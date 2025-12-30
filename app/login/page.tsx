@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import LoginForm from "@/components/auth/LoginForm";
+import ConnectionLoader from "@/components/shared/ConnectionLoader";
 
 export default function LoginPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -17,20 +19,19 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!loading && user) {
+      setRedirecting(true);
       router.push("/app");
     }
   }, [user, loading, router]);
 
+  // Show loading state
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="relative">
-          <div className="w-16 h-16 bg-gradient-to-br from-primary to-accent rounded-2xl flex items-center justify-center animate-pulse-soft">
-            <span className="text-white font-bold text-2xl">T</span>
-          </div>
-        </div>
-      </div>
-    );
+    return <ConnectionLoader message="Vérification de votre session..." />;
+  }
+
+  // Show redirecting state
+  if (redirecting) {
+    return <ConnectionLoader message="Redirection vers votre espace..." />;
   }
 
   const handleSuccess = () => {

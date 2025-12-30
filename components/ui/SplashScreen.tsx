@@ -10,34 +10,19 @@ interface SplashScreenProps {
 }
 
 /**
- * Premium splash screen with smooth animations
- * Displays POSTY logo and loading animation
+ * Simple splash screen - Logo + POSTY + discrete loader
+ * Minimal, fast, professional
  */
 export default function SplashScreen({ isLoading, onComplete }: SplashScreenProps) {
   const [show, setShow] = useState(true);
   const prefersReducedMotion = useReducedMotion();
-  const [progress, setProgress] = useState(0);
 
-  // Simulate loading progress for smooth animation
   useEffect(() => {
-    if (isLoading) {
-      const interval = setInterval(() => {
-        setProgress((prev) => {
-          if (prev >= 90) return prev;
-          return prev + Math.random() * 10;
-        });
-      }, 150);
-
-      return () => clearInterval(interval);
-    } else {
-      // Complete progress when loading is done
-      setProgress(100);
-
-      // Wait for animation to complete before hiding
+    if (!isLoading) {
       const timeout = setTimeout(() => {
         setShow(false);
         onComplete?.();
-      }, prefersReducedMotion ? 100 : 600);
+      }, prefersReducedMotion ? 50 : 300);
 
       return () => clearTimeout(timeout);
     }
@@ -52,136 +37,77 @@ export default function SplashScreen({ isLoading, onComplete }: SplashScreenProp
           animate={{ opacity: 1 }}
           exit={{
             opacity: 0,
-            y: prefersReducedMotion ? 0 : -20,
             transition: {
-              duration: prefersReducedMotion ? 0.1 : 0.5,
-              ease: [0.22, 1, 0.36, 1],
+              duration: prefersReducedMotion ? 0.05 : 0.25,
+              ease: "easeOut",
             },
           }}
-          className="fixed inset-0 z-[9999] flex items-center justify-center"
-          style={{
-            background: "linear-gradient(135deg, #0B0E11 0%, #151923 100%)",
-          }}
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#0B0E11]"
         >
-          <div className="flex flex-col items-center gap-8 px-4">
-            {/* Logo Container */}
+          <div className="flex flex-col items-center gap-6">
+            {/* Logo */}
             <motion.div
-              initial={{ scale: prefersReducedMotion ? 1 : 0.8, opacity: 0 }}
+              initial={{ scale: prefersReducedMotion ? 1 : 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{
-                duration: prefersReducedMotion ? 0 : 0.6,
-                delay: prefersReducedMotion ? 0 : 0.1,
-                ease: [0.25, 0.1, 0.25, 1],
+                duration: prefersReducedMotion ? 0 : 0.3,
+                ease: "easeOut",
               }}
-              className="relative"
+              className="w-20 h-20 lg:w-24 lg:h-24 bg-gradient-to-br from-primary to-accent rounded-2xl overflow-hidden flex items-center justify-center shadow-xl"
             >
-              {/* Glow effect */}
-              <div className="absolute -inset-8 bg-gradient-to-br from-primary/30 to-accent/30 rounded-full blur-3xl animate-pulse" />
-
-              {/* Logo */}
-              <div className="relative w-24 h-24 lg:w-32 lg:h-32 bg-gradient-to-br from-primary to-accent rounded-2xl overflow-hidden flex items-center justify-center shadow-2xl">
-                <img
-                  src="/logo.png"
-                  alt="POSTY Logo"
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                    const sibling = e.currentTarget.nextElementSibling as HTMLElement | null;
-                    if (sibling) sibling.style.display = 'flex';
-                  }}
-                />
-                <span className="text-white font-bold text-4xl lg:text-5xl hidden">P</span>
-              </div>
+              <img
+                src="/logo.png"
+                alt="POSTY"
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  const sibling = e.currentTarget.nextElementSibling as HTMLElement | null;
+                  if (sibling) sibling.style.display = 'flex';
+                }}
+              />
+              <span className="text-white font-bold text-3xl lg:text-4xl hidden">P</span>
             </motion.div>
 
             {/* Brand Name */}
-            <motion.div
-              initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 10 }}
-              animate={{ opacity: 1, y: 0 }}
+            <motion.h1
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               transition={{
-                duration: prefersReducedMotion ? 0 : 0.5,
-                delay: prefersReducedMotion ? 0 : 0.3,
-                ease: "easeOut",
+                duration: prefersReducedMotion ? 0 : 0.3,
+                delay: prefersReducedMotion ? 0 : 0.1,
               }}
-              className="flex flex-col items-center gap-3"
+              className="text-3xl lg:text-4xl font-bold text-white tracking-tight"
             >
-              <h1 className="text-4xl lg:text-5xl font-bold text-white tracking-tight">
-                POSTY
-              </h1>
-              <p className="text-text-secondary text-sm lg:text-base">
-                Générateur de Posts LinkedIn
-              </p>
-            </motion.div>
+              POSTY
+            </motion.h1>
 
-            {/* Loading Progress Bar */}
+            {/* Simple loader dots */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{
-                duration: prefersReducedMotion ? 0 : 0.4,
-                delay: prefersReducedMotion ? 0 : 0.5,
+                duration: prefersReducedMotion ? 0 : 0.3,
+                delay: prefersReducedMotion ? 0 : 0.2,
               }}
-              className="w-64 lg:w-80"
+              className="flex gap-1.5 mt-2"
             >
-              {/* Progress bar container */}
-              <div className="relative h-1 bg-dark-border/30 rounded-full overflow-hidden">
+              {[0, 1, 2].map((index) => (
                 <motion.div
-                  className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary to-accent rounded-full"
-                  initial={{ width: "0%" }}
-                  animate={{ width: `${progress}%` }}
-                  transition={{
-                    duration: 0.3,
-                    ease: "easeOut",
-                  }}
-                />
-
-                {/* Shimmer effect */}
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                  key={index}
+                  className="w-2 h-2 bg-primary rounded-full"
                   animate={{
-                    x: ["-100%", "200%"],
+                    scale: prefersReducedMotion ? 1 : [1, 1.3, 1],
+                    opacity: prefersReducedMotion ? 1 : [0.4, 1, 0.4],
                   }}
                   transition={{
-                    duration: 1.5,
-                    repeat: Infinity,
-                    ease: "linear",
+                    duration: prefersReducedMotion ? 0 : 1,
+                    repeat: prefersReducedMotion ? 0 : Infinity,
+                    delay: prefersReducedMotion ? 0 : index * 0.15,
+                    ease: "easeInOut",
                   }}
                 />
-              </div>
-
-              {/* Loading dots */}
-              <div className="flex justify-center gap-1.5 mt-6">
-                {[0, 1, 2].map((index) => (
-                  <motion.div
-                    key={index}
-                    className="w-2 h-2 bg-primary rounded-full"
-                    animate={{
-                      scale: [1, 1.4, 1],
-                      opacity: [0.4, 1, 0.4],
-                    }}
-                    transition={{
-                      duration: 1.2,
-                      repeat: Infinity,
-                      delay: index * 0.15,
-                      ease: "easeInOut",
-                    }}
-                  />
-                ))}
-              </div>
+              ))}
             </motion.div>
-
-            {/* Subtle hint text */}
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{
-                duration: prefersReducedMotion ? 0 : 0.5,
-                delay: prefersReducedMotion ? 0 : 0.8,
-              }}
-              className="text-text-muted text-xs lg:text-sm mt-4"
-            >
-              Préparation de votre expérience...
-            </motion.p>
           </div>
         </motion.div>
       )}

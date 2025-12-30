@@ -5,16 +5,17 @@ import { useState, useEffect } from "react";
 /**
  * Hook to manage app initialization state
  * Ensures app is fully loaded before hiding splash screen
+ * Minimal display time: 800ms for smooth UX
  */
 export function useAppInitialization() {
   const [isInitialized, setIsInitialized] = useState(false);
   const [minLoadTimeElapsed, setMinLoadTimeElapsed] = useState(false);
 
   useEffect(() => {
-    // Minimum splash screen display time (for smooth UX)
+    // Minimum splash screen display time (800ms for fast, smooth UX)
     const minLoadTime = setTimeout(() => {
       setMinLoadTimeElapsed(true);
-    }, 1200); // 1.2 seconds minimum
+    }, 800);
 
     // Check if document is fully loaded
     const checkReady = () => {
