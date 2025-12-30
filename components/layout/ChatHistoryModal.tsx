@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { Post } from "@/types";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 interface ChatHistoryModalProps {
   isOpen: boolean;
@@ -17,6 +19,8 @@ export default function ChatHistoryModal({
   posts,
   searchQuery,
 }: ChatHistoryModalProps) {
+  const prefersReducedMotion = useReducedMotion();
+
   // Handle escape key
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -116,139 +120,170 @@ export default function ChatHistoryModal({
 
   const groupedPosts = groupPostsByDate(filteredPosts);
 
-  if (!isOpen) return null;
-
   return (
-    <>
-      {/* Overlay */}
-      <div
-        className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm animate-fade-in"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-
-      {/* Modal */}
-      <div
-        className="
-          fixed z-[90] bg-dark-card border border-dark-border rounded-2xl shadow-2xl
-          animate-scale-in overflow-hidden
-          inset-4 lg:inset-auto lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2
-          lg:w-full lg:max-w-2xl lg:max-h-[80vh]
-          flex flex-col
-        "
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-dark-border shrink-0">
-          <div>
-            <h2 className="text-lg font-semibold text-white">Historique des chats</h2>
-            <p className="text-sm text-gray-500">
-              {filteredPosts.length} conversation{filteredPosts.length !== 1 ? "s" : ""}
-            </p>
-          </div>
-          <button
+    <AnimatePresence mode="wait">
+      {isOpen && (
+        <>
+          {/* Overlay - Click to close */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{
+              duration: prefersReducedMotion ? 0.1 : 0.2,
+              ease: "easeOut",
+            }}
+            className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm"
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-white hover:bg-dark-hover rounded-lg transition-colors"
-            aria-label="Fermer"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
+            aria-hidden="true"
+          />
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4">
-          {filteredPosts.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 bg-dark-hover rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
+          {/* Modal - Perfectly centered */}
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 pointer-events-none">
+            <motion.div
+              initial={{
+                opacity: 0,
+                scale: prefersReducedMotion ? 1 : 0.95,
+                y: prefersReducedMotion ? 0 : 20,
+              }}
+              animate={{
+                opacity: 1,
+                scale: 1,
+                y: 0,
+              }}
+              exit={{
+                opacity: 0,
+                scale: prefersReducedMotion ? 1 : 0.95,
+                y: prefersReducedMotion ? 0 : 10,
+              }}
+              transition={{
+                duration: prefersReducedMotion ? 0.1 : 0.25,
+                ease: [0.22, 1, 0.36, 1],
+              }}
+              className="
+                w-full max-w-2xl max-h-[90vh] lg:max-h-[80vh]
+                bg-dark-card border border-dark-border rounded-2xl shadow-2xl
+                flex flex-col overflow-hidden
+                pointer-events-auto
+              "
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between p-4 lg:p-5 border-b border-dark-border shrink-0">
+                <div>
+                  <h2 className="text-lg lg:text-xl font-semibold text-white">
+                    Historique des chats
+                  </h2>
+                  <p className="text-sm text-text-muted mt-0.5">
+                    {filteredPosts.length} conversation{filteredPosts.length !== 1 ? "s" : ""}
+                  </p>
+                </div>
+                <button
+                  onClick={onClose}
+                  className="p-2 text-text-secondary hover:text-white hover:bg-dark-hover rounded-lg transition-colors"
+                  aria-label="Fermer"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
-              <p className="text-gray-400 text-sm">
-                {searchQuery ? "Aucun resultat pour cette recherche" : "Aucune conversation"}
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {groupedPosts.map((group) => (
-                <div key={group.date}>
-                  {/* Date header */}
-                  <div className="flex items-center gap-3 mb-3">
-                    <span className="text-xs font-medium text-primary uppercase tracking-wider">
-                      {group.date}
-                    </span>
-                    <div className="flex-1 h-px bg-dark-border" />
-                  </div>
 
-                  {/* Posts for this date */}
-                  <div className="space-y-2">
-                    {group.posts.map((post) => (
-                      <Link
-                        key={post.id}
-                        href={`/history?id=${post.id}`}
-                        onClick={onClose}
-                        className="
-                          flex items-start gap-3 p-3 rounded-xl
-                          bg-dark-bg hover:bg-dark-hover
-                          border border-dark-border hover:border-primary/30
-                          transition-all duration-200 group
-                        "
-                      >
-                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                          <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                            />
-                          </svg>
+              {/* Content - Scrollable */}
+              <div className="flex-1 overflow-y-auto p-4 lg:p-5">
+                {filteredPosts.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 bg-dark-hover rounded-full flex items-center justify-center mx-auto mb-4">
+                      <svg className="w-8 h-8 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                        />
+                      </svg>
+                    </div>
+                    <p className="text-text-secondary text-sm">
+                      {searchQuery ? "Aucun résultat pour cette recherche" : "Aucune conversation"}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {groupedPosts.map((group) => (
+                      <div key={group.date}>
+                        {/* Date header */}
+                        <div className="flex items-center gap-3 mb-3">
+                          <span className="text-xs font-medium text-primary uppercase tracking-wider">
+                            {group.date}
+                          </span>
+                          <div className="flex-1 h-px bg-dark-border" />
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-white font-medium truncate group-hover:text-primary transition-colors">
-                            {post.prompt}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {formatTime(post.createdAt)}
-                          </p>
+
+                        {/* Posts for this date */}
+                        <div className="space-y-2">
+                          {group.posts.map((post) => (
+                            <Link
+                              key={post.id}
+                              href={`/history?id=${post.id}`}
+                              onClick={onClose}
+                              className="
+                                flex items-start gap-3 p-3 rounded-xl
+                                bg-dark-bg hover:bg-dark-hover
+                                border border-dark-border hover:border-primary/30
+                                transition-all duration-200 group
+                              "
+                            >
+                              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                                <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                                  />
+                                </svg>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-white font-medium truncate group-hover:text-primary transition-colors">
+                                  {post.prompt}
+                                </p>
+                                <p className="text-xs text-text-muted mt-1">
+                                  {formatTime(post.createdAt)}
+                                </p>
+                              </div>
+                              <svg
+                                className="w-5 h-5 text-text-muted group-hover:text-primary shrink-0 transition-colors"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                              </svg>
+                            </Link>
+                          ))}
                         </div>
-                        <svg
-                          className="w-5 h-5 text-gray-500 group-hover:text-primary shrink-0 transition-colors"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </Link>
+                      </div>
                     ))}
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+                )}
+              </div>
 
-        {/* Footer */}
-        <div className="p-4 border-t border-dark-border shrink-0">
-          <Link
-            href="/history"
-            onClick={onClose}
-            className="flex items-center justify-center gap-2 w-full px-4 py-2.5 text-primary hover:text-white hover:bg-primary rounded-lg transition-colors text-sm font-medium"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            Voir tout l&apos;historique
-          </Link>
-        </div>
-      </div>
-    </>
+              {/* Footer */}
+              <div className="p-4 lg:p-5 border-t border-dark-border shrink-0">
+                <Link
+                  href="/history"
+                  onClick={onClose}
+                  className="flex items-center justify-center gap-2 w-full px-4 py-2.5 text-primary hover:text-white hover:bg-primary rounded-lg transition-all duration-200 text-sm font-medium"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Voir tout l&apos;historique
+                </Link>
+              </div>
+            </motion.div>
+          </div>
+        </>
+      )}
+    </AnimatePresence>
   );
 }
