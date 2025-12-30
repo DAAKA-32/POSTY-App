@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 interface HistoryListItemProps {
   post: Post;
   isSelected?: boolean;
-  onDelete?: () => void;
+  onDelete?: (postId: string) => void;
   index?: number;
 }
 
@@ -119,7 +119,7 @@ export default function HistoryListItem({
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              onDelete();
+              onDelete(post.id);
             }}
             className="
               absolute top-2 right-2 p-1.5 text-text-muted hover:text-error hover:bg-error/10
