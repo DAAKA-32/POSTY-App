@@ -1,0 +1,46 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users collection - only owner can read/write
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Posts collection - owner can read/write, any authenticated user can create
+    match /posts/{postId} {
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null;
+    }
+
+    // Sessions collection - for chat history
+    match /sessions/{sessionId} {
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null;
+    }
+
+    // Consents collection - RGPD consent management
+    match /consents/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // LinkedIn connections - OAuth tokens and profile data
+    match /linkedinConnections/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // LinkedIn posts history
+    match /linkedinPosts/{postId} {
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null;
+    }
+
+    // Default deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
