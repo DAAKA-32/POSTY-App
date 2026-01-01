@@ -15,14 +15,21 @@
     "deploy:indexes": "firebase deploy --only firestore:indexes"
   },
   "dependencies": {
+    "@opentelemetry/api": "1.9.0",
+    "@stripe/react-stripe-js": "5.4.1",
+    "@stripe/stripe-js": "8.6.0",
+    "canvas-confetti": "1.9.4",
     "firebase": "^11.1.0",
+    "firebase-admin": "13.6.0",
     "framer-motion": "^12.23.26",
     "next": "16.1.1",
     "react": "19.0.0",
     "react-dom": "19.0.0",
-    "react-hot-toast": "^2.4.1"
+    "react-hot-toast": "^2.4.1",
+    "stripe": "20.1.0"
   },
   "devDependencies": {
+    "@types/canvas-confetti": "1.9.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

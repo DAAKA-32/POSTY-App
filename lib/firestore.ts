@@ -98,14 +98,22 @@ export async function completeOnboarding(
   profileData: UserProfile["profile"]
 ): Promise<void> {
   const userRef = doc(db, "users", userId);
-  await updateDoc(userRef, {
-    sector: profileData?.sector || "",
-    role: profileData?.role || "",
-    linkedinStyle: profileData?.linkedinStyle || "",
-    objective: profileData?.objective || "",
-    profile: profileData,
-    onboardingComplete: true,
-  });
+
+  // Use setDoc with merge to handle cases where user document doesn't exist yet
+  // This can happen if user signed up with Google and profile wasn't created
+  await setDoc(
+    userRef,
+    {
+      uid: userId,
+      sector: profileData?.sector || "",
+      role: profileData?.role || "",
+      linkedinStyle: profileData?.linkedinStyle || "",
+      objective: profileData?.objective || "",
+      profile: profileData,
+      onboardingComplete: true,
+    },
+    { merge: true }
+  );
 }
 
 // ============== POST OPERATIONS ==============
@@ -490,4 +498,278 @@ export async function getLinkedInPosts(
     id: docSnap.id,
     ...docSnap.data(),
   })) as LinkedInPostData[];
+}
+
+// ============== QUOTA MANAGEMENT ==============
+
+import { SubscriptionPlan, DAILY_MESSAGE_LIMITS } from "@/types";
+
+export interface QuotaInfo {
+  plan: SubscriptionPlan;
+  dailyLimit: number;
+  usedToday: number;
+  remaining: number;
+  canSendMessage: boolean;
+  resetsAt: Date;
+  // Legacy fields for backwards compatibility
+  weeklyLimit?: number;
+  usedThisWeek?: number;
+  canPublish?: boolean;
+}
+
+/**
+ * Get the start of today (00:00:00 local time)
+ */
+function getTodayStart(): Date {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+}
+
+/**
+ * Get the end of today (23:59:59 local time)
+ */
+function getTodayEnd(): Date {
+  const today = getTodayStart();
+  today.setDate(today.getDate() + 1);
+  return today;
+}
+
+/**
+ * Check if a date is today
+ */
+function isToday(date: Date): boolean {
+  const today = getTodayStart();
+  const tomorrow = getTodayEnd();
+  return date >= today && date < tomorrow;
+}
+
+/**
+ * Get quota information for a user (daily message limits)
+ */
+export async function getUserQuota(userId: string): Promise<QuotaInfo> {
+  const userRef = doc(db, "users", userId);
+  const userSnap = await getDoc(userRef);
+
+  const todayEnd = getTodayEnd();
+
+  // If user document doesn't exist, return default free quota
+  if (!userSnap.exists()) {
+    const dailyLimit = DAILY_MESSAGE_LIMITS.free;
+    return {
+      plan: "free",
+      dailyLimit,
+      usedToday: 0,
+      remaining: dailyLimit,
+      canSendMessage: true,
+      resetsAt: todayEnd,
+      // Legacy
+      weeklyLimit: dailyLimit,
+      usedThisWeek: 0,
+      canPublish: true,
+    };
+  }
+
+  const data = userSnap.data();
+  const plan: SubscriptionPlan = data.subscription?.plan || "free";
+  const dailyLimit = DAILY_MESSAGE_LIMITS[plan];
+
+  // Check if we need to reset the quota (new day)
+  let usedToday = 0;
+  const lastMessageDate = data.quota?.lastMessageDate?.toDate?.();
+
+  if (lastMessageDate && isToday(lastMessageDate)) {
+    // Same day, use existing count
+    usedToday = data.quota?.dailyMessageCount || 0;
+  }
+  // Otherwise, it's a new day, usedToday stays 0
+
+  const remaining = dailyLimit === -1 ? -1 : Math.max(0, dailyLimit - usedToday);
+  const canSendMessage = dailyLimit === -1 || usedToday < dailyLimit;
+
+  return {
+    plan,
+    dailyLimit,
+    usedToday,
+    remaining,
+    canSendMessage,
+    resetsAt: todayEnd,
+    // Legacy compatibility
+    weeklyLimit: dailyLimit,
+    usedThisWeek: usedToday,
+    canPublish: canSendMessage,
+  };
+}
+
+/**
+ * Check if user can send a message (quota not exceeded)
+ */
+export async function canUserSendMessage(userId: string): Promise<boolean> {
+  const quota = await getUserQuota(userId);
+  return quota.canSendMessage;
+}
+
+/**
+ * Legacy alias for backwards compatibility
+ */
+export async function canUserPublish(userId: string): Promise<boolean> {
+  return canUserSendMessage(userId);
+}
+
+/**
+ * Increment the user's message count for today
+ */
+export async function incrementMessageCount(userId: string): Promise<void> {
+  const userRef = doc(db, "users", userId);
+  const userSnap = await getDoc(userRef);
+
+  if (!userSnap.exists()) {
+    throw new Error("User not found");
+  }
+
+  const data = userSnap.data();
+  const today = getTodayStart();
+  const lastMessageDate = data.quota?.lastMessageDate?.toDate?.();
+
+  let newCount = 1;
+
+  if (lastMessageDate && isToday(lastMessageDate)) {
+    // Same day, increment existing count
+    newCount = (data.quota?.dailyMessageCount || 0) + 1;
+  }
+  // Otherwise, it's a new day, start fresh at 1
+
+  await updateDoc(userRef, {
+    "quota.dailyMessageCount": newCount,
+    "quota.lastMessageDate": Timestamp.fromDate(today),
+  });
+}
+
+/**
+ * Legacy alias for backwards compatibility
+ */
+export async function incrementPublishCount(userId: string): Promise<void> {
+  return incrementMessageCount(userId);
+}
+
+/**
+ * Update user subscription plan
+ */
+export async function updateUserSubscription(
+  userId: string,
+  plan: SubscriptionPlan,
+  expiresAt?: Date
+): Promise<void> {
+  const userRef = doc(db, "users", userId);
+
+  const subscriptionData: Record<string, unknown> = {
+    "subscription.plan": plan,
+    "subscription.subscribedAt": serverTimestamp(),
+  };
+
+  if (expiresAt) {
+    subscriptionData["subscription.expiresAt"] = Timestamp.fromDate(expiresAt);
+  }
+
+  await updateDoc(userRef, subscriptionData);
+}
+
+/**
+ * Update user subscription with Stripe data
+ */
+export async function updateUserStripeSubscription(
+  userId: string,
+  data: {
+    plan: SubscriptionPlan;
+    stripeCustomerId?: string;
+    stripeSubscriptionId?: string;
+    status?: "active" | "canceled" | "past_due" | "unpaid" | "trialing";
+    expiresAt?: Date;
+  }
+): Promise<void> {
+  const userRef = doc(db, "users", userId);
+
+  const subscriptionData: Record<string, unknown> = {
+    "subscription.plan": data.plan,
+    "subscription.subscribedAt": serverTimestamp(),
+  };
+
+  if (data.stripeCustomerId) {
+    subscriptionData["subscription.stripeCustomerId"] = data.stripeCustomerId;
+  }
+  if (data.stripeSubscriptionId) {
+    subscriptionData["subscription.stripeSubscriptionId"] = data.stripeSubscriptionId;
+  }
+  if (data.status) {
+    subscriptionData["subscription.status"] = data.status;
+  }
+  if (data.expiresAt) {
+    subscriptionData["subscription.expiresAt"] = Timestamp.fromDate(data.expiresAt);
+  }
+
+  await updateDoc(userRef, subscriptionData);
+}
+
+/**
+ * Get user's Stripe customer ID
+ */
+export async function getUserStripeCustomerId(userId: string): Promise<string | null> {
+  const userRef = doc(db, "users", userId);
+  const userSnap = await getDoc(userRef);
+
+  if (userSnap.exists()) {
+    return userSnap.data()?.subscription?.stripeCustomerId || null;
+  }
+  return null;
+}
+
+// ============== PAYMENT HISTORY ==============
+
+export interface PaymentRecord {
+  id: string;
+  userId: string;
+  stripePaymentId: string;
+  amount: number;
+  currency: string;
+  status: "succeeded" | "failed" | "pending";
+  description?: string;
+  invoiceUrl?: string;
+  createdAt: Timestamp;
+}
+
+/**
+ * Save a payment record
+ */
+export async function savePaymentRecord(
+  userId: string,
+  payment: Omit<PaymentRecord, "id" | "userId" | "createdAt">
+): Promise<string> {
+  const paymentsRef = collection(db, "payments");
+  const docRef = await addDoc(paymentsRef, {
+    userId,
+    ...payment,
+    createdAt: serverTimestamp(),
+  });
+  return docRef.id;
+}
+
+/**
+ * Get user's payment history
+ */
+export async function getUserPayments(
+  userId: string,
+  limitCount: number = 20
+): Promise<PaymentRecord[]> {
+  const paymentsRef = collection(db, "payments");
+  const q = query(
+    paymentsRef,
+    where("userId", "==", userId),
+    orderBy("createdAt", "desc"),
+    limit(limitCount)
+  );
+
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map((docSnap) => ({
+    id: docSnap.id,
+    ...docSnap.data(),
+  })) as PaymentRecord[];
 }
