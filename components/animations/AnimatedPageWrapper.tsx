@@ -42,7 +42,8 @@ export function AnimatedPageWrapper({
       initial="hidden"
       animate="visible"
       variants={variants}
-      className={className}
+      className={`gpu-layer ${className}`}
+      style={{ willChange: "transform, opacity" }}
     >
       {children}
     </motion.div>
@@ -165,7 +166,8 @@ export function AnimatedSlideIn({
       initial="hidden"
       animate="visible"
       variants={variants}
-      className={className}
+      className={`gpu-layer ${className}`}
+      style={{ willChange: "transform, opacity" }}
     >
       {children}
     </motion.div>
@@ -207,7 +209,8 @@ export function AnimatedScaleFade({
       initial="hidden"
       animate="visible"
       variants={variants}
-      className={className}
+      className={`gpu-layer ${className}`}
+      style={{ willChange: "transform, opacity" }}
     >
       {children}
     </motion.div>

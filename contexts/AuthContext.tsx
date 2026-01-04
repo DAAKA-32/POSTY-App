@@ -69,13 +69,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Check if user profile exists, if not create one
       const existingProfile = await getUserProfile(googleUser.uid);
       if (!existingProfile) {
-        await createUserProfile(googleUser.uid, {
-          email: googleUser.email || "",
-          displayName: googleUser.displayName || "",
-          photoURL: googleUser.photoURL,
-        });
+        try {
+          await createUserProfile(googleUser.uid, {
+            email: googleUser.email || "",
+            displayName: googleUser.displayName || "",
+            photoURL: googleUser.photoURL,
+          });
+        } catch (profileError) {
+          // Log but don't fail - profile will be created during onboarding
+          console.warn("Profile creation deferred to onboarding:", profileError);
+        }
       }
 
+      // Refresh profile after sign in
+      await refreshUserProfile();
       toast.success("Connexion réussie !");
     } catch (error) {
       console.error("Google sign-in error:", error);
@@ -89,9 +96,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       toast.success("Connexion réussie !");
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Email sign-in error:", error);
-      toast.error("Email ou mot de passe incorrect");
+
+      // Handle specific Firebase Auth errors
+      const firebaseError = error as { code?: string };
+      switch (firebaseError.code) {
+        case "auth/invalid-credential":
+        case "auth/wrong-password":
+        case "auth/user-not-found":
+          toast.error("Email ou mot de passe incorrect");
+          break;
+        case "auth/invalid-email":
+          toast.error("Format d'email invalide");
+          break;
+        case "auth/user-disabled":
+          toast.error("Ce compte a été désactivé");
+          break;
+        case "auth/too-many-requests":
+          toast.error("Trop de tentatives. Réessayez dans quelques minutes.");
+          break;
+        case "auth/network-request-failed":
+          toast.error("Erreur de connexion. Vérifiez votre connexion internet.");
+          break;
+        default:
+          toast.error("Erreur lors de la connexion");
+      }
       throw error;
     }
   };
@@ -117,9 +147,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       toast.success("Compte créé avec succès !");
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Email sign-up error:", error);
-      toast.error("Erreur lors de la création du compte");
+
+      // Handle specific Firebase Auth errors
+      const firebaseError = error as { code?: string };
+      switch (firebaseError.code) {
+        case "auth/email-already-in-use":
+          toast.error("Cet email est déjà utilisé. Connectez-vous ou utilisez un autre email.");
+          break;
+        case "auth/invalid-email":
+          toast.error("Format d'email invalide");
+          break;
+        case "auth/weak-password":
+          toast.error("Le mot de passe doit contenir au moins 6 caractères");
+          break;
+        case "auth/operation-not-allowed":
+          toast.error("L'inscription par email n'est pas activée");
+          break;
+        case "auth/network-request-failed":
+          toast.error("Erreur de connexion. Vérifiez votre connexion internet.");
+          break;
+        default:
+          toast.error("Erreur lors de la création du compte");
+      }
       throw error;
     }
   };

@@ -59,13 +59,16 @@ export default function ChatInput({
           className="
             flex-1
             bg-transparent
-            text-white
-            placeholder-gray-500
+            text-white text-base
+            placeholder-text-muted
             resize-none
             focus:outline-none
             disabled:opacity-50
-            min-h-[24px]
+            min-h-[44px]
             max-h-[200px]
+            py-2.5
+            leading-6
+            align-middle
           "
         />
         <Button

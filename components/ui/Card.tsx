@@ -30,7 +30,7 @@ export default function Card({
       className={`
         bg-dark-card
         border border-dark-border
-        rounded-xl
+        rounded-lg
         ${paddingStyles[padding]}
         ${hover ? "hover:bg-dark-hover hover:border-gray-600 cursor-pointer transition-all duration-200" : ""}
         ${onClick ? "cursor-pointer" : ""}

@@ -1,15 +1,24 @@
 "use client";
 
 import { Post } from "@/types";
-import ResponseCard from "@/components/chat/ResponseCard";
-import { motion } from "framer-motion";
+import ChatMessage from "@/components/chat/ChatMessage";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface HistoryDetailPanelProps {
   post: Post | null;
   onCopy: (content: string) => void;
+  onPublishToLinkedIn?: (content: string) => void;
+  userName?: string;
+  userInitial?: string;
 }
 
-export default function HistoryDetailPanel({ post, onCopy }: HistoryDetailPanelProps) {
+export default function HistoryDetailPanel({
+  post,
+  onCopy,
+  onPublishToLinkedIn,
+  userName = "Vous",
+  userInitial = "U",
+}: HistoryDetailPanelProps) {
   const formatDate = (timestamp: { toDate?: () => Date } | Date | null) => {
     if (!timestamp) return "";
     const date =
@@ -38,9 +47,9 @@ export default function HistoryDetailPanel({ post, onCopy }: HistoryDetailPanelP
             />
           </svg>
         </div>
-        <h3 className="text-xl font-semibold text-white mb-2">Sélectionnez un post</h3>
+        <h3 className="text-xl font-semibold text-white mb-2">Selectionnez un post</h3>
         <p className="text-text-muted text-center max-w-sm">
-          Choisissez un post dans la liste pour voir ses détails et versions générées
+          Choisissez un post dans la liste pour voir ses details et versions generees
         </p>
       </div>
     );
@@ -55,51 +64,72 @@ export default function HistoryDetailPanel({ post, onCopy }: HistoryDetailPanelP
       className="hidden lg:block h-full overflow-y-auto"
     >
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-sm text-text-muted mb-1">Créé le</p>
-            <p className="text-white font-medium">{formatDate(post.createdAt)}</p>
+        {/* Header with date */}
+        <div className="flex items-center justify-between pb-4 border-b border-dark-border">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+              <span className="text-white font-bold">T</span>
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-white">Conversation</h2>
+              <p className="text-sm text-text-muted">{formatDate(post.createdAt)}</p>
+            </div>
           </div>
+
+          {/* Version badge */}
+          {post.selectedVersion && (
+            <span
+              className={`
+                px-3 py-1 text-xs font-medium rounded-full
+                ${post.selectedVersion === "A"
+                  ? "bg-purple-500/20 text-purple-400"
+                  : "bg-blue-500/20 text-blue-400"
+                }
+              `}
+            >
+              {post.selectedVersion === "A" ? "Storytelling" : "Business"}
+            </span>
+          )}
         </div>
 
-        {/* Prompt */}
-        <div className="p-6 bg-dark-card border border-dark-border rounded-xl">
-          <div className="flex items-center gap-2 mb-3">
-            <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
-              />
-            </svg>
-            <p className="text-sm font-medium text-text-muted uppercase tracking-wider">Prompt initial</p>
-          </div>
-          <p className="text-white leading-relaxed">{post.prompt}</p>
-        </div>
+        {/* Conversational display */}
+        <div className="space-y-6">
+          <AnimatePresence mode="popLayout">
+            {/* User message */}
+            <ChatMessage
+              key={`user-${post.id}`}
+              type="user"
+              content={post.prompt}
+              userName={userName}
+              userInitial={userInitial}
+              showActions={false}
+              index={0}
+            />
 
-        {/* Responses */}
-        <div>
-          <h3 className="text-sm font-medium text-text-muted uppercase tracking-wider mb-4">
-            Versions générées
-          </h3>
-          <div className="space-y-4">
-            <ResponseCard
-              title="Version Storytelling"
+            {/* AI Response - Storytelling */}
+            <ChatMessage
+              key={`ai-storytelling-${post.id}`}
+              type="ai"
               content={post.responseA}
-              type="storytelling"
-              isSelected={post.selectedVersion === "A"}
+              variant="storytelling"
+              showActions={true}
               onCopy={() => onCopy(post.responseA)}
+              onPublishToLinkedIn={onPublishToLinkedIn ? () => onPublishToLinkedIn(post.responseA) : undefined}
+              index={1}
             />
-            <ResponseCard
-              title="Version Business"
+
+            {/* AI Response - Business */}
+            <ChatMessage
+              key={`ai-business-${post.id}`}
+              type="ai"
               content={post.responseB}
-              type="business"
-              isSelected={post.selectedVersion === "B"}
+              variant="business"
+              showActions={true}
               onCopy={() => onCopy(post.responseB)}
+              onPublishToLinkedIn={onPublishToLinkedIn ? () => onPublishToLinkedIn(post.responseB) : undefined}
+              index={2}
             />
-          </div>
+          </AnimatePresence>
         </div>
       </div>
     </motion.div>

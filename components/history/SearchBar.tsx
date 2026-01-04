@@ -68,7 +68,7 @@ export default function SearchBar({
               exit={{ opacity: 0, scale: 0.8 }}
               transition={{ duration: 0.15 }}
               onClick={() => onChange("")}
-              className="p-1 text-text-muted hover:text-white hover:bg-dark-hover rounded-lg transition-colors"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center text-text-muted hover:text-white hover:bg-dark-hover rounded-lg transition-colors"
               aria-label="Effacer"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

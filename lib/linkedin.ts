@@ -5,18 +5,19 @@ export const LINKEDIN_CONFIG = {
   redirectUri: process.env.NEXT_PUBLIC_LINKEDIN_REDIRECT_URI || "",
   scope: "openid profile email w_member_social",
   authorizationUrl: "https://www.linkedin.com/oauth/v2/authorization",
-  // Firebase Cloud Functions URLs
-  callbackFunctionUrl: process.env.NEXT_PUBLIC_LINKEDIN_CALLBACK_FUNCTION_URL || "",
-  postFunctionUrl: process.env.NEXT_PUBLIC_LINKEDIN_POST_FUNCTION_URL || "",
 };
 
-// Generate LinkedIn OAuth authorization URL
-export function getLinkedInAuthUrl(state: string): string {
+/**
+ * Génère l'URL d'autorisation LinkedIn OAuth 2.0
+ * @param userId - L'ID de l'utilisateur (passé comme state pour le callback)
+ * @returns URL de redirection vers LinkedIn
+ */
+export function getLinkedInAuthUrl(userId: string): string {
   const params = new URLSearchParams({
     response_type: "code",
     client_id: LINKEDIN_CONFIG.clientId,
     redirect_uri: LINKEDIN_CONFIG.redirectUri,
-    state,
+    state: userId, // Le userId est passé comme state pour être récupéré au callback
     scope: LINKEDIN_CONFIG.scope,
   });
 
@@ -77,74 +78,59 @@ export interface LinkedInPostRecord {
   error?: string;
 }
 
-// Exchange authorization code for access token via Cloud Function
-export async function exchangeCodeForToken(
-  code: string
-): Promise<{
-  success: boolean;
-  accessToken?: string;
-  expiresAt?: string;
-  linkedInId?: string;
-  profileName?: string;
-  profilePicture?: string;
-  email?: string;
-  error?: string;
-}> {
-  const response = await fetch(LINKEDIN_CONFIG.callbackFunctionUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      code,
-      redirectUri: LINKEDIN_CONFIG.redirectUri,
-    }),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    return { success: false, error: error.error || "Failed to exchange code" };
-  }
-
-  return response.json();
-}
-
-// Post content to LinkedIn via Cloud Function
+/**
+ * Publie du contenu sur LinkedIn via l'API Next.js
+ *
+ * Cette fonction appelle notre route API Next.js qui gère:
+ * - La vérification du token
+ * - La publication via l'API LinkedIn
+ * - L'enregistrement dans Firestore
+ *
+ * @param userId - ID de l'utilisateur POSTY
+ * @param content - Contenu du post à publier
+ * @param postId - ID du post POSTY (optionnel)
+ * @returns Résultat de la publication
+ */
 export async function postToLinkedIn(
-  accessToken: string,
-  linkedInId: string,
+  userId: string,
   content: string,
-  expiresAt: string
+  postId?: string
 ): Promise<LinkedInPostResult> {
-  const response = await fetch(LINKEDIN_CONFIG.postFunctionUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      accessToken,
-      linkedInId,
-      content,
-      expiresAt,
-    }),
-  });
+  try {
+    const response = await fetch("/api/linkedin/publish", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        userId,
+        content,
+        postId,
+      }),
+    });
 
-  if (!response.ok) {
-    const error = await response.json();
+    const result = await response.json();
+
+    if (!response.ok) {
+      return {
+        id: "",
+        success: false,
+        error: result.message || result.error || "Échec de la publication",
+      };
+    }
+
+    return {
+      id: result.shareId || "",
+      success: true,
+      postUrl: result.shareUrl,
+    };
+  } catch (error) {
     return {
       id: "",
       success: false,
-      error: error.error || "Failed to post to LinkedIn",
+      error: error instanceof Error ? error.message : "Erreur inattendue",
     };
   }
-
-  const result = await response.json();
-  return {
-    id: result.postId || "",
-    success: result.success,
-    postUrl: result.postUrl,
-    error: result.error,
-  };
 }
 
 // Check if token is expired or about to expire (within 5 minutes)

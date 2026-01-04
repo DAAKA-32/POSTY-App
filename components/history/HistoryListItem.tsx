@@ -56,7 +56,7 @@ export default function HistoryListItem({
       transition={{ delay: index * 0.03, duration: 0.2 }}
     >
       <Link
-        href={`/history?id=${post.id}`}
+        href={`/app/c/${post.id}`}
         className={`
           group relative block p-4 rounded-xl
           transition-all duration-200

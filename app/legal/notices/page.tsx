@@ -1,4 +1,4 @@
-import LegalLayout from "@/components/layout/LegalLayout";
+import LegalLayoutLight from "@/components/layout/LegalLayoutLight";
 
 export const metadata = {
   title: "Mentions legales - POSTY",
@@ -7,7 +7,7 @@ export const metadata = {
 
 export default function LegalNoticesPage() {
   return (
-    <LegalLayout title="Mentions legales">
+    <LegalLayoutLight title="Mentions legales">
       <p className="text-gray-300 text-lg mb-8">
         Conformement aux dispositions des articles 6-III et 19 de la Loi n° 2004-575 du
         21 juin 2004 pour la Confiance dans l&apos;economie numerique (LCEN).
@@ -140,6 +140,6 @@ export default function LegalNoticesPage() {
           <p><strong className="text-white">Support technique :</strong> support@posty.app</p>
         </div>
       </section>
-    </LegalLayout>
+    </LegalLayoutLight>
   );
 }

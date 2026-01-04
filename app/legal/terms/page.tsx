@@ -1,4 +1,4 @@
-import LegalLayout from "@/components/layout/LegalLayout";
+import LegalLayoutLight from "@/components/layout/LegalLayoutLight";
 
 export const metadata = {
   title: "Conditions Generales d'Utilisation - POSTY",
@@ -7,7 +7,7 @@ export const metadata = {
 
 export default function TermsOfServicePage() {
   return (
-    <LegalLayout title="Conditions Generales d&apos;Utilisation">
+    <LegalLayoutLight title="Conditions Generales d'Utilisation">
       <p className="text-gray-300 text-lg mb-8">
         Derniere mise a jour : {new Date().toLocaleDateString("fr-FR")}
       </p>
@@ -203,6 +203,6 @@ export default function TermsOfServicePage() {
           <p>Email : contact@posty.app</p>
         </div>
       </section>
-    </LegalLayout>
+    </LegalLayoutLight>
   );
 }

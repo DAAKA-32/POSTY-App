@@ -8,6 +8,7 @@ import { useChat } from "@/hooks/useChat";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import ChatBubble from "@/components/chat/ChatBubble";
+import AIResponsePair from "@/components/chat/AIResponsePair";
 import toast from "react-hot-toast";
 
 const GUEST_LIMIT = 2;
@@ -238,44 +239,102 @@ export default function ChatPage() {
             </div>
           ) : (
             <>
-              {messages.map((message) => (
-                <div key={message.id} className="animate-fade-in-up">
-                  <ChatBubble role={message.role}>
-                    {message.type && (
-                      <div className="mb-2">
-                        <span
-                          className={`
-                            inline-block px-2.5 py-1 text-xs font-medium rounded-lg
-                            ${message.type === "storytelling"
-                              ? "bg-purple-500/20 text-purple-400"
-                              : "bg-primary/20 text-primary"
-                            }
-                          `}
-                        >
-                          {message.type === "storytelling" ? "Storytelling" : "Business"}
-                        </span>
+              {(() => {
+                // Group messages: user messages standalone, AI responses paired
+                const elements: React.ReactNode[] = [];
+                let i = 0;
+                let pairIndex = 0;
+
+                while (i < messages.length) {
+                  const message = messages[i];
+
+                  if (message.role === "user") {
+                    // Render user message with ChatBubble
+                    elements.push(
+                      <div key={message.id} className="animate-fade-in-up">
+                        <ChatBubble role={message.role}>
+                          <div className="whitespace-pre-wrap">{message.content}</div>
+                        </ChatBubble>
                       </div>
-                    )}
-                    <div className="whitespace-pre-wrap">{message.content}</div>
-                    {message.role === "assistant" && (
-                      <button
-                        onClick={() => handleCopy(message.content)}
-                        className="
-                          mt-3 flex items-center gap-1.5 px-3 py-1.5
-                          text-xs text-text-muted hover:text-white
-                          bg-dark-hover/50 hover:bg-dark-hover
-                          rounded-lg transition-all duration-200
-                        "
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        </svg>
-                        Copier
-                      </button>
-                    )}
-                  </ChatBubble>
-                </div>
-              ))}
+                    );
+                    i++;
+                  } else if (message.role === "assistant") {
+                    // Check if next message is also assistant (paired response)
+                    const nextMessage = messages[i + 1];
+
+                    if (nextMessage && nextMessage.role === "assistant") {
+                      // Find storytelling and business in the pair
+                      const storytelling = message.type === "storytelling" ? message : nextMessage;
+                      const business = message.type === "business" ? message : nextMessage;
+
+                      // Render paired responses with AIResponsePair
+                      elements.push(
+                        <div key={`pair-${message.id}`} className="animate-fade-in-up">
+                          <AIResponsePair
+                            storytellingResponse={{
+                              id: storytelling.id,
+                              content: storytelling.content,
+                              variant: "storytelling",
+                            }}
+                            businessResponse={{
+                              id: business.id,
+                              content: business.content,
+                              variant: "business",
+                            }}
+                            onCopy={handleCopy}
+                            index={pairIndex}
+                          />
+                        </div>
+                      );
+                      pairIndex++;
+                      i += 2; // Skip both messages
+                    } else {
+                      // Single AI message (shouldn't happen normally)
+                      elements.push(
+                        <div key={message.id} className="animate-fade-in-up">
+                          <ChatBubble role={message.role}>
+                            {message.type && (
+                              <div className="mb-2">
+                                <span
+                                  className={`
+                                    inline-block px-2.5 py-1 text-xs font-medium rounded-lg
+                                    ${message.type === "storytelling"
+                                      ? "bg-purple-500/20 text-purple-400"
+                                      : "bg-primary/20 text-primary"
+                                    }
+                                  `}
+                                >
+                                  {message.type === "storytelling" ? "Storytelling" : "Business"}
+                                </span>
+                              </div>
+                            )}
+                            <div className="whitespace-pre-wrap">{message.content}</div>
+                            <button
+                              onClick={() => handleCopy(message.content)}
+                              className="
+                                mt-3 flex items-center gap-1.5 px-3 py-1.5
+                                text-xs text-text-muted hover:text-white
+                                bg-dark-hover/50 hover:bg-dark-hover
+                                rounded-lg transition-all duration-200
+                              "
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                              </svg>
+                              Copier
+                            </button>
+                          </ChatBubble>
+                        </div>
+                      );
+                      i++;
+                    }
+                  } else {
+                    i++;
+                  }
+                }
+
+                return elements;
+              })()}
 
               {/* Loading indicator */}
               {isLoading && (

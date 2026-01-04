@@ -22,7 +22,7 @@ export default function Button({
   ...props
 }: ButtonProps) {
   const baseStyles = `
-    inline-flex items-center justify-center font-medium rounded-xl
+    inline-flex items-center justify-center font-medium rounded-lg
     transition-all duration-200 ease-smooth
     focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background
     disabled:opacity-50 disabled:cursor-not-allowed
@@ -61,9 +61,9 @@ export default function Button({
   };
 
   const sizes = {
-    sm: "px-3 py-2 text-sm",
-    md: "px-4 py-2.5 text-sm",
-    lg: "px-6 py-3 text-base",
+    sm: "px-3 py-2 text-sm tracking-snug",
+    md: "px-4 py-2.5 text-base tracking-snug",
+    lg: "px-6 py-3.5 text-lg tracking-snug",
   };
 
   return (

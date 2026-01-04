@@ -1,6 +1,14 @@
 import { initializeApp, getApps, FirebaseApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, Auth } from "firebase/auth";
-import { getFirestore, Firestore } from "firebase/firestore";
+import {
+  getFirestore,
+  Firestore,
+  enableIndexedDbPersistence,
+  CACHE_SIZE_UNLIMITED,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+} from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -23,21 +31,40 @@ const isConfigValid = () => {
   );
 };
 
-// Only initialize Firebase on the client side with valid config
+// Initialize Firebase for both client and server
 let app: FirebaseApp | undefined;
 let authInstance: Auth | undefined;
 let dbInstance: Firestore | undefined;
 let googleProviderInstance: GoogleAuthProvider | undefined;
 
-// Initialize Firebase only on client side and if config is valid
-if (typeof window !== "undefined" && isConfigValid()) {
+// Initialize Firebase if config is valid (works on both client and server)
+if (isConfigValid()) {
   app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-  authInstance = getAuth(app);
-  dbInstance = getFirestore(app);
-  googleProviderInstance = new GoogleAuthProvider();
+
+  // Client-side: Initialize Firestore with persistent cache
+  if (typeof window !== "undefined") {
+    try {
+      // Use the new persistent cache API (Firebase v10+)
+      dbInstance = initializeFirestore(app, {
+        localCache: persistentLocalCache({
+          tabManager: persistentMultipleTabManager(),
+          cacheSizeBytes: CACHE_SIZE_UNLIMITED,
+        }),
+      });
+    } catch {
+      // Fallback if already initialized
+      dbInstance = getFirestore(app);
+    }
+
+    authInstance = getAuth(app);
+    googleProviderInstance = new GoogleAuthProvider();
+  } else {
+    // Server-side: Use standard Firestore without persistence
+    dbInstance = getFirestore(app);
+  }
 }
 
-// Export safe getters that throw meaningful errors if Firebase is not initialized
+// Export safe getters
 export const auth = authInstance as Auth;
 export const db = dbInstance as Firestore;
 export const googleProvider = googleProviderInstance as GoogleAuthProvider;

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, memo } from "react";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import { LinkedInIcon } from "@/components/linkedin/LinkedInConnectButton";
+import { useHapticFeedback } from "@/hooks/useHapticFeedback";
 import toast from "react-hot-toast";
 
 interface ResponseCardProps {
@@ -17,7 +18,7 @@ interface ResponseCardProps {
   showLinkedInButton?: boolean;
 }
 
-export default function ResponseCard({
+const ResponseCard = memo(function ResponseCard({
   title,
   content,
   type,
@@ -28,15 +29,18 @@ export default function ResponseCard({
   showLinkedInButton = false,
 }: ResponseCardProps) {
   const [copied, setCopied] = useState(false);
+  const { trigger: triggerHaptic } = useHapticFeedback();
 
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(content);
       setCopied(true);
+      triggerHaptic("success");
       toast.success("Copie !");
       setTimeout(() => setCopied(false), 2000);
       onCopy?.();
     } catch {
+      triggerHaptic("error");
       toast.error("Erreur lors de la copie");
     }
   };
@@ -154,4 +158,6 @@ export default function ResponseCard({
       </div>
     </Card>
   );
-}
+});
+
+export default ResponseCard;

@@ -179,7 +179,7 @@ export default function ChatHistoryModal({
                 </div>
                 <button
                   onClick={onClose}
-                  className="p-2 text-text-secondary hover:text-white hover:bg-dark-hover rounded-lg transition-colors"
+                  className="min-w-[44px] min-h-[44px] p-2 flex items-center justify-center text-text-secondary hover:text-white hover:bg-dark-hover rounded-lg transition-colors"
                   aria-label="Fermer"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -223,10 +223,10 @@ export default function ChatHistoryModal({
                           {group.posts.map((post) => (
                             <Link
                               key={post.id}
-                              href={`/history?id=${post.id}`}
+                              href={`/app/c/${post.id}`}
                               onClick={onClose}
                               className="
-                                flex items-start gap-3 p-3 rounded-xl
+                                flex items-start gap-3 p-3 rounded-lg
                                 bg-dark-bg hover:bg-dark-hover
                                 border border-dark-border hover:border-primary/30
                                 transition-all duration-200 group

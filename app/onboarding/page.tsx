@@ -147,9 +147,9 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-dark-bg flex flex-col">
+    <div className="min-h-screen max-h-screen bg-dark-bg flex flex-col overflow-y-auto overflow-x-hidden overscroll-contain">
       {/* Header */}
-      <header className="p-4 lg:p-6 flex items-center justify-between max-w-4xl mx-auto w-full">
+      <header className="p-4 lg:p-6 flex items-center justify-between max-w-4xl mx-auto w-full flex-shrink-0">
         <Link href="/" className="inline-flex items-center gap-2">
           <div className="w-8 h-8 lg:w-10 lg:h-10 bg-gradient-to-br from-primary to-accent rounded-lg overflow-hidden flex items-center justify-center">
             <img
@@ -171,7 +171,7 @@ export default function OnboardingPage() {
       </header>
 
       {/* Progress bar */}
-      <div className="px-4 lg:px-8 max-w-2xl mx-auto w-full">
+      <div className="px-4 lg:px-8 max-w-2xl mx-auto w-full flex-shrink-0">
         <div className="h-1 lg:h-1.5 bg-dark-card rounded-full overflow-hidden">
           <div
             className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-300"
@@ -181,8 +181,8 @@ export default function OnboardingPage() {
       </div>
 
       {/* Main content */}
-      <main className="flex-1 flex items-center justify-center px-4 lg:px-8 py-12 lg:py-16">
-        <div className="w-full max-w-lg lg:max-w-xl">
+      <main className="flex-1 flex flex-col items-center justify-start px-4 lg:px-8 py-8 lg:py-12 min-h-0">
+        <div className="w-full max-w-lg lg:max-w-xl my-auto">
           <div className="text-center mb-8 lg:mb-12">
             <h1 className="text-2xl lg:text-3xl xl:text-4xl font-bold text-white mb-2 lg:mb-4">
               {currentStepData.title}

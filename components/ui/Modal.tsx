@@ -1,6 +1,8 @@
 "use client";
 
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useEffect, useRef, useId } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 import Button from "./Button";
 
 interface ModalProps {
@@ -9,8 +11,45 @@ interface ModalProps {
   title?: string;
   children: ReactNode;
   showCloseButton?: boolean;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
+  scrollable?: boolean;
+  /** ARIA description for accessibility */
+  description?: string;
 }
+
+// Spring animation config for smooth, natural feel
+const springConfig = {
+  type: "spring" as const,
+  damping: 25,
+  stiffness: 300,
+  mass: 0.5,
+};
+
+const backdropVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1 },
+  exit: { opacity: 0 },
+};
+
+const modalVariants = {
+  hidden: {
+    opacity: 0,
+    scale: 0.95,
+    y: 20,
+  },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: springConfig,
+  },
+  exit: {
+    opacity: 0,
+    scale: 0.95,
+    y: 10,
+    transition: { duration: 0.15 },
+  },
+};
 
 export default function Modal({
   isOpen,
@@ -19,8 +58,21 @@ export default function Modal({
   children,
   showCloseButton = true,
   size = "md",
+  scrollable = true,
+  description,
 }: ModalProps) {
-  // Close on escape key
+  const scrollPosRef = useRef(0);
+  const titleId = useId();
+  const descriptionId = useId();
+
+  // Focus trap for accessibility
+  const focusTrapRef = useFocusTrap<HTMLDivElement>({
+    enabled: isOpen,
+    initialFocus: "first",
+    returnFocus: true,
+  });
+
+  // Close on escape key and handle body scroll lock
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -29,76 +81,143 @@ export default function Modal({
     };
 
     if (isOpen) {
+      // Save scroll position before locking
+      scrollPosRef.current = window.scrollY;
+
       document.addEventListener("keydown", handleEscape);
+
+      // Lock body scroll while preserving position
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollPosRef.current}px`;
+      document.body.style.left = "0";
+      document.body.style.right = "0";
       document.body.style.overflow = "hidden";
     }
 
     return () => {
       document.removeEventListener("keydown", handleEscape);
-      document.body.style.overflow = "unset";
+
+      // Restore scroll position
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.overflow = "";
+
+      // Restore scroll position
+      if (scrollPosRef.current > 0) {
+        window.scrollTo(0, scrollPosRef.current);
+      }
     };
   }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
 
   const sizes = {
     sm: "max-w-sm",
     md: "max-w-md",
     lg: "max-w-lg",
+    xl: "max-w-xl",
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm modal-backdrop-enter"
-        onClick={onClose}
-      />
+    <AnimatePresence>
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
+          role="presentation"
+        >
+          {/* Backdrop */}
+          <motion.div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm gpu-accelerated"
+            variants={backdropVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            transition={{ duration: 0.2 }}
+            onClick={onClose}
+            aria-hidden="true"
+          />
 
-      {/* Modal content */}
-      <div
-        className={`
-          relative ${sizes[size]} w-full
-          bg-dark-card
-          border border-dark-border
-          rounded-2xl
-          shadow-elevated
-          modal-content-enter
-        `}
-      >
-        {/* Header */}
-        {(title || showCloseButton) && (
-          <div className="flex items-center justify-between p-5 border-b border-dark-border">
-            {title && (
-              <h3 className="text-lg font-semibold text-white">{title}</h3>
+          {/* Modal content */}
+          <motion.div
+            ref={focusTrapRef}
+            className={`
+              relative ${sizes[size]} w-full
+              bg-dark-card
+              border border-dark-border
+              rounded-xl
+              shadow-elevated
+              my-auto
+              max-h-[90vh]
+              flex flex-col
+              gpu-layer
+            `}
+            variants={modalVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={title ? titleId : undefined}
+            aria-describedby={description ? descriptionId : undefined}
+            tabIndex={-1}
+          >
+            {/* Hidden description for screen readers */}
+            {description && (
+              <span id={descriptionId} className="sr-only">
+                {description}
+              </span>
             )}
-            {showCloseButton && (
-              <button
-                onClick={onClose}
-                className="p-2 text-text-secondary hover:text-white transition-all duration-200 rounded-xl hover:bg-dark-hover haptic-feedback"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            )}
-          </div>
-        )}
 
-        {/* Body */}
-        <div className="p-5">{children}</div>
-      </div>
-    </div>
+            {/* Header */}
+            {(title || showCloseButton) && (
+              <div className="flex items-center justify-between p-5 border-b border-dark-border flex-shrink-0">
+                {title && (
+                  <h2
+                    id={titleId}
+                    className="text-lg font-semibold text-white"
+                  >
+                    {title}
+                  </h2>
+                )}
+                {showCloseButton && (
+                  <button
+                    onClick={onClose}
+                    className="min-w-[44px] min-h-[44px] flex items-center justify-center text-text-secondary hover:text-white transition-all duration-200 rounded-lg hover:bg-dark-hover haptic-feedback ml-auto"
+                    aria-label="Fermer la fenetre"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Body - scrollable if content overflows */}
+            <div
+              className={`
+                p-5
+                ${scrollable ? "overflow-y-auto overscroll-contain gpu-scroll" : "overflow-visible"}
+                flex-1 min-h-0
+              `}
+            >
+              {children}
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
   );
 }
 
@@ -125,7 +244,13 @@ export function ConfirmModal({
   variant = "primary",
 }: ConfirmModalProps) {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={title} size="sm">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={title}
+      size="sm"
+      description={message}
+    >
       <p className="text-text-secondary mb-6">{message}</p>
       <div className="flex gap-3 justify-end">
         <Button variant="ghost" onClick={onClose}>

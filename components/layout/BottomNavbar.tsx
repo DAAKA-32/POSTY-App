@@ -10,15 +10,15 @@ const navItems = [
     activeHrefs: ["/app", "/chat"],
     icon: (active: boolean) => (
       <svg
-        className={`w-6 h-6 transition-colors duration-200 ${active ? "text-primary" : "text-gray-400"}`}
-        fill="none"
+        className={`w-6 h-6 transition-all duration-200 ${active ? "text-primary scale-110" : "text-gray-400"}`}
+        fill={active ? "currentColor" : "none"}
         stroke="currentColor"
         viewBox="0 0 24 24"
       >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={2}
+          strokeWidth={active ? 0 : 2}
           d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
         />
       </svg>
@@ -30,15 +30,15 @@ const navItems = [
     activeHrefs: ["/history"],
     icon: (active: boolean) => (
       <svg
-        className={`w-6 h-6 transition-colors duration-200 ${active ? "text-primary" : "text-gray-400"}`}
-        fill="none"
+        className={`w-6 h-6 transition-all duration-200 ${active ? "text-primary scale-110" : "text-gray-400"}`}
+        fill={active ? "currentColor" : "none"}
         stroke="currentColor"
         viewBox="0 0 24 24"
       >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={2}
+          strokeWidth={active ? 0 : 2}
           d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
         />
       </svg>
@@ -50,15 +50,15 @@ const navItems = [
     activeHrefs: ["/profile"],
     icon: (active: boolean) => (
       <svg
-        className={`w-6 h-6 transition-colors duration-200 ${active ? "text-primary" : "text-gray-400"}`}
-        fill="none"
+        className={`w-6 h-6 transition-all duration-200 ${active ? "text-primary scale-110" : "text-gray-400"}`}
+        fill={active ? "currentColor" : "none"}
         stroke="currentColor"
         viewBox="0 0 24 24"
       >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={2}
+          strokeWidth={active ? 0 : 2}
           d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
         />
       </svg>
@@ -85,11 +85,14 @@ export default function BottomNavbar() {
               key={item.name}
               href={item.href}
               className={`
-                flex flex-col items-center justify-center
-                py-2 px-5 rounded-xl
+                relative flex flex-col items-center justify-center
+                min-w-[48px] min-h-[48px] px-4 rounded-xl
                 transition-all duration-200
                 active:scale-95
-                ${isActive ? "bg-primary/10" : ""}
+                ${isActive
+                  ? "bg-primary/10 before:absolute before:top-0 before:left-1/2 before:-translate-x-1/2 before:w-6 before:h-1 before:bg-primary before:rounded-full before:shadow-glow"
+                  : ""
+                }
               `}
             >
               {item.icon(isActive)}

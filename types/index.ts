@@ -153,6 +153,10 @@ export interface Post {
   responseB: string;
   selectedVersion: "A" | "B" | null;
   createdAt: Timestamp;
+  // Conversation management fields
+  title?: string; // Custom title (defaults to prompt if not set)
+  isPinned?: boolean; // Whether the conversation is pinned
+  pinnedAt?: Timestamp; // When it was pinned (for sorting)
 }
 
 export interface MockResponse {
@@ -240,4 +244,107 @@ export interface AuthContextType {
   signOut: () => Promise<void>;
   refreshUserProfile: () => Promise<void>;
   deleteUserAccount: (password: string) => Promise<void>;
+}
+
+// ============== MULTI-PLATFORM PUBLISHING TYPES ==============
+
+export type Platform = "linkedin" | "twitter" | "medium";
+
+export interface PublishResult {
+  platform: Platform;
+  success: boolean;
+  postUrl?: string;
+  error?: string;
+}
+
+export interface PlatformConnection {
+  platform: Platform;
+  isConnected: boolean;
+  profileName?: string;
+  profilePicture?: string;
+  username?: string;
+  expiresAt?: Date;
+}
+
+// ============== TWITTER TYPES ==============
+
+export interface TwitterConnectionData {
+  userId: string;
+  twitterId: string;
+  username: string;
+  accessToken: string;
+  refreshToken?: string;
+  expiresAt: Timestamp;
+  profileName: string;
+  profilePicture?: string;
+  connectedAt: Timestamp;
+  lastUsedAt?: Timestamp;
+}
+
+export interface TwitterPostData {
+  id: string;
+  userId: string;
+  twitterId: string;
+  tweetId: string;
+  content: string;
+  tweetUrl?: string;
+  publishedAt: Timestamp;
+  success: boolean;
+  error?: string;
+}
+
+// ============== MEDIUM TYPES ==============
+
+export type MediumPublishStatus = "draft" | "public" | "unlisted";
+
+export interface MediumConnectionData {
+  userId: string;
+  mediumId: string;
+  username: string;
+  integrationToken: string;
+  profileName: string;
+  profilePicture?: string;
+  profileUrl?: string;
+  connectedAt: Timestamp;
+  lastUsedAt?: Timestamp;
+}
+
+export interface MediumPostData {
+  id: string;
+  userId: string;
+  mediumId: string;
+  articleId: string;
+  title: string;
+  content: string;
+  articleUrl?: string;
+  publishStatus: MediumPublishStatus;
+  publishedAt: Timestamp;
+  success: boolean;
+  error?: string;
+}
+
+// ============== LINKEDIN TYPES (re-exported for consistency) ==============
+
+export interface LinkedInConnectionData {
+  userId: string;
+  linkedInId: string;
+  accessToken: string;
+  expiresAt: Timestamp;
+  profileName: string;
+  profilePicture?: string;
+  email?: string;
+  connectedAt: Timestamp;
+  lastUsedAt?: Timestamp;
+}
+
+export interface LinkedInPostData {
+  id: string;
+  userId: string;
+  linkedInId: string;
+  postId: string;
+  content: string;
+  postUrl?: string;
+  publishedAt: Timestamp;
+  success: boolean;
+  error?: string;
 }

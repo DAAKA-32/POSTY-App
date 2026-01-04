@@ -2,23 +2,22 @@
 
 import { motion } from "framer-motion";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
-import Loader, { LoaderDots } from "./Loader";
+import Loader from "./Loader";
 
 interface InlineLoaderProps {
   message?: string;
   size?: "sm" | "md" | "lg";
-  variant?: "spinner" | "dots";
   className?: string;
 }
 
 /**
  * Inline/Contextual loader for specific components
  * Does not block the entire UI, only the container
+ * Uses spinner instead of dots for professional look
  */
 export default function InlineLoader({
   message,
   size = "md",
-  variant = "spinner",
   className = "",
 }: InlineLoaderProps) {
   const prefersReducedMotion = useReducedMotion();
@@ -34,11 +33,7 @@ export default function InlineLoader({
       }}
       className={`flex flex-col items-center justify-center gap-3 py-8 ${className}`}
     >
-      {variant === "spinner" ? (
-        <Loader size={size} color="primary" />
-      ) : (
-        <LoaderDots size={size} color="primary" />
-      )}
+      <Loader size={size} color="primary" />
 
       {message && (
         <p className="text-text-secondary text-sm font-medium text-center">
@@ -56,7 +51,7 @@ export function CompactInlineLoader({
   message,
   size = "sm",
   className = "",
-}: Omit<InlineLoaderProps, "variant">) {
+}: InlineLoaderProps) {
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <Loader size={size} color="primary" />

@@ -33,24 +33,23 @@ export default function GoogleButton({ onSuccess, label = "Continuer avec Google
       onMouseLeave={() => setIsHovered(false)}
       className="
         relative w-full flex items-center justify-center gap-3
-        px-4 py-4
-        bg-white
-        text-gray-800 font-semibold
-        rounded-xl
+        px-4 py-3.5
+        bg-white/[0.04] border border-white/[0.08]
+        text-white font-medium
+        rounded-lg
         overflow-hidden
-        focus:outline-none focus:ring-4 focus:ring-primary/30 focus:ring-offset-2 focus:ring-offset-background
-        transition-all duration-300 ease-smooth
+        focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2 focus:ring-offset-background
+        transition-all duration-300
         disabled:opacity-50 disabled:cursor-not-allowed
-        group
-        min-h-[56px]
-        hover:shadow-lg hover:shadow-white/10
+        hover:bg-white/[0.08] hover:border-white/[0.12]
         active:scale-[0.98]
+        group
       "
     >
       {/* Shine effect on hover */}
       <div
         className={`
-          absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent
+          absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent
           transition-transform duration-500 ease-out
           ${isHovered ? "translate-x-full" : "-translate-x-full"}
         `}
@@ -58,7 +57,7 @@ export default function GoogleButton({ onSuccess, label = "Continuer avec Google
 
       {isLoading ? (
         <svg
-          className="animate-spin h-5 w-5 text-gray-600"
+          className="animate-spin h-5 w-5 text-white"
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
           viewBox="0 0 24 24"
@@ -100,7 +99,7 @@ export default function GoogleButton({ onSuccess, label = "Continuer avec Google
               />
             </svg>
           </div>
-          <span className="relative">{label}</span>
+          <span className="relative text-sm">{label}</span>
         </>
       )}
     </button>

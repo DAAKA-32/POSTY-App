@@ -1,5 +1,8 @@
 "use client";
 
+import { ReactNode } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+
 // ============== SKELETON LOADER ==============
 
 interface SkeletonProps {
@@ -43,6 +46,61 @@ export function Skeleton({
       `}
       style={style}
     />
+  );
+}
+
+// ============== SKELETON WRAPPER WITH FADE TRANSITION ==============
+
+interface SkeletonWrapperProps {
+  isLoading: boolean;
+  skeleton: ReactNode;
+  children: ReactNode;
+  className?: string;
+}
+
+/**
+ * Wrapper component that handles smooth transitions between skeleton and content
+ *
+ * Usage:
+ * ```tsx
+ * <SkeletonWrapper
+ *   isLoading={isLoading}
+ *   skeleton={<SkeletonCard />}
+ * >
+ *   <ActualContent />
+ * </SkeletonWrapper>
+ * ```
+ */
+export function SkeletonWrapper({
+  isLoading,
+  skeleton,
+  children,
+  className = "",
+}: SkeletonWrapperProps) {
+  return (
+    <div className={className}>
+      <AnimatePresence mode="wait">
+        {isLoading ? (
+          <motion.div
+            key="skeleton"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+          >
+            {skeleton}
+          </motion.div>
+        ) : (
+          <motion.div
+            key="content"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+          >
+            {children}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
 

@@ -1,25 +1,38 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 
 /**
  * Hook to manage app initialization state
- * Ensures app is fully loaded before hiding splash screen
- * Minimal display time: 800ms for smooth UX
+ * - Landing page (/) : NO splash screen, instant display
+ * - App pages : Minimal splash for smooth transition (100ms)
  */
 export function useAppInitialization() {
+  const pathname = usePathname();
+  // Start as initialized for SSR, then verify on client
   const [isInitialized, setIsInitialized] = useState(false);
   const [minLoadTimeElapsed, setMinLoadTimeElapsed] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Landing page gets instant display - no splash
+  const isLandingPage = pathname === "/" || pathname === "/login" || pathname === "/signup";
 
   useEffect(() => {
-    // Minimum splash screen display time (800ms for fast, smooth UX)
+    setIsMounted(true);
+
+    // For landing/auth pages: instant (no delay)
+    // For app pages: minimal delay (100ms) for smooth DOM transition
+    const minLoadDelay = isLandingPage ? 0 : 100;
+
     const minLoadTime = setTimeout(() => {
       setMinLoadTimeElapsed(true);
-    }, 800);
+    }, minLoadDelay);
 
     // Check if document is fully loaded
     const checkReady = () => {
-      if (document.readyState === "complete") {
+      if (typeof document !== "undefined" &&
+          (document.readyState === "complete" || document.readyState === "interactive")) {
         setIsInitialized(true);
       }
     };
@@ -28,21 +41,38 @@ export function useAppInitialization() {
     checkReady();
 
     // Listen for load events
-    window.addEventListener("load", checkReady);
-    document.addEventListener("readystatechange", checkReady);
+    if (typeof window !== "undefined") {
+      window.addEventListener("load", checkReady);
+      document.addEventListener("readystatechange", checkReady);
+    }
 
     return () => {
       clearTimeout(minLoadTime);
-      window.removeEventListener("load", checkReady);
-      document.removeEventListener("readystatechange", checkReady);
+      if (typeof window !== "undefined") {
+        window.removeEventListener("load", checkReady);
+        document.removeEventListener("readystatechange", checkReady);
+      }
     };
-  }, []);
+  }, [isLandingPage]);
 
-  // App is ready when both conditions are met
-  const isReady = isInitialized && minLoadTimeElapsed;
+  // Server-side or before mount: show content for landing pages
+  if (!isMounted) {
+    return {
+      isLoading: !isLandingPage,
+      isReady: isLandingPage,
+      isLandingPage,
+    };
+  }
+
+  // Landing page: ready immediately if DOM is interactive
+  // App pages: ready when both conditions met
+  const isReady = isLandingPage
+    ? (isInitialized || (typeof document !== "undefined" && document.readyState !== "loading"))
+    : (isInitialized && minLoadTimeElapsed);
 
   return {
     isLoading: !isReady,
     isReady,
+    isLandingPage,
   };
 }

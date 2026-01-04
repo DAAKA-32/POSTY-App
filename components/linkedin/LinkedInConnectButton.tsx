@@ -1,50 +1,44 @@
 "use client";
 
-import { useState } from "react";
 import Button from "@/components/ui/Button";
-import { getLinkedInAuthUrl, generateOAuthState } from "@/lib/linkedin";
+import { useLinkedIn } from "@/contexts/LinkedInContext";
 
 interface LinkedInConnectButtonProps {
-  isConnected?: boolean;
-  profileName?: string;
-  profilePicture?: string;
-  onDisconnect?: () => void;
   variant?: "default" | "compact";
   className?: string;
 }
 
 export default function LinkedInConnectButton({
-  isConnected = false,
-  profileName,
-  profilePicture,
-  onDisconnect,
   variant = "default",
   className = "",
 }: LinkedInConnectButtonProps) {
-  const [isLoading, setIsLoading] = useState(false);
+  const {
+    isConnected,
+    isLoading: contextLoading,
+    connection,
+    connectLinkedIn,
+    disconnectLinkedIn
+  } = useLinkedIn();
 
   const handleConnect = () => {
-    setIsLoading(true);
-
-    // Generate and store OAuth state for security
-    const state = generateOAuthState();
-    sessionStorage.setItem("linkedin_oauth_state", state);
-
-    // Redirect to LinkedIn OAuth
-    const authUrl = getLinkedInAuthUrl(state);
-    window.location.href = authUrl;
+    connectLinkedIn();
   };
 
-  if (isConnected) {
+  const handleDisconnect = async () => {
+    await disconnectLinkedIn();
+  };
+
+  if (isConnected && connection) {
     return (
       <div className={`flex items-center gap-3 ${className}`}>
         {variant === "default" && (
           <div className="flex items-center gap-3 flex-1 min-w-0">
-            {profilePicture ? (
+            {connection.profilePicture ? (
               <img
-                src={profilePicture}
-                alt={profileName || "LinkedIn profile"}
+                src={connection.profilePicture}
+                alt={connection.profileName || "LinkedIn profile"}
                 className="w-10 h-10 rounded-full object-cover border-2 border-[#0A66C2]"
+                loading="lazy"
               />
             ) : (
               <div className="w-10 h-10 rounded-full bg-[#0A66C2]/20 flex items-center justify-center">
@@ -52,10 +46,10 @@ export default function LinkedInConnectButton({
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <p className="text-white font-medium truncate">{profileName}</p>
+              <p className="text-white font-medium truncate">{connection.profileName}</p>
               <p className="text-xs text-accent flex items-center gap-1">
                 <span className="w-1.5 h-1.5 bg-accent rounded-full" />
-                Connecte
+                Connecté
               </p>
             </div>
           </div>
@@ -63,10 +57,10 @@ export default function LinkedInConnectButton({
         <Button
           variant="secondary"
           size="sm"
-          onClick={onDisconnect}
+          onClick={handleDisconnect}
           className="shrink-0"
         >
-          Deconnecter
+          Déconnecter
         </Button>
       </div>
     );
@@ -75,11 +69,11 @@ export default function LinkedInConnectButton({
   return (
     <Button
       onClick={handleConnect}
-      isLoading={isLoading}
+      isLoading={contextLoading}
       className={`bg-[#0A66C2] hover:bg-[#004182] border-none ${className}`}
     >
       <LinkedInIcon className="w-5 h-5 mr-2" />
-      {isLoading ? "Connexion..." : "Connecter LinkedIn"}
+      {contextLoading ? "Connexion..." : "Connecter LinkedIn"}
     </Button>
   );
 }

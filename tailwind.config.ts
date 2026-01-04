@@ -10,86 +10,182 @@ export default {
   theme: {
     extend: {
       colors: {
-        // THYNK Design System - Option A: Performance & Haute confiance
+        // POSTY Design System - Option A: Évolution Subtile
+        // Bleu moderne + Teal = Familier mais raffiné
         background: "#0B0E11",
         foreground: "#FFFFFF",
 
-        // Primary - Action color (CTA, links, focus)
+        // Primary - Blue moderne (Tailwind Blue-500)
+        // Plus vibrant que l'ancien, reste professionnel
         primary: {
-          DEFAULT: "#2F80ED",
-          hover: "#1E6FD9",
-          light: "#5A9DF4",
-          dark: "#1A5BBF",
+          DEFAULT: "#3B82F6",  // Blue-500 (moderne, confiance)
+          hover: "#2563EB",    // Blue-600 (darker on hover)
+          light: "#60A5FA",    // Blue-400
+          dark: "#1D4ED8",     // Blue-700
+          muted: "#3B82F6/20", // For subtle backgrounds
         },
 
-        // Accent - Secondary (success, interactive elements)
+        // Accent - Teal (légèrement désaturé, élégant)
+        // Plus subtil que le turquoise original
         accent: {
-          DEFAULT: "#00D1C1",
-          hover: "#00B8AA",
-          light: "#33DDD0",
-          dark: "#009E93",
+          DEFAULT: "#14B8A6",  // Teal-500
+          hover: "#0D9488",    // Teal-600
+          light: "#2DD4BF",    // Teal-400
+          dark: "#0F766E",     // Teal-700
         },
 
-        // Text colors
+        // Text colors - Palette slate harmonisée
         text: {
-          primary: "#FFFFFF",
-          secondary: "#A1A7B5",
-          muted: "#6B7280",
+          primary: "#F8FAFC",   // Slate-50 (blanc cassé)
+          secondary: "#94A3B8", // Slate-400
+          muted: "#64748B",     // Slate-500
+          subtle: "#475569",    // Slate-600
         },
 
-        // Warning / Alert
+        // Warning - Ambre doux (moins agressif que l'orange)
         warning: {
-          DEFAULT: "#FF8A00",
-          hover: "#E67A00",
-          light: "#FFB347",
+          DEFAULT: "#F59E0B",  // Amber-500
+          hover: "#D97706",    // Amber-600
+          light: "#FBBF24",    // Amber-400
+          dark: "#B45309",     // Amber-700
         },
 
-        // Error / Danger
+        // Error / Danger - Rouge standard
         error: {
-          DEFAULT: "#EF4444",
-          hover: "#DC2626",
-          light: "#FCA5A5",
+          DEFAULT: "#EF4444",  // Red-500
+          hover: "#DC2626",    // Red-600
+          light: "#F87171",    // Red-400
+          dark: "#B91C1C",     // Red-700
         },
 
-        // Success
+        // Success - Emerald distinct (différent de l'accent)
         success: {
-          DEFAULT: "#00D1C1",
-          hover: "#00B8AA",
+          DEFAULT: "#10B981",  // Emerald-500
+          hover: "#059669",    // Emerald-600
+          light: "#34D399",    // Emerald-400
+          dark: "#047857",     // Emerald-700
+        },
+
+        // Info - Pour notifications neutres
+        info: {
+          DEFAULT: "#0EA5E9",  // Sky-500
+          hover: "#0284C7",    // Sky-600
+          light: "#38BDF8",    // Sky-400
         },
 
         // Dark theme surfaces
         dark: {
-          bg: "#0B0E11",
-          card: "#12161B",
-          elevated: "#181D24",
-          border: "#1E2530",
-          hover: "#232A36",
-          active: "#2A3342",
+          bg: "#0B0E11",       // Fond principal
+          card: "#12161B",     // Cards et conteneurs
+          elevated: "#181D24", // Éléments élevés
+          border: "#1E2530",   // Bordures subtiles
+          hover: "#232A36",    // Hover state
+          active: "#2A3342",   // Active/pressed state
+          highlight: "#313B4D", // Highlight pour sélection
+        },
+
+        // Premium additions
+        premium: {
+          purple: "#8B5CF6",   // Violet pour badges premium
+          pink: "#EC4899",     // Rose pour notifications
+          gold: "#EAB308",     // Or pour achievements
         },
       },
 
       borderRadius: {
-        DEFAULT: "12px",
-        md: "12px",
-        lg: "16px",
-        xl: "20px",
-        "2xl": "24px",
+        // Professional, subtle rounded corners - SaaS Premium style
+        none: "0",
+        sm: "4px",
+        DEFAULT: "6px",
+        md: "8px",
+        lg: "10px",
+        xl: "12px",
+        "2xl": "14px",
+        "3xl": "16px",
+        full: "9999px",
       },
 
       fontFamily: {
-        sans: ["Inter", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
+        sans: ["var(--font-poppins)", "Poppins", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
+        mono: ["var(--font-mono)", "JetBrains Mono", "Fira Code", "monospace"],
       },
 
+      // Mobile-first typography scale (Poppins)
       fontSize: {
-        "2xs": ["0.625rem", { lineHeight: "0.875rem" }],
+        // Extra small - Legal/RGPD text
+        "2xs": ["0.6875rem", { lineHeight: "1rem", letterSpacing: "0" }], // 11px
+        // Small - Captions, meta info
+        "xs": ["0.75rem", { lineHeight: "1.125rem", letterSpacing: "0" }], // 12px
+        // Body small
+        "sm": ["0.875rem", { lineHeight: "1.375rem", letterSpacing: "-0.01em" }], // 14px
+        // Body default (conversational)
+        "base": ["0.9375rem", { lineHeight: "1.5rem", letterSpacing: "-0.01em" }], // 15px mobile
+        // Body large / CTA
+        "lg": ["1rem", { lineHeight: "1.625rem", letterSpacing: "-0.01em" }], // 16px
+        // Sub-headings H3
+        "xl": ["1.125rem", { lineHeight: "1.75rem", letterSpacing: "-0.02em" }], // 18px
+        // Headings H2
+        "2xl": ["1.25rem", { lineHeight: "1.875rem", letterSpacing: "-0.02em" }], // 20px
+        // Headings H1 mobile
+        "3xl": ["1.375rem", { lineHeight: "1.75rem", letterSpacing: "-0.02em" }], // 22px
+        // Large H1 mobile
+        "4xl": ["1.5rem", { lineHeight: "2rem", letterSpacing: "-0.02em" }], // 24px
+        // Desktop H1
+        "5xl": ["1.75rem", { lineHeight: "2.25rem", letterSpacing: "-0.03em" }], // 28px
+        // Hero desktop
+        "6xl": ["2rem", { lineHeight: "2.5rem", letterSpacing: "-0.03em" }], // 32px
+        // Display
+        "7xl": ["2.5rem", { lineHeight: "3rem", letterSpacing: "-0.03em" }], // 40px
+        "8xl": ["3rem", { lineHeight: "3.5rem", letterSpacing: "-0.03em" }], // 48px
+      },
+
+      letterSpacing: {
+        tighter: "-0.03em",
+        tight: "-0.02em",
+        snug: "-0.01em",
+        normal: "0",
+        wide: "0.01em",
+        wider: "0.02em",
+        widest: "0.05em",
+      },
+
+      lineHeight: {
+        none: "1",
+        tight: "1.1",
+        snug: "1.25",
+        normal: "1.4",
+        relaxed: "1.5",
+        loose: "1.6",
+      },
+
+      fontWeight: {
+        extralight: "200",
+        light: "300",
+        normal: "400",
+        medium: "500",
+        semibold: "600",
+        bold: "700",
+        extrabold: "800",
       },
 
       boxShadow: {
-        "glow": "0 0 20px rgba(47, 128, 237, 0.3)",
-        "glow-accent": "0 0 20px rgba(0, 209, 193, 0.3)",
+        // Glow effects - Option A: Blue primary
+        "glow": "0 0 20px rgba(59, 130, 246, 0.35)",
+        "glow-lg": "0 0 40px rgba(59, 130, 246, 0.4)",
+        "glow-accent": "0 0 20px rgba(20, 184, 166, 0.35)",
+        "glow-success": "0 0 20px rgba(16, 185, 129, 0.35)",
+        "glow-error": "0 0 20px rgba(239, 68, 68, 0.35)",
+        // Elevation shadows
         "soft": "0 2px 15px rgba(0, 0, 0, 0.3)",
         "elevated": "0 8px 30px rgba(0, 0, 0, 0.4)",
+        "card": "0 4px 20px rgba(0, 0, 0, 0.25)",
+        "dropdown": "0 10px 40px rgba(0, 0, 0, 0.5)",
+        // Inner shadows
         "inner-soft": "inset 0 1px 2px rgba(0, 0, 0, 0.2)",
+        "inner-glow": "inset 0 0 20px rgba(59, 130, 246, 0.1)",
+        // Button shadows
+        "btn-primary": "0 4px 14px rgba(59, 130, 246, 0.4)",
+        "btn-success": "0 4px 14px rgba(16, 185, 129, 0.4)",
       },
 
       animation: {
@@ -134,8 +230,20 @@ export default {
         // Spin
         "spin-slow": "spin 3s linear infinite",
 
-        // Glow effect
+        // Glow effects
         "glow-pulse": "glowPulse 2s ease-in-out infinite",
+        "glow-pulse-accent": "glowPulseAccent 2s ease-in-out infinite",
+        "glow-pulse-success": "glowPulseSuccess 2s ease-in-out infinite",
+
+        // Auth page animations
+        "auth-form-enter": "authFormEnter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+        "gradient-shift": "gradientShift 4s ease-in-out infinite",
+        "float": "float 3s ease-in-out infinite",
+        "logo-float": "logoFloat 4s ease-in-out infinite",
+        "scroll-bounce": "scrollBounce 2s ease-in-out infinite",
+        "icon-pop": "iconPop 0.3s ease-out forwards",
+        "shimmer-cta": "shimmerCta 2s ease-in-out infinite",
+        "particle-float": "particleFloat 6s ease-in-out infinite",
       },
 
       keyframes: {
@@ -235,17 +343,111 @@ export default {
           "100%": { opacity: "0", transform: "translateY(-10px)" },
         },
 
-        // Glow keyframes
+        // Glow keyframes - Option A: Blue primary
         glowPulse: {
-          "0%, 100%": { boxShadow: "0 0 20px rgba(47, 128, 237, 0.3)" },
-          "50%": { boxShadow: "0 0 40px rgba(47, 128, 237, 0.6)" },
+          "0%, 100%": { boxShadow: "0 0 20px rgba(59, 130, 246, 0.35)" },
+          "50%": { boxShadow: "0 0 40px rgba(59, 130, 246, 0.6)" },
+        },
+        // Additional glow animations
+        glowPulseAccent: {
+          "0%, 100%": { boxShadow: "0 0 20px rgba(20, 184, 166, 0.35)" },
+          "50%": { boxShadow: "0 0 40px rgba(20, 184, 166, 0.6)" },
+        },
+        glowPulseSuccess: {
+          "0%, 100%": { boxShadow: "0 0 20px rgba(16, 185, 129, 0.35)" },
+          "50%": { boxShadow: "0 0 40px rgba(16, 185, 129, 0.6)" },
+        },
+
+        // Auth page keyframes
+        authFormEnter: {
+          "0%": { opacity: "0", transform: "scale(0.95) translateY(10px)" },
+          "100%": { opacity: "1", transform: "scale(1) translateY(0)" },
+        },
+        gradientShift: {
+          "0%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
+          "100%": { backgroundPosition: "0% 50%" },
+        },
+        float: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-10px)" },
+        },
+        logoFloat: {
+          "0%, 100%": { transform: "translateY(0) rotate(0deg)" },
+          "25%": { transform: "translateY(-5px) rotate(1deg)" },
+          "75%": { transform: "translateY(-5px) rotate(-1deg)" },
+        },
+        scrollBounce: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(8px)" },
+        },
+        iconPop: {
+          "0%": { transform: "scale(0.5) rotate(-180deg)", opacity: "0" },
+          "50%": { transform: "scale(1.2) rotate(0deg)" },
+          "100%": { transform: "scale(1) rotate(0deg)", opacity: "1" },
+        },
+        shimmerCta: {
+          "0%": { backgroundPosition: "-200% 0" },
+          "100%": { backgroundPosition: "200% 0" },
+        },
+        particleFloat: {
+          "0%, 100%": { transform: "translate(0, 0) scale(1)", opacity: "0.3" },
+          "25%": { transform: "translate(10px, -10px) scale(1.05)", opacity: "0.5" },
+          "50%": { transform: "translate(0, -20px) scale(1.1)", opacity: "0.4" },
+          "75%": { transform: "translate(-10px, -10px) scale(1.05)", opacity: "0.5" },
         },
       },
 
       transitionTimingFunction: {
         "smooth": "cubic-bezier(0.4, 0, 0.2, 1)",
       },
+
+      // GPU Acceleration utilities
+      willChange: {
+        "transform": "transform",
+        "opacity": "opacity",
+        "transform-opacity": "transform, opacity",
+        "scroll": "scroll-position",
+        "contents": "contents",
+      },
     },
   },
-  plugins: [],
+  plugins: [
+    // GPU Acceleration plugin
+    function({ addUtilities }: { addUtilities: (utilities: Record<string, Record<string, string>>) => void }) {
+      addUtilities({
+        // Force GPU acceleration
+        ".gpu-accelerated": {
+          "transform": "translateZ(0)",
+          "backface-visibility": "hidden",
+          "-webkit-backface-visibility": "hidden",
+        },
+        // GPU layer for animations
+        ".gpu-layer": {
+          "will-change": "transform, opacity",
+          "transform": "translate3d(0, 0, 0)",
+        },
+        // Smooth scrolling with GPU
+        ".gpu-scroll": {
+          "-webkit-overflow-scrolling": "touch",
+          "transform": "translateZ(0)",
+        },
+        // Prevent layout thrashing
+        ".contain-layout": {
+          "contain": "layout",
+        },
+        ".contain-paint": {
+          "contain": "paint",
+        },
+        ".contain-strict": {
+          "contain": "strict",
+        },
+        // Optimized for animation
+        ".animate-gpu": {
+          "will-change": "transform",
+          "transform": "translateZ(0)",
+        },
+      });
+    },
+  ],
 } satisfies Config;

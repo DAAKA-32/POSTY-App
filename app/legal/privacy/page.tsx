@@ -1,4 +1,4 @@
-import LegalLayout from "@/components/layout/LegalLayout";
+import LegalLayoutLight from "@/components/layout/LegalLayoutLight";
 
 export const metadata = {
   title: "Politique de confidentialite - POSTY",
@@ -7,7 +7,7 @@ export const metadata = {
 
 export default function PrivacyPolicyPage() {
   return (
-    <LegalLayout title="Politique de confidentialite">
+    <LegalLayoutLight title="Politique de confidentialite">
       <p className="text-gray-300 text-lg mb-8">
         Derniere mise a jour : {new Date().toLocaleDateString("fr-FR")}
       </p>
@@ -216,6 +216,6 @@ export default function PrivacyPolicyPage() {
           <p>Email RGPD / DPO : privacy@posty.app</p>
         </div>
       </section>
-    </LegalLayout>
+    </LegalLayoutLight>
   );
 }

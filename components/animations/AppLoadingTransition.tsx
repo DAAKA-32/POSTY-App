@@ -1,39 +1,72 @@
 "use client";
 
-import { useState, useEffect, ReactNode } from "react";
+import { useState, useEffect, ReactNode, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { AnimatedLogo } from "@/components/ui/Logo";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 interface AppLoadingTransitionProps {
   isLoading: boolean;
   children: ReactNode;
   loadingMessage?: string;
+  /** Minimum time to show loader (ms) for smooth UX */
+  minLoadTime?: number;
 }
 
 /**
- * Manages smooth transition from loading screen to app interface
- * Provides premium fade-out animation with logo dissolution
+ * Premium loading transition with logo and progress bar
+ * Provides smooth fade-out animation with elegant progress indicator
  */
 export function AppLoadingTransition({
   isLoading,
   children,
   loadingMessage = "Chargement...",
+  minLoadTime = 800,
 }: AppLoadingTransitionProps) {
   const [showLoader, setShowLoader] = useState(isLoading);
+  const [progress, setProgress] = useState(0);
+  const [loadStartTime] = useState(Date.now());
   const prefersReducedMotion = useReducedMotion();
+
+  // Simulate progress based on loading state
+  useEffect(() => {
+    if (isLoading) {
+      setProgress(0);
+
+      // Quick initial progress (0-30%)
+      const initialTimeout = setTimeout(() => setProgress(30), 100);
+
+      // Steady progress (30-70%)
+      const midTimeout = setTimeout(() => setProgress(70), 400);
+
+      // Slow progress (70-85%)
+      const slowTimeout = setTimeout(() => setProgress(85), 700);
+
+      return () => {
+        clearTimeout(initialTimeout);
+        clearTimeout(midTimeout);
+        clearTimeout(slowTimeout);
+      };
+    } else {
+      // Complete progress when loaded
+      setProgress(100);
+    }
+  }, [isLoading]);
 
   useEffect(() => {
     if (!isLoading) {
-      // Add small delay before hiding loader for smooth transition
+      // Ensure minimum load time for smooth UX
+      const elapsed = Date.now() - loadStartTime;
+      const remainingTime = Math.max(0, minLoadTime - elapsed);
+
       const timeout = setTimeout(() => {
         setShowLoader(false);
-      }, prefersReducedMotion ? 0 : 200);
+      }, prefersReducedMotion ? 0 : remainingTime + 300);
+
       return () => clearTimeout(timeout);
     } else {
       setShowLoader(true);
     }
-  }, [isLoading, prefersReducedMotion]);
+  }, [isLoading, prefersReducedMotion, loadStartTime, minLoadTime]);
 
   return (
     <>
@@ -44,74 +77,118 @@ export function AppLoadingTransition({
             initial={{ opacity: 1 }}
             exit={{
               opacity: 0,
-              scale: prefersReducedMotion ? 1 : 0.98,
               transition: {
-                duration: prefersReducedMotion ? 0 : 0.42,
+                duration: prefersReducedMotion ? 0 : 0.5,
                 ease: [0.25, 0.1, 0.25, 1],
               },
             }}
-            className="fixed inset-0 bg-dark-bg/98 backdrop-blur-md z-[100] flex items-center justify-center"
+            className="fixed inset-0 bg-dark-bg z-[100] flex items-center justify-center"
           >
-            <div className="flex flex-col items-center gap-6">
-              {/* Animated Logo with glow */}
+            <div className="flex flex-col items-center gap-8 px-6 w-full max-w-sm">
+              {/* Logo without background - clean and professional */}
               <motion.div
-                initial={{ scale: 1, opacity: 1 }}
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
                 exit={{
-                  scale: prefersReducedMotion ? 1 : 0.9,
+                  scale: prefersReducedMotion ? 1 : 1.05,
                   opacity: 0,
                   transition: {
-                    duration: prefersReducedMotion ? 0 : 0.38,
+                    duration: prefersReducedMotion ? 0 : 0.4,
                     ease: [0.22, 1, 0.36, 1],
                   },
                 }}
+                transition={{
+                  duration: prefersReducedMotion ? 0 : 0.5,
+                  ease: [0.22, 1, 0.36, 1],
+                }}
                 className="relative"
               >
-                {/* Glow effect */}
-                <div className="absolute -inset-6 bg-gradient-to-br from-primary/40 to-accent/40 rounded-full blur-3xl animate-pulse" />
+                {/* Subtle glow behind logo */}
+                <motion.div
+                  className="absolute -inset-8 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full blur-3xl"
+                  animate={{
+                    opacity: [0.3, 0.6, 0.3],
+                    scale: [0.95, 1.05, 0.95],
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                />
 
-                {/* Logo */}
-                <div className="relative">
-                  <AnimatedLogo size="xl" />
+                {/* Logo image - no colored background */}
+                <div className="relative w-20 h-20 md:w-24 md:h-24 flex items-center justify-center">
+                  <img
+                    src="/logo.png"
+                    alt="POSTY"
+                    className="w-full h-full object-contain drop-shadow-2xl"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                      const sibling = e.currentTarget
+                        .nextElementSibling as HTMLElement | null;
+                      if (sibling) sibling.style.display = "flex";
+                    }}
+                  />
+                  {/* Fallback */}
+                  <div className="hidden w-full h-full bg-gradient-to-br from-primary to-accent rounded-2xl items-center justify-center">
+                    <span className="text-white font-bold text-4xl">P</span>
+                  </div>
                 </div>
               </motion.div>
 
-              {/* Loading text with dots animation */}
-              {loadingMessage && (
-                <motion.div
-                  initial={{ opacity: 1 }}
-                  exit={{
-                    opacity: 0,
-                    y: prefersReducedMotion ? 0 : -10,
-                    transition: {
-                      duration: prefersReducedMotion ? 0 : 0.3,
-                      ease: "easeOut",
-                    },
-                  }}
-                  className="flex flex-col items-center gap-3"
+              {/* Brand name */}
+              <motion.h1
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -5 }}
+                transition={{
+                  duration: prefersReducedMotion ? 0 : 0.4,
+                  delay: 0.1,
+                }}
+                className="text-2xl md:text-3xl font-bold text-white tracking-tight"
+              >
+                POSTY
+              </motion.h1>
+
+              {/* Progress bar container */}
+              <motion.div
+                initial={{ opacity: 0, width: "60%" }}
+                animate={{ opacity: 1, width: "100%" }}
+                exit={{ opacity: 0 }}
+                transition={{
+                  duration: prefersReducedMotion ? 0 : 0.4,
+                  delay: 0.2,
+                }}
+                className="w-full max-w-xs"
+              >
+                {/* Progress bar background */}
+                <div className="h-1 bg-dark-border rounded-full overflow-hidden">
+                  {/* Progress bar fill */}
+                  <motion.div
+                    className="h-full bg-gradient-to-r from-primary via-accent to-primary rounded-full"
+                    initial={{ width: "0%" }}
+                    animate={{ width: `${progress}%` }}
+                    transition={{
+                      duration: 0.4,
+                      ease: [0.25, 0.1, 0.25, 1],
+                    }}
+                    style={{
+                      backgroundSize: "200% 100%",
+                    }}
+                  />
+                </div>
+
+                {/* Loading message */}
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-text-muted text-sm text-center mt-4 font-medium"
                 >
-                  <p className="text-white font-medium text-lg tracking-wide">
-                    {loadingMessage}
-                  </p>
-                  <div className="flex gap-1.5">
-                    {[0, 1, 2].map((index) => (
-                      <motion.div
-                        key={index}
-                        className="w-2 h-2 bg-primary rounded-full"
-                        animate={{
-                          scale: [1, 1.3, 1],
-                          opacity: [0.5, 1, 0.5],
-                        }}
-                        transition={{
-                          duration: 1.2,
-                          repeat: Infinity,
-                          delay: index * 0.2,
-                          ease: "easeInOut",
-                        }}
-                      />
-                    ))}
-                  </div>
-                </motion.div>
-              )}
+                  {loadingMessage}
+                </motion.p>
+              </motion.div>
             </div>
           </motion.div>
         )}
@@ -124,14 +201,11 @@ export function AppLoadingTransition({
             key="content"
             initial={{
               opacity: 0,
-              scale: prefersReducedMotion ? 1 : 0.98,
             }}
             animate={{
               opacity: 1,
-              scale: 1,
               transition: {
-                duration: prefersReducedMotion ? 0 : 0.45,
-                delay: prefersReducedMotion ? 0 : 0.1,
+                duration: prefersReducedMotion ? 0 : 0.4,
                 ease: [0.25, 0.1, 0.25, 1],
               },
             }}
@@ -142,5 +216,42 @@ export function AppLoadingTransition({
         )}
       </AnimatePresence>
     </>
+  );
+}
+
+/**
+ * Premium progress bar component for reuse
+ */
+export function PremiumProgressBar({
+  progress = 0,
+  className = "",
+  showPercentage = false,
+}: {
+  progress: number;
+  className?: string;
+  showPercentage?: boolean;
+}) {
+  return (
+    <div className={`w-full ${className}`}>
+      <div className="h-1.5 bg-dark-border rounded-full overflow-hidden">
+        <motion.div
+          className="h-full bg-gradient-to-r from-primary via-accent to-primary rounded-full relative"
+          initial={{ width: "0%" }}
+          animate={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
+          transition={{
+            duration: 0.3,
+            ease: [0.25, 0.1, 0.25, 1],
+          }}
+        >
+          {/* Shimmer effect */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
+        </motion.div>
+      </div>
+      {showPercentage && (
+        <p className="text-text-muted text-xs text-right mt-1">
+          {Math.round(progress)}%
+        </p>
+      )}
+    </div>
   );
 }

@@ -109,6 +109,7 @@ export default function LegalLayout({ children, title }: LegalLayoutProps) {
                   src="/logo.png"
                   alt="POSTY Logo"
                   className="w-full h-full object-cover"
+                  loading="lazy"
                   onError={(e) => {
                     e.currentTarget.style.display = 'none';
                     const sibling = e.currentTarget.nextElementSibling as HTMLElement | null; if (sibling) sibling.style.display = 'flex';

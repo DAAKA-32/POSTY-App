@@ -3,6 +3,7 @@
 import { ReactNode } from "react";
 import { useAppInitialization } from "@/hooks/useAppInitialization";
 import SplashScreen from "@/components/ui/SplashScreen";
+import MobileGestureProvider, { SwipeIndicator } from "./MobileGestureProvider";
 
 interface AppProviderProps {
   children: ReactNode;
@@ -10,15 +11,21 @@ interface AppProviderProps {
 
 /**
  * Global app provider that wraps the entire app
- * Handles splash screen display during initialization
+ * - Landing/Auth pages: NO splash screen (instant display)
+ * - App pages: Minimal splash for smooth transition
+ * Provides mobile gesture support (swipe back navigation)
  */
 export default function AppProvider({ children }: AppProviderProps) {
-  const { isLoading } = useAppInitialization();
+  const { isLoading, isLandingPage } = useAppInitialization();
 
   return (
     <>
-      <SplashScreen isLoading={isLoading} />
-      {children}
+      {/* No splash screen for landing/auth pages - instant display */}
+      {!isLandingPage && <SplashScreen isLoading={isLoading} />}
+      <MobileGestureProvider>
+        <SwipeIndicator />
+        {children}
+      </MobileGestureProvider>
     </>
   );
 }

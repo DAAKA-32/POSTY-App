@@ -62,13 +62,15 @@ export default function MobileChatInput({
               flex-1
               bg-transparent
               text-white text-base
-              placeholder-gray-500
+              placeholder-text-muted
               resize-none
               focus:outline-none
               disabled:opacity-50
-              min-h-[24px]
+              min-h-[40px]
               max-h-[120px]
-              py-2 px-2
+              py-2.5 px-2
+              leading-5
+              align-middle
             "
           />
           <button

@@ -14,6 +14,8 @@ import {
   serverTimestamp,
   Timestamp,
   arrayUnion,
+  writeBatch,
+  DocumentReference,
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { UserProfile, Post, Session, ChatMessage } from "@/types";
@@ -206,6 +208,92 @@ export async function getPost(postId: string): Promise<Post | null> {
 export async function deletePost(postId: string): Promise<void> {
   const postRef = doc(db, "posts", postId);
   await deleteDoc(postRef);
+}
+
+/**
+ * Pin or unpin a post
+ */
+export async function pinPost(postId: string, isPinned: boolean): Promise<void> {
+  const postRef = doc(db, "posts", postId);
+  if (isPinned) {
+    await updateDoc(postRef, {
+      isPinned: true,
+      pinnedAt: serverTimestamp(),
+    });
+  } else {
+    await updateDoc(postRef, {
+      isPinned: false,
+      pinnedAt: null,
+    });
+  }
+}
+
+/**
+ * Rename a post (set custom title)
+ */
+export async function renamePost(postId: string, title: string): Promise<void> {
+  const postRef = doc(db, "posts", postId);
+  await updateDoc(postRef, { title });
+}
+
+/**
+ * Get user posts with pinned posts first
+ */
+export async function getUserPostsWithPinned(
+  userId: string,
+  limitCount: number = 50
+): Promise<Post[]> {
+  const postsRef = collection(db, "posts");
+  const q = query(
+    postsRef,
+    where("userId", "==", userId),
+    orderBy("createdAt", "desc"),
+    limit(limitCount)
+  );
+
+  const querySnapshot = await getDocs(q);
+  const posts = querySnapshot.docs.map((docSnap) => {
+    const data = docSnap.data();
+    return {
+      id: docSnap.id,
+      userId: data.userId,
+      prompt: data.prompt,
+      responseA: data.contentA || data.responseA,
+      responseB: data.contentB || data.responseB,
+      selectedVersion: data.chosenVersion || data.selectedVersion,
+      createdAt: data.createdAt as Timestamp,
+      title: data.title || undefined,
+      isPinned: data.isPinned || false,
+      pinnedAt: data.pinnedAt || undefined,
+    };
+  }) as Post[];
+
+  // Sort: pinned posts first (by pinnedAt desc), then by createdAt desc
+  return posts.sort((a, b) => {
+    // Pinned posts come first
+    if (a.isPinned && !b.isPinned) return -1;
+    if (!a.isPinned && b.isPinned) return 1;
+
+    // Both pinned: sort by pinnedAt
+    if (a.isPinned && b.isPinned) {
+      const aPinnedAt = a.pinnedAt && typeof (a.pinnedAt as { toDate?: () => Date }).toDate === "function"
+        ? (a.pinnedAt as { toDate: () => Date }).toDate()
+        : new Date(0);
+      const bPinnedAt = b.pinnedAt && typeof (b.pinnedAt as { toDate?: () => Date }).toDate === "function"
+        ? (b.pinnedAt as { toDate: () => Date }).toDate()
+        : new Date(0);
+      return bPinnedAt.getTime() - aPinnedAt.getTime();
+    }
+
+    // Both not pinned: sort by createdAt (with null safety)
+    const aCreatedAt = a.createdAt && typeof (a.createdAt as { toDate?: () => Date }).toDate === "function"
+      ? (a.createdAt as { toDate: () => Date }).toDate()
+      : a.createdAt ? new Date(a.createdAt as unknown as string) : new Date(0);
+    const bCreatedAt = b.createdAt && typeof (b.createdAt as { toDate?: () => Date }).toDate === "function"
+      ? (b.createdAt as { toDate: () => Date }).toDate()
+      : b.createdAt ? new Date(b.createdAt as unknown as string) : new Date(0);
+    return bCreatedAt.getTime() - aCreatedAt.getTime();
+  });
 }
 
 // ============== SESSION OPERATIONS ==============
@@ -772,4 +860,315 @@ export async function getUserPayments(
     id: docSnap.id,
     ...docSnap.data(),
   })) as PaymentRecord[];
+}
+
+// ============== BATCH OPERATIONS ==============
+
+export interface BatchUpdate {
+  ref: DocumentReference;
+  data: Record<string, unknown>;
+}
+
+/**
+ * Perform multiple updates in a single batch transaction
+ * More efficient than multiple individual updates
+ */
+export async function batchUpdateDocs(updates: BatchUpdate[]): Promise<void> {
+  if (updates.length === 0) return;
+
+  const batch = writeBatch(db);
+
+  updates.forEach(({ ref, data }) => {
+    batch.update(ref, data);
+  });
+
+  await batch.commit();
+}
+
+/**
+ * Batch delete multiple documents
+ */
+export async function batchDeleteDocs(refs: DocumentReference[]): Promise<void> {
+  if (refs.length === 0) return;
+
+  const batch = writeBatch(db);
+
+  refs.forEach((ref) => {
+    batch.delete(ref);
+  });
+
+  await batch.commit();
+}
+
+/**
+ * Batch pin/unpin multiple posts
+ */
+export async function batchPinPosts(
+  postIds: string[],
+  isPinned: boolean
+): Promise<void> {
+  const updates: BatchUpdate[] = postIds.map((postId) => ({
+    ref: doc(db, "posts", postId),
+    data: isPinned
+      ? { isPinned: true, pinnedAt: serverTimestamp() }
+      : { isPinned: false, pinnedAt: null },
+  }));
+
+  await batchUpdateDocs(updates);
+}
+
+/**
+ * Batch delete multiple posts
+ */
+export async function batchDeletePosts(postIds: string[]): Promise<void> {
+  const refs = postIds.map((postId) => doc(db, "posts", postId));
+  await batchDeleteDocs(refs);
+}
+
+/**
+ * Search posts by prompt content
+ */
+export async function searchPosts(
+  userId: string,
+  searchQuery: string,
+  limitCount: number = 20
+): Promise<Post[]> {
+  // Firestore doesn't support full-text search natively
+  // For now, we fetch posts and filter client-side
+  // For production, consider Algolia or Elasticsearch
+  const posts = await getUserPostsWithPinned(userId, 100);
+
+  const normalizedQuery = searchQuery.toLowerCase().trim();
+
+  return posts
+    .filter((post) => {
+      const prompt = post.prompt.toLowerCase();
+      const title = (post.title || "").toLowerCase();
+      return prompt.includes(normalizedQuery) || title.includes(normalizedQuery);
+    })
+    .slice(0, limitCount);
+}
+
+// ============== TWITTER CONNECTION MANAGEMENT ==============
+// Collection: twitterConnections
+// Document ID: userId
+
+import { TwitterConnectionData, TwitterPostData } from "@/types";
+
+export async function saveTwitterConnection(
+  userId: string,
+  data: {
+    twitterId: string;
+    username: string;
+    accessToken: string;
+    refreshToken?: string;
+    expiresAt: Date;
+    profileName: string;
+    profilePicture?: string;
+  }
+): Promise<void> {
+  const connectionRef = doc(db, "twitterConnections", userId);
+  await setDoc(connectionRef, {
+    userId,
+    twitterId: data.twitterId,
+    username: data.username,
+    accessToken: data.accessToken,
+    refreshToken: data.refreshToken || null,
+    expiresAt: Timestamp.fromDate(data.expiresAt),
+    profileName: data.profileName,
+    profilePicture: data.profilePicture || null,
+    connectedAt: serverTimestamp(),
+    lastUsedAt: null,
+  });
+}
+
+export async function getTwitterConnection(
+  userId: string
+): Promise<TwitterConnectionData | null> {
+  const connectionRef = doc(db, "twitterConnections", userId);
+  const connectionSnap = await getDoc(connectionRef);
+
+  if (connectionSnap.exists()) {
+    return connectionSnap.data() as TwitterConnectionData;
+  }
+  return null;
+}
+
+export async function updateTwitterTokens(
+  userId: string,
+  accessToken: string,
+  refreshToken: string | undefined,
+  expiresAt: Date
+): Promise<void> {
+  const connectionRef = doc(db, "twitterConnections", userId);
+  await updateDoc(connectionRef, {
+    accessToken,
+    refreshToken: refreshToken || null,
+    expiresAt: Timestamp.fromDate(expiresAt),
+  });
+}
+
+export async function updateTwitterLastUsed(userId: string): Promise<void> {
+  const connectionRef = doc(db, "twitterConnections", userId);
+  await updateDoc(connectionRef, {
+    lastUsedAt: serverTimestamp(),
+  });
+}
+
+export async function deleteTwitterConnection(userId: string): Promise<void> {
+  const connectionRef = doc(db, "twitterConnections", userId);
+  await deleteDoc(connectionRef);
+}
+
+// ============== TWITTER POSTS HISTORY ==============
+// Collection: twitterPosts
+
+export async function saveTwitterPost(
+  userId: string,
+  data: {
+    twitterId: string;
+    tweetId: string;
+    content: string;
+    tweetUrl?: string;
+    success: boolean;
+    error?: string;
+  }
+): Promise<string> {
+  const postsRef = collection(db, "twitterPosts");
+  const docRef = await addDoc(postsRef, {
+    userId,
+    twitterId: data.twitterId,
+    tweetId: data.tweetId,
+    content: data.content,
+    tweetUrl: data.tweetUrl || null,
+    success: data.success,
+    error: data.error || null,
+    publishedAt: serverTimestamp(),
+  });
+  return docRef.id;
+}
+
+export async function getTwitterPosts(
+  userId: string,
+  limitCount: number = 20
+): Promise<TwitterPostData[]> {
+  const postsRef = collection(db, "twitterPosts");
+  const q = query(
+    postsRef,
+    where("userId", "==", userId),
+    orderBy("publishedAt", "desc"),
+    limit(limitCount)
+  );
+
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map((docSnap) => ({
+    id: docSnap.id,
+    ...docSnap.data(),
+  })) as TwitterPostData[];
+}
+
+// ============== MEDIUM CONNECTION MANAGEMENT ==============
+// Collection: mediumConnections
+// Document ID: userId
+
+import { MediumConnectionData, MediumPostData, MediumPublishStatus } from "@/types";
+
+export async function saveMediumConnection(
+  userId: string,
+  data: {
+    mediumId: string;
+    username: string;
+    integrationToken: string;
+    profileName: string;
+    profilePicture?: string;
+    profileUrl?: string;
+  }
+): Promise<void> {
+  const connectionRef = doc(db, "mediumConnections", userId);
+  await setDoc(connectionRef, {
+    userId,
+    mediumId: data.mediumId,
+    username: data.username,
+    integrationToken: data.integrationToken,
+    profileName: data.profileName,
+    profilePicture: data.profilePicture || null,
+    profileUrl: data.profileUrl || null,
+    connectedAt: serverTimestamp(),
+    lastUsedAt: null,
+  });
+}
+
+export async function getMediumConnection(
+  userId: string
+): Promise<MediumConnectionData | null> {
+  const connectionRef = doc(db, "mediumConnections", userId);
+  const connectionSnap = await getDoc(connectionRef);
+
+  if (connectionSnap.exists()) {
+    return connectionSnap.data() as MediumConnectionData;
+  }
+  return null;
+}
+
+export async function updateMediumLastUsed(userId: string): Promise<void> {
+  const connectionRef = doc(db, "mediumConnections", userId);
+  await updateDoc(connectionRef, {
+    lastUsedAt: serverTimestamp(),
+  });
+}
+
+export async function deleteMediumConnection(userId: string): Promise<void> {
+  const connectionRef = doc(db, "mediumConnections", userId);
+  await deleteDoc(connectionRef);
+}
+
+// ============== MEDIUM POSTS HISTORY ==============
+// Collection: mediumPosts
+
+export async function saveMediumPost(
+  userId: string,
+  data: {
+    mediumId: string;
+    articleId: string;
+    title: string;
+    content: string;
+    articleUrl?: string;
+    publishStatus: MediumPublishStatus;
+    success: boolean;
+    error?: string;
+  }
+): Promise<string> {
+  const postsRef = collection(db, "mediumPosts");
+  const docRef = await addDoc(postsRef, {
+    userId,
+    mediumId: data.mediumId,
+    articleId: data.articleId,
+    title: data.title,
+    content: data.content,
+    articleUrl: data.articleUrl || null,
+    publishStatus: data.publishStatus,
+    success: data.success,
+    error: data.error || null,
+    publishedAt: serverTimestamp(),
+  });
+  return docRef.id;
+}
+
+export async function getMediumPosts(
+  userId: string,
+  limitCount: number = 20
+): Promise<MediumPostData[]> {
+  const postsRef = collection(db, "mediumPosts");
+  const q = query(
+    postsRef,
+    where("userId", "==", userId),
+    orderBy("publishedAt", "desc"),
+    limit(limitCount)
+  );
+
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map((docSnap) => ({
+    id: docSnap.id,
+    ...docSnap.data(),
+  })) as MediumPostData[];
 }

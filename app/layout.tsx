@@ -1,9 +1,23 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import { Poppins } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { LinkedInProvider } from "@/contexts/LinkedInContext";
+import { QuotaProvider } from "@/contexts/QuotaContext";
 import AppProvider from "@/components/providers/AppProvider";
+import GlobalCommandPalette from "@/components/providers/GlobalCommandPalette";
+import KeyboardNavigationProvider from "@/components/providers/KeyboardNavigationProvider";
+import SkipLinks from "@/components/accessibility/SkipLinks";
+import DevTools from "@/components/dev/DevTools";
 import "./globals.css";
+
+const poppins = Poppins({
+  variable: "--font-poppins",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  display: "swap",
+  preload: true,
+});
 
 export const metadata: Metadata = {
   title: "POSTY - Generateur de Posts LinkedIn",
@@ -12,6 +26,23 @@ export const metadata: Metadata = {
     icon: "/logo.png",
     apple: "/logo.png",
   },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "POSTY",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+};
+
+// Disable zoom for native mobile experience
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -20,13 +51,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className="dark">
-      <body className="antialiased">
+    <html lang="fr" className={`dark ${poppins.variable}`}>
+      <body className={`antialiased ${poppins.className}`}>
+        <SkipLinks />
+        <KeyboardNavigationProvider>
         <AppProvider>
           <AuthProvider>
-            <LinkedInProvider>
-              {children}
-            </LinkedInProvider>
+            <QuotaProvider>
+              <LinkedInProvider>
+                {children}
+                <GlobalCommandPalette />
+              </LinkedInProvider>
+            </QuotaProvider>
             <Toaster
               position="bottom-center"
               toastOptions={{
@@ -38,7 +74,9 @@ export default function RootLayout({
               }}
             />
           </AuthProvider>
+          <DevTools />
         </AppProvider>
+        </KeyboardNavigationProvider>
       </body>
     </html>
   );

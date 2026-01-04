@@ -165,7 +165,7 @@ export default function DeleteAccountModal({
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-text-muted hover:text-white transition-colors rounded-lg hover:bg-dark-hover"
+                className="absolute right-1 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] flex items-center justify-center text-text-muted hover:text-white transition-colors rounded-lg hover:bg-dark-hover"
                 tabIndex={-1}
               >
                 {showPassword ? (

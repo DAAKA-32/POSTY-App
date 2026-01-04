@@ -1,78 +1,133 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLinkedIn } from "@/contexts/LinkedInContext";
+import { useQuota } from "@/contexts/QuotaContext";
 import { useChat } from "@/hooks/useChat";
-import { getUserPosts } from "@/lib/firestore";
+import { useSmartScroll } from "@/hooks/useSmartScroll";
+import { getUserPostsWithPinned } from "@/lib/firestore";
 import { Post } from "@/types";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import MainLayout from "@/components/layout/MainLayout";
-import ResponseCard from "@/components/chat/ResponseCard";
+import ChatMessage, { TypingIndicator } from "@/components/chat/ChatMessage";
+import AIResponsePair from "@/components/chat/AIResponsePair";
+import NewResponseIndicator from "@/components/chat/NewResponseIndicator";
 import PublishToLinkedInModal from "@/components/linkedin/PublishToLinkedInModal";
-import Modal from "@/components/ui/Modal";
-import Button from "@/components/ui/Button";
-import { AnimatedStaggerContainer, AnimatedStaggerItem, AnimatedScaleFade } from "@/components/animations/AnimatedPageWrapper";
+import UsageBanner from "@/components/ui/UsageBanner";
+import { AnimatedScaleFade } from "@/components/animations/AnimatedPageWrapper";
 import toast from "react-hot-toast";
+
+// Dynamic placeholder examples that rotate
+const PLACEHOLDER_EXAMPLES = [
+  "Un post sur le leadership...",
+  "Une astuce productivite...",
+  "Mon parcours professionnel...",
+  "Une lecon apprise recemment...",
+  "Un conseil pour les juniors...",
+  "Une reflexion sur le teletravail...",
+  "Un moment cle de ma carriere...",
+];
+
+// Character limits
+const CHAR_LIMIT_WARNING = 2500;
+const CHAR_LIMIT_MAX = 3000;
 
 function AppContent() {
   const { user, userProfile } = useAuth();
   const { connection: linkedInConnection, publishToLinkedIn } = useLinkedIn();
+  const { canSendMessage, isPremium } = useQuota();
   const [posts, setPosts] = useState<Post[]>([]);
-  const [showAnotherModal, setShowAnotherModal] = useState(false);
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [publishContent, setPublishContent] = useState("");
   const [inputValue, setInputValue] = useState("");
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  const [isFocused, setIsFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Character count helpers
+  const charCount = inputValue.length;
+  const isNearLimit = charCount >= CHAR_LIMIT_WARNING;
+  const isOverLimit = charCount > CHAR_LIMIT_MAX;
 
   const {
-    responses,
+    messages,
     isLoading,
+    isStreaming,
     error,
     generate,
     reset,
-    lastPrompt,
   } = useChat({
     userId: user?.uid,
     isGuest: false,
   });
 
-  // Fetch user posts
+  // Smart scroll: only auto-scroll when user is near bottom
+  const {
+    containerRef: scrollContainerRef,
+    bottomRef: messagesEndRef,
+    hasNewContent,
+    newContentCount,
+    scrollToBottom,
+  } = useSmartScroll({
+    dependencies: messages,
+    isStreaming,
+    isLoading,
+    threshold: 200,
+  });
+
+  // Fetch user posts (with pinned posts first)
   useEffect(() => {
     const fetchPosts = async () => {
       if (user) {
-        const userPosts = await getUserPosts(user.uid, 10);
+        const userPosts = await getUserPostsWithPinned(user.uid, 20);
         setPosts(userPosts);
       }
     };
     fetchPosts();
-  }, [user, responses]);
+  }, [user, messages]);
 
-  // Scroll to bottom when responses change
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [responses]);
-
-  // Auto-resize textarea
-  useEffect(() => {
+  // Auto-resize textarea with smooth transition
+  const resizeTextarea = useCallback(() => {
     if (textareaRef.current) {
+      // Reset height to auto to get the correct scrollHeight
       textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
+      // Calculate new height with min/max constraints
+      const minHeight = 56;
+      const maxHeight = 200;
+      const scrollHeight = textareaRef.current.scrollHeight;
+      const newHeight = Math.max(minHeight, Math.min(scrollHeight, maxHeight));
+      textareaRef.current.style.height = `${newHeight}px`;
     }
-  }, [inputValue]);
+  }, []);
+
+  useEffect(() => {
+    resizeTextarea();
+  }, [inputValue, resizeTextarea]);
+
+  // Rotating placeholder effect
+  useEffect(() => {
+    if (isFocused || inputValue.length > 0) return; // Don't rotate when focused or has content
+
+    const interval = setInterval(() => {
+      setPlaceholderIndex((prev) => (prev + 1) % PLACEHOLDER_EXAMPLES.length);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [isFocused, inputValue.length]);
 
   const handleGenerate = async (prompt: string) => {
     await generate(prompt);
-    setTimeout(() => setShowAnotherModal(true), 500);
   };
 
   const handleSubmit = async () => {
-    if (!inputValue.trim() || isLoading) return;
+    if (!inputValue.trim() || isLoading || isStreaming || isOverLimit) return;
     const prompt = inputValue.trim();
     setInputValue("");
+    // Reset textarea height smoothly
     if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = "56px";
     }
     await handleGenerate(prompt);
   };
@@ -84,7 +139,7 @@ function AppContent() {
     }
   };
 
-  const handleNewPost = () => {
+  const handleNewConversation = () => {
     reset();
   };
 
@@ -102,18 +157,21 @@ function AppContent() {
     setShowPublishModal(true);
   };
 
-  const handleConfirmPublish = async () => {
-    return await publishToLinkedIn(publishContent);
+  const handleConfirmPublish = async (editedContent: string) => {
+    return await publishToLinkedIn(editedContent);
   };
+
+  const userInitial = userProfile?.displayName?.charAt(0) || user?.email?.charAt(0) || "U";
+  const userName = userProfile?.displayName || "Vous";
 
   return (
     <MainLayout posts={posts} showMobileHeader={true}>
       <div className="flex flex-col h-full bg-background">
         {/* Messages area */}
-        <div className="flex-1 overflow-y-auto">
+        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto gpu-scroll">
           <div className="max-w-3xl mx-auto px-4 py-6 lg:py-12">
-            {/* Welcome message when no responses */}
-            {responses.length === 0 && (
+            {/* Welcome message when no messages */}
+            {messages.length === 0 && !isLoading && (
               <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
                 {/* Animated logo */}
                 <div className="relative mb-6">
@@ -159,76 +217,120 @@ function AppContent() {
               </div>
             )}
 
-            {/* Results */}
-            {responses.length > 0 && (
-              <div className="mb-8 animate-fade-in-up">
-                {/* User prompt */}
-                <div className="mb-6 p-4 bg-dark-card border border-dark-border rounded-xl">
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center shrink-0">
-                      <span className="text-primary font-semibold text-sm">
-                        {userProfile?.displayName?.charAt(0) || user?.email?.charAt(0) || "U"}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="text-xs text-text-muted mb-1">Votre demande</p>
-                      <p className="text-white text-sm lg:text-base">{lastPrompt}</p>
-                    </div>
+            {/* Conversation messages */}
+            {messages.length > 0 && (
+              <div className="space-y-6 mb-8">
+                <AnimatePresence mode="popLayout">
+                  {(() => {
+                    // Group messages: user messages standalone, AI responses paired
+                    const elements: React.ReactNode[] = [];
+                    let i = 0;
+                    let pairIndex = 0;
+
+                    while (i < messages.length) {
+                      const message = messages[i];
+
+                      if (message.type === "user") {
+                        // Render user message with ChatMessage
+                        elements.push(
+                          <ChatMessage
+                            key={message.id}
+                            type={message.type}
+                            content={message.content}
+                            timestamp={message.timestamp}
+                            userName={userName}
+                            userInitial={userInitial}
+                            showActions={false}
+                            index={i}
+                          />
+                        );
+                        i++;
+                      } else if (message.type === "ai") {
+                        // Check if next message is also AI (paired response)
+                        const nextMessage = messages[i + 1];
+
+                        if (nextMessage && nextMessage.type === "ai") {
+                          // Find storytelling and business in the pair
+                          const storytelling = message.variant === "storytelling" ? message : nextMessage;
+                          const business = message.variant === "business" ? message : nextMessage;
+
+                          // Render paired responses with AIResponsePair
+                          elements.push(
+                            <AIResponsePair
+                              key={`pair-${message.id}`}
+                              storytellingResponse={{
+                                id: storytelling.id,
+                                content: storytelling.content,
+                                variant: "storytelling",
+                                timestamp: storytelling.timestamp,
+                                isStreaming: storytelling.isStreaming,
+                              }}
+                              businessResponse={{
+                                id: business.id,
+                                content: business.content,
+                                variant: "business",
+                                timestamp: business.timestamp,
+                                isStreaming: business.isStreaming,
+                              }}
+                              onCopy={handleCopy}
+                              onPublishToLinkedIn={handlePublishToLinkedIn}
+                              index={pairIndex}
+                            />
+                          );
+                          pairIndex++;
+                          i += 2; // Skip both messages
+                        } else {
+                          // Single AI message (shouldn't happen normally, but handle it)
+                          elements.push(
+                            <ChatMessage
+                              key={message.id}
+                              type={message.type}
+                              content={message.content}
+                              timestamp={message.timestamp}
+                              variant={message.variant}
+                              showActions={true}
+                              onCopy={() => handleCopy(message.content)}
+                              onPublishToLinkedIn={() => handlePublishToLinkedIn(message.content)}
+                              index={i}
+                              isStreaming={message.isStreaming}
+                            />
+                          );
+                          i++;
+                        }
+                      } else {
+                        i++;
+                      }
+                    }
+
+                    return elements;
+                  })()}
+                </AnimatePresence>
+
+                {/* Typing indicator when loading (before streaming starts) */}
+                <AnimatePresence>
+                  {isLoading && !isStreaming && <TypingIndicator />}
+                </AnimatePresence>
+
+                {/* New conversation button */}
+                {!isLoading && !isStreaming && (
+                  <div className="flex justify-center pt-4">
+                    <button
+                      onClick={handleNewConversation}
+                      className="
+                        flex items-center gap-2 px-6 py-3
+                        bg-dark-elevated hover:bg-dark-hover
+                        border border-dark-border hover:border-primary/30
+                        text-white font-medium rounded-xl
+                        transition-all duration-200 haptic-feedback
+                      "
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      Nouvelle conversation
+                    </button>
                   </div>
-                </div>
-
-                {/* Response cards */}
-                <AnimatedStaggerContainer staggerDelay={0.12} className="grid gap-4 lg:grid-cols-2">
-                  {responses.map((response, index) => (
-                    <AnimatedStaggerItem key={index}>
-                      <ResponseCard
-                        title={response.title}
-                        content={response.content}
-                        type={response.type}
-                        onCopy={() => handleCopy(response.content)}
-                        showLinkedInButton={true}
-                        onPublishToLinkedIn={() => handlePublishToLinkedIn(response.content)}
-                      />
-                    </AnimatedStaggerItem>
-                  ))}
-                </AnimatedStaggerContainer>
-
-                {/* Generate another button */}
-                <div className="mt-8 flex justify-center">
-                  <button
-                    onClick={handleNewPost}
-                    className="
-                      flex items-center gap-2 px-6 py-3
-                      bg-dark-elevated hover:bg-dark-hover
-                      border border-dark-border hover:border-primary/30
-                      text-white font-medium rounded-xl
-                      transition-all duration-200 haptic-feedback
-                    "
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    Nouveau post
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Loading state */}
-            {isLoading && responses.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-12 animate-fade-in">
-                <div className="relative mb-6">
-                  <div className="w-16 h-16 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center">
-                    <span className="text-white font-bold text-2xl">T</span>
-                  </div>
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent rounded-xl animate-pulse-soft" />
-                </div>
-                <p className="text-text-secondary text-sm">Generation en cours...</p>
-                <div className="flex gap-1 mt-3">
-                  <span className="w-2 h-2 bg-primary rounded-full typing-dot" />
-                  <span className="w-2 h-2 bg-primary rounded-full typing-dot" />
-                  <span className="w-2 h-2 bg-primary rounded-full typing-dot" />
-                </div>
+                )}
               </div>
             )}
 
@@ -248,40 +350,103 @@ function AppContent() {
           </div>
         </div>
 
+        {/* New response indicator - shown when user scrolled up and new content is available */}
+        <NewResponseIndicator
+          isVisible={hasNewContent && !isLoading && !isStreaming}
+          onClick={scrollToBottom}
+          newCount={newContentCount}
+        />
+
         {/* Input area - fixed at bottom like ChatGPT */}
         <div className="flex-shrink-0 bg-gradient-to-t from-background via-background to-transparent pt-4 pb-safe">
           <div className="max-w-3xl mx-auto px-4 pb-4">
-            <div className="relative bg-dark-card border border-dark-border rounded-2xl shadow-elevated transition-all duration-200 focus-within:border-primary/50 focus-within:shadow-glow">
+            {/* Usage Banner - Above input for free users */}
+            <UsageBanner className="mb-3" />
+
+            <div className={`
+              relative bg-dark-card border rounded-2xl shadow-elevated transition-all duration-200
+              ${isOverLimit
+                ? "border-error/50 focus-within:border-error"
+                : canSendMessage
+                  ? "border-dark-border focus-within:border-primary/50 focus-within:shadow-glow"
+                  : "border-error/20 opacity-75"
+              }
+            `}>
               <textarea
+                id="chat-input"
                 ref={textareaRef}
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Decrivez votre post LinkedIn..."
-                disabled={isLoading}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
+                placeholder={
+                  !canSendMessage
+                    ? "Limite de messages atteinte pour aujourd'hui"
+                    : PLACEHOLDER_EXAMPLES[placeholderIndex]
+                }
+                disabled={isLoading || isStreaming || !canSendMessage}
                 rows={1}
+                aria-label="Decrivez votre post LinkedIn"
+                aria-describedby="char-counter"
                 className="
                   w-full bg-transparent text-white text-base
                   placeholder-text-muted resize-none focus:outline-none
-                  disabled:opacity-50 min-h-[56px] max-h-[120px]
-                  py-4 px-4 pr-14
+                  disabled:opacity-50 min-h-[56px] max-h-[200px]
+                  py-[18px] px-4 pr-14
+                  leading-5 transition-[height] duration-150 ease-out
                 "
+                style={{ overflow: inputValue.length > 100 ? "auto" : "hidden" }}
               />
+
+              {/* Character counter - screen reader version always available */}
+              <span id="char-counter" className="sr-only">
+                {charCount} caracteres sur {CHAR_LIMIT_MAX} maximum
+                {isOverLimit && ". Limite depassee."}
+                {isNearLimit && !isOverLimit && ". Proche de la limite."}
+              </span>
+
+              {/* Character counter - visual version */}
+              <AnimatePresence>
+                {charCount > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 5 }}
+                    aria-hidden="true"
+                    className={`
+                      absolute left-4 bottom-3 text-xs font-medium
+                      transition-colors duration-200
+                      ${isOverLimit
+                        ? "text-error"
+                        : isNearLimit
+                          ? "text-warning"
+                          : "text-text-muted"
+                      }
+                    `}
+                  >
+                    {charCount.toLocaleString()}/{CHAR_LIMIT_MAX.toLocaleString()}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Submit button */}
               <button
                 onClick={handleSubmit}
-                disabled={!inputValue.trim() || isLoading}
+                disabled={!inputValue.trim() || isLoading || isStreaming || !canSendMessage || isOverLimit}
                 className={`
                   absolute right-3 bottom-3
                   w-10 h-10 rounded-xl flex items-center justify-center
                   transition-all duration-200
-                  ${inputValue.trim() && !isLoading
+                  ${inputValue.trim() && !isLoading && !isStreaming && canSendMessage && !isOverLimit
                     ? "bg-gradient-to-r from-primary to-primary-hover text-white shadow-glow hover:shadow-lg"
                     : "bg-dark-border text-text-muted"
                   }
                   disabled:opacity-50 active:scale-95 haptic-feedback
                 `}
+                title={isOverLimit ? "Message trop long" : "Envoyer (Entree)"}
               >
-                {isLoading ? (
+                {isLoading || isStreaming ? (
                   <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path
@@ -297,44 +462,21 @@ function AppContent() {
                 )}
               </button>
             </div>
-            <p className="text-center text-2xs text-text-muted mt-3">
-              POSTY peut faire des erreurs. Verifiez les informations importantes.
-            </p>
+
+            {/* Helper text with keyboard shortcut hint */}
+            <div className="flex items-center justify-between mt-3 px-1">
+              <p className="text-2xs text-text-muted">
+                POSTY peut faire des erreurs. Verifiez les informations importantes.
+              </p>
+              <p className="text-2xs text-text-muted hidden sm:block">
+                <kbd className="px-1.5 py-0.5 bg-dark-elevated rounded text-text-secondary">Entree</kbd> envoyer
+                <span className="mx-1.5 text-dark-border">|</span>
+                <kbd className="px-1.5 py-0.5 bg-dark-elevated rounded text-text-secondary">Shift+Entree</kbd> nouvelle ligne
+              </p>
+            </div>
           </div>
         </div>
       </div>
-
-      {/* Want another modal */}
-      <Modal
-        isOpen={showAnotherModal}
-        onClose={() => setShowAnotherModal(false)}
-        title="Voulez-vous un autre post ?"
-      >
-        <div className="text-center">
-          <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-primary/20 to-accent/20 rounded-xl flex items-center justify-center">
-            <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <p className="text-text-secondary mb-6 text-sm">
-            Souhaitez-vous generer une autre version de ce post ?
-          </p>
-          <div className="flex gap-3">
-            <Button variant="secondary" fullWidth onClick={() => setShowAnotherModal(false)}>
-              Non, merci
-            </Button>
-            <Button
-              fullWidth
-              onClick={() => {
-                setShowAnotherModal(false);
-                handleNewPost();
-              }}
-            >
-              Oui, generer
-            </Button>
-          </div>
-        </div>
-      </Modal>
 
       {/* Publish to LinkedIn modal */}
       <PublishToLinkedInModal

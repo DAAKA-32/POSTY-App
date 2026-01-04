@@ -54,16 +54,22 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
               w-full px-4 pt-5 pb-2
               bg-dark-card
               border-2 ${error ? "border-error" : isFocused ? "border-primary" : "border-dark-border"}
-              rounded-xl
+              rounded-lg
               text-white text-base
               placeholder-transparent
               focus:outline-none
               transition-all duration-200 ease-smooth
               disabled:opacity-50 disabled:cursor-not-allowed
               min-h-[56px]
+              caret-primary
+              autofill:bg-dark-card autofill:text-white
               ${isPassword && showPasswordToggle !== false ? "pr-12" : ""}
               ${className}
             `}
+            style={{
+              colorScheme: 'dark',
+              WebkitTextFillColor: value ? '#FFFFFF' : undefined,
+            }}
             {...props}
           />
 
@@ -98,7 +104,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           {/* Focus ring animation */}
           <div
             className={`
-              absolute inset-0 rounded-xl pointer-events-none
+              absolute inset-0 rounded-lg pointer-events-none
               transition-all duration-300
               ${isFocused ? "ring-4 ring-primary/20" : ""}
             `}
