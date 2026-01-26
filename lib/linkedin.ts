@@ -88,12 +88,14 @@ export interface LinkedInPostRecord {
  *
  * @param userId - ID de l'utilisateur POSTY
  * @param content - Contenu du post à publier
+ * @param visibility - Visibilité du post (PUBLIC ou CONNECTIONS)
  * @param postId - ID du post POSTY (optionnel)
  * @returns Résultat de la publication
  */
 export async function postToLinkedIn(
   userId: string,
   content: string,
+  visibility: "PUBLIC" | "CONNECTIONS" = "PUBLIC",
   postId?: string
 ): Promise<LinkedInPostResult> {
   try {
@@ -105,6 +107,7 @@ export async function postToLinkedIn(
       body: JSON.stringify({
         userId,
         content,
+        visibility,
         postId,
       }),
     });

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -37,13 +37,13 @@ function CheckoutSuccessContent() {
           ...defaults,
           particleCount,
           origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
-          colors: ["#6366F1", "#8B5CF6", "#10B981", "#F59E0B"],
+          colors: ["#F8A35D", "#F85751", "#FAB9AD", "#EC254D"],
         });
         confetti({
           ...defaults,
           particleCount,
           origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
-          colors: ["#6366F1", "#8B5CF6", "#10B981", "#F59E0B"],
+          colors: ["#F8A35D", "#F85751", "#FAB9AD", "#EC254D"],
         });
       }, 250);
     };
@@ -69,8 +69,8 @@ function CheckoutSuccessContent() {
     }
   }, [sessionId, refreshUserProfile]);
 
-  const planName = userProfile?.subscription?.plan === "max" ? "Max+" :
-                   userProfile?.subscription?.plan === "pro" ? "Pro" : "Free";
+  const planName = userProfile?.subscription?.plan === "max" ? "Max" :
+                   userProfile?.subscription?.plan === "pro" ? "Pro" : "Gratuit";
 
   return (
     <div className="max-w-xl mx-auto px-4 py-12 lg:py-20">
@@ -122,8 +122,8 @@ function CheckoutSuccessContent() {
           transition={{ delay: 0.4 }}
           className="text-lg text-text-muted mb-8"
         >
-          Votre abonnement a ete active avec succes.
-          Vous avez maintenant acces a toutes les fonctionnalites premium.
+          Votre abonnement a été activé avec succès.
+          Vous avez maintenant accès à toutes les fonctionnalités premium.
         </motion.p>
 
         {/* Benefits */}
@@ -144,13 +144,13 @@ function CheckoutSuccessContent() {
               <svg className="w-4 h-4 text-accent flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
-              Messages IA illimites
+              Messages IA illimités
             </li>
             <li className="flex items-center gap-3 text-sm text-text-secondary">
               <svg className="w-4 h-4 text-accent flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
-              Historique illimite
+              Historique illimité
             </li>
             <li className="flex items-center gap-3 text-sm text-text-secondary">
               <svg className="w-4 h-4 text-accent flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -179,7 +179,7 @@ function CheckoutSuccessContent() {
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
-              Commencer a creer
+              Commencer à créer
             </Button>
           </Link>
           <Link href="/profile">
@@ -196,7 +196,7 @@ function CheckoutSuccessContent() {
           transition={{ delay: 0.8 }}
           className="mt-8 text-sm text-text-muted"
         >
-          Un email de confirmation a ete envoye a votre adresse.
+          Un email de confirmation a été envoyé à votre adresse.
           Vous pouvez gerer votre abonnement depuis votre profil.
         </motion.p>
       </motion.div>
@@ -207,7 +207,7 @@ function CheckoutSuccessContent() {
 function LoadingFallback() {
   return (
     <div className="max-w-xl mx-auto px-4 py-12 lg:py-20 flex items-center justify-center">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="w-10 h-10 md:w-12 md:h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
     </div>
   );
 }

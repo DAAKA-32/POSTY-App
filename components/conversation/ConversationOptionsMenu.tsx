@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Post } from "@/types";
 
@@ -13,6 +14,16 @@ interface ConversationOptionsMenuProps {
   isVisible?: boolean;
 }
 
+interface MenuPosition {
+  top: number;
+  left: number;
+  transformOrigin: string;
+  placement: "bottom" | "top";
+}
+
+// Minimum delay (ms) before backdrop can close menu - prevents race condition
+const OPEN_PROTECTION_DELAY = 100;
+
 export default function ConversationOptionsMenu({
   post,
   onPin,
@@ -21,37 +32,43 @@ export default function ConversationOptionsMenu({
   isVisible = true,
 }: ConversationOptionsMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [menuPosition, setMenuPosition] = useState<"bottom" | "top">("bottom");
+  const [menuPosition, setMenuPosition] = useState<MenuPosition>({
+    top: 0,
+    left: 0,
+    transformOrigin: "top right",
+    placement: "bottom",
+  });
   const [focusedIndex, setFocusedIndex] = useState(-1);
+  const [isMounted, setIsMounted] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+
+  // Protection against immediate close after open (race condition fix)
+  const openTimestampRef = useRef<number>(0);
+  const isProtectedRef = useRef(false);
+
+  // Check if we're in browser for portal
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Define menu items with useMemo to avoid recreation on each render
   const menuItems = useMemo(() => [
     {
       id: "pin",
-      label: post.isPinned ? "Désépingler" : "Épingler",
+      label: post.isPinned ? "Desepingler" : "Epingler",
       icon: post.isPinned ? (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M6 18L18 6M6 6l12 12"
-          />
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <path d="M16 4a1 1 0 0 1 1 1v3.586l1.707 1.707a1 1 0 0 1 .293.707v2a1 1 0 0 1-1 1h-4v6a1 1 0 0 1-2 0v-6H8a1 1 0 0 1-1-1v-2a1 1 0 0 1 .293-.707L9 8.586V5a1 1 0 0 1 1-1h6z"/>
+          <path strokeLinecap="round" d="M4 4l16 16"/>
         </svg>
       ) : (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-          />
+        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M16 4a1 1 0 0 1 1 1v3.586l1.707 1.707a1 1 0 0 1 .293.707v2a1 1 0 0 1-1 1h-4v6a1 1 0 0 1-2 0v-6H8a1 1 0 0 1-1-1v-2a1 1 0 0 1 .293-.707L9 8.586V5a1 1 0 0 1 1-1h6z"/>
         </svg>
       ),
       action: () => onPin(post.id, !post.isPinned),
-      color: "text-text-secondary hover:text-white",
+      variant: "default" as const,
     },
     {
       id: "rename",
@@ -67,7 +84,7 @@ export default function ConversationOptionsMenu({
         </svg>
       ),
       action: () => onRename(post.id),
-      color: "text-text-secondary hover:text-white",
+      variant: "default" as const,
     },
     {
       id: "delete",
@@ -83,34 +100,57 @@ export default function ConversationOptionsMenu({
         </svg>
       ),
       action: () => onDelete(post.id),
-      color: "text-red-400 hover:text-red-300",
+      variant: "danger" as const,
     },
   ], [post.id, post.isPinned, onPin, onRename, onDelete]);
 
   const handleAction = useCallback((action: () => void) => {
     action();
+    isProtectedRef.current = false;
+    setIsOpen(false);
+  }, []);
+
+  // Safe close function that respects the protection delay
+  const safeClose = useCallback(() => {
+    const now = Date.now();
+    const timeSinceOpen = now - openTimestampRef.current;
+
+    // Don't close if we're still in the protection window
+    if (isProtectedRef.current && timeSinceOpen < OPEN_PROTECTION_DELAY) {
+      return;
+    }
+
+    isProtectedRef.current = false;
     setIsOpen(false);
   }, []);
 
   // Close menu when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       if (
         menuRef.current &&
         !menuRef.current.contains(event.target as Node) &&
         buttonRef.current &&
         !buttonRef.current.contains(event.target as Node)
       ) {
-        setIsOpen(false);
+        safeClose();
       }
     };
 
     if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-      return () =>
+      // Delay adding listener to avoid capturing the opening click
+      const timer = setTimeout(() => {
+        document.addEventListener("mousedown", handleClickOutside);
+        document.addEventListener("touchstart", handleClickOutside as EventListener);
+      }, 10);
+
+      return () => {
+        clearTimeout(timer);
         document.removeEventListener("mousedown", handleClickOutside);
+        document.removeEventListener("touchstart", handleClickOutside as EventListener);
+      };
     }
-  }, [isOpen]);
+  }, [isOpen, safeClose]);
 
   // Close on escape key + keyboard navigation
   useEffect(() => {
@@ -146,32 +186,175 @@ export default function ConversationOptionsMenu({
     }
   }, [isOpen]);
 
-  // Calculate menu position (above or below button)
+  // Calculate menu position dynamically
   const calculatePosition = useCallback(() => {
     if (!buttonRef.current) return;
 
     const buttonRect = buttonRef.current.getBoundingClientRect();
     const viewportHeight = window.innerHeight;
-    const menuHeight = 160; // Estimated menu height
+    const viewportWidth = window.innerWidth;
+    const menuWidth = 180;
+    const menuHeight = 160; // Approximate height for 3 items
+    const padding = 12;
 
-    // If there's not enough space below, show above
-    if (buttonRect.bottom + menuHeight > viewportHeight - 20) {
-      setMenuPosition("top");
+    let top: number;
+    let left: number;
+    let transformOrigin: string;
+    let placement: "bottom" | "top";
+
+    // Calculate horizontal position
+    // Default: align right edge of menu with right edge of button
+    left = buttonRect.right - menuWidth;
+
+    // If menu would go off-screen left, align left edges instead
+    if (left < padding) {
+      left = buttonRect.left;
+      transformOrigin = "top left";
     } else {
-      setMenuPosition("bottom");
+      transformOrigin = "top right";
     }
+
+    // If menu would go off-screen right, clamp it
+    if (left + menuWidth > viewportWidth - padding) {
+      left = viewportWidth - menuWidth - padding;
+    }
+
+    // Calculate vertical position
+    const spaceBelow = viewportHeight - buttonRect.bottom;
+    const spaceAbove = buttonRect.top;
+
+    if (spaceBelow >= menuHeight + padding || spaceBelow >= spaceAbove) {
+      // Show below
+      top = buttonRect.bottom + 4;
+      placement = "bottom";
+    } else {
+      // Show above
+      top = buttonRect.top - menuHeight - 4;
+      placement = "top";
+      transformOrigin = transformOrigin.replace("top", "bottom");
+    }
+
+    // Ensure menu stays within viewport vertically
+    if (top < padding) {
+      top = padding;
+    } else if (top + menuHeight > viewportHeight - padding) {
+      top = viewportHeight - menuHeight - padding;
+    }
+
+    setMenuPosition({ top, left, transformOrigin, placement });
   }, []);
+
+  // Recalculate position on scroll or resize while open
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleUpdate = () => calculatePosition();
+
+    window.addEventListener("scroll", handleUpdate, true);
+    window.addEventListener("resize", handleUpdate);
+
+    return () => {
+      window.removeEventListener("scroll", handleUpdate, true);
+      window.removeEventListener("resize", handleUpdate);
+    };
+  }, [isOpen, calculatePosition]);
 
   const handleToggle = useCallback(() => {
     if (!isOpen) {
+      // Opening: set protection and timestamp
+      openTimestampRef.current = Date.now();
+      isProtectedRef.current = true;
       calculatePosition();
+      setIsOpen(true);
+    } else {
+      // Closing via trigger button: bypass protection
+      isProtectedRef.current = false;
+      setIsOpen(false);
     }
-    setIsOpen(!isOpen);
   }, [isOpen, calculatePosition]);
 
+  // Render menu in portal
+  const renderMenu = () => {
+    if (!isMounted) return null;
+
+    return createPortal(
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            {/* Invisible backdrop for mobile tap-to-close */}
+            <div
+              className="fixed inset-0 z-[9998]"
+              onClick={safeClose}
+              onTouchEnd={safeClose}
+              aria-hidden="true"
+            />
+
+            {/* Menu */}
+            <motion.div
+              ref={menuRef}
+              role="menu"
+              initial={{
+                opacity: 0,
+                scale: 0.95,
+                y: menuPosition.placement === "bottom" ? -8 : 8
+              }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{
+                opacity: 0,
+                scale: 0.95,
+                y: menuPosition.placement === "bottom" ? -8 : 8
+              }}
+              transition={{ duration: 0.15, ease: [0.22, 1, 0.36, 1] }}
+              style={{
+                position: "fixed",
+                top: menuPosition.top,
+                left: menuPosition.left,
+                transformOrigin: menuPosition.transformOrigin,
+                zIndex: 9999,
+              }}
+              className="
+                min-w-[180px] py-2
+                bg-dark-card border border-dark-border
+                rounded-xl shadow-2xl shadow-black/40
+                backdrop-blur-xl
+              "
+              onClick={(e) => e.stopPropagation()}
+            >
+              {menuItems.map((item, index) => (
+                <button
+                  key={item.id}
+                  role="menuitem"
+                  onClick={() => handleAction(item.action)}
+                  onMouseEnter={() => setFocusedIndex(index)}
+                  className={`
+                    w-full flex items-center gap-3 px-4 py-3
+                    text-sm font-medium transition-colors duration-150
+                    min-h-[44px]
+                    ${item.variant === "danger"
+                      ? "text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                      : "text-text-secondary hover:text-text-primary hover:bg-dark-hover"
+                    }
+                    ${focusedIndex === index ? (item.variant === "danger" ? "bg-red-500/10" : "bg-dark-hover") : ""}
+                    ${item.id === "delete" ? "border-t border-dark-border mt-1" : ""}
+                  `}
+                >
+                  <span className="w-5 h-5 flex items-center justify-center shrink-0">
+                    {item.icon}
+                  </span>
+                  <span>{item.label}</span>
+                </button>
+              ))}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>,
+      document.body
+    );
+  };
+
   return (
-    <div className="relative">
-      {/* Three dots button - horizontal style like ChatGPT */}
+    <>
+      {/* Three dots button */}
       <button
         ref={buttonRef}
         onClick={(e) => {
@@ -181,21 +364,20 @@ export default function ConversationOptionsMenu({
         }}
         className={`
           flex items-center justify-center
-          w-8 h-8 md:w-7 md:h-7 rounded-lg
+          w-9 h-9 md:w-8 md:h-8 rounded-lg
           transition-all duration-150 ease-out
-          text-text-secondary hover:text-white hover:bg-dark-hover
+          text-text-secondary hover:text-text-primary hover:bg-dark-hover
           active:scale-95 active:bg-dark-hover
           touch-manipulation
-          ${isOpen ? "bg-dark-hover text-white" : ""}
-          opacity-100
+          ${isOpen ? "bg-dark-hover text-text-primary" : ""}
         `}
         aria-label="Options de la conversation"
         aria-expanded={isOpen}
         aria-haspopup="menu"
       >
-        {/* Professional horizontal ellipsis icon - ChatGPT style */}
+        {/* Horizontal ellipsis icon */}
         <svg
-          className="w-4 h-4"
+          className="w-5 h-5"
           viewBox="0 0 24 24"
           fill="currentColor"
           aria-hidden="true"
@@ -206,47 +388,8 @@ export default function ConversationOptionsMenu({
         </svg>
       </button>
 
-      {/* Dropdown menu */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            ref={menuRef}
-            role="menu"
-            initial={{ opacity: 0, scale: 0.95, y: menuPosition === "bottom" ? -5 : 5 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: menuPosition === "bottom" ? -5 : 5 }}
-            transition={{ duration: 0.15, ease: [0.22, 1, 0.36, 1] }}
-            className={`
-              absolute z-[80] right-0
-              min-w-[160px] py-1.5
-              bg-dark-card border border-dark-border
-              rounded-xl shadow-xl shadow-black/30
-              backdrop-blur-xl
-              ${menuPosition === "bottom" ? "mt-1 top-full" : "mb-1 bottom-full"}
-            `}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {menuItems.map((item, index) => (
-              <button
-                key={item.id}
-                role="menuitem"
-                onClick={() => handleAction(item.action)}
-                onMouseEnter={() => setFocusedIndex(index)}
-                className={`
-                  w-full flex items-center gap-3 px-4 py-2.5
-                  text-sm font-medium transition-colors duration-150
-                  ${item.color}
-                  ${focusedIndex === index ? "bg-dark-hover" : "hover:bg-dark-hover"}
-                  ${index === menuItems.length - 1 ? "border-t border-dark-border mt-1 pt-2.5" : ""}
-                `}
-              >
-                {item.icon}
-                <span>{item.label}</span>
-              </button>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+      {/* Portal-rendered menu */}
+      {renderMenu()}
+    </>
   );
 }

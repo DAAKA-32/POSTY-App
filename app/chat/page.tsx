@@ -1,15 +1,18 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useChat } from "@/hooks/useChat";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import ChatBubble from "@/components/chat/ChatBubble";
 import AIResponsePair from "@/components/chat/AIResponsePair";
-import toast from "react-hot-toast";
+import toast from "@/components/ui/Toast";
+import { useBrowserMode, setBrowserModeCSSVars } from "@/hooks/useBrowserMode";
+import UniversalChatInput from "@/components/chat/UniversalChatInput";
 
 const GUEST_LIMIT = 2;
 
@@ -22,6 +25,7 @@ interface Message {
 
 export default function ChatPage() {
   const { user, loading: authLoading } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -41,6 +45,14 @@ export default function ChatPage() {
   } = useChat({
     isGuest: !user,
   });
+
+  // Detect browser mode vs PWA for input positioning
+  const browserMode = useBrowserMode();
+
+  // Set CSS variables for browser mode adjustments
+  useEffect(() => {
+    setBrowserModeCSSVars(browserMode);
+  }, [browserMode]);
 
   // Redirect authenticated users to /app
   useEffect(() => {
@@ -127,9 +139,9 @@ export default function ChatPage() {
   const handleCopy = async (content: string) => {
     try {
       await navigator.clipboard.writeText(content);
-      toast.success("Copie !");
+      toast.success(t.chat.copied);
     } catch {
-      toast.error("Erreur lors de la copie");
+      toast.error(t.chat.copyError);
     }
   };
 
@@ -157,45 +169,41 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="h-screen bg-background flex flex-col overflow-hidden">
+    <div className="h-screen bg-background flex flex-col overflow-hidden app-layout">
       {/* Header */}
-      <header className="flex-shrink-0 bg-dark-card/95 backdrop-blur-xl border-b border-dark-border z-40">
+      <header className="flex-shrink-0 bg-white/95 dark:bg-dark-card/95 backdrop-blur-xl border-b border-gray-200 dark:border-dark-border z-40 pwa-fixed-header">
         <div className="max-w-2xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-9 h-9 bg-gradient-to-br from-primary to-accent rounded-xl overflow-hidden flex items-center justify-center shadow-glow transition-transform group-hover:scale-105">
+            <div className="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center shadow-glow transition-transform group-hover:scale-105">
               <img
-                src="/logo.png"
-                alt="POSTY Logo"
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                  const sibling = e.currentTarget.nextElementSibling as HTMLElement | null;
-                  if (sibling) sibling.style.display = 'flex';
-                }}
+                src="/logo.jpg"
+                alt="Posty Logo"
+                className="w-full h-full object-contain"
               />
-              <span className="text-white font-bold text-lg hidden">P</span>
             </div>
-            <span className="font-semibold text-white text-lg tracking-tight">POSTY</span>
+            <span className="font-semibold text-gray-900 dark:text-white text-lg tracking-tight">POSTY</span>
           </Link>
           <div className="flex items-center gap-4">
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-dark-elevated rounded-full border border-dark-border">
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-dark-elevated rounded-full border border-gray-200 dark:border-dark-border">
               <div className={`w-2 h-2 rounded-full ${canGenerate ? "bg-accent" : "bg-warning"}`} />
               <span className="text-xs text-text-secondary">
-                {GUEST_LIMIT - generationCount} essai{GUEST_LIMIT - generationCount !== 1 ? "s" : ""} restant{GUEST_LIMIT - generationCount !== 1 ? "s" : ""}
+                {GUEST_LIMIT - generationCount} {GUEST_LIMIT - generationCount !== 1 ? t.guest.trialsRemaining : t.guest.trialRemaining}
               </span>
             </div>
             <Link href="/login">
               <Button variant="primary" size="sm">
-                Connexion
+                {t.common.login}
               </Button>
             </Link>
           </div>
         </div>
       </header>
 
-      {/* Messages area */}
-      <main className="flex-1 overflow-y-auto">
-        <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
+      {/* Messages area - with padding for content to scroll behind fixed input */}
+      <main className={`flex-1 gpu-scroll app-scroll-container app-content-wrapper ${messages.length === 0 ? 'overflow-hidden lg:overflow-y-auto scroll-disabled' : 'overflow-y-auto'}`}>
+        <div
+          className={`max-w-2xl mx-auto px-4 pt-6 space-y-4 content-with-fixed-input ${browserMode.isMobileBrowser ? 'mobile-browser-mode' : ''}`}
+        >
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
               {/* Animated logo */}
@@ -206,28 +214,28 @@ export default function ChatPage() {
                 <div className="absolute -inset-1 bg-gradient-to-br from-primary/20 to-accent/20 rounded-2xl blur-xl -z-10" />
               </div>
 
-              <h2 className="text-xl lg:text-2xl font-bold text-white mb-3">
-                Decrivez votre idee
+              <h2 className="text-xl lg:text-2xl font-bold text-text-primary mb-3">
+                {t.chat.describeIdea}
               </h2>
               <p className="text-text-secondary text-sm lg:text-base max-w-sm mb-6">
-                POSTY genere 2 versions de votre post : Storytelling et Business
+                {t.chat.twoVersionsDesc}
               </p>
 
               {/* Quick suggestions */}
               <div className="flex flex-wrap justify-center gap-2 max-w-md">
                 {[
-                  "Un post motivant",
-                  "Partager une lecon",
-                  "Annoncer une news",
+                  t.chat.suggestionMotivating,
+                  t.chat.suggestionLesson,
+                  t.chat.suggestionNews,
                 ].map((suggestion) => (
                   <button
                     key={suggestion}
                     onClick={() => setInputValue(suggestion)}
                     className="
                       px-4 py-2 text-sm
-                      bg-dark-elevated hover:bg-dark-hover
-                      border border-dark-border hover:border-primary/30
-                      text-text-secondary hover:text-white
+                      bg-gray-100 dark:bg-dark-elevated hover:bg-gray-200 dark:hover:bg-dark-hover
+                      border border-gray-200 dark:border-dark-border hover:border-primary/30
+                      text-text-secondary hover:text-text-primary
                       rounded-xl transition-all duration-200
                       haptic-feedback
                     "
@@ -313,15 +321,15 @@ export default function ChatPage() {
                               onClick={() => handleCopy(message.content)}
                               className="
                                 mt-3 flex items-center gap-1.5 px-3 py-1.5
-                                text-xs text-text-muted hover:text-white
-                                bg-dark-hover/50 hover:bg-dark-hover
+                                text-xs text-text-muted hover:text-text-primary
+                                bg-gray-100/50 dark:bg-dark-hover/50 hover:bg-gray-200 dark:hover:bg-dark-hover
                                 rounded-lg transition-all duration-200
                               "
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                               </svg>
-                              Copier
+                              {t.chat.copy}
                             </button>
                           </ChatBubble>
                         </div>
@@ -350,16 +358,16 @@ export default function ChatPage() {
                     onClick={handleNewChat}
                     className="
                       flex items-center gap-2 px-5 py-2.5
-                      bg-dark-elevated hover:bg-dark-hover
-                      border border-dark-border hover:border-primary/30
-                      text-white text-sm font-medium rounded-xl
+                      bg-gray-100 dark:bg-dark-elevated hover:bg-gray-200 dark:hover:bg-dark-hover
+                      border border-gray-200 dark:border-dark-border hover:border-primary/30
+                      text-text-primary text-sm font-medium rounded-xl
                       transition-all duration-200 haptic-feedback
                     "
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                     </svg>
-                    Nouveau post
+                    {t.chat.newPost}
                   </button>
                 </div>
               )}
@@ -369,57 +377,42 @@ export default function ChatPage() {
         </div>
       </main>
 
-      {/* Input area - fixed at bottom like ChatGPT */}
-      <div className="flex-shrink-0 bg-gradient-to-t from-background via-background to-transparent pt-4 pb-safe">
-        <div className="max-w-2xl mx-auto px-4 pb-4">
-          <div className="relative bg-dark-card border border-dark-border rounded-2xl shadow-elevated transition-all duration-200 focus-within:border-primary/50 focus-within:shadow-glow">
-            <textarea
-              ref={textareaRef}
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Decrivez votre post LinkedIn..."
-              disabled={isLoading}
-              rows={1}
-              className="
-                w-full bg-transparent text-white text-base
-                placeholder-text-muted resize-none focus:outline-none
-                disabled:opacity-50 min-h-[56px] max-h-[120px]
-                py-4 px-4 pr-14
-              "
-            />
-            <button
-              onClick={handleSubmit}
-              disabled={!inputValue.trim() || isLoading}
-              className={`
-                absolute right-3 bottom-3
-                w-10 h-10 rounded-xl flex items-center justify-center
-                transition-all duration-200
-                ${inputValue.trim() && !isLoading
-                  ? "bg-gradient-to-r from-primary to-primary-hover text-white shadow-glow hover:shadow-lg"
-                  : "bg-dark-border text-text-muted"
-                }
-                disabled:opacity-50 active:scale-95 haptic-feedback
-              `}
-            >
-              {isLoading ? (
-                <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-              ) : (
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
-                </svg>
-              )}
-            </button>
-          </div>
+      {/* Input area - Always fixed at bottom on all devices */}
+      <div
+        className={`
+          fixed-input-area
+          ${browserMode.isMobileBrowser ? 'mobile-browser-mode' : ''}
+        `}
+      >
+        <div className="max-w-2xl mx-auto px-4 py-1 lg:py-2">
+          {/* UniversalChatInput - Unified premium input component */}
+          <UniversalChatInput
+            onSubmit={async (message) => {
+              if (!canGenerate) {
+                setShowLimitModal(true);
+                return;
+              }
+              await generate(message);
+            }}
+            placeholder={t.chat.placeholderLinkedin}
+            disabled={!canGenerate}
+            isLoading={isLoading}
+            enableVoiceRecording={false}
+            showHelperText={true}
+            maxHeight={120}
+            minHeight={56}
+            isMobile={browserMode.isMobileBrowser}
+            browserMode={browserMode}
+            context="guest"
+            trialLimitReached={!canGenerate}
+          />
+
           {/* Mobile trial counter */}
-          <div className="sm:hidden flex justify-center mt-3">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-dark-elevated/50 rounded-full">
+          <div className="sm:hidden flex justify-center mt-2">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100/50 dark:bg-dark-elevated/50 rounded-full">
               <div className={`w-2 h-2 rounded-full ${canGenerate ? "bg-accent" : "bg-warning"}`} />
               <span className="text-xs text-text-muted">
-                {GUEST_LIMIT - generationCount} essai{GUEST_LIMIT - generationCount !== 1 ? "s" : ""} restant{GUEST_LIMIT - generationCount !== 1 ? "s" : ""}
+                {GUEST_LIMIT - generationCount} {GUEST_LIMIT - generationCount !== 1 ? t.guest.trialsRemaining : t.guest.trialRemaining}
               </span>
             </div>
           </div>
@@ -440,23 +433,23 @@ export default function ChatPage() {
               </svg>
             </div>
           </div>
-          <h3 className="text-xl font-bold text-white mb-2">
-            Tu aimes POSTY ?
+          <h3 className="text-xl font-bold text-text-primary mb-2">
+            {t.guest.likePosty}
           </h3>
           <p className="text-text-secondary mb-6 text-sm">
-            Sauvegarde tes posts et publie-les directement sur LinkedIn
+            {t.guest.saveAndPublish}
           </p>
           <div className="space-y-3">
             <Link href="/signup" className="block">
               <Button fullWidth>
-                Creer mon compte
+                {t.guest.createMyAccount}
               </Button>
             </Link>
             <button
               onClick={() => setShowSignupPrompt(false)}
               className="w-full py-2.5 text-sm text-text-muted hover:text-text-secondary transition-colors"
             >
-              Continuer plus tard
+              {t.guest.continueLater}
             </button>
           </div>
         </div>
@@ -466,7 +459,7 @@ export default function ChatPage() {
       <Modal
         isOpen={showLimitModal}
         onClose={() => setShowLimitModal(false)}
-        title="Limite atteinte"
+        title={t.guest.limitReached}
       >
         <div className="text-center">
           <div className="w-16 h-16 bg-warning/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -474,20 +467,19 @@ export default function ChatPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
           </div>
-          <h3 className="text-xl font-semibold text-white mb-2">
-            Tu as utilise tes {GUEST_LIMIT} essais gratuits
+          <h3 className="text-xl font-semibold text-text-primary mb-2">
+            {t.guest.usedTrials.replace("{count}", String(GUEST_LIMIT))}
           </h3>
           <p className="text-text-secondary mb-6 text-sm">
-            Cree un compte gratuit pour continuer a generer des posts LinkedIn
-            et acceder a ton historique.
+            {t.guest.createFreeAccount}
           </p>
           <div className="flex flex-col gap-3">
             <Link href="/signup" className="block">
-              <Button fullWidth>Creer un compte gratuit</Button>
+              <Button fullWidth>{t.guest.createFreeAccountBtn}</Button>
             </Link>
             <Link href="/login" className="block">
               <Button variant="secondary" fullWidth>
-                J&apos;ai deja un compte
+                {t.guest.alreadyHaveAccount}
               </Button>
             </Link>
           </div>

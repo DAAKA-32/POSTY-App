@@ -4,7 +4,9 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Post } from "@/types";
+import toast from "@/components/ui/Toast";
 
 interface CommandPaletteProps {
   posts?: Post[];
@@ -78,6 +80,7 @@ export default function CommandPalette({ posts = [] }: CommandPaletteProps) {
   const listRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { user, signOut } = useAuth();
+  const { t } = useLanguage();
 
   // Build command items
   const commands = useMemo<CommandItem[]>(() => {
@@ -86,16 +89,16 @@ export default function CommandPalette({ posts = [] }: CommandPaletteProps) {
       {
         id: "new-post",
         label: "Nouveau post",
-        description: "Creer un nouveau post LinkedIn",
+        description: "Créer un nouveau post LinkedIn",
         icon: <PlusIcon />,
         action: () => router.push("/app"),
         category: "navigation",
-        keywords: ["new", "create", "nouveau", "creer"],
+        keywords: ["new", "create", "nouveau", "créer"],
       },
       {
         id: "home",
         label: "Accueil",
-        description: "Retour a l'accueil",
+        description: "Retour à l'accueil",
         icon: <HomeIcon />,
         action: () => router.push("/app"),
         category: "navigation",
@@ -121,12 +124,12 @@ export default function CommandPalette({ posts = [] }: CommandPaletteProps) {
       },
       {
         id: "settings",
-        label: "Parametres",
+        label: "Paramètres",
         description: "Configurer l'application",
         icon: <SettingsIcon />,
         action: () => router.push("/settings"),
         category: "navigation",
-        keywords: ["settings", "parametres", "config", "preferences"],
+        keywords: ["settings", "paramètres", "config", "préférences"],
       },
     ];
 
@@ -134,15 +137,16 @@ export default function CommandPalette({ posts = [] }: CommandPaletteProps) {
     if (user) {
       items.push({
         id: "logout",
-        label: "Deconnexion",
-        description: "Se deconnecter de POSTY",
+        label: "Déconnexion",
+        description: "Se déconnecter de POSTY",
         icon: <LogoutIcon />,
-        action: () => {
-          signOut();
+        action: async () => {
+          await signOut();
+          toast.success(t.toasts.logoutSuccess);
           router.push("/");
         },
         category: "action",
-        keywords: ["logout", "deconnexion", "sortir", "quitter"],
+        keywords: ["logout", "déconnexion", "sortir", "quitter"],
       });
     }
 
@@ -160,7 +164,7 @@ export default function CommandPalette({ posts = [] }: CommandPaletteProps) {
     });
 
     return items;
-  }, [posts, user, router, signOut]);
+  }, [posts, user, router, signOut, t]);
 
   // Filter commands based on query
   const filteredCommands = useMemo(() => {
@@ -261,7 +265,7 @@ export default function CommandPalette({ posts = [] }: CommandPaletteProps) {
   const categoryLabels: { [key: string]: string } = {
     navigation: "Navigation",
     action: "Actions",
-    conversation: "Conversations recentes",
+    conversation: "Conversations récentes",
   };
 
   return (
@@ -311,7 +315,7 @@ export default function CommandPalette({ posts = [] }: CommandPaletteProps) {
               >
                 {filteredCommands.length === 0 ? (
                   <div className="px-4 py-8 text-center text-text-muted">
-                    <p className="text-sm">Aucun resultat pour "{query}"</p>
+                    <p className="text-sm">Aucun résultat pour "{query}"</p>
                   </div>
                 ) : (
                   <>
@@ -392,7 +396,7 @@ export default function CommandPalette({ posts = [] }: CommandPaletteProps) {
                   </span>
                   <span className="flex items-center gap-1">
                     <kbd className="px-1.5 py-0.5 bg-dark-bg border border-dark-border rounded">↵</kbd>
-                    <span className="ml-1">selectionner</span>
+                    <span className="ml-1">sélectionner</span>
                   </span>
                 </div>
                 <span className="flex items-center gap-1">

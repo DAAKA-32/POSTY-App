@@ -1,8 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import Link from "next/link";
 import Button from "./Button";
+import Toggle from "./Toggle";
 
 interface ConsentModalProps {
   isOpen: boolean;
@@ -27,13 +28,19 @@ export default function ConsentModal({ isOpen, onAccept }: ConsentModalProps) {
     if (!canSubmit) return;
 
     setIsSubmitting(true);
-    await onAccept({
-      privacyPolicy: privacyAccepted,
-      termsOfService: termsAccepted,
-      analytics: analyticsAccepted,
-      marketing: marketingAccepted,
-    });
-    setIsSubmitting(false);
+    try {
+      await onAccept({
+        privacyPolicy: privacyAccepted,
+        termsOfService: termsAccepted,
+        analytics: analyticsAccepted,
+        marketing: marketingAccepted,
+      });
+      // Parent component handles closing/navigation after consent
+    } catch (error) {
+      console.error("Error submitting consent:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -50,8 +57,8 @@ export default function ConsentModal({ isOpen, onAccept }: ConsentModalProps) {
               </svg>
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">Protection de vos donnees</h2>
-              <p className="text-sm text-gray-400">Conformement au RGPD</p>
+              <h2 className="text-xl font-bold text-white">Protection de vos données</h2>
+              <p className="text-sm text-gray-400">Conformément au RGPD</p>
             </div>
           </div>
         </div>
@@ -59,8 +66,8 @@ export default function ConsentModal({ isOpen, onAccept }: ConsentModalProps) {
         {/* Content */}
         <div className="p-6 max-h-[60vh] overflow-y-auto">
           <p className="text-gray-300 text-sm mb-6">
-            Avant de continuer, veuillez prendre connaissance de nos conditions et indiquer vos preferences.
-            Les cases marquees d&apos;un asterisque (*) sont obligatoires.
+            Avant de continuer, veuillez prendre connaissance de nos conditions et indiquer vos préférences.
+            Les cases marquées d&apos;un asterisque (*) sont obligatoires.
           </p>
 
           {/* Required consents */}
@@ -96,7 +103,7 @@ export default function ConsentModal({ isOpen, onAccept }: ConsentModalProps) {
               <span className="text-sm text-gray-300 group-hover:text-white transition-colors">
                 J&apos;ai lu et j&apos;accepte la{" "}
                 <Link href="/legal/privacy" target="_blank" className="text-primary hover:underline">
-                  Politique de confidentialite
+                  Politique de confidentialité
                 </Link>
               </span>
             </label>
@@ -128,7 +135,7 @@ export default function ConsentModal({ isOpen, onAccept }: ConsentModalProps) {
               <span className="text-sm text-gray-300 group-hover:text-white transition-colors">
                 J&apos;accepte les{" "}
                 <Link href="/legal/terms" target="_blank" className="text-primary hover:underline">
-                  Conditions Generales d&apos;Utilisation
+                  Conditions Générales d&apos;Utilisation
                 </Link>
               </span>
             </label>
@@ -140,81 +147,45 @@ export default function ConsentModal({ isOpen, onAccept }: ConsentModalProps) {
               Consentements optionnels
             </h3>
 
-            <label className="flex items-start gap-3 cursor-pointer group">
-              <div className="relative mt-0.5">
-                <input
-                  type="checkbox"
-                  checked={analyticsAccepted}
-                  onChange={(e) => setAnalyticsAccepted(e.target.checked)}
-                  className="sr-only"
-                />
-                <div
-                  className={`
-                    w-5 h-5 rounded border-2 flex items-center justify-center transition-colors
-                    ${analyticsAccepted
-                      ? "bg-primary border-primary"
-                      : "border-gray-500 group-hover:border-gray-400"
-                    }
-                  `}
-                >
-                  {analyticsAccepted && (
-                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                    </svg>
-                  )}
-                </div>
-              </div>
-              <div>
-                <span className="text-sm text-gray-300 group-hover:text-white transition-colors">
+            <div className="flex items-center justify-between p-3 bg-dark-bg rounded-xl">
+              <div className="flex-1 pr-4">
+                <span className="text-sm text-gray-300">
                   Autoriser les analytics
                 </span>
                 <p className="text-xs text-gray-500 mt-0.5">
                   Nous aide a ameliorer l&apos;application en analysant son utilisation
                 </p>
               </div>
-            </label>
+              <Toggle
+                checked={analyticsAccepted}
+                onChange={setAnalyticsAccepted}
+                size="md"
+              />
+            </div>
 
-            <label className="flex items-start gap-3 cursor-pointer group">
-              <div className="relative mt-0.5">
-                <input
-                  type="checkbox"
-                  checked={marketingAccepted}
-                  onChange={(e) => setMarketingAccepted(e.target.checked)}
-                  className="sr-only"
-                />
-                <div
-                  className={`
-                    w-5 h-5 rounded border-2 flex items-center justify-center transition-colors
-                    ${marketingAccepted
-                      ? "bg-primary border-primary"
-                      : "border-gray-500 group-hover:border-gray-400"
-                    }
-                  `}
-                >
-                  {marketingAccepted && (
-                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                    </svg>
-                  )}
-                </div>
-              </div>
-              <div>
-                <span className="text-sm text-gray-300 group-hover:text-white transition-colors">
+            <div className="flex items-center justify-between p-3 bg-dark-bg rounded-xl">
+              <div className="flex-1 pr-4">
+                <span className="text-sm text-gray-300">
                   Recevoir des communications marketing
                 </span>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  Nouveautes, conseils et offres speciales par email
+                  Nouveautes, conseils et offres spéciales par email
                 </p>
               </div>
-            </label>
+              <Toggle
+                checked={marketingAccepted}
+                onChange={setMarketingAccepted}
+                size="md"
+              />
+            </div>
           </div>
 
           {/* Info box */}
           <div className="mt-6 p-4 bg-primary/10 border border-primary/20 rounded-lg">
             <p className="text-xs text-gray-300">
-              <strong className="text-white">Vos droits :</strong> Vous pouvez a tout moment
+              <strong className="text-white">Vos droits :</strong> Vous pouvez à tout moment
               modifier vos preferences ou supprimer vos donnees dans les{" "}
-              <span className="text-primary">Parametres de confidentialite</span> de l&apos;application.
+              <span className="text-primary">Paramètres de confidentialité</span> de l&apos;application.
             </p>
           </div>
         </div>

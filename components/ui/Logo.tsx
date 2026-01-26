@@ -23,14 +23,6 @@ const textSizeClasses = {
   "2xl": "text-2xl",
 };
 
-const fallbackTextSize = {
-  xs: "text-xs",
-  sm: "text-sm",
-  md: "text-base",
-  lg: "text-lg",
-  xl: "text-2xl",
-};
-
 export default function Logo({
   size = "md",
   className = "",
@@ -42,27 +34,16 @@ export default function Logo({
       <div
         className={`
           ${sizeClasses[size]}
-          bg-gradient-to-br from-primary to-accent
           rounded-xl overflow-hidden
           flex items-center justify-center
           shadow-glow transition-transform hover:scale-105
         `}
       >
         <img
-          src="/logo.png"
-          alt="POSTY Logo"
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            e.currentTarget.style.display = "none";
-            const sibling = e.currentTarget.nextElementSibling as HTMLElement | null;
-            if (sibling) sibling.style.display = "flex";
-          }}
+          src="/logo.jpg"
+          alt="Posty Logo"
+          className="w-full h-full object-contain"
         />
-        <span
-          className={`text-white font-bold hidden ${fallbackTextSize[size]}`}
-        >
-          P
-        </span>
       </div>
       {showText && (
         <span
@@ -88,7 +69,6 @@ export function AnimatedLogo({
       <div
         className={`
           ${sizeClasses[size]}
-          bg-gradient-to-br from-primary to-accent
           rounded-xl overflow-hidden
           flex items-center justify-center
           shadow-glow
@@ -96,20 +76,10 @@ export function AnimatedLogo({
         `}
       >
         <img
-          src="/logo.png"
-          alt="POSTY Logo"
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            e.currentTarget.style.display = "none";
-            const sibling = e.currentTarget.nextElementSibling as HTMLElement | null;
-            if (sibling) sibling.style.display = "flex";
-          }}
+          src="/logo.jpg"
+          alt="Posty Logo"
+          className="w-full h-full object-contain"
         />
-        <span
-          className={`text-white font-bold hidden animate-pulse ${fallbackTextSize[size]}`}
-        >
-          P
-        </span>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 type SetValue<T> = T | ((prevValue: T) => T);
 
@@ -24,26 +24,35 @@ export function useLocalStorage<T>(
     deserialize = JSON.parse,
   } = options || {};
 
+  // Use ref to avoid re-creating readValue when initialValue is an array/object
+  const initialValueRef = useRef(initialValue);
+
   // Get stored value or initial value
   const readValue = useCallback((): T => {
     if (typeof window === "undefined") {
-      return initialValue;
+      return initialValueRef.current;
     }
 
     try {
       const item = window.localStorage.getItem(key);
-      return item ? deserialize(item) : initialValue;
+      return item ? deserialize(item) : initialValueRef.current;
     } catch (error) {
       console.warn(`Error reading localStorage key "${key}":`, error);
-      return initialValue;
+      return initialValueRef.current;
     }
-  }, [key, initialValue, deserialize]);
+  }, [key, deserialize]);
 
   const [storedValue, setStoredValue] = useState<T>(initialValue);
 
-  // Read from localStorage on mount
+  // Track if we've read from localStorage
+  const isInitialized = useRef(false);
+
+  // Read from localStorage on mount (only once)
   useEffect(() => {
-    setStoredValue(readValue());
+    if (!isInitialized.current) {
+      isInitialized.current = true;
+      setStoredValue(readValue());
+    }
   }, [readValue]);
 
   // Listen for changes from other tabs/windows

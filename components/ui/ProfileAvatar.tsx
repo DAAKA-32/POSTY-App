@@ -67,35 +67,29 @@ export default function ProfileAvatar({
 
   const isClickable = !!onClick;
 
+  // Check if className contains rounded override
+  const hasRoundedOverride = className.includes("!rounded");
+
   return (
     <div
       className={`
-        relative ${config.container} rounded-xl
+        relative ${config.container}
+        ${hasRoundedOverride ? "" : "rounded-xl"}
         ${isClickable ? "cursor-pointer group" : ""}
         ${className}
       `}
       onClick={onClick}
     >
-      {/* Background gradient (always visible for loading state) */}
-      <div
-        className={`
-          absolute inset-0 rounded-xl
-          bg-gradient-to-br from-primary/20 to-accent/20
-          border border-dark-border
-          ${isClickable ? "group-hover:border-primary/30 transition-colors" : ""}
-        `}
-      />
-
-      {/* Photo */}
+      {/* Photo - fills entire container */}
       {photoURL && !imageError ? (
-        <div className={`relative ${config.container} rounded-xl overflow-hidden`}>
+        <div className="relative w-full h-full overflow-hidden">
           <Image
             src={photoURL}
             alt={displayName}
             fill
             sizes={`${config.px}px`}
             className={`
-              object-cover
+              object-cover object-center
               transition-all duration-300
               ${isLoaded ? "opacity-100 scale-100" : "opacity-0 scale-95"}
               ${isClickable ? "group-hover:scale-105" : ""}
@@ -107,14 +101,15 @@ export default function ProfileAvatar({
           />
           {/* Hover overlay for clickable */}
           {isClickable && (
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors rounded-xl" />
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
           )}
         </div>
       ) : (
-        /* Fallback initials */
+        /* Fallback initials - only show gradient background when no photo */
         <div
           className={`
-            ${config.container} rounded-xl
+            w-full h-full
+            ${hasRoundedOverride ? "" : "rounded-xl"}
             flex items-center justify-center
             bg-gradient-to-br from-primary/20 to-accent/20
             border border-dark-border
@@ -127,7 +122,7 @@ export default function ProfileAvatar({
         </div>
       )}
 
-      {/* LinkedIn badge */}
+      {/* LinkedIn badge - only when explicitly requested */}
       {showLinkedInBadge && linkedInConnected && (
         <div
           className={`
@@ -176,7 +171,7 @@ export function CompactAvatar({
           alt={name || "Avatar"}
           fill
           sizes={`${config.px}px`}
-          className="object-cover rounded-full"
+          className="object-cover object-center rounded-full"
           onError={() => setImageError(true)}
           loading="lazy"
         />

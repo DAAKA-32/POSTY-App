@@ -24,19 +24,14 @@ export default function LegalLayout({ children, title }: LegalLayoutProps) {
       <header className="sticky top-0 z-50 bg-dark-card/95 backdrop-blur-xl border-b border-dark-border">
         <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/app" className="flex items-center gap-3 group">
-            <div className="w-9 h-9 bg-gradient-to-br from-primary to-accent rounded-xl overflow-hidden flex items-center justify-center shadow-glow transition-transform group-hover:scale-105">
+            <div className="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center shadow-glow transition-transform group-hover:scale-105">
               <img
-                src="/logo.png"
-                alt="POSTY Logo"
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                  const sibling = e.currentTarget.nextElementSibling as HTMLElement | null; if (sibling) sibling.style.display = 'flex';
-                }}
+                src="/logo.jpg"
+                alt="Posty Logo"
+                className="w-full h-full object-contain"
               />
-              <span className="text-white font-bold text-lg hidden">P</span>
             </div>
-            <span className="font-semibold text-white text-lg tracking-tight">POSTY</span>
+            <span className="font-semibold text-gray-900 dark:text-white text-lg tracking-tight">POSTY</span>
           </Link>
           <Link
             href="/app"
@@ -104,18 +99,13 @@ export default function LegalLayout({ children, title }: LegalLayoutProps) {
         <div className="max-w-4xl mx-auto px-4 py-8">
           <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-primary to-accent rounded-lg overflow-hidden flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center">
                 <img
-                  src="/logo.png"
-                  alt="POSTY Logo"
-                  className="w-full h-full object-cover"
+                  src="/logo.jpg"
+                  alt="Posty Logo"
+                  className="w-full h-full object-contain"
                   loading="lazy"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                    const sibling = e.currentTarget.nextElementSibling as HTMLElement | null; if (sibling) sibling.style.display = 'flex';
-                  }}
                 />
-                <span className="text-white font-bold text-sm hidden">P</span>
               </div>
               <span className="text-sm text-text-secondary">
                 © {new Date().getFullYear()} POSTY. Tous droits reserves.

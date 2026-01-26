@@ -84,6 +84,220 @@ export async function saveLinkedInPostAdmin(
   return docRef.id;
 }
 
+// ============== QUOTA MANAGEMENT (SERVER-SIDE) ==============
+
+import { DAILY_MESSAGE_LIMITS, SubscriptionPlan } from "@/types";
+
+/**
+ * Get the start of today (00:00:00 UTC)
+ */
+function getTodayStartUTC(): Date {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
+}
+
+/**
+ * Get the end of today (23:59:59 UTC)
+ */
+function getTodayEndUTC(): Date {
+  const today = getTodayStartUTC();
+  today.setUTCDate(today.getUTCDate() + 1);
+  return today;
+}
+
+/**
+ * Check if a date is today (UTC)
+ */
+function isTodayUTC(date: Date): boolean {
+  const today = getTodayStartUTC();
+  const tomorrow = getTodayEndUTC();
+  return date >= today && date < tomorrow;
+}
+
+export interface QuotaCheckResult {
+  canGenerate: boolean;
+  plan: SubscriptionPlan;
+  dailyLimit: number;
+  usedToday: number;
+  remaining: number;
+  reason?: string;
+}
+
+/**
+ * Check if user can generate content (quota not exceeded)
+ * Server-side check using Admin SDK
+ *
+ * IMPORTANT: Respects test mode - if test mode is active, uses the test plan
+ * for quota calculations instead of the actual Stripe subscription.
+ */
+export async function checkUserQuotaAdmin(userId: string): Promise<QuotaCheckResult> {
+  if (!adminDb) {
+    throw new Error("Firebase Admin not initialized");
+  }
+
+  const userRef = adminDb.collection("users").doc(userId);
+  const userSnap = await userRef.get();
+
+  // Default free plan limits
+  const defaultResult: QuotaCheckResult = {
+    canGenerate: true,
+    plan: "free",
+    dailyLimit: DAILY_MESSAGE_LIMITS.free,
+    usedToday: 0,
+    remaining: DAILY_MESSAGE_LIMITS.free,
+  };
+
+  if (!userSnap.exists) {
+    // New user, use free limits
+    return defaultResult;
+  }
+
+  const data = userSnap.data();
+  if (!data) return defaultResult;
+
+  // Check for test mode - test plan takes precedence if active
+  const isTestMode = data.testMode?.active === true;
+  const testPlan = isTestMode ? data.testMode?.plan : null;
+
+  // Determine effective plan (test mode overrides actual subscription)
+  // Handle legacy "starter" plan name from database
+  const rawPlan = data.subscription?.plan || "free";
+  let effectivePlan: SubscriptionPlan = (rawPlan === "starter" ? "pro" : rawPlan) as SubscriptionPlan;
+
+  // Use test plan if test mode is active
+  if (isTestMode && testPlan) {
+    effectivePlan = testPlan as SubscriptionPlan;
+  }
+
+  const dailyLimit = DAILY_MESSAGE_LIMITS[effectivePlan];
+
+  // Unlimited plan (-1) - Max plan and test mode with max plan
+  if (dailyLimit === -1) {
+    return {
+      canGenerate: true,
+      plan: effectivePlan,
+      dailyLimit: -1,
+      usedToday: data.quota?.dailyMessageCount || 0,
+      remaining: -1,
+    };
+  }
+
+  // Check daily usage
+  let usedToday = 0;
+  const lastMessageDate = data.quota?.lastMessageDate?.toDate?.();
+
+  if (lastMessageDate && isTodayUTC(lastMessageDate)) {
+    usedToday = data.quota?.dailyMessageCount || 0;
+  }
+
+  const remaining = Math.max(0, dailyLimit - usedToday);
+  const canGenerate = usedToday < dailyLimit;
+
+  return {
+    canGenerate,
+    plan: effectivePlan,
+    dailyLimit,
+    usedToday,
+    remaining,
+    reason: canGenerate ? undefined : "Limite quotidienne atteinte",
+  };
+}
+
+/**
+ * Increment user's daily message count
+ * Server-side update using Admin SDK
+ */
+export async function incrementUserQuotaAdmin(userId: string): Promise<void> {
+  if (!adminDb) {
+    throw new Error("Firebase Admin not initialized");
+  }
+
+  const userRef = adminDb.collection("users").doc(userId);
+  const userSnap = await userRef.get();
+
+  const today = getTodayStartUTC();
+
+  if (!userSnap.exists) {
+    // Create user document with initial quota
+    await userRef.set({
+      uid: userId,
+      quota: {
+        dailyMessageCount: 1,
+        lastMessageDate: Timestamp.fromDate(today),
+      },
+      createdAt: FieldValue.serverTimestamp(),
+    });
+    return;
+  }
+
+  const data = userSnap.data();
+  const lastMessageDate = data?.quota?.lastMessageDate?.toDate?.();
+
+  let newCount = 1;
+
+  if (lastMessageDate && isTodayUTC(lastMessageDate)) {
+    // Same day, increment existing count
+    newCount = (data?.quota?.dailyMessageCount || 0) + 1;
+  }
+  // Otherwise, it's a new day, start fresh at 1
+
+  await userRef.update({
+    "quota.dailyMessageCount": newCount,
+    "quota.lastMessageDate": Timestamp.fromDate(today),
+  });
+}
+
+/**
+ * Get user profile data (server-side)
+ *
+ * IMPORTANT: Respects test mode - if test mode is active, returns the test plan
+ * instead of the actual Stripe subscription.
+ */
+export async function getUserProfileAdmin(userId: string): Promise<{
+  plan: SubscriptionPlan;
+  profile?: {
+    sector?: string;
+    role?: string;
+    linkedinStyle?: string;
+    objective?: string;
+    targetAudience?: string;
+    communicationTone?: string;
+  };
+  isTestMode?: boolean;
+} | null> {
+  if (!adminDb) {
+    throw new Error("Firebase Admin not initialized");
+  }
+
+  const userRef = adminDb.collection("users").doc(userId);
+  const userSnap = await userRef.get();
+
+  if (!userSnap.exists) {
+    return null;
+  }
+
+  const data = userSnap.data();
+
+  // Check for test mode - test plan takes precedence if active
+  const isTestMode = data?.testMode?.active === true;
+  const testPlan = isTestMode ? data?.testMode?.plan : null;
+
+  // Determine effective plan (handle legacy "starter" plan name)
+  const rawPlan2 = data?.subscription?.plan || "free";
+  let effectivePlan: SubscriptionPlan = (rawPlan2 === "starter" ? "pro" : rawPlan2) as SubscriptionPlan;
+
+  // Use test plan if active
+  if (isTestMode && testPlan) {
+    effectivePlan = testPlan as SubscriptionPlan;
+  }
+
+  return {
+    plan: effectivePlan,
+    profile: data?.profile,
+    isTestMode,
+  };
+}
+
 /**
  * Save LinkedIn connection (server-side)
  * Used by the OAuth callback route

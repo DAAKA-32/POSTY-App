@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useMemo } from "react";
 import Link from "next/link";
@@ -35,7 +35,7 @@ export default function UsageBanner({ className = "" }: UsageBannerProps) {
         show: true,
         icon: "warning",
         title: "Limite atteinte",
-        message: "Vous avez utilise vos 3 messages du jour.",
+        message: "Vous avez utilisé vos 3 messages du jour.",
         cta: "Passer au plan Pro",
         ctaHighlight: true,
       };
@@ -47,8 +47,8 @@ export default function UsageBanner({ className = "" }: UsageBannerProps) {
         show: true,
         icon: "info",
         title: `${messagesRemaining} message restant`,
-        message: "Votre creativite merite plus ! Historique limite a 7 jours.",
-        cta: "Debloquer l'illimite",
+        message: "Votre créativité mérite plus ! Historique limité a 7 jours.",
+        cta: "Débloquer l'illimité",
         ctaHighlight: true,
       };
     }
@@ -59,7 +59,7 @@ export default function UsageBanner({ className = "" }: UsageBannerProps) {
         show: true,
         icon: "info",
         title: `${messagesRemaining} messages restants`,
-        message: "Historique limite. Passez a Pro pour un acces complet.",
+        message: "Historique limité. Passez à Pro pour un acces complet.",
         cta: "Voir les plans",
         ctaHighlight: false,
       };
@@ -72,7 +72,7 @@ export default function UsageBanner({ className = "" }: UsageBannerProps) {
       icon: "sparkle",
       title: `${messagesRemaining}/${dailyLimit} messages`,
       message: "Plan gratuit • Historique 7 jours",
-      cta: "Passer a Pro",
+      cta: "Passer à Pro",
       ctaHighlight: false,
     };
   }, [isPremium, messagesRemaining, dailyLimit]);
@@ -88,14 +88,17 @@ export default function UsageBanner({ className = "" }: UsageBannerProps) {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -10 }}
-        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+        transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
         className={`w-full ${className}`}
+        role="region"
+        aria-label="Quota d'utilisation"
+        data-quota="true"
       >
         <div
           className={`
             relative overflow-hidden
             rounded-xl border backdrop-blur-sm
-            transition-all duration-300
+            transition-all duration-200
             ${bannerState.type === "limit-reached"
               ? "bg-error/5 border-error/20"
               : bannerState.type === "low"
@@ -103,18 +106,20 @@ export default function UsageBanner({ className = "" }: UsageBannerProps) {
                 : "bg-dark-elevated/80 border-dark-border"
             }
           `}
+          aria-live="polite"
+          aria-atomic="true"
         >
           {/* Subtle gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-r from-primary/3 via-transparent to-accent/3 pointer-events-none" />
 
-          <div className="relative px-4 py-3">
-            <div className="flex items-center justify-between gap-3">
+          <div className="relative px-3 sm:px-4 py-2.5 sm:py-3">
+            <div className="flex items-center justify-between gap-2 sm:gap-3">
               {/* Left: Icon + Message */}
-              <div className="flex items-center gap-3 min-w-0 flex-1">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                 {/* Icon */}
                 <div
                   className={`
-                    shrink-0 w-8 h-8 rounded-lg flex items-center justify-center
+                    shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center
                     ${bannerState.type === "limit-reached"
                       ? "bg-error/10 text-error"
                       : bannerState.type === "low"
@@ -140,10 +145,10 @@ export default function UsageBanner({ className = "" }: UsageBannerProps) {
 
                 {/* Text content */}
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                     <span
                       className={`
-                        text-sm font-semibold
+                        text-xs sm:text-sm font-semibold
                         ${bannerState.type === "limit-reached"
                           ? "text-error"
                           : bannerState.type === "low"
@@ -154,13 +159,13 @@ export default function UsageBanner({ className = "" }: UsageBannerProps) {
                     >
                       {bannerState.title}
                     </span>
-                    <span className="text-xs text-text-muted hidden sm:inline">•</span>
-                    <span className="text-xs text-text-muted hidden sm:inline truncate">
+                    <span className="text-xs text-text-muted hidden lg:inline">•</span>
+                    <span className="text-xs text-text-muted hidden lg:inline truncate">
                       {bannerState.message}
                     </span>
                   </div>
-                  {/* Mobile: message on second line */}
-                  <p className="text-xs text-text-muted mt-0.5 sm:hidden truncate">
+                  {/* Mobile/Tablet: message on second line */}
+                  <p className="text-2xs sm:text-xs text-text-muted mt-0.5 lg:hidden truncate">
                     {bannerState.message}
                   </p>
                 </div>
@@ -170,7 +175,7 @@ export default function UsageBanner({ className = "" }: UsageBannerProps) {
               <Link
                 href="/pricing"
                 className={`
-                  shrink-0 px-3 py-1.5 text-xs font-semibold rounded-lg
+                  shrink-0 px-2.5 sm:px-3 py-1.5 text-2xs sm:text-xs font-semibold rounded-lg whitespace-nowrap
                   transition-all duration-200 haptic-feedback
                   ${bannerState.ctaHighlight
                     ? "bg-gradient-to-r from-primary to-primary-hover text-white shadow-glow hover:shadow-lg"
@@ -184,11 +189,18 @@ export default function UsageBanner({ className = "" }: UsageBannerProps) {
 
             {/* Progress bar for remaining messages */}
             {!canSendMessage ? null : (
-              <div className="mt-3 h-1 bg-dark-border/50 rounded-full overflow-hidden">
+              <div
+                className="mt-2 sm:mt-3 h-1 bg-dark-border/50 rounded-full overflow-hidden"
+                role="progressbar"
+                aria-valuenow={messagesRemaining}
+                aria-valuemin={0}
+                aria-valuemax={dailyLimit}
+                aria-label={`${messagesRemaining} messages restants sur ${dailyLimit}`}
+              >
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${(messagesRemaining / dailyLimit) * 100}%` }}
-                  transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+                  transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
                   className={`
                     h-full rounded-full
                     ${messagesRemaining === 0
@@ -274,7 +286,7 @@ export function PremiumBadge() {
         <path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
       </svg>
       <span className="text-xs font-semibold text-white">{planName}</span>
-      <span className="text-2xs text-accent">Illimite</span>
+      <span className="text-2xs text-accent">Illimité</span>
     </div>
   );
 }

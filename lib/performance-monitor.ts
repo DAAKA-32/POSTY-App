@@ -13,8 +13,8 @@ export interface PerformanceMetrics {
   fcp: number | null; // First Contentful Paint
   ttfb: number | null; // Time to First Byte
   inp: number | null; // Interaction to Next Paint
-
-  // Additional metrics
+   
+  //  metrics
   domContentLoaded: number | null;
   windowLoad: number | null;
   resourceCount: number;

@@ -1,5 +1,5 @@
 import { initializeApp, getApps, FirebaseApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, Auth } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, Auth, browserLocalPersistence, setPersistence } from "firebase/auth";
 import {
   getFirestore,
   Firestore,
@@ -57,6 +57,8 @@ if (isConfigValid()) {
     }
 
     authInstance = getAuth(app);
+    // Configure persistent session - user stays logged in until manual sign out
+    setPersistence(authInstance, browserLocalPersistence).catch(console.error);
     googleProviderInstance = new GoogleAuthProvider();
   } else {
     // Server-side: Use standard Firestore without persistence

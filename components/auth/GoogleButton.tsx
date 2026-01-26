@@ -32,16 +32,17 @@ export default function GoogleButton({ onSuccess, label = "Continuer avec Google
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className="
-        relative w-full flex items-center justify-center gap-3
-        px-4 py-3.5
-        bg-white/[0.04] border border-white/[0.08]
-        text-white font-medium
-        rounded-lg
+        relative w-full flex items-center justify-center gap-2.5 sm:gap-3
+        px-4 py-3 sm:py-3.5
+        bg-white border border-gray-200
+        text-gray-700 font-medium
+        rounded-xl sm:rounded-2xl
+        shadow-sm hover:shadow-md
         overflow-hidden
-        focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2 focus:ring-offset-background
+        focus:outline-none focus:ring-2 focus:ring-warm-orange/20 focus:ring-offset-2 focus:ring-offset-white
         transition-all duration-300
         disabled:opacity-50 disabled:cursor-not-allowed
-        hover:bg-white/[0.08] hover:border-white/[0.12]
+        hover:bg-gray-50/80 hover:border-gray-300
         active:scale-[0.98]
         group
       "
@@ -49,7 +50,7 @@ export default function GoogleButton({ onSuccess, label = "Continuer avec Google
       {/* Shine effect on hover */}
       <div
         className={`
-          absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent
+          absolute inset-0 bg-gradient-to-r from-transparent via-gray-100/80 to-transparent
           transition-transform duration-500 ease-out
           ${isHovered ? "translate-x-full" : "-translate-x-full"}
         `}
@@ -57,7 +58,7 @@ export default function GoogleButton({ onSuccess, label = "Continuer avec Google
 
       {isLoading ? (
         <svg
-          className="animate-spin h-5 w-5 text-white"
+          className="animate-spin h-5 w-5 text-gray-600"
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
           viewBox="0 0 24 24"
@@ -78,9 +79,9 @@ export default function GoogleButton({ onSuccess, label = "Continuer avec Google
         </svg>
       ) : (
         <>
-          {/* Google Icon with subtle animation */}
-          <div className="relative transition-transform duration-200 group-hover:scale-110">
-            <svg className="w-5 h-5" viewBox="0 0 24 24">
+          {/* Google Icon with subtle background */}
+          <div className="relative w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24">
               <path
                 fill="#4285F4"
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -99,7 +100,7 @@ export default function GoogleButton({ onSuccess, label = "Continuer avec Google
               />
             </svg>
           </div>
-          <span className="relative text-sm">{label}</span>
+          <span className="relative text-sm sm:text-base font-medium">{label}</span>
         </>
       )}
     </button>

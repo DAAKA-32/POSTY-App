@@ -10,7 +10,7 @@ interface SkeletonProps {
   variant?: "text" | "circular" | "rectangular" | "rounded";
   width?: string | number;
   height?: string | number;
-  animation?: "shimmer" | "pulse" | "none";
+  animation?: "shimmer" | "pulse" | "none" | "premium";
 }
 
 export function Skeleton({
@@ -27,10 +27,12 @@ export function Skeleton({
     rounded: "rounded-xl",
   };
 
+  // Updated animation styles with orange/salmon tints for premium feel
   const animationStyles = {
-    shimmer: "bg-gradient-to-r from-dark-card via-dark-elevated to-dark-card bg-[length:200%_100%] animate-shimmer",
-    pulse: "bg-dark-elevated animate-skeleton-pulse",
-    none: "bg-dark-elevated",
+    shimmer: "skeleton-shimmer",
+    pulse: "skeleton-pulse",
+    none: "bg-dark-elevated dark:bg-dark-elevated",
+    premium: "skeleton-premium",
   };
 
   const style: React.CSSProperties = {};
@@ -283,20 +285,38 @@ export function SkeletonSidebar() {
 interface SpinnerProps {
   size?: "sm" | "md" | "lg";
   className?: string;
+  variant?: "default" | "gradient";
 }
 
-export function Spinner({ size = "md", className = "" }: SpinnerProps) {
+export function Spinner({ size = "md", className = "", variant = "default" }: SpinnerProps) {
   const sizeStyles = {
     sm: "w-4 h-4 border-2",
     md: "w-8 h-8 border-3",
     lg: "w-12 h-12 border-4",
   };
 
+  if (variant === "gradient") {
+    return (
+      <div
+        className={`
+          ${sizeStyles[size]}
+          border-primary
+          border-t-accent
+          border-r-transparent
+          rounded-full
+          animate-spin
+          ${className}
+        `}
+        style={{ boxShadow: "0 0 12px rgba(232, 147, 77, 0.3)" }}
+      />
+    );
+  }
+
   return (
     <div
       className={`
         ${sizeStyles[size]}
-        border-dark-border
+        border-dark-border dark:border-dark-border
         border-t-primary
         rounded-full
         animate-spin
@@ -306,9 +326,27 @@ export function Spinner({ size = "md", className = "" }: SpinnerProps) {
   );
 }
 
-// ============== LOADING DOTS ==============
+// ============== LOADING DOTS - Orange/Salmon ==============
 
-export function LoadingDots({ className = "" }: { className?: string }) {
+export function LoadingDots({ className = "", variant = "default" }: { className?: string; variant?: "default" | "gradient" }) {
+  if (variant === "gradient") {
+    return (
+      <div className={`flex items-center gap-1 ${className}`}>
+        {[0, 1, 2].map((i) => (
+          <span
+            key={i}
+            className="w-2 h-2 rounded-full animate-bounce"
+            style={{
+              background: "linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)",
+              boxShadow: "0 0 6px rgba(232, 147, 77, 0.4)",
+              animationDelay: `${-0.3 + i * 0.15}s`,
+            }}
+          />
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className={`flex items-center gap-1 ${className}`}>
       <span className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]" />
@@ -318,43 +356,84 @@ export function LoadingDots({ className = "" }: { className?: string }) {
   );
 }
 
-// ============== TYPING INDICATOR ==============
+// ============== TYPING INDICATOR - Premium Orange/Salmon ==============
 
 export function TypingIndicator({ className = "" }: { className?: string }) {
   return (
-    <div className={`flex items-center gap-2 px-4 py-3 bg-dark-elevated rounded-2xl w-fit ${className}`}>
+    <div className={`flex items-center gap-2 px-4 py-3 bg-dark-elevated dark:bg-dark-elevated rounded-2xl w-fit ${className}`}>
       <div className="flex gap-1">
-        <span className="w-2 h-2 bg-text-secondary rounded-full animate-bounce [animation-delay:-0.3s]" />
-        <span className="w-2 h-2 bg-text-secondary rounded-full animate-bounce [animation-delay:-0.15s]" />
-        <span className="w-2 h-2 bg-text-secondary rounded-full animate-bounce" />
+        {[0, 1, 2].map((i) => (
+          <span
+            key={i}
+            className="w-2 h-2 rounded-full animate-bounce"
+            style={{
+              background: "linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)",
+              animationDelay: `${-0.3 + i * 0.15}s`,
+            }}
+          />
+        ))}
       </div>
     </div>
   );
 }
 
-// ============== PAGE LOADER ==============
+// ============== PAGE LOADER - Premium Orange/Salmon ==============
 
 interface PageLoaderProps {
   message?: string;
+  showProgress?: boolean;
 }
 
-export function PageLoader({ message = "Chargement..." }: PageLoaderProps) {
+export function PageLoader({ message = "Chargement...", showProgress = true }: PageLoaderProps) {
   return (
     <div className="fixed inset-0 bg-background flex items-center justify-center z-50">
-      <div className="flex flex-col items-center gap-4 animate-fade-in">
-        {/* Logo animation */}
+      <div className="flex flex-col items-center gap-6 animate-fade-in">
+        {/* Logo with premium glow */}
         <div className="relative">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-accent animate-pulse-soft" />
-          <div className="absolute inset-0 w-16 h-16 rounded-2xl border-2 border-primary/30 animate-ping" />
+          {/* Glow effect */}
+          <div
+            className="absolute -inset-4 rounded-3xl blur-2xl animate-pulse"
+            style={{
+              background: "linear-gradient(135deg, rgba(232, 147, 77, 0.3) 0%, rgba(248, 87, 81, 0.3) 100%)",
+            }}
+          />
+          {/* Logo container */}
+          <div className="relative w-16 h-16 lg:w-20 lg:h-20 rounded-2xl overflow-hidden flex items-center justify-center">
+            <img
+              src="/logo.jpg"
+              alt="Posty Logo"
+              className="w-full h-full object-contain"
+            />
+          </div>
+          {/* Ping effect */}
+          <div
+            className="absolute inset-0 w-16 h-16 lg:w-20 lg:h-20 rounded-2xl animate-ping opacity-30"
+            style={{
+              border: "2px solid var(--primary)",
+            }}
+          />
         </div>
+
+        {/* Brand name */}
+        <h1 className="text-xl lg:text-2xl font-bold text-white tracking-tight">
+          POSTY
+        </h1>
 
         {/* Text */}
         <p className="text-text-secondary text-sm">{message}</p>
 
         {/* Progress bar */}
-        <div className="w-48 h-1 bg-dark-border rounded-full overflow-hidden">
-          <div className="h-full bg-gradient-to-r from-primary to-accent rounded-full animate-shimmer bg-[length:200%_100%]" />
-        </div>
+        {showProgress && (
+          <div className="w-48 h-1.5 bg-dark-border dark:bg-dark-border rounded-full overflow-hidden">
+            <div
+              className="h-full rounded-full animate-progress-indeterminate"
+              style={{
+                background: "linear-gradient(90deg, var(--primary) 0%, var(--accent) 50%, var(--primary) 100%)",
+                backgroundSize: "200% 100%",
+              }}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

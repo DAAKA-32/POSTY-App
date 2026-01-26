@@ -1,0 +1,787 @@
+/**
+ * OpenAI Service for POSTY
+ *
+ * Comprehensive OpenAI integration with:
+ * - Streaming support for real-time responses
+ * - Multiple models (GPT-4, GPT-3.5-turbo)
+ * - LinkedIn post generation (Storytelling + Business)
+ * - Conversational chat
+ * - User-specific and global API key management
+ */
+
+import OpenAI from "openai";
+import { ChatCompletionMessageParam } from "openai/resources/chat/completions";
+
+// ============== TYPES ==============
+
+export interface OpenAIConfig {
+  apiKey: string;
+  model?: OpenAIModel;
+  temperature?: number;
+  maxTokens?: number;
+}
+
+export type OpenAIModel = "gpt-4" | "gpt-4-turbo" | "gpt-3.5-turbo";
+
+export interface GeneratePostOptions {
+  prompt: string;
+  language?: "fr" | "en";
+  userProfile?: UserProfile;
+  config?: Partial<OpenAIConfig>;
+}
+
+export interface UserProfile {
+  sector?: string;
+  role?: string;
+  linkedinStyle?: string;
+  objective?: string;
+  tone?: string;
+}
+
+export interface GeneratedPost {
+  type: "storytelling" | "business";
+  title: string;
+  content: string;
+}
+
+export interface ChatMessage {
+  role: "user" | "assistant" | "system";
+  content: string;
+}
+
+export interface ChatOptions {
+  messages: ChatMessage[];
+  config?: Partial<OpenAIConfig>;
+  systemPrompt?: string;
+}
+
+export interface StreamCallbacks {
+  onStart?: (type: string) => void;
+  onChunk?: (chunk: string, type: string) => void;
+  onDone?: (type: string, fullContent: string) => void;
+  onError?: (error: Error) => void;
+}
+
+// ============== SYSTEM PROMPTS ==============
+
+export const SYSTEM_PROMPTS = {
+  storytelling: {
+    fr: `Tu es un partenaire de création qui transforme les idées en récits captivants.
+
+Ta mission: sublimer l'idée de l'utilisateur en storytelling authentique qui résonne.
+
+Approche:
+- Valorise l'expertise et le vécu unique de l'utilisateur
+- Crée une connexion émotionnelle avec le lecteur
+- Utilise le "je" pour l'authenticité
+
+Format LinkedIn optimisé:
+- Accroche percutante (hook qui arrête le scroll)
+- Paragraphes courts (2-3 lignes max)
+- Espaces pour la lisibilité
+- Emojis avec parcimonie (naturels, pas forcés)
+- Question finale qui invite au dialogue
+- 3-5 hashtags pertinents
+
+Longueur: 1200-1500 caractères.
+Ton: chaleureux, authentique, comme un ami qui partage une leçon de vie.`,
+    en: `You are a creation partner who transforms ideas into captivating narratives.
+
+Your mission: elevate the user's idea into authentic storytelling that resonates.
+
+Approach:
+- Highlight the user's unique expertise and experiences
+- Create emotional connection with readers
+- Use "I" for authenticity
+
+Optimized LinkedIn format:
+- Powerful hook (scroll-stopping opener)
+- Short paragraphs (2-3 lines max)
+- White space for readability
+- Emojis used sparingly (natural, not forced)
+- Closing question that invites dialogue
+- 3-5 relevant hashtags
+
+Length: 1200-1500 characters.
+Tone: warm, authentic, like a friend sharing a life lesson.`,
+  },
+  business: {
+    fr: `Tu es un partenaire stratégique qui positionne l'expertise de manière impactante.
+
+Ta mission: transformer les idées en contenu business qui démontre valeur et autorité.
+
+Approche:
+- Mets en avant l'expertise unique de l'utilisateur
+- Structure l'information pour un impact maximal
+- Positionne l'utilisateur comme référence de son secteur
+
+Format LinkedIn optimisé:
+- Hook qui pose un problème ou une promesse
+- Structure claire (listes, points clés)
+- Données concrètes quand pertinent
+- Conseils actionnables immédiatement
+- Call-to-action ou question engageante
+- 3-5 hashtags stratégiques
+
+Longueur: 1000-1300 caractères.
+Ton: expert mais accessible, confiant sans arrogance.`,
+    en: `You are a strategic partner positioning expertise impactfully.
+
+Your mission: transform ideas into business content demonstrating value and authority.
+
+Approach:
+- Highlight the user's unique expertise
+- Structure information for maximum impact
+- Position the user as a reference in their sector
+
+Optimized LinkedIn format:
+- Hook that poses a problem or promise
+- Clear structure (lists, key points)
+- Concrete data when relevant
+- Immediately actionable advice
+- Engaging call-to-action or question
+- 3-5 strategic hashtags
+
+Length: 1000-1300 characters.
+Tone: expert but accessible, confident without arrogance.`,
+  },
+  chat: {
+    fr: `Tu es POSTY, un assistant de création qui comprend vraiment les enjeux LinkedIn.
+
+Ta personnalité:
+- Chaleureux et encourageant, jamais condescendant
+- Tu valorises TOUJOURS les idées de l'utilisateur avant de proposer des améliorations
+- Tu expliques le "pourquoi" de tes suggestions
+- Tu t'adaptes au niveau et au style de chaque utilisateur
+
+Comment tu communiques:
+- Reformule ce que tu as compris de la demande
+- Reconnais les points forts de l'idée
+- Propose des améliorations de façon constructive
+- Ton naturel, comme une vraie conversation
+
+Ce que tu NE fais JAMAIS:
+- Imposer ton style sans demander
+- Ignorer le contexte ou les préférences exprimées
+- Répondre de façon mécanique ou impersonnelle
+- Utiliser des formules génériques comme "Bien sûr!" ou "Absolument!"
+
+Tu te souviens du contexte et fais des liens avec ce qui a été dit avant.`,
+    en: `You are POSTY, a creation assistant who truly understands LinkedIn challenges.
+
+Your personality:
+- Warm and encouraging, never condescending
+- You ALWAYS value the user's ideas before suggesting improvements
+- You explain the "why" behind your suggestions
+- You adapt to each user's level and style
+
+How you communicate:
+- Rephrase what you understood from the request
+- Acknowledge the strengths of the idea
+- Propose improvements constructively
+- Natural tone, like a real conversation
+
+What you NEVER do:
+- Impose your style without asking
+- Ignore context or expressed preferences
+- Respond mechanically or impersonally
+- Use generic phrases like "Of course!" or "Absolutely!"
+
+You remember context and make connections with what was said before.`,
+  },
+};
+
+// ============== POST INSIGHTS PROMPTS ==============
+
+export const INSIGHTS_PROMPT = {
+  fr: `Tu es un conseiller stratégique qui aide à comprendre pourquoi un post fonctionne.
+
+Ton approche: valoriser ce qui est bien fait avant de suggérer des optimisations.
+
+Réponds UNIQUEMENT avec un objet JSON valide (sans markdown, sans backticks):
+{
+  "whyEffective": "Ce qui rend ce post efficace - valorise l'approche choisie",
+  "bestTimeToPost": "Moment optimal pour publier (ex: Mardi 8h-9h) avec explication courte",
+  "expectedEngagement": "Prédiction d'engagement basée sur les points forts du post",
+  "keyTakeaway": "La valeur unique que ce post apporte à l'audience"
+}`,
+  en: `You are a strategic advisor helping understand why a post works.
+
+Your approach: highlight what's done well before suggesting optimizations.
+
+Respond ONLY with a valid JSON object (no markdown, no backticks):
+{
+  "whyEffective": "What makes this post effective - value the chosen approach",
+  "bestTimeToPost": "Optimal posting time (e.g., Tuesday 8-9am) with brief explanation",
+  "expectedEngagement": "Engagement prediction based on post strengths",
+  "keyTakeaway": "The unique value this post brings to the audience"
+}`,
+};
+
+// ============== POST ANALYSIS PROMPTS (PRO+) ==============
+
+export const ANALYSIS_PROMPT = {
+  fr: `Tu es un coach en contenu LinkedIn qui aide à progresser tout en valorisant le travail accompli.
+
+Ton approche:
+- Commence par ce qui fonctionne bien
+- Les suggestions d'amélioration sont constructives, jamais négatives
+- Chaque feedback explique le "pourquoi"
+
+Réponds UNIQUEMENT avec un objet JSON valide (sans markdown, sans backticks):
+{
+  "hookScore": 7,
+  "hookFeedback": "Ce qui accroche dans cette intro + suggestion d'amélioration si pertinent",
+  "structureScore": 8,
+  "structureFeedback": "Points forts de la structure + piste d'optimisation",
+  "ctaScore": 6,
+  "ctaFeedback": "Efficacité du call-to-action + comment le renforcer",
+  "overallScore": 7,
+  "improvements": ["Amélioration actionnable 1", "Amélioration actionnable 2", "Amélioration actionnable 3"]
+}
+Scores de 1 à 10. Constructif et encourageant, mais honnête.`,
+  en: `You are a LinkedIn content coach helping users progress while valuing their work.
+
+Your approach:
+- Start with what works well
+- Improvement suggestions are constructive, never negative
+- Each feedback explains the "why"
+
+Respond ONLY with a valid JSON object (no markdown, no backticks):
+{
+  "hookScore": 7,
+  "hookFeedback": "What hooks in this intro + improvement suggestion if relevant",
+  "structureScore": 8,
+  "structureFeedback": "Structure strengths + optimization path",
+  "ctaScore": 6,
+  "ctaFeedback": "Call-to-action effectiveness + how to strengthen it",
+  "overallScore": 7,
+  "improvements": ["Actionable improvement 1", "Actionable improvement 2", "Actionable improvement 3"]
+}
+Scores from 1 to 10. Constructive and encouraging, but honest.`,
+};
+
+// ============== PLATFORM ADAPTATION PROMPTS (PRO+/MAX) ==============
+
+export const PLATFORM_PROMPTS = {
+  reddit: {
+    fr: `Tu es un expert en contenu Reddit. Adapte ce post LinkedIn pour Reddit.
+Règles:
+- Ton authentique et communautaire (pas de marketing agressif)
+- Titre accrocheur et informatif (séparé du contenu)
+- Style conversationnel, comme si tu partageais avec des amis
+- Pas de hashtags (Reddit n'utilise pas de hashtags)
+- Longueur: 200-800 caractères pour le corps
+- Valeur ajoutée claire pour la communauté
+- Évite le ton corporate
+
+Réponds UNIQUEMENT avec un objet JSON valide (sans markdown, sans backticks):
+{
+  "title": "Titre accrocheur pour le post Reddit",
+  "content": "Le contenu adapté pour Reddit",
+  "characterCount": 400,
+  "suggestedSubreddits": ["subreddit1", "subreddit2"],
+  "notes": "Conseil spécifique pour ce post Reddit"
+}`,
+    en: `You are a Reddit content expert. Adapt this LinkedIn post for Reddit.
+Rules:
+- Authentic and community-oriented tone (no aggressive marketing)
+- Catchy and informative title (separate from content)
+- Conversational style, like sharing with friends
+- No hashtags (Reddit doesn't use hashtags)
+- Length: 200-800 characters for the body
+- Clear added value for the community
+- Avoid corporate tone
+
+Respond ONLY with a valid JSON object (no markdown, no backticks):
+{
+  "title": "Catchy title for the Reddit post",
+  "content": "Adapted content for Reddit",
+  "characterCount": 400,
+  "suggestedSubreddits": ["subreddit1", "subreddit2"],
+  "notes": "Specific tip for this Reddit post"
+}`,
+  },
+  instagram: {
+    fr: `Tu es un expert en contenu Instagram. Adapte ce post LinkedIn pour Instagram.
+Règles:
+- Ton plus décontracté et visuel
+- Emojis plus nombreux et expressifs
+- Hashtags: 5-10 hashtags populaires et de niche
+- Longueur: 150-300 caractères pour la caption principale
+- Termine par un call-to-action engageant
+
+Réponds UNIQUEMENT avec un objet JSON valide (sans markdown, sans backticks):
+{
+  "content": "Le contenu adapté pour Instagram",
+  "characterCount": 250,
+  "hashtags": ["hashtag1", "hashtag2", "hashtag3"],
+  "notes": "Conseil spécifique pour ce post sur Instagram"
+}`,
+    en: `You are an Instagram content expert. Adapt this LinkedIn post for Instagram.
+Rules:
+- More casual and visual tone
+- More expressive emojis
+- Hashtags: 5-10 popular and niche hashtags
+- Length: 150-300 characters for main caption
+- End with an engaging call-to-action
+
+Respond ONLY with a valid JSON object (no markdown, no backticks):
+{
+  "content": "Adapted content for Instagram",
+  "characterCount": 250,
+  "hashtags": ["hashtag1", "hashtag2", "hashtag3"],
+  "notes": "Specific tip for this post on Instagram"
+}`,
+  },
+  twitter: {
+    fr: `Tu es un expert en contenu Twitter/X. Adapte ce post LinkedIn pour Twitter.
+Règles:
+- Maximum 280 caractères (STRICTEMENT)
+- Style direct et percutant
+- 1-3 hashtags maximum
+- Emojis utilisés avec parcimonie
+
+Réponds UNIQUEMENT avec un objet JSON valide (sans markdown, sans backticks):
+{
+  "content": "Le contenu adapté pour Twitter (max 280 car)",
+  "characterCount": 180,
+  "hashtags": ["hashtag1"],
+  "notes": "Conseil spécifique pour ce tweet"
+}`,
+    en: `You are a Twitter/X content expert. Adapt this LinkedIn post for Twitter.
+Rules:
+- Maximum 280 characters (STRICTLY)
+- Direct and punchy style
+- 1-3 hashtags maximum
+- Emojis used sparingly
+
+Respond ONLY with a valid JSON object (no markdown, no backticks):
+{
+  "content": "Adapted content for Twitter (max 280 chars)",
+  "characterCount": 180,
+  "hashtags": ["hashtag1"],
+  "notes": "Specific tip for this tweet"
+}`,
+  },
+  facebook: {
+    fr: `Tu es un expert en contenu Facebook. Adapte ce post LinkedIn pour Facebook.
+Règles:
+- Ton plus conversationnel et personnel
+- Encourage les commentaires et partages
+- Longueur: 100-500 caractères
+- Hashtags: 1-3 maximum (moins importants sur Facebook)
+- Question engageante à la fin
+
+Réponds UNIQUEMENT avec un objet JSON valide (sans markdown, sans backticks):
+{
+  "content": "Le contenu adapté pour Facebook",
+  "characterCount": 350,
+  "hashtags": ["hashtag1"],
+  "notes": "Conseil spécifique pour ce post Facebook"
+}`,
+    en: `You are a Facebook content expert. Adapt this LinkedIn post for Facebook.
+Rules:
+- More conversational and personal tone
+- Encourage comments and shares
+- Length: 100-500 characters
+- Hashtags: 1-3 maximum (less important on Facebook)
+- Engaging question at the end
+
+Respond ONLY with a valid JSON object (no markdown, no backticks):
+{
+  "content": "Adapted content for Facebook",
+  "characterCount": 350,
+  "hashtags": ["hashtag1"],
+  "notes": "Specific tip for this Facebook post"
+}`,
+  },
+};
+
+// ============== IMPROVE POST PROMPTS (PRO+) ==============
+
+export const IMPROVE_PROMPT = {
+  fr: `Tu es un partenaire d'amélioration qui sublime le contenu tout en préservant la voix unique de l'auteur.
+
+Ton approche:
+- L'idée de base est déjà bonne - tu l'améliores, tu ne la remplaces pas
+- Chaque modification a un objectif précis (meilleur hook, plus de clarté, etc.)
+- Tu gardes l'authenticité et le style personnel de l'auteur
+
+Ce que tu améliores:
+- L'accroche: plus percutante, arrête le scroll
+- La structure: plus aérée, plus lisible
+- Le call-to-action: plus engageant, invite à la conversation
+- Les détails: formulations plus précises, plus impactantes
+
+Ce que tu préserves:
+- L'essence du message original
+- Le ton et la personnalité de l'auteur
+- Les éléments qui fonctionnent déjà bien
+
+Format: Génère directement le post amélioré.
+Longueur: similaire à l'original.`,
+  en: `You are an improvement partner who elevates content while preserving the author's unique voice.
+
+Your approach:
+- The base idea is already good - you improve it, don't replace it
+- Each modification has a clear purpose (better hook, more clarity, etc.)
+- You keep the authenticity and personal style of the author
+
+What you improve:
+- The hook: more powerful, scroll-stopping
+- The structure: more airy, more readable
+- The call-to-action: more engaging, invites conversation
+- The details: more precise wording, more impactful
+
+What you preserve:
+- The essence of the original message
+- The tone and personality of the author
+- Elements that already work well
+
+Format: Generate the improved post directly.
+Length: similar to the original.`,
+};
+
+// ============== OPENAI SERVICE CLASS ==============
+
+export class OpenAIService {
+  private client: OpenAI;
+  private model: OpenAIModel;
+  private temperature: number;
+  private maxTokens: number;
+
+  constructor(config: OpenAIConfig) {
+    this.client = new OpenAI({
+      apiKey: config.apiKey,
+    });
+    this.model = config.model || "gpt-4";
+    this.temperature = config.temperature ?? 0.7;
+    this.maxTokens = config.maxTokens ?? 1000;
+  }
+
+  /**
+   * Generate a LinkedIn post with streaming
+   */
+  async generatePostStream(
+    type: "storytelling" | "business",
+    options: GeneratePostOptions,
+    callbacks: StreamCallbacks
+  ): Promise<string> {
+    const { prompt, language = "fr", userProfile } = options;
+    const systemPrompt = this.buildSystemPrompt(type, language, userProfile);
+
+    try {
+      callbacks.onStart?.(type);
+
+      const stream = await this.client.chat.completions.create({
+        model: this.model,
+        messages: [
+          { role: "system", content: systemPrompt },
+          {
+            role: "user",
+            content:
+              language === "fr"
+                ? `Crée un post LinkedIn sur le sujet suivant: ${prompt}`
+                : `Create a LinkedIn post about the following topic: ${prompt}`,
+          },
+        ],
+        temperature: type === "storytelling" ? 0.8 : 0.7,
+        max_tokens: this.maxTokens,
+        stream: true,
+      });
+
+      let fullContent = "";
+
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content || "";
+        if (content) {
+          fullContent += content;
+          callbacks.onChunk?.(content, type);
+        }
+      }
+
+      callbacks.onDone?.(type, fullContent);
+      return fullContent;
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      callbacks.onError?.(err);
+      throw err;
+    }
+  }
+
+  /**
+   * Generate both post types in parallel with streaming
+   */
+  async generateBothPostsStream(
+    options: GeneratePostOptions,
+    callbacks: {
+      storytelling: StreamCallbacks;
+      business: StreamCallbacks;
+    }
+  ): Promise<{ storytelling: string; business: string }> {
+    const [storytelling, business] = await Promise.all([
+      this.generatePostStream("storytelling", options, callbacks.storytelling),
+      this.generatePostStream("business", options, callbacks.business),
+    ]);
+
+    return { storytelling, business };
+  }
+
+  /**
+   * Generate posts sequentially (for SSE streaming to client)
+   */
+  async generatePostsSequential(
+    options: GeneratePostOptions,
+    callbacks: StreamCallbacks
+  ): Promise<GeneratedPost[]> {
+    const results: GeneratedPost[] = [];
+    const language = options.language || "fr";
+
+    // Generate storytelling first
+    const storytellingContent = await this.generatePostStream(
+      "storytelling",
+      options,
+      callbacks
+    );
+    results.push({
+      type: "storytelling",
+      title: language === "fr" ? "Version Storytelling" : "Storytelling Version",
+      content: storytellingContent,
+    });
+
+    // Then generate business
+    const businessContent = await this.generatePostStream(
+      "business",
+      options,
+      callbacks
+    );
+    results.push({
+      type: "business",
+      title: language === "fr" ? "Version Business" : "Business Version",
+      content: businessContent,
+    });
+
+    return results;
+  }
+
+  /**
+   * Chat completion with streaming
+   */
+  async chatStream(
+    options: ChatOptions,
+    callbacks: StreamCallbacks
+  ): Promise<string> {
+    const { messages, systemPrompt } = options;
+
+    try {
+      callbacks.onStart?.("chat");
+
+      const chatMessages: ChatCompletionMessageParam[] = [];
+
+      // Add system prompt if provided
+      if (systemPrompt) {
+        chatMessages.push({ role: "system", content: systemPrompt });
+      }
+
+      // Add conversation history
+      messages.forEach((msg) => {
+        chatMessages.push({
+          role: msg.role as "user" | "assistant" | "system",
+          content: msg.content,
+        });
+      });
+
+      const stream = await this.client.chat.completions.create({
+        model: this.model,
+        messages: chatMessages,
+        temperature: this.temperature,
+        max_tokens: this.maxTokens,
+        stream: true,
+      });
+
+      let fullContent = "";
+
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content || "";
+        if (content) {
+          fullContent += content;
+          callbacks.onChunk?.(content, "chat");
+        }
+      }
+
+      callbacks.onDone?.("chat", fullContent);
+      return fullContent;
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      callbacks.onError?.(err);
+      throw err;
+    }
+  }
+
+  /**
+   * Simple chat completion (non-streaming)
+   */
+  async chat(options: ChatOptions): Promise<string> {
+    const { messages, systemPrompt } = options;
+
+    const chatMessages: ChatCompletionMessageParam[] = [];
+
+    if (systemPrompt) {
+      chatMessages.push({ role: "system", content: systemPrompt });
+    }
+
+    messages.forEach((msg) => {
+      chatMessages.push({
+        role: msg.role as "user" | "assistant" | "system",
+        content: msg.content,
+      });
+    });
+
+    const response = await this.client.chat.completions.create({
+      model: this.model,
+      messages: chatMessages,
+      temperature: this.temperature,
+      max_tokens: this.maxTokens,
+    });
+
+    return response.choices[0]?.message?.content || "";
+  }
+
+  /**
+   * Build system prompt with user context
+   */
+  private buildSystemPrompt(
+    type: "storytelling" | "business",
+    language: "fr" | "en",
+    userProfile?: UserProfile
+  ): string {
+    let prompt = SYSTEM_PROMPTS[type][language];
+
+    if (userProfile) {
+      const contextLabels = {
+        fr: {
+          context: "Contexte de l'utilisateur",
+          sector: "Secteur",
+          role: "Rôle",
+          style: "Style préféré",
+          objective: "Objectif",
+          tone: "Ton souhaité",
+          notSpecified: "Non spécifié",
+        },
+        en: {
+          context: "User context",
+          sector: "Sector",
+          role: "Role",
+          style: "Preferred style",
+          objective: "Objective",
+          tone: "Desired tone",
+          notSpecified: "Not specified",
+        },
+      };
+
+      const labels = contextLabels[language];
+
+      prompt += `\n\n${labels.context}:
+- ${labels.sector}: ${userProfile.sector || labels.notSpecified}
+- ${labels.role}: ${userProfile.role || labels.notSpecified}
+- ${labels.style}: ${userProfile.linkedinStyle || labels.notSpecified}
+- ${labels.objective}: ${userProfile.objective || labels.notSpecified}
+- ${labels.tone}: ${userProfile.tone || labels.notSpecified}`;
+    }
+
+    return prompt;
+  }
+
+  /**
+   * Test API connection
+   */
+  async testConnection(): Promise<boolean> {
+    try {
+      await this.client.models.list();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+}
+
+// ============== FACTORY FUNCTIONS ==============
+
+/**
+ * Create OpenAI service with global API key
+ */
+export function createOpenAIService(
+  overrideConfig?: Partial<OpenAIConfig>
+): OpenAIService | null {
+  const apiKey = process.env.OPENAI_API_KEY;
+
+  if (!apiKey) {
+    return null;
+  }
+
+  return new OpenAIService({
+    apiKey,
+    model: (overrideConfig?.model as OpenAIModel) || "gpt-4",
+    temperature: overrideConfig?.temperature,
+    maxTokens: overrideConfig?.maxTokens,
+  });
+}
+
+/**
+ * Create OpenAI service with user-provided API key
+ */
+export function createUserOpenAIService(
+  userApiKey: string,
+  config?: Partial<OpenAIConfig>
+): OpenAIService {
+  return new OpenAIService({
+    apiKey: userApiKey,
+    model: (config?.model as OpenAIModel) || "gpt-4",
+    temperature: config?.temperature,
+    maxTokens: config?.maxTokens,
+  });
+}
+
+// ============== UTILITY FUNCTIONS ==============
+
+/**
+ * Check if OpenAI is configured (global key exists)
+ */
+export function isOpenAIConfigured(): boolean {
+  return !!process.env.OPENAI_API_KEY;
+}
+
+/**
+ * Validate an API key format (basic validation)
+ */
+export function isValidApiKeyFormat(apiKey: string): boolean {
+  return apiKey.startsWith("sk-") && apiKey.length > 20;
+}
+
+/**
+ * Get available models
+ */
+export function getAvailableModels(): {
+  id: OpenAIModel;
+  name: string;
+  description: string;
+}[] {
+  return [
+    {
+      id: "gpt-4",
+      name: "GPT-4",
+      description: "Most capable, best quality",
+    },
+    {
+      id: "gpt-4-turbo",
+      name: "GPT-4 Turbo",
+      description: "Faster GPT-4 with latest knowledge",
+    },
+    {
+      id: "gpt-3.5-turbo",
+      name: "GPT-3.5 Turbo",
+      description: "Fast and cost-effective",
+    },
+  ];
+}

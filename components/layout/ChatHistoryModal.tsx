@@ -170,7 +170,7 @@ export default function ChatHistoryModal({
               {/* Header */}
               <div className="flex items-center justify-between p-4 lg:p-5 border-b border-dark-border shrink-0">
                 <div>
-                  <h2 className="text-lg lg:text-xl font-semibold text-white">
+                  <h2 className="text-lg lg:text-xl font-semibold text-text-primary">
                     Historique des chats
                   </h2>
                   <p className="text-sm text-text-muted mt-0.5">
@@ -179,20 +179,44 @@ export default function ChatHistoryModal({
                 </div>
                 <button
                   onClick={onClose}
-                  className="min-w-[44px] min-h-[44px] p-2 flex items-center justify-center text-text-secondary hover:text-white hover:bg-dark-hover rounded-lg transition-colors"
+                  className="min-w-[44px] min-h-[44px] p-2 flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-dark-hover rounded-lg transition-colors"
                   aria-label="Fermer"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 6L18 18M6 18L18 6" />
                   </svg>
                 </button>
               </div>
 
-              {/* Content - Scrollable */}
-              <div className="flex-1 overflow-y-auto p-4 lg:p-5">
+              {/* Content - Scrollable with stable scrollbar gutter */}
+              <div
+                className="flex-1 overflow-y-scroll p-4 lg:p-5"
+                style={{
+                  scrollbarGutter: "stable",
+                }}
+              >
                 {filteredPosts.length === 0 ? (
-                  <div className="text-center py-12">
-                    <div className="w-16 h-16 bg-dark-hover rounded-full flex items-center justify-center mx-auto mb-4">
+                  <motion.div
+                    className="text-center py-12"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{
+                      duration: prefersReducedMotion ? 0.1 : 0.4,
+                      ease: [0.22, 1, 0.36, 1],
+                    }}
+                  >
+                    <motion.div
+                      className="w-16 h-16 bg-dark-hover rounded-full flex items-center justify-center mx-auto mb-4"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{
+                        duration: prefersReducedMotion ? 0.1 : 0.5,
+                        delay: prefersReducedMotion ? 0 : 0.1,
+                        type: "spring",
+                        stiffness: 200,
+                        damping: 15,
+                      }}
+                    >
                       <svg className="w-8 h-8 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path
                           strokeLinecap="round"
@@ -201,37 +225,110 @@ export default function ChatHistoryModal({
                           d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                         />
                       </svg>
-                    </div>
-                    <p className="text-text-secondary text-sm">
+                    </motion.div>
+                    <motion.p
+                      className="text-text-secondary text-sm"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{
+                        duration: prefersReducedMotion ? 0.1 : 0.3,
+                        delay: prefersReducedMotion ? 0 : 0.2,
+                      }}
+                    >
                       {searchQuery ? "Aucun résultat pour cette recherche" : "Aucune conversation"}
-                    </p>
-                  </div>
+                    </motion.p>
+                  </motion.div>
                 ) : (
-                  <div className="space-y-6">
-                    {groupedPosts.map((group) => (
-                      <div key={group.date}>
+                  <motion.div
+                    className="space-y-6"
+                    initial="hidden"
+                    animate="visible"
+                    variants={{
+                      hidden: { opacity: 0 },
+                      visible: {
+                        opacity: 1,
+                        transition: {
+                          staggerChildren: prefersReducedMotion ? 0 : 0.05,
+                        },
+                      },
+                    }}
+                  >
+                    {groupedPosts.map((group, groupIndex) => (
+                      <motion.div
+                        key={group.date}
+                        variants={{
+                          hidden: { opacity: 0, y: 20 },
+                          visible: {
+                            opacity: 1,
+                            y: 0,
+                            transition: {
+                              duration: prefersReducedMotion ? 0.1 : 0.3,
+                              ease: [0.22, 1, 0.36, 1],
+                            },
+                          },
+                        }}
+                      >
                         {/* Date header */}
-                        <div className="flex items-center gap-3 mb-3">
+                        <motion.div
+                          className="flex items-center gap-3 mb-3"
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{
+                            duration: prefersReducedMotion ? 0.1 : 0.4,
+                            delay: prefersReducedMotion ? 0 : groupIndex * 0.05,
+                            ease: [0.22, 1, 0.36, 1],
+                          }}
+                        >
                           <span className="text-xs font-medium text-primary uppercase tracking-wider">
                             {group.date}
                           </span>
                           <div className="flex-1 h-px bg-dark-border" />
-                        </div>
+                        </motion.div>
 
                         {/* Posts for this date */}
-                        <div className="space-y-2">
-                          {group.posts.map((post) => (
-                            <Link
+                        <motion.div
+                          className="space-y-2"
+                          variants={{
+                            hidden: {},
+                            visible: {
+                              transition: {
+                                staggerChildren: prefersReducedMotion ? 0 : 0.04,
+                              },
+                            },
+                          }}
+                          initial="hidden"
+                          animate="visible"
+                        >
+                          {group.posts.map((post, postIndex) => (
+                            <motion.div
                               key={post.id}
-                              href={`/app/c/${post.id}`}
-                              onClick={onClose}
-                              className="
-                                flex items-start gap-3 p-3 rounded-lg
-                                bg-dark-bg hover:bg-dark-hover
-                                border border-dark-border hover:border-primary/30
-                                transition-all duration-200 group
-                              "
+                              variants={{
+                                hidden: {
+                                  opacity: 0,
+                                  x: -20,
+                                  scale: 0.95,
+                                },
+                                visible: {
+                                  opacity: 1,
+                                  x: 0,
+                                  scale: 1,
+                                  transition: {
+                                    duration: prefersReducedMotion ? 0.1 : 0.35,
+                                    ease: [0.22, 1, 0.36, 1],
+                                  },
+                                },
+                              }}
                             >
+                              <Link
+                                href={`/app/c/${post.id}`}
+                                onClick={onClose}
+                                className="
+                                  flex items-start gap-3 p-3 rounded-lg
+                                  bg-dark-bg hover:bg-dark-hover
+                                  border border-dark-border hover:border-primary/30
+                                  transition-all duration-200 group
+                                "
+                              >
                               <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
                                 <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path
@@ -243,7 +340,7 @@ export default function ChatHistoryModal({
                                 </svg>
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-white font-medium truncate group-hover:text-primary transition-colors">
+                                <p className="text-text-primary font-medium truncate group-hover:text-primary transition-colors">
                                   {post.prompt}
                                 </p>
                                 <p className="text-xs text-text-muted mt-1">
@@ -258,12 +355,13 @@ export default function ChatHistoryModal({
                               >
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                               </svg>
-                            </Link>
+                              </Link>
+                            </motion.div>
                           ))}
-                        </div>
-                      </div>
+                        </motion.div>
+                      </motion.div>
                     ))}
-                  </div>
+                  </motion.div>
                 )}
               </div>
 

@@ -1,9 +1,9 @@
-"use client";
+﻿"use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
-import Link from "next/link";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import GoogleButton from "./GoogleButton";
 
@@ -15,10 +15,12 @@ interface AuthPanelProps {
 }
 
 // Password strength calculation
+type PasswordStrengthKey = "veryWeak" | "weak" | "medium" | "good" | "excellent";
+
 function getPasswordStrength(password: string): {
   width: number;
   color: string;
-  label: string;
+  labelKey: PasswordStrengthKey;
   score: number;
 } {
   let score = 0;
@@ -28,20 +30,23 @@ function getPasswordStrength(password: string): {
   if (/[0-9]/.test(password)) score++;
   if (/[^A-Za-z0-9]/.test(password)) score++;
 
-  if (score <= 1) return { width: 20, color: "#EF4444", label: "Tres faible", score };
-  if (score === 2) return { width: 40, color: "#EF4444", label: "Faible", score };
-  if (score === 3) return { width: 60, color: "#F59E0B", label: "Moyen", score };
-  if (score === 4) return { width: 80, color: "#00D1C1", label: "Bon", score };
-  return { width: 100, color: "#00D1C1", label: "Excellent", score };
+  // Warm color palette: Red -> Orange -> Salmon -> Coral (good/excellent)
+  if (score <= 1) return { width: 20, color: "#EF4444", labelKey: "veryWeak", score };
+  if (score === 2) return { width: 40, color: "#EF4444", labelKey: "weak", score };
+  if (score === 3) return { width: 60, color: "#F8A35D", labelKey: "medium", score }; // warm-orange logo
+  if (score === 4) return { width: 80, color: "#10B981", labelKey: "good", score }; // green for good
+  return { width: 100, color: "#10B981", labelKey: "excellent", score }; // green for excellent
 }
 
 // Password criteria check
-function getPasswordCriteria(password: string) {
+type PasswordCriteriaKey = "minChars" | "uppercase" | "number" | "special";
+
+function getPasswordCriteria(password: string): { met: boolean; labelKey: PasswordCriteriaKey }[] {
   return [
-    { met: password.length >= 8, label: "8 caracteres minimum" },
-    { met: /[A-Z]/.test(password), label: "Une majuscule" },
-    { met: /[0-9]/.test(password), label: "Un chiffre" },
-    { met: /[^A-Za-z0-9]/.test(password), label: "Un caractere special" },
+    { met: password.length >= 8, labelKey: "minChars" },
+    { met: /[A-Z]/.test(password), labelKey: "uppercase" },
+    { met: /[0-9]/.test(password), labelKey: "number" },
+    { met: /[^A-Za-z0-9]/.test(password), labelKey: "special" },
   ];
 }
 
@@ -89,72 +94,24 @@ const SparklesIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
   </svg>
 );
 
-// Premium animated background
-const PremiumBackground = ({ prefersReducedMotion }: { prefersReducedMotion: boolean }) => (
-  <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
-    {/* Primary gradient orb */}
-    <motion.div
-      className="absolute w-[600px] h-[600px] rounded-full blur-[150px] opacity-20"
-      style={{
-        background: "radial-gradient(circle, rgba(47, 128, 237, 0.7) 0%, transparent 70%)",
-        top: "-30%",
-        left: "-20%",
-      }}
-      animate={prefersReducedMotion ? {} : {
-        scale: [1, 1.1, 1],
-        opacity: [0.15, 0.25, 0.15],
-      }}
-      transition={{
-        duration: 8,
-        repeat: Infinity,
-        ease: "easeInOut",
-      }}
-    />
-    {/* Accent gradient orb */}
-    <motion.div
-      className="absolute w-[500px] h-[500px] rounded-full blur-[120px] opacity-15"
-      style={{
-        background: "radial-gradient(circle, rgba(0, 209, 193, 0.6) 0%, transparent 70%)",
-        bottom: "-25%",
-        right: "-15%",
-      }}
-      animate={prefersReducedMotion ? {} : {
-        scale: [1, 1.15, 1],
-        opacity: [0.12, 0.22, 0.12],
-      }}
-      transition={{
-        duration: 10,
-        repeat: Infinity,
-        ease: "easeInOut",
-        delay: 2,
-      }}
-    />
-    {/* Subtle grid pattern */}
-    <div
-      className="absolute inset-0 opacity-[0.015]"
-      style={{
-        backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
-                          linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
-        backgroundSize: "64px 64px",
-      }}
-    />
-  </div>
-);
+// Premium animated background removed - using page's global background for seamless integration
 
-// Social proof component
-const SocialProof = ({ prefersReducedMotion }: { prefersReducedMotion: boolean }) => (
+// Social proof component - Premium light mode styling
+const SocialProof = ({ prefersReducedMotion, usersText, thisWeekText }: { prefersReducedMotion: boolean; usersText: string; thisWeekText: string }) => (
   <motion.div
     initial={{ opacity: 0, y: 10 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: prefersReducedMotion ? 0 : 0.5, delay: 0.2 }}
-    className="flex items-center justify-center gap-3 mb-6"
+    className="flex items-center justify-center gap-3 sm:gap-4 mb-4 sm:mb-6 px-4 py-2.5 sm:py-3 bg-gradient-to-r from-warm-orange/5 via-transparent to-warm-coral/5 rounded-xl sm:rounded-2xl border border-warm-orange/10"
   >
-    <div className="flex -space-x-2">
+    {/* Avatars avec COULEURS AUTOSCROLL */}
+    <div className="flex -space-x-2 sm:-space-x-2.5">
       {[
-        "from-blue-500 to-blue-600",
-        "from-purple-500 to-purple-600",
-        "from-emerald-500 to-emerald-600",
-        "from-orange-500 to-orange-600",
+        "from-orange-500 to-amber-500",      // ORANGE DOMINANT
+        "from-rose-500 to-pink-500",         // ROSE créativité
+        "from-violet-500 to-purple-500",     // VIOLET premium
+        "from-emerald-500 to-green-500",     // VERT succès
+        "from-blue-500 to-cyan-500",         // BLEU confiance
       ].map((gradient, i) => (
         <motion.div
           key={i}
@@ -166,19 +123,19 @@ const SocialProof = ({ prefersReducedMotion }: { prefersReducedMotion: boolean }
             type: "spring",
             stiffness: 200,
           }}
-          className={`w-7 h-7 rounded-full bg-gradient-to-br ${gradient} border-2 border-dark-bg flex items-center justify-center shadow-lg`}
+          className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br ${gradient} border-2 border-white flex items-center justify-center shadow-md`}
         >
-          <span className="text-[9px] text-white font-semibold">
+          <span className="text-[8px] sm:text-[10px] text-white font-bold">
             {String.fromCharCode(65 + i)}
           </span>
         </motion.div>
       ))}
     </div>
     <div className="flex flex-col">
-      <span className="text-xs font-medium text-white">
-        <span className="text-accent">2,847+</span> utilisateurs
+      <span className="text-[11px] sm:text-sm font-semibold text-gray-800">
+        <span className="text-warm-orange">2,847+</span> {usersText}
       </span>
-      <span className="text-[10px] text-text-muted">cette semaine</span>
+      <span className="text-[9px] sm:text-xs text-gray-500">{thisWeekText}</span>
     </div>
   </motion.div>
 );
@@ -222,7 +179,7 @@ const PremiumInput = ({
     }}
     transition={{ duration: 0.2 }}
   >
-    {/* Focus ring */}
+    {/* Focus ring - Warm Orange/Coral gradient */}
     <AnimatePresence>
       {isFocused && (
         <motion.div
@@ -230,17 +187,17 @@ const PremiumInput = ({
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.98 }}
           transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
-          className="absolute -inset-0.5 bg-gradient-to-r from-primary/30 to-accent/30 rounded-xl blur-sm"
+          className="absolute -inset-0.5 bg-gradient-to-r from-warm-orange/20 to-warm-coral/20 rounded-xl blur-sm"
         />
       )}
     </AnimatePresence>
 
     <div className="relative flex items-center">
-      {/* Icon */}
+      {/* Icon - Warm orange when focused */}
       <motion.div
-        className="absolute left-3.5 flex items-center justify-center w-5 h-5 z-10"
+        className="absolute left-3 sm:left-3.5 flex items-center justify-center w-4 h-4 sm:w-5 sm:h-5 z-10"
         animate={{
-          color: isFocused ? "rgb(47, 128, 237)" : "rgb(107, 114, 128)",
+          color: isFocused ? "rgb(249, 115, 22)" : "rgb(156, 163, 175)",
           scale: prefersReducedMotion ? 1 : isFocused ? 1.1 : 1,
         }}
         transition={{ duration: 0.2 }}
@@ -248,7 +205,7 @@ const PremiumInput = ({
         {icon}
       </motion.div>
 
-      {/* Input */}
+      {/* Input - Light mode styling */}
       <input
         ref={inputRef}
         type={type}
@@ -260,13 +217,14 @@ const PremiumInput = ({
         autoComplete={autoComplete}
         required={required}
         className={`
-          relative w-full pl-11 py-3.5
-          bg-white/[0.03] border rounded-xl
-          text-sm text-white placeholder:text-text-muted/70
-          focus:outline-none focus:bg-white/[0.05]
-          transition-colors duration-300
-          ${rightElement ? "pr-12" : "pr-4"}
-          ${isFocused ? "border-primary/50" : "border-white/[0.08] hover:border-white/[0.15]"}
+          relative w-full pl-10 sm:pl-11 py-3.5 sm:py-4
+          bg-white border rounded-lg sm:rounded-xl
+          text-sm text-gray-900 placeholder:text-gray-400
+          focus:outline-none focus:bg-white
+          transition-all duration-300
+          shadow-sm
+          ${rightElement ? "pr-11 sm:pr-12" : "pr-4"}
+          ${isFocused ? "border-warm-orange ring-2 ring-warm-orange/20" : "border-gray-200 hover:border-gray-300"}
         `}
       />
 
@@ -280,7 +238,7 @@ const PremiumInput = ({
   </motion.div>
 );
 
-// Premium checkbox component
+// Premium checkbox component - Light mode compatible
 const PremiumCheckbox = ({
   checked,
   onChange,
@@ -305,8 +263,8 @@ const PremiumCheckbox = ({
           w-[18px] h-[18px] rounded-md border-2 flex items-center justify-center
           transition-colors duration-200
           ${checked
-            ? "bg-primary border-primary"
-            : "border-white/20 group-hover:border-white/40"
+            ? "bg-warm-orange border-warm-orange"
+            : "border-gray-300 group-hover:border-warm-orange/50"
           }
         `}
         whileTap={prefersReducedMotion ? {} : { scale: 0.9 }}
@@ -325,7 +283,7 @@ const PremiumCheckbox = ({
         </AnimatePresence>
       </motion.div>
     </div>
-    <span className="text-xs text-text-muted leading-relaxed group-hover:text-text-secondary transition-colors">
+    <span className="text-xs text-gray-600 leading-relaxed group-hover:text-gray-800 transition-colors">
       {children}
     </span>
   </label>
@@ -333,7 +291,8 @@ const PremiumCheckbox = ({
 
 // Main AuthPanel component
 export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPanelProps) {
-  const { signInWithEmail, signUpWithEmail } = useAuth();
+  const { signInWithEmail, signUpWithEmail, resetPassword } = useAuth();
+  const { t } = useLanguage();
   const prefersReducedMotion = useReducedMotion();
   const [mode, setMode] = useState<AuthMode>(initialMode);
 
@@ -342,11 +301,14 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
+  const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
+  const [forgotPasswordSuccess, setForgotPasswordSuccess] = useState(false);
 
   // Focus states
   const [focusedField, setFocusedField] = useState<string | null>(null);
@@ -375,17 +337,74 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
     return () => clearTimeout(timer);
   }, [mode]);
 
+  // Block scroll when input is focused on mobile/tablet
+  // This prevents accidental scrolling while typing
+  const touchStartY = useRef<number | null>(null);
+
+  const preventScrollOnFocus = useCallback((e: TouchEvent) => {
+    // Only block when an input field is focused
+    if (!focusedField) return;
+
+    // Allow scrolling inside scrollable containers
+    const target = e.target as HTMLElement;
+    if (target.closest('.overflow-y-auto, .overflow-auto, [data-allow-scroll]')) {
+      return;
+    }
+
+    // Prevent scroll
+    e.preventDefault();
+  }, [focusedField]);
+
+  const handleTouchStartForScroll = useCallback((e: TouchEvent) => {
+    if (e.touches.length === 1) {
+      touchStartY.current = e.touches[0].clientY;
+    }
+  }, []);
+
+  useEffect(() => {
+    // Only add listeners when a field is focused
+    if (!focusedField) {
+      // Cleanup styles when no field is focused
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
+      document.body.style.touchAction = "";
+      return;
+    }
+
+    // Block scroll when input is focused
+    document.body.style.overflow = "hidden";
+    document.body.style.position = "fixed";
+    document.body.style.width = "100%";
+    document.body.style.touchAction = "none";
+
+    // Add touch listeners to prevent scroll gestures
+    document.addEventListener("touchstart", handleTouchStartForScroll, { passive: true });
+    document.addEventListener("touchmove", preventScrollOnFocus, { passive: false });
+
+    return () => {
+      document.removeEventListener("touchstart", handleTouchStartForScroll);
+      document.removeEventListener("touchmove", preventScrollOnFocus);
+      // Restore scroll on cleanup
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
+      document.body.style.touchAction = "";
+      touchStartY.current = null;
+    };
+  }, [focusedField, preventScrollOnFocus, handleTouchStartForScroll]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
     if (mode === "signup") {
       if (password.length < 6) {
-        setError("Le mot de passe doit contenir au moins 6 caracteres");
+        setError(t.auth.passwordMinLength);
         return;
       }
       if (!acceptTerms) {
-        setError("Veuillez accepter les conditions d'utilisation");
+        setError(t.auth.acceptTermsRequired);
         return;
       }
     }
@@ -417,38 +436,49 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
     setError("");
   };
 
-  return (
-    <div className="relative w-full max-w-sm sm:max-w-md lg:max-w-[380px] mx-auto px-4 sm:px-6 lg:px-0 py-8 lg:py-0">
-      {/* Premium background - Desktop only */}
-      <div className="hidden lg:block">
-        <PremiumBackground prefersReducedMotion={prefersReducedMotion} />
-      </div>
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotPasswordEmail.trim()) return;
 
+    setForgotPasswordLoading(true);
+    try {
+      await resetPassword(forgotPasswordEmail.trim());
+      setForgotPasswordSuccess(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Une erreur est survenue");
+    } finally {
+      setForgotPasswordLoading(false);
+    }
+  };
+
+  const closeForgotPassword = () => {
+    setShowForgotPassword(false);
+    setForgotPasswordEmail("");
+    setForgotPasswordSuccess(false);
+    setError("");
+  };
+
+  return (
+    <div className="relative w-full max-w-md sm:max-w-md lg:max-w-[400px] mx-auto px-4 sm:px-6 lg:px-0 py-2 sm:py-4 lg:py-0">
       {/* Logo - Mobile only */}
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: prefersReducedMotion ? 0 : 0.5 }}
-        className="flex justify-center mb-8 lg:hidden"
+        className="flex justify-center mb-3 sm:mb-6 lg:hidden"
       >
         <div className="relative">
-          <div className="w-16 h-16 bg-gradient-to-br from-primary to-accent rounded-2xl flex items-center justify-center shadow-2xl shadow-primary/25 overflow-hidden">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg overflow-hidden">
             <img
-              src="/logo.png"
-              alt="POSTY"
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                e.currentTarget.style.display = "none";
-                const sibling = e.currentTarget.nextElementSibling as HTMLElement | null;
-                if (sibling) sibling.style.display = "flex";
-              }}
+              src="/logo.jpg"
+              alt="Posty Logo"
+              className="w-full h-full object-contain"
             />
-            <span className="text-white font-bold text-2xl hidden items-center justify-center">P</span>
           </div>
           <motion.div
-            className="absolute -inset-4 bg-gradient-to-br from-primary/20 to-accent/20 rounded-2xl blur-2xl -z-10"
+            className="absolute -inset-3 bg-gradient-to-br from-warm-orange/15 to-warm-coral/15 rounded-xl blur-xl -z-10"
             animate={prefersReducedMotion ? {} : {
-              opacity: [0.3, 0.5, 0.3],
+              opacity: [0.2, 0.35, 0.2],
               scale: [0.95, 1.05, 0.95],
             }}
             transition={{ duration: 3, repeat: Infinity }}
@@ -456,25 +486,25 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
         </div>
       </motion.div>
 
-      {/* Header */}
+      {/* Header - Premium light mode styling */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: prefersReducedMotion ? 0 : 0.5, delay: 0.1 }}
-        className="text-center mb-6"
+        className="text-center mb-4 sm:mb-6"
       >
-        <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2 tracking-tight">
-          {mode === "login" ? "Bon retour" : "Creer un compte"}
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1.5 sm:mb-2 tracking-tight">
+          {mode === "login" ? t.auth.welcomeBack : t.auth.createAccount}
         </h1>
-        <p className="text-text-secondary text-sm">
+        <p className="text-gray-500 text-xs sm:text-sm max-w-[280px] mx-auto leading-relaxed">
           {mode === "login"
-            ? "Connectez-vous pour acceder a votre espace"
-            : "Rejoignez POSTY et boostez votre LinkedIn"}
+            ? t.auth.loginSubtitle
+            : t.auth.signupSubtitle}
         </p>
       </motion.div>
 
       {/* Social proof - Signup only */}
-      {mode === "signup" && <SocialProof prefersReducedMotion={prefersReducedMotion} />}
+      {mode === "signup" && <SocialProof prefersReducedMotion={prefersReducedMotion} usersText={t.auth.users} thisWeekText={t.auth.thisWeek} />}
 
       {/* Form */}
       <AnimatePresence mode="wait">
@@ -485,23 +515,23 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
           exit={{ opacity: 0, x: mode === "login" ? 20 : -20 }}
           transition={{ duration: prefersReducedMotion ? 0 : 0.3 }}
         >
-          {/* Success message */}
+          {/* Success message - Warm Orange Theme */}
           <AnimatePresence>
             {showSuccess && (
               <motion.div
                 initial={{ opacity: 0, y: -10, height: 0 }}
                 animate={{ opacity: 1, y: 0, height: "auto" }}
                 exit={{ opacity: 0, y: -10, height: 0 }}
-                className="mb-4 p-4 bg-accent/10 border border-accent/30 rounded-xl flex items-center gap-3"
+                className="mb-4 p-4 bg-success/10 border border-success/30 rounded-xl flex items-center gap-3"
               >
-                <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center">
-                  <CheckIcon className="w-4 h-4 text-accent" />
+                <div className="w-8 h-8 rounded-full bg-success/20 flex items-center justify-center">
+                  <CheckIcon className="w-4 h-4 text-success" />
                 </div>
                 <div>
-                  <p className="text-accent text-sm font-medium">
-                    {mode === "login" ? "Connexion reussie !" : "Compte cree avec succes !"}
+                  <p className="text-success text-sm font-medium">
+                    {mode === "login" ? t.auth.loginSuccess : t.auth.accountCreated}
                   </p>
-                  <p className="text-accent/70 text-xs">Redirection en cours...</p>
+                  <p className="text-success/70 text-xs">{t.auth.redirecting}</p>
                 </div>
               </motion.div>
             )}
@@ -518,7 +548,7 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
               >
                 <div className="w-6 h-6 rounded-full bg-error/20 flex items-center justify-center shrink-0">
                   <svg className="w-3 h-3 text-error" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 6L18 18M6 18L18 6" />
                   </svg>
                 </div>
                 <p className="text-error text-xs">{error}</p>
@@ -526,7 +556,7 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
             )}
           </AnimatePresence>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
             {/* Name field - Signup only */}
             {mode === "signup" && (
               <motion.div
@@ -536,7 +566,7 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
               >
                 <PremiumInput
                   type="text"
-                  placeholder="Votre nom"
+                  placeholder={t.auth.yourName}
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   icon={<UserIcon className="w-4 h-4" />}
@@ -554,7 +584,7 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
             {/* Email field */}
             <PremiumInput
               type="email"
-              placeholder="Adresse email"
+              placeholder={t.auth.emailAddress}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               icon={<MailIcon className="w-4 h-4" />}
@@ -571,7 +601,7 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
             <div className="space-y-3">
               <PremiumInput
                 type={showPassword ? "text" : "password"}
-                placeholder="Mot de passe"
+                placeholder={t.auth.password}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 icon={<LockIcon className="w-4 h-4" />}
@@ -585,7 +615,7 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="min-w-[44px] min-h-[44px] flex items-center justify-center text-text-muted hover:text-white transition-colors"
+                    className="min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
                   >
                     {showPassword ? <EyeOffIcon /> : <EyeIcon />}
                   </button>
@@ -604,7 +634,7 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
                   >
                     {/* Strength bar */}
                     <div className="space-y-1.5">
-                      <div className="h-1.5 rounded-full bg-dark-border overflow-hidden">
+                      <div className="h-1.5 rounded-full bg-gray-200 overflow-hidden">
                         <motion.div
                           className="h-full rounded-full"
                           style={{ backgroundColor: passwordStrength.color }}
@@ -614,12 +644,12 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
                         />
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] text-text-muted">Force:</span>
+                        <span className="text-[10px] text-gray-500">{t.auth.strength}:</span>
                         <span
                           className="text-[10px] font-medium"
                           style={{ color: passwordStrength.color }}
                         >
-                          {passwordStrength.label}
+                          {t.auth.passwordStrength[passwordStrength.labelKey]}
                         </span>
                       </div>
                     </div>
@@ -633,12 +663,12 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: prefersReducedMotion ? 0 : index * 0.05 }}
                           className={`flex items-center gap-2 text-[10px] ${
-                            criterion.met ? "text-accent" : "text-text-muted"
+                            criterion.met ? "text-emerald-600" : "text-gray-500"
                           }`}
                         >
                           <motion.div
                             className={`w-3.5 h-3.5 rounded-full flex items-center justify-center ${
-                              criterion.met ? "bg-accent/20" : "bg-dark-border"
+                              criterion.met ? "bg-emerald-100" : "bg-gray-200"
                             }`}
                             animate={{ scale: criterion.met ? [1, 1.2, 1] : 1 }}
                             transition={{ duration: 0.2 }}
@@ -646,10 +676,10 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
                             {criterion.met ? (
                               <CheckIcon className="w-2 h-2" />
                             ) : (
-                              <div className="w-1 h-1 rounded-full bg-text-muted" />
+                              <div className="w-1 h-1 rounded-full bg-gray-400" />
                             )}
                           </motion.div>
-                          <span>{criterion.label}</span>
+                          <span>{t.auth.passwordCriteria[criterion.labelKey]}</span>
                         </motion.div>
                       ))}
                     </div>
@@ -657,22 +687,16 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
                 )}
               </AnimatePresence>
 
-              {/* Remember me / Forgot password - Login only */}
+              {/* Forgot password - Login only */}
               {mode === "login" && (
-                <div className="flex items-center justify-between pt-1">
-                  <PremiumCheckbox
-                    checked={rememberMe}
-                    onChange={setRememberMe}
-                    prefersReducedMotion={prefersReducedMotion}
+                <div className="flex justify-end pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotPassword(true)}
+                    className="text-xs text-gray-500 hover:text-warm-orange transition-colors"
                   >
-                    Se souvenir de moi
-                  </PremiumCheckbox>
-                  <Link
-                    href="/forgot-password"
-                    className="text-xs text-text-muted hover:text-primary transition-colors"
-                  >
-                    Mot de passe oublie ?
-                  </Link>
+                    {t.auth.forgotPassword}
+                  </button>
                 </div>
               )}
             </div>
@@ -684,27 +708,29 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
                 onChange={setAcceptTerms}
                 prefersReducedMotion={prefersReducedMotion}
               >
-                J&apos;accepte les{" "}
-                <Link href="/legal/terms" className="text-primary hover:underline">CGU</Link>
-                {" "}et la{" "}
-                <Link href="/legal/privacy" className="text-primary hover:underline">politique de confidentialite</Link>
+                {t.auth.acceptTermsText}{" "}
+                <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="text-warm-orange hover:underline">{t.common.terms}</a>
+                {" "}{t.auth.andThe}{" "}
+                <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-warm-orange hover:underline">{t.auth.privacyPolicyText}</a>
               </PremiumCheckbox>
             )}
 
-            {/* Submit button */}
+            {/* Submit button - Premium Warm Orange/Coral Gradient */}
             <motion.button
               type="submit"
               disabled={isLoading || showSuccess || (mode === "signup" && !acceptTerms)}
               className="
-                relative w-full py-4 rounded-xl font-semibold text-sm text-white
-                bg-gradient-to-r from-primary via-primary-light to-primary
+                relative w-full py-3.5 sm:py-4 rounded-xl sm:rounded-2xl font-semibold text-sm sm:text-base text-white
+                bg-gradient-to-r from-warm-orange via-warm-coral to-warm-orange
                 bg-[length:200%_100%]
-                shadow-lg shadow-primary/30
-                disabled:opacity-50 disabled:cursor-not-allowed
+                shadow-lg shadow-warm-orange/25
+                hover:shadow-xl hover:shadow-warm-orange/30
+                disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-lg
                 overflow-hidden group
+                transition-shadow duration-300
               "
               whileHover={prefersReducedMotion ? {} : {
-                scale: 1.02,
+                scale: 1.01,
                 backgroundPosition: "100% 0",
               }}
               whileTap={prefersReducedMotion ? {} : { scale: 0.98 }}
@@ -712,7 +738,7 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
             >
               {/* Shimmer effect */}
               <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent"
                 initial={{ x: "-100%" }}
                 animate={{ x: "100%" }}
                 transition={{
@@ -726,67 +752,205 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">
                   <motion.div
-                    className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
+                    className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/30 border-t-white rounded-full"
                     animate={{ rotate: 360 }}
                     transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
                   />
-                  Chargement...
+                  <span className="text-white/90">{t.common.loading}</span>
                 </span>
               ) : (
                 <span className="relative flex items-center justify-center gap-2">
-                  {mode === "signup" && <SparklesIcon className="w-4 h-4" />}
-                  {mode === "login" ? "Se connecter" : "Creer mon compte"}
+                  {mode === "signup" && <SparklesIcon className="w-4 h-4 sm:w-5 sm:h-5" />}
+                  {mode === "login" ? t.auth.signIn : t.auth.createMyAccount}
                 </span>
               )}
             </motion.button>
           </form>
 
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-white/[0.08]" />
-            </div>
-            <div className="relative flex justify-center">
-              <span className="px-4 bg-dark-bg text-text-muted text-xs">ou continuer avec</span>
-            </div>
+          {/* Divider - Premium seamless styling without background */}
+          <div className="flex items-center gap-3 sm:gap-4 my-5 sm:my-7">
+            <div className="flex-1 h-px bg-gray-200/80" />
+            <span className="text-gray-400 text-[10px] sm:text-xs font-medium uppercase tracking-wider shrink-0">
+              {t.auth.orContinueWith}
+            </span>
+            <div className="flex-1 h-px bg-gray-200/80" />
           </div>
 
           {/* Google Button */}
           <GoogleButton
             onSuccess={onSuccess}
-            label={mode === "login" ? "Se connecter avec Google" : "S'inscrire avec Google"}
+            label={mode === "login" ? t.auth.signInWithGoogle : t.auth.signUpWithGoogle}
           />
 
-          {/* Toggle mode */}
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className="mt-6 text-center text-text-secondary text-sm"
-          >
-            {mode === "login" ? "Pas encore de compte ? " : "Deja un compte ? "}
-            <button
-              type="button"
-              onClick={() => handleModeSwitch(mode === "login" ? "signup" : "login")}
-              className="text-primary hover:text-primary-light font-semibold transition-colors"
-            >
-              {mode === "login" ? "S'inscrire gratuitement" : "Se connecter"}
-            </button>
-          </motion.p>
-
-          {/* Security badge */}
+          {/* Toggle mode - Enhanced visibility for signup */}
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="mt-6 flex items-center justify-center gap-2 text-text-muted"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.4 }}
+            className="mt-5 sm:mt-7"
           >
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.02] rounded-full border border-white/[0.05]">
-              <LockIcon className="w-3 h-3" />
-              <span className="text-[10px]">Connexion securisee SSL</span>
+            {mode === "login" ? (
+              // Signup CTA — clean, premium, matching login button proportions
+              <div className="text-center">
+                <p className="text-gray-500 text-xs sm:text-sm mb-3">
+                  {t.auth.noAccount}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => handleModeSwitch("signup")}
+                  className="w-full py-3 sm:py-3.5 px-4 bg-white border border-warm-orange/60 text-warm-orange hover:border-warm-orange hover:bg-warm-orange/5 font-medium rounded-xl sm:rounded-2xl transition-all duration-200 text-sm active:scale-[0.98]"
+                >
+                  {t.auth.signUpFree}
+                </button>
+              </div>
+            ) : (
+              // Subtle login link when on signup page
+              <p className="text-center text-gray-500 text-xs sm:text-sm">
+                {t.auth.haveAccount}{" "}
+                <button
+                  type="button"
+                  onClick={() => handleModeSwitch("login")}
+                  className="text-warm-orange hover:text-warm-coral font-semibold transition-colors underline-offset-2 hover:underline"
+                >
+                  {t.auth.signIn}
+                </button>
+              </p>
+            )}
+          </motion.div>
+
+          {/* Security badge - Premium styling */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, duration: 0.4 }}
+            className="mt-4 sm:mt-6 flex items-center justify-center"
+          >
+            <div className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-50 rounded-full border border-gray-100 shadow-sm">
+              <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-emerald-100 flex items-center justify-center">
+                <LockIcon className="w-2 h-2 sm:w-2.5 sm:h-2.5 text-emerald-600" />
+              </div>
+              <span className="text-[10px] sm:text-xs text-gray-600 font-medium">{t.auth.securedSSL}</span>
             </div>
           </motion.div>
         </motion.div>
+      </AnimatePresence>
+
+      {/* Forgot Password Modal */}
+      <AnimatePresence>
+        {showForgotPassword && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+            onClick={closeForgotPassword}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ duration: 0.2 }}
+              className="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {forgotPasswordSuccess ? (
+                // Success state
+                <div className="text-center">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-emerald-100 rounded-full flex items-center justify-center">
+                    <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Email envoyé !
+                  </h3>
+                  <p className="text-sm text-gray-600 mb-3">
+                    Vérifiez votre boîte mail pour réinitialiser votre mot de passe.
+                  </p>
+                  <p className="text-xs text-gray-500 italic mb-6">
+                    Pensez à vérifier votre dossier spam ou courrier indésirable si vous ne voyez pas l&apos;email.
+                  </p>
+                  <button
+                    onClick={closeForgotPassword}
+                    className="w-full py-3 bg-gradient-to-r from-warm-orange to-warm-coral text-white font-medium rounded-xl hover:opacity-90 transition-opacity"
+                  >
+                    Retour à la connexion
+                  </button>
+                </div>
+              ) : (
+                // Form state
+                <>
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Réinitialiser le mot de passe
+                    </h3>
+                    <button
+                      onClick={closeForgotPassword}
+                      className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 6L18 18M6 18L18 6" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  <p className="text-sm text-gray-600 mb-6">
+                    Entrez votre adresse email et nous vous enverrons un lien pour réinitialiser votre mot de passe.
+                  </p>
+
+                  {error && (
+                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+                      {error}
+                    </div>
+                  )}
+
+                  <form onSubmit={handleForgotPassword} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        value={forgotPasswordEmail}
+                        onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                        placeholder="votre@email.com"
+                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-warm-orange focus:ring-2 focus:ring-warm-orange/20 transition-all"
+                        required
+                        autoFocus
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={forgotPasswordLoading || !forgotPasswordEmail.trim()}
+                      className="w-full py-3 bg-gradient-to-r from-warm-orange to-warm-coral text-white font-medium rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {forgotPasswordLoading ? (
+                        <>
+                          <motion.div
+                            className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+                          />
+                          Envoi en cours...
+                        </>
+                      ) : (
+                        "Envoyer le lien"
+                      )}
+                    </button>
+                  </form>
+
+                  <button
+                    onClick={closeForgotPassword}
+                    className="w-full mt-4 py-2.5 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+                  >
+                    Retour à la connexion
+                  </button>
+                </>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
       </AnimatePresence>
     </div>
   );

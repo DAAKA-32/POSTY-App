@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { SubscriptionPlan, getPlanById } from "@/types";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ProfilePlanCardProps {
   currentPlan: SubscriptionPlan;
@@ -16,26 +17,36 @@ export default function ProfilePlanCard({
   dailyLimit = 3,
   onUpgrade,
 }: ProfilePlanCardProps) {
+  const { t } = useLanguage();
   const plan = getPlanById(currentPlan);
   const isUnlimited = dailyLimit === -1;
   const usagePercentage = isUnlimited ? 0 : Math.min((dailyMessagesUsed / dailyLimit) * 100, 100);
 
-  // Plan styles
+  // Plan styles - Premium design with light mode support
   const planStyles = {
     free: {
-      gradient: "from-text-muted/20 to-text-muted/10",
-      badge: "bg-dark-hover text-text-secondary",
-      icon: "text-text-muted",
+      gradient: "from-gray-100 dark:from-text-muted/15 to-gray-50 dark:to-text-muted/5",
+      badge: "bg-gray-100 dark:bg-dark-hover text-gray-600 dark:text-text-secondary border border-gray-200 dark:border-dark-border",
+      icon: "text-gray-500 dark:text-text-muted",
+      glow: "",
+      border: "border-gray-200 dark:border-dark-border hover:border-gray-300 dark:hover:border-text-muted/30",
+      cardBg: "bg-white dark:bg-transparent",
     },
     pro: {
-      gradient: "from-primary/20 to-primary/10",
-      badge: "bg-primary/20 text-primary",
-      icon: "text-primary",
+      gradient: "from-orange-50 dark:from-orange-500/15 via-orange-50/50 dark:via-orange-400/10 to-transparent",
+      badge: "bg-orange-100 dark:bg-gradient-to-r dark:from-orange-500/20 dark:to-orange-400/10 text-orange-500 dark:text-orange-400 border border-orange-200 dark:border-orange-500/20",
+      icon: "text-orange-500 dark:text-orange-400",
+      glow: "hover:shadow-md dark:hover:shadow-[0_0_20px_rgba(232,147,77,0.15)]",
+      border: "border-orange-200 dark:border-orange-500/20 hover:border-orange-300 dark:hover:border-orange-500/40",
+      cardBg: "bg-white dark:bg-transparent",
     },
     max: {
-      gradient: "from-accent/20 to-accent/10",
-      badge: "bg-accent/20 text-accent",
-      icon: "text-accent",
+      gradient: "from-orange-50 dark:from-primary/15 via-pink-50/50 dark:via-accent/10 to-transparent",
+      badge: "bg-gradient-to-r from-orange-100 dark:from-primary/20 to-pink-100 dark:to-accent/10 text-orange-500 dark:text-primary border border-orange-200 dark:border-primary/20",
+      icon: "text-orange-500 dark:text-primary",
+      glow: "hover:shadow-md dark:hover:shadow-glow",
+      border: "border-orange-200 dark:border-primary/20 hover:border-orange-300 dark:hover:border-primary/40",
+      cardBg: "bg-white dark:bg-transparent",
     },
   };
 
@@ -46,18 +57,88 @@ export default function ProfilePlanCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+      whileHover={{ y: -4, scale: 1.005 }}
       className={`
-        relative overflow-hidden
+        group relative overflow-hidden
         bg-gradient-to-br ${style.gradient}
-        border border-dark-border
+        border ${style.border}
         rounded-2xl p-5 lg:p-6
+        transition-all duration-300
+        ${style.glow}
       `}
     >
+      {/* AUTOSCROLL-style shimmer effect for pro/max plans */}
+      {currentPlan !== "free" && (
+        <motion.div
+          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+          animate={{
+            backgroundPosition: ["0% 0%", "200% 200%"],
+          }}
+          transition={{
+            duration: 3,
+            repeat: Infinity,
+            ease: "linear",
+          }}
+          style={{
+            background: currentPlan === "max"
+              ? "linear-gradient(135deg, transparent 0%, rgba(248,147,93,0.08) 25%, transparent 50%, rgba(251,146,60,0.08) 75%, transparent 100%)"
+              : "linear-gradient(135deg, transparent 0%, rgba(251,146,60,0.08) 25%, transparent 50%, rgba(251,146,60,0.08) 75%, transparent 100%)",
+            backgroundSize: "200% 200%",
+          }}
+        />
+      )}
+
+      {/* Decorative glow for pro plan - Enhanced with animation */}
+      {currentPlan === "pro" && (
+        <motion.div
+          className="absolute -top-12 -right-12 w-32 h-32 bg-orange-500/10 rounded-full blur-2xl"
+          animate={{
+            opacity: [0, 0.6, 0],
+            scale: [1, 1.1, 1],
+          }}
+          transition={{
+            duration: 4,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+      )}
+
+      {/* Decorative glow for max plan - ORANGE DOMINANT with accent */}
+      {currentPlan === "max" && (
+        <>
+          <motion.div
+            className="absolute -top-12 -right-12 w-32 h-32 bg-primary/12 rounded-full blur-2xl"
+            animate={{
+              opacity: [0, 0.7, 0],
+              scale: [1, 1.15, 1],
+            }}
+            transition={{
+              duration: 3.5,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          />
+          <motion.div
+            className="absolute -bottom-8 -left-8 w-24 h-24 bg-accent/10 rounded-full blur-xl"
+            animate={{
+              opacity: [0, 0.5, 0],
+              scale: [1, 1.1, 1],
+            }}
+            transition={{
+              duration: 4.5,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 1,
+            }}
+          />
+        </>
+      )}
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
           {/* Plan icon */}
-          <div className={`w-10 h-10 rounded-xl bg-dark-card flex items-center justify-center ${style.icon}`}>
+          <div className={`w-10 h-10 rounded-xl bg-white dark:bg-dark-card flex items-center justify-center ${style.icon}`}>
             {currentPlan === "free" ? (
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -74,14 +155,14 @@ export default function ProfilePlanCard({
           </div>
 
           <div>
-            <h3 className="font-semibold text-white text-lg">Plan {plan.name}</h3>
-            <p className="text-sm text-text-muted">{plan.tagline}</p>
+            <h3 className="font-semibold text-gray-900 dark:text-text-primary text-lg">{plan.name}</h3>
+            <p className="text-sm text-gray-500 dark:text-text-muted">{plan.tagline}</p>
           </div>
         </div>
 
         {/* Plan badge */}
         <span className={`px-3 py-1 text-xs font-semibold rounded-full ${style.badge}`}>
-          {currentPlan === "free" ? "Gratuit" : plan.price.toFixed(2) + " EUR/mois"}
+          {currentPlan === "free" ? t.common.free : plan.price.toFixed(2) + " EUR/mois"}
         </span>
       </div>
 
@@ -89,12 +170,12 @@ export default function ProfilePlanCard({
       {currentPlan === "free" && (
         <div className="mb-4">
           <div className="flex items-center justify-between text-sm mb-2">
-            <span className="text-text-muted">Messages aujourd&apos;hui</span>
-            <span className="text-white font-medium">
+            <span className="text-gray-500 dark:text-text-muted">{t.sidebar.messagesToday}</span>
+            <span className="text-gray-900 dark:text-text-primary font-medium">
               {dailyMessagesUsed} / {dailyLimit}
             </span>
           </div>
-          <div className="h-2 bg-dark-card rounded-full overflow-hidden">
+          <div className="h-2 bg-gray-100 dark:bg-dark-card rounded-full overflow-hidden">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${usagePercentage}%` }}
@@ -111,32 +192,47 @@ export default function ProfilePlanCard({
         </div>
       )}
 
-      {/* Upgrade CTA (subtle, only for free plan) */}
+      {/* Upgrade CTA - Premium design with shimmer (only for free plan) */}
       {currentPlan === "free" && onUpgrade && (
-        <button
+        <motion.button
           onClick={onUpgrade}
+          whileHover={{ scale: 1.02, y: -1 }}
+          whileTap={{ scale: 0.98 }}
           className="
+            group/btn relative overflow-hidden
             w-full flex items-center justify-center gap-2
-            py-2.5 bg-dark-card hover:bg-dark-hover
-            border border-dark-border hover:border-primary/30
-            rounded-xl text-sm font-medium text-text-secondary hover:text-primary
-            transition-all duration-200
+            py-3 bg-orange-50 dark:bg-gradient-to-r dark:from-primary/10 dark:to-accent/10
+            border border-orange-200 dark:border-primary/20 hover:border-orange-300 dark:hover:border-primary/40
+            rounded-xl text-sm font-semibold text-orange-500 dark:text-primary hover:text-white
+            hover:bg-gradient-to-r hover:from-primary hover:to-accent
+            shadow-sm hover:shadow-glow
+            transition-all duration-300
           "
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          {/* Shimmer effect on hover - ORANGE DOMINANT */}
+          <span
+            className="absolute inset-0 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300 pointer-events-none"
+            style={{
+              background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)",
+              backgroundSize: "200% 100%",
+              animation: "shimmer 2s infinite linear",
+            }}
+          />
+
+          <svg className="w-4 h-4 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
           </svg>
-          Debloquer plus avec Pro
-        </button>
+          <span className="relative z-10">{t.quota.upgradeNow}</span>
+        </motion.button>
       )}
 
-      {/* Pro/Max benefits */}
+      {/* Pro/Max benefits - Premium design */}
       {currentPlan !== "free" && (
-        <div className="flex items-center gap-2 text-sm text-text-muted">
+        <div className="flex items-center gap-2 px-3 py-2 bg-success/5 border border-success/20 rounded-lg text-sm">
           <svg className="w-4 h-4 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
-          Messages illimites actifs
+          <span className="text-success font-medium">{t.sidebar.unlimitedMessages}</span>
         </div>
       )}
     </motion.div>

@@ -1,143 +1,176 @@
-import LegalLayoutLight from "@/components/layout/LegalLayoutLight";
+"use client";
 
-export const metadata = {
-  title: "Mentions legales - POSTY",
-  description: "Mentions legales de l'application POSTY",
-};
+import LegalLayoutLight from "@/components/layout/LegalLayoutLight";
+import { useLanguage } from "@/contexts/LanguageContext";
+import Link from "next/link";
 
 export default function LegalNoticesPage() {
+  const { t } = useLanguage();
+  const notices = t.legal.notices;
+
   return (
-    <LegalLayoutLight title="Mentions legales">
-      <p className="text-gray-300 text-lg mb-8">
-        Conformement aux dispositions des articles 6-III et 19 de la Loi n° 2004-575 du
-        21 juin 2004 pour la Confiance dans l&apos;economie numerique (LCEN).
-      </p>
+    <LegalLayoutLight title={notices.title}>
+      <p className="text-gray-300 text-lg mb-8">{notices.intro}</p>
 
+      {/* Section 1 */}
       <section className="mb-8">
-        <h2 className="text-xl font-semibold text-white mb-4">1. Editeur du site</h2>
+        <h2 className="text-xl font-semibold text-white mb-4">{notices.section1.title}</h2>
         <div className="bg-dark-card border border-dark-border rounded-lg p-6 text-gray-300 space-y-2">
-          <p><strong className="text-white">Nom de l&apos;application :</strong> POSTY</p>
-          <p><strong className="text-white">Forme juridique :</strong> [A completer]</p>
-          <p><strong className="text-white">Siege social :</strong> [A completer]</p>
-          <p><strong className="text-white">SIRET :</strong> [A completer]</p>
-          <p><strong className="text-white">Capital social :</strong> [A completer]</p>
-          <p><strong className="text-white">Numero de TVA :</strong> [A completer]</p>
-          <p><strong className="text-white">Email :</strong> contact@posty.app</p>
-          <p><strong className="text-white">Telephone :</strong> [A completer]</p>
+          <p>
+            <strong className="text-white">{notices.section1.appName}</strong> POSTY
+          </p>
+          <p>
+            <strong className="text-white">{notices.section1.legalForm}</strong> {notices.section1.toComplete}
+          </p>
+          <p>
+            <strong className="text-white">{notices.section1.address}</strong> {notices.section1.addressValue}
+          </p>
+          <p>
+            <strong className="text-white">{notices.section1.siret}</strong> {notices.section1.siretValue}
+          </p>
+          <p>
+            <strong className="text-white">{notices.section1.capital}</strong> {notices.section1.capitalValue}
+          </p>
+          <p>
+            <strong className="text-white">{notices.section1.vat}</strong> {notices.section1.vatValue}
+          </p>
+          <p>
+            <strong className="text-white">{notices.section1.email}</strong> contact@posty.app
+          </p>
+          <p>
+            <strong className="text-white">{notices.section1.phone}</strong> {notices.section1.phoneValue}
+          </p>
         </div>
-        <p className="text-gray-400 text-sm mt-2 italic">
-          * Les informations entre crochets doivent etre completees avec les informations reelles de votre entreprise.
-        </p>
+        <p className="text-gray-400 text-sm mt-2 italic">{notices.section1.note}</p>
       </section>
 
+      {/* Section 2 */}
       <section className="mb-8">
-        <h2 className="text-xl font-semibold text-white mb-4">2. Directeur de la publication</h2>
+        <h2 className="text-xl font-semibold text-white mb-4">{notices.section2.title}</h2>
         <div className="bg-dark-card border border-dark-border rounded-lg p-6 text-gray-300 space-y-2">
-          <p><strong className="text-white">Nom :</strong> [A completer]</p>
-          <p><strong className="text-white">Email :</strong> contact@posty.app</p>
+          <p>
+            <strong className="text-white">{notices.section2.name}</strong> {notices.section2.toComplete}
+          </p>
+          <p>
+            <strong className="text-white">{notices.section2.email}</strong> contact@posty.app
+          </p>
+          <p>
+            <strong className="text-white">LinkedIn :</strong>{" "}
+            <a
+              href="https://www.linkedin.com/in/e-nepveu-58a38127a/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              linkedin.com/in/e-nepveu-58a38127a
+            </a>
+          </p>
         </div>
       </section>
 
+      {/* Section 3 */}
       <section className="mb-8">
-        <h2 className="text-xl font-semibold text-white mb-4">3. Hebergeur</h2>
+        <h2 className="text-xl font-semibold text-white mb-4">{notices.section3.title}</h2>
         <div className="bg-dark-card border border-dark-border rounded-lg p-6 text-gray-300 space-y-2">
-          <p><strong className="text-white">Nom :</strong> Google Cloud Platform / Firebase</p>
-          <p><strong className="text-white">Societe :</strong> Google LLC</p>
-          <p><strong className="text-white">Adresse :</strong> 1600 Amphitheatre Parkway, Mountain View, CA 94043, USA</p>
-          <p><strong className="text-white">Site web :</strong>{" "}
-            <a href="https://firebase.google.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+          <p>
+            <strong className="text-white">{notices.section3.name}</strong> {notices.section3.firebase}
+          </p>
+          <p>
+            <strong className="text-white">{notices.section3.company}</strong> {notices.section3.google}
+          </p>
+          <p>
+            <strong className="text-white">{notices.section3.address}</strong> {notices.section3.googleAddress}
+          </p>
+          <p>
+            <strong className="text-white">{notices.section3.website}</strong>{" "}
+            <a
+              href="https://firebase.google.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
               firebase.google.com
             </a>
           </p>
         </div>
       </section>
 
+      {/* Section 4 */}
       <section className="mb-8">
-        <h2 className="text-xl font-semibold text-white mb-4">4. Delegue a la Protection des Donnees (DPO)</h2>
+        <h2 className="text-xl font-semibold text-white mb-4">{notices.section4.title}</h2>
         <div className="bg-dark-card border border-dark-border rounded-lg p-6 text-gray-300 space-y-2">
-          <p><strong className="text-white">Contact DPO :</strong> privacy@posty.app</p>
-          <p className="text-gray-400 text-sm mt-2">
-            Pour toute question relative a la protection de vos donnees personnelles ou pour exercer
-            vos droits RGPD, vous pouvez contacter notre DPO a l&apos;adresse ci-dessus.
+          <p>
+            <strong className="text-white">{notices.section4.contact}</strong> privacy@posty.app
           </p>
+          <p className="text-gray-400 text-sm mt-2">{notices.section4.description}</p>
         </div>
       </section>
 
+      {/* Section 5 */}
       <section className="mb-8">
-        <h2 className="text-xl font-semibold text-white mb-4">5. Propriete intellectuelle</h2>
-        <p className="text-gray-300 mb-4">
-          L&apos;ensemble du contenu de ce site (textes, images, logos, icones, sons, logiciels, etc.)
-          est la propriete exclusive de POSTY ou de ses partenaires et est protege par les lois
-          francaises et internationales relatives a la propriete intellectuelle.
-        </p>
-        <p className="text-gray-300">
-          Toute reproduction, representation, modification, publication ou adaptation de tout ou
-          partie des elements du site, quel que soit le moyen ou le procede utilise, est interdite
-          sans autorisation ecrite prealable de POSTY.
-        </p>
+        <h2 className="text-xl font-semibold text-white mb-4">{notices.section5.title}</h2>
+        <p className="text-gray-300 mb-4">{notices.section5.content1}</p>
+        <p className="text-gray-300">{notices.section5.content2}</p>
       </section>
 
+      {/* Section 6 */}
       <section className="mb-8">
-        <h2 className="text-xl font-semibold text-white mb-4">6. Credits</h2>
+        <h2 className="text-xl font-semibold text-white mb-4">{notices.section6.title}</h2>
         <div className="bg-dark-card border border-dark-border rounded-lg p-6 text-gray-300 space-y-2">
-          <p><strong className="text-white">Conception et developpement :</strong> POSTY Team</p>
-          <p><strong className="text-white">Technologies utilisees :</strong></p>
+          <p>
+            <strong className="text-white">{notices.section6.development}</strong> {notices.section6.team}
+          </p>
+          <p>
+            <strong className="text-white">{notices.section6.tech}</strong>
+          </p>
           <ul className="list-disc list-inside ml-4 text-gray-400 space-y-1">
-            <li>Next.js / React</li>
-            <li>TypeScript</li>
-            <li>Tailwind CSS</li>
-            <li>Firebase (Authentication, Firestore)</li>
-            <li>Intelligence Artificielle (OpenAI / Anthropic)</li>
+            {notices.section6.technologies.map((tech, i) => (
+              <li key={i}>{tech}</li>
+            ))}
           </ul>
         </div>
       </section>
 
+      {/* Section 7 */}
       <section className="mb-8">
-        <h2 className="text-xl font-semibold text-white mb-4">7. Cookies</h2>
-        <p className="text-gray-300 mb-4">
-          L&apos;application POSTY utilise des cookies pour assurer le bon fonctionnement du service
-          et ameliorer l&apos;experience utilisateur.
-        </p>
+        <h2 className="text-xl font-semibold text-white mb-4">{notices.section7.title}</h2>
+        <p className="text-gray-300 mb-4">{notices.section7.content1}</p>
         <p className="text-gray-300">
-          Pour plus d&apos;informations sur l&apos;utilisation des cookies et la gestion de vos preferences,
-          consultez notre{" "}
-          <a href="/legal/privacy" className="text-primary hover:underline">
-            Politique de confidentialite
-          </a>
+          {notices.section7.content2}{" "}
+          <Link href="/legal/privacy" className="text-primary hover:underline">
+            {notices.section7.privacyLink}
+          </Link>
           .
         </p>
       </section>
 
+      {/* Section 8 */}
       <section className="mb-8">
-        <h2 className="text-xl font-semibold text-white mb-4">8. Limitation de responsabilite</h2>
-        <p className="text-gray-300 mb-4">
-          POSTY s&apos;efforce d&apos;assurer l&apos;exactitude des informations diffusees sur l&apos;application.
-          Cependant, POSTY ne peut garantir l&apos;exactitude, la precision ou l&apos;exhaustivite des
-          informations mises a disposition.
-        </p>
-        <p className="text-gray-300">
-          Le contenu genere par l&apos;intelligence artificielle est fourni a titre indicatif.
-          L&apos;utilisateur reste seul responsable de l&apos;utilisation qu&apos;il en fait.
-        </p>
+        <h2 className="text-xl font-semibold text-white mb-4">{notices.section8.title}</h2>
+        <p className="text-gray-300 mb-4">{notices.section8.content1}</p>
+        <p className="text-gray-300">{notices.section8.content2}</p>
       </section>
 
+      {/* Section 9 */}
       <section className="mb-8">
-        <h2 className="text-xl font-semibold text-white mb-4">9. Droit applicable</h2>
-        <p className="text-gray-300">
-          Les presentes mentions legales sont regies par le droit francais. En cas de litige,
-          et a defaut de resolution amiable, les tribunaux francais seront seuls competents.
-        </p>
+        <h2 className="text-xl font-semibold text-white mb-4">{notices.section9.title}</h2>
+        <p className="text-gray-300">{notices.section9.content}</p>
       </section>
 
+      {/* Section 10 */}
       <section>
-        <h2 className="text-xl font-semibold text-white mb-4">10. Contact</h2>
-        <p className="text-gray-300 mb-4">
-          Pour toute question ou demande d&apos;information concernant l&apos;application :
-        </p>
+        <h2 className="text-xl font-semibold text-white mb-4">{notices.section10.title}</h2>
+        <p className="text-gray-300 mb-4">{notices.section10.intro}</p>
         <div className="bg-dark-card border border-dark-border rounded-lg p-6 text-gray-300 space-y-2">
-          <p><strong className="text-white">Email general :</strong> contact@posty.app</p>
-          <p><strong className="text-white">Email RGPD :</strong> privacy@posty.app</p>
-          <p><strong className="text-white">Support technique :</strong> support@posty.app</p>
+          <p>
+            <strong className="text-white">{notices.section10.emailGeneral}</strong> contact@posty.app
+          </p>
+          <p>
+            <strong className="text-white">{notices.section10.emailGDPR}</strong> privacy@posty.app
+          </p>
+          <p>
+            <strong className="text-white">{notices.section10.emailSupport}</strong> support@posty.app
+          </p>
         </div>
       </section>
     </LegalLayoutLight>

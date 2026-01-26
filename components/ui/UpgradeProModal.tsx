@@ -27,7 +27,13 @@ export default function UpgradeProModal({
   remaining = 0,
   resetsAt,
 }: UpgradeProModalProps) {
-  const [isMobile, setIsMobile] = useState(false);
+  // SSR-safe mobile detection
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window !== "undefined") {
+      return window.innerWidth < 768;
+    }
+    return false;
+  });
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -35,6 +41,13 @@ export default function UpgradeProModal({
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
+
+  // Force re-check when modal opens
+  useEffect(() => {
+    if (isOpen && typeof window !== "undefined") {
+      setIsMobile(window.innerWidth < 768);
+    }
+  }, [isOpen]);
 
   // Format reset time
   const formatResetTime = () => {

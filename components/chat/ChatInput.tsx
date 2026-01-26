@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import Button from "@/components/ui/Button";
 
 interface ChatInputProps {
   onSubmit: (message: string) => void;
@@ -17,6 +16,7 @@ export default function ChatInput({
   disabled = false,
 }: ChatInputProps) {
   const [message, setMessage] = useState("");
+  const [isFocused, setIsFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Auto-resize textarea
@@ -47,57 +47,66 @@ export default function ChatInput({
 
   return (
     <form onSubmit={handleSubmit} className="relative">
-      <div className="relative flex items-end gap-2 p-4 bg-dark-card border border-dark-border rounded-xl">
+      <div className="relative">
         <textarea
           ref={textareaRef}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={handleKeyDown}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
           placeholder={placeholder}
           disabled={disabled || isLoading}
           rows={1}
-          className="
-            flex-1
-            bg-transparent
-            text-white text-base
-            placeholder-text-muted
+          className={`
+            w-full
+            bg-white dark:bg-dark-card
+            text-gray-900 dark:text-white text-base
+            placeholder-gray-500 dark:placeholder-gray-400
             resize-none
-            focus:outline-none
+            border-2 rounded-[28px]
+            transition-all duration-200 ease-out
             disabled:opacity-50
-            min-h-[44px]
+            min-h-[56px]
             max-h-[200px]
-            py-2.5
+            py-4 pl-5 pr-16
             leading-6
-            align-middle
-          "
+            focus:outline-none
+            [&::placeholder]:whitespace-nowrap [&::placeholder]:overflow-hidden [&::placeholder]:text-ellipsis [&::placeholder]:block
+            ${isFocused
+              ? "border-gray-900 dark:border-white"
+              : "border-gray-900 dark:border-gray-700 hover:border-black dark:hover:border-gray-500"
+            }
+          `}
         />
-        <Button
+        <button
           type="submit"
           disabled={!message.trim() || isLoading || disabled}
-          isLoading={isLoading}
-          size="sm"
-          className="shrink-0"
+          className={`
+            absolute right-3 bottom-3
+            w-10 h-10 rounded-full
+            flex items-center justify-center
+            transition-all duration-200
+            ${message.trim() && !isLoading && !disabled
+              ? "bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-black dark:hover:bg-gray-100"
+              : "bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500"
+            }
+            disabled:cursor-not-allowed
+          `}
         >
           {isLoading ? (
-            "Génération..."
+            <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
           ) : (
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-              />
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
             </svg>
           )}
-        </Button>
+        </button>
       </div>
-      <p className="text-xs text-gray-500 mt-2 text-center">
+      <p className="hidden sm:block text-xs text-gray-500 dark:text-gray-400 mt-2.5 text-center">
         Appuyez sur Entrée pour envoyer, Shift+Entrée pour un saut de ligne
       </p>
     </form>

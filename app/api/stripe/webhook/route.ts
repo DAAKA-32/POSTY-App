@@ -33,17 +33,30 @@ function getFirebaseAdmin() {
 }
 
 // Map Stripe price IDs to plan names
+// Note: Old env vars (STARTER) map to new "pro" plan, old PRO maps to new "max"
 function getPlanFromPriceId(priceId: string): SubscriptionPlan {
-  const proMonthly = process.env.STRIPE_PRICE_PRO_MONTHLY;
-  const proYearly = process.env.STRIPE_PRICE_PRO_YEARLY;
+  // PRO plan price IDs (new naming or legacy STARTER naming)
+  const proMonthly = process.env.STRIPE_PRICE_PRO_MONTHLY || process.env.STRIPE_PRICE_STARTER_MONTHLY;
+  const proYearly = process.env.STRIPE_PRICE_PRO_YEARLY || process.env.STRIPE_PRICE_STARTER_YEARLY;
+  // MAX plan price IDs (new naming or legacy PRO naming)
   const maxMonthly = process.env.STRIPE_PRICE_MAX_MONTHLY;
   const maxYearly = process.env.STRIPE_PRICE_MAX_YEARLY;
+  // Legacy PRO env vars (now MAX) - fallback
+  const legacyProMonthly = process.env.STRIPE_PRICE_PRO_MONTHLY;
+  const legacyProYearly = process.env.STRIPE_PRICE_PRO_YEARLY;
 
-  if (priceId === proMonthly || priceId === proYearly) {
-    return "pro";
-  }
+  // Check for MAX plan first (highest tier)
   if (priceId === maxMonthly || priceId === maxYearly) {
     return "max";
+  }
+  // Legacy check: if STRIPE_PRICE_PRO was used for the old "pro" (now "max")
+  if ((priceId === legacyProMonthly || priceId === legacyProYearly) &&
+      priceId !== proMonthly && priceId !== proYearly) {
+    return "max";
+  }
+  // Check for PRO plan (was "starter")
+  if (priceId === proMonthly || priceId === proYearly) {
+    return "pro";
   }
   return "free";
 }

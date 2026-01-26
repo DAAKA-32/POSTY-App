@@ -66,14 +66,22 @@ export default function LinkedInConnectButton({
     );
   }
 
+  // Enhanced connect button with better visibility
   return (
     <Button
       onClick={handleConnect}
       isLoading={contextLoading}
-      className={`bg-[#0A66C2] hover:bg-[#004182] border-none ${className}`}
+      className={`
+        bg-[#0A66C2] hover:bg-[#004182] border-none
+        min-h-[52px] sm:min-h-[48px]
+        text-base font-semibold
+        shadow-lg shadow-[#0A66C2]/25 hover:shadow-xl hover:shadow-[#0A66C2]/30
+        transition-all duration-200
+        ${className}
+      `}
     >
-      <LinkedInIcon className="w-5 h-5 mr-2" />
-      {contextLoading ? "Connexion..." : "Connecter LinkedIn"}
+      <LinkedInIcon className="w-5 h-5 mr-2.5" />
+      {contextLoading ? "Connexion en cours..." : "Connecter LinkedIn"}
     </Button>
   );
 }

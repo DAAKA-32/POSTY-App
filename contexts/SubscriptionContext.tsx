@@ -1,0 +1,507 @@
+"use client";
+
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
+import { useAuth } from "./AuthContext";
+import {
+  PlanType,
+  PlanSource,
+  getPlanConfig,
+  getPlanLimits,
+  PlanConfig,
+  PlanLimits,
+} from "@/lib/plans";
+import {
+  UserSubscription,
+  UserUsage,
+  PermissionCheckResult,
+  canSendMessage,
+  canUsePromptLength,
+  canSendToRelations,
+  canUsePlatform,
+  canSchedulePosts,
+  canManageConversations,
+  hasPersonalizedResponses,
+  hasAudienceTargeting,
+  hasPriorityProcessing,
+  hasEarlyAccess,
+  shouldResetWeeklyQuota,
+  shouldResetMonthlyQuota,
+  getWeekStartDate,
+  getMonthStartDate,
+  Platform,
+} from "@/lib/permissions";
+import { doc, getDoc, updateDoc, Timestamp } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+
+// ============================================
+// TYPES
+// ============================================
+
+interface SubscriptionState {
+  // Current subscription info
+  subscription: UserSubscription;
+  usage: UserUsage;
+  planConfig: PlanConfig;
+  planLimits: PlanLimits;
+
+  // Test mode
+  isTestMode: boolean;
+  testPlan: PlanType | null;
+
+  // Loading state
+  loading: boolean;
+  error: string | null;
+}
+
+interface SubscriptionContextValue extends SubscriptionState {
+  // Plan info
+  currentPlan: PlanType;
+  isFreePlan: boolean;
+  isProPlan: boolean;
+  isMaxPlan: boolean;
+
+  // Permission checks
+  canSendMessage: () => PermissionCheckResult;
+  canUsePromptLength: (length: number) => PermissionCheckResult;
+  canSendToRelations: (count: number) => PermissionCheckResult;
+  canUsePlatform: (platform: Platform) => PermissionCheckResult;
+  canSchedulePosts: () => PermissionCheckResult;
+  canManageConversations: () => PermissionCheckResult;
+
+  // Feature flags
+  hasPersonalizedResponses: boolean;
+  hasAudienceTargeting: boolean;
+  hasPriorityProcessing: boolean;
+  hasEarlyAccess: boolean;
+
+  // Usage tracking
+  incrementConversationCount: () => Promise<void>;
+  refreshUsage: () => Promise<void>;
+
+  // Test mode controls
+  enableTestMode: (plan: PlanType) => Promise<void>;
+  disableTestMode: () => Promise<void>;
+
+  // Subscription actions
+  refreshSubscription: () => Promise<void>;
+}
+
+// ============================================
+// DEFAULT VALUES
+// ============================================
+
+const defaultSubscription: UserSubscription = {
+  plan: "free",
+  planSource: "stripe",
+  status: "active",
+};
+
+const defaultUsage: UserUsage = {
+  conversationsThisWeek: 0,
+  conversationsThisMonth: 0,
+};
+
+const defaultState: SubscriptionState = {
+  subscription: defaultSubscription,
+  usage: defaultUsage,
+  planConfig: getPlanConfig("free"),
+  planLimits: getPlanLimits("free"),
+  isTestMode: false,
+  testPlan: null,
+  loading: true,
+  error: null,
+};
+
+// ============================================
+// CONTEXT
+// ============================================
+
+const SubscriptionContext = createContext<SubscriptionContextValue | null>(null);
+
+// ============================================
+// PROVIDER
+// ============================================
+
+export function SubscriptionProvider({ children }: { children: React.ReactNode }) {
+  const { user, userProfile } = useAuth();
+  const [state, setState] = useState<SubscriptionState>(defaultState);
+
+  // ============================================
+  // LOAD SUBSCRIPTION FROM FIRESTORE
+  // ============================================
+
+  const loadSubscription = useCallback(async () => {
+    if (!user?.uid) {
+      setState(defaultState);
+      return;
+    }
+
+    try {
+      setState(prev => ({ ...prev, loading: true, error: null }));
+
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      const userData = userDoc.data();
+
+      if (!userData) {
+        setState({ ...defaultState, loading: false });
+        return;
+      }
+
+      // Parse subscription data
+      const subscriptionData = userData.subscription || {};
+      const usageData = userData.usage || {};
+
+      // Determine effective plan (test mode takes precedence if active)
+      const isTestMode = userData.testMode?.active === true;
+      const testPlan = isTestMode ? (userData.testMode?.plan as PlanType) : null;
+
+      // Map old plan names to new ones
+      let stripePlan: PlanType = "free";
+      if (subscriptionData.plan === "starter") stripePlan = "pro";
+      else if (subscriptionData.plan === "pro") stripePlan = "max";
+      else if (["free", "pro", "max"].includes(subscriptionData.plan)) {
+        stripePlan = subscriptionData.plan as PlanType;
+      }
+
+      const effectivePlan = isTestMode && testPlan ? testPlan : stripePlan;
+
+      // Build subscription object
+      const subscription: UserSubscription = {
+        plan: effectivePlan,
+        planSource: isTestMode ? "test" : "stripe",
+        status: subscriptionData.status || "active",
+        currentPeriodStart: subscriptionData.subscribedAt?.toDate(),
+        currentPeriodEnd: subscriptionData.expiresAt?.toDate(),
+      };
+
+      // Parse usage data with quota reset logic
+      const weekStartDate = usageData.weekStartDate?.toDate();
+      const monthStartDate = usageData.monthStartDate?.toDate();
+
+      let conversationsThisWeek = usageData.conversationsThisWeek || 0;
+      let conversationsThisMonth = usageData.conversationsThisMonth || 0;
+
+      // Reset weekly quota if needed
+      if (shouldResetWeeklyQuota(weekStartDate)) {
+        conversationsThisWeek = 0;
+      }
+
+      // Reset monthly quota if needed
+      if (shouldResetMonthlyQuota(monthStartDate)) {
+        conversationsThisMonth = 0;
+      }
+
+      const usage: UserUsage = {
+        conversationsThisWeek,
+        conversationsThisMonth,
+        lastConversationDate: usageData.lastConversationDate?.toDate(),
+        weekStartDate,
+        monthStartDate,
+      };
+
+      setState({
+        subscription,
+        usage,
+        planConfig: getPlanConfig(effectivePlan),
+        planLimits: getPlanLimits(effectivePlan),
+        isTestMode,
+        testPlan,
+        loading: false,
+        error: null,
+      });
+    } catch (error) {
+      console.error("Error loading subscription:", error);
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: "Erreur lors du chargement de l'abonnement",
+      }));
+    }
+  }, [user?.uid]);
+
+  // Load on mount and when user changes
+  useEffect(() => {
+    loadSubscription();
+  }, [loadSubscription]);
+
+  // ============================================
+  // USAGE TRACKING
+  // ============================================
+
+  const incrementConversationCount = useCallback(async () => {
+    if (!user?.uid) return;
+
+    try {
+      const now = new Date();
+      const weekStart = state.usage.weekStartDate || getWeekStartDate();
+      const monthStart = state.usage.monthStartDate || getMonthStartDate();
+
+      // Calculate new counts
+      let newWeeklyCount = state.usage.conversationsThisWeek;
+      let newMonthlyCount = state.usage.conversationsThisMonth;
+      let newWeekStart = weekStart;
+      let newMonthStart = monthStart;
+
+      // Check if we need to reset weekly
+      if (shouldResetWeeklyQuota(weekStart)) {
+        newWeeklyCount = 0;
+        newWeekStart = getWeekStartDate();
+      }
+
+      // Check if we need to reset monthly
+      if (shouldResetMonthlyQuota(monthStart)) {
+        newMonthlyCount = 0;
+        newMonthStart = getMonthStartDate();
+      }
+
+      // Increment counts
+      newWeeklyCount += 1;
+      newMonthlyCount += 1;
+
+      // Update Firestore
+      await updateDoc(doc(db, "users", user.uid), {
+        "usage.conversationsThisWeek": newWeeklyCount,
+        "usage.conversationsThisMonth": newMonthlyCount,
+        "usage.lastConversationDate": Timestamp.fromDate(now),
+        "usage.weekStartDate": Timestamp.fromDate(newWeekStart),
+        "usage.monthStartDate": Timestamp.fromDate(newMonthStart),
+      });
+
+      // Update local state
+      setState(prev => ({
+        ...prev,
+        usage: {
+          ...prev.usage,
+          conversationsThisWeek: newWeeklyCount,
+          conversationsThisMonth: newMonthlyCount,
+          lastConversationDate: now,
+          weekStartDate: newWeekStart,
+          monthStartDate: newMonthStart,
+        },
+      }));
+    } catch (error) {
+      console.error("Error incrementing conversation count:", error);
+    }
+  }, [user?.uid, state.usage]);
+
+  const refreshUsage = useCallback(async () => {
+    await loadSubscription();
+  }, [loadSubscription]);
+
+  // ============================================
+  // TEST MODE CONTROLS
+  // ============================================
+
+  const enableTestMode = useCallback(async (plan: PlanType) => {
+    if (!user?.uid) return;
+
+    try {
+      await updateDoc(doc(db, "users", user.uid), {
+        "testMode.active": true,
+        "testMode.plan": plan,
+        "testMode.activatedAt": Timestamp.fromDate(new Date()),
+      });
+
+      // Update local state immediately
+      setState(prev => ({
+        ...prev,
+        subscription: {
+          ...prev.subscription,
+          plan,
+          planSource: "test",
+        },
+        planConfig: getPlanConfig(plan),
+        planLimits: getPlanLimits(plan),
+        isTestMode: true,
+        testPlan: plan,
+      }));
+    } catch (error) {
+      console.error("Error enabling test mode:", error);
+      throw error;
+    }
+  }, [user?.uid]);
+
+  const disableTestMode = useCallback(async () => {
+    if (!user?.uid) return;
+
+    try {
+      // Get the actual Stripe subscription
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      const userData = userDoc.data();
+      const subscriptionData = userData?.subscription || {};
+
+      // Map old plan names
+      let stripePlan: PlanType = "free";
+      if (subscriptionData.plan === "starter") stripePlan = "pro";
+      else if (subscriptionData.plan === "pro") stripePlan = "max";
+      else if (["free", "pro", "max"].includes(subscriptionData.plan)) {
+        stripePlan = subscriptionData.plan as PlanType;
+      }
+
+      await updateDoc(doc(db, "users", user.uid), {
+        "testMode.active": false,
+        "testMode.plan": null,
+        "testMode.deactivatedAt": Timestamp.fromDate(new Date()),
+      });
+
+      // Update local state to real Stripe subscription
+      setState(prev => ({
+        ...prev,
+        subscription: {
+          ...prev.subscription,
+          plan: stripePlan,
+          planSource: "stripe",
+        },
+        planConfig: getPlanConfig(stripePlan),
+        planLimits: getPlanLimits(stripePlan),
+        isTestMode: false,
+        testPlan: null,
+      }));
+    } catch (error) {
+      console.error("Error disabling test mode:", error);
+      throw error;
+    }
+  }, [user?.uid]);
+
+  // ============================================
+  // PERMISSION CHECK FUNCTIONS
+  // ============================================
+
+  const checkCanSendMessage = useCallback((): PermissionCheckResult => {
+    return canSendMessage(state.subscription, state.usage);
+  }, [state.subscription, state.usage]);
+
+  const checkCanUsePromptLength = useCallback((length: number): PermissionCheckResult => {
+    return canUsePromptLength(state.subscription, length);
+  }, [state.subscription]);
+
+  const checkCanSendToRelations = useCallback((count: number): PermissionCheckResult => {
+    return canSendToRelations(state.subscription, count);
+  }, [state.subscription]);
+
+  const checkCanUsePlatform = useCallback((platform: Platform): PermissionCheckResult => {
+    return canUsePlatform(state.subscription, platform);
+  }, [state.subscription]);
+
+  const checkCanSchedulePosts = useCallback((): PermissionCheckResult => {
+    return canSchedulePosts(state.subscription);
+  }, [state.subscription]);
+
+  const checkCanManageConversations = useCallback((): PermissionCheckResult => {
+    return canManageConversations(state.subscription);
+  }, [state.subscription]);
+
+  // ============================================
+  // MEMOIZED VALUES
+  // ============================================
+
+  const contextValue = useMemo<SubscriptionContextValue>(() => ({
+    // State
+    ...state,
+
+    // Plan info
+    currentPlan: state.subscription.plan,
+    isFreePlan: state.subscription.plan === "free",
+    isProPlan: state.subscription.plan === "pro",
+    isMaxPlan: state.subscription.plan === "max",
+
+    // Permission checks
+    canSendMessage: checkCanSendMessage,
+    canUsePromptLength: checkCanUsePromptLength,
+    canSendToRelations: checkCanSendToRelations,
+    canUsePlatform: checkCanUsePlatform,
+    canSchedulePosts: checkCanSchedulePosts,
+    canManageConversations: checkCanManageConversations,
+
+    // Feature flags
+    hasPersonalizedResponses: hasPersonalizedResponses(state.subscription),
+    hasAudienceTargeting: hasAudienceTargeting(state.subscription),
+    hasPriorityProcessing: hasPriorityProcessing(state.subscription),
+    hasEarlyAccess: hasEarlyAccess(state.subscription),
+
+    // Usage tracking
+    incrementConversationCount,
+    refreshUsage,
+
+    // Test mode controls
+    enableTestMode,
+    disableTestMode,
+
+    // Subscription actions
+    refreshSubscription: loadSubscription,
+  }), [
+    state,
+    checkCanSendMessage,
+    checkCanUsePromptLength,
+    checkCanSendToRelations,
+    checkCanUsePlatform,
+    checkCanSchedulePosts,
+    checkCanManageConversations,
+    incrementConversationCount,
+    refreshUsage,
+    enableTestMode,
+    disableTestMode,
+    loadSubscription,
+  ]);
+
+  return (
+    <SubscriptionContext.Provider value={contextValue}>
+      {children}
+    </SubscriptionContext.Provider>
+  );
+}
+
+// ============================================
+// HOOK
+// ============================================
+
+export function useSubscription(): SubscriptionContextValue {
+  const context = useContext(SubscriptionContext);
+  if (!context) {
+    throw new Error("useSubscription must be used within a SubscriptionProvider");
+  }
+  return context;
+}
+
+// ============================================
+// UTILITY HOOKS
+// ============================================
+
+/**
+ * Hook to check if a specific feature is available
+ */
+export function useFeatureAccess(feature: "schedule" | "manage" | "personalized" | "audience" | "priority" | "early"): boolean {
+  const { subscription } = useSubscription();
+
+  switch (feature) {
+    case "schedule":
+      return canSchedulePosts(subscription).allowed;
+    case "manage":
+      return canManageConversations(subscription).allowed;
+    case "personalized":
+      return hasPersonalizedResponses(subscription);
+    case "audience":
+      return hasAudienceTargeting(subscription);
+    case "priority":
+      return hasPriorityProcessing(subscription);
+    case "early":
+      return hasEarlyAccess(subscription);
+    default:
+      return false;
+  }
+}
+
+/**
+ * Hook to check platform access
+ */
+export function usePlatformAccess(platform: Platform): boolean {
+  const { canUsePlatform } = useSubscription();
+  return canUsePlatform(platform).allowed;
+}

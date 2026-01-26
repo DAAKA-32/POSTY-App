@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { motion } from "framer-motion";
 import Image from "next/image";
@@ -29,13 +29,14 @@ export default function ProfileLinkedInCard({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -2 }}
       transition={{ duration: 0.4, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-      className="bg-dark-card border border-dark-border rounded-2xl p-5 lg:p-6"
+      className="group bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border hover:border-[#0A66C2]/30 rounded-2xl p-5 lg:p-6 transition-all duration-300 hover:shadow-md dark:hover:shadow-[0_0_30px_rgba(10,102,194,0.12)]"
     >
       {/* Header */}
       <div className="flex items-center gap-3 mb-4">
         <div
-          className="w-10 h-10 rounded-xl flex items-center justify-center"
+          className="w-10 h-10 rounded-xl flex items-center justify-center border border-[#0A66C2]/20 group-hover:shadow-[0_0_20px_rgba(10,102,194,0.35)] transition-shadow duration-300"
           style={{ backgroundColor: `${linkedInBlue}20` }}
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24" fill={linkedInBlue}>
@@ -43,9 +44,9 @@ export default function ProfileLinkedInCard({
           </svg>
         </div>
         <div>
-          <h3 className="font-semibold text-white">LinkedIn</h3>
-          <p className="text-sm text-text-muted">
-            {isConnected ? "Compte connecte" : "Connectez votre compte"}
+          <h3 className="font-semibold text-gray-900 dark:text-text-primary">LinkedIn</h3>
+          <p className="text-sm text-gray-500 dark:text-text-muted">
+            {isConnected ? "Compte connecté" : "Connectez votre compte"}
           </p>
         </div>
       </div>
@@ -54,30 +55,32 @@ export default function ProfileLinkedInCard({
       {isConnected ? (
         <div className="space-y-4">
           {/* Profile info */}
-          <div className="flex items-center gap-3 p-3 bg-dark-hover rounded-xl">
+          <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-dark-hover rounded-xl">
             {profilePicture ? (
-              <Image
-                src={profilePicture}
-                alt={profileName || "LinkedIn"}
-                width={40}
-                height={40}
-                className="w-10 h-10 rounded-full object-cover"
-              />
+              <div className="w-10 h-10 flex-shrink-0 rounded-full overflow-hidden">
+                <Image
+                  src={profilePicture}
+                  alt={profileName || "LinkedIn"}
+                  width={40}
+                  height={40}
+                  className="w-full h-full object-cover object-center"
+                />
+              </div>
             ) : (
-              <div className="w-10 h-10 rounded-full bg-dark-border flex items-center justify-center">
-                <svg className="w-5 h-5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 flex-shrink-0 rounded-full bg-gray-200 dark:bg-dark-border flex items-center justify-center">
+                <svg className="w-5 h-5 text-gray-400 dark:text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-white truncate">
+              <p className="font-medium text-gray-900 dark:text-text-primary truncate">
                 {profileName || "Profil LinkedIn"}
               </p>
               <div className="flex items-center gap-1.5">
                 <div className={`w-2 h-2 rounded-full ${isTokenValid ? "bg-success" : "bg-warning"}`} />
-                <span className="text-xs text-text-muted">
-                  {isTokenValid ? "Session active" : "Session expiree"}
+                <span className="text-xs text-gray-500 dark:text-text-muted">
+                  {isTokenValid ? "Session active" : "Session expirée"}
                 </span>
               </div>
             </div>
@@ -89,27 +92,27 @@ export default function ProfileLinkedInCard({
             disabled={isLoading}
             className="
               w-full flex items-center justify-center gap-2
-              py-2.5 bg-dark-hover hover:bg-dark-active
-              border border-dark-border hover:border-error/30
-              rounded-xl text-sm font-medium text-text-secondary hover:text-error
+              py-2.5 bg-gray-50 dark:bg-dark-hover hover:bg-gray-100 dark:hover:bg-dark-active
+              border border-gray-200 dark:border-dark-border hover:border-error/30
+              rounded-xl text-sm font-medium text-gray-600 dark:text-text-secondary hover:text-error
               transition-all duration-200
               disabled:opacity-50 disabled:cursor-not-allowed
             "
           >
             {isLoading ? (
-              <div className="w-4 h-4 border-2 border-text-muted border-t-transparent rounded-full animate-spin" />
+              <div className="w-4 h-4 border-2 border-gray-400 dark:border-text-muted border-t-transparent rounded-full animate-spin" />
             ) : (
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>
             )}
-            Deconnecter LinkedIn
+            Déconnecter LinkedIn
           </button>
         </div>
       ) : (
         /* Disconnected state */
         <div className="space-y-4">
-          <p className="text-sm text-text-muted leading-relaxed">
+          <p className="text-sm text-gray-500 dark:text-text-muted leading-relaxed">
             Connectez votre compte LinkedIn pour publier directement vos posts depuis POSTY.
           </p>
 

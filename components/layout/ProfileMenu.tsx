@@ -1,8 +1,12 @@
-"use client";
+﻿"use client";
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLinkedIn } from "@/contexts/LinkedInContext";
+import { useSubscription } from "@/contexts/SubscriptionContext";
+import { PlanBadge } from "@/components/subscription/PlanInfoCard";
+import Image from "next/image";
 
 interface ProfileMenuProps {
   isCollapsed?: boolean;
@@ -11,8 +15,28 @@ interface ProfileMenuProps {
 
 const menuItems = [
   {
+    name: "Dashboard",
+    href: "/dashboard",
+    color: "emerald",
+    iconColor: "text-emerald-500",
+    glowColor: "rgba(16, 185, 129, 0.3)", // emerald glow
+    icon: (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+        />
+      </svg>
+    ),
+  },
+  {
     name: "Profil",
     href: "/profile",
+    color: "cyan",
+    iconColor: "text-cyan-500",
+    glowColor: "rgba(6, 182, 212, 0.3)", // cyan glow
     icon: (
       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -27,6 +51,9 @@ const menuItems = [
   {
     name: "Abonnement",
     href: "/subscription",
+    color: "orange",
+    iconColor: "text-orange-500",
+    glowColor: "rgba(249, 115, 22, 0.3)", // orange glow
     icon: (
       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -39,8 +66,11 @@ const menuItems = [
     ),
   },
   {
-    name: "Parametres",
+    name: "Paramètres",
     href: "/settings",
+    color: "violet",
+    iconColor: "text-violet-500",
+    glowColor: "rgba(139, 92, 246, 0.3)", // violet glow
     icon: (
       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -62,9 +92,22 @@ const menuItems = [
 
 export default function ProfileMenu({ isCollapsed = false, onNavigate }: ProfileMenuProps) {
   const { user, userProfile } = useAuth();
+  const { profilePicture: linkedInPhoto } = useLinkedIn();
+  const { planConfig, isTestMode } = useSubscription();
   const [isOpen, setIsOpen] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+
+  // Priority: LinkedIn photo > Firestore photo > fallback
+  const photoURL = !imageError
+    ? linkedInPhoto || userProfile?.photoURL || null
+    : null;
+
+  // Reset image error when photo URL changes
+  useEffect(() => {
+    setImageError(false);
+  }, [linkedInPhoto, userProfile?.photoURL]);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -155,17 +198,20 @@ export default function ProfileMenu({ isCollapsed = false, onNavigate }: Profile
         aria-haspopup="true"
       >
         <div className={`
-          w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20
+          relative w-10 h-10 rounded-lg overflow-hidden
           flex items-center justify-center shrink-0 border border-dark-border
           group-hover:border-primary/30 group-hover:scale-105 transition-all duration-200
           ${isOpen ? "border-primary/30 scale-105" : ""}
+          ${!photoURL ? "bg-gradient-to-br from-primary/20 to-accent/20" : ""}
         `}>
-          {userProfile?.photoURL ? (
-            <img
-              src={userProfile.photoURL}
-              alt={userProfile.displayName || "Avatar"}
-              className="w-10 h-10 rounded-lg object-cover"
-              loading="lazy"
+          {photoURL ? (
+            <Image
+              src={photoURL}
+              alt={userProfile?.displayName || "Avatar"}
+              fill
+              sizes="40px"
+              className="object-cover object-center"
+              onError={() => setImageError(true)}
             />
           ) : (
             <span className="text-primary font-semibold text-lg">
@@ -176,9 +222,13 @@ export default function ProfileMenu({ isCollapsed = false, onNavigate }: Profile
         {!isCollapsed && (
           <>
             <div className="flex-1 min-w-0 text-left">
-              <p className="text-sm font-semibold text-white truncate">
-                {userProfile?.displayName || "Utilisateur"}
-              </p>
+              <div className="flex items-center gap-1.5">
+                <p className="text-sm font-semibold text-text-primary truncate">
+                  {userProfile?.displayName || "Utilisateur"}
+                </p>
+                {/* Plan badge */}
+                <PlanBadge />
+              </div>
               {userProfile?.profile?.role ? (
                 <p className="text-xs text-accent truncate">{userProfile.profile.role}</p>
               ) : (
@@ -188,7 +238,7 @@ export default function ProfileMenu({ isCollapsed = false, onNavigate }: Profile
             {/* Chevron indicator */}
             <div className="shrink-0 w-6 h-6 flex items-center justify-center">
               <svg
-                className={`w-5 h-5 text-white/70 group-hover:text-white transition-all duration-200 ${isOpen ? "rotate-180" : ""}`}
+                className={`w-5 h-5 text-text-muted group-hover:text-text-primary transition-all duration-200 ${isOpen ? "rotate-180" : ""}`}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -219,31 +269,52 @@ export default function ProfileMenu({ isCollapsed = false, onNavigate }: Profile
       >
         {/* User info header */}
         <div className="px-4 py-3 border-b border-dark-border">
-          <p className="text-sm font-semibold text-white truncate">
+          <p className="text-sm font-semibold text-text-primary truncate">
             {userProfile?.displayName || "Utilisateur"}
           </p>
           <p className="text-xs text-text-muted truncate">{user.email}</p>
         </div>
 
-        {/* Menu items */}
+        {/* Menu items - Enhanced with vivid colors and glow effects */}
         <div className="p-1.5">
           {menuItems.map((item) => (
             <Link
               key={item.name}
               href={item.href}
               onClick={handleItemClick}
-              className="
+              className={`
                 flex items-center gap-3 px-3 py-2.5 rounded-lg
                 text-text-secondary text-sm
-                hover:text-white hover:bg-dark-hover
-                transition-all duration-150 group/item
-              "
+                transition-all duration-200 group/item
+                hover:translate-x-0.5 active:scale-[0.98]
+                ${
+                  item.color === "emerald"
+                    ? "hover:bg-emerald-500/10"
+                    : item.color === "cyan"
+                    ? "hover:bg-cyan-500/10"
+                    : item.color === "orange"
+                    ? "hover:bg-orange-500/10"
+                    : item.color === "violet"
+                    ? "hover:bg-violet-500/10"
+                    : "hover:bg-dark-hover"
+                }
+              `}
               role="menuitem"
             >
-              <span className="text-text-muted group-hover/item:text-primary transition-colors duration-150">
+              {/* Vivid colored icon with glow effect */}
+              <span
+                className={`
+                  transition-all duration-200
+                  ${item.iconColor}
+                  group-hover/item:scale-110
+                `}
+                style={{
+                  filter: `drop-shadow(0 0 4px ${item.glowColor})`,
+                }}
+              >
                 {item.icon}
               </span>
-              <span className="font-medium">{item.name}</span>
+              <span className="font-medium group-hover/item:text-text-primary transition-colors duration-200">{item.name}</span>
             </Link>
           ))}
         </div>
@@ -265,7 +336,7 @@ export default function ProfileMenu({ isCollapsed = false, onNavigate }: Profile
           shadow-lg
           pointer-events-none
         ">
-          <p className="font-semibold text-white">{userProfile?.displayName || "Utilisateur"}</p>
+          <p className="font-semibold text-text-primary">{userProfile?.displayName || "Utilisateur"}</p>
           <p className="text-xs text-text-muted">{user.email}</p>
           <div className="absolute -left-1 bottom-3 w-2 h-2 bg-dark-elevated border-l border-b border-dark-border rotate-45" />
         </div>

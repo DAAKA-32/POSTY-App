@@ -1,7 +1,8 @@
 "use client";
 
-import { ReactNode, useEffect, useRef, useState, useId } from "react";
-import { motion, AnimatePresence, PanInfo, useAnimation } from "framer-motion";
+import { ReactNode, useEffect, useRef, useState, useId, useCallback } from "react";
+import { createPortal } from "react-dom";
+import { motion, AnimatePresence, PanInfo, useAnimation, useMotionValue, useTransform } from "framer-motion";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { useHapticFeedback } from "@/hooks/useHapticFeedback";
 
@@ -17,14 +18,38 @@ interface BottomSheetProps {
   swipeToDismiss?: boolean;
   /** ARIA description for accessibility */
   description?: string;
+  /** Snap points as percentages (e.g., [0.5, 1] for half and full) */
+  snapPoints?: number[];
 }
 
-// Spring animation config
+// iOS-native spring animation - slightly bouncy feel
 const springConfig = {
   type: "spring" as const,
-  damping: 30,
-  stiffness: 300,
+  damping: 28,
+  stiffness: 380,
+  mass: 0.8,
 };
+
+// Faster spring for snap-back
+const snapBackSpring = {
+  type: "spring" as const,
+  damping: 32,
+  stiffness: 450,
+  mass: 0.6,
+};
+
+// Exit animation - smooth and fast
+const exitSpring = {
+  type: "spring" as const,
+  damping: 35,
+  stiffness: 400,
+  mass: 0.8,
+};
+
+// Threshold constants for smart snap behavior
+const VELOCITY_THRESHOLD = 800; // px/s - high velocity = immediate action
+const SMALL_DRAG_THRESHOLD = 0.25; // 25% of sheet height
+const LARGE_DRAG_THRESHOLD = 0.45; // 45% of sheet height
 
 export default function BottomSheet({
   isOpen,
@@ -39,9 +64,33 @@ export default function BottomSheet({
   const controls = useAnimation();
   const sheetRef = useRef<HTMLDivElement>(null);
   const [sheetHeight, setSheetHeight] = useState(0);
+  const [isMounted, setIsMounted] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const titleId = useId();
   const descriptionId = useId();
   const { trigger: triggerHaptic } = useHapticFeedback();
+
+  // Motion value for tracking drag position
+  const dragY = useMotionValue(0);
+
+  // Transform drag progress to backdrop opacity (1 at rest, fades as dragged)
+  const backdropOpacity = useTransform(
+    dragY,
+    [0, sheetHeight * 0.5],
+    [1, 0.3]
+  );
+
+  // Transform drag progress to sheet scale (subtle scale down when dragging)
+  const sheetScale = useTransform(
+    dragY,
+    [0, sheetHeight * 0.3],
+    [1, 0.98]
+  );
+
+  // Check if we're in browser for portal
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Focus trap for accessibility
   const focusTrapRef = useFocusTrap<HTMLDivElement>({
@@ -50,7 +99,7 @@ export default function BottomSheet({
     returnFocus: true,
   });
 
-  // Handle escape key and haptic feedback
+  // Handle escape key, haptic feedback, and iOS-compatible scroll lock
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -58,35 +107,114 @@ export default function BottomSheet({
       }
     };
 
+    // Prevent touch move on background (iOS scroll lock)
+    const preventTouchMove = (e: TouchEvent) => {
+      // Allow scrolling inside bottom sheet content
+      const target = e.target as HTMLElement;
+      if (target.closest('[data-bottomsheet-content]')) {
+        return;
+      }
+      e.preventDefault();
+    };
+
     if (isOpen) {
       document.addEventListener("keydown", handleEscape);
+
+      // iOS-compatible scroll lock
       document.body.style.overflow = "hidden";
+      document.documentElement.classList.add("bottomsheet-open");
+
+      // iOS touch prevention
+      document.addEventListener("touchmove", preventTouchMove, { passive: false });
+
       // Haptic feedback when sheet opens
       triggerHaptic("light");
     }
 
     return () => {
       document.removeEventListener("keydown", handleEscape);
-      document.body.style.overflow = "unset";
+      document.removeEventListener("touchmove", preventTouchMove);
+      document.body.style.overflow = "";
+      document.documentElement.classList.remove("bottomsheet-open");
     };
   }, [isOpen, onClose, triggerHaptic]);
 
   // Update sheet height for swipe calculations
   useEffect(() => {
     if (sheetRef.current && isOpen) {
-      setSheetHeight(sheetRef.current.offsetHeight);
+      // Small delay to ensure DOM is ready
+      requestAnimationFrame(() => {
+        if (sheetRef.current) {
+          setSheetHeight(sheetRef.current.offsetHeight);
+        }
+      });
     }
   }, [isOpen]);
 
-  const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    const shouldClose = info.velocity.y > 500 || info.offset.y > sheetHeight * 0.4;
-    if (shouldClose && swipeToDismiss) {
-      triggerHaptic("light");
-      onClose();
-    } else {
-      controls.start({ y: 0 });
+  // Smart drag end handler with iOS-like snap behavior
+  const handleDragEnd = useCallback((_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    if (!swipeToDismiss) {
+      controls.start({ y: 0 }, snapBackSpring);
+      return;
     }
-  };
+
+    const velocity = info.velocity.y;
+    const offset = info.offset.y;
+    const dragPercent = offset / sheetHeight;
+
+    // High velocity swipe - immediate action based on direction
+    if (Math.abs(velocity) > VELOCITY_THRESHOLD) {
+      if (velocity > 0) {
+        // Fast swipe down - close
+        triggerHaptic("medium");
+        onClose();
+      } else {
+        // Fast swipe up - snap back with bounce
+        triggerHaptic("light");
+        controls.start({ y: 0 }, snapBackSpring);
+      }
+      return;
+    }
+
+    // Position-based decision for slower drags
+    if (dragPercent > LARGE_DRAG_THRESHOLD) {
+      // Dragged past 45% - close
+      triggerHaptic("medium");
+      onClose();
+    } else if (dragPercent > SMALL_DRAG_THRESHOLD) {
+      // Between 25-45% - use velocity to decide
+      if (velocity > 200) {
+        // Moving down with some velocity - close
+        triggerHaptic("medium");
+        onClose();
+      } else {
+        // Moving up or slow - snap back
+        triggerHaptic("light");
+        controls.start({ y: 0 }, snapBackSpring);
+      }
+    } else {
+      // Small drag (< 25%) - always snap back
+      controls.start({ y: 0 }, snapBackSpring);
+    }
+  }, [swipeToDismiss, sheetHeight, triggerHaptic, onClose, controls]);
+
+  // Handle drag start
+  const handleDragStart = useCallback(() => {
+    setIsDragging(true);
+  }, []);
+
+  // Handle drag (update motion value for visual feedback)
+  const handleDrag = useCallback((_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    dragY.set(Math.max(0, info.offset.y));
+  }, [dragY]);
+
+  // Reset drag state
+  useEffect(() => {
+    if (!isOpen) {
+      setIsDragging(false);
+      dragY.set(0);
+    }
+  }, [isOpen, dragY]);
 
   const getHeightStyle = () => {
     if (height === "auto") return {};
@@ -104,19 +232,30 @@ export default function BottomSheet({
     }
   };
 
-  return (
-    <AnimatePresence>
+  // Don't render on server
+  if (!isMounted) return null;
+
+  return createPortal(
+    <AnimatePresence mode="wait">
       {isOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center md:hidden"
+          className="fixed inset-0 z-[100] flex items-end justify-center md:hidden ios-bottomsheet-container"
           role="presentation"
+          style={{
+            // Ensure full viewport coverage on iOS
+            minHeight: "100dvh",
+            height: "100%",
+          }}
         >
-          {/* Backdrop */}
+          {/* Backdrop - covers entire screen including sidebar */}
+          {/* Use bg-black/80 as fallback for iOS which has issues with backdrop-blur */}
           <motion.div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm gpu-accelerated"
+            className="absolute inset-0 bg-black/80 ios-backdrop-blur"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            style={{ opacity: isDragging ? backdropOpacity : undefined }}
+            transition={{ duration: 0.2 }}
             onClick={onClose}
             aria-hidden="true"
           />
@@ -124,16 +263,30 @@ export default function BottomSheet({
           {/* Bottom Sheet */}
           <motion.div
             ref={setRefs}
-            className="relative w-full bg-dark-card border-t border-dark-border rounded-t-3xl shadow-elevated max-h-[90vh] overflow-hidden gpu-layer"
-            style={getHeightStyle()}
+            data-bottomsheet-content
+            className={`
+              relative w-full bg-white dark:bg-dark-card border-t border-gray-200 dark:border-dark-border
+              rounded-t-3xl shadow-elevated max-h-[85vh] overflow-hidden
+              ios-bottomsheet-content will-change-transform
+              ${isDragging ? 'cursor-grabbing' : ''}
+            `}
+            style={{
+              ...getHeightStyle(),
+              scale: isDragging ? sheetScale : 1,
+            }}
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
-            exit={{ y: "100%" }}
+            exit={{ y: "100%", transition: exitSpring }}
             transition={springConfig}
             drag={swipeToDismiss ? "y" : false}
             dragConstraints={{ top: 0, bottom: 0 }}
-            dragElastic={{ top: 0, bottom: 0.5 }}
-            onDragEnd={handleDragEnd}
+            dragElastic={{ top: 0.05, bottom: 0.6 }}
+            onDragStart={handleDragStart}
+            onDrag={handleDrag}
+            onDragEnd={(e, info) => {
+              setIsDragging(false);
+              handleDragEnd(e, info);
+            }}
             role="dialog"
             aria-modal="true"
             aria-labelledby={title ? titleId : undefined}
@@ -147,13 +300,15 @@ export default function BottomSheet({
               </span>
             )}
 
-            {/* Drag handle */}
+            {/* Drag handle - iOS style pill */}
             {swipeToDismiss && (
               <div
-                className="flex justify-center pt-3 pb-1 cursor-grab active:cursor-grabbing"
+                className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing touch-none"
                 aria-hidden="true"
               >
-                <div className="w-10 h-1 bg-dark-border rounded-full" />
+                <div
+                  className="w-9 h-[5px] bg-gray-400/50 dark:bg-gray-500/50 rounded-full transition-transform duration-150 hover:scale-110 active:scale-95"
+                />
               </div>
             )}
 
@@ -163,7 +318,7 @@ export default function BottomSheet({
                 {title && (
                   <h2
                     id={titleId}
-                    className="text-lg font-semibold text-white"
+                    className="text-lg font-semibold text-text-primary"
                   >
                     {title}
                   </h2>
@@ -171,7 +326,7 @@ export default function BottomSheet({
                 {showCloseButton && (
                   <button
                     onClick={onClose}
-                    className="min-w-[44px] min-h-[44px] flex items-center justify-center text-text-secondary hover:text-white transition-all duration-200 rounded-xl hover:bg-dark-hover haptic-feedback"
+                    className="min-w-[44px] min-h-[44px] flex items-center justify-center text-text-secondary hover:text-text-primary transition-all duration-200 rounded-xl hover:bg-dark-hover haptic-feedback active:scale-95"
                     aria-label="Fermer la fenetre"
                   >
                     <svg
@@ -185,7 +340,7 @@ export default function BottomSheet({
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
+                        d="M6 6L18 18M6 18L18 6"
                       />
                     </svg>
                   </button>
@@ -193,8 +348,14 @@ export default function BottomSheet({
               </div>
             )}
 
-            {/* Content */}
-            <div className="p-5 overflow-y-auto max-h-[calc(90vh-100px)] gpu-scroll overscroll-contain">
+            {/* Content - scrollable area */}
+            <div
+              className="p-5 overflow-y-auto max-h-[calc(90vh-100px)] gpu-scroll overscroll-contain scrollbar-none"
+              style={{
+                WebkitOverflowScrolling: 'touch',
+                scrollbarWidth: 'none',
+              }}
+            >
               {children}
             </div>
 
@@ -203,7 +364,8 @@ export default function BottomSheet({
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
 
@@ -237,7 +399,7 @@ export function BottomSheetAction({
   };
 
   const variantStyles = {
-    default: "text-white hover:bg-dark-hover active:bg-dark-active",
+    default: "text-text-primary hover:bg-dark-hover active:bg-dark-active",
     danger: "text-error hover:bg-error/10 active:bg-error/20",
     primary: "text-primary hover:bg-primary/10 active:bg-primary/20",
   };

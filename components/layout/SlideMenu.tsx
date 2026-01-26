@@ -1,12 +1,14 @@
-"use client";
+﻿"use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useSchedulingPendingCount } from "@/contexts/SchedulingContext";
 import { Post } from "@/types";
 import { pinPost, renamePost, deletePost } from "@/lib/firestore";
-import toast from "react-hot-toast";
+import toast from "@/components/ui/Toast";
 import ConversationOptionsMenu from "@/components/conversation/ConversationOptionsMenu";
 import RenameConversationModal from "@/components/conversation/RenameConversationModal";
 import DeleteConfirmModal from "@/components/conversation/DeleteConfirmModal";
@@ -21,7 +23,15 @@ interface SlideMenuProps {
 }
 
 // Group posts by date with pinned posts first
-function groupPostsByDate(posts: Post[]) {
+interface SidebarTranslations {
+  pinned: string;
+  today: string;
+  yesterday: string;
+  thisWeek: string;
+  older: string;
+}
+
+function groupPostsByDate(posts: Post[], labels: SidebarTranslations) {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
@@ -48,15 +58,15 @@ function groupPostsByDate(posts: Post[]) {
 
   // Add pinned group first if there are pinned posts
   if (pinnedPosts.length > 0) {
-    groups.push({ label: "Epingles", posts: pinnedPosts, isPinnedGroup: true });
+    groups.push({ label: labels.pinned, posts: pinnedPosts, isPinnedGroup: true });
   }
 
   // Date-based groups for non-pinned posts
   const dateGroups: { label: string; posts: Post[] }[] = [
-    { label: "Aujourd'hui", posts: [] },
-    { label: "Hier", posts: [] },
-    { label: "Cette semaine", posts: [] },
-    { label: "Plus ancien", posts: [] },
+    { label: labels.today, posts: [] },
+    { label: labels.yesterday, posts: [] },
+    { label: labels.thisWeek, posts: [] },
+    { label: labels.older, posts: [] },
   ];
 
   nonPinnedPosts.forEach((post) => {
@@ -87,8 +97,12 @@ function groupPostsByDate(posts: Post[]) {
 
 const menuItems = [
   {
-    name: "Chat",
+    nameKey: "chat" as const,
     href: "/app",
+    color: "orange",
+    activeClasses: "bg-orange-500/10 text-orange-500",
+    hoverClasses: "hover:text-orange-500 hover:bg-orange-500/5",
+    indicatorColor: "bg-orange-500",
     icon: (isActive: boolean) => (
       <svg className="w-5 h-5" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -101,8 +115,12 @@ const menuItems = [
     ),
   },
   {
-    name: "Historique",
+    nameKey: "history" as const,
     href: "/history",
+    color: "cyan",
+    activeClasses: "bg-cyan-500/10 text-cyan-500",
+    hoverClasses: "hover:text-cyan-500 hover:bg-cyan-500/5",
+    indicatorColor: "bg-cyan-500",
     icon: (isActive: boolean) => (
       <svg className="w-5 h-5" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -114,11 +132,32 @@ const menuItems = [
       </svg>
     ),
   },
+  {
+    nameKey: "schedule" as const,
+    href: "/schedule",
+    hasBadge: true,
+    color: "violet",
+    activeClasses: "bg-violet-500/10 text-violet-500",
+    hoverClasses: "hover:text-violet-500 hover:bg-violet-500/5",
+    indicatorColor: "bg-violet-500",
+    icon: (isActive: boolean) => (
+      <svg className="w-5 h-5" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={isActive ? 0 : 2}
+          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+        />
+      </svg>
+    ),
+  },
 ];
 
 export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostUpdate }: SlideMenuProps) {
   const pathname = usePathname();
   const { user, userProfile } = useAuth();
+  const { t } = useLanguage();
+  const schedulingPendingCount = useSchedulingPendingCount();
   const [searchQuery, setSearchQuery] = useState("");
   const [showChatList, setShowChatList] = useState(true);
 
@@ -141,8 +180,14 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
   }, [localPosts, searchQuery]);
 
   const groupedPosts = useMemo(
-    () => groupPostsByDate(filteredPosts),
-    [filteredPosts]
+    () => groupPostsByDate(filteredPosts, {
+      pinned: t.sidebar.pinned,
+      today: t.sidebar.today,
+      yesterday: t.sidebar.yesterday,
+      thisWeek: t.sidebar.thisWeek,
+      older: t.sidebar.older,
+    }),
+    [filteredPosts, t.sidebar]
   );
 
   // Handle escape key
@@ -167,6 +212,101 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
     };
   }, [isOpen, handleKeyDown]);
 
+  // Block horizontal swipe gestures when sidebar is open
+  // This prevents browser back gesture, page reload, and theme changes on swipe
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const isSwipeBlocked = useRef(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      // Don't track touch on form elements
+      const target = e.target as HTMLElement;
+      const isFormElement = target.tagName === "INPUT" ||
+                           target.tagName === "TEXTAREA" ||
+                           target.tagName === "SELECT" ||
+                           target.closest("input, textarea, select") !== null;
+      if (isFormElement) {
+        touchStartX.current = null;
+        touchStartY.current = null;
+        return;
+      }
+
+      if (e.touches.length === 1) {
+        touchStartX.current = e.touches[0].clientX;
+        touchStartY.current = e.touches[0].clientY;
+        isSwipeBlocked.current = false;
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (touchStartX.current === null || touchStartY.current === null) return;
+      if (e.touches.length !== 1) return;
+
+      // Don't block touch interactions on form elements (input, textarea, select)
+      const target = e.target as HTMLElement;
+      const isFormElement = target.tagName === "INPUT" ||
+                           target.tagName === "TEXTAREA" ||
+                           target.tagName === "SELECT" ||
+                           target.closest("input, textarea, select") !== null;
+      if (isFormElement) return;
+
+      const touch = e.touches[0];
+      const deltaX = touch.clientX - touchStartX.current;
+      const deltaY = Math.abs(touch.clientY - touchStartY.current);
+      const absDeltaX = Math.abs(deltaX);
+
+      // Block ALL horizontal movements when sidebar is open (except form elements)
+      // This prevents: browser back gesture, pull-to-refresh, theme changes, page reload
+      if (absDeltaX > deltaY && absDeltaX > 5) {
+        e.preventDefault();
+        e.stopPropagation();
+        isSwipeBlocked.current = true;
+      }
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      // If we blocked a swipe, also prevent the touchend from triggering any navigation
+      if (isSwipeBlocked.current) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      touchStartX.current = null;
+      touchStartY.current = null;
+      isSwipeBlocked.current = false;
+    };
+
+    // Add listeners to document to catch all touch events when sidebar is open
+    // Use capture phase to intercept before any other handlers
+    document.addEventListener("touchstart", handleTouchStart, { passive: true, capture: true });
+    document.addEventListener("touchmove", handleTouchMove, { passive: false, capture: true });
+    document.addEventListener("touchend", handleTouchEnd, { passive: false, capture: true });
+    document.addEventListener("touchcancel", handleTouchEnd, { passive: true, capture: true });
+
+    // Add touch-action CSS to body to further prevent gestures
+    document.body.style.touchAction = "pan-y";
+    document.documentElement.style.touchAction = "pan-y";
+    // Prevent overscroll which can trigger page reload
+    document.body.style.overscrollBehavior = "none";
+    document.documentElement.style.overscrollBehavior = "none";
+
+    return () => {
+      document.removeEventListener("touchstart", handleTouchStart, { capture: true });
+      document.removeEventListener("touchmove", handleTouchMove, { capture: true });
+      document.removeEventListener("touchend", handleTouchEnd, { capture: true });
+      document.removeEventListener("touchcancel", handleTouchEnd, { capture: true });
+      document.body.style.touchAction = "";
+      document.documentElement.style.touchAction = "";
+      document.body.style.overscrollBehavior = "";
+      document.documentElement.style.overscrollBehavior = "";
+      touchStartX.current = null;
+      touchStartY.current = null;
+      isSwipeBlocked.current = false;
+    };
+  }, [isOpen]);
+
   // Handle pin/unpin
   const handlePin = async (postId: string, isPinned: boolean) => {
     // Optimistic update
@@ -176,7 +316,7 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
 
     try {
       await pinPost(postId, isPinned);
-      toast.success(isPinned ? "Conversation epinglee" : "Conversation desepinglee");
+      toast.success(isPinned ? t.toasts.conversationPinned : t.toasts.conversationUnpinned);
       onPostUpdate?.();
     } catch (error) {
       console.error("Error pinning post:", error);
@@ -184,7 +324,7 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
       setLocalPosts((prev) =>
         prev.map((p) => (p.id === postId ? { ...p, isPinned: !isPinned } : p))
       );
-      toast.error("Erreur lors de l'epinglage");
+      toast.error(t.toasts.errorPinning);
     }
   };
 
@@ -205,11 +345,11 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
 
     try {
       await renamePost(postId, newTitle);
-      toast.success("Conversation renommee");
+      toast.success(t.toasts.conversationRenamed);
       onPostUpdate?.();
     } catch (error) {
       console.error("Error renaming post:", error);
-      toast.error("Erreur lors du renommage");
+      toast.error(t.toasts.errorRenaming);
     }
   };
 
@@ -228,19 +368,19 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
 
     try {
       await deletePost(postId);
-      toast.success("Conversation supprimee");
+      toast.success(t.toasts.conversationDeleted);
       onPostUpdate?.();
     } catch (error) {
       console.error("Error deleting post:", error);
       // Revert - re-fetch posts
       onPostUpdate?.();
-      toast.error("Erreur lors de la suppression");
+      toast.error(t.toasts.errorDelete);
     }
   };
 
   return (
     <>
-      {/* Overlay */}
+      {/* Overlay - blocks all touch gestures when open */}
       <div
         className={`
           fixed inset-0 z-[60] popup-overlay
@@ -250,66 +390,95 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
         `}
         onClick={onClose}
         aria-hidden="true"
+        style={{ touchAction: isOpen ? "none" : "auto" }}
       />
 
-      {/* Slide Menu */}
+      {/* Slide Menu - PWA Safe Area Support */}
       <aside
         className={`
-          fixed top-0 left-0 z-[70] h-full w-80
-          bg-dark-card border-r border-dark-border
+          fixed top-0 left-0 z-[70] h-full w-[85vw] max-w-80
+          bg-white dark:bg-dark-card border-r border-gray-200 dark:border-dark-border
           flex flex-col
           transform transition-transform duration-300 ease-smooth
           lg:hidden
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
         `}
+        style={{
+          touchAction: "pan-y",
+          paddingTop: "env(safe-area-inset-top, 0px)",
+        }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-dark-border">
-          <Link href="/app" className="flex items-center gap-3 group" onClick={onClose}>
-            <div className="w-12 h-12 bg-gradient-to-br from-primary to-accent rounded-lg overflow-hidden flex items-center justify-center shadow-glow transition-transform group-hover:scale-105">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-dark-border">
+          <Link href="/app" className="flex items-center gap-2.5 group min-w-0 flex-1" onClick={onClose}>
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl overflow-hidden flex items-center justify-center shadow-glow transition-transform group-hover:scale-105 flex-shrink-0">
               <img
-                src="/logo.png"
-                alt="POSTY Logo"
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                  const sibling = e.currentTarget.nextElementSibling as HTMLElement | null; if (sibling) sibling.style.display = 'flex';
-                }}
+                src="/logo.jpg"
+                alt="Posty Logo"
+                className="w-full h-full object-contain"
               />
-              <span className="text-white font-bold text-xl hidden">P</span>
             </div>
-            <span className="font-semibold text-white text-xl tracking-tight">POSTY</span>
+            <span className="font-bold text-gray-900 dark:text-white text-lg sm:text-xl truncate">Posty</span>
           </Link>
           <button
             onClick={onClose}
-            className="min-w-[44px] min-h-[44px] p-2.5 flex items-center justify-center text-text-secondary hover:text-white hover:bg-dark-hover rounded-lg transition-all duration-200 haptic-feedback"
-            aria-label="Fermer le menu"
+            className="min-w-[44px] min-h-[44px] p-2.5 flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-gray-100 dark:hover:bg-dark-hover rounded-lg transition-all duration-200 haptic-feedback"
+            aria-label={t.sidebar.closeMenu}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              {/* Symmetric X icon - both lines use absolute coordinates */}
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 6L18 18" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6" />
             </svg>
           </button>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 p-4 overflow-y-auto no-scrollbar">
-          {/* New post button */}
-          <Link
-            href="/app"
-            onClick={onClose}
-            className="
-              flex items-center justify-center gap-3 w-full px-4 py-3.5 mb-5
-              bg-gradient-to-r from-primary to-primary-hover
-              hover:from-primary-hover hover:to-primary
-              text-white rounded-lg transition-all duration-200
-              shadow-glow hover:shadow-lg haptic-feedback
-            "
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            <span className="font-semibold">Nouveau post</span>
-          </Link>
+        {/* Navigation - overscroll-contain prevents scroll chaining */}
+        <nav className="flex-1 p-4 overflow-y-auto no-scrollbar overscroll-contain">
+          {/* New post button - Enhanced with shimmer glow */}
+          <div className="relative mb-5 group">
+            {/* Animated glow effect - orange AUTOSCROLL */}
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-primary via-orange-500 to-primary rounded-lg opacity-75 blur-sm group-hover:opacity-100 animate-pulse-glow" />
+
+            <Link
+              href="/app"
+              onClick={onClose}
+              className="
+                relative flex items-center justify-center gap-3 w-full px-4 py-3.5
+                bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500
+                hover:from-orange-600 hover:via-orange-500 hover:to-orange-600
+                text-white rounded-xl
+                transition-all duration-200 ease-out
+                shadow-lg hover:shadow-xl
+                active:scale-[0.97] active:transition-none
+                haptic-feedback
+                overflow-hidden
+              "
+              style={{
+                boxShadow: "0 4px 20px rgba(249, 115, 22, 0.3)",
+              }}
+            >
+              {/* Shimmer overlay - enhanced */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full animate-shimmer-enhanced" />
+
+              <svg
+                className="w-5 h-5 relative z-10"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                style={{
+                  filter: "drop-shadow(0 0 4px rgba(255, 255, 255, 0.5))",
+                }}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+              </svg>
+
+              <span className="font-bold relative z-10">{t.sidebar.newPost}</span>
+
+              {/* Emoji indicator */}
+              <span className="relative z-10 text-sm animate-pulse">✨</span>
+            </Link>
+          </div>
 
           {/* Search bar */}
           <div className="relative mb-5">
@@ -328,13 +497,13 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
             </svg>
             <input
               type="text"
-              placeholder="Rechercher un chat..."
+              placeholder={t.sidebar.searchPlaceholder}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="
                 w-full pl-11 pr-4 py-3 text-sm
-                bg-dark-bg border border-dark-border rounded-lg
-                text-white placeholder-text-muted
+                bg-gray-50 dark:bg-dark-bg border border-gray-200 dark:border-dark-border rounded-lg
+                text-text-primary placeholder-text-muted
                 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary
                 transition-all duration-200
               "
@@ -342,58 +511,165 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
-                className="absolute right-1 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] flex items-center justify-center text-text-muted hover:text-white transition-colors"
+                className="absolute right-1 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] flex items-center justify-center text-text-muted hover:text-text-primary transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 6L18 18" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6" />
                 </svg>
               </button>
             )}
           </div>
 
-          {/* Nav items */}
-          <div className="space-y-1.5">
+          {/* Nav items - Enhanced with vivid colors and glow effects */}
+          <div className="space-y-1">
             {menuItems.map((item) => {
               const isActive = pathname === item.href || (item.href === "/app" && pathname === "/chat");
+              const itemName = t.nav[item.nameKey];
+              const showBadge = item.hasBadge && schedulingPendingCount > 0;
+
+              // Color mapping for glow effects
+              const glowColors = {
+                orange: "rgba(249, 115, 22, 0.35)",
+                cyan: "rgba(6, 182, 212, 0.35)",
+                violet: "rgba(139, 92, 246, 0.35)",
+              };
+
               return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  onClick={onClose}
-                  className={`
-                    relative flex items-center gap-3 px-4 py-3 rounded-lg
-                    transition-all duration-200 group haptic-feedback
-                    ${isActive
-                      ? "bg-primary/10 text-primary before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-1 before:h-6 before:bg-primary before:rounded-full before:shadow-glow"
-                      : "text-text-secondary hover:text-white hover:bg-dark-hover hover:border-l-2 hover:border-primary/30 hover:pl-[14px]"
-                    }
-                  `}
-                >
-                  <span className={`transition-transform duration-200 ${isActive ? "scale-110" : "group-hover:scale-110"}`}>
-                    {item.icon(isActive)}
-                  </span>
-                  <span className="font-medium">{item.name}</span>
-                </Link>
+                <div key={item.nameKey} className="relative">
+                  {/* Enhanced active indicator with glow */}
+                  {isActive && (
+                    <div
+                      className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-full ${
+                        item.color === "orange"
+                          ? "bg-orange-500"
+                          : item.color === "cyan"
+                          ? "bg-cyan-500"
+                          : item.color === "violet"
+                          ? "bg-violet-500"
+                          : "bg-primary"
+                      }`}
+                      style={{
+                        boxShadow: `0 0 12px ${glowColors[item.color as keyof typeof glowColors]}`,
+                      }}
+                    />
+                  )}
+
+                  {/* Glow effect behind active item */}
+                  {isActive && (
+                    <div
+                      className="absolute inset-0 rounded-lg blur-xl pointer-events-none"
+                      style={{
+                        background: `radial-gradient(circle at center left, ${glowColors[item.color as keyof typeof glowColors]} 0%, transparent 60%)`,
+                      }}
+                    />
+                  )}
+
+                  <Link
+                    href={item.href}
+                    onClick={onClose}
+                    className={`
+                      relative flex items-center gap-3 px-4 py-2 rounded-lg
+                      transition-all duration-200 ease-out group haptic-feedback
+                      transform-gpu overflow-hidden
+                      ${
+                        isActive
+                          ? item.activeClasses
+                          : `text-text-secondary ${item.hoverClasses} hover:translate-x-1 active:scale-[0.98] active:transition-none`
+                      }
+                    `}
+                  >
+                    {/* Vivid colored icon with enhanced glow */}
+                    <span
+                      className={`
+                        relative transition-all duration-200
+                        ${isActive ? "scale-110" : "group-hover:scale-110"}
+                        ${item.color === "orange" ? "text-orange-500" : ""}
+                        ${item.color === "cyan" ? "text-cyan-500" : ""}
+                        ${item.color === "violet" ? "text-violet-500" : ""}
+                      `}
+                      style={isActive ? {
+                        filter: `drop-shadow(0 0 6px ${glowColors[item.color as keyof typeof glowColors]})`
+                      } : undefined}
+                    >
+                      {item.icon(isActive)}
+                    </span>
+
+                    <span className="font-bold flex-1">{itemName}</span>
+
+                    {showBadge && (
+                      <div className="relative flex-shrink-0">
+                        {/* Pulsing glow effect for visibility */}
+                        <div className="absolute inset-0 bg-violet-500/30 rounded-full blur-md animate-pulse" />
+
+                        {/* Badge with enhanced styling */}
+                        <span
+                          className="relative px-2.5 py-0.5 text-xs font-bold bg-gradient-to-r from-violet-500 via-purple-500 to-violet-500 text-white rounded-full min-w-[24px] text-center shadow-lg flex items-center justify-center"
+                          style={{
+                            boxShadow: "0 0 12px rgba(139, 92, 246, 0.5), 0 0 20px rgba(139, 92, 246, 0.3)",
+                          }}
+                        >
+                          {schedulingPendingCount}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Arrow indicator for active state */}
+                    {isActive && (
+                      <svg
+                        className={`
+                          w-4 h-4 transition-all duration-200
+                          ${item.color === "orange" ? "text-orange-500" : ""}
+                          ${item.color === "cyan" ? "text-cyan-500" : ""}
+                          ${item.color === "violet" ? "text-violet-500" : ""}
+                        `}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    )}
+                  </Link>
+                </div>
               );
             })}
           </div>
 
-          {/* Chat list section */}
-          <div className="mt-6">
-            {/* Toggle header */}
+          {/* Chat list section - Compact spacing */}
+          <div className="mt-4">
+            {/* Toggle header - Enhanced with color */}
             <button
               onClick={() => setShowChatList(!showChatList)}
-              className="flex items-center justify-between w-full px-3 py-2 text-text-muted hover:text-white transition-colors rounded-lg"
+              className="group flex items-center justify-between w-full px-3 py-2 text-text-muted hover:text-text-primary hover:bg-light-hover dark:hover:bg-dark-hover transition-all duration-200 rounded-lg"
             >
-              <span className="text-xs font-semibold uppercase tracking-wider">
-                Conversations
+              <span className="text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+                <svg
+                  className="w-4 h-4 text-blue-500 group-hover:text-blue-600 transition-colors"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                  />
+                </svg>
+                {t.sidebar.conversations}
               </span>
               <div className="flex items-center gap-2">
-                <span className="text-2xs text-text-muted bg-dark-hover px-2 py-0.5 rounded-full">
+                <span
+                  className="text-2xs font-bold text-white bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-500 px-2.5 py-0.5 rounded-full shadow-lg"
+                  style={{
+                    boxShadow: "0 0 8px rgba(59, 130, 246, 0.4)",
+                  }}
+                >
                   {localPosts.length}
                 </span>
                 <svg
-                  className={`w-4 h-4 transition-transform duration-200 ${showChatList ? "" : "-rotate-90"}`}
+                  className={`w-4 h-4 transition-all duration-200 text-blue-500 ${showChatList ? "rotate-0" : "-rotate-90"}`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -412,40 +688,141 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
             >
               {groupedPosts.length > 0 ? (
                 <>
-                  {groupedPosts.map((group, groupIndex) => (
-                    <div key={group.label} className={groupIndex > 0 ? "mt-4" : "mt-2"}>
-                      <p className={`
-                        px-3 py-1 text-2xs font-medium uppercase tracking-wider flex items-center gap-1.5
-                        ${group.isPinnedGroup ? "text-accent" : "text-text-muted"}
-                      `}>
-                        {group.isPinnedGroup && (
-                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                          </svg>
-                        )}
-                        {group.label}
-                      </p>
-                      <div className="space-y-0.5 mt-1">
-                        {group.posts.map((post) => (
-                          <div
-                            key={post.id}
-                            className="
-                              relative flex items-center gap-2 px-3 py-2.5 rounded-lg
-                              text-text-secondary text-sm
-                              hover:text-white hover:bg-dark-hover
-                              hover:border-l-2 hover:border-primary/40 hover:pl-[10px]
-                              transition-all duration-200 group haptic-feedback
-                              cursor-pointer
-                            "
-                          >
-                            {/* Pin indicator */}
+                  {groupedPosts.map((group, groupIndex) => {
+                    // Determine group visual properties
+                    const isToday = group.label.includes(t.sidebar.today || "Aujourd'hui");
+                    const isYesterday = group.label.includes(t.sidebar.yesterday || "Hier");
+                    const isPinned = group.isPinnedGroup;
+
+                    return (
+                      <div key={group.label} className={groupIndex > 0 ? "mt-2.5" : "mt-1.5"}>
+                        {/* Enhanced group header with vivid icons */}
+                        <div className={`
+                          px-3 py-1 rounded-lg mb-0.5
+                          flex items-center gap-2
+                          ${isPinned ? "bg-violet-500/5 dark:bg-violet-500/10" : ""}
+                          ${isToday ? "bg-emerald-500/5 dark:bg-emerald-500/10" : ""}
+                          ${isYesterday ? "bg-blue-500/5 dark:bg-blue-500/10" : ""}
+                        `}>
+                          {/* Vivid colored icon based on group type */}
+                          {isPinned && (
+                            <svg
+                              className="w-4 h-4 text-violet-500 dark:text-violet-400"
+                              fill="currentColor"
+                              viewBox="0 0 24 24"
+                              style={{
+                                filter: "drop-shadow(0 0 4px rgba(139, 92, 246, 0.3))",
+                              }}
+                            >
+                              <path d="M16 4a1 1 0 0 1 1 1v3.586l1.707 1.707a1 1 0 0 1 .293.707v2a1 1 0 0 1-1 1h-4v6a1 1 0 0 1-2 0v-6H8a1 1 0 0 1-1-1v-2a1 1 0 0 1 .293-.707L9 8.586V5a1 1 0 0 1 1-1h6z"/>
+                            </svg>
+                          )}
+                          {isToday && (
+                            <svg
+                              className="w-4 h-4 text-emerald-500 dark:text-emerald-400"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              style={{
+                                filter: "drop-shadow(0 0 4px rgba(16, 185, 129, 0.3))",
+                              }}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+                              />
+                            </svg>
+                          )}
+                          {isYesterday && (
+                            <svg
+                              className="w-4 h-4 text-blue-500 dark:text-blue-400"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              style={{
+                                filter: "drop-shadow(0 0 4px rgba(59, 130, 246, 0.3))",
+                              }}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+                              />
+                            </svg>
+                          )}
+                          {!isPinned && !isToday && !isYesterday && (
+                            <svg
+                              className="w-4 h-4 text-amber-500 dark:text-amber-400"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              style={{
+                                filter: "drop-shadow(0 0 4px rgba(245, 158, 11, 0.3))",
+                              }}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
+                          )}
+
+                          {/* Group label with enhanced color */}
+                          <span className={`
+                            text-2xs font-bold uppercase tracking-wider
+                            ${isPinned ? "text-violet-600 dark:text-violet-400" : ""}
+                            ${isToday ? "text-emerald-600 dark:text-emerald-400" : ""}
+                            ${isYesterday ? "text-blue-600 dark:text-blue-400" : ""}
+                            ${!isPinned && !isToday && !isYesterday ? "text-amber-600 dark:text-amber-400" : ""}
+                          `}>
+                            {group.label}
+                          </span>
+
+                          {/* Post count badge - Enhanced with consistent styling */}
+                          <span className={`
+                            ml-auto text-2xs font-bold px-2 py-0.5 rounded-full
+                            transition-all duration-200
+                            ${isPinned ? "bg-violet-100 dark:bg-violet-500/25 text-violet-700 dark:text-violet-300 ring-1 ring-violet-200 dark:ring-violet-500/30" : ""}
+                            ${isToday ? "bg-emerald-100 dark:bg-emerald-500/25 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-200 dark:ring-emerald-500/30" : ""}
+                            ${isYesterday ? "bg-blue-100 dark:bg-blue-500/25 text-blue-700 dark:text-blue-300 ring-1 ring-blue-200 dark:ring-blue-500/30" : ""}
+                            ${!isPinned && !isToday && !isYesterday ? "bg-amber-100 dark:bg-amber-500/25 text-amber-700 dark:text-amber-300 ring-1 ring-amber-200 dark:ring-amber-500/30" : ""}
+                          `}>
+                            {group.posts.length}
+                          </span>
+                        </div>
+
+                        {/* Posts list - Compact spacing for professional look */}
+                        <div className="space-y-0.5 mt-0.5">
+                          {group.posts.map((post) => {
+                          const isActive = pathname === `/app/c/${post.id}`;
+                          return (
+                            <div
+                              key={post.id}
+                              className={`
+                                relative flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm
+                                transition-all duration-200 ease-out group haptic-feedback
+                                cursor-pointer transform-gpu
+                                active:scale-[0.98] active:transition-none
+                                ${
+                                  isActive
+                                    ? "bg-primary/10 dark:bg-primary/10 text-text-primary border-l-2 border-primary pl-[10px] shadow-sm"
+                                    : "text-text-secondary hover:text-text-primary hover:bg-light-hover dark:hover:bg-dark-hover hover:border-l-2 hover:border-primary/40 hover:pl-[10px]"
+                                }
+                              `}
+                            >
+                            {/* Pin indicator - Premium violet color */}
                             {post.isPinned && (
                               <svg
-                                className="w-3 h-3 shrink-0 text-accent group-hover:scale-110 transition-transform duration-200"
+                                className="w-3.5 h-3.5 shrink-0 text-violet-500 dark:text-violet-400 group-hover:scale-110 transition-transform duration-200"
                                 fill="currentColor"
-                                viewBox="0 0 20 20"
+                                viewBox="0 0 24 24"
                               >
-                                <path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                                <path d="M16 4a1 1 0 0 1 1 1v3.586l1.707 1.707a1 1 0 0 1 .293.707v2a1 1 0 0 1-1 1h-4v6a1 1 0 0 1-2 0v-6H8a1 1 0 0 1-1-1v-2a1 1 0 0 1 .293-.707L9 8.586V5a1 1 0 0 1 1-1h6z"/>
                               </svg>
                             )}
                             <Link
@@ -455,7 +832,9 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
                             >
                               {!post.isPinned && (
                                 <svg
-                                  className="w-4 h-4 shrink-0 text-text-muted group-hover:text-primary group-hover:scale-110 transition-all duration-200"
+                                  className={`w-4 h-4 shrink-0 group-hover:scale-110 transition-all duration-200 ${
+                                    isActive ? "text-primary" : "text-text-muted group-hover:text-primary"
+                                  }`}
                                   fill="none"
                                   stroke="currentColor"
                                   viewBox="0 0 24 24"
@@ -468,7 +847,9 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
                                   />
                                 </svg>
                               )}
-                              <span className="truncate flex-1 group-hover:translate-x-0.5 transition-transform duration-200">
+                              <span className={`truncate flex-1 group-hover:translate-x-0.5 transition-transform duration-200 ${
+                                isActive ? "font-semibold" : ""
+                              }`}>
                                 {(post.title || post.prompt).slice(0, 30)}
                                 {(post.title || post.prompt).length > 30 ? "..." : ""}
                               </span>
@@ -483,10 +864,12 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
                               />
                             </div>
                           </div>
-                        ))}
+                          );
+                        })}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
 
                   {/* View all button - Always show for full history page access */}
                   {localPosts.length > 0 && (
@@ -502,13 +885,13 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
                       </svg>
-                      Voir tout l&apos;historique
+                      {t.sidebar.viewAllHistory}
                     </Link>
                   )}
                 </>
               ) : (
                 <div className="px-3 py-8 text-center">
-                  <div className="w-12 h-12 mx-auto mb-3 bg-dark-elevated rounded-lg flex items-center justify-center">
+                  <div className="w-12 h-12 mx-auto mb-3 bg-gray-100 dark:bg-dark-elevated rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       {searchQuery ? (
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -518,10 +901,10 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
                     </svg>
                   </div>
                   <p className="text-sm text-text-muted">
-                    {searchQuery ? "Aucun resultat" : "Aucune conversation"}
+                    {searchQuery ? t.sidebar.noResults : t.sidebar.noConversations}
                   </p>
                   {searchQuery && (
-                    <p className="text-xs text-text-muted mt-1">pour &ldquo;{searchQuery}&rdquo;</p>
+                    <p className="text-xs text-text-muted mt-1">{t.sidebar.forQuery} &ldquo;{searchQuery}&rdquo;</p>
                   )}
                 </div>
               )}
@@ -529,10 +912,18 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
           </div>
         </nav>
 
-        {/* Footer - User Profile Menu */}
-        <div className="p-4 border-t border-dark-border">
+        {/* Footer - User Profile Menu with safe area for iOS home indicator */}
+        <div
+          className="px-3 py-3 border-t border-gray-200 dark:border-dark-border"
+          style={{
+            paddingBottom: "max(env(safe-area-inset-bottom, 0px), 12px)",
+          }}
+        >
           {user ? (
-            <ProfileMenu onNavigate={onClose} />
+            // Compact profile container - reduced width for balanced mobile appearance
+            <div className="max-w-[92%]">
+              <ProfileMenu onNavigate={onClose} />
+            </div>
           ) : (
             <div className="space-y-2">
               <Link
@@ -546,20 +937,20 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
                   transition-all duration-200 shadow-glow hover:shadow-lg haptic-feedback
                 "
               >
-                Connexion
+                {t.common.login}
               </Link>
               <Link
                 href="/signup"
                 onClick={onClose}
                 className="
                   flex items-center justify-center gap-2 w-full px-4 py-3
-                  text-text-secondary hover:text-white
-                  bg-dark-elevated hover:bg-dark-hover
-                  border border-dark-border hover:border-primary/30
+                  text-text-secondary hover:text-text-primary
+                  bg-gray-50 dark:bg-dark-elevated hover:bg-gray-100 dark:hover:bg-dark-hover
+                  border border-gray-200 dark:border-dark-border hover:border-primary/30
                   rounded-lg transition-all duration-200 haptic-feedback
                 "
               >
-                Creer un compte
+                {t.auth.createAccount}
               </Link>
             </div>
           )}

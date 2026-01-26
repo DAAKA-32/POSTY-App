@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
         },
       },
       success_url: `${appUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${appUrl}/pricing?canceled=true`,
+      cancel_url: `${appUrl}/subscription?canceled=true`,
       allow_promotion_codes: true,
       billing_address_collection: "auto",
       locale: "fr",

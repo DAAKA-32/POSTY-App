@@ -29,19 +29,22 @@ export default function ProfileHeader({
       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
       className="relative"
     >
-      {/* Subtle gradient background */}
-      <div className="absolute inset-x-0 -top-4 h-28 bg-gradient-to-b from-primary/5 via-primary/3 to-transparent rounded-3xl pointer-events-none" />
+      {/* Premium gradient background - theme aware */}
+      <div className="absolute inset-x-0 -top-4 h-32 bg-gradient-to-br from-primary/8 via-accent/5 to-transparent dark:from-primary/8 dark:via-accent/5 rounded-3xl pointer-events-none" />
+      <div className="absolute top-0 right-0 w-40 h-40 bg-accent/5 dark:bg-accent/5 rounded-full blur-3xl pointer-events-none" />
 
       <div className="relative flex flex-col items-center text-center lg:flex-row lg:items-start lg:text-left gap-5 lg:gap-6">
-        {/* Avatar */}
+        {/* Avatar with premium glow - Clean display without badge */}
         <div className="relative group shrink-0">
-          <div className="w-24 h-24 lg:w-28 lg:h-28 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 p-[2px]">
-            <div className="w-full h-full rounded-2xl bg-dark-card overflow-hidden">
+          {/* Glow effect */}
+          <div className="absolute -inset-2 bg-gradient-to-r from-primary/40 to-accent/40 rounded-2xl blur-xl opacity-0 group-hover:opacity-70 transition-opacity duration-500" />
+          <div className="relative w-24 h-24 lg:w-28 lg:h-28 rounded-2xl bg-gradient-to-r from-primary to-accent p-[3px] shadow-md group-hover:shadow-glow transition-shadow duration-300">
+            <div className="w-full h-full rounded-[13px] overflow-hidden">
               <ProfileAvatar
                 size="xl"
-                showLinkedInBadge={linkedInConnected}
+                showLinkedInBadge={false}
                 priority
-                className="w-full h-full"
+                className="w-full h-full !rounded-none"
               />
             </div>
           </div>
@@ -49,25 +52,31 @@ export default function ProfileHeader({
 
         {/* Info */}
         <div className="flex-1 min-w-0 pt-1">
-          {/* Name */}
-          <h1 className="text-2xl lg:text-3xl font-bold text-white tracking-tight">
+          {/* Name - theme aware */}
+          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-text-primary tracking-tight">
             {displayName || "Utilisateur"}
           </h1>
 
-          {/* Role */}
+          {/* Role - theme aware with better contrast */}
           {role && (
-            <p className="mt-1 text-base lg:text-lg text-text-secondary">
+            <p className="mt-1 text-base lg:text-lg text-gray-600 dark:text-text-secondary font-medium">
               {role}
             </p>
           )}
 
-          {/* Sector badge */}
+          {/* Sector badge - Always gradient style like edit button */}
           {sector && (
             <motion.span
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.1 }}
-              className="inline-flex items-center gap-1.5 mt-3 px-3 py-1.5 bg-primary/10 text-primary text-sm font-medium rounded-lg"
+              className="inline-flex items-center gap-1.5 mt-3 px-3 py-1.5
+                bg-gradient-to-r from-primary to-accent
+                text-white
+                text-sm font-medium rounded-lg
+                border border-transparent
+                shadow-sm
+                transition-colors duration-200"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
@@ -81,33 +90,37 @@ export default function ProfileHeader({
             </motion.span>
           )}
 
-          {/* Bio */}
+          {/* Bio - theme aware */}
           {bio && !isEditing && (
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.15 }}
-              className="mt-4 text-sm text-text-muted max-w-md leading-relaxed"
+              className="mt-4 text-sm text-gray-500 dark:text-text-muted max-w-md leading-relaxed"
             >
               {bio}
             </motion.p>
           )}
         </div>
 
-        {/* Edit button */}
+        {/* Edit button - Always gradient style */}
         {onEdit && !isEditing && (
           <motion.button
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
             onClick={onEdit}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             className="
               absolute top-0 right-0 lg:relative lg:top-auto lg:right-auto
-              flex items-center gap-2 px-4 py-2
-              bg-dark-card hover:bg-dark-hover
-              border border-dark-border hover:border-primary/30
-              rounded-xl text-sm font-medium text-text-secondary hover:text-white
-              transition-all duration-200
+              flex items-center gap-2 px-4 py-2.5
+              bg-gradient-to-r from-primary to-accent
+              border border-transparent
+              rounded-xl text-sm font-medium
+              text-white
+              shadow-sm hover:shadow-glow
+              transition-all duration-300
             "
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

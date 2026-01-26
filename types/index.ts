@@ -5,6 +5,43 @@ import { User as FirebaseUser } from "firebase/auth";
 
 export type SubscriptionPlan = "free" | "pro" | "max";
 
+// ============== RESPONSE & GENERATION TYPES ==============
+
+// Response modes based on plan
+export type ResponseMode = "business-only" | "single-choice" | "dual";
+
+// AI-generated insights (all plans)
+export interface PostInsights {
+  whyEffective: string;       // Why this approach works
+  bestTimeToPost: string;     // Optimal posting time
+  expectedEngagement: string; // Engagement prediction
+  keyTakeaway: string;        // Main value proposition
+}
+
+// Post analysis (PRO+)
+export interface PostAnalysis {
+  hookScore: number;          // 1-10
+  hookFeedback: string;
+  structureScore: number;     // 1-10
+  structureFeedback: string;
+  ctaScore: number;           // 1-10
+  ctaFeedback: string;
+  overallScore: number;       // 1-10
+  improvements: string[];
+}
+
+// Platform adaptation targets (Pro+ for reddit, Max for others)
+export type AdaptationPlatform = "reddit" | "instagram" | "twitter" | "facebook";
+
+// Platform adaptation result (MAX)
+export interface PlatformAdaptation {
+  platform: AdaptationPlatform;
+  content: string;
+  characterCount: number;
+  hashtags: string[];
+  notes: string;              // Platform-specific tips
+}
+
 export interface SubscriptionFeature {
   id: string;
   label: string;
@@ -33,63 +70,66 @@ export const DAILY_MESSAGE_LIMITS: Record<SubscriptionPlan, number> = {
 };
 
 // Configuration complete des plans
+// Prix annuels calcules avec 20% d'economie
 export const SUBSCRIPTION_PLANS: PlanConfig[] = [
   {
     id: "free",
-    name: "Free",
+    name: "Gratuit",
     tagline: "Pour decouvrir Posty",
     price: 0,
     priceYearly: 0,
     dailyMessageLimit: 3,
-    ctaLabel: "Plan actuel",
+    ctaLabel: "Commencer gratuitement",
     features: [
       { id: "messages", label: "3 messages IA par jour", included: true },
-      { id: "basic-gen", label: "Generation de posts basique", included: true },
+      { id: "response-mode", label: "Version Business uniquement", included: true },
+      { id: "insights", label: "Insights IA sur chaque post", included: true, highlight: true },
       { id: "history", label: "Historique limite (7 jours)", included: true },
-      { id: "templates", label: "Templates premium", included: false },
-      { id: "priority", label: "Acces prioritaire", included: false },
-      { id: "memory", label: "IA avec memoire", included: false },
-      { id: "coaching", label: "Coaching personnalise", included: false },
-      { id: "support", label: "Support prioritaire", included: false },
+      { id: "style-choice", label: "Choix du style (Storytelling/Business)", included: false },
+      { id: "analysis", label: "Analyse de post", included: false },
+      { id: "improve", label: "Ameliorer un post existant", included: false },
+      { id: "multiplatform", label: "Adaptation multi-plateforme", included: false },
     ],
   },
   {
     id: "pro",
     name: "Pro",
-    tagline: "Pour les createurs reguliers",
-    price: 9.99,
-    priceYearly: 99,
+    tagline: "Pour les createurs serieux",
+    price: 9.90,
+    priceYearly: 95, // 9,90 x 12 x 0,80 = 95,04€ (20% economie)
     dailyMessageLimit: -1,
     popular: true,
-    ctaLabel: "Passer a Pro",
+    ctaLabel: "Choisir Pro",
     features: [
       { id: "messages", label: "Messages IA illimites", included: true, highlight: true },
-      { id: "basic-gen", label: "Generation optimisee", included: true, highlight: true },
+      { id: "response-mode", label: "Choix Storytelling OU Business", included: true, highlight: true },
+      { id: "insights", label: "Insights IA sur chaque post", included: true },
       { id: "history", label: "Historique illimite", included: true },
-      { id: "templates", label: "Templates premium", included: true, highlight: true },
-      { id: "priority", label: "Acces prioritaire", included: true },
-      { id: "memory", label: "IA avec memoire", included: false },
-      { id: "coaching", label: "Coaching personnalise", included: false },
-      { id: "support", label: "Support prioritaire", included: true },
+      { id: "style-choice", label: "Ton adaptatif personnalise", included: true, highlight: true },
+      { id: "analysis", label: "Analyse de post (hook, structure, CTA)", included: true, highlight: true },
+      { id: "improve", label: "Ameliorer un post existant", included: true, highlight: true },
+      { id: "multiplatform", label: "Adaptation multi-plateforme", included: false },
+      { id: "support", label: "Support email prioritaire", included: true },
     ],
   },
   {
     id: "max",
-    name: "Max+",
-    tagline: "L'experience ultime",
-    price: 19.99,
-    priceYearly: 199,
+    name: "Max",
+    tagline: "L'assistant LinkedIn complet",
+    price: 19.90,
+    priceYearly: 191, // 19,90 x 12 x 0,80 = 191,04€ (20% economie)
     dailyMessageLimit: -1,
-    ctaLabel: "Passer a Max+",
+    ctaLabel: "Choisir Max",
     features: [
-      { id: "messages", label: "Messages IA illimites", included: true },
-      { id: "basic-gen", label: "Generation IA avancee", included: true, highlight: true },
+      { id: "messages", label: "Messages IA illimites", included: true, highlight: true },
+      { id: "response-mode", label: "Double generation (Storytelling + Business)", included: true, highlight: true },
+      { id: "insights", label: "Insights IA avances", included: true },
       { id: "history", label: "Historique illimite", included: true },
-      { id: "templates", label: "Templates premium", included: true },
-      { id: "priority", label: "Acces prioritaire", included: true },
-      { id: "memory", label: "IA avec memoire contextuelle", included: true, highlight: true },
-      { id: "coaching", label: "Coaching personnalise", included: true, highlight: true },
-      { id: "support", label: "Support VIP 24/7", included: true, highlight: true },
+      { id: "style-choice", label: "Personnalisation avancee", included: true },
+      { id: "analysis", label: "Analyse de post complete", included: true },
+      { id: "improve", label: "Ameliorer un post existant", included: true },
+      { id: "multiplatform", label: "Adaptation Instagram, Twitter, Facebook", included: true, highlight: true },
+      { id: "support", label: "Support prioritaire 24/7", included: true, highlight: true },
     ],
   },
 ];
@@ -113,6 +153,9 @@ export interface UserProfile {
     role: string;
     linkedinStyle: string;
     objective: string;
+    // Extended profile fields (Pro/Max only)
+    targetAudience?: string;
+    communicationTone?: string;
   };
   stats?: {
     postsCount: number;
@@ -157,6 +200,23 @@ export interface Post {
   title?: string; // Custom title (defaults to prompt if not set)
   isPinned?: boolean; // Whether the conversation is pinned
   pinnedAt?: Timestamp; // When it was pinned (for sorting)
+  // New transformation fields (optional for backwards compatibility)
+  insights?: PostInsights; // AI-generated insights
+  analysis?: PostAnalysis; // Detailed post analysis (PRO+)
+  responseMode?: ResponseMode; // Mode used for generation
+  selectedStyle?: "storytelling" | "business"; // Style choice for single-mode
+  // Multi-turn conversation support
+  messages?: ConversationTurn[]; // Follow-up messages after initial exchange
+  updatedAt?: Timestamp; // Last message timestamp
+}
+
+// Message in a multi-turn conversation
+export interface ConversationTurn {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  variant?: "storytelling" | "business";
+  timestamp: Date | Timestamp;
 }
 
 export interface MockResponse {
@@ -232,38 +292,84 @@ export const OBJECTIVES = [
   "Partager mon expertise",
 ] as const;
 
+// Extended profile options (Pro/Max only)
+export const TARGET_AUDIENCES = [
+  "Entrepreneurs / Fondateurs",
+  "Dirigeants / C-Level",
+  "Managers / Team Leaders",
+  "Freelances / Indépendants",
+  "Développeurs / Tech",
+  "Marketeurs / Growth",
+  "RH / Recruteurs",
+  "Étudiants / Jeunes diplômés",
+  "Grand public",
+] as const;
+
+export const COMMUNICATION_TONES = [
+  "Professionnel et formel",
+  "Accessible et conversationnel",
+  "Inspirant et motivant",
+  "Direct et percutant",
+  "Éducatif et pédagogue",
+  "Authentique et personnel",
+] as const;
+
 // ============== AUTH CONTEXT TYPES ==============
 
 export interface AuthContextType {
   user: FirebaseUser | null;
   userProfile: UserProfile | null;
   loading: boolean;
+  /** True ONLY when user just signed up (not on login) - used to trigger onboarding */
+  isNewUser: boolean;
   signInWithGoogle: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signUpWithEmail: (email: string, password: string, displayName: string) => Promise<void>;
   signOut: () => Promise<void>;
   refreshUserProfile: () => Promise<void>;
   deleteUserAccount: (password: string) => Promise<void>;
+  /** @deprecated Use clearOnboardingFlag instead */
+  clearNewUserFlag: () => void;
+  /** Send password reset email */
+  resetPassword: (email: string) => Promise<void>;
+  /** Check if user needs to see onboarding (combines memory + localStorage for robustness) */
+  needsOnboarding: () => boolean;
+  /** Clear all onboarding flags (memory + localStorage) - call after onboarding is complete */
+  clearOnboardingFlag: () => void;
 }
 
 // ============== MULTI-PLATFORM PUBLISHING TYPES ==============
 
-export type Platform = "linkedin" | "twitter" | "medium";
+/**
+ * Core platforms supported by Posty plans
+ * - Free: linkedin only
+ * - Pro: linkedin, reddit
+ * - Max: linkedin, reddit, instagram, facebook
+ */
+export type Platform = "linkedin" | "reddit" | "instagram" | "facebook";
+
+/**
+ * Extended platform type including legacy/additional platforms
+ * Used for broader compatibility with existing features
+ */
+export type ExtendedPlatform = Platform | "twitter" | "medium";
 
 export interface PublishResult {
-  platform: Platform;
+  platform: Platform | ExtendedPlatform;
   success: boolean;
   postUrl?: string;
   error?: string;
 }
 
 export interface PlatformConnection {
-  platform: Platform;
+  platform: Platform | ExtendedPlatform;
   isConnected: boolean;
   profileName?: string;
   profilePicture?: string;
   username?: string;
   expiresAt?: Date;
+  /** Minimum plan required for this platform */
+  minPlan?: "free" | "pro" | "max";
 }
 
 // ============== TWITTER TYPES ==============
@@ -347,4 +453,248 @@ export interface LinkedInPostData {
   publishedAt: Timestamp;
   success: boolean;
   error?: string;
+}
+
+// ============== REDDIT TYPES ==============
+
+export interface RedditConnectionData {
+  userId: string;
+  redditId: string;
+  username: string;
+  accessToken: string;
+  refreshToken?: string;
+  expiresAt: Timestamp;
+  profileName: string;
+  profilePicture?: string;
+  karma?: number;
+  connectedAt: Timestamp;
+  lastUsedAt?: Timestamp;
+}
+
+export interface RedditPostData {
+  id: string;
+  userId: string;
+  redditId: string;
+  postId: string;
+  subreddit: string;
+  title: string;
+  content: string;
+  postUrl?: string;
+  publishedAt: Timestamp;
+  success: boolean;
+  error?: string;
+}
+
+// ============== INSTAGRAM TYPES ==============
+
+export interface InstagramConnectionData {
+  userId: string;
+  instagramId: string;
+  username: string;
+  accessToken: string;
+  expiresAt: Timestamp;
+  profileName: string;
+  profilePicture?: string;
+  followersCount?: number;
+  /** Instagram Business/Creator account ID */
+  businessAccountId?: string;
+  /** Connected Facebook Page ID (required for Instagram API) */
+  facebookPageId?: string;
+  connectedAt: Timestamp;
+  lastUsedAt?: Timestamp;
+}
+
+export interface InstagramPostData {
+  id: string;
+  userId: string;
+  instagramId: string;
+  mediaId: string;
+  mediaType: "IMAGE" | "VIDEO" | "CAROUSEL" | "REELS";
+  caption: string;
+  mediaUrl?: string;
+  permalink?: string;
+  publishedAt: Timestamp;
+  success: boolean;
+  error?: string;
+}
+
+// ============== FACEBOOK TYPES ==============
+
+export interface FacebookConnectionData {
+  userId: string;
+  facebookId: string;
+  accessToken: string;
+  expiresAt: Timestamp;
+  profileName: string;
+  profilePicture?: string;
+  email?: string;
+  /** Facebook Page IDs the user can manage */
+  pageIds?: string[];
+  /** Selected page for publishing */
+  selectedPageId?: string;
+  connectedAt: Timestamp;
+  lastUsedAt?: Timestamp;
+}
+
+export interface FacebookPostData {
+  id: string;
+  userId: string;
+  facebookId: string;
+  postId: string;
+  pageId?: string;
+  content: string;
+  postUrl?: string;
+  publishedAt: Timestamp;
+  success: boolean;
+  error?: string;
+}
+
+// ============== SCHEDULING TYPES ==============
+
+export type ScheduleStatus = "pending" | "published" | "failed" | "cancelled";
+
+export type SchedulePlatform = "linkedin" | "reddit" | "instagram" | "facebook";
+
+export type LinkedInPostType = "feed" | "article";
+
+export interface ScheduledPost {
+  id: string;
+  userId: string;
+  // Content
+  content: string;
+  postId?: string; // Reference to original Post if from history
+  title?: string; // Optional title for identification
+  // Scheduling
+  scheduledAt: Timestamp; // When to publish
+  timezone: string; // User's timezone (e.g., "Europe/Paris")
+  status: ScheduleStatus;
+  // Platform config
+  platform: SchedulePlatform;
+  postType?: LinkedInPostType; // For LinkedIn: feed or article
+  // Tracking
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  // Publishing results
+  publishedAt?: Timestamp;
+  publishedUrl?: string;
+  // Error handling
+  attemptCount: number;
+  lastAttemptAt?: Timestamp;
+  failureReason?: string;
+}
+
+// For creating a new scheduled post
+export interface CreateScheduledPostData {
+  content: string;
+  postId?: string;
+  title?: string;
+  scheduledAt: Date;
+  timezone: string;
+  platform: SchedulePlatform;
+  postType?: LinkedInPostType;
+}
+
+// Scheduling context type
+export interface SchedulingContextType {
+  scheduledPosts: ScheduledPost[];
+  isLoading: boolean;
+  // Actions
+  schedulePost: (data: CreateScheduledPostData) => Promise<{ success: boolean; scheduledPostId?: string; error?: string }>;
+  cancelSchedule: (scheduledPostId: string) => Promise<{ success: boolean; error?: string }>;
+  reschedulePost: (scheduledPostId: string, newDate: Date) => Promise<{ success: boolean; error?: string }>;
+  refreshScheduledPosts: () => Promise<void>;
+  // Helpers
+  getPendingPosts: () => ScheduledPost[];
+  getPublishedPosts: () => ScheduledPost[];
+  getPostsForDate: (date: Date) => ScheduledPost[];
+}
+
+// Time slot for scheduling picker
+export interface TimeSlot {
+  hour: number;
+  minute: number;
+  label: string; // e.g., "09:00", "14:30"
+}
+
+// Optimal time suggestion from AI
+export interface OptimalTimeSlot {
+  day: string; // e.g., "Lundi", "Mardi"
+  time: string; // e.g., "09:00"
+  reason: string; // e.g., "Meilleur engagement pour votre audience"
+  engagementScore: number; // 1-100
+}
+
+// ============== WEB SPEECH API TYPES ==============
+
+// Extend Window interface with Web Speech API
+declare global {
+  interface Window {
+    SpeechRecognition: typeof SpeechRecognition;
+    webkitSpeechRecognition: typeof SpeechRecognition;
+  }
+
+  interface SpeechRecognition extends EventTarget {
+    continuous: boolean;
+    interimResults: boolean;
+    lang: string;
+    maxAlternatives: number;
+    onaudioend: ((this: SpeechRecognition, ev: Event) => void) | null;
+    onaudiostart: ((this: SpeechRecognition, ev: Event) => void) | null;
+    onend: ((this: SpeechRecognition, ev: Event) => void) | null;
+    onerror: ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => void) | null;
+    onnomatch: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => void) | null;
+    onresult: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => void) | null;
+    onsoundend: ((this: SpeechRecognition, ev: Event) => void) | null;
+    onsoundstart: ((this: SpeechRecognition, ev: Event) => void) | null;
+    onspeechend: ((this: SpeechRecognition, ev: Event) => void) | null;
+    onspeechstart: ((this: SpeechRecognition, ev: Event) => void) | null;
+    onstart: ((this: SpeechRecognition, ev: Event) => void) | null;
+    abort(): void;
+    start(): void;
+    stop(): void;
+  }
+
+  interface SpeechRecognitionEvent extends Event {
+    readonly resultIndex: number;
+    readonly results: SpeechRecognitionResultList;
+  }
+
+  interface SpeechRecognitionResultList {
+    readonly length: number;
+    item(index: number): SpeechRecognitionResult;
+    [index: number]: SpeechRecognitionResult;
+  }
+
+  interface SpeechRecognitionResult {
+    readonly isFinal: boolean;
+    readonly length: number;
+    item(index: number): SpeechRecognitionAlternative;
+    [index: number]: SpeechRecognitionAlternative;
+  }
+
+  interface SpeechRecognitionAlternative {
+    readonly confidence: number;
+    readonly transcript: string;
+  }
+
+  interface SpeechRecognitionErrorEvent extends Event {
+    readonly error: SpeechRecognitionErrorCode;
+    readonly message: string;
+  }
+
+  type SpeechRecognitionErrorCode =
+    | "aborted"
+    | "audio-capture"
+    | "bad-grammar"
+    | "language-not-supported"
+    | "network"
+    | "no-speech"
+    | "not-allowed"
+    | "service-not-allowed";
+
+  // Constructor
+  const SpeechRecognition: {
+    new (): SpeechRecognition;
+    prototype: SpeechRecognition;
+  };
 }

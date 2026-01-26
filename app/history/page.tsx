@@ -1,11 +1,12 @@
-"use client";
+﻿"use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useLinkedIn } from "@/contexts/LinkedInContext";
-import { getUserPostsWithPinned, deletePost, pinPost } from "@/lib/firestore";
+import { getUserPostsWithPinned, deletePost, pinPost, renamePost } from "@/lib/firestore";
 import { Post } from "@/types";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import MainLayout from "@/components/layout/MainLayout";
@@ -13,12 +14,26 @@ import Button from "@/components/ui/Button";
 import PullToRefresh from "@/components/ui/PullToRefresh";
 import { MenuIcons } from "@/components/ui/DropdownMenu";
 import ExpandableHistoryCard from "@/components/history/ExpandableHistoryCard";
+import { HistoryPageSkeleton } from "@/components/history/HistoryCardSkeleton";
+import HistoryStatsBanner from "@/components/history/HistoryStatsBanner";
 import PublishToLinkedInModal from "@/components/linkedin/PublishToLinkedInModal";
-import { useDeleteWithUndo } from "@/hooks/useDeleteWithUndo";
-import toast from "react-hot-toast";
+import DeleteConfirmModal from "@/components/conversation/DeleteConfirmModal";
+import RenameConversationModal from "@/components/conversation/RenameConversationModal";
+import toast from "@/components/ui/Toast";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { useListKeyboardNavigation } from "@/hooks/useListKeyboardNavigation";
 
-// Format date helper
-function formatDate(timestamp: { toDate?: () => Date } | Date | null): string {
+// Format date helper - accepts translations for today/yesterday
+interface DateLabels {
+  today: string;
+  yesterday: string;
+}
+
+function formatDate(
+  timestamp: { toDate?: () => Date } | Date | null,
+  labels: DateLabels,
+  locale: string = "fr-FR"
+): string {
   if (!timestamp) return "";
   const date =
     typeof (timestamp as { toDate?: () => Date }).toDate === "function"
@@ -37,11 +52,11 @@ function formatDate(timestamp: { toDate?: () => Date } | Date | null): string {
   );
 
   if (postDate.getTime() === today.getTime()) {
-    return "Aujourd'hui";
+    return labels.today;
   } else if (postDate.getTime() === yesterday.getTime()) {
-    return "Hier";
+    return labels.yesterday;
   } else {
-    return new Intl.DateTimeFormat("fr-FR", {
+    return new Intl.DateTimeFormat(locale, {
       day: "numeric",
       month: "long",
       year: "numeric",
@@ -50,14 +65,14 @@ function formatDate(timestamp: { toDate?: () => Date } | Date | null): string {
 }
 
 // Format time helper
-function formatTime(timestamp: { toDate?: () => Date } | Date | null): string {
+function formatTime(timestamp: { toDate?: () => Date } | Date | null, locale: string = "fr-FR"): string {
   if (!timestamp) return "";
   const date =
     typeof (timestamp as { toDate?: () => Date }).toDate === "function"
       ? (timestamp as { toDate: () => Date }).toDate()
       : new Date(timestamp as unknown as string);
 
-  return new Intl.DateTimeFormat("fr-FR", {
+  return new Intl.DateTimeFormat(locale, {
     hour: "2-digit",
     minute: "2-digit",
   }).format(date);
@@ -65,26 +80,31 @@ function formatTime(timestamp: { toDate?: () => Date } | Date | null): string {
 
 function HistoryContent() {
   const { user } = useAuth();
+  const { t, language } = useLanguage();
   const { connection: linkedInConnection, publishToLinkedIn } = useLinkedIn();
 
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearchQuery = useDebouncedValue(searchQuery, 300);
+  const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
+
+  // Ref for keyboard navigation container
+  const listContainerRef = useRef<HTMLDivElement>(null);
 
   // LinkedIn publish state
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [publishContent, setPublishContent] = useState("");
 
-  // Delete with undo functionality
-  const { scheduleDelete, isDeleted } = useDeleteWithUndo<Post>({
-    undoDuration: 5000,
-    onDelete: async (post) => {
-      await deletePost(post.id);
-      setPosts((prev) => prev.filter((p) => p.id !== post.id));
-    },
-    toastMessage: "Conversation supprimee",
-    undoText: "Annuler",
-  });
+  // Delete confirmation modal state
+  const [postToDelete, setPostToDelete] = useState<Post | null>(null);
+
+  // Rename modal state
+  const [postToRename, setPostToRename] = useState<Post | null>(null);
+
+  // Locale for date formatting (French only)
+  const locale = "fr-FR";
+  const dateLabels = { today: t.history.today, yesterday: t.history.yesterday };
 
   // Fetch posts function - extracted for reuse (with pinned posts first)
   const loadPosts = useCallback(async () => {
@@ -101,18 +121,36 @@ function HistoryContent() {
     loadPosts();
   }, [loadPosts]);
 
-  // Filter posts by search (excluding deleted ones)
+  // Filter posts by search (using debounced value for performance)
   const filteredPosts = useMemo(() => {
-    const activePosts = posts.filter((p) => !isDeleted(p.id));
-    if (!searchQuery.trim()) return activePosts;
-    const query = searchQuery.toLowerCase();
-    return activePosts.filter(
+    if (!debouncedSearchQuery.trim()) return posts;
+    const query = debouncedSearchQuery.toLowerCase();
+    return posts.filter(
       (post) =>
         post.prompt.toLowerCase().includes(query) ||
         post.responseA?.toLowerCase().includes(query) ||
         post.responseB?.toLowerCase().includes(query),
     );
-  }, [posts, searchQuery, isDeleted]);
+  }, [posts, debouncedSearchQuery]);
+
+  // Flatten grouped posts for keyboard navigation indexing
+  const flatPostIds = useMemo(() => {
+    return filteredPosts.map((p) => p.id);
+  }, [filteredPosts]);
+
+  // Keyboard navigation hook
+  const {
+    focusedIndex,
+    isFocused: isPostFocused,
+  } = useListKeyboardNavigation({
+    itemCount: flatPostIds.length,
+    onActivate: (index) => {
+      const postId = flatPostIds[index];
+      setExpandedPostId((prev) => (prev === postId ? null : postId));
+    },
+    containerRef: listContainerRef,
+    enabled: !isLoading && filteredPosts.length > 0,
+  });
 
   // Group posts by date with pinned posts first
   const groupedPosts = useMemo(() => {
@@ -136,25 +174,25 @@ function HistoryContent() {
           : new Date(bPinnedAt as unknown as string || 0);
         return bDate.getTime() - aDate.getTime();
       });
-      result.push({ date: "Epingles", posts: pinnedPosts, isPinnedGroup: true });
+      result.push({ date: t.history.pinned, posts: pinnedPosts, isPinnedGroup: true });
     }
 
     // Group non-pinned posts by date
     const groups: { [key: string]: Post[] } = {};
     nonPinnedPosts.forEach((post) => {
-      const dateLabel = formatDate(post.createdAt);
+      const dateLabel = formatDate(post.createdAt, dateLabels, locale);
       if (!groups[dateLabel]) {
         groups[dateLabel] = [];
       }
       groups[dateLabel].push(post);
     });
 
-    // Sort: Aujourd'hui first, then Hier, then by date
+    // Sort: Today first, then Yesterday, then by date
     const sortedKeys = Object.keys(groups).sort((a, b) => {
-      if (a === "Aujourd'hui") return -1;
-      if (b === "Aujourd'hui") return 1;
-      if (a === "Hier") return -1;
-      if (b === "Hier") return 1;
+      if (a === dateLabels.today) return -1;
+      if (b === dateLabels.today) return 1;
+      if (a === dateLabels.yesterday) return -1;
+      if (b === dateLabels.yesterday) return 1;
       return 0;
     });
 
@@ -163,25 +201,51 @@ function HistoryContent() {
     });
 
     return result;
-  }, [filteredPosts]);
+  }, [filteredPosts, t.history.pinned, dateLabels, locale]);
 
-  // Handle delete
-  const handleDelete = useCallback(
-    (post: Post) => {
-      scheduleDelete(post);
-    },
-    [scheduleDelete],
-  );
+  // Handle delete - opens confirmation modal
+  const handleDelete = useCallback((post: Post) => {
+    setPostToDelete(post);
+  }, []);
+
+  // Confirm delete - actually performs the deletion
+  const handleDeleteConfirm = useCallback(async (postId: string) => {
+    await deletePost(postId);
+    setPosts((prev) => prev.filter((p) => p.id !== postId));
+    toast.success(t.history.conversationDeleted);
+  }, [t.history.conversationDeleted]);
+
+  // Handle rename - opens modal
+  const handleRename = useCallback((post: Post) => {
+    setPostToRename(post);
+  }, []);
+
+  // Confirm rename - actually performs the rename
+  const handleRenameSubmit = useCallback(async (postId: string, newTitle: string) => {
+    // Optimistic update
+    setPosts((prev) =>
+      prev.map((p) => (p.id === postId ? { ...p, title: newTitle } : p))
+    );
+    try {
+      await renamePost(postId, newTitle);
+      toast.success(t.toasts.conversationRenamed);
+    } catch (error) {
+      console.error("Error renaming post:", error);
+      toast.error(t.toasts.errorRenaming);
+      // Reload posts on error to revert
+      loadPosts();
+    }
+  }, [t.toasts.conversationRenamed, t.toasts.errorRenaming, loadPosts]);
 
   // Copy content
   const handleCopy = useCallback(async (content: string) => {
     try {
       await navigator.clipboard.writeText(content);
-      toast.success("Copie !");
+      toast.success(t.chat.copied);
     } catch {
-      toast.error("Erreur lors de la copie");
+      toast.error(t.chat.copyError);
     }
-  }, []);
+  }, [t.chat.copied, t.chat.copyError]);
 
   // Handle pin/unpin
   const handlePin = useCallback(async (post: Post) => {
@@ -192,15 +256,15 @@ function HistoryContent() {
     );
     try {
       await pinPost(post.id, newPinnedState);
-      toast.success(newPinnedState ? "Conversation epinglee" : "Conversation desepinglee");
+      toast.success(newPinnedState ? t.toasts.conversationPinned : t.toasts.conversationUnpinned);
     } catch {
       // Revert on error
       setPosts((prev) =>
         prev.map((p) => (p.id === post.id ? { ...p, isPinned: !newPinnedState } : p))
       );
-      toast.error("Erreur lors de l'epinglage");
+      toast.error(t.toasts.errorPinning);
     }
-  }, []);
+  }, [t.toasts.conversationPinned, t.toasts.conversationUnpinned, t.toasts.errorPinning]);
 
   // Publish to LinkedIn
   const handlePublishToLinkedIn = useCallback((content: string) => {
@@ -208,8 +272,8 @@ function HistoryContent() {
     setShowPublishModal(true);
   }, []);
 
-  const handleConfirmPublish = async (editedContent: string) => {
-    return await publishToLinkedIn(editedContent);
+  const handleConfirmPublish = async (editedContent: string, visibility: "PUBLIC" | "CONNECTIONS" = "PUBLIC") => {
+    return await publishToLinkedIn(editedContent, visibility);
   };
 
   // Get content to display for a post
@@ -238,58 +302,57 @@ function HistoryContent() {
     return null;
   }, []);
 
-  // Build menu items for a post
+  // Build menu items for a post - same as Sidebar (ConversationOptionsMenu)
   const getMenuItems = useCallback(
-    (post: Post, content: string) => [
+    (post: Post) => [
       {
         id: "pin",
-        label: post.isPinned ? "Desepingler" : "Epingler",
+        label: post.isPinned ? t.history.unpin : t.history.pin,
         icon: post.isPinned ? MenuIcons.unpin : MenuIcons.pin,
         variant: "default" as const,
         onClick: () => handlePin(post),
       },
       {
-        id: "copy",
-        label: "Copier",
-        icon: MenuIcons.copy,
+        id: "rename",
+        label: t.history.rename,
+        icon: MenuIcons.edit,
         variant: "default" as const,
-        onClick: () => handleCopy(content),
-      },
-      {
-        id: "linkedin",
-        label: "Publier sur LinkedIn",
-        icon: MenuIcons.linkedin,
-        variant: "default" as const,
-        onClick: () => handlePublishToLinkedIn(content),
+        onClick: () => handleRename(post),
       },
       {
         id: "delete",
-        label: "Supprimer",
+        label: t.history.delete,
         icon: MenuIcons.delete,
         variant: "danger" as const,
         onClick: () => handleDelete(post),
       },
     ],
-    [handleCopy, handlePublishToLinkedIn, handleDelete, handlePin],
+    [handleDelete, handlePin, handleRename, t.history],
   );
 
   return (
     <MainLayout
       posts={posts}
       showMobileHeader={true}
-      headerTitle="Historique"
+      headerTitle={t.history.title}
       onPostUpdate={loadPosts}
     >
       {/*
-        Responsive container with smooth scroll and pull-to-refresh (mobile only)
-        - Mobile: Full height with native scroll + pull-to-refresh
-        - Tablet/Desktop: Optimized spacing and width
+        Wrapper for PWA mobile scroll management
+        - app-content-wrapper: allows flex child to scroll
+        - app-scroll-container: defines scrollable area
       */}
-      <PullToRefresh
-        onRefresh={loadPosts}
-        className="min-h-full bg-background scroll-smooth lg:overflow-y-auto"
-        disabled={isLoading}
-      >
+      <div className="flex flex-col h-full bg-light-bg dark:bg-dark-bg app-content-wrapper">
+        {/*
+          Responsive container with smooth scroll and pull-to-refresh (mobile only)
+          - Mobile: Full height with native scroll + pull-to-refresh
+          - Tablet/Desktop: Optimized spacing and width
+        */}
+        <PullToRefresh
+          onRefresh={loadPosts}
+          className="flex-1 min-h-0 bg-light-bg dark:bg-dark-bg scroll-smooth app-scroll-container"
+          disabled={isLoading}
+        >
         {/*
           Content wrapper with responsive max-width and padding
           - Mobile: px-4, compact
@@ -307,40 +370,51 @@ function HistoryContent() {
           2xl:max-w-5xl
         "
         >
-          {/* Header - Responsive typography and spacing */}
+          {/* Header - Premium responsive typography and spacing */}
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             className="
               flex items-center justify-between
-              mb-5 md:mb-6 lg:mb-8
+              mb-6 md:mb-8 lg:mb-10
             "
           >
             <div>
               <h1
                 className="
-                text-xl font-bold text-white
+                text-xl font-bold text-gray-900 dark:text-white
                 md:text-2xl
                 lg:text-3xl
               "
               >
-                Historique
+                {t.history.title}
               </h1>
               <p
                 className="
-                text-sm text-text-muted mt-0.5
-                md:text-base md:mt-1
+                text-sm text-gray-600 dark:text-text-muted mt-1
+                md:text-base md:mt-1.5
               "
               >
-                {filteredPosts.length} post
-                {filteredPosts.length !== 1 ? "s" : ""} genere
-                {filteredPosts.length !== 1 ? "s" : ""}
+                <span className="font-medium text-gray-900 dark:text-white">{filteredPosts.length}</span> {filteredPosts.length !== 1 ? t.history.postsGenerated : t.history.postGenerated}
               </p>
             </div>
-            <Link href="/app">
-              <Button size="sm" className="md:hidden">
+            <Link href="/app" className="group relative">
+              {/* Animated glow effect - Mobile */}
+              <div className="md:hidden absolute -inset-0.5 bg-gradient-to-r from-primary via-orange-500 to-primary rounded-xl opacity-75 blur-sm group-hover:opacity-100 animate-pulse-glow" />
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="md:hidden relative inline-flex items-center gap-1.5 px-3.5 py-2.5
+                  bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500
+                  text-white text-sm font-semibold
+                  rounded-xl overflow-hidden
+                  transition-all duration-200"
+                style={{ boxShadow: "0 4px 20px rgba(249, 115, 22, 0.4)" }}
+              >
+                {/* Shimmer overlay */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full animate-shimmer-enhanced" />
                 <svg
-                  className="w-4 h-4 mr-1"
+                  className="w-4 h-4 relative z-10"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -348,15 +422,28 @@ function HistoryContent() {
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
+                    strokeWidth={2.5}
                     d="M12 4v16m8-8H4"
                   />
                 </svg>
-                Nouveau
-              </Button>
-              <Button className="hidden md:flex">
+                <span className="relative z-10">{t.history.new}</span>
+              </motion.button>
+              {/* Animated glow effect - Desktop */}
+              <div className="hidden md:block absolute -inset-0.5 bg-gradient-to-r from-primary via-orange-500 to-primary rounded-xl opacity-75 blur-sm group-hover:opacity-100 animate-pulse-glow" />
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="hidden md:inline-flex relative items-center gap-2 px-5 py-2.5
+                  bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500
+                  text-white text-sm font-semibold
+                  rounded-xl overflow-hidden
+                  transition-all duration-200"
+                style={{ boxShadow: "0 4px 20px rgba(249, 115, 22, 0.4)" }}
+              >
+                {/* Shimmer overlay */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full animate-shimmer-enhanced" />
                 <svg
-                  className="w-4 h-4 mr-2"
+                  className="w-4 h-4 relative z-10"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -364,30 +451,31 @@ function HistoryContent() {
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
+                    strokeWidth={2.5}
                     d="M12 4v16m8-8H4"
                   />
                 </svg>
-                Nouveau post
-              </Button>
+                <span className="relative z-10">{t.history.newPost}</span>
+              </motion.button>
             </Link>
           </motion.div>
 
-          {/* Search - Responsive sizing */}
+          {/* Search - Premium responsive sizing */}
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.05 }}
             className="
               relative
-              mb-5 md:mb-6 lg:mb-8
+              mb-6 md:mb-8
             "
           >
             <svg
               className="
-                absolute left-3 top-1/2 -translate-y-1/2
+                absolute left-4 top-1/2 -translate-y-1/2
                 w-4 h-4 md:w-5 md:h-5
-                text-text-muted
+                text-gray-400 dark:text-text-muted
+                transition-colors duration-200
               "
               fill="none"
               stroke="currentColor"
@@ -404,39 +492,58 @@ function HistoryContent() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Rechercher dans l'historique..."
+              placeholder={t.history.searchPlaceholder}
               className="
                 w-full
-                pl-9 pr-4 py-2.5
-                md:pl-11 md:pr-5 md:py-3
-                lg:py-3.5
-                bg-dark-card border border-dark-border rounded-xl
+                pl-11 pr-4 py-3
+                md:pl-12 md:pr-5 md:py-3.5
+                lg:py-4
+                bg-white dark:bg-dark-card
+                border border-gray-200 dark:border-dark-border
+                rounded-2xl
                 text-sm md:text-base
-                text-white placeholder-text-muted
-                focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20
+                text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-text-muted
+                focus:outline-none focus:border-violet-400 dark:focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20
+                shadow-sm hover:shadow-md hover:border-violet-200 dark:hover:border-violet-500/30
                 transition-all duration-200
               "
             />
+            {searchQuery && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                onClick={() => setSearchQuery("")}
+                className="
+                  absolute right-3 top-1/2 -translate-y-1/2
+                  p-1.5 rounded-lg
+                  text-gray-400 hover:text-gray-600
+                  dark:text-text-muted dark:hover:text-white
+                  hover:bg-gray-100 dark:hover:bg-dark-elevated
+                  transition-all duration-200
+                "
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </motion.button>
+            )}
           </motion.div>
+
+          {/* Stats Banner */}
+          {!isLoading && posts.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="mb-6 md:mb-8"
+            >
+              <HistoryStatsBanner posts={posts} />
+            </motion.div>
+          )}
 
           {/* Content */}
           {isLoading ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="
-                flex justify-center
-                py-16 md:py-20 lg:py-24
-              "
-            >
-              <div
-                className="
-                w-8 h-8 md:w-10 md:h-10
-                border-2 border-primary border-t-transparent
-                rounded-full animate-spin
-              "
-              />
-            </motion.div>
+            <HistoryPageSkeleton />
           ) : filteredPosts.length === 0 ? (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -446,51 +553,65 @@ function HistoryContent() {
                 py-16 md:py-20 lg:py-24
               "
             >
-              {/* Empty state icon */}
-              <div
-                className="
-                w-16 h-16 md:w-20 md:h-20
-                bg-dark-card rounded-2xl
-                flex items-center justify-center
-                mx-auto mb-4 md:mb-6
-              "
-              >
-                <svg
-                  className="w-8 h-8 md:w-10 md:h-10 text-text-muted"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                  />
-                </svg>
+              {/* Premium empty state icon */}
+              <div className="relative w-20 h-20 md:w-24 md:h-24 mx-auto mb-6">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-2xl blur-xl" />
+                <div className="relative w-full h-full bg-white dark:bg-dark-card rounded-2xl border border-gray-200 dark:border-dark-border shadow-lg flex items-center justify-center">
+                  <svg
+                    className="w-10 h-10 md:w-12 md:h-12 text-gray-400 dark:text-text-muted"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                    />
+                  </svg>
+                </div>
               </div>
               <h3
                 className="
                 text-lg md:text-xl lg:text-2xl
-                font-semibold text-white mb-2
+                font-semibold text-gray-900 dark:text-white mb-2
               "
               >
-                {searchQuery ? "Aucun resultat" : "Aucun post pour le moment"}
+                {searchQuery ? t.history.noResults : t.history.noPostsYet}
               </h3>
               <p
                 className="
                 text-sm md:text-base
-                text-text-muted mb-6 md:mb-8
+                text-gray-600 dark:text-text-muted mb-8
                 max-w-sm mx-auto
               "
               >
                 {searchQuery
-                  ? "Essayez avec d'autres mots-cles"
-                  : "Commencez a creer des posts pour les retrouver ici"}
+                  ? t.history.tryOtherKeywords
+                  : t.history.startCreating}
               </p>
               {!searchQuery && (
-                <Link href="/app">
-                  <Button>Creer mon premier post</Button>
+                <Link href="/app" className="group relative inline-block">
+                  {/* Animated glow effect */}
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-primary via-orange-500 to-primary rounded-xl opacity-75 blur-sm group-hover:opacity-100 animate-pulse-glow" />
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="relative inline-flex items-center gap-2.5 px-6 py-3.5
+                      bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500
+                      text-white font-semibold
+                      rounded-xl overflow-hidden
+                      transition-all duration-200"
+                    style={{ boxShadow: "0 4px 20px rgba(249, 115, 22, 0.4)" }}
+                  >
+                    {/* Shimmer overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full animate-shimmer-enhanced" />
+                    <svg className="w-5 h-5 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span className="relative z-10">{t.history.createFirst}</span>
+                  </motion.button>
                 </Link>
               )}
             </motion.div>
@@ -499,8 +620,13 @@ function HistoryContent() {
               {/*
                 Posts grouped by date
                 - Responsive spacing between groups
+                - Keyboard navigation enabled with j/k/Enter keys
               */}
-              <div className="space-y-6 md:space-y-8 lg:space-y-10">
+              <div
+                ref={listContainerRef}
+                className="space-y-6 md:space-y-8 lg:space-y-10"
+                tabIndex={-1}
+              >
                 {groupedPosts.map((group, groupIndex) => (
                   <motion.div
                     key={group.date}
@@ -508,35 +634,70 @@ function HistoryContent() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: groupIndex * 0.05 }}
                   >
-                    {/* Date header - Responsive styling */}
+                    {/* Date header - Premium vibrant responsive styling */}
                     <div
                       className="
+                      sticky top-0 z-10
                       flex items-center gap-3
-                      mb-3 md:mb-4
+                      mb-4 py-2
+                      bg-gray-50/80 dark:bg-background/80 backdrop-blur-sm
+                      -mx-4 px-4
                     "
                     >
-                      <h2
-                        className={`
-                          text-sm md:text-base font-semibold flex items-center gap-2
-                          ${group.isPinnedGroup ? "text-accent" : "text-text-secondary"}
-                        `}
-                      >
-                        {group.isPinnedGroup && (
-                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                          </svg>
+                      <div className="flex items-center gap-2">
+                        {group.isPinnedGroup ? (
+                          <div className="w-2 h-2 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 shadow-sm shadow-amber-500/50" />
+                        ) : group.date === dateLabels.today ? (
+                          <div className="w-2 h-2 rounded-full bg-gradient-to-r from-violet-500 to-purple-500 shadow-sm shadow-violet-500/50" />
+                        ) : group.date === dateLabels.yesterday ? (
+                          <div className="w-2 h-2 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 shadow-sm shadow-blue-500/50" />
+                        ) : (
+                          <div className="w-2 h-2 rounded-full bg-gradient-to-r from-gray-400 to-gray-500" />
                         )}
-                        {group.date}
-                      </h2>
-                      <div className={`flex-1 h-px ${group.isPinnedGroup ? "bg-accent/30" : "bg-dark-border"}`} />
+                        <h2
+                          className={`
+                            text-sm md:text-base font-semibold flex items-center gap-2
+                            ${group.isPinnedGroup
+                              ? "bg-gradient-to-r from-amber-600 to-orange-600 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent"
+                              : group.date === dateLabels.today
+                                ? "bg-gradient-to-r from-violet-600 to-purple-600 dark:from-violet-400 dark:to-purple-400 bg-clip-text text-transparent"
+                                : group.date === dateLabels.yesterday
+                                  ? "bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-blue-400 dark:to-cyan-400 bg-clip-text text-transparent"
+                                  : "text-gray-900 dark:text-white"
+                            }
+                          `}
+                        >
+                          {group.isPinnedGroup && (
+                            <svg className="w-4 h-4 text-amber-500" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M16 4a1 1 0 0 1 1 1v3.586l1.707 1.707a1 1 0 0 1 .293.707v2a1 1 0 0 1-1 1h-4v6a1 1 0 0 1-2 0v-6H8a1 1 0 0 1-1-1v-2a1 1 0 0 1 .293-.707L9 8.586V5a1 1 0 0 1 1-1h6z"/>
+                            </svg>
+                          )}
+                          {group.date}
+                        </h2>
+                      </div>
+                      <div className={`flex-1 h-px bg-gradient-to-r ${
+                        group.isPinnedGroup
+                          ? "from-amber-400/40 via-orange-400/20 to-transparent"
+                          : group.date === dateLabels.today
+                            ? "from-violet-400/40 via-purple-400/20 to-transparent"
+                            : group.date === dateLabels.yesterday
+                              ? "from-blue-400/40 via-cyan-400/20 to-transparent"
+                              : "from-gray-300 dark:from-dark-border to-transparent"
+                      }`} />
                       <span
                         className={`
-                          text-xs md:text-sm
-                          ${group.isPinnedGroup ? "text-accent" : "text-text-muted"}
+                          text-xs md:text-sm px-2.5 py-1 rounded-lg font-medium
+                          ${group.isPinnedGroup
+                            ? "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/25"
+                            : group.date === dateLabels.today
+                              ? "text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/25"
+                              : group.date === dateLabels.yesterday
+                                ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/25"
+                                : "text-gray-500 dark:text-text-muted bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border"
+                          }
                         `}
                       >
-                        {group.posts.length} post
-                        {group.posts.length !== 1 ? "s" : ""}
+                        {group.posts.length} {group.posts.length !== 1 ? t.history.posts : t.history.post}
                       </span>
                     </div>
 
@@ -545,9 +706,10 @@ function HistoryContent() {
                       <AnimatePresence mode="popLayout">
                         {group.posts.map((post) => {
                           const content = getPostContent(post);
-                          const menuItems = getMenuItems(post, content);
+                          const menuItems = getMenuItems(post);
                           const versionBadge = getVersionBadge(post);
-                          const time = formatTime(post.createdAt);
+                          const time = formatTime(post.createdAt, locale);
+                          const postIndex = flatPostIds.indexOf(post.id);
 
                           return (
                             <ExpandableHistoryCard
@@ -560,6 +722,11 @@ function HistoryContent() {
                               onCopy={handleCopy}
                               onPublishToLinkedIn={handlePublishToLinkedIn}
                               onDelete={() => handleDelete(post)}
+                              isKeyboardFocused={isPostFocused(postIndex)}
+                              isExpanded={expandedPostId === post.id}
+                              onExpandChange={(expanded) => {
+                                setExpandedPostId(expanded ? post.id : null);
+                              }}
                             />
                           );
                         })}
@@ -567,6 +734,17 @@ function HistoryContent() {
                     </div>
                   </motion.div>
                 ))}
+
+                {/* Load more indicator - Shows when there are many posts */}
+                {filteredPosts.length > 50 && (
+                  <div
+                    className="flex justify-center py-4 text-text-muted text-sm"
+                    role="status"
+                    aria-label={`${filteredPosts.length} ${t.history.postsLoaded}`}
+                  >
+                    {filteredPosts.length} {t.history.postsDisplayed}
+                  </div>
+                )}
               </div>
             </LayoutGroup>
           )}
@@ -574,7 +752,8 @@ function HistoryContent() {
           {/* Bottom spacing for mobile navigation */}
           <div className="h-20 md:h-8" />
         </div>
-      </PullToRefresh>
+        </PullToRefresh>
+      </div>
 
       {/* Publish to LinkedIn modal */}
       <PublishToLinkedInModal
@@ -583,6 +762,22 @@ function HistoryContent() {
         content={publishContent}
         linkedInConnection={linkedInConnection}
         onPublish={handleConfirmPublish}
+      />
+
+      {/* Delete confirmation modal */}
+      <DeleteConfirmModal
+        isOpen={!!postToDelete}
+        onClose={() => setPostToDelete(null)}
+        post={postToDelete}
+        onConfirm={handleDeleteConfirm}
+      />
+
+      {/* Rename modal */}
+      <RenameConversationModal
+        isOpen={!!postToRename}
+        onClose={() => setPostToRename(null)}
+        post={postToRename}
+        onRename={handleRenameSubmit}
       />
     </MainLayout>
   );

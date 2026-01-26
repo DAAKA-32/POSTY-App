@@ -448,8 +448,8 @@ export function PulseGlow({
   className = "",
 }: PulseGlowProps) {
   const glowColors = {
-    primary: "shadow-[0_0_20px_rgba(47,128,237,0.4)]",
-    accent: "shadow-[0_0_20px_rgba(0,209,193,0.4)]",
+    primary: "shadow-[0_0_20px_rgba(232,147,77,0.4)]",
+    accent: "shadow-[0_0_20px_rgba(248,87,81,0.4)]",
   };
 
   return (

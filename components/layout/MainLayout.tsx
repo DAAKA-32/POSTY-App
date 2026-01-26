@@ -3,8 +3,12 @@
 import { useState, useMemo, useRef, useEffect, useCallback, ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useQuota } from "@/contexts/QuotaContext";
+import { useSidebar } from "@/contexts/SidebarContext";
+import { useSchedulingPendingCount } from "@/contexts/SchedulingContext";
 import SlideMenu from "./SlideMenu";
 import ChatHistoryModal from "./ChatHistoryModal";
 import ProfileMenu from "./ProfileMenu";
@@ -14,7 +18,62 @@ import DeleteConfirmModal from "@/components/conversation/DeleteConfirmModal";
 import { Post } from "@/types";
 import { getUserPostsWithPinned, pinPost, renamePost, deletePost } from "@/lib/firestore";
 import { AnimatedSlideIn, AnimatedPageWrapper } from "@/components/animations/AnimatedPageWrapper";
-import toast from "react-hot-toast";
+import toast from "@/components/ui/Toast";
+import TestModeIndicator from "@/components/subscription/TestModeIndicator";
+
+// Premium animation easings - consistent across app
+const smoothEase = [0.25, 0.1, 0.25, 1] as const;
+
+// Sidebar animation variants
+const sidebarContainerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.06,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+const sidebarItemVariants = {
+  hidden: { opacity: 0, x: -15 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: {
+      duration: 0.4,
+      ease: smoothEase,
+    },
+  },
+};
+
+const navItemVariants = {
+  hidden: { opacity: 0, x: -10, filter: "blur(4px)" },
+  visible: (i: number) => ({
+    opacity: 1,
+    x: 0,
+    filter: "blur(0px)",
+    transition: {
+      duration: 0.35,
+      delay: 0.15 + i * 0.05,
+      ease: smoothEase,
+    },
+  }),
+};
+
+const conversationItemVariants = {
+  hidden: { opacity: 0, x: -8 },
+  visible: (i: number) => ({
+    opacity: 1,
+    x: 0,
+    transition: {
+      duration: 0.3,
+      delay: i * 0.03,
+      ease: smoothEase,
+    },
+  }),
+};
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -24,8 +83,12 @@ interface MainLayoutProps {
   onPostUpdate?: () => void;
 }
 
+// Sidebar dimensions (constants for consistency)
+const SIDEBAR_ICON_WIDTH = 68; // Width of the icon rail (collapsed state)
+const SIDEBAR_EXPANDED_WIDTH = 288; // Full expanded width (w-72 = 18rem = 288px)
+
 // Group posts by date with pinned posts first
-function groupPostsByDate(posts: Post[]) {
+function groupPostsByDate(posts: Post[], labels: { pinned: string; today: string; yesterday: string; thisWeek: string; older: string }) {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
@@ -39,15 +102,15 @@ function groupPostsByDate(posts: Post[]) {
 
   // Add pinned section first if there are pinned posts
   if (pinnedPosts.length > 0) {
-    groups.push({ label: "Epingles", posts: pinnedPosts, isPinned: true });
+    groups.push({ label: labels.pinned, posts: pinnedPosts, isPinned: true });
   }
 
   // Date-based groups for unpinned posts
   const dateGroups: { label: string; posts: Post[] }[] = [
-    { label: "Aujourd'hui", posts: [] },
-    { label: "Hier", posts: [] },
-    { label: "Cette semaine", posts: [] },
-    { label: "Plus ancien", posts: [] },
+    { label: labels.today, posts: [] },
+    { label: labels.yesterday, posts: [] },
+    { label: labels.thisWeek, posts: [] },
+    { label: labels.older, posts: [] },
   ];
 
   unpinnedPosts.forEach((post) => {
@@ -76,39 +139,69 @@ function groupPostsByDate(posts: Post[]) {
   return groups;
 }
 
-const navItems = [
-  {
-    name: "Chat",
-    href: "/app",
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-        />
-      </svg>
-    ),
-  },
-  {
-    name: "Historique",
-    href: "/history",
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-        />
-      </svg>
-    ),
-  },
-];
-
-// LocalStorage key for sidebar state (per user)
-const getSidebarStorageKey = (userId: string) => `posty_sidebar_collapsed_${userId}`;
+// Nav items - defined inside component to access translations
+function getNavItems(t: ReturnType<typeof useLanguage>["t"]) {
+  return [
+    {
+      name: t.nav.chat,
+      href: "/app",
+      color: "orange",
+      activeClasses: "bg-orange-500/10 text-orange-500",
+      hoverClasses: "hover:text-orange-500 hover:bg-orange-500/5",
+      indicatorColor: "bg-orange-500",
+      glowColor: "rgba(249, 115, 22, 0.35)",
+      icon: (isActive: boolean) => (
+        <svg className="w-5 h-5" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={isActive ? 0 : 2}
+            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+          />
+        </svg>
+      ),
+    },
+    {
+      name: t.nav.history,
+      href: "/history",
+      color: "cyan",
+      activeClasses: "bg-cyan-500/10 text-cyan-500",
+      hoverClasses: "hover:text-cyan-500 hover:bg-cyan-500/5",
+      indicatorColor: "bg-cyan-500",
+      glowColor: "rgba(6, 182, 212, 0.35)",
+      icon: (isActive: boolean) => (
+        <svg className="w-5 h-5" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={isActive ? 0 : 2}
+            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+      ),
+    },
+    {
+      name: t.nav.schedule,
+      href: "/schedule",
+      hasBadge: true,
+      color: "violet",
+      activeClasses: "bg-violet-500/10 text-violet-500",
+      hoverClasses: "hover:text-violet-500 hover:bg-violet-500/5",
+      indicatorColor: "bg-violet-500",
+      glowColor: "rgba(139, 92, 246, 0.35)",
+      icon: (isActive: boolean) => (
+        <svg className="w-5 h-5" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={isActive ? 0 : 2}
+            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+          />
+        </svg>
+      ),
+    },
+  ];
+}
 
 export default function MainLayout({
   children,
@@ -117,9 +210,18 @@ export default function MainLayout({
   headerTitle,
   onPostUpdate,
 }: MainLayoutProps) {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  // Sidebar state: null = not yet determined (prevents flash)
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean | null>(null);
+  // Use unified sidebar context - for mobile menu and desktop collapse
+  const {
+    isOpen: isSidebarOpen,
+    isCollapsed,
+    open: openSidebar,
+    close: closeSidebar,
+    toggleCollapse,
+  } = useSidebar();
+
+  // Calculate current sidebar width based on collapsed state
+  const currentSidebarWidth = isCollapsed ? SIDEBAR_ICON_WIDTH : SIDEBAR_EXPANDED_WIDTH;
+
   const [searchQuery, setSearchQuery] = useState("");
   const [showChatList, setShowChatList] = useState(true);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
@@ -131,6 +233,12 @@ export default function MainLayout({
   const pathname = usePathname();
   const router = useRouter();
   const { user, userProfile } = useAuth();
+  const { t } = useLanguage();
+  const prefersReducedMotion = useReducedMotion();
+  const schedulingPendingCount = useSchedulingPendingCount();
+
+  // Get nav items with translations
+  const navItems = getNavItems(t);
 
   // Pages where we should NOT load conversations (subscription page)
   const isSubscriptionPage = pathname === "/subscription" || pathname === "/pricing";
@@ -170,7 +278,7 @@ export default function MainLayout({
 
     try {
       await pinPost(postId, isPinned);
-      toast.success(isPinned ? "Conversation epinglee" : "Conversation desepinglee");
+      toast.success(isPinned ? t.toasts.conversationPinned : t.toasts.conversationUnpinned);
       onPostUpdate?.();
     } catch (error) {
       console.error("Error pinning post:", error);
@@ -178,7 +286,7 @@ export default function MainLayout({
       setLocalPosts((prev) =>
         prev.map((p) => (p.id === postId ? { ...p, isPinned: !isPinned } : p))
       );
-      toast.error("Erreur lors de l'epinglage");
+      toast.error(t.toasts.errorPinning);
     }
   };
 
@@ -199,11 +307,11 @@ export default function MainLayout({
 
     try {
       await renamePost(postId, newTitle);
-      toast.success("Conversation renommee");
+      toast.success(t.toasts.conversationRenamed);
       onPostUpdate?.();
     } catch (error) {
       console.error("Error renaming post:", error);
-      toast.error("Erreur lors du renommage");
+      toast.error(t.toasts.errorRenaming);
     }
   };
 
@@ -222,13 +330,13 @@ export default function MainLayout({
 
     try {
       await deletePost(postId);
-      toast.success("Conversation supprimee");
+      toast.success(t.toasts.conversationDeleted);
       onPostUpdate?.();
     } catch (error) {
       console.error("Error deleting post:", error);
       // Revert - re-fetch posts
       onPostUpdate?.();
-      toast.error("Erreur lors de la suppression");
+      toast.error(t.toasts.errorDelete);
     }
   };
 
@@ -241,30 +349,38 @@ export default function MainLayout({
     });
   }, [router]);
 
-  // Restore sidebar state from localStorage on mount
+  // Add pwa-mobile class to body on mobile devices for proper scroll handling
   useEffect(() => {
-    if (user?.uid) {
-      const storageKey = getSidebarStorageKey(user.uid);
-      const savedState = localStorage.getItem(storageKey);
-      if (savedState !== null) {
-        setIsSidebarCollapsed(savedState === "true");
-      } else {
-        // Default: collapsed for first-time users
-        setIsSidebarCollapsed(true);
-      }
-    } else {
-      // Not logged in: default to collapsed
-      setIsSidebarCollapsed(true);
-    }
-  }, [user?.uid]);
+    if (typeof window === "undefined") return;
 
-  // Save sidebar state to localStorage when it changes
-  useEffect(() => {
-    if (user?.uid && isSidebarCollapsed !== null) {
-      const storageKey = getSidebarStorageKey(user.uid);
-      localStorage.setItem(storageKey, String(isSidebarCollapsed));
+    const isMobile = window.innerWidth < 1024;
+    const isPWA = window.matchMedia("(display-mode: standalone)").matches ||
+                  (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
+
+    // Add pwa-mobile class for mobile devices (both PWA and browser)
+    if (isMobile) {
+      document.body.classList.add("pwa-mobile");
     }
-  }, [isSidebarCollapsed, user?.uid]);
+
+    // Handle resize to update class
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        document.body.classList.add("pwa-mobile");
+      } else {
+        document.body.classList.remove("pwa-mobile");
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      document.body.classList.remove("pwa-mobile");
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
+  // Sidebar state is now managed by SidebarContext (see contexts/SidebarContext.tsx)
+  // No need for local localStorage handling - it's centralized
 
   // Ref for search input auto-focus
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -272,58 +388,60 @@ export default function MainLayout({
 
   // Auto-focus search input when sidebar opens via search click
   useEffect(() => {
-    if (isSidebarCollapsed === false && shouldFocusSearch && searchInputRef.current) {
+    if (isSidebarOpen && shouldFocusSearch && searchInputRef.current) {
       const timer = setTimeout(() => {
         searchInputRef.current?.focus();
         setShouldFocusSearch(false);
       }, 150);
       return () => clearTimeout(timer);
     }
-  }, [isSidebarCollapsed, shouldFocusSearch]);
+  }, [isSidebarOpen, shouldFocusSearch]);
 
-  // Keyboard shortcut: Cmd/Ctrl+K to focus search
+  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd/Ctrl+K to focus search
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
-        if (isSidebarCollapsed) {
+        if (!isSidebarOpen) {
           setShouldFocusSearch(true);
-          setIsSidebarCollapsed(false);
+          openSidebar();
         } else {
           searchInputRef.current?.focus();
         }
       }
-      // Escape to blur search
-      if (e.key === "Escape" && document.activeElement === searchInputRef.current) {
-        searchInputRef.current?.blur();
-        setSearchQuery("");
+      // Cmd/Ctrl+B to toggle sidebar collapse (desktop)
+      if ((e.metaKey || e.ctrlKey) && e.key === "b") {
+        e.preventDefault();
+        // Only toggle on desktop (lg breakpoint)
+        if (window.innerWidth >= 1024) {
+          toggleCollapse();
+        }
+      }
+      // Escape to blur search or close sidebar
+      if (e.key === "Escape") {
+        if (document.activeElement === searchInputRef.current) {
+          searchInputRef.current?.blur();
+          setSearchQuery("");
+        } else if (isSidebarOpen) {
+          closeSidebar();
+        }
       }
     };
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isSidebarCollapsed]);
+  }, [isSidebarOpen, openSidebar, closeSidebar, toggleCollapse]);
 
   // Handle search icon click
   const handleSearchClick = useCallback(() => {
-    if (isSidebarCollapsed) {
+    if (!isSidebarOpen) {
       setShouldFocusSearch(true);
-      setIsSidebarCollapsed(false);
+      openSidebar();
     } else {
       searchInputRef.current?.focus();
     }
-  }, [isSidebarCollapsed]);
-
-  // Toggle sidebar
-  const toggleSidebar = useCallback(() => {
-    setIsSidebarCollapsed((prev) => !prev);
-    setShouldFocusSearch(false);
-  }, []);
-
-  // Effective collapsed state (use true as fallback while loading)
-  const isCollapsed = isSidebarCollapsed ?? true;
-  // Whether state has been determined (to control visibility)
-  const isStateReady = isSidebarCollapsed !== null;
+  }, [isSidebarOpen, openSidebar]);
 
   // Filter and group posts (using localPosts for optimistic updates)
   const filteredPosts = useMemo(() => {
@@ -334,302 +452,542 @@ export default function MainLayout({
   }, [localPosts, searchQuery]);
 
   const groupedPosts = useMemo(
-    () => groupPostsByDate(filteredPosts),
-    [filteredPosts]
+    () => groupPostsByDate(filteredPosts, {
+      pinned: t.sidebar.pinned,
+      today: t.sidebar.today,
+      yesterday: t.sidebar.yesterday,
+      thisWeek: t.sidebar.thisWeek,
+      older: t.sidebar.older,
+    }),
+    [filteredPosts, t]
   );
 
   return (
-    <div className="h-screen bg-background flex overflow-hidden">
-      {/* Desktop/Tablet Sidebar */}
-      <AnimatedSlideIn direction="left" delay={0.1}>
-        <aside
-          className={`
-            hidden lg:flex flex-col
-            ${isCollapsed ? "w-[68px]" : "w-72"}
-            h-screen bg-dark-card border-r border-dark-border
-            transition-[width,box-shadow] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]
-            fixed left-0 top-0 z-40
-            gpu-accelerated
-            ${!isCollapsed ? "shadow-xl shadow-black/20" : ""}
-            ${isStateReady ? "opacity-100" : "opacity-0"}
-          `}
+    <div className="h-screen bg-background flex overflow-hidden app-layout">
+      {/* ========== DESKTOP SIDEBAR - COLLAPSIBLE ========== */}
+      <aside
+        role="navigation"
+        aria-label="Navigation principale"
+        className="hidden lg:flex flex-col h-screen bg-white dark:bg-dark-card border-r border-gray-200 dark:border-dark-border fixed left-0 top-0 z-40 overflow-hidden transition-all duration-200 ease-out"
+        style={{ width: currentSidebarWidth }}
+      >
+        {/* Header - Logo when expanded, Toggle when collapsed */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: smoothEase }}
+          className={`h-16 border-b border-gray-200 dark:border-dark-border flex items-center shrink-0 ${isCollapsed ? "justify-center px-2" : "justify-between px-3"}`}
         >
-        {/* Sidebar Header */}
-        <div className={`p-4 border-b border-dark-border flex items-center ${isCollapsed ? "justify-center" : "justify-between"}`}>
           {isCollapsed ? (
-            /* Collapsed: Only expand arrow button */
-            <button
-              onClick={toggleSidebar}
-              className="
-                p-2.5 rounded-lg
-                text-text-secondary hover:text-primary
-                hover:bg-dark-hover
-                transition-all duration-300 ease-out
-                group
-              "
-              title="Ouvrir la sidebar"
+            /* Toggle button when collapsed - replaces logo */
+            <motion.button
+              onClick={toggleCollapse}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-gray-100 dark:hover:bg-dark-hover transition-colors duration-200 group relative"
+              title="Déplier la sidebar"
+              aria-label="Déplier la sidebar"
             >
               <svg
-                className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-0.5"
+                className="w-5 h-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
               </svg>
-            </button>
+              {/* Tooltip */}
+              <span className="absolute left-full ml-2 px-2 py-1 bg-white dark:bg-dark-elevated border border-gray-200 dark:border-dark-border rounded-lg text-sm whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50 shadow-lg pointer-events-none">
+                Déplier la sidebar
+              </span>
+            </motion.button>
           ) : (
-            /* Expanded: Logo + collapse button */
+            /* Logo + Toggle when expanded */
             <>
-              <Link href="/app" className="flex items-center gap-3 group">
-                <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-lg overflow-hidden flex items-center justify-center shadow-glow transition-transform duration-300 group-hover:scale-105">
-                  <img
-                    src="/logo.png"
-                    alt="POSTY Logo"
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                      const sibling = e.currentTarget.nextElementSibling as HTMLElement | null;
-                      if (sibling) sibling.style.display = 'flex';
-                    }}
-                  />
-                  <span className="text-white font-bold text-lg hidden items-center justify-center">P</span>
-                </div>
-                <span className="font-semibold text-white text-lg tracking-tight transition-opacity duration-300">POSTY</span>
+              <Link href="/app" className="flex items-center gap-3 group min-w-0">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8, filter: "blur(8px)" }}
+                  animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+                  transition={{ duration: 0.5, ease: smoothEase }}
+                  className="relative"
+                  whileHover={{ scale: 1.05 }}
+                >
+                  {/* Subtle glow on hover */}
+                  <div className="absolute -inset-1 bg-gradient-to-br from-primary/30 to-accent/30 rounded-2xl opacity-0 group-hover:opacity-100 blur-md transition-opacity duration-300" />
+                  <div className="relative w-10 h-10 shrink-0 rounded-xl overflow-hidden flex items-center justify-center shadow-md ring-1 ring-gray-200/50 dark:ring-dark-border/50">
+                    <img
+                      src="/logo.jpg"
+                      alt="Posty Logo"
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                </motion.div>
+                <motion.span
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.4, delay: 0.1, ease: smoothEase }}
+                  className="font-bold text-lg whitespace-nowrap text-gray-900 dark:text-white group-hover:text-primary transition-colors duration-300"
+                >
+                  Posty
+                </motion.span>
               </Link>
-              <button
-                onClick={toggleSidebar}
-                className="min-w-[44px] min-h-[44px] p-2 flex items-center justify-center text-text-secondary hover:text-white hover:bg-dark-hover rounded-lg transition-all duration-200"
-                title="Reduire"
+              <motion.button
+                onClick={toggleCollapse}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-gray-100 dark:hover:bg-dark-hover transition-colors duration-200"
+                title="Replier la sidebar"
+                aria-label="Replier la sidebar"
               >
                 <svg
-                  className="w-5 h-5 transition-transform duration-300"
+                  className="w-4 h-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
                 </svg>
-              </button>
+              </motion.button>
             </>
           )}
-        </div>
+        </motion.div>
 
-        {/* Search Section */}
-        <div className={`${isCollapsed ? "p-2" : "p-3"}`}>
-          {isCollapsed ? (
-            /* Collapsed: Search icon button */
-            <button
-              onClick={handleSearchClick}
-              className="
-                w-full p-3 rounded-lg
-                bg-dark-bg border border-dark-border
-                hover:bg-dark-hover hover:border-primary/30
-                text-text-muted hover:text-primary
-                transition-all duration-200
-                flex items-center justify-center
-                group
-              "
-              title="Rechercher"
-            >
-              <svg
-                className="w-5 h-5 transition-transform duration-200 group-hover:scale-110"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </button>
-          ) : (
-            /* Expanded: Full search input with keyboard shortcut hint */
-            <div className="relative group">
-              <svg
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none transition-colors group-focus-within:text-primary"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden p-2 space-y-1">
+          {/* Search - Only show when expanded */}
+          {!isCollapsed && (
+            <div className="relative mb-2">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               <input
                 ref={searchInputRef}
                 type="text"
-                placeholder="Rechercher..."
+                placeholder={t.sidebar.searchShortPlaceholder}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="
-                  w-full pl-10 pr-16 py-2.5 text-sm
-                  bg-dark-bg border border-dark-border rounded-lg
-                  text-white placeholder-text-muted
-                  focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary
-                  transition-all duration-200
-                "
+                className="w-full pl-10 pr-10 py-2.5 text-sm bg-gray-50 dark:bg-dark-bg border border-gray-200 dark:border-dark-border rounded-xl text-text-primary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
               />
-              {/* Keyboard shortcut hint or clear button */}
-              {searchQuery ? (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-1 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] flex items-center justify-center text-text-muted hover:text-white transition-colors"
-                >
+              {searchQuery && (
+                <button onClick={() => setSearchQuery("")} className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center text-text-muted hover:text-text-primary">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 6L18 18M6 18L18 6" />
                   </svg>
                 </button>
-              ) : (
-                <kbd className="absolute right-3 top-1/2 -translate-y-1/2 hidden sm:inline-flex items-center text-2xs text-text-muted/60 font-mono px-1.5 py-0.5 bg-dark-hover rounded border border-dark-border">
-                  <span className="text-[10px]">⌘</span>K
-                </kbd>
               )}
             </div>
           )}
-        </div>
 
-        {/* Navigation */}
-        <nav
-          id="navigation"
-          aria-label="Navigation principale"
-          className={`flex-1 overflow-y-auto no-scrollbar gpu-scroll ${isCollapsed ? "p-2" : "p-3"}`}
-        >
-          {/* New post button */}
-          <Link
-            href="/app"
-            className={`
-              flex items-center gap-3 mb-4 rounded-lg
-              bg-gradient-to-r from-primary to-primary-hover
-              hover:from-primary-hover hover:to-primary
-              text-white shadow-glow hover:shadow-lg
-              transition-all duration-200
-              ${isCollapsed ? "justify-center p-3" : "px-3 py-2.5"}
-            `}
-            title={isCollapsed ? "Nouveau post" : undefined}
+          {/* Search icon button - Only show when collapsed */}
+          {isCollapsed && (
+            <button
+              onClick={handleSearchClick}
+              className="w-full h-11 rounded-xl flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-gray-100 dark:hover:bg-dark-hover transition-colors group relative"
+              title={t.sidebar.searchShortPlaceholder}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              {/* Tooltip */}
+              <span className="absolute left-full ml-2 px-2 py-1 bg-white dark:bg-dark-elevated border border-gray-200 dark:border-dark-border rounded-lg text-sm whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50 shadow-lg pointer-events-none">
+                {t.sidebar.searchShortPlaceholder}
+              </span>
+            </button>
+          )}
+
+          {/* New post button - Premium version with shimmer */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1, ease: smoothEase }}
+            className="relative group"
           >
-            <svg className={`${isCollapsed ? "w-6 h-6" : "w-5 h-5"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            {!isCollapsed && <span className="font-medium">Nouveau post</span>}
-          </Link>
+            {/* Animated glow effect - orange AUTOSCROLL */}
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-primary via-orange-500 to-primary rounded-xl opacity-75 blur-sm group-hover:opacity-100 animate-pulse-glow" />
 
-          {/* Nav items with improved visual hierarchy */}
-          <div className={`${isCollapsed ? "space-y-2" : "space-y-1"}`}>
-            {navItems.map((item) => {
-              const isActive = pathname === item.href || (item.href === "/app" && pathname === "/chat");
-              return (
+            <Link
+              href="/app"
+              className={`
+                relative w-full h-11 rounded-xl flex items-center gap-2.5
+                bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500
+                hover:from-orange-600 hover:via-orange-500 hover:to-orange-600
+                text-white shadow-lg hover:shadow-xl
+                transition-all duration-200 ease-out
+                overflow-hidden
+                ${isCollapsed ? "justify-center px-0" : "px-3"}
+              `}
+              style={{
+                boxShadow: "0 4px 20px rgba(249, 115, 22, 0.3)",
+              }}
+              title={t.sidebar.newPost}
+            >
+              {/* Shimmer overlay - enhanced */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full animate-shimmer-enhanced" />
+
+              <motion.svg
+                className="w-5 h-5 shrink-0 relative z-10"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                style={{
+                  filter: "drop-shadow(0 0 4px rgba(255, 255, 255, 0.5))",
+                }}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+              </motion.svg>
+              {!isCollapsed && <span className="font-bold whitespace-nowrap relative z-10">{t.sidebar.newPost}</span>}
+              {!isCollapsed && <span className="relative z-10 text-sm animate-pulse">✨</span>}
+              {/* Tooltip for collapsed mode */}
+              {isCollapsed && (
+                <span className="absolute left-full ml-2 px-2 py-1 bg-white dark:bg-dark-elevated border border-gray-200 dark:border-dark-border rounded-lg text-sm text-text-primary whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50 shadow-lg pointer-events-none">
+                  {t.sidebar.newPost}
+                </span>
+              )}
+            </Link>
+          </motion.div>
+
+          {/* Nav items with stagger animation and vivid colors */}
+          {navItems.map((item, index) => {
+            const isActive = pathname === item.href || (item.href === "/app" && pathname === "/chat");
+            const showBadge = (item as { hasBadge?: boolean }).hasBadge && schedulingPendingCount > 0;
+            return (
+              <motion.div
+                key={item.name}
+                custom={index}
+                variants={navItemVariants}
+                initial="hidden"
+                animate="visible"
+                className="relative"
+              >
+                {/* Enhanced active indicator with glow */}
+                {isActive && (
+                  <div
+                    className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-full ${
+                      item.color === "orange"
+                        ? "bg-orange-500"
+                        : item.color === "cyan"
+                        ? "bg-cyan-500"
+                        : item.color === "violet"
+                        ? "bg-violet-500"
+                        : "bg-primary"
+                    }`}
+                    style={{
+                      boxShadow: `0 0 12px ${item.glowColor}`,
+                    }}
+                  />
+                )}
+
+                {/* Glow effect behind active item */}
+                {isActive && (
+                  <div
+                    className="absolute inset-0 rounded-xl blur-xl pointer-events-none"
+                    style={{
+                      background: `radial-gradient(circle at center left, ${item.glowColor} 0%, transparent 60%)`,
+                    }}
+                  />
+                )}
+
                 <Link
-                  key={item.name}
                   href={item.href}
                   className={`
-                    flex items-center rounded-lg relative
-                    transition-all duration-200 group
-                    ${isActive
-                      ? "bg-primary/10 text-primary"
-                      : "text-text-secondary hover:text-white hover:bg-dark-hover"
-                    }
-                    ${isCollapsed
-                      ? "justify-center p-3"
-                      : "gap-3 px-3 py-2.5"
+                    relative w-full h-11 rounded-xl flex items-center gap-3 transition-all duration-200 ease-out group transform-gpu overflow-hidden
+                    ${isCollapsed ? "justify-center px-0" : "px-3"}
+                    ${
+                      isActive
+                        ? item.activeClasses
+                        : `text-text-secondary ${item.hoverClasses} hover:translate-x-0.5 active:scale-[0.98]`
                     }
                   `}
-                  title={isCollapsed ? item.name : undefined}
+                  title={item.name}
                 >
-                  {/* Active indicator bar */}
-                  {isActive && !isCollapsed && (
-                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-r-full" />
-                  )}
-                  <span className={`transition-all duration-200 ${!isActive && "group-hover:scale-110"} ${isCollapsed && "flex items-center"}`}>
-                    {item.icon}
+                  {/* Vivid colored icon with enhanced glow */}
+                  <span
+                    className={`
+                      relative shrink-0 transition-all duration-200
+                      ${isActive ? "scale-110" : "group-hover:scale-110"}
+                      ${item.color === "orange" ? "text-orange-500" : ""}
+                      ${item.color === "cyan" ? "text-cyan-500" : ""}
+                      ${item.color === "violet" ? "text-violet-500" : ""}
+                    `}
+                    style={isActive ? {
+                      filter: `drop-shadow(0 0 6px ${item.glowColor})`
+                    } : undefined}
+                  >
+                    {item.icon(isActive)}
+                    {/* Badge on icon when collapsed */}
+                    {isCollapsed && showBadge && (
+                      <span
+                        className="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 text-2xs font-bold bg-gradient-to-r from-violet-500 via-purple-500 to-violet-500 text-white rounded-full min-w-[16px] text-center shadow-lg"
+                        style={{
+                          boxShadow: "0 0 12px rgba(139, 92, 246, 0.5), 0 0 20px rgba(139, 92, 246, 0.3)",
+                        }}
+                      >
+                        {schedulingPendingCount}
+                      </span>
+                    )}
                   </span>
                   {!isCollapsed && (
-                    <span className={`font-medium ${isActive ? "text-primary" : ""}`}>
+                    <>
+                      <span className="font-bold whitespace-nowrap flex-1">{item.name}</span>
+                      {/* Badge after name when expanded with violet gradient */}
+                      {showBadge && (
+                        <div className="relative flex-shrink-0">
+                          {/* Pulsing glow effect for visibility */}
+                          <div className="absolute inset-0 bg-violet-500/30 rounded-full blur-md animate-pulse" />
+
+                          <span
+                            className="relative px-2.5 py-0.5 text-xs font-bold bg-gradient-to-r from-violet-500 via-purple-500 to-violet-500 text-white rounded-full min-w-[24px] text-center shadow-lg flex items-center justify-center"
+                            style={{
+                              boxShadow: "0 0 12px rgba(139, 92, 246, 0.5), 0 0 20px rgba(139, 92, 246, 0.3)",
+                            }}
+                          >
+                            {schedulingPendingCount}
+                          </span>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {/* Arrow indicator for active state */}
+                  {!isCollapsed && isActive && (
+                    <svg
+                      className={`
+                        w-4 h-4 transition-all duration-200
+                        ${item.color === "orange" ? "text-orange-500" : ""}
+                        ${item.color === "cyan" ? "text-cyan-500" : ""}
+                        ${item.color === "violet" ? "text-violet-500" : ""}
+                      `}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  )}
+
+                  {/* Tooltip for collapsed mode */}
+                  {isCollapsed && (
+                    <span className="absolute left-full ml-2 px-2 py-1 bg-white dark:bg-dark-elevated border border-gray-200 dark:border-dark-border rounded-lg text-sm text-text-primary whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50 shadow-lg pointer-events-none">
                       {item.name}
+                      {showBadge && ` (${schedulingPendingCount})`}
                     </span>
                   )}
                 </Link>
-              );
-            })}
-          </div>
+              </motion.div>
+            );
+          })}
 
-
-          {/* Chat history section */}
+          {/* Conversations - Only show when expanded */}
           {!isCollapsed && localPosts.length > 0 && (
-            <div className="mt-6">
-              {/* Toggle header */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.4, delay: 0.3, ease: smoothEase }}
+              className="mt-4 pt-4 border-t border-gray-200 dark:border-dark-border"
+            >
               <button
                 onClick={() => setShowChatList(!showChatList)}
-                className="flex items-center justify-between w-full px-3 py-2 text-text-muted hover:text-white transition-colors rounded-lg"
+                className="group flex items-center justify-between w-full px-3 py-2 text-text-muted hover:text-text-primary hover:bg-light-hover dark:hover:bg-dark-hover transition-all duration-200 rounded-lg"
               >
-                <span className="text-xs font-semibold uppercase tracking-wider">
-                  Conversations
+                <span className="text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+                  <svg
+                    className="w-4 h-4 text-blue-500 group-hover:text-blue-600 transition-colors"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                    />
+                  </svg>
+                  {t.sidebar.conversations}
                 </span>
                 <div className="flex items-center gap-2">
-                  <span className="text-2xs text-text-muted bg-dark-hover px-2 py-0.5 rounded-full">
+                  <span
+                    className="text-2xs font-bold text-white bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-500 px-2.5 py-0.5 rounded-full shadow-lg"
+                    style={{
+                      boxShadow: "0 0 8px rgba(59, 130, 246, 0.4)",
+                    }}
+                  >
                     {localPosts.length}
                   </span>
-                  <svg
-                    className={`w-4 h-4 transition-transform duration-200 ${showChatList ? "" : "-rotate-90"}`}
+                  <motion.svg
+                    animate={{ rotate: showChatList ? 0 : -90 }}
+                    transition={{ duration: 0.2, ease: smoothEase }}
+                    className="w-4 h-4 text-blue-500"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
+                  </motion.svg>
                 </div>
               </button>
 
-              {/* Grouped posts - Unified scroll (no separate scroll container) */}
-              <div
-                className={`
-                  transition-all duration-300 ease-smooth gpu-layer
-                  ${showChatList ? "opacity-100" : "max-h-0 opacity-0 overflow-hidden"}
-                `}
-              >
-                {groupedPosts.length > 0 ? (
-                  <>
-                    {groupedPosts.map((group, groupIndex) => (
-                      <div key={group.label} className={groupIndex > 0 ? "mt-4" : "mt-2"}>
-                        <div className="flex items-center gap-2 px-3 py-1">
-                          {/* Pin icon for pinned section */}
-                          {group.isPinned && (
-                            <svg className="w-3 h-3 text-primary" fill="currentColor" viewBox="0 0 20 20">
-                              <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+              <AnimatePresence>
+                {showChatList && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3, ease: smoothEase }}
+                    className="mt-2 space-y-0.5 overflow-hidden"
+                  >
+                    {groupedPosts.map((group, groupIndex) => {
+                      // Determine group visual properties
+                      const isToday = group.label.includes(t.sidebar.today || "Aujourd'hui");
+                      const isYesterday = group.label.includes(t.sidebar.yesterday || "Hier");
+                      const isPinned = group.isPinned;
+
+                      return (
+                      <div key={group.label} className={groupIndex > 0 ? "mt-2.5 mb-3" : "mb-3"}>
+                        {/* Enhanced group header with vivid icons */}
+                        <motion.div
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.3, delay: groupIndex * 0.05, ease: smoothEase }}
+                          className={`
+                            px-3 py-1 rounded-lg mb-0.5
+                            flex items-center gap-2
+                            ${isPinned ? "bg-violet-500/5 dark:bg-violet-500/10" : ""}
+                            ${isToday ? "bg-emerald-500/5 dark:bg-emerald-500/10" : ""}
+                            ${isYesterday ? "bg-blue-500/5 dark:bg-blue-500/10" : ""}
+                          `}
+                        >
+                          {/* Vivid colored icon based on group type */}
+                          {isPinned && (
+                            <svg
+                              className="w-4 h-4 text-violet-500 dark:text-violet-400"
+                              fill="currentColor"
+                              viewBox="0 0 24 24"
+                              style={{
+                                filter: "drop-shadow(0 0 4px rgba(139, 92, 246, 0.3))",
+                              }}
+                            >
+                              <path d="M16 4a1 1 0 0 1 1 1v3.586l1.707 1.707a1 1 0 0 1 .293.707v2a1 1 0 0 1-1 1h-4v6a1 1 0 0 1-2 0v-6H8a1 1 0 0 1-1-1v-2a1 1 0 0 1 .293-.707L9 8.586V5a1 1 0 0 1 1-1h6z"/>
                             </svg>
                           )}
-                          <span className={`text-2xs font-semibold uppercase tracking-wider ${group.isPinned ? "text-primary" : "text-text-muted"}`}>
+                          {isToday && (
+                            <svg
+                              className="w-4 h-4 text-emerald-500 dark:text-emerald-400"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              style={{
+                                filter: "drop-shadow(0 0 4px rgba(16, 185, 129, 0.3))",
+                              }}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+                              />
+                            </svg>
+                          )}
+                          {isYesterday && (
+                            <svg
+                              className="w-4 h-4 text-blue-500 dark:text-blue-400"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              style={{
+                                filter: "drop-shadow(0 0 4px rgba(59, 130, 246, 0.3))",
+                              }}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+                              />
+                            </svg>
+                          )}
+                          {!isPinned && !isToday && !isYesterday && (
+                            <svg
+                              className="w-4 h-4 text-amber-500 dark:text-amber-400"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              style={{
+                                filter: "drop-shadow(0 0 4px rgba(245, 158, 11, 0.3))",
+                              }}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
+                          )}
+
+                          {/* Group label with enhanced color */}
+                          <span className={`
+                            text-2xs font-bold uppercase tracking-wider
+                            ${isPinned ? "text-violet-600 dark:text-violet-400" : ""}
+                            ${isToday ? "text-emerald-600 dark:text-emerald-400" : ""}
+                            ${isYesterday ? "text-blue-600 dark:text-blue-400" : ""}
+                            ${!isPinned && !isToday && !isYesterday ? "text-amber-600 dark:text-amber-400" : ""}
+                          `}>
                             {group.label}
                           </span>
-                        </div>
-                        <div className="space-y-0.5 mt-1">
-                          {group.posts.map((post) => (
-                            <div
+
+                          {/* Post count badge - Enhanced with consistent styling */}
+                          <span className={`
+                            ml-auto text-2xs font-bold px-2 py-0.5 rounded-full
+                            transition-all duration-200
+                            ${isPinned ? "bg-violet-100 dark:bg-violet-500/25 text-violet-700 dark:text-violet-300 ring-1 ring-violet-200 dark:ring-violet-500/30" : ""}
+                            ${isToday ? "bg-emerald-100 dark:bg-emerald-500/25 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-200 dark:ring-emerald-500/30" : ""}
+                            ${isYesterday ? "bg-blue-100 dark:bg-blue-500/25 text-blue-700 dark:text-blue-300 ring-1 ring-blue-200 dark:ring-blue-500/30" : ""}
+                            ${!isPinned && !isToday && !isYesterday ? "bg-amber-100 dark:bg-amber-500/25 text-amber-700 dark:text-amber-300 ring-1 ring-amber-200 dark:ring-amber-500/30" : ""}
+                          `}>
+                            {group.posts.length}
+                          </span>
+                        </motion.div>
+                        {/* Posts list - Compact spacing for professional look */}
+                        <div className="space-y-0.5 mt-0.5">
+                          {group.posts.map((post, postIndex) => {
+                          const isActive = pathname === `/app/c/${post.id}`;
+                          return (
+                            <motion.div
                               key={post.id}
+                              custom={postIndex}
+                              variants={conversationItemVariants}
+                              initial="hidden"
+                              animate="visible"
                               onMouseEnter={() => setHoveredPostId(post.id)}
                               onMouseLeave={() => setHoveredPostId(null)}
                               className={`
-                                relative flex items-center gap-2 px-3 py-2 rounded-lg
-                                text-sm transition-all duration-200 group cursor-pointer
-                                ${post.isPinned
-                                  ? "text-white bg-primary/5 border border-primary/10 hover:bg-primary/10 hover:border-primary/20"
-                                  : "text-text-secondary hover:text-white hover:bg-dark-hover"
+                                relative flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm
+                                transition-all duration-200 ease-out group cursor-pointer transform-gpu
+                                active:scale-[0.98] active:transition-none
+                                ${
+                                  isActive
+                                    ? "bg-primary/10 dark:bg-primary/10 text-text-primary border-l-2 border-primary pl-[10px] shadow-sm"
+                                    : "text-text-secondary hover:text-text-primary hover:bg-light-hover dark:hover:bg-dark-hover hover:border-l-2 hover:border-primary/40 hover:pl-[10px]"
                                 }
                               `}
                             >
-                              {/* Pin indicator */}
+                              {/* Pin indicator - Premium violet color */}
                               {post.isPinned && (
                                 <svg
-                                  className="w-3 h-3 shrink-0 text-accent group-hover:scale-110 transition-transform duration-200"
+                                  className="w-3.5 h-3.5 shrink-0 text-violet-500 dark:text-violet-400 group-hover:scale-110 transition-transform duration-200"
                                   fill="currentColor"
-                                  viewBox="0 0 20 20"
+                                  viewBox="0 0 24 24"
                                 >
-                                  <path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                                  <path d="M16 4a1 1 0 0 1 1 1v3.586l1.707 1.707a1 1 0 0 1 .293.707v2a1 1 0 0 1-1 1h-4v6a1 1 0 0 1-2 0v-6H8a1 1 0 0 1-1-1v-2a1 1 0 0 1 .293-.707L9 8.586V5a1 1 0 0 1 1-1h6z"/>
                                 </svg>
                               )}
-                              <Link
-                                href={`/app/c/${post.id}`}
-                                className="flex items-center gap-2 flex-1 min-w-0"
-                              >
+                              <Link href={`/app/c/${post.id}`} className="flex items-center gap-2 flex-1 min-w-0">
                                 {!post.isPinned && (
                                   <svg
-                                    className="w-4 h-4 shrink-0 text-text-muted group-hover:text-primary group-hover:scale-110 transition-all duration-200"
+                                    className={`w-4 h-4 shrink-0 group-hover:scale-110 transition-all duration-200 ${
+                                      isActive ? "text-primary" : "text-text-muted group-hover:text-primary"
+                                    }`}
                                     fill="none"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"
@@ -642,139 +1000,144 @@ export default function MainLayout({
                                     />
                                   </svg>
                                 )}
-                                <span className="truncate flex-1 group-hover:translate-x-0.5 transition-transform duration-200">
-                                  {(post.title || post.prompt).slice(0, 22)}
-                                  {(post.title || post.prompt).length > 22 ? "..." : ""}
+                                <span className={`truncate flex-1 group-hover:translate-x-0.5 transition-transform duration-200 ${
+                                  isActive ? "font-semibold" : ""
+                                }`}>
+                                  {(post.title || post.prompt).slice(0, 25)}{(post.title || post.prompt).length > 25 ? "..." : ""}
                                 </span>
                               </Link>
-                              {/* Options menu - visible on hover */}
                               <div className="shrink-0">
-                                <ConversationOptionsMenu
-                                  post={post}
-                                  onPin={handlePin}
-                                  onRename={handleRename}
-                                  onDelete={handleDeleteClick}
-                                  isVisible={hoveredPostId === post.id}
-                                />
+                                <ConversationOptionsMenu post={post} onPin={handlePin} onRename={handleRename} onDelete={handleDeleteClick} isVisible={hoveredPostId === post.id} />
                               </div>
-                            </div>
-                          ))}
+                            </motion.div>
+                          );
+                        })}
                         </div>
                       </div>
-                    ))}
-
-                    {/* View all button */}
+                    );
+                    })}
                     {localPosts.length > 5 && (
-                      <button
+                      <motion.button
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.3, delay: 0.2, ease: smoothEase }}
                         onClick={() => setShowHistoryModal(true)}
-                        className="
-                          flex items-center justify-center gap-2 w-full mt-3 px-3 py-2
-                          text-xs text-primary hover:text-accent
-                          hover:bg-primary/5 rounded-lg transition-all duration-200
-                        "
+                        className="flex items-center justify-center gap-1.5 w-full mt-2 px-2 py-1.5 text-xs text-primary hover:text-accent hover:bg-primary/5 rounded-lg transition-colors"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                        </svg>
-                        Voir tout ({localPosts.length})
-                      </button>
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+                        {t.sidebar.viewAll} ({localPosts.length})
+                      </motion.button>
                     )}
-                  </>
-                ) : (
-                  <div className="px-3 py-8 text-center">
-                    <div className="w-12 h-12 mx-auto mb-3 bg-dark-elevated rounded-lg flex items-center justify-center">
-                      <svg className="w-6 h-6 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        {searchQuery ? (
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        ) : (
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                        )}
-                      </svg>
-                    </div>
-                    <p className="text-sm text-text-muted">
-                      {searchQuery ? "Aucun resultat" : "Aucune conversation"}
-                    </p>
-                    {searchQuery && (
-                      <p className="text-xs text-text-muted mt-1">pour &ldquo;{searchQuery}&rdquo;</p>
-                    )}
-                  </div>
+                  </motion.div>
                 )}
+              </AnimatePresence>
+            </motion.div>
+          )}
+
+          {/* Conversations icon - Only show when collapsed and has posts */}
+          {isCollapsed && localPosts.length > 0 && (
+            <button
+              onClick={() => setShowHistoryModal(true)}
+              className="w-full h-11 rounded-xl flex items-center justify-center text-blue-500 hover:text-blue-600 hover:bg-blue-500/5 transition-colors group relative mt-4 pt-4 border-t border-gray-200 dark:border-dark-border"
+              title={t.sidebar.conversations}
+            >
+              <div className="relative">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                {/* Badge count with blue gradient */}
+                <span
+                  className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-2xs font-bold rounded-full flex items-center justify-center shadow-lg"
+                  style={{
+                    boxShadow: "0 0 8px rgba(59, 130, 246, 0.4)",
+                  }}
+                >
+                  {localPosts.length > 9 ? "9+" : localPosts.length}
+                </span>
               </div>
-            </div>
+              {/* Tooltip */}
+              <span className="absolute left-full ml-2 px-2 py-1 bg-white dark:bg-dark-elevated border border-gray-200 dark:border-dark-border rounded-lg text-sm whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50 shadow-lg pointer-events-none">
+                {t.sidebar.conversations} ({localPosts.length})
+              </span>
+            </button>
           )}
         </nav>
 
-        {/* Quota Badge */}
-        <QuotaBadge isSidebarCollapsed={isCollapsed} />
-
-        {/* Sidebar Footer - User Profile Menu */}
-        <div className="p-3 border-t border-dark-border">
+        {/* Profile */}
+        <div className="p-2 border-t border-gray-200 dark:border-dark-border shrink-0">
           <ProfileMenu isCollapsed={isCollapsed} />
         </div>
-        </aside>
-      </AnimatedSlideIn>
+      </aside>
 
-      {/* Mobile Slide Menu with Swipe Gesture Support */}
-      <SlideMenu
-        isOpen={isMenuOpen}
-        onClose={() => setIsMenuOpen(false)}
-        onOpen={() => setIsMenuOpen(true)}
-        posts={effectivePosts}
-        onPostUpdate={onPostUpdate}
-      />
+      {/* Mobile Slide Menu */}
+      <div className="lg:hidden">
+        <SlideMenu isOpen={isSidebarOpen} onClose={closeSidebar} onOpen={openSidebar} posts={effectivePosts} onPostUpdate={onPostUpdate} />
+      </div>
 
-      {/* Main Content */}
+      {/* Main Content - Responsive padding for desktop sidebar */}
       <main
         id="main-content"
         role="main"
         aria-label="Contenu principal"
         tabIndex={-1}
-        className={`
-          flex-1 flex flex-col h-screen
-          transition-all duration-300 ease-in-out
-          ${isCollapsed ? "lg:pl-[68px]" : "lg:pl-72"}
-          focus:outline-none
-        `}
+        className={`flex-1 flex flex-col h-screen focus:outline-none transition-all duration-200 ease-out ${isCollapsed ? "lg:pl-[68px]" : "lg:pl-[288px]"}`}
       >
-        {/* Mobile Header */}
+        {/* Desktop spacer - hidden on mobile */}
+        <div className="hidden lg:block" />
+
+        {/* Mobile Header - Fixed position WITHOUT animation wrapper for true viewport positioning */}
         {showMobileHeader && (
-          <AnimatedSlideIn direction="top" delay={0.05}>
-            <header className="lg:hidden flex-shrink-0 bg-dark-card/95 backdrop-blur-xl border-b border-dark-border z-30">
-            <div className="flex items-center justify-between h-16 px-4">
+          <header
+            role="banner"
+            aria-label="En-tête mobile"
+            className="mobile-header lg:hidden fixed top-0 left-0 right-0 bg-white/95 dark:bg-dark-card/95 backdrop-blur-xl border-b border-gray-200 dark:border-dark-border z-[60]"
+            style={{
+              paddingTop: "env(safe-area-inset-top, 0px)",
+            }}
+          >
+            <div className="flex items-center justify-between h-14 min-h-[56px] px-4">
               <button
-                onClick={() => setIsMenuOpen(true)}
-                className="min-w-[44px] min-h-[44px] p-2.5 -ml-2 flex items-center justify-center text-text-secondary hover:text-white hover:bg-dark-hover rounded-lg transition-all duration-200 haptic-feedback"
-                aria-label="Ouvrir le menu"
+                onClick={openSidebar}
+                className="min-w-[44px] min-h-[44px] p-2.5 -ml-2 flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-gray-100 dark:hover:bg-dark-hover rounded-lg transition-colors duration-200"
+                aria-label={t.sidebar.openMenu}
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </button>
               <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-lg overflow-hidden flex items-center justify-center shadow-glow">
-                  <img
-                    src="/logo.png"
-                    alt="POSTY Logo"
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                      const sibling = e.currentTarget.nextElementSibling as HTMLElement | null; if (sibling) sibling.style.display = 'flex';
-                    }}
-                  />
-                  <span className="text-white font-bold hidden">P</span>
+                <div className="relative">
+                  {/* Subtle glow */}
+                  <div className="absolute -inset-0.5 bg-gradient-to-br from-primary/20 to-accent/20 rounded-xl blur-sm" />
+                  <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden flex items-center justify-center shadow-md ring-1 ring-white/50 dark:ring-dark-border/50 flex-shrink-0">
+                    <img
+                      src="/logo.jpg"
+                      alt="Posty Logo"
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
                 </div>
-                <span className="font-semibold text-white text-lg tracking-tight">
-                  {headerTitle || "POSTY"}
+                <span className="font-bold text-gray-900 dark:text-white text-base sm:text-lg tracking-tight truncate max-w-[140px] sm:max-w-none">
+                  {headerTitle || "Posty"}
                 </span>
               </div>
-              <div className="w-10" /> {/* Spacer for centering */}
+              <div className="w-10 flex-shrink-0" />
             </div>
-            </header>
-          </AnimatedSlideIn>
+          </header>
         )}
 
-        {/* Page Content */}
-        <AnimatedPageWrapper delay={0.2} className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain gpu-scroll">
+        {/* Spacer for fixed mobile header - accounts for safe area + header height */}
+        {showMobileHeader && (
+          <div
+            className="lg:hidden flex-shrink-0"
+            style={{
+              height: "calc(env(safe-area-inset-top, 0px) + 56px)",
+            }}
+          />
+        )}
+
+        {/* Page Content - No scroll on mobile (children handle scroll), scroll on desktop */}
+        <AnimatedPageWrapper delay={0.2} className="flex-1 overflow-hidden lg:overflow-y-auto lg:overflow-x-hidden lg:overscroll-contain">
           {children}
         </AnimatedPageWrapper>
       </main>
@@ -801,13 +1164,73 @@ export default function MainLayout({
         post={postToDelete}
         onConfirm={handleDeleteConfirm}
       />
+
+      {/* Test Mode Indicator - Shows when test mode is active */}
+      <TestModeIndicator />
     </div>
   );
 }
 
-// Quota Badge Component
-function QuotaBadge({ isSidebarCollapsed }: { isSidebarCollapsed: boolean }) {
-  const { currentPlan, planName, messagesUsedToday, dailyLimit, isPremium } = useQuota();
+// Quota Badge Component - Collapsed version (icon only)
+function QuotaBadgeCollapsed() {
+  const { planName, messagesUsedToday, dailyLimit, isPremium } = useQuota();
+  const { t } = useLanguage();
+
+  const getProgressPercentage = () => {
+    if (dailyLimit === -1) return 0;
+    return Math.min((messagesUsedToday / dailyLimit) * 100, 100);
+  };
+
+  const getProgressColor = () => {
+    const percentage = getProgressPercentage();
+    if (percentage >= 100) return "stroke-error";
+    if (percentage >= 80) return "stroke-warning";
+    return "stroke-primary";
+  };
+
+  return (
+    <Link
+      href="/pricing"
+      className={`
+        w-full h-11 rounded-xl flex items-center justify-center
+        ${isPremium
+          ? "bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/30"
+          : "bg-gray-100 dark:bg-dark-hover border border-gray-200 dark:border-dark-border hover:border-primary/30"
+        }
+        transition-colors duration-200
+      `}
+      title={`${planName} - ${dailyLimit === -1 ? t.sidebar.unlimited : `${messagesUsedToday}/${dailyLimit}`}`}
+    >
+      {isPremium ? (
+        <svg className="w-5 h-5 text-primary" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+        </svg>
+      ) : (
+        <div className="relative w-5 h-5">
+          <svg className="w-5 h-5" viewBox="0 0 36 36">
+            <circle cx="18" cy="18" r="16" fill="none" stroke="currentColor" strokeWidth="3" opacity="0.2" className="text-text-muted" />
+            <circle
+              cx="18"
+              cy="18"
+              r="16"
+              fill="none"
+              strokeWidth="3"
+              strokeDasharray={`${getProgressPercentage()} 100`}
+              strokeLinecap="round"
+              transform="rotate(-90 18 18)"
+              className={getProgressColor()}
+            />
+          </svg>
+        </div>
+      )}
+    </Link>
+  );
+}
+
+// Quota Badge Component - Expanded version (full details)
+function QuotaBadgeExpanded() {
+  const { planName, messagesUsedToday, dailyLimit, isPremium } = useQuota();
+  const { t } = useLanguage();
 
   const getProgressPercentage = () => {
     if (dailyLimit === -1) return 0;
@@ -821,60 +1244,17 @@ function QuotaBadge({ isSidebarCollapsed }: { isSidebarCollapsed: boolean }) {
     return "bg-primary";
   };
 
-  if (isSidebarCollapsed) {
-    return (
-      <div className="px-2 pb-2">
-        <Link
-          href="/pricing"
-          className={`
-            flex items-center justify-center p-3 rounded-lg
-            ${isPremium
-              ? "bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/30"
-              : "bg-dark-hover border border-dark-border hover:border-primary/30"
-            }
-            transition-all duration-200 group
-          `}
-          title={`${planName} - ${dailyLimit === -1 ? "Illimite" : `${messagesUsedToday}/${dailyLimit}`}`}
-        >
-          {isPremium ? (
-            <svg className="w-5 h-5 text-primary" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-            </svg>
-          ) : (
-            <div className="relative w-5 h-5">
-              <svg className="w-5 h-5 text-text-muted" viewBox="0 0 36 36">
-                <circle cx="18" cy="18" r="16" fill="none" stroke="currentColor" strokeWidth="3" opacity="0.3" />
-                <circle
-                  cx="18"
-                  cy="18"
-                  r="16"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                  strokeDasharray={`${getProgressPercentage()} 100`}
-                  strokeLinecap="round"
-                  transform="rotate(-90 18 18)"
-                  className={getProgressColor().replace("bg-", "stroke-")}
-                />
-              </svg>
-            </div>
-          )}
-        </Link>
-      </div>
-    );
-  }
-
   return (
     <div className="px-3 pb-3">
       <Link
         href="/pricing"
         className={`
-          block p-3 rounded-lg
+          block p-3 rounded-xl
           ${isPremium
             ? "bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20"
-            : "bg-dark-hover/50 border border-dark-border hover:border-primary/30"
+            : "bg-gray-50 dark:bg-dark-hover/50 border border-gray-200 dark:border-dark-border hover:border-primary/30"
           }
-          transition-all duration-200 group
+          transition-colors duration-200 group
         `}
       >
         <div className="flex items-center justify-between mb-2">
@@ -888,32 +1268,31 @@ function QuotaBadge({ isSidebarCollapsed }: { isSidebarCollapsed: boolean }) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             )}
-            <span className={`text-sm font-medium ${isPremium ? "text-primary" : "text-white"}`}>
+            <span className={`text-sm font-medium ${isPremium ? "text-primary" : "text-text-primary"}`}>
               {planName}
             </span>
           </div>
           {!isPremium && (
-            <span className="text-xs text-primary group-hover:underline">Upgrade</span>
+            <span className="text-xs text-primary group-hover:underline">{t.sidebar.upgrade}</span>
           )}
         </div>
 
-        {/* Progress bar for free users */}
         {!isPremium && dailyLimit > 0 && (
           <>
-            <div className="h-1.5 bg-dark-border rounded-full overflow-hidden mb-1.5">
+            <div className="h-1.5 bg-gray-200 dark:bg-dark-border rounded-full overflow-hidden mb-1.5">
               <div
                 className={`h-full ${getProgressColor()} transition-all duration-300`}
                 style={{ width: `${getProgressPercentage()}%` }}
               />
             </div>
             <p className="text-xs text-text-muted">
-              {messagesUsedToday}/{dailyLimit} messages aujourd'hui
+              {messagesUsedToday}/{dailyLimit} {t.sidebar.messagesToday}
             </p>
           </>
         )}
 
         {isPremium && (
-          <p className="text-xs text-text-secondary">Messages illimites</p>
+          <p className="text-xs text-text-secondary">{t.sidebar.unlimitedMessages}</p>
         )}
       </Link>
     </div>

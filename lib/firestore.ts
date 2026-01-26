@@ -19,6 +19,7 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { UserProfile, Post, Session, ChatMessage } from "@/types";
+import { planHasFeature, PlanType } from "./plans";
 
 // ============== USER OPERATIONS ==============
 // Collection: users
@@ -120,23 +121,50 @@ export async function completeOnboarding(
 
 // ============== POST OPERATIONS ==============
 // Collection: posts
-// Fields: userId, contentA, contentB, chosenVersion, createdAt
+// Fields: userId, contentA, contentB, chosenVersion, createdAt, insights?, analysis?, responseMode?, selectedStyle?
+
+interface SavePostOptions {
+  insights?: {
+    whyEffective: string;
+    bestTimeToPost: string;
+    expectedEngagement: string;
+    keyTakeaway: string;
+  };
+  responseMode?: "business-only" | "single-choice" | "dual";
+  selectedStyle?: "storytelling" | "business";
+}
 
 export async function savePost(
   userId: string,
   prompt: string,
   contentA: string,
-  contentB: string
+  contentB: string,
+  options?: SavePostOptions
 ): Promise<string> {
   const postsRef = collection(db, "posts");
-  const docRef = await addDoc(postsRef, {
+  const timestamp = serverTimestamp();
+  const postData: Record<string, unknown> = {
     userId,
     prompt,
     contentA,
     contentB,
     chosenVersion: null,
-    createdAt: serverTimestamp(),
-  });
+    createdAt: timestamp,
+    updatedAt: timestamp, // Initialize updatedAt on creation for proper sorting
+  };
+
+  // Add optional fields if provided
+  if (options?.insights) {
+    postData.insights = options.insights;
+  }
+  if (options?.responseMode) {
+    postData.responseMode = options.responseMode;
+  }
+  if (options?.selectedStyle) {
+    postData.selectedStyle = options.selectedStyle;
+  }
+
+  const docRef = await addDoc(postsRef, postData);
   return docRef.id;
 }
 
@@ -149,6 +177,41 @@ export async function createPost(data: {
   selectedVersion: "A" | "B" | null;
 }): Promise<string> {
   return savePost(data.userId, data.prompt, data.responseA, data.responseB);
+}
+
+// Save post analysis (PRO+ feature)
+export async function savePostAnalysis(
+  postId: string,
+  analysis: {
+    hookScore: number;
+    hookFeedback: string;
+    structureScore: number;
+    structureFeedback: string;
+    ctaScore: number;
+    ctaFeedback: string;
+    overallScore: number;
+    improvements: string[];
+  }
+): Promise<void> {
+  const postRef = doc(db, "posts", postId);
+  await updateDoc(postRef, {
+    analysis,
+    analyzedAt: serverTimestamp(),
+  });
+}
+
+// Update post insights (if generated after save)
+export async function updatePostInsights(
+  postId: string,
+  insights: {
+    whyEffective: string;
+    bestTimeToPost: string;
+    expectedEngagement: string;
+    keyTakeaway: string;
+  }
+): Promise<void> {
+  const postRef = doc(db, "posts", postId);
+  await updateDoc(postRef, { insights });
 }
 
 export async function getUserPosts(
@@ -200,9 +263,81 @@ export async function getPost(postId: string): Promise<Post | null> {
       responseB: data.contentB || data.responseB,
       selectedVersion: data.chosenVersion || data.selectedVersion,
       createdAt: data.createdAt,
+      // Conversation messages for multi-turn support
+      messages: data.messages || [],
     } as Post;
   }
   return null;
+}
+
+// ============== CONVERSATION PERSISTENCE ==============
+// Enables multi-turn conversations without creating new posts
+
+export interface ConversationMessageData {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  variant?: "storytelling" | "business";
+  timestamp: Date | Timestamp;
+}
+
+/**
+ * Add messages to an existing conversation (multi-turn support)
+ * This prevents creating new posts for follow-up messages
+ */
+export async function addMessagesToConversation(
+  postId: string,
+  newMessages: ConversationMessageData[]
+): Promise<void> {
+  const postRef = doc(db, "posts", postId);
+
+  // Convert Date to Timestamp for Firestore
+  const messagesForFirestore = newMessages.map(msg => ({
+    ...msg,
+    timestamp: msg.timestamp instanceof Date
+      ? Timestamp.fromDate(msg.timestamp)
+      : msg.timestamp,
+  }));
+
+  await updateDoc(postRef, {
+    messages: arrayUnion(...messagesForFirestore),
+    updatedAt: serverTimestamp(),
+  });
+}
+
+/**
+ * Get conversation with full message history for API context
+ */
+export async function getConversationHistory(postId: string): Promise<{
+  prompt: string;
+  messages: Array<{ role: "user" | "assistant"; content: string }>;
+} | null> {
+  const postRef = doc(db, "posts", postId);
+  const postSnap = await getDoc(postRef);
+
+  if (!postSnap.exists()) return null;
+
+  const data = postSnap.data();
+  const messages: Array<{ role: "user" | "assistant"; content: string }> = [];
+
+  // Add original prompt
+  messages.push({ role: "user", content: data.prompt });
+
+  // Add original AI response (use contentA as primary)
+  if (data.contentA) {
+    messages.push({ role: "assistant", content: data.contentA });
+  } else if (data.contentB) {
+    messages.push({ role: "assistant", content: data.contentB });
+  }
+
+  // Add follow-up messages
+  if (data.messages && Array.isArray(data.messages)) {
+    data.messages.forEach((msg: ConversationMessageData) => {
+      messages.push({ role: msg.role, content: msg.content });
+    });
+  }
+
+  return { prompt: data.prompt, messages };
 }
 
 export async function deletePost(postId: string): Promise<void> {
@@ -262,13 +397,14 @@ export async function getUserPostsWithPinned(
       responseB: data.contentB || data.responseB,
       selectedVersion: data.chosenVersion || data.selectedVersion,
       createdAt: data.createdAt as Timestamp,
+      updatedAt: data.updatedAt as Timestamp | undefined, // Include updatedAt for smart sorting
       title: data.title || undefined,
       isPinned: data.isPinned || false,
       pinnedAt: data.pinnedAt || undefined,
     };
   }) as Post[];
 
-  // Sort: pinned posts first (by pinnedAt desc), then by createdAt desc
+  // Sort: pinned posts first (by pinnedAt desc), then by updatedAt/createdAt desc
   return posts.sort((a, b) => {
     // Pinned posts come first
     if (a.isPinned && !b.isPinned) return -1;
@@ -285,14 +421,19 @@ export async function getUserPostsWithPinned(
       return bPinnedAt.getTime() - aPinnedAt.getTime();
     }
 
-    // Both not pinned: sort by createdAt (with null safety)
-    const aCreatedAt = a.createdAt && typeof (a.createdAt as { toDate?: () => Date }).toDate === "function"
-      ? (a.createdAt as { toDate: () => Date }).toDate()
-      : a.createdAt ? new Date(a.createdAt as unknown as string) : new Date(0);
-    const bCreatedAt = b.createdAt && typeof (b.createdAt as { toDate?: () => Date }).toDate === "function"
-      ? (b.createdAt as { toDate: () => Date }).toDate()
-      : b.createdAt ? new Date(b.createdAt as unknown as string) : new Date(0);
-    return bCreatedAt.getTime() - aCreatedAt.getTime();
+    // Both not pinned: sort by updatedAt (last message time) with fallback to createdAt
+    // This ensures conversations with recent activity appear first
+    const aTimestamp = a.updatedAt || a.createdAt;
+    const bTimestamp = b.updatedAt || b.createdAt;
+
+    const aDate = aTimestamp && typeof (aTimestamp as { toDate?: () => Date }).toDate === "function"
+      ? (aTimestamp as { toDate: () => Date }).toDate()
+      : aTimestamp ? new Date(aTimestamp as unknown as string) : new Date(0);
+    const bDate = bTimestamp && typeof (bTimestamp as { toDate?: () => Date }).toDate === "function"
+      ? (bTimestamp as { toDate: () => Date }).toDate()
+      : bTimestamp ? new Date(bTimestamp as unknown as string) : new Date(0);
+
+    return bDate.getTime() - aDate.getTime();
   });
 }
 
@@ -461,6 +602,35 @@ export async function withdrawConsent(userId: string): Promise<void> {
     marketing: false,
     lastUpdated: serverTimestamp(),
   });
+}
+
+// Update a single consent preference (analytics or marketing)
+export async function updateConsentPreference(
+  userId: string,
+  field: "analytics" | "marketing",
+  value: boolean
+): Promise<void> {
+  const consentRef = doc(db, "consents", userId);
+  const existingConsent = await getDoc(consentRef);
+
+  if (existingConsent.exists()) {
+    // Update existing document
+    await updateDoc(consentRef, {
+      [field]: value,
+      lastUpdated: serverTimestamp(),
+    });
+  } else {
+    // Create new document with default values
+    await setDoc(consentRef, {
+      userId,
+      privacyPolicy: true,
+      termsOfService: true,
+      analytics: field === "analytics" ? value : false,
+      marketing: field === "marketing" ? value : false,
+      consentDate: serverTimestamp(),
+      lastUpdated: serverTimestamp(),
+    });
+  }
 }
 
 // ============== LINKEDIN INTEGRATION ==============
@@ -633,6 +803,9 @@ function isToday(date: Date): boolean {
 
 /**
  * Get quota information for a user (daily message limits)
+ *
+ * IMPORTANT: Respects test mode - if test mode is active, uses the test plan
+ * for quota calculations instead of the actual Stripe subscription.
  */
 export async function getUserQuota(userId: string): Promise<QuotaInfo> {
   const userRef = doc(db, "users", userId);
@@ -658,8 +831,22 @@ export async function getUserQuota(userId: string): Promise<QuotaInfo> {
   }
 
   const data = userSnap.data();
-  const plan: SubscriptionPlan = data.subscription?.plan || "free";
-  const dailyLimit = DAILY_MESSAGE_LIMITS[plan];
+
+  // Check for test mode - test plan takes precedence if active
+  const isTestMode = data.testMode?.active === true;
+  const testPlan = isTestMode ? data.testMode?.plan : null;
+
+  // Determine effective plan (test mode overrides actual subscription)
+  // Handle legacy "starter" plan name from database
+  const rawPlan = data.subscription?.plan || "free";
+  let effectivePlan: SubscriptionPlan = (rawPlan === "starter" ? "pro" : rawPlan) as SubscriptionPlan;
+
+  // Use test plan if active
+  if (isTestMode && testPlan) {
+    effectivePlan = testPlan as SubscriptionPlan;
+  }
+
+  const dailyLimit = DAILY_MESSAGE_LIMITS[effectivePlan];
 
   // Check if we need to reset the quota (new day)
   let usedToday = 0;
@@ -675,7 +862,7 @@ export async function getUserQuota(userId: string): Promise<QuotaInfo> {
   const canSendMessage = dailyLimit === -1 || usedToday < dailyLimit;
 
   return {
-    plan,
+    plan: effectivePlan,
     dailyLimit,
     usedToday,
     remaining,
@@ -926,6 +1113,66 @@ export async function batchDeletePosts(postIds: string[]): Promise<void> {
 }
 
 /**
+ * Delete all user conversations (posts and sessions)
+ * Used for "Delete all my conversations" feature in Settings
+ * Returns the count of deleted items for feedback
+ */
+export async function deleteAllUserConversations(userId: string): Promise<{
+  postsDeleted: number;
+  sessionsDeleted: number;
+}> {
+  let postsDeleted = 0;
+  let sessionsDeleted = 0;
+
+  // Delete all user posts (conversations)
+  const postsRef = collection(db, "posts");
+  const postsQuery = query(postsRef, where("userId", "==", userId));
+  const postsSnapshot = await getDocs(postsQuery);
+
+  if (postsSnapshot.docs.length > 0) {
+    // Use batch delete for efficiency (Firestore limits batch to 500 operations)
+    const BATCH_SIZE = 500;
+    const postDocs = postsSnapshot.docs;
+
+    for (let i = 0; i < postDocs.length; i += BATCH_SIZE) {
+      const batchOp = writeBatch(db);
+      const chunk = postDocs.slice(i, i + BATCH_SIZE);
+
+      chunk.forEach((docSnap) => {
+        batchOp.delete(doc(db, "posts", docSnap.id));
+      });
+
+      await batchOp.commit();
+      postsDeleted += chunk.length;
+    }
+  }
+
+  // Delete all user sessions
+  const sessionsRef = collection(db, "sessions");
+  const sessionsQuery = query(sessionsRef, where("userId", "==", userId));
+  const sessionsSnapshot = await getDocs(sessionsQuery);
+
+  if (sessionsSnapshot.docs.length > 0) {
+    const BATCH_SIZE = 500;
+    const sessionDocs = sessionsSnapshot.docs;
+
+    for (let i = 0; i < sessionDocs.length; i += BATCH_SIZE) {
+      const batchOp = writeBatch(db);
+      const chunk = sessionDocs.slice(i, i + BATCH_SIZE);
+
+      chunk.forEach((docSnap) => {
+        batchOp.delete(doc(db, "sessions", docSnap.id));
+      });
+
+      await batchOp.commit();
+      sessionsDeleted += chunk.length;
+    }
+  }
+
+  return { postsDeleted, sessionsDeleted };
+}
+
+/**
  * Search posts by prompt content
  */
 export async function searchPosts(
@@ -1171,4 +1418,502 @@ export async function getMediumPosts(
     id: docSnap.id,
     ...docSnap.data(),
   })) as MediumPostData[];
+}
+
+// ============== DASHBOARD STATISTICS ==============
+
+export interface DashboardStats {
+  totalPosts: number;
+  publishedPosts: number;
+  totalSessions: number;
+  postsLast7Days: number;
+  postsLast30Days: number;
+  postsByDay: { date: string; count: number }[];
+  styleDistribution: { style: string; count: number }[];
+  recentActivity: { date: string; type: string; content: string }[];
+}
+
+export async function getDashboardStats(userId: string): Promise<DashboardStats> {
+  const now = new Date();
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+  // Get all posts for the user
+  const postsRef = collection(db, "posts");
+  const postsQuery = query(
+    postsRef,
+    where("userId", "==", userId),
+    orderBy("createdAt", "desc")
+  );
+  const postsSnapshot = await getDocs(postsQuery);
+  const posts = postsSnapshot.docs.map((docSnap) => ({
+    id: docSnap.id,
+    ...docSnap.data(),
+  }));
+
+  // Get LinkedIn published posts
+  const linkedInPostsRef = collection(db, "linkedinPosts");
+  const linkedInQuery = query(
+    linkedInPostsRef,
+    where("userId", "==", userId),
+    where("success", "==", true)
+  );
+  const linkedInSnapshot = await getDocs(linkedInQuery);
+  const publishedPosts = linkedInSnapshot.size;
+
+  // Get sessions count
+  const sessionsRef = collection(db, "sessions");
+  const sessionsQuery = query(sessionsRef, where("userId", "==", userId));
+  const sessionsSnapshot = await getDocs(sessionsQuery);
+  const totalSessions = sessionsSnapshot.size;
+
+  // Calculate posts in last 7 and 30 days
+  let postsLast7Days = 0;
+  let postsLast30Days = 0;
+  const postsByDayMap: Record<string, number> = {};
+  const styleCount: Record<string, number> = {
+    "Storytelling": 0,
+    "Business": 0,
+  };
+
+  posts.forEach((post) => {
+    const postData = post as { createdAt?: Timestamp; chosenVersion?: string };
+    if (postData.createdAt) {
+      const postDate = postData.createdAt.toDate();
+      const dateKey = postDate.toISOString().split("T")[0];
+
+      // Count by day
+      postsByDayMap[dateKey] = (postsByDayMap[dateKey] || 0) + 1;
+
+      // Count last 7/30 days
+      if (postDate >= sevenDaysAgo) postsLast7Days++;
+      if (postDate >= thirtyDaysAgo) postsLast30Days++;
+    }
+
+    // Count style distribution
+    if (postData.chosenVersion === "A") {
+      styleCount["Storytelling"]++;
+    } else if (postData.chosenVersion === "B") {
+      styleCount["Business"]++;
+    }
+  });
+
+  // Convert postsByDay to sorted array (last 30 days)
+  const postsByDay: { date: string; count: number }[] = [];
+  for (let i = 29; i >= 0; i--) {
+    const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+    const dateKey = date.toISOString().split("T")[0];
+    postsByDay.push({
+      date: dateKey,
+      count: postsByDayMap[dateKey] || 0,
+    });
+  }
+
+  // Style distribution
+  const styleDistribution = Object.entries(styleCount).map(([style, count]) => ({
+    style,
+    count,
+  }));
+
+  // Recent activity (last 5 posts)
+  const recentActivity = posts.slice(0, 5).map((post) => {
+    const postData = post as { createdAt?: Timestamp; prompt?: string };
+    return {
+      date: postData.createdAt?.toDate().toISOString() || new Date().toISOString(),
+      type: "post",
+      content: postData.prompt?.substring(0, 50) || "Post genere",
+    };
+  });
+
+  return {
+    totalPosts: posts.length,
+    publishedPosts,
+    totalSessions,
+    postsLast7Days,
+    postsLast30Days,
+    postsByDay,
+    styleDistribution,
+    recentActivity,
+  };
+}
+
+// Update dashboard visited flag
+export async function markDashboardVisited(userId: string): Promise<void> {
+  const userRef = doc(db, "users", userId);
+  await updateDoc(userRef, {
+    dashboardVisited: true,
+  });
+}
+
+export async function hasDashboardBeenVisited(userId: string): Promise<boolean> {
+  const userRef = doc(db, "users", userId);
+  const userSnap = await getDoc(userRef);
+  if (userSnap.exists()) {
+    return userSnap.data().dashboardVisited === true;
+  }
+  return false;
+}
+
+// ============== SCHEDULED POSTS MANAGEMENT ==============
+// Collection: scheduledPosts
+// Document ID: auto-generated
+
+import {
+  ScheduledPost,
+  CreateScheduledPostData,
+  ScheduleStatus,
+  SchedulePlatform,
+} from "@/types";
+
+/**
+ * Create a new scheduled post
+ * Validates user's subscription plan before creating
+ */
+export async function createScheduledPost(
+  userId: string,
+  data: CreateScheduledPostData
+): Promise<string> {
+  // Backend validation: Check if user's plan allows scheduling
+  const userRef = doc(db, "users", userId);
+  const userSnap = await getDoc(userRef);
+
+  if (!userSnap.exists()) {
+    throw new Error("Utilisateur non trouve");
+  }
+
+  const userData = userSnap.data();
+
+  // Check for test mode - use test plan if active, otherwise use subscription plan
+  const isTestMode = userData?.testMode?.active === true;
+  const testPlan = userData?.testMode?.plan as PlanType | undefined;
+  const subscriptionPlan: PlanType = userData?.subscription?.plan || "free";
+  const effectivePlan: PlanType = isTestMode && testPlan ? testPlan : subscriptionPlan;
+
+  // Check if the user's effective plan allows scheduling
+  if (!planHasFeature(effectivePlan, "canSchedulePosts")) {
+    throw new Error("La programmation de posts necessite un abonnement Pro ou Max");
+  }
+
+  const scheduledPostsRef = collection(db, "scheduledPosts");
+  const docRef = await addDoc(scheduledPostsRef, {
+    userId,
+    content: data.content,
+    postId: data.postId || null,
+    title: data.title || null,
+    scheduledAt: Timestamp.fromDate(data.scheduledAt),
+    timezone: data.timezone,
+    status: "pending" as ScheduleStatus,
+    platform: data.platform,
+    postType: data.postType || "feed",
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+    attemptCount: 0,
+    publishedAt: null,
+    publishedUrl: null,
+    lastAttemptAt: null,
+    failureReason: null,
+  });
+  return docRef.id;
+}
+
+/**
+ * Get all scheduled posts for a user
+ */
+export async function getScheduledPosts(
+  userId: string,
+  status?: ScheduleStatus
+): Promise<ScheduledPost[]> {
+  const scheduledPostsRef = collection(db, "scheduledPosts");
+
+  let q;
+  if (status) {
+    q = query(
+      scheduledPostsRef,
+      where("userId", "==", userId),
+      where("status", "==", status),
+      orderBy("scheduledAt", "asc")
+    );
+  } else {
+    q = query(
+      scheduledPostsRef,
+      where("userId", "==", userId),
+      orderBy("scheduledAt", "desc")
+    );
+  }
+
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map((docSnap) => ({
+    id: docSnap.id,
+    ...docSnap.data(),
+  })) as ScheduledPost[];
+}
+
+/**
+ * Get pending scheduled posts (for publishing worker)
+ */
+export async function getPendingScheduledPosts(
+  userId?: string
+): Promise<ScheduledPost[]> {
+  const scheduledPostsRef = collection(db, "scheduledPosts");
+  const now = new Date();
+
+  let q;
+  if (userId) {
+    q = query(
+      scheduledPostsRef,
+      where("userId", "==", userId),
+      where("status", "==", "pending"),
+      where("scheduledAt", "<=", Timestamp.fromDate(now)),
+      orderBy("scheduledAt", "asc")
+    );
+  } else {
+    // For admin/worker: get all pending posts that should be published
+    q = query(
+      scheduledPostsRef,
+      where("status", "==", "pending"),
+      where("scheduledAt", "<=", Timestamp.fromDate(now)),
+      orderBy("scheduledAt", "asc"),
+      limit(50) // Process in batches
+    );
+  }
+
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map((docSnap) => ({
+    id: docSnap.id,
+    ...docSnap.data(),
+  })) as ScheduledPost[];
+}
+
+/**
+ * Get a single scheduled post by ID
+ */
+export async function getScheduledPost(
+  scheduledPostId: string
+): Promise<ScheduledPost | null> {
+  const postRef = doc(db, "scheduledPosts", scheduledPostId);
+  const postSnap = await getDoc(postRef);
+
+  if (postSnap.exists()) {
+    return {
+      id: postSnap.id,
+      ...postSnap.data(),
+    } as ScheduledPost;
+  }
+  return null;
+}
+
+/**
+ * Update scheduled post status
+ */
+export async function updateScheduledPostStatus(
+  scheduledPostId: string,
+  status: ScheduleStatus,
+  additionalData?: {
+    publishedAt?: Date;
+    publishedUrl?: string;
+    failureReason?: string;
+  }
+): Promise<void> {
+  const postRef = doc(db, "scheduledPosts", scheduledPostId);
+  const updateData: Record<string, unknown> = {
+    status,
+    updatedAt: serverTimestamp(),
+  };
+
+  if (additionalData?.publishedAt) {
+    updateData.publishedAt = Timestamp.fromDate(additionalData.publishedAt);
+  }
+  if (additionalData?.publishedUrl) {
+    updateData.publishedUrl = additionalData.publishedUrl;
+  }
+  if (additionalData?.failureReason) {
+    updateData.failureReason = additionalData.failureReason;
+  }
+
+  await updateDoc(postRef, updateData);
+}
+
+/**
+ * Reschedule a post to a new date/time
+ */
+export async function reschedulePost(
+  scheduledPostId: string,
+  newScheduledAt: Date
+): Promise<void> {
+  const postRef = doc(db, "scheduledPosts", scheduledPostId);
+
+  // Get the scheduled post to find the userId
+  const postSnap = await getDoc(postRef);
+  if (!postSnap.exists()) {
+    throw new Error("Post programme non trouve");
+  }
+
+  const postData = postSnap.data();
+  const userId = postData?.userId;
+
+  if (!userId) {
+    throw new Error("Utilisateur non trouve pour ce post");
+  }
+
+  // Backend validation: Check if user's plan still allows scheduling
+  const userRef = doc(db, "users", userId);
+  const userSnap = await getDoc(userRef);
+
+  if (userSnap.exists()) {
+    const userData = userSnap.data();
+
+    // Check for test mode - use test plan if active, otherwise use subscription plan
+    const isTestMode = userData?.testMode?.active === true;
+    const testPlan = userData?.testMode?.plan as PlanType | undefined;
+    const subscriptionPlan: PlanType = userData?.subscription?.plan || "free";
+    const effectivePlan: PlanType = isTestMode && testPlan ? testPlan : subscriptionPlan;
+
+    if (!planHasFeature(effectivePlan, "canSchedulePosts")) {
+      throw new Error("La reprogrammation necessite un abonnement Pro ou Max");
+    }
+  }
+
+  await updateDoc(postRef, {
+    scheduledAt: Timestamp.fromDate(newScheduledAt),
+    status: "pending" as ScheduleStatus,
+    updatedAt: serverTimestamp(),
+    failureReason: null,
+    attemptCount: 0,
+  });
+}
+
+/**
+ * Cancel a scheduled post
+ */
+export async function cancelScheduledPost(
+  scheduledPostId: string
+): Promise<void> {
+  const postRef = doc(db, "scheduledPosts", scheduledPostId);
+  await updateDoc(postRef, {
+    status: "cancelled" as ScheduleStatus,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+/**
+ * Delete a scheduled post permanently
+ */
+export async function deleteScheduledPost(
+  scheduledPostId: string
+): Promise<void> {
+  const postRef = doc(db, "scheduledPosts", scheduledPostId);
+  await deleteDoc(postRef);
+}
+
+/**
+ * Increment attempt count for a scheduled post (for retry logic)
+ */
+export async function incrementScheduledPostAttempt(
+  scheduledPostId: string
+): Promise<void> {
+  const postRef = doc(db, "scheduledPosts", scheduledPostId);
+  const postSnap = await getDoc(postRef);
+
+  if (postSnap.exists()) {
+    const currentAttempts = postSnap.data().attemptCount || 0;
+    await updateDoc(postRef, {
+      attemptCount: currentAttempts + 1,
+      lastAttemptAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+  }
+}
+
+/**
+ * Get count of pending scheduled posts (for badge display)
+ */
+export async function getPendingScheduledPostsCount(
+  userId: string
+): Promise<number> {
+  const scheduledPostsRef = collection(db, "scheduledPosts");
+  const q = query(
+    scheduledPostsRef,
+    where("userId", "==", userId),
+    where("status", "==", "pending")
+  );
+
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.size;
+}
+
+/**
+ * Get scheduled posts for a specific date
+ */
+export async function getScheduledPostsForDate(
+  userId: string,
+  date: Date
+): Promise<ScheduledPost[]> {
+  const startOfDay = new Date(date);
+  startOfDay.setHours(0, 0, 0, 0);
+
+  const endOfDay = new Date(date);
+  endOfDay.setHours(23, 59, 59, 999);
+
+  const scheduledPostsRef = collection(db, "scheduledPosts");
+  const q = query(
+    scheduledPostsRef,
+    where("userId", "==", userId),
+    where("scheduledAt", ">=", Timestamp.fromDate(startOfDay)),
+    where("scheduledAt", "<=", Timestamp.fromDate(endOfDay)),
+    orderBy("scheduledAt", "asc")
+  );
+
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map((docSnap) => ({
+    id: docSnap.id,
+    ...docSnap.data(),
+  })) as ScheduledPost[];
+}
+
+/**
+ * Get upcoming scheduled posts (next 7 days)
+ */
+export async function getUpcomingScheduledPosts(
+  userId: string,
+  days: number = 7
+): Promise<ScheduledPost[]> {
+  const now = new Date();
+  const future = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+
+  const scheduledPostsRef = collection(db, "scheduledPosts");
+  const q = query(
+    scheduledPostsRef,
+    where("userId", "==", userId),
+    where("status", "==", "pending"),
+    where("scheduledAt", ">=", Timestamp.fromDate(now)),
+    where("scheduledAt", "<=", Timestamp.fromDate(future)),
+    orderBy("scheduledAt", "asc")
+  );
+
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map((docSnap) => ({
+    id: docSnap.id,
+    ...docSnap.data(),
+  })) as ScheduledPost[];
+}
+
+/**
+ * Update scheduled post content
+ */
+export async function updateScheduledPostContent(
+  scheduledPostId: string,
+  content: string,
+  title?: string
+): Promise<void> {
+  const postRef = doc(db, "scheduledPosts", scheduledPostId);
+  const updateData: Record<string, unknown> = {
+    content,
+    updatedAt: serverTimestamp(),
+  };
+
+  if (title !== undefined) {
+    updateData.title = title;
+  }
+
+  await updateDoc(postRef, updateData);
 }

@@ -27,8 +27,8 @@ export default function PremiumCTA({
     gradient: `
       bg-gradient-to-r from-primary via-primary to-accent
       text-white font-semibold
-      shadow-[0_4px_20px_rgba(47,128,237,0.35)]
-      hover:shadow-[0_6px_30px_rgba(47,128,237,0.5)]
+      shadow-[0_4px_20px_rgba(232,147,77,0.35)]
+      hover:shadow-[0_6px_30px_rgba(232,147,77,0.5)]
       hover:brightness-110
       active:scale-[0.98]
     `,
@@ -113,7 +113,7 @@ export function UpgradeProCTA({
           border border-primary/30 rounded-xl
           text-sm text-white font-medium
           transition-all duration-200
-          hover:border-primary/50 hover:shadow-[0_0_15px_rgba(47,128,237,0.2)]
+          hover:border-primary/50 hover:shadow-[0_0_15px_rgba(232,147,77,0.2)]
           group
           ${className}
         `}
@@ -138,18 +138,18 @@ export function UpgradeProCTA({
       `}
     >
       <div className="flex items-start gap-3 mb-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-[0_0_20px_rgba(47,128,237,0.3)]">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-[0_0_20px_rgba(232,147,77,0.3)]">
           <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
             <path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
           </svg>
         </div>
         <div className="flex-1">
-          <h4 className="text-white font-semibold text-sm">Passez a POSTY Pro</h4>
-          <p className="text-text-muted text-xs mt-0.5">Publications illimitees</p>
+          <h4 className="text-white font-semibold text-sm">Passez à POSTY Pro</h4>
+          <p className="text-text-muted text-xs mt-0.5">Publications illimitées</p>
         </div>
       </div>
       <PremiumCTA onClick={onUpgrade} size="sm" fullWidth>
-        Debloquer Pro
+        Débloquer Pro
       </PremiumCTA>
     </div>
   );

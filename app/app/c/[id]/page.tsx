@@ -2,34 +2,38 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLinkedIn } from "@/contexts/LinkedInContext";
 import { useQuota } from "@/contexts/QuotaContext";
+import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useChat } from "@/hooks/useChat";
 import { useSmartScroll } from "@/hooks/useSmartScroll";
+import { useBrowserMode } from "@/hooks/useBrowserMode";
 import { getPost, getUserPostsWithPinned } from "@/lib/firestore";
+import { getPlanFeatures } from "@/lib/plan-features";
 import { Post } from "@/types";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import MainLayout from "@/components/layout/MainLayout";
 import ChatMessage, { TypingIndicator } from "@/components/chat/ChatMessage";
-import AIResponsePair from "@/components/chat/AIResponsePair";
+import ModernAIResponsePair from "@/components/chat/ModernAIResponsePair";
+import ModernResponseCard from "@/components/chat/ModernResponseCard";
 import NewResponseIndicator from "@/components/chat/NewResponseIndicator";
 import PublishToLinkedInModal from "@/components/linkedin/PublishToLinkedInModal";
-import UsageBanner from "@/components/ui/UsageBanner";
+import ScheduleModal from "@/components/schedule/ScheduleModal";
 import { AnimatedScaleFade } from "@/components/animations/AnimatedPageWrapper";
-import toast from "react-hot-toast";
+import toast from "@/components/ui/Toast";
+import UniversalChatInput from "@/components/chat/UniversalChatInput";
 
 // Dynamic placeholder examples that rotate
 const PLACEHOLDER_EXAMPLES = [
   "Continuez la conversation...",
-  "Une nouvelle idee a explorer...",
   "Affinez le message...",
 ];
 
-// Character limits
-const CHAR_LIMIT_WARNING = 2500;
-const CHAR_LIMIT_MAX = 3000;
+// Animation easing
+const smoothEase = [0.25, 0.1, 0.25, 1] as const;
 
 function ConversationContent() {
   const params = useParams();
@@ -38,7 +42,9 @@ function ConversationContent() {
 
   const { user, userProfile } = useAuth();
   const { connection: linkedInConnection, publishToLinkedIn } = useLinkedIn();
-  const { canSendMessage, isPremium } = useQuota();
+  const { canSendMessage } = useQuota();
+  const { currentPlan } = useSubscription();
+  const browserMode = useBrowserMode();
 
   // Conversation state
   const [originalPost, setOriginalPost] = useState<Post | null>(null);
@@ -48,15 +54,17 @@ function ConversationContent() {
   // UI State
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [publishContent, setPublishContent] = useState("");
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [scheduleContent, setScheduleContent] = useState("");
   const [inputValue, setInputValue] = useState("");
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [isFocused, setIsFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Character count helpers
-  const charCount = inputValue.length;
-  const isNearLimit = charCount >= CHAR_LIMIT_WARNING;
-  const isOverLimit = charCount > CHAR_LIMIT_MAX;
+  // Voice recording state
+  const [isRecording, setIsRecording] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(false);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   const {
     messages,
@@ -86,7 +94,7 @@ function ConversationContent() {
     threshold: 200,
   });
 
-  // Load the original conversation/post
+  // Load the original conversation/post (including follow-up messages for multi-turn)
   useEffect(() => {
     const loadOriginalPost = async () => {
       if (!conversationId || !user) return;
@@ -96,8 +104,15 @@ function ConversationContent() {
         const post = await getPost(conversationId);
         if (post && post.userId === user.uid) {
           setOriginalPost(post);
-          // Load the conversation into chat
-          loadConversation?.(post);
+          // Load the conversation into chat - including follow-up messages
+          loadConversation?.({
+            id: post.id,
+            prompt: post.prompt,
+            responseA: post.responseA,
+            responseB: post.responseB,
+            // Include follow-up messages for multi-turn conversations
+            messages: post.messages || [],
+          });
         } else {
           // Post not found or doesn't belong to user
           toast.error("Conversation introuvable");
@@ -151,9 +166,70 @@ function ConversationContent() {
     return () => clearInterval(interval);
   }, [isFocused, inputValue]);
 
+  // Initialize speech recognition
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      setSpeechSupported(true);
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = "fr-FR";
+
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
+        let finalTranscript = "";
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript;
+          }
+        }
+        if (finalTranscript) {
+          setInputValue((prev) => prev + (prev ? " " : "") + finalTranscript);
+        }
+      };
+
+      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+        console.error("Speech recognition error:", event.error);
+        setIsRecording(false);
+        if (event.error === "not-allowed") {
+          toast.error("Microphone non autorisé. Vérifiez les permissions.");
+        } else if (event.error === "no-speech") {
+          toast.error("Aucune voix détectée. Réessayez.");
+        }
+      };
+
+      recognition.onend = () => setIsRecording(false);
+      recognitionRef.current = recognition;
+    }
+    return () => recognitionRef.current?.abort();
+  }, []);
+
+  // Toggle voice recording
+  const toggleRecording = useCallback(() => {
+    if (!recognitionRef.current) return;
+    if (isRecording) {
+      recognitionRef.current.stop();
+      setIsRecording(false);
+    } else {
+      try {
+        recognitionRef.current.start();
+        setIsRecording(true);
+      } catch (error) {
+        console.error("Failed to start recording:", error);
+        toast.error("Impossible de démarrer l'enregistrement");
+      }
+    }
+  }, [isRecording]);
+
   // Handle submit
   const handleSubmit = useCallback(async () => {
-    if (!inputValue.trim() || isLoading || isOverLimit) return;
+    if (!inputValue.trim() || isLoading) return;
+    // Stop recording if active
+    if (isRecording && recognitionRef.current) {
+      recognitionRef.current.stop();
+      setIsRecording(false);
+    }
 
     const prompt = inputValue.trim();
     setInputValue("");
@@ -163,7 +239,7 @@ function ConversationContent() {
     } catch (error) {
       console.error("Generation error:", error);
     }
-  }, [inputValue, isLoading, isOverLimit, generate]);
+  }, [inputValue, isLoading, isRecording, generate]);
 
   // Handle keyboard submit
   const handleKeyDown = useCallback(
@@ -180,7 +256,7 @@ function ConversationContent() {
   const handleCopy = useCallback(async (content: string) => {
     try {
       await navigator.clipboard.writeText(content);
-      toast.success("Copie !");
+      toast.success("Copié !");
     } catch {
       toast.error("Erreur lors de la copie");
     }
@@ -192,13 +268,20 @@ function ConversationContent() {
     setShowPublishModal(true);
   }, []);
 
-  const handleConfirmPublish = async (editedContent: string) => {
-    return await publishToLinkedIn(editedContent);
+  const handleConfirmPublish = async (editedContent: string, visibility: "PUBLIC" | "CONNECTIONS" = "PUBLIC") => {
+    return await publishToLinkedIn(editedContent, visibility);
   };
+
+  // Schedule handlers
+  const handleSchedulePost = useCallback((content: string) => {
+    setScheduleContent(content);
+    setShowScheduleModal(true);
+  }, []);
 
   const userInitial =
     userProfile?.displayName?.charAt(0) || user?.email?.charAt(0) || "U";
   const userName = userProfile?.displayName || "Vous";
+  const userPhotoURL = user?.photoURL || userProfile?.photoURL || null;
 
   // Loading state
   if (isLoadingPost) {
@@ -216,55 +299,24 @@ function ConversationContent() {
 
   return (
     <MainLayout posts={posts} showMobileHeader={true}>
-      <div className="flex flex-col h-full bg-background">
-        {/* Messages area */}
+      <div className="flex flex-col h-full bg-background app-content-wrapper">
+        {/* Messages area - with padding for content to scroll behind fixed input */}
         <div
           ref={scrollContainerRef}
-          className="flex-1 overflow-y-auto gpu-scroll"
+          className="flex-1 overflow-y-auto gpu-scroll app-scroll-container overscroll-contain"
         >
-          <div className="max-w-3xl mx-auto px-4 py-6 lg:py-12">
-            {/* Conversation header */}
-            {originalPost && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mb-6 pb-4 border-b border-dark-border"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center shrink-0">
-                    <svg
-                      className="w-5 h-5 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                      />
-                    </svg>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h1 className="text-lg font-semibold text-white truncate">
-                      {originalPost.title ||
-                        originalPost.prompt.slice(0, 50) +
-                          (originalPost.prompt.length > 50 ? "..." : "")}
-                    </h1>
-                    <p className="text-xs text-text-muted">
-                      Conversation active - Continuez a discuter avec l'IA
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
+          <div
+            className={`max-w-3xl mx-auto px-4 pt-6 lg:pt-12 content-with-fixed-input ${browserMode.isMobileBrowser ? 'mobile-browser-mode' : ''}`}
+          >
             {/* Conversation messages */}
             {messages.length > 0 && (
               <div className="space-y-6 mb-8">
                 <AnimatePresence mode="popLayout">
                   {(() => {
+                    // Get response mode based on plan (dual = 2 versions, else single)
+                    const planFeatures = getPlanFeatures(currentPlan);
+                    const isDualMode = planFeatures.responseMode === "dual";
+
                     const elements: React.ReactNode[] = [];
                     let i = 0;
                     let pairIndex = 0;
@@ -281,6 +333,7 @@ function ConversationContent() {
                             timestamp={message.timestamp}
                             userName={userName}
                             userInitial={userInitial}
+                            userPhotoURL={userPhotoURL || undefined}
                             showActions={false}
                             index={i}
                           />
@@ -289,7 +342,10 @@ function ConversationContent() {
                       } else if (message.type === "ai") {
                         const nextMessage = messages[i + 1];
 
-                        if (nextMessage && nextMessage.type === "ai") {
+                        // Only render AIResponsePair if:
+                        // 1. User has MAX plan (dual mode)
+                        // 2. There are two consecutive AI messages
+                        if (isDualMode && nextMessage && nextMessage.type === "ai") {
                           const storytelling =
                             message.variant === "storytelling"
                               ? message
@@ -299,46 +355,79 @@ function ConversationContent() {
                               ? message
                               : nextMessage;
 
+                          // Render paired responses with ModernAIResponsePair (MAX plan only)
                           elements.push(
-                            <AIResponsePair
-                              key={`pair-${message.id}`}
-                              storytellingResponse={{
-                                id: storytelling.id,
-                                content: storytelling.content,
-                                variant: "storytelling",
-                                timestamp: storytelling.timestamp,
-                                isStreaming: storytelling.isStreaming,
-                              }}
-                              businessResponse={{
-                                id: business.id,
-                                content: business.content,
-                                variant: "business",
-                                timestamp: business.timestamp,
-                                isStreaming: business.isStreaming,
-                              }}
-                              onCopy={handleCopy}
-                              onPublishToLinkedIn={handlePublishToLinkedIn}
-                              index={pairIndex}
-                            />
+                            <div key={`pair-${message.id}`}>
+                              {/* POSTY Avatar and Label */}
+                              <div className="flex items-center gap-3 mb-3">
+                                <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 shadow-sm">
+                                  <img
+                                    src="/logo.jpg"
+                                    alt="Posty"
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                                <span className="text-xs text-text-muted font-medium">POSTY</span>
+                              </div>
+                              <ModernAIResponsePair
+                                storytellingResponse={{
+                                  content: storytelling.content,
+                                  variant: "storytelling",
+                                  timestamp: storytelling.timestamp,
+                                  isStreaming: storytelling.isStreaming,
+                                }}
+                                businessResponse={{
+                                  content: business.content,
+                                  variant: "business",
+                                  timestamp: business.timestamp,
+                                  isStreaming: business.isStreaming,
+                                }}
+                                userPlan={currentPlan}
+                                onPublishToLinkedIn={handlePublishToLinkedIn}
+                                onSchedule={handleSchedulePost}
+                              />
+                            </div>
                           );
                           pairIndex++;
                           i += 2;
                         } else {
+                          // Single AI response (FREE/PRO plans) - use ModernResponseCard
                           elements.push(
-                            <ChatMessage
+                            <motion.div
                               key={message.id}
-                              type={message.type}
-                              content={message.content}
-                              timestamp={message.timestamp}
-                              variant={message.variant}
-                              showActions={true}
-                              onCopy={() => handleCopy(message.content)}
-                              onPublishToLinkedIn={() =>
-                                handlePublishToLinkedIn(message.content)
-                              }
-                              index={i}
-                              isStreaming={message.isStreaming}
-                            />
+                              initial={{ opacity: 0, y: 8 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{
+                                duration: 0.25,
+                                delay: i * 0.05,
+                                ease: smoothEase,
+                              }}
+                              className="w-full"
+                            >
+                              {/* POSTY Avatar and Label */}
+                              <div className="flex items-center gap-3 mb-3">
+                                <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 shadow-sm">
+                                  <img
+                                    src="/logo.jpg"
+                                    alt="Posty"
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                                <span className="text-xs text-text-muted font-medium">POSTY</span>
+                              </div>
+
+                              {/* Modern Response Card - No border, no block, like ChatGPT */}
+                              <ModernResponseCard
+                                content={message.content}
+                                variant={message.variant || "business"}
+                                timestamp={message.timestamp}
+                                isStreaming={message.isStreaming}
+                                userPlan={currentPlan}
+                                onPublishToLinkedIn={handlePublishToLinkedIn}
+                                onSchedule={handleSchedulePost}
+                                showVariantBadge={planFeatures.responseMode === "single-choice"}
+                              />
+                            </motion.div>
                           );
                           i++;
                         }
@@ -391,100 +480,39 @@ function ConversationContent() {
           newCount={newContentCount}
         />
 
-        {/* Input area */}
-        <div className="flex-shrink-0 bg-gradient-to-t from-background via-background to-transparent pt-4 pb-safe">
-          <div className="max-w-3xl mx-auto px-4 pb-4">
-            <UsageBanner className="mb-3" />
-
-            <div
-              className={`
-                relative bg-dark-card border rounded-2xl shadow-elevated transition-all duration-200
-                ${
-                  isOverLimit
-                    ? "border-error/50 focus-within:border-error"
-                    : canSendMessage
-                    ? "border-dark-border focus-within:border-primary/50 focus-within:shadow-glow"
-                    : "border-error/20 opacity-75"
+        {/* Input area - Always fixed at bottom on all devices */}
+        <div
+          className={`
+            fixed-input-area
+            ${browserMode.isMobileBrowser ? 'mobile-browser-mode' : ''}
+          `}
+        >
+          <div className="max-w-3xl mx-auto px-3 sm:px-4 py-1 lg:py-2">
+            {/* UniversalChatInput - Unified premium input component */}
+            <UniversalChatInput
+              onSubmit={async (message) => {
+                // Stop recording if active
+                if (isRecording && recognitionRef.current) {
+                  recognitionRef.current.stop();
+                  setIsRecording(false);
                 }
-              `}
-            >
-              <textarea
-                id="chat-input"
-                ref={textareaRef}
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={handleKeyDown}
-                onFocus={() => setIsFocused(true)}
-                onBlur={() => setIsFocused(false)}
-                placeholder={PLACEHOLDER_EXAMPLES[placeholderIndex]}
-                disabled={isLoading || !canSendMessage}
-                rows={1}
-                aria-label="Votre message"
-                aria-describedby="char-count"
-                className="
-                  w-full bg-transparent text-white text-base
-                  placeholder-text-muted resize-none focus:outline-none
-                  disabled:opacity-50 min-h-[56px] max-h-[200px]
-                  py-4 pl-4 pr-14
-                "
-              />
-
-              {/* Submit button */}
-              <button
-                onClick={handleSubmit}
-                disabled={
-                  !inputValue.trim() || isLoading || isOverLimit || !canSendMessage
-                }
-                className={`
-                  absolute right-3 bottom-3
-                  w-10 h-10 rounded-xl flex items-center justify-center
-                  transition-all duration-200
-                  ${
-                    inputValue.trim() && !isLoading && !isOverLimit && canSendMessage
-                      ? "bg-primary hover:bg-primary-hover text-white shadow-glow"
-                      : "bg-dark-hover text-text-muted cursor-not-allowed"
-                  }
-                `}
-                aria-label="Envoyer"
-              >
-                {isLoading ? (
-                  <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 10l7-7m0 0l7 7m-7-7v18"
-                    />
-                  </svg>
-                )}
-              </button>
-            </div>
-
-            {/* Character count */}
-            {charCount > 0 && (
-              <div
-                id="char-count"
-                className={`
-                  mt-2 text-xs text-right transition-colors
-                  ${
-                    isOverLimit
-                      ? "text-error"
-                      : isNearLimit
-                      ? "text-warning"
-                      : "text-text-muted"
-                  }
-                `}
-              >
-                {charCount}/{CHAR_LIMIT_MAX}
-              </div>
-            )}
+                await generate(message);
+              }}
+              placeholder={PLACEHOLDER_EXAMPLES}
+              disabled={false}
+              isLoading={isLoading}
+              enableVoiceRecording={speechSupported}
+              onVoiceRecordingStart={toggleRecording}
+              onVoiceRecordingStop={toggleRecording}
+              isRecording={isRecording}
+              showHelperText={true}
+              maxHeight={200}
+              minHeight={56}
+              isMobile={browserMode.isMobileBrowser}
+              browserMode={browserMode}
+              context="conversation"
+              quotaLimitReached={!canSendMessage}
+            />
           </div>
         </div>
       </div>
@@ -496,6 +524,13 @@ function ConversationContent() {
         content={publishContent}
         linkedInConnection={linkedInConnection}
         onPublish={handleConfirmPublish}
+      />
+
+      {/* Schedule post modal */}
+      <ScheduleModal
+        isOpen={showScheduleModal}
+        onClose={() => setShowScheduleModal(false)}
+        content={scheduleContent}
       />
     </MainLayout>
   );

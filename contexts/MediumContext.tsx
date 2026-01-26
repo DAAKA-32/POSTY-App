@@ -21,7 +21,7 @@ import {
   generateTitleFromContent,
 } from "@/lib/medium";
 import type { MediumPublishStatus } from "@/lib/medium";
-import toast from "react-hot-toast";
+import toast from "@/components/ui/Toast";
 
 interface MediumContextType {
   connection: MediumConnectionData | null;
@@ -116,30 +116,7 @@ export function MediumProvider({ children }: { children: ReactNode }) {
         await loadConnection();
 
         // Success toast
-        toast.success(
-          () => (
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-[#00ab6c] flex items-center justify-center shrink-0">
-                <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M13.54 12a6.8 6.8 0 01-6.77 6.82A6.8 6.8 0 010 12a6.8 6.8 0 016.77-6.82A6.8 6.8 0 0113.54 12zM20.96 12c0 3.54-1.51 6.42-3.38 6.42-1.87 0-3.39-2.88-3.39-6.42s1.52-6.42 3.39-6.42 3.38 2.88 3.38 6.42M24 12c0 3.17-.53 5.75-1.19 5.75-.66 0-1.19-2.58-1.19-5.75s.53-5.75 1.19-5.75C23.47 6.25 24 8.83 24 12z" />
-                </svg>
-              </div>
-              <div>
-                <p className="font-medium text-white">Medium connecte !</p>
-                <p className="text-xs text-text-secondary">Bienvenue, {profile.name}</p>
-              </div>
-            </div>
-          ),
-          {
-            duration: 4000,
-            style: {
-              background: '#1a1a2e',
-              border: '1px solid rgba(0, 171, 108, 0.3)',
-              padding: '12px 16px',
-              borderRadius: '12px',
-            },
-          }
-        );
+        toast.success("Medium connecté");
 
         return { success: true };
       } catch (error) {
@@ -162,30 +139,7 @@ export function MediumProvider({ children }: { children: ReactNode }) {
     try {
       await deleteMediumConnection(user.uid);
       setConnection(null);
-      toast.success(
-        () => (
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center shrink-0">
-              <svg className="w-4 h-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <div>
-              <p className="font-medium text-white">Medium deconnecte</p>
-              <p className="text-xs text-text-secondary">Votre compte a ete dissocie</p>
-            </div>
-          </div>
-        ),
-        {
-          duration: 3000,
-          style: {
-            background: '#1a1a2e',
-            border: '1px solid rgba(0, 212, 170, 0.3)',
-            padding: '12px 16px',
-            borderRadius: '12px',
-          },
-        }
-      );
+      toast.success("Medium déconnecté");
     } catch (error) {
       console.error("Error disconnecting Medium:", error);
       toast.error("Impossible de deconnecter Medium");

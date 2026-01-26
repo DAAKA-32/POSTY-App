@@ -54,7 +54,7 @@ export default function ConnectionLoader({
   }
 
   return (
-    <div className="min-h-screen bg-dark-bg flex items-center justify-center">
+    <div className="min-h-screen loader-bg flex items-center justify-center">
       <motion.div
         initial={{ opacity: 0, scale: prefersReducedMotion ? 1 : 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -87,20 +87,10 @@ export default function ConnectionLoader({
           {/* Logo image - clean, no background */}
           <div className="relative w-20 h-20 lg:w-24 lg:h-24 flex items-center justify-center">
             <img
-              src="/logo.png"
-              alt="POSTY"
+              src="/logo.jpg"
+              alt="Posty Logo"
               className="w-full h-full object-contain drop-shadow-2xl"
-              onError={(e) => {
-                e.currentTarget.style.display = "none";
-                const sibling = e.currentTarget
-                  .nextElementSibling as HTMLElement | null;
-                if (sibling) sibling.style.display = "flex";
-              }}
             />
-            {/* Fallback */}
-            <div className="hidden w-full h-full bg-gradient-to-br from-primary to-accent rounded-2xl items-center justify-center shadow-2xl">
-              <span className="text-white font-bold text-4xl">P</span>
-            </div>
           </div>
         </div>
 
@@ -112,7 +102,7 @@ export default function ConnectionLoader({
             duration: prefersReducedMotion ? 0 : 0.4,
             delay: 0.1,
           }}
-          className="text-2xl lg:text-3xl font-bold text-white tracking-tight"
+          className="text-2xl lg:text-3xl font-bold text-text-primary tracking-tight"
         >
           POSTY
         </motion.h1>
@@ -128,16 +118,29 @@ export default function ConnectionLoader({
           className="w-full max-w-xs"
         >
           {/* Progress bar */}
-          <div className="h-1 bg-dark-border rounded-full overflow-hidden">
+          <div className="h-1.5 loader-track rounded-full overflow-hidden">
             <motion.div
-              className="h-full bg-gradient-to-r from-primary via-accent to-primary rounded-full"
+              className="h-full bg-gradient-to-r from-primary via-accent to-primary rounded-full relative overflow-hidden"
               initial={{ width: "0%" }}
               animate={{ width: `${progress}%` }}
               transition={{
                 duration: 0.4,
                 ease: [0.25, 0.1, 0.25, 1],
               }}
-            />
+            >
+              {/* Shimmer effect */}
+              {!prefersReducedMotion && (
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                  animate={{ x: ["-100%", "100%"] }}
+                  transition={{
+                    duration: 1.5,
+                    repeat: Infinity,
+                    ease: "linear",
+                  }}
+                />
+              )}
+            </motion.div>
           </div>
 
           {/* Message */}

@@ -11,6 +11,7 @@ interface StatusBadgeProps {
   className?: string;
 }
 
+// AUTOSCROLL COLORS - Badges renforcés avec palette complète
 const badgeConfig: Record<BadgeVariant, { icon: ReactNode; label: string; colors: string; glow: string }> = {
   vip: {
     icon: (
@@ -19,8 +20,9 @@ const badgeConfig: Record<BadgeVariant, { icon: ReactNode; label: string; colors
       </svg>
     ),
     label: "VIP",
-    colors: "from-amber-400 to-amber-600 text-amber-900",
-    glow: "shadow-[0_0_20px_rgba(245,158,11,0.4)]",
+    // JAUNE: Couleur autoscroll pour éléments premium
+    colors: "from-amber-400 via-amber-500 to-orange-500 text-white",
+    glow: "shadow-[0_0_24px_rgba(245,158,11,0.5)]",
   },
   verified: {
     icon: (
@@ -29,8 +31,9 @@ const badgeConfig: Record<BadgeVariant, { icon: ReactNode; label: string; colors
       </svg>
     ),
     label: "Verifie",
-    colors: "from-primary to-primary/80 text-white",
-    glow: "shadow-[0_0_16px_rgba(47,128,237,0.4)]",
+    // BLEU: Couleur autoscroll pour vérification/confiance
+    colors: "from-blue-500 via-blue-600 to-cyan-500 text-white",
+    glow: "shadow-[0_0_20px_rgba(59,130,246,0.5)]",
   },
   creator: {
     icon: (
@@ -40,8 +43,9 @@ const badgeConfig: Record<BadgeVariant, { icon: ReactNode; label: string; colors
       </svg>
     ),
     label: "Createur",
-    colors: "from-accent to-accent/80 text-white",
-    glow: "shadow-[0_0_16px_rgba(0,209,193,0.4)]",
+    // ROSE/ROUGE: Couleur autoscroll pour créativité
+    colors: "from-pink-500 via-rose-500 to-red-500 text-white",
+    glow: "shadow-[0_0_20px_rgba(244,63,94,0.5)]",
   },
   influencer: {
     icon: (
@@ -50,8 +54,9 @@ const badgeConfig: Record<BadgeVariant, { icon: ReactNode; label: string; colors
       </svg>
     ),
     label: "Influenceur",
-    colors: "from-purple-500 to-pink-500 text-white",
-    glow: "shadow-[0_0_16px_rgba(168,85,247,0.4)]",
+    // VIOLET: Couleur autoscroll pour influence/premium
+    colors: "from-violet-500 via-purple-500 to-fuchsia-500 text-white",
+    glow: "shadow-[0_0_24px_rgba(139,92,246,0.5)]",
   },
   pro: {
     icon: (
@@ -60,8 +65,9 @@ const badgeConfig: Record<BadgeVariant, { icon: ReactNode; label: string; colors
       </svg>
     ),
     label: "Pro",
-    colors: "from-primary to-accent text-white",
-    glow: "shadow-[0_0_20px_rgba(47,128,237,0.5)]",
+    // ORANGE SAUMON: Couleur dominante CTA principale
+    colors: "from-primary via-orange-500 to-accent text-white",
+    glow: "shadow-[0_0_24px_rgba(248,147,93,0.6)]",
   },
   free: {
     icon: (

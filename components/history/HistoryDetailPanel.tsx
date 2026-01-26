@@ -47,9 +47,9 @@ export default function HistoryDetailPanel({
             />
           </svg>
         </div>
-        <h3 className="text-xl font-semibold text-white mb-2">Selectionnez un post</h3>
+        <h3 className="text-xl font-semibold text-white mb-2">Sélectionnez un post</h3>
         <p className="text-text-muted text-center max-w-sm">
-          Choisissez un post dans la liste pour voir ses details et versions generees
+          Choisissez un post dans la liste pour voir ses détails et versions générées
         </p>
       </div>
     );
@@ -82,8 +82,8 @@ export default function HistoryDetailPanel({
               className={`
                 px-3 py-1 text-xs font-medium rounded-full
                 ${post.selectedVersion === "A"
-                  ? "bg-purple-500/20 text-purple-400"
-                  : "bg-blue-500/20 text-blue-400"
+                  ? "bg-accent/20 text-accent"
+                  : "bg-primary/20 text-primary"
                 }
               `}
             >

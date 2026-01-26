@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -66,7 +66,7 @@ export default function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
               className="absolute top-4 right-4 p-2 text-text-secondary hover:text-white transition-colors rounded-xl hover:bg-dark-hover"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 6L18 18M6 18L18 6" />
               </svg>
             </button>
 
@@ -86,14 +86,14 @@ export default function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
 
               {/* Usage info */}
               <p className="text-text-secondary text-center mb-6">
-                Vous avez utilise <span className="text-white font-medium">{messagesUsedToday}/{dailyLimit}</span> messages aujourd'hui.
+                Vous avez utilisé <span className="text-white font-medium">{messagesUsedToday}/{dailyLimit}</span> messages aujourd'hui.
                 <br />
-                Votre quota se reinitialise dans <span className="text-primary font-medium">{formatResetTime()}</span>.
+                Votre quota se réinitialise dans <span className="text-primary font-medium">{formatResetTime()}</span>.
               </p>
 
               {/* Upgrade benefits */}
               <div className="bg-dark-hover/50 rounded-xl p-4 mb-6">
-                <p className="text-sm font-medium text-white mb-3">Passez a Pro pour debloquer :</p>
+                <p className="text-sm font-medium text-white mb-3">Passez à Pro pour débloquer :</p>
                 <ul className="space-y-2">
                   {proPlan.features
                     .filter((f) => f.highlight)
@@ -118,7 +118,7 @@ export default function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
               {/* CTA buttons */}
               <div className="space-y-3">
                 <Button variant="primary" fullWidth onClick={handleUpgrade} className="shadow-glow">
-                  Passer a Pro
+                  Passer à Pro
                 </Button>
                 <Button variant="ghost" fullWidth onClick={onClose}>
                   Attendre demain
@@ -129,7 +129,7 @@ export default function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
             {/* Footer note */}
             <div className="px-6 py-4 bg-dark-hover/30 border-t border-dark-border">
               <p className="text-xs text-text-secondary text-center">
-                Annulation possible a tout moment. Satisfait ou rembourse 14 jours.
+                Annulation possible à tout moment. Satisfait ou remboursé 14 jours.
               </p>
             </div>
           </motion.div>

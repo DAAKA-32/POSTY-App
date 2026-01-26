@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface MenuItem {
@@ -18,6 +19,16 @@ interface DropdownMenuProps {
   className?: string;
 }
 
+interface MenuPosition {
+  top: number;
+  left: number;
+  transformOrigin: string;
+  placement: "bottom" | "top";
+}
+
+// Minimum delay (ms) before backdrop can close menu - prevents race condition
+const OPEN_PROTECTION_DELAY = 100;
+
 export default function DropdownMenu({
   items,
   trigger,
@@ -25,32 +36,67 @@ export default function DropdownMenu({
   className = "",
 }: DropdownMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [menuPosition, setMenuPosition] = useState<MenuPosition>({
+    top: 0,
+    left: 0,
+    transformOrigin: "top right",
+    placement: "bottom",
+  });
+  const [isMounted, setIsMounted] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
+  // Protection against immediate close after open (race condition fix)
+  const openTimestampRef = useRef<number>(0);
+  const isProtectedRef = useRef(false);
+
+  // Check if we're in browser for portal
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Safe close function that respects the protection delay
+  const safeClose = useCallback(() => {
+    const now = Date.now();
+    const timeSinceOpen = now - openTimestampRef.current;
+
+    // Don't close if we're still in the protection window
+    if (isProtectedRef.current && timeSinceOpen < OPEN_PROTECTION_DELAY) {
+      return;
+    }
+
+    isProtectedRef.current = false;
+    setIsOpen(false);
+  }, []);
+
   // Close menu when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      // Check if click was on trigger or menu
       if (
         menuRef.current &&
         !menuRef.current.contains(event.target as Node) &&
         triggerRef.current &&
         !triggerRef.current.contains(event.target as Node)
       ) {
-        setIsOpen(false);
+        safeClose();
       }
     };
 
     if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-      document.addEventListener("touchstart", handleClickOutside as unknown as EventListener);
-    }
+      // Delay adding listener to avoid capturing the opening click
+      const timer = setTimeout(() => {
+        document.addEventListener("mousedown", handleClickOutside);
+        document.addEventListener("touchstart", handleClickOutside as EventListener);
+      }, 10);
 
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("touchstart", handleClickOutside as unknown as EventListener);
-    };
-  }, [isOpen]);
+      return () => {
+        clearTimeout(timer);
+        document.removeEventListener("mousedown", handleClickOutside);
+        document.removeEventListener("touchstart", handleClickOutside as EventListener);
+      };
+    }
+  }, [isOpen, safeClose]);
 
   // Close menu on escape key
   useEffect(() => {
@@ -69,75 +115,216 @@ export default function DropdownMenu({
     };
   }, [isOpen]);
 
+  // Calculate menu position dynamically
+  const calculatePosition = useCallback(() => {
+    if (!triggerRef.current) return;
+
+    const buttonRect = triggerRef.current.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+    const menuWidth = 180;
+    const menuHeight = items.length * 48 + 16; // Approximate height
+    const padding = 12;
+
+    let top: number;
+    let left: number;
+    let transformOrigin: string;
+    let placement: "bottom" | "top";
+
+    // Calculate horizontal position based on position prop
+    if (position === "right") {
+      left = buttonRect.right - menuWidth;
+      transformOrigin = "top right";
+    } else {
+      left = buttonRect.left;
+      transformOrigin = "top left";
+    }
+
+    // Clamp horizontal position
+    if (left < padding) {
+      left = padding;
+      transformOrigin = transformOrigin.replace("right", "left");
+    }
+    if (left + menuWidth > viewportWidth - padding) {
+      left = viewportWidth - menuWidth - padding;
+      transformOrigin = transformOrigin.replace("left", "right");
+    }
+
+    // Calculate vertical position
+    const spaceBelow = viewportHeight - buttonRect.bottom;
+    const spaceAbove = buttonRect.top;
+
+    if (spaceBelow >= menuHeight + padding || spaceBelow >= spaceAbove) {
+      top = buttonRect.bottom + 4;
+      placement = "bottom";
+    } else {
+      top = buttonRect.top - menuHeight - 4;
+      placement = "top";
+      transformOrigin = transformOrigin.replace("top", "bottom");
+    }
+
+    // Clamp vertical position
+    if (top < padding) {
+      top = padding;
+    } else if (top + menuHeight > viewportHeight - padding) {
+      top = viewportHeight - menuHeight - padding;
+    }
+
+    setMenuPosition({ top, left, transformOrigin, placement });
+  }, [items.length, position]);
+
+  // Recalculate position on scroll or resize while open
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleUpdate = () => calculatePosition();
+
+    window.addEventListener("scroll", handleUpdate, true);
+    window.addEventListener("resize", handleUpdate);
+
+    return () => {
+      window.removeEventListener("scroll", handleUpdate, true);
+      window.removeEventListener("resize", handleUpdate);
+    };
+  }, [isOpen, calculatePosition]);
+
   const handleItemClick = useCallback((item: MenuItem) => {
     item.onClick();
+    isProtectedRef.current = false;
     setIsOpen(false);
   }, []);
 
   const toggleMenu = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    setIsOpen(!isOpen);
-  }, [isOpen]);
+
+    if (!isOpen) {
+      // Opening: set protection and timestamp
+      openTimestampRef.current = Date.now();
+      isProtectedRef.current = true;
+      calculatePosition();
+      setIsOpen(true);
+    } else {
+      // Closing via trigger button: bypass protection
+      isProtectedRef.current = false;
+      setIsOpen(false);
+    }
+  }, [isOpen, calculatePosition]);
+
+  // Render menu in portal
+  const renderMenu = () => {
+    if (!isMounted) return null;
+
+    return createPortal(
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            {/* Invisible backdrop for tap-to-close */}
+            <div
+              className="fixed inset-0 z-[9998]"
+              onClick={safeClose}
+              onTouchEnd={safeClose}
+              aria-hidden="true"
+            />
+
+            {/* Menu */}
+            <motion.div
+              ref={menuRef}
+              initial={{
+                opacity: 0,
+                scale: 0.95,
+                y: menuPosition.placement === "bottom" ? -8 : 8
+              }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{
+                opacity: 0,
+                scale: 0.95,
+                y: menuPosition.placement === "bottom" ? -8 : 8
+              }}
+              transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+              style={{
+                position: "fixed",
+                top: menuPosition.top,
+                left: menuPosition.left,
+                transformOrigin: menuPosition.transformOrigin,
+                zIndex: 9999,
+              }}
+              className="
+                min-w-[180px] py-2
+                bg-light-card dark:bg-dark-card border border-light-border dark:border-dark-border
+                rounded-xl shadow-2xl shadow-black/20 dark:shadow-black/40
+                backdrop-blur-xl
+              "
+              role="menu"
+              aria-orientation="vertical"
+            >
+              {items.map((item, index) => (
+                <button
+                  key={item.id}
+                  onClick={() => handleItemClick(item)}
+                  className={`
+                    w-full flex items-center gap-3 px-4 py-3 min-h-[44px] text-sm
+                    font-medium transition-all duration-150 ease-out
+                    transform-gpu
+                    ${
+                      item.variant === "danger"
+                        ? "text-error hover:text-error hover:bg-error/10 active:bg-error/15"
+                        : "text-text-secondary hover:bg-light-hover dark:hover:bg-dark-hover hover:text-text-primary hover:translate-x-0.5"
+                    }
+                    ${item.variant === "danger" && index > 0 ? "border-t border-light-border dark:border-dark-border mt-1" : ""}
+                    active:scale-[0.98] active:transition-none
+                    focus-visible:outline-none focus-visible:bg-primary/10
+                  `}
+                  role="menuitem"
+                >
+                  {item.icon && (
+                    <span className="w-5 h-5 flex items-center justify-center shrink-0 transition-transform duration-150 group-hover:scale-110">
+                      {item.icon}
+                    </span>
+                  )}
+                  <span>{item.label}</span>
+                </button>
+              ))}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>,
+      document.body
+    );
+  };
 
   return (
     <div className={`relative ${className}`}>
-      {/* Trigger button - min 44x44px for touch accessibility */}
+      {/* Trigger button - consistent with ConversationOptionsMenu */}
       <button
         ref={triggerRef}
         onClick={toggleMenu}
-        className="min-w-[44px] min-h-[44px] p-2.5 flex items-center justify-center text-text-muted hover:text-white hover:bg-dark-hover rounded-lg transition-all duration-200 haptic-feedback"
+        className={`
+          flex items-center justify-center
+          min-w-[44px] min-h-[44px] w-11 h-11 md:w-9 md:h-9 rounded-lg
+          transition-all duration-150 ease-out
+          transform-gpu
+          text-text-secondary hover:text-text-primary hover:bg-light-hover dark:hover:bg-dark-hover
+          active:scale-[0.92] active:transition-none
+          focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background
+          touch-manipulation
+          ${isOpen ? "bg-light-hover dark:bg-dark-hover text-text-primary scale-95" : ""}
+        `}
         aria-label="Options"
         aria-expanded={isOpen}
         aria-haspopup="menu"
       >
         {trigger || (
-          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <circle cx="5" cy="12" r="2" />
+            <circle cx="12" cy="12" r="2" />
+            <circle cx="19" cy="12" r="2" />
           </svg>
         )}
       </button>
 
-      {/* Dropdown Menu */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            ref={menuRef}
-            initial={{ opacity: 0, scale: 0.95, y: -8 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: -8 }}
-            transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            className={`
-              absolute z-50 mt-1 min-w-[160px] py-1.5
-              bg-dark-elevated border border-dark-border
-              rounded-lg shadow-elevated
-              ${position === "right" ? "right-0" : "left-0"}
-            `}
-            role="menu"
-            aria-orientation="vertical"
-          >
-            {items.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => handleItemClick(item)}
-                className={`
-                  w-full flex items-center gap-2.5 px-4 min-h-[44px] text-sm
-                  transition-colors duration-150
-                  ${
-                    item.variant === "danger"
-                      ? "text-error hover:bg-error/10 hover:text-error"
-                      : "text-text-secondary hover:bg-dark-hover hover:text-white"
-                  }
-                `}
-                role="menuitem"
-              >
-                {item.icon && <span className="w-4 h-4 flex-shrink-0">{item.icon}</span>}
-                <span className="font-medium">{item.label}</span>
-              </button>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Portal-rendered menu */}
+      {renderMenu()}
     </div>
   );
 }
@@ -180,18 +367,14 @@ export const MenuIcons = {
     </svg>
   ),
   pin: (
-    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-      <path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M16 4a1 1 0 0 1 1 1v3.586l1.707 1.707a1 1 0 0 1 .293.707v2a1 1 0 0 1-1 1h-4v6a1 1 0 0 1-2 0v-6H8a1 1 0 0 1-1-1v-2a1 1 0 0 1 .293-.707L9 8.586V5a1 1 0 0 1 1-1h6z"/>
     </svg>
   ),
   unpin: (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-      />
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+      <path d="M16 4a1 1 0 0 1 1 1v3.586l1.707 1.707a1 1 0 0 1 .293.707v2a1 1 0 0 1-1 1h-4v6a1 1 0 0 1-2 0v-6H8a1 1 0 0 1-1-1v-2a1 1 0 0 1 .293-.707L9 8.586V5a1 1 0 0 1 1-1h6z"/>
+      <path strokeLinecap="round" d="M4 4l16 16"/>
     </svg>
   ),
 };

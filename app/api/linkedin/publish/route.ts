@@ -38,11 +38,37 @@ export async function POST(request: NextRequest) {
 
     // 🔐 ÉTAPE 1: Récupération et validation des données
     const body = await request.json();
-    const { userId, content, postId } = body;
+    const { userId, content, postId, platforms, visibility = "PUBLIC" } = body;
+
+    // Validate visibility value
+    const validVisibilities = ["PUBLIC", "CONNECTIONS"];
+    const safeVisibility = validVisibilities.includes(visibility) ? visibility : "PUBLIC";
 
     if (!userId || !content) {
       return NextResponse.json(
         { error: "Missing required fields: userId, content" },
+        { status: 400 }
+      );
+    }
+
+    // 🛡️ Validation: au moins une plateforme doit être sélectionnée
+    if (platforms && Array.isArray(platforms) && platforms.length === 0) {
+      return NextResponse.json(
+        {
+          error: "no_platform_selected",
+          message: "Aucune plateforme sélectionnée. Veuillez sélectionner au moins un réseau pour publier.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // 🛡️ Validation: LinkedIn doit être dans les plateformes sélectionnées pour cette route
+    if (platforms && Array.isArray(platforms) && !platforms.includes("linkedin")) {
+      return NextResponse.json(
+        {
+          error: "linkedin_not_selected",
+          message: "Cette route est réservée à la publication LinkedIn.",
+        },
         { status: 400 }
       );
     }
@@ -75,6 +101,7 @@ export async function POST(request: NextRequest) {
 
     // 📝 ÉTAPE 4: Publication sur LinkedIn via Share API
     // Documentation: https://learn.microsoft.com/en-us/linkedin/consumer/integrations/self-serve/share-on-linkedin
+    // Visibility options: PUBLIC (visible by everyone) or CONNECTIONS (only connections)
     const shareResponse = await fetch(
       "https://api.linkedin.com/v2/ugcPosts",
       {
@@ -96,7 +123,7 @@ export async function POST(request: NextRequest) {
             },
           },
           visibility: {
-            "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC",
+            "com.linkedin.ugc.MemberNetworkVisibility": safeVisibility,
           },
         }),
       }

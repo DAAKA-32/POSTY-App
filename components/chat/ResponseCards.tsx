@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { MockResponse } from "@/types";
 import Button from "@/components/ui/Button";
-import toast from "react-hot-toast";
+import toast from "@/components/ui/Toast";
 
 interface ResponseCardsProps {
   responses: MockResponse[];
@@ -36,8 +36,8 @@ export default function ResponseCards({ responses }: ResponseCardsProps) {
               className={`
                 text-xs font-medium px-2 py-1 rounded-full
                 ${response.type === "storytelling"
-                  ? "bg-purple-500/20 text-purple-400"
-                  : "bg-blue-500/20 text-blue-400"
+                  ? "bg-accent/20 text-accent"
+                  : "bg-primary/20 text-primary"
                 }
               `}
             >

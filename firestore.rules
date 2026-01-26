@@ -2,40 +2,138 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper function to check if user owns the document by userId path
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Helper function to check if user owns the resource (for existing docs)
+    function isResourceOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.userId;
+    }
+
+    // Helper function to check if the request data has matching userId
+    function isRequestOwner() {
+      return isAuthenticated() && request.resource.data.userId == request.auth.uid;
+    }
+
+    // Helper function to check if user can schedule posts (Pro or Max plan)
+    // Supports both regular subscription AND test mode
+    function canSchedulePosts() {
+      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
+
+      // Check if user document exists
+      let hasUser = userDoc != null && userDoc.data != null;
+
+      // Check regular subscription plan
+      let hasRegularPlan = hasUser
+        && userDoc.data.subscription != null
+        && (userDoc.data.subscription.plan == 'pro' || userDoc.data.subscription.plan == 'max');
+
+      // Check test mode - if active with pro or max plan, allow scheduling
+      let hasTestModePlan = hasUser
+        && userDoc.data.testMode != null
+        && userDoc.data.testMode.active == true
+        && (userDoc.data.testMode.plan == 'pro' || userDoc.data.testMode.plan == 'max');
+
+      return hasRegularPlan || hasTestModePlan;
+    }
+
     // Users collection - only owner can read/write
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isOwner(userId);
     }
 
     // Posts collection - owner can read/write, any authenticated user can create
     match /posts/{postId} {
-      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
-      allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null;
+      // Allow list queries for authenticated users (queries filter by userId anyway)
+      allow list: if isAuthenticated();
+      // Allow read for single document if owner
+      allow get: if isResourceOwner();
+      allow update, delete: if isResourceOwner();
+      allow create: if isAuthenticated() && isRequestOwner();
     }
 
     // Sessions collection - for chat history
     match /sessions/{sessionId} {
-      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
-      allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null;
+      allow list: if isAuthenticated();
+      allow get: if isResourceOwner();
+      allow update, delete: if isResourceOwner();
+      allow create: if isAuthenticated() && isRequestOwner();
     }
 
     // Consents collection - RGPD consent management
     match /consents/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isOwner(userId);
     }
 
     // LinkedIn connections - OAuth tokens and profile data
     match /linkedinConnections/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isOwner(userId);
+    }
+
+    // Twitter connections - OAuth tokens and profile data
+    match /twitterConnections/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // Medium connections - integration tokens and profile data
+    match /mediumConnections/{userId} {
+      allow read, write: if isOwner(userId);
     }
 
     // LinkedIn posts history
     match /linkedinPosts/{postId} {
-      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
-      allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null;
+      allow list: if isAuthenticated();
+      allow get: if isResourceOwner();
+      allow update, delete: if isResourceOwner();
+      allow create: if isAuthenticated() && isRequestOwner();
+    }
+
+    // Twitter posts history
+    match /twitterPosts/{postId} {
+      allow list: if isAuthenticated();
+      allow get: if isResourceOwner();
+      allow update, delete: if isResourceOwner();
+      allow create: if isAuthenticated() && isRequestOwner();
+    }
+
+    // Medium posts history
+    match /mediumPosts/{postId} {
+      allow list: if isAuthenticated();
+      allow get: if isResourceOwner();
+      allow update, delete: if isResourceOwner();
+      allow create: if isAuthenticated() && isRequestOwner();
+    }
+
+    // Scheduled posts collection - Pro/Max plans only for create
+    match /scheduledPosts/{postId} {
+      // Allow list queries for authenticated users
+      allow list: if isAuthenticated();
+
+      // Allow get if user owns the scheduled post
+      allow get: if isResourceOwner();
+
+      // Allow update and delete if user owns the scheduled post
+      allow update, delete: if isResourceOwner();
+
+      // Allow create only if authenticated, owns the data, and has Pro/Max plan
+      allow create: if isAuthenticated()
+        && isRequestOwner()
+        && canSchedulePosts();
+    }
+
+    // Payments collection - read only for owner
+    match /payments/{paymentId} {
+      allow list: if isAuthenticated();
+      allow get: if isResourceOwner();
+      allow create: if false; // Only server can create
+      allow update, delete: if false; // Read-only
     }
 
     // Default deny all other access

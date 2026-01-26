@@ -36,8 +36,9 @@ export default function ProfileSection({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -2 }}
       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-      className="bg-dark-card border border-dark-border rounded-2xl overflow-hidden"
+      className="group bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border hover:border-orange-200 dark:hover:border-primary/20 rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-md dark:hover:shadow-[0_0_30px_rgba(232,147,77,0.08)]"
     >
       {/* Header */}
       <button
@@ -45,21 +46,21 @@ export default function ProfileSection({
         disabled={!collapsible}
         className={`
           w-full flex items-center justify-between p-4 lg:p-5
-          ${collapsible ? "hover:bg-dark-hover cursor-pointer" : "cursor-default"}
+          ${collapsible ? "hover:bg-gray-50 dark:hover:bg-dark-hover cursor-pointer" : "cursor-default"}
           transition-colors duration-200
         `}
       >
         <div className="flex items-center gap-3">
-          {/* Icon */}
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconColor}`}>
+          {/* Icon with premium gradient */}
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconColor} border border-orange-200 dark:border-primary/10 group-hover:shadow-glow transition-shadow duration-300`}>
             {icon}
           </div>
 
           {/* Title & subtitle */}
           <div className="text-left">
-            <h3 className="font-semibold text-white">{title}</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-text-primary">{title}</h3>
             {subtitle && (
-              <p className="text-sm text-text-muted">{subtitle}</p>
+              <p className="text-sm text-gray-500 dark:text-text-muted">{subtitle}</p>
             )}
           </div>
         </div>
@@ -77,7 +78,7 @@ export default function ProfileSection({
             <motion.svg
               animate={{ rotate: isOpen ? 180 : 0 }}
               transition={{ duration: 0.2 }}
-              className="w-5 h-5 text-text-muted"
+              className="w-5 h-5 text-gray-400 dark:text-text-muted"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"

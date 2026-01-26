@@ -5,6 +5,7 @@ import {
   useContext,
   useEffect,
   useState,
+  useCallback,
   ReactNode,
 } from "react";
 import {
@@ -20,18 +21,80 @@ import {
   deleteUser,
   GoogleAuthProvider,
   reauthenticateWithPopup,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 import { auth, googleProvider } from "@/lib/firebase";
 import { createUserProfile, getUserProfile, deleteAllUserData } from "@/lib/firestore";
 import { AuthContextType, UserProfile } from "@/types";
-import toast from "react-hot-toast";
+import toast from "@/components/ui/Toast";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// LocalStorage key for onboarding persistence (survives page refresh)
+const ONBOARDING_STORAGE_KEY = "posty_should_show_onboarding";
+const THEME_STORAGE_KEY = "posty-theme";
+
+/**
+ * Reset theme to light mode for public pages after logout/account deletion.
+ * This ensures a consistent, professional experience for logged-out users.
+ */
+const resetThemeToLight = () => {
+  if (typeof window === "undefined") return;
+
+  localStorage.setItem(THEME_STORAGE_KEY, "light");
+
+  const root = document.documentElement;
+  root.classList.remove("dark");
+  root.classList.add("light");
+  root.style.colorScheme = "light";
+  root.setAttribute("data-theme", "light");
+};
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  // Flag to track if user just signed up (NOT on login) - used for onboarding
+  const [isNewUser, setIsNewUser] = useState(false);
+
+  // Check localStorage for shouldShowOnboarding (persistent across refresh)
+  const getShouldShowOnboarding = useCallback((): boolean => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem(ONBOARDING_STORAGE_KEY) === "true";
+  }, []);
+
+  // Set shouldShowOnboarding in localStorage
+  const setShouldShowOnboarding = useCallback((value: boolean): void => {
+    if (typeof window === "undefined") return;
+    if (value) {
+      localStorage.setItem(ONBOARDING_STORAGE_KEY, "true");
+    } else {
+      localStorage.removeItem(ONBOARDING_STORAGE_KEY);
+    }
+  }, []);
+
+  // Clear the onboarding flag (call after onboarding is complete)
+  const clearOnboardingFlag = useCallback((): void => {
+    setIsNewUser(false);
+    setShouldShowOnboarding(false);
+  }, [setShouldShowOnboarding]);
+
+  // Check if user needs to see onboarding
+  // This combines in-memory flag AND localStorage for robustness
+  const needsOnboarding = useCallback((): boolean => {
+    // Check in-memory flag first (for current session)
+    if (isNewUser) return true;
+    // Check localStorage (for page refresh during signup flow)
+    if (getShouldShowOnboarding()) return true;
+    return false;
+  }, [isNewUser, getShouldShowOnboarding]);
+
+  // Initialize isNewUser from localStorage on mount (for page refresh during signup)
+  useEffect(() => {
+    if (getShouldShowOnboarding()) {
+      setIsNewUser(true);
+    }
+  }, [getShouldShowOnboarding]);
 
   // Listen to auth state changes
   useEffect(() => {
@@ -42,15 +105,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Fetch user profile from Firestore
         const profile = await getUserProfile(firebaseUser.uid);
         setUserProfile(profile);
+
+        // If user has completed onboarding, clear any stale localStorage flags
+        if (profile?.onboardingComplete) {
+          setShouldShowOnboarding(false);
+          setIsNewUser(false);
+        }
       } else {
         setUserProfile(null);
+        // Clear onboarding flags when user logs out
+        setShouldShowOnboarding(false);
+        setIsNewUser(false);
       }
 
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [setShouldShowOnboarding]);
 
   // Refresh user profile
   const refreshUserProfile = async () => {
@@ -69,21 +141,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Check if user profile exists, if not create one
       const existingProfile = await getUserProfile(googleUser.uid);
       if (!existingProfile) {
+        // This is a NEW user - set flag for onboarding
         try {
           await createUserProfile(googleUser.uid, {
             email: googleUser.email || "",
             displayName: googleUser.displayName || "",
             photoURL: googleUser.photoURL,
           });
+          // Mark as new user for onboarding (signup via Google)
+          // Set BOTH in-memory AND localStorage for robustness
+          setIsNewUser(true);
+          setShouldShowOnboarding(true);
         } catch (profileError) {
           // Log but don't fail - profile will be created during onboarding
           console.warn("Profile creation deferred to onboarding:", profileError);
+          // Still mark as new user since no profile exists
+          setIsNewUser(true);
+          setShouldShowOnboarding(true);
         }
+        toast.success("Compte créé avec succès !");
+      } else {
+        // Existing user - this is a LOGIN, not signup
+        // isNewUser stays false (never show onboarding on login)
+        // Clear any stale localStorage flags
+        setShouldShowOnboarding(false);
+        toast.success("Connexion réussie !");
       }
 
       // Refresh profile after sign in
       await refreshUserProfile();
-      toast.success("Connexion réussie !");
     } catch (error) {
       console.error("Google sign-in error:", error);
       toast.error("Erreur lors de la connexion Google");
@@ -95,6 +181,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signInWithEmail = async (email: string, password: string) => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      // Clear any stale localStorage flags on login
+      setShouldShowOnboarding(false);
       toast.success("Connexion réussie !");
     } catch (error: unknown) {
       console.error("Email sign-in error:", error);
@@ -146,6 +234,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         photoURL: null,
       });
 
+      // Mark as new user for onboarding (signup via email)
+      // Set BOTH in-memory AND localStorage for robustness
+      setIsNewUser(true);
+      setShouldShowOnboarding(true);
+
       toast.success("Compte créé avec succès !");
     } catch (error: unknown) {
       console.error("Email sign-up error:", error);
@@ -180,12 +273,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await firebaseSignOut(auth);
       setUserProfile(null);
-      toast.success("Déconnexion réussie");
+      setIsNewUser(false);
+      setShouldShowOnboarding(false);
+
+      // Reset theme to light mode for public pages
+      resetThemeToLight();
     } catch (error) {
       console.error("Sign-out error:", error);
-      toast.error("Erreur lors de la déconnexion");
       throw error;
     }
+  };
+
+  // Legacy function - kept for backward compatibility
+  const clearNewUserFlag = () => {
+    clearOnboardingFlag();
   };
 
   // Delete user account with password verification
@@ -223,6 +324,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Clear local state
       setUser(null);
       setUserProfile(null);
+      setShouldShowOnboarding(false);
+
+      // Reset theme to light mode for public pages
+      resetThemeToLight();
     } catch (error: unknown) {
       console.error("Delete account error:", error);
 
@@ -242,16 +347,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Send password reset email
+  const resetPassword = async (email: string): Promise<void> => {
+    try {
+      await sendPasswordResetEmail(auth, email, {
+        url: `${window.location.origin}/login`, // Redirect to login after reset
+      });
+      toast.success("Email de réinitialisation envoyé !");
+    } catch (error: unknown) {
+      console.error("Password reset error:", error);
+      const firebaseError = error as { code?: string };
+
+      if (firebaseError.code === "auth/user-not-found") {
+        throw new Error("Aucun compte associé à cet email");
+      } else if (firebaseError.code === "auth/invalid-email") {
+        throw new Error("Adresse email invalide");
+      } else if (firebaseError.code === "auth/too-many-requests") {
+        throw new Error("Trop de tentatives. Réessayez plus tard.");
+      }
+
+      throw new Error("Erreur lors de l'envoi de l'email");
+    }
+  };
+
   const value: AuthContextType = {
     user,
     userProfile,
     loading,
+    isNewUser,
     signInWithGoogle,
     signInWithEmail,
     signUpWithEmail,
     signOut,
     refreshUserProfile,
     deleteUserAccount,
+    clearNewUserFlag,
+    resetPassword,
+    // New functions for robust onboarding
+    needsOnboarding,
+    clearOnboardingFlag,
   };
 
   return (

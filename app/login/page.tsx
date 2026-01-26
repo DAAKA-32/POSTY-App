@@ -1,30 +1,366 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { motion, useReducedMotion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { usePreventPullToRefresh } from "@/hooks/usePreventPullToRefresh";
+import AuthPanel from "@/components/auth/AuthPanel";
 import ConnectionLoader from "@/components/shared/ConnectionLoader";
 
-// Redirect to main page which now handles authentication
-export default function LoginPage() {
-  const { user, userProfile, loading } = useAuth();
-  const router = useRouter();
+// Premium animation easings - inspired by Linear, Notion
+const smoothEase = [0.25, 0.1, 0.25, 1] as const;
 
+// Animation variants for staggered effects
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20, filter: "blur(8px)" },
+  visible: {
+    opacity: 1,
+    y: 0,
+    filter: "blur(0px)",
+    transition: {
+      duration: 0.6,
+      ease: smoothEase,
+    },
+  },
+};
+
+const logoVariants = {
+  hidden: { opacity: 0, scale: 0.8, filter: "blur(10px)" },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    filter: "blur(0px)",
+    transition: {
+      duration: 0.7,
+      ease: smoothEase,
+    },
+  },
+};
+
+const slideInRight = {
+  hidden: { opacity: 0, x: 60, filter: "blur(10px)" },
+  visible: {
+    opacity: 1,
+    x: 0,
+    filter: "blur(0px)",
+    transition: {
+      duration: 0.7,
+      ease: smoothEase,
+    },
+  },
+};
+
+export default function LoginPage() {
+  const { user, userProfile, loading, needsOnboarding } = useAuth();
+  const { t } = useLanguage();
+  const router = useRouter();
+  const [redirecting, setRedirecting] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
+
+  // Prevent pull-to-refresh and bounce on mobile
+  usePreventPullToRefresh(!loading && !user);
+
+  // Force light mode on login page
   useEffect(() => {
-    if (!loading) {
-      if (user) {
-        // Authenticated: redirect to app or onboarding
-        if (!userProfile?.onboardingComplete) {
-          router.replace("/onboarding");
-        } else {
-          router.replace("/app");
-        }
+    const root = document.documentElement;
+    root.classList.remove("dark");
+    root.classList.add("light");
+    root.style.colorScheme = "light";
+    root.setAttribute("data-theme", "light");
+  }, []);
+
+  // Redirect authenticated users based on onboarding status
+  // - New users (signup) → /onboarding
+  // - Existing users (login) → /app
+  useEffect(() => {
+    if (!loading && user) {
+      setRedirecting(true);
+
+      // Check if user needs onboarding (new signup or first Google login)
+      // This uses both in-memory flag AND localStorage for robustness
+      if (needsOnboarding() && !userProfile?.onboardingComplete) {
+        router.push("/onboarding");
       } else {
-        // Not authenticated: redirect to main page with auth panel
-        router.replace("/");
+        router.push("/app");
       }
     }
-  }, [user, userProfile, loading, router]);
+  }, [user, userProfile, loading, router, needsOnboarding]);
 
-  return <ConnectionLoader message="Redirection..." />;
+  // CRITICAL: Block ALL rendering while auth state is loading
+  // This prevents any flash of the login page for authenticated users
+  // The user sees nothing until we know their auth state
+  if (loading) {
+    return null; // Invisible - no flash, no loader, just blank
+  }
+
+  // If user is authenticated, show minimal loader during redirect
+  // This state is very brief as router.push happens immediately
+  if (redirecting || user) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-warm-orange/30 border-t-warm-orange rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // Only render the login page if user is definitely NOT authenticated
+  return (
+    <div className="h-[100dvh] bg-white overflow-hidden touch-fixed">
+      {/* Premium AUTOSCROLL Background Effects - Couleurs dynamiques */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        {/* ORANGE DOMINANT - top left */}
+        <motion.div
+          initial={{ opacity: 0.1, scale: 1 }}
+          animate={prefersReducedMotion ? {} : {
+            opacity: [0.1, 0.18, 0.1],
+            scale: [1, 1.1, 1],
+          }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-0 -left-1/4 w-[60%] h-[50%] bg-gradient-to-br from-orange-500/20 to-amber-500/15 rounded-full blur-[100px]"
+        />
+        {/* ROSE/PINK accent - top right */}
+        <motion.div
+          initial={{ opacity: 0.08, scale: 1 }}
+          animate={prefersReducedMotion ? {} : {
+            opacity: [0.08, 0.15, 0.08],
+            scale: [1, 1.12, 1],
+          }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+          className="absolute top-1/4 -right-1/4 w-[45%] h-[45%] bg-gradient-to-br from-pink-500/10 to-rose-500/8 rounded-full blur-[120px]"
+        />
+        {/* VIOLET premium - center */}
+        <motion.div
+          initial={{ opacity: 0.06, scale: 1 }}
+          animate={prefersReducedMotion ? {} : {
+            opacity: [0.06, 0.12, 0.06],
+            scale: [1, 1.08, 1],
+          }}
+          transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[50%] h-[50%] bg-gradient-to-br from-violet-500/8 to-purple-500/6 rounded-full blur-[100px]"
+        />
+        {/* VERT success - bottom left */}
+        <motion.div
+          initial={{ opacity: 0.07, scale: 1 }}
+          animate={prefersReducedMotion ? {} : {
+            opacity: [0.07, 0.13, 0.07],
+            scale: [1, 1.1, 1],
+          }}
+          transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 3 }}
+          className="absolute bottom-0 -left-1/4 w-[40%] h-[40%] bg-gradient-to-br from-emerald-500/10 to-green-500/8 rounded-full blur-[90px]"
+        />
+        {/* BLEU confiance - bottom right */}
+        <motion.div
+          initial={{ opacity: 0.08, scale: 1 }}
+          animate={prefersReducedMotion ? {} : {
+            opacity: [0.08, 0.14, 0.08],
+            scale: [1, 1.09, 1],
+          }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 4 }}
+          className="absolute bottom-0 -right-1/4 w-[45%] h-[45%] bg-gradient-to-br from-blue-500/9 to-cyan-500/7 rounded-full blur-[110px]"
+        />
+        {/* Grid pattern overlay */}
+        <div
+          className="absolute inset-0 opacity-[0.02]"
+          style={{
+            backgroundImage: `linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)`,
+            backgroundSize: '60px 60px',
+          }}
+        />
+      </div>
+
+      {/* Mobile Layout - No scroll, single viewport */}
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+        className="md:hidden relative z-10 h-full flex flex-col px-4 pt-safe pb-safe"
+      >
+        {/* Mobile Header - Back */}
+        <motion.div variants={itemVariants} className="flex items-center py-2 shrink-0">
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-gray-500 hover:text-warm-orange transition-colors duration-200 text-sm"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Retour
+          </Link>
+        </motion.div>
+
+        {/* Main content - centered vertically */}
+        <motion.div
+          variants={itemVariants}
+          className="flex-1 flex items-center justify-center min-h-0"
+        >
+          <AuthPanel onSuccess={() => {}} />
+        </motion.div>
+
+        {/* Footer links - Fixed at bottom */}
+        <motion.div
+          variants={itemVariants}
+          className="py-2 flex flex-wrap justify-center gap-4 text-xs text-text-muted shrink-0"
+        >
+          <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="hover:text-warm-orange transition-colors">{t.common.privacy}</a>
+          <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="hover:text-warm-orange transition-colors">{t.common.terms}</a>
+          <a href="/legal/notices" target="_blank" rel="noopener noreferrer" className="hover:text-warm-orange transition-colors">{t.common.legalNotices}</a>
+        </motion.div>
+      </motion.div>
+
+      {/* Desktop Layout */}
+      <div className="hidden md:flex h-screen relative z-10">
+        {/* Left: Premium Branding Area - Light gray background */}
+        <div className="w-1/2 h-screen bg-gray-50 flex flex-col items-center justify-center relative overflow-hidden">
+          {/* Additional warm accent for left panel - animated */}
+          <div className="absolute inset-0 pointer-events-none">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 1, ease: smoothEase }}
+              className="absolute top-1/4 left-1/4 w-[300px] h-[300px] bg-warm-orange/10 rounded-full blur-[80px]"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 1, delay: 0.2, ease: smoothEase }}
+              className="absolute bottom-1/4 right-1/4 w-[250px] h-[250px] bg-warm-coral/10 rounded-full blur-[60px]"
+            />
+          </div>
+
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={containerVariants}
+            className="flex flex-col items-center gap-6 relative z-10"
+          >
+            {/* Logo with warm glow */}
+            <motion.div
+              variants={logoVariants}
+              whileHover={{ scale: 1.05, rotate: 3 }}
+              transition={{ type: "spring", stiffness: 300 }}
+              className="relative"
+            >
+              <div className="w-24 h-24 lg:w-32 lg:h-32 rounded-2xl overflow-hidden flex items-center justify-center shadow-lg">
+                <img
+                  src="/logo.jpg"
+                  alt="Posty Logo"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+              {/* Warm glow effect */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.8, delay: 0.3, ease: smoothEase }}
+                className="absolute -inset-4 bg-gradient-to-br from-warm-orange/30 to-warm-coral/30 rounded-3xl blur-2xl -z-10"
+              />
+            </motion.div>
+
+            {/* Brand name */}
+            <motion.span
+              variants={itemVariants}
+              className="font-semibold text-gray-900 text-3xl lg:text-4xl tracking-tight"
+            >
+              Posty
+            </motion.span>
+
+            {/* Tagline */}
+            <motion.p
+              variants={itemVariants}
+              className="text-gray-600 text-center text-sm lg:text-base max-w-xs"
+            >
+              Créez du contenu LinkedIn qui convertit, en quelques secondes
+            </motion.p>
+
+            {/* Trust badges */}
+            <motion.div
+              variants={itemVariants}
+              className="flex items-center gap-6 mt-4"
+            >
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                className="flex items-center gap-2 text-gray-500"
+              >
+                <svg className="w-4 h-4 text-warm-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                <span className="text-xs">SSL Sécurisé</span>
+              </motion.div>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                className="flex items-center gap-2 text-gray-500"
+              >
+                <svg className="w-4 h-4 text-warm-coral" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span className="text-xs">Rapide</span>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+
+          {/* Back to home link */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.5, duration: 0.5, ease: smoothEase }}
+            className="absolute top-6 left-6"
+          >
+            <Link
+              href="/"
+              className="flex items-center gap-2 text-gray-500 hover:text-warm-orange transition-colors duration-200 text-sm group"
+            >
+              <svg className="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Retour
+            </Link>
+          </motion.div>
+        </div>
+
+        {/* Right: Auth Panel */}
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={slideInRight}
+          className="w-1/2 h-screen flex flex-col items-center justify-center p-6 lg:p-10 xl:p-14 bg-white overflow-y-auto overflow-x-hidden overscroll-contain relative"
+        >
+          <motion.div
+            initial={{ opacity: 0, y: 30, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.6, delay: 0.2, ease: smoothEase }}
+          >
+            <AuthPanel onSuccess={() => {}} />
+          </motion.div>
+
+          {/* Footer links */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.6, ease: smoothEase }}
+            className="absolute bottom-6 left-1/2 -translate-x-1/2"
+          >
+            <div className="flex gap-4 text-xs text-text-muted">
+              <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="hover:text-warm-orange transition-colors duration-200">{t.common.privacy}</a>
+              <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="hover:text-warm-orange transition-colors duration-200">{t.common.terms}</a>
+              <a href="/legal/notices" target="_blank" rel="noopener noreferrer" className="hover:text-warm-orange transition-colors duration-200">{t.common.legalNotices}</a>
+            </div>
+          </motion.div>
+        </motion.div>
+      </div>
+    </div>
+  );
 }

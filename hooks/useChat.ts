@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
-import { savePost } from "@/lib/firestore";
-import { MockResponse } from "@/types";
+import { savePost, addMessagesToConversation, getConversationHistory } from "@/lib/firestore";
+import { MockResponse, PostInsights, ConversationTurn } from "@/types";
 
 const GUEST_GENERATION_LIMIT = 2;
 const GUEST_STORAGE_KEY = "posty_guest_generations";
@@ -26,7 +26,14 @@ interface StreamingContent {
 interface UseChatOptions {
   userId?: string;
   isGuest?: boolean;
+  /** Current conversation ID - when set, follow-ups continue in same conversation */
   conversationId?: string;
+  /** @deprecated Use selectedStyle instead */
+  dualMode?: boolean;
+  /** @deprecated Use selectedStyle instead */
+  responseType?: "storytelling" | "business";
+  /** Style selection for PRO users (ignored for FREE/MAX) */
+  selectedStyle?: "storytelling" | "business";
 }
 
 interface UseChatReturn {
@@ -40,12 +47,23 @@ interface UseChatReturn {
   canGenerate: boolean;
   generate: (prompt: string) => Promise<void>;
   reset: () => void;
-  loadConversation: (post: { prompt: string; responseA: string; responseB: string; id: string }) => void;
+  loadConversation: (post: { prompt: string; responseA: string; responseB: string; id: string; messages?: ConversationTurn[] }) => void;
   lastPrompt: string;
   postId: string | null;
+  /** AI-generated insights about the post (all plans) */
+  insights: PostInsights | null;
+  /** True when continuing an existing conversation */
+  isFollowUp: boolean;
 }
 
-export function useChat({ userId, isGuest = false }: UseChatOptions): UseChatReturn {
+export function useChat({
+  userId,
+  isGuest = false,
+  conversationId: initialConversationId,
+  dualMode = false,
+  responseType = "business",
+  selectedStyle = "business",
+}: UseChatOptions): UseChatReturn {
   const [responses, setResponses] = useState<MockResponse[]>([]);
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -56,7 +74,11 @@ export function useChat({ userId, isGuest = false }: UseChatOptions): UseChatRet
   });
   const [error, setError] = useState<string | null>(null);
   const [lastPrompt, setLastPrompt] = useState("");
-  const [postId, setPostId] = useState<string | null>(null);
+  const [postId, setPostId] = useState<string | null>(initialConversationId || null);
+  const [insights, setInsights] = useState<PostInsights | null>(null);
+
+  // Use selectedStyle, fallback to responseType for backwards compatibility
+  const effectiveStyle = selectedStyle || responseType;
 
   // Abort controller for canceling streams
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -78,6 +100,9 @@ export function useChat({ userId, isGuest = false }: UseChatOptions): UseChatRet
   // Check if user can generate (based on guest limit)
   const generationCount = getGuestCount();
   const canGenerate = !isGuest || generationCount < GUEST_GENERATION_LIMIT;
+
+  // Check if this is a follow-up in existing conversation
+  const isFollowUp = postId !== null && messages.length > 0;
 
   // Generate responses with streaming
   const generate = useCallback(
@@ -102,8 +127,11 @@ export function useChat({ userId, isGuest = false }: UseChatOptions): UseChatRet
       setIsStreaming(false);
       setError(null);
       setLastPrompt(prompt);
-      setPostId(null);
       setStreamingContent({ storytelling: "", business: "" });
+
+      // Determine if this is a follow-up message in existing conversation
+      const currentPostId = postId;
+      const isExistingConversation = currentPostId !== null && messages.length > 0;
 
       // Add user message to conversation
       const userMessage: ConversationMessage = {
@@ -122,15 +150,48 @@ export function useChat({ userId, isGuest = false }: UseChatOptions): UseChatRet
       };
 
       try {
+        // Get conversation history if continuing existing conversation
+        let conversationHistory: Array<{ role: "user" | "assistant"; content: string }> | undefined;
+        if (isExistingConversation && currentPostId) {
+          const history = await getConversationHistory(currentPostId);
+          if (history) {
+            conversationHistory = history.messages;
+          }
+        }
+
         const response = await fetch("/api/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt }),
+          body: JSON.stringify({
+            userId: userId || "guest",
+            prompt,
+            dualMode,
+            responseType: effectiveStyle,
+            selectedStyle: effectiveStyle,
+            // NEW: Send conversation context for follow-ups
+            conversationId: currentPostId,
+            conversationHistory,
+          }),
           signal: abortControllerRef.current.signal,
         });
 
         if (!response.ok) {
-          throw new Error("Generation failed");
+          const errorData = await response.json().catch(() => ({}));
+          if (errorData.error === "quota_exceeded") {
+            // Professional limit handling: Create an AI system message instead of throwing
+            const limitMessage: ConversationMessage = {
+              id: `ai-limit-${Date.now()}`,
+              type: "ai",
+              content: "Limite atteinte pour aujourd'hui. Revenez demain pour continuer ✨",
+              timestamp: new Date(),
+              isStreaming: false,
+            };
+            setMessages((prev) => [...prev, limitMessage]);
+            setIsLoading(false);
+            setIsStreaming(false);
+            return; // Exit gracefully without error
+          }
+          throw new Error(errorData.error || "Generation failed");
         }
 
         const reader = response.body?.getReader();
@@ -152,7 +213,7 @@ export function useChat({ userId, isGuest = false }: UseChatOptions): UseChatRet
 
           // Parse SSE events from buffer
           const lines = buffer.split("\n");
-          buffer = lines.pop() || ""; // Keep incomplete line in buffer
+          buffer = lines.pop() || "";
 
           for (let i = 0; i < lines.length; i++) {
             const line = lines[i].trim();
@@ -162,11 +223,16 @@ export function useChat({ userId, isGuest = false }: UseChatOptions): UseChatRet
               const dataLine = lines[i + 1];
 
               if (dataLine && dataLine.startsWith("data:")) {
-                const data = JSON.parse(dataLine.slice(5).trim());
+                let data;
+                try {
+                  data = JSON.parse(dataLine.slice(5).trim());
+                } catch (parseError) {
+                  console.error("Failed to parse SSE data:", parseError, dataLine);
+                  continue;
+                }
 
                 switch (eventType) {
                   case "start": {
-                    // Add empty streaming message
                     const newMessage: ConversationMessage = {
                       id: messageIds[data.type as keyof typeof messageIds],
                       type: "ai",
@@ -183,13 +249,11 @@ export function useChat({ userId, isGuest = false }: UseChatOptions): UseChatRet
                     const type = data.type as "storytelling" | "business";
                     accumulatedContent[type] += data.content;
 
-                    // Update streaming content state
                     setStreamingContent((prev) => ({
                       ...prev,
                       [type]: accumulatedContent[type],
                     }));
 
-                    // Update message content
                     setMessages((prev) =>
                       prev.map((msg) =>
                         msg.id === messageIds[type]
@@ -202,7 +266,6 @@ export function useChat({ userId, isGuest = false }: UseChatOptions): UseChatRet
 
                   case "done": {
                     const type = data.type as "storytelling" | "business";
-                    // Mark message as no longer streaming
                     setMessages((prev) =>
                       prev.map((msg) =>
                         msg.id === messageIds[type]
@@ -213,41 +276,97 @@ export function useChat({ userId, isGuest = false }: UseChatOptions): UseChatRet
                     break;
                   }
 
+                  case "insights": {
+                    if (data.insights) {
+                      setInsights(data.insights);
+                    }
+                    break;
+                  }
+
                   case "complete": {
-                    // All responses done - finalize
                     setIsStreaming(false);
 
-                    // Set final responses
-                    setResponses([
-                      {
-                        title: "Version Storytelling",
-                        content: accumulatedContent.storytelling,
-                        type: "storytelling",
-                      },
-                      {
-                        title: "Version Business",
-                        content: accumulatedContent.business,
-                        type: "business",
-                      },
-                    ]);
+                    if (data.quota) {
+                      console.log("Quota updated:", data.quota);
+                    }
 
-                    // Increment guest count if applicable
+                    // Set final responses based on mode
+                    if (dualMode) {
+                      setResponses([
+                        {
+                          title: "Version Storytelling",
+                          content: accumulatedContent.storytelling,
+                          type: "storytelling",
+                        },
+                        {
+                          title: "Version Business",
+                          content: accumulatedContent.business,
+                          type: "business",
+                        },
+                      ]);
+                    } else {
+                      setResponses([
+                        {
+                          title: responseType === "storytelling"
+                            ? "Version Storytelling"
+                            : "Version Business",
+                          content: accumulatedContent[responseType],
+                          type: responseType,
+                        },
+                      ]);
+                    }
+
                     if (isGuest) {
                       incrementGuestCount();
                     }
 
-                    // Save to Firestore if user is logged in
+                    // CRITICAL: Save to Firestore based on conversation state
                     if (userId && !isGuest) {
                       try {
-                        const newPostId = await savePost(
-                          userId,
-                          prompt,
-                          accumulatedContent.storytelling,
-                          accumulatedContent.business
-                        );
-                        setPostId(newPostId);
+                        if (isExistingConversation && currentPostId) {
+                          // FOLLOW-UP: Add messages to existing conversation
+                          const newMessages: ConversationTurn[] = [
+                            {
+                              id: userMessage.id,
+                              role: "user",
+                              content: prompt,
+                              timestamp: userMessage.timestamp,
+                            },
+                            {
+                              id: messageIds.business,
+                              role: "assistant",
+                              content: dualMode ? accumulatedContent.storytelling : accumulatedContent[responseType],
+                              variant: dualMode ? "storytelling" : responseType,
+                              timestamp: new Date(),
+                            },
+                          ];
+
+                          // Add business response if dual mode
+                          if (dualMode && accumulatedContent.business) {
+                            newMessages.push({
+                              id: messageIds.storytelling,
+                              role: "assistant",
+                              content: accumulatedContent.business,
+                              variant: "business",
+                              timestamp: new Date(),
+                            });
+                          }
+
+                          await addMessagesToConversation(currentPostId, newMessages);
+                          // Keep the same postId - no new conversation created
+                        } else {
+                          // NEW CONVERSATION: Create new post
+                          const newPostId = await savePost(
+                            userId,
+                            prompt,
+                            dualMode ? accumulatedContent.storytelling : accumulatedContent[responseType],
+                            dualMode ? accumulatedContent.business : ""
+                          );
+                          setPostId(newPostId);
+                        }
                       } catch (saveError) {
-                        console.error("Failed to save post:", saveError);
+                        console.error("Failed to save:", saveError);
+                        setError("Post généré mais non sauvegardé. Vérifiez votre connexion.");
                       }
                     }
                     break;
@@ -258,14 +377,13 @@ export function useChat({ userId, isGuest = false }: UseChatOptions): UseChatRet
                   }
                 }
 
-                i++; // Skip the data line we just processed
+                i++;
               }
             }
           }
         }
       } catch (err) {
         if (err instanceof Error && err.name === "AbortError") {
-          // Request was cancelled, ignore
           return;
         }
         console.error("Generation error:", err);
@@ -276,12 +394,11 @@ export function useChat({ userId, isGuest = false }: UseChatOptions): UseChatRet
         abortControllerRef.current = null;
       }
     },
-    [userId, isGuest, canGenerate, incrementGuestCount]
+    [userId, isGuest, canGenerate, incrementGuestCount, dualMode, responseType, effectiveStyle, postId, messages.length]
   );
 
-  // Reset chat state
+  // Reset chat state - starts a NEW conversation
   const reset = useCallback(() => {
-    // Cancel any ongoing stream
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
@@ -289,15 +406,15 @@ export function useChat({ userId, isGuest = false }: UseChatOptions): UseChatRet
     setMessages([]);
     setError(null);
     setLastPrompt("");
-    setPostId(null);
+    setPostId(null); // Clear postId to start fresh
     setIsStreaming(false);
     setStreamingContent({ storytelling: "", business: "" });
+    setInsights(null);
   }, []);
 
   // Load an existing conversation from a Post
   const loadConversation = useCallback(
-    (post: { prompt: string; responseA: string; responseB: string; id: string }) => {
-      // Reset any current state
+    (post: { prompt: string; responseA: string; responseB: string; id: string; messages?: ConversationTurn[] }) => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
@@ -305,11 +422,11 @@ export function useChat({ userId, isGuest = false }: UseChatOptions): UseChatRet
       setIsLoading(false);
       setError(null);
 
-      // Set the post ID
+      // CRITICAL: Set the post ID to enable conversation continuation
       setPostId(post.id);
       setLastPrompt(post.prompt);
 
-      // Create messages from the post
+      // Create messages from the original post
       const timestamp = new Date();
       const newMessages: ConversationMessage[] = [
         {
@@ -318,23 +435,49 @@ export function useChat({ userId, isGuest = false }: UseChatOptions): UseChatRet
           content: post.prompt,
           timestamp,
         },
-        {
+      ];
+
+      // Add original AI responses
+      if (post.responseA) {
+        newMessages.push({
           id: `ai-${post.id}-storytelling`,
           type: "ai",
           content: post.responseA,
           timestamp,
           variant: "storytelling",
           isStreaming: false,
-        },
-        {
+        });
+      }
+      if (post.responseB) {
+        newMessages.push({
           id: `ai-${post.id}-business`,
           type: "ai",
           content: post.responseB,
           timestamp,
           variant: "business",
           isStreaming: false,
-        },
-      ];
+        });
+      }
+
+      // Add any follow-up messages from conversation history
+      if (post.messages && post.messages.length > 0) {
+        post.messages.forEach((msg) => {
+          const msgTimestamp = msg.timestamp instanceof Date
+            ? msg.timestamp
+            : typeof (msg.timestamp as { toDate?: () => Date }).toDate === "function"
+              ? (msg.timestamp as { toDate: () => Date }).toDate()
+              : new Date();
+
+          newMessages.push({
+            id: msg.id,
+            type: msg.role === "user" ? "user" : "ai",
+            content: msg.content,
+            timestamp: msgTimestamp,
+            variant: msg.variant,
+            isStreaming: false,
+          });
+        });
+      }
 
       setMessages(newMessages);
 
@@ -374,6 +517,8 @@ export function useChat({ userId, isGuest = false }: UseChatOptions): UseChatRet
     loadConversation,
     lastPrompt,
     postId,
+    insights,
+    isFollowUp,
   };
 }
 

@@ -39,3 +39,10 @@ firebase-service-account.json
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Claude temporary files
+tmpclaude-*
+nul
+
+# Claude local settings
+.claude/settings.local.json

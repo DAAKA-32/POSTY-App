@@ -49,7 +49,7 @@ export default function PremiumChip({
         transition-all duration-200
         ${variantStyles[variant]}
         ${sizeStyles[size]}
-        ${glow ? "shadow-[0_0_12px_rgba(47,128,237,0.3)]" : ""}
+        ${glow ? "shadow-[0_0_12px_rgba(232,147,77,0.3)]" : ""}
         ${pulse ? "animate-pulse" : ""}
         hover:scale-105 hover:brightness-110
         ${className}

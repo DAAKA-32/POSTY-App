@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import Button from "./Button";
@@ -76,7 +76,7 @@ export default function WelcomePopup({ isOpen, onClose }: WelcomePopupProps) {
             Bienvenue sur POSTY
           </h2>
           <p className="text-gray-400 text-sm mb-6">
-            Cree ton prochain post LinkedIn en quelques secondes. Essayez-le maintenant !
+            Crée ton prochain post LinkedIn en quelques secondes. Essayez-le maintenant !
           </p>
 
           <Button onClick={handleClose} fullWidth>

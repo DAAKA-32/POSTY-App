@@ -80,11 +80,6 @@ export const DynamicPricingCard = dynamic(
   { loading: SectionFallback, ssr: false }
 );
 
-export const DynamicBillingToggle = dynamic(
-  () => import("@/components/stripe/BillingToggle").then((mod) => mod.default),
-  { loading: () => null, ssr: false }
-);
-
 // ============== DYNAMIC PROFILE IMPORTS ==============
 // Profile components loaded when visiting profile page
 

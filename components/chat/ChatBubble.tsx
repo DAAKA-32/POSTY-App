@@ -29,18 +29,18 @@ export default function ChatBubble({
           shadow-md
           ${isUser
             ? "bg-primary text-white rounded-br-md shadow-primary/20"
-            : "bg-dark-card border border-dark-border text-gray-100 rounded-bl-md shadow-black/30"
+            : "bg-dark-card border border-dark-border text-text-primary rounded-bl-md shadow-black/30"
           }
         `}
       >
         {isTyping ? (
           <div className="flex items-center gap-1 py-1">
-            <span className="w-2 h-2 bg-gray-400 rounded-full typing-dot" />
-            <span className="w-2 h-2 bg-gray-400 rounded-full typing-dot" />
-            <span className="w-2 h-2 bg-gray-400 rounded-full typing-dot" />
+            <span className="w-2 h-2 bg-text-muted rounded-full typing-dot" />
+            <span className="w-2 h-2 bg-text-muted rounded-full typing-dot" />
+            <span className="w-2 h-2 bg-text-muted rounded-full typing-dot" />
           </div>
         ) : (
-          <div className="text-sm leading-relaxed whitespace-pre-wrap">
+          <div className="text-sm leading-relaxed whitespace-pre-wrap break-words overflow-wrap-anywhere">
             {children}
           </div>
         )}

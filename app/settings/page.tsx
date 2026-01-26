@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -7,20 +7,22 @@ import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   getUserConsent,
-  saveUserConsent,
   exportUserData,
   withdrawConsent,
+  updateConsentPreference,
+  deleteAllUserConversations,
   UserConsent,
 } from "@/lib/firestore";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
-import MainLayout from "@/components/layout/MainLayout";
 import Button from "@/components/ui/Button";
+import { ToggleField } from "@/components/ui/Toggle";
 import DeleteAccountModal from "@/components/ui/DeleteAccountModal";
-import LinkedInConnectButton, { LinkedInIcon } from "@/components/linkedin/LinkedInConnectButton";
-import LinkedInDisconnectModal from "@/components/linkedin/LinkedInDisconnectModal";
-import { useLinkedIn } from "@/contexts/LinkedInContext";
-import { isTokenExpired } from "@/lib/linkedin";
-import toast from "react-hot-toast";
+import DeleteConversationsModal from "@/components/ui/DeleteConversationsModal";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useTheme } from "@/contexts/ThemeContext";
+import toast from "@/components/ui/Toast";
+import { SubscriptionManagement, PlatformConnectionsSection } from "@/components/settings";
+import TestModePanel from "@/components/subscription/TestModePanel";
 
 // Animation variants for staggered sections
 const containerVariants = {
@@ -45,50 +47,39 @@ const sectionVariants = {
   },
 };
 
-// Toggle Switch Component
-function ToggleSwitch({
-  enabled,
-  onChange,
-}: {
-  enabled: boolean;
-  onChange: () => void;
-}) {
-  return (
-    <button
-      onClick={onChange}
-      className={`
-        relative w-12 h-6 md:w-14 md:h-7 rounded-full transition-all duration-200
-        ${enabled ? "bg-accent" : "bg-dark-border"}
-      `}
-    >
-      <motion.span
-        animate={{ x: enabled ? 24 : 2 }}
-        transition={{ type: "spring", stiffness: 500, damping: 30 }}
-        className="absolute top-1 w-4 h-4 md:w-5 md:h-5 bg-white rounded-full shadow-sm"
-      />
-    </button>
-  );
-}
 
 function SettingsContent() {
   const { user, userProfile, deleteUserAccount, signOut } = useAuth();
-  const { connection: linkedInConnection, disconnectLinkedIn, isLoading: linkedInLoading } = useLinkedIn();
+  const { t } = useLanguage();
+  const { theme, toggleTheme, isDark } = useTheme();
   const router = useRouter();
   const [consent, setConsent] = useState<UserConsent | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [showLinkedInDisconnectModal, setShowLinkedInDisconnectModal] = useState(false);
+  const [showDeleteConversationsModal, setShowDeleteConversationsModal] = useState(false);
+
+  // Enable scrolling on this page (override global overflow:hidden)
+  useEffect(() => {
+    document.documentElement.classList.add("scrollable-page");
+    document.body.style.overflow = "auto";
+    document.body.style.height = "auto";
+    document.documentElement.style.overflow = "auto";
+    document.documentElement.style.height = "auto";
+
+    return () => {
+      document.documentElement.classList.remove("scrollable-page");
+      document.body.style.overflow = "";
+      document.body.style.height = "";
+      document.documentElement.style.overflow = "";
+      document.documentElement.style.height = "";
+    };
+  }, []);
 
   // Check if user signed in with Google
   const isGoogleUser = user?.providerData.some(
     (provider) => provider.providerId === "google.com"
   ) ?? false;
-
-  // Check LinkedIn token status
-  const linkedInTokenValid = linkedInConnection
-    ? !isTokenExpired(linkedInConnection.expiresAt.toDate())
-    : false;
 
   // Load consent data
   useEffect(() => {
@@ -101,36 +92,6 @@ function SettingsContent() {
     };
     loadConsent();
   }, [user]);
-
-  const handleConsentChange = async (key: "analytics" | "marketing", value: boolean) => {
-    if (!user) return;
-
-    try {
-      await saveUserConsent(user.uid, {
-        privacyPolicy: consent?.privacyPolicy ?? true,
-        termsOfService: consent?.termsOfService ?? true,
-        analytics: key === "analytics" ? value : (consent?.analytics ?? false),
-        marketing: key === "marketing" ? value : (consent?.marketing ?? false),
-      });
-
-      setConsent((prev) =>
-        prev
-          ? { ...prev, [key]: value }
-          : {
-              userId: user.uid,
-              privacyPolicy: true,
-              termsOfService: true,
-              analytics: key === "analytics" ? value : false,
-              marketing: key === "marketing" ? value : false,
-            } as UserConsent
-      );
-
-      toast.success("Preferences mises a jour");
-    } catch (error) {
-      console.error("Error updating consent:", error);
-      toast.error("Erreur lors de la mise a jour");
-    }
-  };
 
   const handleExportData = async () => {
     if (!user) return;
@@ -152,10 +113,10 @@ function SettingsContent() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      toast.success("Donnees exportees avec succes");
+      toast.success(t.toasts.dataExported);
     } catch (error) {
       console.error("Error exporting data:", error);
-      toast.error("Erreur lors de l'export");
+      toast.error(t.toasts.errorExport);
     } finally {
       setIsExporting(false);
     }
@@ -166,7 +127,7 @@ function SettingsContent() {
 
     await deleteUserAccount(password);
     setShowDeleteModal(false);
-    toast.success("Compte supprime avec succes");
+    toast.success(t.toasts.accountDeleted);
 
     // Small delay for success animation
     setTimeout(() => {
@@ -182,307 +143,211 @@ function SettingsContent() {
       setConsent((prev) =>
         prev ? { ...prev, analytics: false, marketing: false } : null
       );
-      toast.success("Consentement retire");
+      toast.success(t.toasts.consentWithdrawn);
     } catch (error) {
       console.error("Error withdrawing consent:", error);
-      toast.error("Erreur lors du retrait du consentement");
+      toast.error(t.toasts.errorUpdate);
     }
   };
 
-  const handleLinkedInDisconnect = async () => {
-    await disconnectLinkedIn();
-    // Toast is handled by LinkedInContext
+  const handleToggleAnalytics = async (checked: boolean) => {
+    if (!user) return;
+
+    // Optimistic update
+    setConsent((prev) => prev ? { ...prev, analytics: checked } : null);
+
+    try {
+      await updateConsentPreference(user.uid, "analytics", checked);
+      toast.success(checked ? t.toasts.analyticsEnabled : t.toasts.analyticsDisabled);
+    } catch (error) {
+      console.error("Error updating analytics consent:", error);
+      // Revert on error
+      setConsent((prev) => prev ? { ...prev, analytics: !checked } : null);
+      toast.error(t.toasts.errorUpdate);
+    }
+  };
+
+  const handleToggleMarketing = async (checked: boolean) => {
+    if (!user) return;
+
+    // Optimistic update
+    setConsent((prev) => prev ? { ...prev, marketing: checked } : null);
+
+    try {
+      await updateConsentPreference(user.uid, "marketing", checked);
+      toast.success(checked ? t.toasts.marketingEnabled : t.toasts.marketingDisabled);
+    } catch (error) {
+      console.error("Error updating marketing consent:", error);
+      // Revert on error
+      setConsent((prev) => prev ? { ...prev, marketing: !checked } : null);
+      toast.error(t.toasts.errorUpdate);
+    }
   };
 
   const handleLogout = async () => {
     try {
       await signOut();
-      toast.success("Deconnexion reussie");
+      toast.success(t.toasts.logoutSuccess);
       router.push("/");
     } catch (error) {
       console.error("Error signing out:", error);
-      toast.error("Erreur lors de la deconnexion");
+      toast.error(t.toasts.errorLogout);
     }
+  };
+
+  const handleDeleteConversations = async () => {
+    if (!user) throw new Error("User not found");
+
+    const result = await deleteAllUserConversations(user.uid);
+    toast.success(t.settings.deleteConversationsSuccess);
+    return result;
   };
 
   if (isLoading) {
     return (
-      <MainLayout showMobileHeader={true} headerTitle="Parametres">
-        <div className="flex flex-col items-center justify-center h-full gap-4">
-          <div className="w-10 h-10 md:w-12 md:h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-text-secondary text-sm md:text-base">Chargement...</p>
-        </div>
-      </MainLayout>
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
+        <div className="w-10 h-10 md:w-12 md:h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <p className="text-text-secondary text-sm md:text-base">{t.common.loading}</p>
+      </div>
     );
   }
 
   return (
-    <MainLayout showMobileHeader={true} headerTitle="Parametres">
-      <div className="h-full overflow-y-auto bg-background scroll-smooth">
-        {/*
-          Responsive container
-          - Mobile: px-4, compact
-          - Tablet (md): px-6, max-w-2xl
-          - Desktop (lg): px-8, max-w-3xl
-          - Large (xl): max-w-4xl
-        */}
-        <div className="
-          w-full mx-auto
-          px-4 py-6
-          md:px-6 md:py-8 md:max-w-2xl
-          lg:px-8 lg:py-10 lg:max-w-3xl
-          xl:py-12 xl:max-w-4xl
-        ">
-          {/* Header - Desktop only */}
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="hidden lg:block mb-8 xl:mb-10"
-          >
-            <h1 className="text-2xl xl:text-3xl font-bold text-white mb-1">
-              Parametres
+    <div
+      className="min-h-screen bg-background"
+      style={{
+        overflowY: "auto",
+        overflowX: "hidden",
+        minHeight: "100vh",
+        WebkitOverflowScrolling: "touch",
+      }}
+    >
+      {/* Sticky Header with Back Button */}
+      <div className="sticky top-0 z-40 bg-light-bg/80 dark:bg-dark-bg/80 backdrop-blur-xl border-b border-light-border dark:border-dark-border">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="relative flex items-center h-16">
+            <button
+              onClick={() => router.back()}
+              className="flex items-center gap-2 text-gray-600 dark:text-text-secondary hover:text-gray-900 dark:hover:text-white transition-colors group z-10"
+            >
+              <svg className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              <span className="hidden sm:inline">{t.common.back}</span>
+            </button>
+            <div className="absolute left-1/2 -translate-x-1/2 text-lg font-semibold text-gray-900 dark:text-white">
+              {t.settings.title}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="
+        w-full mx-auto
+        px-4 py-6
+        md:px-6 md:py-8 md:max-w-2xl
+        lg:px-8 lg:py-10 lg:max-w-3xl
+        xl:py-12 xl:max-w-4xl
+      ">
+        {/* Page Header - Premium styling */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8 xl:mb-10 relative"
+        >
+          {/* Subtle gradient background */}
+          <div className="absolute -inset-4 bg-gradient-to-r from-primary/5 via-transparent to-accent/5 rounded-2xl pointer-events-none" />
+          <div className="relative">
+            <h1 className="text-2xl xl:text-3xl font-bold text-gray-900 dark:text-white mb-1">
+              {t.settings.title}
             </h1>
             <p className="text-text-secondary md:text-lg">
-              Gerez vos connexions et preferences
+              {t.settings.subtitle}
             </p>
-          </motion.div>
+          </div>
+        </motion.div>
 
-          {/* Sections with staggered animation */}
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="space-y-4 md:space-y-5 lg:space-y-6"
-          >
-            {/* External Connections Section */}
+        {/* Sections with staggered animation */}
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="space-y-4 md:space-y-5 lg:space-y-6"
+        >
+            {/* Platform Connections Section - Multiplatform */}
+            <PlatformConnectionsSection />
+
+            {/* Subscription Management Section */}
+            <SubscriptionManagement />
+
+            {/* Test Mode Panel - Dev/QA only */}
+            <TestModePanel className="mt-4 md:mt-5 lg:mt-6" />
+
+            {/* Data collected section - Premium styling with AUTOSCROLL shimmer */}
             <motion.section
               variants={sectionVariants}
-              className="bg-dark-card border border-dark-border rounded-xl p-4 md:p-5 lg:p-6"
+              whileHover={{ y: -4, scale: 1.005 }}
+              className="group relative overflow-hidden bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border hover:border-primary/20 rounded-xl p-4 md:p-5 lg:p-6 transition-all duration-300 hover:shadow-[0_0_30px_rgba(232,147,77,0.08)]"
             >
-              {/* Section Header with Security Badge */}
-              <div className="flex items-center justify-between mb-5 lg:mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                    <svg className="w-5 h-5 lg:w-6 lg:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h2 className="text-base lg:text-lg font-semibold text-white">Connexions externes</h2>
-                    <p className="text-xs lg:text-sm text-text-muted">
-                      Gerez vos comptes connectes
-                    </p>
-                  </div>
-                </div>
-                {/* Security Badge */}
-                <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-accent/10 border border-accent/20 rounded-lg">
-                  <svg className="w-3.5 h-3.5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                  <span className="text-xs text-accent font-medium hidden sm:inline">Securise</span>
-                </div>
-              </div>
-
-              {/* Security Message */}
+              {/* AUTOSCROLL-style shimmer effect - ORANGE DOMINANT */}
               <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="flex items-center gap-3 p-3 mb-5 bg-accent/5 border border-accent/10 rounded-xl"
-              >
-                <svg className="w-5 h-5 text-accent shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
-                <p className="text-xs lg:text-sm text-text-secondary">
-                  Vos connexions sont securisees. Les tokens d&apos;acces sont chiffres et stockes de maniere securisee.
-                </p>
-              </motion.div>
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                animate={{
+                  backgroundPosition: ["0% 0%", "200% 200%"],
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "linear",
+                }}
+                style={{
+                  background: "linear-gradient(135deg, transparent 0%, rgba(248,147,93,0.08) 25%, transparent 50%, rgba(251,146,60,0.08) 75%, transparent 100%)",
+                  backgroundSize: "200% 200%",
+                }}
+              />
 
-              {/* LinkedIn Connection */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-8 h-8 rounded-lg bg-[#0A66C2]/10 flex items-center justify-center">
-                    <LinkedInIcon className="w-4 h-4 text-[#0A66C2]" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-medium text-white">LinkedIn</h3>
-                    <p className="text-xs text-text-muted">Publiez vos posts directement</p>
-                  </div>
-                </div>
-
-                {linkedInLoading ? (
-                  <div className="flex items-center gap-3 p-4 bg-dark-bg rounded-xl">
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                      className="w-5 h-5 border-2 border-[#0A66C2] border-t-transparent rounded-full"
-                    />
-                    <span className="text-text-secondary text-sm">Chargement...</span>
-                  </div>
-                ) : linkedInConnection ? (
-                  <div className="space-y-3">
-                    {/* Connected profile */}
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.98 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className="flex items-center gap-3 md:gap-4 p-3 md:p-4 bg-dark-bg rounded-xl border border-dark-border"
-                    >
-                      {linkedInConnection.profilePicture ? (
-                        <motion.img
-                          initial={{ scale: 0.8, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          transition={{ delay: 0.1 }}
-                          src={linkedInConnection.profilePicture}
-                          alt={linkedInConnection.profileName}
-                          className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover border-2 border-[#0A66C2]"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#0A66C2]/20 flex items-center justify-center">
-                          <LinkedInIcon className="w-5 h-5 md:w-6 md:h-6 text-[#0A66C2]" />
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-white font-medium text-sm md:text-base truncate">
-                          {linkedInConnection.profileName}
-                        </p>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          {linkedInTokenValid ? (
-                            <motion.div
-                              initial={{ scale: 0 }}
-                              animate={{ scale: 1 }}
-                              className="flex items-center gap-1.5"
-                            >
-                              <motion.span
-                                animate={{ scale: [1, 1.2, 1] }}
-                                transition={{ duration: 2, repeat: Infinity }}
-                                className="w-2 h-2 bg-accent rounded-full"
-                              />
-                              <span className="text-xs text-accent">Connecte</span>
-                            </motion.div>
-                          ) : (
-                            <div className="flex items-center gap-1.5">
-                              <span className="w-2 h-2 bg-warning rounded-full animate-pulse" />
-                              <span className="text-xs text-warning">Session expiree</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => setShowLinkedInDisconnectModal(true)}
-                        className="hover:bg-error/10 hover:text-error hover:border-error/20 transition-colors"
-                      >
-                        Deconnecter
-                      </Button>
-                    </motion.div>
-
-                    {/* Token expired warning */}
-                    {!linkedInTokenValid && (
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        className="flex items-start gap-3 p-3 md:p-4 bg-warning/10 border border-warning/20 rounded-xl"
-                      >
-                        <svg className="w-5 h-5 text-warning shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                        <div>
-                          <p className="text-warning font-medium text-sm">Session expiree</p>
-                          <p className="text-text-muted text-xs mt-1">
-                            Reconnectez-vous pour pouvoir publier sur LinkedIn.
-                          </p>
-                          <LinkedInConnectButton className="mt-3" />
-                        </div>
-                      </motion.div>
-                    )}
-                  </div>
-                ) : (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="p-3 md:p-4 bg-dark-bg rounded-xl border border-dark-border border-dashed"
-                  >
-                    <p className="text-text-secondary text-sm mb-4">
-                      Connectez votre compte LinkedIn pour publier vos posts en un clic.
-                    </p>
-                    <LinkedInConnectButton />
-                  </motion.div>
-                )}
-              </div>
-
-              {/* Divider */}
-              <div className="my-5 border-t border-dark-border" />
-
-              {/* Google Connection (Placeholder) */}
-              <div className="space-y-4 opacity-60">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
-                      <svg className="w-4 h-4" viewBox="0 0 24 24">
-                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                      </svg>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-white">Google</h3>
-                      <p className="text-xs text-text-muted">Synchronisation contacts</p>
-                    </div>
-                  </div>
-                  <span className="text-xs text-text-muted bg-dark-hover px-2.5 py-1 rounded-lg">Bientot</span>
-                </div>
-                <div className="p-3 md:p-4 bg-dark-bg/50 rounded-xl border border-dark-border border-dashed">
-                  <p className="text-text-muted text-sm">
-                    La connexion Google sera disponible prochainement pour synchroniser vos contacts.
-                  </p>
-                </div>
-              </div>
-            </motion.section>
-
-            {/* Data collected section */}
-            <motion.section
-              variants={sectionVariants}
-              className="bg-dark-card border border-dark-border rounded-xl p-4 md:p-5 lg:p-6"
-            >
-              <div className="flex items-center gap-3 mb-4 lg:mb-5">
-                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+              <div className="flex items-center gap-3 mb-4 lg:mb-5 relative z-10">
+                <motion.div
+                  whileHover={{ scale: 1.1, rotate: 5 }}
+                  transition={{ duration: 0.2 }}
+                  className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-gradient-to-br from-primary/15 to-accent/10 border border-primary/20 flex items-center justify-center group-hover:shadow-glow transition-shadow duration-300"
+                >
                   <svg className="w-5 h-5 lg:w-6 lg:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
-                </div>
-                <h2 className="text-base lg:text-lg font-semibold text-white">Donnees collectees</h2>
+                </motion.div>
+                <h2 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white">{t.settings.dataCollected}</h2>
               </div>
-              <div className="space-y-0 divide-y divide-dark-border">
+              <div className="space-y-0 divide-y divide-gray-200 dark:divide-dark-border">
                 <div className="flex items-center justify-between py-3 lg:py-4">
-                  <span className="text-text-secondary text-sm lg:text-base">Email</span>
-                  <span className="text-white font-medium text-sm lg:text-base truncate max-w-[180px] lg:max-w-none">
+                  <span className="text-text-secondary text-sm lg:text-base">{t.settings.emailLabel}</span>
+                  <span className="text-gray-900 dark:text-white font-medium text-sm lg:text-base truncate max-w-[180px] lg:max-w-none">
                     {user?.email}
                   </span>
                 </div>
                 <div className="flex items-center justify-between py-3 lg:py-4">
-                  <span className="text-text-secondary text-sm lg:text-base">Nom</span>
-                  <span className="text-white font-medium text-sm lg:text-base">
-                    {userProfile?.displayName || "Non renseigne"}
+                  <span className="text-text-secondary text-sm lg:text-base">{t.settings.nameLabel}</span>
+                  <span className="text-gray-900 dark:text-white font-medium text-sm lg:text-base">
+                    {userProfile?.displayName || t.settings.notSpecified}
                   </span>
                 </div>
                 <div className="flex items-center justify-between py-3 lg:py-4">
-                  <span className="text-text-secondary text-sm lg:text-base">Secteur</span>
-                  <span className="text-white font-medium text-sm lg:text-base">
-                    {userProfile?.profile?.sector || "Non renseigne"}
+                  <span className="text-text-secondary text-sm lg:text-base">{t.settings.sectorLabel}</span>
+                  <span className="text-gray-900 dark:text-white font-medium text-sm lg:text-base">
+                    {userProfile?.profile?.sector || t.settings.notSpecified}
                   </span>
                 </div>
                 <div className="flex items-center justify-between py-3 lg:py-4">
-                  <span className="text-text-secondary text-sm lg:text-base">Role</span>
-                  <span className="text-white font-medium text-sm lg:text-base">
-                    {userProfile?.profile?.role || "Non renseigne"}
+                  <span className="text-text-secondary text-sm lg:text-base">{t.settings.roleLabel}</span>
+                  <span className="text-gray-900 dark:text-white font-medium text-sm lg:text-base">
+                    {userProfile?.profile?.role || t.settings.notSpecified}
                   </span>
                 </div>
                 <div className="flex items-center justify-between py-3 lg:py-4">
-                  <span className="text-text-secondary text-sm lg:text-base">Style LinkedIn</span>
-                  <span className="text-white font-medium text-sm lg:text-base">
-                    {userProfile?.profile?.linkedinStyle || "Non renseigne"}
+                  <span className="text-text-secondary text-sm lg:text-base">{t.settings.linkedinStyleLabel}</span>
+                  <span className="text-gray-900 dark:text-white font-medium text-sm lg:text-base">
+                    {userProfile?.profile?.linkedinStyle || t.settings.notSpecified}
                   </span>
                 </div>
               </div>
@@ -495,109 +360,214 @@ function SettingsContent() {
                   rounded-xl transition-all duration-200
                 "
               >
-                Modifier mon profil
+                {t.settings.editProfile}
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </Link>
             </motion.section>
 
-            {/* Consent preferences */}
+            {/* Appearance Section - Theme Toggle - Premium styling with AUTOSCROLL shimmer */}
             <motion.section
               variants={sectionVariants}
-              className="bg-dark-card border border-dark-border rounded-xl p-4 md:p-5 lg:p-6"
+              whileHover={{ y: -4, scale: 1.005 }}
+              className="group relative overflow-hidden bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border hover:border-primary/20 rounded-xl p-4 md:p-5 lg:p-6 transition-all duration-300 hover:shadow-[0_0_30px_rgba(232,147,77,0.08)]"
+            >
+              {/* AUTOSCROLL-style shimmer effect - ORANGE DOMINANT */}
+              <motion.div
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                animate={{
+                  backgroundPosition: ["0% 0%", "200% 200%"],
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "linear",
+                }}
+                style={{
+                  background: "linear-gradient(135deg, transparent 0%, rgba(248,147,93,0.08) 25%, transparent 50%, rgba(251,146,60,0.08) 75%, transparent 100%)",
+                  backgroundSize: "200% 200%",
+                }}
+              />
+
+              <div className="flex items-center gap-3 mb-4 lg:mb-5 relative z-10">
+                <motion.div
+                  whileHover={{ scale: 1.1, rotate: 5 }}
+                  transition={{ duration: 0.2 }}
+                  className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-gradient-to-br from-primary/15 to-accent/10 border border-primary/20 flex items-center justify-center group-hover:shadow-glow transition-shadow duration-300"
+                >
+                  {isDark ? (
+                    <svg className="w-5 h-5 lg:w-6 lg:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5 lg:w-6 lg:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                  )}
+                </motion.div>
+                <div>
+                  <h2 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white">{t.settings.appearance || "Apparence"}</h2>
+                  <p className="text-xs lg:text-sm text-text-muted mt-0.5">{t.settings.appearanceSubtitle || "Personnalisez l'interface"}</p>
+                </div>
+              </div>
+
+              {/* Theme Toggle */}
+              <ToggleField
+                checked={isDark}
+                onChange={toggleTheme}
+                label={t.settings.themeMode || "Mode d'affichage"}
+                description={isDark ? (t.settings.darkModeActive || "Mode sombre activé") : (t.settings.lightModeActive || "Mode clair activé")}
+              />
+            </motion.section>
+
+            {/* Notifications Section - Premium styling */}
+            <motion.section
+              variants={sectionVariants}
+              whileHover={{ y: -2 }}
+              className="group bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border hover:border-primary/20 rounded-xl p-4 md:p-5 lg:p-6 transition-all duration-300 hover:shadow-[0_0_30px_rgba(232,147,77,0.08)]"
             >
               <div className="flex items-center gap-3 mb-4 lg:mb-5">
-                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-accent/10 flex items-center justify-center">
+                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-gradient-to-br from-primary/15 to-accent/10 border border-primary/20 flex items-center justify-center group-hover:shadow-glow transition-shadow duration-300">
+                  <svg className="w-5 h-5 lg:w-6 lg:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white">{t.settings.notifications}</h2>
+                  <p className="text-xs lg:text-sm text-text-muted mt-0.5">{t.settings.notificationsSubtitle}</p>
+                </div>
+              </div>
+
+              {/* Security Alerts - Always on, highlighted with opinion color */}
+              <div className="flex items-center justify-between p-3 lg:p-4 bg-red-50 dark:bg-red-500/10 rounded-xl border border-red-200 dark:border-red-500/30">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-500/20 flex items-center justify-center">
+                    <svg className="w-4 h-4 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-gray-900 dark:text-white font-medium text-sm lg:text-base">{t.settings.securityAlerts}</p>
+                    <p className="text-xs lg:text-sm text-text-muted mt-0.5">{t.settings.securityAlertsDesc}</p>
+                  </div>
+                </div>
+                <span className="px-2.5 py-1 bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-300 text-xs font-medium rounded-lg">Toujours actif</span>
+              </div>
+            </motion.section>
+
+            {/* Consent preferences - Premium styling */}
+            <motion.section
+              variants={sectionVariants}
+              whileHover={{ y: -2 }}
+              className="group bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border hover:border-accent/20 rounded-xl p-4 md:p-5 lg:p-6 transition-all duration-300 hover:shadow-[0_0_30px_rgba(248,87,81,0.08)]"
+            >
+              <div className="flex items-center gap-3 mb-4 lg:mb-5">
+                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-gradient-to-br from-accent/15 to-primary/10 border border-accent/20 flex items-center justify-center group-hover:shadow-glow-accent transition-shadow duration-300">
                   <svg className="w-5 h-5 lg:w-6 lg:h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
                 </div>
-                <h2 className="text-base lg:text-lg font-semibold text-white">Preferences de consentement</h2>
+                <h2 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white">{t.settings.consentPreferences}</h2>
               </div>
               <div className="space-y-3 lg:space-y-4">
-                <div className="flex items-center justify-between p-3 lg:p-4 bg-dark-bg rounded-xl">
-                  <div className="flex-1 min-w-0 mr-4">
-                    <p className="text-white font-medium text-sm lg:text-base">Analytics</p>
-                    <p className="text-xs lg:text-sm text-text-muted mt-0.5">Nous aide a ameliorer le service</p>
-                  </div>
-                  <ToggleSwitch
-                    enabled={consent?.analytics ?? false}
-                    onChange={() => handleConsentChange("analytics", !consent?.analytics)}
-                  />
-                </div>
-                <div className="flex items-center justify-between p-3 lg:p-4 bg-dark-bg rounded-xl">
-                  <div className="flex-1 min-w-0 mr-4">
-                    <p className="text-white font-medium text-sm lg:text-base">Communications marketing</p>
-                    <p className="text-xs lg:text-sm text-text-muted mt-0.5">Recevoir des emails promotionnels</p>
-                  </div>
-                  <ToggleSwitch
-                    enabled={consent?.marketing ?? false}
-                    onChange={() => handleConsentChange("marketing", !consent?.marketing)}
-                  />
-                </div>
+                <ToggleField
+                  label={t.settings.analytics}
+                  description={t.settings.analyticsDesc}
+                  checked={consent?.analytics ?? false}
+                  onChange={handleToggleAnalytics}
+                />
+                <ToggleField
+                  label={t.settings.marketing}
+                  description={t.settings.marketingDesc}
+                  checked={consent?.marketing ?? false}
+                  onChange={handleToggleMarketing}
+                />
               </div>
               <button
                 onClick={handleWithdrawConsent}
                 className="mt-4 text-xs lg:text-sm text-text-muted hover:text-error transition-colors"
               >
-                Retirer tous les consentements optionnels
+                {t.settings.withdrawConsent}
               </button>
             </motion.section>
 
-            {/* Your rights */}
+            {/* Your rights - Premium styling */}
             <motion.section
               variants={sectionVariants}
-              className="bg-dark-card border border-dark-border rounded-xl p-4 md:p-5 lg:p-6"
+              whileHover={{ y: -2 }}
+              className="group bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border hover:border-warning/20 rounded-xl p-4 md:p-5 lg:p-6 transition-all duration-300 hover:shadow-[0_0_30px_rgba(248,163,93,0.08)]"
             >
               <div className="flex items-center gap-3 mb-4 lg:mb-5">
-                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-warning/10 flex items-center justify-center">
+                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-gradient-to-br from-warning/15 to-warning/5 border border-warning/20 flex items-center justify-center group-hover:shadow-[0_0_20px_rgba(248,163,93,0.35)] transition-shadow duration-300">
                   <svg className="w-5 h-5 lg:w-6 lg:h-6 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <h2 className="text-base lg:text-lg font-semibold text-white">Vos droits RGPD</h2>
+                <h2 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white">{t.settings.gdprRights}</h2>
               </div>
               <div className="grid gap-2 md:gap-3 grid-cols-2 lg:grid-cols-4">
-                <div className="p-3 lg:p-4 bg-dark-bg rounded-xl border border-dark-border">
-                  <p className="text-white font-medium text-xs lg:text-sm">Droit d&apos;acces</p>
-                  <p className="text-xs text-text-muted mt-0.5 lg:mt-1">Voir vos donnees</p>
+                <div className="p-3 lg:p-4 bg-gray-50 dark:bg-dark-bg rounded-xl border border-gray-200 dark:border-dark-border hover:border-warning/20 transition-colors duration-200">
+                  <p className="text-gray-900 dark:text-white font-medium text-xs lg:text-sm">{t.settings.rightAccess}</p>
+                  <p className="text-xs text-text-muted mt-0.5 lg:mt-1">{t.settings.seeYourData}</p>
                 </div>
-                <div className="p-3 lg:p-4 bg-dark-bg rounded-xl border border-dark-border">
-                  <p className="text-white font-medium text-xs lg:text-sm">Droit de rectification</p>
-                  <p className="text-xs text-text-muted mt-0.5 lg:mt-1">Corriger vos infos</p>
+                <div className="p-3 lg:p-4 bg-gray-50 dark:bg-dark-bg rounded-xl border border-gray-200 dark:border-dark-border hover:border-warning/20 transition-colors duration-200">
+                  <p className="text-gray-900 dark:text-white font-medium text-xs lg:text-sm">{t.settings.rightRectification}</p>
+                  <p className="text-xs text-text-muted mt-0.5 lg:mt-1">{t.settings.correctInfo}</p>
                 </div>
-                <div className="p-3 lg:p-4 bg-dark-bg rounded-xl border border-dark-border">
-                  <p className="text-white font-medium text-xs lg:text-sm">Droit a l&apos;effacement</p>
-                  <p className="text-xs text-text-muted mt-0.5 lg:mt-1">Supprimer vos donnees</p>
+                <div className="p-3 lg:p-4 bg-gray-50 dark:bg-dark-bg rounded-xl border border-gray-200 dark:border-dark-border hover:border-warning/20 transition-colors duration-200">
+                  <p className="text-gray-900 dark:text-white font-medium text-xs lg:text-sm">{t.settings.rightErasure}</p>
+                  <p className="text-xs text-text-muted mt-0.5 lg:mt-1">{t.settings.deleteData}</p>
                 </div>
-                <div className="p-3 lg:p-4 bg-dark-bg rounded-xl border border-dark-border">
-                  <p className="text-white font-medium text-xs lg:text-sm">Droit a la portabilite</p>
-                  <p className="text-xs text-text-muted mt-0.5 lg:mt-1">Exporter vos donnees</p>
+                <div className="p-3 lg:p-4 bg-gray-50 dark:bg-dark-bg rounded-xl border border-gray-200 dark:border-dark-border hover:border-warning/20 transition-colors duration-200">
+                  <p className="text-gray-900 dark:text-white font-medium text-xs lg:text-sm">{t.settings.rightPortability}</p>
+                  <p className="text-xs text-text-muted mt-0.5 lg:mt-1">{t.settings.exportData}</p>
                 </div>
               </div>
             </motion.section>
 
-            {/* Actions */}
+            {/* Actions - Premium styling with AUTOSCROLL shimmer */}
             <motion.section
               variants={sectionVariants}
-              className="bg-dark-card border border-dark-border rounded-xl p-4 md:p-5 lg:p-6"
+              whileHover={{ y: -4, scale: 1.005 }}
+              className="group relative overflow-hidden bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border hover:border-primary/20 rounded-xl p-4 md:p-5 lg:p-6 transition-all duration-300 hover:shadow-[0_0_30px_rgba(232,147,77,0.08)]"
             >
-              <div className="flex items-center gap-3 mb-4 lg:mb-5">
-                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+              {/* AUTOSCROLL-style shimmer effect - ORANGE DOMINANT */}
+              <motion.div
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                animate={{
+                  backgroundPosition: ["0% 0%", "200% 200%"],
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "linear",
+                }}
+                style={{
+                  background: "linear-gradient(135deg, transparent 0%, rgba(248,147,93,0.08) 25%, transparent 50%, rgba(251,146,60,0.08) 75%, transparent 100%)",
+                  backgroundSize: "200% 200%",
+                }}
+              />
+
+              <div className="flex items-center gap-3 mb-4 lg:mb-5 relative z-10">
+                <motion.div
+                  whileHover={{ scale: 1.1, rotate: 5 }}
+                  transition={{ duration: 0.2 }}
+                  className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-gradient-to-br from-primary/15 to-accent/10 border border-primary/20 flex items-center justify-center group-hover:shadow-glow transition-shadow duration-300"
+                >
                   <svg className="w-5 h-5 lg:w-6 lg:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
-                </div>
-                <h2 className="text-base lg:text-lg font-semibold text-white">Actions</h2>
+                </motion.div>
+                <h2 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white">{t.settings.actions}</h2>
               </div>
               <div className="space-y-3 lg:space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 lg:p-4 bg-dark-bg rounded-xl border border-dark-border">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 lg:p-4 bg-gray-50 dark:bg-dark-bg rounded-xl border border-gray-200 dark:border-dark-border hover:border-primary/20 transition-colors duration-200">
                   <div>
-                    <p className="text-white font-medium text-sm lg:text-base">Exporter mes donnees</p>
+                    <p className="text-gray-900 dark:text-white font-medium text-sm lg:text-base">{t.settings.exportMyData}</p>
                     <p className="text-xs lg:text-sm text-text-muted mt-0.5">
-                      Telecharger toutes vos donnees au format JSON
+                      {t.settings.exportDesc}
                     </p>
                   </div>
                   <Button
@@ -605,38 +575,57 @@ function SettingsContent() {
                     size="sm"
                     onClick={handleExportData}
                     isLoading={isExporting}
-                    className="shrink-0"
+                    className="shrink-0 hover:border-primary/40 hover:text-primary"
                   >
                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                     </svg>
-                    Exporter
+                    {t.settings.export}
                   </Button>
                 </div>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 lg:p-4 bg-dark-bg rounded-xl border border-dark-border">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 lg:p-4 bg-gray-50 dark:bg-dark-bg rounded-xl border border-gray-200 dark:border-dark-border hover:border-primary/20 transition-colors duration-200">
                   <div>
-                    <p className="text-white font-medium text-sm lg:text-base">Se deconnecter</p>
+                    <p className="text-gray-900 dark:text-white font-medium text-sm lg:text-base">{t.settings.logoutAction}</p>
                     <p className="text-xs lg:text-sm text-text-muted mt-0.5">
-                      Deconnectez-vous de votre compte POSTY
+                      {t.settings.logoutDesc}
                     </p>
                   </div>
                   <Button
                     variant="secondary"
                     size="sm"
                     onClick={handleLogout}
-                    className="shrink-0"
+                    className="shrink-0 hover:border-primary/40 hover:text-primary"
                   >
                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                     </svg>
-                    Deconnexion
+                    {t.auth.logout}
                   </Button>
                 </div>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 lg:p-4 bg-error/5 rounded-xl border border-error/20">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 lg:p-4 bg-amber-50 dark:bg-warning/5 rounded-xl border border-amber-200 dark:border-warning/20 hover:border-amber-300 dark:hover:border-warning/40 transition-colors duration-200">
                   <div>
-                    <p className="text-error font-medium text-sm lg:text-base">Supprimer mon compte</p>
+                    <p className="text-amber-700 dark:text-warning font-medium text-sm lg:text-base">{t.settings.deleteConversations}</p>
+                    <p className="text-xs lg:text-sm text-amber-600/70 dark:text-text-muted mt-0.5">
+                      {t.settings.deleteConversationsDesc}
+                    </p>
+                  </div>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setShowDeleteConversationsModal(true)}
+                    className="shrink-0 hover:border-amber-400 dark:hover:border-warning/40 hover:text-amber-700 dark:hover:text-warning"
+                  >
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    {t.common.delete}
+                  </Button>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 lg:p-4 bg-error/5 rounded-xl border border-error/20 hover:border-error/40 transition-colors duration-200">
+                  <div>
+                    <p className="text-error font-medium text-sm lg:text-base">{t.settings.deleteAccount}</p>
                     <p className="text-xs lg:text-sm text-text-muted mt-0.5">
-                      Supprime definitivement votre compte et toutes vos donnees
+                      {t.settings.deleteAccountDesc}
                     </p>
                   </div>
                   <Button
@@ -648,34 +637,35 @@ function SettingsContent() {
                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
-                    Supprimer
+                    {t.common.delete}
                   </Button>
                 </div>
               </div>
             </motion.section>
 
-            {/* Legal links */}
+            {/* Legal links - Premium styling */}
             <motion.section
               variants={sectionVariants}
-              className="bg-dark-card border border-dark-border rounded-xl p-4 md:p-5 lg:p-6"
+              whileHover={{ y: -2 }}
+              className="group bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border hover:border-text-muted/30 rounded-xl p-4 md:p-5 lg:p-6 transition-all duration-300"
             >
               <div className="flex items-center gap-3 mb-4 lg:mb-5">
-                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-text-muted/10 flex items-center justify-center">
+                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-gradient-to-br from-text-muted/15 to-text-muted/5 border border-text-muted/20 flex items-center justify-center transition-shadow duration-300">
                   <svg className="w-5 h-5 lg:w-6 lg:h-6 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                 </div>
-                <h2 className="text-base lg:text-lg font-semibold text-white">Documents legaux</h2>
+                <h2 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white">{t.settings.legalDocuments}</h2>
               </div>
               <div className="space-y-2 lg:space-y-3">
                 <a
                   href="/legal/privacy"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-between p-3 lg:p-4 bg-dark-bg rounded-xl border border-dark-border hover:border-primary/30 transition-all duration-200 group"
+                  className="flex items-center justify-between p-3 lg:p-4 bg-gray-50 dark:bg-dark-bg rounded-xl border border-gray-200 dark:border-dark-border hover:border-primary/30 transition-all duration-200 group"
                 >
-                  <span className="text-white text-sm lg:text-base group-hover:text-primary transition-colors">
-                    Politique de confidentialite
+                  <span className="text-gray-900 dark:text-white text-sm lg:text-base group-hover:text-primary transition-colors">
+                    {t.settings.privacyPolicy}
                   </span>
                   <svg className="w-4 h-4 lg:w-5 lg:h-5 text-text-muted group-hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -685,10 +675,10 @@ function SettingsContent() {
                   href="/legal/terms"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-between p-3 lg:p-4 bg-dark-bg rounded-xl border border-dark-border hover:border-primary/30 transition-all duration-200 group"
+                  className="flex items-center justify-between p-3 lg:p-4 bg-gray-50 dark:bg-dark-bg rounded-xl border border-gray-200 dark:border-dark-border hover:border-primary/30 transition-all duration-200 group"
                 >
-                  <span className="text-white text-sm lg:text-base group-hover:text-primary transition-colors">
-                    Conditions d&apos;utilisation
+                  <span className="text-gray-900 dark:text-white text-sm lg:text-base group-hover:text-primary transition-colors">
+                    {t.settings.termsOfUse}
                   </span>
                   <svg className="w-4 h-4 lg:w-5 lg:h-5 text-text-muted group-hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -698,10 +688,10 @@ function SettingsContent() {
                   href="/legal/notices"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-between p-3 lg:p-4 bg-dark-bg rounded-xl border border-dark-border hover:border-primary/30 transition-all duration-200 group"
+                  className="flex items-center justify-between p-3 lg:p-4 bg-gray-50 dark:bg-dark-bg rounded-xl border border-gray-200 dark:border-dark-border hover:border-primary/30 transition-all duration-200 group"
                 >
-                  <span className="text-white text-sm lg:text-base group-hover:text-primary transition-colors">
-                    Mentions legales
+                  <span className="text-gray-900 dark:text-white text-sm lg:text-base group-hover:text-primary transition-colors">
+                    {t.settings.legalNotices}
                   </span>
                   <svg className="w-4 h-4 lg:w-5 lg:h-5 text-text-muted group-hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -716,7 +706,7 @@ function SettingsContent() {
               className="text-center py-4 lg:py-6"
             >
               <p className="text-text-muted text-xs lg:text-sm mb-2">
-                Pour toute question concernant vos donnees :
+                {t.settings.contactPrivacy}
               </p>
               <a
                 href="mailto:privacy@posty.app"
@@ -727,9 +717,8 @@ function SettingsContent() {
             </motion.div>
           </motion.div>
 
-          {/* Bottom spacing for mobile navigation */}
-          <div className="h-20 md:h-8" />
-        </div>
+        {/* Bottom spacing */}
+        <div className="h-12" />
       </div>
 
       {/* Delete confirmation modal */}
@@ -740,14 +729,13 @@ function SettingsContent() {
         isGoogleUser={isGoogleUser}
       />
 
-      {/* LinkedIn disconnect confirmation modal */}
-      <LinkedInDisconnectModal
-        isOpen={showLinkedInDisconnectModal}
-        onClose={() => setShowLinkedInDisconnectModal(false)}
-        onConfirm={handleLinkedInDisconnect}
-        profileName={linkedInConnection?.profileName}
+      {/* Delete conversations confirmation modal */}
+      <DeleteConversationsModal
+        isOpen={showDeleteConversationsModal}
+        onClose={() => setShowDeleteConversationsModal(false)}
+        onConfirm={handleDeleteConversations}
       />
-    </MainLayout>
+    </div>
   );
 }
 

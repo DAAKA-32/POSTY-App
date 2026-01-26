@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -15,109 +15,53 @@ const legalLinks = [
   { name: "Mentions legales", href: "/legal/notices" },
 ];
 
+/**
+ * LegalLayoutLight - Layout pour les pages legales
+ * Mode sombre pour coherence avec l'application POSTY
+ */
 export default function LegalLayoutLight({ children, title }: LegalLayoutLightProps) {
   const pathname = usePathname();
 
+  // Enable scrolling on legal pages by adding class to html
+  useEffect(() => {
+    // Add class to enable scrolling
+    document.documentElement.classList.add("legal-page");
+    document.body.style.overflow = "auto";
+    document.body.style.height = "auto";
+    document.documentElement.style.overflow = "auto";
+    document.documentElement.style.height = "auto";
+
+    return () => {
+      // Cleanup when leaving legal pages
+      document.documentElement.classList.remove("legal-page");
+      document.body.style.overflow = "";
+      document.body.style.height = "";
+      document.documentElement.style.overflow = "";
+      document.documentElement.style.height = "";
+    };
+  }, []);
+
   return (
-    <div
-      className="min-h-screen"
-      style={{
-        fontFamily: "Arial, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        backgroundColor: "#ffffff",
-        color: "#1a1a1a",
-      }}
-    >
+    <div className="min-h-screen bg-background text-white overflow-y-auto overflow-x-hidden">
       {/* Header */}
-      <header
-        style={{
-          position: "sticky",
-          top: 0,
-          zIndex: 50,
-          backgroundColor: "#ffffff",
-          borderBottom: "1px solid #e5e5e5",
-        }}
-      >
-        <div
-          style={{
-            maxWidth: "960px",
-            margin: "0 auto",
-            padding: "16px 24px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
+      <header className="sticky top-0 z-50 bg-dark-card border-b border-dark-border backdrop-blur-sm">
+        <div className="max-w-[960px] mx-auto px-6 py-4 flex items-center justify-between">
           {/* Logo */}
-          <Link
-            href="/"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "12px",
-              textDecoration: "none",
-            }}
-          >
-            <div
-              style={{
-                width: "36px",
-                height: "36px",
-                background: "linear-gradient(135deg, #2F80ED 0%, #00D1C1 100%)",
-                borderRadius: "8px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                overflow: "hidden",
-              }}
-            >
+          <Link href="/" className="flex items-center gap-3 no-underline">
+            <div className="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center">
               <img
-                src="/logo.png"
-                alt="POSTY"
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                onError={(e) => {
-                  e.currentTarget.style.display = "none";
-                  const sibling = e.currentTarget.nextElementSibling as HTMLElement | null;
-                  if (sibling) sibling.style.display = "flex";
-                }}
+                src="/logo.jpg"
+                alt="Posty Logo"
+                className="w-full h-full object-contain"
               />
-              <span
-                style={{
-                  display: "none",
-                  color: "#ffffff",
-                  fontWeight: 700,
-                  fontSize: "18px",
-                }}
-              >
-                P
-              </span>
             </div>
-            <span
-              style={{
-                fontWeight: 600,
-                fontSize: "18px",
-                color: "#1a1a1a",
-              }}
-            >
-              POSTY
-            </span>
+            <span className="font-semibold text-lg text-gray-900 dark:text-white">POSTY</span>
           </Link>
 
           {/* Return button */}
           <Link
             href="/"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "8px 16px",
-              fontSize: "14px",
-              color: "#2F80ED",
-              backgroundColor: "#f5f5f5",
-              borderRadius: "6px",
-              textDecoration: "none",
-              transition: "background-color 0.2s",
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#e5e5e5")}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#f5f5f5")}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm text-primary bg-dark-elevated hover:bg-dark-hover rounded-lg no-underline transition-colors duration-200"
           >
             <svg
               width="16"
@@ -133,48 +77,26 @@ export default function LegalLayoutLight({ children, title }: LegalLayoutLightPr
                 d="M10 19l-7-7m0 0l7-7m-7 7h18"
               />
             </svg>
-            Retour a l'application
+            Retour a l&apos;application
           </Link>
         </div>
       </header>
 
       {/* Navigation tabs */}
-      <nav
-        style={{
-          borderBottom: "1px solid #e5e5e5",
-          backgroundColor: "#fafafa",
-        }}
-      >
-        <div
-          style={{
-            maxWidth: "960px",
-            margin: "0 auto",
-            padding: "0 24px",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              gap: "8px",
-              overflowX: "auto",
-              padding: "12px 0",
-            }}
-          >
+      <nav className="border-b border-dark-border bg-dark-bg">
+        <div className="max-w-[960px] mx-auto px-6">
+          <div className="flex gap-2 overflow-x-auto py-3 scrollbar-hide">
             {legalLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                style={{
-                  padding: "8px 16px",
-                  fontSize: "14px",
-                  fontWeight: pathname === link.href ? 600 : 400,
-                  whiteSpace: "nowrap",
-                  borderRadius: "6px",
-                  textDecoration: "none",
-                  color: pathname === link.href ? "#2F80ED" : "#666666",
-                  backgroundColor: pathname === link.href ? "#e8f0fe" : "transparent",
-                  transition: "all 0.2s",
-                }}
+                className={`
+                  px-4 py-2 text-sm whitespace-nowrap rounded-lg no-underline transition-all duration-200
+                  ${pathname === link.href
+                    ? "font-semibold text-primary bg-primary/10"
+                    : "font-normal text-text-secondary hover:text-white hover:bg-dark-hover"
+                  }
+                `}
               >
                 {link.name}
               </Link>
@@ -184,157 +106,64 @@ export default function LegalLayoutLight({ children, title }: LegalLayoutLightPr
       </nav>
 
       {/* Main content */}
-      <main
-        style={{
-          maxWidth: "960px",
-          margin: "0 auto",
-          padding: "40px 24px 80px",
-        }}
-      >
+      <main className="max-w-[960px] mx-auto px-6 py-10 pb-20">
         {/* Page title */}
-        <div style={{ marginBottom: "32px" }}>
-          <h1
-            style={{
-              fontSize: "28px",
-              fontWeight: 700,
-              color: "#1a1a1a",
-              marginBottom: "8px",
-              lineHeight: 1.3,
-            }}
-          >
+        <div className="mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-white mb-2 leading-tight">
             {title}
           </h1>
-          <div
-            style={{
-              width: "60px",
-              height: "3px",
-              backgroundColor: "#2F80ED",
-              borderRadius: "2px",
-            }}
-          />
+          <div className="w-[60px] h-[3px] bg-primary rounded-full" />
         </div>
 
         {/* Content */}
-        <div
-          style={{
-            fontSize: "15px",
-            lineHeight: 1.7,
-            color: "#333333",
-          }}
-        >
+        <div className="text-[15px] leading-relaxed text-text-secondary">
           {children}
         </div>
       </main>
 
       {/* Footer */}
-      <footer
-        style={{
-          borderTop: "1px solid #e5e5e5",
-          backgroundColor: "#fafafa",
-          marginTop: "auto",
-        }}
-      >
-        <div
-          style={{
-            maxWidth: "960px",
-            margin: "0 auto",
-            padding: "32px 24px",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "16px",
-            }}
-          >
+      <footer className="border-t border-dark-border bg-dark-card mt-auto">
+        <div className="max-w-[960px] mx-auto px-6 py-8">
+          <div className="flex flex-col items-center gap-4">
             {/* Logo and copyright */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "12px",
-              }}
-            >
-              <div
-                style={{
-                  width: "28px",
-                  height: "28px",
-                  background: "linear-gradient(135deg, #2F80ED 0%, #00D1C1 100%)",
-                  borderRadius: "6px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  overflow: "hidden",
-                }}
-              >
+            <div className="flex items-center gap-3">
+              <div className="w-7 h-7 rounded-lg overflow-hidden flex items-center justify-center">
                 <img
-                  src="/logo.png"
-                  alt="POSTY"
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  src="/logo.jpg"
+                  alt="Posty Logo"
+                  className="w-full h-full object-contain"
                   loading="lazy"
-                  onError={(e) => {
-                    e.currentTarget.style.display = "none";
-                    const sibling = e.currentTarget.nextElementSibling as HTMLElement | null;
-                    if (sibling) sibling.style.display = "flex";
-                  }}
                 />
-                <span
-                  style={{
-                    display: "none",
-                    color: "#ffffff",
-                    fontWeight: 700,
-                    fontSize: "12px",
-                  }}
-                >
-                  P
-                </span>
               </div>
-              <span style={{ fontSize: "13px", color: "#666666" }}>
+              <span className="text-sm text-text-muted">
                 © {new Date().getFullYear()} POSTY. Tous droits reserves.
               </span>
             </div>
 
             {/* Legal links */}
-            <div
-              style={{
-                display: "flex",
-                gap: "24px",
-                fontSize: "13px",
-              }}
-            >
+            <div className="flex gap-6 text-sm">
               <Link
                 href="/legal/privacy"
-                style={{
-                  color: "#666666",
-                  textDecoration: "none",
-                }}
+                className="text-text-muted hover:text-white no-underline transition-colors duration-200"
               >
                 Confidentialite
               </Link>
               <Link
                 href="/legal/terms"
-                style={{
-                  color: "#666666",
-                  textDecoration: "none",
-                }}
+                className="text-text-muted hover:text-white no-underline transition-colors duration-200"
               >
                 CGU
               </Link>
               <Link
                 href="/legal/notices"
-                style={{
-                  color: "#666666",
-                  textDecoration: "none",
-                }}
+                className="text-text-muted hover:text-white no-underline transition-colors duration-200"
               >
                 Mentions legales
               </Link>
             </div>
 
             {/* Contact */}
-            <p style={{ fontSize: "12px", color: "#999999", marginTop: "8px" }}>
+            <p className="text-xs text-text-subtle mt-2">
               Contact RGPD : privacy@posty.app
             </p>
           </div>

@@ -1,18 +1,38 @@
 "use client";
 
-import { InputHTMLAttributes, forwardRef, useState } from "react";
+import { InputHTMLAttributes, forwardRef, useState, useEffect } from "react";
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
+  success?: boolean;
   helperText?: string;
   showPasswordToggle?: boolean;
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, helperText, className = "", type, showPasswordToggle, value, ...props }, ref) => {
+  ({ label, error, success, helperText, className = "", type, showPasswordToggle, value, ...props }, ref) => {
     const [isFocused, setIsFocused] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [isDarkMode, setIsDarkMode] = useState(true);
+
+    // Listen to theme changes
+    useEffect(() => {
+      const checkTheme = () => {
+        setIsDarkMode(document.documentElement.classList.contains("dark"));
+      };
+
+      checkTheme();
+
+      // Observe theme changes
+      const observer = new MutationObserver(checkTheme);
+      observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["class"],
+      });
+
+      return () => observer.disconnect();
+    }, []);
 
     const hasValue = value !== undefined && value !== "";
     const isFloating = isFocused || hasValue;
@@ -28,10 +48,10 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
               className={`
                 absolute left-4 transition-all duration-200 ease-out pointer-events-none
                 ${isFloating
-                  ? "top-1 text-xs text-primary font-medium"
+                  ? "top-1 text-xs font-medium"
                   : "top-1/2 -translate-y-1/2 text-base text-text-muted"
                 }
-                ${error ? "text-error" : ""}
+                ${error ? "text-error" : success ? "text-success" : isFloating ? "text-primary" : ""}
               `}
             >
               {label}
@@ -52,23 +72,29 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             }}
             className={`
               w-full px-4 pt-5 pb-2
-              bg-dark-card
-              border-2 ${error ? "border-error" : isFocused ? "border-primary" : "border-dark-border"}
+              bg-light-card dark:bg-dark-card
+              border-2 ${error ? "border-error" : success ? "border-success" : isFocused ? "border-primary" : "border-light-border dark:border-dark-border"}
               rounded-lg
-              text-white text-base
-              placeholder-transparent
-              focus:outline-none
-              transition-all duration-200 ease-smooth
-              disabled:opacity-50 disabled:cursor-not-allowed
+              text-text-primary text-base
+              placeholder-text-muted/50
+              focus:outline-none focus:ring-2 ${error ? "focus:ring-error/30" : success ? "focus:ring-success/30" : "focus:ring-primary/30"} focus:ring-offset-1 focus:ring-offset-light-bg dark:focus:ring-offset-dark-bg
+              transition-all duration-200 ease-out
+              transform-gpu
+              ${isFocused ? "scale-[1.01] shadow-sm" : ""}
+              disabled:bg-light-hover dark:disabled:bg-dark-hover disabled:opacity-60 disabled:cursor-not-allowed
               min-h-[56px]
               caret-primary
-              autofill:bg-dark-card autofill:text-white
+              autofill:bg-light-card dark:autofill:bg-dark-card autofill:text-text-primary
               ${isPassword && showPasswordToggle !== false ? "pr-12" : ""}
               ${className}
             `}
             style={{
-              colorScheme: 'dark',
-              WebkitTextFillColor: value ? '#FFFFFF' : undefined,
+              colorScheme: isDarkMode ? "dark" : "light",
+              WebkitTextFillColor: value
+                ? isDarkMode
+                  ? "#FFFFFF"
+                  : "#111827"
+                : undefined,
             }}
             {...props}
           />
@@ -79,12 +105,14 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               className="
-                absolute right-3 top-1/2 -translate-y-1/2
-                p-2 rounded-lg
-                text-text-muted hover:text-white
-                hover:bg-dark-hover
-                transition-all duration-200
-                focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-dark-card
+                absolute right-2 top-1/2 -translate-y-1/2
+                min-w-[44px] min-h-[44px] flex items-center justify-center
+                rounded-lg
+                text-text-muted hover:text-text-primary
+                hover:bg-light-hover dark:hover:bg-dark-hover
+                transition-all duration-200 ease-out
+                transform-gpu active:scale-[0.92] active:transition-none
+                focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-light-card dark:focus-visible:ring-offset-dark-card
               "
               aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
             >
@@ -100,15 +128,6 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
               )}
             </button>
           )}
-
-          {/* Focus ring animation */}
-          <div
-            className={`
-              absolute inset-0 rounded-lg pointer-events-none
-              transition-all duration-300
-              ${isFocused ? "ring-4 ring-primary/20" : ""}
-            `}
-          />
         </div>
 
         {/* Error message with animation */}
@@ -121,8 +140,18 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           </p>
         )}
 
+        {/* Success indicator */}
+        {success && !error && (
+          <p className="mt-2 text-sm text-success flex items-center gap-1.5 animate-fade-in">
+            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            Valide
+          </p>
+        )}
+
         {/* Helper text */}
-        {helperText && !error && (
+        {helperText && !error && !success && (
           <p className="mt-2 text-sm text-text-muted">{helperText}</p>
         )}
       </div>

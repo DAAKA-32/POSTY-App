@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
-import toast from "react-hot-toast";
+import toast from "@/components/ui/Toast";
 
 interface DeleteWithUndoOptions<T> {
   /** Duration in ms before permanent deletion (default: 5000) */
@@ -42,49 +42,32 @@ export function useDeleteWithUndo<T extends { id: string }>({
       // Immediately mark as deleted in UI
       setDeletedIds((prev) => new Set(prev).add(itemId));
 
-      // Create custom toast with undo button
-      const toastId = toast(
-        (t) => (
-          <div className="flex items-center gap-3">
-            <span className="text-sm">{toastMessage}</span>
-            <button
-              onClick={() => {
-                // Cancel deletion
-                const pending = pendingRef.current.get(itemId);
-                if (pending) {
-                  clearTimeout(pending.timeoutId);
-                  pendingRef.current.delete(itemId);
-                  setPendingDeletes(new Map(pendingRef.current));
-                }
+      // Create toast with undo action
+      const toastId = toast.info(toastMessage, {
+        duration: undoDuration,
+        action: {
+          label: undoText,
+          onClick: () => {
+            // Cancel deletion
+            const pending = pendingRef.current.get(itemId);
+            if (pending) {
+              clearTimeout(pending.timeoutId);
+              pendingRef.current.delete(itemId);
+              setPendingDeletes(new Map(pendingRef.current));
+            }
 
-                // Restore in UI
-                setDeletedIds((prev) => {
-                  const next = new Set(prev);
-                  next.delete(itemId);
-                  return next;
-                });
+            // Restore in UI
+            setDeletedIds((prev) => {
+              const next = new Set(prev);
+              next.delete(itemId);
+              return next;
+            });
 
-                // Call onUndo callback
-                onUndo?.(item);
-
-                // Dismiss toast
-                toast.dismiss(t.id);
-              }}
-              className="px-2.5 py-1 text-sm font-medium text-primary hover:text-primary-hover bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors"
-            >
-              {undoText}
-            </button>
-          </div>
-        ),
-        {
-          duration: undoDuration,
-          style: {
-            background: "#1a1a1a",
-            color: "#fff",
-            border: "1px solid #2a2a2a",
+            // Call onUndo callback
+            onUndo?.(item);
           },
-        }
-      );
+        },
+      });
 
       // Schedule actual deletion
       const timeoutId = setTimeout(async () => {

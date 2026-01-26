@@ -1,11 +1,13 @@
 "use client";
 
-import { memo, useState, useCallback } from "react";
+import { memo, useState, useCallback, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Post } from "@/types";
 import DropdownMenu from "@/components/ui/DropdownMenu";
 import { useHapticFeedback } from "@/hooks/useHapticFeedback";
 import { useSmartCentering } from "@/hooks/useSmartCentering";
+import { useCanHover } from "@/hooks/useCanHover";
 
 interface ExpandableHistoryCardProps {
   post: Post;
@@ -22,6 +24,12 @@ interface ExpandableHistoryCardProps {
   onCopy: (content: string) => void;
   onPublishToLinkedIn: (content: string) => void;
   onDelete: () => void;
+  /** Whether this card is keyboard-focused */
+  isKeyboardFocused?: boolean;
+  /** External control for expanded state */
+  isExpanded?: boolean;
+  /** Callback when expand state changes */
+  onExpandChange?: (expanded: boolean) => void;
 }
 
 /**
@@ -40,10 +48,67 @@ const ExpandableHistoryCard = memo(function ExpandableHistoryCard({
   menuItems,
   onCopy,
   onPublishToLinkedIn,
+  isKeyboardFocused = false,
+  isExpanded: controlledExpanded,
+  onExpandChange,
 }: ExpandableHistoryCardProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  // Support both controlled and uncontrolled expand state
+  const [internalExpanded, setInternalExpanded] = useState(false);
+  const isExpanded = controlledExpanded !== undefined ? controlledExpanded : internalExpanded;
   const [showHighlight, setShowHighlight] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+  const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0, width: 0 });
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
   const { trigger: triggerHaptic } = useHapticFeedback();
+  const canHover = useCanHover();
+
+  // Check if mounted for portal
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Calculate tooltip position when showing preview
+  const updateTooltipPosition = useCallback(() => {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const tooltipHeight = 140; // Approximate height
+    const padding = 8;
+
+    // Check if tooltip would go below viewport
+    const spaceBelow = viewportHeight - rect.bottom;
+    const showAbove = spaceBelow < tooltipHeight + padding;
+
+    setTooltipPosition({
+      top: showAbove ? rect.top - tooltipHeight - padding : rect.bottom + padding,
+      left: rect.left + 16,
+      width: rect.width - 32,
+    });
+  }, []);
+
+  // Handle hover preview (desktop only)
+  const handleMouseEnter = useCallback(() => {
+    if (!canHover || isExpanded) return;
+    hoverTimeoutRef.current = setTimeout(() => {
+      updateTooltipPosition();
+      setShowPreview(true);
+    }, 400); // 400ms delay to avoid flickering
+  }, [canHover, isExpanded, updateTooltipPosition]);
+
+  const handleMouseLeave = useCallback(() => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+    setShowPreview(false);
+  }, []);
+
+  // Generate preview snippet (first 150 chars)
+  const previewSnippet = content.length > 150
+    ? content.substring(0, 150).trim() + "..."
+    : content;
 
   // Handle highlight animation after centering
   const handleCenterComplete = useCallback(() => {
@@ -64,11 +129,14 @@ const ExpandableHistoryCard = memo(function ExpandableHistoryCard({
 
   const toggleExpand = () => {
     triggerHaptic("light");
-    if (!isExpanded) {
-      setIsExpanded(true);
+    const newExpanded = !isExpanded;
+    if (onExpandChange) {
+      onExpandChange(newExpanded);
     } else {
+      setInternalExpanded(newExpanded);
+    }
+    if (!newExpanded) {
       setShowHighlight(false);
-      setIsExpanded(false);
     }
   };
 
@@ -95,9 +163,57 @@ const ExpandableHistoryCard = memo(function ExpandableHistoryCard({
     },
   };
 
+  // Merge refs for both smart centering and card position
+  const setRefs = useCallback((node: HTMLDivElement | null) => {
+    // Set both refs
+    (elementRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+    (cardRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+  }, [elementRef]);
+
+  // Render preview tooltip in portal to avoid layout shift
+  const renderPreviewTooltip = () => {
+    if (!isMounted || !showPreview || isExpanded || !canHover) return null;
+
+    return createPortal(
+      <AnimatePresence>
+        {showPreview && (
+          <motion.div
+            initial={{ opacity: 0, y: 8, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 4, scale: 0.98 }}
+            transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
+            style={{
+              position: "fixed",
+              top: tooltipPosition.top,
+              left: tooltipPosition.left,
+              width: tooltipPosition.width,
+              zIndex: 9999,
+            }}
+            className="
+              p-4 bg-white dark:bg-dark-elevated border border-gray-200 dark:border-dark-border
+              rounded-xl shadow-2xl shadow-black/20 dark:shadow-black/40
+              pointer-events-none
+            "
+          >
+            <p className="text-sm text-text-secondary leading-relaxed line-clamp-4">
+              {previewSnippet}
+            </p>
+            <div className="mt-2 pt-2 border-t border-gray-200 dark:border-dark-border flex items-center gap-2 text-xs text-text-muted">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              <span>Cliquez pour développer</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>,
+      document.body
+    );
+  };
+
   return (
     <motion.div
-      ref={elementRef}
+      ref={setRefs}
       layout
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -112,6 +228,8 @@ const ExpandableHistoryCard = memo(function ExpandableHistoryCard({
         opacity: { duration: 0.2 },
       }}
       className="group relative"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       {/* Highlight flash overlay - appears after scroll centering */}
       <AnimatePresence>
@@ -123,14 +241,17 @@ const ExpandableHistoryCard = memo(function ExpandableHistoryCard({
             transition={{ duration: 0.3, ease: "easeOut" }}
             className="
               absolute inset-0 -m-1 rounded-xl pointer-events-none z-10
-              bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10
-              ring-2 ring-primary/30 ring-offset-2 ring-offset-dark-bg
+              bg-gradient-to-r from-violet-500/10 via-purple-500/5 to-violet-500/10
+              ring-2 ring-violet-500/40 ring-offset-2 ring-offset-white dark:ring-offset-dark-bg
             "
           />
         )}
       </AnimatePresence>
 
-      {/* Active reading indicator - left border */}
+      {/* Quick preview tooltip - rendered in portal to avoid layout shift */}
+      {renderPreviewTooltip()}
+
+      {/* Active reading indicator - left border with vibrant gradient */}
       <motion.div
         initial={false}
         animate={{
@@ -140,21 +261,23 @@ const ExpandableHistoryCard = memo(function ExpandableHistoryCard({
         transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
         className="
           absolute left-0 top-4 bottom-4 w-1
-          bg-gradient-to-b from-primary via-primary/80 to-primary/40
-          rounded-full shadow-glow
+          bg-gradient-to-b from-violet-500 via-purple-500 to-violet-400
+          rounded-full shadow-lg shadow-violet-500/30
           origin-top
         "
       />
 
       <div
         className={`
-          bg-dark-card border rounded-xl ml-2
+          bg-white dark:bg-dark-card border rounded-2xl ml-2
           transition-all duration-300 ease-out
+          transform-gpu will-change-transform
           ${isExpanded
-            ? "border-primary/40 shadow-xl shadow-primary/10 ring-1 ring-primary/20"
-            : "border-dark-border hover:border-dark-hover hover:bg-dark-elevated/30 hover:shadow-lg"
+            ? "border-violet-400/50 shadow-xl shadow-violet-500/15 ring-1 ring-violet-500/25"
+            : "border-gray-200/80 dark:border-dark-border/80 hover:border-violet-300 dark:hover:border-violet-500/40 hover:shadow-lg hover:shadow-violet-500/10"
           }
-          ${isCentering ? "ring-2 ring-primary/20" : ""}
+          ${isCentering ? "ring-2 ring-violet-500/25" : ""}
+          ${isKeyboardFocused && !isExpanded ? "ring-2 ring-blue-500/50 border-blue-400/40 bg-blue-50/50 dark:bg-blue-500/10" : ""}
         `}
       >
         {/* Header */}
@@ -177,12 +300,20 @@ const ExpandableHistoryCard = memo(function ExpandableHistoryCard({
               <div className="flex items-center gap-2 flex-wrap mb-1.5">
                 {post.isPinned && (
                   <motion.span
-                    initial={false}
-                    animate={{ scale: isExpanded ? 1.1 : 1 }}
-                    className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-accent/10 text-accent text-xs font-medium rounded"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{
+                      opacity: 1,
+                      scale: isExpanded ? 1.05 : 1,
+                    }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    className="inline-flex items-center gap-1.5 px-2 py-1 bg-accent/15 text-accent text-xs font-semibold rounded-md border border-accent/20 shadow-sm"
                   >
-                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                    <svg
+                      className="w-3.5 h-3.5"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M16 4a1 1 0 0 1 1 1v3.586l1.707 1.707a1 1 0 0 1 .293.707v2a1 1 0 0 1-1 1h-4v6a1 1 0 0 1-2 0v-6H8a1 1 0 0 1-1-1v-2a1 1 0 0 1 .293-.707L9 8.586V5a1 1 0 0 1 1-1h6z"/>
                     </svg>
                   </motion.span>
                 )}
@@ -196,8 +327,8 @@ const ExpandableHistoryCard = memo(function ExpandableHistoryCard({
                   text-sm md:text-base font-medium
                   transition-all duration-300
                   ${isExpanded
-                    ? "text-white"
-                    : "text-text-secondary group-hover:text-white"
+                    ? "text-gray-900 dark:text-white"
+                    : "text-text-secondary group-hover:text-gray-900 dark:group-hover:text-white"
                   }
                 `}
               >
@@ -213,8 +344,8 @@ const ExpandableHistoryCard = memo(function ExpandableHistoryCard({
                 shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg
                 transition-all duration-300
                 ${isExpanded
-                  ? "text-primary bg-primary/15 shadow-sm shadow-primary/20"
-                  : "text-text-muted group-hover:text-white group-hover:bg-dark-hover"
+                  ? "text-violet-600 dark:text-violet-400 bg-gradient-to-r from-violet-500/15 to-purple-500/15 shadow-sm shadow-violet-500/20"
+                  : "text-text-muted group-hover:text-violet-600 dark:group-hover:text-violet-400 group-hover:bg-violet-50 dark:group-hover:bg-violet-500/10"
                 }
               `}
             >
@@ -259,29 +390,32 @@ const ExpandableHistoryCard = memo(function ExpandableHistoryCard({
               className="overflow-hidden"
             >
               <div className="px-4 pb-4 md:px-5 md:pb-5 lg:px-6 lg:pb-6">
-                {/* Elegant divider with animated gradient */}
+                {/* Elegant divider with animated vibrant gradient */}
                 <div className="relative mb-4">
-                  <div className="border-t border-dark-border" />
+                  <div className="border-t border-gray-200 dark:border-dark-border" />
                   <motion.div
                     initial={{ scaleX: 0 }}
                     animate={{ scaleX: 1 }}
                     transition={{ duration: 0.4, delay: 0.1 }}
-                    className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent origin-center"
+                    className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500/50 to-transparent origin-center"
                   />
                 </div>
 
-                {/* Original prompt (if different from title) */}
+                {/* Original prompt (if different from title) - Premium design */}
                 {post.title && post.title !== post.prompt && (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.15, duration: 0.25 }}
-                    className="mb-4 p-3 bg-dark-elevated/50 rounded-lg border border-dark-border/50"
+                    className="mb-4 p-4 bg-gradient-to-br from-gray-50 to-gray-100/50 dark:from-dark-elevated/50 dark:to-dark-elevated/30 rounded-xl border border-gray-200/80 dark:border-dark-border/50"
                   >
-                    <span className="text-xs text-text-muted mb-1 block font-medium">
-                      Prompt original
-                    </span>
-                    <p className="text-sm text-text-secondary italic leading-relaxed">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-1 h-4 bg-gradient-to-b from-blue-500 via-cyan-500 to-blue-400 rounded-full" />
+                      <span className="text-xs text-blue-600 dark:text-blue-400 font-semibold uppercase tracking-wide">
+                        Prompt original
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-text-secondary italic leading-relaxed pl-3">
                       {post.prompt}
                     </p>
                   </motion.div>
@@ -296,7 +430,7 @@ const ExpandableHistoryCard = memo(function ExpandableHistoryCard({
                 >
                   <p
                     className="
-                      text-white text-sm md:text-base
+                      text-gray-900 dark:text-white text-sm md:text-base
                       leading-relaxed whitespace-pre-wrap
                     "
                   >
@@ -304,25 +438,31 @@ const ExpandableHistoryCard = memo(function ExpandableHistoryCard({
                   </p>
                 </motion.div>
 
-                {/* Actions footer with fade-in - min 44px touch targets */}
+                {/* Actions footer with fade-in - min 44px touch targets - Premium design */}
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.2, duration: 0.2 }}
-                  className="flex items-center gap-2 pt-3 border-t border-dark-border"
+                  className="flex items-center gap-2 pt-4 border-t border-gray-100 dark:border-dark-border/50"
                 >
                   {/* Copy */}
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={(e) => {
                       e.stopPropagation();
                       onCopy(content);
                     }}
                     className="
                       flex items-center gap-2 px-4 min-h-[44px]
-                      text-sm font-medium text-text-muted hover:text-white
-                      bg-dark-hover/50 hover:bg-dark-hover
-                      rounded-lg transition-all duration-200
-                      active:scale-95
+                      text-sm font-medium
+                      text-violet-600 dark:text-violet-400
+                      hover:text-violet-700 dark:hover:text-violet-300
+                      bg-violet-50 dark:bg-violet-500/10
+                      hover:bg-violet-100 dark:hover:bg-violet-500/15
+                      border border-violet-200 dark:border-violet-500/25
+                      rounded-xl transition-all duration-200 ease-out
+                      focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:ring-offset-1
                     "
                   >
                     <svg
@@ -339,20 +479,25 @@ const ExpandableHistoryCard = memo(function ExpandableHistoryCard({
                       />
                     </svg>
                     Copier
-                  </button>
+                  </motion.button>
 
                   {/* Publish to LinkedIn */}
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={(e) => {
                       e.stopPropagation();
                       onPublishToLinkedIn(content);
                     }}
                     className="
                       flex items-center gap-2 px-4 min-h-[44px]
-                      text-sm font-medium text-text-muted hover:text-[#0A66C2]
-                      hover:bg-[#0A66C2]/10
-                      rounded-lg transition-all duration-200
-                      active:scale-95
+                      text-sm font-medium
+                      text-[#0A66C2]
+                      bg-[#0A66C2]/5 dark:bg-[#0A66C2]/10
+                      hover:bg-[#0A66C2]/10 dark:hover:bg-[#0A66C2]/15
+                      border border-[#0A66C2]/20
+                      rounded-xl transition-all duration-200 ease-out
+                      focus-visible:ring-2 focus-visible:ring-[#0A66C2]/40 focus-visible:ring-offset-1
                     "
                   >
                     <svg
@@ -363,7 +508,7 @@ const ExpandableHistoryCard = memo(function ExpandableHistoryCard({
                       <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
                     </svg>
                     LinkedIn
-                  </button>
+                  </motion.button>
                 </motion.div>
               </div>
             </motion.div>

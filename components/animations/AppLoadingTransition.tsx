@@ -120,20 +120,10 @@ export function AppLoadingTransition({
                 {/* Logo image - no colored background */}
                 <div className="relative w-20 h-20 md:w-24 md:h-24 flex items-center justify-center">
                   <img
-                    src="/logo.png"
-                    alt="POSTY"
+                    src="/logo.jpg"
+                    alt="Posty Logo"
                     className="w-full h-full object-contain drop-shadow-2xl"
-                    onError={(e) => {
-                      e.currentTarget.style.display = "none";
-                      const sibling = e.currentTarget
-                        .nextElementSibling as HTMLElement | null;
-                      if (sibling) sibling.style.display = "flex";
-                    }}
                   />
-                  {/* Fallback */}
-                  <div className="hidden w-full h-full bg-gradient-to-br from-primary to-accent rounded-2xl items-center justify-center">
-                    <span className="text-white font-bold text-4xl">P</span>
-                  </div>
                 </div>
               </motion.div>
 

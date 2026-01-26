@@ -1,219 +1,189 @@
-import LegalLayoutLight from "@/components/layout/LegalLayoutLight";
+"use client";
 
-export const metadata = {
-  title: "Politique de confidentialite - POSTY",
-  description: "Politique de confidentialite et protection des donnees personnelles de POSTY",
-};
+import LegalLayoutLight from "@/components/layout/LegalLayoutLight";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function PrivacyPolicyPage() {
+  const { t, language } = useLanguage();
+  const privacy = t.legal.privacy;
+
   return (
-    <LegalLayoutLight title="Politique de confidentialite">
+    <LegalLayoutLight title={privacy.title}>
       <p className="text-gray-300 text-lg mb-8">
-        Derniere mise a jour : {new Date().toLocaleDateString("fr-FR")}
+        {t.legal.lastUpdated} {new Date().toLocaleDateString(language === "fr" ? "fr-FR" : "en-US")}
       </p>
 
+      {/* Section 1 */}
       <section className="mb-8">
-        <h2 className="text-xl font-semibold text-white mb-4">1. Introduction</h2>
-        <p className="text-gray-300 mb-4">
-          Bienvenue sur POSTY. Nous accordons une grande importance a la protection de vos donnees
-          personnelles et au respect de votre vie privee. Cette politique de confidentialite explique
-          comment nous collectons, utilisons, stockons et protegeons vos informations personnelles
-          conformement au Reglement General sur la Protection des Donnees (RGPD) et a la loi
-          Informatique et Libertes.
-        </p>
-        <p className="text-gray-300">
-          En utilisant notre application, vous acceptez les pratiques decrites dans cette politique.
-        </p>
+        <h2 className="text-xl font-semibold text-white mb-4">{privacy.section1.title}</h2>
+        <p className="text-gray-300 mb-4">{privacy.section1.content1}</p>
+        <p className="text-gray-300">{privacy.section1.content2}</p>
       </section>
 
+      {/* Section 2 */}
       <section className="mb-8">
-        <h2 className="text-xl font-semibold text-white mb-4">2. Responsable du traitement</h2>
+        <h2 className="text-xl font-semibold text-white mb-4">{privacy.section2.title}</h2>
         <div className="bg-dark-card border border-dark-border rounded-lg p-4 text-gray-300">
-          <p><strong className="text-white">POSTY</strong></p>
-          <p>Email : contact@posty.app</p>
-          <p>Contact RGPD : privacy@posty.app</p>
+          <p><strong className="text-white">{privacy.section2.companyName}</strong></p>
+          <p>{privacy.section2.email}</p>
+          <p>{privacy.section2.gdprContact}</p>
         </div>
       </section>
 
+      {/* Section 3 */}
       <section className="mb-8">
-        <h2 className="text-xl font-semibold text-white mb-4">3. Donnees collectees</h2>
-        <p className="text-gray-300 mb-4">Nous collectons les categories de donnees suivantes :</p>
+        <h2 className="text-xl font-semibold text-white mb-4">{privacy.section3.title}</h2>
+        <p className="text-gray-300 mb-4">{privacy.section3.intro}</p>
 
-        <h3 className="text-lg font-medium text-white mb-2">3.1 Donnees d&apos;identification</h3>
+        <h3 className="text-lg font-medium text-white mb-2">{privacy.section3.identification.title}</h3>
         <ul className="list-disc list-inside text-gray-300 mb-4 space-y-1">
-          <li>Nom et prenom</li>
-          <li>Adresse email</li>
-          <li>Photo de profil (si fournie via Google)</li>
+          {privacy.section3.identification.items.map((item, i) => (
+            <li key={i}>{item}</li>
+          ))}
         </ul>
 
-        <h3 className="text-lg font-medium text-white mb-2">3.2 Donnees de profil professionnel</h3>
+        <h3 className="text-lg font-medium text-white mb-2">{privacy.section3.profile.title}</h3>
         <ul className="list-disc list-inside text-gray-300 mb-4 space-y-1">
-          <li>Secteur d&apos;activite</li>
-          <li>Role / Metier</li>
-          <li>Style LinkedIn prefere</li>
-          <li>Objectifs professionnels</li>
+          {privacy.section3.profile.items.map((item, i) => (
+            <li key={i}>{item}</li>
+          ))}
         </ul>
 
-        <h3 className="text-lg font-medium text-white mb-2">3.3 Donnees d&apos;utilisation</h3>
+        <h3 className="text-lg font-medium text-white mb-2">{privacy.section3.usage.title}</h3>
         <ul className="list-disc list-inside text-gray-300 mb-4 space-y-1">
-          <li>Historique des posts generes</li>
-          <li>Prompts saisis</li>
-          <li>Preferences de contenu</li>
+          {privacy.section3.usage.items.map((item, i) => (
+            <li key={i}>{item}</li>
+          ))}
         </ul>
 
-        <h3 className="text-lg font-medium text-white mb-2">3.4 Donnees techniques</h3>
+        <h3 className="text-lg font-medium text-white mb-2">{privacy.section3.technical.title}</h3>
         <ul className="list-disc list-inside text-gray-300 space-y-1">
-          <li>Adresse IP</li>
-          <li>Type de navigateur</li>
-          <li>Donnees de connexion</li>
+          {privacy.section3.technical.items.map((item, i) => (
+            <li key={i}>{item}</li>
+          ))}
         </ul>
       </section>
 
+      {/* Section 4 */}
       <section className="mb-8">
-        <h2 className="text-xl font-semibold text-white mb-4">4. Finalites du traitement</h2>
-        <p className="text-gray-300 mb-4">Vos donnees sont utilisees pour :</p>
+        <h2 className="text-xl font-semibold text-white mb-4">{privacy.section4.title}</h2>
+        <p className="text-gray-300 mb-4">{privacy.section4.intro}</p>
         <ul className="list-disc list-inside text-gray-300 space-y-2">
-          <li><strong className="text-white">Fournir le service :</strong> Generation de posts LinkedIn personnalises</li>
-          <li><strong className="text-white">Personnalisation :</strong> Adapter le contenu a votre profil et preferences</li>
-          <li><strong className="text-white">Amelioration du service :</strong> Analyser l&apos;utilisation pour ameliorer l&apos;experience</li>
-          <li><strong className="text-white">Communication :</strong> Vous informer des mises a jour importantes</li>
-          <li><strong className="text-white">Securite :</strong> Proteger votre compte et prevenir les fraudes</li>
+          {privacy.section4.purposes.map((purpose, i) => (
+            <li key={i}>
+              <strong className="text-white">{purpose.label}</strong> {purpose.desc}
+            </li>
+          ))}
         </ul>
       </section>
 
+      {/* Section 5 */}
       <section className="mb-8">
-        <h2 className="text-xl font-semibold text-white mb-4">5. Base legale du traitement</h2>
-        <p className="text-gray-300 mb-4">Nous traitons vos donnees sur les bases legales suivantes :</p>
+        <h2 className="text-xl font-semibold text-white mb-4">{privacy.section5.title}</h2>
+        <p className="text-gray-300 mb-4">{privacy.section5.intro}</p>
         <ul className="list-disc list-inside text-gray-300 space-y-2">
-          <li><strong className="text-white">Consentement :</strong> Pour la collecte de donnees de profil et l&apos;envoi de communications marketing</li>
-          <li><strong className="text-white">Execution du contrat :</strong> Pour fournir les services de generation de contenu</li>
-          <li><strong className="text-white">Interet legitime :</strong> Pour ameliorer nos services et assurer la securite</li>
-          <li><strong className="text-white">Obligation legale :</strong> Pour respecter nos obligations reglementaires</li>
+          {privacy.section5.bases.map((basis, i) => (
+            <li key={i}>
+              <strong className="text-white">{basis.label}</strong> {basis.desc}
+            </li>
+          ))}
         </ul>
       </section>
 
+      {/* Section 6 */}
       <section className="mb-8">
-        <h2 className="text-xl font-semibold text-white mb-4">6. Partage des donnees</h2>
-        <p className="text-gray-300 mb-4">
-          Vos donnees peuvent etre partagees avec :
-        </p>
+        <h2 className="text-xl font-semibold text-white mb-4">{privacy.section6.title}</h2>
+        <p className="text-gray-300 mb-4">{privacy.section6.intro}</p>
         <ul className="list-disc list-inside text-gray-300 space-y-2">
-          <li><strong className="text-white">Firebase (Google) :</strong> Hebergement et authentification</li>
-          <li><strong className="text-white">OpenAI / Anthropic :</strong> Generation de contenu IA (donnees anonymisees)</li>
+          {privacy.section6.partners.map((partner, i) => (
+            <li key={i}>
+              <strong className="text-white">{partner.name}</strong> {partner.desc}
+            </li>
+          ))}
         </ul>
-        <p className="text-gray-300 mt-4">
-          Nous ne vendons jamais vos donnees personnelles a des tiers. Tout partage est encadre
-          par des contrats garantissant la protection de vos donnees.
-        </p>
+        <p className="text-gray-300 mt-4">{privacy.section6.noSale}</p>
       </section>
 
+      {/* Section 7 */}
       <section className="mb-8">
-        <h2 className="text-xl font-semibold text-white mb-4">7. Duree de conservation</h2>
-        <p className="text-gray-300 mb-4">Nous conservons vos donnees selon les durees suivantes :</p>
+        <h2 className="text-xl font-semibold text-white mb-4">{privacy.section7.title}</h2>
+        <p className="text-gray-300 mb-4">{privacy.section7.intro}</p>
         <ul className="list-disc list-inside text-gray-300 space-y-2">
-          <li><strong className="text-white">Donnees de compte :</strong> Jusqu&apos;a la suppression de votre compte + 30 jours</li>
-          <li><strong className="text-white">Historique des posts :</strong> 2 ans apres la derniere activite</li>
-          <li><strong className="text-white">Donnees techniques :</strong> 12 mois</li>
-          <li><strong className="text-white">Donnees de facturation :</strong> 10 ans (obligation legale)</li>
+          {privacy.section7.periods.map((period, i) => (
+            <li key={i}>
+              <strong className="text-white">{period.label}</strong> {period.duration}
+            </li>
+          ))}
         </ul>
       </section>
 
+      {/* Section 8 */}
       <section className="mb-8">
-        <h2 className="text-xl font-semibold text-white mb-4">8. Vos droits RGPD</h2>
-        <p className="text-gray-300 mb-4">
-          Conformement au RGPD, vous disposez des droits suivants :
-        </p>
+        <h2 className="text-xl font-semibold text-white mb-4">{privacy.section8.title}</h2>
+        <p className="text-gray-300 mb-4">{privacy.section8.intro}</p>
         <div className="grid gap-4 md:grid-cols-2">
-          <div className="bg-dark-card border border-dark-border rounded-lg p-4">
-            <h3 className="font-medium text-white mb-2">Droit d&apos;acces</h3>
-            <p className="text-gray-400 text-sm">Obtenir une copie de vos donnees personnelles</p>
-          </div>
-          <div className="bg-dark-card border border-dark-border rounded-lg p-4">
-            <h3 className="font-medium text-white mb-2">Droit de rectification</h3>
-            <p className="text-gray-400 text-sm">Corriger vos donnees inexactes ou incompletes</p>
-          </div>
-          <div className="bg-dark-card border border-dark-border rounded-lg p-4">
-            <h3 className="font-medium text-white mb-2">Droit a l&apos;effacement</h3>
-            <p className="text-gray-400 text-sm">Demander la suppression de vos donnees</p>
-          </div>
-          <div className="bg-dark-card border border-dark-border rounded-lg p-4">
-            <h3 className="font-medium text-white mb-2">Droit a la portabilite</h3>
-            <p className="text-gray-400 text-sm">Recevoir vos donnees dans un format structure</p>
-          </div>
-          <div className="bg-dark-card border border-dark-border rounded-lg p-4">
-            <h3 className="font-medium text-white mb-2">Droit d&apos;opposition</h3>
-            <p className="text-gray-400 text-sm">Vous opposer a certains traitements</p>
-          </div>
-          <div className="bg-dark-card border border-dark-border rounded-lg p-4">
-            <h3 className="font-medium text-white mb-2">Droit de limitation</h3>
-            <p className="text-gray-400 text-sm">Limiter le traitement de vos donnees</p>
-          </div>
+          {privacy.section8.rights.map((right, i) => (
+            <div key={i} className="bg-dark-card border border-dark-border rounded-lg p-4">
+              <h3 className="font-medium text-white mb-2">{right.title}</h3>
+              <p className="text-gray-400 text-sm">{right.desc}</p>
+            </div>
+          ))}
         </div>
-        <p className="text-gray-300 mt-4">
-          Pour exercer ces droits, rendez-vous dans les <strong className="text-white">Parametres de confidentialite</strong> de
-          l&apos;application ou contactez-nous a : <span className="text-primary">privacy@posty.app</span>
-        </p>
+        <p className="text-gray-300 mt-4">{privacy.section8.exercise}</p>
       </section>
 
+      {/* Section 9 */}
       <section className="mb-8">
-        <h2 className="text-xl font-semibold text-white mb-4">9. Securite des donnees</h2>
-        <p className="text-gray-300 mb-4">
-          Nous mettons en oeuvre des mesures de securite appropriees pour proteger vos donnees :
-        </p>
+        <h2 className="text-xl font-semibold text-white mb-4">{privacy.section9.title}</h2>
+        <p className="text-gray-300 mb-4">{privacy.section9.intro}</p>
         <ul className="list-disc list-inside text-gray-300 space-y-1">
-          <li>Chiffrement des donnees en transit (HTTPS/TLS)</li>
-          <li>Chiffrement des donnees au repos</li>
-          <li>Authentification securisee</li>
-          <li>Acces restreint aux donnees personnelles</li>
-          <li>Surveillance et detection des intrusions</li>
+          {privacy.section9.measures.map((measure, i) => (
+            <li key={i}>{measure}</li>
+          ))}
         </ul>
       </section>
 
+      {/* Section 10 */}
       <section className="mb-8">
-        <h2 className="text-xl font-semibold text-white mb-4">10. Cookies et traceurs</h2>
-        <p className="text-gray-300 mb-4">
-          Notre application utilise des cookies essentiels pour le fonctionnement du service.
-          Pour les cookies non essentiels (analytics), nous demandons votre consentement explicite.
-        </p>
+        <h2 className="text-xl font-semibold text-white mb-4">{privacy.section10.title}</h2>
+        <p className="text-gray-300">{privacy.section10.content}</p>
       </section>
 
+      {/* Section 11 */}
       <section className="mb-8">
-        <h2 className="text-xl font-semibold text-white mb-4">11. Transferts internationaux</h2>
-        <p className="text-gray-300">
-          Vos donnees peuvent etre transferees vers des serveurs situes en dehors de l&apos;UE
-          (notamment aux USA via Firebase/Google). Ces transferts sont encadres par des clauses
-          contractuelles types ou des decisions d&apos;adequation de la Commission europeenne.
-        </p>
+        <h2 className="text-xl font-semibold text-white mb-4">{privacy.section11.title}</h2>
+        <p className="text-gray-300">{privacy.section11.content}</p>
       </section>
 
+      {/* Section 12 */}
       <section className="mb-8">
-        <h2 className="text-xl font-semibold text-white mb-4">12. Modifications de cette politique</h2>
-        <p className="text-gray-300">
-          Nous pouvons mettre a jour cette politique de confidentialite. En cas de modification
-          substantielle, nous vous en informerons par email ou via l&apos;application. La date de
-          derniere mise a jour est indiquee en haut de cette page.
-        </p>
+        <h2 className="text-xl font-semibold text-white mb-4">{privacy.section12.title}</h2>
+        <p className="text-gray-300">{privacy.section12.content}</p>
       </section>
 
+      {/* Section 13 */}
       <section className="mb-8">
-        <h2 className="text-xl font-semibold text-white mb-4">13. Reclamation</h2>
+        <h2 className="text-xl font-semibold text-white mb-4">{privacy.section13.title}</h2>
         <p className="text-gray-300">
-          Si vous estimez que vos droits ne sont pas respectes, vous pouvez introduire une
-          reclamation aupres de la CNIL (Commission Nationale de l&apos;Informatique et des Libertes) :
-          <a href="https://www.cnil.fr" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline ml-1">
-            www.cnil.fr
+          {privacy.section13.content}{" "}
+          <a
+            href="https://www.cnil.fr"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline ml-1"
+          >
+            {privacy.section13.cnilLink}
           </a>
         </p>
       </section>
 
+      {/* Section 14 */}
       <section>
-        <h2 className="text-xl font-semibold text-white mb-4">14. Contact</h2>
-        <p className="text-gray-300 mb-4">
-          Pour toute question concernant cette politique ou vos donnees personnelles :
-        </p>
+        <h2 className="text-xl font-semibold text-white mb-4">{privacy.section14.title}</h2>
+        <p className="text-gray-300 mb-4">{privacy.section14.intro}</p>
         <div className="bg-dark-card border border-dark-border rounded-lg p-4 text-gray-300">
-          <p>Email general : contact@posty.app</p>
-          <p>Email RGPD / DPO : privacy@posty.app</p>
+          <p>{privacy.section14.emailGeneral}</p>
+          <p>{privacy.section14.emailGDPR}</p>
         </div>
       </section>
     </LegalLayoutLight>

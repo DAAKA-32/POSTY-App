@@ -49,24 +49,26 @@ export interface StripePriceConfig {
 }
 
 export const STRIPE_PRICES: Record<string, StripePriceConfig> = {
+  // PRO plan - 12.90€/month
   pro_monthly: {
-    priceId: process.env.STRIPE_PRICE_PRO_MONTHLY || "",
-    amount: 999, // 9.99€ in cents
+    priceId: process.env.STRIPE_PRICE_PRO_MONTHLY || process.env.STRIPE_PRICE_STARTER_MONTHLY || "",
+    amount: 1290, // 12.90€ in cents
     interval: "monthly",
   },
   pro_yearly: {
-    priceId: process.env.STRIPE_PRICE_PRO_YEARLY || "",
-    amount: 9900, // 99€ in cents
+    priceId: process.env.STRIPE_PRICE_PRO_YEARLY || process.env.STRIPE_PRICE_STARTER_YEARLY || "",
+    amount: 12900, // 129€ in cents (-17%, soit 10.75€/mois)
     interval: "yearly",
   },
+  // MAX plan - 19.90€/month
   max_monthly: {
-    priceId: process.env.STRIPE_PRICE_MAX_MONTHLY || "",
-    amount: 1999, // 19.99€ in cents
+    priceId: process.env.STRIPE_PRICE_MAX_MONTHLY || process.env.STRIPE_PRICE_PRO_MONTHLY || "",
+    amount: 1990, // 19.90€ in cents
     interval: "monthly",
   },
   max_yearly: {
-    priceId: process.env.STRIPE_PRICE_MAX_YEARLY || "",
-    amount: 19900, // 199€ in cents
+    priceId: process.env.STRIPE_PRICE_MAX_YEARLY || process.env.STRIPE_PRICE_PRO_YEARLY || "",
+    amount: 19900, // 199€ in cents (-17%, soit 16.58€/mois)
     interval: "yearly",
   },
 };

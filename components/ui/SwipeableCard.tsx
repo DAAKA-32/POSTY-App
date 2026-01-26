@@ -103,15 +103,12 @@ export default function SwipeableCard({
               <svg
                 className="w-5 h-5 text-white"
                 fill={isPinned ? "none" : "currentColor"}
-                stroke="currentColor"
+                stroke={isPinned ? "currentColor" : "none"}
+                strokeWidth={isPinned ? 2 : 0}
                 viewBox="0 0 24 24"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-                />
+                <path d="M16 4a1 1 0 0 1 1 1v3.586l1.707 1.707a1 1 0 0 1 .293.707v2a1 1 0 0 1-1 1h-4v6a1 1 0 0 1-2 0v-6H8a1 1 0 0 1-1-1v-2a1 1 0 0 1 .293-.707L9 8.586V5a1 1 0 0 1 1-1h6z"/>
+                {isPinned && <path strokeLinecap="round" d="M4 4l16 16"/>}
               </svg>
               <span className="text-white text-xs font-medium">
                 {isPinned ? "Retirer" : "Epingler"}

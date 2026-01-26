@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { Post } from "@/types";
 import { pinPost, deletePost, renamePost } from "@/lib/firestore";
-import toast from "react-hot-toast";
+import toast from "@/components/ui/Toast";
 import { triggerHaptic } from "./useHapticFeedback";
 
 interface UseOptimisticPostsOptions {

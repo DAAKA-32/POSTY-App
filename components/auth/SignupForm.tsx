@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
@@ -23,7 +23,7 @@ function getPasswordStrength(password: string): {
   if (/[0-9]/.test(password)) score++;
   if (/[^A-Za-z0-9]/.test(password)) score++;
 
-  if (score <= 1) return { width: "w-1/5", color: "bg-error", label: "Tres faible", score };
+  if (score <= 1) return { width: "w-1/5", color: "bg-error", label: "Très faible", score };
   if (score === 2) return { width: "w-2/5", color: "bg-error", label: "Faible", score };
   if (score === 3) return { width: "w-3/5", color: "bg-warning", label: "Moyen", score };
   if (score === 4) return { width: "w-4/5", color: "bg-accent", label: "Bon", score };
@@ -33,7 +33,7 @@ function getPasswordStrength(password: string): {
 // Password criteria check
 function getPasswordCriteria(password: string) {
   return [
-    { met: password.length >= 8, label: "8 caracteres minimum" },
+    { met: password.length >= 8, label: "8 caractères minimum" },
     { met: /[A-Z]/.test(password), label: "Une majuscule" },
     { met: /[0-9]/.test(password), label: "Un chiffre" },
     { met: /[^A-Za-z0-9]/.test(password), label: "Un caractere special" },
@@ -46,7 +46,7 @@ const GradientOrbs = () => (
     <div
       className="absolute w-[400px] h-[400px] rounded-full blur-[100px] opacity-15 animate-float"
       style={{
-        background: "radial-gradient(circle, rgba(47, 128, 237, 0.5) 0%, transparent 70%)",
+        background: "radial-gradient(circle, rgba(232, 147, 77, 0.5) 0%, transparent 70%)",
         top: "-15%",
         left: "-5%",
       }}
@@ -54,7 +54,7 @@ const GradientOrbs = () => (
     <div
       className="absolute w-[300px] h-[300px] rounded-full blur-[80px] opacity-10 animate-float"
       style={{
-        background: "radial-gradient(circle, rgba(0, 209, 193, 0.4) 0%, transparent 70%)",
+        background: "radial-gradient(circle, rgba(248, 87, 81, 0.4) 0%, transparent 70%)",
         bottom: "-10%",
         right: "0%",
         animationDelay: "-3s",
@@ -86,38 +86,38 @@ const SocialProofBadge = () => (
 
 // Icons components
 const MailIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
   </svg>
 );
 
 const LockIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
   </svg>
 );
 
 const UserIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
   </svg>
 );
 
 const EyeIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
   </svg>
 );
 
 const EyeOffIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
   </svg>
 );
 
 const LoaderIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
-  <svg className={`${className} animate-spin`} fill="none" viewBox="0 0 24 24">
+  <svg className={`${className} animate-spin`} fill="none" viewBox="0 0 24 24" aria-hidden="true">
     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
   </svg>
@@ -155,7 +155,7 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
 
     // Validation
     if (password.length < 6) {
-      setError("Le mot de passe doit contenir au moins 6 caracteres");
+      setError("Le mot de passe doit contenir au moins 6 caractères");
       return;
     }
 
@@ -173,7 +173,7 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
         onSuccess?.();
       }, 500);
     } catch {
-      setError("Erreur lors de la creation du compte. Cet email est peut-etre deja utilise.");
+      setError("Erreur lors de la création du compte. Cet email est peut-être déjà utilisé.");
       // Shake animation on error
       const form = document.getElementById("signup-form");
       form?.classList.add("animate-shake");
@@ -192,7 +192,7 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
 
   // Input base styles with enhanced focus
   const inputBaseClass = `
-    w-full pl-10 pr-4 py-3
+    w-full pl-10 pr-4 py-3.5
     bg-white/[0.03] border border-white/[0.08]
     rounded-lg text-sm text-white
     placeholder:text-text-muted
@@ -212,7 +212,7 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
     <div
       className={`
         relative w-full max-w-sm mx-auto
-        transition-all duration-700 ease-out
+        transition-all duration-500 ease-out
         ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}
       `}
     >
@@ -220,17 +220,21 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
       <GradientOrbs />
 
       {/* Header with animation */}
-      <div className="text-center mb-4">
+      <div className="text-center mb-8">
         <div
           className={`
             inline-flex items-center justify-center w-16 h-16 mb-6
-            bg-gradient-to-br from-primary to-accent rounded-lg
+            rounded-xl overflow-hidden
             shadow-glow animate-logo-float
             transition-all duration-500 delay-100
             ${isVisible ? "opacity-100 scale-100" : "opacity-0 scale-75"}
           `}
         >
-          <span className="text-white font-bold text-2xl">P</span>
+          <img
+            src="/logo.jpg"
+            alt="Posty Logo"
+            className="w-full h-full object-contain"
+          />
         </div>
         <h1
           className={`
@@ -239,7 +243,7 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
             ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}
           `}
         >
-          Creer un compte
+          Créer un compte
         </h1>
         <p
           className={`
@@ -248,7 +252,7 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
             ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}
           `}
         >
-          Rejoignez POSTY et creez des posts percutants
+          Rejoignez POSTY et créez des posts percutants
         </p>
       </div>
 
@@ -257,18 +261,18 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
 
       {/* Success state */}
       {showSuccess && (
-        <div className="mb-4 p-3 bg-accent/10 border border-accent/30 rounded-lg text-accent text-sm flex items-center gap-2 animate-fade-in">
-          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="mb-4 p-3 bg-accent/10 border border-accent/30 rounded-lg text-accent text-sm flex items-center gap-2 animate-fade-in" role="status">
+          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
-          <span>Compte cree ! Redirection...</span>
+          <span>Compte créé ! Redirection...</span>
         </div>
       )}
 
       {/* Error message */}
       {error && (
-        <div className="mb-4 px-3 py-2.5 bg-error/10 border border-error/20 rounded-lg text-error text-xs flex items-center gap-2 animate-fade-in">
-          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="mb-4 px-3 py-2.5 bg-error/10 border border-error/20 rounded-lg text-error text-xs flex items-center gap-2 animate-fade-in" role="alert">
+          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <span>{error}</span>
@@ -280,8 +284,8 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
         id="signup-form"
         onSubmit={handleSubmit}
         className={`
-          space-y-3
-          transition-all duration-500 delay-600
+          space-y-5
+          transition-all duration-500 delay-300
           ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}
         `}
       >
@@ -343,6 +347,7 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-1 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] flex items-center justify-center text-text-muted hover:text-white transition-colors z-10"
+              aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
             >
               {showPassword ? <EyeOffIcon /> : <EyeIcon />}
             </button>
@@ -353,13 +358,13 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
 
           {/* Enhanced password strength indicator */}
           {password.length > 0 && (
-            <div className="mt-3 space-y-2 animate-fade-in">
+            <div className="mt-3.5 space-y-2 animate-fade-in">
               {/* Strength bar with gradient */}
               <div className="h-1.5 rounded-full bg-dark-border overflow-hidden">
                 <div
                   className={`h-full ${passwordStrength.width} ${passwordStrength.color} transition-all duration-500 ease-out`}
                   style={{
-                    boxShadow: passwordStrength.score >= 4 ? "0 0 8px rgba(0, 209, 193, 0.5)" : "none"
+                    boxShadow: passwordStrength.score >= 4 ? "0 0 8px rgba(248, 87, 81, 0.5)" : "none"
                   }}
                 />
               </div>
@@ -388,7 +393,7 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
                       criterion.met ? "bg-accent/20" : "bg-dark-border"
                     }`}>
                       {criterion.met ? (
-                        <svg className="w-2 h-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-2 h-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                         </svg>
                       ) : (
@@ -430,13 +435,13 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
           </div>
           <span className="text-[11px] text-text-muted leading-relaxed">
             J&apos;accepte les{" "}
-            <Link href="/legal/terms" className="text-primary hover:underline">
+            <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
               conditions d&apos;utilisation
-            </Link>{" "}
+            </a>{" "}
             et la{" "}
-            <Link href="/legal/privacy" className="text-primary hover:underline">
+            <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
               politique de confidentialite
-            </Link>
+            </a>
           </span>
         </label>
 
@@ -449,10 +454,9 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
             bg-gradient-to-r from-primary to-primary-light
             shadow-lg shadow-primary/25
             hover:shadow-xl hover:shadow-primary/40
-            hover:-translate-y-0.5 hover:scale-[1.02]
             active:scale-[0.98]
             transition-all duration-300
-            disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:scale-100
+            disabled:opacity-50 disabled:cursor-not-allowed
             overflow-hidden
             group
           "
@@ -466,16 +470,16 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
               Chargement...
             </span>
           ) : (
-            <span className="relative">Creer mon compte</span>
+            <span className="relative">Créer mon compte</span>
           )}
         </button>
 
         {/* RGPD notice */}
         <p className="text-[10px] text-text-muted text-center leading-relaxed">
-          Vos donnees sont traitees conformement au RGPD.{" "}
-          <Link href="/legal/privacy" className="text-primary hover:underline">
+          Vos données sont traitées conformément au RGPD.{" "}
+          <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
             En savoir plus
-          </Link>
+          </a>
         </p>
       </form>
 
@@ -483,7 +487,7 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
       <div
         className={`
           relative my-6
-          transition-all duration-500 delay-500
+          transition-all duration-500 delay-200
           ${isVisible ? "opacity-100" : "opacity-0"}
         `}
       >
@@ -498,7 +502,7 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
       {/* Google Sign Up */}
       <div
         className={`
-          transition-all duration-500 delay-600
+          transition-all duration-500 delay-300
           ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}
         `}
       >
@@ -509,11 +513,11 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
       <p
         className={`
           mt-6 text-center text-text-secondary text-sm
-          transition-all duration-500 delay-700
+          transition-all duration-500 delay-300
           ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}
         `}
       >
-        Deja un compte ?{" "}
+        Déjà un compte ?{" "}
         <Link
           href="/login"
           className="text-primary hover:text-primary-light font-medium transition-colors"
@@ -526,14 +530,14 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
       <div
         className={`
           mt-6 flex items-center justify-center gap-1.5 text-xs text-text-muted
-          transition-all duration-500 delay-800
+          transition-all duration-500 delay-300
           ${isVisible ? "opacity-100" : "opacity-0"}
         `}
       >
         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
         </svg>
-        <span>Donnees chiffrees & securisees</span>
+        <span>Données chiffrées & sécurisées</span>
       </div>
     </div>
   );

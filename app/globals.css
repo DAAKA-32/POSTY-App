@@ -2,6 +2,634 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============== IOS SAFE AREA UTILITIES ============== */
+/* Support for iPhone notch and status bar */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .pl-safe {
+    padding-left: env(safe-area-inset-left, 0px);
+  }
+
+  .pr-safe {
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+
+  .mt-safe {
+    margin-top: env(safe-area-inset-top, 0px);
+  }
+
+  .mb-safe {
+    margin-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* Combined padding utilities */
+  .p-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+
+  .px-safe {
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+
+  .py-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
+/* ============== IOS SAFARI SAFE AREA & BACKGROUND FIX ============== */
+/* Prevents violet/colored backgrounds in iOS Safari status bar and safe areas */
+/* Ensures consistent background color across all iOS Safari zones */
+
+html {
+  /* Extend background to cover all safe areas on iOS */
+  background-color: #FAFBFC;
+  /* Ensure the background extends behind the status bar */
+  -webkit-tap-highlight-color: transparent;
+}
+
+html.dark {
+  background-color: #0F1115;
+}
+
+body {
+  /* Ensure body background matches and covers safe areas */
+  background-color: #FAFBFC;
+  /* Prevent iOS Safari from applying default colors */
+  -webkit-text-size-adjust: 100%;
+}
+
+html.dark body {
+  background-color: #0F1115;
+}
+
+/* iOS Safari specific: Ensure safe areas use correct background */
+@supports (padding-top: env(safe-area-inset-top)) {
+  html::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: env(safe-area-inset-top, 0px);
+    background-color: inherit;
+    z-index: 9999;
+    pointer-events: none;
+  }
+
+  html::after {
+    content: "";
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: env(safe-area-inset-bottom, 0px);
+    background-color: inherit;
+    z-index: 9999;
+    pointer-events: none;
+  }
+}
+
+/* Prevent overscroll background color issues on iOS Safari */
+/* When user scrolls beyond content bounds, this ensures the correct background shows */
+html,
+body {
+  overscroll-behavior: none;
+  overscroll-behavior-y: none;
+  overscroll-behavior-x: none;
+}
+
+/* iOS Safari rubber-band scrolling fix */
+/* Ensures background color is visible during elastic scrolling */
+@supports (-webkit-touch-callout: none) {
+  html {
+    min-height: 100%;
+    min-height: -webkit-fill-available;
+    background-attachment: fixed;
+  }
+
+  body {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+  }
+}
+
+/* ============== DYNAMIC VIEWPORT HEIGHT (DVH) SUPPORT ============== */
+/* Fallback for browsers that don't support dvh units */
+/* dvh = dynamic viewport height, accounts for mobile browser chrome */
+
+/* Login/Signup page specific - no scroll, full viewport */
+.h-\[100dvh\] {
+  height: 100vh; /* Fallback */
+  height: 100dvh; /* Modern browsers */
+}
+
+@supports (height: 100dvh) {
+  .h-\[100dvh\] {
+    height: 100dvh;
+  }
+}
+
+/* iOS Safari specific fix for 100dvh */
+@supports (-webkit-touch-callout: none) {
+  .h-\[100dvh\] {
+    height: -webkit-fill-available;
+  }
+}
+
+/* ============== TOUCH BOUNCE / PULL-TO-REFRESH PREVENTION ============== */
+/* Use these classes on pages where scrolling should be completely disabled */
+/* Prevents: pull-to-refresh, elastic bounce, overscroll stretch */
+
+/* No bounce - prevents elastic scrolling on touch devices */
+.no-bounce {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+  overscroll-behavior-y: none;
+  -webkit-overflow-scrolling: auto;
+  touch-action: none;
+}
+
+/* Touch fixed - alternative approach for fixed pages */
+.touch-fixed {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  overscroll-behavior: contain;
+  touch-action: pan-x pan-y;
+}
+
+/* No pull-to-refresh - specifically blocks pull-to-refresh gesture */
+.no-pull-refresh {
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: auto;
+}
+
+/* Full page container that prevents all unwanted touch behaviors */
+.page-fixed {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* iOS Safari specific: Prevent rubber-band effect on fixed pages */
+@supports (-webkit-touch-callout: none) {
+  .no-bounce,
+  .touch-fixed,
+  .page-fixed {
+    -webkit-overflow-scrolling: auto;
+    height: -webkit-fill-available;
+  }
+
+  /* Body class to apply when a fixed page is active */
+  body.no-scroll {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+}
+
+/* Android Chrome: Prevent pull-to-refresh */
+@media (pointer: coarse) {
+  .no-bounce,
+  .no-pull-refresh {
+    overscroll-behavior-y: none;
+  }
+}
+
+/* ============== PWA MOBILE SCROLL MANAGEMENT ============== */
+/*
+ * Native-app-like scroll behavior for PWA on mobile:
+ * - Body never scrolls (fixed viewport)
+ * - Only central content area can scroll
+ * - Scroll disabled when no content present
+ * - Fixed navbar and input bar always visible
+ */
+
+/* PWA App Container - fixed viewport shell */
+.pwa-app-shell {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* PWA Content Area - scrollable only when needed */
+.pwa-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* No scroll state - when there's no content */
+.pwa-scroll-area.no-content-scroll {
+  overflow: hidden;
+  overflow-y: hidden;
+}
+
+/* PWA Fixed Elements */
+.pwa-fixed-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 60;
+  flex-shrink: 0;
+}
+
+.pwa-fixed-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  flex-shrink: 0;
+}
+
+/* Mobile-only PWA scroll rules */
+@media (max-width: 1023px) {
+  /* Prevent body scroll on mobile PWA */
+  body.pwa-mobile {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    height: 100dvh;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
+  /* Main app layout container - fills viewport */
+  .pwa-mobile .app-layout {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Content wrapper between fixed header and footer */
+  .pwa-mobile .app-content-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0; /* Important: allows flex child to scroll */
+    overflow: hidden;
+  }
+
+  /* Scrollable content area */
+  .pwa-mobile .app-scroll-container {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+
+  /* Disable scroll when no content (welcome screen) */
+  .pwa-mobile .app-scroll-container.scroll-disabled {
+    overflow: hidden !important;
+    overflow-y: hidden !important;
+  }
+}
+
+/* iOS Safari PWA specific fixes */
+@supports (-webkit-touch-callout: none) {
+  @media (max-width: 1023px) and (display-mode: standalone) {
+    body.pwa-mobile {
+      height: -webkit-fill-available;
+    }
+
+    .pwa-mobile .app-layout {
+      height: -webkit-fill-available;
+    }
+
+    .pwa-mobile .app-scroll-container {
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+}
+
+/* Standalone PWA mode detection */
+@media (display-mode: standalone) {
+  body {
+    /* Ensure no system scrollbars in PWA mode */
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+}
+
+/* ============== MOBILE BROWSER MODE ADJUSTMENTS ============== */
+/* These styles apply when NOT in PWA mode to handle browser UI */
+
+/* CSS Custom Properties for browser mode (set by JavaScript) */
+:root {
+  --browser-ui-height: 0px;
+  --input-bottom-padding: 0px;
+  --is-mobile-browser: 0;
+}
+
+/* Mobile browser specific styles (not PWA) */
+/* ============== MOBILE BROWSER INPUT HANDLING ============== */
+/* Handles the bottom input positioning for mobile browsers (not PWA) */
+/* Uses CSS variables set by useBrowserMode hook for dynamic adjustment */
+
+@media (max-width: 1023px) {
+  /* When NOT in standalone mode (i.e., in browser) */
+  @media not all and (display-mode: standalone) {
+    /* Extra bottom padding for input areas in mobile browsers */
+    .mobile-browser-input {
+      /* Smooth transition for padding changes */
+      transition: padding-bottom 0.2s ease-out;
+    }
+
+    /* Adjust scroll container padding for browser UI */
+    .app-scroll-container {
+      /* Add extra scroll space at bottom for browser UI */
+      scroll-padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--browser-ui-height, 50px));
+    }
+
+    /* Use dynamic viewport height for better mobile browser support */
+    .app-layout {
+      min-height: 100dvh;
+      min-height: -webkit-fill-available;
+    }
+
+    .app-content-wrapper {
+      min-height: 100dvh;
+      min-height: -webkit-fill-available;
+    }
+  }
+}
+
+/* iOS Safari bottom bar handling - uses data attribute for reliability */
+@supports (-webkit-touch-callout: none) {
+  @media (max-width: 1023px) {
+    @media not all and (display-mode: standalone) {
+      /* When in Safari browser (not PWA) */
+      body {
+        /* Use -webkit-fill-available for proper viewport sizing */
+        min-height: -webkit-fill-available;
+      }
+
+      /* Input container needs to be above Safari's bottom toolbar */
+      .input-area-container {
+        /* Ensure it sits above the Safari bottom bar */
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+      }
+
+      /* Mobile browser input - iOS Safari specific */
+      .mobile-browser-input {
+        /* iOS Safari: use CSS variable with fallback */
+        padding-bottom: calc(
+          env(safe-area-inset-bottom, 20px) +
+          var(--input-bottom-padding, 75px)
+        ) !important;
+      }
+
+      /* When keyboard is visible (focus within), reduce padding */
+      .mobile-browser-input:focus-within {
+        padding-bottom: max(env(safe-area-inset-bottom, 8px), 8px) !important;
+      }
+    }
+  }
+}
+
+/* Android Chrome/Firefox bottom bar handling */
+@media (max-width: 1023px) {
+  @media not all and (display-mode: standalone) {
+    /* When in Chrome/Firefox browser (not PWA) on Android */
+    @supports not (-webkit-touch-callout: none) {
+      .mobile-browser-input {
+        /* Android browsers: use CSS variable with fallback */
+        padding-bottom: calc(
+          env(safe-area-inset-bottom, 16px) +
+          var(--input-bottom-padding, 65px)
+        ) !important;
+      }
+
+      /* When keyboard is visible, reduce padding */
+      .mobile-browser-input:focus-within {
+        padding-bottom: max(env(safe-area-inset-bottom, 8px), 8px) !important;
+      }
+    }
+  }
+}
+
+/* ============== STABLE MOBILE VIEWPORT POSITIONING ============== */
+/* Ensures consistent vertical positioning across all mobile browsers and PWA */
+/* Uses dvh/svh units with fallbacks for maximum compatibility */
+
+:root {
+  /* Stable anchor point for welcome content - percentage from viewport top */
+  --welcome-anchor-top: 38%;
+  /* Safe area compensation */
+  --mobile-header-height: 56px;
+  /* Input area height estimation */
+  --mobile-input-height: 140px;
+  /* Viewport height with fallbacks */
+  --stable-vh: 100vh;
+}
+
+/* Modern browsers with dvh support */
+@supports (height: 100dvh) {
+  :root {
+    --stable-vh: 100dvh;
+  }
+}
+
+/* iOS Safari specific */
+@supports (-webkit-touch-callout: none) {
+  :root {
+    --stable-vh: -webkit-fill-available;
+  }
+}
+
+/* Welcome screen container - stable positioning */
+.welcome-screen-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  min-height: 100%;
+  /* Desktop: Use padding-top for stable vertical anchor */
+  padding-top: calc(var(--welcome-anchor-top) - 120px);
+  padding-bottom: 20px;
+  box-sizing: border-box;
+}
+
+/* Mobile-specific: True vertical centering with flex */
+@media (max-width: 1023px) {
+  .welcome-screen-container {
+    /* True vertical centering on mobile */
+    justify-content: center;
+    padding-top: 0;
+    padding-bottom: 0;
+    /* Full available height for perfect centering */
+    min-height: 100%;
+    height: 100%;
+    /* No offset - pure center */
+    margin-top: 0;
+  }
+
+  /* Small phones (iPhone SE, etc.) */
+  @media (max-height: 700px) {
+    .welcome-screen-container {
+      margin-top: 0;
+    }
+  }
+
+  /* Very small phones or landscape - no centering, stack from top */
+  @media (max-height: 550px) {
+    .welcome-screen-container {
+      justify-content: flex-start;
+      padding-top: 16px;
+      margin-top: 0;
+      min-height: auto;
+    }
+  }
+}
+
+/* PWA mode - adjust for no browser chrome */
+@media (display-mode: standalone) {
+  @media (max-width: 1023px) {
+    .welcome-screen-container {
+      /* PWA has more vertical space */
+      min-height: calc(var(--stable-vh) - var(--mobile-header-height) - var(--mobile-input-height) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    }
+  }
+}
+
+/* Infinite scroll container - stable positioning */
+.infinite-scroll-stable {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Prevent CLS during template loading */
+.template-section {
+  min-height: 80px;
+  contain: layout style;
+}
+
+/* ============== SMOOTH SCROLL BEHAVIOR ============== */
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* ============== CORE WEB VITALS OPTIMIZATIONS ============== */
+
+/* CLS Prevention: Ensure images don't cause layout shifts */
+img,
+video {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Reserve space for images with aspect ratios */
+.aspect-square { aspect-ratio: 1 / 1; }
+.aspect-video { aspect-ratio: 16 / 9; }
+.aspect-logo { aspect-ratio: 1 / 1; }
+
+/* Font loading optimization - prevent FOIT/FOUT */
+.font-loading {
+  font-display: swap;
+}
+
+/* Prevent content jumps during hydration */
+[data-loading="true"] {
+  visibility: hidden;
+}
+
+/* Optimize paint containment for performance */
+.contain-paint {
+  contain: paint;
+}
+
+.contain-layout {
+  contain: layout;
+}
+
+/* GPU acceleration for animations */
+.will-change-transform {
+  will-change: transform;
+}
+
+.will-change-opacity {
+  will-change: opacity;
+}
+
+/* Reduce motion for accessibility and performance */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* ============== POSTY DESIGN SYSTEM - POPPINS TYPOGRAPHY ============== */
 
 :root {
@@ -59,28 +687,140 @@
   --tracking-normal: 0;
   --tracking-wide: 0.01em;
 
-  /* Core Colors - Option A: Évolution Subtile */
-  --background: #0B0E11;
-  --foreground: #F8FAFC;
+  /* Core Colors - Posty Brand (Corail/Rose Pêche) - Light Mode First */
+  --background: #FAFBFC;
+  --foreground: #1A1D21;
 
-  /* Primary - Blue moderne (confiance, professionnel) */
-  --primary: #3B82F6;
-  --primary-hover: #2563EB;
-  --primary-light: #60A5FA;
-  --primary-dark: #1D4ED8;
+  /* Primary - Orange clair (couleur principale CTA) */
+  --primary: #F8935D;
+  --primary-hover: #F76B54;
+  --primary-light: #FBB9AD;
+  --primary-dark: #E8834D;
 
-  /* Accent - Teal (élégant, subtil) */
-  --accent: #14B8A6;
-  --accent-hover: #0D9488;
-  --accent-light: #2DD4BF;
+  /* Secondary - Corail moyen */
+  --secondary: #F89E85;
+  --secondary-hover: #F76B54;
+  --secondary-light: #FBB9AD;
 
-  /* Text - Slate palette harmonisée */
-  --text-primary: #F8FAFC;
-  --text-secondary: #94A3B8;
-  --text-muted: #64748B;
-  --text-subtle: #475569;
+  /* Accent - Rouge/rose intense */
+  --accent: #F13452;
+  --accent-hover: #D91E3D;
+  --accent-light: #FBB9AD;
+
+  /* Text - Palette optimisée Light Mode Premium */
+  --text-primary: #1A1D21;      /* Quasi-noir - Excellent contraste */
+  --text-secondary: #4B5563;    /* Gray-600 - Bon contraste */
+  --text-muted: #6B7280;        /* Gray-500 - Lisible mais discret */
+  --text-subtle: #9CA3AF;       /* Gray-400 - Pour éléments tertiaires */
+
+  /* Dashboard Light Mode Premium Colors */
+  --dashboard-card-bg: #FFFFFF;         /* Cartes blanches */
+  --dashboard-card-border: #E5E7EB;     /* Bordures grises subtiles */
+  --dashboard-card-hover: #F9FAFB;      /* Hover state léger */
+  --dashboard-elevated: #F8FAFC;        /* Éléments élevés */
+  --dashboard-grid-line: #F3F4F6;       /* Lignes de grille */
+
+  /* Chart Colors - Optimisées pour light mode */
+  --chart-bar-active: #F8935D;          /* Barre active - orange clair */
+  --chart-bar-inactive: rgba(248, 147, 93, 0.4);  /* Barre inactive */
+  --chart-grid: rgba(107, 114, 128, 0.12);        /* Grilles subtiles */
+  --chart-label: #6B7280;               /* Labels axes */
 
   /* Semantic Colors */
+  --success: #059669;
+  --success-hover: #047857;
+  --warning: #D97706;
+  --warning-hover: #B45309;
+  --error: #DC2626;
+  --error-hover: #B91C1C;
+  --info: #0284C7;
+
+  /* Premium additions */
+  --premium-purple: #7C3AED;
+  --premium-pink: #DB2777;
+  --premium-gold: #CA8A04;
+
+  /* Surfaces - Light Theme */
+  --card-bg: #FFFFFF;
+  --elevated-bg: #F8FAFC;
+  --border: #E5E7EB;
+  --hover: #F3F4F6;
+  --active: #E5E7EB;
+  --highlight: #FEF3F0;
+
+  /* Safe Area */
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-top: env(safe-area-inset-top, 0px);
+}
+
+/* ============== THEME TRANSITION - PREMIUM SMOOTH EFFECT ============== */
+/* Smooth color transition when switching between light and dark modes */
+/* Inspired by Notion, Linear, Vercel - 350ms fade transition */
+
+/* Active only when .theme-transitioning class is present (during toggle) */
+html.theme-transitioning,
+html.theme-transitioning *,
+html.theme-transitioning *::before,
+html.theme-transitioning *::after {
+  transition:
+    background-color 350ms cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 350ms cubic-bezier(0.4, 0, 0.2, 1),
+    color 250ms cubic-bezier(0.4, 0, 0.2, 1),
+    fill 250ms cubic-bezier(0.4, 0, 0.2, 1),
+    stroke 250ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 350ms cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 300ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Exclude elements that should not animate during theme transition */
+html.theme-transitioning input,
+html.theme-transitioning textarea,
+html.theme-transitioning select,
+html.theme-transitioning [class*="animate-"],
+html.theme-transitioning .no-theme-transition {
+  transition: none !important;
+}
+
+/* Disable theme transition during reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  html.theme-transitioning,
+  html.theme-transitioning *,
+  html.theme-transitioning *::before,
+  html.theme-transitioning *::after {
+    transition: none !important;
+  }
+}
+
+/* ============== DARK MODE THEME ============== */
+/* Premium Dark Mode with Orange/Corail Posty palette */
+.dark {
+  /* Core Colors - Dark Mode Background */
+  --background: #0F1115;
+  --foreground: #F1F5F9;
+
+  /* Primary - Orange clair (même que light pour consistance) */
+  --primary: #F8935D;
+  --primary-hover: #F76B54;
+  --primary-light: #FBB9AD;
+  --primary-dark: #E8834D;
+
+  /* Secondary - Corail moyen */
+  --secondary: #F89E85;
+  --secondary-hover: #F8935D;
+  --secondary-light: #FBB9AD;
+
+  /* Accent - Rouge/rose intense */
+  --accent: #F13452;
+  --accent-hover: #D91E3D;
+  --accent-light: #FBB9AD;
+
+  /* Text - Light slate for dark backgrounds */
+  --text-primary: #F1F5F9;
+  --text-secondary: #CBD5E1;
+  --text-muted: #94A3B8;
+  --text-subtle: #64748B;
+
+  /* Semantic Colors - Brighter for dark backgrounds */
   --success: #10B981;
   --success-hover: #059669;
   --warning: #F59E0B;
@@ -89,22 +829,1013 @@
   --error-hover: #DC2626;
   --info: #0EA5E9;
 
-  /* Premium additions */
+  /* Premium additions - Brighter for visibility */
   --premium-purple: #8B5CF6;
   --premium-pink: #EC4899;
   --premium-gold: #EAB308;
 
-  /* Surfaces */
-  --card-bg: #12161B;
-  --elevated-bg: #181D24;
-  --border: #1E2530;
-  --hover: #232A36;
-  --active: #2A3342;
-  --highlight: #313B4D;
+  /* Surfaces - Dark Theme */
+  --card-bg: #16191F;
+  --elevated-bg: #1C2027;
+  --border: #262B35;
+  --hover: #2A3040;
+  --active: #333B4D;
+  --highlight: #3D465A;
 
-  /* Safe Area */
-  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
-  --safe-area-top: env(safe-area-inset-top, 0px);
+  /* Dashboard Dark Mode Premium Colors */
+  --dashboard-card-bg: #16191F;           /* Cartes sombres */
+  --dashboard-card-border: #262B35;       /* Bordures subtiles */
+  --dashboard-card-hover: #1C2027;        /* Hover state */
+  --dashboard-elevated: #1C2027;          /* Éléments élevés */
+  --dashboard-grid-line: #262B35;         /* Lignes de grille */
+
+  /* Chart Colors - Optimisées pour dark mode */
+  --chart-bar-active: #F8935D;            /* Barre active (orange clair) */
+  --chart-bar-inactive: rgba(248, 147, 93, 0.5);  /* Barre inactive */
+  --chart-grid: rgba(148, 163, 184, 0.1);         /* Grilles subtiles */
+  --chart-label: #94A3B8;                 /* Labels axes */
+
+  /* Color scheme for inputs */
+  color-scheme: dark;
+}
+
+/* ============== LIGHT MODE THEME (Default) ============== */
+/* Light mode inherits from :root, this class is for explicit styling */
+.light {
+  /* Color scheme for inputs */
+  color-scheme: light;
+}
+
+/* Light mode specific styles */
+.light body {
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+/* Light mode scrollbar */
+.light ::-webkit-scrollbar-track {
+  background: var(--elevated-bg);
+}
+
+.light ::-webkit-scrollbar-thumb {
+  background: var(--border);
+}
+
+.light ::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Light mode selection */
+.light ::selection {
+  background: rgba(247, 107, 84, 0.2);
+  color: var(--foreground);
+}
+
+/* Dark mode selection */
+.dark ::selection {
+  background: rgba(247, 107, 84, 0.3);
+  color: var(--foreground);
+}
+
+/* Light mode autofill override */
+.light input:-webkit-autofill,
+.light input:-webkit-autofill:hover,
+.light input:-webkit-autofill:focus,
+.light input:-webkit-autofill:active,
+.light textarea:-webkit-autofill,
+.light textarea:-webkit-autofill:hover,
+.light textarea:-webkit-autofill:focus,
+.light textarea:-webkit-autofill:active,
+.light select:-webkit-autofill,
+.light select:-webkit-autofill:hover,
+.light select:-webkit-autofill:focus,
+.light select:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px var(--card-bg) inset !important;
+  box-shadow: 0 0 0 1000px var(--card-bg) inset !important;
+  -webkit-text-fill-color: var(--text-primary) !important;
+  background-color: var(--card-bg) !important;
+  transition: background-color 600000s 0s, color 600000s 0s !important;
+  caret-color: var(--primary) !important;
+  border-color: var(--border) !important;
+}
+
+/* Light mode placeholder */
+.light input::placeholder,
+.light textarea::placeholder {
+  color: var(--text-muted) !important;
+  opacity: 1 !important;
+}
+
+/* Light mode focus styles */
+.light :focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.light button:focus-visible,
+.light a:focus-visible,
+.light [role="button"]:focus-visible,
+.light [tabindex="0"]:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(248, 147, 93, 0.15);
+}
+
+/* Light mode glow effects - softer for light backgrounds */
+.light .glow-primary {
+  box-shadow: 0 0 20px rgba(248, 147, 93, 0.2);
+}
+
+.light .glow-accent {
+  box-shadow: 0 0 20px rgba(241, 52, 82, 0.2);
+}
+
+/* Dark mode glow effects - vibrant for dark backgrounds */
+.dark .glow-primary {
+  box-shadow: 0 0 20px rgba(248, 147, 93, 0.35);
+}
+
+.dark .glow-accent {
+  box-shadow: 0 0 20px rgba(241, 52, 82, 0.35);
+}
+
+/* ============== SELECT DROPDOWN ARROW - THEME AWARE ============== */
+/* Custom select arrow that changes color based on theme */
+.select-with-arrow {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236B7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 20px;
+}
+
+.dark .select-with-arrow {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394A3B8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+}
+
+/* Light mode shadows */
+.light .card-shadow {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.light .elevated-shadow {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.light .input-shadow {
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05), 0 -1px 5px rgba(0, 0, 0, 0.03);
+}
+
+/* ============== LIGHT MODE - GLOBAL COMPONENT OVERRIDES ============== */
+/* These override the dark-* utility classes in light mode */
+/* AGGRESSIVE overrides to ensure Tailwind classes are properly overridden */
+
+/* ===== MASTER RULE: Force all dark backgrounds to light ===== */
+html.light *[class*="bg-dark-"] {
+  --tw-bg-opacity: 1 !important;
+}
+
+html.light .bg-dark-bg {
+  background-color: #FAFBFC !important;
+}
+
+html.light .bg-dark-card {
+  background-color: #FFFFFF !important;
+}
+
+html.light .bg-dark-elevated {
+  background-color: #F8FAFC !important;
+}
+
+html.light .bg-dark-hover {
+  background-color: #F3F4F6 !important;
+}
+
+html.light .bg-dark-active {
+  background-color: #E5E7EB !important;
+}
+
+html.light .bg-dark-highlight {
+  background-color: #FEF3F0 !important;
+}
+
+html.light .bg-dark-border {
+  background-color: #E5E7EB !important;
+}
+
+html.light .bg-background {
+  background-color: #FAFBFC !important;
+}
+
+/* ===== Compound class overrides (bg-dark-card/95 etc.) ===== */
+html.light [class*="bg-dark-card"] {
+  background-color: #FFFFFF !important;
+}
+
+html.light [class*="bg-dark-bg"] {
+  background-color: #FAFBFC !important;
+}
+
+html.light [class*="bg-dark-elevated"] {
+  background-color: #F8FAFC !important;
+}
+
+html.light [class*="bg-dark-hover"] {
+  background-color: #F3F4F6 !important;
+}
+
+/* ===== Border colors ===== */
+html.light .border-dark-border {
+  border-color: #E5E7EB !important;
+}
+
+html.light .border-dark-hover {
+  border-color: #D1D5DB !important;
+}
+
+html.light [class*="border-dark-border"] {
+  border-color: #E5E7EB !important;
+}
+
+/* ===== Structural elements - Force light ===== */
+html.light aside {
+  background-color: #FFFFFF !important;
+  border-right-color: #E5E7EB !important;
+}
+
+/* All divs inside sidebar should inherit white background */
+html.light aside div {
+  background-color: inherit;
+}
+
+/* Sidebar containers with dark backgrounds */
+html.light aside [class*="bg-dark"] {
+  background-color: #FFFFFF !important;
+}
+
+html.light aside [class*="border-dark"] {
+  border-color: #E5E7EB !important;
+}
+
+html.light main {
+  background-color: #FAFBFC !important;
+}
+
+html.light header {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border-bottom-color: #E5E7EB !important;
+}
+
+/* ===== Body and root ===== */
+html.light,
+html.light body {
+  background-color: #FAFBFC !important;
+  color: #1A1D21 !important;
+}
+
+/* ===== Fix for Tailwind dark color utilities ===== */
+/* Override all bg-dark-* utilities globally */
+html.light [class^="bg-dark-"],
+html.light [class*=" bg-dark-"] {
+  background-color: #FFFFFF !important;
+}
+
+/* ===== Hover states ===== */
+html.light .hover\:bg-dark-hover:hover,
+html.light [class*="hover:bg-dark-hover"]:hover {
+  background-color: #F3F4F6 !important;
+}
+
+html.light .hover\:bg-dark-elevated:hover {
+  background-color: #F8FAFC !important;
+}
+
+html.light .hover\:bg-dark-card:hover {
+  background-color: #FFFFFF !important;
+}
+
+html.light .hover\:border-dark-border:hover {
+  border-color: #D1D5DB !important;
+}
+
+/* ===== Dashboard specific overrides ===== */
+html.light .bg-dashboard-card {
+  background-color: #FFFFFF !important;
+}
+
+html.light .bg-dashboard-bg {
+  background-color: #FAFBFC !important;
+}
+
+html.light .bg-dashboard-elevated {
+  background-color: #F8FAFC !important;
+}
+
+html.light .bg-dashboard-surface-1 {
+  background-color: #FFFFFF !important;
+}
+
+html.light .bg-dashboard-surface-2 {
+  background-color: #F9FAFB !important;
+}
+
+html.light .bg-dashboard-surface-3 {
+  background-color: #F8FAFC !important;
+}
+
+html.light .border-dashboard-card-border {
+  border-color: #E5E7EB !important;
+}
+
+html.light .border-dashboard-grid-line {
+  border-color: #F3F4F6 !important;
+}
+
+html.light [class*="border-dashboard-card-border"] {
+  border-color: #E5E7EB !important;
+}
+
+html.light .hover\:bg-dashboard-card-hover:hover,
+html.light [class*="hover:bg-dashboard-card-hover"]:hover {
+  background-color: #F9FAFB !important;
+}
+
+html.light .hover\:bg-dashboard-surface-2:hover {
+  background-color: #F9FAFB !important;
+}
+
+html.light .text-dashboard-surface-2 {
+  color: #E5E7EB !important;
+}
+
+/* Ring offset for dashboard cards in light mode */
+html.light .ring-offset-dashboard-card {
+  --tw-ring-offset-color: #FFFFFF !important;
+}
+
+/* ===== Text colors ===== */
+/* Default text-white becomes dark in light mode */
+html.light .text-white {
+  color: #1A1D21 !important;
+}
+
+html.light .text-text-primary {
+  color: #1A1D21 !important;
+}
+
+html.light .text-text-secondary {
+  color: #4B5563 !important;
+}
+
+html.light .text-text-muted {
+  color: #6B7280 !important;
+}
+
+html.light .text-text-subtle {
+  color: #9CA3AF !important;
+}
+
+/* ===== Keep white text on colored backgrounds ===== */
+/* Buttons and elements with colored backgrounds should keep white text */
+html.light .bg-primary,
+html.light .bg-primary-hover,
+html.light .bg-accent,
+html.light .bg-error,
+html.light .bg-success,
+html.light .bg-\[\#0A66C2\],
+html.light [class*="bg-gradient-to-r"][class*="from-primary"],
+html.light [class*="bg-gradient-to-br"][class*="from-primary"],
+html.light button[class*="bg-gradient"],
+html.light a[class*="bg-gradient"] {
+  color: #FFFFFF !important;
+}
+
+/* Nested elements in colored containers */
+html.light .bg-primary .text-white,
+html.light .bg-primary-hover .text-white,
+html.light .bg-accent .text-white,
+html.light [class*="bg-gradient-to-r"][class*="from-primary"] .text-white,
+html.light [class*="bg-gradient-to-r"][class*="from-primary"] span,
+html.light [class*="bg-gradient-to-br"][class*="from-primary"] .text-white,
+html.light [class*="bg-gradient-to-br"][class*="from-primary"] span,
+html.light button[class*="bg-gradient"] .text-white,
+html.light button[class*="bg-gradient"] span,
+html.light a[class*="bg-gradient"] .text-white,
+html.light a[class*="bg-gradient"] span,
+html.light .bg-error .text-white,
+html.light .bg-success .text-white,
+html.light .bg-\[\#0A66C2\] .text-white {
+  color: #FFFFFF !important;
+}
+
+/* Premium badges with gradient background */
+html.light .bg-gradient-to-r.from-primary.to-accent,
+html.light [class*="bg-gradient-to-r"][class*="from-primary"][class*="to-accent"] {
+  color: #FFFFFF !important;
+}
+
+/* ===== Hover text colors ===== */
+html.light .hover\:text-white:hover {
+  color: #1A1D21 !important;
+}
+
+html.light .hover\:text-text-primary:hover {
+  color: #1A1D21 !important;
+}
+
+/* ===== Landing page specific - Keep gradient text visible ===== */
+html.light .text-gradient {
+  background: linear-gradient(135deg, #FB923C, #FB7185) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+/* ===== Input fields ===== */
+html.light input,
+html.light textarea,
+html.light select {
+  background-color: #FFFFFF !important;
+  color: #1A1D21 !important;
+}
+
+html.light input[class*="bg-dark"],
+html.light textarea[class*="bg-dark"],
+html.light select[class*="bg-dark"] {
+  background-color: #F8FAFC !important;
+  border-color: #E5E7EB !important;
+  color: #1A1D21 !important;
+}
+
+html.light input:focus,
+html.light textarea:focus,
+html.light select:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(248, 163, 93, 0.1) !important;
+}
+
+/* ===== Modal/Dialog backgrounds ===== */
+html.light [class*="bg-dark-bg/"],
+html.light [class*="bg-dark-card/"] {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+}
+
+/* Dropdown menus - Light Mode */
+.light .dropdown,
+.light [role="menu"] {
+  background-color: #FFFFFF !important;
+  border-color: #E5E7EB !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Tooltip - Light Mode */
+.light .tooltip {
+  background-color: #1A1D21 !important;
+  color: #FFFFFF !important;
+}
+
+/* Progress bars background - Light Mode */
+.light .bg-dark-border {
+  background-color: #E5E7EB !important;
+}
+
+/* Dividers - Light Mode */
+.light .divide-dark-border > * + * {
+  border-color: #E5E7EB !important;
+}
+
+/* Ring colors - Light Mode */
+.light .ring-dark-border {
+  --tw-ring-color: #E5E7EB !important;
+}
+
+/* Badge/Tag backgrounds - Light Mode */
+.light .bg-dark-hover\/50 {
+  background-color: rgba(243, 244, 246, 0.5) !important;
+}
+
+.light .bg-primary\/10 {
+  background-color: rgba(248, 163, 93, 0.1) !important;
+}
+
+.light .bg-primary\/5 {
+  background-color: rgba(248, 163, 93, 0.05) !important;
+}
+
+/* Chat bubbles - Light Mode */
+.light .chat-bubble-user {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%) !important;
+  color: #FFFFFF !important;
+}
+
+.light .chat-bubble-ai {
+  background-color: #F3F4F6 !important;
+  color: #1A1D21 !important;
+}
+
+/* Shadows - Light Mode (softer) */
+.light .shadow-glow {
+  box-shadow: 0 4px 14px rgba(248, 163, 93, 0.15) !important;
+}
+
+.light .shadow-elevated {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+}
+
+.light .shadow-soft {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Backdrop blur containers - Light Mode */
+.light .backdrop-blur-xl {
+  background-color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.light .backdrop-blur-md {
+  background-color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* Slide menu / Mobile menu - Light Mode */
+.light .slide-menu,
+.light [class*="SlideMenu"] {
+  background-color: #FFFFFF !important;
+}
+
+/* Conversation items - Light Mode */
+.light .conversation-item {
+  background-color: transparent !important;
+}
+
+.light .conversation-item:hover {
+  background-color: #F3F4F6 !important;
+}
+
+.light .conversation-item.active {
+  background-color: rgba(248, 163, 93, 0.1) !important;
+}
+
+/* Profile menu - Light Mode */
+.light .profile-menu {
+  background-color: #FFFFFF !important;
+  border-color: #E5E7EB !important;
+}
+
+/* ===== Quote badge / Plan section - Light Mode ===== */
+html.light .quota-badge,
+html.light [class*="quota"],
+html.light a[href="/pricing"],
+html.light a[href*="/pricing"] {
+  background-color: #F8FAFC !important;
+  border-color: #E5E7EB !important;
+}
+
+/* Quota badge with gradient - override in light mode (only for low opacity variants) */
+html.light [class*="from-primary/20"],
+html.light [class*="to-accent/20"] {
+  background: linear-gradient(to bottom right, rgba(248, 163, 93, 0.15), rgba(248, 87, 81, 0.15)) !important;
+}
+
+/* Plan card in sidebar - Force white background */
+html.light [class*="bg-dark-hover/"],
+html.light .bg-dark-hover\/50 {
+  background-color: rgba(243, 244, 246, 0.7) !important;
+}
+
+/* Plan section bottom of sidebar */
+html.light aside > div:last-child,
+html.light aside [class*="mt-auto"] {
+  background-color: #FFFFFF !important;
+}
+
+/* Quota progress bar track */
+html.light .bg-dark-border {
+  background-color: #E5E7EB !important;
+}
+
+/* Plan name badge */
+html.light [class*="plan"],
+html.light .plan-badge {
+  background-color: #F8FAFC !important;
+}
+
+/* Search input - Light Mode */
+html.light .search-input {
+  background-color: #F3F4F6 !important;
+  border-color: #E5E7EB !important;
+}
+
+html.light .search-input:focus {
+  background-color: #FFFFFF !important;
+  border-color: var(--primary) !important;
+}
+
+/* New post button - Keep gradient */
+html.light .new-post-btn,
+html.light a[href="/app"].bg-gradient-to-r {
+  background: linear-gradient(to right, var(--primary), var(--primary-hover)) !important;
+  color: #FFFFFF !important;
+}
+
+/* Active nav item indicator */
+html.light .nav-active-indicator {
+  background-color: var(--primary) !important;
+}
+
+/* ============== PROFILE PAGE - LIGHT MODE FIX ============== */
+/* Fix for elements using dark: variant classes that match [class*="from-primary"] selectors */
+/* These elements use bg-orange-50 in light mode and need orange text, not white */
+
+/* Profile badge (sector) and edit button with bg-orange-50 should have orange text */
+html.light .bg-orange-50 {
+  background-color: #FFF7ED !important;
+  color: #EA580C !important;
+}
+
+html.light .bg-orange-50 svg {
+  color: #EA580C !important;
+}
+
+html.light .bg-orange-50 span {
+  color: #EA580C !important;
+}
+
+/* Override the gradient text-white rule for elements that have bg-orange-50 */
+html.light [class*="bg-orange-50"][class*="dark:bg-gradient"] {
+  color: #EA580C !important;
+}
+
+html.light [class*="bg-orange-50"][class*="dark:from-primary"] {
+  color: #EA580C !important;
+}
+
+/* Profile edit form header icon */
+html.light .bg-orange-100 {
+  background-color: #FFEDD5 !important;
+}
+
+html.light .text-orange-500 {
+  color: #F97316 !important;
+}
+
+html.light .text-orange-600 {
+  color: #EA580C !important;
+}
+
+/* Ensure border colors are visible */
+html.light .border-orange-200 {
+  border-color: #FED7AA !important;
+}
+
+html.light .border-orange-300 {
+  border-color: #FDBA74 !important;
+}
+
+/* ============== SCROLLBAR - LIGHT MODE - POSTY ORANGE/SALMON ============== */
+/* Premium scrollbar with Posty brand colors */
+
+/* Main page scrollbar (html element itself) */
+html.light::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+html.light::-webkit-scrollbar-track {
+  background: linear-gradient(180deg, #FFF7ED 0%, #FEF3E2 100%);
+  border-radius: 5px;
+}
+
+html.light::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #FDBA74 0%, #FB923C 50%, #F97316 100%);
+  border-radius: 5px;
+  border: 2px solid #FFF7ED;
+  transition: all 0.2s ease;
+}
+
+html.light::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #FB923C 0%, #F97316 50%, #EA580C 100%);
+  border-color: #FEF3E2;
+}
+
+html.light::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(180deg, #F97316 0%, #EA580C 50%, #C2410C 100%);
+}
+
+/* Scrollbar for all child elements */
+html.light ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+html.light ::-webkit-scrollbar-track {
+  background: linear-gradient(180deg, #FFF7ED 0%, #FEF3E2 100%);
+  border-radius: 5px;
+}
+
+html.light ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #FDBA74 0%, #FB923C 50%, #F97316 100%);
+  border-radius: 5px;
+  border: 2px solid #FFF7ED;
+  transition: all 0.2s ease;
+}
+
+html.light ::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #FB923C 0%, #F97316 50%, #EA580C 100%);
+  border-color: #FEF3E2;
+}
+
+html.light ::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(180deg, #F97316 0%, #EA580C 50%, #C2410C 100%);
+}
+
+/* Firefox scrollbar - Light Mode */
+html.light {
+  scrollbar-width: thin;
+  scrollbar-color: #FB923C #FFF7ED;
+}
+
+html.light * {
+  scrollbar-width: thin;
+  scrollbar-color: #FB923C #FFF7ED;
+}
+
+html.light:hover,
+html.light *:hover {
+  scrollbar-color: #FB923C #FEF3E2;
+}
+
+/* ============== SIDEBAR SCROLLBAR - GRAY & DISCRETE ============== */
+/* Subtle gray scrollbar for sidebar navigation */
+html.light aside::-webkit-scrollbar,
+html.light aside *::-webkit-scrollbar,
+html.light .sidebar-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+html.light aside::-webkit-scrollbar-track,
+html.light aside *::-webkit-scrollbar-track,
+html.light .sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 3px;
+}
+
+html.light aside::-webkit-scrollbar-thumb,
+html.light aside *::-webkit-scrollbar-thumb,
+html.light .sidebar-scroll::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.4);
+  border-radius: 3px;
+  border: none;
+}
+
+html.light aside::-webkit-scrollbar-thumb:hover,
+html.light aside *::-webkit-scrollbar-thumb:hover,
+html.light .sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.6);
+}
+
+html.light aside::-webkit-scrollbar-thumb:active,
+html.light aside *::-webkit-scrollbar-thumb:active,
+html.light .sidebar-scroll::-webkit-scrollbar-thumb:active {
+  background: rgba(156, 163, 175, 0.7);
+}
+
+/* Firefox - Gray discrete scrollbar for sidebar */
+html.light aside,
+html.light aside *,
+html.light .sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 163, 175, 0.4) transparent;
+}
+
+/* Light mode popup overlay */
+html.light .popup-overlay {
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+}
+
+/* Light mode gradient border */
+html.light .gradient-border {
+  background: var(--card-bg);
+}
+
+/* Light mode skeleton shimmer */
+html.light .skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--elevated-bg) 0%,
+    var(--card-bg) 20%,
+    var(--hover) 40%,
+    var(--card-bg) 60%,
+    var(--elevated-bg) 100%
+  );
+  background-size: 200% 100%;
+}
+
+/* Light mode sidebar scroll */
+html.light .sidebar-scroll:hover {
+  scrollbar-color: var(--border) transparent;
+}
+
+html.light .sidebar-scroll:hover::-webkit-scrollbar-thumb {
+  background: var(--border);
+}
+
+html.light .sidebar-scroll:hover::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* ===== INPUT AREA - CHAT PAGE ===== */
+/* Input area container styling for /app page */
+/* Mobile: Fixed at bottom with safe area support */
+/* Desktop (lg+): Relative within main content */
+.input-area-container {
+  background-color: var(--background);
+  /* Ensure it's above other content on mobile */
+  isolation: isolate;
+}
+
+/* Mobile input area - enhanced fixed positioning */
+@media (max-width: 1023px) {
+  .input-area-container {
+    /* Fixed positioning with safe area support */
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 40 !important;
+    /* Safe area padding for iOS - PWA mode */
+    padding-bottom: max(env(safe-area-inset-bottom, 12px), 12px) !important;
+    /* Prevent scroll interference */
+    touch-action: manipulation;
+    /* Hardware acceleration for smooth keyboard transitions */
+    will-change: transform;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    /* Subtle shadow for depth */
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Mobile browser mode (not PWA) - extra padding for browser UI */
+  /* Uses data attribute set by useBrowserMode hook */
+  html[data-mobile-browser="true"] .input-area-container {
+    /* Use CSS variable set by JavaScript, with generous fallback */
+    padding-bottom: calc(
+      max(env(safe-area-inset-bottom, 20px), 20px) +
+      var(--input-bottom-padding, 75px)
+    ) !important;
+  }
+
+  /* iOS Safari specific - extra padding for bottom toolbar */
+  @supports (-webkit-touch-callout: none) {
+    @media not all and (display-mode: standalone) {
+      .input-area-container {
+        /* Safari bottom toolbar is ~44-50px + home indicator */
+        padding-bottom: calc(env(safe-area-inset-bottom, 34px) + 75px) !important;
+      }
+    }
+  }
+
+  /* Backdrop blur support */
+  @supports ((-webkit-backdrop-filter: blur(16px)) or (backdrop-filter: blur(16px))) {
+    .input-area-container {
+      -webkit-backdrop-filter: blur(16px);
+      backdrop-filter: blur(16px);
+      background-color: rgba(11, 14, 17, 0.95) !important;
+    }
+  }
+}
+
+/* Desktop input area - relative within layout */
+@media (min-width: 1024px) {
+  .input-area-container {
+    position: relative !important;
+    z-index: auto !important;
+    flex-shrink: 0;
+    box-shadow: none;
+    will-change: auto;
+  }
+}
+
+/* Light mode - Force solid white/light background on input area */
+html.light .input-area-container {
+  background-color: #FAFBFC !important;
+}
+
+/* Light mode - Mobile input area */
+@media (max-width: 1023px) {
+  html.light .input-area-container {
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08) !important;
+  }
+
+  @supports ((-webkit-backdrop-filter: blur(16px)) or (backdrop-filter: blur(16px))) {
+    html.light .input-area-container {
+      background-color: rgba(250, 251, 252, 0.95) !important;
+    }
+  }
+}
+
+/* Ensure textarea in input area is always interactive */
+.input-area-container textarea {
+  /* Ensure textarea is always clickable */
+  position: relative;
+  z-index: 1;
+  /* Allow all touch interactions for text input */
+  touch-action: auto !important;
+  -webkit-touch-callout: default;
+  -webkit-user-select: text;
+  user-select: text;
+  /* Ensure cursor and interactions work */
+  cursor: text;
+  pointer-events: auto !important;
+}
+
+/* Ensure textarea focus works properly */
+.input-area-container textarea:focus {
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Action buttons should not block textarea */
+.input-area-container .absolute {
+  pointer-events: auto;
+}
+
+/* Light mode - Input card styling */
+html.light .input-area-container .bg-dark-card {
+  background-color: #FFFFFF !important;
+  border-color: #E5E7EB !important;
+}
+
+/* Light mode - Input card hover/focus states */
+html.light .input-area-container .bg-dark-card:focus-within {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(248, 163, 93, 0.1) !important;
+}
+
+/* ===== CHAT PAGE BACKGROUNDS - LIGHT MODE ===== */
+/* Main chat container */
+html.light .flex.flex-col.h-full.bg-background {
+  background-color: #FAFBFC !important;
+}
+
+/* Messages area background */
+html.light .overflow-y-auto.gpu-scroll {
+  background-color: #FAFBFC !important;
+}
+
+/* Welcome screen area - transparent to show parent bg */
+html.light .flex.flex-col.items-center.justify-center.w-full.text-center {
+  background-color: transparent !important;
+}
+
+/* Override any remaining gradient backgrounds in light mode */
+html.light [class*="bg-gradient-to-t"][class*="from-background"] {
+  background: #FAFBFC !important;
+}
+
+html.light [class*="to-transparent"] {
+  --tw-gradient-to: rgba(250, 251, 252, 0) !important;
+}
+
+/* Input card with border radius */
+html.light .bg-dark-card.border.rounded-2xl,
+html.light .bg-dark-card[class*="rounded-2xl"] {
+  background-color: #FFFFFF !important;
+}
+
+/* Elevated buttons in input area */
+html.light .input-area-container .bg-dark-elevated {
+  background-color: #F3F4F6 !important;
+}
+
+html.light .input-area-container .bg-dark-elevated:hover {
+  background-color: #E5E7EB !important;
+}
+
+/* ===== MOBILE HEADER ===== */
+/* Fixed header at top of screen on mobile devices */
+.mobile-header {
+  /* Hardware acceleration for smooth scrolling */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  will-change: transform;
+  /* Ensure it stays above content */
+  isolation: isolate;
+  /* Subtle shadow for depth */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Light mode mobile header */
+html.light .mobile-header {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border-bottom-color: #E5E7EB !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Ensure header content is accessible on all devices */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .mobile-header {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
 }
 
 /* Base Reset */
@@ -117,7 +1848,8 @@
 
 html {
   height: 100%;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   font-size: 16px;
 }
 
@@ -129,8 +1861,8 @@ body {
   letter-spacing: var(--tracking-snug);
   background-color: var(--background);
   color: var(--foreground);
-  height: 100%;
-  overflow: hidden;
+  min-height: 100%;
+  overflow-x: hidden;
   /* Premium text rendering */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -223,10 +1955,14 @@ a {
   text-decoration: none;
 }
 
-/* Prevent horizontal scroll */
+/* Prevent horizontal scroll and browser swipe-back gesture */
 html, body {
   max-width: 100vw;
   overflow-x: hidden;
+  /* Block browser swipe-back gesture on iOS/Android */
+  overscroll-behavior-x: none;
+  /* Allow all touch gestures for proper scrolling - removed pan-y restriction */
+  touch-action: manipulation;
 }
 
 /* Premium Scrollbar */
@@ -370,7 +2106,7 @@ a:focus-visible,
 [tabindex="0"]:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
-  box-shadow: 0 0 0 4px rgba(47, 128, 237, 0.2);
+  box-shadow: 0 0 0 4px rgba(248, 163, 93, 0.2);
 }
 
 /* Card focus state */
@@ -378,7 +2114,7 @@ a:focus-visible,
 .card-interactive:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
-  box-shadow: 0 0 0 4px rgba(47, 128, 237, 0.15);
+  box-shadow: 0 0 0 4px rgba(248, 163, 93, 0.15);
 }
 
 /* Remove default focus for mouse users */
@@ -407,12 +2143,12 @@ a:focus-visible,
 .keyboard-nav-active *:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
-  box-shadow: 0 0 0 4px rgba(0, 209, 193, 0.2);
+  box-shadow: 0 0 0 4px rgba(248, 87, 81, 0.2);
 }
 
 /* Selection */
 ::selection {
-  background: rgba(47, 128, 237, 0.3);
+  background: rgba(248, 163, 93, 0.3);
   color: #FFFFFF;
 }
 
@@ -495,6 +2231,138 @@ a:focus-visible,
   animation: float 3s ease-in-out infinite;
 }
 
+/* ============== ADAPTIVE LOADER - THEME AWARE ============== */
+/* Loader background that adapts to current theme */
+.loader-bg {
+  background-color: rgba(11, 14, 17, 0.98);
+}
+
+.light .loader-bg,
+html.light .loader-bg {
+  background-color: rgba(250, 251, 252, 0.98);
+}
+
+/* Loader progress track that adapts to current theme */
+.loader-track {
+  background-color: var(--border);
+}
+
+.light .loader-track,
+html.light .loader-track {
+  background-color: #E5E7EB;
+}
+
+/* Loader text colors - ensure proper contrast */
+.loader-bg .text-text-primary {
+  color: var(--text-primary);
+}
+
+.loader-bg .text-text-muted {
+  color: var(--text-muted);
+}
+
+/* ============== PREMIUM SKELETON LOADERS - Orange/Salmon ============== */
+
+/* Default skeleton shimmer */
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--dark-card, #1a1a1a) 0%,
+    var(--dark-elevated, #252525) 25%,
+    rgba(248, 163, 93, 0.05) 50%,
+    var(--dark-elevated, #252525) 75%,
+    var(--dark-card, #1a1a1a) 100%
+  );
+  background-size: 400% 100%;
+  animation: skeleton-shimmer 2s ease-in-out infinite;
+}
+
+/* Light mode skeleton shimmer */
+.light .skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    #f3f4f6 0%,
+    #e5e7eb 25%,
+    rgba(248, 163, 93, 0.08) 50%,
+    #e5e7eb 75%,
+    #f3f4f6 100%
+  );
+  background-size: 400% 100%;
+}
+
+/* Premium skeleton with stronger orange tint */
+.skeleton-premium {
+  background: linear-gradient(
+    90deg,
+    var(--dark-card, #1a1a1a) 0%,
+    rgba(248, 163, 93, 0.1) 25%,
+    rgba(248, 87, 81, 0.1) 50%,
+    rgba(248, 163, 93, 0.1) 75%,
+    var(--dark-card, #1a1a1a) 100%
+  );
+  background-size: 400% 100%;
+  animation: skeleton-shimmer 2s ease-in-out infinite;
+}
+
+.light .skeleton-premium {
+  background: linear-gradient(
+    90deg,
+    #f8fafc 0%,
+    rgba(248, 163, 93, 0.15) 25%,
+    rgba(248, 87, 81, 0.15) 50%,
+    rgba(248, 163, 93, 0.15) 75%,
+    #f8fafc 100%
+  );
+  background-size: 400% 100%;
+}
+
+/* Pulsing skeleton */
+.skeleton-pulse {
+  background-color: var(--dark-elevated, #252525);
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+.light .skeleton-pulse {
+  background-color: #e5e7eb;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: -100% 50%;
+  }
+}
+
+@keyframes skeleton-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Indeterminate progress animation */
+.animate-progress-indeterminate {
+  animation: progress-indeterminate 1.5s ease-in-out infinite;
+}
+
+@keyframes progress-indeterminate {
+  0% {
+    background-position: 100% 50%;
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(0%);
+  }
+  100% {
+    background-position: -100% 50%;
+    transform: translateX(100%);
+  }
+}
+
 /* Smooth transitions */
 .transition-smooth {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -573,6 +2441,24 @@ a:focus-visible,
 
 /* Utility classes */
 @layer utilities {
+  /* ============== SCROLLBAR UTILITIES ============== */
+  /* Hide scrollbar while maintaining scroll functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+  }
+
+  /* ============== TEXT WRAPPING UTILITIES ============== */
+  /* Force long words and URLs to break and wrap properly */
+  .overflow-wrap-anywhere {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
   /* ============== TYPOGRAPHY UTILITIES - POPPINS ============== */
 
   /* Display & Hero Text */
@@ -766,11 +2652,11 @@ a:focus-visible,
 
 /* Glow effects */
 .glow-primary {
-  box-shadow: 0 0 20px rgba(47, 128, 237, 0.4);
+  box-shadow: 0 0 20px rgba(248, 163, 93, 0.4);
 }
 
 .glow-accent {
-  box-shadow: 0 0 20px rgba(0, 209, 193, 0.4);
+  box-shadow: 0 0 20px rgba(248, 87, 81, 0.4);
 }
 
 /* Gradient border effect */
@@ -851,10 +2737,10 @@ a:focus-visible,
 /* Pulse glow animation */
 @keyframes pulseGlow {
   0%, 100% {
-    box-shadow: 0 0 20px rgba(47, 128, 237, 0.3);
+    box-shadow: 0 0 20px rgba(248, 163, 93, 0.3);
   }
   50% {
-    box-shadow: 0 0 40px rgba(47, 128, 237, 0.6);
+    box-shadow: 0 0 40px rgba(248, 163, 93, 0.6);
   }
 }
 
@@ -1037,13 +2923,13 @@ a:focus-visible,
 /* Focus ring animation */
 @keyframes focusRing {
   0% {
-    box-shadow: 0 0 0 0 rgba(47, 128, 237, 0.4);
+    box-shadow: 0 0 0 0 rgba(248, 163, 93, 0.4);
   }
   70% {
-    box-shadow: 0 0 0 8px rgba(47, 128, 237, 0);
+    box-shadow: 0 0 0 8px rgba(248, 163, 93, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(47, 128, 237, 0);
+    box-shadow: 0 0 0 0 rgba(248, 163, 93, 0);
   }
 }
 
@@ -1110,11 +2996,11 @@ a:focus-visible,
 @keyframes borderGlow {
   0%, 100% {
     border-color: var(--primary);
-    box-shadow: 0 0 10px rgba(47, 128, 237, 0.3);
+    box-shadow: 0 0 10px rgba(248, 163, 93, 0.3);
   }
   50% {
     border-color: var(--accent);
-    box-shadow: 0 0 20px rgba(0, 209, 193, 0.3);
+    box-shadow: 0 0 20px rgba(248, 87, 81, 0.3);
   }
 }
 
@@ -1402,6 +3288,36 @@ a:focus-visible,
   }
 }
 
+/* ============== LANDING NAVBAR - SAFARI iOS FIX ============== */
+/* Ensures navbar is always visible and properly sized on mobile Safari */
+@supports (padding-top: env(safe-area-inset-top)) {
+  /* Landing page navbar - ensure minimum visibility */
+  nav[class*="fixed"][class*="top-0"] {
+    /* Minimum height to ensure content is visible */
+    min-height: calc(env(safe-area-inset-top, 0px) + 56px);
+  }
+
+  /* Mobile-specific navbar adjustments */
+  @media (max-width: 767px) {
+    nav[class*="fixed"][class*="top-0"] {
+      /* Stronger background on mobile for visibility - use theme background */
+      background-color: hsl(var(--background) / 0.95) !important;
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+    }
+  }
+}
+
+/* Safari iOS specific: prevent navbar from being cut off */
+@supports (-webkit-touch-callout: none) {
+  /* iOS Safari only */
+  nav[class*="fixed"][class*="top-0"] {
+    /* Use webkit-specific safe area */
+    padding-top: constant(safe-area-inset-top); /* iOS 11.0-11.2 */
+    padding-top: env(safe-area-inset-top, 0px); /* iOS 11.2+ */
+  }
+}
+
 /* Draggable indicator for bottom sheets */
 .drag-indicator {
   width: 36px;
@@ -1429,6 +3345,18 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Scroll margin for sections with IDs to compensate for fixed navbar */
+section[id] {
+  scroll-margin-top: 80px;
+}
+
+/* Mobile: account for taller navbar with safe area (Safari iOS) */
+@media (max-width: 768px) {
+  section[id] {
+    scroll-margin-top: calc(env(safe-area-inset-top, 0px) + 72px);
+  }
+}
+
 /* Prevent overscroll bounce */
 .overscroll-none {
   overscroll-behavior: none;
@@ -1446,6 +3374,172 @@ html {
 
 .no-scrollbar::-webkit-scrollbar {
   display: none;
+}
+
+/* Alias for scrollbar-none (Tailwind naming convention) */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* ============== IOS BOTTOM SHEET UTILITIES ============== */
+/* Premium iOS-style bottom sheet with smooth interactions */
+
+/* Touch-optimized dragging */
+.bottom-sheet-drag-handle {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Smooth scroll for sheet content */
+.bottom-sheet-content {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.bottom-sheet-content::-webkit-scrollbar {
+  display: none;
+}
+
+/* Prevent content scroll when dragging sheet */
+.sheet-dragging .bottom-sheet-content {
+  overflow: hidden !important;
+  touch-action: none;
+}
+
+/* GPU acceleration for smooth animations */
+.gpu-layer {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Will-change hints for better performance */
+.will-change-transform {
+  will-change: transform;
+}
+
+/* ============== IOS MODAL & BOTTOMSHEET FIXES ============== */
+/* Critical fixes for iOS Safari modal rendering issues */
+
+/* Body scroll lock states */
+html.modal-open,
+html.bottomsheet-open {
+  overflow: hidden;
+  position: relative;
+  height: 100%;
+}
+
+html.modal-open body,
+html.bottomsheet-open body {
+  overflow: hidden;
+  position: relative;
+  height: 100%;
+  touch-action: none;
+}
+
+/* iOS Modal Container - ensures proper stacking and positioning */
+.ios-modal-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  /* Ensure it's above everything including transformed elements */
+  isolation: isolate;
+  /* Force GPU layer for iOS */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+/* iOS Bottom Sheet Container */
+.ios-bottomsheet-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  isolation: isolate;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+/* iOS Backdrop blur fallback - use solid color on iOS if blur causes issues */
+.ios-backdrop-blur {
+  /* Solid fallback first */
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+/* Only apply blur on devices that support it well */
+@supports ((-webkit-backdrop-filter: blur(8px)) or (backdrop-filter: blur(8px))) {
+  .ios-backdrop-blur {
+    background-color: rgba(0, 0, 0, 0.7);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+  }
+}
+
+/* iOS Modal Content - proper GPU acceleration */
+.ios-modal-content {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  /* Ensure proper rendering context */
+  isolation: isolate;
+}
+
+/* iOS Bottom Sheet Content - use will-change instead of transform to avoid animation conflicts */
+.ios-bottomsheet-content {
+  /* Use will-change instead of translateZ(0) to avoid Framer Motion conflicts */
+  will-change: transform, opacity;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  isolation: isolate;
+  /* Fix for iOS elastic scroll */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Scrollable content inside modals - allow touch scrolling */
+[data-modal-content],
+[data-bottomsheet-content] {
+  /* Enable touch scrolling on these elements */
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* iOS Safari specific viewport fixes */
+@supports (-webkit-touch-callout: none) {
+  /* iOS Safari only */
+  .ios-modal-container,
+  .ios-bottomsheet-container {
+    /* Use safe area aware positioning */
+    top: env(safe-area-inset-top, 0px);
+    bottom: env(safe-area-inset-bottom, 0px);
+    left: env(safe-area-inset-left, 0px);
+    right: env(safe-area-inset-right, 0px);
+    /* Recalculate based on actual viewport */
+    height: calc(100% - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Reset for absolute positioned backdrop */
+  .ios-modal-container .ios-backdrop-blur,
+  .ios-bottomsheet-container .ios-backdrop-blur {
+    top: calc(-1 * env(safe-area-inset-top, 0px));
+    bottom: calc(-1 * env(safe-area-inset-bottom, 0px));
+    left: calc(-1 * env(safe-area-inset-left, 0px));
+    right: calc(-1 * env(safe-area-inset-right, 0px));
+  }
 }
 
 /* Custom scrollbar styling for dark theme */
@@ -1663,6 +3757,23 @@ body.no-pull-refresh {
 .gpu-scroll {
   transform: translateZ(0);
   -webkit-overflow-scrolling: touch;
+  /* Prevent scroll chaining to parent elements */
+  overscroll-behavior: contain;
+  overscroll-behavior-y: contain;
+  /* Ensure smooth scrolling on iOS */
+  scroll-behavior: smooth;
+}
+
+/* Mobile-specific scroll optimizations */
+@media (max-width: 1023px) {
+  .gpu-scroll {
+    /* Prevent pull-to-refresh within this container */
+    overscroll-behavior-y: contain;
+    /* Ensure touch scrolling is optimized */
+    touch-action: pan-y;
+    /* Prevent content from bouncing at edges */
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 /* Disabled state with proper feedback */
@@ -1749,4 +3860,2011 @@ button, a, [role="button"] {
 /* Dark mode active state for list items */
 .dark-active-bg {
   background-color: var(--active);
+}
+
+/* ============== MOBILE KEYBOARD INPUT ADAPTATIONS ============== */
+
+/* Prevent body scroll when input is focused (iOS fix) */
+body.input-focused {
+  position: fixed;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Ensure input container stays above keyboard on iOS/Android */
+.input-container-fixed {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Smooth height transition for dynamic keyboards */
+@supports (height: 100dvh) {
+  .viewport-height {
+    height: 100dvh;
+  }
+}
+
+/* Keyboard-aware scrolling */
+.keyboard-scroll-container {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  transition: padding-bottom 0.3s ease-out;
+}
+
+/* Input expansion animation for mobile */
+@keyframes inputExpand {
+  from {
+    transform: scale(1);
+    padding: 18px 16px;
+  }
+  to {
+    transform: scale(1.02);
+    padding: 20px 20px;
+  }
+}
+
+.input-expanded {
+  animation: inputExpand 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Subtle glow when input is focused */
+@keyframes inputFocusGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(248, 163, 93, 0);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(248, 163, 93, 0.3);
+  }
+}
+
+.input-focus-glow {
+  animation: inputFocusGlow 2s ease-in-out infinite;
+}
+
+/* Prevent viewport shift on mobile when keyboard opens */
+@media screen and (max-width: 768px) {
+  .keyboard-safe-area {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+}
+
+/* iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+  /* Fix for iOS safe area with keyboard */
+  .ios-keyboard-padding {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Prevent iOS Safari from jumping when keyboard opens */
+  input:focus,
+  textarea:focus {
+    /* Prevent Safari from zooming in on focus */
+    font-size: max(16px, 1em);
+  }
+}
+
+/* Android specific fixes */
+@media (hover: none) and (pointer: coarse) {
+  /* Prevent Android keyboard from covering input */
+  .android-keyboard-aware {
+    resize: none;
+    overflow-y: auto;
+  }
+}
+
+/* Smooth keyboard transition */
+.keyboard-transition {
+  transition:
+    transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    padding 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.3s ease-out;
+}
+
+/* Visual feedback when tapping outside to close keyboard */
+@keyframes tapDismiss {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.tap-dismiss-feedback {
+  animation: tapDismiss 0.2s ease-out;
+}
+
+/* Enhanced mobile input focus state */
+@media (max-width: 768px) {
+  textarea:focus,
+  input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow:
+      0 0 0 3px rgba(248, 163, 93, 0.1),
+      0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+}
+
+/* Placeholder transition on focus */
+@keyframes placeholderFade {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.5;
+  }
+}
+
+input:focus::placeholder,
+textarea:focus::placeholder {
+  animation: placeholderFade 0.2s ease-out forwards;
+}
+
+/* Ensure content is always visible above keyboard */
+.content-above-keyboard {
+  margin-bottom: 0;
+  transition: margin-bottom 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Mobile-first responsive input sizing */
+@media (max-width: 640px) {
+  textarea.mobile-adaptive {
+    font-size: 16px; /* Prevent iOS zoom */
+    line-height: 1.5;
+    padding: 20px 16px;
+  }
+}
+
+/* Smooth scroll restoration after keyboard closes */
+.scroll-restore {
+  scroll-behavior: smooth;
+  transition: scroll-top 0.3s ease-out;
+}
+
+/* Input container elevation when keyboard is visible */
+.elevated-on-keyboard {
+  box-shadow:
+    0 -4px 20px rgba(0, 0, 0, 0.15),
+    0 -2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* ============== LANDING PAGE - HOVER DESKTOP ONLY ============== */
+/*
+ * Disable hover effects on touch devices (mobile/tablet)
+ * Only enable hover on devices with mouse pointer
+ */
+
+/* Touch devices - disable all HOVER effects, but allow TAP/ACTIVE states */
+@media (hover: none), (pointer: coarse) {
+  /* Disable CSS hover-triggered glow effects - JS will control active states */
+  .landing-card .glow-effect,
+  .feature-card .glow-effect {
+    /* Default hidden, JS controls visibility via inline styles for active state */
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  /* Allow JS-controlled active states to show glow */
+  .feature-card.mobile-active .glow-effect {
+    opacity: 1 !important;
+    display: block !important;
+  }
+
+  /* Disable hover border changes - keep default border */
+  .landing-card,
+  .feature-card {
+    border-color: var(--dark-border);
+  }
+
+  /* Disable hover shadows and transforms - only on :hover pseudo */
+  .landing-card:hover,
+  .feature-card:hover {
+    box-shadow: none !important;
+    transform: none !important;
+  }
+
+  /* Disable group-hover color changes */
+  .group:hover .group-hover\:opacity-100 {
+    opacity: 0 !important;
+  }
+
+  .group:hover .group-hover\:bg-primary\/20,
+  .group:hover .group-hover\:border-transparent,
+  .group:hover .group-hover\:text-white {
+    background-color: inherit !important;
+    border-color: inherit !important;
+    color: inherit !important;
+  }
+
+  /* Disable scale transforms on hover for landing */
+  .landing-section [class*="hover:scale"],
+  .landing-section [class*="hover:-translate"],
+  .landing-section .group:hover {
+    transform: none !important;
+  }
+
+  /* Make cards look static on hover - no-hover-mobile class */
+  .no-hover-mobile:hover,
+  .no-hover-mobile:active,
+  .no-hover-mobile:focus {
+    transform: none !important;
+  }
+
+  /* Mobile active state styles - applied via JS */
+  .feature-card.mobile-active {
+    transform: scale(1.02) translateY(-4px) !important;
+    z-index: 10;
+  }
+
+  .feature-card.mobile-active .feature-card-inner {
+    border-color: rgba(248, 163, 93, 0.4);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  }
+}
+
+/* Desktop only - enable hover effects */
+@media (hover: hover) and (pointer: fine) {
+  /* Desktop hover effects enabled */
+  .desktop-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  }
+
+  .desktop-hover-scale:hover {
+    /* Subtle glow effect instead of scale for premium feel */
+    filter: brightness(1.1);
+    box-shadow: 0 8px 30px rgba(232, 147, 77, 0.25);
+  }
+
+  .desktop-hover-glow:hover .glow-effect {
+    opacity: 1;
+  }
+
+  /* Feature card hover - desktop only */
+  .feature-card-desktop:hover {
+    border-color: rgba(248, 163, 93, 0.3);
+    box-shadow: 0 10px 30px rgba(248, 163, 93, 0.1);
+  }
+
+  .feature-card-desktop:hover .feature-icon {
+    background-color: rgba(248, 163, 93, 0.2);
+  }
+}
+
+/* ============== MOBILE-FIRST ANIMATION OPTIMIZATION ============== */
+/*
+ * Faster, snappier animations for touch devices
+ * iOS-like responsiveness - animations feel instant
+ */
+
+@media (hover: none), (pointer: coarse) {
+  /* Global animation speed-up for mobile */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.6 !important; /* Cap max duration */
+  }
+
+  /* Specific animation overrides - make them snappy */
+  .animate-fade-in-up {
+    animation-duration: 0.2s !important;
+  }
+
+  .animate-typing {
+    animation-duration: 0.8s !important;
+  }
+
+  .animate-shimmer {
+    animation-duration: 1s !important;
+  }
+
+  .animate-float {
+    animation-duration: 2s !important;
+  }
+
+  .animate-slide-in-left,
+  .animate-slide-out-left {
+    animation-duration: 0.2s !important;
+  }
+
+  .animate-fade-in {
+    animation-duration: 0.15s !important;
+  }
+
+  .animate-scale-in {
+    animation-duration: 0.15s !important;
+  }
+
+  .animate-scale-bounce {
+    animation-duration: 0.25s !important;
+  }
+
+  .animate-slide-up,
+  .animate-slide-down,
+  .animate-slide-right {
+    animation-duration: 0.25s !important;
+  }
+
+  .animate-page-enter {
+    animation-duration: 0.25s !important;
+  }
+
+  .animate-modal-backdrop-in {
+    animation-duration: 0.15s !important;
+  }
+
+  .animate-modal-content-in {
+    animation-duration: 0.2s !important;
+  }
+
+  .animate-success-check {
+    animation-duration: 0.25s !important;
+  }
+
+  .animate-message-appear {
+    animation-duration: 0.2s !important;
+  }
+
+  .animate-slide-in-from-right,
+  .animate-slide-out-to-right {
+    animation-duration: 0.2s !important;
+  }
+
+  .animate-bottom-sheet-up,
+  .animate-bottom-sheet-down {
+    animation-duration: 0.2s !important;
+  }
+
+  .animate-input-expand {
+    animation-duration: 0.2s !important;
+  }
+
+  .animate-tap-dismiss {
+    animation-duration: 0.15s !important;
+  }
+
+  /* Reduce or disable decorative animations on mobile */
+  .animate-pulse-glow,
+  .animate-gradient-shift,
+  .animate-border-glow,
+  .animate-subtle-bounce,
+  .animate-soft-pulse {
+    animation-duration: 1.5s !important;
+  }
+
+  /* Faster transitions for interactive elements */
+  button,
+  a,
+  input,
+  textarea,
+  select,
+  [role="button"] {
+    transition-duration: 0.15s !important;
+  }
+
+  /* Faster card transitions */
+  .card,
+  .feature-card,
+  .landing-card,
+  [class*="Card"] {
+    transition-duration: 0.2s !important;
+  }
+
+  /* Faster modal/overlay transitions */
+  [class*="modal"],
+  [class*="Modal"],
+  [class*="overlay"],
+  [class*="Overlay"],
+  [class*="backdrop"],
+  [class*="Backdrop"] {
+    transition-duration: 0.2s !important;
+  }
+}
+
+/* Small screens - even more aggressive optimization */
+@media (max-width: 640px) {
+  /* Reduce stagger delays */
+  [class*="stagger"] > *:nth-child(1) { animation-delay: 0s !important; }
+  [class*="stagger"] > *:nth-child(2) { animation-delay: 0.03s !important; }
+  [class*="stagger"] > *:nth-child(3) { animation-delay: 0.06s !important; }
+  [class*="stagger"] > *:nth-child(4) { animation-delay: 0.09s !important; }
+  [class*="stagger"] > *:nth-child(5) { animation-delay: 0.12s !important; }
+  [class*="stagger"] > *:nth-child(n+6) { animation-delay: 0.15s !important; }
+
+  /* Reduce scroll animation distances on small screens */
+  .scroll-animate {
+    --scroll-distance: 15px;
+  }
+}
+
+/* ============== PREMIUM MICRO-INTERACTIONS ============== */
+/*
+ * Subtle, elegant, professional micro-interactions
+ * Inspired by Linear, Notion, Stripe Dashboard, Vercel
+ */
+
+/* === PREMIUM HOVER LIFT UTILITIES === */
+
+/* Subtle hover lift - 2px */
+.hover-lift-sm {
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.2s ease-out;
+}
+.hover-lift-sm:hover {
+  transform: translateY(-2px);
+}
+
+/* Medium hover lift - 4px (most common) */
+.hover-lift {
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.25s ease-out;
+}
+.hover-lift:hover {
+  transform: translateY(-4px);
+}
+
+/* Large hover lift - 6px (for feature cards) */
+.hover-lift-lg {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.3s ease-out;
+}
+.hover-lift-lg:hover {
+  transform: translateY(-6px);
+}
+
+/* === PREMIUM GLOW EFFECTS === */
+
+/* Subtle glow on hover */
+.hover-glow {
+  transition: box-shadow 0.3s ease-out;
+}
+.hover-glow:hover {
+  box-shadow: 0 0 20px rgba(248, 147, 93, 0.15),
+              0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Stronger glow for CTAs */
+.hover-glow-strong {
+  transition: box-shadow 0.3s ease-out;
+}
+.hover-glow-strong:hover {
+  box-shadow: 0 0 30px rgba(248, 147, 93, 0.25),
+              0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Primary color glow */
+.glow-primary {
+  box-shadow: 0 0 15px rgba(248, 147, 93, 0.2);
+}
+
+/* Accent color glow */
+.glow-accent {
+  box-shadow: 0 0 15px rgba(241, 52, 82, 0.2);
+}
+
+/* Success glow */
+.glow-success {
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+}
+
+/* === PREMIUM SHADOW TRANSITIONS === */
+
+/* Elevated shadow on hover */
+.hover-shadow {
+  transition: box-shadow 0.25s ease-out;
+}
+.hover-shadow:hover {
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.15),
+              0 4px 15px -5px rgba(0, 0, 0, 0.1);
+}
+
+/* Card shadow hover */
+.hover-shadow-card {
+  transition: box-shadow 0.25s ease-out, border-color 0.25s ease-out;
+}
+.hover-shadow-card:hover {
+  box-shadow: 0 8px 30px -5px rgba(0, 0, 0, 0.12),
+              0 3px 12px -3px rgba(0, 0, 0, 0.08);
+}
+
+/* Light mode specific shadow */
+@media (prefers-color-scheme: light) {
+  .hover-shadow-card:hover {
+    box-shadow: 0 8px 30px -5px rgba(0, 0, 0, 0.1),
+                0 3px 12px -3px rgba(0, 0, 0, 0.06);
+  }
+}
+
+/* === PREMIUM CARD HOVER EFFECTS === */
+
+/* Interactive card with all effects combined */
+.card-interactive {
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.25s ease-out,
+              border-color 0.25s ease-out;
+}
+.card-interactive:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 35px -10px rgba(0, 0, 0, 0.15),
+              0 4px 15px -5px rgba(0, 0, 0, 0.08);
+}
+
+/* Card with primary accent border on hover */
+.card-accent-hover {
+  transition: border-color 0.2s ease-out,
+              box-shadow 0.2s ease-out;
+}
+.card-accent-hover:hover {
+  border-color: rgba(248, 147, 93, 0.4);
+  box-shadow: 0 0 0 1px rgba(248, 147, 93, 0.1);
+}
+
+/* History/List item hover */
+.list-item-hover {
+  transition: background-color 0.15s ease-out,
+              transform 0.15s ease-out;
+}
+.list-item-hover:hover {
+  background-color: rgba(248, 147, 93, 0.05);
+}
+.dark .list-item-hover:hover {
+  background-color: rgba(248, 147, 93, 0.08);
+}
+
+/* === SMOOTH TRANSITION UTILITIES === */
+
+/* Ultra-smooth transitions */
+.transition-smooth {
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Spring-like transition */
+.transition-spring {
+  transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Ease-out soft */
+.transition-ease-soft {
+  transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* All properties with smooth transition */
+.transition-all-smooth {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Fast transition */
+.transition-fast {
+  transition-duration: 0.15s;
+}
+
+/* Medium transition */
+.transition-medium {
+  transition-duration: 0.25s;
+}
+
+/* Slow transition */
+.transition-slow {
+  transition-duration: 0.4s;
+}
+
+/* === INTERACTIVE FEEDBACK UTILITIES === */
+
+/* Scale down on click/active */
+.active-scale {
+  transition: transform 0.1s ease-out;
+}
+.active-scale:active {
+  transform: scale(0.97);
+}
+
+/* Strong scale down */
+.active-scale-strong {
+  transition: transform 0.1s ease-out;
+}
+.active-scale-strong:active {
+  transform: scale(0.95);
+}
+
+/* Opacity feedback on press */
+.active-opacity {
+  transition: opacity 0.1s ease-out;
+}
+.active-opacity:active {
+  opacity: 0.8;
+}
+
+/* Combined press effect */
+.press-effect {
+  transition: transform 0.1s ease-out, opacity 0.1s ease-out;
+}
+.press-effect:active {
+  transform: scale(0.97);
+  opacity: 0.9;
+}
+
+/* === PREMIUM SHIMMER EFFECTS === */
+
+/* Loading shimmer */
+@keyframes premium-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.shimmer-loading {
+  background: linear-gradient(
+    90deg,
+    rgba(248, 147, 93, 0.08) 0%,
+    rgba(248, 147, 93, 0.15) 50%,
+    rgba(248, 147, 93, 0.08) 100%
+  );
+  background-size: 200% 100%;
+  animation: premium-shimmer 1.5s ease-in-out infinite;
+}
+
+/* Subtle shine effect on hover */
+.hover-shine {
+  position: relative;
+  overflow: hidden;
+}
+.hover-shine::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  transition: left 0.5s ease-out;
+  pointer-events: none;
+}
+.hover-shine:hover::after {
+  left: 100%;
+}
+
+/* === SHIMMERING NAME / TEXT GRADIENT === */
+/* Premium animated gradient text for names and highlights */
+
+@keyframes shimmer-text {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes shimmer-sparkle {
+  0%, 100% {
+    opacity: 0;
+    transform: scale(0) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1) rotate(180deg);
+  }
+}
+
+/* Elegant gradient text with animated shimmer */
+.shimmer-text-gradient {
+  background: linear-gradient(
+    135deg,
+    var(--primary) 0%,
+    var(--accent) 25%,
+    var(--primary) 50%,
+    #FFD700 75%,
+    var(--primary) 100%
+  );
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer-text 6s ease-in-out infinite;
+}
+
+/* Character animation for shimmer */
+.shimmer-char {
+  display: inline-block;
+  background: inherit;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Reduced motion: static elegant gradient */
+@media (prefers-reduced-motion: reduce) {
+  .shimmer-text-gradient {
+    animation: none;
+    background: linear-gradient(
+      135deg,
+      var(--primary) 0%,
+      var(--accent) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
+
+/* Dark mode optimizations for shimmer */
+html.dark .shimmer-text-gradient {
+  background: linear-gradient(
+    135deg,
+    #F8935D 0%,
+    #FFB347 20%,
+    #F76B54 40%,
+    #FFC857 60%,
+    #F8935D 80%,
+    #FFB347 100%
+  );
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer-text 6s ease-in-out infinite;
+}
+
+/* Light mode shimmer text */
+html:not(.dark) .shimmer-text-gradient {
+  background: linear-gradient(
+    135deg,
+    #F76B54 0%,
+    #F8935D 25%,
+    #E8527A 50%,
+    #F8935D 75%,
+    #F76B54 100%
+  );
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* === DEMO CONTENT AREA SMOOTH EXPANSION === */
+
+/* Smooth height transitions for demo chat area */
+.demo-content-area {
+  transition: min-height 0.5s cubic-bezier(0.25, 0.1, 0.25, 1),
+              max-height 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+  will-change: min-height, max-height;
+}
+
+/* Custom scrollbar for demo area */
+.demo-content-area::-webkit-scrollbar {
+  width: 6px;
+}
+
+.demo-content-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.demo-content-area::-webkit-scrollbar-thumb {
+  background: rgba(248, 147, 93, 0.3);
+  border-radius: 3px;
+}
+
+.demo-content-area::-webkit-scrollbar-thumb:hover {
+  background: rgba(248, 147, 93, 0.5);
+}
+
+/* Firefox scrollbar */
+.demo-content-area {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(248, 147, 93, 0.3) transparent;
+}
+
+/* Ensure smooth content appearance */
+.demo-content-area > * {
+  animation: demoContentFadeIn 0.4s ease-out forwards;
+}
+
+@keyframes demoContentFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Prevent layout shift during expansion */
+.demo-content-area {
+  contain: layout style;
+}
+
+/* === BORDER GLOW ANIMATIONS === */
+
+@keyframes border-glow-pulse {
+  0%, 100% {
+    border-color: rgba(248, 147, 93, 0.2);
+    box-shadow: 0 0 0 0 rgba(248, 147, 93, 0);
+  }
+  50% {
+    border-color: rgba(248, 147, 93, 0.4);
+    box-shadow: 0 0 10px rgba(248, 147, 93, 0.1);
+  }
+}
+
+.border-glow-pulse {
+  animation: border-glow-pulse 2s ease-in-out infinite;
+}
+
+/* Focus ring with glow */
+.focus-glow:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--background),
+              0 0 0 4px rgba(248, 147, 93, 0.5),
+              0 0 15px rgba(248, 147, 93, 0.2);
+}
+
+/* === SIDEBAR & MENU ITEM EFFECTS === */
+
+/* Sidebar item hover */
+.sidebar-item-hover {
+  transition: background-color 0.15s ease-out,
+              transform 0.15s ease-out,
+              color 0.15s ease-out;
+}
+.sidebar-item-hover:hover {
+  background-color: rgba(248, 147, 93, 0.08);
+  transform: translateX(4px);
+}
+.sidebar-item-hover.active {
+  background-color: rgba(248, 147, 93, 0.12);
+  border-left: 3px solid var(--primary);
+}
+
+/* Menu item hover */
+.menu-item-hover {
+  transition: background-color 0.12s ease-out;
+}
+.menu-item-hover:hover {
+  background-color: rgba(248, 147, 93, 0.1);
+}
+
+/* === DROPDOWN & MODAL ANIMATIONS === */
+
+/* Dropdown enter */
+@keyframes dropdown-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.dropdown-enter {
+  animation: dropdown-enter 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Dropdown exit */
+@keyframes dropdown-exit {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+}
+
+.dropdown-exit {
+  animation: dropdown-exit 0.15s ease-out forwards;
+}
+
+/* Modal backdrop fade */
+@keyframes modal-backdrop-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-backdrop-enter {
+  animation: modal-backdrop-fade 0.2s ease-out forwards;
+}
+
+/* Modal content enter */
+@keyframes modal-content-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal-content-enter {
+  animation: modal-content-enter 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* === PAGE TRANSITIONS === */
+
+/* Page fade in */
+@keyframes page-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-transition-enter {
+  animation: page-fade-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Content stagger animation */
+.stagger-children > * {
+  opacity: 0;
+  animation: page-fade-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.stagger-children > *:nth-child(1) { animation-delay: 0s; }
+.stagger-children > *:nth-child(2) { animation-delay: 0.05s; }
+.stagger-children > *:nth-child(3) { animation-delay: 0.1s; }
+.stagger-children > *:nth-child(4) { animation-delay: 0.15s; }
+.stagger-children > *:nth-child(5) { animation-delay: 0.2s; }
+.stagger-children > *:nth-child(n+6) { animation-delay: 0.25s; }
+
+/* === ICON MICRO-INTERACTIONS === */
+
+/* Icon hover scale */
+.icon-hover {
+  transition: transform 0.15s ease-out, color 0.15s ease-out;
+}
+.icon-hover:hover {
+  transform: scale(1.1);
+  color: var(--primary);
+}
+
+/* Icon rotation on hover */
+.icon-hover-rotate {
+  transition: transform 0.2s ease-out;
+}
+.icon-hover-rotate:hover {
+  transform: rotate(15deg);
+}
+
+/* === BADGE & CHIP ANIMATIONS === */
+
+/* Badge pop in */
+@keyframes badge-pop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.badge-pop {
+  animation: badge-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Badge pulse */
+@keyframes badge-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(248, 147, 93, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(248, 147, 93, 0);
+  }
+}
+
+.badge-pulse {
+  animation: badge-pulse 2s ease-in-out infinite;
+}
+
+/* === DISCOVER BUTTON SHIMMER EFFECT === */
+
+/* Subtle shimmer animation for CTA buttons */
+@keyframes btn-shimmer {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(300%);
+    opacity: 0;
+  }
+}
+
+/* Button shimmer effect - only on hover */
+.btn-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(
+    105deg,
+    transparent 15%,
+    rgba(255, 255, 255, 0.25) 45%,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(255, 255, 255, 0.25) 55%,
+    transparent 85%
+  );
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-100%);
+  will-change: transform, opacity;
+}
+
+/* Shimmer animation on hover - only for devices with pointer */
+@media (hover: hover) and (pointer: fine) {
+  .btn-shimmer:hover::after {
+    animation: btn-shimmer 0.6s ease-out forwards;
+  }
+}
+
+/* ============================================================ */
+/* Premium CTA Shimmer — single clean shine sweep               */
+/* One-shot on hover, no infinite loop, no dual-layer           */
+/* GPU-friendly: uses transform + opacity only                  */
+/* ============================================================ */
+
+@keyframes shimmer-cta-sweep {
+  0% {
+    transform: translateX(-100%) skewX(-12deg);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(250%) skewX(-12deg);
+    opacity: 0;
+  }
+}
+
+.shimmer-cta {
+  position: relative;
+  overflow: hidden;
+  /* Subtle brightness lift on hover for immediate feedback */
+  transition: filter 0.25s ease-out;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .shimmer-cta:hover {
+    filter: brightness(1.05);
+  }
+}
+
+/* No ::before / ::after at rest — pseudo-element only created on hover */
+
+/* Desktop: single clean shine sweep on hover */
+@media (hover: hover) and (pointer: fine) {
+  .shimmer-cta:hover::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 35%;
+    height: 100%;
+    background: linear-gradient(
+      105deg,
+      transparent 15%,
+      rgba(255, 255, 255, 0.15) 35%,
+      rgba(255, 255, 255, 0.35) 50%,
+      rgba(255, 255, 255, 0.15) 65%,
+      transparent 85%
+    );
+    pointer-events: none;
+    z-index: 1;
+    animation: shimmer-cta-sweep 0.65s ease-out forwards;
+  }
+}
+
+/* Mobile: single shine sweep on tap */
+@media (hover: none) {
+  .shimmer-cta:active {
+    filter: brightness(1.08);
+  }
+  .shimmer-cta:active::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 35%;
+    height: 100%;
+    background: linear-gradient(
+      105deg,
+      transparent 15%,
+      rgba(255, 255, 255, 0.15) 35%,
+      rgba(255, 255, 255, 0.35) 50%,
+      rgba(255, 255, 255, 0.15) 65%,
+      transparent 85%
+    );
+    pointer-events: none;
+    z-index: 1;
+    animation: shimmer-cta-sweep 0.5s ease-out forwards;
+  }
+}
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .shimmer-cta:hover::before,
+  .shimmer-cta:active::before {
+    animation: none !important;
+  }
+  .shimmer-cta:hover,
+  .shimmer-cta:active {
+    filter: brightness(1.05);
+  }
+}
+
+/* Text link shimmer effect */
+.link-shimmer {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.link-shimmer::before {
+  content: '';
+  position: absolute;
+  inset: -4px -8px;
+  border-radius: 8px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    currentColor 50%,
+    transparent 100%
+  );
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .link-shimmer:hover::before {
+    animation: link-glow 0.6s ease-out forwards;
+  }
+}
+
+@keyframes link-glow {
+  0% {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  50% {
+    opacity: 0.1;
+    transform: scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleX(1);
+  }
+}
+
+/* === INFINITE HORIZONTAL SCROLL ANIMATION === */
+/* Premium marquee-style animation for template suggestions */
+
+@keyframes infinite-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.infinite-scroll-container {
+  overflow: hidden;
+  /* Prevent layout shifts */
+  min-height: 52px;
+  contain: layout style;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 5%,
+    black 95%,
+    transparent
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 5%,
+    black 95%,
+    transparent
+  );
+}
+
+.infinite-scroll-track {
+  display: flex;
+  gap: 0.75rem;
+  width: max-content;
+  animation: infinite-scroll 35s linear infinite;
+  will-change: transform;
+  /* Stable positioning */
+  transform: translateZ(0);
+}
+
+/* Pause animation on hover for better UX */
+.infinite-scroll-container:hover .infinite-scroll-track {
+  animation-play-state: paused;
+}
+
+/* GPU acceleration for smooth performance */
+.infinite-scroll-track > * {
+  flex-shrink: 0;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Template chip - Premium subtle hover effect */
+.template-chip {
+  position: relative;
+  transition: filter 200ms ease-out, box-shadow 200ms ease-out;
+  overflow: hidden;
+}
+
+/* Subtle glow + brightness on hover */
+.template-chip:hover {
+  filter: brightness(1.08);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 0 12px rgba(255, 255, 255, 0.08);
+}
+
+/* Dark mode: slightly stronger glow */
+.dark .template-chip:hover {
+  filter: brightness(1.12);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.15),
+    0 0 16px rgba(255, 255, 255, 0.06);
+}
+
+/* ============== INTERACTIVE SCROLL CONTAINER ============== */
+/* Premium interactive auto-scroll with touch/drag support */
+
+.interactive-scroll-container {
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+  min-height: 52px;
+  /* Hide scrollbar completely */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  /* Prevent text selection during drag */
+  user-select: none;
+  -webkit-user-select: none;
+  /* GPU acceleration for smooth rendering */
+  transform: translateZ(0);
+  will-change: contents;
+  /* Touch action for horizontal drag only */
+  touch-action: pan-y pinch-zoom;
+  /* Gradient mask for fade edges */
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 4%,
+    black 96%,
+    transparent
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 4%,
+    black 96%,
+    transparent
+  );
+}
+
+.interactive-scroll-container::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.interactive-scroll-track {
+  display: flex;
+  gap: 0.75rem;
+  width: max-content;
+  /* GPU acceleration - Ultra optimized */
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+  /* Smooth transform transitions */
+  transition: none;
+  /* Render optimization */
+  contain: layout style paint;
+}
+
+/* Template chip for interactive scroll - no hover scale */
+.template-chip-interactive {
+  position: relative;
+  transition: filter 150ms ease-out, box-shadow 150ms ease-out;
+  overflow: hidden;
+  cursor: pointer;
+  /* Prevent zoom on double-tap mobile */
+  touch-action: manipulation;
+  /* GPU acceleration - Ultra optimized */
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  will-change: filter;
+  /* Render isolation */
+  contain: layout style;
+}
+
+/* Subtle active state feedback */
+.template-chip-interactive:active {
+  filter: brightness(0.95);
+  transition: filter 50ms ease-out;
+}
+
+/* Hover state - subtle brightness only, NO scale */
+.template-chip-interactive:hover {
+  filter: brightness(1.05);
+}
+
+/* Dark mode adjustments */
+.dark .template-chip-interactive:hover {
+  filter: brightness(1.08);
+}
+
+.dark .template-chip-interactive:active {
+  filter: brightness(0.92);
+}
+
+/* Grabbing cursor state */
+.interactive-scroll-container[style*="grabbing"] .template-chip-interactive {
+  cursor: grabbing;
+}
+
+/* Prevent pointer events on children during drag */
+.interactive-scroll-container[style*="grabbing"] .template-chip-interactive * {
+  pointer-events: none;
+}
+
+/* Reduced motion: disable auto-scroll */
+@media (prefers-reduced-motion: reduce) {
+  .interactive-scroll-container {
+    overflow-x: auto;
+    -webkit-mask-image: none;
+    mask-image: none;
+    cursor: auto;
+  }
+
+  .interactive-scroll-track {
+    will-change: auto;
+  }
+}
+
+/* Subtle sheen effect overlay */
+.template-chip::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.15) 45%,
+    rgba(255, 255, 255, 0.25) 50%,
+    rgba(255, 255, 255, 0.15) 55%,
+    transparent 60%
+  );
+  transform: translateX(-100%);
+  transition: transform 400ms ease-out;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.template-chip:hover::before {
+  transform: translateX(100%);
+}
+
+/* Active/pressed state - very subtle */
+.template-chip:active {
+  filter: brightness(0.98);
+  transition-duration: 50ms;
+}
+
+/* Reduced motion: disable sheen animation */
+@media (prefers-reduced-motion: reduce) {
+  .template-chip::before {
+    display: none;
+  }
+
+  .template-chip:hover {
+    filter: brightness(1.05);
+  }
+}
+
+/* Reduced motion: disable scroll animation */
+@media (prefers-reduced-motion: reduce) {
+  .infinite-scroll-track {
+    animation: none;
+  }
+
+  .infinite-scroll-container {
+    overflow-x: auto;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+}
+
+/* === DISABLE ANIMATIONS FOR REDUCED MOTION === */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .hover-lift,
+  .hover-lift-sm,
+  .hover-lift-lg,
+  .card-interactive {
+    transform: none !important;
+  }
+
+  .hover-lift:hover,
+  .hover-lift-sm:hover,
+  .hover-lift-lg:hover,
+  .card-interactive:hover {
+    transform: none !important;
+  }
+}
+
+/* === DESKTOP ONLY HOVER EFFECTS === */
+
+@media (hover: hover) and (pointer: fine) {
+  /* Enable hover lift only on desktop */
+  .desktop-hover-lift:hover {
+    transform: translateY(-4px);
+  }
+
+  /* Enable glow only on desktop */
+  .desktop-hover-glow:hover {
+    box-shadow: 0 0 25px rgba(248, 147, 93, 0.2);
+  }
+}
+
+/* ============== PREMIUM SHIMMER EFFECTS - AUTOSCROLL INSPIRED ============== */
+/* Vibrant, engaging shimmer effects using the warm autoscroll template colors */
+
+/* Multi-color shimmer gradient - Purple → Pink → Orange */
+@keyframes multiColorShimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Text shimmer - for headings and important text */
+.text-shimmer-premium {
+  background: linear-gradient(
+    90deg,
+    rgb(168, 85, 247) 0%,    /* purple-500 */
+    rgb(236, 72, 153) 25%,   /* pink-500 */
+    rgb(251, 146, 60) 50%,   /* orange-400 */
+    rgb(251, 191, 36) 75%,   /* amber-400 */
+    rgb(168, 85, 247) 100%   /* purple-500 */
+  );
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: multiColorShimmer 6s ease-in-out infinite;
+  will-change: background-position;
+}
+
+/* Border shimmer - for cards and containers */
+@keyframes borderShimmerGlow {
+  0%, 100% {
+    border-color: rgba(168, 85, 247, 0.3);
+    box-shadow: 0 0 15px rgba(168, 85, 247, 0.2);
+  }
+  25% {
+    border-color: rgba(236, 72, 153, 0.3);
+    box-shadow: 0 0 15px rgba(236, 72, 153, 0.2);
+  }
+  50% {
+    border-color: rgba(251, 146, 60, 0.3);
+    box-shadow: 0 0 15px rgba(251, 146, 60, 0.2);
+  }
+  75% {
+    border-color: rgba(251, 191, 36, 0.3);
+    box-shadow: 0 0 15px rgba(251, 191, 36, 0.2);
+  }
+}
+
+.border-shimmer-premium {
+  animation: borderShimmerGlow 4s ease-in-out infinite;
+  will-change: border-color, box-shadow;
+}
+
+/* Background shimmer - subtle for hero sections */
+@keyframes bgShimmerPremium {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.bg-shimmer-premium {
+  background: linear-gradient(
+    90deg,
+    rgba(168, 85, 247, 0.05) 0%,
+    rgba(236, 72, 153, 0.05) 25%,
+    rgba(251, 146, 60, 0.05) 50%,
+    rgba(251, 191, 36, 0.05) 75%,
+    rgba(168, 85, 247, 0.05) 100%
+  );
+  background-size: 200% auto;
+  animation: bgShimmerPremium 8s ease-in-out infinite;
+  will-change: background-position;
+}
+
+/* Category-specific glow effects */
+@keyframes storytellingGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(99, 102, 241, 0.35);
+  }
+}
+
+@keyframes tipsGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(251, 146, 60, 0.35);
+  }
+}
+
+@keyframes opinionGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(236, 72, 153, 0.35);
+  }
+}
+
+@keyframes victoryGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(20, 184, 166, 0.35);
+  }
+}
+
+@keyframes lessonGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(6, 182, 212, 0.35);
+  }
+}
+
+@keyframes engagementGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(168, 85, 247, 0.35);
+  }
+}
+
+/* Utility classes for category-specific glows */
+.glow-storytelling {
+  animation: storytellingGlow 2s ease-in-out infinite;
+}
+
+.glow-tips {
+  animation: tipsGlow 2s ease-in-out infinite;
+}
+
+.glow-opinion {
+  animation: opinionGlow 2s ease-in-out infinite;
+}
+
+.glow-victory {
+  animation: victoryGlow 2s ease-in-out infinite;
+}
+
+.glow-lesson {
+  animation: lessonGlow 2s ease-in-out infinite;
+}
+
+.glow-engagement {
+  animation: engagementGlow 2s ease-in-out infinite;
+}
+
+/* Hover-triggered sparkle effect */
+@keyframes sparkleFloat {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-10px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-20px) scale(0);
+  }
+}
+
+.sparkle-on-hover {
+  position: relative;
+  overflow: visible;
+}
+
+.sparkle-on-hover::after {
+  content: "✨";
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  font-size: 14px;
+  opacity: 0;
+  pointer-events: none;
+  animation: sparkleFloat 1.5s ease-out infinite;
+}
+
+.sparkle-on-hover:hover::after {
+  animation-play-state: running;
+}
+
+/* Gradient text - warm palette */
+.text-gradient-warm {
+  background: linear-gradient(
+    90deg,
+    rgb(251, 146, 60),  /* orange-400 */
+    rgb(251, 113, 133),  /* pink-400 */
+    rgb(236, 72, 153)    /* pink-500 */
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Gradient text - cool palette */
+.text-gradient-cool {
+  background: linear-gradient(
+    90deg,
+    rgb(59, 130, 246),  /* blue-500 */
+    rgb(6, 182, 212),   /* cyan-500 */
+    rgb(16, 185, 129)   /* emerald-500 */
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Gradient text - premium purple */
+.text-gradient-premium {
+  background: linear-gradient(
+    90deg,
+    rgb(139, 92, 246),  /* violet-500 */
+    rgb(168, 85, 247),  /* purple-500 */
+    rgb(236, 72, 153)   /* pink-500 */
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Interactive hover glow - category colors */
+.hover-glow-storytelling:hover {
+  box-shadow: 0 0 25px rgba(168, 85, 247, 0.3);
+  transition: box-shadow 0.3s ease-out;
+}
+
+.hover-glow-tips:hover {
+  box-shadow: 0 0 25px rgba(245, 158, 11, 0.3);
+  transition: box-shadow 0.3s ease-out;
+}
+
+.hover-glow-opinion:hover {
+  box-shadow: 0 0 25px rgba(239, 68, 68, 0.3);
+  transition: box-shadow 0.3s ease-out;
+}
+
+.hover-glow-victory:hover {
+  box-shadow: 0 0 25px rgba(16, 185, 129, 0.3);
+  transition: box-shadow 0.3s ease-out;
+}
+
+.hover-glow-lesson:hover {
+  box-shadow: 0 0 25px rgba(59, 130, 246, 0.3);
+  transition: box-shadow 0.3s ease-out;
+}
+
+.hover-glow-engagement:hover {
+  box-shadow: 0 0 25px rgba(139, 92, 246, 0.3);
+  transition: box-shadow 0.3s ease-out;
+}
+
+/* ============== NEW POST BUTTON ENHANCED SHIMMER ============== */
+/* Shimmer effect for "Nouveau poste" button - orange AUTOSCROLL */
+@keyframes shimmerEnhanced {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+.animate-shimmer-enhanced {
+  animation: shimmerEnhanced 2s ease-in-out infinite;
+}
+
+/* ============== LANDING PAGE TEXT SHIMMER ============== */
+/* Shimmer effect for gradient text - orange saumon AUTOSCROLL */
+@keyframes textShimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.text-shimmer {
+  background-size: 200% auto;
+  animation: textShimmer 3s linear infinite;
+}
+
+/* Subtle text glow for important CTAs */
+@keyframes textGlow {
+  0%, 100% {
+    text-shadow: 0 0 10px rgba(248, 147, 93, 0.3), 0 0 20px rgba(248, 147, 93, 0.15);
+  }
+  50% {
+    text-shadow: 0 0 20px rgba(248, 147, 93, 0.5), 0 0 30px rgba(248, 147, 93, 0.25);
+  }
+}
+
+.text-glow-subtle {
+  animation: textGlow 3s ease-in-out infinite;
+}
+
+/* Reduce motion: disable shimmer animations */
+@media (prefers-reduced-motion: reduce) {
+  .text-shimmer-premium,
+  .border-shimmer-premium,
+  .bg-shimmer-premium,
+  .glow-storytelling,
+  .glow-tips,
+  .glow-opinion,
+  .glow-victory,
+  .glow-lesson,
+  .glow-engagement,
+  .animate-shimmer-enhanced,
+  .text-shimmer,
+  .text-glow-subtle {
+    animation: none !important;
+  }
+
+  .sparkle-on-hover::after {
+    display: none;
+  }
+}
+
+/* ============== FIXED INPUT AREA - BOTTOM POSITIONING ============== */
+/*
+ * Unified system for fixing the chat input at the bottom of the screen
+ * Works consistently across all devices: desktop, tablet, and mobile
+ * Features:
+ * - Always fixed at the bottom (no middle-screen positioning)
+ * - Premium frosted glass effect with subtle blur and gradient
+ * - Proper safe-area handling for iOS notch/home indicator
+ * - Keyboard-aware positioning for mobile devices
+ * - Responsive and accessible
+ * - Modern iOS-style backdrop blur for elegant visual separation
+ */
+
+/* Base fixed input area - applies to ALL screen sizes */
+.fixed-input-area {
+  /* Fixed positioning at bottom */
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+
+  /* Premium blur effect - frosted glass style */
+  background: linear-gradient(
+    to top,
+    rgba(250, 251, 252, 0.85) 0%,
+    rgba(250, 251, 252, 0.75) 60%,
+    rgba(250, 251, 252, 0) 100%
+  );
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+
+  /* Smooth transitions */
+  transition: transform 0.3s ease-out, backdrop-filter 0.3s ease-out;
+
+  /* Desktop: quasi-collé au bas */
+  padding-bottom: env(safe-area-inset-bottom);
+  margin: 0;
+}
+
+/* Dark mode - adjusted blur effect */
+html.dark .fixed-input-area {
+  background: linear-gradient(
+    to top,
+    rgba(15, 17, 21, 0.85) 0%,
+    rgba(15, 17, 21, 0.75) 60%,
+    rgba(15, 17, 21, 0) 100%
+  );
+}
+
+/* Mobile: quasi-collé au bas de l'écran */
+@media (max-width: 1023px) {
+  .fixed-input-area {
+    /* Quasi-collé au bas - uniquement safe area */
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Mobile browser mode - additional padding for browser UI when in browser (not PWA) */
+  @media not all and (display-mode: standalone) {
+    .fixed-input-area.mobile-browser-mode {
+      /* Dynamic padding set by JavaScript based on browser UI */
+      padding-bottom: calc(env(safe-area-inset-bottom) + var(--input-bottom-padding, 0px));
+    }
+
+    /* When keyboard is visible, minimal padding */
+    .fixed-input-area.mobile-browser-mode.keyboard-visible {
+      padding-bottom: env(safe-area-inset-bottom);
+      transform: translateY(calc(-1 * var(--keyboard-height, 0px)));
+    }
+  }
+}
+
+/* Fallback for browsers that don't support backdrop-filter */
+@supports not (backdrop-filter: blur(12px)) {
+  .fixed-input-area {
+    /* More opaque background when blur is not supported */
+    background: linear-gradient(
+      to top,
+      rgba(250, 251, 252, 0.95) 0%,
+      rgba(250, 251, 252, 0.85) 60%,
+      rgba(250, 251, 252, 0) 100%
+    );
+  }
+
+  html.dark .fixed-input-area {
+    background: linear-gradient(
+      to top,
+      rgba(15, 17, 21, 0.95) 0%,
+      rgba(15, 17, 21, 0.85) 60%,
+      rgba(15, 17, 21, 0) 100%
+    );
+  }
+}
+
+/* iOS Safari specific adjustments */
+@supports (-webkit-touch-callout: none) {
+  @media (max-width: 1023px) {
+    .fixed-input-area {
+      /* Use -webkit-fill-available for proper sizing */
+      min-height: fit-content;
+    }
+  }
+}
+
+/* Content padding to prevent overlap with fixed input */
+.content-with-fixed-input {
+  /* Default padding for desktop */
+  padding-bottom: calc(120px + env(safe-area-inset-bottom, 16px));
+}
+
+/* Mobile content padding */
+@media (max-width: 1023px) {
+  .content-with-fixed-input {
+    /* Extra padding on mobile */
+    padding-bottom: calc(140px + env(safe-area-inset-bottom, 16px));
+  }
+
+  /* Mobile browser mode - account for browser UI */
+  @media not all and (display-mode: standalone) {
+    .content-with-fixed-input.mobile-browser-mode {
+      padding-bottom: calc(
+        140px +
+        env(safe-area-inset-bottom, 16px) +
+        var(--input-bottom-padding, 60px)
+      );
+    }
+  }
+}
+
+/* Animation for smooth appearance */
+@keyframes slideUpFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fixed-input-area.animate-in {
+  animation: slideUpFadeIn 0.5s ease-out;
+}
+
+/* Reduce motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .fixed-input-area {
+    transition: none;
+  }
+
+  .fixed-input-area.animate-in {
+    animation: none;
+  }
 }

@@ -15,8 +15,8 @@ export function useAppInitialization() {
   const [minLoadTimeElapsed, setMinLoadTimeElapsed] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
-  // Landing page gets instant display - no splash
-  const isLandingPage = pathname === "/" || pathname === "/login" || pathname === "/signup";
+  // Landing/auth pages get instant display - no splash
+  const isLandingPage = pathname === "/" || pathname === "/login" || pathname === "/login" || pathname === "/signup";
 
   useEffect(() => {
     setIsMounted(true);
