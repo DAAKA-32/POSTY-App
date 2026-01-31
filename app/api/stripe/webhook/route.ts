@@ -70,6 +70,10 @@ async function updateUserSubscription(
     stripeSubscriptionId?: string;
     status?: string;
     currentPeriodEnd?: Date;
+    // Trial-specific fields
+    trialStart?: Date;
+    trialEnd?: Date;
+    isTrialStart?: boolean;
   }
 ) {
   const db = getFirebaseAdmin();
@@ -77,8 +81,12 @@ async function updateUserSubscription(
 
   const updateData: Record<string, unknown> = {
     "subscription.plan": data.plan,
-    "subscription.subscribedAt": Timestamp.now(),
   };
+
+  // Only set subscribedAt if not in trial (set when trial ends or direct subscription)
+  if (data.status !== "trialing") {
+    updateData["subscription.subscribedAt"] = Timestamp.now();
+  }
 
   if (data.stripeCustomerId) {
     updateData["subscription.stripeCustomerId"] = data.stripeCustomerId;
@@ -91,6 +99,18 @@ async function updateUserSubscription(
   }
   if (data.currentPeriodEnd) {
     updateData["subscription.expiresAt"] = Timestamp.fromDate(data.currentPeriodEnd);
+  }
+
+  // Handle trial tracking - mark trial as used on first trial start
+  if (data.isTrialStart && data.status === "trialing") {
+    updateData["subscription.trialUsed"] = true;
+    updateData["subscription.trialPlan"] = data.plan;
+    if (data.trialStart) {
+      updateData["subscription.trialStartedAt"] = Timestamp.fromDate(data.trialStart);
+    }
+    if (data.trialEnd) {
+      updateData["subscription.trialEndsAt"] = Timestamp.fromDate(data.trialEnd);
+    }
   }
 
   await userRef.update(updateData);
@@ -173,6 +193,15 @@ export async function POST(request: NextRequest) {
         const priceId = subscription.items?.data?.[0]?.price?.id;
         const plan = getPlanFromPriceId(priceId || "");
 
+        // Check if this is a trial subscription
+        const isTrialing = subscription.status === "trialing";
+        const trialStart = subscription.trial_start
+          ? new Date(subscription.trial_start * 1000)
+          : undefined;
+        const trialEnd = subscription.trial_end
+          ? new Date(subscription.trial_end * 1000)
+          : undefined;
+
         await updateUserSubscription(userId, {
           plan,
           stripeCustomerId: session.customer as string,
@@ -181,9 +210,13 @@ export async function POST(request: NextRequest) {
           currentPeriodEnd: subscription.current_period_end
             ? new Date(subscription.current_period_end * 1000)
             : undefined,
+          // Trial tracking
+          isTrialStart: isTrialing,
+          trialStart,
+          trialEnd,
         });
 
-        console.log(`Checkout completed for user ${userId}, plan: ${plan}`);
+        console.log(`Checkout completed for user ${userId}, plan: ${plan}${isTrialing ? " (TRIAL)" : ""}`);
         break;
       }
 

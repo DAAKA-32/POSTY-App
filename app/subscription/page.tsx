@@ -49,22 +49,16 @@ function SubscriptionContent() {
   const isAdmin = process.env.NEXT_PUBLIC_ADMIN_MODE === "true";
   const canUseTestMode = isDev || isAdmin;
 
-  // Enable scrolling on this page (override global overflow:hidden)
+  // Enable full scrolling on Subscription page (mouse wheel, trackpad, touch, keyboard)
   useEffect(() => {
-    // Add class for styling and enable scroll
-    document.documentElement.classList.add("scrollable-page");
-    document.body.style.overflow = "auto";
-    document.body.style.height = "auto";
-    document.documentElement.style.overflow = "auto";
-    document.documentElement.style.height = "auto";
+    document.documentElement.classList.add("subscription-scroll-enabled");
+    document.body.classList.add("subscription-scroll-enabled");
+    // Remove any classes that might block scroll
+    document.body.classList.remove("pwa-mobile", "no-scroll", "scroll-locked", "modal-open");
 
     return () => {
-      // Cleanup when leaving page
-      document.documentElement.classList.remove("scrollable-page");
-      document.body.style.overflow = "";
-      document.body.style.height = "";
-      document.documentElement.style.overflow = "";
-      document.documentElement.style.height = "";
+      document.documentElement.classList.remove("subscription-scroll-enabled");
+      document.body.classList.remove("subscription-scroll-enabled");
     };
   }, []);
 
@@ -149,16 +143,17 @@ function SubscriptionContent() {
 
   return (
     <div
-      className="min-h-screen bg-background"
+      className="min-h-screen bg-background-warm dark:bg-background"
       style={{
         overflowY: "auto",
         overflowX: "hidden",
         minHeight: "100vh",
         WebkitOverflowScrolling: "touch",
+        touchAction: "pan-y",
       }}
     >
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-light-bg/80 dark:bg-dark-bg/80 backdrop-blur-xl border-b border-light-border dark:border-dark-border">
+      <div className="sticky top-0 z-40 bg-background-warm/80 dark:bg-dark-bg/80 backdrop-blur-xl border-b border-[#F8935D]/10 dark:border-dark-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="relative flex items-center h-16">
             <button
@@ -338,7 +333,7 @@ function LoadingFallback() {
   // Note: We can't use hooks here since this is rendered before SubscriptionContent
   // Using a simple loading message that works universally
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
+    <div className="min-h-screen bg-background-warm dark:bg-background flex items-center justify-center">
       <div className="flex flex-col items-center gap-4">
         <div className="w-10 h-10 md:w-12 md:h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
         <p className="text-text-secondary">{/* Loading animation only */}</p>

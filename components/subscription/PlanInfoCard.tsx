@@ -17,13 +17,10 @@ const FEATURE_CHECKS = [
   {
     key: "conversations",
     getLabel: (limits: ReturnType<typeof getPlanConfig>["limits"]) => {
-      if (limits.conversationsPerWeek === -1 && limits.conversationsPerMonth === -1) {
+      if (limits.messagesPerDay === -1) {
         return "Créations illimitées";
       }
-      if (limits.conversationsPerMonth > 0) {
-        return `${limits.conversationsPerMonth} créations/mois`;
-      }
-      return `${limits.conversationsPerWeek} créations/semaine`;
+      return `${limits.messagesPerDay} créations/jour`;
     },
     isIncluded: () => true,
   },

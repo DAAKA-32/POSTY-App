@@ -7,6 +7,12 @@ import {
   OpenAIModel,
   SYSTEM_PROMPTS,
 } from "@/lib/openai";
+import {
+  checkUserQuotaAdmin,
+  incrementUserQuotaAdmin,
+} from "@/lib/firestore-admin";
+import { isAdminInitialized } from "@/lib/firebase-admin";
+import { getPlanLimits, getMaxTokensForPlan, PlanType } from "@/lib/plans";
 
 /**
  * POST /api/chat
@@ -30,6 +36,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const {
+      userId,
       messages,
       language = "fr",
       userApiKey,
@@ -37,13 +44,87 @@ export async function POST(request: NextRequest) {
       context = "linkedin",
     } = body;
 
-    // Validate messages
+    // Validate required fields
+    if (!userId || typeof userId !== "string") {
+      return new Response(
+        JSON.stringify({ error: "userId is required" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return new Response(
         JSON.stringify({ error: "Messages array is required" }),
         { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
+
+    // ========== QUOTA CHECK (SERVER-SIDE) ==========
+    let userPlan: PlanType = "free";
+    if (isAdminInitialized()) {
+      try {
+        const quotaCheck = await checkUserQuotaAdmin(userId);
+        userPlan = quotaCheck.plan as PlanType;
+
+        if (!quotaCheck.canGenerate) {
+          return new Response(
+            JSON.stringify({
+              error: "quota_exceeded",
+              message: language === "fr"
+                ? "Vous avez atteint votre limite quotidienne de messages."
+                : "You have reached your daily message limit.",
+              limit: quotaCheck.dailyLimit,
+              used: quotaCheck.usedToday,
+              plan: quotaCheck.plan,
+            }),
+            { status: 429, headers: { "Content-Type": "application/json" } }
+          );
+        }
+      } catch (quotaError) {
+        console.error("Quota check error:", quotaError);
+        if (process.env.NODE_ENV === "production") {
+          return new Response(
+            JSON.stringify({
+              error: "service_unavailable",
+              message: language === "fr"
+                ? "Service temporairement indisponible. Veuillez réessayer."
+                : "Service temporarily unavailable. Please try again.",
+            }),
+            { status: 503, headers: { "Content-Type": "application/json" } }
+          );
+        }
+      }
+    } else if (process.env.NODE_ENV === "production") {
+      return new Response(
+        JSON.stringify({
+          error: "service_unavailable",
+          message: language === "fr"
+            ? "Service temporairement indisponible. Veuillez réessayer."
+            : "Service temporarily unavailable. Please try again.",
+        }),
+        { status: 503, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // ========== PROMPT LENGTH ENFORCEMENT ==========
+    const planLimits = getPlanLimits(userPlan);
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage?.content && lastMessage.content.length > planLimits.maxCharactersPerPrompt) {
+      return new Response(
+        JSON.stringify({
+          error: "prompt_too_long",
+          message: language === "fr"
+            ? `Votre message dépasse la limite de ${planLimits.maxCharactersPerPrompt} caractères pour votre plan.`
+            : `Your message exceeds the ${planLimits.maxCharactersPerPrompt} character limit for your plan.`,
+          limit: planLimits.maxCharactersPerPrompt,
+          current: lastMessage.content.length,
+        }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // Plan-based max tokens for response length
+    const maxTokens = getMaxTokensForPlan(userPlan);
 
     // Check for API key
     const hasUserKey = userApiKey && isValidApiKeyFormat(userApiKey);
@@ -106,7 +187,7 @@ export async function POST(request: NextRequest) {
             model: openaiService["model"],
             messages: chatMessages,
             temperature: 0.7,
-            max_tokens: 1000,
+            max_tokens: maxTokens,
             stream: true,
           });
 
@@ -117,6 +198,15 @@ export async function POST(request: NextRequest) {
             if (content) {
               fullContent += content;
               sendEvent("chunk", { content });
+            }
+          }
+
+          // Increment quota after successful response
+          if (isAdminInitialized()) {
+            try {
+              await incrementUserQuotaAdmin(userId);
+            } catch (incrementError) {
+              console.error("Quota increment error:", incrementError);
             }
           }
 

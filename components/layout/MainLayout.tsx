@@ -200,6 +200,25 @@ function getNavItems(t: ReturnType<typeof useLanguage>["t"]) {
         </svg>
       ),
     },
+    {
+      name: t.nav.analytics,
+      href: "/analytics",
+      color: "emerald",
+      activeClasses: "bg-emerald-500/10 text-emerald-500",
+      hoverClasses: "hover:text-emerald-500 hover:bg-emerald-500/5",
+      indicatorColor: "bg-emerald-500",
+      glowColor: "rgba(16, 185, 129, 0.35)",
+      icon: (isActive: boolean) => (
+        <svg className="w-5 h-5" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={isActive ? 0 : 2}
+            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+          />
+        </svg>
+      ),
+    },
   ];
 }
 
@@ -350,6 +369,8 @@ export default function MainLayout({
   }, [router]);
 
   // Add pwa-mobile class to body on mobile devices for proper scroll handling
+  // IMPORTANT: Ne pas ajouter pwa-mobile si force-scroll-enabled est présent
+  // (certaines pages activent explicitement le scroll)
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -357,14 +378,20 @@ export default function MainLayout({
     const isPWA = window.matchMedia("(display-mode: standalone)").matches ||
                   (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
 
-    // Add pwa-mobile class for mobile devices (both PWA and browser)
-    if (isMobile) {
+    // Add pwa-mobile class for mobile devices ONLY if scroll is not explicitly enabled
+    const hasForceScroll = document.body.classList.contains("force-scroll-enabled") ||
+                           document.documentElement.classList.contains("force-scroll-enabled");
+
+    if (isMobile && !hasForceScroll) {
       document.body.classList.add("pwa-mobile");
     }
 
-    // Handle resize to update class
+    // Handle resize to update class (respecting force-scroll-enabled)
     const handleResize = () => {
-      if (window.innerWidth < 1024) {
+      const hasForceScrollOnResize = document.body.classList.contains("force-scroll-enabled") ||
+                                     document.documentElement.classList.contains("force-scroll-enabled");
+
+      if (window.innerWidth < 1024 && !hasForceScrollOnResize) {
         document.body.classList.add("pwa-mobile");
       } else {
         document.body.classList.remove("pwa-mobile");
@@ -468,7 +495,7 @@ export default function MainLayout({
       <aside
         role="navigation"
         aria-label="Navigation principale"
-        className="hidden lg:flex flex-col h-screen bg-white dark:bg-dark-card border-r border-gray-200 dark:border-dark-border fixed left-0 top-0 z-40 overflow-hidden transition-all duration-200 ease-out"
+        className="hidden lg:flex flex-col h-screen bg-background-warm dark:bg-dark-card border-r border-[#F8935D]/10 dark:border-dark-border fixed left-0 top-0 z-40 overflow-hidden transition-all duration-200 ease-out"
         style={{ width: currentSidebarWidth }}
       >
         {/* Header - Logo when expanded, Toggle when collapsed */}
@@ -476,7 +503,7 @@ export default function MainLayout({
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: smoothEase }}
-          className={`h-16 border-b border-gray-200 dark:border-dark-border flex items-center shrink-0 ${isCollapsed ? "justify-center px-2" : "justify-between px-3"}`}
+          className={`h-16 border-b border-[#F8935D]/10 dark:border-dark-border flex items-center shrink-0 ${isCollapsed ? "justify-center px-2" : "justify-between px-3"}`}
         >
           {isCollapsed ? (
             /* Toggle button when collapsed - replaces logo */
@@ -484,7 +511,7 @@ export default function MainLayout({
               onClick={toggleCollapse}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="w-10 h-10 rounded-xl flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-gray-100 dark:hover:bg-dark-hover transition-colors duration-200 group relative"
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-[#F8935D]/10 dark:hover:bg-dark-hover transition-colors duration-200 group relative"
               title="Déplier la sidebar"
               aria-label="Déplier la sidebar"
             >
@@ -497,7 +524,7 @@ export default function MainLayout({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
               </svg>
               {/* Tooltip */}
-              <span className="absolute left-full ml-2 px-2 py-1 bg-white dark:bg-dark-elevated border border-gray-200 dark:border-dark-border rounded-lg text-sm whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50 shadow-lg pointer-events-none">
+              <span className="absolute left-full ml-2 px-2 py-1 bg-background-warm dark:bg-dark-elevated border border-[#F8935D]/15 dark:border-dark-border rounded-lg text-sm whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50 shadow-lg pointer-events-none">
                 Déplier la sidebar
               </span>
             </motion.button>
@@ -535,7 +562,7 @@ export default function MainLayout({
                 onClick={toggleCollapse}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-gray-100 dark:hover:bg-dark-hover transition-colors duration-200"
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-[#F8935D]/10 dark:hover:bg-dark-hover transition-colors duration-200"
                 title="Replier la sidebar"
                 aria-label="Replier la sidebar"
               >
@@ -566,7 +593,7 @@ export default function MainLayout({
                 placeholder={t.sidebar.searchShortPlaceholder}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-10 py-2.5 text-sm bg-gray-50 dark:bg-dark-bg border border-gray-200 dark:border-dark-border rounded-xl text-text-primary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                className="w-full pl-10 pr-10 py-2.5 text-sm bg-white/70 dark:bg-dark-bg border border-[#F8935D]/15 dark:border-dark-border rounded-xl text-text-primary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
               />
               {searchQuery && (
                 <button onClick={() => setSearchQuery("")} className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center text-text-muted hover:text-text-primary">
@@ -582,14 +609,14 @@ export default function MainLayout({
           {isCollapsed && (
             <button
               onClick={handleSearchClick}
-              className="w-full h-11 rounded-xl flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-gray-100 dark:hover:bg-dark-hover transition-colors group relative"
+              className="w-full h-11 rounded-xl flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-[#F8935D]/10 dark:hover:bg-dark-hover transition-colors group relative"
               title={t.sidebar.searchShortPlaceholder}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               {/* Tooltip */}
-              <span className="absolute left-full ml-2 px-2 py-1 bg-white dark:bg-dark-elevated border border-gray-200 dark:border-dark-border rounded-lg text-sm whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50 shadow-lg pointer-events-none">
+              <span className="absolute left-full ml-2 px-2 py-1 bg-background-warm dark:bg-dark-elevated border border-[#F8935D]/15 dark:border-dark-border rounded-lg text-sm whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50 shadow-lg pointer-events-none">
                 {t.sidebar.searchShortPlaceholder}
               </span>
             </button>
@@ -639,7 +666,7 @@ export default function MainLayout({
               {!isCollapsed && <span className="relative z-10 text-sm animate-pulse">✨</span>}
               {/* Tooltip for collapsed mode */}
               {isCollapsed && (
-                <span className="absolute left-full ml-2 px-2 py-1 bg-white dark:bg-dark-elevated border border-gray-200 dark:border-dark-border rounded-lg text-sm text-text-primary whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50 shadow-lg pointer-events-none">
+                <span className="absolute left-full ml-2 px-2 py-1 bg-background-warm dark:bg-dark-elevated border border-[#F8935D]/15 dark:border-dark-border rounded-lg text-sm text-text-primary whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50 shadow-lg pointer-events-none">
                   {t.sidebar.newPost}
                 </span>
               )}
@@ -669,6 +696,8 @@ export default function MainLayout({
                         ? "bg-cyan-500"
                         : item.color === "violet"
                         ? "bg-violet-500"
+                        : item.color === "emerald"
+                        ? "bg-emerald-500"
                         : "bg-primary"
                     }`}
                     style={{
@@ -708,6 +737,7 @@ export default function MainLayout({
                       ${item.color === "orange" ? "text-orange-500" : ""}
                       ${item.color === "cyan" ? "text-cyan-500" : ""}
                       ${item.color === "violet" ? "text-violet-500" : ""}
+                      ${item.color === "emerald" ? "text-emerald-500" : ""}
                     `}
                     style={isActive ? {
                       filter: `drop-shadow(0 0 6px ${item.glowColor})`
@@ -756,6 +786,7 @@ export default function MainLayout({
                         ${item.color === "orange" ? "text-orange-500" : ""}
                         ${item.color === "cyan" ? "text-cyan-500" : ""}
                         ${item.color === "violet" ? "text-violet-500" : ""}
+                        ${item.color === "emerald" ? "text-emerald-500" : ""}
                       `}
                       fill="none"
                       stroke="currentColor"
@@ -767,7 +798,7 @@ export default function MainLayout({
 
                   {/* Tooltip for collapsed mode */}
                   {isCollapsed && (
-                    <span className="absolute left-full ml-2 px-2 py-1 bg-white dark:bg-dark-elevated border border-gray-200 dark:border-dark-border rounded-lg text-sm text-text-primary whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50 shadow-lg pointer-events-none">
+                    <span className="absolute left-full ml-2 px-2 py-1 bg-background-warm dark:bg-dark-elevated border border-[#F8935D]/15 dark:border-dark-border rounded-lg text-sm text-text-primary whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50 shadow-lg pointer-events-none">
                       {item.name}
                       {showBadge && ` (${schedulingPendingCount})`}
                     </span>
@@ -787,7 +818,7 @@ export default function MainLayout({
             >
               <button
                 onClick={() => setShowChatList(!showChatList)}
-                className="group flex items-center justify-between w-full px-3 py-2 text-text-muted hover:text-text-primary hover:bg-light-hover dark:hover:bg-dark-hover transition-all duration-200 rounded-lg"
+                className="group flex items-center justify-between w-full px-3 py-2 text-text-muted hover:text-text-primary hover:bg-[#F8935D]/10 dark:hover:bg-dark-hover transition-all duration-200 rounded-lg"
               >
                 <span className="text-xs font-bold uppercase tracking-wider flex items-center gap-2">
                   <svg
@@ -968,7 +999,7 @@ export default function MainLayout({
                                 ${
                                   isActive
                                     ? "bg-primary/10 dark:bg-primary/10 text-text-primary border-l-2 border-primary pl-[10px] shadow-sm"
-                                    : "text-text-secondary hover:text-text-primary hover:bg-light-hover dark:hover:bg-dark-hover hover:border-l-2 hover:border-primary/40 hover:pl-[10px]"
+                                    : "text-text-secondary hover:text-text-primary hover:bg-[#F8935D]/10 dark:hover:bg-dark-hover hover:border-l-2 hover:border-primary/40 hover:pl-[10px]"
                                 }
                               `}
                             >
@@ -1056,7 +1087,7 @@ export default function MainLayout({
                 </span>
               </div>
               {/* Tooltip */}
-              <span className="absolute left-full ml-2 px-2 py-1 bg-white dark:bg-dark-elevated border border-gray-200 dark:border-dark-border rounded-lg text-sm whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50 shadow-lg pointer-events-none">
+              <span className="absolute left-full ml-2 px-2 py-1 bg-background-warm dark:bg-dark-elevated border border-[#F8935D]/15 dark:border-dark-border rounded-lg text-sm whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50 shadow-lg pointer-events-none">
                 {t.sidebar.conversations} ({localPosts.length})
               </span>
             </button>
@@ -1090,7 +1121,7 @@ export default function MainLayout({
           <header
             role="banner"
             aria-label="En-tête mobile"
-            className="mobile-header lg:hidden fixed top-0 left-0 right-0 bg-white/95 dark:bg-dark-card/95 backdrop-blur-xl border-b border-gray-200 dark:border-dark-border z-[60]"
+            className="mobile-header lg:hidden fixed top-0 left-0 right-0 bg-background-warm/95 dark:bg-dark-card/95 backdrop-blur-xl border-b border-[#F8935D]/10 dark:border-dark-border z-[60]"
             style={{
               paddingTop: "env(safe-area-inset-top, 0px)",
             }}
@@ -1098,7 +1129,7 @@ export default function MainLayout({
             <div className="flex items-center justify-between h-14 min-h-[56px] px-4">
               <button
                 onClick={openSidebar}
-                className="min-w-[44px] min-h-[44px] p-2.5 -ml-2 flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-gray-100 dark:hover:bg-dark-hover rounded-lg transition-colors duration-200"
+                className="min-w-[44px] min-h-[44px] p-2.5 -ml-2 flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-[#F8935D]/10 dark:hover:bg-dark-hover rounded-lg transition-colors duration-200"
                 aria-label={t.sidebar.openMenu}
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1195,7 +1226,7 @@ function QuotaBadgeCollapsed() {
         w-full h-11 rounded-xl flex items-center justify-center
         ${isPremium
           ? "bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/30"
-          : "bg-gray-100 dark:bg-dark-hover border border-gray-200 dark:border-dark-border hover:border-primary/30"
+          : "bg-[#F8935D]/5 dark:bg-dark-hover border border-[#F8935D]/15 dark:border-dark-border hover:border-primary/30"
         }
         transition-colors duration-200
       `}
@@ -1252,7 +1283,7 @@ function QuotaBadgeExpanded() {
           block p-3 rounded-xl
           ${isPremium
             ? "bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20"
-            : "bg-gray-50 dark:bg-dark-hover/50 border border-gray-200 dark:border-dark-border hover:border-primary/30"
+            : "bg-[#F8935D]/5 dark:bg-dark-hover/50 border border-[#F8935D]/15 dark:border-dark-border hover:border-primary/30"
           }
           transition-colors duration-200 group
         `}
@@ -1279,7 +1310,7 @@ function QuotaBadgeExpanded() {
 
         {!isPremium && dailyLimit > 0 && (
           <>
-            <div className="h-1.5 bg-gray-200 dark:bg-dark-border rounded-full overflow-hidden mb-1.5">
+            <div className="h-1.5 bg-[#F8935D]/15 dark:bg-dark-border rounded-full overflow-hidden mb-1.5">
               <div
                 className={`h-full ${getProgressColor()} transition-all duration-300`}
                 style={{ width: `${getProgressPercentage()}%` }}

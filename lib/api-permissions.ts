@@ -12,6 +12,7 @@ import {
   PlanSource,
   getPlanLimits,
   Platform,
+  isTestModeValid,
 } from "./plans";
 import {
   UserSubscription,
@@ -77,11 +78,10 @@ export async function getUserSubscriptionData(userId: string): Promise<Subscript
     // Parse subscription data
     const subscriptionData = userData.subscription || {};
     const usageData = userData.usage || {};
-    const testModeData = userData.testMode || {};
-
-    // Determine effective plan (test mode takes precedence if active)
-    const isTestMode = testModeData.active === true;
-    const testPlan = isTestMode ? (testModeData.plan as PlanType) : null;
+    // Determine effective plan (test mode takes precedence if active and not expired)
+    const testModeResult = isTestModeValid(userData.testMode);
+    const isTestMode = testModeResult.isActive;
+    const testPlan = testModeResult.plan;
 
     // Map old plan names to new ones
     let stripePlan: PlanType = "free";
@@ -102,6 +102,21 @@ export async function getUserSubscriptionData(userId: string): Promise<Subscript
       currentPeriodEnd: subscriptionData.expiresAt?.toDate(),
     };
 
+    // Parse daily quota data
+    const quotaData = userData.quota || {};
+    const lastMessageDate = quotaData.lastMessageDate?.toDate?.();
+    let messagesUsedToday = 0;
+    if (lastMessageDate) {
+      const now = new Date();
+      const isSameDay =
+        lastMessageDate.getUTCFullYear() === now.getUTCFullYear() &&
+        lastMessageDate.getUTCMonth() === now.getUTCMonth() &&
+        lastMessageDate.getUTCDate() === now.getUTCDate();
+      if (isSameDay) {
+        messagesUsedToday = quotaData.dailyMessageCount || 0;
+      }
+    }
+
     // Parse usage data with quota reset logic
     const weekStartDate = usageData.weekStartDate?.toDate();
     const monthStartDate = usageData.monthStartDate?.toDate();
@@ -120,6 +135,8 @@ export async function getUserSubscriptionData(userId: string): Promise<Subscript
     }
 
     const usage: UserUsage = {
+      messagesUsedToday,
+      lastMessageDate,
       conversationsThisWeek,
       conversationsThisMonth,
       lastConversationDate: usageData.lastConversationDate?.toDate(),

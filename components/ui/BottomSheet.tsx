@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence, PanInfo, useAnimation, useMotionValue, useTransform } from "framer-motion";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { useHapticFeedback } from "@/hooks/useHapticFeedback";
+import { useScrollLock } from "@/hooks/useScrollLock";
 
 interface BottomSheetProps {
   isOpen: boolean;
@@ -99,7 +100,10 @@ export default function BottomSheet({
     returnFocus: true,
   });
 
-  // Handle escape key, haptic feedback, and iOS-compatible scroll lock
+  // Centralized scroll lock - uses CSS class system
+  useScrollLock(isOpen);
+
+  // Handle escape key, haptic feedback, and iOS touch prevention
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -119,12 +123,9 @@ export default function BottomSheet({
 
     if (isOpen) {
       document.addEventListener("keydown", handleEscape);
-
-      // iOS-compatible scroll lock
-      document.body.style.overflow = "hidden";
       document.documentElement.classList.add("bottomsheet-open");
 
-      // iOS touch prevention
+      // iOS touch prevention (mobile only)
       document.addEventListener("touchmove", preventTouchMove, { passive: false });
 
       // Haptic feedback when sheet opens
@@ -134,7 +135,6 @@ export default function BottomSheet({
     return () => {
       document.removeEventListener("keydown", handleEscape);
       document.removeEventListener("touchmove", preventTouchMove);
-      document.body.style.overflow = "";
       document.documentElement.classList.remove("bottomsheet-open");
     };
   }, [isOpen, onClose, triggerHaptic]);

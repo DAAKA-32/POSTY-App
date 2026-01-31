@@ -22,27 +22,30 @@ const legalLinks = [
 export default function LegalLayoutLight({ children, title }: LegalLayoutLightProps) {
   const pathname = usePathname();
 
-  // Enable scrolling on legal pages by adding class to html
+  // Enable full scrolling on Legal pages (mouse wheel, trackpad, touch, keyboard)
   useEffect(() => {
-    // Add class to enable scrolling
-    document.documentElement.classList.add("legal-page");
-    document.body.style.overflow = "auto";
-    document.body.style.height = "auto";
-    document.documentElement.style.overflow = "auto";
-    document.documentElement.style.height = "auto";
+    document.documentElement.classList.add("legal-scroll-enabled");
+    document.body.classList.add("legal-scroll-enabled");
+    // Remove any classes that might block scroll
+    document.body.classList.remove("pwa-mobile", "no-scroll", "scroll-locked", "modal-open");
 
     return () => {
-      // Cleanup when leaving legal pages
-      document.documentElement.classList.remove("legal-page");
-      document.body.style.overflow = "";
-      document.body.style.height = "";
-      document.documentElement.style.overflow = "";
-      document.documentElement.style.height = "";
+      document.documentElement.classList.remove("legal-scroll-enabled");
+      document.body.classList.remove("legal-scroll-enabled");
     };
   }, []);
 
   return (
-    <div className="min-h-screen bg-background text-white overflow-y-auto overflow-x-hidden">
+    <div
+      className="min-h-screen bg-background text-white"
+      style={{
+        overflowY: "auto",
+        overflowX: "hidden",
+        minHeight: "100vh",
+        WebkitOverflowScrolling: "touch",
+        touchAction: "pan-y",
+      }}
+    >
       {/* Header */}
       <header className="sticky top-0 z-50 bg-dark-card border-b border-dark-border backdrop-blur-sm">
         <div className="max-w-[960px] mx-auto px-6 py-4 flex items-center justify-between">

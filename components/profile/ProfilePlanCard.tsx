@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { SubscriptionPlan, getPlanById } from "@/types";
+import { SubscriptionPlan } from "@/types";
+import { getPlanConfig } from "@/lib/plans";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ProfilePlanCardProps {
@@ -18,7 +19,7 @@ export default function ProfilePlanCard({
   onUpgrade,
 }: ProfilePlanCardProps) {
   const { t } = useLanguage();
-  const plan = getPlanById(currentPlan);
+  const plan = getPlanConfig(currentPlan);
   const isUnlimited = dailyLimit === -1;
   const usagePercentage = isUnlimited ? 0 : Math.min((dailyMessagesUsed / dailyLimit) * 100, 100);
 
@@ -156,13 +157,13 @@ export default function ProfilePlanCard({
 
           <div>
             <h3 className="font-semibold text-gray-900 dark:text-text-primary text-lg">{plan.name}</h3>
-            <p className="text-sm text-gray-500 dark:text-text-muted">{plan.tagline}</p>
+            <p className="text-sm text-gray-500 dark:text-text-muted">{plan.description}</p>
           </div>
         </div>
 
         {/* Plan badge */}
         <span className={`px-3 py-1 text-xs font-semibold rounded-full ${style.badge}`}>
-          {currentPlan === "free" ? t.common.free : plan.price.toFixed(2) + " EUR/mois"}
+          {currentPlan === "free" ? t.common.free : plan.price.monthly.toFixed(2) + " EUR/mois"}
         </span>
       </div>
 

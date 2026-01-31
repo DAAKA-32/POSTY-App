@@ -1,6 +1,7 @@
 "use client";
 
-import { SubscriptionPlan, getPlanById } from "@/types";
+import { SubscriptionPlan } from "@/types";
+import { getPlanConfig } from "@/lib/plans";
 
 interface SubscriptionBadgeProps {
   plan: SubscriptionPlan;
@@ -13,7 +14,7 @@ export default function SubscriptionBadge({
   size = "md",
   showLabel = true,
 }: SubscriptionBadgeProps) {
-  const planConfig = getPlanById(plan);
+  const planConfig = getPlanConfig(plan);
 
   const sizeClasses = {
     sm: "px-2 py-0.5 text-xs",

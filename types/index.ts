@@ -42,103 +42,6 @@ export interface PlatformAdaptation {
   notes: string;              // Platform-specific tips
 }
 
-export interface SubscriptionFeature {
-  id: string;
-  label: string;
-  description?: string;
-  included: boolean;
-  highlight?: boolean;
-}
-
-export interface PlanConfig {
-  id: SubscriptionPlan;
-  name: string;
-  tagline: string;
-  price: number; // Prix mensuel en euros
-  priceYearly: number; // Prix annuel en euros (total)
-  dailyMessageLimit: number; // -1 = illimite
-  features: SubscriptionFeature[];
-  popular?: boolean;
-  ctaLabel: string;
-}
-
-// Limites quotidiennes de messages IA
-export const DAILY_MESSAGE_LIMITS: Record<SubscriptionPlan, number> = {
-  free: 3,
-  pro: -1, // Illimite
-  max: -1, // Illimite
-};
-
-// Configuration complete des plans
-// Prix annuels calcules avec 20% d'economie
-export const SUBSCRIPTION_PLANS: PlanConfig[] = [
-  {
-    id: "free",
-    name: "Gratuit",
-    tagline: "Pour decouvrir Posty",
-    price: 0,
-    priceYearly: 0,
-    dailyMessageLimit: 3,
-    ctaLabel: "Commencer gratuitement",
-    features: [
-      { id: "messages", label: "3 messages IA par jour", included: true },
-      { id: "response-mode", label: "Version Business uniquement", included: true },
-      { id: "insights", label: "Insights IA sur chaque post", included: true, highlight: true },
-      { id: "history", label: "Historique limite (7 jours)", included: true },
-      { id: "style-choice", label: "Choix du style (Storytelling/Business)", included: false },
-      { id: "analysis", label: "Analyse de post", included: false },
-      { id: "improve", label: "Ameliorer un post existant", included: false },
-      { id: "multiplatform", label: "Adaptation multi-plateforme", included: false },
-    ],
-  },
-  {
-    id: "pro",
-    name: "Pro",
-    tagline: "Pour les createurs serieux",
-    price: 9.90,
-    priceYearly: 95, // 9,90 x 12 x 0,80 = 95,04€ (20% economie)
-    dailyMessageLimit: -1,
-    popular: true,
-    ctaLabel: "Choisir Pro",
-    features: [
-      { id: "messages", label: "Messages IA illimites", included: true, highlight: true },
-      { id: "response-mode", label: "Choix Storytelling OU Business", included: true, highlight: true },
-      { id: "insights", label: "Insights IA sur chaque post", included: true },
-      { id: "history", label: "Historique illimite", included: true },
-      { id: "style-choice", label: "Ton adaptatif personnalise", included: true, highlight: true },
-      { id: "analysis", label: "Analyse de post (hook, structure, CTA)", included: true, highlight: true },
-      { id: "improve", label: "Ameliorer un post existant", included: true, highlight: true },
-      { id: "multiplatform", label: "Adaptation multi-plateforme", included: false },
-      { id: "support", label: "Support email prioritaire", included: true },
-    ],
-  },
-  {
-    id: "max",
-    name: "Max",
-    tagline: "L'assistant LinkedIn complet",
-    price: 19.90,
-    priceYearly: 191, // 19,90 x 12 x 0,80 = 191,04€ (20% economie)
-    dailyMessageLimit: -1,
-    ctaLabel: "Choisir Max",
-    features: [
-      { id: "messages", label: "Messages IA illimites", included: true, highlight: true },
-      { id: "response-mode", label: "Double generation (Storytelling + Business)", included: true, highlight: true },
-      { id: "insights", label: "Insights IA avances", included: true },
-      { id: "history", label: "Historique illimite", included: true },
-      { id: "style-choice", label: "Personnalisation avancee", included: true },
-      { id: "analysis", label: "Analyse de post complete", included: true },
-      { id: "improve", label: "Ameliorer un post existant", included: true },
-      { id: "multiplatform", label: "Adaptation Instagram, Twitter, Facebook", included: true, highlight: true },
-      { id: "support", label: "Support prioritaire 24/7", included: true, highlight: true },
-    ],
-  },
-];
-
-// Helper pour obtenir un plan par ID
-export function getPlanById(planId: SubscriptionPlan): PlanConfig {
-  return SUBSCRIPTION_PLANS.find((p) => p.id === planId) || SUBSCRIPTION_PLANS[0];
-}
-
 // ============== USER TYPES ==============
 
 export interface UserProfile {
@@ -149,13 +52,15 @@ export interface UserProfile {
   bio?: string;
   onboardingComplete: boolean;
   profile?: {
+    profileType?: string;
     sector: string;
     role: string;
-    linkedinStyle: string;
     objective: string;
-    // Extended profile fields (Pro/Max only)
     targetAudience?: string;
     communicationTone?: string;
+    publishingFrequency?: string;
+    // Legacy field — kept for backward compatibility with existing users
+    linkedinStyle?: string;
   };
   stats?: {
     postsCount: number;
@@ -171,6 +76,11 @@ export interface UserProfile {
     stripeCustomerId?: string;
     stripeSubscriptionId?: string;
     status?: "active" | "canceled" | "past_due" | "unpaid" | "trialing";
+    // Trial tracking (one trial per account, ever)
+    trialUsed?: boolean;           // True if user has ever used a trial
+    trialStartedAt?: Timestamp;    // When trial started
+    trialEndsAt?: Timestamp;       // When trial ends (for display)
+    trialPlan?: SubscriptionPlan;  // Which plan was trialed (pro or max)
   };
   quota?: {
     dailyMessageCount: number;
@@ -257,11 +167,21 @@ export interface PromptSuggestion {
 // ============== ONBOARDING TYPES ==============
 
 export interface OnboardingData {
+  profileType: string;
   sector: string;
   role: string;
-  linkedinStyle: string;
   objective: string;
+  targetAudience: string;
+  communicationTone: string;
+  publishingFrequency: string;
 }
+
+export const PROFILE_TYPES = [
+  "Independant / Freelance",
+  "Agence",
+  "Entrepreneur / Founder",
+  "Salarie en entreprise",
+] as const;
 
 export const SECTORS = [
   "Tech / IT",
@@ -285,11 +205,18 @@ export const LINKEDIN_STYLES = [
 ] as const;
 
 export const OBJECTIVES = [
-  "Augmenter ma visibilité",
-  "Recruter des talents",
-  "Générer des leads",
-  "Développer ma marque personnelle",
-  "Partager mon expertise",
+  "Trouver de nouveaux clients",
+  "Augmenter mon chiffre d'affaires",
+  "Développer ma visibilité et crédibilité",
+  "Générer des leads qualifiés",
+  "Construire une audience engagée",
+] as const;
+
+export const PUBLISHING_FREQUENCIES = [
+  "1 à 2 fois par semaine",
+  "3 à 4 fois par semaine",
+  "Tous les jours",
+  "Je ne publie pas encore",
 ] as const;
 
 // Extended profile options (Pro/Max only)
@@ -453,6 +380,30 @@ export interface LinkedInPostData {
   publishedAt: Timestamp;
   success: boolean;
   error?: string;
+  // Engagement metrics (user-provided or scraped)
+  metrics?: LinkedInPostMetrics;
+}
+
+export interface LinkedInPostMetrics {
+  likes: number;
+  comments: number;
+  shares: number;
+  impressions?: number;
+  clickRate?: number;
+  engagementRate?: number;
+  updatedAt: Timestamp;
+  source: 'manual' | 'extension' | 'api'; // How metrics were collected
+}
+
+export interface LinkedInAnalyticsSummary {
+  totalPosts: number;
+  totalLikes: number;
+  totalComments: number;
+  totalShares: number;
+  avgEngagementRate: number;
+  bestPerformingPost?: LinkedInPostData;
+  postsThisWeek: number;
+  postsThisMonth: number;
 }
 
 // ============== REDDIT TYPES ==============

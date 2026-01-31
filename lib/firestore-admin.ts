@@ -86,7 +86,8 @@ export async function saveLinkedInPostAdmin(
 
 // ============== QUOTA MANAGEMENT (SERVER-SIDE) ==============
 
-import { DAILY_MESSAGE_LIMITS, SubscriptionPlan } from "@/types";
+import { SubscriptionPlan } from "@/types";
+import { DAILY_MESSAGE_LIMITS, isTestModeValid } from "@/lib/plans";
 
 /**
  * Get the start of today (00:00:00 UTC)
@@ -155,9 +156,10 @@ export async function checkUserQuotaAdmin(userId: string): Promise<QuotaCheckRes
   const data = userSnap.data();
   if (!data) return defaultResult;
 
-  // Check for test mode - test plan takes precedence if active
-  const isTestMode = data.testMode?.active === true;
-  const testPlan = isTestMode ? data.testMode?.plan : null;
+  // Check for test mode - test plan takes precedence if active and not expired
+  const testModeResult = isTestModeValid(data.testMode);
+  const isTestMode = testModeResult.isActive;
+  const testPlan = testModeResult.plan;
 
   // Determine effective plan (test mode overrides actual subscription)
   // Handle legacy "starter" plan name from database
@@ -256,12 +258,14 @@ export async function incrementUserQuotaAdmin(userId: string): Promise<void> {
 export async function getUserProfileAdmin(userId: string): Promise<{
   plan: SubscriptionPlan;
   profile?: {
+    profileType?: string;
     sector?: string;
     role?: string;
     linkedinStyle?: string;
     objective?: string;
     targetAudience?: string;
     communicationTone?: string;
+    publishingFrequency?: string;
   };
   isTestMode?: boolean;
 } | null> {
@@ -278,9 +282,10 @@ export async function getUserProfileAdmin(userId: string): Promise<{
 
   const data = userSnap.data();
 
-  // Check for test mode - test plan takes precedence if active
-  const isTestMode = data?.testMode?.active === true;
-  const testPlan = isTestMode ? data?.testMode?.plan : null;
+  // Check for test mode - test plan takes precedence if active and not expired
+  const testModeResult2 = isTestModeValid(data?.testMode);
+  const isTestMode = testModeResult2.isActive;
+  const testPlan = testModeResult2.plan;
 
   // Determine effective plan (handle legacy "starter" plan name)
   const rawPlan2 = data?.subscription?.plan || "free";

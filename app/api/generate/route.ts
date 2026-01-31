@@ -8,13 +8,17 @@ import {
   OpenAIModel,
   SYSTEM_PROMPTS,
   INSIGHTS_PROMPT,
+  CONVERSATIONAL_PROMPT,
+  INTENT_CLASSIFICATION_PROMPT,
 } from "@/lib/openai";
 import {
   checkUserQuotaAdmin,
   incrementUserQuotaAdmin,
+  getUserProfileAdmin,
 } from "@/lib/firestore-admin";
 import { isAdminInitialized } from "@/lib/firebase-admin";
 import { getPlanFeatures } from "@/lib/plan-features";
+import { planHasFeature, PlanType, getPlanLimits, getMaxTokensForPlan } from "@/lib/plans";
 import { SubscriptionPlan, PostInsights } from "@/types";
 
 // Streaming configuration for mock responses
@@ -103,8 +107,87 @@ export async function POST(request: NextRequest) {
         }
       } catch (quotaError) {
         console.error("Quota check error:", quotaError);
-        // Continue without quota check if Firebase Admin is not configured
-        // This allows development without Firebase Admin setup
+        // In production, fail if quota cannot be verified (prevents unlimited access)
+        if (process.env.NODE_ENV === "production") {
+          return new Response(
+            JSON.stringify({
+              error: "service_unavailable",
+              message: language === "fr"
+                ? "Service temporairement indisponible. Veuillez réessayer."
+                : "Service temporarily unavailable. Please try again.",
+            }),
+            { status: 503, headers: { "Content-Type": "application/json" } }
+          );
+        }
+      }
+    } else if (process.env.NODE_ENV === "production") {
+      // In production, Firebase Admin must be initialized to enforce quotas
+      return new Response(
+        JSON.stringify({
+          error: "service_unavailable",
+          message: language === "fr"
+            ? "Service temporairement indisponible. Veuillez réessayer."
+            : "Service temporarily unavailable. Please try again.",
+        }),
+        { status: 503, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // ========== PROMPT LENGTH ENFORCEMENT ==========
+    const planLimits = getPlanLimits(userPlan as PlanType);
+    if (prompt.length > planLimits.maxCharactersPerPrompt) {
+      return new Response(
+        JSON.stringify({
+          error: "prompt_too_long",
+          message: language === "fr"
+            ? `Votre message dépasse la limite de ${planLimits.maxCharactersPerPrompt} caractères pour votre plan.`
+            : `Your message exceeds the ${planLimits.maxCharactersPerPrompt} character limit for your plan.`,
+          limit: planLimits.maxCharactersPerPrompt,
+          current: prompt.length,
+        }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // Plan-based max tokens for response length
+    const maxTokens = getMaxTokensForPlan(userPlan as PlanType);
+
+    // ========== SERVER-SIDE PROFILE LOADING + PLAN GATING ==========
+    // Load profile from Firestore (server-side, ignores client-sent userProfile)
+    // Filter fields based on user's plan permissions
+    let serverUserProfile: Record<string, string> | undefined;
+    if (isAdminInitialized()) {
+      try {
+        const userProfileData = await getUserProfileAdmin(userId);
+        if (userProfileData?.profile) {
+          const profile = userProfileData.profile;
+          const plan = userProfileData.plan as PlanType;
+
+          if (planHasFeature(plan, "hasPersonalizedResponses")) {
+            // Pro+ : base personalization fields
+            serverUserProfile = {
+              ...(profile.profileType && { profileType: profile.profileType }),
+              ...(profile.sector && { sector: profile.sector }),
+              ...(profile.role && { role: profile.role }),
+              ...(profile.objective && { objective: profile.objective }),
+              ...(profile.linkedinStyle && { linkedinStyle: profile.linkedinStyle }),
+            };
+
+            if (planHasFeature(plan, "hasAudienceTargeting")) {
+              // Max : enhanced personalization fields
+              serverUserProfile = {
+                ...serverUserProfile,
+                ...(profile.targetAudience && { targetAudience: profile.targetAudience }),
+                ...(profile.communicationTone && { communicationTone: profile.communicationTone }),
+                ...(profile.publishingFrequency && { publishingFrequency: profile.publishingFrequency }),
+              };
+            }
+          }
+          // Free plan: serverUserProfile stays undefined (no personalization)
+        }
+      } catch (profileError) {
+        console.error("Profile loading error:", profileError);
+        // Continue without profile - generation still works
       }
     }
 
@@ -156,29 +239,50 @@ export async function POST(request: NextRequest) {
 
         try {
           let generatedContent = "";
+          let isConversational = false;
 
           if (openaiService) {
-            // Use real OpenAI with streaming
-            // Pass conversation history for contextual follow-up responses
-            generatedContent = await generateWithOpenAI(
+            // ========== INTENT CLASSIFICATION ==========
+            // Classify user intent BEFORE generating
+            const intent = await classifyIntent(
               openaiService,
               prompt,
-              language,
-              userProfile,
-              sendEvent,
-              typesToGenerate,
-              conversationHistory as Array<{ role: "user" | "assistant"; content: string }> | undefined
+              language as "fr" | "en"
             );
+
+            if (intent === "SOCIAL" || intent === "EXPLORATORY") {
+              // Conversational response - no post generation
+              isConversational = true;
+              generatedContent = await generateConversational(
+                openaiService,
+                prompt,
+                language as "fr" | "en",
+                sendEvent,
+                conversationHistory as Array<{ role: "user" | "assistant"; content: string }> | undefined
+              );
+            } else {
+              // Production intent - generate LinkedIn post
+              generatedContent = await generateWithOpenAI(
+                openaiService,
+                prompt,
+                language,
+                serverUserProfile,
+                sendEvent,
+                typesToGenerate,
+                maxTokens,
+                conversationHistory as Array<{ role: "user" | "assistant"; content: string }> | undefined
+              );
+            }
           } else {
-            // Fallback to mock responses
+            // Fallback to mock responses (always production mode)
             generatedContent = await generateWithMock(prompt, sendEvent, typesToGenerate);
           }
 
           generationSuccessful = true;
 
-          // ========== GENERATE INSIGHTS (ALL PLANS) ==========
-          // Generate AI insights after the post is created
-          if (openaiService && generatedContent) {
+          // ========== GENERATE INSIGHTS (PRODUCTION ONLY) ==========
+          // Only generate insights for actual LinkedIn posts
+          if (openaiService && generatedContent && !isConversational) {
             try {
               const insights = await generateInsights(
                 openaiService,
@@ -259,6 +363,7 @@ async function generateWithOpenAI(
   userProfile: Record<string, string> | undefined,
   sendEvent: (event: string, data: object) => void,
   typesToGenerate: Array<"storytelling" | "business">,
+  maxTokens: number,
   conversationHistory?: Array<{ role: "user" | "assistant"; content: string }>
 ): Promise<string> {
   let firstPostContent = "";
@@ -319,7 +424,7 @@ async function generateWithOpenAI(
       model: service["model"],
       messages,
       temperature: type === "storytelling" ? 0.8 : 0.7,
-      max_tokens: 1000,
+      max_tokens: maxTokens,
       stream: true,
     });
 
@@ -526,4 +631,152 @@ async function generateInsights(
     console.error("Insights generation failed:", error);
     return null;
   }
+}
+
+// ============== INTENT CLASSIFICATION ==============
+
+type IntentType = "SOCIAL" | "EXPLORATORY" | "PRODUCTION";
+
+/**
+ * Fast pattern-based intent detection for common cases
+ * Falls back to AI classification for ambiguous prompts
+ */
+function detectIntentFast(prompt: string): IntentType | null {
+  const trimmed = prompt.trim().toLowerCase();
+
+  // Social patterns (greetings, very short messages)
+  const socialPatterns = [
+    /^(coucou|salut|hello|hey|hi|yo|bonjour|bonsoir)[\s!.,?]*$/i,
+    /^(ça va|ca va|comment ça va|comment ca va|comment vas-tu|how are you|what's up|quoi de neuf)[\s!?,]*$/i,
+    /^(merci|thanks|thank you|thx)[\s!.,]*$/i,
+  ];
+
+  for (const pattern of socialPatterns) {
+    if (pattern.test(trimmed)) {
+      return "SOCIAL";
+    }
+  }
+
+  // Very short messages without production keywords = likely social
+  if (trimmed.length < 15 && !trimmed.includes("post") && !trimmed.includes("écris") && !trimmed.includes("génère") && !trimmed.includes("crée")) {
+    return "SOCIAL";
+  }
+
+  // Production patterns (explicit content requests)
+  const productionPatterns = [
+    /\b(fais|fait|crée|créé|écris|écrit|génère|génère|rédige|compose)\s*(moi|me|nous)?\s*(un|une|des|le|la)?\s*(post|article|texte|contenu|publication)/i,
+    /\b(write|create|generate|make)\s*(me|us)?\s*(a|an|the)?\s*(post|article|content|text)/i,
+    /\b(post\s+(sur|about|on))\b/i,
+    /\b(linkedin\s+post)\b/i,
+  ];
+
+  for (const pattern of productionPatterns) {
+    if (pattern.test(trimmed)) {
+      return "PRODUCTION";
+    }
+  }
+
+  // Cannot determine fast - need AI classification
+  return null;
+}
+
+/**
+ * Classify user intent using AI (GPT-3.5-turbo for speed)
+ * Only called when fast detection is inconclusive
+ */
+async function classifyIntent(
+  service: NonNullable<ReturnType<typeof createOpenAIService>>,
+  prompt: string,
+  language: "fr" | "en"
+): Promise<IntentType> {
+  // Try fast detection first
+  const fastIntent = detectIntentFast(prompt);
+  if (fastIntent) {
+    return fastIntent;
+  }
+
+  // Fall back to AI classification
+  try {
+    const response = await service["client"].chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        { role: "system", content: INTENT_CLASSIFICATION_PROMPT[language] },
+        { role: "user", content: prompt },
+      ],
+      temperature: 0,
+      max_tokens: 20,
+    });
+
+    const result = response.choices[0]?.message?.content?.trim().toUpperCase();
+
+    if (result === "SOCIAL" || result === "EXPLORATOIRE" || result === "EXPLORATORY") {
+      return result === "EXPLORATOIRE" ? "EXPLORATORY" : result as IntentType;
+    }
+    if (result === "PRODUCTION") {
+      return "PRODUCTION";
+    }
+
+    // Default to production if unclear (maintain backwards compatibility)
+    return "PRODUCTION";
+  } catch (error) {
+    console.error("Intent classification failed:", error);
+    // Default to production on error
+    return "PRODUCTION";
+  }
+}
+
+/**
+ * Generate conversational response (for social/exploratory intents)
+ * No post generation, just natural conversation
+ */
+async function generateConversational(
+  service: NonNullable<ReturnType<typeof createOpenAIService>>,
+  prompt: string,
+  language: "fr" | "en",
+  sendEvent: (event: string, data: object) => void,
+  conversationHistory?: Array<{ role: "user" | "assistant"; content: string }>
+): Promise<string> {
+  // Use a simple "chat" type for the response
+  const title = language === "fr" ? "POSTY" : "POSTY";
+
+  sendEvent("start", { type: "conversational", title });
+
+  // Build messages
+  const messages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
+    { role: "system", content: CONVERSATIONAL_PROMPT[language] },
+  ];
+
+  // Add conversation history if available
+  if (conversationHistory && conversationHistory.length > 0) {
+    const recentHistory = conversationHistory.slice(-6);
+    for (const msg of recentHistory) {
+      messages.push({
+        role: msg.role === "user" ? "user" : "assistant",
+        content: msg.content,
+      });
+    }
+  }
+
+  messages.push({ role: "user", content: prompt });
+
+  const stream = await service["client"].chat.completions.create({
+    model: "gpt-3.5-turbo", // Use faster model for conversation
+    messages,
+    temperature: 0.7,
+    max_tokens: 300, // Keep responses short for conversation
+    stream: true,
+  });
+
+  let fullContent = "";
+  for await (const chunk of stream) {
+    const content = chunk.choices[0]?.delta?.content || "";
+    if (content) {
+      fullContent += content;
+      sendEvent("chunk", { content, type: "conversational" });
+    }
+  }
+
+  sendEvent("done", { type: "conversational" });
+
+  return fullContent;
 }

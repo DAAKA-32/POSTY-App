@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { useScrollLock } from "@/hooks/useScrollLock";
 
 interface DemoChatFullscreenProps {
   isOpen: boolean;
@@ -143,24 +144,8 @@ export default function DemoChatFullscreen({
     }
   }, [isOpen]);
 
-  // Lock body scroll when open
-  useEffect(() => {
-    if (isOpen) {
-      const scrollY = window.scrollY;
-      document.body.style.position = "fixed";
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = "100%";
-      document.body.style.overflow = "hidden";
-
-      return () => {
-        document.body.style.position = "";
-        document.body.style.top = "";
-        document.body.style.width = "";
-        document.body.style.overflow = "";
-        window.scrollTo(0, scrollY);
-      };
-    }
-  }, [isOpen]);
+  // Centralized scroll lock when open
+  useScrollLock(isOpen);
 
   // Handle escape key
   useEffect(() => {

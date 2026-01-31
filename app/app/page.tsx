@@ -286,14 +286,11 @@ function AppContent() {
 
       recognition.onresult = (event: SpeechRecognitionEvent) => {
         let finalTranscript = "";
-        let interimTranscript = "";
 
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const transcript = event.results[i][0].transcript;
           if (event.results[i].isFinal) {
             finalTranscript += transcript;
-          } else {
-            interimTranscript += transcript;
           }
         }
 
@@ -301,7 +298,8 @@ function AppContent() {
           // Show processing state briefly for smooth transition
           setIsProcessingVoice(true);
           setTimeout(() => {
-            setInputValue((prev) => prev + (prev ? " " : "") + finalTranscript);
+            // Inject transcribed text into the chat input via ref
+            chatInputRef.current?.appendValue(finalTranscript);
             setIsProcessingVoice(false);
           }, 300);
         }
@@ -322,25 +320,40 @@ function AppContent() {
       };
 
       recognition.onend = () => {
+        // Ensure state is updated immediately when recognition ends
         setIsRecording(false);
       };
 
       recognitionRef.current = recognition;
     }
 
+    // Cleanup: abort recognition and release microphone on unmount
     return () => {
       if (recognitionRef.current) {
-        recognitionRef.current.abort();
+        try {
+          recognitionRef.current.abort();
+        } catch {
+          // Ignore abort errors
+        }
+        recognitionRef.current = null;
       }
+      setIsRecording(false);
     };
   }, []);
 
-  // Toggle voice recording
+  // Toggle voice recording with immediate state updates
   const toggleRecording = useCallback(() => {
     if (!recognitionRef.current) return;
 
     if (isRecording) {
-      recognitionRef.current.stop();
+      // Stop recognition - this releases the microphone
+      try {
+        recognitionRef.current.stop();
+      } catch {
+        // Force abort if stop fails
+        recognitionRef.current.abort();
+      }
+      // Update state immediately (don't wait for onend)
       setIsRecording(false);
     } else {
       try {
@@ -348,6 +361,7 @@ function AppContent() {
         setIsRecording(true);
       } catch (error) {
         console.error("Failed to start recording:", error);
+        setIsRecording(false);
         toast.error("Impossible de démarrer l'enregistrement");
       }
     }
@@ -418,7 +432,7 @@ function AppContent() {
 
   return (
     <MainLayout posts={posts} showMobileHeader={true}>
-      <div className="flex flex-col h-full bg-background app-content-wrapper">
+      <div className="flex flex-col h-full bg-background-warm dark:bg-background app-content-wrapper">
         {/* Messages area - with padding for content to scroll behind fixed input */}
         <div
           ref={scrollContainerRef}
@@ -561,7 +575,7 @@ function AppContent() {
                         // Render user message with ChatMessage
                         elements.push(
                           <ChatMessage
-                            key={message.id}
+                            key={message.id || `user-${i}`}
                             type={message.type}
                             content={message.content}
                             timestamp={message.timestamp}
@@ -587,7 +601,7 @@ function AppContent() {
 
                           // Render paired responses with ModernAIResponsePair (MAX plan only)
                           elements.push(
-                            <div key={`pair-${message.id}`}>
+                            <div key={`pair-${message.id || i}-${pairIndex}`}>
                               {/* POSTY Avatar and Label */}
                               <div className="flex items-center gap-3 mb-3">
                                 <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 shadow-sm">
@@ -624,7 +638,7 @@ function AppContent() {
                           // Single AI response (FREE/PRO plans) - use ModernResponseCard
                           elements.push(
                             <motion.div
-                              key={message.id}
+                              key={message.id || `ai-${i}`}
                               initial={{ opacity: 0, y: 8 }}
                               animate={{ opacity: 1, y: 0 }}
                               transition={{
@@ -701,9 +715,9 @@ function AppContent() {
                       whileTap={{ scale: 0.98 }}
                       className="
                         group relative flex items-center gap-2.5 px-6 py-3.5
-                        bg-white dark:bg-dark-elevated
-                        hover:bg-gray-50 dark:hover:bg-dark-hover
-                        border border-gray-200 dark:border-dark-border
+                        bg-white/80 dark:bg-dark-elevated
+                        hover:bg-[#F8935D]/5 dark:hover:bg-dark-hover
+                        border border-[#F8935D]/15 dark:border-dark-border
                         hover:border-primary/40 dark:hover:border-primary/40
                         text-text-primary font-medium rounded-2xl
                         transition-all duration-300
@@ -712,7 +726,7 @@ function AppContent() {
                       "
                     >
                       {/* Gradient icon background on hover */}
-                      <span className="relative flex items-center justify-center w-8 h-8 rounded-xl bg-gray-100 dark:bg-dark-hover group-hover:bg-gradient-to-br group-hover:from-primary/20 group-hover:to-accent/20 transition-all duration-300">
+                      <span className="relative flex items-center justify-center w-8 h-8 rounded-xl bg-[#F8935D]/10 dark:bg-dark-hover group-hover:bg-gradient-to-br group-hover:from-primary/20 group-hover:to-accent/20 transition-all duration-300">
                         <svg className="w-4 h-4 text-text-secondary group-hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                         </svg>
@@ -928,7 +942,7 @@ function AppContent() {
 
 export default function AppPage() {
   return (
-    <ProtectedRoute>
+    <ProtectedRoute requireOnboarding>
       <AppContent />
     </ProtectedRoute>
   );

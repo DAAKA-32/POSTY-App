@@ -72,6 +72,10 @@ export interface UniversalChatInputRef {
   focus: () => void;
   blur: () => void;
   setValue: (value: string) => void;
+  /** Append text to current value (for voice transcription) */
+  appendValue: (value: string) => void;
+  /** Get current value */
+  getValue: () => string;
 }
 
 const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputProps>(({
@@ -104,7 +108,7 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
   // Use consistent minHeight across all devices for unified appearance
   const effectiveMinHeight = minHeight;
 
-  // Expose focus/blur/setValue methods to parent via ref
+  // Expose focus/blur/setValue/appendValue/getValue methods to parent via ref
   useImperativeHandle(ref, () => ({
     focus: () => {
       textareaRef.current?.focus();
@@ -126,6 +130,26 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
           textareaRef.current.style.height = `${newHeight}px`;
         }
       });
+    },
+    appendValue: (value: string) => {
+      setMessage((prev) => {
+        const newValue = prev + (prev ? " " : "") + value;
+        // Auto-resize after appending
+        requestAnimationFrame(() => {
+          if (textareaRef.current) {
+            textareaRef.current.style.height = "auto";
+            const newHeight = Math.min(
+              Math.max(textareaRef.current.scrollHeight, effectiveMinHeight),
+              maxHeight
+            );
+            textareaRef.current.style.height = `${newHeight}px`;
+          }
+        });
+        return newValue;
+      });
+    },
+    getValue: () => {
+      return textareaRef.current?.value || "";
     },
   }), [effectiveMinHeight, maxHeight]);
 

@@ -10,7 +10,8 @@ import {
 } from "react";
 import { useAuth } from "./AuthContext";
 import { getUserQuota, incrementMessageCount, QuotaInfo } from "@/lib/firestore";
-import { SubscriptionPlan, getPlanById } from "@/types";
+import { SubscriptionPlan } from "@/types";
+import { getPlanConfig } from "@/lib/plans";
 
 interface QuotaContextType {
   quota: QuotaInfo | null;
@@ -91,7 +92,7 @@ export function QuotaProvider({ children }: { children: ReactNode }) {
 
   // Derived values
   const currentPlan: SubscriptionPlan = quota?.plan || "free";
-  const planConfig = getPlanById(currentPlan);
+  const planConfig = getPlanConfig(currentPlan);
   const isPremium = currentPlan !== "free";
 
   const value: QuotaContextType = {

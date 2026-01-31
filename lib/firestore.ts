@@ -19,7 +19,7 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { UserProfile, Post, Session, ChatMessage } from "@/types";
-import { planHasFeature, PlanType } from "./plans";
+import { planHasFeature, PlanType, DAILY_MESSAGE_LIMITS, isTestModeValid } from "./plans";
 
 // ============== USER OPERATIONS ==============
 // Collection: users
@@ -86,10 +86,13 @@ export async function updateUserProfile(
   if (data.bio !== undefined) updateData.bio = data.bio;
   if (data.photoURL !== undefined) updateData.photoURL = data.photoURL;
   if (data.profile) {
+    updateData.profileType = data.profile.profileType;
     updateData.sector = data.profile.sector;
     updateData.role = data.profile.role;
-    updateData.linkedinStyle = data.profile.linkedinStyle;
     updateData.objective = data.profile.objective;
+    updateData.targetAudience = data.profile.targetAudience;
+    updateData.communicationTone = data.profile.communicationTone;
+    updateData.publishingFrequency = data.profile.publishingFrequency;
     updateData.profile = data.profile;
   }
 
@@ -108,10 +111,13 @@ export async function completeOnboarding(
     userRef,
     {
       uid: userId,
+      profileType: profileData?.profileType || "",
       sector: profileData?.sector || "",
       role: profileData?.role || "",
-      linkedinStyle: profileData?.linkedinStyle || "",
       objective: profileData?.objective || "",
+      targetAudience: profileData?.targetAudience || "",
+      communicationTone: profileData?.communicationTone || "",
+      publishingFrequency: profileData?.publishingFrequency || "",
       profile: profileData,
       onboardingComplete: true,
     },
@@ -702,6 +708,17 @@ export async function deleteLinkedInConnection(userId: string): Promise<void> {
 // Collection: linkedinPosts
 // Fields: userId, linkedInId, postId, content, publishedAt, postUrl, success, error
 
+export interface LinkedInPostMetrics {
+  likes: number;
+  comments: number;
+  shares: number;
+  impressions?: number;
+  clickRate?: number;
+  engagementRate?: number;
+  updatedAt: Timestamp;
+  source: 'manual' | 'extension' | 'api';
+}
+
 export interface LinkedInPostData {
   id: string;
   userId: string;
@@ -712,6 +729,18 @@ export interface LinkedInPostData {
   postUrl?: string;
   success: boolean;
   error?: string;
+  metrics?: LinkedInPostMetrics;
+}
+
+export interface LinkedInAnalyticsSummary {
+  totalPosts: number;
+  totalLikes: number;
+  totalComments: number;
+  totalShares: number;
+  avgEngagementRate: number;
+  bestPerformingPost?: LinkedInPostData;
+  postsThisWeek: number;
+  postsThisMonth: number;
 }
 
 export async function saveLinkedInPost(
@@ -758,9 +787,135 @@ export async function getLinkedInPosts(
   })) as LinkedInPostData[];
 }
 
+/**
+ * Update engagement metrics for a LinkedIn post
+ */
+export async function updateLinkedInPostMetrics(
+  postId: string,
+  metrics: {
+    likes: number;
+    comments: number;
+    shares: number;
+    impressions?: number;
+    source?: 'manual' | 'extension' | 'api';
+  }
+): Promise<void> {
+  const postRef = doc(db, "linkedinPosts", postId);
+
+  // Calculate engagement rate if we have impressions
+  let engagementRate: number | undefined;
+  if (metrics.impressions && metrics.impressions > 0) {
+    const totalEngagements = metrics.likes + metrics.comments + metrics.shares;
+    engagementRate = (totalEngagements / metrics.impressions) * 100;
+  }
+
+  await updateDoc(postRef, {
+    metrics: {
+      likes: metrics.likes,
+      comments: metrics.comments,
+      shares: metrics.shares,
+      impressions: metrics.impressions || null,
+      engagementRate: engagementRate || null,
+      updatedAt: serverTimestamp(),
+      source: metrics.source || 'manual',
+    },
+  });
+}
+
+/**
+ * Get LinkedIn analytics summary for a user
+ */
+export async function getLinkedInAnalytics(
+  userId: string
+): Promise<LinkedInAnalyticsSummary> {
+  const postsRef = collection(db, "linkedinPosts");
+  const q = query(
+    postsRef,
+    where("userId", "==", userId),
+    where("success", "==", true),
+    orderBy("publishedAt", "desc")
+  );
+
+  const querySnapshot = await getDocs(q);
+  const posts = querySnapshot.docs.map((docSnap) => ({
+    id: docSnap.id,
+    ...docSnap.data(),
+  })) as LinkedInPostData[];
+
+  // Calculate date boundaries
+  const now = new Date();
+  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+  // Aggregate metrics
+  let totalLikes = 0;
+  let totalComments = 0;
+  let totalShares = 0;
+  let totalEngagementRate = 0;
+  let postsWithMetrics = 0;
+  let bestPerformingPost: LinkedInPostData | undefined;
+  let bestEngagement = 0;
+  let postsThisWeek = 0;
+  let postsThisMonth = 0;
+
+  posts.forEach((post) => {
+    // Count posts by time period
+    const publishedAt = post.publishedAt?.toDate?.() || new Date(0);
+    if (publishedAt >= weekAgo) postsThisWeek++;
+    if (publishedAt >= monthAgo) postsThisMonth++;
+
+    // Aggregate metrics
+    if (post.metrics) {
+      totalLikes += post.metrics.likes || 0;
+      totalComments += post.metrics.comments || 0;
+      totalShares += post.metrics.shares || 0;
+
+      if (post.metrics.engagementRate) {
+        totalEngagementRate += post.metrics.engagementRate;
+        postsWithMetrics++;
+      }
+
+      // Find best performing post
+      const engagement = (post.metrics.likes || 0) + (post.metrics.comments || 0) * 2 + (post.metrics.shares || 0) * 3;
+      if (engagement > bestEngagement) {
+        bestEngagement = engagement;
+        bestPerformingPost = post;
+      }
+    }
+  });
+
+  return {
+    totalPosts: posts.length,
+    totalLikes,
+    totalComments,
+    totalShares,
+    avgEngagementRate: postsWithMetrics > 0 ? totalEngagementRate / postsWithMetrics : 0,
+    bestPerformingPost,
+    postsThisWeek,
+    postsThisMonth,
+  };
+}
+
+/**
+ * Get LinkedIn post by ID
+ */
+export async function getLinkedInPostById(
+  postId: string
+): Promise<LinkedInPostData | null> {
+  const postRef = doc(db, "linkedinPosts", postId);
+  const postSnap = await getDoc(postRef);
+
+  if (!postSnap.exists()) return null;
+
+  return {
+    id: postSnap.id,
+    ...postSnap.data(),
+  } as LinkedInPostData;
+}
+
 // ============== QUOTA MANAGEMENT ==============
 
-import { SubscriptionPlan, DAILY_MESSAGE_LIMITS } from "@/types";
+import { SubscriptionPlan } from "@/types";
 
 export interface QuotaInfo {
   plan: SubscriptionPlan;
@@ -832,9 +987,10 @@ export async function getUserQuota(userId: string): Promise<QuotaInfo> {
 
   const data = userSnap.data();
 
-  // Check for test mode - test plan takes precedence if active
-  const isTestMode = data.testMode?.active === true;
-  const testPlan = isTestMode ? data.testMode?.plan : null;
+  // Check for test mode - test plan takes precedence if active and not expired
+  const testModeResult = isTestModeValid(data.testMode);
+  const isTestMode = testModeResult.isActive;
+  const testPlan = testModeResult.plan;
 
   // Determine effective plan (test mode overrides actual subscription)
   // Handle legacy "starter" plan name from database
@@ -1583,11 +1739,10 @@ export async function createScheduledPost(
 
   const userData = userSnap.data();
 
-  // Check for test mode - use test plan if active, otherwise use subscription plan
-  const isTestMode = userData?.testMode?.active === true;
-  const testPlan = userData?.testMode?.plan as PlanType | undefined;
+  // Check for test mode - use test plan if active and not expired
+  const testModeResult = isTestModeValid(userData?.testMode);
   const subscriptionPlan: PlanType = userData?.subscription?.plan || "free";
-  const effectivePlan: PlanType = isTestMode && testPlan ? testPlan : subscriptionPlan;
+  const effectivePlan: PlanType = testModeResult.isActive && testModeResult.plan ? testModeResult.plan : subscriptionPlan;
 
   // Check if the user's effective plan allows scheduling
   if (!planHasFeature(effectivePlan, "canSchedulePosts")) {
@@ -1762,11 +1917,10 @@ export async function reschedulePost(
   if (userSnap.exists()) {
     const userData = userSnap.data();
 
-    // Check for test mode - use test plan if active, otherwise use subscription plan
-    const isTestMode = userData?.testMode?.active === true;
-    const testPlan = userData?.testMode?.plan as PlanType | undefined;
+    // Check for test mode - use test plan if active and not expired
+    const testModeResult = isTestModeValid(userData?.testMode);
     const subscriptionPlan: PlanType = userData?.subscription?.plan || "free";
-    const effectivePlan: PlanType = isTestMode && testPlan ? testPlan : subscriptionPlan;
+    const effectivePlan: PlanType = testModeResult.isActive && testModeResult.plan ? testModeResult.plan : subscriptionPlan;
 
     if (!planHasFeature(effectivePlan, "canSchedulePosts")) {
       throw new Error("La reprogrammation necessite un abonnement Pro ou Max");
@@ -1917,3 +2071,4 @@ export async function updateScheduledPostContent(
 
   await updateDoc(postRef, updateData);
 }
+

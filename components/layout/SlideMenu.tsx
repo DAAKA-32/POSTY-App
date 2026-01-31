@@ -13,6 +13,7 @@ import ConversationOptionsMenu from "@/components/conversation/ConversationOptio
 import RenameConversationModal from "@/components/conversation/RenameConversationModal";
 import DeleteConfirmModal from "@/components/conversation/DeleteConfirmModal";
 import ProfileMenu from "@/components/layout/ProfileMenu";
+import { useScrollLock } from "@/hooks/useScrollLock";
 
 interface SlideMenuProps {
   isOpen: boolean;
@@ -151,6 +152,24 @@ const menuItems = [
       </svg>
     ),
   },
+  {
+    nameKey: "analytics" as const,
+    href: "/analytics",
+    color: "emerald",
+    activeClasses: "bg-emerald-500/10 text-emerald-500",
+    hoverClasses: "hover:text-emerald-500 hover:bg-emerald-500/5",
+    indicatorColor: "bg-emerald-500",
+    icon: (isActive: boolean) => (
+      <svg className="w-5 h-5" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={isActive ? 0 : 2}
+          d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+        />
+      </svg>
+    ),
+  },
 ];
 
 export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostUpdate }: SlideMenuProps) {
@@ -200,15 +219,16 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
     [onClose]
   );
 
+  // Centralized scroll lock
+  useScrollLock(isOpen);
+
   // Add event listener for escape key
   useEffect(() => {
     if (isOpen) {
       document.addEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = "hidden";
     }
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = "";
     };
   }, [isOpen, handleKeyDown]);
 
@@ -397,7 +417,7 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
       <aside
         className={`
           fixed top-0 left-0 z-[70] h-full w-[85vw] max-w-80
-          bg-white dark:bg-dark-card border-r border-gray-200 dark:border-dark-border
+          bg-background-warm dark:bg-dark-card border-r border-[#F8935D]/10 dark:border-dark-border
           flex flex-col
           transform transition-transform duration-300 ease-smooth
           lg:hidden
@@ -409,7 +429,7 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
         }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-dark-border">
+        <div className="flex items-center justify-between p-4 border-b border-[#F8935D]/10 dark:border-dark-border">
           <Link href="/app" className="flex items-center gap-2.5 group min-w-0 flex-1" onClick={onClose}>
             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl overflow-hidden flex items-center justify-center shadow-glow transition-transform group-hover:scale-105 flex-shrink-0">
               <img
@@ -422,7 +442,7 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
           </Link>
           <button
             onClick={onClose}
-            className="min-w-[44px] min-h-[44px] p-2.5 flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-gray-100 dark:hover:bg-dark-hover rounded-lg transition-all duration-200 haptic-feedback"
+            className="min-w-[44px] min-h-[44px] p-2.5 flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-[#F8935D]/10 dark:hover:bg-dark-hover rounded-lg transition-all duration-200 haptic-feedback"
             aria-label={t.sidebar.closeMenu}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -502,7 +522,7 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
               onChange={(e) => setSearchQuery(e.target.value)}
               className="
                 w-full pl-11 pr-4 py-3 text-sm
-                bg-gray-50 dark:bg-dark-bg border border-gray-200 dark:border-dark-border rounded-lg
+                bg-white/70 dark:bg-dark-bg border border-[#F8935D]/15 dark:border-dark-border rounded-lg
                 text-text-primary placeholder-text-muted
                 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary
                 transition-all duration-200
@@ -641,7 +661,7 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
             {/* Toggle header - Enhanced with color */}
             <button
               onClick={() => setShowChatList(!showChatList)}
-              className="group flex items-center justify-between w-full px-3 py-2 text-text-muted hover:text-text-primary hover:bg-light-hover dark:hover:bg-dark-hover transition-all duration-200 rounded-lg"
+              className="group flex items-center justify-between w-full px-3 py-2 text-text-muted hover:text-text-primary hover:bg-[#F8935D]/10 dark:hover:bg-dark-hover transition-all duration-200 rounded-lg"
             >
               <span className="text-xs font-bold uppercase tracking-wider flex items-center gap-2">
                 <svg
@@ -811,7 +831,7 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
                                 ${
                                   isActive
                                     ? "bg-primary/10 dark:bg-primary/10 text-text-primary border-l-2 border-primary pl-[10px] shadow-sm"
-                                    : "text-text-secondary hover:text-text-primary hover:bg-light-hover dark:hover:bg-dark-hover hover:border-l-2 hover:border-primary/40 hover:pl-[10px]"
+                                    : "text-text-secondary hover:text-text-primary hover:bg-[#F8935D]/10 dark:hover:bg-dark-hover hover:border-l-2 hover:border-primary/40 hover:pl-[10px]"
                                 }
                               `}
                             >
@@ -891,7 +911,7 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
                 </>
               ) : (
                 <div className="px-3 py-8 text-center">
-                  <div className="w-12 h-12 mx-auto mb-3 bg-gray-100 dark:bg-dark-elevated rounded-lg flex items-center justify-center">
+                  <div className="w-12 h-12 mx-auto mb-3 bg-[#F8935D]/10 dark:bg-dark-elevated rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       {searchQuery ? (
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -945,7 +965,7 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
                 className="
                   flex items-center justify-center gap-2 w-full px-4 py-3
                   text-text-secondary hover:text-text-primary
-                  bg-gray-50 dark:bg-dark-elevated hover:bg-gray-100 dark:hover:bg-dark-hover
+                  bg-[#F8935D]/5 dark:bg-dark-elevated hover:bg-[#F8935D]/10 dark:hover:bg-dark-hover
                   border border-gray-200 dark:border-dark-border hover:border-primary/30
                   rounded-lg transition-all duration-200 haptic-feedback
                 "

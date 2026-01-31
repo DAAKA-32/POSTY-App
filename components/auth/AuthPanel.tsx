@@ -104,15 +104,13 @@ const SocialProof = ({ prefersReducedMotion, usersText, thisWeekText }: { prefer
     transition={{ duration: prefersReducedMotion ? 0 : 0.5, delay: 0.2 }}
     className="flex items-center justify-center gap-3 sm:gap-4 mb-4 sm:mb-6 px-4 py-2.5 sm:py-3 bg-gradient-to-r from-warm-orange/5 via-transparent to-warm-coral/5 rounded-xl sm:rounded-2xl border border-warm-orange/10"
   >
-    {/* Avatars avec COULEURS AUTOSCROLL */}
+    {/* Real user avatars — social proof */}
     <div className="flex -space-x-2 sm:-space-x-2.5">
       {[
-        "from-orange-500 to-amber-500",      // ORANGE DOMINANT
-        "from-rose-500 to-pink-500",         // ROSE créativité
-        "from-violet-500 to-purple-500",     // VIOLET premium
-        "from-emerald-500 to-green-500",     // VERT succès
-        "from-blue-500 to-cyan-500",         // BLEU confiance
-      ].map((gradient, i) => (
+        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&crop=face",
+        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face",
+        "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop&crop=face",
+      ].map((src, i) => (
         <motion.div
           key={i}
           initial={{ scale: 0, opacity: 0 }}
@@ -123,11 +121,14 @@ const SocialProof = ({ prefersReducedMotion, usersText, thisWeekText }: { prefer
             type: "spring",
             stiffness: 200,
           }}
-          className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br ${gradient} border-2 border-white flex items-center justify-center shadow-md`}
+          className="w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 border-white shadow-md overflow-hidden"
         >
-          <span className="text-[8px] sm:text-[10px] text-white font-bold">
-            {String.fromCharCode(65 + i)}
-          </span>
+          <img
+            src={src}
+            alt=""
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
         </motion.div>
       ))}
     </div>
@@ -309,6 +310,7 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
   const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
   const [forgotPasswordSuccess, setForgotPasswordSuccess] = useState(false);
+  const [forgotPasswordError, setForgotPasswordError] = useState(""); // Separate error state for modal
 
   // Focus states
   const [focusedField, setFocusedField] = useState<string | null>(null);
@@ -362,18 +364,20 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
   }, []);
 
   useEffect(() => {
-    // Only add listeners when a field is focused
-    if (!focusedField) {
-      // Cleanup styles when no field is focused
-      document.body.style.overflow = "";
+    // Only add listeners when a field is focused AND on mobile/touch devices
+    // Desktop with mouse/trackpad should NOT have scroll blocked during input focus
+    const isDesktopWithMouse = window.matchMedia("(pointer: fine) and (hover: hover)").matches;
+
+    if (!focusedField || isDesktopWithMouse) {
+      // Cleanup styles when no field is focused or on desktop
       document.body.style.position = "";
       document.body.style.width = "";
       document.body.style.touchAction = "";
+      // Note: Don't manipulate body.style.overflow - let CSS handle it
       return;
     }
 
-    // Block scroll when input is focused
-    document.body.style.overflow = "hidden";
+    // Mobile/touch only: Block scroll when input is focused (prevents iOS keyboard issues)
     document.body.style.position = "fixed";
     document.body.style.width = "100%";
     document.body.style.touchAction = "none";
@@ -385,8 +389,7 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
     return () => {
       document.removeEventListener("touchstart", handleTouchStartForScroll);
       document.removeEventListener("touchmove", preventScrollOnFocus);
-      // Restore scroll on cleanup
-      document.body.style.overflow = "";
+      // Restore on cleanup
       document.body.style.position = "";
       document.body.style.width = "";
       document.body.style.touchAction = "";
@@ -419,8 +422,8 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
       }
       setShowSuccess(true);
       setTimeout(() => onSuccess?.(), 500);
-    } catch {
-      // Error is handled by AuthContext toast
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "La connexion n'a pas abouti. Veuillez réessayer.");
     } finally {
       setIsLoading(false);
     }
@@ -440,12 +443,13 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
     e.preventDefault();
     if (!forgotPasswordEmail.trim()) return;
 
+    setForgotPasswordError(""); // Clear previous error
     setForgotPasswordLoading(true);
     try {
       await resetPassword(forgotPasswordEmail.trim());
       setForgotPasswordSuccess(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Une erreur est survenue");
+      setForgotPasswordError(err instanceof Error ? err.message : "Une erreur est survenue");
     } finally {
       setForgotPasswordLoading(false);
     }
@@ -455,7 +459,7 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
     setShowForgotPassword(false);
     setForgotPasswordEmail("");
     setForgotPasswordSuccess(false);
-    setError("");
+    setForgotPasswordError(""); // Clear modal error, not main form error
   };
 
   return (
@@ -515,13 +519,14 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
           exit={{ opacity: 0, x: mode === "login" ? 20 : -20 }}
           transition={{ duration: prefersReducedMotion ? 0 : 0.3 }}
         >
-          {/* Success message - Warm Orange Theme */}
-          <AnimatePresence>
+          {/* Success message - Instant display, no progressive expansion */}
+          <AnimatePresence mode="wait">
             {showSuccess && (
               <motion.div
-                initial={{ opacity: 0, y: -10, height: 0 }}
-                animate={{ opacity: 1, y: 0, height: "auto" }}
-                exit={{ opacity: 0, y: -10, height: 0 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
                 className="mb-4 p-4 bg-success/10 border border-success/30 rounded-xl flex items-center gap-3"
               >
                 <div className="w-8 h-8 rounded-full bg-success/20 flex items-center justify-center">
@@ -537,13 +542,14 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
             )}
           </AnimatePresence>
 
-          {/* Error message */}
-          <AnimatePresence>
+          {/* Error message - Instant display, no progressive expansion */}
+          <AnimatePresence mode="wait">
             {error && (
               <motion.div
-                initial={{ opacity: 0, y: -10, height: 0 }}
-                animate={{ opacity: 1, y: 0, height: "auto" }}
-                exit={{ opacity: 0, y: -10, height: 0 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
                 className="mb-4 p-3 bg-error/10 border border-error/20 rounded-xl flex items-center gap-3"
               >
                 <div className="w-6 h-6 rounded-full bg-error/20 flex items-center justify-center shrink-0">
@@ -568,7 +574,7 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
                   type="text"
                   placeholder={t.auth.yourName}
                   value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
+                  onChange={(e) => { setDisplayName(e.target.value); setError(""); }}
                   icon={<UserIcon className="w-4 h-4" />}
                   isFocused={focusedField === "name"}
                   onFocus={() => setFocusedField("name")}
@@ -586,7 +592,7 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
               type="email"
               placeholder={t.auth.emailAddress}
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => { setEmail(e.target.value); setError(""); }}
               icon={<MailIcon className="w-4 h-4" />}
               isFocused={focusedField === "email"}
               onFocus={() => setFocusedField("email")}
@@ -603,7 +609,7 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
                 type={showPassword ? "text" : "password"}
                 placeholder={t.auth.password}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => { setPassword(e.target.value); setError(""); }}
                 icon={<LockIcon className="w-4 h-4" />}
                 isFocused={focusedField === "password"}
                 onFocus={() => setFocusedField("password")}
@@ -779,6 +785,8 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
           {/* Google Button */}
           <GoogleButton
             onSuccess={onSuccess}
+            onError={(msg) => setError(msg)}
+            onStartAuth={() => setError("")}
             label={mode === "login" ? t.auth.signInWithGoogle : t.auth.signUpWithGoogle}
           />
 
@@ -790,21 +798,17 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
             className="mt-5 sm:mt-7"
           >
             {mode === "login" ? (
-              // Signup CTA — clean, premium, matching login button proportions
-              <div className="text-center">
-                <p className="text-gray-500 text-xs sm:text-sm mb-3">
-                  {t.auth.noAccount}
-                </p>
+              <p className="text-center text-gray-500 text-xs sm:text-sm">
+                {t.auth.noAccount}{" "}
                 <button
                   type="button"
                   onClick={() => handleModeSwitch("signup")}
-                  className="w-full py-3 sm:py-3.5 px-4 bg-white border border-warm-orange/60 text-warm-orange hover:border-warm-orange hover:bg-warm-orange/5 font-medium rounded-xl sm:rounded-2xl transition-all duration-200 text-sm active:scale-[0.98]"
+                  className="text-warm-orange hover:text-warm-coral font-semibold transition-colors underline-offset-2 hover:underline"
                 >
                   {t.auth.signUpFree}
                 </button>
-              </div>
+              </p>
             ) : (
-              // Subtle login link when on signup page
               <p className="text-center text-gray-500 text-xs sm:text-sm">
                 {t.auth.haveAccount}{" "}
                 <button
@@ -898,9 +902,14 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
                     Entrez votre adresse email et nous vous enverrons un lien pour réinitialiser votre mot de passe.
                   </p>
 
-                  {error && (
-                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
-                      {error}
+                  {forgotPasswordError && (
+                    <div className="mb-4 p-3 bg-error/10 border border-error/20 rounded-xl flex items-center gap-3">
+                      <div className="w-6 h-6 rounded-full bg-error/20 flex items-center justify-center shrink-0">
+                        <svg className="w-3 h-3 text-error" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 6L18 18M6 18L18 6" />
+                        </svg>
+                      </div>
+                      <p className="text-error text-xs">{forgotPasswordError}</p>
                     </div>
                   )}
 
@@ -912,7 +921,7 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
                       <input
                         type="email"
                         value={forgotPasswordEmail}
-                        onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                        onChange={(e) => { setForgotPasswordEmail(e.target.value); setForgotPasswordError(""); }}
                         placeholder="votre@email.com"
                         className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-warm-orange focus:ring-2 focus:ring-warm-orange/20 transition-all"
                         required

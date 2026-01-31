@@ -83,6 +83,19 @@ export default function LoginPage() {
     root.setAttribute("data-theme", "light");
   }, []);
 
+  // Enable full scrolling on Login page (mouse wheel, trackpad, touch, keyboard)
+  useEffect(() => {
+    document.documentElement.classList.add("login-scroll-enabled");
+    document.body.classList.add("login-scroll-enabled");
+    // Remove any classes that might block scroll
+    document.body.classList.remove("pwa-mobile", "no-scroll", "scroll-locked", "modal-open");
+
+    return () => {
+      document.documentElement.classList.remove("login-scroll-enabled");
+      document.body.classList.remove("login-scroll-enabled");
+    };
+  }, []);
+
   // Redirect authenticated users based on onboarding status
   // - New users (signup) → /onboarding
   // - Existing users (login) → /app
@@ -111,7 +124,7 @@ export default function LoginPage() {
   // This state is very brief as router.push happens immediately
   if (redirecting || user) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen bg-background-warm flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-warm-orange/30 border-t-warm-orange rounded-full animate-spin" />
       </div>
     );
@@ -119,7 +132,16 @@ export default function LoginPage() {
 
   // Only render the login page if user is definitely NOT authenticated
   return (
-    <div className="h-[100dvh] bg-white overflow-hidden touch-fixed">
+    <div
+      className="min-h-[100dvh] bg-background-warm"
+      style={{
+        overflowY: "auto",
+        overflowX: "hidden",
+        minHeight: "100dvh",
+        WebkitOverflowScrolling: "touch",
+        touchAction: "pan-y",
+      }}
+    >
       {/* Premium AUTOSCROLL Background Effects - Couleurs dynamiques */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         {/* ORANGE DOMINANT - top left */}
@@ -182,15 +204,19 @@ export default function LoginPage() {
         />
       </div>
 
-      {/* Mobile Layout - No scroll, single viewport */}
+      {/* Mobile Layout - Scrollable with proper safe areas for PWA */}
       <motion.div
         initial="hidden"
         animate="visible"
         variants={containerVariants}
-        className="md:hidden relative z-10 h-full flex flex-col px-4 pt-safe pb-safe"
+        className="md:hidden relative z-10 min-h-[100dvh] flex flex-col px-4"
+        style={{
+          paddingTop: 'max(env(safe-area-inset-top, 0px), 8px)',
+          paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 8px)',
+        }}
       >
         {/* Mobile Header - Back */}
-        <motion.div variants={itemVariants} className="flex items-center py-2 shrink-0">
+        <motion.div variants={itemVariants} className="flex items-center py-3 shrink-0">
           <Link
             href="/"
             className="flex items-center gap-2 text-gray-500 hover:text-warm-orange transition-colors duration-200 text-sm"
@@ -202,18 +228,18 @@ export default function LoginPage() {
           </Link>
         </motion.div>
 
-        {/* Main content - centered vertically */}
+        {/* Main content - Flexible area that can grow */}
         <motion.div
           variants={itemVariants}
-          className="flex-1 flex items-center justify-center min-h-0"
+          className="flex-1 flex items-center justify-center py-4"
         >
           <AuthPanel onSuccess={() => {}} />
         </motion.div>
 
-        {/* Footer links - Fixed at bottom */}
+        {/* Footer links - Always visible at bottom */}
         <motion.div
           variants={itemVariants}
-          className="py-2 flex flex-wrap justify-center gap-4 text-xs text-text-muted shrink-0"
+          className="py-4 flex flex-wrap justify-center gap-4 text-xs text-text-muted shrink-0"
         >
           <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="hover:text-warm-orange transition-colors">{t.common.privacy}</a>
           <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="hover:text-warm-orange transition-colors">{t.common.terms}</a>
@@ -222,9 +248,9 @@ export default function LoginPage() {
       </motion.div>
 
       {/* Desktop Layout */}
-      <div className="hidden md:flex h-screen relative z-10">
+      <div className="hidden md:flex min-h-[100dvh] relative z-10">
         {/* Left: Premium Branding Area - Light gray background */}
-        <div className="w-1/2 h-screen bg-gray-50 flex flex-col items-center justify-center relative overflow-hidden">
+        <div className="w-1/2 min-h-[100dvh] bg-background-peach flex flex-col items-center justify-center relative overflow-hidden">
           {/* Additional warm accent for left panel - animated */}
           <div className="absolute inset-0 pointer-events-none">
             <motion.div
@@ -336,29 +362,35 @@ export default function LoginPage() {
           initial="hidden"
           animate="visible"
           variants={slideInRight}
-          className="w-1/2 h-screen flex flex-col items-center justify-center p-6 lg:p-10 xl:p-14 bg-white overflow-y-auto overflow-x-hidden overscroll-contain relative"
+          className="w-1/2 min-h-[100dvh] flex flex-col items-center justify-center p-6 lg:p-10 xl:p-14 bg-background-warm overflow-y-auto overflow-x-hidden overscroll-contain"
         >
+          {/* Spacer for centering */}
+          <div className="flex-1" />
+
           <motion.div
             initial={{ opacity: 0, y: 30, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.6, delay: 0.2, ease: smoothEase }}
+            className="w-full max-w-md"
           >
             <AuthPanel onSuccess={() => {}} />
           </motion.div>
 
-          {/* Footer links */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.6, ease: smoothEase }}
-            className="absolute bottom-6 left-1/2 -translate-x-1/2"
-          >
-            <div className="flex gap-4 text-xs text-text-muted">
-              <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="hover:text-warm-orange transition-colors duration-200">{t.common.privacy}</a>
-              <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="hover:text-warm-orange transition-colors duration-200">{t.common.terms}</a>
-              <a href="/legal/notices" target="_blank" rel="noopener noreferrer" className="hover:text-warm-orange transition-colors duration-200">{t.common.legalNotices}</a>
-            </div>
-          </motion.div>
+          {/* Spacer + Footer links */}
+          <div className="flex-1 flex flex-col justify-end">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.6, ease: smoothEase }}
+              className="py-6"
+            >
+              <div className="flex gap-4 text-xs text-text-muted justify-center">
+                <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="hover:text-warm-orange transition-colors duration-200">{t.common.privacy}</a>
+                <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="hover:text-warm-orange transition-colors duration-200">{t.common.terms}</a>
+                <a href="/legal/notices" target="_blank" rel="noopener noreferrer" className="hover:text-warm-orange transition-colors duration-200">{t.common.legalNotices}</a>
+              </div>
+            </motion.div>
+          </div>
         </motion.div>
       </div>
     </div>

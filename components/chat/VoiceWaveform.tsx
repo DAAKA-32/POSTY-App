@@ -98,38 +98,81 @@ export default function VoiceWaveform({
     updateSimulation();
   }, []);
 
-  // Cleanup audio resources
+  // Cleanup audio resources - Critical for iOS microphone indicator
   const stopAudioAnalysis = useCallback(() => {
+    // 1. Cancel animation frame first to stop any pending updates
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = null;
     }
 
+    // 2. Stop all media stream tracks immediately (critical for iOS)
+    // This is what releases the microphone and removes the iOS indicator
     if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+      const tracks = mediaStreamRef.current.getTracks();
+      tracks.forEach((track) => {
+        track.stop();
+        // Ensure track is fully released
+        track.enabled = false;
+      });
       mediaStreamRef.current = null;
     }
 
+    // 3. Close AudioContext to release audio resources
     if (audioContextRef.current) {
-      audioContextRef.current.close();
+      // Suspend first, then close for cleaner shutdown
+      if (audioContextRef.current.state !== "closed") {
+        audioContextRef.current.suspend().then(() => {
+          audioContextRef.current?.close().catch(() => {
+            // Ignore close errors (may already be closed)
+          });
+        }).catch(() => {
+          // Fallback: try direct close if suspend fails
+          audioContextRef.current?.close().catch(() => {});
+        });
+      }
       audioContextRef.current = null;
     }
 
+    // 4. Clear analyser reference
     analyserRef.current = null;
+
+    // 5. Reset visual levels
     setAudioLevels(Array(barCount).fill(0.2));
   }, [barCount]);
 
+  // Effect to manage audio analysis lifecycle
+  // Critical: stopAudioAnalysis must run immediately when isRecording becomes false
+  // to release the microphone and remove iOS indicator
   useEffect(() => {
     if (isRecording) {
       startAudioAnalysis();
     } else {
+      // Immediate cleanup when recording stops
       stopAudioAnalysis();
     }
 
+    // Cleanup on unmount or when recording state changes
     return () => {
       stopAudioAnalysis();
     };
   }, [isRecording, startAudioAnalysis, stopAudioAnalysis]);
+
+  // Additional cleanup on component unmount to guarantee microphone release
+  useEffect(() => {
+    return () => {
+      // Force stop all tracks on unmount regardless of state
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((track) => {
+          track.stop();
+          track.enabled = false;
+        });
+      }
+      if (audioContextRef.current && audioContextRef.current.state !== "closed") {
+        audioContextRef.current.close().catch(() => {});
+      }
+    };
+  }, []);
 
   // Processing state animation
   if (isProcessing) {

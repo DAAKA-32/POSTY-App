@@ -1,254 +1,381 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { completeOnboarding } from "@/lib/firestore";
-import { SECTORS, LINKEDIN_STYLES, OBJECTIVES, OnboardingData } from "@/types";
-import Button from "@/components/ui/Button";
+import {
+  PROFILE_TYPES,
+  SECTORS,
+  OBJECTIVES,
+  TARGET_AUDIENCES,
+  COMMUNICATION_TONES,
+  PUBLISHING_FREQUENCIES,
+  OnboardingData,
+} from "@/types";
 import toast from "@/components/ui/Toast";
 
-// Thank You Screen Component with ultra-modern animations
-function ThankYouScreen({ onComplete }: { onComplete: () => void }) {
+// =============================================================================
+// STEP CONFIGURATION
+// =============================================================================
+const STEPS = [
+  {
+    id: "profileType" as const,
+    title: "Quel est votre profil ?",
+    subtitle: "Pour personnaliser Posty a votre activite",
+    options: PROFILE_TYPES,
+    type: "select" as const,
+  },
+  {
+    id: "sector" as const,
+    title: "Dans quel secteur exercez-vous ?",
+    subtitle: "Posty adapte ses strategies a votre marche",
+    options: SECTORS,
+    type: "select" as const,
+  },
+  {
+    id: "role" as const,
+    title: "Quel est votre role ?",
+    subtitle: "Pour calibrer le ton et la credibilite de vos posts",
+    options: [] as readonly string[],
+    type: "input" as const,
+  },
+  {
+    id: "objective" as const,
+    title: "Quel est votre objectif numero 1 ?",
+    subtitle: "Chaque post sera optimise pour cet objectif",
+    options: OBJECTIVES,
+    type: "select" as const,
+  },
+  {
+    id: "targetAudience" as const,
+    title: "Qui souhaitez-vous atteindre ?",
+    subtitle: "Posty ciblera les bons profils pour vous",
+    options: TARGET_AUDIENCES,
+    type: "select" as const,
+  },
+  {
+    id: "communicationTone" as const,
+    title: "Quel ton vous correspond le mieux ?",
+    subtitle: "Votre voix, amplifiee par l'IA",
+    options: COMMUNICATION_TONES,
+    type: "select" as const,
+  },
+  {
+    id: "publishingFrequency" as const,
+    title: "A quelle frequence souhaitez-vous publier ?",
+    subtitle: "Posty s'adapte a votre rythme",
+    options: PUBLISHING_FREQUENCIES,
+    type: "select" as const,
+  },
+];
+
+type StepId = typeof STEPS[number]["id"];
+
+// =============================================================================
+// ANIMATION VARIANTS
+// =============================================================================
+const smoothEase = [0.22, 1, 0.36, 1] as const;
+
+const slideVariants = {
+  enter: (direction: number) => ({
+    x: direction > 0 ? 80 : -80,
+    opacity: 0,
+    filter: "blur(6px)",
+  }),
+  center: {
+    x: 0,
+    opacity: 1,
+    filter: "blur(0px)",
+  },
+  exit: (direction: number) => ({
+    x: direction < 0 ? 80 : -80,
+    opacity: 0,
+    filter: "blur(6px)",
+  }),
+};
+
+// =============================================================================
+// UPSELL SCREEN
+// =============================================================================
+function UpsellScreen({ onContinue, onUpgrade }: { onContinue: () => void; onUpgrade: (plan: "pro" | "max") => void }) {
+  const [showReassurance, setShowReassurance] = useState(false);
+
+  // Auto-redirect after reassurance message
   useEffect(() => {
-    const timer = setTimeout(() => {
-      onComplete();
-    }, 3500);
-    return () => clearTimeout(timer);
-  }, [onComplete]);
+    if (!showReassurance) return;
+    const timeout = setTimeout(() => {
+      onContinue();
+    }, 2500);
+    return () => clearTimeout(timeout);
+  }, [showReassurance, onContinue]);
+
+  const proFeatures = [
+    { text: "Personnalisation IA (secteur, role, style)", included: true },
+    { text: "Posts illimites", included: true },
+    { text: "Historique complet", included: true },
+    { text: "Ciblage audience avance", included: false },
+    { text: "Ton de communication personnalise", included: false },
+  ];
+
+  const maxFeatures = [
+    { text: "Tout le plan Pro inclus", included: true },
+    { text: "Ciblage audience avance", included: true },
+    { text: "Ton de communication personnalise", included: true },
+    { text: "Double generation (Storytelling + Business)", included: true },
+    { text: "Support prioritaire", included: true },
+  ];
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-dark-bg"
+      transition={{ duration: 0.5 }}
+      className="flex-1 flex flex-col items-center justify-center px-4 py-8"
     >
-      {/* Animated background gradient */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 1, ease: [0.25, 0.1, 0.25, 1] }}
-        className="absolute inset-0 overflow-hidden"
-      >
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px]">
+      <AnimatePresence mode="wait">
+        {showReassurance ? (
           <motion.div
-            animate={{
-              rotate: 360,
-              scale: [1, 1.1, 1],
-            }}
-            transition={{
-              rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-              scale: { duration: 4, repeat: Infinity, ease: "easeInOut" },
-            }}
-            className="absolute inset-0 rounded-full blur-3xl"
-            style={{
-              background: "conic-gradient(from 0deg, rgba(232, 147, 77, 0.2), rgba(248, 163, 93, 0.1), rgba(232, 147, 77, 0.2))",
-            }}
-          />
-        </div>
-      </motion.div>
+            key="reassurance"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.4, ease: smoothEase }}
+            className="w-full max-w-md text-center"
+          >
+            {/* Green checkmark */}
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
+              className="mx-auto w-20 h-20 rounded-full bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center mb-6 shadow-lg shadow-emerald-500/20"
+            >
+              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+              </svg>
+            </motion.div>
 
-      {/* Floating particles */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(20)].map((_, i) => (
+            <motion.h2
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.4, ease: smoothEase }}
+              className="text-2xl font-bold text-gray-900 mb-3"
+            >
+              Vos donnees sont sauvegardees
+            </motion.h2>
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.4, ease: smoothEase }}
+              className="text-gray-500 text-base"
+            >
+              Vous pourrez activer la personnalisation IA a tout moment dans vos parametres.
+            </motion.p>
+
+            {/* Loading indicator */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              className="mt-8 flex items-center justify-center gap-2 text-sm text-gray-400"
+            >
+              <div className="w-4 h-4 border-2 border-gray-300 border-t-[#F8935D] rounded-full animate-spin" />
+              Redirection...
+            </motion.div>
+          </motion.div>
+        ) : (
           <motion.div
-            key={i}
-            initial={{
-              opacity: 0,
-              left: `${(i * 5) % 100}%`,
-              bottom: "-20px",
-            }}
-            animate={{
-              opacity: [0, 1, 0],
-              bottom: "110%",
-              left: `${((i * 7) + 10) % 100}%`,
-            }}
-            transition={{
-              duration: 3 + (i % 3),
-              delay: (i % 5) * 0.4,
-              repeat: Infinity,
-              ease: "easeOut",
-            }}
-            className={`absolute w-2 h-2 rounded-full ${
-              i % 3 === 0 ? "bg-primary" : i % 3 === 1 ? "bg-accent" : "bg-white/50"
-            }`}
-          />
-        ))}
-      </div>
-
-      {/* Main content */}
-      <div className="relative z-10 text-center px-6">
-        {/* Logo animation */}
-        <motion.div
-          initial={{ scale: 0, rotate: -180 }}
-          animate={{ scale: 1, rotate: 0 }}
-          transition={{
-            type: "spring",
-            stiffness: 200,
-            damping: 15,
-            delay: 0.2,
-          }}
-          className="mb-8"
-        >
-          <div className="relative inline-block">
-            <motion.div
-              animate={{
-                boxShadow: [
-                  "0 0 30px rgba(232, 147, 77, 0.3)",
-                  "0 0 60px rgba(232, 147, 77, 0.5)",
-                  "0 0 30px rgba(232, 147, 77, 0.3)",
-                ],
-              }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="w-20 h-20 lg:w-24 lg:h-24 rounded-2xl overflow-hidden"
-            >
-              <img
-                src="/logo.jpg"
-                alt="Posty Logo"
-                className="w-full h-full object-contain"
-              />
-            </motion.div>
-            {/* Sparkle effects */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.8 }}
-              className="absolute -top-2 -right-2"
-            >
-              <motion.svg
-                animate={{ rotate: 360 }}
-                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                className="w-6 h-6 text-primary"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
-              </motion.svg>
-            </motion.div>
-          </div>
-        </motion.div>
-
-        {/* Text animations */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
-        >
-          <motion.h1
-            className="text-3xl lg:text-5xl font-bold mb-4"
-            initial={{ opacity: 0, filter: "blur(10px)" }}
-            animate={{ opacity: 1, filter: "blur(0px)" }}
-            transition={{ delay: 0.6, duration: 0.8 }}
-          >
-            <span className="bg-gradient-to-r from-white via-primary to-accent bg-clip-text text-transparent">
-              L'équipe Posty
-            </span>
-          </motion.h1>
-
-          <motion.p
-            className="text-xl lg:text-2xl text-white font-medium mb-2"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.9, duration: 0.6 }}
-          >
-            vous remercie
-          </motion.p>
-
-          <motion.p
-            className="text-gray-400 text-base lg:text-lg max-w-md mx-auto"
+            key="upsell"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 1.2, duration: 0.6 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.3 }}
+            className="w-full max-w-2xl"
           >
-            Votre aventure LinkedIn commence maintenant
-          </motion.p>
-        </motion.div>
+            {/* Success check */}
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
+              className="mx-auto w-16 h-16 rounded-full bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center mb-6 shadow-lg shadow-emerald-500/20"
+            >
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+              </svg>
+            </motion.div>
 
-        {/* Loading indicator */}
-        <motion.div
-          initial={{ opacity: 0, scaleX: 0 }}
-          animate={{ opacity: 1, scaleX: 1 }}
-          transition={{ delay: 1.5, duration: 2 }}
-          className="mt-12 mx-auto w-48 h-1 bg-dark-card rounded-full overflow-hidden"
-        >
-          <motion.div
-            initial={{ x: "-100%" }}
-            animate={{ x: "100%" }}
-            transition={{
-              duration: 1.5,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-            className="w-1/2 h-full bg-gradient-to-r from-transparent via-primary to-transparent"
-          />
-        </motion.div>
-      </div>
+            {/* Title */}
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2, ease: smoothEase }}
+              className="text-center mb-8"
+            >
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-600 text-xs font-semibold rounded-full mb-4 border border-emerald-200">
+                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                Felicitations
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">
+                Votre profil est pret !{" "}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
+                  Activez la personnalisation IA.
+                </span>
+              </h1>
+              <p className="text-gray-500 text-sm sm:text-base max-w-lg mx-auto">
+                Posty a collecte vos donnees. Activez un plan pour que l&apos;IA les exploite et genere des posts ultra-cibles pour votre audience.
+              </p>
+            </motion.div>
+
+            {/* Plan cards side by side */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.35, ease: smoothEase }}
+              className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6"
+            >
+              {/* Pro card */}
+              <div className="relative bg-white rounded-2xl border-2 border-[#F8935D]/30 p-5 shadow-sm hover:shadow-md hover:border-[#F8935D]/50 transition-all duration-300">
+                {/* Popular badge */}
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <span className="inline-flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white text-xs font-semibold rounded-full shadow-md shadow-[#F8935D]/30">
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                    Populaire
+                  </span>
+                </div>
+
+                <div className="text-center mt-2 mb-4">
+                  <h3 className="text-lg font-bold text-gray-900">Pro</h3>
+                  <div className="flex items-baseline justify-center gap-1 mt-1">
+                    <span className="text-3xl font-bold text-gray-900">12,90</span>
+                    <span className="text-gray-900 font-medium">€</span>
+                    <span className="text-gray-400 text-sm">/mois</span>
+                  </div>
+                </div>
+
+                {/* Features */}
+                <ul className="space-y-2.5 mb-5">
+                  {proFeatures.map((feature, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      {feature.included ? (
+                        <svg className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      ) : (
+                        <svg className="w-4 h-4 text-gray-300 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M5 10a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1z" clipRule="evenodd" />
+                        </svg>
+                      )}
+                      <span className={`text-sm ${feature.included ? "text-gray-700" : "text-gray-400"}`}>
+                        {feature.text}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+
+                <button
+                  onClick={() => onUpgrade("pro")}
+                  className="w-full py-3 px-4 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white font-semibold rounded-xl shadow-lg shadow-[#F8935D]/25 hover:shadow-xl hover:shadow-[#F8935D]/35 transition-all duration-300 active:scale-[0.98] text-sm"
+                >
+                  Activer le Pro
+                </button>
+              </div>
+
+              {/* Max card */}
+              <div className="relative bg-white rounded-2xl border border-gray-200 p-5 shadow-sm hover:shadow-md hover:border-amber-300 transition-all duration-300">
+                <div className="text-center mb-4">
+                  <h3 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-500">Max</h3>
+                  <div className="flex items-baseline justify-center gap-1 mt-1">
+                    <span className="text-3xl font-bold text-gray-900">19,90</span>
+                    <span className="text-gray-900 font-medium">€</span>
+                    <span className="text-gray-400 text-sm">/mois</span>
+                  </div>
+                </div>
+
+                {/* Features */}
+                <ul className="space-y-2.5 mb-5">
+                  {maxFeatures.map((feature, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <svg className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      <span className="text-sm text-gray-700">{feature.text}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <button
+                  onClick={() => onUpgrade("max")}
+                  className="w-full py-3 px-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold rounded-xl shadow-lg shadow-amber-500/25 hover:shadow-xl hover:shadow-amber-500/35 transition-all duration-300 active:scale-[0.98] text-sm"
+                >
+                  Activer le Max
+                </button>
+              </div>
+            </motion.div>
+
+            {/* Later CTA */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.4, delay: 0.7 }}
+              className="text-center"
+            >
+              <button
+                onClick={() => setShowReassurance(true)}
+                className="py-3 px-6 text-gray-400 hover:text-gray-600 font-medium text-sm transition-colors duration-200"
+              >
+                Je verrai plus tard
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
 
-const STEPS = [
-  {
-    id: "sector",
-    title: "Quel est votre secteur d'activité ?",
-    subtitle: "Cela nous aide a personnaliser vos posts",
-  },
-  {
-    id: "role",
-    title: "Quel est votre rôle / métier ?",
-    subtitle: "Par exemple : CEO, Développeur, Marketing Manager...",
-  },
-  {
-    id: "style",
-    title: "Quel style de post LinkedIn préférez-vous ?",
-    subtitle: "Choisissez le ton qui vous correspond le mieux",
-  },
-  {
-    id: "objective",
-    title: "Quel est votre objectif principal sur LinkedIn ?",
-    subtitle: "Nous adapterons nos suggestions en conséquence",
-  },
-];
-
+// =============================================================================
+// MAIN ONBOARDING PAGE
+// =============================================================================
 export default function OnboardingPage() {
   const { user, userProfile, loading, refreshUserProfile, needsOnboarding, clearOnboardingFlag } = useAuth();
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
+  const [direction, setDirection] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showThankYou, setShowThankYou] = useState(false);
+  const [showUpsell, setShowUpsell] = useState(false);
   const [data, setData] = useState<OnboardingData>({
+    profileType: "",
     sector: "",
     role: "",
-    linkedinStyle: "",
     objective: "",
+    targetAudience: "",
+    communicationTone: "",
+    publishingFrequency: "",
   });
 
-  // Check if onboarding is needed (robust check with localStorage backup)
   const shouldShowOnboarding = needsOnboarding();
 
-  // Redirect logic:
-  // - Not logged in -> /login
-  // - Onboarding already complete -> /app
-  // - Not a new user (came from login, not signup) -> /app
+  // Redirect logic
   useEffect(() => {
     if (!loading) {
       if (!user) {
         router.push("/login");
-      } else if (userProfile?.onboardingComplete) {
-        // Already completed onboarding, go to app
+      } else if (userProfile?.onboardingComplete && !showUpsell) {
         router.push("/app");
       } else if (!shouldShowOnboarding && userProfile) {
-        // Existing user who logged in (not signup) - skip onboarding
-        // This prevents the "flash" when logging in
         router.push("/app");
       }
     }
-  }, [user, userProfile, loading, router, shouldShowOnboarding]);
+  }, [user, userProfile, loading, router, shouldShowOnboarding, showUpsell]);
 
-  // Prevent pull-to-refresh on touch devices while allowing normal scroll
+  // Prevent pull-to-refresh
   const preventPullToRefresh = useCallback((e: TouchEvent) => {
     const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
     if (scrollTop <= 0 && e.touches.length === 1) {
@@ -269,25 +396,26 @@ export default function OnboardingPage() {
   useEffect(() => {
     document.addEventListener("touchstart", handleTouchStart, { passive: true });
     document.addEventListener("touchmove", preventPullToRefresh, { passive: false });
-
     return () => {
       document.removeEventListener("touchstart", handleTouchStart);
       document.removeEventListener("touchmove", preventPullToRefresh);
     };
   }, [handleTouchStart, preventPullToRefresh]);
 
-  const handleSelect = (field: keyof OnboardingData, value: string) => {
+  const handleSelect = (field: StepId, value: string) => {
     setData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleNext = () => {
     if (currentStep < STEPS.length - 1) {
+      setDirection(1);
       setCurrentStep((prev) => prev + 1);
     }
   };
 
   const handleBack = () => {
     if (currentStep > 0) {
+      setDirection(-1);
       setCurrentStep((prev) => prev - 1);
     }
   };
@@ -299,10 +427,8 @@ export default function OnboardingPage() {
     try {
       await completeOnboarding(user.uid, data);
       await refreshUserProfile();
-      // Clear all onboarding flags (memory + localStorage) after completing
       clearOnboardingFlag();
-      // Show thank you screen instead of toast
-      setShowThankYou(true);
+      setShowUpsell(true);
     } catch (error) {
       console.error("Onboarding error:", error);
       toast.error("Une erreur est survenue");
@@ -310,193 +436,207 @@ export default function OnboardingPage() {
     }
   };
 
-  const handleThankYouComplete = () => {
+  const handleUpsellContinue = () => {
     router.push("/app");
   };
 
-  const currentStepData = STEPS[currentStep];
+  const handleUpsellUpgrade = (plan: "pro" | "max") => {
+    router.push(`/subscription?plan=${plan}`);
+  };
+
+  const step = STEPS[currentStep];
   const isLastStep = currentStep === STEPS.length - 1;
+  const currentValue = data[step.id as keyof OnboardingData];
+  const canProceed = currentValue.trim().length > 0;
 
-  const getCurrentOptions = () => {
-    switch (currentStep) {
-      case 0:
-        return SECTORS;
-      case 2:
-        return LINKEDIN_STYLES;
-      case 3:
-        return OBJECTIVES;
-      default:
-        return [];
-    }
-  };
+  // Keyboard navigation: Enter key advances to next step (or submits on last step)
+  useEffect(() => {
+    if (showUpsell) return;
 
-  const getCurrentValue = () => {
-    switch (currentStep) {
-      case 0:
-        return data.sector;
-      case 1:
-        return data.role;
-      case 2:
-        return data.linkedinStyle;
-      case 3:
-        return data.objective;
-      default:
-        return "";
-    }
-  };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Enter") return;
+      if (!canProceed || isSubmitting) return;
 
-  const getCurrentField = (): keyof OnboardingData => {
-    switch (currentStep) {
-      case 0:
-        return "sector";
-      case 1:
-        return "role";
-      case 2:
-        return "linkedinStyle";
-      case 3:
-        return "objective";
-      default:
-        return "sector";
-    }
-  };
+      e.preventDefault();
 
-  const canProceed = () => {
-    return getCurrentValue().trim().length > 0;
-  };
+      if (isLastStep) {
+        handleSubmit();
+      } else {
+        handleNext();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [canProceed, isSubmitting, isLastStep, showUpsell]);
 
   if (loading || !user) {
     return (
-      <div className="min-h-screen bg-dark-bg flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-gradient-to-b from-[#FFF8F5] to-white flex items-center justify-center">
+        <div className="w-10 h-10 border-3 border-[#F8935D] border-t-transparent rounded-full animate-spin" />
       </div>
-    );
-  }
-
-  // Show thank you screen after onboarding completion
-  if (showThankYou) {
-    return (
-      <AnimatePresence mode="wait">
-        <ThankYouScreen onComplete={handleThankYouComplete} />
-      </AnimatePresence>
     );
   }
 
   return (
-    <div className="min-h-screen max-h-screen bg-dark-bg flex flex-col overflow-y-auto overflow-x-hidden overscroll-contain no-pull-refresh">
+    <div className="min-h-screen max-h-screen bg-gradient-to-b from-[#FFF8F5] via-white to-[#FFF8F5]/50 flex flex-col overflow-y-auto overflow-x-hidden overscroll-contain">
       {/* Header */}
-      <header className="p-4 lg:p-6 flex items-center justify-between max-w-4xl mx-auto w-full flex-shrink-0">
-        <Link href="/" className="inline-flex items-center gap-2">
-          <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-xl overflow-hidden flex items-center justify-center">
-            <img
-              src="/logo.jpg"
-              alt="Posty Logo"
-              className="w-full h-full object-contain"
-            />
+      <header className="p-4 sm:p-6 flex items-center justify-between max-w-2xl mx-auto w-full flex-shrink-0">
+        <Link href="/" className="inline-flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl overflow-hidden shadow-md shadow-[#F8935D]/10">
+            <Image src="/logo-avec fond.jpg" alt="Posty" width={36} height={36} className="w-full h-full object-cover" />
           </div>
-          <span className="font-semibold text-gray-900 dark:text-white text-lg lg:text-xl">POSTY</span>
+          <span className="font-bold text-gray-900 text-lg">Posty</span>
         </Link>
-        <span className="text-sm lg:text-base text-gray-500">
-          Étape {currentStep + 1} sur {STEPS.length}
-        </span>
+        {!showUpsell && (
+          <span className="text-sm text-gray-400 font-medium">
+            {currentStep + 1} / {STEPS.length}
+          </span>
+        )}
       </header>
 
       {/* Progress bar */}
-      <div className="px-4 lg:px-8 max-w-2xl mx-auto w-full flex-shrink-0">
-        <div className="h-1 lg:h-1.5 bg-dark-card rounded-full overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-300"
-            style={{ width: `${((currentStep + 1) / STEPS.length) * 100}%` }}
-          />
+      {!showUpsell && (
+        <div className="px-4 sm:px-8 max-w-2xl mx-auto w-full flex-shrink-0">
+          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <motion.div
+              className="h-full bg-gradient-to-r from-[#F8935D] to-[#F76B54] rounded-full"
+              initial={{ width: 0 }}
+              animate={{ width: `${((currentStep + 1) / STEPS.length) * 100}%` }}
+              transition={{ duration: 0.4, ease: smoothEase }}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Main content */}
-      <main className="flex-1 flex flex-col items-center justify-start px-4 lg:px-8 py-8 lg:py-12 min-h-0">
-        <div className="w-full max-w-lg lg:max-w-xl my-auto">
-          <div className="text-center mb-8 lg:mb-12">
-            <h1 className="text-2xl lg:text-3xl xl:text-4xl font-bold text-white mb-2 lg:mb-4">
-              {currentStepData.title}
-            </h1>
-            <p className="text-gray-400">{currentStepData.subtitle}</p>
-          </div>
+      <main className="flex-1 flex flex-col items-center justify-start min-h-0">
+        {showUpsell ? (
+          <UpsellScreen onContinue={handleUpsellContinue} onUpgrade={handleUpsellUpgrade} />
+        ) : (
+          <div className="w-full max-w-lg px-4 sm:px-6 py-8 sm:py-12 my-auto">
+            <AnimatePresence mode="wait" custom={direction}>
+              <motion.div
+                key={currentStep}
+                custom={direction}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.35, ease: smoothEase }}
+              >
+                {/* Question */}
+                <div className="text-center mb-8 sm:mb-10">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                    {step.title}
+                  </h1>
+                  <p className="text-gray-400 text-sm sm:text-base">{step.subtitle}</p>
+                </div>
 
-          {/* Step 1: Role (text input) */}
-          {currentStep === 1 ? (
-            <div className="mb-8">
-              <input
-                type="text"
-                value={data.role}
-                onChange={(e) => handleSelect("role", e.target.value)}
-                placeholder="Entrez votre rôle..."
-                className="w-full px-4 py-3 bg-dark-card border border-dark-border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-              />
-            </div>
-          ) : (
-            /* Other steps: Options selection */
-            <div className="grid gap-3 mb-8">
-              {getCurrentOptions().map((option) => (
-                <button
-                  key={option}
-                  onClick={() => handleSelect(getCurrentField(), option)}
-                  className={`
-                    p-4 text-left rounded-xl border transition-all duration-200
-                    ${
-                      getCurrentValue() === option
-                        ? "bg-primary/10 border-primary text-white"
-                        : "bg-dark-card border-dark-border text-gray-300 hover:bg-dark-hover hover:border-gray-600"
-                    }
-                  `}
-                >
-                  <div className="flex items-center justify-between">
-                    <span>{option}</span>
-                    {getCurrentValue() === option && (
-                      <svg
-                        className="w-5 h-5 text-primary"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                    )}
+                {/* Input or Selection */}
+                {step.type === "input" ? (
+                  <div className="mb-8">
+                    <input
+                      type="text"
+                      value={currentValue}
+                      onChange={(e) => handleSelect(step.id, e.target.value)}
+                      placeholder="Ex : CEO, Developpeur, Marketing Manager..."
+                      className="w-full px-5 py-4 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#F8935D]/30 focus:border-[#F8935D]/50 transition-all duration-200 text-[15px] shadow-sm"
+                      autoFocus
+                    />
                   </div>
-                </button>
-              ))}
-            </div>
-          )}
+                ) : (
+                  <div className="grid gap-2.5 mb-8">
+                    {step.options.map((option, i) => {
+                      const isSelected = currentValue === option;
+                      return (
+                        <motion.button
+                          key={option}
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.25, delay: i * 0.04, ease: smoothEase }}
+                          onClick={() => handleSelect(step.id, option)}
+                          className={`
+                            p-4 text-left rounded-xl border transition-all duration-200 shadow-sm
+                            ${isSelected
+                              ? "bg-[#F8935D]/5 border-[#F8935D] text-gray-900 shadow-md shadow-[#F8935D]/10"
+                              : "bg-white border-gray-200 text-gray-600 hover:border-[#F8935D]/40 hover:bg-[#F8935D]/[0.02]"
+                            }
+                          `}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-[15px] font-medium">{option}</span>
+                            {isSelected && (
+                              <motion.div
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                              >
+                                <div className="w-5 h-5 rounded-full bg-gradient-to-r from-[#F8935D] to-[#F76B54] flex items-center justify-center">
+                                  <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                  </svg>
+                                </div>
+                              </motion.div>
+                            )}
+                          </div>
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+                )}
 
-          {/* Navigation buttons */}
-          <div className="flex gap-3">
-            {currentStep > 0 && (
-              <Button variant="secondary" onClick={handleBack} className="flex-1">
-                Retour
-              </Button>
-            )}
-            {isLastStep ? (
-              <Button
-                onClick={handleSubmit}
-                disabled={!canProceed()}
-                isLoading={isSubmitting}
-                className="flex-1"
-              >
-                Terminer
-              </Button>
-            ) : (
-              <Button
-                onClick={handleNext}
-                disabled={!canProceed()}
-                className="flex-1"
-              >
-                Suivant
-              </Button>
-            )}
+                {/* Navigation */}
+                <div className="flex gap-3">
+                  {currentStep > 0 && (
+                    <button
+                      onClick={handleBack}
+                      className="flex-1 py-3.5 px-4 bg-white border border-gray-200 text-gray-600 font-medium rounded-xl hover:bg-gray-50 transition-all duration-200 active:scale-[0.98] text-sm"
+                    >
+                      Retour
+                    </button>
+                  )}
+                  {isLastStep ? (
+                    <button
+                      onClick={handleSubmit}
+                      disabled={!canProceed || isSubmitting}
+                      className={`
+                        flex-1 py-3.5 px-4 font-semibold rounded-xl transition-all duration-200 active:scale-[0.98] text-sm
+                        ${canProceed && !isSubmitting
+                          ? "bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white shadow-lg shadow-[#F8935D]/25 hover:shadow-xl hover:shadow-[#F8935D]/35"
+                          : "bg-gray-100 text-gray-300 cursor-not-allowed"
+                        }
+                      `}
+                    >
+                      {isSubmitting ? (
+                        <div className="flex items-center justify-center gap-2">
+                          <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                          <span>Enregistrement...</span>
+                        </div>
+                      ) : (
+                        "Terminer"
+                      )}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleNext}
+                      disabled={!canProceed}
+                      className={`
+                        flex-1 py-3.5 px-4 font-semibold rounded-xl transition-all duration-200 active:scale-[0.98] text-sm
+                        ${canProceed
+                          ? "bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white shadow-lg shadow-[#F8935D]/25 hover:shadow-xl hover:shadow-[#F8935D]/35"
+                          : "bg-gray-100 text-gray-300 cursor-not-allowed"
+                        }
+                      `}
+                    >
+                      Suivant
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+            </AnimatePresence>
           </div>
-        </div>
+        )}
       </main>
     </div>
   );

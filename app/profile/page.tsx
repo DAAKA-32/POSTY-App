@@ -8,8 +8,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLinkedIn } from "@/contexts/LinkedInContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { updateUserProfile, getUserPosts, getUserSessions } from "@/lib/firestore";
-import { DAILY_MESSAGE_LIMITS, SubscriptionPlan } from "@/types";
-import { PlanType } from "@/lib/plans";
+import { SubscriptionPlan } from "@/types";
+import { PlanType, DAILY_MESSAGE_LIMITS } from "@/lib/plans";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import Button from "@/components/ui/Button";
 import {
@@ -41,20 +41,16 @@ function ProfileContent() {
   const [postsCount, setPostsCount] = useState(0);
   const [sessionsCount, setSessionsCount] = useState(0);
 
-  // Enable scrolling on this page (override global overflow:hidden)
+  // Enable full scrolling on Profile page (mouse wheel, trackpad, touch, keyboard)
   useEffect(() => {
-    document.documentElement.classList.add("scrollable-page");
-    document.body.style.overflow = "auto";
-    document.body.style.height = "auto";
-    document.documentElement.style.overflow = "auto";
-    document.documentElement.style.height = "auto";
+    document.documentElement.classList.add("profile-scroll-enabled");
+    document.body.classList.add("profile-scroll-enabled");
+    // Remove any classes that might block scroll
+    document.body.classList.remove("pwa-mobile", "no-scroll", "scroll-locked", "modal-open");
 
     return () => {
-      document.documentElement.classList.remove("scrollable-page");
-      document.body.style.overflow = "";
-      document.body.style.height = "";
-      document.documentElement.style.overflow = "";
-      document.documentElement.style.height = "";
+      document.documentElement.classList.remove("profile-scroll-enabled");
+      document.body.classList.remove("profile-scroll-enabled");
     };
   }, []);
 
@@ -178,7 +174,7 @@ function ProfileContent() {
 
   return (
     <div
-      className="min-h-screen bg-background"
+      className="min-h-screen bg-background-warm dark:bg-background"
       style={{
         overflowY: "auto",
         overflowX: "hidden",
@@ -187,7 +183,7 @@ function ProfileContent() {
       }}
     >
       {/* Sticky Header with Back Button */}
-      <div className="sticky top-0 z-40 bg-light-bg/80 dark:bg-dark-bg/80 backdrop-blur-xl border-b border-light-border dark:border-dark-border">
+      <div className="sticky top-0 z-40 bg-background-warm/80 dark:bg-dark-bg/80 backdrop-blur-xl border-b border-[#F8935D]/10 dark:border-dark-border">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="relative flex items-center h-16">
             <button
@@ -316,7 +312,7 @@ function ProfileContent() {
                         whileHover={{ x: 4 }}
                         className="
                           flex items-center justify-between p-3
-                          bg-gray-100 dark:bg-dark-hover hover:bg-gray-200 dark:hover:bg-dark-active
+                          bg-[#F8935D]/10 dark:bg-dark-hover hover:bg-[#F8935D]/15 dark:hover:bg-dark-active
                           rounded-xl cursor-pointer
                           transition-colors duration-200
                         "
@@ -340,7 +336,7 @@ function ProfileContent() {
                         whileHover={{ x: 4 }}
                         className="
                           flex items-center justify-between p-3
-                          bg-gray-100 dark:bg-dark-hover hover:bg-gray-200 dark:hover:bg-dark-active
+                          bg-[#F8935D]/10 dark:bg-dark-hover hover:bg-[#F8935D]/15 dark:hover:bg-dark-active
                           rounded-xl cursor-pointer
                           transition-colors duration-200
                         "

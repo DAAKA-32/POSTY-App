@@ -24,7 +24,7 @@ import PublishToLinkedInModal from "@/components/linkedin/PublishToLinkedInModal
 import ScheduleModal from "@/components/schedule/ScheduleModal";
 import { AnimatedScaleFade } from "@/components/animations/AnimatedPageWrapper";
 import toast from "@/components/ui/Toast";
-import UniversalChatInput from "@/components/chat/UniversalChatInput";
+import UniversalChatInput, { UniversalChatInputRef } from "@/components/chat/UniversalChatInput";
 
 // Dynamic placeholder examples that rotate
 const PLACEHOLDER_EXAMPLES = [
@@ -65,6 +65,7 @@ function ConversationContent() {
   const [isRecording, setIsRecording] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const chatInputRef = useRef<UniversalChatInputRef>(null);
 
   const {
     messages,
@@ -185,7 +186,8 @@ function ConversationContent() {
           }
         }
         if (finalTranscript) {
-          setInputValue((prev) => prev + (prev ? " " : "") + finalTranscript);
+          // Inject transcribed text into the chat input via ref
+          chatInputRef.current?.appendValue(finalTranscript);
         }
       };
 
@@ -202,14 +204,32 @@ function ConversationContent() {
       recognition.onend = () => setIsRecording(false);
       recognitionRef.current = recognition;
     }
-    return () => recognitionRef.current?.abort();
+    // Cleanup: abort recognition and release microphone on unmount
+    return () => {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.abort();
+        } catch {
+          // Ignore abort errors
+        }
+        recognitionRef.current = null;
+      }
+      setIsRecording(false);
+    };
   }, []);
 
-  // Toggle voice recording
+  // Toggle voice recording with immediate state updates
   const toggleRecording = useCallback(() => {
     if (!recognitionRef.current) return;
     if (isRecording) {
-      recognitionRef.current.stop();
+      // Stop recognition - this releases the microphone
+      try {
+        recognitionRef.current.stop();
+      } catch {
+        // Force abort if stop fails
+        recognitionRef.current.abort();
+      }
+      // Update state immediately (don't wait for onend)
       setIsRecording(false);
     } else {
       try {
@@ -217,6 +237,7 @@ function ConversationContent() {
         setIsRecording(true);
       } catch (error) {
         console.error("Failed to start recording:", error);
+        setIsRecording(false);
         toast.error("Impossible de démarrer l'enregistrement");
       }
     }
@@ -327,7 +348,7 @@ function ConversationContent() {
                       if (message.type === "user") {
                         elements.push(
                           <ChatMessage
-                            key={message.id}
+                            key={message.id || `user-${i}-${Date.now()}`}
                             type={message.type}
                             content={message.content}
                             timestamp={message.timestamp}
@@ -357,7 +378,7 @@ function ConversationContent() {
 
                           // Render paired responses with ModernAIResponsePair (MAX plan only)
                           elements.push(
-                            <div key={`pair-${message.id}`}>
+                            <div key={`pair-${message.id || i}-${pairIndex}`}>
                               {/* POSTY Avatar and Label */}
                               <div className="flex items-center gap-3 mb-3">
                                 <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 shadow-sm">
@@ -394,7 +415,7 @@ function ConversationContent() {
                           // Single AI response (FREE/PRO plans) - use ModernResponseCard
                           elements.push(
                             <motion.div
-                              key={message.id}
+                              key={message.id || `ai-${i}`}
                               initial={{ opacity: 0, y: 8 }}
                               animate={{ opacity: 1, y: 0 }}
                               transition={{
@@ -490,6 +511,7 @@ function ConversationContent() {
           <div className="max-w-3xl mx-auto px-3 sm:px-4 py-1 lg:py-2">
             {/* UniversalChatInput - Unified premium input component */}
             <UniversalChatInput
+              ref={chatInputRef}
               onSubmit={async (message) => {
                 // Stop recording if active
                 if (isRecording && recognitionRef.current) {

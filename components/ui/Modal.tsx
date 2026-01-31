@@ -4,6 +4,7 @@ import { ReactNode, useEffect, useRef, useId, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
+import { useScrollLock } from "@/hooks/useScrollLock";
 import Button from "./Button";
 
 interface ModalProps {
@@ -79,7 +80,10 @@ export default function Modal({
     returnFocus: true,
   });
 
-  // Close on escape key and handle body scroll lock
+  // Use centralized scroll lock
+  useScrollLock(isOpen);
+
+  // Close on escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -88,33 +92,11 @@ export default function Modal({
     };
 
     if (isOpen) {
-      // Save scroll position before locking
-      scrollPosRef.current = window.scrollY;
-
       document.addEventListener("keydown", handleEscape);
-
-      // Lock body scroll while preserving position
-      document.body.style.position = "fixed";
-      document.body.style.top = `-${scrollPosRef.current}px`;
-      document.body.style.left = "0";
-      document.body.style.right = "0";
-      document.body.style.overflow = "hidden";
     }
 
     return () => {
       document.removeEventListener("keydown", handleEscape);
-
-      // Restore scroll position
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.left = "";
-      document.body.style.right = "";
-      document.body.style.overflow = "";
-
-      // Restore scroll position
-      if (scrollPosRef.current > 0) {
-        window.scrollTo(0, scrollPosRef.current);
-      }
     };
   }, [isOpen, onClose]);
 

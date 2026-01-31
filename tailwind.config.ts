@@ -32,6 +32,9 @@ export default {
         // Brand palette: Corail vif + Rose pêche = Premium & Engageant
         // Using CSS variables for theme-aware colors
         background: "var(--background)",
+        "background-warm": "var(--background-warm)",
+        "background-peach": "var(--background-peach)",
+        "background-cream": "var(--background-cream)",
         foreground: "var(--foreground)",
 
         // Primary - Orange clair (couleur principale CTA)

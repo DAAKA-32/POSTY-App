@@ -4,6 +4,7 @@ import { useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { PostInsights } from "@/types";
+import { useScrollLock } from "@/hooks/useScrollLock";
 
 interface PostInsightsModalProps {
   isOpen: boolean;
@@ -26,6 +27,9 @@ export default function PostInsightsModal({
   onClose,
   insights,
 }: PostInsightsModalProps) {
+  // Centralized scroll lock
+  useScrollLock(isOpen);
+
   // Close on ESC key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -36,13 +40,10 @@ export default function PostInsightsModal({
 
     if (isOpen) {
       document.addEventListener("keydown", handleEscape);
-      // Prevent body scroll when modal is open
-      document.body.style.overflow = "hidden";
     }
 
     return () => {
       document.removeEventListener("keydown", handleEscape);
-      document.body.style.overflow = "unset";
     };
   }, [isOpen, onClose]);
 

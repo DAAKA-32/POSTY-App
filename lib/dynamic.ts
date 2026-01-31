@@ -72,14 +72,6 @@ export const DynamicFilterPanel = dynamic(
   { loading: SectionFallback, ssr: false }
 );
 
-// ============== DYNAMIC STRIPE IMPORTS ==============
-// Stripe components are heavy - load only on pricing page
-
-export const DynamicPricingCard = dynamic(
-  () => import("@/components/stripe/PricingCard").then((mod) => mod.default),
-  { loading: SectionFallback, ssr: false }
-);
-
 // ============== DYNAMIC PROFILE IMPORTS ==============
 // Profile components loaded when visiting profile page
 

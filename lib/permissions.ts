@@ -37,6 +37,10 @@ export interface UserSubscription {
 }
 
 export interface UserUsage {
+  // Daily tracking (actively enforced)
+  messagesUsedToday: number;
+  lastMessageDate?: Date;
+  // Weekly/monthly tracking (for future enforcement)
   conversationsThisWeek: number;
   conversationsThisMonth: number;
   lastConversationDate?: Date;
@@ -80,7 +84,20 @@ export function canSendMessage(
     };
   }
 
-  // Check weekly limit (for free plan)
+  // Check daily limit (for free plan)
+  if (limits.quotaResetPeriod === "daily" && limits.messagesPerDay !== -1) {
+    if (usage.messagesUsedToday >= limits.messagesPerDay) {
+      return {
+        allowed: false,
+        reason: `Limite quotidienne atteinte (${limits.messagesPerDay} messages)`,
+        requiredPlan: "pro",
+        currentUsage: usage.messagesUsedToday,
+        limit: limits.messagesPerDay,
+      };
+    }
+  }
+
+  // Check weekly limit (future enforcement)
   if (limits.quotaResetPeriod === "weekly" && limits.conversationsPerWeek !== -1) {
     if (usage.conversationsThisWeek >= limits.conversationsPerWeek) {
       return {
@@ -93,7 +110,7 @@ export function canSendMessage(
     }
   }
 
-  // Check monthly limit (for pro plan)
+  // Check monthly limit (future enforcement)
   if (limits.quotaResetPeriod === "monthly" && limits.conversationsPerMonth !== -1) {
     if (usage.conversationsThisMonth >= limits.conversationsPerMonth) {
       return {

@@ -134,6 +134,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Sign in with Google
   const signInWithGoogle = async () => {
+    // Set onboarding flags BEFORE signInWithPopup.
+    // onAuthStateChanged fires as soon as the popup resolves, before we can
+    // check if the user is new. Setting flags optimistically ensures
+    // needsOnboarding() returns true when the login page redirect runs.
+    // Flags are cleared below if the user turns out to be existing.
+    setIsNewUser(true);
+    setShouldShowOnboarding(true);
+
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const { user: googleUser } = result;
@@ -141,39 +149,63 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Check if user profile exists, if not create one
       const existingProfile = await getUserProfile(googleUser.uid);
       if (!existingProfile) {
-        // This is a NEW user - set flag for onboarding
+        // Confirmed NEW user — flags already set, create profile
         try {
           await createUserProfile(googleUser.uid, {
             email: googleUser.email || "",
             displayName: googleUser.displayName || "",
             photoURL: googleUser.photoURL,
           });
-          // Mark as new user for onboarding (signup via Google)
-          // Set BOTH in-memory AND localStorage for robustness
-          setIsNewUser(true);
-          setShouldShowOnboarding(true);
         } catch (profileError) {
           // Log but don't fail - profile will be created during onboarding
           console.warn("Profile creation deferred to onboarding:", profileError);
-          // Still mark as new user since no profile exists
-          setIsNewUser(true);
-          setShouldShowOnboarding(true);
         }
         toast.success("Compte créé avec succès !");
       } else {
-        // Existing user - this is a LOGIN, not signup
-        // isNewUser stays false (never show onboarding on login)
-        // Clear any stale localStorage flags
+        // Existing user — this is a LOGIN, not signup.
+        // Clear the optimistic onboarding flags.
+        setIsNewUser(false);
         setShouldShowOnboarding(false);
         toast.success("Connexion réussie !");
       }
 
       // Refresh profile after sign in
       await refreshUserProfile();
-    } catch (error) {
-      console.error("Google sign-in error:", error);
-      toast.error("Erreur lors de la connexion Google");
-      throw error;
+    } catch (error: unknown) {
+      // Reset onboarding flags on failure — no account was created/logged in
+      setIsNewUser(false);
+      setShouldShowOnboarding(false);
+
+      const firebaseError = error as { code?: string; message?: string };
+
+      // User cancelled or popup blocked — NOT an error, return silently
+      // This ensures manual login works immediately after abandoning Google auth
+      const cancelledCodes = [
+        "auth/popup-closed-by-user",
+        "auth/cancelled-popup-request",
+        "auth/popup-blocked",
+        "auth/user-cancelled",
+      ];
+      if (firebaseError.code && cancelledCodes.includes(firebaseError.code)) {
+        return; // Clean return, no error state
+      }
+
+      // Real error — throw with appropriate message
+      let message: string;
+      switch (firebaseError.code) {
+        case "auth/network-request-failed":
+          message = "Connexion impossible. Vérifiez votre connexion internet.";
+          break;
+        case "auth/account-exists-with-different-credential":
+          message = "Un compte existe déjà avec cette adresse e-mail.";
+          break;
+        case "auth/operation-not-allowed":
+          message = "La connexion Google n'est pas disponible pour le moment.";
+          break;
+        default:
+          message = "La connexion n'a pas abouti. Veuillez réessayer.";
+      }
+      throw new Error(message);
     }
   };
 
@@ -181,36 +213,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signInWithEmail = async (email: string, password: string) => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      // Clear any stale localStorage flags on login
       setShouldShowOnboarding(false);
       toast.success("Connexion réussie !");
     } catch (error: unknown) {
-      console.error("Email sign-in error:", error);
-
-      // Handle specific Firebase Auth errors
       const firebaseError = error as { code?: string };
+      let message: string;
       switch (firebaseError.code) {
         case "auth/invalid-credential":
         case "auth/wrong-password":
         case "auth/user-not-found":
-          toast.error("Email ou mot de passe incorrect");
+          message = "Adresse e-mail ou mot de passe incorrect.";
           break;
         case "auth/invalid-email":
-          toast.error("Format d'email invalide");
+          message = "Le format de l'adresse e-mail n'est pas valide.";
           break;
         case "auth/user-disabled":
-          toast.error("Ce compte a été désactivé");
+          message = "Ce compte a été désactivé.";
           break;
         case "auth/too-many-requests":
-          toast.error("Trop de tentatives. Réessayez dans quelques minutes.");
+          message = "Trop de tentatives. Veuillez réessayer dans quelques minutes.";
           break;
         case "auth/network-request-failed":
-          toast.error("Erreur de connexion. Vérifiez votre connexion internet.");
+          message = "Connexion impossible. Vérifiez votre connexion internet.";
           break;
         default:
-          toast.error("Erreur lors de la connexion");
+          message = "La connexion n'a pas abouti. Veuillez réessayer.";
       }
-      throw error;
+      throw new Error(message);
     }
   };
 
@@ -220,6 +249,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     password: string,
     displayName: string
   ) => {
+    // Set onboarding flags BEFORE creating the account.
+    // onAuthStateChanged fires during createUserWithEmailAndPassword's await,
+    // which triggers the login page redirect. If flags aren't set yet,
+    // needsOnboarding() returns false and the user lands on /app instead of /onboarding.
+    setIsNewUser(true);
+    setShouldShowOnboarding(true);
+
     try {
       const result = await createUserWithEmailAndPassword(auth, email, password);
       const { user: newUser } = result;
@@ -234,37 +270,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         photoURL: null,
       });
 
-      // Mark as new user for onboarding (signup via email)
-      // Set BOTH in-memory AND localStorage for robustness
-      setIsNewUser(true);
-      setShouldShowOnboarding(true);
-
       toast.success("Compte créé avec succès !");
     } catch (error: unknown) {
-      console.error("Email sign-up error:", error);
+      // Reset onboarding flags on failure — account was not created
+      setIsNewUser(false);
+      setShouldShowOnboarding(false);
 
-      // Handle specific Firebase Auth errors
       const firebaseError = error as { code?: string };
+      let message: string;
       switch (firebaseError.code) {
         case "auth/email-already-in-use":
-          toast.error("Cet email est déjà utilisé. Connectez-vous ou utilisez un autre email.");
+          message = "Cette adresse e-mail est déjà associée à un compte.";
           break;
         case "auth/invalid-email":
-          toast.error("Format d'email invalide");
+          message = "Le format de l'adresse e-mail n'est pas valide.";
           break;
         case "auth/weak-password":
-          toast.error("Le mot de passe doit contenir au moins 6 caractères");
+          message = "Le mot de passe doit contenir au moins 6 caractères.";
           break;
         case "auth/operation-not-allowed":
-          toast.error("L'inscription par email n'est pas activée");
+          message = "L'inscription par e-mail n'est pas disponible pour le moment.";
           break;
         case "auth/network-request-failed":
-          toast.error("Erreur de connexion. Vérifiez votre connexion internet.");
+          message = "Connexion impossible. Vérifiez votre connexion internet.";
           break;
         default:
-          toast.error("Erreur lors de la création du compte");
+          message = "La création du compte n'a pas abouti. Veuillez réessayer.";
       }
-      throw error;
+      throw new Error(message);
     }
   };
 
@@ -355,18 +388,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       toast.success("Email de réinitialisation envoyé !");
     } catch (error: unknown) {
-      console.error("Password reset error:", error);
       const firebaseError = error as { code?: string };
-
       if (firebaseError.code === "auth/user-not-found") {
-        throw new Error("Aucun compte associé à cet email");
+        throw new Error("Aucun compte n'est associé à cette adresse e-mail.");
       } else if (firebaseError.code === "auth/invalid-email") {
-        throw new Error("Adresse email invalide");
+        throw new Error("Le format de l'adresse e-mail n'est pas valide.");
       } else if (firebaseError.code === "auth/too-many-requests") {
-        throw new Error("Trop de tentatives. Réessayez plus tard.");
+        throw new Error("Trop de tentatives. Veuillez réessayer plus tard.");
       }
-
-      throw new Error("Erreur lors de l'envoi de l'email");
+      throw new Error("L'envoi de l'e-mail n'a pas abouti. Veuillez réessayer.");
     }
   };
 

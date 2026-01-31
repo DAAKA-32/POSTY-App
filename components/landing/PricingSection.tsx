@@ -5,11 +5,11 @@ import { motion, useInView, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCanHover } from "@/hooks/useCanHover";
 import Link from "next/link";
-import { getAllPlans, PLAN_TAGLINES, getPlanCoreFeatures, getPlanSecondaryFeatures, getYearlyMonthlyEquivalent, getSavingsText, PlanConfig, FeatureItem } from "@/lib/plans";
+import { getAvailablePlansForNewUsers, PLAN_TAGLINES, getPlanCoreFeatures, getPlanSecondaryFeatures, getYearlyMonthlyEquivalent, getSavingsText, PlanConfig, FeatureItem, TRIAL_PERIOD_DAYS } from "@/lib/plans";
 import BillingToggle from "@/components/ui/BillingToggle";
 
-// Get plans from lib/plans.ts (single source of truth)
-const PLANS = getAllPlans();
+// Get available plans for new users (excludes deprecated free plan)
+const PLANS = getAvailablePlansForNewUsers();
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 30 },
@@ -301,7 +301,7 @@ function PlanCard({
         {/* ZONE 5: CTA Button (fixed height: 72px, always at bottom) */}
         <div className="h-[72px] px-6 md:px-8 pb-6 mt-auto">
           <Link
-            href="/subscription"
+            href={plan.trialDays > 0 ? `/subscription?plan=${plan.id}&trial=true` : `/subscription?plan=${plan.id}`}
             className={`
               block w-full px-6 py-3.5 rounded-xl font-semibold text-center transition-all duration-300
               focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-white
@@ -312,9 +312,12 @@ function PlanCard({
                   : 'bg-gray-100 border border-gray-200 text-gray-900 hover:bg-gray-200'
               }
             `}
-            aria-label={`Choisir le plan ${plan.name}`}
+            aria-label={plan.trialDays > 0 ? `Essayer ${plan.name} gratuitement pendant ${plan.trialDays} jours` : `Choisir le plan ${plan.name}`}
           >
-            {isFree ? "Commencer gratuitement" : plan.highlight ? "Essayer Pro" : "Choisir ce plan"}
+            {plan.trialDays > 0
+              ? `Essayer ${TRIAL_PERIOD_DAYS} jours gratuit`
+              : "Choisir ce plan"
+            }
           </Link>
         </div>
       </div>

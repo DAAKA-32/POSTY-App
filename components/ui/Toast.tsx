@@ -126,11 +126,11 @@ function ActionToast({ t, type, message, action }: ActionToastProps) {
 
   const animationVariants = {
     initial: isMobile
-      ? { opacity: 0, y: 50, scale: 0.95 }
+      ? { opacity: 0, y: -50, scale: 0.95 }
       : { opacity: 0, x: 50, scale: 0.95 },
     animate: { opacity: 1, y: 0, x: 0, scale: 1 },
     exit: isMobile
-      ? { opacity: 0, y: 20, scale: 0.95 }
+      ? { opacity: 0, y: -20, scale: 0.95 }
       : { opacity: 0, x: 20, scale: 0.95 },
   };
 
@@ -190,11 +190,11 @@ function MinimalToast({ t, type, message }: CustomToastProps) {
   // Animation variants based on position
   const animationVariants = {
     initial: isMobile
-      ? { opacity: 0, y: 50, scale: 0.95 }
+      ? { opacity: 0, y: -50, scale: 0.95 }
       : { opacity: 0, x: 50, scale: 0.95 },
     animate: { opacity: 1, y: 0, x: 0, scale: 1 },
     exit: isMobile
-      ? { opacity: 0, y: 20, scale: 0.95 }
+      ? { opacity: 0, y: -20, scale: 0.95 }
       : { opacity: 0, x: 20, scale: 0.95 },
   };
 
@@ -258,11 +258,11 @@ export function PremiumToaster() {
 
   return (
     <Toaster
-      position={isMobile ? "bottom-center" : "top-right"}
+      position={isMobile ? "top-center" : "top-right"}
       containerStyle={{
-        // Mobile: bottom with safe area
+        // Mobile: top with safe area (avoids overlap with inputs and keyboard)
         ...(isMobile ? {
-          bottom: "max(env(safe-area-inset-bottom, 16px), 16px)",
+          top: "max(env(safe-area-inset-top, 12px), 12px)",
           left: 0,
           right: 0,
           padding: "0 16px",

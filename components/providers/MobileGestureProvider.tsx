@@ -241,21 +241,39 @@ export default function MobileGestureProvider({ children }: MobileGestureProvide
   useEffect(() => {
     if (typeof window === "undefined") return;
 
+    // Use media query to detect desktop with mouse/trackpad
+    // pointer: fine = mouse/trackpad (precise pointer)
+    // hover: hover = can hover (not touch-primary device)
+    const isDesktopWithMouse = window.matchMedia("(pointer: fine) and (hover: hover)").matches;
+
+    // Skip ALL style injection on desktop - let CSS handle scroll
+    if (isDesktopWithMouse) return;
+
     // Disable overscroll behavior to prevent iOS/Android edge gestures
     const style = document.createElement("style");
     style.id = "posty-gesture-blocker";
     style.textContent = `
-      html, body {
+      /* MOBILE ONLY: Gesture blocking styles */
+      /* These styles only apply when NOT on landing page or pages with force-scroll-enabled */
+      html:not(.landing-scroll-enabled):not(.force-scroll-enabled),
+      body:not(.landing-scroll-enabled):not(.force-scroll-enabled) {
         overscroll-behavior: none;
         overscroll-behavior-x: none;
         overscroll-behavior-y: none;
         -webkit-overflow-scrolling: touch;
         touch-action: pan-y pinch-zoom;
       }
-      /* Prevent pull-to-refresh on the whole page */
-      body {
+      /* Prevent pull-to-refresh on the whole page (mobile app only) */
+      body:not(.landing-scroll-enabled):not(.force-scroll-enabled) {
         overflow-y: auto;
         overflow-x: hidden;
+      }
+      /* Allow full scrolling on pages with force-scroll-enabled */
+      html.force-scroll-enabled,
+      body.force-scroll-enabled {
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: auto !important;
       }
       /* Block all horizontal gestures when sidebar is open */
       body.sidebar-open {

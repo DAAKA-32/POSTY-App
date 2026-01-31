@@ -7,8 +7,32 @@
 
 // Plan Types
 export type PlanType = "free" | "pro" | "max";
-export type PlanSource = "stripe" | "test";
+export type PaidPlanType = "pro" | "max"; // Plans that can be purchased/trialed
+export type PlanSource = "stripe" | "test" | "trial";
 export type SubscriptionStatus = "active" | "inactive" | "canceled" | "past_due" | "trialing";
+
+// ============================================
+// TRIAL CONFIGURATION
+// ============================================
+
+/** Trial period duration in days */
+export const TRIAL_PERIOD_DAYS = 7;
+
+/** Trial period duration in milliseconds */
+export const TRIAL_PERIOD_MS = TRIAL_PERIOD_DAYS * 24 * 60 * 60 * 1000;
+
+/** Default plan for trial (shown as primary CTA) */
+export const DEFAULT_TRIAL_PLAN: PaidPlanType = "pro";
+
+/** Plans that offer free trials */
+export const TRIAL_ELIGIBLE_PLANS: PaidPlanType[] = ["pro", "max"];
+
+/**
+ * Check if a plan type supports free trials
+ */
+export function isPlanTrialEligible(plan: PlanType): plan is PaidPlanType {
+  return TRIAL_ELIGIBLE_PLANS.includes(plan as PaidPlanType);
+}
 
 // Platform Types - All supported social platforms
 export type Platform = "linkedin" | "reddit" | "instagram" | "facebook";
@@ -76,7 +100,10 @@ export function getPlatformsForPlan(plan: PlanType): Platform[] {
 
 // Plan Limits Interface
 export interface PlanLimits {
-  // Conversations
+  // Daily message limit (actually enforced)
+  messagesPerDay: number; // -1 = unlimited
+
+  // Conversations (weekly/monthly — for future use)
   conversationsPerWeek: number; // -1 = unlimited
   conversationsPerMonth: number; // -1 = unlimited
 
@@ -105,7 +132,7 @@ export interface PlanLimits {
   canPublishSimultaneously: boolean; // Can publish to multiple platforms at once
 
   // Quotas Reset
-  quotaResetPeriod: "weekly" | "monthly";
+  quotaResetPeriod: "daily" | "weekly" | "monthly";
 }
 
 // Plan Configuration
@@ -122,6 +149,10 @@ export interface PlanConfig {
   badge?: string;
   highlight: boolean;
   premium: boolean;
+  /** Trial period in days (0 = no trial, only for paid plans) */
+  trialDays: number;
+  /** Whether this plan is deprecated (free plan after trial system) */
+  deprecated?: boolean;
 }
 
 // ============================================
@@ -133,14 +164,15 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
     id: "free",
     name: "Découverte",
     displayName: "Free",
-    description: "Découvrez le potentiel de Posty",
+    description: "Plan réservé aux utilisateurs existants",
     price: {
       monthly: 0,
       yearly: 0,
     },
     limits: {
-      conversationsPerWeek: 5,
-      conversationsPerMonth: -1, // Uses weekly limit
+      messagesPerDay: 3,
+      conversationsPerWeek: -1, // Not used (daily enforcement)
+      conversationsPerMonth: -1, // Not used (daily enforcement)
       maxCharactersPerPrompt: 100,
       maxRelations: 1,
       responseQuality: "essential",
@@ -156,10 +188,12 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
       allowedPlatforms: ["linkedin"],
       maxPlatformConnections: 1,
       canPublishSimultaneously: false,
-      quotaResetPeriod: "weekly",
+      quotaResetPeriod: "daily",
     },
     highlight: false,
     premium: false,
+    trialDays: 0,
+    deprecated: true, // Free plan no longer available for new users
   },
 
   pro: {
@@ -172,8 +206,9 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
       yearly: 129, // -17% (10.75€/mois)
     },
     limits: {
+      messagesPerDay: -1, // Unlimited
       conversationsPerWeek: -1, // Unlimited
-      conversationsPerMonth: 100, // "Comfortable monthly usage"
+      conversationsPerMonth: 100, // Monthly soft cap (for future enforcement)
       maxCharactersPerPrompt: 300,
       maxRelations: 10,
       responseQuality: "complete",
@@ -194,6 +229,7 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
     badge: "Recommandé",
     highlight: true,
     premium: false,
+    trialDays: TRIAL_PERIOD_DAYS,
   },
 
   max: {
@@ -206,8 +242,9 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
       yearly: 199, // -17% (16.58€/mois)
     },
     limits: {
+      messagesPerDay: -1, // Unlimited
       conversationsPerWeek: -1, // Unlimited
-      conversationsPerMonth: -1, // Unlimited (intensive usage)
+      conversationsPerMonth: -1, // Unlimited
       maxCharactersPerPrompt: 3000,
       maxRelations: -1, // Unlimited
       responseQuality: "ultra",
@@ -228,6 +265,7 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
     badge: "Elite",
     highlight: false,
     premium: true,
+    trialDays: TRIAL_PERIOD_DAYS,
   },
 };
 
@@ -247,6 +285,23 @@ export function getPlanConfig(plan: PlanType): PlanConfig {
  */
 export function getPlanLimits(plan: PlanType): PlanLimits {
   return getPlanConfig(plan).limits;
+}
+
+/**
+ * Get max_tokens for OpenAI based on plan's responseLength
+ */
+export function getMaxTokensForPlan(plan: PlanType): number {
+  const limits = getPlanLimits(plan);
+  switch (limits.responseLength) {
+    case "short":
+      return 500;
+    case "medium":
+      return 1000;
+    case "long":
+      return 2000;
+    default:
+      return 500;
+  }
 }
 
 /**
@@ -359,6 +414,18 @@ export function getMinimumPlanForSimultaneousPublishing(): PlanType {
 }
 
 // ============================================
+// DAILY MESSAGE LIMITS (for quota enforcement)
+// ============================================
+
+// Derived from PLAN_CONFIGS.limits.messagesPerDay
+export const DAILY_MESSAGE_LIMITS: Record<PlanType, number> = Object.fromEntries(
+  (Object.keys(PLAN_CONFIGS) as PlanType[]).map((plan) => [
+    plan,
+    PLAN_CONFIGS[plan].limits.messagesPerDay,
+  ])
+) as Record<PlanType, number>;
+
+// ============================================
 // STRIPE PRICE ID MAPPING
 // ============================================
 
@@ -469,16 +536,16 @@ export function getYearlyDiscountPercent(plan: PlanType): number {
  */
 export const PLAN_TAGLINES: Record<PlanType, { tagline: string; idealFor: string }> = {
   free: {
-    tagline: "Découvrez le potentiel de l'IA",
-    idealFor: "Idéal pour tester et découvrir",
+    tagline: "Découvrez la puissance de Posty",
+    idealFor: "Premier pas vers l'acquisition LinkedIn",
   },
   pro: {
-    tagline: "Le meilleur rapport qualité-prix",
-    idealFor: "Parfait pour les créateurs sérieux",
+    tagline: "L'essentiel pour générer des clients",
+    idealFor: "Pour les professionnels en croissance",
   },
   max: {
-    tagline: "Puissance maximale, résultats exceptionnels",
-    idealFor: "Conçu pour les ambitieux qui veulent dominer",
+    tagline: "La performance maximale, sans compromis",
+    idealFor: "Pour ceux qui veulent dominer leur marché",
   },
 };
 
@@ -528,9 +595,9 @@ export type UnifiedFeatureKey = typeof UNIFIED_FEATURES[number]["key"];
  * Get CTA button label based on plan - action-oriented
  */
 export function getCTALabel(planId: PlanType, isYearly: boolean): string {
-  if (planId === "free") return "Commencer gratuitement";
-  if (planId === "pro") return isYearly ? "Économiser avec Pro" : "Passer à Pro";
-  if (planId === "max") return isYearly ? "Débloquer Max" : "Devenir Max";
+  if (planId === "free") return "Tester gratuitement";
+  if (planId === "pro") return isYearly ? "Accélérer ma croissance" : "Accélérer ma croissance";
+  if (planId === "max") return isYearly ? "Passer au niveau supérieur" : "Passer au niveau supérieur";
   return "Choisir ce plan";
 }
 
@@ -552,7 +619,7 @@ function getFeatureIncluded(key: string, plan: PlanConfig): boolean {
 
   switch (key) {
     case "creations":
-      return limits.conversationsPerWeek === -1 && limits.conversationsPerMonth === -1;
+      return limits.messagesPerDay === -1;
     case "insights":
       return true; // AI Insights available for all plans
     case "quality":
@@ -638,7 +705,7 @@ export function getPlanFeaturesUnified(plan: PlanConfig): FeatureItem[] {
 
     switch (feature.key) {
       case "creations":
-        included = limits.conversationsPerWeek === -1 && limits.conversationsPerMonth === -1;
+        included = limits.messagesPerDay === -1;
         break;
       case "insights":
         // AI Insights available for all plans
@@ -705,12 +772,10 @@ export function getPlanFeaturesDynamic(plan: PlanConfig): FeatureItem[] {
   const features: FeatureItem[] = [];
 
   // Conversations quota - benefit-oriented language
-  if (limits.conversationsPerWeek === -1 && limits.conversationsPerMonth === -1) {
+  if (limits.messagesPerDay === -1) {
     features.push({ text: "Créations illimitées", included: true, highlight: true });
-  } else if (limits.conversationsPerMonth > 0) {
-    features.push({ text: `${limits.conversationsPerMonth} créations / mois`, included: true });
-  } else if (limits.conversationsPerWeek > 0) {
-    features.push({ text: `${limits.conversationsPerWeek} créations / semaine`, included: true });
+  } else {
+    features.push({ text: `${limits.messagesPerDay} créations / jour`, included: true });
   }
 
   // AI Insights - All plans
@@ -827,4 +892,184 @@ export function getPlanFeaturesDynamic(plan: PlanConfig): FeatureItem[] {
   }
 
   return features;
+}
+
+// ============================================
+// TEST MODE EXPIRATION
+// ============================================
+
+/** Default test mode duration: 24 hours in milliseconds */
+export const TEST_MODE_DURATION_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Extract milliseconds from a Firestore Timestamp, Date, or number.
+ * Works with both firebase/firestore and firebase-admin/firestore Timestamps.
+ */
+function getTimestampMs(value: unknown): number {
+  if (typeof value === "number") return value;
+  if (value instanceof Date) return value.getTime();
+  if (value && typeof (value as { toMillis?: () => number }).toMillis === "function") {
+    return (value as { toMillis: () => number }).toMillis();
+  }
+  if (value && typeof (value as { toDate?: () => Date }).toDate === "function") {
+    return (value as { toDate: () => Date }).toDate().getTime();
+  }
+  return 0;
+}
+
+/**
+ * Check if test mode is currently active and not expired.
+ *
+ * Expiration logic:
+ * 1. If `expiresAt` exists → use it directly
+ * 2. Else if `activatedAt` exists → expire after TEST_MODE_DURATION_MS (24h)
+ * 3. Else → trust the `active` flag (backward compat for old data without timestamps)
+ */
+export function isTestModeValid(testModeData: {
+  active?: boolean;
+  plan?: string;
+  activatedAt?: unknown;
+  expiresAt?: unknown;
+} | null | undefined): { isActive: boolean; plan: PlanType | null } {
+  if (!testModeData?.active) {
+    return { isActive: false, plan: null };
+  }
+
+  const now = Date.now();
+
+  // Check explicit expiresAt
+  if (testModeData.expiresAt) {
+    const expiresAtMs = getTimestampMs(testModeData.expiresAt);
+    if (expiresAtMs > 0 && now > expiresAtMs) {
+      return { isActive: false, plan: null };
+    }
+  }
+
+  // Fallback: check activatedAt + 24h (for data created before expiresAt was added)
+  if (testModeData.activatedAt && !testModeData.expiresAt) {
+    const activatedMs = getTimestampMs(testModeData.activatedAt);
+    if (activatedMs > 0 && now > activatedMs + TEST_MODE_DURATION_MS) {
+      return { isActive: false, plan: null };
+    }
+  }
+
+  return {
+    isActive: true,
+    plan: (testModeData.plan as PlanType) || null,
+  };
+}
+
+// ============================================
+// TRIAL HELPER FUNCTIONS
+// ============================================
+
+/**
+ * Get all available plans for new users (excludes deprecated free plan)
+ */
+export function getAvailablePlansForNewUsers(): PlanConfig[] {
+  return Object.values(PLAN_CONFIGS).filter(plan => !plan.deprecated);
+}
+
+/**
+ * Get plans that support free trials
+ */
+export function getTrialEligiblePlans(): PlanConfig[] {
+  return Object.values(PLAN_CONFIGS).filter(plan => plan.trialDays > 0);
+}
+
+/**
+ * Check if user is eligible for a trial
+ * @param userData User's subscription data from Firestore
+ * @returns Object with eligibility status and reason if not eligible
+ */
+export function checkTrialEligibility(userData: {
+  subscription?: {
+    trialUsed?: boolean;
+    status?: string;
+    plan?: string;
+  };
+} | null | undefined): {
+  eligible: boolean;
+  reason?: string;
+} {
+  // No user data = eligible (new user)
+  if (!userData?.subscription) {
+    return { eligible: true };
+  }
+
+  const { trialUsed, status, plan } = userData.subscription;
+
+  // Already used a trial = not eligible
+  if (trialUsed) {
+    return {
+      eligible: false,
+      reason: "Vous avez déjà utilisé votre essai gratuit.",
+    };
+  }
+
+  // Currently in trial = not eligible
+  if (status === "trialing") {
+    return {
+      eligible: false,
+      reason: "Vous êtes actuellement en période d'essai.",
+    };
+  }
+
+  // Active paid subscription = not eligible (they're already paying)
+  if (status === "active" && plan && plan !== "free") {
+    return {
+      eligible: false,
+      reason: "Vous avez déjà un abonnement actif.",
+    };
+  }
+
+  return { eligible: true };
+}
+
+/**
+ * Calculate trial end date from start date
+ */
+export function calculateTrialEndDate(startDate: Date = new Date()): Date {
+  return new Date(startDate.getTime() + TRIAL_PERIOD_MS);
+}
+
+/**
+ * Get days remaining in trial
+ */
+export function getTrialDaysRemaining(trialEndsAt: Date | { toDate: () => Date } | null | undefined): number {
+  if (!trialEndsAt) return 0;
+
+  const endDate = trialEndsAt instanceof Date
+    ? trialEndsAt
+    : trialEndsAt.toDate();
+
+  const now = Date.now();
+  const remaining = endDate.getTime() - now;
+
+  if (remaining <= 0) return 0;
+  return Math.ceil(remaining / (24 * 60 * 60 * 1000));
+}
+
+/**
+ * Format trial status message for UI
+ */
+export function formatTrialStatusMessage(
+  status: string | undefined,
+  trialEndsAt: Date | { toDate: () => Date } | null | undefined,
+  trialPlan: string | undefined
+): string | null {
+  if (status !== "trialing" || !trialEndsAt) return null;
+
+  const daysRemaining = getTrialDaysRemaining(trialEndsAt);
+  const planName = trialPlan ? PLAN_CONFIGS[trialPlan as PlanType]?.name || trialPlan : "votre plan";
+
+  if (daysRemaining <= 0) {
+    return `Votre essai ${planName} est terminé.`;
+  }
+
+  if (daysRemaining === 1) {
+    return `Dernier jour de votre essai ${planName} !`;
+  }
+
+  return `${daysRemaining} jours restants sur votre essai ${planName}.`;
 }

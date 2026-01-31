@@ -1,12 +1,15 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { motion, AnimatePresence, useReducedMotion, useInView } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion, useInView, useScroll, useTransform, useMotionValue, useSpring } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { getAllPlans, PlanConfig, PLAN_TAGLINES, getPlanCoreFeatures, getPlanSecondaryFeatures, getCTALabel, getSavingsText, FeatureItem } from "@/lib/plans";
+import BillingToggle from "@/components/ui/BillingToggle";
+import { useScrollLock } from "@/hooks/useScrollLock";
+import AnimatedMacBook from "@/components/landing/AnimatedMacBook";
 
 // =============================================================================
 // DESIGN SYSTEM - Soft Orange Palette (consistent with /app and /login)
@@ -21,6 +24,7 @@ const colors = {
 
 // Premium animation easings - inspired by Linear, Notion
 const smoothEase = [0.25, 0.1, 0.25, 1] as const;
+const premiumEase = [0.22, 1, 0.36, 1] as const;
 
 // =============================================================================
 // NAVBAR - Premium Mobile-First Design (Stripe / Linear / Notion inspired)
@@ -54,7 +58,7 @@ const NAV_LINKS = [
   {
     label: "Demo",
     href: "#demo",
-    description: "Testez l'IA en direct",
+    description: "Voir Posty en action",
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
@@ -62,9 +66,9 @@ const NAV_LINKS = [
     ),
   },
   {
-    label: "Caracteristiques",
+    label: "Fonctionnalites",
     href: "#features",
-    description: "Fonctionnalites cles",
+    description: "Ce que Posty fait pour vous",
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
@@ -74,7 +78,7 @@ const NAV_LINKS = [
   {
     label: "Temoignages",
     href: "#testimonials",
-    description: "Avis de nos utilisateurs",
+    description: "Ce qu'en disent nos clients",
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
@@ -126,8 +130,8 @@ function Navbar() {
   const [activeSection, setActiveSection] = useState<string>("");
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", handleScroll);
+    const handleScroll = () => setIsScrolled(window.scrollY > 50);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -152,136 +156,220 @@ function Navbar() {
     return () => observers.forEach((o) => o.disconnect());
   }, []);
 
-  // Lock body scroll when mobile menu is open
-  useEffect(() => {
+  // Centralized scroll lock when mobile menu is open
+  useScrollLock(isMenuOpen);
+
+  // Smooth scroll with proper navbar offset handling
+  const scrollTo = useCallback((href: string) => {
+    setIsMenuOpen(false);
+
+    const scrollToSection = () => {
+      const targetElement = document.querySelector(href) as HTMLElement;
+      if (!targetElement) return;
+
+      // Calculate navbar height dynamically (accounts for scrolled/non-scrolled state)
+      // Desktop: 68px + 12px padding when scrolled = 80px, Mobile: 64px + 12px = 76px
+      const isMobile = window.innerWidth < 768;
+      const navbarOffset = isMobile ? 76 : 84;
+
+      // Get target position and apply offset
+      const targetPosition = targetElement.getBoundingClientRect().top + window.scrollY;
+      const offsetPosition = targetPosition - navbarOffset;
+
+      // Smooth scroll with native behavior for best performance
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth"
+      });
+    };
+
+    // Delay slightly for mobile menu close animation
     if (isMenuOpen) {
-      document.body.style.overflow = "hidden";
+      setTimeout(scrollToSection, 200);
     } else {
-      document.body.style.overflow = "";
+      scrollToSection();
     }
-    return () => { document.body.style.overflow = ""; };
   }, [isMenuOpen]);
 
-  const scrollTo = (href: string) => {
-    setIsMenuOpen(false);
-    setTimeout(() => {
-      document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
-    }, 150);
-  };
-
   return (
-    <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        isScrolled || isMenuOpen
-          ? "bg-white/95 backdrop-blur-xl border-b border-gray-200/60 shadow-sm shadow-gray-200/40"
-          : "bg-transparent"
-      }`}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 md:h-[72px]">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 relative z-[60]">
-            <motion.div
-              whileHover={{ scale: 1.05, rotate: 2 }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-              className="w-9 h-9 md:w-10 md:h-10 rounded-xl overflow-hidden shadow-md shadow-[#F8935D]/15 ring-1 ring-gray-100"
-            >
-              <Image src="/logo-avec fond.jpg" alt="Posty" width={40} height={40} className="w-full h-full object-cover" />
-            </motion.div>
-            <span className="text-lg md:text-xl font-bold text-gray-900 tracking-tight">Posty</span>
-          </Link>
-
-          {/* Desktop Nav — pill bg on hover + active indicator */}
-          <div className="hidden md:flex items-center gap-1 p-1 rounded-2xl bg-gray-100/0 transition-colors duration-300"
-            style={isScrolled ? { backgroundColor: "rgba(243,244,246,0.6)" } : {}}
-          >
-            {NAV_LINKS.map((link) => {
-              const isActive = activeSection === link.href;
-              return (
-                <button
-                  key={link.href}
-                  onClick={() => scrollTo(link.href)}
-                  className={`
-                    relative px-4 py-2 rounded-xl font-medium text-[14px] transition-all duration-300 group/navlink
-                    ${isActive
-                      ? "text-[#F76B54]"
-                      : "text-gray-500 hover:text-gray-900"
-                    }
-                  `}
+    <>
+    {/* Outer fixed container — always full width for positioning */}
+    <div className="fixed top-0 left-0 right-0 z-50 pointer-events-none">
+      {/* Dynamic container — changes width and border-radius on scroll */}
+      <motion.nav
+        initial={false}
+        animate={{
+          paddingLeft: isScrolled && !isMenuOpen ? "16px" : "0px",
+          paddingRight: isScrolled && !isMenuOpen ? "16px" : "0px",
+          paddingTop: isScrolled && !isMenuOpen ? "12px" : "0px",
+        }}
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        className="w-full pointer-events-auto"
+      >
+        <motion.div
+          initial={false}
+          animate={{
+            maxWidth: isScrolled && !isMenuOpen ? "1100px" : "100%",
+            borderRadius: isScrolled && !isMenuOpen ? "20px" : "0px",
+          }}
+          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          className={`
+            mx-auto transition-all duration-400
+            ${isScrolled || isMenuOpen
+              ? "bg-white/95 backdrop-blur-xl shadow-lg shadow-gray-900/[0.08] border border-gray-200/60"
+              : "bg-transparent border-transparent"
+            }
+          `}
+          style={{
+            // Smooth transitions for background and shadow
+            transitionProperty: "background-color, box-shadow, border-color",
+            transitionDuration: "400ms",
+            transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)",
+          }}
+        >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16 md:h-[68px]">
+              {/* Logo */}
+              <Link href="/" className="flex items-center gap-2.5 relative z-[60]">
+                <motion.div
+                  whileHover={{ scale: 1.05, rotate: 2 }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                  className="w-9 h-9 md:w-10 md:h-10 rounded-xl overflow-hidden shadow-md shadow-[#F8935D]/15 ring-1 ring-gray-100"
                 >
-                  {/* Active pill background */}
-                  {isActive && (
-                    <motion.div
-                      layoutId="nav-active-pill"
-                      className="absolute inset-0 bg-white rounded-xl shadow-sm ring-1 ring-gray-200/60"
-                      transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                    />
-                  )}
-                  {/* Hover bg — only when not active */}
-                  {!isActive && (
-                    <span className="absolute inset-0 rounded-xl bg-gray-200/50 opacity-0 group-hover/navlink:opacity-100 transition-opacity duration-200" />
-                  )}
-                  <span className="relative z-10">{link.label}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* CTA Desktop */}
-          <div className="hidden md:flex items-center gap-3">
-            <Link
-              href="/login"
-              className="px-4 py-2 text-[14px] font-medium text-gray-600 hover:text-gray-900 rounded-xl hover:bg-gray-100 transition-all duration-200"
-            >
-              Se connecter
-            </Link>
-            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-              <Link
-                href="/signup"
-                className="shimmer-cta inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl font-semibold text-white text-[14px] bg-gradient-to-r from-[#F8935D] to-[#F76B54] shadow-lg shadow-[#F8935D]/20 hover:shadow-xl hover:shadow-[#F8935D]/30 transition-all duration-300 group"
-              >
-                <span className="relative z-10">Commencer</span>
-                <svg className="relative z-10 w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                </svg>
+                  <Image src="/logo-avec fond.jpg" alt="Posty" width={40} height={40} className="w-full h-full object-cover" />
+                </motion.div>
+                <span className="text-lg md:text-xl font-bold text-gray-900 tracking-tight">Posty</span>
               </Link>
-            </motion.div>
+
+              {/* Desktop Nav — pill bg on hover + active indicator */}
+              <div className={`
+                hidden md:flex items-center gap-0.5 p-1 rounded-2xl transition-all duration-400
+                ${isScrolled ? "bg-gray-100/70" : "bg-transparent"}
+              `}>
+                {NAV_LINKS.map((link) => {
+                  const isActive = activeSection === link.href;
+                  return (
+                    <button
+                      key={link.href}
+                      onClick={() => scrollTo(link.href)}
+                      className={`
+                        relative px-3.5 py-2 rounded-xl font-medium text-[13px] transition-all duration-300 group/navlink
+                        ${isActive
+                          ? "text-[#F76B54]"
+                          : "text-gray-500 hover:text-gray-900"
+                        }
+                      `}
+                    >
+                      {/* Active pill background */}
+                      {isActive && (
+                        <motion.div
+                          layoutId="nav-active-pill"
+                          className="absolute inset-0 bg-white rounded-xl shadow-sm ring-1 ring-gray-200/60"
+                          transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                        />
+                      )}
+                      {/* Hover bg — only when not active */}
+                      {!isActive && (
+                        <span className="absolute inset-0 rounded-xl bg-gray-200/50 opacity-0 group-hover/navlink:opacity-100 transition-opacity duration-200" />
+                      )}
+                      <span className="relative z-10">{link.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* CTA Desktop */}
+              <div className="hidden md:flex items-center gap-2">
+                <Link
+                  href="/login"
+                  className="px-4 py-2 text-[13px] font-medium text-gray-600 hover:text-gray-900 rounded-xl hover:bg-gray-100 transition-all duration-200"
+                >
+                  Se connecter
+                </Link>
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <Link
+                    href="/signup"
+                    className="inline-flex items-center justify-center gap-2 h-9 px-4 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white text-[13px] font-semibold rounded-xl shadow-md shadow-[#F8935D]/20 hover:shadow-lg hover:shadow-[#F8935D]/25 transition-shadow duration-200"
+                  >
+                    Commencer
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  </Link>
+                </motion.div>
+              </div>
+
+              {/* Mobile Menu Button */}
+              <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="md:hidden relative z-[60] flex items-center justify-center w-10 h-10 rounded-xl hover:bg-gray-100 active:bg-gray-200 transition-colors duration-200"
+                aria-label={isMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
+                aria-expanded={isMenuOpen}
+              >
+                <HamburgerIcon isOpen={isMenuOpen} />
+              </button>
+            </div>
           </div>
+        </motion.div>
+      </motion.nav>
+    </div>
 
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden relative z-[60] flex items-center justify-center w-10 h-10 rounded-xl hover:bg-gray-100 active:bg-gray-200 transition-colors duration-200"
-            aria-label={isMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
-            aria-expanded={isMenuOpen}
-          >
-            <HamburgerIcon isOpen={isMenuOpen} />
-          </button>
-        </div>
-      </div>
+    {/* Mobile Full-Screen Menu — outside <nav> to avoid backdrop-blur containment */}
+    <AnimatePresence>
+      {isMenuOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3, ease: [0, 0, 0.2, 1] }}
+          className="md:hidden fixed inset-0 z-[55]"
+        >
+          {/* Light premium background */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#FFF8F5] to-white" />
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{ background: "radial-gradient(ellipse at top right, rgba(248,147,93,0.08) 0%, transparent 60%)" }}
+          />
 
-      {/* ============================================= */}
-      {/* Mobile Full-Screen Drawer                     */}
-      {/* ============================================= */}
-      <AnimatePresence>
-        {isMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, x: "100%" }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: "100%" }}
-            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            className="md:hidden fixed top-16 inset-x-0 bottom-0 bg-white z-50 flex flex-col overflow-hidden"
+          {/* Content container - optimized for mobile visibility */}
+          <div
+            className="relative h-full flex flex-col overflow-y-auto overscroll-contain"
+            style={{
+              paddingTop: "calc(env(safe-area-inset-top, 0px) + 64px)",
+              paddingBottom: "env(safe-area-inset-bottom, 0px)",
+            }}
           >
-            <motion.div
-              variants={mobileMenuVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              className="flex-1 flex flex-col px-5 pt-6 pb-8 overflow-y-auto"
+
+            {/* Top bar: logo + close button - fixed at top */}
+            <div
+              className="fixed top-0 left-0 right-0 h-16 flex items-center justify-between px-4 sm:px-6 bg-gradient-to-b from-[#FFF8F5] to-[#FFF8F5]/95 backdrop-blur-sm z-10"
+              style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
             >
-              {/* Navigation Links */}
-              <div className="space-y-1">
+              <Link href="/" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl overflow-hidden shadow-md shadow-[#F8935D]/15 ring-1 ring-gray-100">
+                  <Image src="/logo-avec fond.jpg" alt="Posty" width={40} height={40} className="w-full h-full object-cover" />
+                </div>
+                <span className="text-lg font-bold text-gray-900 tracking-tight">Posty</span>
+              </Link>
+              <button
+                onClick={() => setIsMenuOpen(false)}
+                className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-gray-100 active:bg-gray-200 transition-colors"
+                aria-label="Fermer le menu"
+              >
+                <HamburgerIcon isOpen={true} />
+              </button>
+            </div>
+
+            {/* Navigation items - at the top, not centered */}
+            <nav className="px-4 sm:px-6 pt-4" role="navigation">
+              <motion.div
+                variants={mobileMenuVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                className="space-y-2"
+              >
                 {NAV_LINKS.map((link) => {
                   const isActive = activeSection === link.href;
                   return (
@@ -290,103 +378,455 @@ function Navbar() {
                       variants={mobileItemVariants}
                       onClick={() => scrollTo(link.href)}
                       className={`
-                        w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-left
-                        transition-all duration-200 group
+                        w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left
+                        transition-colors duration-200 group
                         ${isActive
-                          ? "bg-[#F8935D]/5 border border-[#F8935D]/15"
-                          : "hover:bg-gray-50 active:bg-gray-100 border border-transparent"
+                          ? "bg-white shadow-md shadow-[#F8935D]/10 border border-[#F8935D]/20"
+                          : "bg-white/50 border border-transparent hover:bg-white hover:shadow-sm active:bg-white"
                         }
                       `}
                     >
-                      {/* Icon container */}
+                      {/* Icon */}
                       <div className={`
-                        flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center
-                        transition-all duration-200 border
+                        flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center transition-colors duration-200
                         ${isActive
-                          ? "bg-[#F8935D]/10 border-[#F8935D]/20 text-[#F8935D]"
-                          : "bg-gray-50 border-gray-100 text-gray-500 group-active:bg-[#F8935D]/10 group-active:border-[#F8935D]/20 group-active:text-[#F8935D]"
+                          ? "bg-gradient-to-br from-[#F8935D] to-[#F76B54] text-white shadow-sm"
+                          : "bg-[#FEF3EE] text-[#F8935D]/70 group-hover:text-[#F8935D]"
                         }
                       `}>
                         {link.icon}
                       </div>
                       {/* Label + description */}
                       <div className="flex-1 min-w-0">
-                        <p className={`text-[15px] font-semibold ${isActive ? "text-[#F76B54]" : "text-gray-900"}`}>
+                        <p className={`text-[15px] font-semibold ${isActive ? "text-gray-900" : "text-gray-700 group-hover:text-gray-900"}`}>
                           {link.label}
                         </p>
-                        <p className="text-xs text-gray-400 mt-0.5">
-                          {link.description}
-                        </p>
+                        <p className="text-[11px] text-gray-400 mt-0.5 line-clamp-1">{link.description}</p>
                       </div>
                       {/* Arrow */}
-                      <svg className={`w-4 h-4 flex-shrink-0 transition-colors duration-200 ${isActive ? "text-[#F8935D]" : "text-gray-300"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className={`w-4 h-4 flex-shrink-0 transition-colors duration-200 ${isActive ? "text-[#F8935D]" : "text-gray-300 group-hover:text-gray-400"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                       </svg>
                     </motion.button>
                   );
                 })}
-              </div>
-
-              {/* Divider */}
-              <motion.div
-                variants={mobileItemVariants}
-                className="my-6 border-t border-gray-100"
-              />
-
-              {/* Secondary link: Connexion */}
-              <motion.div variants={mobileItemVariants}>
-                <Link
-                  href="/login"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-600 hover:text-gray-900 active:bg-gray-50 transition-colors duration-200"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                  </svg>
-                  <span className="text-[15px] font-medium">Se connecter</span>
-                </Link>
               </motion.div>
+            </nav>
 
-              {/* Spacer */}
-              <div className="flex-1 min-h-6" />
+            {/* Spacer to push CTA to bottom */}
+            <div className="flex-1 min-h-4" />
 
-              {/* CTA Button */}
-              <motion.div variants={mobileItemVariants} className="mt-auto">
+            {/* Bottom CTA section - always visible */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.35, duration: 0.3 }}
+              className="px-4 sm:px-6 pb-4"
+            >
+              <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent mb-4" />
+
+              <div className="space-y-2.5">
+                {/* Primary CTA */}
                 <Link
                   href="/signup"
                   onClick={() => setIsMenuOpen(false)}
-                  className="shimmer-cta flex items-center justify-center gap-2 w-full py-4 rounded-2xl font-semibold text-white text-base bg-gradient-to-r from-[#F8935D] to-[#F76B54] shadow-lg shadow-[#F8935D]/25 active:scale-[0.98] transition-all duration-300"
+                  className="flex items-center justify-center gap-2 w-full h-12 rounded-xl font-bold text-white text-[15px] bg-gradient-to-r from-[#F8935D] to-[#F76B54] shadow-lg shadow-[#F8935D]/25 active:scale-[0.98] transition-transform duration-150"
                 >
-                  Demarrer gratuitement
+                  Commencer gratuitement
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
                 </Link>
+
+                {/* Secondary — Login */}
+                <Link
+                  href="/login"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="flex items-center justify-center gap-2 w-full h-11 rounded-xl font-medium text-sm text-gray-600 bg-white border border-gray-200 hover:border-gray-300 hover:text-gray-900 active:scale-[0.98] transition-all duration-200"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  Se connecter
+                </Link>
+              </div>
+
+              {/* Trust indicators - compact */}
+              <div className="mt-3 flex items-center justify-center gap-3 text-[11px] text-gray-400">
+                <span className="flex items-center gap-1">
+                  <svg className="w-3 h-3 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  Sans carte bancaire
+                </span>
+                <span className="w-1 h-1 rounded-full bg-gray-300" />
+                <span>100% gratuit</span>
+              </div>
+            </motion.div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+    </>
+  );
+}
+
+// =============================================================================
+// HERO SECTION — Premium Split Layout (Text Left, Devices Right)
+// Inspired by Linear, Stripe, Notion — immersive and conversion-focused
+// =============================================================================
+
+function HeroSection() {
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const isInView = useInView(sectionRef, { once: true, amount: 0.1 });
+  const prefersReducedMotion = useReducedMotion();
+
+  // Parallax effect for background elements
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end start"],
+  });
+  const bgY = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
+  const deviceY = useTransform(scrollYProgress, [0, 1], ["0%", "15%"]);
+
+  return (
+    <section
+      ref={sectionRef}
+      className="relative min-h-[100dvh] lg:min-h-screen flex items-center overflow-hidden"
+    >
+      {/* === PREMIUM ANIMATED BACKGROUND === */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#FFFCFA] via-white to-[#FEF8F4]">
+        {/* Mesh gradient overlay */}
+        <motion.div
+          style={{ y: prefersReducedMotion ? 0 : bgY }}
+          className="absolute inset-0 pointer-events-none"
+        >
+          {/* Primary orange glow - top right */}
+          <motion.div
+            animate={prefersReducedMotion ? {} : {
+              scale: [1, 1.2, 1],
+              opacity: [0.4, 0.6, 0.4],
+            }}
+            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute -top-20 right-0 w-[600px] h-[600px] bg-gradient-to-bl from-[#F8935D]/25 via-[#F76B54]/15 to-transparent rounded-full blur-[120px]"
+          />
+          {/* Secondary coral glow - bottom left */}
+          <motion.div
+            animate={prefersReducedMotion ? {} : {
+              scale: [1, 1.15, 1],
+              opacity: [0.3, 0.5, 0.3],
+            }}
+            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+            className="absolute bottom-0 -left-20 w-[500px] h-[500px] bg-gradient-to-tr from-[#FBB9AD]/30 via-[#F8935D]/15 to-transparent rounded-full blur-[100px]"
+          />
+          {/* Subtle blue accent - center */}
+          <motion.div
+            animate={prefersReducedMotion ? {} : {
+              scale: [1, 1.1, 1],
+              opacity: [0.15, 0.25, 0.15],
+            }}
+            transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 4 }}
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-r from-blue-100/20 via-violet-100/10 to-transparent rounded-full blur-[150px]"
+          />
+        </motion.div>
+
+        {/* Subtle dot pattern */}
+        <div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: `radial-gradient(circle at 1px 1px, #000 1px, transparent 1px)`,
+            backgroundSize: "32px 32px",
+          }}
+        />
+      </div>
+
+      {/* === MAIN CONTENT === */}
+      <div className="relative z-10 w-full max-w-[1400px] 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 py-20 md:py-24 lg:py-0">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 xl:gap-20 2xl:gap-28 items-center">
+
+          {/* LEFT COLUMN — Text Content */}
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            animate={isInView ? { opacity: 1, x: 0 } : {}}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            className="text-center lg:text-left order-2 lg:order-1"
+          >
+            {/* Trust badge */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.5, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+              className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/80 backdrop-blur-md border border-gray-200/60 shadow-lg shadow-gray-200/30 mb-6 lg:mb-8"
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+              <span className="text-sm font-medium text-gray-700">
+                +500 professionnels actifs
+              </span>
+              <div className="flex -space-x-1.5">
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="w-5 h-5 rounded-full bg-gradient-to-br from-[#F8935D] to-[#F76B54] border-2 border-white"
+                  />
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Main headline */}
+            <h1 className="text-[2.5rem] sm:text-5xl lg:text-[3.25rem] xl:text-[3.75rem] 2xl:text-[4.25rem] font-bold text-gray-900 leading-[1.1] tracking-tight">
+              <span className="block">Vos posts LinkedIn</span>
+              <span className="block mt-1 lg:mt-2">
+                generent des{" "}
+                <span className="relative inline-block">
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] via-[#F76B54] to-[#F8935D] bg-[length:200%_100%] animate-[gradient-x_3s_ease_infinite]">
+                    clients
+                  </span>
+                  <motion.span
+                    initial={{ scaleX: 0 }}
+                    animate={isInView ? { scaleX: 1 } : {}}
+                    transition={{ delay: 0.8, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                    className="absolute -bottom-1 left-0 right-0 h-1 bg-gradient-to-r from-[#F8935D] to-[#F76B54] rounded-full origin-left"
+                  />
+                </span>
+              </span>
+              <span className="block mt-1 lg:mt-2 text-transparent bg-clip-text bg-gradient-to-r from-gray-700 to-gray-500">
+                Pas juste des likes.
+              </span>
+            </h1>
+
+            {/* Subtitle */}
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.6, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              className="mt-5 lg:mt-6 text-lg lg:text-xl text-gray-600 max-w-xl mx-auto lg:mx-0 leading-relaxed"
+            >
+              L&apos;IA strategique qui cree du contenu LinkedIn{" "}
+              <span className="font-semibold text-gray-800">concu pour convertir</span>.
+              Pour les entrepreneurs, agences et freelances qui veulent des{" "}
+              <span className="font-semibold text-gray-800">resultats concrets</span>.
+            </motion.p>
+
+            {/* CTA Buttons */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.6, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
+              className="mt-8 lg:mt-10 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
+            >
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Link
+                  href="/signup"
+                  className="group relative inline-flex items-center justify-center gap-2.5 px-8 py-4 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white text-base font-semibold rounded-2xl shadow-xl shadow-[#F8935D]/30 hover:shadow-2xl hover:shadow-[#F8935D]/40 transition-all duration-300 overflow-hidden"
+                >
+                  {/* Shine effect on hover */}
+                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                  <span className="relative">Commencer gratuitement</span>
+                  <svg className="relative w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </Link>
+              </motion.div>
+              <motion.a
+                href="#demo"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="inline-flex items-center justify-center gap-2.5 px-8 py-4 bg-white/80 backdrop-blur-sm border-2 border-gray-200/80 text-gray-700 text-base font-semibold rounded-2xl hover:border-[#F8935D]/40 hover:bg-white hover:text-gray-900 hover:shadow-lg transition-all duration-300"
+              >
+                <svg className="w-5 h-5 text-[#F8935D]" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+                Voir la demo
+              </motion.a>
+            </motion.div>
+
+            {/* Trust indicators */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.6, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              className="mt-8 lg:mt-10 flex flex-wrap items-center gap-6 justify-center lg:justify-start text-sm text-gray-500"
+            >
+              <span className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                Sans carte bancaire
+              </span>
+              <span className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                Configuration en 2 min
+              </span>
+              <span className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                Resultats immediats
+              </span>
+            </motion.div>
+          </motion.div>
+
+          {/* RIGHT COLUMN — Device Mockups */}
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            animate={isInView ? { opacity: 1, x: 0 } : {}}
+            transition={{ duration: 0.7, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+            style={{ y: prefersReducedMotion ? 0 : deviceY }}
+            className="relative order-1 lg:order-2"
+          >
+            {/* Glow effect behind devices */}
+            <div className="absolute inset-0 -z-10">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-br from-[#F8935D]/15 via-[#F76B54]/10 to-[#FBB9AD]/15 rounded-full blur-[80px]" />
+            </div>
+
+            {/* Devices container */}
+            <div className="relative flex items-end justify-center lg:justify-end gap-4 md:gap-6 py-8 lg:py-0">
+              {/* iPhone — floating left */}
+              <motion.div
+                initial={{ opacity: 0, y: 40 }}
+                animate={isInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.6, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                className="relative z-20 w-[90px] sm:w-[110px] md:w-[140px] lg:w-[160px] xl:w-[180px] flex-shrink-0"
+              >
+                {/* Floating animation */}
+                <motion.div
+                  animate={prefersReducedMotion ? {} : {
+                    y: [0, -8, 0],
+                  }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <Image
+                    src="/iphoneimg.png"
+                    alt="Posty sur iPhone"
+                    width={220}
+                    height={440}
+                    className="w-full h-auto drop-shadow-2xl"
+                    priority
+                  />
+                  {/* Reflection glow */}
+                  <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-[80%] h-8 bg-gradient-to-t from-[#F8935D]/20 to-transparent blur-xl rounded-full" />
+                </motion.div>
+              </motion.div>
+
+              {/* MacBook — dominant visual */}
+              <motion.div
+                initial={{ opacity: 0, y: 40 }}
+                animate={isInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.6, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                className="relative z-10 w-[220px] sm:w-[280px] md:w-[380px] lg:w-[420px] xl:w-[500px]"
+              >
+                {/* Subtle floating animation */}
+                <motion.div
+                  animate={prefersReducedMotion ? {} : {
+                    y: [0, -6, 0],
+                  }}
+                  transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+                >
+                  <Image
+                    src="/macimg.png"
+                    alt="Posty sur MacBook"
+                    width={600}
+                    height={400}
+                    className="w-full h-auto drop-shadow-xl"
+                    priority
+                  />
+                  {/* Reflection glow */}
+                  <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-[90%] h-12 bg-gradient-to-t from-[#F8935D]/15 to-transparent blur-2xl rounded-full" />
+                </motion.div>
+              </motion.div>
+            </div>
+
+            {/* Floating stats card — desktop only */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={isInView ? { opacity: 1, scale: 1, y: 0 } : {}}
+              transition={{ duration: 0.5, delay: 0.7, ease: [0.22, 1, 0.36, 1] }}
+              className="hidden lg:block absolute -left-4 xl:-left-8 top-1/4 z-30"
+            >
+              <motion.div
+                animate={prefersReducedMotion ? {} : {
+                  y: [0, -5, 0],
+                }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100/80 p-4"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-500 flex items-center justify-center">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Taux d&apos;engagement</p>
+                    <p className="text-lg font-bold text-gray-900">+340%</p>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+
+            {/* Floating notification — desktop only */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={isInView ? { opacity: 1, scale: 1, y: 0 } : {}}
+              transition={{ duration: 0.5, delay: 0.9, ease: [0.22, 1, 0.36, 1] }}
+              className="hidden lg:block absolute -right-2 xl:right-4 bottom-1/4 z-30"
+            >
+              <motion.div
+                animate={prefersReducedMotion ? {} : {
+                  y: [0, 5, 0],
+                }}
+                transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100/80 p-4"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#F8935D] to-[#F76B54] flex items-center justify-center">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Nouveau client</p>
+                    <p className="text-sm font-semibold text-gray-900">via LinkedIn</p>
+                  </div>
+                </div>
               </motion.div>
             </motion.div>
           </motion.div>
-        )}
-      </AnimatePresence>
-    </nav>
+
+        </div>
+      </div>
+
+    </section>
   );
 }
 
 // =============================================================================
 // DEMO SECTION - Two-Stage Immersive Chat Experience
 // =============================================================================
+
+// =============================================================================
+// DEMO SECTION — Interactive Demo with AI
 // Stage 1: Landing page block — input + suggestions only (no AI response)
 // Stage 2: Full-screen overlay — real conversation with AI streaming
 // State preserved across navigation (localStorage + React state)
 // =============================================================================
 
 const ALL_DEMO_SUGGESTIONS = [
-  { label: "Strategie d'entreprise", emoji: "🎯", text: "Ecris un post LinkedIn sur la strategie d'entreprise et la vision a long terme" },
-  { label: "Networking professionnel", emoji: "🤝", text: "Ecris un post engageant sur l'importance du networking professionnel" },
-  { label: "Leadership en entreprise", emoji: "👤", text: "Ecris un post LinkedIn sur le leadership authentique en entreprise" },
-  { label: "Visibilite LinkedIn", emoji: "📈", text: "Ecris un post LinkedIn sur l'optimisation de sa visibilite sur LinkedIn" },
-  { label: "Generation de prospects", emoji: "💼", text: "Ecris un post LinkedIn sur la generation de prospects efficace" },
-  { label: "Posts engageants", emoji: "✍️", text: "Ecris un post LinkedIn sur comment creer des posts engageants qui convertissent" },
-  { label: "Croissance professionnelle", emoji: "🚀", text: "Ecris un post LinkedIn sur la croissance professionnelle et personnelle" },
+  { label: "Acquisition de clients B2B", emoji: "🎯", text: "Ecris un post LinkedIn pour attirer des clients B2B dans le secteur du consulting" },
+  { label: "Positionnement d'expert", emoji: "👤", text: "Ecris un post LinkedIn qui renforce ma credibilite et mon positionnement d'expert sur mon marche" },
+  { label: "Convertir mes prospects", emoji: "💼", text: "Ecris un post LinkedIn qui convertit mes prospects en clients grace a une approche strategique" },
+  { label: "Visibilite algorithmique", emoji: "📈", text: "Ecris un post LinkedIn optimise pour l'algorithme afin de maximiser ma portee et ma visibilite" },
+  { label: "Preuve sociale", emoji: "🤝", text: "Ecris un post LinkedIn base sur un cas client concret pour renforcer ma preuve sociale" },
+  { label: "Storytelling business", emoji: "✍️", text: "Ecris un post LinkedIn en storytelling qui montre comment j'ai aide un client a atteindre ses objectifs" },
+  { label: "Croissance et revenus", emoji: "🚀", text: "Ecris un post LinkedIn sur la croissance de mon activite et l'impact de LinkedIn sur mes revenus" },
 ];
 
 function DemoSection() {
@@ -394,6 +834,15 @@ function DemoSection() {
   const fullScreenChatRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(sectionRef, { once: true, amount: 0.15 });
   const prefersReducedMotion = useReducedMotion();
+
+  // Opening animation state - descent effect
+  const [hasAnimated, setHasAnimated] = useState(false);
+
+  useEffect(() => {
+    // Trigger descent animation after a brief delay for smooth page load
+    const timer = setTimeout(() => setHasAnimated(true), prefersReducedMotion ? 0 : 100);
+    return () => clearTimeout(timer);
+  }, [prefersReducedMotion]);
 
   // Randomly pick 3 suggestions from the 7 on mount
   const [suggestions] = useState(() => {
@@ -412,6 +861,9 @@ function DemoSection() {
   const [showFullScreen, setShowFullScreen] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  // View mode state: "demo" or "preview" - Default to preview for premium first impression
+  const [viewMode, setViewMode] = useState<"demo" | "preview">("preview");
+
   // Restore state from localStorage on mount
   useEffect(() => {
     try {
@@ -427,15 +879,8 @@ function DemoSection() {
     }
   }, []);
 
-  // Body scroll lock when full-screen is open
-  useEffect(() => {
-    if (showFullScreen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => { document.body.style.overflow = ""; };
-  }, [showFullScreen]);
+  // Centralized scroll lock when full-screen is open
+  useScrollLock(showFullScreen);
 
   // Auto-scroll in full-screen chat as response streams
   useEffect(() => {
@@ -447,16 +892,15 @@ function DemoSection() {
     }
   }, [aiResponse, isStreaming, showFullScreen]);
 
-  // Reveal card after entrance animation
+  // Reveal card content after descent animation completes
   useEffect(() => {
-    if (!isInView) return;
-    const t = setTimeout(() => setShowCard(true), prefersReducedMotion ? 0 : 1400);
+    if (!hasAnimated) return;
+    const t = setTimeout(() => setShowCard(true), prefersReducedMotion ? 0 : 800);
     return () => clearTimeout(t);
-  }, [isInView, prefersReducedMotion]);
+  }, [hasAnimated, prefersReducedMotion]);
 
   // Easing tokens
   const premiumEase = [0.22, 1, 0.36, 1] as [number, number, number, number];
-  const settleEase = [0.4, 0, 0.2, 1] as [number, number, number, number];
 
   // Send message → open full-screen → stream AI response
   const handleSend = async (message: string) => {
@@ -546,117 +990,165 @@ function DemoSection() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // Cinematic easing for smooth descent
+  const cinematicEase = [0.16, 1, 0.3, 1] as [number, number, number, number];
+
   return (
     <>
       {/* ================================================================== */}
-      {/* STAGE 1: Landing Page Demo Block                                   */}
+      {/* HERO: Demo Section with Cinematic Reveal                          */}
       {/* ================================================================== */}
       <section
         ref={sectionRef}
         id="demo"
-        className="relative pt-28 pb-16 md:pt-32 md:pb-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-[#FAE8DE]/50 via-[#FFF8F5] to-[#FAE8DE]/50 overflow-hidden"
+        className="relative pt-28 pb-16 md:pt-32 md:pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden"
       >
-        {/* Decorative ambient glows — animated */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={isInView ? { opacity: [0, 0.06, 0.09, 0.06] } : {}}
-            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-[#F8935D] rounded-full blur-[120px]"
+        {/* Background image — cinematic hero */}
+        <div className="absolute inset-0">
+          <Image
+            src="/background-landing.jpg"
+            alt=""
+            fill
+            priority
+            className="object-cover object-center"
+            sizes="100vw"
           />
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={isInView ? { opacity: [0, 0.04, 0.07, 0.04] } : {}}
-            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
-            className="absolute top-1/3 left-1/3 w-[500px] h-[400px] bg-[#F76B54] rounded-full blur-[100px]"
-          />
+          {/* Warm overlay for text readability */}
+          <div className="absolute inset-0 bg-[#FFF8F5]/75" />
         </div>
 
-        <div className="max-w-6xl mx-auto relative">
+        {/* Subtle static glow */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-[1]">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-[#F8935D]/[0.04] rounded-full blur-[100px]" />
+        </div>
 
-          {/* Reveal tagline — progressively revealed as demo card descends */}
-          <div className="text-center mb-8 md:mb-10 relative z-10">
-            <motion.h2
-              initial={{ opacity: 0, y: 30, filter: "blur(12px)" }}
-              animate={isInView ? { opacity: 1, y: 0, filter: "blur(0px)" } : {}}
-              transition={
-                prefersReducedMotion
-                  ? { duration: 0.3 }
-                  : { duration: 0.8, delay: 0.45, ease: [0.22, 1, 0.36, 1] }
-              }
-              className="text-2xl sm:text-3xl md:text-4xl lg:text-[2.5rem] font-bold text-gray-900 leading-tight"
+        <div className="max-w-4xl 2xl:max-w-5xl mx-auto relative z-10">
+          {/* ============================================================ */}
+          {/* Hero Text — fades in as demo card descends                   */}
+          {/* ============================================================ */}
+          <div className="text-center mb-10 md:mb-14 2xl:mb-16">
+            {/* Main headline */}
+            <motion.h1
+              initial={{ opacity: 0, y: 30 }}
+              animate={hasAnimated ? { opacity: 1, y: 0 } : {}}
+              transition={{
+                duration: 0.8,
+                delay: 0.2,
+                ease: cinematicEase,
+              }}
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] 2xl:text-[4rem] font-bold text-gray-900 leading-[1.1] tracking-tight"
             >
-              Voici votre outil qui transforme vos posts en{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
-                machine a clients
+              Vos posts LinkedIn,{" "}
+              <br className="hidden sm:block" />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] via-[#F76B54] to-[#F8935D]">
+                generateurs de clients
               </span>
-            </motion.h2>
+            </motion.h1>
+
+            {/* Subheadline */}
             <motion.p
-              initial={{ opacity: 0, y: 20, filter: "blur(8px)" }}
-              animate={isInView ? { opacity: 1, y: 0, filter: "blur(0px)" } : {}}
-              transition={
-                prefersReducedMotion
-                  ? { duration: 0.3, delay: 0.1 }
-                  : { duration: 0.7, delay: 0.65, ease: [0.22, 1, 0.36, 1] }
-              }
-              className="mt-3 text-gray-500 text-base md:text-lg max-w-xl mx-auto"
+              initial={{ opacity: 0, y: 20 }}
+              animate={hasAnimated ? { opacity: 1, y: 0 } : {}}
+              transition={{
+                duration: 0.7,
+                delay: 0.4,
+                ease: cinematicEase,
+              }}
+              className="mt-5 md:mt-6 text-gray-600 text-base md:text-lg lg:text-xl max-w-2xl mx-auto leading-relaxed"
             >
-              Testez Posty en direct — generez votre premier post LinkedIn en quelques secondes.
+              L&apos;IA qui transforme vos idees en posts LinkedIn viraux.
             </motion.p>
           </div>
 
-          {/* Demo card — 2-act cinematic entrance                         */}
-          {/* ACT 1 (0→0.38s): Fast slide from left, deblur, arrive elevated  */}
-          {/* ACT 2 (0.38→1.35s): Dramatic descent to final position          */}
-          {/* Text is progressively revealed as card descends                 */}
+          {/* ============================================================ */}
+          {/* Interactive View Mode Tabs                                   */}
+          {/* ============================================================ */}
           <motion.div
-            initial={
-              prefersReducedMotion
-                ? { opacity: 1, x: 0, y: 0, scale: 1, rotate: 0 }
-                : { opacity: 0, x: "-55%", y: -140, scale: 0.9, rotate: -2, filter: "blur(10px)" }
-            }
-            animate={
-              prefersReducedMotion
-                ? { opacity: 1, x: 0, y: 0, scale: 1, rotate: 0, filter: "blur(0px)" }
-                : isInView
-                  ? {
-                      opacity: [0, 0.9, 1, 1, 1],
-                      x: ["-55%", "-2%", "0%", "0%", "0%"],
-                      y: [-140, -140, -130, -20, 0],
-                      scale: [0.9, 1.02, 1.0, 1.0, 1.0],
-                      rotate: [-2, 0, 0, 0, 0],
-                      filter: ["blur(10px)", "blur(1px)", "blur(0px)", "blur(0px)", "blur(0px)"],
-                    }
-                  : {}
-            }
-            transition={
-              prefersReducedMotion
-                ? { duration: 0.2 }
-                : {
-                    duration: 1.35,
-                    times: [0, 0.28, 0.38, 0.72, 1],
-                    ease: ["easeOut", "easeOut", [0.22, 1, 0.36, 1], [0.22, 1, 0.36, 1]],
-                  }
-            }
-            className="relative z-20"
+            initial={{ opacity: 0, y: 20 }}
+            animate={hasAnimated ? { opacity: 1, y: 0 } : {}}
+            transition={{
+              duration: 0.6,
+              delay: 0.35,
+              ease: cinematicEase,
+            }}
+            className="flex justify-center mb-4 md:mb-5"
           >
-            {/* Layered glow behind the card — builds as card arrives at center */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={isInView ? { opacity: [0, 0.5, 1], scale: [0.8, 0.9, 1] } : {}}
-              transition={{ duration: 1.0, delay: 0.25, times: [0, 0.4, 1], ease: "easeOut" }}
-              className="absolute -inset-4 md:-inset-6 rounded-[2rem] bg-gradient-to-br from-[#F8935D]/12 via-[#F76B54]/8 to-[#FBB9AD]/5 blur-3xl pointer-events-none"
-            />
-            {/* Secondary warm ring glow — fades in during descent */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={isInView ? { opacity: [0, 0, 0.5, 0.3] } : {}}
-              transition={{ duration: 2.0, times: [0, 0.3, 0.6, 1], ease: "easeInOut" }}
-              className="absolute -inset-8 md:-inset-12 rounded-[2.5rem] bg-gradient-to-r from-[#F8935D]/[0.06] via-[#F76B54]/[0.04] to-[#F8935D]/[0.06] blur-[60px] pointer-events-none"
-            />
+            <div className="inline-flex items-center p-1 bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-2xl shadow-lg shadow-gray-200/40">
+              {/* Preview Tab - First (default) */}
+              <button
+                onClick={() => setViewMode("preview")}
+                className={`
+                  relative px-5 py-2.5 md:px-6 md:py-3 rounded-xl text-sm md:text-base font-semibold transition-all duration-300 ease-out
+                  ${viewMode === "preview"
+                    ? "text-white"
+                    : "text-gray-500 hover:text-gray-700"
+                  }
+                `}
+              >
+                {/* Active background */}
+                {viewMode === "preview" && (
+                  <motion.div
+                    layoutId="activeTabBg"
+                    className="absolute inset-0 bg-gradient-to-r from-[#F8935D] to-[#F76B54] rounded-xl shadow-md shadow-[#F8935D]/30"
+                    transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
+                  />
+                )}
+                <span className="relative z-10 flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  Apercu produit
+                </span>
+              </button>
 
-            {/* Main demo card */}
-            <div className="relative bg-white border border-gray-200/60 rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl shadow-gray-400/20">
+              {/* Demo Tab */}
+              <button
+                onClick={() => setViewMode("demo")}
+                className={`
+                  relative px-5 py-2.5 md:px-6 md:py-3 rounded-xl text-sm md:text-base font-semibold transition-all duration-300 ease-out
+                  ${viewMode === "demo"
+                    ? "text-white"
+                    : "text-gray-500 hover:text-gray-700"
+                  }
+                `}
+              >
+                {/* Active background */}
+                {viewMode === "demo" && (
+                  <motion.div
+                    layoutId="activeTabBg"
+                    className="absolute inset-0 bg-gradient-to-r from-[#F8935D] to-[#F76B54] rounded-xl shadow-md shadow-[#F8935D]/30"
+                    transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
+                  />
+                )}
+                <span className="relative z-10 flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Essayer la demo
+                </span>
+              </button>
+            </div>
+          </motion.div>
+
+          {/* ============================================================ */}
+          {/* Demo Card — descends from above                              */}
+          {/* ============================================================ */}
+          <AnimatePresence mode="wait">
+            {viewMode === "demo" && (
+              <motion.div
+                key="demo"
+                initial={{ opacity: 0, y: -60 }}
+                animate={hasAnimated ? { opacity: 1, y: 0 } : {}}
+                exit={{ opacity: 0, y: 20, transition: { duration: 0.3 } }}
+                transition={{
+                  duration: 1,
+                  delay: 0.5,
+                  ease: cinematicEase,
+                }}
+              >
+                {/* Main demo card */}
+                <div className="relative bg-white border border-gray-200/60 rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl shadow-gray-400/20">
 
               {/* MacBook-style title bar */}
               <div className="flex items-center justify-between px-5 md:px-6 py-3.5 md:py-4 border-b border-gray-100 bg-gradient-to-b from-gray-50/80 to-white">
@@ -668,7 +1160,7 @@ function DemoSection() {
                     <p className="text-gray-900 font-semibold text-sm md:text-base">Posty</p>
                     <p className="text-[11px] md:text-xs text-emerald-600 flex items-center gap-1">
                       <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                      IA disponible
+                      Pret a generer
                     </p>
                   </div>
                 </div>
@@ -695,9 +1187,9 @@ function DemoSection() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
-                    <p className="text-gray-900 font-semibold text-base mb-1">Vous avez deja teste la demo</p>
+                    <p className="text-gray-900 font-semibold text-base mb-1">Vous avez vu la puissance de Posty</p>
                     <p className="text-gray-500 text-sm mb-5 max-w-xs">
-                      Creez un compte gratuit pour generer des posts LinkedIn illimites avec Posty
+                      Passez a l&apos;action. Generez des posts qui convertissent, chaque jour.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-3">
                       {aiResponse && (
@@ -714,10 +1206,10 @@ function DemoSection() {
                       )}
                       <Link
                         href="/signup"
-                        className="shimmer-cta inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white font-semibold rounded-xl shadow-lg shadow-[#F8935D]/25 hover:shadow-xl hover:shadow-[#F8935D]/35 transition-all duration-300"
+                        className="inline-flex items-center justify-center gap-2 h-11 px-6 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white text-sm font-semibold rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200"
                       >
-                        <span className="relative z-10">Creer mon compte gratuit</span>
-                        <svg className="relative z-10 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        Commencer a generer des clients
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                         </svg>
                       </Link>
@@ -746,27 +1238,29 @@ function DemoSection() {
                       </motion.div>
 
                       {/* Instructional text */}
-                      <motion.p
+                      <motion.div
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.4, delay: 0.2, ease: premiumEase }}
-                        className="text-gray-500 text-sm md:text-base mb-6 md:mb-8"
+                        transition={{ duration: 0.4, delay: 0.15, ease: premiumEase }}
+                        className="flex flex-col items-center mb-6 md:mb-8"
                       >
-                        Demander quelque chose a Posty
-                      </motion.p>
+                        <p className="text-gray-500 text-sm md:text-base">
+                          Decrivez votre objectif business
+                        </p>
+                        <div className="mt-2.5 h-[2px] w-16 bg-gradient-to-r from-[#F8935D] to-[#F76B54] rounded-full" />
+                      </motion.div>
 
                       {/* Three numbered suggestions — stacked vertically */}
                       <div className="w-full max-w-sm space-y-2.5">
                         {suggestions.map((suggestion, i) => (
                           <motion.button
                             key={suggestion.label}
-                            initial={{ opacity: 0, y: 12 }}
+                            initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.4, delay: 0.25 + i * 0.1, ease: premiumEase }}
+                            transition={{ duration: 0.3, delay: 0.2 + i * 0.08, ease: premiumEase }}
                             onClick={() => handleSend(suggestion.text)}
-                            whileHover={{ x: 4 }}
                             whileTap={{ scale: 0.98 }}
-                            className="w-full flex items-center gap-3.5 px-4 py-3 md:px-5 md:py-3.5 bg-white border border-gray-200 rounded-xl text-left text-sm md:text-[15px] text-gray-700 hover:border-[#F8935D]/50 hover:bg-[#F8935D]/5 hover:text-gray-900 transition-all duration-[250ms] shadow-sm hover:shadow-md hover:shadow-[#F8935D]/10"
+                            className="w-full flex items-center gap-3.5 px-4 py-3 md:px-5 md:py-3.5 bg-white border border-gray-200 rounded-xl text-left text-sm md:text-[15px] text-gray-700 hover:border-[#F8935D]/50 hover:bg-[#F8935D]/5 hover:text-gray-900 transition-all duration-200 shadow-sm"
                           >
                             <span className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#F8935D]/10 to-[#F76B54]/10 flex items-center justify-center text-[#F8935D] text-xs font-bold flex-shrink-0">
                               {i + 1}
@@ -784,24 +1278,12 @@ function DemoSection() {
                           type="text"
                           value={inputValue}
                           onChange={(e) => setInputValue(e.target.value)}
-                          placeholder="Ecrivez votre propre sujet..."
-                          className="w-full text-sm md:text-[15px] text-gray-900 placeholder-gray-400 bg-transparent py-3.5 md:py-4 pl-5 pr-28 rounded-[20px] focus:outline-none"
+                          placeholder="Quel est votre objectif ? Ex: generer des leads en consulting..."
+                          className="w-full text-sm md:text-[15px] text-gray-900 placeholder-gray-400 bg-transparent py-3.5 md:py-4 pl-5 pr-16 rounded-[20px] focus:outline-none"
                           disabled={isStreaming}
                         />
-                        {/* Action buttons — right side */}
-                        <div className="absolute flex items-center right-2.5 top-1/2 -translate-y-1/2 gap-2">
-                          {/* Microphone button (decorative) */}
-                          <button
-                            type="button"
-                            className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 transition-colors duration-200 hover:bg-gray-200 hover:text-gray-500"
-                            aria-label="Enregistrement vocal"
-                            tabIndex={-1}
-                          >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                            </svg>
-                          </button>
-                          {/* Send button */}
+                        {/* Send button — right side */}
+                        <div className="absolute flex items-center right-2.5 top-1/2 -translate-y-1/2">
                           <motion.button
                             type="submit"
                             whileTap={{ scale: inputValue.trim() && !isStreaming ? 0.95 : 1 }}
@@ -824,6 +1306,29 @@ function DemoSection() {
               </div>
             </div>
           </motion.div>
+            )}
+
+            {/* ============================================================ */}
+            {/* Product Preview — Animated MacBook with 3D Opening Effect   */}
+            {/* Cinematic sequence: Rise from bottom → Text reveal → Lid opens → Content appears → Badges float in */}
+            {/* ============================================================ */}
+            {viewMode === "preview" && (
+              <motion.div
+                key="preview"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0, transition: { duration: 0.3 } }}
+                transition={{ duration: 0.3 }}
+                className="relative"
+              >
+                {/* Animated MacBook with cinematic 3D reveal - includes text, MacBook, badges, and CTA */}
+                <AnimatedMacBook
+                  isVisible={viewMode === "preview"}
+                  screenImage="/macimg.png"
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </section>
 
@@ -949,14 +1454,14 @@ function DemoSection() {
 
                         <div className="px-5 py-4 bg-gradient-to-r from-[#F8935D]/5 to-[#F76B54]/5 border border-[#F8935D]/15 rounded-xl">
                           <p className="text-gray-600 text-sm mb-3">
-                            Envie de generer plus de posts LinkedIn ?
+                            Ce post pourrait vous rapporter votre prochain client.
                           </p>
                           <Link
                             href="/signup"
-                            className="shimmer-cta inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white font-semibold rounded-xl shadow-lg shadow-[#F8935D]/25 hover:shadow-xl hover:shadow-[#F8935D]/35 transition-all duration-300"
+                            className="inline-flex items-center justify-center gap-2 h-11 px-6 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white text-sm font-semibold rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200"
                           >
-                            <span className="relative z-10">Creer mon compte gratuit</span>
-                            <svg className="relative z-10 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            Commencer a generer des clients
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                             </svg>
                           </Link>
@@ -971,6 +1476,958 @@ function DemoSection() {
         )}
       </AnimatePresence>
     </>
+  );
+}
+
+// =============================================================================
+// KEY BENEFITS SECTION - Premium 3D Carousel
+// =============================================================================
+
+const BENEFITS_DATA = [
+  {
+    number: "01",
+    title: "Gagnez 5h par semaine",
+    highlight: "5h par semaine",
+    description: "Posts prets a publier en 30 secondes, adaptes a votre voix.",
+    stat: { value: "5h", unit: "", label: "economisees" },
+    icon: (
+      <svg className="w-8 h-8 md:w-10 md:h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
+    color: {
+      primary: "#3B82F6",
+      secondary: "#2563EB",
+      bg: "from-blue-50 via-indigo-50/80 to-white",
+      glow: "rgba(59, 130, 246, 0.3)",
+    },
+  },
+  {
+    number: "02",
+    title: "Multipliez votre engagement par 3",
+    highlight: "engagement par 3",
+    description: "Posts optimises pour l'algorithme LinkedIn. Plus de vues, plus de prospects.",
+    stat: { value: "x3", unit: "", label: "engagement" },
+    icon: (
+      <svg className="w-8 h-8 md:w-10 md:h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+      </svg>
+    ),
+    color: {
+      primary: "#F59E0B",
+      secondary: "#D97706",
+      bg: "from-amber-50 via-orange-50/80 to-white",
+      glow: "rgba(245, 158, 11, 0.3)",
+    },
+  },
+  {
+    number: "03",
+    title: "Devenez la reference de votre marche",
+    highlight: "la reference",
+    description: "En 90 jours, positionnez-vous comme l'expert de votre secteur.",
+    stat: { value: "90", unit: "j", label: "pour briller" },
+    icon: (
+      <svg className="w-8 h-8 md:w-10 md:h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+      </svg>
+    ),
+    color: {
+      primary: "#8B5CF6",
+      secondary: "#A855F7",
+      bg: "from-violet-50 via-purple-50/80 to-white",
+      glow: "rgba(139, 92, 246, 0.3)",
+    },
+  },
+  {
+    number: "04",
+    title: "Un pipeline de prospects sans fin",
+    highlight: "prospects sans fin",
+    description: "LinkedIn devient votre canal d'acquisition principal.",
+    stat: { value: "24/7", unit: "", label: "actif" },
+    icon: (
+      <svg className="w-8 h-8 md:w-10 md:h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+      </svg>
+    ),
+    color: {
+      primary: "#10B981",
+      secondary: "#059669",
+      bg: "from-emerald-50 via-teal-50/80 to-white",
+      glow: "rgba(16, 185, 129, 0.3)",
+    },
+  },
+];
+
+// Benefit Card Component for Carousel - Door Pivot Hover Effect
+// Card opens like a door (pivots on left edge) revealing content behind
+function BenefitCard({
+  benefit,
+  isActive,
+  position,
+  onClick,
+}: {
+  benefit: typeof BENEFITS_DATA[0];
+  isActive: boolean;
+  position: number; // -1 = left, 0 = center, 1 = right, 2+ = hidden
+  onClick?: () => void;
+}) {
+  const prefersReducedMotion = useReducedMotion();
+  const [isHovered, setIsHovered] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile on mount
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  // Enable hover effect on desktop for active card only
+  const enableHoverEffect = isActive && !prefersReducedMotion && !isMobile;
+
+  // Door is open when hovering on desktop
+  const isDoorOpen = enableHoverEffect && isHovered;
+
+  // Show description: always on mobile (inline), revealed behind door on desktop
+  const showDescriptionMobile = isMobile;
+
+  // Calculate precise transforms based on position
+  const getTransform = () => {
+    if (position === 0) {
+      return { x: 0, scale: 1, rotateY: 0, z: 0, opacity: 1, filter: "blur(0px)" };
+    }
+    if (position === -1) {
+      return { x: -110, scale: 0.82, rotateY: 12, z: -150, opacity: 0.5, filter: "blur(2px)" };
+    }
+    if (position === 1) {
+      return { x: 110, scale: 0.82, rotateY: -12, z: -150, opacity: 0.5, filter: "blur(2px)" };
+    }
+    return {
+      x: position < 0 ? -200 : 200,
+      scale: 0.6,
+      rotateY: position < 0 ? 20 : -20,
+      z: -300,
+      opacity: 0,
+      filter: "blur(4px)",
+    };
+  };
+
+  const transform = getTransform();
+
+  return (
+    <motion.div
+      initial={false}
+      animate={{
+        x: `${transform.x}%`,
+        scale: transform.scale,
+        rotateY: prefersReducedMotion ? 0 : transform.rotateY,
+        z: transform.z,
+        opacity: transform.opacity,
+        filter: prefersReducedMotion ? "blur(0px)" : transform.filter,
+      }}
+      transition={{
+        type: "spring",
+        stiffness: 260,
+        damping: 26,
+        mass: 0.9,
+        opacity: { duration: 0.4, ease: "easeOut" },
+        filter: { duration: 0.4, ease: "easeOut" },
+      }}
+      onClick={!isActive ? onClick : undefined}
+      onMouseEnter={() => enableHoverEffect && setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={{
+        transformStyle: "preserve-3d",
+        transformOrigin: "center center",
+        willChange: "transform, opacity, filter",
+      }}
+      className={`absolute inset-0 m-auto w-[90%] sm:w-[85%] md:w-[480px] lg:w-[520px] h-fit ${
+        isActive ? "z-30" : "z-10 cursor-pointer"
+      }`}
+    >
+      {/* 3D Container for door effect - needs perspective for realistic 3D */}
+      <div
+        className="relative"
+        style={{
+          transformStyle: "preserve-3d",
+          perspective: 1500,
+        }}
+      >
+        {/* Description panel - revealed behind when door opens (desktop only) */}
+        {!isMobile && (
+          <motion.div
+            initial={false}
+            animate={{
+              opacity: isDoorOpen ? 1 : 0,
+              scale: isDoorOpen ? 1 : 0.95,
+            }}
+            transition={{
+              duration: 0.35,
+              ease: [0.22, 1, 0.36, 1],
+              delay: isDoorOpen ? 0.1 : 0,
+            }}
+            className={`absolute inset-0 rounded-3xl p-6 md:p-8 bg-gradient-to-br ${benefit.color.bg} overflow-hidden`}
+            style={{
+              zIndex: 1,
+              boxShadow: `inset 0 2px 20px -5px ${benefit.color.glow}, 0 0 0 1px rgba(255,255,255,0.5)`,
+            }}
+          >
+            {/* Background glow for description panel */}
+            <div
+              className="absolute -bottom-20 -right-20 w-64 h-64 rounded-full blur-[80px] pointer-events-none opacity-50"
+              style={{ background: benefit.color.glow }}
+            />
+
+            <div className="relative z-10 h-full flex flex-col justify-center py-2">
+              {/* Small icon reference */}
+              <div className="flex items-center gap-3 mb-4">
+                <div
+                  className="w-10 h-10 rounded-xl bg-white/90 flex items-center justify-center shadow-md"
+                  style={{ boxShadow: `0 4px 16px -4px ${benefit.color.glow}` }}
+                >
+                  <div className="scale-75" style={{ color: benefit.color.primary }}>{benefit.icon}</div>
+                </div>
+                <span className="text-sm font-semibold text-gray-600">{benefit.title.split(" ").slice(0, 3).join(" ")}...</span>
+              </div>
+
+              {/* Description text - main content */}
+              <p className="text-gray-800 text-base md:text-lg leading-relaxed font-medium">
+                {benefit.description}
+              </p>
+
+              {/* Stat reminder */}
+              <div className="mt-5 flex items-center gap-2 p-3 bg-white/60 rounded-xl w-fit">
+                <span className="text-2xl font-bold" style={{ color: benefit.color.primary }}>
+                  {benefit.stat.value}
+                </span>
+                {benefit.stat.unit && (
+                  <span className="text-lg font-semibold" style={{ color: benefit.color.secondary }}>
+                    {benefit.stat.unit}
+                  </span>
+                )}
+                <span className="text-xs text-gray-500 ml-1">{benefit.stat.label}</span>
+              </div>
+            </div>
+
+            {/* Bottom accent line */}
+            <div
+              className="absolute bottom-0 left-0 right-0 h-1"
+              style={{ background: `linear-gradient(to right, ${benefit.color.primary}, ${benefit.color.secondary})` }}
+            />
+          </motion.div>
+        )}
+
+        {/* Main door card - pivots on LEFT edge like a door */}
+        <motion.div
+          initial={false}
+          animate={{
+            rotateY: isDoorOpen ? -85 : 0,
+            boxShadow: isDoorOpen
+              ? `25px 15px 50px -15px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.9)`
+              : isActive
+              ? `0 25px 50px -12px ${benefit.color.glow}, 0 0 0 1px rgba(255,255,255,0.8)`
+              : "0 10px 30px -10px rgba(0,0,0,0.1), 0 0 0 1px rgba(255,255,255,0.6)",
+          }}
+          transition={{
+            duration: 0.45,
+            ease: [0.22, 1, 0.36, 1],
+            rotateY: { duration: 0.5, ease: [0.34, 1.56, 0.64, 1] },
+          }}
+          style={{
+            transformStyle: "preserve-3d",
+            transformOrigin: "left center",
+            zIndex: 2,
+            backfaceVisibility: "hidden",
+          }}
+          className={`relative rounded-3xl p-6 md:p-8 bg-gradient-to-br ${benefit.color.bg} overflow-hidden`}
+        >
+          {/* Background glow */}
+          <motion.div
+            initial={false}
+            animate={{ opacity: isActive && !isDoorOpen ? 0.6 : 0, scale: isActive ? 1 : 0.8 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="absolute -top-24 -right-24 w-72 h-72 rounded-full blur-[100px] pointer-events-none"
+            style={{ background: benefit.color.glow }}
+          />
+
+          <div className="relative z-10">
+            {/* Top row: Icon + Number + Stat */}
+            <div className="flex items-center justify-between mb-4 md:mb-5">
+              <div className="flex items-center gap-3 md:gap-4">
+                <motion.div
+                  initial={false}
+                  animate={{
+                    scale: isActive ? 1.05 : 1,
+                    y: isActive ? -1 : 0,
+                  }}
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                  className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white/95 backdrop-blur-sm flex items-center justify-center"
+                  style={{ boxShadow: `0 8px 32px -8px ${benefit.color.glow}` }}
+                >
+                  <div style={{ color: benefit.color.primary }}>{benefit.icon}</div>
+                </motion.div>
+                <span className="text-4xl md:text-5xl font-black text-gray-200/40 select-none tracking-tighter">
+                  {benefit.number}
+                </span>
+              </div>
+              <div className="flex items-baseline gap-1.5 md:gap-2 px-3 md:px-4 py-1.5 md:py-2 rounded-xl bg-white/85 backdrop-blur-md border border-white/70 shadow-lg">
+                <span className="text-xl md:text-2xl font-bold" style={{ color: benefit.color.primary }}>
+                  {benefit.stat.value}
+                </span>
+                {benefit.stat.unit && (
+                  <span className="text-base md:text-lg font-semibold" style={{ color: benefit.color.secondary }}>
+                    {benefit.stat.unit}
+                  </span>
+                )}
+                <span className="text-[10px] md:text-xs text-gray-500 ml-0.5 md:ml-1">{benefit.stat.label}</span>
+              </div>
+            </div>
+
+            {/* Title - Always visible */}
+            <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 leading-tight tracking-tight">
+              {benefit.title.split(benefit.highlight).map((part, i, arr) => (
+                <span key={i}>
+                  {part}
+                  {i < arr.length - 1 && (
+                    <span style={{ color: benefit.color.primary }}>{benefit.highlight}</span>
+                  )}
+                </span>
+              ))}
+            </h3>
+
+            {/* Description - Inline on mobile only */}
+            {showDescriptionMobile && (
+              <p className="text-gray-600 text-sm leading-relaxed mt-3">
+                {benefit.description}
+              </p>
+            )}
+          </div>
+
+          {/* Bottom accent line */}
+          <motion.div
+            initial={false}
+            animate={{
+              opacity: isActive ? 1 : 0.4,
+              scaleX: isActive ? 1 : 0.92,
+            }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="absolute bottom-0 left-0 right-0 h-1 origin-center"
+            style={{ background: `linear-gradient(to right, ${benefit.color.primary}, ${benefit.color.secondary})` }}
+          />
+        </motion.div>
+      </div>
+
+      {/* Hover hint - desktop only */}
+      {isActive && !isMobile && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: isDoorOpen ? 0 : 0.6 }}
+          transition={{ delay: 1, duration: 0.5 }}
+          className="hidden md:flex absolute -bottom-8 left-1/2 -translate-x-1/2 items-center gap-1.5 text-xs text-gray-400"
+        >
+          <span>Survolez pour en savoir plus</span>
+        </motion.div>
+      )}
+    </motion.div>
+  );
+}
+
+// Premium Navigation Dot Component
+function CarouselDot({
+  isActive,
+  isPaused,
+  color,
+  onClick,
+  duration = 5000,
+}: {
+  isActive: boolean;
+  isPaused: boolean;
+  color: string;
+  onClick: () => void;
+  duration?: number;
+}) {
+  const prefersReducedMotion = useReducedMotion();
+
+  return (
+    <button
+      onClick={onClick}
+      className="relative flex items-center justify-center w-8 h-8 aspect-square group"
+      aria-label="Navigation slide"
+    >
+      {/* Outer ring for active state - perfectly circular */}
+      <motion.div
+        initial={false}
+        animate={{
+          scale: isActive ? 1 : 0,
+          opacity: isActive ? 1 : 0,
+        }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        className="absolute inset-0 rounded-full aspect-square"
+        style={{
+          border: `2px solid ${color}20`,
+        }}
+      />
+
+      {/* Progress ring - using square viewBox for perfect circle */}
+      {isActive && !isPaused && !prefersReducedMotion && (
+        <svg
+          className="absolute inset-0 w-8 h-8 aspect-square -rotate-90"
+          viewBox="0 0 32 32"
+          preserveAspectRatio="xMidYMid meet"
+        >
+          <motion.circle
+            cx="16"
+            cy="16"
+            r="14"
+            fill="none"
+            stroke={color}
+            strokeWidth="2"
+            strokeLinecap="round"
+            initial={{ pathLength: 0 }}
+            animate={{ pathLength: 1 }}
+            transition={{ duration: duration / 1000, ease: "linear" }}
+            style={{ opacity: 0.6 }}
+            key={`progress-${isActive}`}
+          />
+        </svg>
+      )}
+
+      {/* Dot itself - perfectly circular with explicit aspect-square */}
+      <motion.div
+        initial={false}
+        animate={{
+          scale: isActive ? 1 : 0.7,
+          backgroundColor: color,
+        }}
+        whileHover={{ scale: isActive ? 1 : 0.85 }}
+        transition={{ type: "spring", stiffness: 400, damping: 25 }}
+        className="relative w-2.5 h-2.5 aspect-square rounded-full"
+        style={{
+          boxShadow: isActive ? `0 0 12px ${color}50` : "none",
+        }}
+      />
+    </button>
+  );
+}
+
+function KeyBenefitsSection() {
+  const prefersReducedMotion = useReducedMotion();
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const [dragStartX, setDragStartX] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Auto-advance carousel
+  useEffect(() => {
+    if (prefersReducedMotion || isPaused) return;
+
+    const interval = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % BENEFITS_DATA.length);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [prefersReducedMotion, isPaused]);
+
+  // Handle navigation
+  const goToSlide = (index: number) => {
+    setActiveIndex(index);
+  };
+
+  const goNext = () => {
+    setActiveIndex((prev) => (prev + 1) % BENEFITS_DATA.length);
+  };
+
+  const goPrev = () => {
+    setActiveIndex((prev) => (prev - 1 + BENEFITS_DATA.length) % BENEFITS_DATA.length);
+  };
+
+  // Handle swipe/drag
+  const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    setDragStartX(clientX);
+  };
+
+  const handleDragEnd = (e: React.MouseEvent | React.TouchEvent) => {
+    const clientX = 'changedTouches' in e ? e.changedTouches[0].clientX : e.clientX;
+    const diff = dragStartX - clientX;
+    const threshold = 50;
+
+    if (diff > threshold) {
+      goNext();
+    } else if (diff < -threshold) {
+      goPrev();
+    }
+  };
+
+  // Calculate position relative to active index
+  const getPosition = (index: number) => {
+    const diff = index - activeIndex;
+    if (diff === 0) return 0;
+    if (diff === 1 || diff === -(BENEFITS_DATA.length - 1)) return 1;
+    if (diff === -1 || diff === BENEFITS_DATA.length - 1) return -1;
+    return diff > 0 ? 2 : -2;
+  };
+
+  return (
+    <section id="benefices" className="relative py-12 md:py-16 lg:py-20 bg-gradient-to-b from-white via-gray-50/50 to-white overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <motion.div
+          animate={prefersReducedMotion ? {} : { scale: [1, 1.2, 1], opacity: [0.2, 0.4, 0.2] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -top-40 -left-40 w-[500px] h-[500px] bg-gradient-to-br from-[#F8935D]/15 to-transparent rounded-full blur-[120px]"
+        />
+        <motion.div
+          animate={prefersReducedMotion ? {} : { scale: [1, 1.15, 1], opacity: [0.15, 0.3, 0.15] }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+          className="absolute top-1/3 -right-20 w-[400px] h-[400px] bg-gradient-to-bl from-[#3B82F6]/12 to-transparent rounded-full blur-[100px]"
+        />
+      </div>
+
+      <div className="relative z-10 max-w-[1084px] mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Section Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8, ease: premiumEase }}
+          className="text-center max-w-3xl mx-auto mb-10 lg:mb-14"
+        >
+          {/* Heading */}
+          <h2 className="text-3xl md:text-4xl lg:text-[2.75rem] font-bold text-gray-900 mb-4 leading-tight tracking-tight">
+            Pourquoi les entrepreneurs choisissent{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
+              Posty
+            </span>
+          </h2>
+        </motion.div>
+
+        {/* 3D Carousel Container - Centered within 1084px */}
+        <div
+          ref={containerRef}
+          className="relative mx-auto w-full max-w-[900px]"
+          style={{ perspective: "1400px", perspectiveOrigin: "center center" }}
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+          onMouseDown={handleDragStart}
+          onMouseUp={handleDragEnd}
+          onTouchStart={handleDragStart}
+          onTouchEnd={handleDragEnd}
+        >
+          {/* Cards Container - Fixed height with flex centering */}
+          <div
+            className="relative w-full h-[280px] sm:h-[300px] md:h-[320px] lg:h-[340px] 2xl:h-[380px] flex items-center justify-center"
+            style={{ transformStyle: "preserve-3d" }}
+          >
+            {BENEFITS_DATA.map((benefit, index) => (
+              <BenefitCard
+                key={benefit.number}
+                benefit={benefit}
+                isActive={index === activeIndex}
+                position={getPosition(index)}
+                onClick={() => goToSlide(index)}
+              />
+            ))}
+          </div>
+
+          {/* Navigation Arrows - Perfectly aligned */}
+          <button
+            onClick={goPrev}
+            className="hidden md:flex absolute left-2 lg:left-4 xl:-left-4 top-1/2 -translate-y-1/2 z-40 w-11 h-11 rounded-full bg-white/95 backdrop-blur-sm shadow-lg shadow-gray-200/50 border border-gray-100 items-center justify-center text-gray-500 hover:text-gray-800 hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200"
+            aria-label="Precedent"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <button
+            onClick={goNext}
+            className="hidden md:flex absolute right-2 lg:right-4 xl:-right-4 top-1/2 -translate-y-1/2 z-40 w-11 h-11 rounded-full bg-white/95 backdrop-blur-sm shadow-lg shadow-gray-200/50 border border-gray-100 items-center justify-center text-gray-500 hover:text-gray-800 hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200"
+            aria-label="Suivant"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Navigation Dots - Perfectly Centered & Aligned */}
+        <div className="flex items-center justify-center gap-1 mt-8">
+          {BENEFITS_DATA.map((benefit, index) => (
+            <CarouselDot
+              key={benefit.number}
+              isActive={index === activeIndex}
+              isPaused={isPaused}
+              color={benefit.color.primary}
+              onClick={() => goToSlide(index)}
+              duration={5000}
+            />
+          ))}
+        </div>
+
+        {/* Swipe hint - Mobile only */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.5, duration: 0.5 }}
+          className="md:hidden flex items-center justify-center gap-2 mt-4"
+        >
+          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+          </svg>
+          <span className="text-xs text-gray-400 font-medium">Glissez pour naviguer</span>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+// =============================================================================
+// TARGET AUDIENCE SECTION — Premium Interactive Light Showcase
+// =============================================================================
+const audienceAccents = {
+  cyan: {
+    gradient: "from-cyan-400 to-blue-500",
+    iconBg: "bg-gradient-to-br from-cyan-100 to-blue-100",
+    iconRing: "ring-cyan-200/60",
+    iconColor: "text-cyan-600",
+    tag: "bg-cyan-50 text-cyan-700 ring-1 ring-inset ring-cyan-200/60",
+    solutionDot: "bg-cyan-500",
+    solutionLabel: "text-cyan-600/80",
+    glowRgb: "6, 182, 212",
+    numberColor: "text-cyan-400/[0.08]",
+    accentBar: "from-cyan-400 to-blue-500",
+  },
+  violet: {
+    gradient: "from-violet-400 to-purple-500",
+    iconBg: "bg-gradient-to-br from-violet-100 to-purple-100",
+    iconRing: "ring-violet-200/60",
+    iconColor: "text-violet-600",
+    tag: "bg-violet-50 text-violet-700 ring-1 ring-inset ring-violet-200/60",
+    solutionDot: "bg-violet-500",
+    solutionLabel: "text-violet-600/80",
+    glowRgb: "139, 92, 246",
+    numberColor: "text-violet-400/[0.08]",
+    accentBar: "from-violet-400 to-purple-500",
+  },
+  amber: {
+    gradient: "from-amber-400 to-orange-500",
+    iconBg: "bg-gradient-to-br from-amber-100 to-orange-100",
+    iconRing: "ring-amber-200/60",
+    iconColor: "text-amber-600",
+    tag: "bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200/60",
+    solutionDot: "bg-amber-500",
+    solutionLabel: "text-amber-600/80",
+    glowRgb: "245, 158, 11",
+    numberColor: "text-amber-400/[0.08]",
+    accentBar: "from-amber-400 to-orange-500",
+  },
+} as const;
+
+const AUDIENCE_PROFILES = [
+  {
+    title: "Entrepreneurs & Fondateurs",
+    subtitle: "CEOs · Solopreneurs · Fondateurs",
+    painPoint: "Vous savez que LinkedIn peut générer des clients, mais vous n\u2019avez pas le temps de publier régulièrement ni de trouver le bon angle.",
+    solution: "Posty génère des posts stratégiques en 30 secondes, alignés sur votre offre et votre positionnement. Votre LinkedIn travaille pendant que vous gérez votre business.",
+    tag: "Idéal pour les CEOs et solopreneurs",
+    accent: "cyan" as const,
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 00-2.58 5.841m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 01-2.448-2.448 14.9 14.9 0 01.06-.312m-2.24 2.39a4.493 4.493 0 00-1.757 4.306 4.493 4.493 0 004.306-1.758M16.5 9a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+      </svg>
+    ),
+  },
+  {
+    title: "Agences & Directeurs Marketing",
+    subtitle: "CMOs · Agences · Équipes marketing",
+    painPoint: "Gérer le contenu LinkedIn de plusieurs clients prend un temps fou, et la qualité varie d\u2019un rédacteur à l\u2019autre.",
+    solution: "Posty vous permet de produire du contenu premium à grande échelle, avec un ton cohérent par client. Scalez votre offre sans recruter.",
+    tag: "Idéal pour les agences et CMOs",
+    accent: "violet" as const,
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+      </svg>
+    ),
+  },
+  {
+    title: "Freelances & Consultants",
+    subtitle: "Indépendants · Experts · Consultants B2B",
+    painPoint: "Vos missions ne laissent pas de temps pour le marketing. Pourtant, sans visibilité LinkedIn, le prochain contrat est incertain.",
+    solution: "Posty transforme vos idées en posts qui attirent des prospects qualifiés. Dictez une idée entre deux RDV, Posty fait le reste.",
+    tag: "Idéal pour les indépendants B2B",
+    accent: "amber" as const,
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0M12 12.75h.008v.008H12v-.008z" />
+      </svg>
+    ),
+  },
+];
+
+function AudienceCard({ profile, index }: { profile: typeof AUDIENCE_PROFILES[number]; index: number }) {
+  const accent = audienceAccents[profile.accent];
+  const prefersReducedMotion = useReducedMotion();
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  // 3D perspective tilt — desktop only, driven by cursor position
+  const mouseX = useMotionValue(0.5);
+  const mouseY = useMotionValue(0.5);
+  const rawRotateX = useTransform(mouseY, [0, 1], [5, -5]);
+  const rawRotateY = useTransform(mouseX, [0, 1], [-5, 5]);
+  const rotateX = useSpring(rawRotateX, { stiffness: 150, damping: 20 });
+  const rotateY = useSpring(rawRotateY, { stiffness: 150, damping: 20 });
+
+  // Spotlight position for cursor-tracking glow
+  const spotlightX = useMotionValue(50);
+  const spotlightY = useMotionValue(50);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    const card = cardRef.current;
+    if (!card || prefersReducedMotion) return;
+    const rect = card.getBoundingClientRect();
+    const nx = (e.clientX - rect.left) / rect.width;
+    const ny = (e.clientY - rect.top) / rect.height;
+    mouseX.set(nx);
+    mouseY.set(ny);
+    spotlightX.set(nx * 100);
+    spotlightY.set(ny * 100);
+  }, [mouseX, mouseY, spotlightX, spotlightY, prefersReducedMotion]);
+
+  const handleMouseLeave = useCallback(() => {
+    mouseX.set(0.5);
+    mouseY.set(0.5);
+    spotlightX.set(50);
+    spotlightY.set(50);
+  }, [mouseX, mouseY, spotlightX, spotlightY]);
+
+  // Vertical rhythm offset — cards 1 & 3 shift up on desktop
+  const yOffset = index === 1 ? "md:translate-y-4" : "";
+
+  return (
+    <motion.div
+      ref={cardRef}
+      initial={{ opacity: 0, y: 50, filter: prefersReducedMotion ? "none" : "blur(10px)" }}
+      whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      viewport={{ once: true, margin: "-80px" }}
+      transition={{ delay: index * 0.15, duration: 0.7, ease: smoothEase }}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      className={`group relative ${yOffset}`}
+      style={{ perspective: 1000 }}
+    >
+      <motion.div
+        style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
+        className="relative h-full"
+      >
+        {/* Large ambient hover glow */}
+        <div
+          className="absolute -inset-6 rounded-3xl opacity-0 group-hover:opacity-100 transition-all duration-700 blur-3xl pointer-events-none"
+          style={{ background: `radial-gradient(400px circle at 50% 30%, rgba(${accent.glowRgb}, 0.15), transparent 70%)` }}
+        />
+
+        {/* Card container with border + shadow */}
+        <div className="relative h-full rounded-2xl overflow-hidden shadow-sm group-hover:shadow-xl transition-shadow duration-500">
+          {/* Gradient border layer — accent-colored shimmer */}
+          <div className={`absolute inset-0 rounded-2xl bg-gradient-to-b ${accent.gradient} opacity-[0.12] group-hover:opacity-[0.25] transition-opacity duration-500`} />
+
+          {/* Cursor-tracking spotlight */}
+          <motion.div
+            className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+            style={{
+              background: `radial-gradient(350px circle at ${spotlightX.get()}% ${spotlightY.get()}%, rgba(${accent.glowRgb}, 0.08), transparent 60%)`,
+            }}
+          />
+
+          {/* Inner card */}
+          <div className="relative h-full m-[1px] rounded-[15px] bg-white backdrop-blur-2xl overflow-hidden">
+            {/* Left accent bar with traveling glow */}
+            <div className={`absolute left-0 top-0 bottom-0 w-[3px] bg-gradient-to-b ${accent.accentBar} opacity-40 group-hover:opacity-90 transition-opacity duration-500`}>
+              <motion.div
+                className="absolute inset-x-0 h-10 blur-sm"
+                style={{ background: `linear-gradient(to bottom, transparent, rgba(${accent.glowRgb}, 0.6), transparent)` }}
+                animate={prefersReducedMotion ? {} : { top: ["0%", "85%", "0%"] }}
+                transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: index * 0.8 }}
+              />
+            </div>
+
+            {/* Top accent gradient line */}
+            <div className={`h-[2px] bg-gradient-to-r ${accent.gradient} opacity-40 group-hover:opacity-90 transition-opacity duration-500`} />
+
+            <div className="p-7 sm:p-8 lg:p-9 pl-8 sm:pl-9 lg:pl-10">
+              {/* Number + Icon row */}
+              <div className="flex items-start justify-between mb-7">
+                <div
+                  className={`w-12 h-12 rounded-xl ${accent.iconBg} ring-1 ${accent.iconRing} flex items-center justify-center ${accent.iconColor} transition-all duration-300 group-hover:scale-110`}
+                  style={{ boxShadow: `0 0 20px -4px rgba(${accent.glowRgb}, 0)`, transition: "all 0.4s ease" }}
+                >
+                  {profile.icon}
+                </div>
+                <span className={`text-6xl font-black ${accent.numberColor} select-none leading-none`}>
+                  0{index + 1}
+                </span>
+              </div>
+
+              {/* Title & Subtitle */}
+              <h3 className="text-xl sm:text-[22px] font-bold text-gray-900 mb-2 tracking-tight leading-tight">{profile.title}</h3>
+              <p className="text-[13px] text-gray-500 mb-7 font-medium tracking-wide">{profile.subtitle}</p>
+
+              {/* Separator */}
+              <div className="h-px bg-gray-200 mb-7" />
+
+              {/* Pain Point */}
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0" />
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-red-500/70">Le problème</span>
+                </div>
+                <p className="text-sm text-gray-500 leading-relaxed pl-4 border-l border-gray-200">
+                  {profile.painPoint}
+                </p>
+              </div>
+
+              {/* Solution */}
+              <div className="mb-7">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className={`w-1.5 h-1.5 rounded-full ${accent.solutionDot} flex-shrink-0`} />
+                  <span className={`text-[11px] font-semibold uppercase tracking-[0.15em] ${accent.solutionLabel}`}>La solution Posty</span>
+                </div>
+                <p className="text-[14.5px] text-gray-700 leading-relaxed pl-4 border-l border-gray-200">
+                  {profile.solution}
+                </p>
+              </div>
+
+              {/* Tag */}
+              <div className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-medium ${accent.tag}`}>
+                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                {profile.tag}
+              </div>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function TargetAudienceSection() {
+  const prefersReducedMotion = useReducedMotion();
+
+  return (
+    <section id="audience" className="relative py-12 md:py-16 lg:py-20 bg-white overflow-hidden">
+      {/* Smooth edge transition — blends into Features (peach) below */}
+      <div className="absolute bottom-0 left-0 right-0 h-16 md:h-32 bg-gradient-to-t from-[#FEF3EE] to-white z-[1] pointer-events-none" />
+
+      {/* Enhanced aurora background — soft pastel washes on white */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {/* Primary cyan aurora — top left */}
+        <motion.div
+          initial={{ opacity: 0.25 }}
+          animate={prefersReducedMotion ? {} : { opacity: [0.25, 0.45, 0.25], scale: [1, 1.12, 1] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -top-1/3 -left-1/4 w-[65%] h-[65%] bg-cyan-200/30 rounded-full blur-[150px]"
+        />
+        {/* Violet aurora — right side */}
+        <motion.div
+          initial={{ opacity: 0.2 }}
+          animate={prefersReducedMotion ? {} : { opacity: [0.2, 0.38, 0.2], scale: [1, 1.15, 1] }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+          className="absolute top-1/4 -right-1/3 w-[55%] h-[55%] bg-violet-200/25 rounded-full blur-[150px]"
+        />
+        {/* Amber aurora — bottom */}
+        <motion.div
+          initial={{ opacity: 0.18 }}
+          animate={prefersReducedMotion ? {} : { opacity: [0.18, 0.32, 0.18], scale: [1, 1.1, 1] }}
+          transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 4 }}
+          className="absolute -bottom-1/4 left-1/4 w-[50%] h-[50%] bg-amber-200/25 rounded-full blur-[130px]"
+        />
+        {/* Secondary glow — creates depth between primary orbs */}
+        <motion.div
+          initial={{ opacity: 0.1 }}
+          animate={prefersReducedMotion ? {} : { opacity: [0.1, 0.2, 0.1] }}
+          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[70%] h-[40%] bg-gradient-to-r from-cyan-200/15 via-violet-200/10 to-amber-200/15 rounded-full blur-[180px]"
+        />
+
+        {/* Floating luminous particles */}
+        {!prefersReducedMotion && [
+          { top: "18%", left: "12%", d: 5.2, del: 0 },
+          { top: "32%", left: "78%", d: 6.8, del: 1.2 },
+          { top: "55%", left: "25%", d: 4.5, del: 2.1 },
+          { top: "72%", left: "65%", d: 7.2, del: 0.8 },
+          { top: "22%", left: "52%", d: 5.8, del: 3.0 },
+          { top: "68%", left: "88%", d: 6.0, del: 1.8 },
+          { top: "45%", left: "8%", d: 5.5, del: 2.6 },
+        ].map((p, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-[3px] h-[3px] rounded-full bg-gray-400/30"
+            style={{ top: p.top, left: p.left }}
+            animate={{ y: [0, -25, 0], opacity: [0.15, 0.5, 0.15] }}
+            transition={{ duration: p.d, repeat: Infinity, ease: "easeInOut", delay: p.del }}
+          />
+        ))}
+
+        {/* Grid pattern */}
+        <div
+          className="absolute inset-0 opacity-[0.025]"
+          style={{
+            backgroundImage: "linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px)",
+            backgroundSize: "60px 60px",
+          }}
+        />
+      </div>
+
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Section Header — bolder, with glow effect */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.7, ease: smoothEase }}
+          className="text-center mb-12 lg:mb-16"
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-50 border border-gray-200 backdrop-blur-sm mb-6 lg:mb-8"
+          >
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-[#F8935D] opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#F8935D]" />
+            </span>
+            <span className="text-sm font-medium text-gray-600">Concu pour vous</span>
+          </motion.div>
+
+          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 lg:mb-6 tracking-tight">
+            A qui s&apos;adresse{" "}
+            <span className="relative inline-block">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
+                Posty ?
+              </span>
+              {/* Glow behind gradient text */}
+              <span className="absolute inset-0 bg-gradient-to-r from-[#F8935D]/20 to-[#F76B54]/20 blur-2xl -z-10" aria-hidden="true" />
+            </span>
+          </h2>
+          <p className="text-gray-500 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
+            Si vous vendez en B2B et voulez que LinkedIn genere des clients, Posty est fait pour vous.
+          </p>
+        </motion.div>
+
+        {/* Audience Cards Grid - 3 columns on desktop */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+          {AUDIENCE_PROFILES.map((profile, index) => (
+            <AudienceCard key={profile.title} profile={profile} index={index} />
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -1006,11 +2463,11 @@ interface FeatureConfig {
 
 const FEATURES: FeatureConfig[] = [
   {
-    title: "Creez des posts automatiques en 3 clics",
-    description: "Decrivez simplement votre idee et l'IA genere deux versions optimisees pour LinkedIn. Storytelling ou Business, a vous de choisir.",
+    title: "Du brief a la publication en 30 secondes",
+    description: "Decrivez votre objectif, et l'IA genere deux versions strategiques : Storytelling pour engager, Business pour convertir. Votre pipeline de contenu ne s'arrete jamais.",
     image: "/analytics.jpg",
-    badge: "Automatisation",
-    metric: "10x plus rapide",
+    badge: "Generation IA",
+    metric: "2 posts / minute",
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -1029,11 +2486,11 @@ const FEATURES: FeatureConfig[] = [
     },
   },
   {
-    title: "Une IA qui adapte les posts a votre profil",
-    description: "Notre IA apprend votre ton, votre style et votre secteur pour creer du contenu authentique qui vous ressemble vraiment.",
+    title: "Une IA qui comprend votre positionnement marche",
+    description: "Posty analyse votre secteur, votre audience et votre ton pour creer du contenu qui resonne. Chaque post renforce votre credibilite et attire les bons prospects.",
     image: "/img-ia.jpg",
-    badge: "IA Personnalisee",
-    metric: "100% unique",
+    badge: "IA Strategique",
+    metric: "100% votre voix",
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
@@ -1052,11 +2509,11 @@ const FEATURES: FeatureConfig[] = [
     },
   },
   {
-    title: "Programmation intelligente des posts",
-    description: "Planifiez vos publications aux meilleurs moments pour maximiser votre visibilite et votre engagement.",
+    title: "Publiez au moment ou votre audience decide",
+    description: "L'algorithme LinkedIn recompense la regularite et le bon timing. Posty planifie vos publications aux creneaux de conversion optimaux pour maximiser votre portee business.",
     image: "/professionel.jpg",
-    badge: "Planification",
-    metric: "+40% engagement",
+    badge: "Timing optimal",
+    metric: "+40% de portee",
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -1075,25 +2532,25 @@ const FEATURES: FeatureConfig[] = [
     },
   },
   {
-    title: "Creation de contenu en modalite vocale",
-    description: "Dictez vos idees a voix haute et transformez-les instantanement en posts professionnels prets a publier.",
+    title: "Dictez vos idees. Posty les transforme en clients.",
+    description: "Entre deux rendez-vous, dictez une idee a voix haute. Posty la transforme instantanement en post professionnel pret a publier et a convertir.",
     image: "/vocal.jpg",
     badge: "Voice-to-Post",
-    metric: "En 30 secondes",
+    metric: "30 sec chrono",
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
       </svg>
     ),
     color: {
-      primary: "rose",
-      bg: "from-rose-50 via-white to-orange-50/50",
-      border: "border-rose-200 hover:border-rose-400",
+      primary: "orange",
+      bg: "from-orange-50/70 via-white to-[#FBB9AD]/20",
+      border: "border-orange-200 hover:border-[#F8935D]",
       iconBg: "bg-gradient-to-br from-[#F8935D] to-[#F76B54]",
       iconText: "text-white",
-      badge: "bg-rose-100",
-      badgeText: "text-rose-700",
-      glow: "shadow-rose-500/20",
+      badge: "bg-orange-100",
+      badgeText: "text-orange-700",
+      glow: "shadow-[#F8935D]/20",
       accent: "text-[#F76B54]",
     },
   },
@@ -1101,50 +2558,82 @@ const FEATURES: FeatureConfig[] = [
 
 function FeatureCard({ feature, index }: { feature: FeatureConfig; index: number }) {
   const isEven = index % 2 === 0;
-  const stepNumber = index + 1;
+  const prefersReducedMotion = useReducedMotion();
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  // 3D perspective tilt — desktop only, driven by cursor position
+  const mouseX = useMotionValue(0.5);
+  const mouseY = useMotionValue(0.5);
+  const rawRotateX = useTransform(mouseY, [0, 1], [4, -4]); // Slightly less than AudienceCard for larger cards
+  const rawRotateY = useTransform(mouseX, [0, 1], [-4, 4]);
+  const rotateX = useSpring(rawRotateX, { stiffness: 120, damping: 20 });
+  const rotateY = useSpring(rawRotateY, { stiffness: 120, damping: 20 });
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    const card = cardRef.current;
+    if (!card || prefersReducedMotion) return;
+    const rect = card.getBoundingClientRect();
+    const nx = (e.clientX - rect.left) / rect.width;
+    const ny = (e.clientY - rect.top) / rect.height;
+    mouseX.set(nx);
+    mouseY.set(ny);
+  }, [mouseX, mouseY, prefersReducedMotion]);
+
+  const handleMouseLeave = useCallback(() => {
+    mouseX.set(0.5);
+    mouseY.set(0.5);
+  }, [mouseX, mouseY]);
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 50, filter: "blur(8px)" }}
-      whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-      viewport={{ once: true, margin: "-80px" }}
-      transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: index * 0.1 }}
-      className={`
-        relative bg-gradient-to-br ${feature.color.bg}
-        border ${feature.color.border} rounded-2xl lg:rounded-3xl
-        p-5 md:p-8 lg:p-10
-        shadow-sm hover:shadow-xl ${feature.color.glow}
-        transition-all duration-[400ms]
-        group/card
-      `}
+      ref={cardRef}
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-60px" }}
+      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      className="group/card"
+      style={{ perspective: 1200 }}
     >
-      {/* Inner flex layout: image + content */}
-      <div className={`flex flex-col ${isEven ? "lg:flex-row" : "lg:flex-row-reverse"} gap-8 lg:gap-10 items-center`}>
+      <motion.div
+        style={{
+          rotateX: prefersReducedMotion ? 0 : rotateX,
+          rotateY: prefersReducedMotion ? 0 : rotateY,
+          transformStyle: "preserve-3d",
+        }}
+        className={`
+          relative bg-gradient-to-br ${feature.color.bg}
+          border ${feature.color.border} rounded-2xl lg:rounded-3xl
+          p-5 md:p-6 lg:p-8
+          shadow-sm hover:shadow-xl ${feature.color.glow}
+          transition-shadow duration-300
+        `}
+      >
+        {/* Ambient hover glow */}
+        <div
+          className="absolute -inset-4 rounded-3xl opacity-0 group-hover/card:opacity-100 transition-opacity duration-500 blur-2xl pointer-events-none -z-10"
+          style={{ background: `radial-gradient(500px circle at 50% 30%, rgba(248, 147, 93, 0.12), transparent 60%)` }}
+        />
+
+        {/* Inner flex layout: image + content */}
+        <div className={`relative z-10 flex flex-col ${isEven ? "lg:flex-row" : "lg:flex-row-reverse"} gap-6 lg:gap-8 items-center`}>
 
         {/* Image Card */}
         <div className="w-full lg:w-1/2 flex-shrink-0">
-          <div className={`
-            relative rounded-xl lg:rounded-2xl overflow-hidden
-            shadow-md transition-all duration-[400ms]
-            group-hover/card:shadow-lg
-            group/img
-          `}>
-            {/* Image */}
+          <div className="relative rounded-xl lg:rounded-2xl overflow-hidden shadow-md transition-shadow duration-300 group-hover/card:shadow-lg aspect-[16/10]">
+            {/* Image — explicit dimensions prevent CLS */}
             <Image
               src={feature.image}
               alt={feature.title}
               width={500}
-              height={320}
-              className="w-full h-auto object-cover aspect-[16/10]"
+              height={312}
+              className="w-full h-full object-cover"
             />
 
             {/* Badge overlay — top left */}
             <div className="absolute top-3 left-3 z-20">
-              <motion.span
-                initial={{ opacity: 0, x: -10 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.3 + index * 0.1 }}
+              <span
                 className={`
                   inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full
                   ${feature.color.badge} ${feature.color.badgeText}
@@ -1153,34 +2642,12 @@ function FeatureCard({ feature, index }: { feature: FeatureConfig; index: number
               >
                 <span className={`w-2 h-2 rounded-full ${feature.color.iconBg} animate-pulse`} />
                 {feature.badge}
-              </motion.span>
-            </div>
-
-            {/* Numbered step badge — bottom left */}
-            <div className="absolute bottom-3 left-3 z-20">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.5 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.35 + index * 0.1, type: "spring", stiffness: 300 }}
-                className={`
-                  w-9 h-9 rounded-xl ${feature.color.iconBg}
-                  flex items-center justify-center
-                  shadow-lg text-white font-bold text-sm
-                  ring-2 ring-white/80
-                `}
-              >
-                {stepNumber}
-              </motion.div>
+              </span>
             </div>
 
             {/* Metric badge — bottom right */}
             <div className="absolute bottom-3 right-3 z-20">
-              <motion.span
-                initial={{ opacity: 0, scale: 0.8 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.4 + index * 0.1 }}
+              <span
                 className={`
                   inline-flex items-center gap-1 px-3 py-1.5 rounded-full
                   bg-white/95 backdrop-blur-sm shadow-lg
@@ -1188,64 +2655,43 @@ function FeatureCard({ feature, index }: { feature: FeatureConfig; index: number
                 `}
               >
                 {feature.metric}
-              </motion.span>
+              </span>
             </div>
           </div>
         </div>
 
         {/* Content Side */}
         <div className="w-full lg:w-1/2 text-center lg:text-left">
-          {/* Icon with hover animation */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.5 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2 + index * 0.1, type: "spring", stiffness: 200 }}
+          {/* Icon */}
+          <div
             className={`
-              inline-flex items-center justify-center w-14 h-14 rounded-2xl
+              inline-flex items-center justify-center w-12 h-12 lg:w-14 lg:h-14 rounded-xl lg:rounded-2xl
               ${feature.color.iconBg} ${feature.color.iconText}
               shadow-lg ${feature.color.glow}
-              mb-5
+              mb-4
             `}
           >
             {feature.icon}
-          </motion.div>
+          </div>
 
           {/* Title */}
-          <motion.h3
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.25 + index * 0.1 }}
-            className="text-2xl md:text-3xl font-bold text-gray-900 mb-4 leading-tight"
-          >
+          <h3 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 mb-3 leading-tight">
             {feature.title}
-          </motion.h3>
+          </h3>
 
           {/* Description */}
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.3 + index * 0.1 }}
-            className="text-gray-600 text-lg leading-relaxed mb-6"
-          >
+          <p className="text-gray-600 text-base lg:text-lg leading-relaxed mb-5">
             {feature.description}
-          </motion.p>
+          </p>
 
           {/* CTA Link with arrow slide on hover */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.35 + index * 0.1 }}
-          >
+          <div>
             <Link
               href="/signup"
               className={`
                 inline-flex items-center gap-2 font-semibold
                 ${feature.color.accent}
-                transition-all duration-300
+                transition-colors duration-300
                 group/link relative
               `}
             >
@@ -1262,53 +2708,36 @@ function FeatureCard({ feature, index }: { feature: FeatureConfig; index: number
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </Link>
-          </motion.div>
+          </div>
         </div>
-      </div>
+        </div>
+      </motion.div>
     </motion.div>
   );
 }
 
 function FeaturesSection() {
   return (
-    <section id="features" className="py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-[#FEF3EE] via-[#FAE8DE]/30 to-[#FEF3EE] overflow-hidden">
-      <div className="max-w-7xl mx-auto">
+    <section id="features" className="py-10 md:py-14 lg:py-16 2xl:py-18 px-4 sm:px-6 lg:px-8 2xl:px-12 bg-gradient-to-b from-[#FEF3EE] via-[#FAE8DE]/30 to-[#FEF3EE] overflow-hidden">
+      <div className="max-w-7xl 2xl:max-w-[1400px] mx-auto">
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 20, filter: "blur(8px)" }}
           whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, ease: smoothEase }}
-          className="text-center mb-20"
+          className="text-center mb-8 md:mb-10 2xl:mb-12"
         >
-          {/* Premium badge */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-gray-100 to-gray-50 border border-gray-200 mb-6"
-          >
-            <span className="flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-[#F8935D] opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#F8935D]"></span>
-            </span>
-            <span className="text-sm font-medium text-gray-700">Fonctionnalites puissantes</span>
-          </motion.div>
-
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-5">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl 2xl:text-[3.25rem] font-bold text-gray-900">
             Tout ce qu&apos;il vous faut pour{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
               dominer LinkedIn
             </span>
           </h2>
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-            Des outils puissants et intuitifs pour transformer vos idees en posts qui convertissent
-          </p>
         </motion.div>
 
         {/* Features Grid with Connectors */}
-        <div className="relative space-y-16 md:space-y-24">
+        <div className="relative space-y-10 md:space-y-14 lg:space-y-16">
           {/* Vertical connector line — desktop only */}
           <div className="hidden lg:block absolute left-1/2 top-0 bottom-0 -translate-x-1/2 pointer-events-none">
             <motion.div
@@ -1337,8 +2766,8 @@ function FeaturesSection() {
 
               {/* Mobile step connector — vertical line + dot */}
               {index > 0 && (
-                <div className="lg:hidden flex flex-col items-center -mt-4 mb-8">
-                  <div className="w-0.5 h-12 bg-gradient-to-b from-gray-200 to-gray-300 rounded-full" />
+                <div className="lg:hidden flex flex-col items-center -mt-2 mb-5">
+                  <div className="w-0.5 h-8 bg-gradient-to-b from-gray-200 to-gray-300 rounded-full" />
                   <div className={`w-3 h-3 rounded-full ${feature.color.iconBg} ring-3 ring-white shadow-md mt-0.5`} />
                 </div>
               )}
@@ -1368,35 +2797,35 @@ const TESTIMONIALS = [
     role: "Fondateur & CEO",
     company: "GrowthLab",
     image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&h=200&fit=crop&crop=face",
-    quote: "Posty a revolutionne ma strategie LinkedIn. En 3 mois, j'ai triple mon engagement et signe 12 nouveaux clients B2B.",
+    quote: "Avant Posty, LinkedIn etait une corvee. Aujourd'hui, c'est mon premier canal d'acquisition. En 3 mois : engagement triple, 12 clients B2B signes, et un pipeline qui ne tarit plus.",
   },
   {
     name: "Sophie Laurent",
     role: "Directrice Marketing",
     company: "TechVision",
     image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&h=200&fit=crop&crop=face",
-    quote: "L'IA capture parfaitement notre ton de marque. Mes equipes gagnent 10 heures par semaine sur la creation de contenu.",
+    quote: "Mes equipes gagnent 10 heures par semaine. Mais le vrai gain, c'est la qualite : nos posts convertissent 3 fois mieux depuis qu'on utilise Posty.",
   },
   {
     name: "Marc Dubois",
     role: "Consultant Senior",
     company: "Independant",
     image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face",
-    quote: "En freelance, chaque minute compte. Posty me permet de publier du contenu de qualite sans sacrifier mes missions clients.",
+    quote: "En freelance, chaque post doit rapporter. Posty me permet de publier du contenu strategique chaque jour, sans sacrifier mes missions. Mon CA a augmente de 40% en 4 mois.",
   },
 ];
 
 function TestimonialsSection() {
   return (
-    <section id="testimonials" className="py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-[#FAE8DE]/50 to-[#FEF3EE] overflow-hidden">
-      <div className="max-w-7xl mx-auto">
+    <section id="testimonials" className="py-12 md:py-16 2xl:py-20 px-4 sm:px-6 lg:px-8 2xl:px-12 bg-gradient-to-b from-[#FAE8DE]/50 to-[#FEF3EE] overflow-hidden">
+      <div className="max-w-7xl 2xl:max-w-[1400px] mx-auto">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20, filter: "blur(8px)" }}
           whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, ease: smoothEase }}
-          className="text-center mb-16"
+          className="text-center mb-8 md:mb-12"
         >
           {/* Trust Badge */}
           <motion.div
@@ -1413,17 +2842,17 @@ function TestimonialsSection() {
                 </div>
               ))}
             </div>
-            <span className="text-sm text-gray-600 font-medium">+500 professionnels satisfaits</span>
+            <span className="text-sm text-gray-600 font-medium">+500 professionnels generent des clients</span>
           </motion.div>
 
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
-            Ils ont transforme leur{" "}
+            Ils generent des clients chaque semaine{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
-              presence LinkedIn
+              grace a Posty
             </span>
           </h2>
           <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-            Decouvrez les resultats concrets obtenus par nos utilisateurs
+            Des resultats mesurables, pas des promesses
           </p>
         </motion.div>
 
@@ -1436,15 +2865,27 @@ function TestimonialsSection() {
               whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.15, duration: 0.6, ease: smoothEase }}
-              className="group relative bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-[#F8935D]/30 transition-all duration-[400ms] shadow-lg shadow-gray-100/60"
+              className="group relative bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-[#F8935D]/30 transition-all duration-300 shadow-lg shadow-gray-100/60"
             >
               {/* Animated accent line at top */}
-              <div className="h-[3px] bg-gradient-to-r from-[#F8935D] to-[#F76B54] w-0 group-hover:w-full transition-all duration-500 ease-out" />
+              <div className="h-[3px] bg-gradient-to-r from-[#F8935D] to-[#F76B54] w-0 group-hover:w-full transition-all duration-300 ease-out" />
 
               <div className="p-8">
+                {/* Decorative quote mark */}
+                <svg className="w-8 h-8 text-[#F8935D]/15 mb-3" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M4.583 17.321C3.553 16.227 3 15 3 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311C9.591 11.69 11 13.166 11 15c0 1.933-1.567 3.5-3.5 3.5-1.234 0-2.385-.597-2.917-1.179zm10 0C13.553 16.227 13 15 13 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311C19.591 11.69 21 13.166 21 15c0 1.933-1.567 3.5-3.5 3.5-1.234 0-2.385-.597-2.917-1.179z" />
+                </svg>
+                {/* Star rating */}
+                <div className="flex items-center gap-0.5 mb-3">
+                  {[...Array(5)].map((_, i) => (
+                    <svg key={i} className="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  ))}
+                </div>
                 {/* Quote */}
-                <blockquote className="text-gray-700 text-[15px] leading-relaxed mb-8 min-h-[80px]">
-                  &laquo; {testimonial.quote} &raquo;
+                <blockquote className="text-gray-700 text-[15px] leading-relaxed mb-8">
+                  {testimonial.quote}
                 </blockquote>
 
                 {/* Author */}
@@ -1475,161 +2916,209 @@ function TestimonialsSection() {
 }
 
 // =============================================================================
-// FOUNDER MESSAGE SECTION - Typography-First Emotional Design
+// BEFORE/AFTER SECTION - Visual Impact Comparison
 // =============================================================================
-function FounderSection() {
+function BeforeAfterSection() {
+  const prefersReducedMotion = useReducedMotion();
+
+  const beforeItems = [
+    { text: "Posts generiques qui n'attirent personne", icon: "❌" },
+    { text: "Heures perdues a chercher quoi ecrire", icon: "❌" },
+    { text: "Audience inactive et desengagee", icon: "❌" },
+    { text: "LinkedIn = corvee sans resultats", icon: "❌" },
+  ];
+
+  const afterItems = [
+    { text: "Posts strategiques qui attirent des prospects", icon: "✓" },
+    { text: "30 secondes pour un post optimise", icon: "✓" },
+    { text: "Engagement qui genere des conversations", icon: "✓" },
+    { text: "LinkedIn = canal d'acquisition rentable", icon: "✓" },
+  ];
+
   return (
-    <section className="relative py-16 md:py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
-      {/* Distinctive warm background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#FDF8F4] via-[#FFF9F5] to-[#FEF0E8]" />
-      <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "radial-gradient(circle at 1px 1px, #F8935D 1px, transparent 0)", backgroundSize: "40px 40px" }} />
-
-      <div className="relative max-w-5xl mx-auto">
-
-        {/* Section Header */}
+    <section className="py-12 md:py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-[#FEF3EE] to-white overflow-hidden">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20, filter: "blur(8px)" }}
           whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, ease: smoothEase }}
-          className="text-center mb-10 md:mb-14"
+          className="text-center mb-8 md:mb-12"
         >
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
-            Les mots de nos{" "}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="inline-flex items-center gap-2 px-4 py-2 mb-6 bg-white border border-gray-200 rounded-full shadow-sm"
+          >
+            <span className="text-lg">⚡</span>
+            <span className="text-sm text-gray-600 font-medium">La difference est visible</span>
+          </motion.div>
+
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
+            Avant vs Apres{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
-              fondateurs
+              Posty
             </span>
           </h2>
-          <p className="text-gray-500 text-base md:text-lg max-w-md mx-auto">
-            La vision derriere Posty
+          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+            Decouvrez comment Posty transforme votre presence LinkedIn
           </p>
         </motion.div>
 
-        {/* Quote Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-7 mb-10 md:mb-14">
-
-          {/* CEO Quote Card */}
+        {/* Comparison Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+          {/* BEFORE Card */}
           <motion.div
-            initial={{ opacity: 0, y: 25 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, x: -30, filter: prefersReducedMotion ? "none" : "blur(10px)" }}
+            whileInView={{ opacity: 1, x: 0, filter: "blur(0px)" }}
             viewport={{ once: true }}
-            transition={{ duration: 0.7, ease: smoothEase }}
-            className="relative bg-white/80 backdrop-blur-sm rounded-2xl p-6 md:p-8 border border-[#F8935D]/15 shadow-sm hover:shadow-lg hover:shadow-[#F8935D]/8 transition-all duration-300 group/card"
+            transition={{ duration: 0.6, ease: smoothEase }}
+            className="relative group"
           >
-            {/* Quotation mark + accent line */}
-            <div className="flex items-center gap-3 mb-4">
-              <svg className="w-7 h-7 md:w-8 md:h-8 text-[#F8935D]/30 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M4.583 17.321C3.553 16.227 3 15 3 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311C9.591 11.69 11 13.166 11 15c0 1.933-1.567 3.5-3.5 3.5-1.234 0-2.385-.597-2.917-1.179zm10 0C13.553 16.227 13 15 13 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311C19.591 11.69 21 13.166 21 15c0 1.933-1.567 3.5-3.5 3.5-1.234 0-2.385-.597-2.917-1.179z" />
-              </svg>
-              <div className="w-8 h-[2px] bg-gradient-to-r from-[#F8935D] to-transparent rounded-full" />
-            </div>
+            <div className="relative h-full bg-white rounded-3xl border border-gray-200 p-8 md:p-10 shadow-lg shadow-gray-100/60 overflow-hidden">
+              {/* Subtle red tint background */}
+              <div className="absolute inset-0 bg-gradient-to-br from-red-50/50 to-transparent pointer-events-none" />
 
-            {/* Quote text */}
-            <blockquote className="mb-5">
-              <p className="text-base md:text-lg text-gray-700 leading-relaxed italic">
-                J&apos;ai cree Posty pour aider des milliers d&apos;entrepreneurs a{" "}
-                <span className="font-semibold not-italic text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
-                  developper leurs prospects
-                </span>
-                , accroitre leur{" "}
-                <span className="font-semibold not-italic text-transparent bg-clip-text bg-gradient-to-r from-[#F76B54] to-[#E85D45]">
-                  visibilite
-                </span>
-                {" "}et faire reellement croitre leurs{" "}
-                <span className="font-semibold not-italic text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
-                  finances
-                </span>
-                {" "}grace a LinkedIn.
-              </p>
-            </blockquote>
+              {/* Header */}
+              <div className="relative flex items-center gap-4 mb-8">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center shadow-inner">
+                  <svg className="w-7 h-7 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-xl md:text-2xl font-bold text-gray-400">Sans Posty</h3>
+                  <p className="text-sm text-gray-400">LinkedIn reste une corvee</p>
+                </div>
+              </div>
 
-            {/* Author */}
-            <div className="flex items-center gap-3 pt-4 border-t border-[#F8935D]/10">
-              <div className="w-10 h-10 md:w-11 md:h-11 rounded-full overflow-hidden ring-2 ring-[#F8935D]/20 flex-shrink-0">
-                <Image
-                  src="/ceo.png"
-                  alt="Emilien Nepveu"
-                  width={44}
-                  height={44}
-                  className="w-full h-full object-cover"
-                />
+              {/* Items */}
+              <div className="relative space-y-5">
+                {beforeItems.map((item, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: index * 0.1, duration: 0.4 }}
+                    className="flex items-start gap-4 group/item"
+                  >
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
+                      <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </div>
+                    <p className="text-gray-500 text-[15px] md:text-base leading-relaxed pt-1">{item.text}</p>
+                  </motion.div>
+                ))}
               </div>
-              <div>
-                <p className="text-sm md:text-base font-semibold text-gray-900">
-                  Emilien Nepveu
-                </p>
-                <p className="text-xs md:text-sm text-[#F8935D] font-medium">
-                  Founder & CEO
-                </p>
-              </div>
+
+              {/* Decorative blur */}
+              <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-gray-200/30 rounded-full blur-3xl pointer-events-none" />
             </div>
           </motion.div>
 
-          {/* CMO Quote Card */}
+          {/* AFTER Card */}
           <motion.div
-            initial={{ opacity: 0, y: 25 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, x: 30, filter: prefersReducedMotion ? "none" : "blur(10px)" }}
+            whileInView={{ opacity: 1, x: 0, filter: "blur(0px)" }}
             viewport={{ once: true }}
-            transition={{ duration: 0.7, ease: smoothEase, delay: 0.15 }}
-            className="relative bg-white/80 backdrop-blur-sm rounded-2xl p-6 md:p-8 border border-[#F76B54]/15 shadow-sm hover:shadow-lg hover:shadow-[#F76B54]/8 transition-all duration-300 group/card"
+            transition={{ duration: 0.6, ease: smoothEase, delay: 0.15 }}
+            className="relative group"
           >
-            {/* Quotation mark + accent line */}
-            <div className="flex items-center gap-3 mb-4">
-              <svg className="w-7 h-7 md:w-8 md:h-8 text-[#F76B54]/30 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M4.583 17.321C3.553 16.227 3 15 3 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311C9.591 11.69 11 13.166 11 15c0 1.933-1.567 3.5-3.5 3.5-1.234 0-2.385-.597-2.917-1.179zm10 0C13.553 16.227 13 15 13 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311C19.591 11.69 21 13.166 21 15c0 1.933-1.567 3.5-3.5 3.5-1.234 0-2.385-.597-2.917-1.179z" />
-              </svg>
-              <div className="w-8 h-[2px] bg-gradient-to-r from-[#F76B54] to-transparent rounded-full" />
-            </div>
+            {/* Glow effect behind card */}
+            <div className="absolute -inset-1 bg-gradient-to-r from-[#F8935D]/20 to-[#F76B54]/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-            {/* Quote text */}
-            <blockquote className="mb-5">
-              <p className="text-base md:text-lg text-gray-700 leading-relaxed italic">
-                Posty aide les entrepreneurs a transformer leur contenu en{" "}
-                <span className="font-semibold not-italic text-transparent bg-clip-text bg-gradient-to-r from-[#F76B54] to-[#E85D45]">
-                  opportunites concretes
-                </span>
-                {" "}et mesurables.
-              </p>
-            </blockquote>
+            <div className="relative h-full bg-white rounded-3xl border border-[#F8935D]/20 p-8 md:p-10 shadow-xl shadow-[#F8935D]/10 overflow-hidden group-hover:border-[#F8935D]/40 transition-colors duration-300">
+              {/* Gradient background */}
+              <div className="absolute inset-0 bg-gradient-to-br from-[#FEF3EE] via-white to-[#FFF8F5] pointer-events-none" />
 
-            {/* Author */}
-            <div className="flex items-center gap-3 pt-4 border-t border-[#F76B54]/10">
-              <div className="w-10 h-10 md:w-11 md:h-11 rounded-full overflow-hidden ring-2 ring-[#F76B54]/15 flex-shrink-0">
-                <Image
-                  src="/cmo.jpg"
-                  alt="CMO - Posty"
-                  width={44}
-                  height={44}
-                  className="w-full h-full object-cover"
-                />
+              {/* Animated gradient orb */}
+              <motion.div
+                animate={prefersReducedMotion ? {} : {
+                  scale: [1, 1.2, 1],
+                  opacity: [0.3, 0.5, 0.3],
+                }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#F8935D]/20 to-[#F76B54]/10 rounded-full blur-3xl pointer-events-none"
+              />
+
+              {/* Header */}
+              <div className="relative flex items-center gap-4 mb-8">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#F8935D] to-[#F76B54] flex items-center justify-center shadow-lg shadow-[#F8935D]/30">
+                  <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-xl md:text-2xl font-bold text-gray-900">Avec Posty</h3>
+                  <p className="text-sm text-[#F8935D] font-medium">LinkedIn devient rentable</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm md:text-base font-semibold text-gray-900">
-                  CMO
-                </p>
-                <p className="text-xs md:text-sm text-[#F76B54] font-medium">
-                  Chief Marketing Officer
-                </p>
+
+              {/* Items */}
+              <div className="relative space-y-5">
+                {afterItems.map((item, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, x: 20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.15 + index * 0.1, duration: 0.4 }}
+                    className="flex items-start gap-4 group/item"
+                  >
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      whileInView={{ scale: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.3 + index * 0.1, type: "spring", stiffness: 300 }}
+                      className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-500 flex items-center justify-center shadow-md shadow-emerald-200"
+                    >
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </motion.div>
+                    <p className="text-gray-700 text-[15px] md:text-base leading-relaxed pt-1 font-medium">{item.text}</p>
+                  </motion.div>
+                ))}
               </div>
+
+              {/* Accent line at bottom */}
+              <motion.div
+                initial={{ scaleX: 0 }}
+                whileInView={{ scaleX: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.5, duration: 0.8, ease: premiumEase }}
+                className="absolute bottom-0 left-8 right-8 h-1 bg-gradient-to-r from-[#F8935D] to-[#F76B54] rounded-full origin-left"
+              />
             </div>
           </motion.div>
         </div>
 
         {/* Bottom CTA */}
         <motion.div
-          initial={{ opacity: 0, y: 15 }}
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.5, ease: smoothEase, delay: 0.25 }}
-          className="text-center"
+          transition={{ delay: 0.4, duration: 0.5 }}
+          className="text-center mt-12 md:mt-16"
         >
-          <motion.div whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.98 }}>
+          <p className="text-gray-500 text-sm md:text-base mb-6">
+            Rejoignez les professionnels qui ont fait le choix de la performance
+          </p>
+          <motion.div
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+          >
             <Link
               href="/signup"
-              className="shimmer-cta relative inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white font-semibold rounded-xl shadow-lg shadow-[#F8935D]/25 hover:shadow-xl hover:shadow-[#F8935D]/35 transition-all duration-300 overflow-hidden group"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white font-semibold rounded-xl shadow-lg shadow-[#F8935D]/20 hover:shadow-xl hover:shadow-[#F8935D]/30 transition-all duration-300"
             >
-              <span className="relative z-10">Rejoindre Posty</span>
-              <svg className="relative z-10 w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              Passer a Posty maintenant
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
             </Link>
@@ -1641,37 +3130,161 @@ function FounderSection() {
 }
 
 // =============================================================================
+// FOUNDER MESSAGE SECTION - Supabase-Inspired Editorial Design (Light)
+// With Progressive Scroll-Based Zoom Effect
+// =============================================================================
+const FOUNDER_LINKEDIN_URL = "https://www.linkedin.com/in/emilien-nepveu/";
+
+function FounderSection() {
+  const sectionRef = useRef<HTMLElement>(null);
+  const prefersReducedMotion = useReducedMotion();
+
+  // Scroll-based animation: track section progress through viewport
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start end", "center center"], // Start when section enters, complete at center
+  });
+
+  // Transform scroll progress to scale value (0.88 -> 1.0)
+  const scale = useTransform(scrollYProgress, [0, 1], [0.88, 1]);
+  const opacity = useTransform(scrollYProgress, [0, 0.3], [0.6, 1]);
+
+  // Smooth spring animation for more natural feel
+  const smoothScale = useSpring(scale, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.001,
+  });
+  const smoothOpacity = useSpring(opacity, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.001,
+  });
+
+  return (
+    <section
+      ref={sectionRef}
+      id="founders"
+      className="relative py-14 md:py-20 lg:py-24 px-4 sm:px-6 lg:px-8 overflow-hidden bg-white"
+    >
+      {/* Zoom Container - applies scale effect */}
+      <motion.div
+        style={{
+          scale: prefersReducedMotion ? 1 : smoothScale,
+          opacity: prefersReducedMotion ? 1 : smoothOpacity,
+          willChange: "transform, opacity",
+        }}
+        className="relative max-w-4xl 2xl:max-w-5xl mx-auto origin-center"
+      >
+        {/* Decorative glow behind content */}
+        <div className="absolute inset-0 -z-10 pointer-events-none">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-gradient-to-r from-[#F8935D]/5 via-[#F76B54]/8 to-[#F8935D]/5 rounded-full blur-[100px]" />
+        </div>
+
+        {/* Main Quote - Hero Typography */}
+        <motion.blockquote
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8, ease: smoothEase }}
+          className="text-center mb-10 md:mb-14"
+        >
+          {/* Opening quote mark */}
+          <div className="flex justify-center mb-6">
+            <svg className="w-10 h-10 md:w-12 md:h-12 text-[#F8935D]/20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M4.583 17.321C3.553 16.227 3 15 3 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311C9.591 11.69 11 13.166 11 15c0 1.933-1.567 3.5-3.5 3.5-1.234 0-2.385-.597-2.917-1.179zm10 0C13.553 16.227 13 15 13 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311C19.591 11.69 21 13.166 21 15c0 1.933-1.567 3.5-3.5 3.5-1.234 0-2.385-.597-2.917-1.179z" />
+            </svg>
+          </div>
+          <p className="text-xl sm:text-2xl md:text-3xl lg:text-[2.5rem] 2xl:text-[2.75rem] font-medium text-gray-900 leading-snug md:leading-tight tracking-tight">
+            LinkedIn est le levier de croissance le plus sous-exploite du marche B2B. Avec{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
+              Posty
+            </span>
+            , nous avons toujours voulu que chaque entrepreneur puisse en faire un canal d&apos;acquisition rentable.
+          </p>
+        </motion.blockquote>
+
+        {/* Author Info */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, ease: smoothEase, delay: 0.2 }}
+          className="flex flex-col items-center text-center"
+        >
+          {/* Avatar - clickable, no hover effects (minimalist) */}
+          <Link
+            href={FOUNDER_LINKEDIN_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="relative mb-4 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F8935D] focus-visible:ring-offset-2"
+            aria-label="Voir le profil LinkedIn d'Emilien Nepveu"
+          >
+            <div className="w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden ring-4 ring-white shadow-xl shadow-gray-200/50">
+              <Image
+                src="/ceo.png"
+                alt="Emilien Nepveu"
+                width={64}
+                height={64}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          </Link>
+
+          {/* Name - clickable with hover underline effect */}
+          <Link
+            href={FOUNDER_LINKEDIN_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group relative focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F8935D] focus-visible:ring-offset-2 rounded"
+          >
+            <span className="text-gray-900 font-semibold text-base md:text-lg mb-0.5 relative inline-block">
+              Emilien Nepveu
+              {/* Animated underline - desktop only */}
+              <span className="absolute left-0 -bottom-0.5 w-full h-[2px] bg-gradient-to-r from-[#F8935D] to-[#F76B54] origin-left scale-x-0 md:group-hover:scale-x-100 transition-transform duration-300 ease-out rounded-full" />
+            </span>
+          </Link>
+          <p className="text-gray-500 text-sm md:text-base">
+            Founder & CEO chez Posty
+          </p>
+        </motion.div>
+      </motion.div>
+    </section>
+  );
+}
+
+// =============================================================================
 // PRICING SECTION - Replicated from Subscription Page
 // =============================================================================
 const PLANS = getAllPlans();
 
-// Feature item component for pricing cards
+// Feature item component for pricing cards - responsive for 2-col mobile
 function FeatureListItem({ feature, index }: { feature: FeatureItem; index: number }) {
   return (
     <motion.li
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: 0.4 + index * 0.05 }}
-      className="flex items-start gap-2 md:gap-3"
+      className="flex items-start gap-1.5 sm:gap-2 md:gap-3"
     >
       <div className={`
-        flex-shrink-0 w-4 h-4 md:w-5 md:h-5 rounded-full flex items-center justify-center mt-0.5
+        flex-shrink-0 w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded-full flex items-center justify-center mt-0.5
         ${feature.included
           ? "bg-green-500/20 text-green-600"
           : "bg-red-500/15 text-red-500"
         }
       `}>
         {feature.included ? (
-          <svg className="w-2.5 h-2.5 md:w-3 md:h-3" fill="currentColor" viewBox="0 0 20 20">
+          <svg className="w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
           </svg>
         ) : (
-          <svg className="w-2.5 h-2.5 md:w-3 md:h-3" fill="currentColor" viewBox="0 0 20 20">
+          <svg className="w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
           </svg>
         )}
       </div>
-      <span className={`text-xs md:text-sm ${
+      <span className={`text-[11px] sm:text-xs md:text-sm ${
         feature.included
           ? "text-gray-600"
           : "text-gray-400 line-through"
@@ -1728,18 +3341,21 @@ function PricingCard({
       onHoverEnd={() => setIsHovered(false)}
       whileHover={!isPopular ? { y: -6, transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] } } : undefined}
       className={`
-        relative rounded-2xl overflow-hidden h-full
-        ${isPopular ? "scale-100 md:scale-105 z-20 ring-2 ring-[#F8935D]/70" : "z-10"}
+        relative rounded-lg sm:rounded-xl md:rounded-2xl overflow-hidden self-start
+        ${isPopular
+          ? "z-20 ring-2 ring-[#F8935D]/50 sm:ring-[#F8935D]/70"
+          : "z-10"
+        }
       `}
     >
       {/* Enhanced glow effect for popular plan */}
       {isPopular && (
         <>
           {/* Outer pulsing glow */}
-          <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-[#F8935D] via-[#F76B54] to-[#F8935D] opacity-60 blur-xl animate-pulse" />
+          <div className="absolute -inset-0.5 sm:-inset-1 rounded-xl sm:rounded-2xl md:rounded-3xl bg-gradient-to-r from-[#F8935D] via-[#F76B54] to-[#F8935D] opacity-50 sm:opacity-60 blur-lg sm:blur-xl animate-pulse" />
           {/* Inner animated gradient border */}
-          <div className="absolute inset-0 rounded-2xl p-[2px] bg-gradient-to-br from-[#F8935D] via-[#F76B54] to-[#F8935D] bg-[length:200%_200%] animate-gradient-slow">
-            <div className="absolute inset-[2px] rounded-[14px] bg-white" />
+          <div className="absolute inset-0 rounded-lg sm:rounded-xl md:rounded-2xl p-[1px] sm:p-[2px] bg-gradient-to-br from-[#F8935D] via-[#F76B54] to-[#F8935D] bg-[length:200%_200%] animate-gradient-slow">
+            <div className="absolute inset-[1px] sm:inset-[2px] rounded-[7px] sm:rounded-[10px] md:rounded-[14px] bg-white" />
           </div>
         </>
       )}
@@ -1747,14 +3363,14 @@ function PricingCard({
       {/* Premium glow effect */}
       {isPremium && (
         <>
-          <div className="absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 opacity-25 blur-lg" />
-          <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-amber-500/15 via-transparent to-orange-500/15 opacity-80" />
+          <div className="absolute -inset-0.5 rounded-lg sm:rounded-xl md:rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 opacity-20 sm:opacity-25 blur-md sm:blur-lg" />
+          <div className="absolute inset-0 rounded-lg sm:rounded-xl md:rounded-2xl bg-gradient-to-br from-amber-500/15 via-transparent to-orange-500/15 opacity-80" />
         </>
       )}
 
       {/* Shimmer effect on hover */}
       <motion.div
-        className="absolute inset-0 rounded-2xl pointer-events-none overflow-hidden hidden md:block"
+        className="absolute inset-0 rounded-lg sm:rounded-xl md:rounded-2xl pointer-events-none overflow-hidden hidden md:block"
         initial={{ opacity: 0 }}
         animate={{ opacity: isHovered ? 1 : 0 }}
         transition={{ duration: 0.3 }}
@@ -1764,18 +3380,18 @@ function PricingCard({
 
       {/* Card background */}
       <div className={`
-        relative p-4 md:p-6 lg:p-8 rounded-2xl h-full flex flex-col
+        relative p-2 sm:p-4 md:p-6 lg:p-8 rounded-lg sm:rounded-xl md:rounded-2xl flex flex-col h-full
         ${isPopular
           ? "bg-gradient-to-b from-[#F8935D]/10 via-white to-white"
           : isPremium
-            ? "bg-gradient-to-b from-amber-500/5 via-white to-white border-2 border-amber-500/30"
+            ? "bg-gradient-to-b from-amber-500/5 via-white to-white border sm:border-2 border-amber-500/30"
             : isFree
               ? "bg-white border border-[#F8935D]/25"
               : "bg-white border border-gray-200"
         }
       `}>
         {/* ZONE 0: Badges */}
-        <div className="h-[36px] md:h-[44px] flex items-start justify-center relative mb-2">
+        <div className="h-[24px] sm:h-[32px] md:h-[44px] flex items-start justify-center relative mb-1 sm:mb-2">
           {isPopular && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
@@ -1784,11 +3400,12 @@ function PricingCard({
               className="relative"
             >
               <div className="absolute inset-0 bg-[#F8935D] rounded-full blur-md opacity-50 animate-pulse" />
-              <div className="relative px-3 md:px-4 py-1 md:py-1.5 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white text-xs md:text-sm font-semibold rounded-full shadow-lg shadow-[#F8935D]/30 flex items-center gap-1.5">
-                <svg className="w-3 h-3 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
+              <div className="relative px-1.5 sm:px-3 md:px-4 py-0.5 sm:py-1 md:py-1.5 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white text-[10px] sm:text-xs md:text-sm font-semibold rounded-full shadow-lg shadow-[#F8935D]/30 flex items-center gap-0.5 sm:gap-1 md:gap-1.5">
+                <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                 </svg>
-                Le plus populaire
+                <span className="hidden sm:inline">Le plus populaire</span>
+                <span className="inline sm:hidden">Top</span>
               </div>
             </motion.div>
           )}
@@ -1799,8 +3416,8 @@ function PricingCard({
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
             >
-              <div className="px-3 md:px-4 py-1 md:py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs md:text-sm font-semibold rounded-full shadow-lg shadow-amber-500/30 flex items-center gap-1.5">
-                <svg className="w-3 h-3 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
+              <div className="px-1.5 sm:px-3 md:px-4 py-0.5 sm:py-1 md:py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] sm:text-xs md:text-sm font-semibold rounded-full shadow-lg shadow-amber-500/30 flex items-center gap-0.5 sm:gap-1 md:gap-1.5">
+                <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M5 2a2 2 0 00-2 2v14l3.5-2 3.5 2 3.5-2 3.5 2V4a2 2 0 00-2-2H5zm2.5 3a1.5 1.5 0 100 3 1.5 1.5 0 000-3zm6.207.293a1 1 0 00-1.414 0l-6 6a1 1 0 101.414 1.414l6-6a1 1 0 000-1.414zM12.5 10a1.5 1.5 0 100 3 1.5 1.5 0 000-3z" clipRule="evenodd" />
                 </svg>
                 Elite
@@ -1810,71 +3427,71 @@ function PricingCard({
         </div>
 
         {/* ZONE 1: Plan header */}
-        <div className="h-[70px] md:h-[80px] text-center flex flex-col justify-center">
-          <h3 className={`text-lg md:text-2xl font-bold mb-1 ${
+        <div className="h-[50px] sm:h-[60px] md:h-[80px] text-center flex flex-col justify-center">
+          <h3 className={`text-sm sm:text-lg md:text-2xl font-bold mb-0.5 sm:mb-1 ${
             isPremium ? "text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400" : "text-gray-900"
           }`}>
             {plan.name}
           </h3>
-          <p className="text-xs md:text-sm text-gray-500 line-clamp-2">{planInfo.tagline}</p>
-          <p className={`text-[10px] md:text-xs mt-1 ${isPopular ? "text-[#F8935D]" : isPremium ? "text-amber-500" : "text-gray-400"}`}>
+          <p className="text-[10px] sm:text-xs md:text-sm text-gray-500 line-clamp-1 sm:line-clamp-2">{planInfo.tagline}</p>
+          <p className={`text-[9px] sm:text-[10px] md:text-xs mt-0.5 sm:mt-1 hidden sm:block ${isPopular ? "text-[#F8935D]" : isPremium ? "text-amber-500" : "text-gray-400"}`}>
             {planInfo.idealFor}
           </p>
         </div>
 
         {/* ZONE 2: Price section */}
-        <div className="h-[100px] md:h-[130px] text-center flex flex-col justify-center">
+        <div className="h-[70px] sm:h-[90px] md:h-[130px] text-center flex flex-col justify-center">
           {/* Price display */}
-          <div className="h-[42px] md:h-[56px] flex items-center justify-center">
+          <div className="h-[32px] sm:h-[42px] md:h-[56px] flex items-center justify-center">
             <motion.div
               key={`${plan.id}-${billingPeriod}`}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.2 }}
-              className="flex items-baseline justify-center gap-1"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.15 }}
+              className="flex items-baseline justify-center gap-0.5 sm:gap-1"
             >
               {isFree ? (
-                <span className="text-2xl md:text-4xl lg:text-5xl font-bold text-gray-900">Gratuit</span>
+                <span className="text-lg sm:text-2xl md:text-4xl lg:text-5xl font-bold text-gray-900">Gratuit</span>
               ) : (
                 <>
-                  <span className={`text-2xl md:text-4xl lg:text-5xl font-bold tabular-nums ${
+                  <span className={`text-lg sm:text-2xl md:text-4xl lg:text-5xl font-bold tabular-nums ${
                     isPremium ? "text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400" : "text-gray-900"
                   }`}>
                     {displayPrice.toFixed(2).replace(".", ",")}
                   </span>
-                  <span className="text-base md:text-xl text-gray-900 font-medium">€</span>
-                  <span className="text-gray-500 text-xs md:text-sm">/mois</span>
+                  <span className="text-sm sm:text-base md:text-xl text-gray-900 font-medium">€</span>
+                  <span className="text-gray-500 text-[10px] sm:text-xs md:text-sm">/mois</span>
                 </>
               )}
             </motion.div>
           </div>
 
           {/* Savings badge */}
-          <div className={`h-[42px] md:h-[56px] flex flex-col items-center justify-center transition-opacity duration-200 ${
+          <div className={`h-[32px] sm:h-[42px] md:h-[56px] flex flex-col items-center justify-center transition-opacity duration-200 ${
             billingPeriod === "yearly" && !isFree ? "opacity-100" : "opacity-0 pointer-events-none"
           }`}>
-            <div className="inline-flex items-center gap-1.5 px-2 md:px-3 py-1 bg-green-500/10 rounded-full border border-green-500/20">
-              <svg className="w-3 h-3 md:w-4 md:h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+            <div className="inline-flex items-center gap-0.5 sm:gap-1 md:gap-1.5 px-1.5 sm:px-2 md:px-3 py-0.5 sm:py-1 bg-green-500/10 rounded-full border border-green-500/20">
+              <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
-              <span className="text-xs md:text-sm text-green-600 font-semibold">
-                {getSavingsText(plan.id) || `${yearlySavings.toFixed(0)}€ economises`}
+              <span className="text-[10px] sm:text-xs md:text-sm text-green-600 font-semibold">
+                {getSavingsText(plan.id) || `${yearlySavings.toFixed(0)}€`}
               </span>
             </div>
-            <p className="text-[10px] md:text-xs text-gray-400 mt-1">
+            <p className="text-[9px] sm:text-[10px] md:text-xs text-gray-400 mt-0.5 sm:mt-1 hidden sm:block">
               Facture {plan.price.yearly}€/an
             </p>
           </div>
         </div>
 
         {/* ZONE 3: CTA Button */}
-        <div className="h-[42px] md:h-[56px] relative flex items-center mb-4 md:mb-6">
+        <div className="h-[32px] sm:h-[42px] md:h-[56px] relative flex items-center mb-2 sm:mb-4 md:mb-6">
           {/* Glow effect behind button for popular plan */}
           {isPopular && (
-            <div className="absolute inset-0 bg-[#F8935D]/30 rounded-xl blur-xl" />
+            <div className="absolute inset-0 bg-[#F8935D]/30 rounded-lg sm:rounded-xl blur-md sm:blur-xl" />
           )}
           {isPremium && (
-            <div className="absolute inset-0 bg-amber-500/20 rounded-xl blur-xl" />
+            <div className="absolute inset-0 bg-amber-500/20 rounded-lg sm:rounded-xl blur-md sm:blur-xl" />
           )}
 
           <motion.div
@@ -1885,20 +3502,20 @@ function PricingCard({
             <Link
               href="/signup"
               className={`
-                relative w-full h-full flex items-center justify-center px-4 rounded-xl font-semibold text-xs md:text-sm
+                relative w-full h-full flex items-center justify-center px-2 sm:px-3 md:px-4 rounded-lg sm:rounded-xl font-semibold text-[10px] sm:text-xs md:text-sm
                 transition-all duration-300 overflow-hidden
                 ${(isPopular || isPremium) ? "shimmer-cta" : ""}
                 ${isPopular
-                  ? "bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white shadow-lg shadow-[#F8935D]/30 hover:shadow-xl hover:shadow-[#F8935D]/40"
+                  ? "bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white shadow-md sm:shadow-lg shadow-[#F8935D]/30 hover:shadow-xl hover:shadow-[#F8935D]/40"
                   : isPremium
-                    ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/30 hover:shadow-xl hover:shadow-amber-500/40"
+                    ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md sm:shadow-lg shadow-amber-500/30 hover:shadow-xl hover:shadow-amber-500/40"
                     : "bg-gray-100 hover:bg-[#F8935D]/10 text-gray-900 border border-gray-200 hover:border-[#F8935D]/40 hover:text-[#F76B54]"
                 }
               `}
             >
-              <span className="relative z-10 flex items-center justify-center gap-2">
+              <span className="relative z-10 flex items-center justify-center gap-1 sm:gap-2">
                 {getCTALabel(plan.id, billingPeriod === "yearly")}
-                <svg className="w-3 h-3 md:w-4 md:h-4 hidden sm:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 hidden sm:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
               </span>
@@ -1907,8 +3524,8 @@ function PricingCard({
         </div>
 
         {/* ZONE 4: Features list */}
-        <div className="flex-1 pt-4 border-t border-gray-200">
-          <ul className="space-y-2 md:space-y-2.5">
+        <div className="flex-1 pt-2 sm:pt-3 md:pt-4 border-t border-gray-200">
+          <ul className="space-y-1 sm:space-y-1.5 md:space-y-2.5">
             {coreFeatures.map((feature, idx) => (
               <FeatureListItem key={idx} feature={feature} index={idx} />
             ))}
@@ -1916,31 +3533,34 @@ function PricingCard({
 
           {/* "Voir plus" toggle for secondary features */}
           {includedSecondaryCount > 0 && (
-            <div className="mt-4">
-              <button
+            <div className="mt-2 sm:mt-3 md:mt-4">
+              <motion.button
                 onClick={onToggleFeatures}
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
                 className={`
-                  w-full flex items-center justify-center gap-2 py-2 px-3
-                  text-xs md:text-sm font-medium rounded-lg
-                  transition-all duration-200
+                  w-full flex items-center justify-center gap-1 sm:gap-2 py-1.5 sm:py-2 px-2 sm:px-3 md:px-4
+                  text-[10px] sm:text-xs md:text-sm font-medium rounded-md sm:rounded-lg md:rounded-xl
+                  transition-colors duration-200 cursor-pointer
                   ${showMoreFeatures
-                    ? "bg-[#F8935D]/10 text-[#F8935D] border border-[#F8935D]/20"
-                    : "bg-gray-100 text-gray-500 hover:bg-gray-200 border border-gray-200"
+                    ? "bg-[#F8935D]/10 text-[#F8935D] border border-[#F8935D]/30 shadow-sm"
+                    : "bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-gray-800 border border-gray-200"
                   }
                 `}
               >
-                {showMoreFeatures ? "Voir moins" : `+${includedSecondaryCount} fonctionnalites`}
+                <span className="hidden sm:inline">{showMoreFeatures ? "Voir moins" : `Voir +${includedSecondaryCount} fonctionnalites`}</span>
+                <span className="inline sm:hidden">{showMoreFeatures ? "Moins" : `+${includedSecondaryCount}`}</span>
                 <motion.svg
-                  className="w-3 h-3 md:w-4 md:h-4"
+                  className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
                   animate={{ rotate: showMoreFeatures ? 180 : 0 }}
-                  transition={{ duration: 0.2 }}
+                  transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </motion.svg>
-              </button>
+              </motion.button>
 
               {/* Secondary features - Collapsible */}
               <AnimatePresence initial={false}>
@@ -1949,12 +3569,28 @@ function PricingCard({
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.25, ease: "easeInOut" }}
+                    transition={{
+                      height: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
+                      opacity: { duration: 0.2, ease: "easeOut" }
+                    }}
                     className="overflow-hidden"
                   >
-                    <ul className="space-y-2 md:space-y-2.5 mt-4 pt-4 border-t border-gray-200">
+                    <ul className="space-y-1 sm:space-y-1.5 md:space-y-2.5 mt-2 sm:mt-3 md:mt-4 pt-2 sm:pt-3 md:pt-4 border-t border-gray-100">
                       {secondaryFeatures.filter(f => f.included).map((feature, idx) => (
-                        <FeatureListItem key={idx} feature={feature} index={idx} />
+                        <motion.li
+                          key={idx}
+                          initial={{ opacity: 0, x: -8 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: idx * 0.03, duration: 0.2 }}
+                          className="flex items-start gap-1.5 sm:gap-2 md:gap-3"
+                        >
+                          <div className="flex-shrink-0 w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded-full flex items-center justify-center mt-0.5 bg-green-500/20 text-green-600">
+                            <svg className="w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                          <span className="text-[10px] sm:text-xs md:text-sm text-gray-600">{feature.text}</span>
+                        </motion.li>
                       ))}
                     </ul>
                   </motion.div>
@@ -1965,23 +3601,24 @@ function PricingCard({
         </div>
 
         {/* ZONE 5: Trust badge */}
-        <div className="h-10 md:h-12 mt-auto pt-3 border-t border-gray-200 flex items-center justify-center">
+        <div className="h-8 sm:h-10 md:h-12 mt-auto pt-2 sm:pt-2.5 md:pt-3 border-t border-gray-200 flex items-center justify-center">
           {!isFree ? (
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.6 }}
-              className="text-[10px] md:text-xs text-gray-400 flex items-center justify-center gap-1.5"
+              className="text-[9px] sm:text-[10px] md:text-xs text-gray-400 flex items-center justify-center gap-0.5 sm:gap-1 md:gap-1.5"
             >
-              <svg className="w-3 h-3 md:w-3.5 md:h-3.5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3.5 md:h-3.5 text-green-500 hidden sm:inline" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
               </svg>
-              <span className="hidden md:inline">Sans engagement • Annulation a tout moment</span>
+              <span className="hidden md:inline">Sans engagement &bull; Annulation a tout moment</span>
               <span className="inline md:hidden">Sans engagement</span>
             </motion.p>
           ) : (
-            <p className="text-[10px] md:text-xs text-gray-400">
-              Ideal pour decouvrir Posty
+            <p className="text-[9px] sm:text-[10px] md:text-xs text-gray-400">
+              <span className="hidden sm:inline">Decouvrez Posty sans engagement</span>
+              <span className="inline sm:hidden">Gratuit</span>
             </p>
           )}
         </div>
@@ -1990,137 +3627,13 @@ function PricingCard({
   );
 }
 
-// Billing Toggle Component - matches subscription page
-function BillingToggle({
-  isYearly,
-  onChange,
-}: {
-  isYearly: boolean;
-  onChange: (isYearly: boolean) => void;
-}) {
-  const [displayPercentage, setDisplayPercentage] = useState(0);
-
-  useEffect(() => {
-    if (isYearly) {
-      const duration = 600;
-      const steps = 20;
-      const increment = 17 / steps;
-      let current = 0;
-
-      const timer = setInterval(() => {
-        current += increment;
-        if (current >= 17) {
-          setDisplayPercentage(17);
-          clearInterval(timer);
-        } else {
-          setDisplayPercentage(Math.round(current));
-        }
-      }, duration / steps);
-
-      return () => clearInterval(timer);
-    } else {
-      setDisplayPercentage(0);
-    }
-  }, [isYearly]);
-
-  return (
-    <div className="inline-flex items-center justify-center">
-      {/* Invisible spacer to balance savings badge */}
-      <div className="mr-3 flex items-center opacity-0 pointer-events-none select-none" aria-hidden="true" style={{ width: '70px' }}>
-        <div className="px-2.5 py-1 bg-transparent rounded-full flex items-center gap-1">
-          <span className="text-sm font-bold">-17%</span>
-        </div>
-      </div>
-
-      {/* Centered container */}
-      <div className="flex items-center gap-4 flex-shrink-0">
-        {/* Monthly label */}
-        <button
-          type="button"
-          onClick={() => onChange(false)}
-          className={`
-            text-sm font-medium cursor-pointer select-none whitespace-nowrap transition-colors duration-200
-            ${!isYearly ? "text-gray-900" : "text-gray-500 hover:text-gray-700"}
-          `}
-        >
-          Mensuel
-        </button>
-
-        {/* Toggle switch */}
-        <label className="relative inline-block cursor-pointer shrink-0 w-[46px] h-[26px]">
-          <input
-            type="checkbox"
-            checked={isYearly}
-            onChange={(e) => onChange(e.target.checked)}
-            className="sr-only peer"
-          />
-          <span className="absolute inset-0 cursor-pointer rounded-full transition-colors duration-200 ease-out bg-gray-300 peer-checked:bg-[#F8935D] hover:bg-gray-400 peer-checked:hover:bg-[#F76B54]" />
-          <span
-            className="absolute top-1/2 bg-white rounded-full shadow-md pointer-events-none transition-transform duration-200 ease-out"
-            style={{
-              width: "20px",
-              height: "20px",
-              left: "3px",
-              transform: `translateY(-50%) translateX(${isYearly ? 20 : 0}px)`,
-            }}
-          />
-        </label>
-
-        {/* Yearly label */}
-        <button
-          type="button"
-          onClick={() => onChange(true)}
-          className={`
-            text-sm font-medium cursor-pointer select-none whitespace-nowrap transition-colors duration-200
-            ${isYearly ? "text-gray-900" : "text-gray-500 hover:text-gray-700"}
-          `}
-        >
-          Annuel
-        </button>
-      </div>
-
-      {/* Animated Savings badge */}
-      <div className="ml-3 flex items-center flex-shrink-0" style={{ width: '70px' }}>
-        <AnimatePresence mode="wait">
-          {isYearly && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              transition={{ type: "spring", stiffness: 500, damping: 30, duration: 0.3 }}
-              className="relative w-full"
-            >
-              <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-sm" />
-              <div className="relative px-2.5 py-1 bg-gradient-to-r from-emerald-500 to-green-500 text-white rounded-full shadow-lg shadow-emerald-500/25 flex items-center gap-1">
-                <svg className="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                <span className="text-sm font-bold tabular-nums whitespace-nowrap">
-                  -{displayPercentage}%
-                </span>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    </div>
-  );
-}
-
 function PricingSection() {
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("yearly");
-  const [expandedCardIds, setExpandedCardIds] = useState<string[]>([]);
+  const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
 
+  // Only one card can be expanded at a time
   const handleToggleFeatures = (planId: string) => {
-    setExpandedCardIds((prev) => {
-      if (prev.includes(planId)) {
-        return prev.filter((id) => id !== planId);
-      }
-      if (prev.length < 3) {
-        return [...prev, planId];
-      }
-      return [...prev.slice(1), planId];
-    });
+    setExpandedCardId((prev) => prev === planId ? null : planId);
   };
 
   const getYearlyMonthlyPrice = (plan: PlanConfig) => {
@@ -2134,23 +3647,23 @@ function PricingSection() {
   };
 
   return (
-    <section id="pricing" className="py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-[#FAE8DE]/50 to-[#FEF3EE] overflow-hidden">
-      <div className="max-w-6xl mx-auto">
+    <section id="pricing" className="py-16 md:py-24 2xl:py-28 px-4 sm:px-6 lg:px-8 2xl:px-12 bg-gradient-to-b from-[#FAE8DE]/50 to-[#FEF3EE] overflow-hidden">
+      <div className="max-w-6xl 2xl:max-w-7xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20, filter: "blur(8px)" }}
           whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, ease: smoothEase }}
-          className="text-center mb-12"
+          className="text-center mb-12 2xl:mb-16"
         >
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
-            Des tarifs{" "}
+          <h2 className="text-3xl md:text-4xl lg:text-5xl 2xl:text-[3.25rem] font-bold text-gray-900 mb-4">
+            Investissez dans votre{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
-              simples et transparents
+              croissance LinkedIn
             </span>
           </h2>
           <p className="text-gray-600 text-lg max-w-2xl mx-auto mb-10">
-            Choisissez le plan adapte a vos besoins et commencez a transformer votre presence LinkedIn
+            Un seul client signe rembourse votre abonnement annuel. Choisissez le plan qui accelere votre acquisition.
           </p>
 
           {/* Billing Toggle - Replicated from subscription page */}
@@ -2160,20 +3673,49 @@ function PricingSection() {
           />
         </motion.div>
 
-        {/* Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 lg:gap-8 items-start">
-          {PLANS.map((plan, index) => (
-            <PricingCard
-              key={plan.id}
-              plan={plan}
-              billingPeriod={billingPeriod}
-              yearlySavings={getYearlySavings(plan)}
-              yearlyMonthlyPrice={getYearlyMonthlyPrice(plan)}
-              index={index}
-              isFeaturesExpanded={expandedCardIds.includes(plan.id)}
-              onToggleFeatures={() => handleToggleFeatures(plan.id)}
-            />
-          ))}
+        {/* Pricing cards container — max-w-5xl matches subscription page */}
+        <div className="max-w-5xl mx-auto">
+          {/* Mobile: Free plan compact banner (hidden on sm+) */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4 }}
+            className="sm:hidden mb-4 p-3 bg-gradient-to-r from-[#F8935D]/5 via-[#F76B54]/5 to-[#F8935D]/5 border border-[#F8935D]/20 rounded-xl"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <h4 className="text-sm font-bold text-gray-900 mb-0.5">Plan Gratuit</h4>
+                <p className="text-[11px] text-gray-500">3 posts/jour &bull; Ideal pour decouvrir</p>
+              </div>
+              <Link
+                href="/signup"
+                className="px-3 py-1.5 bg-gray-100 hover:bg-[#F8935D]/10 active:bg-[#F8935D]/20 text-gray-700 hover:text-[#F76B54] text-[11px] font-semibold rounded-lg border border-gray-200 hover:border-[#F8935D]/40 transition-all duration-200"
+              >
+                Essayer
+              </Link>
+            </div>
+          </motion.div>
+
+          {/* Cards Grid: 2 cols mobile (Pro+Max), 3 cols sm+ (matching subscription page) */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4 md:gap-6 lg:gap-8 items-start">
+            {PLANS.map((plan, index) => (
+              <div
+                key={plan.id}
+                className={plan.price.monthly === 0 ? "hidden sm:block" : ""}
+              >
+                <PricingCard
+                  plan={plan}
+                  billingPeriod={billingPeriod}
+                  yearlySavings={getYearlySavings(plan)}
+                  yearlyMonthlyPrice={getYearlyMonthlyPrice(plan)}
+                  index={index}
+                  isFeaturesExpanded={expandedCardId === plan.id}
+                  onToggleFeatures={() => handleToggleFeatures(plan.id)}
+                />
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Trust Section */}
@@ -2205,95 +3747,467 @@ function PricingSection() {
 }
 
 // =============================================================================
+// CTA BANNER - Premium Final Conversion Section
+// =============================================================================
+function CtaBanner({
+  headline,
+  subtext,
+  ctaLabel,
+  id,
+}: {
+  headline: string;
+  subtext: string;
+  ctaLabel: string;
+  id?: string;
+}) {
+  const prefersReducedMotion = useReducedMotion();
+
+  return (
+    <section id={id} className="relative py-12 md:py-18 px-4 sm:px-6 lg:px-8 overflow-hidden">
+      {/* Light animated background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-gray-50 via-white to-gray-50/80">
+        {/* Animated gradient mesh */}
+        <motion.div
+          initial={{ opacity: 0.4 }}
+          animate={prefersReducedMotion ? {} : {
+            opacity: [0.4, 0.6, 0.4],
+            scale: [1, 1.1, 1],
+          }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-gradient-to-br from-[#F8935D]/15 to-[#F76B54]/10 rounded-full blur-[120px]"
+        />
+        <motion.div
+          initial={{ opacity: 0.3 }}
+          animate={prefersReducedMotion ? {} : {
+            opacity: [0.3, 0.5, 0.3],
+            scale: [1, 1.15, 1],
+          }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+          className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-gradient-to-br from-[#a855f7]/10 to-[#6366f1]/5 rounded-full blur-[100px]"
+        />
+        <motion.div
+          initial={{ opacity: 0.2 }}
+          animate={prefersReducedMotion ? {} : {
+            opacity: [0.2, 0.35, 0.2],
+            scale: [1, 1.08, 1],
+          }}
+          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 4 }}
+          className="absolute top-1/2 right-0 w-[350px] h-[350px] bg-gradient-to-br from-[#ec4899]/8 to-[#f43f5e]/5 rounded-full blur-[100px]"
+        />
+
+        {/* Grid overlay */}
+        <div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: `linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px)`,
+            backgroundSize: '50px 50px',
+          }}
+        />
+      </div>
+
+      <div className="relative z-10 max-w-5xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
+          whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.7, ease: premiumEase }}
+          className="text-center"
+        >
+          {/* Headline with gradient text */}
+          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+            <span className="text-gray-900">Chaque jour sans </span>
+            <span className="relative inline-block">
+              <span className="bg-gradient-to-r from-[#F8935D] via-[#f97316] to-[#F76B54] bg-clip-text text-transparent">
+                Posty
+              </span>
+              {/* Shimmer effect on Posty */}
+              <motion.span
+                initial={{ x: "-100%" }}
+                animate={prefersReducedMotion ? {} : { x: "200%" }}
+                transition={{ duration: 2, repeat: Infinity, repeatDelay: 3, ease: "easeInOut" }}
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent skew-x-12"
+                style={{ clipPath: "inset(0)" }}
+              />
+            </span>
+            <br className="hidden sm:block" />
+            <span className="text-gray-900"> est un </span>
+            <span className="relative inline-block">
+              <span className="bg-gradient-to-r from-[#ec4899] to-[#a855f7] bg-clip-text text-transparent">
+                client perdu
+              </span>
+            </span>
+          </h2>
+
+          {/* Subtext */}
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="text-gray-500 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed"
+          >
+            {subtext}
+          </motion.p>
+
+          {/* CTA Button with glow effect */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="relative inline-block"
+          >
+            {/* Glow behind button */}
+            <div className="absolute -inset-1 bg-gradient-to-r from-[#F8935D] to-[#F76B54] rounded-xl blur-lg opacity-30" />
+
+            <motion.div
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              className="relative"
+            >
+              <Link
+                href="/signup"
+                className="group relative inline-flex items-center justify-center gap-3 h-14 md:h-16 px-8 md:px-10 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white text-base md:text-lg font-semibold rounded-xl shadow-xl shadow-[#F8935D]/20 hover:shadow-2xl hover:shadow-[#F8935D]/30 transition-all duration-300 overflow-hidden"
+              >
+                {/* Button shimmer effect */}
+                <motion.span
+                  initial={{ x: "-100%" }}
+                  animate={prefersReducedMotion ? {} : { x: "200%" }}
+                  transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 2, ease: "easeInOut" }}
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"
+                />
+                <span className="relative">{ctaLabel}</span>
+                <motion.svg
+                  className="relative w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  animate={prefersReducedMotion ? {} : { x: [0, 4, 0] }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </motion.svg>
+              </Link>
+            </motion.div>
+          </motion.div>
+
+          {/* Trust signals */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+            className="mt-8 flex flex-wrap items-center justify-center gap-6 text-gray-400 text-sm"
+          >
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              <span>Sans carte bancaire</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              <span>Configuration en 2 min</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              <span>Annulation libre</span>
+            </div>
+          </motion.div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+// =============================================================================
+// FAQ SECTION - Accordion-Style Questions & Answers
+// =============================================================================
+const FAQ_ITEMS = [
+  {
+    question: "Comment fonctionne Posty exactement ?",
+    answer: "Posty utilise une IA strategique entrainee sur les meilleures pratiques LinkedIn B2B. Decrivez votre objectif business (trouver des clients, renforcer votre credibilite, etc.), et Posty genere instantanement des posts optimises pour la conversion. Vous pouvez aussi dicter vos idees a la voix.",
+  },
+  {
+    question: "Est-ce vraiment de l\u2019IA ou juste des templates ?",
+    answer: "Posty genere du contenu 100% original a chaque fois. Pas de templates pre-ecrits. L\u2019IA analyse votre secteur, votre audience et votre ton pour creer des posts uniques qui sonnent comme vous \u2014 pas comme un robot.",
+  },
+  {
+    question: "Les posts auront-ils l\u2019air d\u2019etre ecrits par moi ?",
+    answer: "Absolument. Posty s\u2019adapte a votre voix, votre style et votre positionnement. Plus vous l\u2019utilisez, plus il comprend votre ton. Vos lecteurs ne feront pas la difference avec un post que vous auriez ecrit vous-meme.",
+  },
+  {
+    question: "Quels resultats puis-je attendre ?",
+    answer: "Nos utilisateurs constatent en moyenne un engagement triple en 30 jours et signent leurs premiers clients LinkedIn en 60 a 90 jours. Un seul client signe rembourse generalement un an d\u2019abonnement.",
+  },
+  {
+    question: "Puis-je annuler a tout moment ?",
+    answer: "Oui, sans aucun engagement. Vous pouvez annuler votre abonnement en un clic depuis vos parametres. Pas de frais caches, pas de periode d\u2019engagement minimum.",
+  },
+  {
+    question: "Dois-je deja etre actif sur LinkedIn ?",
+    answer: "Pas necessairement. Posty est ideal aussi bien pour ceux qui debutent sur LinkedIn que pour les profils deja etablis. Si vous partez de zero, Posty vous aide a construire votre presence rapidement avec une strategie de contenu coherente.",
+  },
+  {
+    question: "Mes donnees sont-elles securisees ?",
+    answer: "Vos donnees sont chiffrees et hebergees en Europe, conformement au RGPD. Nous ne partageons jamais vos informations avec des tiers. Votre contenu genere vous appartient integralement.",
+  },
+  {
+    question: "Qu\u2019est-ce qui differencie Posty de ChatGPT ?",
+    answer: "ChatGPT est un outil generaliste. Posty est un specialiste LinkedIn B2B. Chaque post est optimise pour l\u2019algorithme LinkedIn, structure pour la conversion, et adapte a votre positionnement marche. C\u2019est la difference entre un couteau suisse et un outil de precision.",
+  },
+];
+
+function FaqItem({
+  item,
+  index,
+  isOpen,
+  onToggle,
+}: {
+  item: (typeof FAQ_ITEMS)[0];
+  index: number;
+  isOpen: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ delay: index * 0.08, duration: 0.5, ease: smoothEase }}
+      className="border-b border-gray-200 last:border-b-0"
+    >
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center justify-between py-6 text-left group"
+        aria-expanded={isOpen}
+      >
+        <span
+          className={`text-lg font-semibold pr-4 transition-colors duration-200 ${
+            isOpen ? "text-[#F8935D]" : "text-gray-900 group-hover:text-[#F8935D]"
+          }`}
+        >
+          {item.question}
+        </span>
+        <motion.div
+          animate={{ rotate: isOpen ? 45 : 0 }}
+          transition={{ duration: 0.2 }}
+          className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-200 ${
+            isOpen
+              ? "bg-[#F8935D]/10 text-[#F8935D]"
+              : "bg-gray-100 text-gray-400 group-hover:bg-[#F8935D]/10 group-hover:text-[#F8935D]"
+          }`}
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v12m6-6H6" />
+          </svg>
+        </motion.div>
+      </button>
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            className="overflow-hidden"
+          >
+            <p className="pb-6 text-gray-600 leading-relaxed max-w-3xl">
+              {item.answer}
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
+function FaqSection() {
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+
+  return (
+    <section id="faq" className="py-16 md:py-24 2xl:py-28 px-4 sm:px-6 lg:px-8 2xl:px-12 bg-gradient-to-b from-[#FEF3EE] to-[#FFF8F5] overflow-hidden">
+      <div className="max-w-3xl 2xl:max-w-4xl mx-auto">
+        {/* Section Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20, filter: "blur(8px)" }}
+          whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, ease: smoothEase }}
+          className="text-center mb-10 md:mb-16"
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-gray-100 to-gray-50 border border-gray-200 mb-6"
+          >
+            <span className="flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-[#F8935D] opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#F8935D]"></span>
+            </span>
+            <span className="text-sm font-medium text-gray-700">Questions frequentes</span>
+          </motion.div>
+
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-5">
+            Vous avez des{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
+              questions ?
+            </span>
+          </h2>
+          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+            Tout ce que vous devez savoir avant de commencer a generer des clients avec Posty.
+          </p>
+        </motion.div>
+
+        {/* Accordion */}
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-lg shadow-gray-100/60 px-8">
+          {FAQ_ITEMS.map((item, index) => (
+            <FaqItem
+              key={index}
+              item={item}
+              index={index}
+              isOpen={openIndex === index}
+              onToggle={() => setOpenIndex(openIndex === index ? null : index)}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// =============================================================================
 // FOOTER
 // =============================================================================
 function Footer() {
   return (
-    <footer className="border-t border-[#F0D5C8]/60 py-16 px-4 sm:px-6 lg:px-8 bg-[#FAE8DE]/40">
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
-          {/* Brand */}
-          <div className="md:col-span-2">
-            <Link href="/" className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-[#F8935D]/10">
-                <Image src="/logo-avec fond.jpg" alt="Posty" width={40} height={40} className="w-full h-full object-cover" />
+    <footer className="border-t border-[#F0D5C8]/60 py-8 md:py-16 2xl:py-20 px-4 sm:px-6 lg:px-8 2xl:px-12 bg-[#FAE8DE]/40">
+      <div className="max-w-7xl 2xl:max-w-[1400px] mx-auto">
+
+        {/* ─── MOBILE FOOTER (compact with all desktop content) ─── */}
+        <div className="md:hidden">
+          {/* Logo + Tagline + Socials */}
+          <div className="flex items-start justify-between gap-3 mb-4">
+            <div className="flex-1">
+              <Link href="/" className="flex items-center gap-2 mb-2">
+                <div className="w-7 h-7 rounded-lg overflow-hidden shadow-sm shadow-[#F8935D]/10">
+                  <Image src="/logo-avec fond.jpg" alt="Posty" width={28} height={28} className="w-full h-full object-cover" />
+                </div>
+                <span className="text-sm font-bold text-gray-900">Posty</span>
+              </Link>
+              <p className="text-[10px] text-gray-500 leading-tight max-w-[200px]">
+                L&apos;IA qui transforme votre LinkedIn en canal d&apos;acquisition clients.
+              </p>
+              <p className="text-[10px] text-[#F8935D] font-medium mt-1">
+                Chaque post = opportunite business
+              </p>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <a href="https://www.linkedin.com/company/posty" target="_blank" rel="noopener noreferrer" className="w-7 h-7 rounded-md bg-gray-100 hover:bg-[#F8935D]/10 flex items-center justify-center text-gray-400 hover:text-[#F8935D] transition-colors" aria-label="LinkedIn">
+                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" /></svg>
+              </a>
+              <a href="https://x.com/posty" target="_blank" rel="noopener noreferrer" className="w-7 h-7 rounded-md bg-gray-100 hover:bg-[#F8935D]/10 flex items-center justify-center text-gray-400 hover:text-[#F8935D] transition-colors" aria-label="X (Twitter)">
+                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
+              </a>
+            </div>
+          </div>
+
+          {/* Links — 3 columns: Navigation | Legal | Account */}
+          <div className="grid grid-cols-3 gap-x-3 gap-y-1 mb-4 text-[11px]">
+            {/* Navigation */}
+            <div>
+              <p className="text-gray-800 font-semibold mb-1.5 text-[10px] uppercase tracking-wide">Navigation</p>
+              <button onClick={() => document.querySelector("#features")?.scrollIntoView({ behavior: "smooth" })} className="block text-left text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">Caracteristiques</button>
+              <button onClick={() => document.querySelector("#testimonials")?.scrollIntoView({ behavior: "smooth" })} className="block text-left text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">Temoignages</button>
+              <button onClick={() => document.querySelector("#pricing")?.scrollIntoView({ behavior: "smooth" })} className="block text-left text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">Tarifs</button>
+              <button onClick={() => document.querySelector("#faq")?.scrollIntoView({ behavior: "smooth" })} className="block text-left text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">FAQ</button>
+            </div>
+            {/* Legal */}
+            <div>
+              <p className="text-gray-800 font-semibold mb-1.5 text-[10px] uppercase tracking-wide">Legal</p>
+              <Link href="/legal/privacy" className="block text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">Confidentialite</Link>
+              <Link href="/legal/terms" className="block text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">CGU</Link>
+              <Link href="/legal/notices" className="block text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">Mentions legales</Link>
+            </div>
+            {/* Account */}
+            <div>
+              <p className="text-gray-800 font-semibold mb-1.5 text-[10px] uppercase tracking-wide">Compte</p>
+              <Link href="/login" className="block text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">Connexion</Link>
+              <Link href="/signup" className="block text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">Inscription</Link>
+              <Link href="/about" className="block text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">A propos</Link>
+            </div>
+          </div>
+
+          {/* Copyright */}
+          <div className="pt-3 border-t border-[#F0D5C8]/60 flex items-center justify-between">
+            <p className="text-gray-400 text-[10px]">© {new Date().getFullYear()} Posty. Tous droits reserves.</p>
+            <p className="text-gray-400 text-[10px]">Concu en France 🇫🇷</p>
+          </div>
+        </div>
+
+        {/* ─── DESKTOP FOOTER (full) ─── */}
+        <div className="hidden md:block">
+          <div className="grid grid-cols-4 gap-12 mb-12">
+            {/* Brand */}
+            <div className="col-span-2">
+              <Link href="/" className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-[#F8935D]/10">
+                  <Image src="/logo-avec fond.jpg" alt="Posty" width={40} height={40} className="w-full h-full object-cover" />
+                </div>
+                <span className="text-xl font-bold text-gray-900">Posty</span>
+              </Link>
+              <p className="text-gray-500 max-w-sm">
+                L&apos;IA strategique qui transforme votre presence LinkedIn en canal d&apos;acquisition clients. Plus de contenu. Plus de visibilite. Plus de revenus.
+              </p>
+              <p className="text-[#F8935D] font-medium text-sm mt-3">
+                Transformez chaque post en opportunite business.
+              </p>
+              <div className="flex items-center gap-3 mt-4">
+                <a href="https://www.linkedin.com/company/posty" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-lg bg-gray-100 hover:bg-[#F8935D]/10 flex items-center justify-center text-gray-400 hover:text-[#F8935D] transition-all duration-200" aria-label="LinkedIn">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" /></svg>
+                </a>
+                <a href="https://x.com/posty" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-lg bg-gray-100 hover:bg-[#F8935D]/10 flex items-center justify-center text-gray-400 hover:text-[#F8935D] transition-all duration-200" aria-label="X (Twitter)">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
+                </a>
               </div>
-              <span className="text-xl font-bold text-gray-900">Posty</span>
-            </Link>
-            <p className="text-gray-500 max-w-sm">
-              L&apos;outil IA qui transforme vos idees en posts LinkedIn percutants.
-              Gagnez du temps, gagnez en visibilite.
-            </p>
+            </div>
+
+            {/* Navigation */}
+            <div>
+              <h4 className="text-gray-900 font-semibold mb-4">Navigation</h4>
+              <ul className="space-y-3">
+                <li><button onClick={() => document.querySelector("#features")?.scrollIntoView({ behavior: "smooth" })} className="text-gray-500 hover:text-[#F8935D] transition-colors">Caracteristiques</button></li>
+                <li><button onClick={() => document.querySelector("#testimonials")?.scrollIntoView({ behavior: "smooth" })} className="text-gray-500 hover:text-[#F8935D] transition-colors">Temoignages</button></li>
+                <li><button onClick={() => document.querySelector("#pricing")?.scrollIntoView({ behavior: "smooth" })} className="text-gray-500 hover:text-[#F8935D] transition-colors">Tarifs</button></li>
+                <li><button onClick={() => document.querySelector("#faq")?.scrollIntoView({ behavior: "smooth" })} className="text-gray-500 hover:text-[#F8935D] transition-colors">FAQ</button></li>
+                <li><Link href="/about" className="text-gray-500 hover:text-[#F8935D] transition-colors">A propos</Link></li>
+              </ul>
+            </div>
+
+            {/* Legal */}
+            <div>
+              <h4 className="text-gray-900 font-semibold mb-4">Legal</h4>
+              <ul className="space-y-3">
+                <li><Link href="/legal/privacy" className="text-gray-500 hover:text-[#F8935D] transition-colors">Politique de confidentialite</Link></li>
+                <li><Link href="/legal/terms" className="text-gray-500 hover:text-[#F8935D] transition-colors">Conditions d&apos;utilisation</Link></li>
+                <li><Link href="/legal/notices" className="text-gray-500 hover:text-[#F8935D] transition-colors">Mentions legales</Link></li>
+              </ul>
+            </div>
           </div>
 
-          {/* Navigation */}
-          <div>
-            <h4 className="text-gray-900 font-semibold mb-4">Navigation</h4>
-            <ul className="space-y-3">
-              <li>
-                <button
-                  onClick={() => document.querySelector("#features")?.scrollIntoView({ behavior: "smooth" })}
-                  className="text-gray-500 hover:text-[#F8935D] transition-colors"
-                >
-                  Caracteristiques
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => document.querySelector("#testimonials")?.scrollIntoView({ behavior: "smooth" })}
-                  className="text-gray-500 hover:text-[#F8935D] transition-colors"
-                >
-                  Temoignages
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => document.querySelector("#pricing")?.scrollIntoView({ behavior: "smooth" })}
-                  className="text-gray-500 hover:text-[#F8935D] transition-colors"
-                >
-                  Tarifs
-                </button>
-              </li>
-              <li>
-                <Link href="/about" className="text-gray-500 hover:text-[#F8935D] transition-colors">
-                  A propos
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Legal */}
-          <div>
-            <h4 className="text-gray-900 font-semibold mb-4">Legal</h4>
-            <ul className="space-y-3">
-              <li>
-                <Link href="/legal/privacy" className="text-gray-500 hover:text-[#F8935D] transition-colors">
-                  Politique de confidentialite
-                </Link>
-              </li>
-              <li>
-                <Link href="/legal/terms" className="text-gray-500 hover:text-[#F8935D] transition-colors">
-                  Conditions d&apos;utilisation
-                </Link>
-              </li>
-              <li>
-                <Link href="/legal/notices" className="text-gray-500 hover:text-[#F8935D] transition-colors">
-                  Mentions legales
-                </Link>
-              </li>
-            </ul>
+          {/* Bottom */}
+          <div className="pt-8 border-t border-[#F0D5C8]/60 flex flex-row items-center justify-between gap-4">
+            <p className="text-gray-500 text-sm">© {new Date().getFullYear()} Posty. Tous droits reserves.</p>
+            <p className="text-gray-500 text-sm">Concu et heberge en France</p>
           </div>
         </div>
 
-        {/* Bottom */}
-        <div className="pt-8 border-t border-[#F0D5C8]/60 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-gray-500 text-sm">
-            © {new Date().getFullYear()} Posty. Tous droits reserves.
-          </p>
-          <p className="text-gray-500 text-sm">
-            Fait avec passion en France
-          </p>
-        </div>
       </div>
     </footer>
   );
@@ -2307,12 +4221,26 @@ export default function LandingPage() {
   const router = useRouter();
 
   // Force light mode on landing page - ignore system dark mode preference
+  // Enable full scrolling (mouse wheel, trackpad, touch, keyboard arrows, space, page up/down)
   useEffect(() => {
     const root = document.documentElement;
     root.classList.remove("dark");
     root.classList.add("light");
     root.style.colorScheme = "light";
     root.setAttribute("data-theme", "light");
+
+    // Enable scrolling on landing page using CSS class
+    document.body.classList.add("landing-scroll-enabled");
+    document.documentElement.classList.add("landing-scroll-enabled");
+
+    // Remove any classes that might block scroll
+    document.body.classList.remove("pwa-mobile", "no-scroll", "sidebar-open", "landing-no-scroll");
+    document.documentElement.classList.remove("landing-no-scroll");
+
+    return () => {
+      document.body.classList.remove("landing-scroll-enabled");
+      document.documentElement.classList.remove("landing-scroll-enabled");
+    };
   }, []);
 
   useEffect(() => {
@@ -2330,16 +4258,35 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-gray-900">
+    <div
+      className="min-h-screen bg-white text-gray-900"
+      style={{
+        overflowY: "auto",
+        overflowX: "hidden",
+        minHeight: "100vh",
+        WebkitOverflowScrolling: "touch",
+        touchAction: "pan-y",
+      }}
+    >
       <Navbar />
+
+      {/* Hero Demo Section — opening with descent animation */}
+      <DemoSection />
 
       {/* All sections with soft orange/salmon background */}
       <div className="bg-[#FEF3EE]">
-        <DemoSection />
+        <KeyBenefitsSection />
         <FeaturesSection />
         <TestimonialsSection />
-        <PricingSection />
         <FounderSection />
+        <PricingSection />
+        <FaqSection />
+        <CtaBanner
+          id="final-cta"
+          headline="Chaque jour sans Posty est un client perdu"
+          subtext="Vos concurrents publient deja. A vous de jouer."
+          ctaLabel="Generer mon premier post"
+        />
         <Footer />
       </div>
     </div>

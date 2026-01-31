@@ -284,6 +284,8 @@ export const en = {
   nav: {
     chat: "Chat",
     history: "History",
+    schedule: "Schedule",
+    analytics: "Analytics",
     settings: "Settings",
     subscription: "Subscription",
     profile: "Profile",

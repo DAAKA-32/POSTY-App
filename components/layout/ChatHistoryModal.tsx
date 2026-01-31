@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { Post } from "@/types";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { useScrollLock } from "@/hooks/useScrollLock";
 
 interface ChatHistoryModalProps {
   isOpen: boolean;
@@ -31,15 +32,16 @@ export default function ChatHistoryModal({
     [onClose]
   );
 
+  // Centralized scroll lock
+  useScrollLock(isOpen);
+
   // Add event listener for escape key
   useEffect(() => {
     if (isOpen) {
       document.addEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = "hidden";
     }
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = "";
     };
   }, [isOpen, handleKeyDown]);
 

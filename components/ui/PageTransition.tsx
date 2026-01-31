@@ -2,6 +2,7 @@
 
 import { ReactNode, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import { useScrollLock } from "@/hooks/useScrollLock";
 
 // ============== PAGE TRANSITION WRAPPER ==============
 
@@ -188,17 +189,13 @@ export function DrawerTransition({
 }: DrawerTransitionProps) {
   const [shouldRender, setShouldRender] = useState(show);
 
+  // Centralized scroll lock
+  useScrollLock(show);
+
   useEffect(() => {
     if (show) {
       setShouldRender(true);
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
     }
-
-    return () => {
-      document.body.style.overflow = "";
-    };
   }, [show]);
 
   const handleTransitionEnd = () => {

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
+import { useScrollLock } from "@/hooks/useScrollLock";
 
 interface NavLink {
   label: string;
@@ -56,41 +57,9 @@ const navLinks: NavLink[] = [
 
 export default function LandingNavbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const scrollPositionRef = useRef(0);
 
-  // Block scroll when mobile menu is open and restore position on close
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    if (mobileMenuOpen) {
-      // Save current scroll position
-      scrollPositionRef.current = window.scrollY;
-
-      // Block scroll by fixing body position
-      document.body.style.position = "fixed";
-      document.body.style.top = `-${scrollPositionRef.current}px`;
-      document.body.style.width = "100%";
-      document.body.style.overflow = "hidden";
-    } else {
-      // Restore scroll
-      const scrollY = scrollPositionRef.current;
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.width = "";
-      document.body.style.overflow = "";
-
-      // Restore exact scroll position
-      window.scrollTo(0, scrollY);
-    }
-
-    // Cleanup on unmount
-    return () => {
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.width = "";
-      document.body.style.overflow = "";
-    };
-  }, [mobileMenuOpen]);
+  // Centralized scroll lock when mobile menu is open
+  useScrollLock(mobileMenuOpen);
 
   const handleScrollTo = useCallback(
     (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {

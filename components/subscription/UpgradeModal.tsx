@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuota } from "@/contexts/QuotaContext";
-import { SUBSCRIPTION_PLANS, getPlanById } from "@/types";
+import { getPlanConfig, getPlanCoreFeatures } from "@/lib/plans";
 import Button from "@/components/ui/Button";
 
 interface UpgradeModalProps {
@@ -15,7 +15,8 @@ export default function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
   const router = useRouter();
   const { currentPlan, dailyLimit, messagesUsedToday, resetsAt } = useQuota();
 
-  const proPlan = SUBSCRIPTION_PLANS.find((p) => p.id === "pro")!;
+  const proPlan = getPlanConfig("pro");
+  const proFeatures = getPlanCoreFeatures(proPlan);
 
   // Format reset time
   const formatResetTime = () => {
@@ -95,15 +96,15 @@ export default function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
               <div className="bg-dark-hover/50 rounded-xl p-4 mb-6">
                 <p className="text-sm font-medium text-white mb-3">Passez à Pro pour débloquer :</p>
                 <ul className="space-y-2">
-                  {proPlan.features
-                    .filter((f) => f.highlight)
+                  {proFeatures
+                    .filter((f) => f.included)
                     .slice(0, 3)
-                    .map((feature) => (
-                      <li key={feature.id} className="flex items-center gap-2 text-sm text-text-secondary">
+                    .map((feature, index) => (
+                      <li key={index} className="flex items-center gap-2 text-sm text-text-secondary">
                         <svg className="w-4 h-4 text-primary flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                         </svg>
-                        {feature.label}
+                        {feature.text}
                       </li>
                     ))}
                 </ul>
@@ -111,7 +112,7 @@ export default function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
 
               {/* Price highlight */}
               <div className="text-center mb-6">
-                <span className="text-3xl font-bold text-white">{proPlan.price.toFixed(2).replace(".", ",")}€</span>
+                <span className="text-3xl font-bold text-white">{proPlan.price.monthly.toFixed(2).replace(".", ",")}€</span>
                 <span className="text-text-secondary">/mois</span>
               </div>
 

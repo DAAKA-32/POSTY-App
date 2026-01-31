@@ -16,6 +16,11 @@ import {
   getPlanLimits,
   PlanConfig,
   PlanLimits,
+  isTestModeValid,
+  TEST_MODE_DURATION_MS,
+  getTrialDaysRemaining,
+  checkTrialEligibility,
+  formatTrialStatusMessage,
 } from "@/lib/plans";
 import {
   UserSubscription,
@@ -55,6 +60,16 @@ interface SubscriptionState {
   isTestMode: boolean;
   testPlan: PlanType | null;
 
+  // Trial state
+  isTrialing: boolean;
+  trialDaysRemaining: number;
+  trialPlan: PlanType | null;
+  trialEndsAt: Date | null;
+  trialEligible: boolean;
+
+  // Migration: true if user is on deprecated free plan and hasn't used trial yet
+  needsMigration: boolean;
+
   // Loading state
   loading: boolean;
   error: string | null;
@@ -91,6 +106,10 @@ interface SubscriptionContextValue extends SubscriptionState {
 
   // Subscription actions
   refreshSubscription: () => Promise<void>;
+
+  // Trial info
+  trialStatusMessage: string | null;
+  canStartTrial: boolean;
 }
 
 // ============================================
@@ -104,6 +123,7 @@ const defaultSubscription: UserSubscription = {
 };
 
 const defaultUsage: UserUsage = {
+  messagesUsedToday: 0,
   conversationsThisWeek: 0,
   conversationsThisMonth: 0,
 };
@@ -115,6 +135,14 @@ const defaultState: SubscriptionState = {
   planLimits: getPlanLimits("free"),
   isTestMode: false,
   testPlan: null,
+  // Trial state
+  isTrialing: false,
+  trialDaysRemaining: 0,
+  trialPlan: null,
+  trialEndsAt: null,
+  trialEligible: true, // Assume eligible until we check
+  // Migration
+  needsMigration: false,
   loading: true,
   error: null,
 };
@@ -157,10 +185,12 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       // Parse subscription data
       const subscriptionData = userData.subscription || {};
       const usageData = userData.usage || {};
+      const quotaData = userData.quota || {};
 
-      // Determine effective plan (test mode takes precedence if active)
-      const isTestMode = userData.testMode?.active === true;
-      const testPlan = isTestMode ? (userData.testMode?.plan as PlanType) : null;
+      // Determine effective plan (test mode takes precedence if active and not expired)
+      const testModeResult = isTestModeValid(userData.testMode);
+      const isTestMode = testModeResult.isActive;
+      const testPlan = testModeResult.plan;
 
       // Map old plan names to new ones
       let stripePlan: PlanType = "free";
@@ -198,13 +228,36 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
         conversationsThisMonth = 0;
       }
 
+      // Daily quota: check if lastMessageDate is today (UTC)
+      const lastMessageDate = quotaData.lastMessageDate?.toDate?.();
+      let messagesUsedToday = 0;
+      if (lastMessageDate) {
+        const now = new Date();
+        const isSameDay =
+          lastMessageDate.getUTCFullYear() === now.getUTCFullYear() &&
+          lastMessageDate.getUTCMonth() === now.getUTCMonth() &&
+          lastMessageDate.getUTCDate() === now.getUTCDate();
+        if (isSameDay) {
+          messagesUsedToday = quotaData.dailyMessageCount || 0;
+        }
+      }
+
       const usage: UserUsage = {
+        messagesUsedToday,
+        lastMessageDate,
         conversationsThisWeek,
         conversationsThisMonth,
         lastConversationDate: usageData.lastConversationDate?.toDate(),
         weekStartDate,
         monthStartDate,
       };
+
+      // Trial state
+      const isTrialing = subscriptionData.status === "trialing";
+      const trialEndsAt = subscriptionData.trialEndsAt?.toDate() || null;
+      const trialDaysRemaining = getTrialDaysRemaining(trialEndsAt);
+      const trialPlan = subscriptionData.trialPlan as PlanType || null;
+      const trialEligibility = checkTrialEligibility(userData);
 
       setState({
         subscription,
@@ -213,6 +266,14 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
         planLimits: getPlanLimits(effectivePlan),
         isTestMode,
         testPlan,
+        // Trial state
+        isTrialing,
+        trialDaysRemaining,
+        trialPlan: isTrialing ? trialPlan : null,
+        trialEndsAt,
+        trialEligible: trialEligibility.eligible,
+        // Migration: user on deprecated free plan who hasn't used trial yet
+        needsMigration: stripePlan === "free" && trialEligibility.eligible,
         loading: false,
         error: null,
       });
@@ -303,10 +364,13 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     if (!user?.uid) return;
 
     try {
+      const now = new Date();
+      const expiresAt = new Date(now.getTime() + TEST_MODE_DURATION_MS);
       await updateDoc(doc(db, "users", user.uid), {
         "testMode.active": true,
         "testMode.plan": plan,
-        "testMode.activatedAt": Timestamp.fromDate(new Date()),
+        "testMode.activatedAt": Timestamp.fromDate(now),
+        "testMode.expiresAt": Timestamp.fromDate(expiresAt),
       });
 
       // Update local state immediately
@@ -436,6 +500,14 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
 
     // Subscription actions
     refreshSubscription: loadSubscription,
+
+    // Trial info
+    trialStatusMessage: formatTrialStatusMessage(
+      state.subscription.status,
+      state.trialEndsAt,
+      state.trialPlan || undefined
+    ),
+    canStartTrial: state.trialEligible && !state.isTrialing,
   }), [
     state,
     checkCanSendMessage,

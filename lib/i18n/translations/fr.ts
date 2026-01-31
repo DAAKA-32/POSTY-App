@@ -285,6 +285,7 @@ export const fr = {
     chat: "Chat",
     history: "Historique",
     schedule: "Programmes",
+    analytics: "Analytics",
     settings: "Paramètres",
     subscription: "Abonnement",
     profile: "Profil",

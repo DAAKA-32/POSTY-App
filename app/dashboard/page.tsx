@@ -63,6 +63,19 @@ export default function DashboardPage() {
     }
   }, [loadingStats]);
 
+  // Enable full scrolling on Dashboard page (mouse wheel, trackpad, touch, keyboard)
+  useEffect(() => {
+    document.documentElement.classList.add("dashboard-scroll-enabled");
+    document.body.classList.add("dashboard-scroll-enabled");
+    // Remove any classes that might block scroll
+    document.body.classList.remove("pwa-mobile", "no-scroll", "scroll-locked", "modal-open");
+
+    return () => {
+      document.documentElement.classList.remove("dashboard-scroll-enabled");
+      document.body.classList.remove("dashboard-scroll-enabled");
+    };
+  }, []);
+
   const handleOnboardingComplete = async () => {
     setShowOnboarding(false);
     if (user) {
@@ -73,7 +86,7 @@ export default function DashboardPage() {
   // Loading state
   if (loading || loadingStats) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-background-warm dark:bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="mx-auto mb-4">
             <AnimatedLogo size="xl" />
@@ -91,7 +104,16 @@ export default function DashboardPage() {
   const firstName = userProfile?.displayName?.split(" ")[0] || "utilisateur";
 
   return (
-    <div className="min-h-screen bg-background">
+    <div
+      className="min-h-screen bg-background-warm dark:bg-background"
+      style={{
+        overflowY: "auto",
+        overflowX: "hidden",
+        minHeight: "100vh",
+        WebkitOverflowScrolling: "touch",
+        touchAction: "pan-y",
+      }}
+    >
       {/* Onboarding */}
       {showOnboarding && (
         <DashboardOnboarding onComplete={handleOnboardingComplete} />
@@ -105,7 +127,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Header - Unified style with other pages */}
-      <header className="sticky top-0 z-40 bg-light-bg/80 dark:bg-dark-bg/80 backdrop-blur-xl border-b border-light-border dark:border-dark-border">
+      <header className="sticky top-0 z-40 bg-background-warm/80 dark:bg-dark-bg/80 backdrop-blur-xl border-b border-[#F8935D]/10 dark:border-dark-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
           <div className="relative flex items-center justify-between h-16">
             {/* Back button - Consistent with profile/settings */}
@@ -143,7 +165,7 @@ export default function DashboardPage() {
               </Link>
               <Link
                 href="/profile"
-                className="px-3 py-2 bg-gray-100 dark:bg-dark-hover hover:bg-gray-200 dark:hover:bg-dark-active border border-gray-200 dark:border-dark-border text-gray-700 dark:text-text-secondary hover:text-gray-900 dark:hover:text-white text-sm font-medium rounded-xl transition-all duration-200"
+                className="px-3 py-2 bg-[#F8935D]/10 dark:bg-dark-hover hover:bg-[#F8935D]/15 dark:hover:bg-dark-active border border-[#F8935D]/15 dark:border-dark-border text-gray-700 dark:text-text-secondary hover:text-gray-900 dark:hover:text-white text-sm font-medium rounded-xl transition-all duration-200"
               >
                 Mon profil
               </Link>

@@ -3,9 +3,11 @@ import {
   getLinkedInConnectionAdmin,
   updateLinkedInLastUsedAdmin,
   saveLinkedInPostAdmin,
+  checkUserQuotaAdmin,
 } from "@/lib/firestore-admin";
 import { adminDb, isAdminInitialized } from "@/lib/firebase-admin";
 import { Timestamp } from "firebase-admin/firestore";
+import { isPlatformAllowed, PlanType } from "@/lib/plans";
 
 /**
  * Route de publication sur LinkedIn
@@ -70,6 +72,36 @@ export async function POST(request: NextRequest) {
           message: "Cette route est réservée à la publication LinkedIn.",
         },
         { status: 400 }
+      );
+    }
+
+    // 🛡️ PLAN CHECK: Verify user's plan allows LinkedIn publishing
+    let userPlan: PlanType = "free";
+    try {
+      const quotaCheck = await checkUserQuotaAdmin(userId);
+      userPlan = quotaCheck.plan as PlanType;
+    } catch (planError) {
+      console.error("Plan check error:", planError);
+      // In production, fail if plan cannot be verified
+      if (process.env.NODE_ENV === "production") {
+        return NextResponse.json(
+          {
+            error: "service_unavailable",
+            message: "Service temporairement indisponible. Veuillez réessayer.",
+          },
+          { status: 503 }
+        );
+      }
+    }
+
+    if (!isPlatformAllowed(userPlan, "linkedin")) {
+      return NextResponse.json(
+        {
+          error: "platform_not_allowed",
+          message: "LinkedIn n'est pas disponible avec votre plan actuel.",
+          requiredPlan: "pro",
+        },
+        { status: 403 }
       );
     }
 

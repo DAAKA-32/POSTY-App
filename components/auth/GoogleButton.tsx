@@ -5,21 +5,29 @@ import { useAuth } from "@/contexts/AuthContext";
 
 interface GoogleButtonProps {
   onSuccess?: () => void;
+  onError?: (message: string) => void;
+  onStartAuth?: () => void; // Called before starting auth to clear any existing state
   label?: string;
 }
 
-export default function GoogleButton({ onSuccess, label = "Continuer avec Google" }: GoogleButtonProps) {
+export default function GoogleButton({ onSuccess, onError, onStartAuth, label = "Continuer avec Google" }: GoogleButtonProps) {
   const { signInWithGoogle } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
   const handleClick = async () => {
+    // Clear any existing error state before starting Google auth
+    onStartAuth?.();
+
     setIsLoading(true);
     try {
       await signInWithGoogle();
       onSuccess?.();
-    } catch (error) {
-      console.error("Google sign-in failed:", error);
+    } catch (err) {
+      // Only show error if it's a real error (not user cancellation)
+      if (err instanceof Error && err.message) {
+        onError?.(err.message);
+      }
     } finally {
       setIsLoading(false);
     }

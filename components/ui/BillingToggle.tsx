@@ -18,11 +18,10 @@ interface BillingToggleProps {
 /**
  * BillingToggle - Monthly/Yearly billing period selector
  *
- * UNIFORMIZED with Toggle.tsx component from consent preferences:
- * - Same pill-shaped track style
+ * Pill-shaped toggle with always-orange track (brand color #F8935D):
  * - Same thumb style (white circle with shadow)
- * - Same color scheme (bg-dark-border → bg-primary)
- * - Same CSS transitions
+ * - Always orange track — thumb position + label styling indicate active state
+ * - Smooth CSS transitions
  * - Dual labels (Mensuel/Annuel) for billing selection
  * - Animated savings badge
  *
@@ -43,25 +42,36 @@ export default function BillingToggle({
   const id = useId();
   const [displayPercentage, setDisplayPercentage] = useState(0);
 
-  // Animate the percentage when switching to yearly
+  // Haptic feedback — Android vibrate API, graceful no-op on iOS/desktop
+  const handleChange = (value: boolean) => {
+    if (value === isYearly) return;
+    try {
+      if (navigator?.vibrate) {
+        navigator.vibrate(10);
+      }
+    } catch {}
+    onChange(value);
+  };
+
+  // Animate the percentage when switching to yearly (requestAnimationFrame for smooth rendering)
   useEffect(() => {
     if (isYearly) {
-      const duration = 600; // ms
-      const steps = 20;
-      const increment = savingsPercentage / steps;
-      let current = 0;
+      const duration = 600;
+      let startTime: number | null = null;
+      let rafId: number;
 
-      const timer = setInterval(() => {
-        current += increment;
-        if (current >= savingsPercentage) {
-          setDisplayPercentage(savingsPercentage);
-          clearInterval(timer);
-        } else {
-          setDisplayPercentage(Math.round(current));
+      const animate = (timestamp: number) => {
+        if (!startTime) startTime = timestamp;
+        const elapsed = timestamp - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        setDisplayPercentage(Math.round(progress * savingsPercentage));
+        if (progress < 1) {
+          rafId = requestAnimationFrame(animate);
         }
-      }, duration / steps);
+      };
 
-      return () => clearInterval(timer);
+      rafId = requestAnimationFrame(animate);
+      return () => cancelAnimationFrame(rafId);
     } else {
       setDisplayPercentage(0);
     }
@@ -116,7 +126,7 @@ export default function BillingToggle({
         {/* Monthly label */}
         <button
           type="button"
-          onClick={() => onChange(false)}
+          onClick={() => handleChange(false)}
           className={`
             ${config.text} font-medium cursor-pointer select-none whitespace-nowrap
             transition-colors duration-200
@@ -139,21 +149,20 @@ export default function BillingToggle({
             type="checkbox"
             id={id}
             checked={isYearly}
-            onChange={(e) => onChange(e.target.checked)}
+            onChange={(e) => handleChange(e.target.checked)}
             className="sr-only peer"
             aria-label={isYearly ? "Facturation annuelle sélectionnée" : "Facturation mensuelle sélectionnée"}
           />
 
-          {/* Slider track - EXACT same style as Toggle.tsx */}
+          {/* Slider track - always orange (brand color) */}
           <span
             className={`
               absolute inset-0 cursor-pointer
               rounded-full
               transition-colors duration-200 ease-out
-              bg-gray-300 dark:bg-dark-border
-              peer-checked:bg-primary
-              peer-focus-visible:ring-2 peer-focus-visible:ring-primary/50 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-white dark:peer-focus-visible:ring-offset-dark-bg
-              hover:bg-gray-400 dark:hover:bg-dark-hover peer-checked:hover:bg-primary-hover
+              bg-[#F8935D]
+              hover:bg-[#F76B54]
+              peer-focus-visible:ring-2 peer-focus-visible:ring-[#F8935D]/50 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-white dark:peer-focus-visible:ring-offset-dark-bg
             `}
           />
 
@@ -172,7 +181,7 @@ export default function BillingToggle({
         {/* Yearly label */}
         <button
           type="button"
-          onClick={() => onChange(true)}
+          onClick={() => handleChange(true)}
           className={`
             ${config.text} font-medium cursor-pointer select-none whitespace-nowrap
             transition-colors duration-200

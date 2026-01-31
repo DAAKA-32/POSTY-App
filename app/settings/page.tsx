@@ -23,6 +23,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import toast from "@/components/ui/Toast";
 import { SubscriptionManagement, PlatformConnectionsSection } from "@/components/settings";
 import TestModePanel from "@/components/subscription/TestModePanel";
+import { useSubscription } from "@/contexts/SubscriptionContext";
 
 // Animation variants for staggered sections
 const containerVariants = {
@@ -52,6 +53,7 @@ function SettingsContent() {
   const { user, userProfile, deleteUserAccount, signOut } = useAuth();
   const { t } = useLanguage();
   const { theme, toggleTheme, isDark } = useTheme();
+  const { hasPersonalizedResponses, hasAudienceTargeting } = useSubscription();
   const router = useRouter();
   const [consent, setConsent] = useState<UserConsent | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -59,20 +61,16 @@ function SettingsContent() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showDeleteConversationsModal, setShowDeleteConversationsModal] = useState(false);
 
-  // Enable scrolling on this page (override global overflow:hidden)
+  // Enable full scrolling on Settings page (mouse wheel, trackpad, touch, keyboard)
   useEffect(() => {
-    document.documentElement.classList.add("scrollable-page");
-    document.body.style.overflow = "auto";
-    document.body.style.height = "auto";
-    document.documentElement.style.overflow = "auto";
-    document.documentElement.style.height = "auto";
+    document.documentElement.classList.add("settings-scroll-enabled");
+    document.body.classList.add("settings-scroll-enabled");
+    // Remove any classes that might block scroll
+    document.body.classList.remove("pwa-mobile", "no-scroll", "scroll-locked", "modal-open");
 
     return () => {
-      document.documentElement.classList.remove("scrollable-page");
-      document.body.style.overflow = "";
-      document.body.style.height = "";
-      document.documentElement.style.overflow = "";
-      document.documentElement.style.height = "";
+      document.documentElement.classList.remove("settings-scroll-enabled");
+      document.body.classList.remove("settings-scroll-enabled");
     };
   }, []);
 
@@ -205,7 +203,7 @@ function SettingsContent() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
+      <div className="min-h-screen bg-background-warm dark:bg-background flex flex-col items-center justify-center gap-4">
         <div className="w-10 h-10 md:w-12 md:h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
         <p className="text-text-secondary text-sm md:text-base">{t.common.loading}</p>
       </div>
@@ -214,16 +212,17 @@ function SettingsContent() {
 
   return (
     <div
-      className="min-h-screen bg-background"
+      className="min-h-screen bg-background-warm dark:bg-background"
       style={{
         overflowY: "auto",
         overflowX: "hidden",
         minHeight: "100vh",
         WebkitOverflowScrolling: "touch",
+        touchAction: "pan-y",
       }}
     >
       {/* Sticky Header with Back Button */}
-      <div className="sticky top-0 z-40 bg-light-bg/80 dark:bg-dark-bg/80 backdrop-blur-xl border-b border-light-border dark:border-dark-border">
+      <div className="sticky top-0 z-40 bg-background-warm/80 dark:bg-dark-bg/80 backdrop-blur-xl border-b border-[#F8935D]/10 dark:border-dark-border">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="relative flex items-center h-16">
             <button
@@ -288,7 +287,7 @@ function SettingsContent() {
             <motion.section
               variants={sectionVariants}
               whileHover={{ y: -4, scale: 1.005 }}
-              className="group relative overflow-hidden bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border hover:border-primary/20 rounded-xl p-4 md:p-5 lg:p-6 transition-all duration-300 hover:shadow-[0_0_30px_rgba(232,147,77,0.08)]"
+              className="group relative overflow-hidden bg-white/80 dark:bg-dark-card border border-[#F8935D]/10 dark:border-dark-border hover:border-primary/20 rounded-xl p-4 md:p-5 lg:p-6 transition-all duration-300 hover:shadow-[0_0_30px_rgba(232,147,77,0.08)]"
             >
               {/* AUTOSCROLL-style shimmer effect - ORANGE DOMINANT */}
               <motion.div
@@ -319,6 +318,7 @@ function SettingsContent() {
                 </motion.div>
                 <h2 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white">{t.settings.dataCollected}</h2>
               </div>
+              {/* Basic info - always visible */}
               <div className="space-y-0 divide-y divide-gray-200 dark:divide-dark-border">
                 <div className="flex items-center justify-between py-3 lg:py-4">
                   <span className="text-text-secondary text-sm lg:text-base">{t.settings.emailLabel}</span>
@@ -332,25 +332,112 @@ function SettingsContent() {
                     {userProfile?.displayName || t.settings.notSpecified}
                   </span>
                 </div>
-                <div className="flex items-center justify-between py-3 lg:py-4">
-                  <span className="text-text-secondary text-sm lg:text-base">{t.settings.sectorLabel}</span>
-                  <span className="text-gray-900 dark:text-white font-medium text-sm lg:text-base">
-                    {userProfile?.profile?.sector || t.settings.notSpecified}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between py-3 lg:py-4">
-                  <span className="text-text-secondary text-sm lg:text-base">{t.settings.roleLabel}</span>
-                  <span className="text-gray-900 dark:text-white font-medium text-sm lg:text-base">
-                    {userProfile?.profile?.role || t.settings.notSpecified}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between py-3 lg:py-4">
-                  <span className="text-text-secondary text-sm lg:text-base">{t.settings.linkedinStyleLabel}</span>
-                  <span className="text-gray-900 dark:text-white font-medium text-sm lg:text-base">
-                    {userProfile?.profile?.linkedinStyle || t.settings.notSpecified}
-                  </span>
+              </div>
+
+              {/* Personalization fields - locked for free users */}
+              <div className="relative mt-4">
+                {/* Locked overlay for free users */}
+                {!hasPersonalizedResponses && (
+                  <div className="absolute inset-0 bg-background-warm/60 dark:bg-dark-bg/60 backdrop-blur-[2px] rounded-xl flex items-center justify-center z-10">
+                    <div className="text-center px-4">
+                      <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-[#F8935D]/10 dark:bg-dark-hover flex items-center justify-center">
+                        <svg className="w-5 h-5 text-gray-400 dark:text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                      </div>
+                      <p className="text-sm text-gray-500 dark:text-text-muted mb-2">
+                        Activez un plan Pro ou Max pour exploiter ces donnees dans vos posts
+                      </p>
+                      <Link
+                        href="/subscription"
+                        className="inline-flex items-center gap-1 text-sm text-primary hover:text-accent transition-colors font-medium"
+                      >
+                        Voir les plans
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </Link>
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-0 divide-y divide-gray-200 dark:divide-dark-border rounded-xl border border-gray-200 dark:border-dark-border p-1">
+                  {/* Pro-level fields */}
+                  <div className="flex items-center justify-between py-3 lg:py-4 px-3">
+                    <span className="text-text-secondary text-sm lg:text-base">Type de profil</span>
+                    <span className="text-gray-900 dark:text-white font-medium text-sm lg:text-base">
+                      {userProfile?.profile?.profileType || t.settings.notSpecified}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between py-3 lg:py-4 px-3">
+                    <span className="text-text-secondary text-sm lg:text-base">{t.settings.sectorLabel}</span>
+                    <span className="text-gray-900 dark:text-white font-medium text-sm lg:text-base">
+                      {userProfile?.profile?.sector || t.settings.notSpecified}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between py-3 lg:py-4 px-3">
+                    <span className="text-text-secondary text-sm lg:text-base">{t.settings.roleLabel}</span>
+                    <span className="text-gray-900 dark:text-white font-medium text-sm lg:text-base">
+                      {userProfile?.profile?.role || t.settings.notSpecified}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between py-3 lg:py-4 px-3">
+                    <span className="text-text-secondary text-sm lg:text-base">Objectif principal</span>
+                    <span className="text-gray-900 dark:text-white font-medium text-sm lg:text-base">
+                      {userProfile?.profile?.objective || t.settings.notSpecified}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between py-3 lg:py-4 px-3">
+                    <span className="text-text-secondary text-sm lg:text-base">{t.settings.linkedinStyleLabel}</span>
+                    <span className="text-gray-900 dark:text-white font-medium text-sm lg:text-base">
+                      {userProfile?.profile?.linkedinStyle || t.settings.notSpecified}
+                    </span>
+                  </div>
+
+                  {/* Max-level fields */}
+                  <div className="relative">
+                    {hasPersonalizedResponses && !hasAudienceTargeting && (
+                      <div className="absolute inset-0 bg-background-warm/60 dark:bg-dark-bg/60 backdrop-blur-[2px] rounded-b-xl flex items-center justify-center z-10">
+                        <div className="text-center px-4">
+                          <p className="text-xs text-gray-500 dark:text-text-muted mb-1">
+                            Disponible avec le plan Max
+                          </p>
+                          <Link
+                            href="/subscription?plan=max"
+                            className="inline-flex items-center gap-1 text-xs text-primary hover:text-accent transition-colors font-medium"
+                          >
+                            Passer au Max
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </Link>
+                        </div>
+                      </div>
+                    )}
+                    <div className="divide-y divide-gray-200 dark:divide-dark-border">
+                      <div className="flex items-center justify-between py-3 lg:py-4 px-3">
+                        <span className="text-text-secondary text-sm lg:text-base">Audience cible</span>
+                        <span className="text-gray-900 dark:text-white font-medium text-sm lg:text-base">
+                          {userProfile?.profile?.targetAudience || t.settings.notSpecified}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between py-3 lg:py-4 px-3">
+                        <span className="text-text-secondary text-sm lg:text-base">Ton de communication</span>
+                        <span className="text-gray-900 dark:text-white font-medium text-sm lg:text-base">
+                          {userProfile?.profile?.communicationTone || t.settings.notSpecified}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between py-3 lg:py-4 px-3">
+                        <span className="text-text-secondary text-sm lg:text-base">Frequence de publication</span>
+                        <span className="text-gray-900 dark:text-white font-medium text-sm lg:text-base">
+                          {userProfile?.profile?.publishingFrequency || t.settings.notSpecified}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
+
               <Link
                 href="/profile"
                 className="
@@ -371,7 +458,7 @@ function SettingsContent() {
             <motion.section
               variants={sectionVariants}
               whileHover={{ y: -4, scale: 1.005 }}
-              className="group relative overflow-hidden bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border hover:border-primary/20 rounded-xl p-4 md:p-5 lg:p-6 transition-all duration-300 hover:shadow-[0_0_30px_rgba(232,147,77,0.08)]"
+              className="group relative overflow-hidden bg-white/80 dark:bg-dark-card border border-[#F8935D]/10 dark:border-dark-border hover:border-primary/20 rounded-xl p-4 md:p-5 lg:p-6 transition-all duration-300 hover:shadow-[0_0_30px_rgba(232,147,77,0.08)]"
             >
               {/* AUTOSCROLL-style shimmer effect - ORANGE DOMINANT */}
               <motion.div
@@ -425,7 +512,7 @@ function SettingsContent() {
             <motion.section
               variants={sectionVariants}
               whileHover={{ y: -2 }}
-              className="group bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border hover:border-primary/20 rounded-xl p-4 md:p-5 lg:p-6 transition-all duration-300 hover:shadow-[0_0_30px_rgba(232,147,77,0.08)]"
+              className="group bg-white/80 dark:bg-dark-card border border-[#F8935D]/10 dark:border-dark-border hover:border-primary/20 rounded-xl p-4 md:p-5 lg:p-6 transition-all duration-300 hover:shadow-[0_0_30px_rgba(232,147,77,0.08)]"
             >
               <div className="flex items-center gap-3 mb-4 lg:mb-5">
                 <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-gradient-to-br from-primary/15 to-accent/10 border border-primary/20 flex items-center justify-center group-hover:shadow-glow transition-shadow duration-300">
@@ -460,7 +547,7 @@ function SettingsContent() {
             <motion.section
               variants={sectionVariants}
               whileHover={{ y: -2 }}
-              className="group bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border hover:border-accent/20 rounded-xl p-4 md:p-5 lg:p-6 transition-all duration-300 hover:shadow-[0_0_30px_rgba(248,87,81,0.08)]"
+              className="group bg-white/80 dark:bg-dark-card border border-[#F8935D]/10 dark:border-dark-border hover:border-accent/20 rounded-xl p-4 md:p-5 lg:p-6 transition-all duration-300 hover:shadow-[0_0_30px_rgba(248,87,81,0.08)]"
             >
               <div className="flex items-center gap-3 mb-4 lg:mb-5">
                 <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-gradient-to-br from-accent/15 to-primary/10 border border-accent/20 flex items-center justify-center group-hover:shadow-glow-accent transition-shadow duration-300">
@@ -496,7 +583,7 @@ function SettingsContent() {
             <motion.section
               variants={sectionVariants}
               whileHover={{ y: -2 }}
-              className="group bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border hover:border-warning/20 rounded-xl p-4 md:p-5 lg:p-6 transition-all duration-300 hover:shadow-[0_0_30px_rgba(248,163,93,0.08)]"
+              className="group bg-white/80 dark:bg-dark-card border border-[#F8935D]/10 dark:border-dark-border hover:border-warning/20 rounded-xl p-4 md:p-5 lg:p-6 transition-all duration-300 hover:shadow-[0_0_30px_rgba(248,163,93,0.08)]"
             >
               <div className="flex items-center gap-3 mb-4 lg:mb-5">
                 <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-gradient-to-br from-warning/15 to-warning/5 border border-warning/20 flex items-center justify-center group-hover:shadow-[0_0_20px_rgba(248,163,93,0.35)] transition-shadow duration-300">
@@ -507,19 +594,19 @@ function SettingsContent() {
                 <h2 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white">{t.settings.gdprRights}</h2>
               </div>
               <div className="grid gap-2 md:gap-3 grid-cols-2 lg:grid-cols-4">
-                <div className="p-3 lg:p-4 bg-gray-50 dark:bg-dark-bg rounded-xl border border-gray-200 dark:border-dark-border hover:border-warning/20 transition-colors duration-200">
+                <div className="p-3 lg:p-4 bg-[#F8935D]/5 dark:bg-dark-bg rounded-xl border border-[#F8935D]/10 dark:border-dark-border hover:border-warning/20 transition-colors duration-200">
                   <p className="text-gray-900 dark:text-white font-medium text-xs lg:text-sm">{t.settings.rightAccess}</p>
                   <p className="text-xs text-text-muted mt-0.5 lg:mt-1">{t.settings.seeYourData}</p>
                 </div>
-                <div className="p-3 lg:p-4 bg-gray-50 dark:bg-dark-bg rounded-xl border border-gray-200 dark:border-dark-border hover:border-warning/20 transition-colors duration-200">
+                <div className="p-3 lg:p-4 bg-[#F8935D]/5 dark:bg-dark-bg rounded-xl border border-[#F8935D]/10 dark:border-dark-border hover:border-warning/20 transition-colors duration-200">
                   <p className="text-gray-900 dark:text-white font-medium text-xs lg:text-sm">{t.settings.rightRectification}</p>
                   <p className="text-xs text-text-muted mt-0.5 lg:mt-1">{t.settings.correctInfo}</p>
                 </div>
-                <div className="p-3 lg:p-4 bg-gray-50 dark:bg-dark-bg rounded-xl border border-gray-200 dark:border-dark-border hover:border-warning/20 transition-colors duration-200">
+                <div className="p-3 lg:p-4 bg-[#F8935D]/5 dark:bg-dark-bg rounded-xl border border-[#F8935D]/10 dark:border-dark-border hover:border-warning/20 transition-colors duration-200">
                   <p className="text-gray-900 dark:text-white font-medium text-xs lg:text-sm">{t.settings.rightErasure}</p>
                   <p className="text-xs text-text-muted mt-0.5 lg:mt-1">{t.settings.deleteData}</p>
                 </div>
-                <div className="p-3 lg:p-4 bg-gray-50 dark:bg-dark-bg rounded-xl border border-gray-200 dark:border-dark-border hover:border-warning/20 transition-colors duration-200">
+                <div className="p-3 lg:p-4 bg-[#F8935D]/5 dark:bg-dark-bg rounded-xl border border-[#F8935D]/10 dark:border-dark-border hover:border-warning/20 transition-colors duration-200">
                   <p className="text-gray-900 dark:text-white font-medium text-xs lg:text-sm">{t.settings.rightPortability}</p>
                   <p className="text-xs text-text-muted mt-0.5 lg:mt-1">{t.settings.exportData}</p>
                 </div>
@@ -530,7 +617,7 @@ function SettingsContent() {
             <motion.section
               variants={sectionVariants}
               whileHover={{ y: -4, scale: 1.005 }}
-              className="group relative overflow-hidden bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border hover:border-primary/20 rounded-xl p-4 md:p-5 lg:p-6 transition-all duration-300 hover:shadow-[0_0_30px_rgba(232,147,77,0.08)]"
+              className="group relative overflow-hidden bg-white/80 dark:bg-dark-card border border-[#F8935D]/10 dark:border-dark-border hover:border-primary/20 rounded-xl p-4 md:p-5 lg:p-6 transition-all duration-300 hover:shadow-[0_0_30px_rgba(232,147,77,0.08)]"
             >
               {/* AUTOSCROLL-style shimmer effect - ORANGE DOMINANT */}
               <motion.div
@@ -563,7 +650,7 @@ function SettingsContent() {
                 <h2 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white">{t.settings.actions}</h2>
               </div>
               <div className="space-y-3 lg:space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 lg:p-4 bg-gray-50 dark:bg-dark-bg rounded-xl border border-gray-200 dark:border-dark-border hover:border-primary/20 transition-colors duration-200">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 lg:p-4 bg-[#F8935D]/5 dark:bg-dark-bg rounded-xl border border-[#F8935D]/10 dark:border-dark-border hover:border-primary/20 transition-colors duration-200">
                   <div>
                     <p className="text-gray-900 dark:text-white font-medium text-sm lg:text-base">{t.settings.exportMyData}</p>
                     <p className="text-xs lg:text-sm text-text-muted mt-0.5">
@@ -583,7 +670,7 @@ function SettingsContent() {
                     {t.settings.export}
                   </Button>
                 </div>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 lg:p-4 bg-gray-50 dark:bg-dark-bg rounded-xl border border-gray-200 dark:border-dark-border hover:border-primary/20 transition-colors duration-200">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 lg:p-4 bg-[#F8935D]/5 dark:bg-dark-bg rounded-xl border border-[#F8935D]/10 dark:border-dark-border hover:border-primary/20 transition-colors duration-200">
                   <div>
                     <p className="text-gray-900 dark:text-white font-medium text-sm lg:text-base">{t.settings.logoutAction}</p>
                     <p className="text-xs lg:text-sm text-text-muted mt-0.5">
@@ -647,7 +734,7 @@ function SettingsContent() {
             <motion.section
               variants={sectionVariants}
               whileHover={{ y: -2 }}
-              className="group bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border hover:border-text-muted/30 rounded-xl p-4 md:p-5 lg:p-6 transition-all duration-300"
+              className="group bg-white/80 dark:bg-dark-card border border-[#F8935D]/10 dark:border-dark-border hover:border-text-muted/30 rounded-xl p-4 md:p-5 lg:p-6 transition-all duration-300"
             >
               <div className="flex items-center gap-3 mb-4 lg:mb-5">
                 <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-gradient-to-br from-text-muted/15 to-text-muted/5 border border-text-muted/20 flex items-center justify-center transition-shadow duration-300">
@@ -662,7 +749,7 @@ function SettingsContent() {
                   href="/legal/privacy"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-between p-3 lg:p-4 bg-gray-50 dark:bg-dark-bg rounded-xl border border-gray-200 dark:border-dark-border hover:border-primary/30 transition-all duration-200 group"
+                  className="flex items-center justify-between p-3 lg:p-4 bg-[#F8935D]/5 dark:bg-dark-bg rounded-xl border border-[#F8935D]/10 dark:border-dark-border hover:border-primary/30 transition-all duration-200 group"
                 >
                   <span className="text-gray-900 dark:text-white text-sm lg:text-base group-hover:text-primary transition-colors">
                     {t.settings.privacyPolicy}
@@ -675,7 +762,7 @@ function SettingsContent() {
                   href="/legal/terms"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-between p-3 lg:p-4 bg-gray-50 dark:bg-dark-bg rounded-xl border border-gray-200 dark:border-dark-border hover:border-primary/30 transition-all duration-200 group"
+                  className="flex items-center justify-between p-3 lg:p-4 bg-[#F8935D]/5 dark:bg-dark-bg rounded-xl border border-[#F8935D]/10 dark:border-dark-border hover:border-primary/30 transition-all duration-200 group"
                 >
                   <span className="text-gray-900 dark:text-white text-sm lg:text-base group-hover:text-primary transition-colors">
                     {t.settings.termsOfUse}
@@ -688,7 +775,7 @@ function SettingsContent() {
                   href="/legal/notices"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-between p-3 lg:p-4 bg-gray-50 dark:bg-dark-bg rounded-xl border border-gray-200 dark:border-dark-border hover:border-primary/30 transition-all duration-200 group"
+                  className="flex items-center justify-between p-3 lg:p-4 bg-[#F8935D]/5 dark:bg-dark-bg rounded-xl border border-[#F8935D]/10 dark:border-dark-border hover:border-primary/30 transition-all duration-200 group"
                 >
                   <span className="text-gray-900 dark:text-white text-sm lg:text-base group-hover:text-primary transition-colors">
                     {t.settings.legalNotices}

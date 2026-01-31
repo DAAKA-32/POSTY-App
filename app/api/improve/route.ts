@@ -11,6 +11,7 @@ import {
 } from "@/lib/firestore-admin";
 import { isAdminInitialized } from "@/lib/firebase-admin";
 import { canImprovePost } from "@/lib/plan-features";
+import { getPlanLimits, getMaxTokensForPlan, PlanType } from "@/lib/plans";
 import { SubscriptionPlan, PostInsights } from "@/types";
 
 /**
@@ -77,7 +78,28 @@ export async function POST(request: NextRequest) {
         }
       } catch (error) {
         console.error("Plan check error:", error);
+        if (process.env.NODE_ENV === "production") {
+          return new Response(
+            JSON.stringify({
+              error: "service_unavailable",
+              message: language === "fr"
+                ? "Service temporairement indisponible. Veuillez réessayer."
+                : "Service temporarily unavailable. Please try again.",
+            }),
+            { status: 503, headers: { "Content-Type": "application/json" } }
+          );
+        }
       }
+    } else if (process.env.NODE_ENV === "production") {
+      return new Response(
+        JSON.stringify({
+          error: "service_unavailable",
+          message: language === "fr"
+            ? "Service temporairement indisponible. Veuillez réessayer."
+            : "Service temporarily unavailable. Please try again.",
+        }),
+        { status: 503, headers: { "Content-Type": "application/json" } }
+      );
     }
 
     // Only PRO and MAX users can improve posts
@@ -94,6 +116,26 @@ export async function POST(request: NextRequest) {
         { status: 403, headers: { "Content-Type": "application/json" } }
       );
     }
+
+    // ========== PROMPT LENGTH ENFORCEMENT ==========
+    const planLimits = getPlanLimits(userPlan as PlanType);
+    const inputLength = existingPost.length + (instructions?.length || 0);
+    if (inputLength > planLimits.maxCharactersPerPrompt) {
+      return new Response(
+        JSON.stringify({
+          error: "prompt_too_long",
+          message: language === "fr"
+            ? `Votre texte dépasse la limite de ${planLimits.maxCharactersPerPrompt} caractères pour votre plan.`
+            : `Your text exceeds the ${planLimits.maxCharactersPerPrompt} character limit for your plan.`,
+          limit: planLimits.maxCharactersPerPrompt,
+          current: inputLength,
+        }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // Plan-based max tokens for response length
+    const maxTokens = getMaxTokensForPlan(userPlan as PlanType);
 
     // Check OpenAI availability
     if (!isOpenAIConfigured()) {
@@ -146,7 +188,7 @@ export async function POST(request: NextRequest) {
               { role: "user", content: userMessage },
             ],
             temperature: 0.7,
-            max_tokens: 1200,
+            max_tokens: maxTokens,
             stream: true,
           });
 
