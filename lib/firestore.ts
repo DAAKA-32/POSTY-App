@@ -95,6 +95,9 @@ export async function updateUserProfile(
     updateData.publishingFrequency = data.profile.publishingFrequency;
     updateData.profile = data.profile;
   }
+  if (data.branding !== undefined) {
+    updateData.branding = data.branding;
+  }
 
   await updateDoc(userRef, updateData);
 }

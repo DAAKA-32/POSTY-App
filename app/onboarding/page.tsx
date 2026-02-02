@@ -375,6 +375,18 @@ export default function OnboardingPage() {
     }
   }, [user, userProfile, loading, router, shouldShowOnboarding, showUpsell]);
 
+  // Enable full scrolling on Onboarding page (mouse wheel, trackpad, touch, keyboard)
+  useEffect(() => {
+    document.documentElement.classList.add("onboarding-scroll-enabled");
+    document.body.classList.add("onboarding-scroll-enabled");
+    document.body.classList.remove("pwa-mobile", "no-scroll", "scroll-locked", "modal-open");
+
+    return () => {
+      document.documentElement.classList.remove("onboarding-scroll-enabled");
+      document.body.classList.remove("onboarding-scroll-enabled");
+    };
+  }, []);
+
   // Prevent pull-to-refresh
   const preventPullToRefresh = useCallback((e: TouchEvent) => {
     const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;

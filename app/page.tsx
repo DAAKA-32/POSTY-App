@@ -829,20 +829,60 @@ const ALL_DEMO_SUGGESTIONS = [
   { label: "Croissance et revenus", emoji: "🚀", text: "Ecris un post LinkedIn sur la croissance de mon activite et l'impact de LinkedIn sur mes revenus" },
 ];
 
+// Module-level flag to track if hero animation played (persists across re-renders, resets on page refresh)
+let heroAnimationPlayedGlobal = false;
+
 function DemoSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const fullScreenChatRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(sectionRef, { once: true, amount: 0.15 });
   const prefersReducedMotion = useReducedMotion();
 
-  // Opening animation state - descent effect
-  const [hasAnimated, setHasAnimated] = useState(false);
+  // ============================================================================
+  // ANIMATION SEQUENCING: MacBook first, then text reveal
+  // Resets on page refresh, persists during React navigation
+  // ============================================================================
 
-  useEffect(() => {
-    // Trigger descent animation after a brief delay for smooth page load
-    const timer = setTimeout(() => setHasAnimated(true), prefersReducedMotion ? 0 : 100);
-    return () => clearTimeout(timer);
+  // Track if MacBook animation already played (module-level for persistence across re-renders)
+  const [heroAnimationPlayed, setHeroAnimationPlayed] = useState(heroAnimationPlayedGlobal);
+
+  // Text reveal state - triggered AFTER MacBook animation completes
+  const [hasAnimated, setHasAnimated] = useState(heroAnimationPlayedGlobal);
+
+  // Callback when MacBook animation completes
+  const handleMacBookAnimationComplete = useCallback(() => {
+    // Minimal delay - texts appear almost instantly after MacBook settles
+    const delay = prefersReducedMotion ? 0 : 50;
+    setTimeout(() => {
+      setHasAnimated(true);
+      // Mark as played (module-level persists across tab switches)
+      heroAnimationPlayedGlobal = true;
+      setHeroAnimationPlayed(true);
+    }, delay);
   }, [prefersReducedMotion]);
+
+  // If animation already played, show content immediately
+  useEffect(() => {
+    if (heroAnimationPlayed && !hasAnimated) {
+      setHasAnimated(true);
+    }
+  }, [heroAnimationPlayed, hasAnimated]);
+
+  // View mode state: "demo" or "preview" - Default to preview for premium first impression
+  const [viewMode, setViewMode] = useState<"demo" | "preview">("preview");
+
+  // Fallback: If user switches to demo mode before MacBook finishes, trigger text animation
+  useEffect(() => {
+    if (viewMode === "demo" && !hasAnimated && !heroAnimationPlayed) {
+      // Trigger text reveal after a short delay when in demo mode
+      const timer = setTimeout(() => {
+        setHasAnimated(true);
+        heroAnimationPlayedGlobal = true;
+        setHeroAnimationPlayed(true);
+      }, prefersReducedMotion ? 0 : 300);
+      return () => clearTimeout(timer);
+    }
+  }, [viewMode, hasAnimated, heroAnimationPlayed, prefersReducedMotion]);
 
   // Randomly pick 3 suggestions from the 7 on mount
   const [suggestions] = useState(() => {
@@ -860,9 +900,6 @@ function DemoSection() {
   const [showCard, setShowCard] = useState(false);
   const [showFullScreen, setShowFullScreen] = useState(false);
   const [copied, setCopied] = useState(false);
-
-  // View mode state: "demo" or "preview" - Default to preview for premium first impression
-  const [viewMode, setViewMode] = useState<"demo" | "preview">("preview");
 
   // Restore state from localStorage on mount
   useEffect(() => {
@@ -1026,15 +1063,18 @@ function DemoSection() {
           {/* ============================================================ */}
           {/* Hero Text — fades in as demo card descends                   */}
           {/* ============================================================ */}
+          {/* Hero Text — FAST sequenced animation after MacBook          */}
+          {/* Optimized: ~0.5s total stagger vs ~0.8s before              */}
+          {/* ============================================================ */}
           <div className="text-center mb-10 md:mb-14 2xl:mb-16">
-            {/* Main headline */}
+            {/* Main headline - Instant */}
             <motion.h1
-              initial={{ opacity: 0, y: 30 }}
-              animate={hasAnimated ? { opacity: 1, y: 0 } : {}}
+              initial={{ opacity: 0, y: 25 }}
+              animate={hasAnimated ? { opacity: 1, y: 0 } : { opacity: 0, y: 25 }}
               transition={{
-                duration: 0.8,
-                delay: 0.2,
-                ease: cinematicEase,
+                duration: 0.5,
+                delay: 0,
+                ease: [0.25, 0.1, 0.25, 1], // Smooth but fast
               }}
               className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] 2xl:text-[4rem] font-bold text-gray-900 leading-[1.1] tracking-tight"
             >
@@ -1045,14 +1085,14 @@ function DemoSection() {
               </span>
             </motion.h1>
 
-            {/* Subheadline */}
+            {/* Subheadline - Quick follow */}
             <motion.p
               initial={{ opacity: 0, y: 20 }}
-              animate={hasAnimated ? { opacity: 1, y: 0 } : {}}
+              animate={hasAnimated ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
               transition={{
-                duration: 0.7,
-                delay: 0.4,
-                ease: cinematicEase,
+                duration: 0.45,
+                delay: hasAnimated ? 0.08 : 0,
+                ease: [0.25, 0.1, 0.25, 1],
               }}
               className="mt-5 md:mt-6 text-gray-600 text-base md:text-lg lg:text-xl max-w-2xl mx-auto leading-relaxed"
             >
@@ -1061,15 +1101,15 @@ function DemoSection() {
           </div>
 
           {/* ============================================================ */}
-          {/* Interactive View Mode Tabs                                   */}
+          {/* Interactive View Mode Tabs - Fast appearance                 */}
           {/* ============================================================ */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={hasAnimated ? { opacity: 1, y: 0 } : {}}
+            initial={{ opacity: 0, y: 15 }}
+            animate={hasAnimated ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
             transition={{
-              duration: 0.6,
-              delay: 0.35,
-              ease: cinematicEase,
+              duration: 0.4,
+              delay: hasAnimated ? 0.15 : 0,
+              ease: [0.25, 0.1, 0.25, 1],
             }}
             className="flex justify-center mb-4 md:mb-5"
           >
@@ -1138,13 +1178,13 @@ function DemoSection() {
             {viewMode === "demo" && (
               <motion.div
                 key="demo"
-                initial={{ opacity: 0, y: -60 }}
-                animate={hasAnimated ? { opacity: 1, y: 0 } : {}}
-                exit={{ opacity: 0, y: 20, transition: { duration: 0.3 } }}
+                initial={{ opacity: 0, y: -40 }}
+                animate={hasAnimated ? { opacity: 1, y: 0 } : { opacity: 0, y: -40 }}
+                exit={{ opacity: 0, y: 15, transition: { duration: 0.2 } }}
                 transition={{
-                  duration: 1,
-                  delay: 0.5,
-                  ease: cinematicEase,
+                  duration: 0.5,
+                  delay: hasAnimated ? 0.2 : 0,
+                  ease: [0.25, 0.1, 0.25, 1],
                 }}
               >
                 {/* Main demo card */}
@@ -1321,10 +1361,12 @@ function DemoSection() {
                 transition={{ duration: 0.3 }}
                 className="relative"
               >
-                {/* Animated MacBook with cinematic 3D reveal - includes text, MacBook, badges, and CTA */}
+                {/* Animated MacBook with cinematic 3D reveal - triggers text animation on complete */}
                 <AnimatedMacBook
                   isVisible={viewMode === "preview"}
                   screenImage="/macimg.png"
+                  onAnimationComplete={handleMacBookAnimationComplete}
+                  hasAlreadyAnimated={heroAnimationPlayed}
                 />
               </motion.div>
             )}
@@ -1480,10 +1522,12 @@ function DemoSection() {
 }
 
 // =============================================================================
-// KEY BENEFITS SECTION - Premium 3D Carousel
+// KEY BENEFITS SECTION - Premium Editorial Layout
+// Business-focused, human-centered design
 // =============================================================================
 
-const BENEFITS_DATA = [
+// Legacy _LEGACY_BENEFITS_DATA kept for reference but not used
+const _LEGACY_BENEFITS_DATA = [
   {
     number: "01",
     title: "Gagnez 5h par semaine",
@@ -1558,15 +1602,15 @@ const BENEFITS_DATA = [
   },
 ];
 
-// Benefit Card Component for Carousel - Door Pivot Hover Effect
-// Card opens like a door (pivots on left edge) revealing content behind
-function BenefitCard({
+// Legacy Benefit Card Component - kept for reference, not used
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function _LegacyBenefitCard({
   benefit,
   isActive,
   position,
   onClick,
 }: {
-  benefit: typeof BENEFITS_DATA[0];
+  benefit: typeof _LEGACY_BENEFITS_DATA[0];
   isActive: boolean;
   position: number; // -1 = left, 0 = center, 1 = right, 2+ = hidden
   onClick?: () => void;
@@ -1833,8 +1877,9 @@ function BenefitCard({
   );
 }
 
-// Premium Navigation Dot Component
-function CarouselDot({
+// Legacy Navigation Dot Component - kept for reference, not used
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function _LegacyCarouselDot({
   isActive,
   isPaused,
   color,
@@ -1913,6 +1958,230 @@ function CarouselDot({
 
 function KeyBenefitsSection() {
   const prefersReducedMotion = useReducedMotion();
+
+  // Premium stagger animation for grid items
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: prefersReducedMotion ? 0 : 0.12,
+        delayChildren: 0.1,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 24 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.6,
+        ease: [0.22, 1, 0.36, 1] as const,
+      },
+    },
+  };
+
+  return (
+    <section id="benefices" className="relative py-20 md:py-28 lg:py-32 overflow-hidden">
+      {/* Subtle background - premium warm gradient */}
+      <div className="absolute inset-0 bg-gradient-to-b from-white via-[#FFFBF8] to-white" />
+
+      {/* Subtle texture overlay */}
+      <div
+        className="absolute inset-0 opacity-[0.015]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+        }}
+      />
+
+      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Section Header - Editorial style */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          className="max-w-2xl mb-16 md:mb-20"
+        >
+          <h2 className="text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-gray-900 leading-[1.15] tracking-tight mb-5">
+            Ce qui change quand vous{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#E8824C]">
+              publiez regulierement
+            </span>
+          </h2>
+          <p className="text-lg text-gray-600 leading-relaxed">
+            Pas de promesses magiques. Juste les resultats concrets que nos utilisateurs
+            constatent apres quelques semaines de publication coherente.
+          </p>
+        </motion.div>
+
+        {/* Bento Grid Layout - Asymmetric premium design */}
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5 lg:gap-6"
+        >
+          {/* Card 1 - Primary Feature (Large) */}
+          <motion.div
+            variants={itemVariants}
+            className="md:col-span-2 lg:col-span-2 group"
+          >
+            <div className="relative h-full p-6 sm:p-8 lg:p-10 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md hover:border-gray-200/80 transition-all duration-300">
+              {/* Subtle gradient accent on hover */}
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-[#F8935D]/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+              <div className="relative z-10">
+                <div className="flex items-start justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#F8935D]/10 to-[#F76B54]/10 flex items-center justify-center">
+                      <svg className="w-5 h-5 text-[#F8935D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Productivite</span>
+                  </div>
+                </div>
+
+                <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-3 leading-snug">
+                  Recuperez vos soirees et week-ends
+                </h3>
+                <p className="text-gray-600 leading-relaxed mb-6 max-w-xl">
+                  Fini les heures passees a chercher quoi publier. Vos posts sont prets
+                  en quelques clics, dans votre ton, sur vos sujets. Le temps economise,
+                  vous le reinvestissez dans ce qui compte vraiment.
+                </p>
+
+                {/* Metric highlight */}
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl sm:text-4xl font-semibold text-gray-900">5h</span>
+                  <span className="text-gray-500">economisees par semaine en moyenne</span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Card 2 - Secondary Feature */}
+          <motion.div
+            variants={itemVariants}
+            className="group"
+          >
+            <div className="relative h-full p-6 sm:p-8 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md hover:border-gray-200/80 transition-all duration-300">
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-500/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+              <div className="relative z-10">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/10 to-indigo-500/10 flex items-center justify-center mb-6">
+                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </div>
+
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Plus de visibilite, naturellement
+                </h3>
+                <p className="text-gray-600 text-sm leading-relaxed mb-5">
+                  Quand vous publiez regulierement, LinkedIn vous met en avant.
+                  Vos posts touchent plus de monde, sans forcer.
+                </p>
+
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-2xl font-semibold text-gray-900">x3</span>
+                  <span className="text-sm text-gray-500">vues en moyenne</span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Card 3 - Tertiary Feature */}
+          <motion.div
+            variants={itemVariants}
+            className="group"
+          >
+            <div className="relative h-full p-6 sm:p-8 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md hover:border-gray-200/80 transition-all duration-300">
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-emerald-500/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+              <div className="relative z-10">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/10 to-teal-500/10 flex items-center justify-center mb-6">
+                  <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Des opportunites qui viennent a vous
+                </h3>
+                <p className="text-gray-600 text-sm leading-relaxed mb-5">
+                  Clients, partenaires, recruteurs... Ils vous contactent
+                  parce qu'ils voient votre expertise au quotidien.
+                </p>
+
+                <div className="flex items-center gap-2">
+                  <div className="flex -space-x-2">
+                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 border-2 border-white" />
+                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-gray-300 to-gray-400 border-2 border-white" />
+                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-gray-400 to-gray-500 border-2 border-white" />
+                  </div>
+                  <span className="text-sm text-gray-500">nouveaux contacts chaque semaine</span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Card 4 - Quote/Social Proof */}
+          <motion.div
+            variants={itemVariants}
+            className="md:col-span-2 group"
+          >
+            <div className="relative h-full p-6 sm:p-8 lg:p-10 rounded-2xl bg-gradient-to-br from-gray-900 to-gray-800 overflow-hidden">
+              {/* Subtle pattern */}
+              <div className="absolute inset-0 opacity-5">
+                <div className="absolute inset-0" style={{
+                  backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
+                  backgroundSize: '24px 24px',
+                }} />
+              </div>
+
+              {/* Accent glow */}
+              <div className="absolute -top-20 -right-20 w-64 h-64 bg-[#F8935D]/20 rounded-full blur-[80px]" />
+
+              <div className="relative z-10">
+                <svg className="w-8 h-8 text-[#F8935D]/60 mb-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
+                </svg>
+
+                <blockquote className="text-lg sm:text-xl text-white/90 leading-relaxed mb-6 max-w-2xl">
+                  &ldquo;Avant, je passais mes dimanches a preparer mes posts LinkedIn.
+                  Maintenant, c'est fait en 10 minutes le lundi matin. Et mes resultats
+                  n'ont jamais ete aussi bons.&rdquo;
+                </blockquote>
+
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#F8935D] to-[#F76B54] flex items-center justify-center text-white font-semibold text-lg">
+                    M
+                  </div>
+                  <div>
+                    <p className="text-white font-medium">Marie Dubois</p>
+                    <p className="text-white/60 text-sm">Consultante en strategie</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+
+      </div>
+    </section>
+  );
+}
+
+// Legacy KeyBenefitsSection - carousel version (not used)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function _LegacyKeyBenefitsSection() {
+  const prefersReducedMotion = useReducedMotion();
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [dragStartX, setDragStartX] = useState(0);
@@ -1923,7 +2192,7 @@ function KeyBenefitsSection() {
     if (prefersReducedMotion || isPaused) return;
 
     const interval = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % BENEFITS_DATA.length);
+      setActiveIndex((prev) => (prev + 1) % _LEGACY_BENEFITS_DATA.length);
     }, 5000);
 
     return () => clearInterval(interval);
@@ -1935,11 +2204,11 @@ function KeyBenefitsSection() {
   };
 
   const goNext = () => {
-    setActiveIndex((prev) => (prev + 1) % BENEFITS_DATA.length);
+    setActiveIndex((prev) => (prev + 1) % _LEGACY_BENEFITS_DATA.length);
   };
 
   const goPrev = () => {
-    setActiveIndex((prev) => (prev - 1 + BENEFITS_DATA.length) % BENEFITS_DATA.length);
+    setActiveIndex((prev) => (prev - 1 + _LEGACY_BENEFITS_DATA.length) % _LEGACY_BENEFITS_DATA.length);
   };
 
   // Handle swipe/drag
@@ -1964,8 +2233,8 @@ function KeyBenefitsSection() {
   const getPosition = (index: number) => {
     const diff = index - activeIndex;
     if (diff === 0) return 0;
-    if (diff === 1 || diff === -(BENEFITS_DATA.length - 1)) return 1;
-    if (diff === -1 || diff === BENEFITS_DATA.length - 1) return -1;
+    if (diff === 1 || diff === -(_LEGACY_BENEFITS_DATA.length - 1)) return 1;
+    if (diff === -1 || diff === _LEGACY_BENEFITS_DATA.length - 1) return -1;
     return diff > 0 ? 2 : -2;
   };
 
@@ -2020,8 +2289,8 @@ function KeyBenefitsSection() {
             className="relative w-full h-[280px] sm:h-[300px] md:h-[320px] lg:h-[340px] 2xl:h-[380px] flex items-center justify-center"
             style={{ transformStyle: "preserve-3d" }}
           >
-            {BENEFITS_DATA.map((benefit, index) => (
-              <BenefitCard
+            {_LEGACY_BENEFITS_DATA.map((benefit: typeof _LEGACY_BENEFITS_DATA[0], index: number) => (
+              <_LegacyBenefitCard
                 key={benefit.number}
                 benefit={benefit}
                 isActive={index === activeIndex}
@@ -2054,8 +2323,8 @@ function KeyBenefitsSection() {
 
         {/* Navigation Dots - Perfectly Centered & Aligned */}
         <div className="flex items-center justify-center gap-1 mt-8">
-          {BENEFITS_DATA.map((benefit, index) => (
-            <CarouselDot
+          {_LEGACY_BENEFITS_DATA.map((benefit: typeof _LEGACY_BENEFITS_DATA[0], index: number) => (
+            <_LegacyCarouselDot
               key={benefit.number}
               isActive={index === activeIndex}
               isPaused={isPaused}
@@ -4275,7 +4544,6 @@ export default function LandingPage() {
 
       {/* All sections with soft orange/salmon background */}
       <div className="bg-[#FEF3EE]">
-        <KeyBenefitsSection />
         <FeaturesSection />
         <TestimonialsSection />
         <FounderSection />

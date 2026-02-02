@@ -27,19 +27,20 @@ export default function KPICard({
 }: KPICardProps) {
   const [showTooltip, setShowTooltip] = useState(false);
 
-  // Premium autoscroll color palette - Semantic mapping
+  // Color palette harmonized with landing page Features section
+  // Brand: #F8935D → #F76B54 | Emerald | Amber | Violet
   const colorClasses = {
     primary: {
-      bg: "bg-purple-500/[0.12]", // Storytelling - Creative content
-      border: "border-purple-500/25",
-      borderHover: "hover:border-purple-500/40",
-      icon: "text-purple-500 dark:text-purple-400",
-      glow: "group-hover:shadow-[0_8px_30px_rgba(168,85,247,0.15)]", // Purple glow
-      ring: "ring-purple-500/20",
-      shimmer: "rgba(168,85,247,0.1)", // Purple shimmer
+      bg: "bg-[#F8935D]/[0.12]", // Brand orange - Primary actions
+      border: "border-[#F8935D]/25",
+      borderHover: "hover:border-[#F8935D]/40",
+      icon: "text-[#F8935D]",
+      glow: "group-hover:shadow-[0_8px_30px_rgba(248,147,93,0.15)]", // Brand glow
+      ring: "ring-[#F8935D]/20",
+      shimmer: "rgba(248,147,93,0.1)", // Brand shimmer
     },
     accent: {
-      bg: "bg-violet-500/[0.12]", // Engagement - Interactive/shared content
+      bg: "bg-violet-500/[0.12]", // Violet - Scheduling/timing (matches Features)
       border: "border-violet-500/25",
       borderHover: "hover:border-violet-500/40",
       icon: "text-violet-500 dark:text-violet-400",
@@ -48,7 +49,7 @@ export default function KPICard({
       shimmer: "rgba(139,92,246,0.1)", // Violet shimmer
     },
     warning: {
-      bg: "bg-amber-500/[0.12]", // Tips - Activity/productivity metrics
+      bg: "bg-amber-500/[0.12]", // Amber - Activity metrics (matches Features)
       border: "border-amber-500/25",
       borderHover: "hover:border-amber-500/40",
       icon: "text-amber-500 dark:text-amber-400",
@@ -57,7 +58,7 @@ export default function KPICard({
       shimmer: "rgba(245,158,11,0.1)", // Amber shimmer
     },
     success: {
-      bg: "bg-emerald-500/[0.12]", // Victory - Success/achievement metrics
+      bg: "bg-emerald-500/[0.12]", // Emerald - Success metrics (matches Features)
       border: "border-emerald-500/25",
       borderHover: "hover:border-emerald-500/40",
       icon: "text-emerald-500 dark:text-emerald-400",

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
@@ -32,12 +33,33 @@ const teamMembers = [
 // MAIN COMPONENT
 // =============================================================================
 export default function AboutPage() {
+  // Enable full scrolling on About page (mouse wheel, trackpad, touch, keyboard)
+  useEffect(() => {
+    document.documentElement.classList.add("about-scroll-enabled");
+    document.body.classList.add("about-scroll-enabled");
+    // Remove any classes that might block scroll
+    document.body.classList.remove("pwa-mobile", "no-scroll", "scroll-locked", "modal-open");
+
+    return () => {
+      document.documentElement.classList.remove("about-scroll-enabled");
+      document.body.classList.remove("about-scroll-enabled");
+    };
+  }, []);
+
   return (
     <>
       {/* Structured Data for SEO */}
       <AboutPageJsonLd />
 
-      <div className="min-h-screen bg-gradient-to-b from-orange-50/50 via-white to-orange-50/30">
+      <div
+        className="min-h-screen bg-gradient-to-b from-orange-50/50 via-white to-orange-50/30"
+        style={{
+          overflowY: "auto",
+          overflowX: "hidden",
+          minHeight: "100vh",
+          WebkitOverflowScrolling: "touch",
+        }}
+      >
         {/* Header */}
         <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100">
           <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">

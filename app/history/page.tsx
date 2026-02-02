@@ -83,6 +83,18 @@ function HistoryContent() {
   const { t, language } = useLanguage();
   const { connection: linkedInConnection, publishToLinkedIn } = useLinkedIn();
 
+  // Enable full scrolling on History page (mouse wheel, trackpad, touch, keyboard)
+  useEffect(() => {
+    document.documentElement.classList.add("history-scroll-enabled");
+    document.body.classList.add("history-scroll-enabled");
+    document.body.classList.remove("pwa-mobile", "no-scroll", "scroll-locked", "modal-open");
+
+    return () => {
+      document.documentElement.classList.remove("history-scroll-enabled");
+      document.body.classList.remove("history-scroll-enabled");
+    };
+  }, []);
+
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");

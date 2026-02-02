@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { getAllPlans, PlanConfig, PlanType, getSavingsText, PLAN_TAGLINES, getPlanCoreFeatures, getPlanSecondaryFeatures, getCTALabel, FeatureItem } from "@/lib/plans";
+import { getAllPlans, PlanConfig, PlanType, getSavingsText, PLAN_TAGLINES, getPlanCoreFeatures, getPlanSecondaryFeatures, getCTALabel, FeatureItem, isTestModeAllowed, PRODUCTION_MODE } from "@/lib/plans";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import Button from "@/components/ui/Button";
 import BillingToggle from "@/components/ui/BillingToggle";
@@ -44,10 +44,17 @@ function SubscriptionContent() {
     });
   };
 
-  // Check if we're in dev mode for test mode functionality
-  const isDev = process.env.NODE_ENV === "development";
-  const isAdmin = process.env.NEXT_PUBLIC_ADMIN_MODE === "true";
-  const canUseTestMode = isDev || isAdmin;
+  // ============================================
+  // PRODUCTION MODE: Test mode is completely disabled
+  // To re-enable: set NEXT_PUBLIC_ENABLE_TEST_MODE=true in .env.local
+  // ============================================
+  const [canUseTestMode, setCanUseTestMode] = useState(false);
+
+  useEffect(() => {
+    // Use centralized isTestModeAllowed() check from lib/plans.ts
+    // This respects PRODUCTION_MODE flag as single source of truth
+    setCanUseTestMode(isTestModeAllowed());
+  }, []);
 
   // Enable full scrolling on Subscription page (mouse wheel, trackpad, touch, keyboard)
   useEffect(() => {
@@ -257,21 +264,24 @@ function SubscriptionContent() {
           </div>
         </div>
 
-        {/* Test Mode Panel - Development Only */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.35 }}
-          className="mt-12 max-w-md mx-auto"
-        >
-          <TestModePanel
-            selectedPlan={selectedTestPlan ?? undefined}
-            onPlanActivated={(plan) => {
-              setSelectedTestPlan(null);
-              toast.success(`Plan ${plan.charAt(0).toUpperCase() + plan.slice(1)} activé en mode test`);
-            }}
-          />
-        </motion.div>
+        {/* Test Mode Panel - Hidden in Production Mode
+            To re-enable: set NEXT_PUBLIC_ENABLE_TEST_MODE=true in .env.local */}
+        {canUseTestMode && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+            className="mt-12 max-w-md mx-auto"
+          >
+            <TestModePanel
+              selectedPlan={selectedTestPlan ?? undefined}
+              onPlanActivated={(plan) => {
+                setSelectedTestPlan(null);
+                toast.success(`Plan ${plan.charAt(0).toUpperCase() + plan.slice(1)} activé en mode test`);
+              }}
+            />
+          </motion.div>
+        )}
 
         {/* FAQ Section - Single Column Layout */}
         <motion.div

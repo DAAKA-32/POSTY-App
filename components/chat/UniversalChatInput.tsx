@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { PlanType } from "@/lib/plans";
+import PromptLimitModal from "./PromptLimitModal";
 
 /**
  * UniversalChatInput - Unified, premium chat input component
@@ -57,6 +59,11 @@ interface UniversalChatInputProps {
   context?: "new-chat" | "conversation" | "guest" | "modal";
   trialLimitReached?: boolean;
   quotaLimitReached?: boolean;
+
+  // Character limit validation (plan-based)
+  currentPlan?: PlanType;
+  maxCharacters?: number;
+  showCharacterCount?: boolean;
 }
 
 // Rotating placeholder examples for premium feel
@@ -97,13 +104,24 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
   context = "new-chat",
   trialLimitReached = false,
   quotaLimitReached = false,
+  // Character limit props
+  currentPlan = "free",
+  maxCharacters = 100,
+  showCharacterCount = true,
 }, ref) => {
   const [message, setMessage] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [hasAnimated, setHasAnimated] = useState(false);
+  const [showLimitModal, setShowLimitModal] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const rotationTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Character limit calculations
+  const currentLength = message.length;
+  const isOverLimit = currentLength > maxCharacters;
+  const isNearLimit = currentLength >= maxCharacters * 0.8;
+  const remainingChars = maxCharacters - currentLength;
 
   // Use consistent minHeight across all devices for unified appearance
   const effectiveMinHeight = minHeight;
@@ -220,11 +238,17 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
     }
   }, [message, effectiveMinHeight, maxHeight]);
 
-  // Handle submission
+  // Handle submission with character limit validation
   const handleSubmit = useCallback(
     (e?: React.FormEvent) => {
       e?.preventDefault();
       if (message.trim() && !isLoading && !disabled && !trialLimitReached && !quotaLimitReached) {
+        // CRITICAL: Intercept submission if over character limit
+        if (message.length > maxCharacters) {
+          setShowLimitModal(true);
+          return; // Block submission - show modal instead
+        }
+
         onSubmit(message.trim());
         setMessage("");
         // Reset textarea height to minimum immediately
@@ -233,7 +257,7 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
         }
       }
     },
-    [message, isLoading, disabled, trialLimitReached, quotaLimitReached, onSubmit, effectiveMinHeight]
+    [message, isLoading, disabled, trialLimitReached, quotaLimitReached, onSubmit, effectiveMinHeight, maxCharacters]
   );
 
   // Handle keyboard shortcuts
@@ -274,34 +298,64 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
       onAnimationComplete={() => setHasAnimated(true)}
       className={`w-full ${className}`}
+      style={{ isolation: "isolate" }}
     >
-      {/* Main input container */}
+      {/* Main input container - gradient border using outline technique for PWA consistency */}
       <div
         className={`
-          relative rounded-[24px]
-          transition-all duration-500 ease-out
+          relative
+          transition-all duration-300 ease-out
+          chat-input-wrapper
           ${showPremiumEffects
-            ? "p-[1px] bg-gradient-to-r from-primary via-accent to-primary bg-[length:200%_auto] animate-shimmer-slow"
+            ? "chat-input-gradient-active"
             : ""
           }
         `}
+        style={{
+          // Explicit box-sizing for cross-platform consistency
+          boxSizing: "border-box",
+          WebkitBoxSizing: "border-box",
+          // Unified border-radius across all states
+          borderRadius: "24px",
+        }}
       >
+        {/* Gradient border overlay - renders behind content for PWA/browser consistency */}
+        {showPremiumEffects && (
+          <div
+            className="absolute inset-0 bg-gradient-to-r from-primary via-accent to-primary bg-[length:200%_auto] animate-shimmer-slow pointer-events-none"
+            style={{
+              zIndex: 0,
+              margin: "-1px",
+              padding: "1px",
+              // Unified border-radius - SAME as wrapper
+              borderRadius: "24px",
+            }}
+            aria-hidden="true"
+          />
+        )}
+
         {/* Inner container - stable dimensions with elegant glow */}
         <div
           className={`
-            relative rounded-[23px] overflow-hidden
+            relative
             bg-white dark:bg-dark-card
             backdrop-blur-sm
-            transition-all duration-500 ease-out
+            transition-all duration-300 ease-out
+            chat-input-inner
             ${showPremiumEffects
               ? "shadow-glow border border-primary/20"
               : "border border-gray-200 dark:border-dark-border"
             }
           `}
           style={{
+            boxSizing: "border-box",
+            WebkitBoxSizing: "border-box",
+            zIndex: 1,
+            // Unified border-radius - SAME as wrapper (critical for hover/focus consistency)
+            borderRadius: "24px",
             boxShadow: showPremiumEffects
               ? "0 0 20px rgba(248, 147, 93, 0.25), 0 0 40px rgba(248, 147, 93, 0.1)"
-              : undefined
+              : undefined,
           }}
         >
           {/* Textarea */}
@@ -339,6 +393,16 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
               overflowY: "auto",
               lineHeight: "1.5",
               transition: "height 0.1s ease-out",
+              // Cross-platform consistency fixes
+              boxSizing: "border-box",
+              WebkitBoxSizing: "border-box",
+              // Prevent iOS zoom on focus (font-size >= 16px)
+              fontSize: "max(16px, 1rem)",
+              // Fix Safari textarea rendering
+              WebkitAppearance: "none",
+              appearance: "none",
+              // Prevent touch highlight issues
+              WebkitTapHighlightColor: "transparent",
             }}
           />
 
@@ -410,21 +474,64 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
         </div>
       </div>
 
-      {/* Helper text - Desktop only (hidden on mobile via CSS for reliability across PWA/browser modes) */}
-      {showHelperText && (
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="hidden sm:block text-xs text-gray-500 dark:text-gray-400 text-center mt-0"
-        >
-          {quotaLimitReached
-            ? "Votre limite quotidienne est atteinte. Revenez demain ou passez à un plan supérieur."
-            : trialLimitReached
-            ? "Limite d'essai atteinte. Inscrivez-vous pour continuer."
-            : "Appuyez sur Entrée pour envoyer, Shift+Entrée pour un saut de ligne"}
-        </motion.p>
-      )}
+      {/* Character counter and helper text */}
+      <div className="flex items-center justify-between mt-2 px-1">
+        {/* Helper text - Desktop only */}
+        {showHelperText && (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="hidden sm:block text-xs text-gray-500 dark:text-gray-400"
+          >
+            {quotaLimitReached
+              ? "Votre limite quotidienne est atteinte. Revenez demain ou passez à un plan supérieur."
+              : trialLimitReached
+              ? "Limite d'essai atteinte. Inscrivez-vous pour continuer."
+              : "Entrée pour envoyer • Shift+Entrée pour saut de ligne"}
+          </motion.p>
+        )}
+
+        {/* Character counter - always visible when showCharacterCount is true */}
+        {showCharacterCount && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className={`
+              text-xs font-medium ml-auto
+              transition-colors duration-200
+              ${isOverLimit
+                ? "text-red-500"
+                : isNearLimit
+                ? "text-amber-500"
+                : "text-gray-400 dark:text-gray-500"
+              }
+            `}
+          >
+            <span className={isOverLimit ? "font-bold" : ""}>
+              {currentLength.toLocaleString("fr-FR")}
+            </span>
+            <span className="text-gray-400 dark:text-gray-500">
+              /{maxCharacters.toLocaleString("fr-FR")}
+            </span>
+            {isOverLimit && (
+              <span className="ml-1.5 text-red-500">
+                (+{(currentLength - maxCharacters).toLocaleString("fr-FR")})
+              </span>
+            )}
+          </motion.div>
+        )}
+      </div>
+
+      {/* Prompt Limit Modal */}
+      <PromptLimitModal
+        isOpen={showLimitModal}
+        onClose={() => setShowLimitModal(false)}
+        currentPlan={currentPlan}
+        currentLength={currentLength}
+        maxLength={maxCharacters}
+      />
     </motion.div>
   );
 });

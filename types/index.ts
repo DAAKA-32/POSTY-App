@@ -16,6 +16,14 @@ export interface PostInsights {
   bestTimeToPost: string;     // Optimal posting time
   expectedEngagement: string; // Engagement prediction
   keyTakeaway: string;        // Main value proposition
+  // Enhanced coaching fields (optional for backwards compatibility)
+  strengths?: string[];       // Specific strengths identified (3-5 items)
+  improvements?: string[];    // Specific actionable improvements with examples
+  coachingTip?: string;       // Personalized coaching advice based on user profile
+  engagementScore?: number;   // 1-100 predicted engagement score
+  readabilityScore?: number;  // 1-100 readability score
+  hookAnalysis?: string;      // Analysis of the opening hook
+  ctaAnalysis?: string;       // Analysis of call-to-action
 }
 
 // Post analysis (PRO+)
@@ -44,6 +52,63 @@ export interface PlatformAdaptation {
 
 // ============== USER TYPES ==============
 
+// Personal branding configuration
+export interface PersonalBranding {
+  // Custom avatar (user-uploaded, not from OAuth)
+  customAvatarURL?: string;
+  // Cover/banner image
+  coverImageURL?: string;
+  // Personal accent color (hex)
+  accentColor?: string;
+  // Gradient preference for profile
+  gradientPreset?: "brand" | "sunset" | "ocean" | "forest" | "purple" | "custom";
+  customGradientStart?: string;
+  customGradientEnd?: string;
+  // Professional tagline (short, displayed under name)
+  tagline?: string;
+  // Social links
+  socialLinks?: {
+    website?: string;
+    linkedin?: string;
+    twitter?: string;
+    github?: string;
+    instagram?: string;
+    youtube?: string;
+  };
+  // Profile card style
+  cardStyle?: "minimal" | "gradient" | "photo" | "accent";
+  // Show/hide elements
+  visibility?: {
+    showStats?: boolean;
+    showSocialLinks?: boolean;
+    showBio?: boolean;
+    showSector?: boolean;
+  };
+}
+
+// Preset accent colors for personal branding
+export const ACCENT_COLOR_PRESETS = [
+  { name: "Posty Orange", hex: "#F8935D" },
+  { name: "Coral", hex: "#F76B54" },
+  { name: "Rose", hex: "#F13452" },
+  { name: "Purple", hex: "#8B5CF6" },
+  { name: "Blue", hex: "#3B82F6" },
+  { name: "Teal", hex: "#14B8A6" },
+  { name: "Green", hex: "#10B981" },
+  { name: "Amber", hex: "#F59E0B" },
+  { name: "Pink", hex: "#EC4899" },
+  { name: "Indigo", hex: "#6366F1" },
+] as const;
+
+// Preset gradients
+export const GRADIENT_PRESETS = {
+  brand: { start: "#F8935D", end: "#F76B54", name: "Posty Brand" },
+  sunset: { start: "#F8935D", end: "#F13452", name: "Sunset" },
+  ocean: { start: "#3B82F6", end: "#06B6D4", name: "Ocean" },
+  forest: { start: "#10B981", end: "#14B8A6", name: "Forest" },
+  purple: { start: "#8B5CF6", end: "#EC4899", name: "Purple Haze" },
+} as const;
+
 export interface UserProfile {
   id: string;
   email: string;
@@ -51,6 +116,8 @@ export interface UserProfile {
   photoURL: string | null;
   bio?: string;
   onboardingComplete: boolean;
+  // Personal branding settings
+  branding?: PersonalBranding;
   profile?: {
     profileType?: string;
     sector: string;

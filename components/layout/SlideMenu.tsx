@@ -96,14 +96,24 @@ function groupPostsByDate(posts: Post[], labels: SidebarTranslations) {
   return groups;
 }
 
+// Brand colors from landing page Features section
+const BRAND_COLORS = {
+  primary: "#F8935D",      // Orange brand
+  primaryDark: "#F76B54",  // Coral/red accent
+  emerald: "#10B981",      // Emerald-500
+  amber: "#F59E0B",        // Amber-500
+  violet: "#8B5CF6",       // Violet-500
+};
+
 const menuItems = [
   {
     nameKey: "chat" as const,
     href: "/app",
-    color: "orange",
-    activeClasses: "bg-orange-500/10 text-orange-500",
-    hoverClasses: "hover:text-orange-500 hover:bg-orange-500/5",
-    indicatorColor: "bg-orange-500",
+    color: "brand",
+    activeClasses: "bg-[#F8935D]/10 text-[#F8935D]",
+    hoverClasses: "hover:text-[#F8935D] hover:bg-[#F8935D]/5",
+    indicatorColor: "bg-gradient-to-b from-[#F8935D] to-[#F76B54]",
+    glowColor: "rgba(248, 147, 93, 0.4)",
     icon: (isActive: boolean) => (
       <svg className="w-5 h-5" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -118,10 +128,11 @@ const menuItems = [
   {
     nameKey: "history" as const,
     href: "/history",
-    color: "cyan",
-    activeClasses: "bg-cyan-500/10 text-cyan-500",
-    hoverClasses: "hover:text-cyan-500 hover:bg-cyan-500/5",
-    indicatorColor: "bg-cyan-500",
+    color: "amber",
+    activeClasses: "bg-amber-500/10 text-amber-500",
+    hoverClasses: "hover:text-amber-500 hover:bg-amber-500/5",
+    indicatorColor: "bg-gradient-to-b from-amber-500 to-orange-500",
+    glowColor: "rgba(245, 158, 11, 0.4)",
     icon: (isActive: boolean) => (
       <svg className="w-5 h-5" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -140,7 +151,8 @@ const menuItems = [
     color: "violet",
     activeClasses: "bg-violet-500/10 text-violet-500",
     hoverClasses: "hover:text-violet-500 hover:bg-violet-500/5",
-    indicatorColor: "bg-violet-500",
+    indicatorColor: "bg-gradient-to-b from-violet-500 to-purple-600",
+    glowColor: "rgba(139, 92, 246, 0.4)",
     icon: (isActive: boolean) => (
       <svg className="w-5 h-5" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -158,7 +170,8 @@ const menuItems = [
     color: "emerald",
     activeClasses: "bg-emerald-500/10 text-emerald-500",
     hoverClasses: "hover:text-emerald-500 hover:bg-emerald-500/5",
-    indicatorColor: "bg-emerald-500",
+    indicatorColor: "bg-gradient-to-b from-emerald-500 to-green-600",
+    glowColor: "rgba(16, 185, 129, 0.4)",
     icon: (isActive: boolean) => (
       <svg className="w-5 h-5" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -455,50 +468,30 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
 
         {/* Navigation - overscroll-contain prevents scroll chaining */}
         <nav className="flex-1 p-4 overflow-y-auto no-scrollbar overscroll-contain">
-          {/* New post button - Enhanced with shimmer glow */}
-          <div className="relative mb-5 group">
-            {/* Animated glow effect - orange AUTOSCROLL */}
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-primary via-orange-500 to-primary rounded-lg opacity-75 blur-sm group-hover:opacity-100 animate-pulse-glow" />
-
-            <Link
-              href="/app"
-              onClick={onClose}
-              className="
-                relative flex items-center justify-center gap-3 w-full px-4 py-3.5
-                bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500
-                hover:from-orange-600 hover:via-orange-500 hover:to-orange-600
-                text-white rounded-xl
-                transition-all duration-200 ease-out
-                shadow-lg hover:shadow-xl
-                active:scale-[0.97] active:transition-none
-                haptic-feedback
-                overflow-hidden
-              "
-              style={{
-                boxShadow: "0 4px 20px rgba(249, 115, 22, 0.3)",
-              }}
+          {/* New post button - Clean, professional design */}
+          <Link
+            href="/app"
+            onClick={onClose}
+            className="
+              flex items-center justify-center gap-2.5 w-full px-4 py-3 mb-5
+              bg-primary hover:bg-primary-hover
+              text-white font-semibold rounded-xl
+              transition-all duration-200 ease-out
+              shadow-md hover:shadow-lg hover:shadow-primary/20
+              active:scale-[0.98] active:transition-none
+              haptic-feedback group
+            "
+          >
+            <svg
+              className="w-5 h-5 transition-transform duration-200 group-hover:rotate-90"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
             >
-              {/* Shimmer overlay - enhanced */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full animate-shimmer-enhanced" />
-
-              <svg
-                className="w-5 h-5 relative z-10"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                style={{
-                  filter: "drop-shadow(0 0 4px rgba(255, 255, 255, 0.5))",
-                }}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-              </svg>
-
-              <span className="font-bold relative z-10">{t.sidebar.newPost}</span>
-
-              {/* Emoji indicator */}
-              <span className="relative z-10 text-sm animate-pulse">✨</span>
-            </Link>
-          </div>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            <span>{t.sidebar.newPost}</span>
+          </Link>
 
           {/* Search bar */}
           <div className="relative mb-5">
@@ -541,36 +534,28 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
             )}
           </div>
 
-          {/* Nav items - Enhanced with vivid colors and glow effects */}
+          {/* Nav items - Harmonized with landing page Features section colors */}
           <div className="space-y-1">
             {menuItems.map((item) => {
               const isActive = pathname === item.href || (item.href === "/app" && pathname === "/chat");
               const itemName = t.nav[item.nameKey];
               const showBadge = item.hasBadge && schedulingPendingCount > 0;
 
-              // Color mapping for glow effects
-              const glowColors = {
-                orange: "rgba(249, 115, 22, 0.35)",
-                cyan: "rgba(6, 182, 212, 0.35)",
-                violet: "rgba(139, 92, 246, 0.35)",
-              };
+              // Icon color classes based on menu item color
+              const iconColorClass =
+                item.color === "brand" ? "text-[#F8935D]" :
+                item.color === "amber" ? "text-amber-500" :
+                item.color === "violet" ? "text-violet-500" :
+                item.color === "emerald" ? "text-emerald-500" : "text-primary";
 
               return (
                 <div key={item.nameKey} className="relative">
-                  {/* Enhanced active indicator with glow */}
+                  {/* Enhanced active indicator with gradient matching Features section */}
                   {isActive && (
                     <div
-                      className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-full ${
-                        item.color === "orange"
-                          ? "bg-orange-500"
-                          : item.color === "cyan"
-                          ? "bg-cyan-500"
-                          : item.color === "violet"
-                          ? "bg-violet-500"
-                          : "bg-primary"
-                      }`}
+                      className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-full ${item.indicatorColor}`}
                       style={{
-                        boxShadow: `0 0 12px ${glowColors[item.color as keyof typeof glowColors]}`,
+                        boxShadow: `0 0 12px ${item.glowColor}`,
                       }}
                     />
                   )}
@@ -580,7 +565,7 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
                     <div
                       className="absolute inset-0 rounded-lg blur-xl pointer-events-none"
                       style={{
-                        background: `radial-gradient(circle at center left, ${glowColors[item.color as keyof typeof glowColors]} 0%, transparent 60%)`,
+                        background: `radial-gradient(circle at center left, ${item.glowColor} 0%, transparent 60%)`,
                       }}
                     />
                   )}
@@ -599,17 +584,15 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
                       }
                     `}
                   >
-                    {/* Vivid colored icon with enhanced glow */}
+                    {/* Vivid colored icon matching Features section palette */}
                     <span
                       className={`
                         relative transition-all duration-200
                         ${isActive ? "scale-110" : "group-hover:scale-110"}
-                        ${item.color === "orange" ? "text-orange-500" : ""}
-                        ${item.color === "cyan" ? "text-cyan-500" : ""}
-                        ${item.color === "violet" ? "text-violet-500" : ""}
+                        ${iconColorClass}
                       `}
                       style={isActive ? {
-                        filter: `drop-shadow(0 0 6px ${glowColors[item.color as keyof typeof glowColors]})`
+                        filter: `drop-shadow(0 0 6px ${item.glowColor})`
                       } : undefined}
                     >
                       {item.icon(isActive)}
@@ -618,31 +601,15 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
                     <span className="font-bold flex-1">{itemName}</span>
 
                     {showBadge && (
-                      <div className="relative flex-shrink-0">
-                        {/* Pulsing glow effect for visibility */}
-                        <div className="absolute inset-0 bg-violet-500/30 rounded-full blur-md animate-pulse" />
-
-                        {/* Badge with enhanced styling */}
-                        <span
-                          className="relative px-2.5 py-0.5 text-xs font-bold bg-gradient-to-r from-violet-500 via-purple-500 to-violet-500 text-white rounded-full min-w-[24px] text-center shadow-lg flex items-center justify-center"
-                          style={{
-                            boxShadow: "0 0 12px rgba(139, 92, 246, 0.5), 0 0 20px rgba(139, 92, 246, 0.3)",
-                          }}
-                        >
-                          {schedulingPendingCount}
-                        </span>
-                      </div>
+                      <span className="px-2 py-0.5 text-xs font-semibold bg-violet-500 text-white rounded-full min-w-[20px] text-center">
+                        {schedulingPendingCount}
+                      </span>
                     )}
 
                     {/* Arrow indicator for active state */}
                     {isActive && (
                       <svg
-                        className={`
-                          w-4 h-4 transition-all duration-200
-                          ${item.color === "orange" ? "text-orange-500" : ""}
-                          ${item.color === "cyan" ? "text-cyan-500" : ""}
-                          ${item.color === "violet" ? "text-violet-500" : ""}
-                        `}
+                        className={`w-4 h-4 transition-all duration-200 ${iconColorClass}`}
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -656,40 +623,22 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
             })}
           </div>
 
-          {/* Chat list section - Compact spacing */}
+          {/* Chat list section */}
           <div className="mt-4">
-            {/* Toggle header - Enhanced with color */}
+            {/* Toggle header - Clean and simple */}
             <button
               onClick={() => setShowChatList(!showChatList)}
-              className="group flex items-center justify-between w-full px-3 py-2 text-text-muted hover:text-text-primary hover:bg-[#F8935D]/10 dark:hover:bg-dark-hover transition-all duration-200 rounded-lg"
+              className="group flex items-center justify-between w-full px-3 py-2 text-text-muted hover:text-text-primary hover:bg-gray-100 dark:hover:bg-dark-hover transition-colors duration-200 rounded-lg"
             >
-              <span className="text-xs font-bold uppercase tracking-wider flex items-center gap-2">
-                <svg
-                  className="w-4 h-4 text-blue-500 group-hover:text-blue-600 transition-colors"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                  />
-                </svg>
+              <span className="text-xs font-semibold uppercase tracking-wide">
                 {t.sidebar.conversations}
               </span>
               <div className="flex items-center gap-2">
-                <span
-                  className="text-2xs font-bold text-white bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-500 px-2.5 py-0.5 rounded-full shadow-lg"
-                  style={{
-                    boxShadow: "0 0 8px rgba(59, 130, 246, 0.4)",
-                  }}
-                >
+                <span className="text-xs text-text-muted">
                   {localPosts.length}
                 </span>
                 <svg
-                  className={`w-4 h-4 transition-all duration-200 text-blue-500 ${showChatList ? "rotate-0" : "-rotate-90"}`}
+                  className={`w-4 h-4 transition-transform duration-200 text-text-muted ${showChatList ? "rotate-0" : "-rotate-90"}`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -715,103 +664,21 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
                     const isPinned = group.isPinnedGroup;
 
                     return (
-                      <div key={group.label} className={groupIndex > 0 ? "mt-2.5" : "mt-1.5"}>
-                        {/* Enhanced group header with vivid icons */}
-                        <div className={`
-                          px-3 py-1 rounded-lg mb-0.5
-                          flex items-center gap-2
-                          ${isPinned ? "bg-violet-500/5 dark:bg-violet-500/10" : ""}
-                          ${isToday ? "bg-emerald-500/5 dark:bg-emerald-500/10" : ""}
-                          ${isYesterday ? "bg-blue-500/5 dark:bg-blue-500/10" : ""}
-                        `}>
-                          {/* Vivid colored icon based on group type */}
-                          {isPinned && (
-                            <svg
-                              className="w-4 h-4 text-violet-500 dark:text-violet-400"
-                              fill="currentColor"
-                              viewBox="0 0 24 24"
-                              style={{
-                                filter: "drop-shadow(0 0 4px rgba(139, 92, 246, 0.3))",
-                              }}
-                            >
-                              <path d="M16 4a1 1 0 0 1 1 1v3.586l1.707 1.707a1 1 0 0 1 .293.707v2a1 1 0 0 1-1 1h-4v6a1 1 0 0 1-2 0v-6H8a1 1 0 0 1-1-1v-2a1 1 0 0 1 .293-.707L9 8.586V5a1 1 0 0 1 1-1h6z"/>
-                            </svg>
-                          )}
-                          {isToday && (
-                            <svg
-                              className="w-4 h-4 text-emerald-500 dark:text-emerald-400"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                              style={{
-                                filter: "drop-shadow(0 0 4px rgba(16, 185, 129, 0.3))",
-                              }}
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-                              />
-                            </svg>
-                          )}
-                          {isYesterday && (
-                            <svg
-                              className="w-4 h-4 text-blue-500 dark:text-blue-400"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                              style={{
-                                filter: "drop-shadow(0 0 4px rgba(59, 130, 246, 0.3))",
-                              }}
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-                              />
-                            </svg>
-                          )}
-                          {!isPinned && !isToday && !isYesterday && (
-                            <svg
-                              className="w-4 h-4 text-amber-500 dark:text-amber-400"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                              style={{
-                                filter: "drop-shadow(0 0 4px rgba(245, 158, 11, 0.3))",
-                              }}
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                              />
-                            </svg>
-                          )}
-
-                          {/* Group label with enhanced color */}
-                          <span className={`
-                            text-2xs font-bold uppercase tracking-wider
-                            ${isPinned ? "text-violet-600 dark:text-violet-400" : ""}
-                            ${isToday ? "text-emerald-600 dark:text-emerald-400" : ""}
-                            ${isYesterday ? "text-blue-600 dark:text-blue-400" : ""}
-                            ${!isPinned && !isToday && !isYesterday ? "text-amber-600 dark:text-amber-400" : ""}
-                          `}>
-                            {group.label}
+                      <div key={group.label} className={groupIndex > 0 ? "mt-3" : "mt-1.5"}>
+                        {/* Group header - Clean and minimal */}
+                        <div className="px-3 py-1.5 flex items-center justify-between">
+                          <span className="text-xs font-medium text-text-muted">
+                            {isPinned && (
+                              <span className="inline-flex items-center gap-1.5">
+                                <svg className="w-3 h-3 text-violet-500" fill="currentColor" viewBox="0 0 24 24">
+                                  <path d="M16 4a1 1 0 0 1 1 1v3.586l1.707 1.707a1 1 0 0 1 .293.707v2a1 1 0 0 1-1 1h-4v6a1 1 0 0 1-2 0v-6H8a1 1 0 0 1-1-1v-2a1 1 0 0 1 .293-.707L9 8.586V5a1 1 0 0 1 1-1h6z"/>
+                                </svg>
+                                {group.label}
+                              </span>
+                            )}
+                            {!isPinned && group.label}
                           </span>
-
-                          {/* Post count badge - Enhanced with consistent styling */}
-                          <span className={`
-                            ml-auto text-2xs font-bold px-2 py-0.5 rounded-full
-                            transition-all duration-200
-                            ${isPinned ? "bg-violet-100 dark:bg-violet-500/25 text-violet-700 dark:text-violet-300 ring-1 ring-violet-200 dark:ring-violet-500/30" : ""}
-                            ${isToday ? "bg-emerald-100 dark:bg-emerald-500/25 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-200 dark:ring-emerald-500/30" : ""}
-                            ${isYesterday ? "bg-blue-100 dark:bg-blue-500/25 text-blue-700 dark:text-blue-300 ring-1 ring-blue-200 dark:ring-blue-500/30" : ""}
-                            ${!isPinned && !isToday && !isYesterday ? "bg-amber-100 dark:bg-amber-500/25 text-amber-700 dark:text-amber-300 ring-1 ring-amber-200 dark:ring-amber-500/30" : ""}
-                          `}>
+                          <span className="text-xs text-text-muted/60">
                             {group.posts.length}
                           </span>
                         </div>

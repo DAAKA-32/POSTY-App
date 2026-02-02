@@ -3,8 +3,22 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useRef, useCallback, useEffect } from "react";
 
+// Template data structure - exported for type usage
+export interface PostTemplate {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  color: string;
+  bgColor: string;
+  borderColor: string;
+  template: string;
+  examples: string[];
+}
+
 // Post template categories with visual styles
-const TEMPLATES = [
+// Exported for use in TemplateFillerModal
+export const TEMPLATES: PostTemplate[] = [
   {
     id: "storytelling",
     name: "Storytelling",
@@ -99,6 +113,8 @@ const TEMPLATES = [
 
 interface PostTemplatesProps {
   onSelect: (template: string) => void;
+  /** Callback when template object is selected (for modal-based flow) */
+  onTemplateSelect?: (template: PostTemplate) => void;
   className?: string;
   disabled?: boolean;
 }
@@ -250,7 +266,7 @@ export default function PostTemplates({ onSelect, className = "" }: PostTemplate
  * - GPU-accelerated for performance
  * - Respects prefers-reduced-motion
  */
-export function CompactPostTemplates({ onSelect, className = "", disabled = false }: PostTemplatesProps) {
+export function CompactPostTemplates({ onSelect, onTemplateSelect, className = "", disabled = false }: PostTemplatesProps) {
   // UI state (for re-renders)
   const [isDraggingState, setIsDraggingState] = useState(false);
   const [scrollX, setScrollX] = useState(0);
@@ -461,7 +477,7 @@ export function CompactPostTemplates({ onSelect, className = "", disabled = fals
     return dx < 10 && dy < 10 && dt < 300;
   }, []);
 
-  const handleExampleSelect = useCallback((template: typeof TEMPLATES[0], clientX: number, clientY: number) => {
+  const handleExampleSelect = useCallback((template: PostTemplate, clientX: number, clientY: number) => {
     // Don't allow selection if disabled
     if (disabled) {
       clickStartRef.current = null;
@@ -469,11 +485,16 @@ export function CompactPostTemplates({ onSelect, className = "", disabled = fals
     }
 
     if (isClick(clientX, clientY)) {
-      // Inject structured template with placeholders
-      onSelect(template.template);
+      // If onTemplateSelect is provided, use modal-based flow
+      if (onTemplateSelect) {
+        onTemplateSelect(template);
+      } else {
+        // Fallback: inject structured template with placeholders directly
+        onSelect(template.template);
+      }
     }
     clickStartRef.current = null;
-  }, [isClick, onSelect, disabled]);
+  }, [isClick, onSelect, onTemplateSelect, disabled]);
 
   // Hover handlers for individual chips (no pause for seamless animation)
   const handleChipMouseEnter = useCallback((templateId: string) => {

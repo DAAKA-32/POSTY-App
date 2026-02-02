@@ -43,7 +43,7 @@ function ConversationContent() {
   const { user, userProfile } = useAuth();
   const { connection: linkedInConnection, publishToLinkedIn } = useLinkedIn();
   const { canSendMessage } = useQuota();
-  const { currentPlan } = useSubscription();
+  const { currentPlan, planLimits } = useSubscription();
   const browserMode = useBrowserMode();
 
   // Conversation state
@@ -534,6 +534,9 @@ function ConversationContent() {
               browserMode={browserMode}
               context="conversation"
               quotaLimitReached={!canSendMessage}
+              currentPlan={currentPlan}
+              maxCharacters={planLimits.maxCharactersPerPrompt}
+              showCharacterCount={true}
             />
           </div>
         </div>

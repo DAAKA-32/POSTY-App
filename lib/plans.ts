@@ -5,6 +5,56 @@
  * Used by both frontend and backend for consistent behavior.
  */
 
+// ============================================
+// PRODUCTION MODE FLAG
+// ============================================
+/**
+ * Production mode flag - Single source of truth
+ *
+ * When true, ALL test mode functionality is disabled:
+ * - TestModePanel is hidden
+ * - TestModeIndicator is hidden
+ * - enableTestMode() function is blocked
+ * - No test mode UI is visible to any user
+ *
+ * To re-enable test mode for development/QA:
+ * 1. Set this flag to false
+ * 2. Or set NEXT_PUBLIC_ENABLE_TEST_MODE=true in .env.local
+ *
+ * Note: This flag takes precedence over NODE_ENV and ADMIN_MODE checks
+ */
+export const PRODUCTION_MODE = process.env.NEXT_PUBLIC_ENABLE_TEST_MODE !== "true";
+
+/**
+ * Check if test mode functionality should be available
+ * Returns true only if:
+ * - PRODUCTION_MODE is false (test mode explicitly enabled)
+ * - AND (in development OR admin mode OR localhost)
+ *
+ * In production (PRODUCTION_MODE=true), this ALWAYS returns false
+ */
+export function isTestModeAllowed(): boolean {
+  // Production mode blocks all test mode functionality
+  if (PRODUCTION_MODE) {
+    return false;
+  }
+
+  // Only in non-production mode, check additional conditions
+  // This code path is only reached if NEXT_PUBLIC_ENABLE_TEST_MODE=true
+  if (typeof window === "undefined") {
+    // Server-side: only allow in development
+    return process.env.NODE_ENV === "development";
+  }
+
+  // Client-side checks
+  const isDev = process.env.NODE_ENV === "development";
+  const isAdmin = process.env.NEXT_PUBLIC_ADMIN_MODE === "true";
+  const hostname = window.location.hostname;
+  const isLocalhost = hostname === "localhost" || hostname === "127.0.0.1";
+
+  return isDev || isAdmin || isLocalhost;
+}
+
 // Plan Types
 export type PlanType = "free" | "pro" | "max";
 export type PaidPlanType = "pro" | "max"; // Plans that can be purchased/trialed

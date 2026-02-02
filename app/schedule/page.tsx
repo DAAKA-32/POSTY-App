@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
@@ -38,6 +38,18 @@ function ScheduleContent() {
     reschedulePost,
     refreshScheduledPosts,
   } = useScheduling();
+
+  // Enable full scrolling on Schedule page (mouse wheel, trackpad, touch, keyboard)
+  useEffect(() => {
+    document.documentElement.classList.add("schedule-scroll-enabled");
+    document.body.classList.add("schedule-scroll-enabled");
+    document.body.classList.remove("pwa-mobile", "no-scroll", "scroll-locked", "modal-open");
+
+    return () => {
+      document.documentElement.classList.remove("schedule-scroll-enabled");
+      document.body.classList.remove("schedule-scroll-enabled");
+    };
+  }, []);
 
   // State
   const [filter, setFilter] = useState<ScheduleStatus | "all">("all");

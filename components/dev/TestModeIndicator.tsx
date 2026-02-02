@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import { getPlanConfig } from "@/lib/plans";
+import { getPlanConfig, isTestModeAllowed } from "@/lib/plans";
 
 /**
  * TestModeIndicator - Global floating indicator when test mode is active
@@ -33,11 +33,21 @@ export default function TestModeIndicator({ showInProduction = false }: TestMode
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
 
-  // Only show in development mode unless explicitly allowed
+  // ============================================
+  // PRODUCTION MODE: Test mode indicator is completely hidden
+  // To re-enable: set NEXT_PUBLIC_ENABLE_TEST_MODE=true in .env.local
+  // ============================================
+  const [shouldShow, setShouldShow] = useState(false);
   const isDev = process.env.NODE_ENV === "development";
   const isAdmin = process.env.NEXT_PUBLIC_ADMIN_MODE === "true";
 
-  if (!isDev && !showInProduction && !isAdmin) {
+  useEffect(() => {
+    // Use centralized isTestModeAllowed() check from lib/plans.ts
+    // This respects PRODUCTION_MODE flag as single source of truth
+    setShouldShow(isTestModeAllowed() || showInProduction);
+  }, [showInProduction]);
+
+  if (!shouldShow) {
     return null;
   }
 

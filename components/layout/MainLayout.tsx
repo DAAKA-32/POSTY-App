@@ -622,48 +622,33 @@ export default function MainLayout({
             </button>
           )}
 
-          {/* New post button - Premium version with shimmer */}
+          {/* New post button - Clean professional version */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.1, ease: smoothEase }}
             className="relative group"
           >
-            {/* Animated glow effect - orange AUTOSCROLL */}
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-primary via-orange-500 to-primary rounded-xl opacity-75 blur-sm group-hover:opacity-100 animate-pulse-glow" />
-
             <Link
               href="/app"
               className={`
                 relative w-full h-11 rounded-xl flex items-center gap-2.5
-                bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500
-                hover:from-orange-600 hover:via-orange-500 hover:to-orange-600
-                text-white shadow-lg hover:shadow-xl
+                bg-orange-500 hover:bg-orange-600
+                text-white shadow-md hover:shadow-lg
                 transition-all duration-200 ease-out
-                overflow-hidden
                 ${isCollapsed ? "justify-center px-0" : "px-3"}
               `}
-              style={{
-                boxShadow: "0 4px 20px rgba(249, 115, 22, 0.3)",
-              }}
               title={t.sidebar.newPost}
             >
-              {/* Shimmer overlay - enhanced */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full animate-shimmer-enhanced" />
-
-              <motion.svg
-                className="w-5 h-5 shrink-0 relative z-10"
+              <svg
+                className="w-5 h-5 shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
-                style={{
-                  filter: "drop-shadow(0 0 4px rgba(255, 255, 255, 0.5))",
-                }}
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-              </motion.svg>
-              {!isCollapsed && <span className="font-bold whitespace-nowrap relative z-10">{t.sidebar.newPost}</span>}
-              {!isCollapsed && <span className="relative z-10 text-sm animate-pulse">✨</span>}
+              </svg>
+              {!isCollapsed && <span className="font-semibold whitespace-nowrap">{t.sidebar.newPost}</span>}
               {/* Tooltip for collapsed mode */}
               {isCollapsed && (
                 <span className="absolute left-full ml-2 px-2 py-1 bg-background-warm dark:bg-dark-elevated border border-[#F8935D]/15 dark:border-dark-border rounded-lg text-sm text-text-primary whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50 shadow-lg pointer-events-none">
@@ -746,12 +731,7 @@ export default function MainLayout({
                     {item.icon(isActive)}
                     {/* Badge on icon when collapsed */}
                     {isCollapsed && showBadge && (
-                      <span
-                        className="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 text-2xs font-bold bg-gradient-to-r from-violet-500 via-purple-500 to-violet-500 text-white rounded-full min-w-[16px] text-center shadow-lg"
-                        style={{
-                          boxShadow: "0 0 12px rgba(139, 92, 246, 0.5), 0 0 20px rgba(139, 92, 246, 0.3)",
-                        }}
-                      >
+                      <span className="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 text-2xs font-bold bg-violet-500 text-white rounded-full min-w-[16px] text-center">
                         {schedulingPendingCount}
                       </span>
                     )}
@@ -759,21 +739,11 @@ export default function MainLayout({
                   {!isCollapsed && (
                     <>
                       <span className="font-bold whitespace-nowrap flex-1">{item.name}</span>
-                      {/* Badge after name when expanded with violet gradient */}
+                      {/* Badge after name when expanded */}
                       {showBadge && (
-                        <div className="relative flex-shrink-0">
-                          {/* Pulsing glow effect for visibility */}
-                          <div className="absolute inset-0 bg-violet-500/30 rounded-full blur-md animate-pulse" />
-
-                          <span
-                            className="relative px-2.5 py-0.5 text-xs font-bold bg-gradient-to-r from-violet-500 via-purple-500 to-violet-500 text-white rounded-full min-w-[24px] text-center shadow-lg flex items-center justify-center"
-                            style={{
-                              boxShadow: "0 0 12px rgba(139, 92, 246, 0.5), 0 0 20px rgba(139, 92, 246, 0.3)",
-                            }}
-                          >
-                            {schedulingPendingCount}
-                          </span>
-                        </div>
+                        <span className="px-2 py-0.5 text-xs font-semibold bg-violet-500 text-white rounded-full min-w-[24px] text-center">
+                          {schedulingPendingCount}
+                        </span>
                       )}
                     </>
                   )}
@@ -837,12 +807,7 @@ export default function MainLayout({
                   {t.sidebar.conversations}
                 </span>
                 <div className="flex items-center gap-2">
-                  <span
-                    className="text-2xs font-bold text-white bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-500 px-2.5 py-0.5 rounded-full shadow-lg"
-                    style={{
-                      boxShadow: "0 0 8px rgba(59, 130, 246, 0.4)",
-                    }}
-                  >
+                  <span className="text-2xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-500/20 px-2 py-0.5 rounded-full">
                     {localPosts.length}
                   </span>
                   <motion.svg
@@ -875,41 +840,29 @@ export default function MainLayout({
 
                       return (
                       <div key={group.label} className={groupIndex > 0 ? "mt-2.5 mb-3" : "mb-3"}>
-                        {/* Enhanced group header with vivid icons */}
+                        {/* Simple group header */}
                         <motion.div
                           initial={{ opacity: 0, x: -10 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ duration: 0.3, delay: groupIndex * 0.05, ease: smoothEase }}
-                          className={`
-                            px-3 py-1 rounded-lg mb-0.5
-                            flex items-center gap-2
-                            ${isPinned ? "bg-violet-500/5 dark:bg-violet-500/10" : ""}
-                            ${isToday ? "bg-emerald-500/5 dark:bg-emerald-500/10" : ""}
-                            ${isYesterday ? "bg-blue-500/5 dark:bg-blue-500/10" : ""}
-                          `}
+                          className="px-3 py-1.5 flex items-center gap-2"
                         >
-                          {/* Vivid colored icon based on group type */}
+                          {/* Simple colored icon based on group type */}
                           {isPinned && (
                             <svg
-                              className="w-4 h-4 text-violet-500 dark:text-violet-400"
+                              className="w-3.5 h-3.5 text-violet-500 dark:text-violet-400"
                               fill="currentColor"
                               viewBox="0 0 24 24"
-                              style={{
-                                filter: "drop-shadow(0 0 4px rgba(139, 92, 246, 0.3))",
-                              }}
                             >
                               <path d="M16 4a1 1 0 0 1 1 1v3.586l1.707 1.707a1 1 0 0 1 .293.707v2a1 1 0 0 1-1 1h-4v6a1 1 0 0 1-2 0v-6H8a1 1 0 0 1-1-1v-2a1 1 0 0 1 .293-.707L9 8.586V5a1 1 0 0 1 1-1h6z"/>
                             </svg>
                           )}
                           {isToday && (
                             <svg
-                              className="w-4 h-4 text-emerald-500 dark:text-emerald-400"
+                              className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
-                              style={{
-                                filter: "drop-shadow(0 0 4px rgba(16, 185, 129, 0.3))",
-                              }}
                             >
                               <path
                                 strokeLinecap="round"
@@ -921,13 +874,10 @@ export default function MainLayout({
                           )}
                           {isYesterday && (
                             <svg
-                              className="w-4 h-4 text-blue-500 dark:text-blue-400"
+                              className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
-                              style={{
-                                filter: "drop-shadow(0 0 4px rgba(59, 130, 246, 0.3))",
-                              }}
                             >
                               <path
                                 strokeLinecap="round"
@@ -939,13 +889,10 @@ export default function MainLayout({
                           )}
                           {!isPinned && !isToday && !isYesterday && (
                             <svg
-                              className="w-4 h-4 text-amber-500 dark:text-amber-400"
+                              className="w-3.5 h-3.5 text-text-muted"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
-                              style={{
-                                filter: "drop-shadow(0 0 4px rgba(245, 158, 11, 0.3))",
-                              }}
                             >
                               <path
                                 strokeLinecap="round"
@@ -956,26 +903,13 @@ export default function MainLayout({
                             </svg>
                           )}
 
-                          {/* Group label with enhanced color */}
-                          <span className={`
-                            text-2xs font-bold uppercase tracking-wider
-                            ${isPinned ? "text-violet-600 dark:text-violet-400" : ""}
-                            ${isToday ? "text-emerald-600 dark:text-emerald-400" : ""}
-                            ${isYesterday ? "text-blue-600 dark:text-blue-400" : ""}
-                            ${!isPinned && !isToday && !isYesterday ? "text-amber-600 dark:text-amber-400" : ""}
-                          `}>
+                          {/* Group label - simple text */}
+                          <span className="text-2xs font-semibold uppercase tracking-wider text-text-muted">
                             {group.label}
                           </span>
 
-                          {/* Post count badge - Enhanced with consistent styling */}
-                          <span className={`
-                            ml-auto text-2xs font-bold px-2 py-0.5 rounded-full
-                            transition-all duration-200
-                            ${isPinned ? "bg-violet-100 dark:bg-violet-500/25 text-violet-700 dark:text-violet-300 ring-1 ring-violet-200 dark:ring-violet-500/30" : ""}
-                            ${isToday ? "bg-emerald-100 dark:bg-emerald-500/25 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-200 dark:ring-emerald-500/30" : ""}
-                            ${isYesterday ? "bg-blue-100 dark:bg-blue-500/25 text-blue-700 dark:text-blue-300 ring-1 ring-blue-200 dark:ring-blue-500/30" : ""}
-                            ${!isPinned && !isToday && !isYesterday ? "bg-amber-100 dark:bg-amber-500/25 text-amber-700 dark:text-amber-300 ring-1 ring-amber-200 dark:ring-amber-500/30" : ""}
-                          `}>
+                          {/* Post count badge - Simple text */}
+                          <span className="ml-auto text-2xs font-medium text-text-muted">
                             {group.posts.length}
                           </span>
                         </motion.div>
@@ -1076,13 +1010,8 @@ export default function MainLayout({
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
-                {/* Badge count with blue gradient */}
-                <span
-                  className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-2xs font-bold rounded-full flex items-center justify-center shadow-lg"
-                  style={{
-                    boxShadow: "0 0 8px rgba(59, 130, 246, 0.4)",
-                  }}
-                >
+                {/* Badge count - simple solid */}
+                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-blue-500 text-white text-2xs font-semibold rounded-full flex items-center justify-center">
                   {localPosts.length > 9 ? "9+" : localPosts.length}
                 </span>
               </div>

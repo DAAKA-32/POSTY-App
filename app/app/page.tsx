@@ -28,7 +28,8 @@ import toast from "@/components/ui/Toast";
 import VoiceWaveform, { ListeningIndicator } from "@/components/chat/VoiceWaveform";
 import ShimmeringName from "@/components/ui/ShimmeringName";
 import { useBrowserMode, setBrowserModeCSSVars } from "@/hooks/useBrowserMode";
-import { CompactPostTemplates } from "@/components/chat/PostTemplates";
+import { CompactPostTemplates, PostTemplate } from "@/components/chat/PostTemplates";
+import TemplateFillerModal from "@/components/chat/TemplateFillerModal";
 import { trackPostGeneration, initAnalytics } from "@/lib/analytics";
 import UniversalChatInput, { UniversalChatInputRef } from "@/components/chat/UniversalChatInput";
 
@@ -114,12 +115,15 @@ function AppContent() {
   const { user, userProfile } = useAuth();
   const { connection: linkedInConnection, publishToLinkedIn } = useLinkedIn();
   const { canSendMessage } = useQuota();
-  const { isMaxPlan, currentPlan } = useSubscription();
+  const { isMaxPlan, currentPlan, planLimits } = useSubscription();
   const [posts, setPosts] = useState<Post[]>([]);
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [publishContent, setPublishContent] = useState("");
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [scheduleContent, setScheduleContent] = useState("");
+  // Template filler modal state
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<PostTemplate | null>(null);
   const [inputValue, setInputValue] = useState("");
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [isFocused, setIsFocused] = useState(false);
@@ -153,6 +157,10 @@ function AppContent() {
   const [isProcessingVoice, setIsProcessingVoice] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  // Silence detection timer - auto-stop after 1.5s of silence
+  const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastSpeechTimeRef = useRef<number>(0);
+  const isRecordingRef = useRef(false); // Mirror for callbacks
 
   const {
     messages,
@@ -273,6 +281,45 @@ function AppContent() {
     return () => clearInterval(interval);
   }, [isFocused, inputValue.length]);
 
+  // Clear silence timer helper
+  const clearSilenceTimer = useCallback(() => {
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = null;
+    }
+  }, []);
+
+  // Force stop recording helper - cleans up all state
+  const forceStopRecording = useCallback(() => {
+    clearSilenceTimer();
+
+    if (recognitionRef.current) {
+      try {
+        // Use abort() for more reliable cleanup on iOS Safari
+        recognitionRef.current.abort();
+      } catch {
+        // Ignore errors
+      }
+    }
+
+    // Force clear all recording states
+    isRecordingRef.current = false;
+    setIsRecording(false);
+    setIsProcessingVoice(false);
+  }, [clearSilenceTimer]);
+
+  // Start silence detection timer
+  const startSilenceTimer = useCallback(() => {
+    clearSilenceTimer();
+
+    // Auto-stop after 1.5 seconds of silence
+    silenceTimerRef.current = setTimeout(() => {
+      if (isRecordingRef.current) {
+        forceStopRecording();
+      }
+    }, 1500);
+  }, [clearSilenceTimer, forceStopRecording]);
+
   // Initialize speech recognition
   useEffect(() => {
     // Check if Web Speech API is supported
@@ -284,19 +331,50 @@ function AppContent() {
       recognition.interimResults = true;
       recognition.lang = "fr-FR";
 
+      // Track when speech is detected - reset silence timer
+      recognition.onspeechstart = () => {
+        lastSpeechTimeRef.current = Date.now();
+        clearSilenceTimer();
+      };
+
+      // Track when speech ends - start silence timer
+      recognition.onspeechend = () => {
+        startSilenceTimer();
+      };
+
+      // Handle audio start - user granted permission and mic is active
+      recognition.onaudiostart = () => {
+        // Start silence timer when audio begins (in case no speech detected)
+        startSilenceTimer();
+      };
+
       recognition.onresult = (event: SpeechRecognitionEvent) => {
         let finalTranscript = "";
+        let hasInterim = false;
 
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const transcript = event.results[i][0].transcript;
           if (event.results[i].isFinal) {
             finalTranscript += transcript;
+          } else {
+            hasInterim = true;
           }
+        }
+
+        // Reset silence timer on any speech input (interim or final)
+        if (hasInterim || finalTranscript) {
+          lastSpeechTimeRef.current = Date.now();
+          clearSilenceTimer();
+          startSilenceTimer();
         }
 
         if (finalTranscript) {
           // Show processing state briefly for smooth transition
           setIsProcessingVoice(true);
+
+          // Stop recording after final transcript
+          forceStopRecording();
+
           setTimeout(() => {
             // Inject transcribed text into the chat input via ref
             chatInputRef.current?.appendValue(finalTranscript);
@@ -306,13 +384,17 @@ function AppContent() {
       };
 
       recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+        clearSilenceTimer();
+        isRecordingRef.current = false;
         setIsRecording(false);
+        setIsProcessingVoice(false);
 
         // Only show user-friendly errors, don't pollute console with permission denials
         if (event.error === "not-allowed") {
           toast.error("Microphone non autorisé. Vérifiez les permissions.");
         } else if (event.error === "no-speech") {
-          toast.error("Aucune voix détectée. Réessayez.");
+          // Silently handle no-speech - this is expected when user doesn't speak
+          // Don't show error toast for better UX
         } else if (event.error !== "aborted") {
           // Log unexpected errors (but not "aborted" which is normal when user stops)
           console.warn("Speech recognition error:", event.error);
@@ -320,7 +402,9 @@ function AppContent() {
       };
 
       recognition.onend = () => {
-        // Ensure state is updated immediately when recognition ends
+        // Ensure all state is updated immediately when recognition ends
+        clearSilenceTimer();
+        isRecordingRef.current = false;
         setIsRecording(false);
       };
 
@@ -329,6 +413,7 @@ function AppContent() {
 
     // Cleanup: abort recognition and release microphone on unmount
     return () => {
+      clearSilenceTimer();
       if (recognitionRef.current) {
         try {
           recognitionRef.current.abort();
@@ -337,35 +422,36 @@ function AppContent() {
         }
         recognitionRef.current = null;
       }
+      isRecordingRef.current = false;
       setIsRecording(false);
+      setIsProcessingVoice(false);
     };
-  }, []);
+  }, [clearSilenceTimer, startSilenceTimer, forceStopRecording]);
 
   // Toggle voice recording with immediate state updates
   const toggleRecording = useCallback(() => {
     if (!recognitionRef.current) return;
 
-    if (isRecording) {
-      // Stop recognition - this releases the microphone
-      try {
-        recognitionRef.current.stop();
-      } catch {
-        // Force abort if stop fails
-        recognitionRef.current.abort();
-      }
-      // Update state immediately (don't wait for onend)
-      setIsRecording(false);
+    if (isRecordingRef.current) {
+      // Stop recording - use forceStopRecording for reliable cleanup
+      forceStopRecording();
     } else {
       try {
+        // Clear any lingering state before starting
+        clearSilenceTimer();
+        setIsProcessingVoice(false);
+
         recognitionRef.current.start();
+        isRecordingRef.current = true;
         setIsRecording(true);
       } catch (error) {
         console.error("Failed to start recording:", error);
+        isRecordingRef.current = false;
         setIsRecording(false);
         toast.error("Impossible de démarrer l'enregistrement");
       }
     }
-  }, [isRecording]);
+  }, [forceStopRecording, clearSilenceTimer]);
 
   const handleGenerate = async (prompt: string) => {
     await generate(prompt);
@@ -375,10 +461,9 @@ function AppContent() {
 
   const handleSubmit = async () => {
     if (!inputValue.trim() || isLoading || isStreaming) return;
-    // Stop recording if active
-    if (isRecording && recognitionRef.current) {
-      recognitionRef.current.stop();
-      setIsRecording(false);
+    // Stop recording if active - use forceStopRecording for reliable cleanup
+    if (isRecordingRef.current) {
+      forceStopRecording();
     }
     const prompt = inputValue.trim();
     setInputValue("");
@@ -540,12 +625,16 @@ function AppContent() {
                 >
                   <CompactPostTemplates
                     onSelect={(template) => {
-                      // Inject template into UniversalChatInput
+                      // Fallback: Inject template into UniversalChatInput directly
                       chatInputRef.current?.setValue(template);
-                      // Focus the chat input after template injection
                       setTimeout(() => {
                         chatInputRef.current?.focus();
                       }, 100);
+                    }}
+                    onTemplateSelect={(template) => {
+                      // Open modal for guided template filling
+                      setSelectedTemplate(template);
+                      setShowTemplateModal(true);
                     }}
                     className="justify-center infinite-scroll-stable"
                     disabled={!canSendMessage}
@@ -905,6 +994,9 @@ function AppContent() {
                 browserMode={browserMode}
                 context="new-chat"
                 quotaLimitReached={!canSendMessage}
+                currentPlan={currentPlan}
+                maxCharacters={planLimits.maxCharactersPerPrompt}
+                showCharacterCount={true}
               />
             </motion.div>
 
@@ -935,6 +1027,26 @@ function AppContent() {
         isOpen={showScheduleModal}
         onClose={() => setShowScheduleModal(false)}
         content={scheduleContent}
+      />
+
+      {/* Template filler modal - guided fill-in-the-blanks */}
+      <TemplateFillerModal
+        isOpen={showTemplateModal}
+        onClose={() => {
+          setShowTemplateModal(false);
+          setSelectedTemplate(null);
+        }}
+        onSubmit={(filledTemplate) => {
+          // Inject filled template into UniversalChatInput
+          chatInputRef.current?.setValue(filledTemplate);
+          // Focus and close modal
+          setTimeout(() => {
+            chatInputRef.current?.focus();
+          }, 100);
+          setShowTemplateModal(false);
+          setSelectedTemplate(null);
+        }}
+        template={selectedTemplate}
       />
     </MainLayout>
   );

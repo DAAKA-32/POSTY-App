@@ -660,6 +660,18 @@ function AnalyticsContent() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>("30d");
 
+  // Enable full scrolling on Analytics page (mouse wheel, trackpad, touch, keyboard)
+  useEffect(() => {
+    document.documentElement.classList.add("analytics-scroll-enabled");
+    document.body.classList.add("analytics-scroll-enabled");
+    document.body.classList.remove("pwa-mobile", "no-scroll", "scroll-locked", "modal-open");
+
+    return () => {
+      document.documentElement.classList.remove("analytics-scroll-enabled");
+      document.body.classList.remove("analytics-scroll-enabled");
+    };
+  }, []);
+
   const loadData = useCallback(async () => {
     if (!user) return;
     setLoading(true);
@@ -767,35 +779,45 @@ function AnalyticsContent() {
         touchAction: "pan-y",
       }}
     >
-      {/* Header */}
-      <div className="sticky top-0 z-40 bg-background-warm/80 dark:bg-dark-bg/80 backdrop-blur-xl border-b border-[#F8935D]/10 dark:border-dark-border">
+      {/* Header - Unified style with Dashboard & Profile */}
+      <header className="sticky top-0 z-40 bg-background-warm/80 dark:bg-dark-bg/80 backdrop-blur-xl border-b border-[#F8935D]/10 dark:border-dark-border">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => router.back()}
-                className="p-2 rounded-xl text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-[#F8935D]/10 dark:hover:bg-gray-800 transition-colors"
+          <div className="relative flex items-center justify-between h-16">
+            {/* Back button - Consistent with Dashboard/Profile */}
+            <button
+              onClick={() => router.back()}
+              className="flex items-center gap-2 text-gray-600 dark:text-text-secondary hover:text-gray-900 dark:hover:text-white transition-colors group z-10"
+              aria-label="Retour"
+            >
+              <svg
+                className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                Analytics LinkedIn
-              </h1>
-            </div>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              <span className="hidden sm:inline">Retour</span>
+            </button>
+
+            {/* Page title - Centered */}
+            <h1 className="absolute left-1/2 -translate-x-1/2 text-lg font-semibold text-gray-900 dark:text-white">
+              Analytics
+            </h1>
+
+            {/* Actions - Right side */}
             <Link
               href="/app"
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#F8935D] bg-[#F8935D]/10 rounded-xl hover:bg-[#F8935D]/20 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#F8935D] bg-[#F8935D]/10 rounded-xl hover:bg-[#F8935D]/20 transition-colors z-10"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              Nouveau post
+              <span className="hidden sm:inline">Nouveau post</span>
             </Link>
           </div>
         </div>
-      </div>
+      </header>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {loading ? (

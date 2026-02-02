@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import { PlanType, getPlanConfig, PLAN_CONFIGS } from "@/lib/plans";
+import { PlanType, getPlanConfig, PLAN_CONFIGS, isTestModeAllowed, PRODUCTION_MODE } from "@/lib/plans";
 import Button from "@/components/ui/Button";
 import toast from "@/components/ui/Toast";
 
@@ -45,21 +45,18 @@ export default function TestModePanel({
   const [isDeactivating, setIsDeactivating] = useState(false);
   const lastSelectedPlanRef = useRef<PlanType | null>(null);
 
-  // Only show in development mode, admin mode, or when explicitly allowed
-  // NODE_ENV is inlined at build time for client components in Next.js
-  const isDev = process.env.NODE_ENV === "development";
-  const isAdmin = process.env.NEXT_PUBLIC_ADMIN_MODE === "true";
-  // Also check for localhost URL as fallback for dev detection
-  const [isLocalhost, setIsLocalhost] = useState(false);
+  // ============================================
+  // PRODUCTION MODE: Test mode is completely disabled
+  // To re-enable: set NEXT_PUBLIC_ENABLE_TEST_MODE=true in .env.local
+  // ============================================
+  const [shouldShow, setShouldShow] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const hostname = window.location.hostname;
-      setIsLocalhost(hostname === "localhost" || hostname === "127.0.0.1");
-    }
-  }, []);
-
-  const shouldShow = isDev || isAdmin || showInProduction || isLocalhost;
+    // Use centralized isTestModeAllowed() check from lib/plans.ts
+    // This respects PRODUCTION_MODE flag as single source of truth
+    const allowed = isTestModeAllowed() || showInProduction;
+    setShouldShow(allowed);
+  }, [showInProduction]);
 
   const handleEnableTestMode = async (plan: PlanType) => {
     if (!shouldShow) return;

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import { getPlanConfig } from "@/lib/plans";
+import { getPlanConfig, isTestModeAllowed } from "@/lib/plans";
 
 /**
  * TestModeIndicator - Floating indicator when test mode is active
@@ -16,17 +16,16 @@ export default function TestModeIndicator() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isDisabling, setIsDisabling] = useState(false);
 
-  // Only show in dev/localhost
+  // ============================================
+  // PRODUCTION MODE: Test mode indicator is completely hidden
+  // To re-enable: set NEXT_PUBLIC_ENABLE_TEST_MODE=true in .env.local
+  // ============================================
   const [shouldShow, setShouldShow] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const hostname = window.location.hostname;
-      const isDev = process.env.NODE_ENV === "development";
-      const isAdmin = process.env.NEXT_PUBLIC_ADMIN_MODE === "true";
-      const isLocalhost = hostname === "localhost" || hostname === "127.0.0.1";
-      setShouldShow(isDev || isAdmin || isLocalhost);
-    }
+    // Use centralized isTestModeAllowed() check from lib/plans.ts
+    // This respects PRODUCTION_MODE flag as single source of truth
+    setShouldShow(isTestModeAllowed());
   }, []);
 
   const handleDisable = async () => {

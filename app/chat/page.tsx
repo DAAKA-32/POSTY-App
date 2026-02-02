@@ -13,6 +13,7 @@ import AIResponsePair from "@/components/chat/AIResponsePair";
 import toast from "@/components/ui/Toast";
 import { useBrowserMode, setBrowserModeCSSVars } from "@/hooks/useBrowserMode";
 import UniversalChatInput from "@/components/chat/UniversalChatInput";
+import { getPlanLimits } from "@/lib/plans";
 
 const GUEST_LIMIT = 2;
 
@@ -405,6 +406,9 @@ export default function ChatPage() {
             browserMode={browserMode}
             context="guest"
             trialLimitReached={!canGenerate}
+            currentPlan="free"
+            maxCharacters={getPlanLimits("free").maxCharactersPerPrompt}
+            showCharacterCount={true}
           />
 
           {/* Mobile trial counter */}

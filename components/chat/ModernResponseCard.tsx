@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { LinkedInIcon } from "@/components/linkedin/LinkedInConnectButton";
 import { useHapticFeedback } from "@/hooks/useHapticFeedback";
 import { useSubscription } from "@/contexts/SubscriptionContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { SubscriptionPlan } from "@/types";
 import PostInsightsModal from "./PostInsightsModal";
 import { generatePostInsights } from "@/lib/generateInsights";
@@ -49,6 +50,7 @@ export const ModernResponseCard = memo(function ModernResponseCard({
 }: ModernResponseCardProps) {
   const { trigger: triggerHaptic } = useHapticFeedback();
   const { canSchedulePosts } = useSubscription();
+  const { userProfile } = useAuth();
   const canSchedule = canSchedulePosts().allowed;
 
   // Menu dropdown state
@@ -212,8 +214,8 @@ export const ModernResponseCard = memo(function ModernResponseCard({
     triggerHaptic("light");
   };
 
-  // Generate insights for this post
-  const insights = generatePostInsights(content, variant);
+  // Generate insights for this post (with user profile for personalization)
+  const insights = generatePostInsights(content, variant, userProfile);
 
   // Render menu in portal with intelligent positioning
   const renderMenu = () => {

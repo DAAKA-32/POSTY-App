@@ -21,6 +21,8 @@ import {
   getTrialDaysRemaining,
   checkTrialEligibility,
   formatTrialStatusMessage,
+  isTestModeAllowed,
+  PRODUCTION_MODE,
 } from "@/lib/plans";
 import {
   UserSubscription,
@@ -359,8 +361,16 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   // ============================================
   // TEST MODE CONTROLS
   // ============================================
+  // PRODUCTION MODE: These functions are blocked in production
+  // To re-enable: set NEXT_PUBLIC_ENABLE_TEST_MODE=true in .env.local
 
   const enableTestMode = useCallback(async (plan: PlanType) => {
+    // Block in production mode - security guard
+    if (PRODUCTION_MODE || !isTestModeAllowed()) {
+      console.warn("[SubscriptionContext] Test mode is disabled in production.");
+      return;
+    }
+
     if (!user?.uid) return;
 
     try {
@@ -393,6 +403,12 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   }, [user?.uid]);
 
   const disableTestMode = useCallback(async () => {
+    // Block in production mode - security guard
+    if (PRODUCTION_MODE || !isTestModeAllowed()) {
+      console.warn("[SubscriptionContext] Test mode is disabled in production.");
+      return;
+    }
+
     if (!user?.uid) return;
 
     try {

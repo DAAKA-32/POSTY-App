@@ -283,39 +283,17 @@ function SettingsContent() {
             {/* Test Mode Panel - Dev/QA only */}
             <TestModePanel className="mt-4 md:mt-5 lg:mt-6" />
 
-            {/* Data collected section - Premium styling with AUTOSCROLL shimmer */}
+            {/* Data collected section */}
             <motion.section
               variants={sectionVariants}
-              whileHover={{ y: -4, scale: 1.005 }}
-              className="group relative overflow-hidden bg-white/80 dark:bg-dark-card border border-[#F8935D]/10 dark:border-dark-border hover:border-primary/20 rounded-xl p-4 md:p-5 lg:p-6 transition-all duration-300 hover:shadow-[0_0_30px_rgba(232,147,77,0.08)]"
+              className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-xl p-4 md:p-5 lg:p-6 transition-colors duration-200"
             >
-              {/* AUTOSCROLL-style shimmer effect - ORANGE DOMINANT */}
-              <motion.div
-                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-                animate={{
-                  backgroundPosition: ["0% 0%", "200% 200%"],
-                }}
-                transition={{
-                  duration: 3,
-                  repeat: Infinity,
-                  ease: "linear",
-                }}
-                style={{
-                  background: "linear-gradient(135deg, transparent 0%, rgba(248,147,93,0.08) 25%, transparent 50%, rgba(251,146,60,0.08) 75%, transparent 100%)",
-                  backgroundSize: "200% 200%",
-                }}
-              />
-
-              <div className="flex items-center gap-3 mb-4 lg:mb-5 relative z-10">
-                <motion.div
-                  whileHover={{ scale: 1.1, rotate: 5 }}
-                  transition={{ duration: 0.2 }}
-                  className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-gradient-to-br from-primary/15 to-accent/10 border border-primary/20 flex items-center justify-center group-hover:shadow-glow transition-shadow duration-300"
-                >
+              <div className="flex items-center gap-3 mb-4 lg:mb-5">
+                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-primary/10 flex items-center justify-center">
                   <svg className="w-5 h-5 lg:w-6 lg:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
-                </motion.div>
+                </div>
                 <h2 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white">{t.settings.dataCollected}</h2>
               </div>
               {/* Basic info - always visible */}
@@ -454,45 +432,23 @@ function SettingsContent() {
               </Link>
             </motion.section>
 
-            {/* Appearance Section - Theme Toggle - Premium styling with AUTOSCROLL shimmer */}
+            {/* Appearance Section - Theme Toggle */}
             <motion.section
               variants={sectionVariants}
-              whileHover={{ y: -4, scale: 1.005 }}
-              className="group relative overflow-hidden bg-white/80 dark:bg-dark-card border border-[#F8935D]/10 dark:border-dark-border hover:border-primary/20 rounded-xl p-4 md:p-5 lg:p-6 transition-all duration-300 hover:shadow-[0_0_30px_rgba(232,147,77,0.08)]"
+              className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-xl p-4 md:p-5 lg:p-6 transition-colors duration-200"
             >
-              {/* AUTOSCROLL-style shimmer effect - ORANGE DOMINANT */}
-              <motion.div
-                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-                animate={{
-                  backgroundPosition: ["0% 0%", "200% 200%"],
-                }}
-                transition={{
-                  duration: 3,
-                  repeat: Infinity,
-                  ease: "linear",
-                }}
-                style={{
-                  background: "linear-gradient(135deg, transparent 0%, rgba(248,147,93,0.08) 25%, transparent 50%, rgba(251,146,60,0.08) 75%, transparent 100%)",
-                  backgroundSize: "200% 200%",
-                }}
-              />
-
-              <div className="flex items-center gap-3 mb-4 lg:mb-5 relative z-10">
-                <motion.div
-                  whileHover={{ scale: 1.1, rotate: 5 }}
-                  transition={{ duration: 0.2 }}
-                  className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-gradient-to-br from-primary/15 to-accent/10 border border-primary/20 flex items-center justify-center group-hover:shadow-glow transition-shadow duration-300"
-                >
+              <div className="flex items-center gap-3 mb-4 lg:mb-5">
+                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-amber-500/10 flex items-center justify-center">
                   {isDark ? (
-                    <svg className="w-5 h-5 lg:w-6 lg:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 lg:w-6 lg:h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                     </svg>
                   ) : (
-                    <svg className="w-5 h-5 lg:w-6 lg:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 lg:w-6 lg:h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                     </svg>
                   )}
-                </motion.div>
+                </div>
                 <div>
                   <h2 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white">{t.settings.appearance || "Apparence"}</h2>
                   <p className="text-xs lg:text-sm text-text-muted mt-0.5">{t.settings.appearanceSubtitle || "Personnalisez l'interface"}</p>
@@ -508,15 +464,14 @@ function SettingsContent() {
               />
             </motion.section>
 
-            {/* Notifications Section - Premium styling */}
+            {/* Notifications Section */}
             <motion.section
               variants={sectionVariants}
-              whileHover={{ y: -2 }}
-              className="group bg-white/80 dark:bg-dark-card border border-[#F8935D]/10 dark:border-dark-border hover:border-primary/20 rounded-xl p-4 md:p-5 lg:p-6 transition-all duration-300 hover:shadow-[0_0_30px_rgba(232,147,77,0.08)]"
+              className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-xl p-4 md:p-5 lg:p-6 transition-colors duration-200"
             >
               <div className="flex items-center gap-3 mb-4 lg:mb-5">
-                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-gradient-to-br from-primary/15 to-accent/10 border border-primary/20 flex items-center justify-center group-hover:shadow-glow transition-shadow duration-300">
-                  <svg className="w-5 h-5 lg:w-6 lg:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                  <svg className="w-5 h-5 lg:w-6 lg:h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                   </svg>
                 </div>
@@ -543,15 +498,14 @@ function SettingsContent() {
               </div>
             </motion.section>
 
-            {/* Consent preferences - Premium styling */}
+            {/* Consent preferences */}
             <motion.section
               variants={sectionVariants}
-              whileHover={{ y: -2 }}
-              className="group bg-white/80 dark:bg-dark-card border border-[#F8935D]/10 dark:border-dark-border hover:border-accent/20 rounded-xl p-4 md:p-5 lg:p-6 transition-all duration-300 hover:shadow-[0_0_30px_rgba(248,87,81,0.08)]"
+              className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-xl p-4 md:p-5 lg:p-6 transition-colors duration-200"
             >
               <div className="flex items-center gap-3 mb-4 lg:mb-5">
-                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-gradient-to-br from-accent/15 to-primary/10 border border-accent/20 flex items-center justify-center group-hover:shadow-glow-accent transition-shadow duration-300">
-                  <svg className="w-5 h-5 lg:w-6 lg:h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+                  <svg className="w-5 h-5 lg:w-6 lg:h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
                 </div>
@@ -579,15 +533,14 @@ function SettingsContent() {
               </button>
             </motion.section>
 
-            {/* Your rights - Premium styling */}
+            {/* Your rights */}
             <motion.section
               variants={sectionVariants}
-              whileHover={{ y: -2 }}
-              className="group bg-white/80 dark:bg-dark-card border border-[#F8935D]/10 dark:border-dark-border hover:border-warning/20 rounded-xl p-4 md:p-5 lg:p-6 transition-all duration-300 hover:shadow-[0_0_30px_rgba(248,163,93,0.08)]"
+              className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-xl p-4 md:p-5 lg:p-6 transition-colors duration-200"
             >
               <div className="flex items-center gap-3 mb-4 lg:mb-5">
-                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-gradient-to-br from-warning/15 to-warning/5 border border-warning/20 flex items-center justify-center group-hover:shadow-[0_0_20px_rgba(248,163,93,0.35)] transition-shadow duration-300">
-                  <svg className="w-5 h-5 lg:w-6 lg:h-6 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-violet-500/10 flex items-center justify-center">
+                  <svg className="w-5 h-5 lg:w-6 lg:h-6 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
@@ -613,40 +566,18 @@ function SettingsContent() {
               </div>
             </motion.section>
 
-            {/* Actions - Premium styling with AUTOSCROLL shimmer */}
+            {/* Actions */}
             <motion.section
               variants={sectionVariants}
-              whileHover={{ y: -4, scale: 1.005 }}
-              className="group relative overflow-hidden bg-white/80 dark:bg-dark-card border border-[#F8935D]/10 dark:border-dark-border hover:border-primary/20 rounded-xl p-4 md:p-5 lg:p-6 transition-all duration-300 hover:shadow-[0_0_30px_rgba(232,147,77,0.08)]"
+              className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-xl p-4 md:p-5 lg:p-6 transition-colors duration-200"
             >
-              {/* AUTOSCROLL-style shimmer effect - ORANGE DOMINANT */}
-              <motion.div
-                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-                animate={{
-                  backgroundPosition: ["0% 0%", "200% 200%"],
-                }}
-                transition={{
-                  duration: 3,
-                  repeat: Infinity,
-                  ease: "linear",
-                }}
-                style={{
-                  background: "linear-gradient(135deg, transparent 0%, rgba(248,147,93,0.08) 25%, transparent 50%, rgba(251,146,60,0.08) 75%, transparent 100%)",
-                  backgroundSize: "200% 200%",
-                }}
-              />
-
-              <div className="flex items-center gap-3 mb-4 lg:mb-5 relative z-10">
-                <motion.div
-                  whileHover={{ scale: 1.1, rotate: 5 }}
-                  transition={{ duration: 0.2 }}
-                  className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-gradient-to-br from-primary/15 to-accent/10 border border-primary/20 flex items-center justify-center group-hover:shadow-glow transition-shadow duration-300"
-                >
-                  <svg className="w-5 h-5 lg:w-6 lg:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex items-center gap-3 mb-4 lg:mb-5">
+                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-gray-100 dark:bg-dark-hover flex items-center justify-center">
+                  <svg className="w-5 h-5 lg:w-6 lg:h-6 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
-                </motion.div>
+                </div>
                 <h2 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white">{t.settings.actions}</h2>
               </div>
               <div className="space-y-3 lg:space-y-4">
@@ -730,15 +661,14 @@ function SettingsContent() {
               </div>
             </motion.section>
 
-            {/* Legal links - Premium styling */}
+            {/* Legal links */}
             <motion.section
               variants={sectionVariants}
-              whileHover={{ y: -2 }}
-              className="group bg-white/80 dark:bg-dark-card border border-[#F8935D]/10 dark:border-dark-border hover:border-text-muted/30 rounded-xl p-4 md:p-5 lg:p-6 transition-all duration-300"
+              className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-xl p-4 md:p-5 lg:p-6 transition-colors duration-200"
             >
               <div className="flex items-center gap-3 mb-4 lg:mb-5">
-                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-gradient-to-br from-text-muted/15 to-text-muted/5 border border-text-muted/20 flex items-center justify-center transition-shadow duration-300">
-                  <svg className="w-5 h-5 lg:w-6 lg:h-6 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-gray-100 dark:bg-dark-hover flex items-center justify-center">
+                  <svg className="w-5 h-5 lg:w-6 lg:h-6 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                 </div>

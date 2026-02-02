@@ -119,11 +119,11 @@ export default function DashboardPage() {
         <DashboardOnboarding onComplete={handleOnboardingComplete} />
       )}
 
-      {/* Background effects - Premium vibrant autoscroll ambiance */}
+      {/* Background effects - Harmonized with landing page Features palette */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-br from-purple-500/[0.06] to-violet-500/[0.04] rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '4s' }} />
-        <div className="absolute bottom-1/4 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-blue-500/[0.05] to-cyan-500/[0.04] rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '5s' }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-br from-amber-500/[0.04] to-orange-500/[0.03] rounded-full blur-[120px] animate-pulse" style={{ animationDuration: '6s' }} />
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-br from-violet-500/[0.06] to-purple-600/[0.04] rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '4s' }} />
+        <div className="absolute bottom-1/4 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-emerald-500/[0.05] to-green-600/[0.04] rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '5s' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-br from-[#F8935D]/[0.04] to-[#F76B54]/[0.03] rounded-full blur-[120px] animate-pulse" style={{ animationDuration: '6s' }} />
       </div>
 
       {/* Header - Unified style with other pages */}
@@ -219,7 +219,7 @@ export default function DashboardPage() {
               </div>
               <Link
                 href="/app"
-                className="group relative px-5 py-3 bg-gradient-to-r from-violet-500 via-purple-500 to-violet-500 hover:from-violet-600 hover:via-purple-600 hover:to-violet-600 text-white text-sm font-semibold rounded-xl shadow-lg shadow-violet-500/25 hover:shadow-xl hover:shadow-violet-500/30 transition-all duration-300"
+                className="group relative px-5 py-3 bg-gradient-to-r from-[#F8935D] via-[#F76B54] to-[#F8935D] hover:from-[#e8854d] hover:via-[#e75b44] hover:to-[#e8854d] text-white text-sm font-semibold rounded-xl shadow-lg shadow-[#F8935D]/25 hover:shadow-xl hover:shadow-[#F8935D]/30 transition-all duration-300"
               >
                 <span className="relative z-10">Creer un post</span>
                 <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -317,6 +317,7 @@ export default function DashboardPage() {
           <InsightsSection
             stats={stats}
             userStyle={userProfile?.profile?.linkedinStyle}
+            userProfile={userProfile}
           />
         </div>
 
@@ -373,18 +374,18 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* CTA section */}
+        {/* CTA section - Brand colors harmonized with landing page */}
         <div
           className={`
             mt-10 text-center transition-all duration-700 ease-out delay-500
             ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}
           `}
         >
-          <div className="relative overflow-hidden bg-gradient-to-r from-violet-500/[0.08] via-purple-500/[0.05] to-violet-500/[0.08] border border-violet-500/25 rounded-2xl p-8">
+          <div className="relative overflow-hidden bg-gradient-to-r from-[#F8935D]/[0.08] via-[#F76B54]/[0.05] to-[#F8935D]/[0.08] border border-[#F8935D]/25 rounded-2xl p-8">
             {/* Animated glow effect */}
-            <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 via-transparent to-purple-500/10 pointer-events-none animate-pulse" style={{ animationDuration: '3s' }} />
+            <div className="absolute inset-0 bg-gradient-to-br from-[#F8935D]/10 via-transparent to-[#F76B54]/10 pointer-events-none animate-pulse" style={{ animationDuration: '3s' }} />
             <div className="relative z-10">
-              <h3 className="text-xl font-bold bg-gradient-to-r from-violet-600 via-purple-600 to-violet-600 dark:from-violet-400 dark:via-purple-400 dark:to-violet-400 bg-clip-text text-transparent mb-2">
+              <h3 className="text-xl font-bold bg-gradient-to-r from-[#F8935D] via-[#F76B54] to-[#F8935D] bg-clip-text text-transparent mb-2">
                 Pret a creer votre prochain post ?
               </h3>
               <p className="text-text-secondary mb-6">
@@ -392,7 +393,7 @@ export default function DashboardPage() {
               </p>
               <Link
                 href="/app"
-                className="group relative inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-violet-500 via-purple-500 to-violet-500 hover:from-violet-600 hover:via-purple-600 hover:to-violet-600 text-white font-semibold rounded-xl shadow-lg shadow-violet-500/25 hover:shadow-xl hover:shadow-violet-500/35 transition-all duration-300"
+                className="group relative inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#F8935D] via-[#F76B54] to-[#F8935D] hover:from-[#e8854d] hover:via-[#e75b44] hover:to-[#e8854d] text-white font-semibold rounded-xl shadow-lg shadow-[#F8935D]/25 hover:shadow-xl hover:shadow-[#F8935D]/35 transition-all duration-300"
               >
                 <span className="relative z-10">Generer un post</span>
                 <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -406,15 +407,15 @@ export default function DashboardPage() {
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 py-8 px-6 text-center border-t border-violet-500/10 mt-12">
+      <footer className="relative z-10 py-8 px-6 text-center border-t border-[#F8935D]/10 mt-12">
         <div className="flex items-center justify-center gap-6 text-xs text-text-subtle">
-          <Link href="/legal/privacy" className="hover:text-violet-500 dark:hover:text-violet-400 transition-colors duration-200">
+          <Link href="/legal/privacy" className="hover:text-[#F8935D] transition-colors duration-200">
             Confidentialite
           </Link>
-          <Link href="/legal/terms" className="hover:text-violet-500 dark:hover:text-violet-400 transition-colors duration-200">
+          <Link href="/legal/terms" className="hover:text-[#F8935D] transition-colors duration-200">
             CGU
           </Link>
-          <Link href="/profile" className="hover:text-violet-500 dark:hover:text-violet-400 transition-colors duration-200">
+          <Link href="/profile" className="hover:text-[#F8935D] transition-colors duration-200">
             Mon profil
           </Link>
         </div>

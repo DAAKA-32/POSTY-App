@@ -374,6 +374,50 @@ body {
     flex-direction: column;
     overflow: hidden;
   }
+}
+
+/* ============================================================================
+   MODAL BLUR OVERLAY SYSTEM
+   ============================================================================
+   Applies blur effect to the entire app when a premium modal is open.
+   This ensures sidebar, main content, and all fixed elements are blurred.
+   ============================================================================ */
+
+/* Global blur when template modal is open */
+body.template-modal-open .app-layout {
+  filter: blur(4px);
+  transition: filter 0.2s ease-out;
+  pointer-events: none;
+}
+
+/* Ensure sidebar is also blurred - it's outside app-layout but should be affected */
+body.template-modal-open aside[role="navigation"] {
+  filter: blur(4px);
+  transition: filter 0.2s ease-out;
+  pointer-events: none;
+}
+
+/* Mobile slide menu blur */
+body.template-modal-open .slide-menu-backdrop,
+body.template-modal-open [data-slide-menu] {
+  filter: blur(4px);
+  transition: filter 0.2s ease-out;
+  pointer-events: none;
+}
+
+/* Smooth transition back when modal closes */
+body:not(.template-modal-open) .app-layout,
+body:not(.template-modal-open) aside[role="navigation"] {
+  filter: blur(0);
+  transition: filter 0.15s ease-in;
+}
+
+/* ============================================================================
+   END MODAL BLUR OVERLAY SYSTEM
+   ============================================================================ */
+
+/* PWA Mobile continued */
+@media (max-width: 1023px) {
 
   /* Content wrapper between fixed header and footer */
   .pwa-mobile .app-content-wrapper {
@@ -607,6 +651,23 @@ body.login-scroll-enabled {
   -webkit-overflow-scrolling: touch !important;
 }
 
+/* ABOUT PAGE - Full scroll enabled */
+/* Enables all scroll methods: mouse wheel, trackpad, touch, keyboard */
+html.about-scroll-enabled,
+html.about-scroll-enabled body,
+body.about-scroll-enabled {
+  overflow: visible !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  position: static !important;
+  height: auto !important;
+  min-height: 100vh !important;
+  width: 100% !important;
+  overscroll-behavior: auto !important;
+  touch-action: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
 /* LEGAL PAGES - Full scroll enabled */
 /* Enables all scroll methods: mouse wheel, trackpad, touch, keyboard */
 html.legal-scroll-enabled,
@@ -629,6 +690,74 @@ body.legal-scroll-enabled {
 html.landing-scroll-enabled,
 html.landing-scroll-enabled body,
 body.landing-scroll-enabled {
+  overflow: visible !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  position: static !important;
+  height: auto !important;
+  min-height: 100vh !important;
+  width: 100% !important;
+  overscroll-behavior: auto !important;
+  touch-action: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* SCHEDULE PAGE - Full scroll enabled */
+/* Enables all scroll methods: mouse wheel, trackpad, touch, keyboard */
+html.schedule-scroll-enabled,
+html.schedule-scroll-enabled body,
+body.schedule-scroll-enabled {
+  overflow: visible !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  position: static !important;
+  height: auto !important;
+  min-height: 100vh !important;
+  width: 100% !important;
+  overscroll-behavior: auto !important;
+  touch-action: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* HISTORY PAGE - Full scroll enabled */
+/* Enables all scroll methods: mouse wheel, trackpad, touch, keyboard */
+html.history-scroll-enabled,
+html.history-scroll-enabled body,
+body.history-scroll-enabled {
+  overflow: visible !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  position: static !important;
+  height: auto !important;
+  min-height: 100vh !important;
+  width: 100% !important;
+  overscroll-behavior: auto !important;
+  touch-action: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* ONBOARDING PAGE - Full scroll enabled */
+/* Enables all scroll methods: mouse wheel, trackpad, touch, keyboard */
+html.onboarding-scroll-enabled,
+html.onboarding-scroll-enabled body,
+body.onboarding-scroll-enabled {
+  overflow: visible !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  position: static !important;
+  height: auto !important;
+  min-height: 100vh !important;
+  width: 100% !important;
+  overscroll-behavior: auto !important;
+  touch-action: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* ANALYTICS PAGE - Full scroll enabled */
+/* Enables all scroll methods: mouse wheel, trackpad, touch, keyboard */
+html.analytics-scroll-enabled,
+html.analytics-scroll-enabled body,
+body.analytics-scroll-enabled {
   overflow: visible !important;
   overflow-y: auto !important;
   overflow-x: hidden !important;
@@ -6183,5 +6312,334 @@ html.dark .fixed-input-area {
 
   .fixed-input-area.animate-in {
     animation: none;
+  }
+}
+
+/* =============================================================================
+   CHAT INPUT - Cross-Platform Consistency (Browser/PWA)
+   Fixes for border rendering, dimensions, and visual consistency
+   ============================================================================= */
+
+/* Base wrapper - ensures consistent box model */
+.chat-input-wrapper {
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  position: relative;
+  isolation: isolate;
+  /* Prevent subpixel rendering issues */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  /* Ensure minimum touch target */
+  min-height: 56px;
+}
+
+/* Inner container - stable dimensions */
+.chat-input-inner {
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  /* Prevent overflow clipping issues on PWA/Safari */
+  overflow: visible;
+  /* GPU acceleration for smooth rendering */
+  will-change: transform, box-shadow;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/* Gradient active state - enhanced border visibility */
+.chat-input-gradient-active {
+  /* Ensure gradient is visible */
+  background-clip: padding-box;
+  -webkit-background-clip: padding-box;
+}
+
+/* Textarea fixes for all platforms */
+.chat-input-wrapper textarea,
+.chat-input-inner textarea {
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  /* Prevent iOS zoom on focus */
+  font-size: 16px;
+  /* Ensure touch-friendly sizing */
+  touch-action: manipulation;
+  /* Fix for Safari textarea rendering */
+  -webkit-appearance: none;
+  appearance: none;
+  /* Prevent text selection highlight issues */
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+  .chat-input-wrapper {
+    /* Fix for iOS border rendering */
+    -webkit-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+  }
+
+  .chat-input-inner {
+    /* Ensure borders render correctly on iOS */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+
+  /* Fix textarea in iOS */
+  .chat-input-wrapper textarea {
+    /* Prevent iOS auto-zoom */
+    font-size: max(16px, 1em);
+    /* Fix for iOS textarea resize */
+    -webkit-appearance: none;
+    /* Inherit border-radius from parent - no reset */
+  }
+}
+
+/* PWA standalone mode fixes */
+@media (display-mode: standalone) {
+  .chat-input-wrapper {
+    /* Ensure full width in PWA mode */
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .chat-input-inner {
+    /* Consistent border rendering in PWA */
+    border-width: 1px;
+    border-style: solid;
+  }
+}
+
+/* High DPI screens - prevent subpixel rendering issues */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .chat-input-wrapper,
+  .chat-input-inner {
+    /* Force crisp rendering */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* =============================================================================
+   CHAT INPUT HOVER & FOCUS STATES - Unified border-radius
+   Ensures consistent visual appearance across hover, focus, and active states
+   ============================================================================= */
+
+/* Hover state - subtle glow effect with SAME border-radius as focus */
+.chat-input-wrapper:hover:not(:focus-within) .chat-input-inner {
+  border-color: rgba(248, 147, 93, 0.3);
+  box-shadow: 0 0 12px rgba(248, 147, 93, 0.1);
+}
+
+/* Focus state - enhanced glow with identical border-radius */
+.chat-input-wrapper:focus-within .chat-input-inner {
+  outline: none;
+  /* Border-radius is inherited from Tailwind classes - ensuring consistency */
+}
+
+/* Ensure all states use the same border-radius value (24px) */
+.chat-input-wrapper,
+.chat-input-wrapper .chat-input-inner,
+.chat-input-wrapper:hover .chat-input-inner,
+.chat-input-wrapper:focus-within .chat-input-inner {
+  border-radius: 24px;
+}
+
+/* Dark mode hover state */
+html.dark .chat-input-wrapper:hover:not(:focus-within) .chat-input-inner {
+  border-color: rgba(248, 147, 93, 0.25);
+  box-shadow: 0 0 12px rgba(248, 147, 93, 0.08);
+}
+
+/* Dark mode specific fixes */
+html.dark .chat-input-inner {
+  /* Ensure border visibility in dark mode */
+  border-color: var(--dark-border, rgba(255, 255, 255, 0.1));
+}
+
+/* Mobile browser adjustments */
+@media (max-width: 1023px) {
+  .chat-input-wrapper {
+    /* Ensure full width on mobile */
+    width: 100%;
+    /* Minimum height for touch targets */
+    min-height: 56px;
+  }
+
+  /* Extra padding for mobile browsers (not PWA) */
+  @media not all and (display-mode: standalone) {
+    .chat-input-wrapper {
+      /* Account for mobile browser UI */
+      margin-bottom: env(safe-area-inset-bottom, 0px);
+    }
+  }
+}
+
+/* =============================================================================
+   PREMIUM TYPOGRAPHY EFFECTS - Landing Page
+   Posty Brand Colors: #F8935D (primary) → #F76B54 (accent) → #FBB9AD (peach)
+   ============================================================================= */
+
+/* Animated Gradient Text - Smooth color flow */
+@keyframes gradient-flow {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.text-gradient-animated {
+  background: linear-gradient(
+    90deg,
+    #F8935D 0%,
+    #F76B54 25%,
+    #FBB9AD 50%,
+    #F76B54 75%,
+    #F8935D 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradient-flow 4s ease-in-out infinite;
+}
+
+/* Static Gradient Text - No animation, premium look */
+.text-gradient-posty {
+  background: linear-gradient(135deg, #F8935D 0%, #F76B54 50%, #F8935D 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Text Shimmer Effect - Subtle light sweep */
+@keyframes text-shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.text-shimmer {
+  background: linear-gradient(
+    90deg,
+    #F8935D 0%,
+    #F76B54 20%,
+    #FFFFFF 50%,
+    #F76B54 80%,
+    #F8935D 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: text-shimmer 3s linear infinite;
+}
+
+/* Text Glow Effect - Soft pulsing glow */
+@keyframes text-glow-pulse {
+  0%, 100% {
+    text-shadow:
+      0 0 10px rgba(248, 147, 93, 0.3),
+      0 0 20px rgba(248, 147, 93, 0.2),
+      0 0 30px rgba(248, 147, 93, 0.1);
+  }
+  50% {
+    text-shadow:
+      0 0 15px rgba(248, 147, 93, 0.5),
+      0 0 30px rgba(248, 147, 93, 0.3),
+      0 0 45px rgba(248, 147, 93, 0.2);
+  }
+}
+
+.text-glow {
+  animation: text-glow-pulse 3s ease-in-out infinite;
+}
+
+/* Static text glow - no animation */
+.text-glow-static {
+  text-shadow:
+    0 0 10px rgba(248, 147, 93, 0.25),
+    0 0 20px rgba(248, 147, 93, 0.15),
+    0 0 30px rgba(248, 147, 93, 0.1);
+}
+
+/* Highlight underline effect */
+@keyframes underline-reveal {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+.text-highlight-underline {
+  position: relative;
+  display: inline-block;
+}
+
+.text-highlight-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, #F8935D, #F76B54);
+  border-radius: 2px;
+  transform-origin: left;
+}
+
+.text-highlight-underline.animate-underline::after {
+  animation: underline-reveal 0.8s ease-out forwards;
+}
+
+/* Premium Badge Shimmer */
+@keyframes badge-shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+.badge-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.badge-shimmer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 100%
+  );
+  animation: badge-shimmer 2.5s ease-in-out infinite;
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .text-gradient-animated,
+  .text-shimmer,
+  .text-glow,
+  .badge-shimmer::before {
+    animation: none;
+  }
+
+  .text-highlight-underline.animate-underline::after {
+    animation: none;
+    width: 100%;
   }
 }

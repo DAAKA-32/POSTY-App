@@ -261,14 +261,14 @@ function ProfileContent() {
                   isLoading={linkedInLoading}
                 />
 
-                {/* Profile Info Section - Premium purple (storytelling/personal) */}
+                {/* Profile Info Section - Violet (matches Features section) */}
                 <ProfileSection
                   icon={
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   }
-                  iconColor="bg-purple-500/10 text-purple-500 dark:text-purple-400"
+                  iconColor="bg-violet-500/10 text-violet-500 dark:text-violet-400"
                   title={t.profile.profileInfo}
                   subtitle={t.profile.profileInfoSubtitle}
                   defaultOpen={false}
@@ -342,8 +342,8 @@ function ProfileContent() {
                         "
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                            <svg className="w-4 h-4 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <div className="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                            <svg className="w-4 h-4 text-emerald-500 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                             </svg>
                           </div>
