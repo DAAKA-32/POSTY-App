@@ -18,50 +18,36 @@ interface ScheduledPostCardProps {
 const DAYS_FR = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
 const MONTHS_FR_SHORT = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
 
-// Status config with vibrant premium styling - aligned with sidebar colors
+// Status config - Clean professional styling
 const STATUS_CONFIG: Record<ScheduleStatus, {
   label: string;
-  icon: string;
   color: string;
   bgColor: string;
   borderColor: string;
-  glowColor: string;
-  iconBg?: string;
 }> = {
   pending: {
     label: "Programmé",
-    icon: "⏳",
-    color: "text-violet-600 dark:text-violet-400",
-    bgColor: "bg-gradient-to-r from-violet-500/10 to-purple-500/10 dark:from-violet-500/15 dark:to-purple-500/15",
-    borderColor: "border-violet-500/25",
-    glowColor: "shadow-violet-500/15",
-    iconBg: "bg-violet-500/20",
+    color: "text-primary",
+    bgColor: "bg-primary/10",
+    borderColor: "border-primary/20",
   },
   published: {
     label: "Publié",
-    icon: "✓",
     color: "text-emerald-600 dark:text-emerald-400",
-    bgColor: "bg-gradient-to-r from-emerald-500/10 to-green-500/10 dark:from-emerald-500/15 dark:to-green-500/15",
-    borderColor: "border-emerald-500/25",
-    glowColor: "shadow-emerald-500/15",
-    iconBg: "bg-emerald-500/20",
+    bgColor: "bg-emerald-500/10",
+    borderColor: "border-emerald-500/20",
   },
   failed: {
     label: "Échec",
-    icon: "!",
     color: "text-red-600 dark:text-red-400",
-    bgColor: "bg-gradient-to-r from-red-500/10 to-rose-500/10 dark:from-red-500/15 dark:to-rose-500/15",
-    borderColor: "border-red-500/25",
-    glowColor: "shadow-red-500/15",
-    iconBg: "bg-red-500/20",
+    bgColor: "bg-red-500/10",
+    borderColor: "border-red-500/20",
   },
   cancelled: {
     label: "Annulé",
-    icon: "×",
     color: "text-gray-500 dark:text-text-muted",
     bgColor: "bg-gray-100 dark:bg-dark-elevated",
     borderColor: "border-gray-200 dark:border-dark-border",
-    glowColor: "shadow-transparent",
   },
 };
 
@@ -130,33 +116,29 @@ export default function ScheduledPostCard({
         {/* Header: Date & Status */}
         <div className="relative flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
-            {/* Date badge - Premium vibrant design */}
+            {/* Date badge - Clean design */}
             <div className="relative">
               <div className={`
                 ${scheduledDate.toDateString() === new Date().toDateString()
-                  ? "bg-gradient-to-br from-amber-500/15 via-orange-500/10 to-amber-500/15 dark:from-amber-500/20 dark:via-orange-500/15 dark:to-amber-500/20 border-amber-500/30"
-                  : "bg-gradient-to-br from-blue-500/10 via-cyan-500/5 to-blue-500/10 dark:from-blue-500/15 dark:via-cyan-500/10 dark:to-blue-500/15 border-blue-500/20"
+                  ? "bg-primary/10 border-primary/20"
+                  : "bg-gray-100 dark:bg-dark-elevated border-gray-200 dark:border-dark-border"
                 }
-                rounded-xl p-2.5 text-center min-w-[64px]
-                border shadow-sm
+                rounded-xl p-2.5 text-center min-w-[64px] border
               `}>
                 <span className={`block text-[10px] font-semibold uppercase tracking-wider ${
                   scheduledDate.toDateString() === new Date().toDateString()
-                    ? "text-amber-600 dark:text-amber-400"
-                    : "text-blue-600 dark:text-blue-400"
+                    ? "text-primary"
+                    : "text-gray-500 dark:text-text-muted"
                 }`}>{month}</span>
                 <span className={`block text-2xl font-bold leading-tight ${
                   scheduledDate.toDateString() === new Date().toDateString()
-                    ? "text-amber-700 dark:text-amber-300"
-                    : "text-blue-700 dark:text-blue-300"
+                    ? "text-primary"
+                    : "text-gray-900 dark:text-white"
                 }`}>{day}</span>
               </div>
-              {/* Today indicator dot with glow */}
+              {/* Today indicator dot */}
               {scheduledDate.toDateString() === new Date().toDateString() && (
-                <div className="absolute -top-1 -right-1">
-                  <div className="absolute inset-0 w-3 h-3 bg-amber-500 rounded-full animate-ping opacity-50" />
-                  <div className="relative w-3 h-3 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full border-2 border-white dark:border-dark-card shadow-lg" />
-                </div>
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full border-2 border-white dark:border-dark-card" />
               )}
             </div>
 
@@ -179,21 +161,17 @@ export default function ScheduledPostCard({
             </div>
           </div>
 
-          {/* Status badge - Premium design */}
-          <motion.span
-            initial={{ scale: 0.95 }}
-            animate={{ scale: 1 }}
+          {/* Status badge */}
+          <span
             className={`
-              inline-flex items-center gap-1.5
+              inline-flex items-center
               text-xs px-3 py-1.5 rounded-full font-medium
               border ${statusConfig.borderColor}
               ${statusConfig.bgColor} ${statusConfig.color}
-              shadow-sm ${statusConfig.glowColor}
             `}
           >
-            <span className="text-[10px]">{statusConfig.icon}</span>
             {statusConfig.label}
-          </motion.span>
+          </span>
         </div>
 
         {/* Platform indicator */}
@@ -258,50 +236,44 @@ export default function ScheduledPostCard({
           </motion.a>
         )}
 
-        {/* Actions - Premium design */}
+        {/* Actions - Clean design */}
         {post.status === "pending" && (
-          <div className="relative flex gap-2 pt-4 mt-1 border-t border-gray-100 dark:border-dark-border/50">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+          <div className="relative flex gap-2 pt-4 mt-1 border-t border-gray-200 dark:border-dark-border">
+            <button
               onClick={() => {
                 triggerHaptic("light");
                 onEdit(post);
               }}
               className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium
                 text-gray-700 dark:text-text-secondary
-                bg-gray-50 dark:bg-dark-elevated/50
-                hover:bg-gray-100 dark:hover:bg-dark-elevated
-                border border-gray-200 dark:border-dark-border/50
-                rounded-xl transition-all duration-200"
+                bg-gray-100 dark:bg-dark-elevated
+                hover:bg-gray-200 dark:hover:bg-dark-hover
+                border border-gray-200 dark:border-dark-border
+                rounded-xl transition-colors duration-200"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
               Modifier
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+            </button>
+            <button
               onClick={() => {
                 triggerHaptic("medium");
                 onReschedule(post);
               }}
               className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium
-                text-violet-600 dark:text-violet-400
-                bg-gradient-to-r from-violet-500/10 to-purple-500/10 dark:from-violet-500/15 dark:to-purple-500/15
-                hover:from-violet-500/15 hover:to-purple-500/15 dark:hover:from-violet-500/20 dark:hover:to-purple-500/20
-                border border-violet-500/25
-                rounded-xl transition-all duration-200
-                shadow-sm hover:shadow-md hover:shadow-violet-500/10"
+                text-primary
+                bg-primary/10
+                hover:bg-primary/15
+                border border-primary/20
+                rounded-xl transition-colors duration-200"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               Reprogrammer
-            </motion.button>
-            <motion.button
-              whileTap={{ scale: 0.95 }}
+            </button>
+            <button
               onClick={() => {
                 triggerHaptic("warning");
                 setShowCancelConfirm(true);
@@ -309,7 +281,7 @@ export default function ScheduledPostCard({
               className="p-2 text-gray-400 dark:text-text-muted
                 hover:text-red-500 dark:hover:text-red-400
                 hover:bg-red-50 dark:hover:bg-red-500/10
-                border border-gray-200/50 dark:border-dark-border/50
+                border border-gray-200 dark:border-dark-border
                 hover:border-red-200 dark:hover:border-red-500/20
                 rounded-xl transition-colors duration-200"
               title="Annuler la programmation"
@@ -317,32 +289,27 @@ export default function ScheduledPostCard({
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 6L18 18M6 18L18 6" />
               </svg>
-            </motion.button>
+            </button>
           </div>
         )}
 
-        {/* Retry button for failed posts - Premium design */}
+        {/* Retry button for failed posts */}
         {post.status === "failed" && (
-          <div className="relative flex gap-2 pt-4 mt-1 border-t border-gray-100 dark:border-dark-border/50">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+          <div className="relative flex gap-2 pt-4 mt-1 border-t border-gray-200 dark:border-dark-border">
+            <button
               onClick={() => {
                 triggerHaptic("medium");
                 onReschedule(post);
               }}
               className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-medium
-                text-white
-                bg-gradient-to-r from-primary to-primary/90
-                hover:from-primary/90 hover:to-primary
-                shadow-md shadow-primary/20
-                rounded-xl transition-all duration-200"
+                text-white bg-primary hover:bg-primary-hover
+                rounded-xl transition-colors duration-200"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
               Reprogrammer
-            </motion.button>
+            </button>
           </div>
         )}
       </motion.div>
