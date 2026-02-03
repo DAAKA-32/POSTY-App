@@ -119,12 +119,6 @@ export default function DashboardPage() {
         <DashboardOnboarding onComplete={handleOnboardingComplete} />
       )}
 
-      {/* Background effects - Harmonized with landing page Features palette */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-br from-violet-500/[0.06] to-purple-600/[0.04] rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '4s' }} />
-        <div className="absolute bottom-1/4 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-emerald-500/[0.05] to-green-600/[0.04] rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '5s' }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-br from-[#F8935D]/[0.04] to-[#F76B54]/[0.03] rounded-full blur-[120px] animate-pulse" style={{ animationDuration: '6s' }} />
-      </div>
 
       {/* Header - Unified style with other pages */}
       <header className="sticky top-0 z-40 bg-background-warm/80 dark:bg-dark-bg/80 backdrop-blur-xl border-b border-[#F8935D]/10 dark:border-dark-border">
@@ -195,20 +189,20 @@ export default function DashboardPage() {
 
             {/* Plan badge */}
             <div className="flex items-center gap-3">
-              <div className={`px-4 py-3 rounded-xl transition-all duration-200 ${
+              <div className={`px-4 py-3 rounded-xl transition-colors duration-200 ${
                 userProfile?.subscription?.plan === "max"
-                  ? "bg-gradient-to-r from-violet-500/10 to-purple-500/10 border border-violet-500/25 hover:border-violet-500/40"
+                  ? "bg-violet-500/10 border border-violet-500/20 hover:border-violet-500/30"
                   : userProfile?.subscription?.plan === "pro"
-                    ? "bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/25 hover:border-blue-500/40"
-                    : "bg-dashboard-card border border-dashboard-card-border hover:border-amber-500/30"
+                    ? "bg-blue-500/10 border border-blue-500/20 hover:border-blue-500/30"
+                    : "bg-gray-100 dark:bg-dark-card border border-gray-200 dark:border-dark-border hover:border-gray-300 dark:hover:border-dark-border-hover"
               }`}>
                 <p className="text-xs text-text-muted mb-1">Plan actuel</p>
                 <p className={`text-sm font-semibold ${
                   userProfile?.subscription?.plan === "max"
-                    ? "bg-gradient-to-r from-violet-500 to-purple-500 bg-clip-text text-transparent"
+                    ? "text-violet-600 dark:text-violet-400"
                     : userProfile?.subscription?.plan === "pro"
-                      ? "bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent"
-                      : "text-amber-500"
+                      ? "text-blue-600 dark:text-blue-400"
+                      : "text-amber-600 dark:text-amber-400"
                 }`}>
                   {userProfile?.subscription?.plan === "pro"
                     ? "Pro"
@@ -219,10 +213,9 @@ export default function DashboardPage() {
               </div>
               <Link
                 href="/app"
-                className="group relative px-5 py-3 bg-gradient-to-r from-[#F8935D] via-[#F76B54] to-[#F8935D] hover:from-[#e8854d] hover:via-[#e75b44] hover:to-[#e8854d] text-white text-sm font-semibold rounded-xl shadow-lg shadow-[#F8935D]/25 hover:shadow-xl hover:shadow-[#F8935D]/30 transition-all duration-300"
+                className="px-5 py-3 bg-primary hover:bg-primary-hover text-white text-sm font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
               >
-                <span className="relative z-10">Creer un post</span>
-                <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                Creer un post
               </Link>
             </div>
           </div>
@@ -329,24 +322,24 @@ export default function DashboardPage() {
               ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}
             `}
           >
-            <div className="bg-dashboard-card border border-violet-500/15 rounded-2xl p-6 hover:border-violet-500/25 transition-colors duration-300">
-              <h3 className="text-lg font-semibold bg-gradient-to-r from-violet-600 to-purple-600 dark:from-violet-400 dark:to-purple-400 bg-clip-text text-transparent mb-4">Activite recente</h3>
+            <div className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-6 hover:border-gray-300 dark:hover:border-dark-border-hover transition-colors duration-200">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Activite recente</h3>
               <div className="space-y-3">
                 {stats.recentActivity.map((activity, index) => (
                   <div
                     key={index}
-                    className="flex items-center gap-4 p-3 bg-gradient-to-r from-violet-500/5 to-purple-500/5 rounded-xl hover:from-violet-500/10 hover:to-purple-500/10 border border-violet-500/10 hover:border-violet-500/20 transition-all duration-200"
+                    className="flex items-center gap-4 p-3 bg-gray-50 dark:bg-dark-elevated rounded-xl hover:bg-gray-100 dark:hover:bg-dark-hover border border-gray-200 dark:border-dark-border transition-colors duration-200"
                   >
-                    <div className="w-10 h-10 bg-gradient-to-br from-violet-500/15 to-purple-500/15 rounded-lg flex items-center justify-center flex-shrink-0 border border-violet-500/25">
-                      <svg className="w-5 h-5 text-violet-500 dark:text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0 border border-primary/20">
+                      <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-text-primary truncate">
+                      <p className="text-sm text-gray-900 dark:text-white truncate">
                         {activity.content}...
                       </p>
-                      <p className="text-xs text-violet-500/70 dark:text-violet-400/70">
+                      <p className="text-xs text-gray-500 dark:text-text-muted">
                         {new Date(activity.date).toLocaleDateString("fr-FR", {
                           day: "numeric",
                           month: "short",
@@ -357,7 +350,7 @@ export default function DashboardPage() {
                     </div>
                     <Link
                       href="/history"
-                      className="text-xs text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 transition-colors duration-200 font-medium px-2.5 py-1 bg-violet-500/10 hover:bg-violet-500/15 rounded-lg"
+                      className="text-xs text-primary hover:text-primary-hover transition-colors duration-200 font-medium px-2.5 py-1 bg-primary/10 hover:bg-primary/15 rounded-lg"
                     >
                       Voir
                     </Link>
@@ -366,7 +359,7 @@ export default function DashboardPage() {
               </div>
               <Link
                 href="/history"
-                className="mt-4 block text-center text-sm text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 transition-colors duration-200 font-medium"
+                className="mt-4 block text-center text-sm text-primary hover:text-primary-hover transition-colors duration-200 font-medium"
               >
                 Voir tout l&apos;historique
               </Link>
@@ -374,34 +367,29 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* CTA section - Brand colors harmonized with landing page */}
+        {/* CTA section - Clean professional design */}
         <div
           className={`
             mt-10 text-center transition-all duration-700 ease-out delay-500
             ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}
           `}
         >
-          <div className="relative overflow-hidden bg-gradient-to-r from-[#F8935D]/[0.08] via-[#F76B54]/[0.05] to-[#F8935D]/[0.08] border border-[#F8935D]/25 rounded-2xl p-8">
-            {/* Animated glow effect */}
-            <div className="absolute inset-0 bg-gradient-to-br from-[#F8935D]/10 via-transparent to-[#F76B54]/10 pointer-events-none animate-pulse" style={{ animationDuration: '3s' }} />
-            <div className="relative z-10">
-              <h3 className="text-xl font-bold bg-gradient-to-r from-[#F8935D] via-[#F76B54] to-[#F8935D] bg-clip-text text-transparent mb-2">
-                Pret a creer votre prochain post ?
-              </h3>
-              <p className="text-text-secondary mb-6">
-                Continuez a developper votre presence LinkedIn avec Posty.
-              </p>
-              <Link
-                href="/app"
-                className="group relative inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#F8935D] via-[#F76B54] to-[#F8935D] hover:from-[#e8854d] hover:via-[#e75b44] hover:to-[#e8854d] text-white font-semibold rounded-xl shadow-lg shadow-[#F8935D]/25 hover:shadow-xl hover:shadow-[#F8935D]/35 transition-all duration-300"
-              >
-                <span className="relative z-10">Generer un post</span>
-                <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
-                <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              </Link>
-            </div>
+          <div className="bg-primary/5 dark:bg-primary/10 border border-primary/20 rounded-2xl p-8">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+              Pret a creer votre prochain post ?
+            </h3>
+            <p className="text-gray-600 dark:text-text-secondary mb-6">
+              Continuez a developper votre presence LinkedIn avec Posty.
+            </p>
+            <Link
+              href="/app"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary-hover text-white font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
+            >
+              Generer un post
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </Link>
           </div>
         </div>
       </main>

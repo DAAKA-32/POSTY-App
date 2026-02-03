@@ -12,28 +12,30 @@ export default function StyleDistributionChart({ data }: StyleDistributionChartP
     return Math.round((count / total) * 100);
   };
 
-  // Dark mode premium color palette avec bordures subtiles
-  const styleColors: Record<string, { bg: string; bar: string; border: string; text: string }> = {
+  // Clean color palette - solid colors
+  const styleColors: Record<string, { bg: string; bar: string; border: string; text: string; stroke: string }> = {
     Storytelling: {
-      bg: "bg-accent/[0.12]",
-      bar: "bg-gradient-to-r from-accent to-accent-light",
-      border: "border-accent/25",
-      text: "text-accent",
+      bg: "bg-red-500/10",
+      bar: "bg-red-500",
+      border: "border-red-500/20",
+      text: "text-red-600 dark:text-red-400",
+      stroke: "#ef4444",
     },
     Business: {
-      bg: "bg-primary/[0.12]",
-      bar: "bg-gradient-to-r from-primary to-primary-light",
-      border: "border-primary/25",
+      bg: "bg-primary/10",
+      bar: "bg-primary",
+      border: "border-primary/20",
       text: "text-primary",
+      stroke: "#F8935D",
     },
   };
 
   return (
-    <div className="bg-dashboard-card border border-dashboard-card-border rounded-2xl p-6 hover:border-primary/10 transition-colors duration-300">
+    <div className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-6 hover:border-gray-300 dark:hover:border-dark-border-hover transition-colors duration-200">
       {/* Header */}
       <div className="mb-6">
-        <h3 className="text-lg font-semibold text-text-primary">Repartition des styles</h3>
-        <p className="text-text-muted text-sm">Versions choisies</p>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Repartition des styles</h3>
+        <p className="text-gray-500 dark:text-text-muted text-sm">Versions choisies</p>
       </div>
 
       {/* Distribution bars */}
@@ -41,28 +43,29 @@ export default function StyleDistributionChart({ data }: StyleDistributionChartP
         {data.map((item) => {
           const percentage = getPercentage(item.count);
           const colors = styleColors[item.style] || {
-            bg: "bg-text-muted/10",
-            bar: "bg-text-muted",
-            border: "border-text-muted/20",
-            text: "text-text-muted",
+            bg: "bg-gray-100 dark:bg-gray-800",
+            bar: "bg-gray-400",
+            border: "border-gray-200 dark:border-gray-700",
+            text: "text-gray-600 dark:text-gray-400",
+            stroke: "#9ca3af",
           };
 
           return (
             <div key={item.style} className="group">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <div className={`w-3 h-3 rounded-full ${colors.bar} ring-2 ring-offset-1 ring-offset-dashboard-card ${colors.border}`} />
-                  <span className="text-sm text-text-secondary font-medium group-hover:text-text-primary transition-colors">{item.style}</span>
+                  <div className={`w-3 h-3 rounded-full ${colors.bar}`} />
+                  <span className="text-sm text-gray-600 dark:text-text-secondary font-medium">{item.style}</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-sm text-text-muted">{item.count} posts</span>
+                  <span className="text-sm text-gray-500 dark:text-text-muted">{item.count} posts</span>
                   <span className={`text-sm font-semibold ${colors.text}`}>{percentage}%</span>
                 </div>
               </div>
-              {/* Progress bar avec hauteur augmentée et effet premium */}
-              <div className={`h-3 rounded-full ${colors.bg} overflow-hidden border ${colors.border}`}>
+              {/* Progress bar */}
+              <div className={`h-2.5 rounded-full ${colors.bg} overflow-hidden border ${colors.border}`}>
                 <div
-                  className={`h-full rounded-full ${colors.bar} transition-all duration-700 ease-out`}
+                  className={`h-full rounded-full ${colors.bar} transition-all duration-500`}
                   style={{ width: `${Math.max(percentage, percentage > 0 ? 3 : 0)}%` }}
                 />
               </div>
@@ -74,24 +77,24 @@ export default function StyleDistributionChart({ data }: StyleDistributionChartP
       {/* Empty state */}
       {total === 0 && (
         <div className="text-center py-8">
-          <div className="w-12 h-12 mx-auto mb-3 bg-dashboard-surface-1 rounded-full flex items-center justify-center border border-dashboard-card-border">
-            <svg className="w-6 h-6 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-12 h-12 mx-auto mb-3 bg-gray-100 dark:bg-dark-elevated rounded-full flex items-center justify-center border border-gray-200 dark:border-dark-border">
+            <svg className="w-6 h-6 text-gray-400 dark:text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
             </svg>
           </div>
-          <p className="text-text-muted text-sm">
+          <p className="text-gray-500 dark:text-text-muted text-sm">
             Aucune version selectionnee pour le moment
           </p>
         </div>
       )}
 
-      {/* Donut visualization - Premium design */}
+      {/* Donut visualization - Clean design */}
       {total > 0 && (
         <div className="mt-8 flex items-center justify-center">
           <div className="relative w-36 h-36">
             <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-              {/* Background circle - plus visible */}
+              {/* Background circle */}
               <circle
                 cx="50"
                 cy="50"
@@ -99,7 +102,7 @@ export default function StyleDistributionChart({ data }: StyleDistributionChartP
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="10"
-                className="text-dashboard-surface-2"
+                className="text-gray-100 dark:text-dark-elevated"
               />
               {/* Storytelling segment */}
               <circle
@@ -107,11 +110,11 @@ export default function StyleDistributionChart({ data }: StyleDistributionChartP
                 cy="50"
                 r="40"
                 fill="none"
-                stroke="url(#accentGradient)"
+                stroke={styleColors.Storytelling.stroke}
                 strokeWidth="10"
                 strokeLinecap="round"
                 strokeDasharray={`${getPercentage(data[0]?.count || 0) * 2.51} 251`}
-                className="transition-all duration-700 drop-shadow-[0_0_6px_rgba(248,87,81,0.4)]"
+                className="transition-all duration-500"
               />
               {/* Business segment */}
               <circle
@@ -119,29 +122,18 @@ export default function StyleDistributionChart({ data }: StyleDistributionChartP
                 cy="50"
                 r="40"
                 fill="none"
-                stroke="url(#primaryGradient)"
+                stroke={styleColors.Business.stroke}
                 strokeWidth="10"
                 strokeLinecap="round"
                 strokeDasharray={`${getPercentage(data[1]?.count || 0) * 2.51} 251`}
                 strokeDashoffset={`-${getPercentage(data[0]?.count || 0) * 2.51}`}
-                className="transition-all duration-700 drop-shadow-[0_0_6px_rgba(248,163,93,0.4)]"
+                className="transition-all duration-500"
               />
-              {/* Gradient definitions - Logo colors */}
-              <defs>
-                <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#F85751" />
-                  <stop offset="100%" stopColor="#FAB9AD" />
-                </linearGradient>
-                <linearGradient id="primaryGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#E8934D" />
-                  <stop offset="100%" stopColor="#F8A35D" />
-                </linearGradient>
-              </defs>
             </svg>
             {/* Center content */}
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-3xl font-bold text-text-primary">{total}</span>
-              <span className="text-xs text-text-muted font-medium">total</span>
+              <span className="text-3xl font-bold text-gray-900 dark:text-white">{total}</span>
+              <span className="text-xs text-gray-500 dark:text-text-muted font-medium">total</span>
             </div>
           </div>
         </div>

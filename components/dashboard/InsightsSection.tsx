@@ -357,10 +357,10 @@ export default function InsightsSection({ stats, userStyle, userProfile }: Insig
 
   if (insights.length === 0) {
     return (
-      <div className="bg-white dark:bg-dashboard-card border border-gray-200 dark:border-dashboard-card-border rounded-2xl p-6 hover:border-primary/20 dark:hover:border-primary/10 transition-colors duration-300">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-text-primary mb-4">Coach IA</h3>
+      <div className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-6 hover:border-gray-300 dark:hover:border-dark-border-hover transition-colors duration-200">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Coach IA</h3>
         <div className="text-center py-8">
-          <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-dashboard-surface-1 rounded-full flex items-center justify-center border border-gray-200 dark:border-dashboard-card-border">
+          <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-dark-elevated rounded-full flex items-center justify-center border border-gray-200 dark:border-dark-border">
             <svg className="w-8 h-8 text-gray-400 dark:text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
             </svg>
@@ -372,14 +372,14 @@ export default function InsightsSection({ stats, userStyle, userProfile }: Insig
   }
 
   return (
-    <div className="bg-white dark:bg-dashboard-card border border-gray-200 dark:border-dashboard-card-border rounded-2xl p-6 hover:border-primary/20 dark:hover:border-primary/10 transition-colors duration-300">
+    <div className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-6 hover:border-gray-300 dark:hover:border-dark-border-hover transition-colors duration-200">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-text-primary">Coach IA</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Coach IA</h3>
           <p className="text-gray-500 dark:text-text-muted text-sm">Conseils personnalises pour votre croissance</p>
         </div>
-        <div className="w-10 h-10 bg-gradient-to-br from-[#F8935D] to-amber-500 rounded-xl flex items-center justify-center shadow-sm">
-          <span className="text-white text-lg">🎯</span>
+        <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center border border-primary/20">
+          <span className="text-lg">🎯</span>
         </div>
       </div>
 
@@ -392,7 +392,7 @@ export default function InsightsSection({ stats, userStyle, userProfile }: Insig
               ${typeStyles[insight.type].bg}
               ${typeStyles[insight.type].border}
               ${typeStyles[insight.type].borderHover}
-              transition-all duration-300 hover:translate-x-1
+              transition-colors duration-200
             `}
           >
             <div className="flex gap-4">
