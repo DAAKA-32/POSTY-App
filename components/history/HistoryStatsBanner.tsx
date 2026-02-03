@@ -121,25 +121,23 @@ export default function HistoryStatsBanner({
       {statItems.map((item, index) => (
         <motion.div
           key={item.label}
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={{ delay: 0.1 + index * 0.05 }}
-          whileHover={{ scale: 1.02 }}
           className={`
             flex items-center gap-3 p-3 md:p-4
-            ${item.bgColor} border ${item.borderColor} rounded-xl
-            transition-all duration-200 cursor-default
-            ${item.highlight ? "ring-2 ring-amber-400/30 shadow-md shadow-amber-500/10" : "hover:shadow-md"}
+            bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-xl
+            transition-colors duration-200 cursor-default
           `}
         >
           <div className={`${item.color}`}>
             {item.icon}
           </div>
           <div className="min-w-0">
-            <p className={`text-lg md:text-xl font-bold ${item.color}`}>
+            <p className="text-lg md:text-xl font-bold text-gray-900 dark:text-white">
               {item.value}
             </p>
-            <p className={`text-xs truncate ${item.color} opacity-70`}>
+            <p className="text-xs truncate text-gray-500 dark:text-text-muted">
               {item.label}
             </p>
           </div>
