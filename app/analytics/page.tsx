@@ -60,27 +60,20 @@ function PeriodFilter({
   ];
 
   return (
-    <div className="inline-flex items-center p-1 bg-[#F8935D]/10 dark:bg-dark-elevated rounded-xl">
+    <div className="inline-flex items-center p-1 bg-gray-100 dark:bg-dark-elevated rounded-xl border border-gray-200 dark:border-dark-border">
       {options.map((option) => (
         <button
           key={option.value}
           onClick={() => onChange(option.value)}
           className={`
-            relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200
+            relative px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200
             ${selected === option.value
-              ? "text-white"
+              ? "text-white bg-primary shadow-sm"
               : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
             }
           `}
         >
-          {selected === option.value && (
-            <motion.div
-              layoutId="period-indicator"
-              className="absolute inset-0 bg-gradient-to-r from-[#F8935D] to-[#F76B54] rounded-lg"
-              transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
-            />
-          )}
-          <span className="relative z-10">{option.label}</span>
+          {option.label}
         </button>
       ))}
     </div>
@@ -303,18 +296,12 @@ function StatsCard({
 }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay, ease: premiumEase }}
-      className="relative overflow-hidden bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-6 shadow-sm hover:shadow-md transition-shadow duration-300"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3, delay }}
+      className="bg-white dark:bg-dark-card rounded-2xl border border-gray-200 dark:border-dark-border p-6 transition-colors duration-200"
     >
-      {/* Background glow */}
-      <div
-        className="absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl opacity-10"
-        style={{ background: color }}
-      />
-
-      <div className="relative flex items-start justify-between">
+      <div className="flex items-start justify-between">
         <div>
           <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">{title}</p>
           <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">{value}</p>
@@ -598,14 +585,14 @@ function MetricsModal({
           <div className="px-6 py-4 border-t border-gray-100 dark:border-dark-border flex gap-3">
             <button
               onClick={onClose}
-              className="flex-1 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 bg-[#F8935D]/10 dark:bg-gray-800 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              className="flex-1 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-dark-elevated rounded-xl hover:bg-gray-200 dark:hover:bg-dark-hover transition-colors"
             >
               Annuler
             </button>
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex-1 px-4 py-3 text-sm font-medium text-white bg-gradient-to-r from-[#F8935D] to-[#F76B54] rounded-xl hover:shadow-lg hover:shadow-[#F8935D]/25 transition-all disabled:opacity-50"
+              className="flex-1 px-4 py-3 text-sm font-medium text-white bg-primary hover:bg-primary-hover rounded-xl transition-colors disabled:opacity-50"
             >
               {saving ? "Enregistrement..." : "Enregistrer"}
             </button>
@@ -622,11 +609,10 @@ function EmptyState() {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: premiumEase }}
       className="text-center py-16"
     >
-      <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-[#F8935D]/20 to-[#F76B54]/20 flex items-center justify-center">
-        <svg className="w-10 h-10 text-[#F8935D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="w-16 h-16 md:w-20 md:h-20 mx-auto mb-6 rounded-2xl bg-gray-100 dark:bg-dark-card border border-gray-200 dark:border-dark-border flex items-center justify-center">
+        <svg className="w-8 h-8 md:w-10 md:h-10 text-gray-400 dark:text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
         </svg>
       </div>
@@ -638,7 +624,7 @@ function EmptyState() {
       </p>
       <Link
         href="/app"
-        className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white font-medium rounded-xl hover:shadow-lg hover:shadow-[#F8935D]/25 transition-all"
+        className="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary-hover text-white font-medium rounded-xl transition-colors duration-200"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
