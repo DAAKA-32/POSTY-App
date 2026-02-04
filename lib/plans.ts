@@ -644,10 +644,11 @@ export type UnifiedFeatureKey = typeof UNIFIED_FEATURES[number]["key"];
 /**
  * Get CTA button label based on plan - action-oriented
  */
-export function getCTALabel(planId: PlanType, isYearly: boolean): string {
+export function getCTALabel(planId: PlanType, isYearly: boolean, trialEligible: boolean = false): string {
   if (planId === "free") return "Tester gratuitement";
-  if (planId === "pro") return isYearly ? "Accélérer ma croissance" : "Accélérer ma croissance";
-  if (planId === "max") return isYearly ? "Passer au niveau supérieur" : "Passer au niveau supérieur";
+  if (trialEligible) return "Essayer 7 jours gratuitement";
+  if (planId === "pro") return "Accélérer ma croissance";
+  if (planId === "max") return "Passer au niveau supérieur";
   return "Choisir ce plan";
 }
 

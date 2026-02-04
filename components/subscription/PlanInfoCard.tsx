@@ -78,6 +78,8 @@ export default function PlanInfoCard({
     isTestMode,
     isFreePlan,
     isMaxPlan,
+    isTrialing,
+    trialDaysRemaining,
     loading,
   } = useSubscription();
 
@@ -126,7 +128,12 @@ export default function PlanInfoCard({
                 <span className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">
                   Plan {planConfig.name}
                 </span>
-                {isTestMode && (
+                {isTrialing && (
+                  <span className="px-1.5 py-0.5 text-2xs font-semibold bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-full border border-blue-500/30">
+                    Essai · {trialDaysRemaining}j
+                  </span>
+                )}
+                {isTestMode && !isTrialing && (
                   <span className="px-1.5 py-0.5 text-2xs font-bold bg-purple-500/20 text-purple-700 dark:text-purple-400 rounded-full border border-purple-500/30">
                     TEST
                   </span>
@@ -134,7 +141,10 @@ export default function PlanInfoCard({
               </div>
               {!compact && (
                 <p className="text-2xs sm:text-xs text-gray-600 dark:text-text-muted">
-                  {planConfig.description}
+                  {isTrialing
+                    ? `${trialDaysRemaining} jour${trialDaysRemaining > 1 ? "s" : ""} restant${trialDaysRemaining > 1 ? "s" : ""} sur votre essai`
+                    : planConfig.description
+                  }
                 </p>
               )}
             </div>
@@ -215,7 +225,7 @@ export default function PlanInfoCard({
 
 // Compact badge version for inline use
 export function PlanBadge({ className = "" }: { className?: string }) {
-  const { currentPlan, planConfig, isTestMode, loading } = useSubscription();
+  const { currentPlan, planConfig, isTestMode, isTrialing, trialDaysRemaining, loading } = useSubscription();
 
   if (loading) {
     return (
@@ -230,7 +240,12 @@ export function PlanBadge({ className = "" }: { className?: string }) {
       <span className={`px-2 py-0.5 text-2xs font-semibold rounded-full border ${styles.badge}`}>
         {planConfig.name}
       </span>
-      {isTestMode && (
+      {isTrialing && (
+        <span className="px-1.5 py-0.5 text-2xs font-semibold bg-blue-500/20 text-blue-500 dark:text-blue-400 rounded-full border border-blue-500/30">
+          Essai · {trialDaysRemaining}j
+        </span>
+      )}
+      {isTestMode && !isTrialing && (
         <span className="px-1.5 py-0.5 text-2xs font-bold bg-purple-500/20 text-purple-400 rounded-full">
           TEST
         </span>

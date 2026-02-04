@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { getAllPlans, PlanConfig, PlanType, getSavingsText, PLAN_TAGLINES, getPlanCoreFeatures, getPlanSecondaryFeatures, getCTALabel, FeatureItem, isTestModeAllowed, PRODUCTION_MODE } from "@/lib/plans";
+import { getAllPlans, PlanConfig, PlanType, getSavingsText, PLAN_TAGLINES, getPlanCoreFeatures, getPlanSecondaryFeatures, getCTALabel, FeatureItem, isTestModeAllowed, PRODUCTION_MODE, TRIAL_PERIOD_DAYS } from "@/lib/plans";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import Button from "@/components/ui/Button";
 import BillingToggle from "@/components/ui/BillingToggle";
@@ -19,7 +19,7 @@ function SubscriptionContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
-  const { currentPlan, isTestMode } = useSubscription();
+  const { currentPlan, isTestMode, canStartTrial, isTrialing, trialDaysRemaining } = useSubscription();
   const { t } = useLanguage();
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("yearly");
   const [isLoading, setIsLoading] = useState<PlanType | null>(null);
@@ -104,7 +104,7 @@ function SubscriptionContent() {
     setIsLoading(plan.id);
 
     try {
-      // Create checkout session
+      // Create checkout session (with trial if eligible)
       const response = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -113,6 +113,7 @@ function SubscriptionContent() {
           userEmail: user.email,
           plan: plan.id,
           interval: billingPeriod,
+          withTrial: canStartTrial,
         }),
       });
 
@@ -258,6 +259,7 @@ function SubscriptionContent() {
                   translations={t.pricing}
                   isFeaturesExpanded={expandedCardIds.includes(plan.id)}
                   onToggleFeatures={() => handleToggleFeatures(plan.id)}
+                  trialEligible={canStartTrial && plan.trialDays > 0}
                 />
               </div>
             ))}
@@ -383,6 +385,8 @@ interface PricingCardProps {
   isFeaturesExpanded?: boolean;
   /** Callback to toggle the features expansion (controlled by parent) */
   onToggleFeatures?: () => void;
+  /** Whether the user is eligible for a free trial on this plan */
+  trialEligible?: boolean;
 }
 
 // PLAN_TAGLINES, getPlanCoreFeatures, getPlanSecondaryFeatures, getCTALabel are now imported from @/lib/plans
@@ -436,6 +440,7 @@ function PricingCard({
   translations,
   isFeaturesExpanded = false,
   onToggleFeatures,
+  trialEligible = false,
 }: PricingCardProps) {
   const displayPrice = billingPeriod === "monthly" ? plan.price.monthly : yearlyMonthlyPrice;
   const isPopular = plan.highlight;
@@ -681,7 +686,7 @@ function PricingCard({
                 </>
               ) : (
                 <>
-                  {getCTALabel(plan.id, billingPeriod === "yearly")}
+                  {getCTALabel(plan.id, billingPeriod === "yearly", trialEligible)}
                   <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 hidden sm:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
@@ -766,12 +771,21 @@ function PricingCard({
               <svg className="w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3.5 md:h-3.5 text-green-500 hidden sm:inline" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
               </svg>
-              <span className="hidden md:inline">Sans engagement • Annulation à tout moment</span>
-              <span className="inline md:hidden">Sans engagement</span>
+              {trialEligible ? (
+                <>
+                  <span className="hidden md:inline">Aucun debit pendant l'essai • Annulez en un clic</span>
+                  <span className="inline md:hidden">Aucun debit pendant l'essai</span>
+                </>
+              ) : (
+                <>
+                  <span className="hidden md:inline">Sans engagement • Annulation a tout moment</span>
+                  <span className="inline md:hidden">Sans engagement</span>
+                </>
+              )}
             </motion.p>
           ) : (
             <p className="text-[9px] sm:text-[10px] md:text-xs text-text-muted">
-              <span className="hidden sm:inline">Idéal pour découvrir Posty</span>
+              <span className="hidden sm:inline">Ideal pour decouvrir Posty</span>
               <span className="inline sm:hidden">Gratuit</span>
             </p>
           )}

@@ -292,6 +292,20 @@ export async function POST(request: NextRequest) {
         break;
       }
 
+      case STRIPE_WEBHOOK_EVENTS.SUBSCRIPTION_TRIAL_WILL_END: {
+        // Trial ending in 3 days - log for future email notification system
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const subscription = event.data.object as any;
+        const userId = subscription.metadata?.userId;
+
+        if (userId) {
+          console.log(`Trial ending soon for user ${userId} (3 days remaining)`);
+          // TODO: Send trial ending email notification here
+          // For now, Stripe's built-in trial ending email handles this
+        }
+        break;
+      }
+
       case STRIPE_WEBHOOK_EVENTS.INVOICE_PAYMENT_FAILED: {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const invoice = event.data.object as any;

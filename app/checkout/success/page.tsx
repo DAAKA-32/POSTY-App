@@ -13,6 +13,7 @@ function CheckoutSuccessContent() {
   const searchParams = useSearchParams();
   const { refreshUserProfile, userProfile } = useAuth();
   const sessionId = searchParams.get("session_id");
+  const isTrialing = userProfile?.subscription?.status === "trialing";
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -112,7 +113,7 @@ function CheckoutSuccessContent() {
           transition={{ delay: 0.3 }}
           className="text-3xl lg:text-4xl font-bold text-white mb-4"
         >
-          Bienvenue dans {planName} !
+          {isTrialing ? `Votre essai ${planName} a commence !` : `Bienvenue dans ${planName} !`}
         </motion.h1>
 
         {/* Description */}
@@ -122,8 +123,10 @@ function CheckoutSuccessContent() {
           transition={{ delay: 0.4 }}
           className="text-lg text-text-muted mb-8"
         >
-          Votre abonnement a été activé avec succès.
-          Vous avez maintenant accès à toutes les fonctionnalités premium.
+          {isTrialing
+            ? "Vous avez 7 jours pour tester toutes les fonctionnalites. Aucun debit pendant l'essai. Annulez a tout moment."
+            : "Votre abonnement a ete active avec succes. Vous avez maintenant acces a toutes les fonctionnalites premium."
+          }
         </motion.p>
 
         {/* Benefits */}
@@ -196,8 +199,10 @@ function CheckoutSuccessContent() {
           transition={{ delay: 0.8 }}
           className="mt-8 text-sm text-text-muted"
         >
-          Un email de confirmation a été envoyé à votre adresse.
-          Vous pouvez gerer votre abonnement depuis votre profil.
+          {isTrialing
+            ? "Un email de confirmation a ete envoye. Vous pouvez annuler a tout moment depuis votre profil."
+            : "Un email de confirmation a ete envoye a votre adresse. Vous pouvez gerer votre abonnement depuis votre profil."
+          }
         </motion.p>
       </motion.div>
     </div>
