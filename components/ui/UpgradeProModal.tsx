@@ -1,6 +1,5 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
 import Modal from "./Modal";
 import BottomSheet from "./BottomSheet";
 import Button from "./Button";
@@ -65,16 +64,8 @@ export default function UpgradeProModal({
   const content = (
     <div className="text-center">
       {/* Header illustration */}
-      <div className="relative w-24 h-24 mx-auto mb-6">
-        <motion.div
-          className="absolute inset-0 bg-gradient-to-br from-primary to-accent rounded-2xl"
-          initial={{ scale: 0.8, rotate: -10 }}
-          animate={{ scale: 1, rotate: 0 }}
-          transition={{ type: "spring", damping: 15 }}
-        />
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-4xl">\uD83D\uDE80</span>
-        </div>
+      <div className="w-24 h-24 mx-auto mb-6 bg-primary/10 border border-primary/20 rounded-2xl flex items-center justify-center">
+        <span className="text-4xl">{"\uD83D\uDE80"}</span>
       </div>
 
       {/* Title */}
@@ -105,17 +96,14 @@ export default function UpgradeProModal({
           Avantages Pro
         </p>
         <div className="space-y-3">
-          {PRO_FEATURES.map((feature, index) => (
-            <motion.div
+          {PRO_FEATURES.map((feature) => (
+            <div
               key={feature.label}
               className="flex items-center gap-3"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.1 }}
             >
               <span className="text-xl">{feature.icon}</span>
               <span className="text-white text-sm">{feature.label}</span>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>
@@ -135,7 +123,7 @@ export default function UpgradeProModal({
       <div className="space-y-3">
         <Button
           fullWidth
-          className="bg-gradient-to-r from-primary to-accent hover:opacity-90 border-none min-h-[52px] text-base font-semibold"
+          className="bg-primary hover:bg-primary-hover border-none min-h-[52px] text-base font-semibold"
           onClick={() => {
             // TODO: Implement Stripe checkout
             alert("Integration Stripe a venir !");

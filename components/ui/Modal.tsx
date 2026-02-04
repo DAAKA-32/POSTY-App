@@ -184,10 +184,9 @@ export default function Modal({
                     className="
                       min-w-[44px] min-h-[44px] flex items-center justify-center
                       text-text-secondary hover:text-text-primary
-                      transition-all duration-200 ease-out
+                      transition-colors duration-200
                       rounded-lg hover:bg-light-hover dark:hover:bg-dark-hover
-                      transform-gpu active:scale-[0.92] active:transition-none
-                      haptic-feedback ml-auto
+                      ml-auto
                       focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-light-card dark:focus-visible:ring-offset-dark-card
                     "
                     aria-label="Fermer la fenetre"

@@ -93,19 +93,11 @@ export default function SignupPromptModal({
               {/* Content */}
               <div className="px-6 py-6 md:py-8 text-center">
                 {/* Success icon */}
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 20, delay: 0.1 }}
-                  className="relative w-20 h-20 mx-auto mb-6"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full blur-xl" />
-                  <div className="relative w-full h-full bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center shadow-glow">
-                    <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                </motion.div>
+                <div className="w-20 h-20 mx-auto mb-6 bg-primary rounded-full flex items-center justify-center">
+                  <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
 
                 {/* Title */}
                 <motion.h3
@@ -165,10 +157,10 @@ export default function SignupPromptModal({
                     onClick={onClose}
                     className="
                       block w-full py-4 px-6
-                      bg-gradient-to-r from-primary to-accent
+                      bg-primary hover:bg-primary-hover
                       text-white font-semibold text-base rounded-xl
-                      shadow-glow hover:shadow-lg
-                      transition-all duration-200 active:scale-[0.98]
+                      shadow-sm hover:shadow-md
+                      transition-colors duration-200
                     "
                   >
                     Se connecter / S'inscrire
@@ -182,7 +174,7 @@ export default function SignupPromptModal({
                       border border-dark-border
                       text-text-secondary hover:text-white
                       font-medium text-sm rounded-xl
-                      transition-all duration-200
+                      transition-colors duration-200
                     "
                   >
                     Continuer a explorer
