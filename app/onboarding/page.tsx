@@ -151,7 +151,7 @@ function UpsellScreen({ onContinue, onUpgrade }: { onContinue: () => void; onUpg
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
-              className="mx-auto w-20 h-20 rounded-full bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center mb-6 shadow-lg shadow-emerald-500/20"
+              className="mx-auto w-20 h-20 rounded-full bg-emerald-500 flex items-center justify-center mb-6"
             >
               <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
@@ -200,7 +200,7 @@ function UpsellScreen({ onContinue, onUpgrade }: { onContinue: () => void; onUpg
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
-              className="mx-auto w-16 h-16 rounded-full bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center mb-6 shadow-lg shadow-emerald-500/20"
+              className="mx-auto w-16 h-16 rounded-full bg-emerald-500 flex items-center justify-center mb-6"
             >
               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
@@ -222,7 +222,7 @@ function UpsellScreen({ onContinue, onUpgrade }: { onContinue: () => void; onUpg
               </div>
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">
                 Votre profil est pret !{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
+                <span className="text-primary">
                   Activez la personnalisation IA.
                 </span>
               </h1>
@@ -239,10 +239,10 @@ function UpsellScreen({ onContinue, onUpgrade }: { onContinue: () => void; onUpg
               className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6"
             >
               {/* Pro card */}
-              <div className="relative bg-white rounded-2xl border-2 border-[#F8935D]/30 p-5 shadow-sm hover:shadow-md hover:border-[#F8935D]/50 transition-all duration-300">
+              <div className="relative bg-white rounded-2xl border-2 border-primary/30 p-5 shadow-sm hover:shadow-md hover:border-primary/50 transition-all duration-200">
                 {/* Popular badge */}
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="inline-flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white text-xs font-semibold rounded-full shadow-md shadow-[#F8935D]/30">
+                  <span className="inline-flex items-center gap-1 px-3 py-1 bg-primary text-white text-xs font-semibold rounded-full shadow-sm">
                     <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                     </svg>
@@ -281,16 +281,16 @@ function UpsellScreen({ onContinue, onUpgrade }: { onContinue: () => void; onUpg
 
                 <button
                   onClick={() => onUpgrade("pro")}
-                  className="w-full py-3 px-4 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white font-semibold rounded-xl shadow-lg shadow-[#F8935D]/25 hover:shadow-xl hover:shadow-[#F8935D]/35 transition-all duration-300 active:scale-[0.98] text-sm"
+                  className="w-full py-3 px-4 bg-primary hover:bg-primary-hover text-white font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 text-sm"
                 >
                   Activer le Pro
                 </button>
               </div>
 
               {/* Max card */}
-              <div className="relative bg-white rounded-2xl border border-gray-200 p-5 shadow-sm hover:shadow-md hover:border-amber-300 transition-all duration-300">
+              <div className="relative bg-white rounded-2xl border border-gray-200 p-5 shadow-sm hover:shadow-md hover:border-gray-300 transition-all duration-200">
                 <div className="text-center mb-4">
-                  <h3 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-500">Max</h3>
+                  <h3 className="text-lg font-bold text-amber-600">Max</h3>
                   <div className="flex items-baseline justify-center gap-1 mt-1">
                     <span className="text-3xl font-bold text-gray-900">19,90</span>
                     <span className="text-gray-900 font-medium">€</span>
@@ -312,7 +312,7 @@ function UpsellScreen({ onContinue, onUpgrade }: { onContinue: () => void; onUpg
 
                 <button
                   onClick={() => onUpgrade("max")}
-                  className="w-full py-3 px-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold rounded-xl shadow-lg shadow-amber-500/25 hover:shadow-xl hover:shadow-amber-500/35 transition-all duration-300 active:scale-[0.98] text-sm"
+                  className="w-full py-3 px-4 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 text-sm"
                 >
                   Activer le Max
                 </button>
@@ -484,18 +484,18 @@ export default function OnboardingPage() {
 
   if (loading || !user) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#FFF8F5] to-white flex items-center justify-center">
-        <div className="w-10 h-10 border-3 border-[#F8935D] border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-[#FFF8F5] flex items-center justify-center">
+        <div className="w-10 h-10 border-3 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen max-h-screen bg-gradient-to-b from-[#FFF8F5] via-white to-[#FFF8F5]/50 flex flex-col overflow-y-auto overflow-x-hidden overscroll-contain">
+    <div className="min-h-screen max-h-screen bg-[#FFF8F5] flex flex-col overflow-y-auto overflow-x-hidden overscroll-contain">
       {/* Header */}
       <header className="p-4 sm:p-6 flex items-center justify-between max-w-2xl mx-auto w-full flex-shrink-0">
         <Link href="/" className="inline-flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl overflow-hidden shadow-md shadow-[#F8935D]/10">
+          <div className="w-9 h-9 rounded-xl overflow-hidden shadow-sm">
             <Image src="/logo-avec fond.jpg" alt="Posty" width={36} height={36} className="w-full h-full object-cover" />
           </div>
           <span className="font-bold text-gray-900 text-lg">Posty</span>
@@ -512,7 +512,7 @@ export default function OnboardingPage() {
         <div className="px-4 sm:px-8 max-w-2xl mx-auto w-full flex-shrink-0">
           <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
             <motion.div
-              className="h-full bg-gradient-to-r from-[#F8935D] to-[#F76B54] rounded-full"
+              className="h-full bg-primary rounded-full"
               initial={{ width: 0 }}
               animate={{ width: `${((currentStep + 1) / STEPS.length) * 100}%` }}
               transition={{ duration: 0.4, ease: smoothEase }}
@@ -569,10 +569,10 @@ export default function OnboardingPage() {
                           transition={{ duration: 0.25, delay: i * 0.04, ease: smoothEase }}
                           onClick={() => handleSelect(step.id, option)}
                           className={`
-                            p-4 text-left rounded-xl border transition-all duration-200 shadow-sm
+                            p-4 text-left rounded-xl border transition-colors duration-200
                             ${isSelected
-                              ? "bg-[#F8935D]/5 border-[#F8935D] text-gray-900 shadow-md shadow-[#F8935D]/10"
-                              : "bg-white border-gray-200 text-gray-600 hover:border-[#F8935D]/40 hover:bg-[#F8935D]/[0.02]"
+                              ? "bg-primary/5 border-primary text-gray-900 shadow-sm"
+                              : "bg-white border-gray-200 text-gray-600 hover:border-primary/40"
                             }
                           `}
                         >
@@ -584,7 +584,7 @@ export default function OnboardingPage() {
                                 animate={{ scale: 1 }}
                                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
                               >
-                                <div className="w-5 h-5 rounded-full bg-gradient-to-r from-[#F8935D] to-[#F76B54] flex items-center justify-center">
+                                <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
                                   <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                                   </svg>
@@ -603,7 +603,7 @@ export default function OnboardingPage() {
                   {currentStep > 0 && (
                     <button
                       onClick={handleBack}
-                      className="flex-1 py-3.5 px-4 bg-white border border-gray-200 text-gray-600 font-medium rounded-xl hover:bg-gray-50 transition-all duration-200 active:scale-[0.98] text-sm"
+                      className="flex-1 py-3.5 px-4 bg-white border border-gray-200 text-gray-600 font-medium rounded-xl hover:bg-gray-50 transition-colors duration-200 text-sm"
                     >
                       Retour
                     </button>
@@ -613,9 +613,9 @@ export default function OnboardingPage() {
                       onClick={handleSubmit}
                       disabled={!canProceed || isSubmitting}
                       className={`
-                        flex-1 py-3.5 px-4 font-semibold rounded-xl transition-all duration-200 active:scale-[0.98] text-sm
+                        flex-1 py-3.5 px-4 font-semibold rounded-xl transition-colors duration-200 text-sm
                         ${canProceed && !isSubmitting
-                          ? "bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white shadow-lg shadow-[#F8935D]/25 hover:shadow-xl hover:shadow-[#F8935D]/35"
+                          ? "bg-primary hover:bg-primary-hover text-white shadow-sm"
                           : "bg-gray-100 text-gray-300 cursor-not-allowed"
                         }
                       `}
@@ -634,9 +634,9 @@ export default function OnboardingPage() {
                       onClick={handleNext}
                       disabled={!canProceed}
                       className={`
-                        flex-1 py-3.5 px-4 font-semibold rounded-xl transition-all duration-200 active:scale-[0.98] text-sm
+                        flex-1 py-3.5 px-4 font-semibold rounded-xl transition-colors duration-200 text-sm
                         ${canProceed
-                          ? "bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white shadow-lg shadow-[#F8935D]/25 hover:shadow-xl hover:shadow-[#F8935D]/35"
+                          ? "bg-primary hover:bg-primary-hover text-white shadow-sm"
                           : "bg-gray-100 text-gray-300 cursor-not-allowed"
                         }
                       `}

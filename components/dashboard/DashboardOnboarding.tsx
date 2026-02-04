@@ -67,67 +67,67 @@ export default function DashboardOnboarding({ onComplete }: DashboardOnboardingP
       {/* Backdrop - effet premium avec léger flou */}
       <div className="absolute inset-0 bg-background/95 backdrop-blur-md" />
 
-      {/* Modal - Design premium dark mode */}
-      <div className="relative w-full max-w-md mx-4 bg-dashboard-card border border-dashboard-card-border rounded-2xl shadow-elevated overflow-hidden animate-scale-in">
-        {/* Progress bar avec glow effect */}
-        <div className="h-1.5 bg-dashboard-surface-1">
+      {/* Modal */}
+      <div className="relative w-full max-w-md mx-4 bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl shadow-lg overflow-hidden animate-scale-in">
+        {/* Progress bar */}
+        <div className="h-1.5 bg-gray-100 dark:bg-dark-elevated">
           <div
-            className="h-full bg-gradient-to-r from-primary via-accent to-primary-light transition-all duration-500 shadow-[0_0_10px_rgba(232,147,77,0.5)]"
+            className="h-full bg-primary transition-all duration-500"
             style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
           />
         </div>
 
         {/* Content */}
         <div className="p-8 text-center">
-          {/* Icon container avec effet de profondeur */}
+          {/* Icon container */}
           <div className="mb-6 flex justify-center">
-            <div className="w-24 h-24 bg-dashboard-surface-1 rounded-2xl flex items-center justify-center border border-dashboard-card-border shadow-inner">
+            <div className="w-24 h-24 bg-gray-50 dark:bg-dark-elevated rounded-2xl flex items-center justify-center border border-gray-200 dark:border-dark-border">
               {step.icon}
             </div>
           </div>
 
           {/* Step indicator */}
-          <p className="text-xs text-text-muted mb-2 font-medium">
+          <p className="text-xs text-gray-500 dark:text-text-muted mb-2 font-medium">
             Etape {currentStep + 1} sur {steps.length}
           </p>
 
           {/* Title */}
-          <h2 className="text-xl font-bold text-text-primary mb-3">{step.title}</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">{step.title}</h2>
 
           {/* Description */}
-          <p className="text-text-secondary text-sm leading-relaxed mb-8">
+          <p className="text-gray-600 dark:text-text-secondary text-sm leading-relaxed mb-8">
             {step.description}
           </p>
 
-          {/* Dots - Plus grands et mieux espacés */}
+          {/* Dots */}
           <div className="flex justify-center gap-2.5 mb-8">
             {steps.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentStep(index)}
-                className={`h-2.5 rounded-full transition-all duration-300 ${
+                className={`h-2.5 rounded-full transition-all duration-200 ${
                   index === currentStep
-                    ? "w-8 bg-gradient-to-r from-primary to-accent shadow-[0_0_8px_rgba(232,147,77,0.4)]"
+                    ? "w-8 bg-primary"
                     : index < currentStep
-                    ? "w-2.5 bg-primary/60"
-                    : "w-2.5 bg-dashboard-surface-2 hover:bg-dashboard-surface-3"
+                    ? "w-2.5 bg-primary/40"
+                    : "w-2.5 bg-gray-200 dark:bg-dark-elevated hover:bg-gray-300 dark:hover:bg-dark-hover"
                 }`}
                 aria-label={`Aller à l'étape ${index + 1}`}
               />
             ))}
           </div>
 
-          {/* Actions - Meilleure hiérarchie visuelle */}
+          {/* Actions */}
           <div className="flex gap-3">
             <button
               onClick={handleSkip}
-              className="flex-1 py-3 text-text-muted hover:text-text-secondary transition-colors duration-200 text-sm font-medium"
+              className="flex-1 py-3 text-gray-500 dark:text-text-muted hover:text-gray-700 dark:hover:text-text-secondary transition-colors duration-200 text-sm font-medium"
             >
               Passer
             </button>
             <button
               onClick={handleNext}
-              className="flex-1 py-3 bg-gradient-to-r from-primary to-primary-hover hover:from-primary-hover hover:to-primary text-slate-50 font-medium rounded-xl shadow-glow hover:shadow-glow-lg transition-all duration-300"
+              className="flex-1 py-3 bg-primary hover:bg-primary-hover text-white font-medium rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
             >
               {currentStep === steps.length - 1 ? "Commencer" : "Suivant"}
             </button>
