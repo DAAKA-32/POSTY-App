@@ -85,7 +85,7 @@ export function isPlanTrialEligible(plan: PlanType): plan is PaidPlanType {
 }
 
 // Platform Types - All supported social platforms
-export type Platform = "linkedin" | "reddit" | "instagram" | "facebook";
+export type Platform = "linkedin" | "reddit" | "threads" | "facebook";
 
 // Platform display information
 export interface PlatformInfo {
@@ -114,12 +114,12 @@ export const PLATFORM_INFO: Record<Platform, PlatformInfo> = {
     description: "Communautés et discussions",
     minPlan: "pro",
   },
-  instagram: {
-    id: "instagram",
-    name: "Instagram",
-    icon: "instagram",
-    color: "#E4405F",
-    description: "Contenu visuel et stories",
+  threads: {
+    id: "threads",
+    name: "Threads",
+    icon: "threads",
+    color: "#000000",
+    description: "Conversations et micro-blogging",
     minPlan: "max",
   },
   facebook: {
@@ -307,7 +307,7 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
       hasEarlyAccess: true,
       hasDualResponseMode: true, // Storytelling + Business simultanés
       // Multi-Platform: All 4 platforms + simultaneous publishing
-      allowedPlatforms: ["linkedin", "reddit", "instagram", "facebook"],
+      allowedPlatforms: ["linkedin", "reddit", "threads", "facebook"],
       maxPlatformConnections: 4, // All platforms
       canPublishSimultaneously: true, // Publish to multiple platforms at once
       quotaResetPeriod: "monthly",

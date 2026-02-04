@@ -43,11 +43,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const validPlatforms: AdaptationPlatform[] = ["instagram", "twitter", "facebook"];
+    const validPlatforms: AdaptationPlatform[] = ["threads", "twitter", "facebook"];
     if (!platform || !validPlatforms.includes(platform)) {
       return new Response(
         JSON.stringify({
-          error: "Invalid platform. Must be: instagram, twitter, or facebook",
+          error: "Invalid platform. Must be: threads, twitter, or facebook",
         }),
         { status: 400, headers: { "Content-Type": "application/json" } }
       );

@@ -39,7 +39,7 @@ export interface PostAnalysis {
 }
 
 // Platform adaptation targets (Pro+ for reddit, Max for others)
-export type AdaptationPlatform = "reddit" | "instagram" | "twitter" | "facebook";
+export type AdaptationPlatform = "reddit" | "threads" | "twitter" | "facebook";
 
 // Platform adaptation result (MAX)
 export interface PlatformAdaptation {
@@ -338,9 +338,9 @@ export interface AuthContextType {
  * Core platforms supported by Posty plans
  * - Free: linkedin only
  * - Pro: linkedin, reddit
- * - Max: linkedin, reddit, instagram, facebook
+ * - Max: linkedin, reddit, threads, facebook
  */
-export type Platform = "linkedin" | "reddit" | "instagram" | "facebook";
+export type Platform = "linkedin" | "reddit" | "threads" | "facebook";
 
 /**
  * Extended platform type including legacy/additional platforms
@@ -503,33 +503,26 @@ export interface RedditPostData {
   error?: string;
 }
 
-// ============== INSTAGRAM TYPES ==============
+// ============== THREADS TYPES ==============
 
-export interface InstagramConnectionData {
+export interface ThreadsConnectionData {
   userId: string;
-  instagramId: string;
+  threadsId: string;
   username: string;
   accessToken: string;
   expiresAt: Timestamp;
   profileName: string;
   profilePicture?: string;
-  followersCount?: number;
-  /** Instagram Business/Creator account ID */
-  businessAccountId?: string;
-  /** Connected Facebook Page ID (required for Instagram API) */
-  facebookPageId?: string;
   connectedAt: Timestamp;
   lastUsedAt?: Timestamp;
 }
 
-export interface InstagramPostData {
+export interface ThreadsPostData {
   id: string;
   userId: string;
-  instagramId: string;
-  mediaId: string;
-  mediaType: "IMAGE" | "VIDEO" | "CAROUSEL" | "REELS";
-  caption: string;
-  mediaUrl?: string;
+  threadsId: string;
+  threadId: string;
+  content: string;
   permalink?: string;
   publishedAt: Timestamp;
   success: boolean;
@@ -571,7 +564,7 @@ export interface FacebookPostData {
 
 export type ScheduleStatus = "pending" | "published" | "failed" | "cancelled";
 
-export type SchedulePlatform = "linkedin" | "reddit" | "instagram" | "facebook";
+export type SchedulePlatform = "linkedin" | "reddit" | "threads" | "facebook";
 
 export type LinkedInPostType = "feed" | "article";
 

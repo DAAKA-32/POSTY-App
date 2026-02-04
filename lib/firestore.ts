@@ -1473,6 +1473,50 @@ export async function getTwitterPosts(
   })) as TwitterPostData[];
 }
 
+// ============== FACEBOOK CONNECTION MANAGEMENT ==============
+// Collection: facebookConnections
+// Document ID: userId
+
+import { FacebookConnectionData, ThreadsConnectionData } from "@/types";
+
+export async function getFacebookConnection(
+  userId: string
+): Promise<FacebookConnectionData | null> {
+  const connectionRef = doc(db, "facebookConnections", userId);
+  const connectionSnap = await getDoc(connectionRef);
+
+  if (connectionSnap.exists()) {
+    return connectionSnap.data() as FacebookConnectionData;
+  }
+  return null;
+}
+
+export async function deleteFacebookConnection(userId: string): Promise<void> {
+  const connectionRef = doc(db, "facebookConnections", userId);
+  await deleteDoc(connectionRef);
+}
+
+// ============== THREADS CONNECTION MANAGEMENT ==============
+// Collection: threadsConnections
+// Document ID: userId
+
+export async function getThreadsConnection(
+  userId: string
+): Promise<ThreadsConnectionData | null> {
+  const connectionRef = doc(db, "threadsConnections", userId);
+  const connectionSnap = await getDoc(connectionRef);
+
+  if (connectionSnap.exists()) {
+    return connectionSnap.data() as ThreadsConnectionData;
+  }
+  return null;
+}
+
+export async function deleteThreadsConnection(userId: string): Promise<void> {
+  const connectionRef = doc(db, "threadsConnections", userId);
+  await deleteDoc(connectionRef);
+}
+
 // ============== MEDIUM CONNECTION MANAGEMENT ==============
 // Collection: mediumConnections
 // Document ID: userId

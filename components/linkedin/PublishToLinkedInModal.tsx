@@ -14,6 +14,8 @@ import PlatformSelector from "@/components/publish/PlatformSelector";
 import { Platform } from "@/types";
 import { usePlatformSelection } from "@/hooks/usePlatformSelection";
 import { triggerHaptic } from "@/hooks/useHapticFeedback";
+import { useFacebook } from "@/contexts/FacebookContext";
+import { useThreads } from "@/contexts/ThreadsContext";
 
 // Visibility options for LinkedIn posts
 type PostVisibility = "PUBLIC" | "CONNECTIONS";
@@ -75,6 +77,8 @@ export default function PublishToLinkedInModal({
   onPublish,
 }: PublishToLinkedInModalProps) {
   const { quota, canPublish, recordPublish } = useQuota();
+  const { isConnected: facebookConnected, publishToFacebook } = useFacebook();
+  const { isConnected: threadsConnected, publishToThreads } = useThreads();
   const [step, setStep] = useState<PublishStep>("preview");
   const [editedContent, setEditedContent] = useState(initialContent);
   const [visibility, setVisibility] = useState<PostVisibility>("PUBLIC");
@@ -92,8 +96,12 @@ export default function PublishToLinkedInModal({
   });
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
-  // Connected platforms - for now only LinkedIn is functional
-  const connectedPlatforms: Platform[] = linkedInConnection ? ["linkedin"] : [];
+  // Connected platforms
+  const connectedPlatforms: Platform[] = [
+    ...(linkedInConnection ? ["linkedin" as Platform] : []),
+    ...(facebookConnected ? ["facebook" as Platform] : []),
+    ...(threadsConnected ? ["threads" as Platform] : []),
+  ];
 
   // Smart platform selection with persistence
   const {
@@ -106,8 +114,7 @@ export default function PublishToLinkedInModal({
   });
 
   const handlePlatformToggle = (platform: Platform) => {
-    // For now, only LinkedIn is functional
-    if (platform === "linkedin") {
+    if (platform === "linkedin" || platform === "facebook" || platform === "threads") {
       togglePlatform(platform);
     }
   };
@@ -207,9 +214,45 @@ export default function PublishToLinkedInModal({
     }, 150);
 
     try {
-      const result = await onPublish(editedContent, visibility);
+      const results: { platform: string; success: boolean; url?: string; error?: string }[] = [];
 
-      if (result.success) {
+      // Publish to LinkedIn if selected
+      if (selectedPlatforms.includes("linkedin")) {
+        const result = await onPublish(editedContent, visibility);
+        results.push({
+          platform: "LinkedIn",
+          success: result.success,
+          url: result.postUrl,
+          error: result.error,
+        });
+      }
+
+      // Publish to Facebook if selected
+      if (selectedPlatforms.includes("facebook")) {
+        const result = await publishToFacebook(editedContent);
+        results.push({
+          platform: "Facebook",
+          success: result.success,
+          url: result.postUrl,
+          error: result.error,
+        });
+      }
+
+      // Publish to Threads if selected
+      if (selectedPlatforms.includes("threads")) {
+        const result = await publishToThreads(editedContent);
+        results.push({
+          platform: "Threads",
+          success: result.success,
+          url: result.permalink,
+          error: result.error,
+        });
+      }
+
+      const successResults = results.filter((r) => r.success);
+      const failedResults = results.filter((r) => !r.success);
+
+      if (successResults.length > 0) {
         // Record publish in quota
         await recordPublish();
         // Save platform selection for future sessions
@@ -219,13 +262,21 @@ export default function PublishToLinkedInModal({
         await new Promise((resolve) => setTimeout(resolve, 600));
         // Success haptic feedback - celebratory pattern
         triggerHaptic("success");
-        setPostUrl(result.postUrl);
+        // Use the first successful URL
+        setPostUrl(successResults[0].url);
         setStep("success");
-        toast.success("Post publié sur LinkedIn");
+
+        const platformNames = successResults.map((r) => r.platform).join(", ");
+        toast.success(`Post publié sur ${platformNames}`);
+
+        if (failedResults.length > 0) {
+          const failedNames = failedResults.map((r) => r.platform).join(", ");
+          toast.error(`Échec sur ${failedNames}: ${failedResults[0].error}`);
+        }
       } else {
-        // Error haptic feedback
+        // All failed
         triggerHaptic("error");
-        setError(result.error || "Une erreur est survenue");
+        setError(failedResults.map((r) => `${r.platform}: ${r.error}`).join("\n") || "Une erreur est survenue");
         setStep("error");
       }
     } catch (err) {
@@ -610,7 +661,7 @@ export default function PublishToLinkedInModal({
             </motion.div>
             <h3 className="text-xl font-bold text-white mb-2">Post publié !</h3>
             <p className="text-text-secondary text-sm mb-6">
-              Votre post a ete publié avec succès sur LinkedIn.
+              Votre post a été publié avec succès{selectedPlatforms.length > 1 ? " sur les plateformes sélectionnées" : ""}.
             </p>
             {postUrl && (
               <a
@@ -619,7 +670,7 @@ export default function PublishToLinkedInModal({
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 text-[#0A66C2] hover:text-[#004182] transition-colors mb-6 min-h-[44px] px-4"
               >
-                Voir sur LinkedIn
+                Voir le post
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>

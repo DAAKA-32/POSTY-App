@@ -414,36 +414,38 @@ Respond ONLY with a valid JSON object (no markdown, no backticks):
   "notes": "Specific tip for this Reddit post"
 }`,
   },
-  instagram: {
-    fr: `Tu es un expert en contenu Instagram. Adapte ce post LinkedIn pour Instagram.
+  threads: {
+    fr: `Tu es un expert en contenu Threads (Meta). Adapte ce post LinkedIn pour Threads.
 Règles:
-- Ton plus décontracté et visuel
-- Emojis plus nombreux et expressifs
-- Hashtags: 5-10 hashtags populaires et de niche
-- Longueur: 150-300 caractères pour la caption principale
-- Termine par un call-to-action engageant
+- Ton conversationnel et authentique
+- Emojis utilisés avec parcimonie
+- Pas de hashtags (Threads ne les supporte pas bien)
+- Longueur: 200-500 caractères maximum
+- Favorise les questions ouvertes pour engager la conversation
+- Style micro-blogging, direct et percutant
 
 Réponds UNIQUEMENT avec un objet JSON valide (sans markdown, sans backticks):
 {
-  "content": "Le contenu adapté pour Instagram",
-  "characterCount": 250,
-  "hashtags": ["hashtag1", "hashtag2", "hashtag3"],
-  "notes": "Conseil spécifique pour ce post sur Instagram"
+  "content": "Le contenu adapté pour Threads",
+  "characterCount": 300,
+  "hashtags": [],
+  "notes": "Conseil spécifique pour ce post sur Threads"
 }`,
-    en: `You are an Instagram content expert. Adapt this LinkedIn post for Instagram.
+    en: `You are a Threads (Meta) content expert. Adapt this LinkedIn post for Threads.
 Rules:
-- More casual and visual tone
-- More expressive emojis
-- Hashtags: 5-10 popular and niche hashtags
-- Length: 150-300 characters for main caption
-- End with an engaging call-to-action
+- Conversational and authentic tone
+- Use emojis sparingly
+- No hashtags (Threads doesn't support them well)
+- Length: 200-500 characters maximum
+- Favor open questions to engage conversation
+- Micro-blogging style, direct and impactful
 
 Respond ONLY with a valid JSON object (no markdown, no backticks):
 {
-  "content": "Adapted content for Instagram",
-  "characterCount": 250,
-  "hashtags": ["hashtag1", "hashtag2", "hashtag3"],
-  "notes": "Specific tip for this post on Instagram"
+  "content": "Adapted content for Threads",
+  "characterCount": 300,
+  "hashtags": [],
+  "notes": "Specific tip for this post on Threads"
 }`,
   },
   twitter: {

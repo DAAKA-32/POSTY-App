@@ -523,6 +523,246 @@ export async function updateMediumLastUsedAdmin(userId: string): Promise<void> {
   });
 }
 
+// ============== FACEBOOK ADMIN FUNCTIONS ==============
+
+// Facebook Connection Data type
+export interface FacebookConnectionDataAdmin {
+  userId: string;
+  facebookId: string;
+  accessToken: string;
+  expiresAt: Timestamp;
+  profileName: string;
+  profilePicture?: string;
+  email?: string;
+  pages: Array<{
+    id: string;
+    name: string;
+    accessToken: string;
+  }>;
+  selectedPageId?: string;
+  connectedAt: Timestamp;
+  lastUsedAt?: Timestamp;
+}
+
+/**
+ * Get Facebook connection for a user (server-side)
+ */
+export async function getFacebookConnectionAdmin(
+  userId: string
+): Promise<FacebookConnectionDataAdmin | null> {
+  if (!adminDb) {
+    throw new Error("Firebase Admin not initialized");
+  }
+
+  const connectionRef = adminDb.collection("facebookConnections").doc(userId);
+  const connectionSnap = await connectionRef.get();
+
+  if (connectionSnap.exists) {
+    return connectionSnap.data() as FacebookConnectionDataAdmin;
+  }
+  return null;
+}
+
+/**
+ * Save Facebook connection (server-side)
+ */
+export async function saveFacebookConnectionAdmin(
+  userId: string,
+  data: {
+    facebookId: string;
+    accessToken: string;
+    expiresAt: Date;
+    profileName: string;
+    profilePicture?: string;
+    email?: string;
+    pages: Array<{
+      id: string;
+      name: string;
+      accessToken: string;
+    }>;
+    selectedPageId?: string;
+  }
+): Promise<void> {
+  if (!adminDb) {
+    throw new Error("Firebase Admin not initialized");
+  }
+
+  const connectionRef = adminDb.collection("facebookConnections").doc(userId);
+  await connectionRef.set({
+    userId,
+    facebookId: data.facebookId,
+    accessToken: data.accessToken,
+    expiresAt: Timestamp.fromDate(data.expiresAt),
+    profileName: data.profileName,
+    profilePicture: data.profilePicture || null,
+    email: data.email || null,
+    pages: data.pages,
+    selectedPageId: data.selectedPageId || (data.pages.length > 0 ? data.pages[0].id : null),
+    connectedAt: FieldValue.serverTimestamp(),
+    lastUsedAt: null,
+  });
+}
+
+/**
+ * Update Facebook last used timestamp (server-side)
+ */
+export async function updateFacebookLastUsedAdmin(userId: string): Promise<void> {
+  if (!adminDb) {
+    throw new Error("Firebase Admin not initialized");
+  }
+
+  const connectionRef = adminDb.collection("facebookConnections").doc(userId);
+  await connectionRef.update({
+    lastUsedAt: FieldValue.serverTimestamp(),
+  });
+}
+
+/**
+ * Save Facebook post record (server-side)
+ */
+export async function saveFacebookPostAdmin(
+  userId: string,
+  data: {
+    facebookId: string;
+    postId: string;
+    pageId?: string;
+    content: string;
+    postUrl?: string;
+    success: boolean;
+    error?: string;
+  }
+): Promise<string> {
+  if (!adminDb) {
+    throw new Error("Firebase Admin not initialized");
+  }
+
+  const postsRef = adminDb.collection("facebookPosts");
+  const docRef = await postsRef.add({
+    userId,
+    facebookId: data.facebookId,
+    postId: data.postId,
+    pageId: data.pageId || null,
+    content: data.content,
+    postUrl: data.postUrl || null,
+    success: data.success,
+    error: data.error || null,
+    publishedAt: FieldValue.serverTimestamp(),
+  });
+  return docRef.id;
+}
+
+// ============== THREADS ADMIN FUNCTIONS ==============
+
+// Threads Connection Data type
+export interface ThreadsConnectionDataAdmin {
+  userId: string;
+  threadsId: string;
+  username: string;
+  accessToken: string;
+  expiresAt: Timestamp;
+  profileName: string;
+  profilePicture?: string;
+  connectedAt: Timestamp;
+  lastUsedAt?: Timestamp;
+}
+
+/**
+ * Get Threads connection for a user (server-side)
+ */
+export async function getThreadsConnectionAdmin(
+  userId: string
+): Promise<ThreadsConnectionDataAdmin | null> {
+  if (!adminDb) {
+    throw new Error("Firebase Admin not initialized");
+  }
+
+  const connectionRef = adminDb.collection("threadsConnections").doc(userId);
+  const connectionSnap = await connectionRef.get();
+
+  if (connectionSnap.exists) {
+    return connectionSnap.data() as ThreadsConnectionDataAdmin;
+  }
+  return null;
+}
+
+/**
+ * Save Threads connection (server-side)
+ */
+export async function saveThreadsConnectionAdmin(
+  userId: string,
+  data: {
+    threadsId: string;
+    username: string;
+    accessToken: string;
+    expiresAt: Date;
+    profileName: string;
+    profilePicture?: string;
+  }
+): Promise<void> {
+  if (!adminDb) {
+    throw new Error("Firebase Admin not initialized");
+  }
+
+  const connectionRef = adminDb.collection("threadsConnections").doc(userId);
+  await connectionRef.set({
+    userId,
+    threadsId: data.threadsId,
+    username: data.username,
+    accessToken: data.accessToken,
+    expiresAt: Timestamp.fromDate(data.expiresAt),
+    profileName: data.profileName,
+    profilePicture: data.profilePicture || null,
+    connectedAt: FieldValue.serverTimestamp(),
+    lastUsedAt: null,
+  });
+}
+
+/**
+ * Update Threads last used timestamp (server-side)
+ */
+export async function updateThreadsLastUsedAdmin(userId: string): Promise<void> {
+  if (!adminDb) {
+    throw new Error("Firebase Admin not initialized");
+  }
+
+  const connectionRef = adminDb.collection("threadsConnections").doc(userId);
+  await connectionRef.update({
+    lastUsedAt: FieldValue.serverTimestamp(),
+  });
+}
+
+/**
+ * Save Threads post record (server-side)
+ */
+export async function saveThreadsPostAdmin(
+  userId: string,
+  data: {
+    threadsId: string;
+    threadId: string;
+    content: string;
+    permalink?: string;
+    success: boolean;
+    error?: string;
+  }
+): Promise<string> {
+  if (!adminDb) {
+    throw new Error("Firebase Admin not initialized");
+  }
+
+  const postsRef = adminDb.collection("threadsPosts");
+  const docRef = await postsRef.add({
+    userId,
+    threadsId: data.threadsId,
+    threadId: data.threadId,
+    content: data.content,
+    permalink: data.permalink || null,
+    success: data.success,
+    error: data.error || null,
+    publishedAt: FieldValue.serverTimestamp(),
+  });
+  return docRef.id;
+}
+
 /**
  * Save Medium post record (server-side)
  */

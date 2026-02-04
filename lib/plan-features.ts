@@ -137,8 +137,8 @@ export function getUpgradeMessage(
       en: { title: "Improve Post", description: "Upgrade to Pro to improve your existing posts." },
     },
     hasMultiPlatform: {
-      fr: { title: "Multi-plateforme", description: "Passez au plan Max pour adapter vos posts a Instagram, Twitter et Facebook." },
-      en: { title: "Multi-platform", description: "Upgrade to Max to adapt your posts to Instagram, Twitter and Facebook." },
+      fr: { title: "Multi-plateforme", description: "Passez au plan Max pour adapter vos posts a Threads, Twitter et Facebook." },
+      en: { title: "Multi-platform", description: "Upgrade to Max to adapt your posts to Threads, Twitter and Facebook." },
     },
     hasAdaptiveTone: {
       fr: { title: "Ton adaptatif", description: "Passez au plan Pro pour personnaliser le ton de vos posts." },

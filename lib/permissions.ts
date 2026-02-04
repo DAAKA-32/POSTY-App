@@ -192,7 +192,7 @@ export function canUsePlatform(
     const platformNames: Record<Platform, string> = {
       linkedin: "LinkedIn",
       reddit: "Reddit",
-      instagram: "Instagram",
+      threads: "Threads",
       facebook: "Facebook",
     };
 
@@ -353,7 +353,7 @@ export function getAllPlatformsAccessStatus(subscription: UserSubscription): Arr
   hasAccess: boolean;
   minPlan: PlanType;
 }> {
-  const platforms: Platform[] = ["linkedin", "reddit", "instagram", "facebook"];
+  const platforms: Platform[] = ["linkedin", "reddit", "threads", "facebook"];
 
   return platforms.map(platform => {
     const info = PLATFORM_INFO[platform];

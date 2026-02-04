@@ -4,6 +4,8 @@ import { PremiumToaster } from "@/components/ui/Toast";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { LinkedInProvider } from "@/contexts/LinkedInContext";
+import { FacebookProvider } from "@/contexts/FacebookContext";
+import { ThreadsProvider } from "@/contexts/ThreadsContext";
 import { SchedulingProvider } from "@/contexts/SchedulingContext";
 import { QuotaProvider } from "@/contexts/QuotaContext";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
@@ -253,10 +255,14 @@ export default function RootLayout({
               <LanguageProvider>
                 <QuotaProvider>
                   <LinkedInProvider>
-                    <SchedulingProvider>
-                      {children}
-                      <GlobalCommandPalette />
-                    </SchedulingProvider>
+                    <FacebookProvider>
+                      <ThreadsProvider>
+                        <SchedulingProvider>
+                          {children}
+                          <GlobalCommandPalette />
+                        </SchedulingProvider>
+                      </ThreadsProvider>
+                    </FacebookProvider>
                   </LinkedInProvider>
                 </QuotaProvider>
               </LanguageProvider>

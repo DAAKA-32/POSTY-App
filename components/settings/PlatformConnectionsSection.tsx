@@ -4,6 +4,8 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useLinkedIn } from "@/contexts/LinkedInContext";
+import { useFacebook } from "@/contexts/FacebookContext";
+import { useThreads } from "@/contexts/ThreadsContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import Button from "@/components/ui/Button";
 import LinkedInConnectButton, { LinkedInIcon } from "@/components/linkedin/LinkedInConnectButton";
@@ -17,7 +19,7 @@ import Link from "next/link";
 const platformColors: Record<Platform, { text: string; bg: string }> = {
   linkedin: { text: "text-[#0A66C2]", bg: "bg-[#0A66C2]/15" },
   reddit: { text: "text-[#FF4500]", bg: "bg-[#FF4500]/15" },
-  instagram: { text: "text-[#E4405F]", bg: "bg-[#E4405F]/15" },
+  threads: { text: "text-black dark:text-white", bg: "bg-black/10 dark:bg-white/15" },
   facebook: { text: "text-[#1877F2]", bg: "bg-[#1877F2]/15" },
 };
 
@@ -29,9 +31,9 @@ const PlatformIcons: Record<Platform, React.FC<{ className?: string }>> = {
       <path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z" />
     </svg>
   ),
-  instagram: ({ className }) => (
+  threads: ({ className }) => (
     <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678c-3.405 0-6.162 2.76-6.162 6.162 0 3.405 2.76 6.162 6.162 6.162 3.405 0 6.162-2.76 6.162-6.162 0-3.405-2.757-6.162-6.162-6.162zM12 16c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm7.846-10.405c0 .795-.646 1.44-1.44 1.44-.795 0-1.44-.646-1.44-1.44 0-.794.646-1.439 1.44-1.439.793-.001 1.44.645 1.44 1.439z" />
+      <path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.29 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.589 12c.027 3.086.718 5.496 2.057 7.164 1.43 1.783 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.75-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.801-1.063-.689-1.685-1.74-1.752-2.96-.065-1.187.408-2.26 1.33-3.017.88-.724 2.107-1.138 3.552-1.199 1.07-.044 2.064.068 2.967.315-.024-1.058-.175-1.878-.453-2.45-.354-.73-.942-1.1-1.746-1.1h-.075c-.596.02-1.09.218-1.468.591-.33.326-.53.77-.59 1.318l-2.07-.248c.101-.886.476-1.653 1.084-2.22.71-.662 1.652-1.013 2.723-1.054h.11c1.387 0 2.467.522 3.213 1.552.637.88.975 2.106 1.005 3.648v.156c1.145.504 2.06 1.265 2.652 2.226.756 1.227.911 2.759.436 4.313-.59 1.93-1.776 3.404-3.438 4.267-1.457.756-3.24 1.156-5.3 1.19zm-1.042-6.594c-.036 0-.072 0-.108.002-.982.053-1.74.358-2.19.882-.403.47-.583 1.04-.549 1.686.044.822.457 1.397 1.127 1.83.618.4 1.42.583 2.198.543 1.122-.06 1.98-.46 2.546-1.166.49-.61.82-1.49.954-2.553-.946-.326-2.024-.485-3.123-.485-.288 0-.576.013-.855.038v.223z" />
     </svg>
   ),
   facebook: ({ className }) => (
@@ -119,8 +121,29 @@ export default function PlatformConnectionsSection() {
   const { t } = useLanguage();
   const { currentPlan, subscription } = useSubscription();
   const { connection: linkedInConnection, disconnectLinkedIn, isLoading: linkedInLoading } = useLinkedIn();
+  const {
+    connection: facebookConnection,
+    isTokenValid: facebookTokenValid,
+    isLoading: facebookLoading,
+    connectFacebook,
+    disconnectFacebook,
+    profileName: facebookProfileName,
+    profilePicture: facebookProfilePicture,
+  } = useFacebook();
+  const {
+    connection: threadsConnection,
+    isTokenValid: threadsTokenValid,
+    isLoading: threadsLoading,
+    connectThreads,
+    disconnectThreads,
+    profileName: threadsProfileName,
+    profilePicture: threadsProfilePicture,
+    username: threadsUsername,
+  } = useThreads();
 
   const [showLinkedInDisconnectModal, setShowLinkedInDisconnectModal] = useState(false);
+  const [showFacebookDisconnectConfirm, setShowFacebookDisconnectConfirm] = useState(false);
+  const [showThreadsDisconnectConfirm, setShowThreadsDisconnectConfirm] = useState(false);
 
   // Get all platforms access status
   const platformsStatus = getAllPlatformsAccessStatus(subscription);
@@ -131,7 +154,10 @@ export default function PlatformConnectionsSection() {
     : false;
 
   // Count connected platforms
-  const connectedCount = linkedInConnection ? 1 : 0; // Will expand when other contexts are added
+  const connectedCount =
+    (linkedInConnection ? 1 : 0) +
+    (facebookConnection ? 1 : 0) +
+    (threadsConnection ? 1 : 0);
 
   // Get max connections for current plan
   const connectionResult = canConnectPlatform(subscription, connectedCount);
@@ -139,6 +165,16 @@ export default function PlatformConnectionsSection() {
   const handleLinkedInDisconnect = async () => {
     await disconnectLinkedIn();
     setShowLinkedInDisconnectModal(false);
+  };
+
+  const handleFacebookDisconnect = async () => {
+    await disconnectFacebook();
+    setShowFacebookDisconnectConfirm(false);
+  };
+
+  const handleThreadsDisconnect = async () => {
+    await disconnectThreads();
+    setShowThreadsDisconnectConfirm(false);
   };
 
   // Render platform card
@@ -151,10 +187,26 @@ export default function PlatformConnectionsSection() {
     const requiredPlan = info.minPlan;
 
     // Check if this platform is connected
-    const isConnected = platform === "linkedin" && !!linkedInConnection;
-    const isTokenValid = platform === "linkedin" ? linkedInTokenValid : false;
-    const connectionData = platform === "linkedin" ? linkedInConnection : null;
-    const isLoading = platform === "linkedin" ? linkedInLoading : false;
+    const isConnected =
+      platform === "linkedin" ? !!linkedInConnection
+      : platform === "facebook" ? !!facebookConnection
+      : platform === "threads" ? !!threadsConnection
+      : false;
+    const isTokenValid =
+      platform === "linkedin" ? linkedInTokenValid
+      : platform === "facebook" ? facebookTokenValid
+      : platform === "threads" ? threadsTokenValid
+      : false;
+    const connectionData =
+      platform === "linkedin" ? linkedInConnection
+      : platform === "facebook" ? facebookConnection
+      : platform === "threads" ? threadsConnection
+      : null;
+    const isLoading =
+      platform === "linkedin" ? linkedInLoading
+      : platform === "facebook" ? facebookLoading
+      : platform === "threads" ? threadsLoading
+      : false;
 
     return (
       <motion.div
@@ -226,7 +278,7 @@ export default function PlatformConnectionsSection() {
                     <img
                       src={connectionData.profilePicture}
                       alt={connectionData.profileName}
-                      className={`w-8 h-8 rounded-full object-cover border-2 border-[#0A66C2]`}
+                      className="w-8 h-8 rounded-full object-cover border-2 border-dark-border"
                     />
                   ) : (
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center ${colors.bg}`}>
@@ -237,12 +289,19 @@ export default function PlatformConnectionsSection() {
                     <p className="text-sm text-white font-medium truncate">
                       {connectionData.profileName}
                     </p>
+                    {"username" in connectionData && (connectionData as any).username && (
+                      <p className="text-xs text-text-muted truncate">@{(connectionData as any).username}</p>
+                    )}
                     <ConnectionStatus connected={true} tokenValid={isTokenValid} />
                   </div>
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setShowLinkedInDisconnectModal(true)}
+                    onClick={() => {
+                      if (platform === "linkedin") setShowLinkedInDisconnectModal(true);
+                      else if (platform === "facebook") setShowFacebookDisconnectConfirm(true);
+                      else if (platform === "threads") setShowThreadsDisconnectConfirm(true);
+                    }}
                     className="text-text-muted hover:text-error hover:bg-error/10"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -268,6 +327,18 @@ export default function PlatformConnectionsSection() {
                 {!isTokenValid && platform === "linkedin" && (
                   <LinkedInConnectButton variant="compact" className="w-full" />
                 )}
+                {!isTokenValid && platform === "facebook" && (
+                  <Button variant="secondary" size="sm" onClick={connectFacebook} className="w-full">
+                    <Icon className={`w-4 h-4 mr-2 ${colors.text}`} />
+                    Reconnecter Facebook
+                  </Button>
+                )}
+                {!isTokenValid && platform === "threads" && (
+                  <Button variant="secondary" size="sm" onClick={connectThreads} className="w-full">
+                    <Icon className={`w-4 h-4 mr-2 ${colors.text}`} />
+                    Reconnecter Threads
+                  </Button>
+                )}
               </div>
             ) : (
               /* Not connected - show connect button */
@@ -275,21 +346,26 @@ export default function PlatformConnectionsSection() {
                 <ConnectionStatus connected={false} tokenValid={false} />
                 {platform === "linkedin" ? (
                   <LinkedInConnectButton variant="compact" className="w-full mt-3" />
-                ) : platform === "instagram" || platform === "facebook" ? (
-                  <div className="mt-3 space-y-2">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      disabled
-                      className="w-full opacity-60"
-                    >
-                      <Icon className={`w-4 h-4 mr-2 ${colors.text}`} />
-                      Très prochainement
-                    </Button>
-                    <p className="text-[10px] text-text-muted text-center leading-relaxed px-2">
-                      L'équipe Posty travaille activement sur cette intégration. Nous nous excusons pour l'attente.
-                    </p>
-                  </div>
+                ) : platform === "facebook" ? (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={connectFacebook}
+                    className="w-full mt-3"
+                  >
+                    <Icon className={`w-4 h-4 mr-2 ${colors.text}`} />
+                    Connecter Facebook
+                  </Button>
+                ) : platform === "threads" ? (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={connectThreads}
+                    className="w-full mt-3"
+                  >
+                    <Icon className={`w-4 h-4 mr-2 ${colors.text}`} />
+                    Connecter Threads
+                  </Button>
                 ) : (
                   <Button
                     variant="secondary"
@@ -397,7 +473,7 @@ export default function PlatformConnectionsSection() {
 
         {/* Platform Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {(["linkedin", "reddit", "instagram", "facebook"] as Platform[]).map(renderPlatformCard)}
+          {(["linkedin", "reddit", "threads", "facebook"] as Platform[]).map(renderPlatformCard)}
         </div>
 
         {/* Security Notice */}
@@ -421,6 +497,74 @@ export default function PlatformConnectionsSection() {
         onConfirm={handleLinkedInDisconnect}
         profileName={linkedInConnection?.profileName}
       />
+
+      {/* Facebook Disconnect Confirmation */}
+      <AnimatePresence>
+        {showFacebookDisconnectConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            onClick={() => setShowFacebookDisconnectConfirm(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-dark-card border border-dark-border rounded-2xl p-6 max-w-sm w-full"
+            >
+              <h3 className="text-lg font-semibold text-white mb-2">Déconnecter Facebook</h3>
+              <p className="text-sm text-text-muted mb-4">
+                Voulez-vous déconnecter {facebookProfileName || "votre compte Facebook"} ? Vous pourrez vous reconnecter à tout moment.
+              </p>
+              <div className="flex gap-3">
+                <Button variant="ghost" size="sm" onClick={() => setShowFacebookDisconnectConfirm(false)} className="flex-1">
+                  Annuler
+                </Button>
+                <Button variant="primary" size="sm" onClick={handleFacebookDisconnect} className="flex-1 !bg-error hover:!bg-error/80">
+                  Déconnecter
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Threads Disconnect Confirmation */}
+      <AnimatePresence>
+        {showThreadsDisconnectConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            onClick={() => setShowThreadsDisconnectConfirm(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-dark-card border border-dark-border rounded-2xl p-6 max-w-sm w-full"
+            >
+              <h3 className="text-lg font-semibold text-white mb-2">Déconnecter Threads</h3>
+              <p className="text-sm text-text-muted mb-4">
+                Voulez-vous déconnecter {threadsUsername ? `@${threadsUsername}` : threadsProfileName || "votre compte Threads"} ? Vous pourrez vous reconnecter à tout moment.
+              </p>
+              <div className="flex gap-3">
+                <Button variant="ghost" size="sm" onClick={() => setShowThreadsDisconnectConfirm(false)} className="flex-1">
+                  Annuler
+                </Button>
+                <Button variant="primary" size="sm" onClick={handleThreadsDisconnect} className="flex-1 !bg-error hover:!bg-error/80">
+                  Déconnecter
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
