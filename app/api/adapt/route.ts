@@ -17,7 +17,7 @@ import { SubscriptionPlan, AdaptationPlatform, PlatformAdaptation } from "@/type
  * Request body:
  * - userId: string - The authenticated user's ID
  * - postContent: string - The LinkedIn post content to adapt
- * - platform: "instagram" | "twitter" | "facebook" - Target platform
+ * - platform: "threads" | "twitter" | "facebook" - Target platform
  * - language?: "fr" | "en" - Language for adaptation (default: "fr")
  *
  * Response:
