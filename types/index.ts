@@ -148,6 +148,10 @@ export interface UserProfile {
     trialStartedAt?: Timestamp;    // When trial started
     trialEndsAt?: Timestamp;       // When trial ends (for display)
     trialPlan?: SubscriptionPlan;  // Which plan was trialed (pro or max)
+    // Guarantee tracking (money-back guarantee after first payment)
+    firstPaymentDate?: Timestamp;  // When first payment was made (guarantee starts here)
+    refundRequested?: boolean;     // True if user has requested a refund
+    refundRequestedAt?: Timestamp; // When refund was requested
   };
   quota?: {
     dailyMessageCount: number;

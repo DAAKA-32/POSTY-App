@@ -71,10 +71,27 @@ export default function TermsOfServicePage() {
         <p className="text-gray-300">{terms.section5.license.content}</p>
       </section>
 
-      {/* Section 6 */}
+      {/* Section 6 - Tarification et abonnements */}
       <section className="mb-8">
         <h2 className="text-xl font-semibold text-white mb-4">{terms.section6.title}</h2>
-        <p className="text-gray-300">{terms.section6.content}</p>
+        <p className="text-gray-300 mb-4">{terms.section6.intro}</p>
+
+        <h3 className="text-lg font-medium text-white mb-2">{terms.section6.plans.title}</h3>
+        <p className="text-gray-300 mb-4">{terms.section6.plans.content}</p>
+
+        <h3 className="text-lg font-medium text-white mb-2">{terms.section6.trial.title}</h3>
+        <p className="text-gray-300 mb-4">{terms.section6.trial.content}</p>
+
+        <h3 className="text-lg font-medium text-white mb-2">{terms.section6.billing.title}</h3>
+        <p className="text-gray-300 mb-4">{terms.section6.billing.content}</p>
+
+        <h3 className="text-lg font-medium text-white mb-2">{terms.section6.guarantee.title}</h3>
+        <div className="bg-dark-card border border-primary/20 rounded-lg p-4 mb-4">
+          <p className="text-gray-300">{terms.section6.guarantee.content}</p>
+        </div>
+
+        <h3 className="text-lg font-medium text-white mb-2">{terms.section6.cancellation.title}</h3>
+        <p className="text-gray-300">{terms.section6.cancellation.content}</p>
       </section>
 
       {/* Section 7 */}

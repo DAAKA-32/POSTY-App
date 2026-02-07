@@ -279,16 +279,35 @@ export async function POST(request: NextRequest) {
 
         if (!userId) break;
 
+        // Only track paid invoices (amount > 0 = real payment, not trial $0 invoice)
+        const amountPaid = invoice.amount_paid || 0;
+
         await savePaymentHistory(userId, {
           stripePaymentId: invoice.payment_intent || invoice.id,
-          amount: invoice.amount_paid || 0,
+          amount: amountPaid,
           currency: invoice.currency || "eur",
           status: "succeeded",
           description: invoice.description || `Subscription payment`,
           invoiceUrl: invoice.hosted_invoice_url || undefined,
         });
 
-        console.log(`Invoice paid for user ${userId}`);
+        // Track first real payment date for money-back guarantee eligibility
+        if (amountPaid > 0) {
+          const db = getFirebaseAdmin();
+          const userRef = db.collection("users").doc(userId);
+          const userDoc = await userRef.get();
+          const userData = userDoc.data();
+
+          // Only set firstPaymentDate if not already set (first payment ever)
+          if (!userData?.subscription?.firstPaymentDate) {
+            await userRef.update({
+              "subscription.firstPaymentDate": Timestamp.now(),
+            });
+            console.log(`First payment tracked for user ${userId} - guarantee period started`);
+          }
+        }
+
+        console.log(`Invoice paid for user ${userId} (amount: ${amountPaid})`);
         break;
       }
 

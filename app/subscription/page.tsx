@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { getAllPlans, PlanConfig, PlanType, getSavingsText, PLAN_TAGLINES, getPlanCoreFeatures, getPlanSecondaryFeatures, getCTALabel, FeatureItem, isTestModeAllowed, PRODUCTION_MODE, TRIAL_PERIOD_DAYS } from "@/lib/plans";
+import { getAllPlans, PlanConfig, PlanType, getSavingsText, PLAN_TAGLINES, getPlanCoreFeatures, getPlanSecondaryFeatures, getCTALabel, FeatureItem, isTestModeAllowed, PRODUCTION_MODE, TRIAL_PERIOD_DAYS, GUARANTEE_PERIOD_DAYS } from "@/lib/plans";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import Button from "@/components/ui/Button";
 import BillingToggle from "@/components/ui/BillingToggle";
@@ -773,13 +773,13 @@ function PricingCard({
               </svg>
               {trialEligible ? (
                 <>
-                  <span className="hidden md:inline">Aucun debit pendant l'essai • Annulez en un clic</span>
-                  <span className="inline md:hidden">Aucun debit pendant l'essai</span>
+                  <span className="hidden md:inline">{TRIAL_PERIOD_DAYS}j gratuits • Garantie {GUARANTEE_PERIOD_DAYS}j rembourse</span>
+                  <span className="inline md:hidden">{TRIAL_PERIOD_DAYS}j gratuits + garantie</span>
                 </>
               ) : (
                 <>
-                  <span className="hidden md:inline">Sans engagement • Annulation a tout moment</span>
-                  <span className="inline md:hidden">Sans engagement</span>
+                  <span className="hidden md:inline">Garantie {GUARANTEE_PERIOD_DAYS}j rembourse • Sans engagement</span>
+                  <span className="inline md:hidden">Garantie {GUARANTEE_PERIOD_DAYS}j</span>
                 </>
               )}
             </motion.p>

@@ -6339,10 +6339,10 @@ html.dark .fixed-input-area {
   box-sizing: border-box;
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
-  /* Prevent overflow clipping issues on PWA/Safari */
-  overflow: visible;
+  /* Clip content to rounded corners — required for border-radius to visually clip children */
+  overflow: hidden;
   /* GPU acceleration for smooth rendering */
-  will-change: transform, box-shadow;
+  will-change: box-shadow;
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
 }

@@ -13,6 +13,7 @@ const legalLinks = [
   { name: "Politique de confidentialite", href: "/legal/privacy" },
   { name: "Conditions d'utilisation", href: "/legal/terms" },
   { name: "Mentions legales", href: "/legal/notices" },
+  { name: "Cookies", href: "/legal/cookies" },
 ];
 
 /**
@@ -144,7 +145,7 @@ export default function LegalLayoutLight({ children, title }: LegalLayoutLightPr
             </div>
 
             {/* Legal links */}
-            <div className="flex gap-6 text-sm">
+            <div className="flex flex-wrap justify-center gap-4 md:gap-6 text-sm">
               <Link
                 href="/legal/privacy"
                 className="text-text-muted hover:text-white no-underline transition-colors duration-200"
@@ -163,12 +164,31 @@ export default function LegalLayoutLight({ children, title }: LegalLayoutLightPr
               >
                 Mentions legales
               </Link>
+              <Link
+                href="/legal/cookies"
+                className="text-text-muted hover:text-white no-underline transition-colors duration-200"
+              >
+                Cookies
+              </Link>
             </div>
 
-            {/* Contact */}
-            <p className="text-xs text-text-subtle mt-2">
-              Contact RGPD : privacy@posty.app
-            </p>
+            {/* Contact + CNIL */}
+            <div className="flex flex-col items-center gap-1 mt-2">
+              <p className="text-xs text-text-subtle">
+                Contact RGPD : privacy@posty.app
+              </p>
+              <p className="text-xs text-text-subtle">
+                Autorite de controle :{" "}
+                <a
+                  href="https://www.cnil.fr"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:text-accent no-underline transition-colors duration-200"
+                >
+                  CNIL (www.cnil.fr)
+                </a>
+              </p>
+            </div>
           </div>
         </div>
       </footer>

@@ -20,6 +20,7 @@ import {
   TEST_MODE_DURATION_MS,
   getTrialDaysRemaining,
   checkTrialEligibility,
+  checkGuaranteeEligibility,
   formatTrialStatusMessage,
   isTestModeAllowed,
   PRODUCTION_MODE,
@@ -69,6 +70,11 @@ interface SubscriptionState {
   trialEndsAt: Date | null;
   trialEligible: boolean;
 
+  // Guarantee state
+  guaranteeEligible: boolean;
+  guaranteeDaysRemaining: number;
+  refundRequested: boolean;
+
   // Migration: true if user is on deprecated free plan and hasn't used trial yet
   needsMigration: boolean;
 
@@ -112,6 +118,12 @@ interface SubscriptionContextValue extends SubscriptionState {
   // Trial info
   trialStatusMessage: string | null;
   canStartTrial: boolean;
+
+  // Guarantee info
+  guaranteeEligible: boolean;
+  guaranteeDaysRemaining: number;
+  refundRequested: boolean;
+  requestRefund: () => Promise<{ success: boolean; message?: string; error?: string }>;
 }
 
 // ============================================
@@ -143,6 +155,10 @@ const defaultState: SubscriptionState = {
   trialPlan: null,
   trialEndsAt: null,
   trialEligible: true, // Assume eligible until we check
+  // Guarantee
+  guaranteeEligible: false,
+  guaranteeDaysRemaining: 0,
+  refundRequested: false,
   // Migration
   needsMigration: false,
   loading: true,
@@ -261,6 +277,11 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       const trialPlan = subscriptionData.trialPlan as PlanType || null;
       const trialEligibility = checkTrialEligibility(userData);
 
+      // Guarantee state
+      const firstPaymentDate = subscriptionData.firstPaymentDate?.toDate() || null;
+      const guaranteeResult = checkGuaranteeEligibility(firstPaymentDate);
+      const refundRequested = subscriptionData.refundRequested === true;
+
       setState({
         subscription,
         usage,
@@ -274,6 +295,10 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
         trialPlan: isTrialing ? trialPlan : null,
         trialEndsAt,
         trialEligible: trialEligibility.eligible,
+        // Guarantee state
+        guaranteeEligible: guaranteeResult.eligible && !refundRequested,
+        guaranteeDaysRemaining: guaranteeResult.daysRemaining,
+        refundRequested,
         // Migration: user on deprecated free plan who hasn't used trial yet
         needsMigration: stripePlan === "free" && trialEligibility.eligible,
         loading: false,
@@ -451,6 +476,35 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   }, [user?.uid]);
 
   // ============================================
+  // REFUND / GUARANTEE
+  // ============================================
+
+  const requestRefund = useCallback(async (): Promise<{ success: boolean; message?: string; error?: string }> => {
+    if (!user?.uid) return { success: false, error: "Non connecté" };
+
+    try {
+      const response = await fetch("/api/stripe/refund", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.uid }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Refresh subscription data
+        await loadSubscription();
+        return { success: true, message: data.message };
+      }
+
+      return { success: false, error: data.message || data.error || "Erreur lors du remboursement" };
+    } catch (error) {
+      console.error("Refund error:", error);
+      return { success: false, error: "Erreur réseau. Veuillez réessayer." };
+    }
+  }, [user?.uid, loadSubscription]);
+
+  // ============================================
   // PERMISSION CHECK FUNCTIONS
   // ============================================
 
@@ -524,6 +578,12 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       state.trialPlan || undefined
     ),
     canStartTrial: state.trialEligible && !state.isTrialing,
+
+    // Guarantee info
+    guaranteeEligible: state.guaranteeEligible,
+    guaranteeDaysRemaining: state.guaranteeDaysRemaining,
+    refundRequested: state.refundRequested,
+    requestRefund,
   }), [
     state,
     checkCanSendMessage,
@@ -537,6 +597,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     enableTestMode,
     disableTestMode,
     loadSubscription,
+    requestRefund,
   ]);
 
   return (

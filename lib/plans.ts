@@ -66,7 +66,10 @@ export type SubscriptionStatus = "active" | "inactive" | "canceled" | "past_due"
 // ============================================
 
 /** Trial period duration in days */
-export const TRIAL_PERIOD_DAYS = 7;
+export const TRIAL_PERIOD_DAYS = 3;
+
+/** Money-back guarantee period in days (after first payment post-trial) */
+export const GUARANTEE_PERIOD_DAYS = 7;
 
 /** Trial period duration in milliseconds */
 export const TRIAL_PERIOD_MS = TRIAL_PERIOD_DAYS * 24 * 60 * 60 * 1000;
@@ -646,7 +649,7 @@ export type UnifiedFeatureKey = typeof UNIFIED_FEATURES[number]["key"];
  */
 export function getCTALabel(planId: PlanType, isYearly: boolean, trialEligible: boolean = false): string {
   if (planId === "free") return "Tester gratuitement";
-  if (trialEligible) return "Essayer 7 jours gratuitement";
+  if (trialEligible) return `Essayer ${TRIAL_PERIOD_DAYS} jours gratuitement`;
   if (planId === "pro") return "Accélérer ma croissance";
   if (planId === "max") return "Passer au niveau supérieur";
   return "Choisir ce plan";
@@ -1123,4 +1126,38 @@ export function formatTrialStatusMessage(
   }
 
   return `${daysRemaining} jours restants sur votre essai ${planName}.`;
+}
+
+// ============================================
+// GUARANTEE HELPER FUNCTIONS
+// ============================================
+
+/** Guarantee period duration in milliseconds */
+export const GUARANTEE_PERIOD_MS = GUARANTEE_PERIOD_DAYS * 24 * 60 * 60 * 1000;
+
+/**
+ * Check if user is within the money-back guarantee period.
+ * The guarantee starts when the first payment is made (after trial ends).
+ * @param firstPaymentDate Date of the first successful payment
+ * @returns Object with eligibility and days remaining
+ */
+export function checkGuaranteeEligibility(
+  firstPaymentDate: Date | { toDate: () => Date } | null | undefined
+): { eligible: boolean; daysRemaining: number } {
+  if (!firstPaymentDate) return { eligible: false, daysRemaining: 0 };
+
+  const paymentDate = firstPaymentDate instanceof Date
+    ? firstPaymentDate
+    : firstPaymentDate.toDate();
+
+  const guaranteeEnd = new Date(paymentDate.getTime() + GUARANTEE_PERIOD_MS);
+  const now = Date.now();
+  const remaining = guaranteeEnd.getTime() - now;
+
+  if (remaining <= 0) return { eligible: false, daysRemaining: 0 };
+
+  return {
+    eligible: true,
+    daysRemaining: Math.ceil(remaining / (24 * 60 * 60 * 1000)),
+  };
 }

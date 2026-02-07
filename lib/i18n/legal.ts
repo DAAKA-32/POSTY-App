@@ -1,12 +1,24 @@
 /**
  * Legal Pages Translations
- * Privacy Policy, Terms of Service, Legal Notices
+ * Privacy Policy, Terms of Service, Legal Notices, Cookie Policy
  * Application uniquement en français
+ *
+ * VERSIONING: Each document has a version field for traceability
+ * Format: "X.Y" where X = major revision, Y = minor update
  */
+
+// Legal document versions - update when content changes
+export const LEGAL_VERSIONS = {
+  privacy: { version: "1.0", date: "2025-02-07" },
+  terms: { version: "1.1", date: "2025-02-07" },
+  notices: { version: "1.0", date: "2025-02-07" },
+  cookies: { version: "1.0", date: "2025-02-07" },
+} as const;
 
 export const legalTranslations = {
   // Common
   lastUpdated: "Dernière mise à jour :",
+  version: "Version :",
   contact: "Contact",
 
   // Privacy Policy
@@ -216,8 +228,28 @@ export const legalTranslations = {
     },
 
     section6: {
-      title: "6. Tarification",
-      content: "Le Service peut proposer des fonctionnalités gratuites et/ou payantes. Les conditions tarifaires sont indiquées dans l'application. Posty se réserve le droit de modifier ses tarifs à tout moment, avec un préavis raisonnable pour les abonnements en cours.",
+      title: "6. Tarification et abonnements",
+      intro: "Le Service propose une offre gratuite et des abonnements payants. Les conditions détaillées sont les suivantes :",
+      plans: {
+        title: "6.1 Plans disponibles",
+        content: "Posty propose trois niveaux de service : un plan Gratuit (fonctionnalités limitées), un plan Pro et un plan Max. Les tarifs en vigueur sont affichés dans l'application et sur la page de tarification. Posty se réserve le droit de modifier ses tarifs avec un préavis de 30 jours pour les abonnements en cours.",
+      },
+      trial: {
+        title: "6.2 Période d'essai gratuite",
+        content: "Les plans Pro et Max bénéficient d'une période d'essai gratuite de 3 jours. Durant cette période, l'utilisateur a accès à l'ensemble des fonctionnalités du plan choisi sans aucun frais. Une carte bancaire valide est requise pour démarrer l'essai. Si l'utilisateur ne résilie pas avant la fin de la période d'essai, l'abonnement sera automatiquement activé et le premier paiement sera prélevé. L'utilisateur peut résilier à tout moment pendant la période d'essai sans aucun frais depuis les paramètres de l'application ou en contactant le support.",
+      },
+      billing: {
+        title: "6.3 Facturation et paiement",
+        content: "Les paiements sont gérés de manière sécurisée par Stripe. Les abonnements sont facturés de manière récurrente (mensuelle ou annuelle selon l'option choisie). Les factures sont disponibles dans l'historique de paiement de l'application. Tous les prix sont indiqués en euros (EUR) TTC.",
+      },
+      guarantee: {
+        title: "6.4 Garantie satisfait ou remboursé",
+        content: "Après la période d'essai gratuite, Posty offre une garantie satisfait ou remboursé de 7 jours à compter du premier paiement. Si l'utilisateur n'est pas satisfait du service, il peut demander un remboursement intégral dans ce délai en contactant le support à contact@posty.app. Au-delà de cette période de 7 jours, aucun remboursement ne sera effectué pour la période en cours, mais l'utilisateur peut résilier son abonnement à tout moment pour éviter les prélèvements futurs.",
+      },
+      cancellation: {
+        title: "6.5 Résiliation d'abonnement",
+        content: "L'utilisateur peut résilier son abonnement à tout moment depuis les paramètres de l'application. La résiliation prend effet à la fin de la période de facturation en cours. L'utilisateur conserve l'accès aux fonctionnalités payantes jusqu'à cette date. Après résiliation, le compte est automatiquement rétrogradé au plan Gratuit.",
+      },
     },
 
     section7: {
@@ -382,5 +414,106 @@ export const legalTranslations = {
       emailGDPR: "Email RGPD :",
       emailSupport: "Support technique :",
     },
+  },
+
+  // Cookie Policy
+  cookies: {
+    title: "Politique de cookies",
+    metaDescription: "Politique de cookies Posty : découvrez quels cookies nous utilisons et comment les gérer.",
+
+    section1: {
+      title: "1. Qu'est-ce qu'un cookie ?",
+      content: "Un cookie est un petit fichier texte déposé sur votre appareil (ordinateur, tablette, smartphone) lors de la visite d'un site web ou de l'utilisation d'une application. Les cookies permettent de stocker des informations relatives à votre navigation et sont essentiels au bon fonctionnement de nombreux services en ligne.",
+    },
+
+    section2: {
+      title: "2. Cookies utilisés par Posty",
+      intro: "Posty utilise différentes catégories de cookies :",
+      essential: {
+        title: "2.1 Cookies strictement nécessaires",
+        description: "Ces cookies sont indispensables au fonctionnement du service. Ils ne peuvent pas être désactivés.",
+        items: [
+          { name: "Session Firebase Auth", purpose: "Authentification et maintien de votre session de connexion", duration: "Session", provider: "Firebase (Google)" },
+          { name: "twitter_code_verifier", purpose: "Sécurisation du processus de connexion Twitter (OAuth PKCE)", duration: "10 minutes", provider: "Posty" },
+          { name: "posty_theme", purpose: "Mémorisation de votre préférence de thème (clair/sombre)", duration: "Persistant", provider: "Posty (localStorage)" },
+          { name: "posty_cookie_consent", purpose: "Enregistrement de vos choix de consentement cookies", duration: "12 mois", provider: "Posty (localStorage)" },
+        ],
+      },
+      functional: {
+        title: "2.2 Cookies fonctionnels",
+        description: "Ces cookies améliorent votre expérience d'utilisation mais ne sont pas indispensables.",
+        items: [
+          { name: "posty_sidebar_collapsed", purpose: "Mémorisation de l'état de la barre latérale", duration: "Persistant", provider: "Posty (localStorage)" },
+          { name: "posty_onboarding_completed", purpose: "Savoir si l'onboarding a été complété", duration: "Persistant", provider: "Posty (localStorage)" },
+          { name: "posty_last_visited_page", purpose: "Mémorisation de la dernière page visitée", duration: "Persistant", provider: "Posty (localStorage)" },
+        ],
+      },
+      analytics: {
+        title: "2.3 Cookies analytiques (optionnels)",
+        description: "Ces cookies nous aident à comprendre comment vous utilisez l'application afin de l'améliorer. Ils ne sont activés qu'avec votre consentement explicite.",
+        items: [
+          { name: "Analytics internes", purpose: "Mesure d'utilisation anonymisée (nombre de posts, sessions)", duration: "12 mois", provider: "Posty" },
+        ],
+        noThirdParty: "Posty n'utilise pas de services d'analytics tiers (pas de Google Analytics, Facebook Pixel, etc.). Toutes les mesures sont effectuées en interne et les données restent sur nos serveurs.",
+      },
+      thirdParty: {
+        title: "2.4 Cookies tiers",
+        description: "Certains services tiers peuvent déposer des cookies lors de leur utilisation :",
+        items: [
+          { name: "Stripe", purpose: "Sécurisation des paiements et prévention de la fraude", duration: "Variable", provider: "Stripe Inc." },
+          { name: "LinkedIn OAuth", purpose: "Connexion et publication sur LinkedIn", duration: "Session", provider: "LinkedIn (Microsoft)" },
+          { name: "Twitter/X OAuth", purpose: "Connexion et publication sur Twitter/X", duration: "Session", provider: "X Corp." },
+          { name: "Facebook/Threads OAuth", purpose: "Connexion et publication sur Facebook/Threads", duration: "Session", provider: "Meta Platforms" },
+        ],
+        note: "Ces cookies tiers sont soumis aux politiques de confidentialité de leurs fournisseurs respectifs.",
+      },
+    },
+
+    section3: {
+      title: "3. Gestion de vos préférences",
+      intro: "Vous pouvez gérer vos préférences de cookies de plusieurs façons :",
+      methods: [
+        { title: "Via le bandeau cookies", desc: "Lors de votre première visite, un bandeau vous permet d'accepter ou refuser les cookies non essentiels." },
+        { title: "Via les paramètres de l'application", desc: "Dans Paramètres > Préférences de confidentialité, vous pouvez modifier vos choix à tout moment." },
+        { title: "Via votre navigateur", desc: "Vous pouvez configurer votre navigateur pour bloquer ou supprimer les cookies. Attention, cela peut affecter le fonctionnement du service." },
+      ],
+    },
+
+    section4: {
+      title: "4. Conséquences du refus des cookies",
+      content: "Le refus des cookies strictement nécessaires peut empêcher l'utilisation du service (authentification impossible). Le refus des cookies analytiques n'a aucun impact sur votre utilisation du service.",
+    },
+
+    section5: {
+      title: "5. Durée de conservation",
+      content: "Vos préférences de cookies sont conservées pendant 12 mois. À l'issue de cette période, votre consentement vous sera à nouveau demandé.",
+    },
+
+    section6: {
+      title: "6. Mises à jour de cette politique",
+      content: "Cette politique de cookies peut être mise à jour pour refléter des changements dans nos pratiques ou pour des raisons réglementaires. La date de dernière mise à jour est indiquée en haut de cette page.",
+    },
+
+    section7: {
+      title: "7. Contact",
+      intro: "Pour toute question concernant notre utilisation des cookies :",
+      email: "Email : privacy@posty.app",
+    },
+  },
+
+  // Cookie Banner
+  cookieBanner: {
+    title: "Nous respectons votre vie privée",
+    description: "Posty utilise des cookies essentiels pour le fonctionnement du service. Les cookies analytiques sont optionnels et nous aident à améliorer l'application.",
+    acceptAll: "Tout accepter",
+    rejectOptional: "Refuser les optionnels",
+    customize: "Personnaliser",
+    savePreferences: "Enregistrer mes choix",
+    essentialLabel: "Cookies essentiels",
+    essentialDesc: "Nécessaires au fonctionnement (authentification, sécurité). Ne peuvent pas être désactivés.",
+    analyticsLabel: "Cookies analytiques",
+    analyticsDesc: "Nous aident à comprendre l'utilisation de l'application pour l'améliorer.",
+    learnMore: "En savoir plus",
+    preferencesTitle: "Préférences de cookies",
   },
 } as const;

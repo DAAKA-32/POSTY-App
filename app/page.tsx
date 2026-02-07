@@ -1038,7 +1038,7 @@ function DemoSection() {
       <section
         ref={sectionRef}
         id="demo"
-        className="relative pt-28 pb-16 md:pt-32 md:pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden"
+        className="relative min-h-[100dvh] flex flex-col justify-center px-4 sm:px-6 lg:px-8 py-20 overflow-hidden"
       >
         {/* Background image — cinematic hero */}
         <div className="absolute inset-0">
@@ -1061,20 +1061,28 @@ function DemoSection() {
 
         <div className="max-w-4xl 2xl:max-w-5xl mx-auto relative z-10">
           {/* ============================================================ */}
-          {/* Hero Text — fades in as demo card descends                   */}
+          {/* Collapsible Hero Container — starts height:0, expands after  */}
+          {/* MacBook animation to push MacBook down naturally             */}
           {/* ============================================================ */}
-          {/* Hero Text — FAST sequenced animation after MacBook          */}
-          {/* Optimized: ~0.5s total stagger vs ~0.8s before              */}
-          {/* ============================================================ */}
+          <motion.div
+            initial={false}
+            animate={hasAnimated ? { height: "auto", opacity: 1 } : { height: 0, opacity: 0 }}
+            transition={{
+              height: { duration: 0.8, ease: [0.22, 1, 0.36, 1] },
+              opacity: { duration: 0.5, delay: 0.1, ease: "easeOut" },
+            }}
+            style={{ overflow: "hidden" }}
+          >
+          {/* Hero Text — staggered reveal after MacBook animation        */}
           <div className="text-center mb-10 md:mb-14 2xl:mb-16">
-            {/* Main headline - Instant */}
+            {/* Main headline */}
             <motion.h1
-              initial={{ opacity: 0, y: 25 }}
-              animate={hasAnimated ? { opacity: 1, y: 0 } : { opacity: 0, y: 25 }}
+              initial={{ opacity: 0, y: 35, filter: "blur(8px)" }}
+              animate={hasAnimated ? { opacity: 1, y: 0, filter: "blur(0px)" } : { opacity: 0, y: 35, filter: "blur(8px)" }}
               transition={{
-                duration: 0.5,
-                delay: 0,
-                ease: [0.25, 0.1, 0.25, 1], // Smooth but fast
+                duration: 0.6,
+                delay: hasAnimated ? 0.15 : 0,
+                ease: [0.22, 1, 0.36, 1],
               }}
               className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] 2xl:text-[4rem] font-bold text-gray-900 leading-[1.1] tracking-tight"
             >
@@ -1085,14 +1093,14 @@ function DemoSection() {
               </span>
             </motion.h1>
 
-            {/* Subheadline - Quick follow */}
+            {/* Subheadline */}
             <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={hasAnimated ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 25, filter: "blur(6px)" }}
+              animate={hasAnimated ? { opacity: 1, y: 0, filter: "blur(0px)" } : { opacity: 0, y: 25, filter: "blur(6px)" }}
               transition={{
-                duration: 0.45,
-                delay: hasAnimated ? 0.08 : 0,
-                ease: [0.25, 0.1, 0.25, 1],
+                duration: 0.55,
+                delay: hasAnimated ? 0.3 : 0,
+                ease: [0.22, 1, 0.36, 1],
               }}
               className="mt-5 md:mt-6 text-gray-600 text-base md:text-lg lg:text-xl max-w-2xl mx-auto leading-relaxed"
             >
@@ -1100,16 +1108,14 @@ function DemoSection() {
             </motion.p>
           </div>
 
-          {/* ============================================================ */}
-          {/* Interactive View Mode Tabs - Fast appearance                 */}
-          {/* ============================================================ */}
+          {/* Interactive View Mode Tabs */}
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={hasAnimated ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
             transition={{
               duration: 0.4,
-              delay: hasAnimated ? 0.15 : 0,
-              ease: [0.25, 0.1, 0.25, 1],
+              delay: hasAnimated ? 0.45 : 0,
+              ease: [0.22, 1, 0.36, 1],
             }}
             className="flex justify-center mb-4 md:mb-5"
           >
@@ -1169,6 +1175,7 @@ function DemoSection() {
                 </span>
               </button>
             </div>
+          </motion.div>
           </motion.div>
 
           {/* ============================================================ */}
@@ -4403,6 +4410,7 @@ function Footer() {
               <Link href="/legal/privacy" className="block text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">Confidentialite</Link>
               <Link href="/legal/terms" className="block text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">CGU</Link>
               <Link href="/legal/notices" className="block text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">Mentions legales</Link>
+              <Link href="/legal/cookies" className="block text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">Cookies</Link>
             </div>
             {/* Account */}
             <div>
@@ -4466,6 +4474,8 @@ function Footer() {
                 <li><Link href="/legal/privacy" className="text-gray-500 hover:text-[#F8935D] transition-colors">Politique de confidentialite</Link></li>
                 <li><Link href="/legal/terms" className="text-gray-500 hover:text-[#F8935D] transition-colors">Conditions d&apos;utilisation</Link></li>
                 <li><Link href="/legal/notices" className="text-gray-500 hover:text-[#F8935D] transition-colors">Mentions legales</Link></li>
+                <li><Link href="/legal/cookies" className="text-gray-500 hover:text-[#F8935D] transition-colors">Politique de cookies</Link></li>
+                <li><a href="https://www.cnil.fr" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-[#F8935D] transition-colors">CNIL</a></li>
               </ul>
             </div>
           </div>

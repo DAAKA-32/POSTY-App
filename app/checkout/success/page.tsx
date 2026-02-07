@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import MainLayout from "@/components/layout/MainLayout";
 import Button from "@/components/ui/Button";
 import confetti from "canvas-confetti";
+import { TRIAL_PERIOD_DAYS, GUARANTEE_PERIOD_DAYS } from "@/lib/plans";
 
 function CheckoutSuccessContent() {
   const searchParams = useSearchParams();
@@ -124,8 +125,8 @@ function CheckoutSuccessContent() {
           className="text-lg text-text-muted mb-8"
         >
           {isTrialing
-            ? "Vous avez 7 jours pour tester toutes les fonctionnalites. Aucun debit pendant l'essai. Annulez a tout moment."
-            : "Votre abonnement a ete active avec succes. Vous avez maintenant acces a toutes les fonctionnalites premium."
+            ? `Vous avez ${TRIAL_PERIOD_DAYS} jours pour tester toutes les fonctionnalites. Aucun debit pendant l'essai. Annulez a tout moment.`
+            : `Votre abonnement a ete active avec succes. Garantie satisfait ou rembourse ${GUARANTEE_PERIOD_DAYS} jours.`
           }
         </motion.p>
 

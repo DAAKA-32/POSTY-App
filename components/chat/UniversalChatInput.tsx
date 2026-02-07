@@ -341,6 +341,7 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
             bg-white dark:bg-dark-card
             backdrop-blur-sm
             transition-all duration-300 ease-out
+            overflow-hidden rounded-3xl
             chat-input-inner
             ${showPremiumEffects
               ? "shadow-glow border border-primary/20"
@@ -474,32 +475,45 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
         </div>
       </div>
 
-      {/* Character counter and helper text */}
-      <div className="flex items-center justify-between mt-2 px-1">
-        {/* Helper text - Desktop only */}
+      {/* Helper text + character counter below input */}
+      <div className="relative flex items-center justify-center mt-2 px-1">
+        {/* Centered instruction or limit message */}
         {showHelperText && (
-          <motion.p
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
-            className="hidden sm:block text-xs text-gray-500 dark:text-gray-400"
           >
-            {quotaLimitReached
-              ? "Votre limite quotidienne est atteinte. Revenez demain ou passez à un plan supérieur."
-              : trialLimitReached
-              ? "Limite d'essai atteinte. Inscrivez-vous pour continuer."
-              : "Entrée pour envoyer • Shift+Entrée pour saut de ligne"}
-          </motion.p>
+            {quotaLimitReached ? (
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Votre limite quotidienne est atteinte. Revenez demain ou passez à un plan supérieur.
+              </p>
+            ) : trialLimitReached ? (
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Limite d&apos;essai atteinte. Inscrivez-vous pour continuer.
+              </p>
+            ) : (
+              <span className="hidden sm:flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500">
+                <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-dark-elevated text-gray-500 dark:text-gray-400 font-mono text-[11px] border border-gray-200 dark:border-dark-border">Entrée</kbd>
+                <span>envoyer</span>
+                <span className="mx-1 text-gray-300 dark:text-gray-600">·</span>
+                <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-dark-elevated text-gray-500 dark:text-gray-400 font-mono text-[11px] border border-gray-200 dark:border-dark-border">Shift</kbd>
+                <span>+</span>
+                <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-dark-elevated text-gray-500 dark:text-gray-400 font-mono text-[11px] border border-gray-200 dark:border-dark-border">Entrée</kbd>
+                <span>nouvelle ligne</span>
+              </span>
+            )}
+          </motion.div>
         )}
 
-        {/* Character counter - always visible when showCharacterCount is true */}
+        {/* Character counter - absolute right so it doesn't push the centered text */}
         {showCharacterCount && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
             className={`
-              text-xs font-medium ml-auto
+              absolute right-1 text-xs font-medium
               transition-colors duration-200
               ${isOverLimit
                 ? "text-red-500"

@@ -15,6 +15,8 @@ import GlobalCommandPalette from "@/components/providers/GlobalCommandPalette";
 import KeyboardNavigationProvider from "@/components/providers/KeyboardNavigationProvider";
 import SkipLinks from "@/components/accessibility/SkipLinks";
 import DevTools from "@/components/dev/DevTools";
+import CookieBanner from "@/components/ui/CookieBanner";
+import LegalUpdateNotification from "@/components/ui/LegalUpdateNotification";
 import { HomepageJsonLd } from "@/components/seo/JsonLd";
 import HreflangTags from "@/components/seo/HreflangTags";
 import "./globals.css";
@@ -270,6 +272,8 @@ export default function RootLayout({
             <PremiumToaster />
           </AuthProvider>
           <DevTools />
+          <CookieBanner />
+          <LegalUpdateNotification />
         </AppProvider>
         </KeyboardNavigationProvider>
         </ThemeProvider>

@@ -82,6 +82,16 @@ service cloud.firestore {
       allow read, write: if isOwner(userId);
     }
 
+    // Facebook connections - OAuth tokens and profile data
+    match /facebookConnections/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // Threads connections - OAuth tokens and profile data
+    match /threadsConnections/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
     // Medium connections - integration tokens and profile data
     match /mediumConnections/{userId} {
       allow read, write: if isOwner(userId);

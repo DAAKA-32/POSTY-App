@@ -714,6 +714,19 @@ function SettingsContent() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                   </svg>
                 </a>
+                <a
+                  href="/legal/cookies"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between p-3 lg:p-4 bg-[#F8935D]/5 dark:bg-dark-bg rounded-xl border border-[#F8935D]/10 dark:border-dark-border hover:border-primary/30 transition-all duration-200 group"
+                >
+                  <span className="text-gray-900 dark:text-white text-sm lg:text-base group-hover:text-primary transition-colors">
+                    Politique de cookies
+                  </span>
+                  <svg className="w-4 h-4 lg:w-5 lg:h-5 text-text-muted group-hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
               </div>
             </motion.section>
 

@@ -9,6 +9,7 @@ import Button from "@/components/ui/Button";
 import { SubscriptionBadge } from "@/components/stripe";
 import toast from "@/components/ui/Toast";
 import Link from "next/link";
+import { GUARANTEE_PERIOD_DAYS } from "@/lib/plans";
 
 // Types for Stripe subscription details
 interface StripeSubscriptionDetails {
@@ -69,6 +70,9 @@ export default function SubscriptionManagement() {
     subscription,
     isFreePlan,
     loading: contextLoading,
+    guaranteeEligible,
+    guaranteeDaysRemaining,
+    requestRefund,
   } = useSubscription();
 
   const [stripeDetails, setStripeDetails] = useState<StripeSubscriptionDetails | null>(null);
@@ -76,6 +80,8 @@ export default function SubscriptionManagement() {
   const [isCanceling, setIsCanceling] = useState(false);
   const [isReactivating, setIsReactivating] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showRefundModal, setShowRefundModal] = useState(false);
+  const [isRefunding, setIsRefunding] = useState(false);
 
   // Get Stripe customer/subscription IDs from user profile
   const stripeCustomerId = userProfile?.subscription?.stripeCustomerId;
@@ -172,6 +178,26 @@ export default function SubscriptionManagement() {
       toast.error("Erreur lors de la réactivation de l'abonnement");
     } finally {
       setIsReactivating(false);
+    }
+  };
+
+  // Handle refund request (money-back guarantee)
+  const handleRefundRequest = async () => {
+    setIsRefunding(true);
+    try {
+      const result = await requestRefund();
+      if (result.success) {
+        toast.success(result.message || "Remboursement effectué avec succès.");
+        setShowRefundModal(false);
+        await fetchStripeDetails();
+      } else {
+        toast.error(result.error || "Erreur lors du remboursement");
+      }
+    } catch (error) {
+      console.error("Error requesting refund:", error);
+      toast.error("Erreur lors de la demande de remboursement");
+    } finally {
+      setIsRefunding(false);
     }
   };
 
@@ -404,6 +430,37 @@ export default function SubscriptionManagement() {
             </>
           )}
 
+          {/* Money-back Guarantee Banner */}
+          {!isFreePlan && guaranteeEligible && (
+            <motion.div
+              variants={itemVariants}
+              className="p-4 bg-accent/5 border border-accent/20 rounded-xl"
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
+                  <svg className="w-4 h-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <p className="text-accent font-medium text-sm">
+                    Garantie satisfait ou remboursé
+                  </p>
+                  <p className="text-text-secondary text-xs mt-1">
+                    Il vous reste <span className="text-white font-medium">{guaranteeDaysRemaining} jour{guaranteeDaysRemaining > 1 ? "s" : ""}</span> pour
+                    demander un remboursement intégral si vous n'êtes pas satisfait.
+                  </p>
+                  <button
+                    onClick={() => setShowRefundModal(true)}
+                    className="mt-2 text-xs text-text-muted hover:text-accent transition-colors underline underline-offset-2"
+                  >
+                    Demander un remboursement
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
           {/* Free Plan Upgrade CTA */}
           {isFreePlan && (
             <motion.div
@@ -478,10 +535,96 @@ export default function SubscriptionManagement() {
           >
             {isFreePlan
               ? "Plan gratuit sans engagement. Passez à Pro ou Max à tout moment."
-              : "Vous pouvez annuler votre abonnement à tout moment. L'accès reste actif jusqu'à la fin de la période payée."}
+              : `Garantie satisfait ou remboursé ${GUARANTEE_PERIOD_DAYS} jours. Annulation possible à tout moment.`}
           </motion.p>
         </div>
       </motion.section>
+
+      {/* Refund Confirmation Modal */}
+      <AnimatePresence>
+        {showRefundModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowRefundModal(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md bg-dark-card border border-dark-border rounded-2xl p-6 shadow-2xl"
+            >
+              {/* Shield Icon */}
+              <div className="flex justify-center mb-4">
+                <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center">
+                  <svg className="w-8 h-8 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                </div>
+              </div>
+
+              <h3 className="text-xl font-semibold text-white text-center mb-2">
+                Demander un remboursement
+              </h3>
+
+              <p className="text-text-secondary text-center mb-6">
+                Vous êtes dans la période de garantie ({GUARANTEE_PERIOD_DAYS} jours).
+                Votre dernier paiement sera intégralement remboursé et votre abonnement sera annulé.
+              </p>
+
+              <div className="p-4 bg-dark-bg rounded-xl border border-dark-border mb-6">
+                <p className="text-sm font-medium text-white mb-2">Ce qui va se passer :</p>
+                <ul className="space-y-2">
+                  <li className="flex items-center gap-2 text-sm text-text-secondary">
+                    <svg className="w-4 h-4 text-accent shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Remboursement intégral sous 5-10 jours
+                  </li>
+                  <li className="flex items-center gap-2 text-sm text-text-secondary">
+                    <svg className="w-4 h-4 text-accent shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Annulation immédiate de l'abonnement
+                  </li>
+                  <li className="flex items-center gap-2 text-sm text-text-secondary">
+                    <svg className="w-4 h-4 text-warning shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01" />
+                    </svg>
+                    Retour au plan gratuit
+                  </li>
+                </ul>
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  variant="secondary"
+                  onClick={() => setShowRefundModal(false)}
+                  className="flex-1"
+                >
+                  Annuler
+                </Button>
+                <Button
+                  variant="danger"
+                  onClick={handleRefundRequest}
+                  isLoading={isRefunding}
+                  className="flex-1"
+                >
+                  Confirmer le remboursement
+                </Button>
+              </div>
+
+              <p className="text-xs text-text-muted text-center mt-4">
+                Le remboursement sera crédité sur votre moyen de paiement original.
+              </p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Cancel Confirmation Modal */}
       <AnimatePresence>

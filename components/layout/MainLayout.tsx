@@ -20,6 +20,7 @@ import { getUserPostsWithPinned, pinPost, renamePost, deletePost } from "@/lib/f
 import { AnimatedSlideIn, AnimatedPageWrapper } from "@/components/animations/AnimatedPageWrapper";
 import toast from "@/components/ui/Toast";
 import TestModeIndicator from "@/components/subscription/TestModeIndicator";
+import TrialBanner from "@/components/subscription/TrialBanner";
 
 // Premium animation easings - consistent across app
 const smoothEase = [0.25, 0.1, 0.25, 1] as const;
@@ -1095,6 +1096,9 @@ export default function MainLayout({
             }}
           />
         )}
+
+        {/* Trial / Guarantee Banner */}
+        <TrialBanner />
 
         {/* Page Content - No scroll on mobile (children handle scroll), scroll on desktop */}
         <AnimatedPageWrapper delay={0.2} className="flex-1 overflow-hidden lg:overflow-y-auto lg:overflow-x-hidden lg:overscroll-contain">

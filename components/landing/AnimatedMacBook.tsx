@@ -50,6 +50,9 @@ export default function AnimatedMacBook({
   const macbookRef = useRef<HTMLDivElement>(null);
   const lidRef = useRef<HTMLDivElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
+  const perspectiveRef = useRef<HTMLDivElement>(null);
+  const screenLightRef = useRef<HTMLDivElement>(null);
+  const shadowRef = useRef<HTMLDivElement>(null);
 
   // Detect mobile on mount
   useEffect(() => {
@@ -84,6 +87,9 @@ export default function AnimatedMacBook({
       gsap.set(macbookRef.current, { y: 0, opacity: 1, scale: 1, filter: "blur(0px)" });
       gsap.set(lidRef.current, { rotateX: 0 });
       gsap.set(glowRef.current, { scale: 1, opacity: 1 });
+      gsap.set(perspectiveRef.current, { perspectiveOrigin: "50% 85%" });
+      gsap.set(screenLightRef.current, { opacity: 1 });
+      gsap.set(shadowRef.current, { scaleX: 1 });
 
       // Trigger callback immediately
       handleAnimationComplete();
@@ -99,15 +105,15 @@ export default function AnimatedMacBook({
       // INITIAL STATES - MacBook visible at top, descends dramatically
       // ================================================================
 
-      // Calculate positions - Start VISIBLE at top of container
+      // Calculate positions - Start FULLY off-screen for cinematic entrance
       const viewportHeight = window.innerHeight;
-      // Start position: Visible above (not off-screen) - around -350px
-      const startY = shouldSimplify ? -300 : -400;
-      // Mid position: Where lid opens
-      const midY = shouldSimplify ? -100 : -150;
+      // Start position: Completely above viewport
+      const startY = shouldSimplify ? -(viewportHeight * 0.5) : -(viewportHeight + 100);
+      // Mid position: Where lid opens (slightly above final)
+      const midY = shouldSimplify ? -60 : -80;
       // Final position
       const finalY = 0;
-      const startScale = shouldSimplify ? 0.96 : 0.9;
+      const startScale = shouldSimplify ? 0.96 : 0.85;
 
       gsap.set(macbookRef.current, {
         y: startY,
@@ -120,6 +126,9 @@ export default function AnimatedMacBook({
         transformOrigin: "center bottom"
       });
       gsap.set(glowRef.current, { scale: 0.3, opacity: 0 });
+      gsap.set(perspectiveRef.current, { perspectiveOrigin: "50% 58%" });
+      gsap.set(screenLightRef.current, { opacity: 0 });
+      gsap.set(shadowRef.current, { scaleX: 0.7 });
 
       // ================================================================
       // TIMELINE - FAST & IMPACTFUL: Descend → Open → Settle → Reveal
@@ -131,22 +140,22 @@ export default function AnimatedMacBook({
       });
 
       // ========================================
-      // PHASE 1: DESCENT - Fast arrival (0.5s)
+      // PHASE 1: DESCENT - Cinematic arrival from off-screen
       // ========================================
       tl.to(macbookRef.current, {
         y: midY,
-        scale: shouldSimplify ? 0.96 : 0.94,
-        duration: shouldSimplify ? 0.35 : 0.5,
+        scale: shouldSimplify ? 0.96 : 0.92,
+        duration: shouldSimplify ? 0.5 : 0.75,
         ease: "power3.out",
       });
 
-      // Ambient glow appears quickly
+      // Ambient glow appears during descent
       tl.to(glowRef.current, {
         scale: 0.6,
         opacity: 0.4,
-        duration: shouldSimplify ? 0.3 : 0.4,
+        duration: shouldSimplify ? 0.4 : 0.5,
         ease: "power2.out",
-      }, "-=0.4");
+      }, "-=0.5");
 
       // ========================================
       // PHASE 2: LID OPENS - Snappy opening (0.4s)
@@ -161,8 +170,29 @@ export default function AnimatedMacBook({
       tl.to(lidRef.current, {
         rotateX: 0,
         duration: shouldSimplify ? 0.3 : 0.45,
-        ease: shouldSimplify ? "power3.out" : "back.out(1.2)",
+        ease: shouldSimplify ? "power3.out" : "back.out(1.5)",
       });
+
+      // Perspective shifts from edge-on to "looking from below" as lid opens
+      tl.to(perspectiveRef.current, {
+        perspectiveOrigin: "50% 85%",
+        duration: shouldSimplify ? 0.3 : 0.45,
+        ease: "power2.inOut",
+      }, "<");
+
+      // Screen light illuminates keyboard surface as lid opens
+      tl.to(screenLightRef.current, {
+        opacity: 1,
+        duration: shouldSimplify ? 0.3 : 0.5,
+        ease: "power2.out",
+      }, "<");
+
+      // Shadow widens as device opens up (larger footprint when open)
+      tl.to(shadowRef.current, {
+        scaleX: 1,
+        duration: shouldSimplify ? 0.3 : 0.4,
+        ease: "power2.out",
+      }, "<");
 
       // ========================================
       // PHASE 3: SETTLE - Quick landing (0.4s)
@@ -211,10 +241,11 @@ export default function AnimatedMacBook({
 
         {/* MacBook 3D Container */}
         <div
+          ref={perspectiveRef}
           className="relative mx-auto"
           style={{
-            perspective: "1800px",
-            perspectiveOrigin: "50% 85%",
+            perspective: "2200px",
+            perspectiveOrigin: "50% 58%",
           }}
         >
           {/* ============================================================ */}
@@ -310,11 +341,14 @@ export default function AnimatedMacBook({
                     }`}
                   />
 
-                  {/* Screen content - Fast reveal for snappy UX */}
+                  {/* Screen content - Reveal with brightness bloom (screen "powers on") */}
                   <div
-                    className={`absolute inset-0 transition-all duration-300 ease-out ${
-                      showContent ? "opacity-100 scale-100" : "opacity-0 scale-[1.01]"
+                    className={`absolute inset-0 transition-all duration-[400ms] ease-out ${
+                      showContent ? "opacity-100 scale-100" : "opacity-0 scale-[1.02]"
                     }`}
+                    style={!shouldSimplify ? {
+                      filter: showContent ? 'brightness(1)' : 'brightness(1.3)',
+                    } : undefined}
                   >
                     <Image
                       src={screenImage}
@@ -324,11 +358,21 @@ export default function AnimatedMacBook({
                       priority
                     />
 
-                    {/* Screen reflection */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] via-transparent to-transparent pointer-events-none" />
+                    {/* Glass reflection — diagonal light streak simulating window reflection */}
+                    {!shouldSimplify && (
+                      <div
+                        className="absolute inset-0 pointer-events-none z-10"
+                        style={{
+                          background: 'linear-gradient(115deg, transparent 0%, transparent 40%, rgba(255,255,255,0.04) 42%, rgba(255,255,255,0.07) 44%, rgba(255,255,255,0.04) 46%, transparent 48%, transparent 100%)',
+                        }}
+                      />
+                    )}
 
-                    {/* Subtle vignette */}
-                    <div className="absolute inset-0 shadow-[inset_0_0_80px_rgba(0,0,0,0.3)] pointer-events-none" />
+                    {/* Screen reflection — ambient corner-to-corner gradient */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/[0.04] via-transparent to-black/[0.02] pointer-events-none" />
+
+                    {/* Edge vignette — simulates screen curvature depth */}
+                    <div className="absolute inset-0 shadow-[inset_0_0_60px_rgba(0,0,0,0.25)] pointer-events-none" />
                   </div>
 
                   {/* Loading shimmer */}
@@ -381,6 +425,16 @@ export default function AnimatedMacBook({
                 {/* Side edge shadows for 3D depth */}
                 <div className="absolute left-0 top-0 bottom-0 w-[6px] sm:w-[8px] md:w-[10px] bg-gradient-to-r from-[#b8b8bd] to-transparent" />
                 <div className="absolute right-0 top-0 bottom-0 w-[6px] sm:w-[8px] md:w-[10px] bg-gradient-to-l from-[#b8b8bd] to-transparent" />
+
+                {/* Screen light cast onto keyboard — simulates display illuminating the surface */}
+                <div
+                  ref={screenLightRef}
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    background: 'radial-gradient(ellipse at 50% -30%, rgba(200,215,240,0.12) 0%, transparent 65%)',
+                    opacity: 0,
+                  }}
+                />
               </div>
 
               {/* Front edge lip - the thin edge you see when looking at MacBook */}
@@ -390,8 +444,8 @@ export default function AnimatedMacBook({
               </div>
             </div>
 
-            {/* Base shadow - realistic soft shadow */}
-            <div className="absolute -bottom-4 sm:-bottom-5 md:-bottom-6 left-[5%] right-[5%] h-6 sm:h-8 md:h-10 bg-black/12 blur-2xl rounded-[50%]" />
+            {/* Base shadow - realistic multi-layer shadow system */}
+            <div ref={shadowRef} className="absolute -bottom-4 sm:-bottom-5 md:-bottom-6 left-[5%] right-[5%] h-6 sm:h-8 md:h-10 bg-black/12 blur-2xl rounded-[50%]" />
             <div className="absolute -bottom-2 sm:-bottom-2.5 left-[12%] right-[12%] h-3 sm:h-4 bg-black/8 blur-lg rounded-[50%]" />
           </div>
         </div>
