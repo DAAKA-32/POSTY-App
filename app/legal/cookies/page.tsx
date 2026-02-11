@@ -188,9 +188,9 @@ export default function CookiePolicyPage() {
         <p className="text-gray-400 text-sm mt-4">
           Voir aussi notre{" "}
           <Link href="/legal/privacy" className="text-primary hover:underline">
-            Politique de confidentialite
+            Politique de confidentialité
           </Link>
-          {" "}pour plus d&apos;informations sur le traitement de vos donnees personnelles.
+          {" "}pour plus d&apos;informations sur le traitement de vos données personnelles.
         </p>
       </section>
     </LegalLayoutLight>

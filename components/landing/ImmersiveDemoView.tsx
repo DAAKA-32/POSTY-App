@@ -372,7 +372,7 @@ export default function ImmersiveDemoView({
                               Créez des posts illimités et publiez directement sur LinkedIn
                             </p>
                             <Link
-                              href="/login"
+                              href="/login?mode=signup"
                               className="group inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-semibold rounded-xl shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-orange-500/40 transition-all duration-300"
                             >
                               <span>Commencer gratuitement</span>

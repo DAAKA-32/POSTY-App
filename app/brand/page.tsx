@@ -46,16 +46,16 @@ const brandColors = {
 
 const typography = [
   { level: "Display", size: "32px", weight: "700", sample: "Posty" },
-  { level: "H1", size: "24px", weight: "700", sample: "Creez du contenu LinkedIn" },
-  { level: "H2", size: "20px", weight: "600", sample: "Fonctionnalites principales" },
-  { level: "H3", size: "18px", weight: "600", sample: "Generation IA" },
-  { level: "Body", size: "15px", weight: "400", sample: "Posty utilise l'IA pour generer des posts LinkedIn engageants." },
-  { level: "Small", size: "13px", weight: "400", sample: "Derniere mise a jour : il y a 2 heures" },
+  { level: "H1", size: "24px", weight: "700", sample: "Créez du contenu LinkedIn" },
+  { level: "H2", size: "20px", weight: "600", sample: "Fonctionnalités principales" },
+  { level: "H3", size: "18px", weight: "600", sample: "Génération IA" },
+  { level: "Body", size: "15px", weight: "400", sample: "Posty utilise l'IA pour générer des posts LinkedIn engageants." },
+  { level: "Small", size: "13px", weight: "400", sample: "Dernière mise à jour : il y a 2 heures" },
   { level: "Caption", size: "11px", weight: "400", sample: "Version 1.0.0" },
 ];
 
 const iconShowcase = [
-  { icon: Sparkles, name: "Generate", description: "Creation de post" },
+  { icon: Sparkles, name: "Generate", description: "Création de post" },
   { icon: Calendar, name: "Schedule", description: "Programmation" },
   { icon: BarChart3, name: "Analytics", description: "Statistiques" },
   { icon: Target, name: "Coach", description: "Coaching IA" },
@@ -133,7 +133,7 @@ export default function BrandPage() {
             target="_blank"
             className="text-sm text-[#F8935D] hover:text-[#F76B54] font-medium"
           >
-            Telecharger BRAND.md
+            Télécharger BRAND.md
           </a>
         </div>
       </header>
@@ -361,11 +361,11 @@ export default function BrandPage() {
 
               {/* With icons */}
               <div>
-                <h4 className="font-semibold text-gray-900 dark:text-white mb-4">Avec icones</h4>
+                <h4 className="font-semibold text-gray-900 dark:text-white mb-4">Avec icônes</h4>
                 <div className="flex flex-wrap gap-4">
                   <Button variant="primary">
                     <Sparkles className="w-4 h-4 mr-2" />
-                    Generer
+                    Générer
                   </Button>
                   <Button variant="secondary">
                     <Calendar className="w-4 h-4 mr-2" />
@@ -515,7 +515,7 @@ export default function BrandPage() {
           <Card className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
-                <h4 className="font-semibold text-gray-900 dark:text-white mb-4">Caracteristiques</h4>
+                <h4 className="font-semibold text-gray-900 dark:text-white mb-4">Caractéristiques</h4>
                 <ul className="space-y-3">
                   <li className="flex items-start gap-3">
                     <div className="w-6 h-6 rounded-full bg-[#F8935D]/10 flex items-center justify-center flex-shrink-0 mt-0.5">

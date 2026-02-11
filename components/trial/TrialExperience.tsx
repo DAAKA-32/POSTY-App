@@ -175,8 +175,8 @@ export default function TrialExperience({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
               </div>
-              <h2 className="text-xl font-semibold text-white mb-2">Creez votre post LinkedIn</h2>
-              <p className="text-text-secondary max-w-sm">Decrivez votre idee et recevez 2 versions optimisees en quelques secondes.</p>
+              <h2 className="text-xl font-semibold text-white mb-2">Créez votre post LinkedIn</h2>
+              <p className="text-text-secondary max-w-sm">Décrivez votre idée et recevez 2 versions optimisées en quelques secondes.</p>
             </motion.div>
           )}
 

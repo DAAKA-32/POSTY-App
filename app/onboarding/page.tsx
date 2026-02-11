@@ -25,49 +25,49 @@ const STEPS = [
   {
     id: "profileType" as const,
     title: "Quel est votre profil ?",
-    subtitle: "Pour personnaliser Posty a votre activite",
+    subtitle: "Pour que Posty parle comme vous",
     options: PROFILE_TYPES,
     type: "select" as const,
   },
   {
     id: "sector" as const,
     title: "Dans quel secteur exercez-vous ?",
-    subtitle: "Posty adapte ses strategies a votre marche",
+    subtitle: "Pour que chaque post touche votre cible",
     options: SECTORS,
     type: "select" as const,
   },
   {
     id: "role" as const,
-    title: "Quel est votre role ?",
-    subtitle: "Pour calibrer le ton et la credibilite de vos posts",
+    title: "Quel est votre rôle ?",
+    subtitle: "Pour calibrer le ton et la crédibilité de vos posts",
     options: [] as readonly string[],
     type: "input" as const,
   },
   {
     id: "objective" as const,
-    title: "Quel est votre objectif numero 1 ?",
-    subtitle: "Chaque post sera optimise pour cet objectif",
+    title: "Quel est votre objectif numéro 1 ?",
+    subtitle: "Chaque post sera optimisé pour cet objectif",
     options: OBJECTIVES,
     type: "select" as const,
   },
   {
     id: "targetAudience" as const,
     title: "Qui souhaitez-vous atteindre ?",
-    subtitle: "Posty ciblera les bons profils pour vous",
+    subtitle: "Pour des posts qui parlent à vos futurs clients",
     options: TARGET_AUDIENCES,
     type: "select" as const,
   },
   {
     id: "communicationTone" as const,
     title: "Quel ton vous correspond le mieux ?",
-    subtitle: "Votre voix, amplifiee par l'IA",
+    subtitle: "Vos mots, amplifiés par l'IA",
     options: COMMUNICATION_TONES,
     type: "select" as const,
   },
   {
     id: "publishingFrequency" as const,
-    title: "A quelle frequence souhaitez-vous publier ?",
-    subtitle: "Posty s'adapte a votre rythme",
+    title: "À quelle fréquence souhaitez-vous publier ?",
+    subtitle: "Posty s'adapte à votre rythme",
     options: PUBLISHING_FREQUENCIES,
     type: "select" as const,
   },
@@ -114,18 +114,18 @@ function UpsellScreen({ onContinue, onUpgrade }: { onContinue: () => void; onUpg
   }, [showReassurance, onContinue]);
 
   const proFeatures = [
-    { text: "Personnalisation IA (secteur, role, style)", included: true },
-    { text: "Posts illimites", included: true },
+    { text: "Personnalisation IA (secteur, rôle, style)", included: true },
+    { text: "Posts illimités", included: true },
     { text: "Historique complet", included: true },
-    { text: "Ciblage audience avance", included: false },
-    { text: "Ton de communication personnalise", included: false },
+    { text: "Ciblage audience avancé", included: false },
+    { text: "Ton de communication personnalisé", included: false },
   ];
 
   const maxFeatures = [
     { text: "Tout le plan Pro inclus", included: true },
-    { text: "Ciblage audience avance", included: true },
-    { text: "Ton de communication personnalise", included: true },
-    { text: "Double generation (Storytelling + Business)", included: true },
+    { text: "Ciblage audience avancé", included: true },
+    { text: "Ton de communication personnalisé", included: true },
+    { text: "Double génération (Storytelling + Business)", included: true },
     { text: "Support prioritaire", included: true },
   ];
 
@@ -164,7 +164,7 @@ function UpsellScreen({ onContinue, onUpgrade }: { onContinue: () => void; onUpg
               transition={{ delay: 0.2, duration: 0.4, ease: smoothEase }}
               className="text-2xl font-bold text-gray-900 mb-3"
             >
-              Vos donnees sont sauvegardees
+              Vos données sont sauvegardées
             </motion.h2>
             <motion.p
               initial={{ opacity: 0, y: 10 }}
@@ -218,16 +218,16 @@ function UpsellScreen({ onContinue, onUpgrade }: { onContinue: () => void; onUpg
                 <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                Felicitations
+                Félicitations
               </div>
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">
-                Votre profil est pret !{" "}
+                Tout est prêt.{" "}
                 <span className="text-primary">
                   Activez la personnalisation IA.
                 </span>
               </h1>
               <p className="text-gray-500 text-sm sm:text-base max-w-lg mx-auto">
-                Posty a collecte vos donnees. Activez un plan pour que l&apos;IA les exploite et genere des posts ultra-cibles pour votre audience.
+                Posty va utiliser vos réponses pour générer des posts calibrés sur votre audience et votre marché.
               </p>
             </motion.div>
 
@@ -330,7 +330,7 @@ function UpsellScreen({ onContinue, onUpgrade }: { onContinue: () => void; onUpg
                 onClick={() => setShowReassurance(true)}
                 className="py-3 px-6 text-gray-400 hover:text-gray-600 font-medium text-sm transition-colors duration-200"
               >
-                Je verrai plus tard
+                Peut-être plus tard
               </button>
             </motion.div>
           </motion.div>

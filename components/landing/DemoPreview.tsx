@@ -73,7 +73,7 @@ export default function DemoPreview({ onSubmit }: DemoPreviewProps) {
             Testez Posty en <span className="text-gradient">direct</span>
           </h2>
           <p className="text-text-secondary max-w-md mx-auto">
-            Entrez votre idee et decouvrez la magie de l'IA
+            Entrez votre idée et découvrez la magie de l'IA
           </p>
         </motion.div>
 
@@ -189,7 +189,7 @@ export default function DemoPreview({ onSubmit }: DemoPreviewProps) {
                   type="text"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
-                  placeholder="Decrivez votre idee de post..."
+                  placeholder="Décrivez votre idée de post..."
                   className="flex-1 px-4 py-3 bg-dark-bg border border-dark-border rounded-xl text-white placeholder-text-muted focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all duration-200"
                 />
                 <motion.button
@@ -199,7 +199,7 @@ export default function DemoPreview({ onSubmit }: DemoPreviewProps) {
                   disabled={!inputValue.trim()}
                   className="px-6 py-3 bg-gradient-to-r from-primary to-accent text-white font-semibold rounded-xl shadow-glow disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                 >
-                  <span className="hidden sm:inline">Generer</span>
+                  <span className="hidden sm:inline">Générer</span>
                   <svg className="w-5 h-5 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>

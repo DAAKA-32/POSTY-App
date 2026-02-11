@@ -21,8 +21,8 @@ export default function SignupPage() {
           router.replace("/app");
         }
       } else {
-        // Not authenticated: redirect to main page with auth panel
-        router.replace("/");
+        // Not authenticated: redirect to login in signup mode
+        router.replace("/login?mode=signup");
       }
     }
   }, [user, isNewUser, loading, router]);

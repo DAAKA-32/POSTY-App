@@ -183,11 +183,11 @@ export const en = {
     loginButton: "Sign in",
     loginWithGoogle: "Continue with Google",
     noAccount: "Don't have an account?",
-    createAccount: "Create account",
+    createAccount: "Create your account",
 
     // Signup
     signupTitle: "Join Posty",
-    signupSubtitle: "Create your free account",
+    signupSubtitle: "Get started for free in seconds",
     signupButton: "Create account",
     signupWithGoogle: "Sign up with Google",
     alreadyHaveAccount: "Already have an account?",

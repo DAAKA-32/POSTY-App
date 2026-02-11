@@ -228,16 +228,16 @@ Cordialement,
     subject: "Suggestion pour votre article - {ArticleTitle}",
     body: `Bonjour {Name},
 
-J'ai lu votre excellent article "{ArticleTitle}" et je pense qu'il pourrait beneficier d'une mention de POSTY dans la section {Section}.
+J'ai lu votre excellent article "{ArticleTitle}" et je pense qu'il pourrait bénéficier d'une mention de POSTY dans la section {Section}.
 
-POSTY est un generateur de posts LinkedIn par IA qui cree 2 versions (Storytelling & Business) en quelques secondes. Il pourrait etre utile a vos lecteurs car {Reason}.
+POSTY est un générateur de posts LinkedIn par IA qui crée 2 versions (Storytelling & Business) en quelques secondes. Il pourrait être utile à vos lecteurs car {Reason}.
 
 Voici quelques infos :
 - Site : posty-app.vercel.app
 - Prix : Gratuit (3 posts/semaine) ou Pro 9,99€/mois
-- Difference : Double version unique (narratif + factuel)
+- Différence : Double version unique (narratif + factuel)
 
-Je serais ravi de repondre a vos questions.
+Je serais ravi de répondre à vos questions.
 
 Cordialement,
 {YourName}`,
@@ -247,14 +247,14 @@ Cordialement,
     subject: "Partenariat POSTY x {TheirBrand}",
     body: `Bonjour {Name},
 
-Je suis {YourName} de POSTY. Je vous contacte car je vois une opportunite de partenariat mutuellement benefique.
+Je suis {YourName} de POSTY. Je vous contacte car je vois une opportunité de partenariat mutuellement bénéfique.
 
 Proposition :
-- Offre exclusive POSTY Pro pour vos utilisateurs/abonnes
-- Co-creation de contenu (webinar, guide, etc.)
-- Integration technique si pertinent
+- Offre exclusive POSTY Pro pour vos utilisateurs/abonnés
+- Co-création de contenu (webinar, guide, etc.)
+- Intégration technique si pertinent
 
-En echange, nous pourrions :
+En échange, nous pourrions :
 - Promouvoir {TheirBrand} aupres de notre audience
 - Creer du contenu conjoint
 - {CustomOffer}

@@ -47,8 +47,8 @@ const ctaVariants = {
 // Section definitions
 const SECTIONS = {
   demo: { label: "Demo", desktopLabel: "Demo" },
-  features: { label: "Caracteristiques", desktopLabel: "Caracteristiques" },
-  testimonials: { label: "Temoignages", desktopLabel: "Temoignages" },
+  features: { label: "Caractéristiques", desktopLabel: "Caractéristiques" },
+  testimonials: { label: "Témoignages", desktopLabel: "Témoignages" },
   founders: { label: "Fondateurs", desktopLabel: "Fondateurs" },
   pricing: { label: "Tarifs", desktopLabel: "Tarifs" },
 } as const;
@@ -215,7 +215,7 @@ export default function Navbar({ transparent = false }: NavbarProps) {
             <div className="flex items-center gap-2.5">
               {/* Desktop CTA */}
               <Link
-                href="/login"
+                href="/login?mode=signup"
                 className="hidden md:inline-flex items-center justify-center h-10 px-5 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white text-sm font-semibold rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200"
               >
                 {t.common.tryNow || "Essayer gratuitement"}
@@ -390,7 +390,7 @@ export default function Navbar({ transparent = false }: NavbarProps) {
                 <div className="space-y-3">
                   {/* Primary CTA */}
                   <Link
-                    href="/login"
+                    href="/login?mode=signup"
                     onClick={() => setMobileMenuOpen(false)}
                     className="
                       relative flex items-center justify-center gap-2

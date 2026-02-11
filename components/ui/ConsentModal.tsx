@@ -184,7 +184,7 @@ export default function ConsentModal({ isOpen, onAccept }: ConsentModalProps) {
           <div className="mt-6 p-4 bg-primary/10 border border-primary/20 rounded-lg">
             <p className="text-xs text-gray-300">
               <strong className="text-white">Vos droits :</strong> Vous pouvez à tout moment
-              modifier vos preferences ou supprimer vos donnees dans les{" "}
+              modifier vos préférences ou supprimer vos données dans les{" "}
               <span className="text-primary">Paramètres de confidentialité</span> de l&apos;application.
             </p>
           </div>

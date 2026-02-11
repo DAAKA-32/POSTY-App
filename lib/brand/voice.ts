@@ -8,7 +8,7 @@
 export const brandVoice = {
   // Core Identity
   identity: {
-    tagline: "L'IA qui ecrit vos posts LinkedIn",
+    tagline: "L'IA qui écrit vos posts LinkedIn",
     positioning: "Assistant IA premium pour professionnels ambitieux",
     promise: "Des posts LinkedIn impactants, en quelques secondes",
   },
@@ -21,11 +21,11 @@ export const brandVoice = {
 
     // What we ARE
     weAre: [
-      "Professionnel et serieux",
-      "Confiant sans etre arrogant",
-      "Inspirant sans etre vendeur",
-      "Direct sans etre froid",
-      "Accessible sans etre familier",
+      "Professionnel et sérieux",
+      "Confiant sans être arrogant",
+      "Inspirant sans être vendeur",
+      "Direct sans être froid",
+      "Accessible sans être familier",
     ],
 
     // What we are NOT
@@ -41,13 +41,13 @@ export const brandVoice = {
   // Writing Principles
   principles: {
     // Clarity over cleverness
-    clarity: "Preferer la clarte a l'originalite forcee",
+    clarity: "Préférer la clarté à l'originalité forcée",
     // Respect the user
     respect: "L'utilisateur est un professionnel intelligent",
     // Value first
-    value: "Toujours montrer le benefice concret",
+    value: "Toujours montrer le bénéfice concret",
     // No pressure
-    noPressure: "Inciter sans forcer, suggerer sans manipuler",
+    noPressure: "Inciter sans forcer, suggérer sans manipuler",
     // Premium feel
     premium: "Chaque mot doit renforcer l'image premium",
   },
@@ -56,11 +56,11 @@ export const brandVoice = {
   messages: {
     // Success states - Celebrate without excess
     success: {
-      pattern: "[Action accomplie]. [Benefice obtenu].",
+      pattern: "[Action accomplie]. [Bénéfice obtenu].",
       examples: [
-        "Post genere. Pret a publier.",
-        "Copie dans le presse-papier.",
-        "Publie sur LinkedIn avec succes.",
+        "Post généré. Prêt à publier.",
+        "Copié dans le presse-papier.",
+        "Publié sur LinkedIn avec succès.",
       ],
     },
 
@@ -68,26 +68,26 @@ export const brandVoice = {
     limits: {
       pattern: "[Constat neutre]. [Solution valorisante].",
       examples: [
-        "Vous avez utilise vos 3 posts cette semaine. Passez en Pro pour creer sans limite.",
-        "Generation limitee en version gratuite. Debloquez l'illimite avec Pro.",
+        "Vous avez utilisé vos 3 posts cette semaine. Passez en Pro pour créer sans limite.",
+        "Génération limitée en version gratuite. Débloquez l'illimité avec Pro.",
       ],
       avoid: [
         "Limite atteinte ! Achetez Pro !",
-        "Vous ne pouvez plus generer...",
+        "Vous ne pouvez plus générer...",
         "Upgrade maintenant pour continuer !",
       ],
     },
 
     // Upgrade prompts - Inspire, don't push
     upgrade: {
-      pattern: "[Benefice Pro]. [Action simple].",
+      pattern: "[Bénéfice Pro]. [Action simple].",
       examples: [
-        "Generations illimitees, support prioritaire. Decouvrir Pro.",
+        "Générations illimitées, support prioritaire. Découvrir Pro.",
         "Publiez sans compter. Voir les avantages Pro.",
       ],
       avoid: [
         "Achetez maintenant !",
-        "Offre limitee !",
+        "Offre limitée !",
         "Ne ratez pas cette occasion !",
       ],
     },
@@ -96,17 +96,17 @@ export const brandVoice = {
     empty: {
       pattern: "[Contexte]. [Suggestion d'action].",
       examples: [
-        "Aucun post pour l'instant. Decrivez votre premiere idee.",
-        "Historique vide. Vos posts apparaitront ici.",
+        "Aucun post pour l'instant. Décrivez votre première idée.",
+        "Historique vide. Vos posts apparaîtront ici.",
       ],
     },
 
     // Errors - Reassure, don't alarm
     errors: {
-      pattern: "[Probleme simple]. [Solution ou reassurance].",
+      pattern: "[Problème simple]. [Solution ou réassurance].",
       examples: [
-        "Connexion interrompue. Reessayez dans quelques instants.",
-        "Generation impossible pour le moment. Nos equipes sont informees.",
+        "Connexion interrompue. Réessayez dans quelques instants.",
+        "Génération impossible pour le moment. Nos équipes sont informées.",
       ],
     },
   },
@@ -115,10 +115,10 @@ export const brandVoice = {
   cta: {
     // Primary CTAs - Clear and valuable
     primary: {
-      style: "Action + Benefice implicite",
+      style: "Action + Bénéfice implicite",
       examples: [
         "Essayer gratuitement",
-        "Generer mon post",
+        "Générer mon post",
         "Commencer maintenant",
         "Voir les tarifs",
       ],
@@ -132,10 +132,10 @@ export const brandVoice = {
 
     // Secondary CTAs - Soft and inviting
     secondary: {
-      style: "Decouverte sans engagement",
+      style: "Découverte sans engagement",
       examples: [
         "En savoir plus",
-        "Decouvrir les fonctionnalites",
+        "Découvrir les fonctionnalités",
         "Explorer",
         "Comparer les plans",
       ],
@@ -143,11 +143,11 @@ export const brandVoice = {
 
     // Upgrade CTAs - Value-focused
     upgrade: {
-      style: "Benefice > Prix",
+      style: "Bénéfice > Prix",
       examples: [
-        "Passer en illimite",
-        "Debloquer toutes les fonctionnalites",
-        "Decouvrir Pro",
+        "Passer en illimité",
+        "Débloquer toutes les fonctionnalités",
+        "Découvrir Pro",
       ],
       avoid: [
         "Upgrader maintenant !",
@@ -161,15 +161,15 @@ export const brandVoice = {
   conversion: {
     // Soft scarcity - Honest limits
     scarcity: {
-      do: "Afficher les limites reelles de facon neutre",
-      dont: "Creer de fausse urgence ou rarete",
+      do: "Afficher les limites réelles de façon neutre",
+      dont: "Créer de fausse urgence ou rareté",
       example: "3 posts restants cette semaine",
     },
 
     // Social proof - Credible
     socialProof: {
-      do: "Utiliser des chiffres reels ou realistes",
-      dont: "Inventer des temoignages ou gonfler les stats",
+      do: "Utiliser des chiffres réels ou réalistes",
+      dont: "Inventer des témoignages ou gonfler les stats",
       example: "Rejoint par 10 000+ professionnels",
     },
 
@@ -183,7 +183,7 @@ export const brandVoice = {
     // User respect - Always
     userRespect: {
       do: "Traiter l'utilisateur comme un professionnel intelligent",
-      dont: "Utiliser des dark patterns ou manipulation emotionnelle",
+      dont: "Utiliser des dark patterns ou manipulation émotionnelle",
       example: "Vous choisissez le plan qui vous convient",
     },
   },
@@ -199,10 +199,10 @@ export function validateCopy(text: string): { valid: boolean; issues: string[] }
 
   // Check for forbidden patterns
   const forbiddenPatterns = [
-    { pattern: /achet(ez|er) maintenant/i, issue: "Eviter 'Achetez maintenant' - trop agressif" },
-    { pattern: /offre limit[ée]e/i, issue: "Eviter 'Offre limitee' - fausse urgence" },
-    { pattern: /ne (ratez|manquez) pas/i, issue: "Eviter FOMO - manipulation emotionnelle" },
-    { pattern: /upgrade(z)? maintenant/i, issue: "Eviter 'Upgrade maintenant' - trop pushy" },
+    { pattern: /achet(ez|er) maintenant/i, issue: "Éviter 'Achetez maintenant' - trop agressif" },
+    { pattern: /offre limit[ée]e/i, issue: "Éviter 'Offre limitée' - fausse urgence" },
+    { pattern: /ne (ratez|manquez) pas/i, issue: "Éviter FOMO - manipulation émotionnelle" },
+    { pattern: /upgrade(z)? maintenant/i, issue: "Éviter 'Upgrade maintenant' - trop pushy" },
     { pattern: /!/g, issue: "Limiter les points d'exclamation - ton trop agressif" },
   ];
 

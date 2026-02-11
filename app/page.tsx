@@ -66,7 +66,7 @@ const NAV_LINKS = [
     ),
   },
   {
-    label: "Fonctionnalites",
+    label: "Fonctionnalités",
     href: "#features",
     description: "Ce que Posty fait pour vous",
     icon: (
@@ -76,7 +76,7 @@ const NAV_LINKS = [
     ),
   },
   {
-    label: "Temoignages",
+    label: "Témoignages",
     href: "#testimonials",
     description: "Ce qu'en disent nos clients",
     icon: (
@@ -579,7 +579,7 @@ function HeroSection() {
             <h1 className="text-[2.5rem] sm:text-5xl lg:text-[3.25rem] xl:text-[3.75rem] 2xl:text-[4.25rem] font-bold text-gray-900 leading-[1.1] tracking-tight">
               <span className="block">Vos posts LinkedIn</span>
               <span className="block mt-1 lg:mt-2">
-                generent des{" "}
+                signent des{" "}
                 <span className="relative inline-block">
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] via-[#F76B54] to-[#F8935D] bg-[length:200%_100%] animate-[gradient-x_3s_ease_infinite]">
                     clients
@@ -604,10 +604,10 @@ function HeroSection() {
               transition={{ duration: 0.6, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
               className="mt-5 lg:mt-6 text-lg lg:text-xl text-gray-600 max-w-xl mx-auto lg:mx-0 leading-relaxed"
             >
-              L&apos;IA strategique qui cree du contenu LinkedIn{" "}
-              <span className="font-semibold text-gray-800">concu pour convertir</span>.
-              Pour les entrepreneurs, agences et freelances qui veulent des{" "}
-              <span className="font-semibold text-gray-800">resultats concrets</span>.
+              Décrivez votre objectif. Posty génère un post LinkedIn{" "}
+              <span className="font-semibold text-gray-800">prêt à publier</span>,
+              calibré pour{" "}
+              <span className="font-semibold text-gray-800">votre audience et votre marché</span>.
             </motion.p>
 
             {/* CTA Buttons */}
@@ -642,7 +642,7 @@ function HeroSection() {
                 <svg className="w-5 h-5 text-[#F8935D]" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M8 5v14l11-7z" />
                 </svg>
-                Voir la demo
+                Voir Posty en action
               </motion.a>
             </motion.div>
 
@@ -669,7 +669,7 @@ function HeroSection() {
                 <svg className="w-5 h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                Resultats immediats
+                Résultats immédiats
               </span>
             </motion.div>
           </motion.div>
@@ -820,13 +820,13 @@ function HeroSection() {
 // =============================================================================
 
 const ALL_DEMO_SUGGESTIONS = [
-  { label: "Acquisition de clients B2B", emoji: "🎯", text: "Ecris un post LinkedIn pour attirer des clients B2B dans le secteur du consulting" },
-  { label: "Positionnement d'expert", emoji: "👤", text: "Ecris un post LinkedIn qui renforce ma credibilite et mon positionnement d'expert sur mon marche" },
-  { label: "Convertir mes prospects", emoji: "💼", text: "Ecris un post LinkedIn qui convertit mes prospects en clients grace a une approche strategique" },
-  { label: "Visibilite algorithmique", emoji: "📈", text: "Ecris un post LinkedIn optimise pour l'algorithme afin de maximiser ma portee et ma visibilite" },
-  { label: "Preuve sociale", emoji: "🤝", text: "Ecris un post LinkedIn base sur un cas client concret pour renforcer ma preuve sociale" },
-  { label: "Storytelling business", emoji: "✍️", text: "Ecris un post LinkedIn en storytelling qui montre comment j'ai aide un client a atteindre ses objectifs" },
-  { label: "Croissance et revenus", emoji: "🚀", text: "Ecris un post LinkedIn sur la croissance de mon activite et l'impact de LinkedIn sur mes revenus" },
+  { label: "Attirer des clients B2B", emoji: "🎯", text: "Je veux attirer des clients B2B dans le secteur du consulting" },
+  { label: "Asseoir mon expertise", emoji: "👤", text: "Je veux renforcer ma crédibilité d'expert sur mon marché" },
+  { label: "Convertir mes prospects", emoji: "💼", text: "Je veux transformer mes prospects LinkedIn en clients" },
+  { label: "Booster ma visibilité", emoji: "📈", text: "Je veux maximiser ma portée et ma visibilité sur LinkedIn" },
+  { label: "Montrer mes résultats", emoji: "🤝", text: "Je veux partager un cas client concret et impactant" },
+  { label: "Raconter une réussite", emoji: "✍️", text: "Je veux raconter comment j'ai aidé un client à atteindre ses objectifs" },
+  { label: "Accélérer ma croissance", emoji: "🚀", text: "Je veux montrer l'impact de LinkedIn sur la croissance de mon activité" },
 ];
 
 // Module-level flag to track if hero animation played (persists across re-renders, resets on page refresh)
@@ -1030,6 +1030,8 @@ function DemoSection() {
   // Cinematic easing for smooth descent
   const cinematicEase = [0.16, 1, 0.3, 1] as [number, number, number, number];
 
+
+
   return (
     <>
       {/* ================================================================== */}
@@ -1038,43 +1040,44 @@ function DemoSection() {
       <section
         ref={sectionRef}
         id="demo"
-        className="relative min-h-[100dvh] flex flex-col justify-center px-4 sm:px-6 lg:px-8 py-20 overflow-hidden"
+        className="relative z-[2]"
       >
-        {/* Background image — cinematic hero */}
-        <div className="absolute inset-0">
-          <Image
-            src="/background-landing.jpg"
-            alt=""
-            fill
-            priority
-            className="object-cover object-center"
-            sizes="100vw"
-          />
-          {/* Warm overlay for text readability */}
-          <div className="absolute inset-0 bg-[#FFF8F5]/75" />
-        </div>
-
-        {/* Subtle static glow */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden z-[1]">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-[#F8935D]/[0.04] rounded-full blur-[100px]" />
-        </div>
-
-        <div className="max-w-4xl 2xl:max-w-5xl mx-auto relative z-10">
-          {/* ============================================================ */}
-          {/* Collapsible Hero Container — starts height:0, expands after  */}
-          {/* MacBook animation to push MacBook down naturally             */}
-          {/* ============================================================ */}
-          <motion.div
-            initial={false}
-            animate={hasAnimated ? { height: "auto", opacity: 1 } : { height: 0, opacity: 0 }}
-            transition={{
-              height: { duration: 0.8, ease: [0.22, 1, 0.36, 1] },
-              opacity: { duration: 0.5, delay: 0.1, ease: "easeOut" },
+        {/* ============================================================ */}
+        {/* FIXED TITLE — stays locked to viewport, covered by content  */}
+        {/* z-[1] so all scrolling content passes IN FRONT              */}
+        {/* ============================================================ */}
+        <div
+          className="fixed inset-x-0 top-0 z-[1] min-h-[50vh] md:min-h-[65vh] flex items-center justify-center px-4 sm:px-6 lg:px-8 pointer-events-none"
+        >
+          {/* Same background image as the rest of the landing page */}
+          <div className="absolute inset-0 overflow-hidden">
+            <Image
+              src="/background-landing.jpg"
+              alt=""
+              fill
+              className="object-cover object-center"
+              sizes="100vw"
+              priority
+            />
+          </div>
+          {/* Dark cinematic overlay for text readability */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background: `linear-gradient(to bottom,
+                rgba(15, 15, 20, 0.93) 0%,
+                rgba(15, 15, 20, 0.88) 50%,
+                rgba(15, 15, 20, 0.8) 70%,
+                rgba(15, 15, 20, 0.55) 85%,
+                transparent 100%)`
             }}
-            style={{ overflow: "hidden" }}
-          >
-          {/* Hero Text — staggered reveal after MacBook animation        */}
-          <div className="text-center mb-10 md:mb-14 2xl:mb-16">
+          />
+          {/* Warm glow for depth on dark */}
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-[#F8935D]/[0.07] rounded-full blur-[120px]" />
+          </div>
+
+          <div className="relative text-center max-w-4xl mx-auto -mt-[5vh]">
             {/* Main headline */}
             <motion.h1
               initial={{ opacity: 0, y: 35, filter: "blur(8px)" }}
@@ -1084,12 +1087,12 @@ function DemoSection() {
                 delay: hasAnimated ? 0.15 : 0,
                 ease: [0.22, 1, 0.36, 1],
               }}
-              className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] 2xl:text-[4rem] font-bold text-gray-900 leading-[1.1] tracking-tight"
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] 2xl:text-[4rem] font-bold text-white leading-[1.1] tracking-tight"
             >
               Vos posts LinkedIn,{" "}
               <br className="hidden sm:block" />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] via-[#F76B54] to-[#F8935D]">
-                generateurs de clients
+                générateurs de clients
               </span>
             </motion.h1>
 
@@ -1102,11 +1105,35 @@ function DemoSection() {
                 delay: hasAnimated ? 0.3 : 0,
                 ease: [0.22, 1, 0.36, 1],
               }}
-              className="mt-5 md:mt-6 text-gray-600 text-base md:text-lg lg:text-xl max-w-2xl mx-auto leading-relaxed"
+              className="mt-5 md:mt-6 text-gray-400 text-base md:text-lg lg:text-xl max-w-2xl mx-auto leading-relaxed"
             >
-              L&apos;IA qui transforme vos idees en posts LinkedIn viraux.
+              Décrivez votre objectif. Posty fait le reste.
             </motion.p>
           </div>
+        </div>
+
+        {/* Spacer — reserves the height the fixed title would occupy in normal flow */}
+        <div className="min-h-[50vh] md:min-h-[65vh]" />
+
+        {/* ============================================================ */}
+        {/* CONTENT — MacBook, tabs, demo — z-[5] passes OVER the title */}
+        {/* ============================================================ */}
+        <div className="relative z-[5]">
+
+          <div className="relative">
+            {/* Opaque background to fully cover the sticky title */}
+            <div className="absolute inset-0 overflow-hidden">
+              <Image
+                src="/background-landing.jpg"
+                alt=""
+                fill
+                className="object-cover object-center"
+                sizes="100vw"
+              />
+              <div className="absolute inset-0 bg-[#FFF8F5]/85" />
+            </div>
+
+            <div className="relative z-10 px-4 sm:px-6 lg:px-8 pb-12">
 
           {/* Interactive View Mode Tabs */}
           <motion.div
@@ -1176,7 +1203,6 @@ function DemoSection() {
               </button>
             </div>
           </motion.div>
-          </motion.div>
 
           {/* ============================================================ */}
           {/* Demo Card — descends from above                              */}
@@ -1193,6 +1219,7 @@ function DemoSection() {
                   delay: hasAnimated ? 0.2 : 0,
                   ease: [0.25, 0.1, 0.25, 1],
                 }}
+                className="max-w-4xl mx-auto"
               >
                 {/* Main demo card */}
                 <div className="relative bg-white border border-gray-200/60 rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl shadow-gray-400/20">
@@ -1207,7 +1234,7 @@ function DemoSection() {
                     <p className="text-gray-900 font-semibold text-sm md:text-base">Posty</p>
                     <p className="text-[11px] md:text-xs text-emerald-600 flex items-center gap-1">
                       <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                      Pret a generer
+                      Prêt à générer
                     </p>
                   </div>
                 </div>
@@ -1234,9 +1261,9 @@ function DemoSection() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
-                    <p className="text-gray-900 font-semibold text-base mb-1">Vous avez vu la puissance de Posty</p>
+                    <p className="text-gray-900 font-semibold text-base mb-1">Votre premier post est prêt</p>
                     <p className="text-gray-500 text-sm mb-5 max-w-xs">
-                      Passez a l&apos;action. Generez des posts qui convertissent, chaque jour.
+                      Créez un compte pour le sauvegarder et en générer autant que vous voulez.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-3">
                       {aiResponse && (
@@ -1248,14 +1275,14 @@ function DemoSection() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                           </svg>
-                          Voir ma reponse
+                          Voir mon post
                         </button>
                       )}
                       <Link
                         href="/signup"
                         className="inline-flex items-center justify-center gap-2 h-11 px-6 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white text-sm font-semibold rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200"
                       >
-                        Commencer a generer des clients
+                        Créer mon compte gratuitement
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                         </svg>
@@ -1325,7 +1352,7 @@ function DemoSection() {
                           type="text"
                           value={inputValue}
                           onChange={(e) => setInputValue(e.target.value)}
-                          placeholder="Quel est votre objectif ? Ex: generer des leads en consulting..."
+                          placeholder="Quel est votre objectif ? Ex: générer des leads en consulting..."
                           className="w-full text-sm md:text-[15px] text-gray-900 placeholder-gray-400 bg-transparent py-3.5 md:py-4 pl-5 pr-16 rounded-[20px] focus:outline-none"
                           disabled={isStreaming}
                         />
@@ -1378,7 +1405,10 @@ function DemoSection() {
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
+
+            </div> {/* close content-inner (relative z-10) */}
+          </div> {/* close content-bg (relative) */}
+        </div> {/* close content-layer (z-[5]) */}
       </section>
 
       {/* ================================================================== */}
@@ -1509,7 +1539,7 @@ function DemoSection() {
                             href="/signup"
                             className="inline-flex items-center justify-center gap-2 h-11 px-6 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white text-sm font-semibold rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200"
                           >
-                            Commencer a generer des clients
+                            Créer mon compte gratuitement
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                             </svg>
@@ -1539,8 +1569,8 @@ const _LEGACY_BENEFITS_DATA = [
     number: "01",
     title: "Gagnez 5h par semaine",
     highlight: "5h par semaine",
-    description: "Posts prets a publier en 30 secondes, adaptes a votre voix.",
-    stat: { value: "5h", unit: "", label: "economisees" },
+    description: "Posts prêts à publier en 30 secondes, adaptés à votre voix.",
+    stat: { value: "5h", unit: "", label: "économisées" },
     icon: (
       <svg className="w-8 h-8 md:w-10 md:h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -1557,7 +1587,7 @@ const _LEGACY_BENEFITS_DATA = [
     number: "02",
     title: "Multipliez votre engagement par 3",
     highlight: "engagement par 3",
-    description: "Posts optimises pour l'algorithme LinkedIn. Plus de vues, plus de prospects.",
+    description: "Posts optimisés pour l'algorithme LinkedIn. Plus de vues, plus de prospects.",
     stat: { value: "x3", unit: "", label: "engagement" },
     icon: (
       <svg className="w-8 h-8 md:w-10 md:h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2013,14 +2043,14 @@ function KeyBenefitsSection() {
           className="max-w-2xl mb-16 md:mb-20"
         >
           <h2 className="text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-gray-900 leading-[1.15] tracking-tight mb-5">
-            Ce qui change quand vous{" "}
+            Ce qui change après{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#E8824C]">
-              publiez regulierement
+              30 jours avec Posty
             </span>
           </h2>
           <p className="text-lg text-gray-600 leading-relaxed">
-            Pas de promesses magiques. Juste les resultats concrets que nos utilisateurs
-            constatent apres quelques semaines de publication coherente.
+            Pas de promesses magiques. Juste ce que nos utilisateurs
+            constatent après quelques semaines de publication régulière.
           </p>
         </motion.div>
 
@@ -2049,17 +2079,16 @@ function KeyBenefitsSection() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
-                    <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Productivite</span>
+                    <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Productivité</span>
                   </div>
                 </div>
 
                 <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-3 leading-snug">
-                  Recuperez vos soirees et week-ends
+                  5 heures récupérées chaque semaine
                 </h3>
                 <p className="text-gray-600 leading-relaxed mb-6 max-w-xl">
-                  Fini les heures passees a chercher quoi publier. Vos posts sont prets
-                  en quelques clics, dans votre ton, sur vos sujets. Le temps economise,
-                  vous le reinvestissez dans ce qui compte vraiment.
+                  Vos posts sont prêts en quelques clics, dans votre ton, sur vos sujets.
+                  Le dimanche soir redevient le vôtre.
                 </p>
 
                 {/* Metric highlight */}
@@ -2088,10 +2117,10 @@ function KeyBenefitsSection() {
                 </div>
 
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Plus de visibilite, naturellement
+                  Votre audience grandit naturellement
                 </h3>
                 <p className="text-gray-600 text-sm leading-relaxed mb-5">
-                  Quand vous publiez regulierement, LinkedIn vous met en avant.
+                  Quand vous publiez régulièrement, LinkedIn vous met en avant.
                   Vos posts touchent plus de monde, sans forcer.
                 </p>
 
@@ -2119,7 +2148,7 @@ function KeyBenefitsSection() {
                 </div>
 
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Des opportunites qui viennent a vous
+                  Les opportunités viennent à vous
                 </h3>
                 <p className="text-gray-600 text-sm leading-relaxed mb-5">
                   Clients, partenaires, recruteurs... Ils vous contactent
@@ -2161,9 +2190,9 @@ function KeyBenefitsSection() {
                 </svg>
 
                 <blockquote className="text-lg sm:text-xl text-white/90 leading-relaxed mb-6 max-w-2xl">
-                  &ldquo;Avant, je passais mes dimanches a preparer mes posts LinkedIn.
-                  Maintenant, c'est fait en 10 minutes le lundi matin. Et mes resultats
-                  n'ont jamais ete aussi bons.&rdquo;
+                  &ldquo;Avant, je passais mes dimanches à préparer mes posts LinkedIn.
+                  Maintenant, c'est fait en 10 minutes le lundi matin. Et mes résultats
+                  n'ont jamais été aussi bons.&rdquo;
                 </blockquote>
 
                 <div className="flex items-center gap-4">
@@ -2692,7 +2721,7 @@ function TargetAudienceSection() {
             </span>
           </h2>
           <p className="text-gray-500 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
-            Si vous vendez en B2B et voulez que LinkedIn genere des clients, Posty est fait pour vous.
+            Si vous vendez en B2B et voulez que LinkedIn génère des clients, Posty est fait pour vous.
           </p>
         </motion.div>
 
@@ -2732,6 +2761,7 @@ interface FeatureConfig {
     badgeText: string;    // Badge text
     glow: string;         // Glow effect
     accent: string;       // Accent details
+    titleGradient: string; // Title text gradient
   };
   badge: string;
   metric: string;
@@ -2739,10 +2769,10 @@ interface FeatureConfig {
 
 const FEATURES: FeatureConfig[] = [
   {
-    title: "Du brief a la publication en 30 secondes",
-    description: "Decrivez votre objectif, et l'IA genere deux versions strategiques : Storytelling pour engager, Business pour convertir. Votre pipeline de contenu ne s'arrete jamais.",
+    title: "De l'idée au post en 30 secondes",
+    description: "Décrivez votre objectif. Posty génère deux versions — Storytelling pour engager, Business pour convertir — prêtes à publier.",
     image: "/analytics.jpg",
-    badge: "Generation IA",
+    badge: "Génération IA",
     metric: "2 posts / minute",
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2759,13 +2789,14 @@ const FEATURES: FeatureConfig[] = [
       badgeText: "text-emerald-700",
       glow: "shadow-emerald-500/20",
       accent: "text-emerald-600",
+      titleGradient: "from-gray-500 to-emerald-600",
     },
   },
   {
-    title: "Une IA qui comprend votre positionnement marche",
-    description: "Posty analyse votre secteur, votre audience et votre ton pour creer du contenu qui resonne. Chaque post renforce votre credibilite et attire les bons prospects.",
+    title: "Chaque post sonne comme vous",
+    description: "Posty analyse votre secteur, votre audience et votre ton. Le résultat : du contenu authentique qui renforce votre crédibilité et attire les bons prospects.",
     image: "/img-ia.jpg",
-    badge: "IA Strategique",
+    badge: "IA Contextuelle",
     metric: "100% votre voix",
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2782,14 +2813,15 @@ const FEATURES: FeatureConfig[] = [
       badgeText: "text-amber-700",
       glow: "shadow-amber-500/20",
       accent: "text-amber-600",
+      titleGradient: "from-gray-500 to-orange-500",
     },
   },
   {
-    title: "Publiez au moment ou votre audience decide",
-    description: "L'algorithme LinkedIn recompense la regularite et le bon timing. Posty planifie vos publications aux creneaux de conversion optimaux pour maximiser votre portee business.",
+    title: "Publiez quand votre audience est là",
+    description: "L'algorithme LinkedIn récompense la régularité et le bon timing. Posty planifie vos publications aux meilleurs créneaux pour maximiser votre portée.",
     image: "/professionel.jpg",
     badge: "Timing optimal",
-    metric: "+40% de portee",
+    metric: "+40% de portée",
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -2805,11 +2837,12 @@ const FEATURES: FeatureConfig[] = [
       badgeText: "text-violet-700",
       glow: "shadow-violet-500/20",
       accent: "text-violet-600",
+      titleGradient: "from-violet-600 to-gray-500",
     },
   },
   {
-    title: "Dictez vos idees. Posty les transforme en clients.",
-    description: "Entre deux rendez-vous, dictez une idee a voix haute. Posty la transforme instantanement en post professionnel pret a publier et a convertir.",
+    title: "Une idée dictée, un post publié",
+    description: "Entre deux rendez-vous, dictez une idée à voix haute. Posty la transforme en post professionnel prêt à publier.",
     image: "/vocal.jpg",
     badge: "Voice-to-Post",
     metric: "30 sec chrono",
@@ -2828,6 +2861,7 @@ const FEATURES: FeatureConfig[] = [
       badgeText: "text-orange-700",
       glow: "shadow-[#F8935D]/20",
       accent: "text-[#F76B54]",
+      titleGradient: "from-[#F8935D] to-gray-500",
     },
   },
 ];
@@ -2880,8 +2914,8 @@ function FeatureCard({ feature, index }: { feature: FeatureConfig; index: number
         }}
         className={`
           relative bg-gradient-to-br ${feature.color.bg}
-          border ${feature.color.border} rounded-2xl lg:rounded-3xl
-          p-5 md:p-6 lg:p-8
+          border ${feature.color.border} rounded-[clamp(1rem,2vw,1.5rem)]
+          p-[clamp(1.25rem,2.5vw,2rem)]
           shadow-sm hover:shadow-xl ${feature.color.glow}
           transition-shadow duration-300
         `}
@@ -2889,15 +2923,15 @@ function FeatureCard({ feature, index }: { feature: FeatureConfig; index: number
         {/* Ambient hover glow */}
         <div
           className="absolute -inset-4 rounded-3xl opacity-0 group-hover/card:opacity-100 transition-opacity duration-500 blur-2xl pointer-events-none -z-10"
-          style={{ background: `radial-gradient(500px circle at 50% 30%, rgba(248, 147, 93, 0.12), transparent 60%)` }}
+          style={{ background: `radial-gradient(min(500px, 35vw) circle at 50% 30%, rgba(248, 147, 93, 0.12), transparent 60%)` }}
         />
 
         {/* Inner flex layout: image + content */}
-        <div className={`relative z-10 flex flex-col ${isEven ? "lg:flex-row" : "lg:flex-row-reverse"} gap-6 lg:gap-8 items-center`}>
+        <div className={`relative z-10 flex flex-col ${isEven ? "lg:flex-row" : "lg:flex-row-reverse"} gap-[clamp(1.5rem,3vw,2rem)] items-center`}>
 
         {/* Image Card */}
         <div className="w-full lg:w-1/2 flex-shrink-0">
-          <div className="relative rounded-xl lg:rounded-2xl overflow-hidden shadow-md transition-shadow duration-300 group-hover/card:shadow-lg aspect-[16/10]">
+          <div className="relative rounded-[clamp(0.75rem,1.5vw,1rem)] overflow-hidden shadow-md transition-shadow duration-300 group-hover/card:shadow-lg aspect-[16/10]">
             {/* Image — explicit dimensions prevent CLS */}
             <Image
               src={feature.image}
@@ -2941,22 +2975,22 @@ function FeatureCard({ feature, index }: { feature: FeatureConfig; index: number
           {/* Icon */}
           <div
             className={`
-              inline-flex items-center justify-center w-12 h-12 lg:w-14 lg:h-14 rounded-xl lg:rounded-2xl
+              inline-flex items-center justify-center w-[clamp(2.75rem,3.5vw,3.5rem)] h-[clamp(2.75rem,3.5vw,3.5rem)] rounded-[clamp(0.75rem,1.2vw,1rem)]
               ${feature.color.iconBg} ${feature.color.iconText}
               shadow-lg ${feature.color.glow}
-              mb-4
+              mb-[clamp(0.75rem,1.5vw,1rem)]
             `}
           >
             {feature.icon}
           </div>
 
           {/* Title */}
-          <h3 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 mb-3 leading-tight">
+          <h3 className={`text-[clamp(1.2rem,2.5vw,1.875rem)] font-bold mb-[clamp(0.5rem,1vw,0.75rem)] leading-tight text-transparent bg-clip-text bg-gradient-to-r ${feature.color.titleGradient}`}>
             {feature.title}
           </h3>
 
           {/* Description */}
-          <p className="text-gray-600 text-base lg:text-lg leading-relaxed mb-5">
+          <p className="text-gray-600 text-[clamp(0.9rem,1.2vw,1.125rem)] leading-relaxed mb-[clamp(1rem,1.5vw,1.25rem)]">
             {feature.description}
           </p>
 
@@ -2994,17 +3028,17 @@ function FeatureCard({ feature, index }: { feature: FeatureConfig; index: number
 
 function FeaturesSection() {
   return (
-    <section id="features" className="py-10 md:py-14 lg:py-16 2xl:py-18 px-4 sm:px-6 lg:px-8 2xl:px-12 bg-gradient-to-b from-[#FEF3EE] via-[#FAE8DE]/30 to-[#FEF3EE] overflow-hidden">
-      <div className="max-w-7xl 2xl:max-w-[1400px] mx-auto">
+    <section id="features" className="py-[clamp(2.5rem,5vw,4.5rem)] px-[clamp(1rem,4vw,3rem)] bg-gradient-to-b from-[#FEF3EE] via-[#FAE8DE]/30 to-[#FEF3EE] overflow-hidden">
+      <div className="w-full max-w-[min(90vw,87.5rem)] mx-auto">
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 20, filter: "blur(8px)" }}
           whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, ease: smoothEase }}
-          className="text-center mb-8 md:mb-10 2xl:mb-12"
+          className="text-center mb-[clamp(2rem,3.5vw,3rem)]"
         >
-          <h2 className="text-3xl md:text-4xl lg:text-5xl 2xl:text-[3.25rem] font-bold text-gray-900">
+          <h2 className="text-[clamp(1.75rem,4vw,3.25rem)] font-bold text-gray-800">
             Tout ce qu&apos;il vous faut pour{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
               dominer LinkedIn
@@ -3013,7 +3047,7 @@ function FeaturesSection() {
         </motion.div>
 
         {/* Features Grid with Connectors */}
-        <div className="relative space-y-10 md:space-y-14 lg:space-y-16">
+        <div className="relative space-y-[clamp(2.5rem,4vw,4rem)]">
           {/* Vertical connector line — desktop only */}
           <div className="hidden lg:block absolute left-1/2 top-0 bottom-0 -translate-x-1/2 pointer-events-none">
             <motion.div
@@ -3073,21 +3107,21 @@ const TESTIMONIALS = [
     role: "Fondateur & CEO",
     company: "GrowthLab",
     image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&h=200&fit=crop&crop=face",
-    quote: "Avant Posty, LinkedIn etait une corvee. Aujourd'hui, c'est mon premier canal d'acquisition. En 3 mois : engagement triple, 12 clients B2B signes, et un pipeline qui ne tarit plus.",
+    quote: "Avant Posty, LinkedIn était une corvée. Aujourd'hui, c'est mon premier canal d'acquisition. En 3 mois : engagement triplé, 12 clients B2B signés, et un pipeline qui ne tarit plus.",
   },
   {
     name: "Sophie Laurent",
     role: "Directrice Marketing",
     company: "TechVision",
     image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&h=200&fit=crop&crop=face",
-    quote: "Mes equipes gagnent 10 heures par semaine. Mais le vrai gain, c'est la qualite : nos posts convertissent 3 fois mieux depuis qu'on utilise Posty.",
+    quote: "Mes équipes gagnent 10 heures par semaine. Mais le vrai gain, c'est la qualité : nos posts convertissent 3 fois mieux depuis qu'on utilise Posty.",
   },
   {
     name: "Marc Dubois",
     role: "Consultant Senior",
-    company: "Independant",
+    company: "Indépendant",
     image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face",
-    quote: "En freelance, chaque post doit rapporter. Posty me permet de publier du contenu strategique chaque jour, sans sacrifier mes missions. Mon CA a augmente de 40% en 4 mois.",
+    quote: "En freelance, chaque post doit rapporter. Posty me permet de publier du contenu stratégique chaque jour, sans sacrifier mes missions. Mon CA a augmenté de 40% en 4 mois.",
   },
 ];
 
@@ -3118,17 +3152,17 @@ function TestimonialsSection() {
                 </div>
               ))}
             </div>
-            <span className="text-sm text-gray-600 font-medium">+500 professionnels generent des clients</span>
+            <span className="text-sm text-gray-600 font-medium">+500 professionnels utilisent Posty chaque jour</span>
           </motion.div>
 
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
-            Ils generent des clients chaque semaine{" "}
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-4">
+            Ils publient. Ils{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
-              grace a Posty
+              convertissent.
             </span>
           </h2>
           <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-            Des resultats mesurables, pas des promesses
+            Ce que nos utilisateurs constatent après quelques semaines.
           </p>
         </motion.div>
 
@@ -3198,16 +3232,16 @@ function BeforeAfterSection() {
   const prefersReducedMotion = useReducedMotion();
 
   const beforeItems = [
-    { text: "Posts generiques qui n'attirent personne", icon: "❌" },
-    { text: "Heures perdues a chercher quoi ecrire", icon: "❌" },
-    { text: "Audience inactive et desengagee", icon: "❌" },
-    { text: "LinkedIn = corvee sans resultats", icon: "❌" },
+    { text: "Posts génériques ignorés par votre audience", icon: "❌" },
+    { text: "Des heures perdues à chercher quoi écrire", icon: "❌" },
+    { text: "Une audience inactive et désengagée", icon: "❌" },
+    { text: "LinkedIn = perte de temps", icon: "❌" },
   ];
 
   const afterItems = [
-    { text: "Posts strategiques qui attirent des prospects", icon: "✓" },
-    { text: "30 secondes pour un post optimise", icon: "✓" },
-    { text: "Engagement qui genere des conversations", icon: "✓" },
+    { text: "Posts stratégiques qui attirent des prospects", icon: "✓" },
+    { text: "30 secondes pour un post optimisé", icon: "✓" },
+    { text: "Engagement qui génère des conversations", icon: "✓" },
     { text: "LinkedIn = canal d'acquisition rentable", icon: "✓" },
   ];
 
@@ -3230,17 +3264,17 @@ function BeforeAfterSection() {
             className="inline-flex items-center gap-2 px-4 py-2 mb-6 bg-white border border-gray-200 rounded-full shadow-sm"
           >
             <span className="text-lg">⚡</span>
-            <span className="text-sm text-gray-600 font-medium">La difference est visible</span>
+            <span className="text-sm text-gray-600 font-medium">La différence est visible</span>
           </motion.div>
 
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
-            Avant vs Apres{" "}
+            Avant vs Après{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
               Posty
             </span>
           </h2>
           <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-            Decouvrez comment Posty transforme votre presence LinkedIn
+            Découvrez comment Posty transforme votre présence LinkedIn
           </p>
         </motion.div>
 
@@ -3267,7 +3301,7 @@ function BeforeAfterSection() {
                 </div>
                 <div>
                   <h3 className="text-xl md:text-2xl font-bold text-gray-400">Sans Posty</h3>
-                  <p className="text-sm text-gray-400">LinkedIn reste une corvee</p>
+                  <p className="text-sm text-gray-400">LinkedIn reste une contrainte</p>
                 </div>
               </div>
 
@@ -3331,7 +3365,7 @@ function BeforeAfterSection() {
                 </div>
                 <div>
                   <h3 className="text-xl md:text-2xl font-bold text-gray-900">Avec Posty</h3>
-                  <p className="text-sm text-[#F8935D] font-medium">LinkedIn devient rentable</p>
+                  <p className="text-sm text-[#F8935D] font-medium">LinkedIn devient votre meilleur commercial</p>
                 </div>
               </div>
 
@@ -3472,11 +3506,11 @@ function FounderSection() {
             </svg>
           </div>
           <p className="text-xl sm:text-2xl md:text-3xl lg:text-[2.5rem] 2xl:text-[2.75rem] font-medium text-gray-900 leading-snug md:leading-tight tracking-tight">
-            LinkedIn est le levier de croissance le plus sous-exploite du marche B2B. Avec{" "}
+            LinkedIn est le levier de croissance le plus sous-exploité du B2B. J&apos;ai créé{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
               Posty
             </span>
-            , nous avons toujours voulu que chaque entrepreneur puisse en faire un canal d&apos;acquisition rentable.
+            {" "}pour que chaque entrepreneur puisse transformer sa présence LinkedIn en vrai canal d&apos;acquisition.
           </p>
         </motion.blockquote>
 
@@ -3888,12 +3922,12 @@ function PricingCard({
               <svg className="w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3.5 md:h-3.5 text-green-500 hidden sm:inline" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
               </svg>
-              <span className="hidden md:inline">Sans engagement &bull; Annulation a tout moment</span>
+              <span className="hidden md:inline">Sans engagement &bull; Annulation à tout moment</span>
               <span className="inline md:hidden">Sans engagement</span>
             </motion.p>
           ) : (
             <p className="text-[9px] sm:text-[10px] md:text-xs text-gray-400">
-              <span className="hidden sm:inline">Decouvrez Posty sans engagement</span>
+              <span className="hidden sm:inline">Découvrez Posty sans engagement</span>
               <span className="inline sm:hidden">Gratuit</span>
             </p>
           )}
@@ -3932,7 +3966,7 @@ function PricingSection() {
           transition={{ duration: 0.6, ease: smoothEase }}
           className="text-center mb-12 2xl:mb-16"
         >
-          <h2 className="text-3xl md:text-4xl lg:text-5xl 2xl:text-[3.25rem] font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl 2xl:text-[3.25rem] font-bold text-gray-800 mb-4">
             Investissez dans votre{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
               croissance LinkedIn
@@ -4007,7 +4041,7 @@ function PricingSection() {
               <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
               </svg>
-              <span>Paiement securise</span>
+              <span>Paiement sécurisé</span>
             </div>
             <div className="flex items-center gap-2">
               <svg className="w-5 h-5 text-[#F8935D]" fill="currentColor" viewBox="0 0 20 20">
@@ -4040,38 +4074,38 @@ function CtaBanner({
 
   return (
     <section id={id} className="relative py-12 md:py-18 px-4 sm:px-6 lg:px-8 overflow-hidden">
-      {/* Light animated background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-gray-50 via-white to-gray-50/80">
-        {/* Animated gradient mesh */}
+      {/* Light premium background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#FEF3EE] via-white to-[#FFF8F5]">
+        {/* Animated gradient mesh — warm glows on dark */}
         <motion.div
-          initial={{ opacity: 0.4 }}
+          initial={{ opacity: 0.3 }}
           animate={prefersReducedMotion ? {} : {
-            opacity: [0.4, 0.6, 0.4],
+            opacity: [0.3, 0.5, 0.3],
             scale: [1, 1.1, 1],
           }}
           transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
           className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-gradient-to-br from-[#F8935D]/15 to-[#F76B54]/10 rounded-full blur-[120px]"
         />
         <motion.div
-          initial={{ opacity: 0.3 }}
+          initial={{ opacity: 0.2 }}
           animate={prefersReducedMotion ? {} : {
-            opacity: [0.3, 0.5, 0.3],
+            opacity: [0.2, 0.35, 0.2],
             scale: [1, 1.15, 1],
           }}
           transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2 }}
           className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-gradient-to-br from-[#a855f7]/10 to-[#6366f1]/5 rounded-full blur-[100px]"
         />
         <motion.div
-          initial={{ opacity: 0.2 }}
+          initial={{ opacity: 0.15 }}
           animate={prefersReducedMotion ? {} : {
-            opacity: [0.2, 0.35, 0.2],
+            opacity: [0.15, 0.25, 0.15],
             scale: [1, 1.08, 1],
           }}
           transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 4 }}
           className="absolute top-1/2 right-0 w-[350px] h-[350px] bg-gradient-to-br from-[#ec4899]/8 to-[#f43f5e]/5 rounded-full blur-[100px]"
         />
 
-        {/* Grid overlay */}
+        {/* Grid overlay — subtle on light */}
         <div
           className="absolute inset-0 opacity-[0.03]"
           style={{
@@ -4091,7 +4125,7 @@ function CtaBanner({
         >
           {/* Headline with gradient text */}
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-            <span className="text-gray-900">Chaque jour sans </span>
+            <span className="text-gray-800">Chaque jour sans </span>
             <span className="relative inline-block">
               <span className="bg-gradient-to-r from-[#F8935D] via-[#f97316] to-[#F76B54] bg-clip-text text-transparent">
                 Posty
@@ -4106,7 +4140,7 @@ function CtaBanner({
               />
             </span>
             <br className="hidden sm:block" />
-            <span className="text-gray-900"> est un </span>
+            <span className="text-gray-800"> est un </span>
             <span className="relative inline-block">
               <span className="bg-gradient-to-r from-[#ec4899] to-[#a855f7] bg-clip-text text-transparent">
                 client perdu
@@ -4134,7 +4168,7 @@ function CtaBanner({
             className="relative inline-block"
           >
             {/* Glow behind button */}
-            <div className="absolute -inset-1 bg-gradient-to-r from-[#F8935D] to-[#F76B54] rounded-xl blur-lg opacity-30" />
+            <div className="absolute -inset-1 bg-gradient-to-r from-[#F8935D] to-[#F76B54] rounded-xl blur-lg opacity-25" />
 
             <motion.div
               whileHover={{ scale: 1.03 }}
@@ -4173,7 +4207,7 @@ function CtaBanner({
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.5 }}
-            className="mt-8 flex flex-wrap items-center justify-center gap-6 text-gray-400 text-sm"
+            className="mt-8 flex flex-wrap items-center justify-center gap-6 text-gray-600 text-sm"
           >
             <div className="flex items-center gap-2">
               <svg className="w-5 h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
@@ -4205,36 +4239,36 @@ function CtaBanner({
 // =============================================================================
 const FAQ_ITEMS = [
   {
-    question: "Comment fonctionne Posty exactement ?",
-    answer: "Posty utilise une IA strategique entrainee sur les meilleures pratiques LinkedIn B2B. Decrivez votre objectif business (trouver des clients, renforcer votre credibilite, etc.), et Posty genere instantanement des posts optimises pour la conversion. Vous pouvez aussi dicter vos idees a la voix.",
+    question: "Comment ça marche, concrètement ?",
+    answer: "Décrivez votre objectif (trouver des clients, renforcer votre crédibilité, etc.) et Posty génère instantanément deux versions de post optimisées pour LinkedIn. Vous pouvez aussi dicter vos idées à la voix. C'est prêt en 30 secondes.",
   },
   {
     question: "Est-ce vraiment de l\u2019IA ou juste des templates ?",
-    answer: "Posty genere du contenu 100% original a chaque fois. Pas de templates pre-ecrits. L\u2019IA analyse votre secteur, votre audience et votre ton pour creer des posts uniques qui sonnent comme vous \u2014 pas comme un robot.",
+    answer: "Posty génère du contenu 100% original à chaque fois. Pas de templates pré-écrits. L\u2019IA analyse votre secteur, votre audience et votre ton pour créer des posts uniques qui sonnent comme vous \u2014 pas comme un robot.",
   },
   {
-    question: "Les posts auront-ils l\u2019air d\u2019etre ecrits par moi ?",
-    answer: "Absolument. Posty s\u2019adapte a votre voix, votre style et votre positionnement. Plus vous l\u2019utilisez, plus il comprend votre ton. Vos lecteurs ne feront pas la difference avec un post que vous auriez ecrit vous-meme.",
+    question: "Les posts auront-ils l\u2019air d\u2019être écrits par moi ?",
+    answer: "Absolument. Posty s\u2019adapte à votre voix, votre style et votre positionnement. Plus vous l\u2019utilisez, plus il comprend votre ton. Vos lecteurs ne feront pas la différence avec un post que vous auriez écrit vous-même.",
   },
   {
-    question: "Quels resultats puis-je attendre ?",
-    answer: "Nos utilisateurs constatent en moyenne un engagement triple en 30 jours et signent leurs premiers clients LinkedIn en 60 a 90 jours. Un seul client signe rembourse generalement un an d\u2019abonnement.",
+    question: "Quels résultats vais-je obtenir ?",
+    answer: "Nos utilisateurs constatent en moyenne un engagement triplé en 30 jours et signent leurs premiers clients LinkedIn en 60 à 90 jours. Un seul client signé rembourse généralement un an d\u2019abonnement.",
   },
   {
-    question: "Puis-je annuler a tout moment ?",
-    answer: "Oui, sans aucun engagement. Vous pouvez annuler votre abonnement en un clic depuis vos parametres. Pas de frais caches, pas de periode d\u2019engagement minimum.",
+    question: "Puis-je annuler à tout moment ?",
+    answer: "Oui, sans aucun engagement. Vous pouvez annuler votre abonnement en un clic depuis vos paramètres. Pas de frais cachés, pas de période d\u2019engagement minimum.",
   },
   {
-    question: "Dois-je deja etre actif sur LinkedIn ?",
-    answer: "Pas necessairement. Posty est ideal aussi bien pour ceux qui debutent sur LinkedIn que pour les profils deja etablis. Si vous partez de zero, Posty vous aide a construire votre presence rapidement avec une strategie de contenu coherente.",
+    question: "Dois-je déjà être actif sur LinkedIn ?",
+    answer: "Pas nécessairement. Posty est idéal aussi bien pour ceux qui débutent sur LinkedIn que pour les profils déjà établis. Si vous partez de zéro, Posty vous aide à construire votre présence rapidement avec une stratégie de contenu cohérente.",
   },
   {
-    question: "Mes donnees sont-elles securisees ?",
-    answer: "Vos donnees sont chiffrees et hebergees en Europe, conformement au RGPD. Nous ne partageons jamais vos informations avec des tiers. Votre contenu genere vous appartient integralement.",
+    question: "Mes données sont-elles sécurisées ?",
+    answer: "Vos données sont chiffrées et hébergées en Europe, conformément au RGPD. Nous ne partageons jamais vos informations avec des tiers. Votre contenu généré vous appartient intégralement.",
   },
   {
-    question: "Qu\u2019est-ce qui differencie Posty de ChatGPT ?",
-    answer: "ChatGPT est un outil generaliste. Posty est un specialiste LinkedIn B2B. Chaque post est optimise pour l\u2019algorithme LinkedIn, structure pour la conversion, et adapte a votre positionnement marche. C\u2019est la difference entre un couteau suisse et un outil de precision.",
+    question: "Qu\u2019est-ce qui différencie Posty de ChatGPT ?",
+    answer: "ChatGPT est généraliste. Posty est un expert LinkedIn B2B. Chaque post est optimisé pour l\u2019algorithme, structuré pour la conversion, et calibré sur votre positionnement. C\u2019est la différence entre un outil générique et un expert dédié à votre croissance LinkedIn.",
   },
 ];
 
@@ -4330,14 +4364,14 @@ function FaqSection() {
             <span className="text-sm font-medium text-gray-700">Questions frequentes</span>
           </motion.div>
 
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-5">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-5">
             Vous avez des{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
               questions ?
             </span>
           </h2>
           <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-            Tout ce que vous devez savoir avant de commencer a generer des clients avec Posty.
+            Les réponses aux questions que vous vous posez avant de commencer.
           </p>
         </motion.div>
 
@@ -4381,7 +4415,7 @@ function Footer() {
                 L&apos;IA qui transforme votre LinkedIn en canal d&apos;acquisition clients.
               </p>
               <p className="text-[10px] text-[#F8935D] font-medium mt-1">
-                Chaque post = opportunite business
+                Chaque post = opportunité business
               </p>
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
@@ -4399,17 +4433,17 @@ function Footer() {
             {/* Navigation */}
             <div>
               <p className="text-gray-800 font-semibold mb-1.5 text-[10px] uppercase tracking-wide">Navigation</p>
-              <button onClick={() => document.querySelector("#features")?.scrollIntoView({ behavior: "smooth" })} className="block text-left text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">Caracteristiques</button>
-              <button onClick={() => document.querySelector("#testimonials")?.scrollIntoView({ behavior: "smooth" })} className="block text-left text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">Temoignages</button>
+              <button onClick={() => document.querySelector("#features")?.scrollIntoView({ behavior: "smooth" })} className="block text-left text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">Caractéristiques</button>
+              <button onClick={() => document.querySelector("#testimonials")?.scrollIntoView({ behavior: "smooth" })} className="block text-left text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">Témoignages</button>
               <button onClick={() => document.querySelector("#pricing")?.scrollIntoView({ behavior: "smooth" })} className="block text-left text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">Tarifs</button>
               <button onClick={() => document.querySelector("#faq")?.scrollIntoView({ behavior: "smooth" })} className="block text-left text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">FAQ</button>
             </div>
             {/* Legal */}
             <div>
-              <p className="text-gray-800 font-semibold mb-1.5 text-[10px] uppercase tracking-wide">Legal</p>
-              <Link href="/legal/privacy" className="block text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">Confidentialite</Link>
+              <p className="text-gray-800 font-semibold mb-1.5 text-[10px] uppercase tracking-wide">Légal</p>
+              <Link href="/legal/privacy" className="block text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">Confidentialité</Link>
               <Link href="/legal/terms" className="block text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">CGU</Link>
-              <Link href="/legal/notices" className="block text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">Mentions legales</Link>
+              <Link href="/legal/notices" className="block text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">Mentions légales</Link>
               <Link href="/legal/cookies" className="block text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">Cookies</Link>
             </div>
             {/* Account */}
@@ -4417,14 +4451,14 @@ function Footer() {
               <p className="text-gray-800 font-semibold mb-1.5 text-[10px] uppercase tracking-wide">Compte</p>
               <Link href="/login" className="block text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">Connexion</Link>
               <Link href="/signup" className="block text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">Inscription</Link>
-              <Link href="/about" className="block text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">A propos</Link>
+              <Link href="/about" className="block text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">À propos</Link>
             </div>
           </div>
 
           {/* Copyright */}
           <div className="pt-3 border-t border-[#F0D5C8]/60 flex items-center justify-between">
-            <p className="text-gray-400 text-[10px]">© {new Date().getFullYear()} Posty. Tous droits reserves.</p>
-            <p className="text-gray-400 text-[10px]">Concu en France 🇫🇷</p>
+            <p className="text-gray-400 text-[10px]">© {new Date().getFullYear()} Posty. Tous droits réservés.</p>
+            <p className="text-gray-400 text-[10px]">Conçu en France 🇫🇷</p>
           </div>
         </div>
 
@@ -4440,10 +4474,10 @@ function Footer() {
                 <span className="text-xl font-bold text-gray-900">Posty</span>
               </Link>
               <p className="text-gray-500 max-w-sm">
-                L&apos;IA strategique qui transforme votre presence LinkedIn en canal d&apos;acquisition clients. Plus de contenu. Plus de visibilite. Plus de revenus.
+                L&apos;IA stratégique qui transforme votre présence LinkedIn en canal d&apos;acquisition clients. Plus de contenu. Plus de visibilité. Plus de revenus.
               </p>
               <p className="text-[#F8935D] font-medium text-sm mt-3">
-                Transformez chaque post en opportunite business.
+                Chaque post est une opportunité.
               </p>
               <div className="flex items-center gap-3 mt-4">
                 <a href="https://www.linkedin.com/company/posty" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-lg bg-gray-100 hover:bg-[#F8935D]/10 flex items-center justify-center text-gray-400 hover:text-[#F8935D] transition-all duration-200" aria-label="LinkedIn">
@@ -4459,21 +4493,21 @@ function Footer() {
             <div>
               <h4 className="text-gray-900 font-semibold mb-4">Navigation</h4>
               <ul className="space-y-3">
-                <li><button onClick={() => document.querySelector("#features")?.scrollIntoView({ behavior: "smooth" })} className="text-gray-500 hover:text-[#F8935D] transition-colors">Caracteristiques</button></li>
-                <li><button onClick={() => document.querySelector("#testimonials")?.scrollIntoView({ behavior: "smooth" })} className="text-gray-500 hover:text-[#F8935D] transition-colors">Temoignages</button></li>
+                <li><button onClick={() => document.querySelector("#features")?.scrollIntoView({ behavior: "smooth" })} className="text-gray-500 hover:text-[#F8935D] transition-colors">Caractéristiques</button></li>
+                <li><button onClick={() => document.querySelector("#testimonials")?.scrollIntoView({ behavior: "smooth" })} className="text-gray-500 hover:text-[#F8935D] transition-colors">Témoignages</button></li>
                 <li><button onClick={() => document.querySelector("#pricing")?.scrollIntoView({ behavior: "smooth" })} className="text-gray-500 hover:text-[#F8935D] transition-colors">Tarifs</button></li>
                 <li><button onClick={() => document.querySelector("#faq")?.scrollIntoView({ behavior: "smooth" })} className="text-gray-500 hover:text-[#F8935D] transition-colors">FAQ</button></li>
-                <li><Link href="/about" className="text-gray-500 hover:text-[#F8935D] transition-colors">A propos</Link></li>
+                <li><Link href="/about" className="text-gray-500 hover:text-[#F8935D] transition-colors">À propos</Link></li>
               </ul>
             </div>
 
             {/* Legal */}
             <div>
-              <h4 className="text-gray-900 font-semibold mb-4">Legal</h4>
+              <h4 className="text-gray-900 font-semibold mb-4">Légal</h4>
               <ul className="space-y-3">
-                <li><Link href="/legal/privacy" className="text-gray-500 hover:text-[#F8935D] transition-colors">Politique de confidentialite</Link></li>
+                <li><Link href="/legal/privacy" className="text-gray-500 hover:text-[#F8935D] transition-colors">Politique de confidentialité</Link></li>
                 <li><Link href="/legal/terms" className="text-gray-500 hover:text-[#F8935D] transition-colors">Conditions d&apos;utilisation</Link></li>
-                <li><Link href="/legal/notices" className="text-gray-500 hover:text-[#F8935D] transition-colors">Mentions legales</Link></li>
+                <li><Link href="/legal/notices" className="text-gray-500 hover:text-[#F8935D] transition-colors">Mentions légales</Link></li>
                 <li><Link href="/legal/cookies" className="text-gray-500 hover:text-[#F8935D] transition-colors">Politique de cookies</Link></li>
                 <li><a href="https://www.cnil.fr" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-[#F8935D] transition-colors">CNIL</a></li>
               </ul>
@@ -4482,8 +4516,8 @@ function Footer() {
 
           {/* Bottom */}
           <div className="pt-8 border-t border-[#F0D5C8]/60 flex flex-row items-center justify-between gap-4">
-            <p className="text-gray-500 text-sm">© {new Date().getFullYear()} Posty. Tous droits reserves.</p>
-            <p className="text-gray-500 text-sm">Concu et heberge en France</p>
+            <p className="text-gray-500 text-sm">© {new Date().getFullYear()} Posty. Tous droits réservés.</p>
+            <p className="text-gray-500 text-sm">Conçu et hébergé en France</p>
           </div>
         </div>
 
@@ -4537,23 +4571,14 @@ export default function LandingPage() {
   }
 
   return (
-    <div
-      className="min-h-screen bg-white text-gray-900"
-      style={{
-        overflowY: "auto",
-        overflowX: "hidden",
-        minHeight: "100vh",
-        WebkitOverflowScrolling: "touch",
-        touchAction: "pan-y",
-      }}
-    >
+    <div className="min-h-screen bg-white text-gray-900">
       <Navbar />
 
       {/* Hero Demo Section — opening with descent animation */}
       <DemoSection />
 
-      {/* All sections with soft orange/salmon background */}
-      <div className="bg-[#FEF3EE]">
+      {/* All sections with soft orange/salmon background — z-[5] to cover the fixed title */}
+      <div className="relative z-[5] bg-[#FEF3EE]">
         <FeaturesSection />
         <TestimonialsSection />
         <FounderSection />
@@ -4561,9 +4586,9 @@ export default function LandingPage() {
         <FaqSection />
         <CtaBanner
           id="final-cta"
-          headline="Chaque jour sans Posty est un client perdu"
-          subtext="Vos concurrents publient deja. A vous de jouer."
-          ctaLabel="Generer mon premier post"
+          headline="Votre prochain client est peut-être sur LinkedIn en ce moment"
+          subtext="Il suffit d'un post pour lancer la conversation."
+          ctaLabel="Essayer Posty gratuitement"
         />
         <Footer />
       </div>

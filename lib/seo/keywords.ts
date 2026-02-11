@@ -10,49 +10,49 @@
 export const longTailKeywordsFR = {
   // Intent: Informational (Comment faire)
   informational: [
-    "comment ecrire un post linkedin qui genere de l'engagement",
-    "comment augmenter sa visibilite sur linkedin en 2024",
-    "comment creer du contenu linkedin professionnel",
-    "comment utiliser l'ia pour rediger des posts linkedin",
-    "comment ameliorer son personal branding linkedin",
-    "comment publier regulierement sur linkedin sans perdre de temps",
-    "comment rediger un post linkedin storytelling",
+    "comment écrire un post linkedin qui génère de l'engagement",
+    "comment augmenter sa visibilité sur linkedin en 2024",
+    "comment créer du contenu linkedin professionnel",
+    "comment utiliser l'ia pour rédiger des posts linkedin",
+    "comment améliorer son personal branding linkedin",
+    "comment publier régulièrement sur linkedin sans perdre de temps",
+    "comment rédiger un post linkedin storytelling",
     "comment faire un post linkedin viral",
-    "quelle frequence de publication sur linkedin",
-    "comment trouver des idees de posts linkedin",
+    "quelle fréquence de publication sur linkedin",
+    "comment trouver des idées de posts linkedin",
   ],
 
   // Intent: Commercial (Comparaison, recherche de solution)
   commercial: [
-    "meilleur generateur de posts linkedin ia",
-    "outil ia pour creer des posts linkedin",
+    "meilleur générateur de posts linkedin ia",
+    "outil ia pour créer des posts linkedin",
     "alternative jasper pour linkedin",
-    "logiciel redaction posts linkedin automatique",
-    "application pour generer du contenu linkedin",
-    "outil gratuit pour ecrire des posts linkedin",
+    "logiciel rédaction posts linkedin automatique",
+    "application pour générer du contenu linkedin",
+    "outil gratuit pour écrire des posts linkedin",
     "comparatif outils ia linkedin",
     "posty vs taplio vs authory",
-    "meilleure app creation contenu linkedin",
+    "meilleure app création contenu linkedin",
     "outil storytelling linkedin professionnel",
   ],
 
   // Intent: Transactional (Prêt à acheter/essayer)
   transactional: [
-    "generateur posts linkedin gratuit",
+    "générateur posts linkedin gratuit",
     "essayer posty gratuitement",
-    "creer un post linkedin en 30 secondes",
-    "generer post linkedin ia sans inscription",
+    "créer un post linkedin en 30 secondes",
+    "générer post linkedin ia sans inscription",
     "outil linkedin ia prix",
-    "abonnement generateur linkedin pas cher",
+    "abonnement générateur linkedin pas cher",
     "posty pro tarif mensuel",
-    "generateur linkedin illimite",
+    "générateur linkedin illimité",
   ],
 
   // Intent: Navigational (Recherche de marque)
   navigational: [
     "posty linkedin",
     "posty ia",
-    "posty generateur",
+    "posty générateur",
     "posty app",
     "posty avis",
     "posty connexion",
@@ -124,7 +124,7 @@ export const longTailKeywordsEN = {
 export const keywordClusters = {
   // Cluster 1: LinkedIn Visibility
   linkedinVisibility: {
-    pillar: "visibilite linkedin",
+    pillar: "visibilité linkedin",
     pillarEN: "linkedin visibility",
     related: [
       "algorithme linkedin",
@@ -144,13 +144,13 @@ export const keywordClusters = {
 
   // Cluster 2: AI Content Creation
   aiContentCreation: {
-    pillar: "creation contenu ia",
+    pillar: "création contenu ia",
     pillarEN: "ai content creation",
     related: [
-      "ia generative",
+      "ia générative",
       "chatgpt linkedin",
       "automatisation contenu",
-      "redaction assistee ia",
+      "rédaction assistée ia",
       "intelligence artificielle marketing",
     ],
     relatedEN: [
@@ -171,7 +171,7 @@ export const keywordClusters = {
       "image professionnelle",
       "thought leadership",
       "expertise sectorielle",
-      "credibilite professionnelle",
+      "crédibilité professionnelle",
     ],
     relatedEN: [
       "personal brand",
@@ -188,7 +188,7 @@ export const keywordClusters = {
     pillarEN: "linkedin storytelling",
     related: [
       "narration professionnelle",
-      "posts emotionnels",
+      "posts émotionnels",
       "histoire personnelle linkedin",
       "accroche linkedin",
       "hook post linkedin",
@@ -210,10 +210,10 @@ export const keywordClusters = {
 export const metaTemplates = {
   home: {
     fr: {
-      title: "POSTY - Generateur de Posts LinkedIn IA | {keyword}",
+      title: "POSTY - Générateur de Posts LinkedIn IA | {keyword}",
       description:
-        "{keyword} en quelques secondes. POSTY cree 2 versions uniques (Storytelling & Business) pour chaque idee. Essai gratuit, sans carte bancaire.",
-      keywords: ["Creez des posts LinkedIn percutants", "Generez du contenu LinkedIn professionnel"],
+        "{keyword} en quelques secondes. POSTY crée 2 versions uniques (Storytelling & Business) pour chaque idée. Essai gratuit, sans carte bancaire.",
+      keywords: ["Créez des posts LinkedIn percutants", "Générez du contenu LinkedIn professionnel"],
     },
     en: {
       title: "POSTY - AI LinkedIn Post Generator | {keyword}",
@@ -232,9 +232,9 @@ export const headingVariations = {
   home: {
     h1: {
       fr: [
-        "Generez des posts LinkedIn percutants avec l'IA",
-        "Creez du contenu LinkedIn professionnel en quelques secondes",
-        "L'IA qui redige vos posts LinkedIn a votre place",
+        "Générez des posts LinkedIn percutants avec l'IA",
+        "Créez du contenu LinkedIn professionnel en quelques secondes",
+        "L'IA qui rédige vos posts LinkedIn à votre place",
       ],
       en: [
         "Generate high-performing LinkedIn posts with AI",
@@ -244,9 +244,9 @@ export const headingVariations = {
     },
     h2: {
       fr: [
-        "Comment fonctionne le generateur de posts LinkedIn ?",
+        "Comment fonctionne le générateur de posts LinkedIn ?",
         "Pourquoi choisir POSTY pour vos posts LinkedIn ?",
-        "2 versions pour chaque idee : Storytelling & Business",
+        "2 versions pour chaque idée : Storytelling & Business",
       ],
       en: [
         "How does the LinkedIn post generator work?",

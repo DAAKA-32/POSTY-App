@@ -324,7 +324,7 @@ function SettingsContent() {
                         </svg>
                       </div>
                       <p className="text-sm text-gray-500 dark:text-text-muted mb-2">
-                        Activez un plan Pro ou Max pour exploiter ces donnees dans vos posts
+                        Activez un plan Pro ou Max pour exploiter ces données dans vos posts
                       </p>
                       <Link
                         href="/subscription"

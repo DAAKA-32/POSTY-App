@@ -609,9 +609,9 @@ export default function ValidationPanel() {
                         details="Manual test: Publier un post sur LinkedIn"
                       />
                       <CheckItem
-                        label="Generation IA avec feedback"
+                        label="Génération IA avec feedback"
                         passed={null}
-                        details="Manual test: Generer un post et verifier le streaming"
+                        details="Manual test: Générer un post et vérifier le streaming"
                       />
                     </Section>
                   </>

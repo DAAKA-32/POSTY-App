@@ -121,7 +121,7 @@ export default function LandingNavbar() {
                 Se connecter
               </Link>
               <Link
-                href="/login"
+                href="/login?mode=signup"
                 className="btn-primary inline-flex items-center"
               >
                 Essai gratuit
@@ -264,7 +264,7 @@ export default function LandingNavbar() {
                   Se connecter
                 </Link>
                 <Link
-                  href="/login"
+                  href="/login?mode=signup"
                   onClick={() => setMobileMenuOpen(false)}
                   className="btn-primary w-full text-center"
                   style={{

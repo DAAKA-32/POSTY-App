@@ -9,7 +9,7 @@ export const fr = {
   common: {
     loading: "Chargement...",
     save: "Enregistrer",
-    cancel: "Annulér",
+    cancel: "Annuler",
     confirm: "Confirmer",
     delete: "Supprimer",
     edit: "Modifier",
@@ -158,19 +158,19 @@ export const fr = {
     whyBenefit1Desc: "Créez des posts LinkedIn professionnels en quelques secondes au lieu de plusieurs heures.",
     whyBenefit2Title: "Deux approches, un choix",
     whyBenefit2Desc: "Chaque idée génère deux versions : Storytelling (émotionnel) et Business (factuel).",
-    whyBenefit3Title: "Votre style, amplifie",
+    whyBenefit3Title: "Votre style, amplifié",
     whyBenefit3Desc: "L'IA s'adapte à votre secteur et votre ton pour des posts authentiques.",
 
     // How it works - Process explanation
-    howItWorksTitle: "Comment génèrer un post LinkedIn avec Posty ?",
+    howItWorksTitle: "Comment générer un post LinkedIn avec Posty ?",
     howItWorksStep1: "Décrivez votre idée",
     howItWorksStep1Desc: "En quelques mots, expliquez le sujet de votre post LinkedIn.",
     howItWorksStep2: "L'IA génère 2 versions",
-    howItWorksStep2Desc: "Recevez instantanement une version Storytelling et une version Business.",
+    howItWorksStep2Desc: "Recevez instantanément une version Storytelling et une version Business.",
     howItWorksStep3: "Choisissez et publiez",
     howItWorksStep3Desc: "Sélectionnez la version qui vous correspond et publiez directement.",
     // Additional feature cards
-    inSeconds: "Posts crées en quelques secondes",
+    inSeconds: "Posts créés en quelques secondes",
     storytellingBusiness: "Storytelling & Business",
     freePercent: "100% gratuit",
   },
@@ -178,19 +178,19 @@ export const fr = {
   // Auth
   auth: {
     // Login
-    loginTitle: "Content de vous revoir",
-    loginSubtitle: "Connectéz-vous pour continuer",
+    loginTitle: "Heureux de vous revoir",
+    loginSubtitle: "Connectez-vous pour continuer",
     loginButton: "Se connecter",
     loginWithGoogle: "Continuer avec Google",
     noAccount: "Pas encore de compte ?",
-    createAccount: "Créer un compte",
+    createAccount: "Créez votre compte",
 
     // Signup
     signupTitle: "Rejoignez Posty",
-    signupSubtitle: "Créez votre compte gratuitement",
+    signupSubtitle: "Commencez gratuitement, en quelques secondes",
     signupButton: "Créer mon compte",
     signupWithGoogle: "S'inscrire avec Google",
-    alreadyHaveAccount: "Déjàun compte ?",
+    alreadyHaveAccount: "Déjà un compte ?",
 
     // Form
     emailPlaceholder: "votre@email.com",
@@ -214,7 +214,7 @@ export const fr = {
 
     // Errors
     invalidCredentials: "Email ou mot de passe incorrect",
-    emailAlreadyInUse: "Cet email est déjàutilisé",
+    emailAlreadyInUse: "Cet email est déjà utilisé",
     weakPassword: "Le mot de passe est trop faible",
     networkError: "Erreur de connexion. Vérifiez votre connexion internet.",
     genericError: "Une erreur est survenue. Veuillez réessayer.",
@@ -246,21 +246,21 @@ export const fr = {
     uppercase: "Une majuscule",
     lowercase: "Une minuscule",
     number: "Un chiffre",
-    special: "Un caractère special",
+    special: "Un caractère spécial",
     passwordCriteria: {
       minChars: "8 caractères minimum",
       uppercase: "Une majuscule",
       lowercase: "Une minuscule",
       number: "Un chiffre",
-      special: "Un caractère special",
+      special: "Un caractère spécial",
     },
 
     // Additional auth keys
     acceptTermsRequired: "Vous devez accepter les conditions",
-    welcomeBack: "Content de vous revoir",
+    welcomeBack: "Heureux de vous revoir",
     users: "utilisateurs",
     thisWeek: "cette semaine",
-    accountCreated: "Compte crée !",
+    accountCreated: "Compte créé !",
     redirecting: "Redirection en cours...",
     yourName: "Votre nom",
     emailAddress: "Adresse email",
@@ -275,7 +275,7 @@ export const fr = {
     orContinueWith: "ou continuer avec",
     signInWithGoogle: "Continuer avec Google",
     signUpWithGoogle: "S'inscrire avec Google",
-    haveAccount: "Déjàun compte ?",
+    haveAccount: "Déjà un compte ?",
     signUpFree: "S'inscrire gratuitement",
     securedSSL: "Connexion sécurisée SSL",
   },
@@ -303,7 +303,7 @@ export const fr = {
 
   // Quota / Usage limits
   quota: {
-    upgradeNow: "Passer àu supérieur",
+    upgradeNow: "Passer au supérieur",
     limitReached: "Limite atteinte",
     messagesRemaining: "messages restants",
     unlimited: "Illimité",
@@ -337,12 +337,12 @@ export const fr = {
   chat: {
     placeholder: "Ex: Un post sur mes 3 erreurs de manager...",
     placeholderShort: "Décrivez votre idée...",
-    send: "Generer",
-    generating: "L'IA redige votre post LinkedIn...",
+    send: "Générer",
+    generating: "L'IA rédige votre post LinkedIn...",
     regenerate: "Nouvelle version",
     copy: "Copier le texte",
     copied: "Texte copié !",
-    copyError: "Erreur lors de la copié",
+    copyError: "Erreur lors de la copie",
     publish: "Publier",
     publishToLinkedIn: "Publier sur LinkedIn",
     storytelling: "Storytelling",
@@ -352,7 +352,7 @@ export const fr = {
     chooseVersion: "Choisissez la version qui vous correspond",
     editPost: "Personnaliser",
     saveChanges: "Enregistrer",
-    discardChanges: "Annulér",
+    discardChanges: "Annuler",
     postsRemaining: "générations restantes cette semaine",
     unlimited: "Générations illimitées",
     upgradeForMore: "Passez en Pro pour des générations illimitées",
@@ -371,21 +371,21 @@ export const fr = {
     describeIdea: "Décrivez votre idée de post",
     twoVersionsDesc: "L'IA génèrera 2 versions : Storytelling et Business",
     suggestionMotivating: "Un post motivant sur le travail",
-    suggestionLesson: "Une lecon que j'ai apprise",
-    suggestionNews: "Une actualite de mon secteur",
+    suggestionLesson: "Une leçon que j'ai apprise",
+    suggestionNews: "Une actualité de mon secteur",
     newPost: "Nouveau post",
     placeholderLinkedin: "Ex: Un post sur mes 3 erreurs de manager...",
     // Dual response mode (Max plan feature)
     dualMode: {
       toggle: "Mode double réponse",
-      toggleDesc: "Obtenez Storytelling et Business simultanement",
+      toggleDesc: "Obtenez Storytelling et Business simultanément",
       enabled: "Activé",
       disabled: "Désactivé",
       maxOnly: "Max",
       maxExclusive: "Exclusif au plan Max",
       upgradeTitle: "Fonctionnalité Premium",
       upgradeDesc: "Cette fonctionnalité est réservée au plan Max. Passez au plan Max pour obtenir deux réponses distinctes (Storytelling et Business) à chaque prompt.",
-      upgradeButton: "Passer àu plan Max",
+      upgradeButton: "Passer au plan Max",
       singleResponseInfo: "Vous recevez une réponse standard. Passez au plan Max pour obtenir les versions Storytelling et Business.",
     },
   },
@@ -393,7 +393,7 @@ export const fr = {
   // History
   history: {
     title: "Historique",
-    subtitle: "Retrouvez tous vos posts génères",
+    subtitle: "Retrouvez tous vos posts générés",
     searchPlaceholder: "Rechercher dans l'historique...",
     filterAll: "Tous",
     filterPublished: "Publiés",
@@ -401,7 +401,7 @@ export const fr = {
     sortNewest: "Plus récents",
     sortOldest: "Plus anciens",
     noHistory: "Aucun post dans l'historique",
-    noHistorySubtitle: "Vos posts génères apparaîtront ici",
+    noHistorySubtitle: "Vos posts générés apparaîtront ici",
     deleteConfirm: "Supprimer ce post ?",
     deleteConfirmDesc: "Cette action est irréversible.",
     postDeleted: "Post supprimé",
@@ -412,16 +412,16 @@ export const fr = {
     rename: "Renommer",
     delete: "Supprimer",
     conversationPinned: "Conversation épinglée",
-    conversationUnpinned: "Conversation desépinglée",
+    conversationUnpinned: "Conversation désépinglée",
     conversationRenamed: "Conversation renommée",
     conversationDeleted: "Conversation supprimée",
     today: "Aujourd'hui",
     yesterday: "Hier",
-    undo: "Annulér",
+    undo: "Annuler",
     copyContent: "Copier le contenu",
     publishLinkedIn: "Publier sur LinkedIn",
-    postsGenerated: "posts génères",
-    postGenerated: "post génère",
+    postsGenerated: "posts générés",
+    postGenerated: "post généré",
     new: "Nouveau",
     newPost: "Nouveau post",
     noResults: "Aucun résultat",
@@ -431,8 +431,8 @@ export const fr = {
     createFirst: "Créer mon premier post",
     posts: "posts",
     post: "post",
-    postsLoaded: "posts charges",
-    postsDisplayed: "posts affiches",
+    postsLoaded: "posts chargés",
+    postsDisplayed: "posts affichés",
   },
 
   // Settings
@@ -442,31 +442,31 @@ export const fr = {
 
     // External connections
     externalConnections: "Connexions externes",
-    externalConnectionsDesc: "Gérez vos comptes connectes",
-    manageConnections: "Gérez vos comptes connectes",
+    externalConnectionsDesc: "Gérez vos comptes connectés",
+    manageConnections: "Gérez vos comptes connectés",
     secured: "Sécurisé",
     securityMessage: "Vos connexions sont sécurisées. Les tokens d'accès sont chiffrés et stockés de manière sécurisée.",
 
     // LinkedIn
     linkedin: "LinkedIn",
     linkedinDesc: "Publiez vos posts directement",
-    linkedinConnect: "Connectér LinkedIn",
+    linkedinConnect: "Connecter LinkedIn",
     linkedinConnected: "Connecté",
     linkedinDisconnect: "Déconnecter",
     linkedinExpired: "Session expirée",
     linkedinExpiredDesc: "Reconnectez-vous pour pouvoir publier sur LinkedIn.",
-    linkedinConnectPrompt: "Connectéz votre compte LinkedIn pour publier vos posts en un clic.",
+    linkedinConnectPrompt: "Connectez votre compte LinkedIn pour publier vos posts en un clic.",
     publishDirectly: "Publiez vos posts directement",
     connected: "Connecté",
     sessionExpired: "Session expirée",
     disconnect: "Déconnecter",
     reconnectMessage: "Reconnectez-vous pour pouvoir publier sur LinkedIn.",
-    connectLinkedIn: "Connectér LinkedIn",
+    connectLinkedIn: "Connecter LinkedIn",
 
     // Google (coming soon)
     google: "Google",
     googleDesc: "Synchronisation contacts",
-    comingSoon: "Bientot",
+    comingSoon: "Bientôt",
     googleComingSoonDesc: "La connexion Google sera disponible prochainement pour synchroniser vos contacts.",
     googleSync: "Synchronisation contacts",
     googleComingSoon: "La connexion Google sera disponible prochainement.",
@@ -476,7 +476,7 @@ export const fr = {
     dataEmail: "Email",
     dataName: "Nom",
     dataSector: "Secteur",
-    dataRole: "Role",
+    dataRole: "Rôle",
     dataLinkedInStyle: "Style LinkedIn",
     notProvided: "Non renseigné",
     notSpecified: "Non renseigné",
@@ -484,7 +484,7 @@ export const fr = {
     emailLabel: "Email",
     nameLabel: "Nom",
     sectorLabel: "Secteur",
-    roleLabel: "Role",
+    roleLabel: "Rôle",
     linkedinStyleLabel: "Style LinkedIn",
 
     // Appearance
@@ -510,7 +510,7 @@ export const fr = {
     consentPreferences: "Préférences de consentement",
     analytics: "Analytics",
     analyticsDesc: "Nous aide à améliorer le service",
-    analyticsEnabled: "Analytics active",
+    analyticsEnabled: "Analytics activé",
     analyticsDisabled: "Analytics désactivé",
     marketing: "Communications marketing",
     marketingDesc: "Recevoir des emails promotionnels",
@@ -537,23 +537,23 @@ export const fr = {
     // Actions
     actions: "Actions",
     exportMyData: "Exporter mes données",
-    exportDataDesc: "Telecharger toutes vos données au format JSON",
-    exportDesc: "Telecharger toutes vos données au format JSON",
+    exportDataDesc: "Télécharger toutes vos données au format JSON",
+    exportDesc: "Télécharger toutes vos données au format JSON",
     export: "Exporter",
     exportSuccess: "Données exportées avec succès",
     exportError: "Erreur lors de l'export",
 
     signOutTitle: "Se déconnecter",
-    signOutDesc: "Deconnectez-vous de votre compte Posty",
+    signOutDesc: "Déconnectez-vous de votre compte Posty",
     logoutAction: "Se déconnecter",
-    logoutDesc: "Deconnectez-vous de votre compte Posty",
+    logoutDesc: "Déconnectez-vous de votre compte Posty",
 
     deleteAccount: "Supprimer mon compte",
     deleteAccountDesc: "Supprime définitivement votre compte et toutes vos données",
 
     // Delete conversations
     deleteConversations: "Supprimer toutes mes conversations",
-    deleteConversationsDesc: "Supprime l'historique de vos conversations IA sans supprimér votre compte",
+    deleteConversationsDesc: "Supprime l'historique de vos conversations IA sans supprimer votre compte",
     deleteConversationsSuccess: "Toutes vos conversations ont été supprimées",
     deleteConversationsError: "Erreur lors de la suppression des conversations",
 
@@ -590,7 +590,7 @@ export const fr = {
     // Fields
     displayName: "Nom d'affichage",
     sector: "Secteur d'activité",
-    rôle: "Role / Metier",
+    rôle: "Rôle / Métier",
     linkedinStyle: "Style LinkedIn préféré",
     objectives: "Objectifs",
 
@@ -607,7 +607,7 @@ export const fr = {
     reconnect: "Reconnecter",
 
     // Stats
-    postsCreated: "Posts crées",
+    postsCreated: "Posts créés",
     sessions: "Sessions",
     memberSince: "Membre depuis",
 
@@ -642,7 +642,7 @@ export const fr = {
     proPlan: "Pro",
     proPlanDesc: "Posts illimités",
     maxPlan: "Max",
-    maxPlanDesc: "Tout inclus + priorite",
+    maxPlanDesc: "Tout inclus + priorité",
 
     // Features
     postsPerWeek: "posts par semaine",
@@ -653,8 +653,8 @@ export const fr = {
     // Actions
     upgrade: "Passer en Pro",
     upgradeTo: "Passer à",
-    manage: "Gerer l'abonnement",
-    cancel: "Annulér l'abonnement",
+    manage: "Gérer l'abonnement",
+    cancel: "Annuler l'abonnement",
 
     // Status
     active: "Actif",
@@ -666,7 +666,7 @@ export const fr = {
     // Modals
     upgradeTitle: "Passer en Pro",
     upgradeDesc: "Débloquez des posts illimités et des fonctionnalités avancées.",
-    confirmCancel: "Annulér votre abonnement ?",
+    confirmCancel: "Annuler votre abonnement ?",
     confirmCancelDesc: "Vous perdrez l'accès aux fonctionnalités Pro à la fin de votre période de facturation.",
   },
 
@@ -685,12 +685,12 @@ export const fr = {
     rolePlaceholder: "Entrez votre rôle...",
 
     // Step 3: Style
-    styleTitle: "Quel style de post LinkedIn préféréz-vous ?",
+    styleTitle: "Quel style de post LinkedIn préférez-vous ?",
     styleSubtitle: "Choisissez le ton qui vous correspond le mieux",
 
     // Step 4: Objective
     objectiveTitle: "Quel est votre objectif principal sur LinkedIn ?",
-    objectiveSubtitle: "Nous adaptérons nos suggestions en consequence",
+    objectiveSubtitle: "Nous adapterons nos suggestions en conséquence",
 
     // Navigation
     back: "Retour",
@@ -704,8 +704,8 @@ export const fr = {
   // Consent modal
   consent: {
     title: "Protection de vos données",
-    subtitle: "Conformement au RGPD",
-    intro: "Avant de continuer, veuillez prendre connaissance de nos conditions et indiquer vos préférences. Les cases marquees d'un asterisque (*) sont obligatoires.",
+    subtitle: "Conformément au RGPD",
+    intro: "Avant de continuer, veuillez prendre connaissance de nos conditions et indiquer vos préférences. Les cases marquées d'un astérisque (*) sont obligatoires.",
 
     required: "Consentements obligatoires *",
     optional: "Consentements optionnels",
@@ -716,10 +716,10 @@ export const fr = {
     analyticsLabel: "Autoriser les analytics",
     analyticsDesc: "Nous aide à améliorer l'application en analysant son utilisation",
     marketingLabel: "Recevoir des communications marketing",
-    marketingDesc: "Nouveautes, conseils et offres speciales par email",
+    marketingDesc: "Nouveautés, conseils et offres spéciales par email",
 
     yourRights: "Vos droits :",
-    rightsDesc: "Vous pouvez à tout moment modifier vos préférences ou supprimér vos données dans les",
+    rightsDesc: "Vous pouvez à tout moment modifier vos préférences ou supprimer vos données dans les",
     privacySettings: "Paramètres de confidentialité",
     ofTheApp: "de l'application.",
 
@@ -741,7 +741,7 @@ export const fr = {
     linkedinDisconnectTitle: "Déconnecter LinkedIn",
     linkedinDisconnectWarning: "Vous ne pourrez plus publier directement sur LinkedIn depuis Posty.",
     linkedinDisconnectConfirm: "Voulez-vous vraiment déconnecter",
-    linkedinDisconnected: "LinkedIn deconnecte",
+    linkedinDisconnected: "LinkedIn déconnecté",
 
     // Delete conversation
     deleteConversationTitle: "Supprimer la conversation",
@@ -757,11 +757,11 @@ export const fr = {
     generic: "Une erreur est survenue",
     network: "Erreur de connexion",
     notFound: "Page non trouvée",
-    unauthorized: "Acces non autorisé",
-    forbidden: "Acces interdit",
+    unauthorized: "Accès non autorisé",
+    forbidden: "Accès interdit",
     serverError: "Erreur serveur",
     tryAgain: "Veuillez réessayer",
-    contactSupport: "Contactez le support si le probleme persiste",
+    contactSupport: "Contactez le support si le problème persiste",
     // 404 Page specific
     pageNotFound: "Page introuvable",
     pageNotFoundDescription: "La page que vous recherchez n'existe pas ou a été déplacée.",
@@ -775,7 +775,7 @@ export const fr = {
 
   // Empty states
   empty: {
-    noData: "Aucune donnee",
+    noData: "Aucune donnée",
     noResults: "Aucun résultat",
     noConversations: "Aucune conversation",
     noPosts: "Aucun post",
@@ -810,7 +810,7 @@ export const fr = {
     back: "Retour",
     subscription: "Abonnement",
     paymentCanceled: "Le paiement a été annulé",
-    subscriptionActivated: "Votre abonnement est active !",
+    subscriptionActivated: "Votre abonnement est activé !",
     alreadyFreePlan: "Vous utilisez déjà le plan gratuit",
     checkoutError: "Erreur lors du paiement",
     paymentError: "Une erreur est survenue lors du paiement",
@@ -826,10 +826,10 @@ export const fr = {
     securePayment: "Paiement sécurisé par Stripe",
     noCommitment: "Sans engagement, annulez à tout moment",
     responsiveSupport: "Support réactif par email",
-    recommended: "Recommande",
+    recommended: "Recommandé",
     free: "Gratuit",
     perMonth: "/mois",
-    billedYearly: "Facture annuellement",
+    billedYearly: "Facturé annuellement",
     savingsYearly: "Économisez {amount}%",
   },
   // FAQ Section - Long-tail keywords for SEO
@@ -851,11 +851,11 @@ export const fr = {
 
     // Question 4 - Beginner friendly
     q4: "Posty est-il adapté aux débutants sur LinkedIn ?",
-    a4: "Absolument. Posty est conçu pour tous les niveaux. Que vous débutiez sur LinkedIn ou que vous soyez un createur de contenu expérimenté, l'interface intuitive vous permet de génèrer des posts professionnels facilement.",
+    a4: "Absolument. Posty est conçu pour tous les niveaux. Que vous débutiez sur LinkedIn ou que vous soyez un créateur de contenu expérimenté, l'interface intuitive vous permet de génèrer des posts professionnels facilement.",
 
     // Question 5 - Quality/uniqueness
-    q5: "Les posts génères sont-ils uniques ?",
-    a5: "Oui, chaque post génère par Posty est unique. L'IA crée du contenu original base sur votre idée, votre secteur d'activité et votre style préféré. Aucun copier-coller de templates génériques.",
+    q5: "Les posts générés sont-ils uniques ?",
+    a5: "Oui, chaque post généré par Posty est unique. L'IA crée du contenu original basé sur votre idée, votre secteur d'activité et votre style préféré. Aucun copier-coller de templates génériques.",
 
     // Question 6 - Publication
     q6: "Puis-je publier directement sur LinkedIn depuis Posty ?",
@@ -863,19 +863,19 @@ export const fr = {
 
     // Question 7 - Data privacy
     q7: "Mes données sont-elles sécurisées ?",
-    a7: "Vos données sont protégées conformement au RGPD. Nous utilisons un chiffrement sécurisé et ne partageons jamais vos informations avec des tiers. Vous pouvez exporter ou supprimér vos données à tout moment.",
+    a7: "Vos données sont protégées conformément au RGPD. Nous utilisons un chiffrement sécurisé et ne partageons jamais vos informations avec des tiers. Vous pouvez exporter ou supprimer vos données à tout moment.",
 
     // Question 8 - Frequency
-    q8: "A quelle fréquence dois-je publier sur LinkedIn ?",
+    q8: "À quelle fréquence dois-je publier sur LinkedIn ?",
     a8: "Pour développer votre visibilité LinkedIn, nous recommandons 2 à 3 posts par semaine. Posty vous aide à maintenir cette régularité en créant du contenu de qualité rapidement.",
 
     // Question 9 - Customization
-    q9: "Puis-je personnaliser le style des posts génères ?",
+    q9: "Puis-je personnaliser le style des posts générés ?",
     a9: "Oui, lors de la configuration de votre profil Posty, vous indiquez votre secteur, votre rôle et votre style préféré. L'IA adapte ensuite le ton et le vocabulaire de chaque post à votre profil.",
 
     // Question 10 - Languages
     q10: "Posty fonctionne-t-il en plusieurs langues ?",
-    a10: "L'interface Posty est disponible en francais et en anglais. Les posts peuvent etre génères dans la langue de votre choix selon vos besoins.",
+    a10: "L'interface Posty est disponible en français et en anglais. Les posts peuvent être générés dans la langue de votre choix selon vos besoins.",
   },
 
   // SEO Meta content
@@ -890,7 +890,7 @@ export const fr = {
   trust: {
     // Security & Privacy
     securityTitle: "Vos données sont protégées",
-    securityDesc: "Chiffrement de bout en bout, conformite RGPD, et contrôle total sur vos informations.",
+    securityDesc: "Chiffrement de bout en bout, conformité au RGPD, et contrôle total sur vos informations.",
     gdprCompliant: "Conforme RGPD",
     dataEncrypted: "Données chiffrées",
     noDataSelling: "Aucune vente de données",
@@ -898,17 +898,17 @@ export const fr = {
 
     // Transparency
     transparencyTitle: "Transparence totale",
-    transparencyDesc: "Pas de frais caches, pas de dark patterns, pas de surprises.",
+    transparencyDesc: "Pas de frais cachés, pas de dark patterns, pas de surprises.",
     noCreditCard: "Aucune carte requise pour essayer",
     cancelAnytime: "Annulation sans engagement",
     clearPricing: "Tarifs clairs et fixes",
 
     // Limitations (honesty)
     limitationsTitle: "Ce que Posty ne fait pas",
-    limitationsDesc: "Nous preferons etre honnetes sur les limites de notre outil.",
+    limitationsDesc: "Nous préférons être honnêtes sur les limites de notre outil.",
     limitation1: "Posty ne remplace pas votre expertise métier",
-    limitation2: "Les posts necessitent votre validation avant publication",
-    limitation3: "L'IA s'ameliore avec vos retours, mais n'est pas parfaite",
+    limitation2: "Les posts nécessitent votre validation avant publication",
+    limitation3: "L'IA s'améliore avec vos retours, mais n'est pas parfaite",
 
     // Support
     supportTitle: "Support réactif",
@@ -925,7 +925,7 @@ export const fr = {
     tip2Title: "Alternez les formats",
     tip2Desc: "Storytelling émotionnel + insights business = engagement optimal.",
     tip3Title: "Engagez avec votre audience",
-    tip3Desc: "Répondez aux commentaires dans les 2 premieres heures.",
+    tip3Desc: "Répondez aux commentaires dans les 2 premières heures.",
 
     // Storytelling vs Business explanation
     storytellingExpertise: "Le Storytelling LinkedIn",
@@ -935,13 +935,13 @@ export const fr = {
 
     // Why 2 versions
     whyTwoVersionsTitle: "Pourquoi Posty génère 2 versions ?",
-    whyTwoVersionsDesc: "Chaque idée peut etre présentée de deux facons. Parfois l'emotion touche plus, parfois les faits convainquent mieux. Vous choisissez selon votre audience et votre objectif du jour.",
+    whyTwoVersionsDesc: "Chaque idée peut être présentée de deux façons. Parfois l'emotion touche plus, parfois les faits convainquent mieux. Vous choisissez selon votre audience et votre objectif du jour.",
   },
 
   // E-E-A-T: Social Proof
   socialProof: {
     // Stats (real or realistic projections)
-    statsTitle: "Posty en chiffrés",
+    statsTitle: "Posty en chiffres",
     stat1Value: "10 000+",
     stat1Label: "utilisateurs actifs",
     stat2Value: "50 000+",
@@ -949,7 +949,7 @@ export const fr = {
     stat3Value: "4.9/5",
     stat3Label: "satisfaction utilisateurs",
     stat4Value: "< 30s",
-    stat4Label: "temps moyen de generation",
+    stat4Label: "temps moyen de génération",
 
     // Testimonials
     testimonialsTitle: "Ce qu'ils disent de Posty",
@@ -964,12 +964,12 @@ export const fr = {
     testimonial3Role: "Fondateur de startup",
 
     // Use cases
-    useCasesTitle: "Qui utilisé Posty ?",
+    useCasesTitle: "Qui utilise Posty ?",
     useCase1: "Freelances et consultants",
-    useCase1Desc: "Developpez votre personal branding et attirez des clients.",
+    useCase1Desc: "Développez votre personal branding et attirez des clients.",
     useCase2: "Founders et entrepreneurs",
     useCase2Desc: "Partagez votre vision et fédérez une communauté.",
-    useCase3: "Equipes marketing",
+    useCase3: "Équipes marketing",
     useCase3Desc: "Produisez du contenu LinkedIn à grande échelle.",
     useCase4: "Professionnels en reconversion",
     useCase4Desc: "Rendez-vous visible auprès des recruteurs.",
@@ -987,12 +987,12 @@ export const fr = {
 
     // Values
     valuesTitle: "Nos valeurs",
-    value1: "Simplicite avant tout",
+    value1: "Simplicité avant tout",
     value1Desc: "Un outil qui fait une chose, et qui la fait bien.",
     value2: "Respect de l'utilisateur",
     value2Desc: "Pas de dark patterns, pas de spam, pas de manipulation.",
     value3: "Transparence",
-    value3Desc: "Des tarifs clairs, des limites assumees, des promesses tenues.",
+    value3Desc: "Des tarifs clairs, des limites assumées, des promesses tenues.",
 
     // Team (can be generic for now)
     teamTitle: "L'équipe Posty",
@@ -1016,7 +1016,7 @@ export const fr = {
 
     // Plan details
     freeDetails: "Parfait pour tester Posty ou publier occasionnellement.",
-    proDetails: "Pour les createurs reguliers qui veulent développer leur presence LinkedIn.",
+    proDetails: "Pour les créateurs réguliers qui veulent développer leur présence LinkedIn.",
     maxDetails: "Pour les professionnels exigeants qui publient intensivement.",
 
     // Guarantees
@@ -1028,20 +1028,20 @@ export const fr = {
     // FAQ pricing specific
     pricingFaqTitle: "Questions sur les tarifs",
     pricingFaq1Q: "Puis-je changer de plan à tout moment ?",
-    pricingFaq1A: "Oui, vous pouvez upgrader ou downgrader à tout moment. Le changement prend effet immediatement.",
-    pricingFaq2Q: "Y a-t-il des frais caches ?",
-    pricingFaq2A: "Non. Le prix affiche est le prix final, taxes incluses. Aucune surprise.",
+    pricingFaq1A: "Oui, vous pouvez upgrader ou downgrader à tout moment. Le changement prend effet immédiatement.",
+    pricingFaq2Q: "Y a-t-il des frais cachés ?",
+    pricingFaq2A: "Non. Le prix affiché est le prix final, taxes incluses. Aucune surprise.",
     pricingFaq3Q: "Que se passe-t-il si j'annule ?",
-    pricingFaq3A: "Vous conservez l'accès jusqu'a la fin de votre periode de facturation. Vos données restent accèssibles.",
+    pricingFaq3A: "Vous conservez l'accès jusqu'à la fin de votre période de facturation. Vos données restent accessibles.",
   },
 
   // Conversion Messages - Brand Voice Optimized
   conversion: {
     // Quota/Limit Messages (Valorizing, not frustrating)
-    quotaUsed: "Vous avez utilisé vos 3 posts cette semaine",
+    quotaUsed: "3 posts cette semaine, c'est déjà bien !",
     quotaRemaining: "post restant cette semaine",
     quotaRemainingPlural: "posts restants cette semaine",
-    unlockUnlimited: "Passez en illimité",
+    unlockUnlimited: "Passer en illimité",
     unlockUnlimitedDesc: "Créez sans compter avec Pro",
 
     // Upgrade Prompts (Value-focused, not pushy)
@@ -1055,10 +1055,10 @@ export const fr = {
     upgradeNoCommitment: "Sans engagement, annulez quand vous voulez",
 
     // Success Messages (Celebrate subtly)
-    postGenerated: "Post génère",
+    postGenerated: "Post généré",
     postGeneratedDesc: "Prêt à publier sur LinkedIn",
-    postCopied: "Copie dans le presse-papier",
-    postPublished: "Publie sur LinkedIn",
+    postCopied: "Copié dans le presse-papiers",
+    postPublished: "Publié sur LinkedIn",
     postSaved: "Post enregistré",
 
     // Value Reminders (Soft, not aggressive)
@@ -1068,16 +1068,16 @@ export const fr = {
 
     // Soft Scarcity (Honest, not manipulative)
     lastPostThisWeek: "Dernier post de la semaine",
-    lastPostDesc: "Passez en Pro pour continuer à créer",
+    lastPostDesc: "Passer en Pro pour continuer à créer",
     resetInfo: "Vos posts se réinitialiseront lundi",
 
     // User Respect Messages
     yourChoice: "Vous choisissez",
     noObligation: "Sans obligation",
-    takeYourTime: "Prenez le temps de comparer",
+    takeYourTime: "Comparer les plans",
 
     // Welcome Back (Warm, professional)
-    welcomeBack: "Content de vous revoir",
+    welcomeBack: "Heureux de vous revoir",
     welcomeBackDesc: "Prêt à créer votre prochain post ?",
     continueCreating: "Continuer à créer",
 
@@ -1088,7 +1088,7 @@ export const fr = {
     tryFirstPost: "Créez votre premier post",
 
     // Premium Feel Messages
-    premiumExperience: "Experience premium",
+    premiumExperience: "Expérience premium",
     professionalTool: "L'outil des professionnels exigeants",
     trustedBy: "Utilisé par plus de 10 000 professionnels",
 
@@ -1122,16 +1122,16 @@ export const fr = {
     usedTrials: "Vous avez utilisé vos {count} essais gratuits",
     createFreeAccount: "Créez un compte gratuit pour continuer à utiliser Posty",
     createFreeAccountBtn: "Créer un compte gratuit",
-    alreadyHaveAccount: "Déjàun compte ? Se connecter",
+    alreadyHaveAccount: "Déjà un compte ? Se connecter",
   },
 
   // Toasts / Notifications
   toasts: {
     conversationPinned: "Conversation épinglée",
-    conversationUnpinned: "Conversation desépinglée",
+    conversationUnpinned: "Conversation désépinglée",
     conversationRenamed: "Conversation renommée",
     conversationDeleted: "Conversation supprimée",
-    errorPinning: "Erreur lors de l'epinglage",
+    errorPinning: "Erreur lors de l'épinglage",
     errorRenaming: "Erreur lors du renommage",
     errorDelete: "Erreur lors de la suppression",
     dataExported: "Données exportées avec succès",
@@ -1139,12 +1139,12 @@ export const fr = {
     accountDeleted: "Compte supprimé",
     consentWithdrawn: "Consentement retiré",
     errorUpdate: "Erreur lors de la mise à jour",
-    analyticsEnabled: "Analyse activee",
+    analyticsEnabled: "Analyse activée",
     analyticsDisabled: "Analyse désactivée",
     marketingEnabled: "Communications marketing activées",
     marketingDisabled: "Communications marketing désactivées",
     logoutSuccess: "Déconnexion réussie",
-    errorLogout: "Erreur lors de la deconnexion",
+    errorLogout: "Erreur lors de la déconnexion",
   },
 } as const;
 

@@ -50,7 +50,7 @@ export const i18nSeoConfig = {
     {
       code: "fr",
       hreflang: "fr",
-      name: "Francais",
+      name: "Français",
       region: "France",
       htmlLang: "fr",
       ogLocale: "fr_FR",
@@ -109,13 +109,13 @@ export const i18nSeoConfig = {
 export const localizedPageSeo = {
   home: {
     fr: {
-      title: "POSTY - Generateur de Posts LinkedIn IA | Creez du Contenu Impactant",
+      title: "POSTY - Générateur de Posts LinkedIn IA | Créez du Contenu Impactant",
       description:
-        "Generez des posts LinkedIn percutants en quelques secondes avec l'IA. POSTY cree 2 versions (Storytelling & Business) pour chaque idee. Essayez gratuitement.",
+        "Générez des posts LinkedIn percutants en quelques secondes avec l'IA. POSTY crée 2 versions (Storytelling & Business) pour chaque idée. Essayez gratuitement.",
       keywords: [
-        "generateur posts LinkedIn",
+        "générateur posts LinkedIn",
         "IA LinkedIn",
-        "creer post LinkedIn",
+        "créer post LinkedIn",
         "contenu LinkedIn IA",
         "storytelling LinkedIn",
         "personal branding LinkedIn",
@@ -139,12 +139,12 @@ export const localizedPageSeo = {
   },
   pricing: {
     fr: {
-      title: "Tarifs POSTY - Plans Gratuit, Pro et Max | Generateur LinkedIn IA",
+      title: "Tarifs POSTY - Plans Gratuit, Pro et Max | Générateur LinkedIn IA",
       description:
-        "Decouvrez nos offres POSTY : 3 posts gratuits/semaine ou illimite en Pro. Generez des posts LinkedIn professionnels avec l'IA sans engagement.",
+        "Découvrez nos offres POSTY : 3 posts gratuits/semaine ou illimité en Pro. Générez des posts LinkedIn professionnels avec l'IA sans engagement.",
       keywords: [
         "tarifs POSTY",
-        "prix generateur LinkedIn",
+        "prix générateur LinkedIn",
         "abonnement LinkedIn IA",
         "POSTY gratuit",
         "POSTY Pro",
@@ -165,9 +165,9 @@ export const localizedPageSeo = {
   },
   login: {
     fr: {
-      title: "Connexion | POSTY - Generateur de Posts LinkedIn IA",
+      title: "Connexion | POSTY - Générateur de Posts LinkedIn IA",
       description:
-        "Connectez-vous a votre compte POSTY pour generer des posts LinkedIn impactants avec l'IA.",
+        "Connectez-vous à votre compte POSTY pour générer des posts LinkedIn impactants avec l'IA.",
       keywords: ["connexion POSTY", "login POSTY"],
     },
     en: {
@@ -179,10 +179,10 @@ export const localizedPageSeo = {
   },
   signup: {
     fr: {
-      title: "Inscription Gratuite | POSTY - Generateur de Posts LinkedIn IA",
+      title: "Inscription Gratuite | POSTY - Générateur de Posts LinkedIn IA",
       description:
-        "Creez votre compte POSTY gratuitement et commencez a generer des posts LinkedIn impactants avec l'IA. Sans carte bancaire.",
-      keywords: ["inscription POSTY", "creer compte POSTY", "essai gratuit LinkedIn IA"],
+        "Créez votre compte POSTY gratuitement et commencez à générer des posts LinkedIn impactants avec l'IA. Sans carte bancaire.",
+      keywords: ["inscription POSTY", "créer compte POSTY", "essai gratuit LinkedIn IA"],
     },
     en: {
       title: "Free Sign Up | POSTY - AI LinkedIn Post Generator",

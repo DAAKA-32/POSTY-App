@@ -176,7 +176,7 @@ const SubscriptionContext = createContext<SubscriptionContextValue | null>(null)
 // ============================================
 
 export function SubscriptionProvider({ children }: { children: React.ReactNode }) {
-  const { user, userProfile } = useAuth();
+  const { user, userProfile, loading: authLoading } = useAuth();
   const [state, setState] = useState<SubscriptionState>(defaultState);
 
   // ============================================
@@ -314,10 +314,11 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     }
   }, [user?.uid]);
 
-  // Load on mount and when user changes
+  // Load on mount and when user changes — skip while auth is still resolving
   useEffect(() => {
+    if (authLoading) return;
     loadSubscription();
-  }, [loadSubscription]);
+  }, [loadSubscription, authLoading]);
 
   // ============================================
   // USAGE TRACKING

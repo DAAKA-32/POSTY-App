@@ -340,7 +340,7 @@ export default function DemoChatFullscreen({
                           />
                         </div>
                         <span className="text-text-muted text-sm">
-                          Posty redige votre post...
+                          Posty rédige votre post...
                         </span>
                       </div>
                     )}
@@ -393,13 +393,13 @@ export default function DemoChatFullscreen({
                           </motion.div>
                           <div className="flex-1 min-w-0">
                             <h4 className="text-white font-semibold text-base mb-1">
-                              Post LinkedIn pret !
+                              Post LinkedIn prêt !
                             </h4>
                             <p className="text-text-muted text-sm mb-4">
-                              Creez des posts illimites et publiez directement sur LinkedIn
+                              Créez des posts illimités et publiez directement sur LinkedIn
                             </p>
                             <Link
-                              href="/login"
+                              href="/login?mode=signup"
                               className="group inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-primary to-accent text-white font-semibold rounded-xl shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300"
                             >
                               <span>Commencer gratuitement</span>

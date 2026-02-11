@@ -16,7 +16,7 @@ interface HreflangTagsProps {
  * - x-default: Fallback for unmatched languages
  */
 const LOCALES = [
-  { code: "fr", hreflang: "fr", name: "Francais" },
+  { code: "fr", hreflang: "fr", name: "Français" },
   { code: "en", hreflang: "en-us", name: "English (US)" },
 ] as const;
 
@@ -101,13 +101,13 @@ export function getLocalizedMetadata(
   const metadata = {
     home: {
       fr: {
-        title: "POSTY - Generateur de Posts LinkedIn IA | Creez du Contenu Impactant",
+        title: "POSTY - Générateur de Posts LinkedIn IA | Créez du Contenu Impactant",
         description:
-          "Generez des posts LinkedIn percutants en quelques secondes avec l'IA. POSTY cree 2 versions (Storytelling & Business) pour chaque idee. Essayez gratuitement.",
+          "Générez des posts LinkedIn percutants en quelques secondes avec l'IA. POSTY crée 2 versions (Storytelling & Business) pour chaque idée. Essayez gratuitement.",
         keywords: [
-          "generateur posts LinkedIn",
+          "générateur posts LinkedIn",
           "IA LinkedIn",
-          "creer post LinkedIn",
+          "créer post LinkedIn",
           "contenu LinkedIn IA",
           "storytelling LinkedIn",
         ],
@@ -127,10 +127,10 @@ export function getLocalizedMetadata(
     },
     pricing: {
       fr: {
-        title: "Tarifs POSTY - Plans Gratuit, Pro et Max | Generateur LinkedIn IA",
+        title: "Tarifs POSTY - Plans Gratuit, Pro et Max | Générateur LinkedIn IA",
         description:
-          "Decouvrez nos offres POSTY : 3 posts gratuits/semaine ou illimite en Pro. Generez des posts LinkedIn professionnels avec l'IA sans engagement.",
-        keywords: ["tarifs POSTY", "prix generateur LinkedIn", "abonnement LinkedIn IA"],
+          "Découvrez nos offres POSTY : 3 posts gratuits/semaine ou illimité en Pro. Générez des posts LinkedIn professionnels avec l'IA sans engagement.",
+        keywords: ["tarifs POSTY", "prix générateur LinkedIn", "abonnement LinkedIn IA"],
       },
       en: {
         title: "POSTY Pricing - Free, Pro & Max Plans | AI LinkedIn Generator",
@@ -142,7 +142,7 @@ export function getLocalizedMetadata(
     login: {
       fr: {
         title: "Connexion | POSTY",
-        description: "Connectez-vous a votre compte POSTY pour generer des posts LinkedIn avec l'IA.",
+        description: "Connectez-vous à votre compte POSTY pour générer des posts LinkedIn avec l'IA.",
         keywords: ["connexion POSTY", "login"],
       },
       en: {
@@ -155,8 +155,8 @@ export function getLocalizedMetadata(
       fr: {
         title: "Inscription Gratuite | POSTY",
         description:
-          "Creez votre compte POSTY gratuitement et commencez a generer des posts LinkedIn impactants avec l'IA.",
-        keywords: ["inscription POSTY", "creer compte", "essai gratuit"],
+          "Créez votre compte POSTY gratuitement et commencez à générer des posts LinkedIn impactants avec l'IA.",
+        keywords: ["inscription POSTY", "créer compte", "essai gratuit"],
       },
       en: {
         title: "Free Sign Up | POSTY",

@@ -376,16 +376,16 @@ export default function DashboardPage() {
         >
           <div className="bg-primary/5 dark:bg-primary/10 border border-primary/20 rounded-2xl p-8">
             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-              Pret a creer votre prochain post ?
+              Prêt à créer votre prochain post ?
             </h3>
             <p className="text-gray-600 dark:text-text-secondary mb-6">
-              Continuez a developper votre presence LinkedIn avec Posty.
+              Continuez à développer votre présence LinkedIn avec Posty.
             </p>
             <Link
               href="/app"
               className="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary-hover text-white font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
             >
-              Generer un post
+              Générer un post
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>

@@ -20,25 +20,25 @@ export default function UpgradeModal({ isOpen, onClose, trigger = "quota" }: Upg
   // Different messaging based on trigger
   const content = {
     quota: {
-      title: t.conversion?.quotaUsed || "Vous avez utilise vos 3 posts cette semaine",
-      subtitle: t.conversion?.resetInfo || "Vos posts se reinitialiseront lundi",
+      title: t.conversion?.quotaUsed || "3 posts cette semaine, c'est déjà bien !",
+      subtitle: t.conversion?.resetInfo || "Vos posts se réinitialiseront lundi",
       valueProps: [
         { icon: "unlimited", text: t.conversion?.upgradeValueProp1 || "Publiez autant que vous voulez" },
         { icon: "support", text: t.conversion?.upgradeValueProp2 || "Support prioritaire sous 24h" },
-        { icon: "style", text: t.conversion?.upgradeValueProp3 || "Personnalisation avancee du style" },
+        { icon: "style", text: t.conversion?.upgradeValueProp3 || "Personnalisation avancée du style" },
       ],
-      cta: t.conversion?.unlockUnlimited || "Passez en illimite",
-      secondary: t.conversion?.takeYourTime || "Prenez le temps de comparer",
+      cta: t.conversion?.unlockUnlimited || "Passer en illimité",
+      secondary: t.conversion?.takeYourTime || "Comparer les plans",
     },
     feature: {
-      title: t.conversion?.upgradeTitle || "Debloquez tout le potentiel de POSTY",
-      subtitle: t.conversion?.upgradeSubtitle || "Generations illimitees, support prioritaire, fonctionnalites avancees",
+      title: t.conversion?.upgradeTitle || "Débloquez tout le potentiel de Posty",
+      subtitle: t.conversion?.upgradeSubtitle || "Générations illimitées, support prioritaire, fonctionnalités avancées",
       valueProps: [
         { icon: "unlimited", text: t.conversion?.upgradeValueProp1 || "Publiez autant que vous voulez" },
         { icon: "support", text: t.conversion?.upgradeValueProp2 || "Support prioritaire sous 24h" },
-        { icon: "style", text: t.conversion?.upgradeValueProp3 || "Personnalisation avancee du style" },
+        { icon: "style", text: t.conversion?.upgradeValueProp3 || "Personnalisation avancée du style" },
       ],
-      cta: t.conversion?.upgradeCta || "Decouvrir Pro",
+      cta: t.conversion?.upgradeCta || "Découvrir Pro",
       secondary: t.conversion?.upgradeCtaSecondary || "Comparer les plans",
     },
     welcome: {
@@ -46,10 +46,10 @@ export default function UpgradeModal({ isOpen, onClose, trigger = "quota" }: Upg
       subtitle: t.conversion?.welcomeNewDesc || "Votre assistant IA pour LinkedIn",
       valueProps: [
         { icon: "time", text: t.conversion?.saveTimeHook || "Gagnez 2h par semaine" },
-        { icon: "visibility", text: t.conversion?.visibilityHook || "Ameliorez votre visibilite" },
-        { icon: "credibility", text: t.conversion?.credibilityHook || "Renforcez votre credibilite" },
+        { icon: "visibility", text: t.conversion?.visibilityHook || "Améliorez votre visibilité" },
+        { icon: "credibility", text: t.conversion?.credibilityHook || "Renforcez votre crédibilité" },
       ],
-      cta: t.conversion?.tryFirstPost || "Creez votre premier post",
+      cta: t.conversion?.tryFirstPost || "Créez votre premier post",
       secondary: null,
     },
   };
@@ -210,14 +210,14 @@ export function QuotaExhaustedOverlay({ onClose }: { onClose: () => void }) {
             {t.conversion?.quotaUsed || "Quota de la semaine atteint"}
           </p>
           <p className="text-xs text-text-muted mt-1">
-            {t.conversion?.resetInfo || "Vos posts se reinitialiseront lundi"}
+            {t.conversion?.resetInfo || "Vos posts se réinitialiseront lundi"}
           </p>
           <div className="flex gap-2 mt-3">
             <Link
               href="/subscription"
               className="text-xs font-medium text-primary hover:text-primary-hover transition-colors"
             >
-              {t.conversion?.unlockUnlimited || "Passer en illimite"}
+              {t.conversion?.unlockUnlimited || "Passer en illimité"}
             </Link>
             <span className="text-dark-border">|</span>
             <button

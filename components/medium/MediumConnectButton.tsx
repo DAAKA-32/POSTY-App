@@ -125,7 +125,7 @@ export default function MediumConnectButton({
                 <ol className="text-text-secondary space-y-1 list-decimal list-inside">
                   <li>Allez sur <a href="https://medium.com/me/settings/security" target="_blank" rel="noopener noreferrer" className="text-[#00ab6c] hover:underline">medium.com/me/settings/security</a></li>
                   <li>Cliquez sur &quot;Integration tokens&quot;</li>
-                  <li>Generez un nouveau token</li>
+                  <li>Générez un nouveau token</li>
                   <li>Copiez et collez-le ci-dessous</li>
                 </ol>
               </div>

@@ -29,15 +29,15 @@ export default function UpgradeBanner({
     switch (context) {
       case "quota":
         return {
-          title: t.conversion?.quotaUsed || "Vous avez utilise vos 3 posts cette semaine",
-          subtitle: t.conversion?.unlockUnlimitedDesc || "Creez sans compter avec Pro",
-          cta: t.conversion?.unlockUnlimited || "Passez en illimite",
+          title: t.conversion?.quotaUsed || "Vous avez utilisé vos 3 posts cette semaine",
+          subtitle: t.conversion?.unlockUnlimitedDesc || "Créez sans compter avec Pro",
+          cta: t.conversion?.unlockUnlimited || "Passez en illimité",
         };
       case "feature":
         return {
-          title: t.conversion?.upgradeTitle || "Debloquez tout le potentiel de POSTY",
-          subtitle: t.conversion?.upgradeSubtitle || "Generations illimitees, support prioritaire",
-          cta: t.conversion?.upgradeCta || "Decouvrir Pro",
+          title: t.conversion?.upgradeTitle || "Débloquez tout le potentiel de Posty",
+          subtitle: t.conversion?.upgradeSubtitle || "Générations illimitées, support prioritaire",
+          cta: t.conversion?.upgradeCta || "Découvrir Pro",
         };
       default:
         return {
@@ -139,7 +139,7 @@ export function QuotaIndicator({
         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
         </svg>
-        <span>{t.conversion?.proUserBenefit || "Generations illimitees actives"}</span>
+        <span>{t.conversion?.proUserBenefit || "Générations illimitées actives"}</span>
       </div>
     );
   }
@@ -164,7 +164,7 @@ export function QuotaIndicator({
       {/* Text */}
       <span>
         {isEmpty ? (
-          t.conversion?.quotaUsed || "Quota utilise"
+          t.conversion?.quotaUsed || "Quota utilisé"
         ) : (
           <>
             {remaining} {remaining === 1
@@ -181,7 +181,7 @@ export function QuotaIndicator({
           href="/subscription"
           className="text-primary hover:text-primary-hover transition-colors ml-1"
         >
-          {t.conversion?.unlockUnlimited || "Passez en illimite"}
+          {t.conversion?.unlockUnlimited || "Passer en illimité"}
         </Link>
       )}
     </div>
@@ -195,19 +195,19 @@ export function QuotaIndicator({
 export function getSuccessMessage(type: "generated" | "copied" | "published" | "saved", t: any) {
   const messages = {
     generated: {
-      title: t.conversion?.postGenerated || "Post genere",
-      subtitle: t.conversion?.postGeneratedDesc || "Pret a publier",
+      title: t.conversion?.postGenerated || "Post généré",
+      subtitle: t.conversion?.postGeneratedDesc || "Prêt à publier",
     },
     copied: {
-      title: t.conversion?.postCopied || "Copie",
+      title: t.conversion?.postCopied || "Copié",
       subtitle: null,
     },
     published: {
-      title: t.conversion?.postPublished || "Publie sur LinkedIn",
+      title: t.conversion?.postPublished || "Publié sur LinkedIn",
       subtitle: null,
     },
     saved: {
-      title: t.conversion?.postSaved || "Post enregistre",
+      title: t.conversion?.postSaved || "Post enregistré",
       subtitle: null,
     },
   };

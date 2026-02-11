@@ -114,7 +114,7 @@ export function DiscoverCTA({ className = "" }: { className?: string }) {
   const { t } = useLanguage();
   return (
     <ConversionCTA href="/" variant="secondary" size="md" className={className}>
-      {t.conversion?.ctaDiscover || "Decouvrir POSTY"}
+      {t.conversion?.ctaDiscover || "Découvrir Posty"}
     </ConversionCTA>
   );
 }
@@ -123,7 +123,7 @@ export function CreatePostCTA({ onClick, className = "" }: { onClick?: () => voi
   const { t } = useLanguage();
   return (
     <ConversionCTA onClick={onClick} variant="primary" size="md" className={className}>
-      {t.conversion?.ctaCreatePost || "Creer un post"}
+      {t.conversion?.ctaCreatePost || "Créer un post"}
     </ConversionCTA>
   );
 }
@@ -187,7 +187,7 @@ export function ValueProposition({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
         </svg>
       ),
-      text: t.conversion?.visibilityHook || "Ameliorez votre visibilite",
+      text: t.conversion?.visibilityHook || "Améliorez votre visibilité",
     },
     credibility: {
       icon: (
@@ -195,7 +195,7 @@ export function ValueProposition({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       ),
-      text: t.conversion?.credibilityHook || "Renforcez votre credibilite",
+      text: t.conversion?.credibilityHook || "Renforcez votre crédibilité",
     },
     consistency: {
       icon: (
@@ -203,7 +203,7 @@ export function ValueProposition({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
         </svg>
       ),
-      text: t.conversion?.consistencyHook || "Publiez regulierement",
+      text: t.conversion?.consistencyHook || "Publiez régulièrement",
     },
   };
 

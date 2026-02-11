@@ -598,7 +598,7 @@ export const PLAN_TAGLINES: Record<PlanType, { tagline: string; idealFor: string
   },
   max: {
     tagline: "La performance maximale, sans compromis",
-    idealFor: "Pour ceux qui veulent dominer leur marché",
+    idealFor: "Pour les professionnels les plus ambitieux",
   },
 };
 

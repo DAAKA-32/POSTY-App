@@ -49,7 +49,7 @@ const defaultQuota: QuotaInfo = {
 const QuotaContext = createContext<QuotaContextType | undefined>(undefined);
 
 export function QuotaProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [quota, setQuota] = useState<QuotaInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -73,10 +73,11 @@ export function QuotaProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
-  // Load quota on mount and when user changes
+  // Load quota on mount and when user changes — skip while auth is resolving
   useEffect(() => {
+    if (authLoading) return;
     loadQuota();
-  }, [loadQuota]);
+  }, [loadQuota, authLoading]);
 
   // Record a message and update quota
   const recordMessage = useCallback(async () => {

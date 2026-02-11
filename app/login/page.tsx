@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { usePreventPullToRefresh } from "@/hooks/usePreventPullToRefresh";
 import AuthPanel from "@/components/auth/AuthPanel";
 import ConnectionLoader from "@/components/shared/ConnectionLoader";
 
@@ -68,11 +67,12 @@ export default function LoginPage() {
   const { user, userProfile, loading, needsOnboarding } = useAuth();
   const { t } = useLanguage();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [redirecting, setRedirecting] = useState(false);
   const prefersReducedMotion = useReducedMotion();
 
-  // Prevent pull-to-refresh and bounce on mobile
-  usePreventPullToRefresh(!loading && !user);
+  // Read ?mode=signup from URL to open signup form directly
+  const initialMode = searchParams.get("mode") === "signup" ? "signup" : "login";
 
   // Force light mode on login page
   useEffect(() => {
@@ -81,19 +81,6 @@ export default function LoginPage() {
     root.classList.add("light");
     root.style.colorScheme = "light";
     root.setAttribute("data-theme", "light");
-  }, []);
-
-  // Enable full scrolling on Login page (mouse wheel, trackpad, touch, keyboard)
-  useEffect(() => {
-    document.documentElement.classList.add("login-scroll-enabled");
-    document.body.classList.add("login-scroll-enabled");
-    // Remove any classes that might block scroll
-    document.body.classList.remove("pwa-mobile", "no-scroll", "scroll-locked", "modal-open");
-
-    return () => {
-      document.documentElement.classList.remove("login-scroll-enabled");
-      document.body.classList.remove("login-scroll-enabled");
-    };
   }, []);
 
   // Redirect authenticated users based on onboarding status
@@ -132,16 +119,7 @@ export default function LoginPage() {
 
   // Only render the login page if user is definitely NOT authenticated
   return (
-    <div
-      className="min-h-[100dvh] bg-background-warm"
-      style={{
-        overflowY: "auto",
-        overflowX: "hidden",
-        minHeight: "100dvh",
-        WebkitOverflowScrolling: "touch",
-        touchAction: "pan-y",
-      }}
-    >
+    <div className="min-h-[100dvh] bg-background-warm overflow-x-hidden">
       {/* Premium AUTOSCROLL Background Effects - Couleurs dynamiques */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         {/* ORANGE DOMINANT - top left */}
@@ -233,7 +211,7 @@ export default function LoginPage() {
           variants={itemVariants}
           className="flex-1 flex items-center justify-center py-4"
         >
-          <AuthPanel onSuccess={() => {}} />
+          <AuthPanel initialMode={initialMode} onSuccess={() => {}} />
         </motion.div>
 
         {/* Footer links - Always visible at bottom */}
@@ -248,9 +226,9 @@ export default function LoginPage() {
       </motion.div>
 
       {/* Desktop Layout */}
-      <div className="hidden md:flex min-h-[100dvh] relative z-10">
-        {/* Left: Premium Branding Area - Light gray background */}
-        <div className="w-1/2 min-h-[100dvh] bg-background-peach flex flex-col items-center justify-center relative overflow-hidden">
+      <div className="hidden md:block min-h-[100dvh] relative z-10">
+        {/* Left: Premium Branding Area - Fixed so it never scrolls */}
+        <div className="fixed top-0 left-0 w-1/2 h-[100dvh] bg-background-peach flex flex-col items-center justify-center overflow-hidden z-10">
           {/* Additional warm accent for left panel - animated */}
           <div className="absolute inset-0 pointer-events-none">
             <motion.div
@@ -309,7 +287,7 @@ export default function LoginPage() {
               variants={itemVariants}
               className="text-gray-600 text-center text-sm lg:text-base max-w-xs"
             >
-              Créez du contenu LinkedIn qui convertit, en quelques secondes
+              Vos posts LinkedIn, prêts en quelques secondes
             </motion.p>
 
             {/* Trust badges */}
@@ -357,12 +335,12 @@ export default function LoginPage() {
           </motion.div>
         </div>
 
-        {/* Right: Auth Panel */}
+        {/* Right: Auth Panel — fixed independent scroll container */}
         <motion.div
           initial="hidden"
           animate="visible"
           variants={slideInRight}
-          className="w-1/2 min-h-[100dvh] flex flex-col items-center justify-center p-6 lg:p-10 xl:p-14 bg-background-warm overflow-y-auto overflow-x-hidden overscroll-contain"
+          className="fixed top-0 right-0 w-1/2 h-[100dvh] flex flex-col items-center justify-center p-6 lg:p-10 xl:p-14 bg-background-warm overflow-y-auto overflow-x-hidden overscroll-contain"
         >
           {/* Spacer for centering */}
           <div className="flex-1" />
@@ -373,7 +351,7 @@ export default function LoginPage() {
             transition={{ duration: 0.6, delay: 0.2, ease: smoothEase }}
             className="w-full max-w-md"
           >
-            <AuthPanel onSuccess={() => {}} />
+            <AuthPanel initialMode={initialMode} onSuccess={() => {}} />
           </motion.div>
 
           {/* Spacer + Footer links */}

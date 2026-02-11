@@ -106,7 +106,7 @@ export default function SignupPromptModal({
                   transition={{ delay: 0.15 }}
                   className="text-xl md:text-2xl font-bold text-white mb-2"
                 >
-                  Vous aimez ce que vous venez de creer ?
+                  Vous aimez ce que vous venez de créer ?
                 </motion.h3>
 
                 {/* Description */}
@@ -116,7 +116,7 @@ export default function SignupPromptModal({
                   transition={{ delay: 0.2 }}
                   className="text-text-secondary mb-6 max-w-sm mx-auto"
                 >
-                  Connectez-vous pour sauvegarder vos posts et acceder a toutes les fonctionnalites premium.
+                  Créez un compte pour retrouver vos posts et accéder à tout Posty.
                 </motion.p>
 
                 {/* Features list */}
@@ -128,10 +128,10 @@ export default function SignupPromptModal({
                 >
                   <div className="grid grid-cols-2 gap-3 text-left">
                     {[
-                      { icon: "M5 13l4 4L19 7", text: "Sauvegarde illimitee" },
+                      { icon: "M5 13l4 4L19 7", text: "Vos posts sauvegardés" },
                       { icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z", text: "Historique complet" },
                       { icon: "M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9", text: "Notifications" },
-                      { icon: "M13 10V3L4 14h7v7l9-11h-7z", text: "Generation rapide" },
+                      { icon: "M13 10V3L4 14h7v7l9-11h-7z", text: "Génération en quelques secondes" },
                     ].map((feature, index) => (
                       <div key={index} className="flex items-center gap-2">
                         <div className="w-6 h-6 bg-primary/10 rounded-md flex items-center justify-center shrink-0">
@@ -163,7 +163,7 @@ export default function SignupPromptModal({
                       transition-colors duration-200
                     "
                   >
-                    Se connecter / S'inscrire
+                    Créer mon compte
                   </Link>
 
                   <button
@@ -177,7 +177,7 @@ export default function SignupPromptModal({
                       transition-colors duration-200
                     "
                   >
-                    Continuer a explorer
+                    Pas maintenant
                   </button>
                 </motion.div>
 
@@ -198,7 +198,7 @@ export default function SignupPromptModal({
                     <svg className="w-3.5 h-3.5 text-accent" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                     </svg>
-                    Donnees securisees
+                    Données sécurisées
                   </div>
                 </motion.div>
               </div>

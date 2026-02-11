@@ -60,13 +60,13 @@ export default function CTASection() {
           {/* Boutons CTA */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
-              href="/login"
+              href="/login?mode=signup"
               className="btn-primary px-10 py-4 text-lg font-semibold w-full sm:w-auto text-center"
             >
               Démarrer l&apos;essai gratuit
             </Link>
             <Link
-              href="/login"
+              href="/login?mode=signup"
               className="btn-ghost px-10 py-4 text-lg w-full sm:w-auto flex items-center justify-center gap-2"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -78,7 +78,7 @@ export default function CTASection() {
 
           {/* Texte de confiance */}
           <p className="text-text-muted text-sm mt-8">
-            Rejoignez plus de 2 500 entreprises qui utilisent déjà Postie pour développer leur activité
+            Rejoignez plus de 2 500 entreprises qui utilisent déjà Posty pour développer leur activité
           </p>
         </div>
 
@@ -90,7 +90,7 @@ export default function CTASection() {
               <div className="w-8 h-8 bg-gradient-to-br from-primary to-accent rounded-lg overflow-hidden flex items-center justify-center">
                 <img
                   src="/logo.jpg"
-                  alt="Postie Logo"
+                  alt="Posty Logo"
                   className="w-full h-full object-cover"
                   onError={(e) => {
                     e.currentTarget.style.display = "none";
@@ -103,7 +103,7 @@ export default function CTASection() {
                 </span>
               </div>
               <span className="font-semibold text-white text-lg tracking-tight">
-                Postie
+                Posty
               </span>
             </Link>
 
@@ -122,7 +122,7 @@ export default function CTASection() {
 
             {/* Copyright */}
             <p className="text-sm text-text-muted">
-              &copy; {new Date().getFullYear()} Postie. Tous droits réservés.
+              &copy; {new Date().getFullYear()} Posty. Tous droits réservés.
             </p>
           </div>
         </footer>

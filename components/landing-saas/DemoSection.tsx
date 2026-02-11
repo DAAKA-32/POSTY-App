@@ -42,7 +42,7 @@ export default function DemoSection() {
               </div>
               <div className="flex-1 mx-4">
                 <div className="bg-dark-bg rounded-md px-3 py-1.5 text-xs text-text-muted text-center">
-                  app.postie.fr/tableau-de-bord
+                  app.posty.fr/tableau-de-bord
                 </div>
               </div>
             </div>
@@ -93,13 +93,13 @@ export default function DemoSection() {
         {/* Boutons CTA */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-12">
           <Link
-            href="/login"
+            href="/login?mode=signup"
             className="btn-primary px-8 py-3 text-base"
           >
             Démarrer l&apos;essai gratuit
           </Link>
           <Link
-            href="/login"
+            href="/login?mode=signup"
             className="btn-secondary px-8 py-3 text-base flex items-center gap-2"
           >
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">

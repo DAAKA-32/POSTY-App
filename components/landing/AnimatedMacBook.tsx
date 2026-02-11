@@ -5,6 +5,17 @@ import { useReducedMotion } from "framer-motion";
 import Image from "next/image";
 import gsap from "gsap";
 
+// Screenshots displayed in the MacBook screen carousel
+const SCREEN_IMAGES = [
+  "/capture1.png",
+  "/capture2.png",
+  "/capture3.png",
+  "/capture4.png",
+  "/capture5.png",
+];
+
+const CAROUSEL_INTERVAL = 4000; // Auto-advance every 4s
+
 interface AnimatedMacBookProps {
   isVisible: boolean;
   screenImage?: string;
@@ -42,6 +53,12 @@ export default function AnimatedMacBook({
   // Track when lid starts opening - hides front face elements until lid begins to open
   const [lidIsOpening, setLidIsOpening] = useState(false);
 
+  // Carousel state
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const touchStartX = useRef(0);
+  const touchDeltaX = useRef(0);
+  const carouselTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   // Internal ref to track animation within this component instance
   const hasAnimatedOnce = useRef(false);
 
@@ -61,6 +78,50 @@ export default function AnimatedMacBook({
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
+
+  // Carousel auto-advance — starts only after screen content is revealed
+  useEffect(() => {
+    if (!showContent) return;
+    carouselTimerRef.current = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % SCREEN_IMAGES.length);
+    }, CAROUSEL_INTERVAL);
+    return () => {
+      if (carouselTimerRef.current) clearInterval(carouselTimerRef.current);
+    };
+  }, [showContent]);
+
+  // Reset auto-advance timer on manual navigation
+  const resetCarouselTimer = useCallback(() => {
+    if (carouselTimerRef.current) clearInterval(carouselTimerRef.current);
+    carouselTimerRef.current = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % SCREEN_IMAGES.length);
+    }, CAROUSEL_INTERVAL);
+  }, []);
+
+  const goToSlide = useCallback((index: number) => {
+    setCurrentSlide(index);
+    resetCarouselTimer();
+  }, [resetCarouselTimer]);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchDeltaX.current = 0;
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    touchDeltaX.current = e.touches[0].clientX - touchStartX.current;
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    const threshold = 50;
+    if (touchDeltaX.current < -threshold) {
+      // Swipe left → next
+      goToSlide((currentSlide + 1) % SCREEN_IMAGES.length);
+    } else if (touchDeltaX.current > threshold) {
+      // Swipe right → prev
+      goToSlide((currentSlide - 1 + SCREEN_IMAGES.length) % SCREEN_IMAGES.length);
+    }
+  }, [currentSlide, goToSlide]);
 
   const handleAnimationComplete = useCallback(() => {
     // Mark animation as completed so it won't replay on tab switch
@@ -227,7 +288,7 @@ export default function AnimatedMacBook({
       {/* MacBook Container */}
       <div
         ref={macbookRef}
-        className="relative w-full max-w-5xl mx-auto"
+        className="relative w-full max-w-[1084px] mx-auto"
       >
         {/* Ambient glow */}
         <div
@@ -341,7 +402,7 @@ export default function AnimatedMacBook({
                     }`}
                   />
 
-                  {/* Screen content - Reveal with brightness bloom (screen "powers on") */}
+                  {/* Screen content - Carousel with brightness bloom (screen "powers on") */}
                   <div
                     className={`absolute inset-0 transition-all duration-[400ms] ease-out ${
                       showContent ? "opacity-100 scale-100" : "opacity-0 scale-[1.02]"
@@ -349,16 +410,71 @@ export default function AnimatedMacBook({
                     style={!shouldSimplify ? {
                       filter: showContent ? 'brightness(1)' : 'brightness(1.3)',
                     } : undefined}
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
                   >
-                    <Image
-                      src={screenImage}
-                      alt="Posty - Interface de generation de posts LinkedIn"
-                      fill
-                      className="object-cover object-top"
-                      priority
-                    />
+                    {/* Carousel slides */}
+                    <div
+                      className="absolute inset-0 flex transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                      style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+                    >
+                      {SCREEN_IMAGES.map((src, i) => (
+                        <div key={src} className="relative w-full h-full flex-shrink-0">
+                          <Image
+                            src={src}
+                            alt={`Posty - Capture ${i + 1}`}
+                            fill
+                            className="object-cover object-top"
+                            priority={i === 0}
+                          />
+                        </div>
+                      ))}
+                    </div>
 
-                    {/* Glass reflection — diagonal light streak simulating window reflection */}
+                    {/* Navigation arrows — desktop only, appear on hover */}
+                    {showContent && (
+                      <div className="absolute inset-0 z-10 hidden sm:flex items-center justify-between px-2 opacity-0 hover:opacity-100 transition-opacity duration-300">
+                        <button
+                          onClick={() => goToSlide((currentSlide - 1 + SCREEN_IMAGES.length) % SCREEN_IMAGES.length)}
+                          className="w-7 h-7 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center text-white/80 hover:bg-black/50 hover:text-white transition-all"
+                          aria-label="Image precedente"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => goToSlide((currentSlide + 1) % SCREEN_IMAGES.length)}
+                          className="w-7 h-7 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center text-white/80 hover:bg-black/50 hover:text-white transition-all"
+                          aria-label="Image suivante"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Dot indicators */}
+                    {showContent && (
+                      <div className="absolute bottom-2 sm:bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5">
+                        {SCREEN_IMAGES.map((_, i) => (
+                          <button
+                            key={i}
+                            onClick={() => goToSlide(i)}
+                            className={`rounded-full transition-all duration-300 ${
+                              i === currentSlide
+                                ? "w-5 h-1.5 bg-white/90"
+                                : "w-1.5 h-1.5 bg-white/40 hover:bg-white/60"
+                            }`}
+                            aria-label={`Capture ${i + 1}`}
+                          />
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Glass reflection — diagonal light streak */}
                     {!shouldSimplify && (
                       <div
                         className="absolute inset-0 pointer-events-none z-10"
@@ -368,10 +484,10 @@ export default function AnimatedMacBook({
                       />
                     )}
 
-                    {/* Screen reflection — ambient corner-to-corner gradient */}
+                    {/* Screen reflection */}
                     <div className="absolute inset-0 bg-gradient-to-br from-white/[0.04] via-transparent to-black/[0.02] pointer-events-none" />
 
-                    {/* Edge vignette — simulates screen curvature depth */}
+                    {/* Edge vignette */}
                     <div className="absolute inset-0 shadow-[inset_0_0_60px_rgba(0,0,0,0.25)] pointer-events-none" />
                   </div>
 

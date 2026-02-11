@@ -41,7 +41,7 @@ export default function InsightsSection({ stats, userStyle, userProfile }: Insig
           </svg>
         ),
         title: "Votre force : le Storytelling",
-        description: `${percentage}% de vos posts utilisent le Storytelling (${storytellingCount} posts). Ce format genere en moyenne 2x plus d'engagement car il cree une connexion emotionnelle.`,
+        description: `${percentage}% de vos posts utilisent le Storytelling (${storytellingCount} posts). Ce format génère en moyenne 2x plus d'engagement car il crée une connexion émotionnelle.`,
         action: "Continuez ainsi ! Ajoutez une question en fin de post pour amplifier les commentaires.",
         type: "success",
         priority: 3,
@@ -55,8 +55,8 @@ export default function InsightsSection({ stats, userStyle, userProfile }: Insig
           </svg>
         ),
         title: "Expert du format Business",
-        description: `${percentage}% de vos posts sont en format Business (${businessCount} posts). Ideal pour affirmer votre expertise et attirer des prospects qualifies.`,
-        action: "Pour maximiser : ajoutez des donnees chiffrees dans vos posts (stats, resultats, pourcentages).",
+        description: `${percentage}% de vos posts sont en format Business (${businessCount} posts). Idéal pour affirmer votre expertise et attirer des prospects qualifiés.`,
+        action: "Pour maximiser : ajoutez des données chiffrées dans vos posts (stats, résultats, pourcentages).",
         type: "success",
         priority: 3,
       });
@@ -72,8 +72,8 @@ export default function InsightsSection({ stats, userStyle, userProfile }: Insig
             </svg>
           ),
           title: "Conseil acquisition clients",
-          description: "Pour attirer des clients sur LinkedIn : terminez chaque post par une question ouverte liee a leurs problemes. Cela genere des commentaires = visibilite = opportunites.",
-          action: "Exemple : \"Quel est votre plus gros defi sur [sujet] ? Je reponds a chaque commentaire.\"",
+          description: "Pour attirer des clients sur LinkedIn : terminez chaque post par une question ouverte liée à leurs problèmes. Cela génère des commentaires = visibilité = opportunités.",
+          action: "Exemple : \"Quel est votre plus gros défi sur [sujet] ? Je réponds à chaque commentaire.\"",
           type: "coaching",
           priority: 5,
         },
@@ -83,38 +83,38 @@ export default function InsightsSection({ stats, userStyle, userProfile }: Insig
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           ),
-          title: "Strategie conversion",
-          description: "Pour convertir : montrez votre expertise en action, pas juste en theorie. Partagez des cas concrets, des resultats clients, des avant/apres.",
-          action: "Format gagnant : Probleme client -> Votre approche -> Resultat mesurable -> CTA",
+          title: "Stratégie conversion",
+          description: "Pour convertir : montrez votre expertise en action, pas juste en théorie. Partagez des cas concrets, des résultats clients, des avant/après.",
+          action: "Format gagnant : Problème client -> Votre approche -> Résultat mesurable -> CTA",
           type: "coaching",
           priority: 5,
         },
-        "Developper ma visibilite et credibilite": {
+        "Développer ma visibilité et crédibilité": {
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
             </svg>
           ),
-          title: "Booster votre visibilite",
-          description: "Pour la visibilite : publiez a heures fixes (l'algorithme aime la regularite) et repondez a TOUS les commentaires dans l'heure qui suit.",
-          action: "Pro tip : les 30 premieres minutes apres publication sont cruciales pour l'algorithme.",
+          title: "Booster votre visibilité",
+          description: "Pour la visibilité : publiez à heures fixes (l'algorithme aime la régularité) et répondez à TOUS les commentaires dans l'heure qui suit.",
+          action: "Pro tip : les 30 premières minutes après publication sont cruciales pour l'algorithme.",
           type: "coaching",
           priority: 5,
         },
-        "Generer des leads qualifies": {
+        "Générer des leads qualifiés": {
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
             </svg>
           ),
-          title: "Generation de leads",
-          description: "Pour generer des leads : offrez une valeur concrete (checklist, template, conseil actionnable) qui donne envie d'en savoir plus sur vos services.",
+          title: "Génération de leads",
+          description: "Pour générer des leads : offrez une valeur concrète (checklist, template, conseil actionnable) qui donne envie d'en savoir plus sur vos services.",
           action: "Incluez un CTA clair : \"Commentez [mot] pour recevoir [ressource gratuite]\"",
           type: "coaching",
           priority: 5,
         },
-        "Construire une audience engagee": {
+        "Construire une audience engagée": {
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
@@ -144,9 +144,9 @@ export default function InsightsSection({ stats, userStyle, userProfile }: Insig
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
             </svg>
           ),
-          title: "Excellente regularite !",
-          description: `${stats.postsLast7Days} posts cette semaine (${avgPerDay.toFixed(1)}/jour). Vous etes dans les 10% des utilisateurs les plus actifs. La regularite est le facteur #1 de croissance sur LinkedIn.`,
-          action: "Maintenez ce rythme et variez les formats (texte, carrousel, video) pour maximiser la portee.",
+          title: "Excellente régularité !",
+          description: `${stats.postsLast7Days} posts cette semaine (${avgPerDay.toFixed(1)}/jour). Vous êtes dans les 10% des utilisateurs les plus actifs. La régularité est le facteur #1 de croissance sur LinkedIn.`,
+          action: "Maintenez ce rythme et variez les formats (texte, carrousel, vidéo) pour maximiser la portée.",
           type: "success",
           priority: 4,
         });
@@ -158,8 +158,8 @@ export default function InsightsSection({ stats, userStyle, userProfile }: Insig
             </svg>
           ),
           title: "Bonne dynamique",
-          description: `${stats.postsLast7Days} posts cette semaine. Vous etes sur la bonne voie ! Pour accelerer votre croissance, visez 4-5 posts/semaine.`,
-          action: "Astuce : preparez vos posts en batch le dimanche pour toute la semaine.",
+          description: `${stats.postsLast7Days} posts cette semaine. Vous êtes sur la bonne voie ! Pour accélérer votre croissance, visez 4-5 posts/semaine.`,
+          action: "Astuce : préparez vos posts en batch le dimanche pour toute la semaine.",
           type: "info",
           priority: 3,
         });
@@ -185,8 +185,8 @@ export default function InsightsSection({ stats, userStyle, userProfile }: Insig
           </svg>
         ),
         title: "Reprenez le rythme",
-        description: "Aucun post cette semaine. L'algorithme LinkedIn penalise les longues pauses. Reprenez des maintenant pour ne pas perdre votre momentum.",
-        action: "Creez un post aujourd'hui ! Meme court, il reactivera votre presence.",
+        description: "Aucun post cette semaine. L'algorithme LinkedIn pénalise les longues pauses. Reprenez dès maintenant pour ne pas perdre votre momentum.",
+        action: "Créez un post aujourd'hui ! Même court, il réactivera votre présence.",
         type: "tip",
         priority: 5,
       });
@@ -215,7 +215,7 @@ export default function InsightsSection({ stats, userStyle, userProfile }: Insig
             </svg>
           ),
           title: "Publiez plus !",
-          description: `${publishRate}% de taux de publication. Vous avez ${stats.totalPosts - stats.publishedPosts} posts non publies. Chaque post non publie = une opportunite manquee.`,
+          description: `${publishRate}% de taux de publication. Vous avez ${stats.totalPosts - stats.publishedPosts} posts non publiés. Chaque post non publié = une opportunité manquée.`,
           action: "Parcourez votre historique et programmez 2-3 posts cette semaine.",
           type: "tip",
           priority: 3,
@@ -227,8 +227,8 @@ export default function InsightsSection({ stats, userStyle, userProfile }: Insig
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
             </svg>
           ),
-          title: "Passez a l'action",
-          description: `Seulement ${publishRate}% de publication. Vous avez ${stats.totalPosts - stats.publishedPosts} posts prets mais non partages. C'est du potentiel inexploite !`,
+          title: "Passez à l'action",
+          description: `Seulement ${publishRate}% de publication. Vous avez ${stats.totalPosts - stats.publishedPosts} posts prêts mais non partagés. C'est du potentiel inexploité !`,
           action: "Connectez LinkedIn et publiez en un clic. Ou utilisez la programmation pour planifier.",
           type: "tip",
           priority: 4,
@@ -241,8 +241,8 @@ export default function InsightsSection({ stats, userStyle, userProfile }: Insig
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
           </svg>
         ),
-        title: "Vos posts attendent d'etre partages",
-        description: `Vous avez ${stats.totalPosts} posts crees mais aucun publie. Connectez votre compte LinkedIn pour les partager en un clic !`,
+        title: "Vos posts attendent d'être partagés",
+        description: `Vous avez ${stats.totalPosts} posts créés mais aucun publié. Connectez votre compte LinkedIn pour les partager en un clic !`,
         action: "Allez dans votre profil pour connecter LinkedIn.",
         type: "tip",
         priority: 5,
@@ -259,8 +259,8 @@ export default function InsightsSection({ stats, userStyle, userProfile }: Insig
             </svg>
           ),
           title: "Testez le format Business",
-          description: "100% Storytelling c'est bien, mais diversifier renforce votre credibilite. Les posts Business avec des donnees chiffrees attirent une audience differente.",
-          action: "Essayez : partagez un resultat concret ou une methode en format Business.",
+          description: "100% Storytelling c'est bien, mais diversifier renforce votre crédibilité. Les posts Business avec des données chiffrées attirent une audience différente.",
+          action: "Essayez : partagez un résultat concret ou une méthode en format Business.",
           type: "tip",
           priority: 2,
         });
@@ -271,9 +271,9 @@ export default function InsightsSection({ stats, userStyle, userProfile }: Insig
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
             </svg>
           ),
-          title: "Ajoutez de l'emotion",
-          description: "100% Business c'est efficace, mais le Storytelling cree une connexion emotionnelle unique. Les histoires personnelles humanisent votre expertise.",
-          action: "Essayez : racontez un echec et ce que vous en avez appris. L'authenticite resonne.",
+          title: "Ajoutez de l'émotion",
+          description: "100% Business c'est efficace, mais le Storytelling crée une connexion émotionnelle unique. Les histoires personnelles humanisent votre expertise.",
+          action: "Essayez : racontez un échec et ce que vous en avez appris. L'authenticité résonne.",
           type: "tip",
           priority: 2,
         });
@@ -303,8 +303,8 @@ export default function InsightsSection({ stats, userStyle, userProfile }: Insig
             </svg>
           ),
           title: "Conseil Marketing",
-          description: "En Marketing, la preuve sociale est cle. Montrez vos resultats avec des captures d'ecran et des metriques reelles.",
-          action: "Partagez un cas avec des chiffres : \"+47% de conversion grace a [technique]\".",
+          description: "En Marketing, la preuve sociale est clé. Montrez vos résultats avec des captures d'écran et des métriques réelles.",
+          action: "Partagez un cas avec des chiffres : \"+47% de conversion grâce à [technique]\".",
           type: "coaching",
           priority: 3,
         });
@@ -365,7 +365,7 @@ export default function InsightsSection({ stats, userStyle, userProfile }: Insig
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
             </svg>
           </div>
-          <p className="text-gray-600 dark:text-text-secondary">Generez quelques posts pour recevoir vos premiers conseils personnalises</p>
+          <p className="text-gray-600 dark:text-text-secondary">Générez quelques posts pour recevoir vos premiers conseils personnalisés</p>
         </div>
       </div>
     );

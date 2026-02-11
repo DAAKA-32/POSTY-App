@@ -103,7 +103,7 @@ export default function PricingSection({
             <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />
             <span className="text-sm text-primary font-medium">ROI garanti</span>
           </motion.span>
-          <h2 className="text-3xl lg:text-4xl xl:text-5xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl lg:text-4xl xl:text-5xl font-bold text-gray-800 mb-4">
             <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Un client signé</span> = <span className="bg-gradient-to-r from-accent via-pink-400 to-orange-300 bg-clip-text text-transparent">abonnement rentabilisé</span>
           </h2>
           <p className="text-gray-600 text-base lg:text-lg max-w-2xl mx-auto">
@@ -148,7 +148,7 @@ export default function PricingSection({
               <p className="text-[10px] text-gray-600">Idéal pour découvrir Posty</p>
             </div>
             <Link
-              href={isAuthenticated ? "#" : "/login"}
+              href={isAuthenticated ? "#" : "/login?mode=signup"}
               onClick={(e) => {
                 if (isAuthenticated) {
                   e.preventDefault();
@@ -290,7 +290,7 @@ function PricingCard({
   };
 
   // Link destination for non-authenticated users
-  const ctaHref = isAuthenticated ? undefined : "/login";
+  const ctaHref = isAuthenticated ? undefined : "/login?mode=signup";
 
   return (
     <motion.div
@@ -312,12 +312,18 @@ function PricingCard({
             ? isActiveInCarousel
               ? "scale-100 z-20 ring-2 ring-primary/70 shadow-2xl shadow-primary/40"
               : "scale-100 z-20 ring-2 ring-primary/40 shadow-xl shadow-primary/20"
-            : "scale-[1.02] md:scale-105 z-20"
+            : "scale-[1.02] md:scale-105 z-20 hover:shadow-xl hover:shadow-primary/20"
+          : isPremium
+            ? isMobile
+              ? isActiveInCarousel
+                ? "z-10 shadow-xl"
+                : "z-10 shadow-lg opacity-90"
+              : "z-10 hover:shadow-xl hover:shadow-amber-500/15 hover:scale-[1.01]"
           : isMobile
             ? isActiveInCarousel
               ? "z-10 shadow-xl"
               : "z-10 shadow-lg opacity-90"
-            : "z-10"
+            : "z-10 hover:shadow-lg hover:shadow-primary/10 hover:scale-[1.01]"
         }
         ${isCurrentPlan ? "ring-2 ring-green-500/50" : ""}
       `}
@@ -341,21 +347,22 @@ function PricingCard({
         animate={{ opacity: isHovered ? 1 : 0 }}
         transition={{ duration: 0.3 }}
       >
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-black/[0.04] dark:via-white/[0.06] to-transparent animate-shimmer" />
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/[0.06] to-transparent animate-shimmer" />
       </motion.div>
 
       {/* Card background */}
       <div
         className={`
         relative p-2 sm:p-4 md:p-6 lg:p-8 rounded-lg sm:rounded-xl md:rounded-2xl h-full flex flex-col
+        transition-colors duration-300
         ${
           isPopular
             ? "bg-gradient-to-b from-primary/10 via-white to-white"
             : isPremium
-            ? "bg-gradient-to-b from-amber-500/5 via-white to-white border sm:border-2 border-amber-500/30"
+            ? "bg-gradient-to-b from-amber-500/5 via-white to-white border sm:border-2 border-amber-500/30 hover:from-amber-500/8"
             : isFree
-            ? "bg-white border border-primary/25"
-            : "bg-white border border-gray-200"
+            ? "bg-white hover:bg-primary/[0.02] border border-primary/25 hover:border-primary/40"
+            : "bg-white hover:bg-primary/[0.02] border border-gray-200 hover:border-primary/25"
         }
       `}
       >
@@ -502,7 +509,7 @@ function PricingCard({
                     ? "bg-gradient-to-r from-primary to-accent text-white shadow-md sm:shadow-lg shadow-primary/30 hover:shadow-lg sm:hover:shadow-xl hover:shadow-primary/40"
                     : isPremium
                     ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md sm:shadow-lg shadow-amber-500/30 hover:shadow-lg sm:hover:shadow-xl hover:shadow-amber-500/40"
-                    : "bg-gray-100 hover:bg-gray-200 text-gray-900 border border-gray-200 hover:border-primary/50"
+                    : "bg-primary/5 hover:bg-primary/10 text-gray-800 hover:text-primary border border-primary/15 hover:border-primary/35"
                 }
               `}
             >
@@ -553,7 +560,7 @@ function PricingCard({
             </motion.button>
           ) : (
             <Link
-              href={ctaHref || "/login"}
+              href={ctaHref || "/login?mode=signup"}
               className={`
                 relative w-full h-full flex items-center justify-center px-2 sm:px-3 md:px-4 rounded-lg sm:rounded-xl font-semibold text-[10px] sm:text-xs md:text-sm
                 transition-all duration-300 overflow-hidden
@@ -562,7 +569,7 @@ function PricingCard({
                     ? "bg-gradient-to-r from-primary to-accent text-white shadow-md sm:shadow-lg shadow-primary/30 hover:shadow-lg sm:hover:shadow-xl hover:shadow-primary/40 hover:scale-[1.02]"
                     : isPremium
                     ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md sm:shadow-lg shadow-amber-500/30 hover:shadow-lg sm:hover:shadow-xl hover:shadow-amber-500/40 hover:scale-[1.02]"
-                    : "bg-gray-100 hover:bg-gray-200 text-gray-900 border border-gray-200 hover:border-primary/50"
+                    : "bg-primary/5 hover:bg-primary/10 text-gray-800 hover:text-primary border border-primary/15 hover:border-primary/35"
                 }
               `}
             >
@@ -600,7 +607,7 @@ function PricingCard({
                       : isPremium
                         ? "bg-amber-500/10 text-amber-500 border border-amber-500/20"
                         : "bg-primary/10 text-primary border border-primary/20"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"
+                    : "bg-gray-50 text-gray-600 hover:bg-primary/5 hover:text-primary border border-gray-200 hover:border-primary/20"
                   }
                 `}
               >

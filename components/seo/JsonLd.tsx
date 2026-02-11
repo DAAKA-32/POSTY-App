@@ -69,7 +69,7 @@ export function WebsiteJsonLd() {
     "@type": "WebSite",
     name: seoConfig.siteName,
     url: seoConfig.siteUrl,
-    description: "Generateur de posts LinkedIn IA - Creez du contenu impactant en quelques secondes",
+    description: "Générateur de posts LinkedIn IA - Créez du contenu impactant en quelques secondes",
     publisher: {
       "@type": "Organization",
       name: seoConfig.brandName,
@@ -236,9 +236,9 @@ export function ServiceJsonLd({
 }) {
   const serviceData = {
     fr: {
-      name: "Generation de posts LinkedIn par IA",
+      name: "Génération de posts LinkedIn par IA",
       description:
-        "Service de creation de contenu LinkedIn professionnel utilisant l'intelligence artificielle. Generez des posts Storytelling et Business en quelques secondes.",
+        "Service de création de contenu LinkedIn professionnel utilisant l'intelligence artificielle. Générez des posts Storytelling et Business en quelques secondes.",
       serviceType: "Content Generation",
     },
     en: {
@@ -285,7 +285,7 @@ export function ServiceJsonLd({
           itemOffered: {
             "@type": "Service",
             name: "Pro",
-            description: lang === "fr" ? "Posts illimites" : "Unlimited posts",
+            description: lang === "fr" ? "Posts illimités" : "Unlimited posts",
           },
           price: "9.99",
           priceCurrency: "EUR",
@@ -466,7 +466,7 @@ export function PricingPageJsonLd({ lang = "fr" }: { lang?: "fr" | "en" }) {
     name: lang === "fr" ? "Tarifs POSTY" : "POSTY Pricing",
     description:
       lang === "fr"
-        ? "Decouvrez nos offres POSTY : Gratuit, Pro et Max"
+        ? "Découvrez nos offres POSTY : Gratuit, Pro et Max"
         : "Explore POSTY plans: Free, Pro, and Max",
     mainEntity: {
       "@type": "ItemList",
@@ -487,7 +487,7 @@ export function PricingPageJsonLd({ lang = "fr" }: { lang?: "fr" | "en" }) {
           "@type": "Product",
           position: 2,
           name: "POSTY Pro",
-          description: lang === "fr" ? "Posts illimites" : "Unlimited posts",
+          description: lang === "fr" ? "Posts illimités" : "Unlimited posts",
           offers: {
             "@type": "Offer",
             price: "9.99",
@@ -501,7 +501,7 @@ export function PricingPageJsonLd({ lang = "fr" }: { lang?: "fr" | "en" }) {
           position: 3,
           name: "POSTY Max",
           description:
-            lang === "fr" ? "Posts illimites + fonctionnalites avancees" : "Unlimited + advanced features",
+            lang === "fr" ? "Posts illimités + fonctionnalités avancées" : "Unlimited + advanced features",
           offers: {
             "@type": "Offer",
             price: "19.99",
@@ -747,27 +747,27 @@ export const postyFaqData = {
     {
       question: "Comment fonctionne POSTY ?",
       answer:
-        "POSTY utilise l'intelligence artificielle pour generer des posts LinkedIn professionnels. Entrez simplement votre idee ou sujet, et l'IA cree instantanement 2 versions : une version Storytelling emotionnelle et une version Business factuelle.",
+        "POSTY utilise l'intelligence artificielle pour générer des posts LinkedIn professionnels. Entrez simplement votre idée ou sujet, et l'IA crée instantanément 2 versions : une version Storytelling émotionnelle et une version Business factuelle.",
     },
     {
       question: "POSTY est-il gratuit ?",
       answer:
-        "Oui, POSTY propose un plan gratuit avec 3 posts par semaine. Pour un usage illimite, decouvrez nos plans Pro (9,99€/mois) et Max (19,99€/mois).",
+        "Oui, POSTY propose un plan gratuit avec 3 posts par semaine. Pour un usage illimité, découvrez nos plans Pro (9,99€/mois) et Max (19,99€/mois).",
     },
     {
-      question: "Puis-je modifier les posts generes ?",
+      question: "Puis-je modifier les posts générés ?",
       answer:
-        "Absolument ! Les posts generes sont entierement editables. Vous pouvez les personnaliser, ajuster le ton, ou combiner des elements des deux versions avant de les publier.",
+        "Absolument ! Les posts générés sont entièrement éditables. Vous pouvez les personnaliser, ajuster le ton, ou combiner des éléments des deux versions avant de les publier.",
     },
     {
       question: "POSTY peut-il publier directement sur LinkedIn ?",
       answer:
-        "Oui, avec la connexion LinkedIn, vous pouvez publier vos posts directement depuis POSTY en un clic. Vous pouvez egalement copier le texte pour le coller manuellement.",
+        "Oui, avec la connexion LinkedIn, vous pouvez publier vos posts directement depuis POSTY en un clic. Vous pouvez également copier le texte pour le coller manuellement.",
     },
     {
-      question: "Les posts sont-ils optimises pour l'algorithme LinkedIn ?",
+      question: "Les posts sont-ils optimisés pour l'algorithme LinkedIn ?",
       answer:
-        "Oui, notre IA est entrainee sur les meilleures pratiques LinkedIn : structure optimale, hooks engageants, call-to-action efficaces, et longueur ideale pour maximiser la visibilite.",
+        "Oui, notre IA est entraînée sur les meilleures pratiques LinkedIn : structure optimale, hooks engageants, call-to-action efficaces, et longueur idéale pour maximiser la visibilité.",
     },
   ],
   en: [
@@ -804,29 +804,29 @@ export const postyFaqData = {
  */
 export const postyHowToData = {
   fr: {
-    name: "Comment creer un post LinkedIn avec POSTY",
+    name: "Comment créer un post LinkedIn avec POSTY",
     description:
-      "Guide etape par etape pour generer des posts LinkedIn professionnels avec l'IA POSTY en moins de 30 secondes.",
+      "Guide étape par étape pour générer des posts LinkedIn professionnels avec l'IA POSTY en moins de 30 secondes.",
     steps: [
       {
-        name: "Connectez-vous a POSTY",
-        text: "Creez un compte gratuit ou connectez-vous avec Google/LinkedIn pour acceder au generateur.",
+        name: "Connectez-vous à POSTY",
+        text: "Créez un compte gratuit ou connectez-vous avec Google/LinkedIn pour accéder au générateur.",
       },
       {
-        name: "Entrez votre idee",
-        text: "Decrivez le sujet ou l'idee de votre post LinkedIn dans le champ prevu. Soyez precis pour de meilleurs resultats.",
+        name: "Entrez votre idée",
+        text: "Décrivez le sujet ou l'idée de votre post LinkedIn dans le champ prévu. Soyez précis pour de meilleurs résultats.",
       },
       {
-        name: "Generez vos posts",
-        text: "Cliquez sur 'Generer' et l'IA cree instantanement 2 versions : Storytelling (emotionnel) et Business (factuel).",
+        name: "Générez vos posts",
+        text: "Cliquez sur 'Générer' et l'IA crée instantanément 2 versions : Storytelling (émotionnel) et Business (factuel).",
       },
       {
         name: "Personnalisez si besoin",
-        text: "Modifiez le texte genere selon vos preferences : ajustez le ton, ajoutez des details, ou combinez les deux versions.",
+        text: "Modifiez le texte généré selon vos préférences : ajustez le ton, ajoutez des détails, ou combinez les deux versions.",
       },
       {
         name: "Publiez sur LinkedIn",
-        text: "Copiez le post ou publiez directement via la connexion LinkedIn integree.",
+        text: "Copiez le post ou publiez directement via la connexion LinkedIn intégrée.",
       },
     ],
   },
