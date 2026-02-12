@@ -513,10 +513,10 @@ function HeroSection() {
   return (
     <section
       ref={sectionRef}
-      className="relative min-h-[100dvh] lg:min-h-screen flex items-center overflow-hidden"
+      className="background-landing relative min-h-[100dvh] lg:min-h-screen flex items-center"
     >
       {/* === PREMIUM ANIMATED BACKGROUND === */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#FFFCFA] via-white to-[#FEF8F4]">
+      <div className="absolute inset-0 pointer-events-none">
         {/* Mesh gradient overlay */}
         <motion.div
           style={{ y: prefersReducedMotion ? 0 : bgY }}
@@ -550,15 +550,6 @@ function HeroSection() {
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-r from-blue-100/20 via-violet-100/10 to-transparent rounded-full blur-[150px]"
           />
         </motion.div>
-
-        {/* Subtle dot pattern */}
-        <div
-          className="absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage: `radial-gradient(circle at 1px 1px, #000 1px, transparent 1px)`,
-            backgroundSize: "32px 32px",
-          }}
-        />
       </div>
 
       {/* === MAIN CONTENT === */}

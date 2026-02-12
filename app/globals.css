@@ -6643,3 +6643,64 @@ html.dark .chat-input-inner {
     width: 100%;
   }
 }
+
+
+/* ============================================================================
+   LANDING PAGE BACKGROUND
+   ============================================================================ */
+
+/* Main landing page background with premium gradient and animated overlays */
+.background-landing {
+  position: relative;
+  background: linear-gradient(135deg, #FFFCFA 0%, white 50%, #FEF8F4 100%);
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+/* Animated gradient overlay container */
+.background-landing::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Subtle dot pattern overlay */
+.background-landing::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.03;
+  background-image: radial-gradient(circle at 1px 1px, #000 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Content wrapper inside background */
+.background-landing > * {
+  position: relative;
+  z-index: 10;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .background-landing {
+    background: linear-gradient(135deg, #FFFCFA 0%, white 50%, #FEF8F4 100%);
+    /* Disable heavy animations on mobile for performance */
+  }
+}
+
+/* Dark mode support (optional) */
+@media (prefers-color-scheme: dark) {
+  .background-landing {
+    background: linear-gradient(135deg, #1a1a1a 0%, #0f0f0f 50%, #1a1a1a 100%);
+  }
+  
+  .background-landing::after {
+    background-image: radial-gradient(circle at 1px 1px, #fff 1px, transparent 1px);
+    opacity: 0.02;
+  }
+}
+
