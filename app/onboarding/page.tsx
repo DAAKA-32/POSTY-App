@@ -16,6 +16,7 @@ import {
   PUBLISHING_FREQUENCIES,
   OnboardingData,
 } from "@/types";
+import { TRIAL_PERIOD_DAYS } from "@/lib/plans";
 import toast from "@/components/ui/Toast";
 
 // =============================================================================
@@ -283,9 +284,17 @@ function UpsellScreen({ onContinue, onUpgrade }: { onContinue: () => void; onUpg
                   onClick={() => onUpgrade("pro")}
                   className="w-full py-3 px-4 bg-primary hover:bg-primary-hover text-white font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 text-sm"
                 >
-                  Essayer 7 jours gratuitement
+                  Essayer {TRIAL_PERIOD_DAYS} jours gratuitement
                 </button>
-                <p className="text-center text-xs text-gray-400 mt-2">Annulation a tout moment</p>
+                <div className="mt-2 flex flex-col items-center gap-1">
+                  <p className="flex items-center gap-1 text-xs text-primary font-medium">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    Sans CB pendant l'essai
+                  </p>
+                  <p className="text-xs text-gray-400">Annulation a tout moment</p>
+                </div>
               </div>
 
               {/* Max card */}
@@ -315,9 +324,17 @@ function UpsellScreen({ onContinue, onUpgrade }: { onContinue: () => void; onUpg
                   onClick={() => onUpgrade("max")}
                   className="w-full py-3 px-4 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 text-sm"
                 >
-                  Essayer 7 jours gratuitement
+                  Essayer {TRIAL_PERIOD_DAYS} jours gratuitement
                 </button>
-                <p className="text-center text-xs text-gray-400 mt-2">Annulation a tout moment</p>
+                <div className="mt-2 flex flex-col items-center gap-1">
+                  <p className="flex items-center gap-1 text-xs text-amber-600 font-medium">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    Sans CB pendant l'essai
+                  </p>
+                  <p className="text-xs text-gray-400">Annulation a tout moment</p>
+                </div>
               </div>
             </motion.div>
 

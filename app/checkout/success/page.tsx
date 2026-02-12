@@ -14,6 +14,7 @@ function CheckoutSuccessContent() {
   const searchParams = useSearchParams();
   const { refreshUserProfile, userProfile } = useAuth();
   const sessionId = searchParams.get("session_id");
+  const redirectAfterSuccess = searchParams.get("redirect");
   const isTrialing = userProfile?.subscription?.status === "trialing";
 
   const [isLoading, setIsLoading] = useState(true);
@@ -50,26 +51,48 @@ function CheckoutSuccessContent() {
       }, 250);
     };
 
-    // Refresh user profile to get updated subscription
-    const refreshAndCelebrate = async () => {
-      try {
-        await refreshUserProfile();
-        triggerConfetti();
-      } catch (error) {
-        console.error("Error refreshing profile:", error);
-      } finally {
-        setIsLoading(false);
+    // Poll subscription status until it's updated or timeout
+    const pollSubscriptionStatus = async () => {
+      const maxAttempts = 10; // 10 seconds max
+      let attempts = 0;
+
+      while (attempts < maxAttempts) {
+        try {
+          await refreshUserProfile();
+
+          // Check if subscription status is valid
+          const currentStatus = userProfile?.subscription?.status;
+          if (currentStatus === "trialing" || currentStatus === "active") {
+            // Success! Status is updated
+            triggerConfetti();
+            setIsLoading(false);
+            return;
+          }
+        } catch (error) {
+          console.error("Error refreshing profile:", error);
+        }
+
+        attempts++;
+
+        // Wait 1 second before next attempt
+        if (attempts < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
       }
+
+      // Timeout reached - show success anyway (webhook might still be processing)
+      console.warn("Subscription status polling timeout - displaying success page");
+      triggerConfetti();
+      setIsLoading(false);
     };
 
     if (sessionId) {
-      // Small delay to allow webhook to process
-      const timeout = setTimeout(refreshAndCelebrate, 1500);
-      return () => clearTimeout(timeout);
+      // Start polling for subscription status
+      pollSubscriptionStatus();
     } else {
       setIsLoading(false);
     }
-  }, [sessionId, refreshUserProfile]);
+  }, [sessionId, refreshUserProfile, userProfile?.subscription?.status]);
 
   const planName = userProfile?.subscription?.plan === "max" ? "Max" :
                    userProfile?.subscription?.plan === "pro" ? "Pro" : "Gratuit";
@@ -130,11 +153,55 @@ function CheckoutSuccessContent() {
           }
         </motion.p>
 
-        {/* Benefits */}
+        {/* Quick Start Guide */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
+          className="bg-gradient-to-br from-primary/10 via-accent/5 to-transparent border border-primary/20 rounded-2xl p-6 mb-6 text-left"
+        >
+          <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
+            <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            Créez votre premier post en 3 étapes
+          </h3>
+          <div className="space-y-3">
+            <div className="flex gap-3">
+              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-sm font-bold">
+                1
+              </div>
+              <div>
+                <p className="text-sm font-medium text-white">Décrivez votre objectif</p>
+                <p className="text-xs text-text-muted mt-0.5">Ex: "Générer des leads pour mon agence de développement web"</p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-sm font-bold">
+                2
+              </div>
+              <div>
+                <p className="text-sm font-medium text-white">Posty analyse votre profil</p>
+                <p className="text-xs text-text-muted mt-0.5">L'IA calibre le message pour votre audience et votre marché</p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-sm font-bold">
+                3
+              </div>
+              <div>
+                <p className="text-sm font-medium text-white">Publiez ou programmez</p>
+                <p className="text-xs text-text-muted mt-0.5">Copiez-collez sur LinkedIn ou planifiez pour plus tard</p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Benefits */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.55 }}
           className="bg-dark-card border border-dark-border rounded-2xl p-6 mb-8 text-left"
         >
           <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
@@ -178,12 +245,12 @@ function CheckoutSuccessContent() {
           transition={{ delay: 0.6 }}
           className="flex flex-col sm:flex-row gap-4 justify-center"
         >
-          <Link href="/chat">
+          <Link href={redirectAfterSuccess || "/chat"}>
             <Button className="w-full sm:w-auto">
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
-              Commencer à créer
+              {redirectAfterSuccess ? "Continuer" : "Commencer à créer"}
             </Button>
           </Link>
           <Link href="/profile">

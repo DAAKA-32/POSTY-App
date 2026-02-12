@@ -104,6 +104,9 @@ function SubscriptionContent() {
     setIsLoading(plan.id);
 
     try {
+      // Get redirect param to pass through checkout flow
+      const redirectAfterSuccess = searchParams.get("redirect");
+
       // Create checkout session (with trial if eligible)
       const response = await fetch("/api/stripe/checkout", {
         method: "POST",
@@ -114,6 +117,7 @@ function SubscriptionContent() {
           plan: plan.id,
           interval: billingPeriod,
           withTrial: canStartTrial,
+          redirectAfterSuccess: redirectAfterSuccess || undefined,
         }),
       });
 
@@ -190,9 +194,42 @@ function SubscriptionContent() {
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-4">
             {t.pricing.title}
           </h1>
-          <p className="text-lg text-gray-600 dark:text-text-secondary max-w-2xl mx-auto mb-10">
+          <p className="text-lg text-gray-600 dark:text-text-secondary max-w-2xl mx-auto mb-6">
             {t.pricing.subtitleFull}
           </p>
+
+          {/* Contextual Message - Show reason for redirect */}
+          {searchParams.get("reason") && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="max-w-2xl mx-auto mb-8"
+            >
+              <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800/40 rounded-xl p-4 flex items-start gap-3">
+                <svg className="w-5 h-5 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-orange-900 dark:text-orange-200 mb-1">
+                    {searchParams.get("reason") === "subscription_required"
+                      ? "Abonnement requis"
+                      : searchParams.get("reason") === "trial_expired"
+                      ? "Essai terminé"
+                      : "Mise à niveau nécessaire"
+                    }
+                  </p>
+                  <p className="text-xs text-orange-700 dark:text-orange-300">
+                    {searchParams.get("reason") === "subscription_required"
+                      ? "Un abonnement actif est nécessaire pour accéder à cette fonctionnalité. Commencez votre essai gratuit dès maintenant !"
+                      : searchParams.get("reason") === "trial_expired"
+                      ? "Votre période d'essai est terminée. Choisissez un plan pour continuer à profiter de Posty."
+                      : "Cette fonctionnalité nécessite un abonnement premium."
+                    }
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
 
           {/* Billing Period Selection - Unified Toggle Style */}
           <BillingToggle
@@ -694,6 +731,16 @@ function PricingCard({
               )}
             </span>
           </motion.button>
+
+          {/* Trial reassurance badge - shown below CTA if trial eligible */}
+          {trialEligible && !isCurrentPlan && !isFree && (
+            <div className="mt-1.5 sm:mt-2 flex items-center justify-center gap-1 text-[9px] sm:text-[10px] md:text-xs text-primary dark:text-primary-light">
+              <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              <span className="font-medium">Sans CB pendant l'essai</span>
+            </div>
+          )}
         </div>
 
         {/* ZONE 4: Features list (flexible, grows to fill space) */}

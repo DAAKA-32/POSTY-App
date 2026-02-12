@@ -1,17 +1,31 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function PricingPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { t } = useLanguage();
 
   useEffect(() => {
-    // Redirect to the main subscription page
-    router.replace("/subscription");
-  }, [router]);
+    // Transfer query params to subscription page
+    const redirect = searchParams.get("redirect");
+    const reason = searchParams.get("reason");
+
+    let targetUrl = "/subscription";
+    const params = new URLSearchParams();
+
+    if (redirect) params.append("redirect", redirect);
+    if (reason) params.append("reason", reason);
+
+    if (params.toString()) {
+      targetUrl += `?${params.toString()}`;
+    }
+
+    router.replace(targetUrl);
+  }, [router, searchParams]);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
