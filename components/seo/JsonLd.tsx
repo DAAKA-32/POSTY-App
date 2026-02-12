@@ -689,7 +689,7 @@ export function AboutPageJsonLd() {
     },
     contactPoint: {
       "@type": "ContactPoint",
-      email: "contact@posty.app",
+      email: seoConfig.supportEmail,
       contactType: "customer support",
     },
   };

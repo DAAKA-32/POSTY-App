@@ -16,11 +16,11 @@ export const seoConfig = {
 
   // Social
   twitterHandle: "@posty_app",
-  ogImageDefault: "/og-image.png",
+  ogImageDefault: "/og-image.jpg",
 
   // Contact
-  supportEmail: "support@posty.app",
-  privacyEmail: "privacy@posty.app",
+  supportEmail: "posty.contact@gmail.com",
+  privacyEmail: "posty.contact@gmail.com",
 
   // Founder - E-E-A-T: Authoritativeness
   founder: {
