@@ -27,6 +27,14 @@ const teamMembers = [
     bio: "En charge du financement et de la stratégie publicitaire de Posty. Je pilote les campagnes d'acquisition et le développement commercial pour accélérer la croissance de l'entreprise.",
     expertise: ["Financement", "Publicité & Acquisition", "Stratégie Commerciale"],
   },
+  {
+    name: "Jean Bouchand",
+    role: "Designer Marketing",
+    photo: "/mark.jpg",
+    linkedIn: null,
+    bio: "Responsable de l'identité visuelle et de la stratégie de marque de Posty. Je conçois les supports marketing et m'assure que chaque point de contact reflète notre vision d'un SaaS premium et accessible.",
+    expertise: ["Design Graphique", "Branding", "Marketing Visuel", "UI/UX Design"],
+  },
 ];
 
 // =============================================================================
