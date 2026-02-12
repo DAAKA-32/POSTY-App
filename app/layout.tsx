@@ -263,6 +263,7 @@ export default function RootLayout({
                         <SchedulingProvider>
                           {children}
                           <GlobalCommandPalette />
+                          <DevQuickActions />
                         </SchedulingProvider>
                       </ThreadsProvider>
                     </FacebookProvider>
@@ -273,7 +274,6 @@ export default function RootLayout({
             <PremiumToaster />
           </AuthProvider>
           <DevTools />
-          <DevQuickActions />
           <CookieBanner />
           <LegalUpdateNotification />
         </AppProvider>
