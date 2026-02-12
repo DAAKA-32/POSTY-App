@@ -184,7 +184,7 @@ export default function AnimatedMacBook({
       });
       gsap.set(lidRef.current, {
         rotateX: -90, // Fully closed
-        transformOrigin: "center bottom"
+        transformOrigin: "50% 100%" // Bottom center - exact pixel alignment
       });
       gsap.set(glowRef.current, { scale: 0.3, opacity: 0 });
       gsap.set(perspectiveRef.current, { perspectiveOrigin: "50% 58%" });
@@ -234,9 +234,9 @@ export default function AnimatedMacBook({
         ease: shouldSimplify ? "power3.out" : "back.out(1.5)",
       });
 
-      // Perspective shifts from edge-on to "looking from below" as lid opens
+      // Perspective shifts subtly - minimal change to preserve proportions
       tl.to(perspectiveRef.current, {
-        perspectiveOrigin: "50% 85%",
+        perspectiveOrigin: "50% 70%", // Reduced from 85% - less distortion
         duration: shouldSimplify ? 0.3 : 0.45,
         ease: "power2.inOut",
       }, "<");
@@ -314,19 +314,21 @@ export default function AnimatedMacBook({
           {/* ============================================================ */}
           <div
             ref={lidRef}
-            className="relative"
+            className="relative w-full"
             style={{
               transformStyle: "preserve-3d",
-              transformOrigin: "center bottom",
+              transformOrigin: "50% 100%", // Bottom center - exact pixel alignment
             }}
           >
             {/* ========== LID BACK FACE (Aluminum exterior with Apple logo) ========== */}
             <div
-              className="absolute inset-0 rounded-t-[12px] sm:rounded-t-[16px] md:rounded-t-[20px]"
+              className="absolute inset-0 w-full rounded-t-[12px] sm:rounded-t-[16px] md:rounded-t-[20px]"
               style={{
                 transform: "rotateX(180deg)",
                 backfaceVisibility: "hidden",
                 transformStyle: "preserve-3d",
+                width: "100%", // Explicit width constraint
+                maxWidth: "100%", // Prevent overflow
               }}
             >
               {/* Aluminum body with premium finish */}
@@ -371,10 +373,14 @@ export default function AnimatedMacBook({
             {/* Hidden when lid is closed to prevent visual artifacts, revealed when opening */}
             {/* Screen outer frame - Aluminum housing */}
             <div
-              className={`relative bg-gradient-to-b from-[#e8e8ed] via-[#d4d4d9] to-[#c0c0c5] rounded-t-[12px] sm:rounded-t-[16px] md:rounded-t-[20px] p-[3px] sm:p-[4px] md:p-[5px] shadow-[0_-2px_10px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.8)] transition-opacity duration-200 ${
+              className={`relative w-full bg-gradient-to-b from-[#e8e8ed] via-[#d4d4d9] to-[#c0c0c5] rounded-t-[12px] sm:rounded-t-[16px] md:rounded-t-[20px] p-[3px] sm:p-[4px] md:p-[5px] shadow-[0_-2px_10px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.8)] transition-opacity duration-200 ${
                 lidIsOpening ? "opacity-100" : "opacity-0"
               }`}
-              style={{ backfaceVisibility: "hidden" }}
+              style={{
+                backfaceVisibility: "hidden",
+                width: "100%", // Explicit width constraint
+                maxWidth: "100%", // Prevent overflow
+              }}
             >
 
               {/* Screen bezel - Dark frame */}

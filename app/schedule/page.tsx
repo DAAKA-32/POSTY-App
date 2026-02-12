@@ -559,7 +559,7 @@ function ScheduleContent() {
 
 export default function SchedulePage() {
   return (
-    <ProtectedRoute>
+    <ProtectedRoute requireOnboarding requireSubscription>
       <ScheduleContent />
     </ProtectedRoute>
   );

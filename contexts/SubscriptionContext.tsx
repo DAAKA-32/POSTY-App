@@ -304,6 +304,14 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
         loading: false,
         error: null,
       });
+
+      // Set cookies for middleware to use for server-side protection
+      // These cookies allow the middleware to check subscription status before rendering pages
+      if (typeof document !== "undefined") {
+        // Set subscription status cookie (expires in 1 hour - will refresh on next load)
+        document.cookie = `subscription_status=${subscription.status}; path=/; max-age=3600; SameSite=Strict`;
+        document.cookie = `subscription_plan=${subscription.plan}; path=/; max-age=3600; SameSite=Strict`;
+      }
     } catch (error) {
       console.error("Error loading subscription:", error);
       setState(prev => ({

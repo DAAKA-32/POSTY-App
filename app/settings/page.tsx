@@ -771,7 +771,7 @@ function SettingsContent() {
 
 export default function SettingsPage() {
   return (
-    <ProtectedRoute>
+    <ProtectedRoute requireOnboarding requireSubscription>
       <SettingsContent />
     </ProtectedRoute>
   );

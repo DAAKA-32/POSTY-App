@@ -961,7 +961,7 @@ function AnalyticsContent() {
 
 export default function AnalyticsPage() {
   return (
-    <ProtectedRoute>
+    <ProtectedRoute requireOnboarding requireSubscription>
       <AnalyticsContent />
     </ProtectedRoute>
   );

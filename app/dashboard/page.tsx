@@ -16,21 +16,15 @@ import StyleDistributionChart from "@/components/dashboard/StyleDistributionChar
 import InsightsSection from "@/components/dashboard/InsightsSection";
 import DashboardOnboarding from "@/components/dashboard/DashboardOnboarding";
 import { AnimatedLogo } from "@/components/ui/Logo";
+import ProtectedRoute from "@/components/layout/ProtectedRoute";
 
-export default function DashboardPage() {
+function DashboardContent() {
   const { user, userProfile, loading } = useAuth();
   const router = useRouter();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
-
-  // Redirect if not authenticated
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push("/login");
-    }
-  }, [user, loading, router]);
 
   // Fetch stats and check onboarding
   useEffect(() => {
@@ -51,10 +45,10 @@ export default function DashboardPage() {
       }
     }
 
-    if (user) {
+    if (!loading && user) {
       fetchData();
     }
-  }, [user]);
+  }, [user, loading]);
 
   // Animate in
   useEffect(() => {
@@ -409,5 +403,13 @@ export default function DashboardPage() {
         </div>
       </footer>
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <ProtectedRoute requireOnboarding requireSubscription>
+      <DashboardContent />
+    </ProtectedRoute>
   );
 }

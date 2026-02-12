@@ -3,15 +3,18 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import SubscriptionGuard from "./SubscriptionGuard";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requireOnboarding?: boolean;
+  requireSubscription?: boolean;
 }
 
 export default function ProtectedRoute({
   children,
   requireOnboarding = false,
+  requireSubscription = false,
 }: ProtectedRouteProps) {
   const { user, userProfile, loading } = useAuth();
   const router = useRouter();
@@ -52,6 +55,11 @@ export default function ProtectedRoute({
   // Don't render if onboarding required but not completed
   if (requireOnboarding && userProfile && !userProfile.onboardingComplete) {
     return null;
+  }
+
+  // If subscription is required, wrap children with SubscriptionGuard
+  if (requireSubscription) {
+    return <SubscriptionGuard>{children}</SubscriptionGuard>;
   }
 
   return <>{children}</>;

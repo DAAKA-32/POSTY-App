@@ -712,7 +712,7 @@ function HistoryContent() {
 
 export default function HistoryPage() {
   return (
-    <ProtectedRoute>
+    <ProtectedRoute requireOnboarding requireSubscription>
       <HistoryContent />
     </ProtectedRoute>
   );

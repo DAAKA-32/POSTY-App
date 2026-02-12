@@ -1074,7 +1074,7 @@ function AppContent() {
 
 export default function AppPage() {
   return (
-    <ProtectedRoute requireOnboarding>
+    <ProtectedRoute requireOnboarding requireSubscription>
       <AppContent />
     </ProtectedRoute>
   );
