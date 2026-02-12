@@ -1213,7 +1213,7 @@ function DemoSection() {
                   delay: hasAnimated ? 0.15 : 0,
                   ease: [0.16, 1, 0.3, 1],
                 }}
-                className="max-w-4xl mx-auto"
+                className="max-w-[1084px] mx-auto"
               >
                 {/* Main demo card */}
                 <div className="relative bg-white border border-gray-200/60 rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl shadow-gray-400/20">
