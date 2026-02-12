@@ -9,7 +9,7 @@ import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useChat } from "@/hooks/useChat";
 import { useSmartScroll } from "@/hooks/useSmartScroll";
 import { useKeyboardHeight } from "@/hooks/useKeyboardHeight";
-import { getUserPostsWithPinned } from "@/lib/firestore";
+import { getUserPostsWithPinned, getDualModeUsageThisWeek } from "@/lib/firestore";
 import { Post } from "@/types";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import MainLayout from "@/components/layout/MainLayout";
@@ -17,6 +17,7 @@ import ChatMessage, { TypingIndicator } from "@/components/chat/ChatMessage";
 import ModernAIResponsePair from "@/components/chat/ModernAIResponsePair";
 import ModernResponseCard from "@/components/chat/ModernResponseCard";
 import ModernStyleSelector from "@/components/chat/ModernStyleSelector";
+import DualModeToggle from "@/components/chat/DualModeToggle";
 import { getPlanFeatures } from "@/lib/plan-features";
 import NewResponseIndicator from "@/components/chat/NewResponseIndicator";
 import { PostInsights } from "@/components/post";
@@ -115,7 +116,7 @@ function AppContent() {
   const { user, userProfile } = useAuth();
   const { connection: linkedInConnection, publishToLinkedIn } = useLinkedIn();
   const { canSendMessage } = useQuota();
-  const { isMaxPlan, currentPlan, planLimits } = useSubscription();
+  const { isMaxPlan, isProPlan, currentPlan, planLimits } = useSubscription();
   const [posts, setPosts] = useState<Post[]>([]);
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [publishContent, setPublishContent] = useState("");
@@ -136,6 +137,10 @@ function AppContent() {
   // Style selection state (PRO plan feature)
   const [selectedStyle, setSelectedStyle] = useState<"storytelling" | "business">("business");
 
+  // Dual mode state (Pro: 3/week, Max: always on)
+  const [dualMode, setDualMode] = useState(false);
+  const [dualUsedThisWeek, setDualUsedThisWeek] = useState(0);
+
   // Track session activity for intelligent upgrade CTA timing
   const [sessionStartTime] = useState(Date.now());
   const [sessionMessageCount, setSessionMessageCount] = useState(0);
@@ -151,6 +156,13 @@ function AppContent() {
   useEffect(() => {
     setBrowserModeCSSVars(browserMode);
   }, [browserMode]);
+
+  // Load dual mode usage for Pro users
+  useEffect(() => {
+    if (user?.uid && isProPlan && planLimits.dualResponsesPerWeek > 0) {
+      getDualModeUsageThisWeek(user.uid).then(setDualUsedThisWeek).catch(() => {});
+    }
+  }, [user?.uid, isProPlan, planLimits.dualResponsesPerWeek]);
 
   // Voice recording state
   const [isRecording, setIsRecording] = useState(false);
@@ -174,6 +186,7 @@ function AppContent() {
     userId: user?.uid,
     isGuest: false,
     selectedStyle,
+    dualMode: dualMode || isMaxPlan, // Max always dual, Pro when toggled
   });
 
   // Smart scroll: only auto-scroll when user is near bottom
@@ -457,6 +470,10 @@ function AppContent() {
     await generate(prompt);
     // Track post generation for activation rate analytics
     trackPostGeneration();
+    // Refresh dual mode usage counter for Pro users
+    if (user?.uid && isProPlan && planLimits.dualResponsesPerWeek > 0) {
+      getDualModeUsageThisWeek(user.uid).then(setDualUsedThisWeek).catch(() => {});
+    }
   };
 
   const handleSubmit = async () => {
@@ -648,9 +665,10 @@ function AppContent() {
               <div className="space-y-6 mb-8 w-full">
                 <AnimatePresence mode="popLayout">
                   {(() => {
-                    // Get response mode based on plan (dual = 2 versions, else single)
+                    // Get response mode based on plan
+                    // Pro: limited dual (3/week), Max: unlimited dual
                     const planFeatures = getPlanFeatures(currentPlan);
-                    const isDualMode = planFeatures.responseMode === "dual";
+                    const isDualMode = planFeatures.responseMode === "dual" || planLimits.hasDualResponseMode;
 
                     // Group messages: user messages standalone, AI responses based on plan
                     const elements: React.ReactNode[] = [];
@@ -878,13 +896,15 @@ function AppContent() {
               sessionDuration={sessionDuration}
             />
 
-            {/* Modern Style Selector - ONLY for PRO plan */}
-            {currentPlan === "pro" && (
+            {/* Style Selector + Dual Mode Toggle - PRO and MAX plans */}
+            {(isProPlan || isMaxPlan) && (
               <div className="mb-3 flex justify-center">
-                <ModernStyleSelector
-                  selectedStyle={selectedStyle}
-                  onStyleChange={setSelectedStyle}
-                  disabled={isLoading || isStreaming}
+                <DualModeToggle
+                  enabled={dualMode || isMaxPlan}
+                  onToggle={(val) => setDualMode(val)}
+                  responseType={selectedStyle}
+                  onResponseTypeChange={setSelectedStyle}
+                  dualUsedThisWeek={dualUsedThisWeek}
                 />
               </div>
             )}

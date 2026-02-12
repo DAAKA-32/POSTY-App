@@ -66,7 +66,7 @@ export type SubscriptionStatus = "active" | "inactive" | "canceled" | "past_due"
 // ============================================
 
 /** Trial period duration in days */
-export const TRIAL_PERIOD_DAYS = 3;
+export const TRIAL_PERIOD_DAYS = 7;
 
 /** Money-back guarantee period in days (after first payment post-trial) */
 export const GUARANTEE_PERIOD_DAYS = 7;
@@ -178,6 +178,7 @@ export interface PlanLimits {
   hasPriorityProcessing: boolean;
   hasEarlyAccess: boolean;
   hasDualResponseMode: boolean; // Storytelling + Business dual responses
+  dualResponsesPerWeek: number; // -1 = unlimited, 0 = disabled
 
   // Multi-Platform Publishing
   allowedPlatforms: Platform[];
@@ -237,6 +238,7 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
       hasPriorityProcessing: false,
       hasEarlyAccess: false,
       hasDualResponseMode: false,
+      dualResponsesPerWeek: 0, // No dual mode
       // Multi-Platform: LinkedIn only
       allowedPlatforms: ["linkedin"],
       maxPlatformConnections: 1,
@@ -272,7 +274,8 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
       hasAudienceTargeting: false,
       hasPriorityProcessing: false,
       hasEarlyAccess: false,
-      hasDualResponseMode: false,
+      hasDualResponseMode: true, // Limited dual mode (3/week)
+      dualResponsesPerWeek: 3, // 3 dual generations per week
       // Multi-Platform: LinkedIn + Reddit
       allowedPlatforms: ["linkedin", "reddit"],
       maxPlatformConnections: 2,
@@ -309,6 +312,7 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
       hasPriorityProcessing: true,
       hasEarlyAccess: true,
       hasDualResponseMode: true, // Storytelling + Business simultanés
+      dualResponsesPerWeek: -1, // Unlimited
       // Multi-Platform: All 4 platforms + simultaneous publishing
       allowedPlatforms: ["linkedin", "reddit", "threads", "facebook"],
       maxPlatformConnections: 4, // All platforms
@@ -938,8 +942,11 @@ export function getPlanFeaturesDynamic(plan: PlanConfig): FeatureItem[] {
 
   // Dual response mode (Storytelling + Business)
   if (limits.hasDualResponseMode) {
+    const dualText = limits.dualResponsesPerWeek === -1
+      ? "Mode Storytelling + Business"
+      : `Mode Storytelling + Business (${limits.dualResponsesPerWeek}/sem.)`;
     features.push({
-      text: "Mode Storytelling + Business",
+      text: dualText,
       included: true,
       highlight: true
     });

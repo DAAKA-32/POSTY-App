@@ -822,20 +822,6 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
             )}
           </motion.div>
 
-          {/* Security badge - Premium styling */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5, duration: 0.4 }}
-            className="mt-4 sm:mt-6 flex items-center justify-center"
-          >
-            <div className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-50 rounded-full border border-gray-100 shadow-sm">
-              <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-emerald-100 flex items-center justify-center">
-                <LockIcon className="w-2 h-2 sm:w-2.5 sm:h-2.5 text-emerald-600" />
-              </div>
-              <span className="text-[10px] sm:text-xs text-gray-600 font-medium">{t.auth.securedSSL}</span>
-            </div>
-          </motion.div>
         </motion.div>
       </AnimatePresence>
 

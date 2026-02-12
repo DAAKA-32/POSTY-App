@@ -133,8 +133,8 @@ export const fr = {
     startFreeDesc: "3 posts LinkedIn gratuits par semaine. Sans engagement.",
     startFreeDescFull: "Commencez avec 3 posts gratuits par semaine. Passez en Pro pour un accès illimité.",
     viewPlans: "Voir les offres",
-    noCardRequired: "Sans carte bancaire",
-    noCardRequiredFull: "Aucune carte bancaire requise",
+    noCardRequired: "Essai gratuit 7 jours",
+    noCardRequiredFull: "Essai gratuit 7 jours, annulation a tout moment",
     privateData: "Données sécurisées",
 
     // Chat mockup - Contextual
@@ -375,7 +375,7 @@ export const fr = {
     suggestionNews: "Une actualité de mon secteur",
     newPost: "Nouveau post",
     placeholderLinkedin: "Ex: Un post sur mes 3 erreurs de manager...",
-    // Dual response mode (Max plan feature)
+    // Dual response mode (Pro: 3/week, Max: unlimited)
     dualMode: {
       toggle: "Mode double réponse",
       toggleDesc: "Obtenez Storytelling et Business simultanément",
@@ -384,9 +384,9 @@ export const fr = {
       maxOnly: "Max",
       maxExclusive: "Exclusif au plan Max",
       upgradeTitle: "Fonctionnalité Premium",
-      upgradeDesc: "Cette fonctionnalité est réservée au plan Max. Passez au plan Max pour obtenir deux réponses distinctes (Storytelling et Business) à chaque prompt.",
-      upgradeButton: "Passer au plan Max",
-      singleResponseInfo: "Vous recevez une réponse standard. Passez au plan Max pour obtenir les versions Storytelling et Business.",
+      upgradeDesc: "Passez au plan Max pour obtenir deux réponses distinctes (Storytelling et Business) de manière illimitée.",
+      upgradeButton: "Passer au Max",
+      singleResponseInfo: "Passez au Pro pour accéder au mode double réponse (3/sem.) ou au Max pour un accès illimité.",
     },
   },
 
@@ -838,8 +838,8 @@ export const fr = {
     subtitle: "Tout ce que vous devez savoir sur Posty",
 
     // Question 1 - Free/pricing
-    q1: "Posty est-il gratuit ?",
-    a1: "Oui, Posty propose une offre gratuite avec 3 posts LinkedIn par semaine. Pour un usage illimité, vous pouvez passer à l'offre Pro. Aucune carte bancaire n'est requise pour commencer.",
+    q1: "Posty propose-t-il un essai gratuit ?",
+    a1: "Oui, Posty propose un essai gratuit de 7 jours avec accès complet aux fonctionnalités Pro. Une carte bancaire est requise pour activer l'essai. Vous pouvez annuler à tout moment pendant la période d'essai sans être débité. Après l'essai, vous bénéficiez d'une garantie satisfait ou remboursé de 7 jours.",
 
     // Question 2 - Core feature differentiation
     q2: "Quelle est la différence entre les versions Storytelling et Business ?",

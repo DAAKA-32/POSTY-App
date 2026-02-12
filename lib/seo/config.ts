@@ -181,7 +181,7 @@ export const localizedPageSeo = {
     fr: {
       title: "Inscription Gratuite | POSTY - Générateur de Posts LinkedIn IA",
       description:
-        "Créez votre compte POSTY gratuitement et commencez à générer des posts LinkedIn impactants avec l'IA. Sans carte bancaire.",
+        "Créez votre compte POSTY et commencez à générer des posts LinkedIn impactants avec l'IA. Essai gratuit 7 jours.",
       keywords: ["inscription POSTY", "créer compte POSTY", "essai gratuit LinkedIn IA"],
     },
     en: {

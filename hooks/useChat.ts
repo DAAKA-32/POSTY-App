@@ -166,6 +166,7 @@ export function useChat({
             userId: userId || "guest",
             prompt,
             dualMode,
+            requestDualMode: dualMode, // Server-side dual mode enforcement
             responseType: effectiveStyle,
             selectedStyle: effectiveStyle,
             // NEW: Send conversation context for follow-ups

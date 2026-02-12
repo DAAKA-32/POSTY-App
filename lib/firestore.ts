@@ -1085,6 +1085,34 @@ export async function incrementPublishCount(userId: string): Promise<void> {
   return incrementMessageCount(userId);
 }
 
+// ============== DUAL MODE WEEKLY QUOTA ==============
+
+/**
+ * Get dual-mode usage count for the current week (client-side)
+ */
+export async function getDualModeUsageThisWeek(userId: string): Promise<number> {
+  const userRef = doc(db, "users", userId);
+  const userSnap = await getDoc(userRef);
+
+  if (!userSnap.exists()) return 0;
+
+  const data = userSnap.data();
+
+  // Calculate current week start (Monday 00:00 UTC)
+  const now = new Date();
+  const day = now.getUTCDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  const weekStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + diff));
+
+  const lastDualWeekStart = data?.quota?.dualModeWeekStart?.toDate?.();
+
+  if (!lastDualWeekStart || lastDualWeekStart.getTime() < weekStart.getTime()) {
+    return 0;
+  }
+
+  return data?.quota?.dualModeCountThisWeek || 0;
+}
+
 /**
  * Update user subscription plan
  */

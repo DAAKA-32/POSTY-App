@@ -43,7 +43,7 @@ function ConversationContent() {
   const { user, userProfile } = useAuth();
   const { connection: linkedInConnection, publishToLinkedIn } = useLinkedIn();
   const { canSendMessage } = useQuota();
-  const { currentPlan, planLimits } = useSubscription();
+  const { currentPlan, planLimits, isMaxPlan, isProPlan } = useSubscription();
   const browserMode = useBrowserMode();
 
   // Conversation state
@@ -79,6 +79,7 @@ function ConversationContent() {
     userId: user?.uid,
     isGuest: false,
     conversationId,
+    dualMode: isMaxPlan || (isProPlan && planLimits.hasDualResponseMode),
   });
 
   // Smart scroll
@@ -334,9 +335,10 @@ function ConversationContent() {
               <div className="space-y-6 mb-8">
                 <AnimatePresence mode="popLayout">
                   {(() => {
-                    // Get response mode based on plan (dual = 2 versions, else single)
+                    // Get response mode based on plan
+                    // Pro: limited dual (3/week), Max: unlimited dual
                     const planFeatures = getPlanFeatures(currentPlan);
-                    const isDualMode = planFeatures.responseMode === "dual";
+                    const isDualMode = planFeatures.responseMode === "dual" || planLimits.hasDualResponseMode;
 
                     const elements: React.ReactNode[] = [];
                     let i = 0;

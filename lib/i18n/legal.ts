@@ -236,7 +236,7 @@ export const legalTranslations = {
       },
       trial: {
         title: "6.2 Période d'essai gratuite",
-        content: "Les plans Pro et Max bénéficient d'une période d'essai gratuite de 3 jours. Durant cette période, l'utilisateur a accès à l'ensemble des fonctionnalités du plan choisi sans aucun frais. Une carte bancaire valide est requise pour démarrer l'essai. Si l'utilisateur ne résilie pas avant la fin de la période d'essai, l'abonnement sera automatiquement activé et le premier paiement sera prélevé. L'utilisateur peut résilier à tout moment pendant la période d'essai sans aucun frais depuis les paramètres de l'application ou en contactant le support.",
+        content: "Les plans Pro et Max bénéficient d'une période d'essai gratuite de 7 jours. Durant cette période, l'utilisateur a accès à l'ensemble des fonctionnalités du plan choisi sans aucun frais. Une carte bancaire valide est requise pour démarrer l'essai. Si l'utilisateur ne résilie pas avant la fin de la période d'essai, l'abonnement sera automatiquement activé et le premier paiement sera prélevé. L'utilisateur peut résilier à tout moment pendant la période d'essai sans aucun frais depuis les paramètres de l'application ou en contactant le support.",
       },
       billing: {
         title: "6.3 Facturation et paiement",

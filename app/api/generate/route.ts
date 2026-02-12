@@ -15,6 +15,8 @@ import {
   checkUserQuotaAdmin,
   incrementUserQuotaAdmin,
   getUserProfileAdmin,
+  getDualModeUsageThisWeek,
+  incrementDualModeUsageAdmin,
 } from "@/lib/firestore-admin";
 import { isAdminInitialized } from "@/lib/firebase-admin";
 import { getPlanFeatures } from "@/lib/plan-features";
@@ -59,6 +61,7 @@ export async function POST(request: NextRequest) {
       model = "gpt-4",
       userProfile,
       selectedStyle = "business", // PRO users can choose style
+      requestDualMode = false, // Client requests dual mode (Pro: limited, Max: unlimited)
       // NEW: Conversation context for multi-turn support
       conversationId,
       conversationHistory,
@@ -193,16 +196,43 @@ export async function POST(request: NextRequest) {
 
     // ========== PLAN-BASED FEATURE ENFORCEMENT ==========
     // FREE: business-only (always business, no choice)
-    // PRO: single-choice (user can choose storytelling OR business)
-    // MAX: dual (generates both storytelling & business)
+    // PRO: single-choice by default, limited dual mode (3/week) when requested
+    // MAX: dual (generates both storytelling & business, unlimited)
     const planFeatures = getPlanFeatures(userPlan as SubscriptionPlan);
     const responseMode = planFeatures.responseMode;
 
     // Determine what type(s) of posts to generate based on plan
     let typesToGenerate: Array<"storytelling" | "business">;
+    let isDualGeneration = false;
+
     if (responseMode === "dual") {
-      // MAX plan: generate both
+      // MAX plan: always generate both (unlimited)
       typesToGenerate = ["storytelling", "business"];
+      isDualGeneration = true;
+    } else if (responseMode === "single-choice" && requestDualMode && planLimits.dualResponsesPerWeek !== 0) {
+      // PRO plan: user explicitly requested dual mode — check weekly limit
+      const dualLimit = planLimits.dualResponsesPerWeek;
+      if (dualLimit === -1) {
+        // Unlimited dual mode
+        typesToGenerate = ["storytelling", "business"];
+        isDualGeneration = true;
+      } else {
+        // Check weekly usage
+        let dualUsedThisWeek = 0;
+        try {
+          dualUsedThisWeek = await getDualModeUsageThisWeek(userId);
+        } catch (e) {
+          console.error("Error checking dual mode usage:", e);
+        }
+
+        if (dualUsedThisWeek < dualLimit) {
+          typesToGenerate = ["storytelling", "business"];
+          isDualGeneration = true;
+        } else {
+          // Limit reached, fall back to single-choice
+          typesToGenerate = [selectedStyle as "storytelling" | "business"];
+        }
+      }
     } else if (responseMode === "single-choice") {
       // PRO plan: user chooses
       typesToGenerate = [selectedStyle as "storytelling" | "business"];
@@ -303,6 +333,11 @@ export async function POST(request: NextRequest) {
           if (isAdminInitialized()) {
             try {
               await incrementUserQuotaAdmin(userId);
+
+              // Track dual mode usage for plans with weekly limits
+              if (isDualGeneration && planLimits.dualResponsesPerWeek > 0) {
+                await incrementDualModeUsageAdmin(userId);
+              }
 
               // Send updated quota info in the complete event
               const updatedQuota = await checkUserQuotaAdmin(userId);

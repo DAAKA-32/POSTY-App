@@ -116,16 +116,16 @@ function UpsellScreen({ onContinue, onUpgrade }: { onContinue: () => void; onUpg
   const proFeatures = [
     { text: "Personnalisation IA (secteur, rôle, style)", included: true },
     { text: "Posts illimités", included: true },
+    { text: "Double génération (3/sem.)", included: true },
     { text: "Historique complet", included: true },
     { text: "Ciblage audience avancé", included: false },
-    { text: "Ton de communication personnalisé", included: false },
   ];
 
   const maxFeatures = [
     { text: "Tout le plan Pro inclus", included: true },
+    { text: "Double génération illimitée", included: true },
     { text: "Ciblage audience avancé", included: true },
     { text: "Ton de communication personnalisé", included: true },
-    { text: "Double génération (Storytelling + Business)", included: true },
     { text: "Support prioritaire", included: true },
   ];
 
@@ -164,7 +164,7 @@ function UpsellScreen({ onContinue, onUpgrade }: { onContinue: () => void; onUpg
               transition={{ delay: 0.2, duration: 0.4, ease: smoothEase }}
               className="text-2xl font-bold text-gray-900 mb-3"
             >
-              Vos données sont sauvegardées
+              Profil sauvegardé
             </motion.h2>
             <motion.p
               initial={{ opacity: 0, y: 10 }}
@@ -172,7 +172,7 @@ function UpsellScreen({ onContinue, onUpgrade }: { onContinue: () => void; onUpg
               transition={{ delay: 0.3, duration: 0.4, ease: smoothEase }}
               className="text-gray-500 text-base"
             >
-              Vous pourrez activer la personnalisation IA a tout moment dans vos parametres.
+              Choisissez votre plan pour commencer a créer des posts.
             </motion.p>
 
             {/* Loading indicator */}
@@ -283,8 +283,9 @@ function UpsellScreen({ onContinue, onUpgrade }: { onContinue: () => void; onUpg
                   onClick={() => onUpgrade("pro")}
                   className="w-full py-3 px-4 bg-primary hover:bg-primary-hover text-white font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 text-sm"
                 >
-                  Activer le Pro
+                  Essayer 7 jours gratuitement
                 </button>
+                <p className="text-center text-xs text-gray-400 mt-2">Annulation a tout moment</p>
               </div>
 
               {/* Max card */}
@@ -314,8 +315,9 @@ function UpsellScreen({ onContinue, onUpgrade }: { onContinue: () => void; onUpg
                   onClick={() => onUpgrade("max")}
                   className="w-full py-3 px-4 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 text-sm"
                 >
-                  Activer le Max
+                  Essayer 7 jours gratuitement
                 </button>
+                <p className="text-center text-xs text-gray-400 mt-2">Annulation a tout moment</p>
               </div>
             </motion.div>
 
@@ -330,7 +332,7 @@ function UpsellScreen({ onContinue, onUpgrade }: { onContinue: () => void; onUpg
                 onClick={() => setShowReassurance(true)}
                 className="py-3 px-6 text-gray-400 hover:text-gray-600 font-medium text-sm transition-colors duration-200"
               >
-                Peut-être plus tard
+                Voir tous les plans
               </button>
             </motion.div>
           </motion.div>
@@ -362,12 +364,15 @@ export default function OnboardingPage() {
 
   const shouldShowOnboarding = needsOnboarding();
 
-  // Redirect logic
+  // Redirect logic — showUpsell must block ALL redirects to /app
   useEffect(() => {
     if (!loading) {
       if (!user) {
         router.push("/login");
-      } else if (userProfile?.onboardingComplete && !showUpsell) {
+      } else if (showUpsell) {
+        // Upsell screen is active — never redirect away
+        return;
+      } else if (userProfile?.onboardingComplete) {
         router.push("/app");
       } else if (!shouldShowOnboarding && userProfile) {
         router.push("/app");
@@ -438,18 +443,23 @@ export default function OnboardingPage() {
     setIsSubmitting(true);
     try {
       await completeOnboarding(user.uid, data);
+      // CRITICAL: Set showUpsell BEFORE refreshUserProfile/clearOnboardingFlag
+      // to prevent the redirect useEffect from navigating to /app
+      // during intermediate renders where onboardingComplete=true but showUpsell=false
+      setShowUpsell(true);
       await refreshUserProfile();
       clearOnboardingFlag();
-      setShowUpsell(true);
     } catch (error) {
       console.error("Onboarding error:", error);
       toast.error("Une erreur est survenue");
+      setShowUpsell(false);
       setIsSubmitting(false);
     }
   };
 
   const handleUpsellContinue = () => {
-    router.push("/app");
+    // New users must start a trial — redirect to subscription page (no free plan)
+    router.push("/subscription");
   };
 
   const handleUpsellUpgrade = (plan: "pro" | "max") => {

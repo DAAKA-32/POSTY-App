@@ -249,6 +249,74 @@ export async function incrementUserQuotaAdmin(userId: string): Promise<void> {
   });
 }
 
+// ============== DUAL MODE WEEKLY QUOTA ==============
+
+/**
+ * Get the start of the current week (Monday 00:00 UTC)
+ */
+function getWeekStartUTC(): Date {
+  const now = new Date();
+  const day = now.getUTCDay();
+  const diff = day === 0 ? -6 : 1 - day; // Monday = 1
+  const weekStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + diff));
+  return weekStart;
+}
+
+/**
+ * Check how many dual-mode generations the user has used this week
+ */
+export async function getDualModeUsageThisWeek(userId: string): Promise<number> {
+  if (!adminDb) {
+    throw new Error("Firebase Admin not initialized");
+  }
+
+  const userRef = adminDb.collection("users").doc(userId);
+  const userSnap = await userRef.get();
+
+  if (!userSnap.exists) return 0;
+
+  const data = userSnap.data();
+  const weekStart = getWeekStartUTC();
+  const lastDualWeekStart = data?.quota?.dualModeWeekStart?.toDate?.();
+
+  // If the stored week start doesn't match current week, count is 0
+  if (!lastDualWeekStart || lastDualWeekStart.getTime() < weekStart.getTime()) {
+    return 0;
+  }
+
+  return data?.quota?.dualModeCountThisWeek || 0;
+}
+
+/**
+ * Increment dual-mode usage counter for the current week
+ */
+export async function incrementDualModeUsageAdmin(userId: string): Promise<void> {
+  if (!adminDb) {
+    throw new Error("Firebase Admin not initialized");
+  }
+
+  const userRef = adminDb.collection("users").doc(userId);
+  const userSnap = await userRef.get();
+
+  const weekStart = getWeekStartUTC();
+
+  if (!userSnap.exists) return;
+
+  const data = userSnap.data();
+  const lastDualWeekStart = data?.quota?.dualModeWeekStart?.toDate?.();
+
+  let newCount = 1;
+  if (lastDualWeekStart && lastDualWeekStart.getTime() >= weekStart.getTime()) {
+    // Same week, increment
+    newCount = (data?.quota?.dualModeCountThisWeek || 0) + 1;
+  }
+
+  await userRef.update({
+    "quota.dualModeCountThisWeek": newCount,
+    "quota.dualModeWeekStart": Timestamp.fromDate(weekStart),
+  });
+}
+
 /**
  * Get user profile data (server-side)
  *

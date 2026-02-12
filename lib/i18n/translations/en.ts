@@ -133,8 +133,8 @@ export const en = {
     startFreeDesc: "3 free LinkedIn posts per week. No strings attached.",
     startFreeDescFull: "Start with 3 free posts per week. Upgrade to Pro for unlimited access.",
     viewPlans: "See pricing",
-    noCardRequired: "No credit card",
-    noCardRequiredFull: "No credit card required",
+    noCardRequired: "Free 7-day trial",
+    noCardRequiredFull: "Free 7-day trial, cancel anytime",
     privateData: "Data secured",
 
     // Chat mockup - Contextual
@@ -375,7 +375,7 @@ export const en = {
     suggestionNews: "News from my industry",
     newPost: "New post",
     placeholderLinkedin: "E.g., A post about my 3 biggest leadership mistakes...",
-    // Dual response mode (Max plan feature)
+    // Dual response mode (Pro: 3/week, Max: unlimited)
     dualMode: {
       toggle: "Dual response mode",
       toggleDesc: "Get Storytelling and Business simultaneously",
@@ -384,9 +384,9 @@ export const en = {
       maxOnly: "Max",
       maxExclusive: "Max plan exclusive",
       upgradeTitle: "Premium Feature",
-      upgradeDesc: "This feature is exclusive to the Max plan. Upgrade to Max to get two distinct responses (Storytelling and Business) for every prompt.",
+      upgradeDesc: "Upgrade to Max to get unlimited dual responses (Storytelling and Business) for every prompt.",
       upgradeButton: "Upgrade to Max",
-      singleResponseInfo: "You receive a standard response. Upgrade to Max to get both Storytelling and Business versions.",
+      singleResponseInfo: "Upgrade to Pro for dual response mode (3/week) or Max for unlimited access.",
     },
   },
 

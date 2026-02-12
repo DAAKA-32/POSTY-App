@@ -70,6 +70,14 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const [redirecting, setRedirecting] = useState(false);
   const prefersReducedMotion = useReducedMotion();
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   // Read ?mode=signup from URL to open signup form directly
   const initialMode = searchParams.get("mode") === "signup" ? "signup" : "login";
@@ -125,7 +133,7 @@ export default function LoginPage() {
         {/* ORANGE DOMINANT - top left */}
         <motion.div
           initial={{ opacity: 0.1, scale: 1 }}
-          animate={prefersReducedMotion ? {} : {
+          animate={(prefersReducedMotion || isMobile) ? {} : {
             opacity: [0.1, 0.18, 0.1],
             scale: [1, 1.1, 1],
           }}
@@ -135,7 +143,7 @@ export default function LoginPage() {
         {/* ROSE/PINK accent - top right */}
         <motion.div
           initial={{ opacity: 0.08, scale: 1 }}
-          animate={prefersReducedMotion ? {} : {
+          animate={(prefersReducedMotion || isMobile) ? {} : {
             opacity: [0.08, 0.15, 0.08],
             scale: [1, 1.12, 1],
           }}
@@ -145,7 +153,7 @@ export default function LoginPage() {
         {/* VIOLET premium - center */}
         <motion.div
           initial={{ opacity: 0.06, scale: 1 }}
-          animate={prefersReducedMotion ? {} : {
+          animate={(prefersReducedMotion || isMobile) ? {} : {
             opacity: [0.06, 0.12, 0.06],
             scale: [1, 1.08, 1],
           }}
@@ -155,7 +163,7 @@ export default function LoginPage() {
         {/* VERT success - bottom left */}
         <motion.div
           initial={{ opacity: 0.07, scale: 1 }}
-          animate={prefersReducedMotion ? {} : {
+          animate={(prefersReducedMotion || isMobile) ? {} : {
             opacity: [0.07, 0.13, 0.07],
             scale: [1, 1.1, 1],
           }}
@@ -165,7 +173,7 @@ export default function LoginPage() {
         {/* BLEU confiance - bottom right */}
         <motion.div
           initial={{ opacity: 0.08, scale: 1 }}
-          animate={prefersReducedMotion ? {} : {
+          animate={(prefersReducedMotion || isMobile) ? {} : {
             opacity: [0.08, 0.14, 0.08],
             scale: [1, 1.09, 1],
           }}
@@ -209,9 +217,11 @@ export default function LoginPage() {
         {/* Main content - Flexible area that can grow */}
         <motion.div
           variants={itemVariants}
-          className="flex-1 flex items-center justify-center py-4"
+          className="flex-1 flex flex-col py-4"
         >
-          <AuthPanel initialMode={initialMode} onSuccess={() => {}} />
+          <div className="my-auto">
+            <AuthPanel initialMode={initialMode} onSuccess={() => {}} />
+          </div>
         </motion.div>
 
         {/* Footer links - Always visible at bottom */}
@@ -274,14 +284,6 @@ export default function LoginPage() {
               />
             </motion.div>
 
-            {/* Brand name */}
-            <motion.span
-              variants={itemVariants}
-              className="font-semibold text-gray-900 text-3xl lg:text-4xl tracking-tight"
-            >
-              Posty
-            </motion.span>
-
             {/* Tagline */}
             <motion.p
               variants={itemVariants}
@@ -290,30 +292,6 @@ export default function LoginPage() {
               Vos posts LinkedIn, prêts en quelques secondes
             </motion.p>
 
-            {/* Trust badges */}
-            <motion.div
-              variants={itemVariants}
-              className="flex items-center gap-6 mt-4"
-            >
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className="flex items-center gap-2 text-gray-500"
-              >
-                <svg className="w-4 h-4 text-warm-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-                <span className="text-xs">SSL Sécurisé</span>
-              </motion.div>
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className="flex items-center gap-2 text-gray-500"
-              >
-                <svg className="w-4 h-4 text-warm-coral" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                <span className="text-xs">Rapide</span>
-              </motion.div>
-            </motion.div>
           </motion.div>
 
           {/* Back to home link */}
@@ -340,7 +318,7 @@ export default function LoginPage() {
           initial="hidden"
           animate="visible"
           variants={slideInRight}
-          className="fixed top-0 right-0 w-1/2 h-[100dvh] flex flex-col items-center justify-center p-6 lg:p-10 xl:p-14 bg-background-warm overflow-y-auto overflow-x-hidden overscroll-contain"
+          className="fixed top-0 right-0 w-1/2 h-[100dvh] flex flex-col items-center p-6 lg:p-10 xl:p-14 bg-background-warm overflow-y-auto overflow-x-hidden overscroll-contain"
         >
           {/* Spacer for centering */}
           <div className="flex-1" />

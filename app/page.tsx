@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { motion, AnimatePresence, useReducedMotion, useInView, useScroll, useTransform, useMotionValue, useSpring } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion, useInView, useScroll, useTransform, useMotionValue, useSpring, useMotionTemplate } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { getAllPlans, PlanConfig, PLAN_TAGLINES, getPlanCoreFeatures, getPlanSecondaryFeatures, getCTALabel, getSavingsText, FeatureItem } from "@/lib/plans";
 import BillingToggle from "@/components/ui/BillingToggle";
@@ -25,6 +25,18 @@ const colors = {
 // Premium animation easings - inspired by Linear, Notion
 const smoothEase = [0.25, 0.1, 0.25, 1] as const;
 const premiumEase = [0.22, 1, 0.36, 1] as const;
+
+// Lightweight mobile detection — avoids heavy infinite animations on mobile
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+  return isMobile;
+}
 
 // =============================================================================
 // NAVBAR - Premium Mobile-First Design (Stripe / Linear / Notion inspired)
@@ -130,8 +142,16 @@ function Navbar() {
   const [activeSection, setActiveSection] = useState<string>("");
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 50);
+    const handleScroll = () => {
+      // Trigger navbar effect only when the content section covers the fixed hero title.
+      // The hero spacer is min-h-[38vh] (mobile) / min-h-[45vh] (md+).
+      // Activate slightly before full coverage for a natural transition.
+      const isMd = window.innerWidth >= 768;
+      const threshold = window.innerHeight * (isMd ? 0.38 : 0.3);
+      setIsScrolled(window.scrollY > threshold);
+    };
     window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll(); // sync on mount
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -457,10 +477,10 @@ function Navbar() {
                   <svg className="w-3 h-3 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
-                  Sans carte bancaire
+                  Essai gratuit 7 jours
                 </span>
                 <span className="w-1 h-1 rounded-full bg-gray-300" />
-                <span>100% gratuit</span>
+                <span>Annulation a tout moment</span>
               </div>
             </motion.div>
           </div>
@@ -480,6 +500,7 @@ function HeroSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(sectionRef, { once: true, amount: 0.1 });
   const prefersReducedMotion = useReducedMotion();
+  const isMobile = useIsMobile();
 
   // Parallax effect for background elements
   const { scrollYProgress } = useScroll({
@@ -501,9 +522,9 @@ function HeroSection() {
           style={{ y: prefersReducedMotion ? 0 : bgY }}
           className="absolute inset-0 pointer-events-none"
         >
-          {/* Primary orange glow - top right */}
+          {/* Primary orange glow - top right (static on mobile to save GPU) */}
           <motion.div
-            animate={prefersReducedMotion ? {} : {
+            animate={(prefersReducedMotion || isMobile) ? {} : {
               scale: [1, 1.2, 1],
               opacity: [0.4, 0.6, 0.4],
             }}
@@ -512,7 +533,7 @@ function HeroSection() {
           />
           {/* Secondary coral glow - bottom left */}
           <motion.div
-            animate={prefersReducedMotion ? {} : {
+            animate={(prefersReducedMotion || isMobile) ? {} : {
               scale: [1, 1.15, 1],
               opacity: [0.3, 0.5, 0.3],
             }}
@@ -521,7 +542,7 @@ function HeroSection() {
           />
           {/* Subtle blue accent - center */}
           <motion.div
-            animate={prefersReducedMotion ? {} : {
+            animate={(prefersReducedMotion || isMobile) ? {} : {
               scale: [1, 1.1, 1],
               opacity: [0.15, 0.25, 0.15],
             }}
@@ -576,7 +597,7 @@ function HeroSection() {
             </motion.div>
 
             {/* Main headline */}
-            <h1 className="text-[2.5rem] sm:text-5xl lg:text-[3.25rem] xl:text-[3.75rem] 2xl:text-[4.25rem] font-bold text-gray-900 leading-[1.1] tracking-tight">
+            <h1 className="text-[2.5rem] sm:text-5xl lg:text-[3.25rem] xl:text-[3.75rem] 2xl:text-[4.25rem] font-bold text-gray-900 leading-[1.15] tracking-tight">
               <span className="block">Vos posts LinkedIn</span>
               <span className="block mt-1 lg:mt-2">
                 signent des{" "}
@@ -657,7 +678,7 @@ function HeroSection() {
                 <svg className="w-5 h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                Sans carte bancaire
+                Essai gratuit 7 jours
               </span>
               <span className="flex items-center gap-2">
                 <svg className="w-5 h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
@@ -698,7 +719,7 @@ function HeroSection() {
               >
                 {/* Floating animation */}
                 <motion.div
-                  animate={prefersReducedMotion ? {} : {
+                  animate={(prefersReducedMotion || isMobile) ? {} : {
                     y: [0, -8, 0],
                   }}
                   transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
@@ -725,7 +746,7 @@ function HeroSection() {
               >
                 {/* Subtle floating animation */}
                 <motion.div
-                  animate={prefersReducedMotion ? {} : {
+                  animate={(prefersReducedMotion || isMobile) ? {} : {
                     y: [0, -6, 0],
                   }}
                   transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
@@ -752,7 +773,7 @@ function HeroSection() {
               className="hidden lg:block absolute -left-4 xl:-left-8 top-1/4 z-30"
             >
               <motion.div
-                animate={prefersReducedMotion ? {} : {
+                animate={(prefersReducedMotion || isMobile) ? {} : {
                   y: [0, -5, 0],
                 }}
                 transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
@@ -780,7 +801,7 @@ function HeroSection() {
               className="hidden lg:block absolute -right-2 xl:right-4 bottom-1/4 z-30"
             >
               <motion.div
-                animate={prefersReducedMotion ? {} : {
+                animate={(prefersReducedMotion || isMobile) ? {} : {
                   y: [0, 5, 0],
                 }}
                 transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
@@ -1047,47 +1068,29 @@ function DemoSection() {
         {/* z-[1] so all scrolling content passes IN FRONT              */}
         {/* ============================================================ */}
         <div
-          className="fixed inset-x-0 top-0 z-[1] min-h-[50vh] md:min-h-[65vh] flex items-center justify-center px-4 sm:px-6 lg:px-8 pointer-events-none"
+          className="fixed inset-x-0 top-0 z-[1] min-h-[38vh] md:min-h-[45vh] flex items-center justify-center px-4 sm:px-6 lg:px-8 pt-16 md:pt-[68px] pointer-events-none bg-[#FEF3EE]"
         >
-          {/* Same background image as the rest of the landing page */}
+          {/* Subtle warm glow for depth — animated entrance */}
           <div className="absolute inset-0 overflow-hidden">
-            <Image
-              src="/background-landing.jpg"
-              alt=""
-              fill
-              className="object-cover object-center"
-              sizes="100vw"
-              priority
+            <motion.div
+              initial={{ opacity: 0, scale: 0.7 }}
+              animate={hasAnimated ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.7 }}
+              transition={{ duration: 1.2, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+              className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-[#F8935D]/[0.06] rounded-full blur-[120px]"
             />
           </div>
-          {/* Dark cinematic overlay for text readability */}
-          <div
-            className="absolute inset-0"
-            style={{
-              background: `linear-gradient(to bottom,
-                rgba(15, 15, 20, 0.93) 0%,
-                rgba(15, 15, 20, 0.88) 50%,
-                rgba(15, 15, 20, 0.8) 70%,
-                rgba(15, 15, 20, 0.55) 85%,
-                transparent 100%)`
-            }}
-          />
-          {/* Warm glow for depth on dark */}
-          <div className="absolute inset-0 overflow-hidden">
-            <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-[#F8935D]/[0.07] rounded-full blur-[120px]" />
-          </div>
 
-          <div className="relative text-center max-w-4xl mx-auto -mt-[5vh]">
+          <div className="relative text-center max-w-4xl mx-auto">
             {/* Main headline */}
             <motion.h1
-              initial={{ opacity: 0, y: 35, filter: "blur(8px)" }}
-              animate={hasAnimated ? { opacity: 1, y: 0, filter: "blur(0px)" } : { opacity: 0, y: 35, filter: "blur(8px)" }}
+              initial={{ opacity: 0, y: 24, filter: "blur(4px)" }}
+              animate={hasAnimated ? { opacity: 1, y: 0, filter: "blur(0px)" } : { opacity: 0, y: 24, filter: "blur(4px)" }}
               transition={{
-                duration: 0.6,
-                delay: hasAnimated ? 0.15 : 0,
-                ease: [0.22, 1, 0.36, 1],
+                duration: 0.7,
+                delay: hasAnimated ? 0.1 : 0,
+                ease: [0.16, 1, 0.3, 1],
               }}
-              className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] 2xl:text-[4rem] font-bold text-white leading-[1.1] tracking-tight"
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] 2xl:text-[4rem] font-bold text-gray-900 leading-[1.2] tracking-tight"
             >
               Vos posts LinkedIn,{" "}
               <br className="hidden sm:block" />
@@ -1098,14 +1101,14 @@ function DemoSection() {
 
             {/* Subheadline */}
             <motion.p
-              initial={{ opacity: 0, y: 25, filter: "blur(6px)" }}
-              animate={hasAnimated ? { opacity: 1, y: 0, filter: "blur(0px)" } : { opacity: 0, y: 25, filter: "blur(6px)" }}
+              initial={{ opacity: 0, y: 16, filter: "blur(3px)" }}
+              animate={hasAnimated ? { opacity: 1, y: 0, filter: "blur(0px)" } : { opacity: 0, y: 16, filter: "blur(3px)" }}
               transition={{
-                duration: 0.55,
-                delay: hasAnimated ? 0.3 : 0,
-                ease: [0.22, 1, 0.36, 1],
+                duration: 0.6,
+                delay: hasAnimated ? 0.25 : 0,
+                ease: [0.16, 1, 0.3, 1],
               }}
-              className="mt-5 md:mt-6 text-gray-400 text-base md:text-lg lg:text-xl max-w-2xl mx-auto leading-relaxed"
+              className="mt-5 md:mt-6 text-gray-500 text-base md:text-lg lg:text-xl max-w-2xl mx-auto leading-relaxed"
             >
               Décrivez votre objectif. Posty fait le reste.
             </motion.p>
@@ -1113,7 +1116,7 @@ function DemoSection() {
         </div>
 
         {/* Spacer — reserves the height the fixed title would occupy in normal flow */}
-        <div className="min-h-[50vh] md:min-h-[65vh]" />
+        <div className="min-h-[38vh] md:min-h-[45vh]" />
 
         {/* ============================================================ */}
         {/* CONTENT — MacBook, tabs, demo — z-[5] passes OVER the title */}
@@ -1122,27 +1125,18 @@ function DemoSection() {
 
           <div className="relative">
             {/* Opaque background to fully cover the sticky title */}
-            <div className="absolute inset-0 overflow-hidden">
-              <Image
-                src="/background-landing.jpg"
-                alt=""
-                fill
-                className="object-cover object-center"
-                sizes="100vw"
-              />
-              <div className="absolute inset-0 bg-[#FFF8F5]/85" />
-            </div>
+            <div className="absolute inset-0 bg-[#FEF3EE]" />
 
             <div className="relative z-10 px-4 sm:px-6 lg:px-8 pb-12">
 
           {/* Interactive View Mode Tabs */}
           <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={hasAnimated ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
+            initial={{ opacity: 0, y: 12 }}
+            animate={hasAnimated ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
             transition={{
-              duration: 0.4,
+              duration: 0.5,
               delay: hasAnimated ? 0.45 : 0,
-              ease: [0.22, 1, 0.36, 1],
+              ease: [0.16, 1, 0.3, 1],
             }}
             className="flex justify-center mb-4 md:mb-5"
           >
@@ -1211,13 +1205,13 @@ function DemoSection() {
             {viewMode === "demo" && (
               <motion.div
                 key="demo"
-                initial={{ opacity: 0, y: -40 }}
-                animate={hasAnimated ? { opacity: 1, y: 0 } : { opacity: 0, y: -40 }}
-                exit={{ opacity: 0, y: 15, transition: { duration: 0.2 } }}
+                initial={{ opacity: 0, y: -25, scale: 0.98 }}
+                animate={hasAnimated ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: -25, scale: 0.98 }}
+                exit={{ opacity: 0, y: 12, scale: 0.99, transition: { duration: 0.25, ease: [0.16, 1, 0.3, 1] } }}
                 transition={{
-                  duration: 0.5,
-                  delay: hasAnimated ? 0.2 : 0,
-                  ease: [0.25, 0.1, 0.25, 1],
+                  duration: 0.55,
+                  delay: hasAnimated ? 0.15 : 0,
+                  ease: [0.16, 1, 0.3, 1],
                 }}
                 className="max-w-4xl mx-auto"
               >
@@ -1333,8 +1327,9 @@ function DemoSection() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.3, delay: 0.2 + i * 0.08, ease: premiumEase }}
                             onClick={() => handleSend(suggestion.text)}
+                            whileHover={{ y: -2, boxShadow: "0 4px 12px rgba(248, 147, 93, 0.12)" }}
                             whileTap={{ scale: 0.98 }}
-                            className="w-full flex items-center gap-3.5 px-4 py-3 md:px-5 md:py-3.5 bg-white border border-gray-200 rounded-xl text-left text-sm md:text-[15px] text-gray-700 hover:border-[#F8935D]/50 hover:bg-[#F8935D]/5 hover:text-gray-900 transition-all duration-200 shadow-sm"
+                            className="w-full flex items-center gap-3.5 px-4 py-3 md:px-5 md:py-3.5 bg-white border border-gray-200 rounded-xl text-left text-sm md:text-[15px] text-gray-700 hover:border-[#F8935D]/50 hover:bg-[#F8935D]/5 hover:text-gray-900 transition-colors duration-200 shadow-sm"
                           >
                             <span className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#F8935D]/10 to-[#F76B54]/10 flex items-center justify-center text-[#F8935D] text-xs font-bold flex-shrink-0">
                               {i + 1}
@@ -2475,6 +2470,7 @@ const AUDIENCE_PROFILES = [
 function AudienceCard({ profile, index }: { profile: typeof AUDIENCE_PROFILES[number]; index: number }) {
   const accent = audienceAccents[profile.accent];
   const prefersReducedMotion = useReducedMotion();
+  const isMobile = useIsMobile();
   const cardRef = useRef<HTMLDivElement>(null);
 
   // 3D perspective tilt — desktop only, driven by cursor position
@@ -2488,6 +2484,7 @@ function AudienceCard({ profile, index }: { profile: typeof AUDIENCE_PROFILES[nu
   // Spotlight position for cursor-tracking glow
   const spotlightX = useMotionValue(50);
   const spotlightY = useMotionValue(50);
+  const spotlightBg = useMotionTemplate`radial-gradient(350px circle at ${spotlightX}% ${spotlightY}%, rgba(${accent.glowRgb}, 0.08), transparent 60%)`;
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     const card = cardRef.current;
@@ -2514,8 +2511,8 @@ function AudienceCard({ profile, index }: { profile: typeof AUDIENCE_PROFILES[nu
   return (
     <motion.div
       ref={cardRef}
-      initial={{ opacity: 0, y: 50, filter: prefersReducedMotion ? "none" : "blur(10px)" }}
-      whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      initial={{ opacity: 0, y: 50, ...((prefersReducedMotion || isMobile) ? {} : { filter: "blur(10px)" }) }}
+      whileInView={{ opacity: 1, y: 0, ...((prefersReducedMotion || isMobile) ? {} : { filter: "blur(0px)" }) }}
       viewport={{ once: true, margin: "-80px" }}
       transition={{ delay: index * 0.15, duration: 0.7, ease: smoothEase }}
       onMouseMove={handleMouseMove}
@@ -2538,12 +2535,10 @@ function AudienceCard({ profile, index }: { profile: typeof AUDIENCE_PROFILES[nu
           {/* Gradient border layer — accent-colored shimmer */}
           <div className={`absolute inset-0 rounded-2xl bg-gradient-to-b ${accent.gradient} opacity-[0.12] group-hover:opacity-[0.25] transition-opacity duration-500`} />
 
-          {/* Cursor-tracking spotlight */}
+          {/* Cursor-tracking spotlight — reactive via useMotionTemplate */}
           <motion.div
             className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-            style={{
-              background: `radial-gradient(350px circle at ${spotlightX.get()}% ${spotlightY.get()}%, rgba(${accent.glowRgb}, 0.08), transparent 60%)`,
-            }}
+            style={{ background: spotlightBg }}
           />
 
           {/* Inner card */}
@@ -2553,7 +2548,7 @@ function AudienceCard({ profile, index }: { profile: typeof AUDIENCE_PROFILES[nu
               <motion.div
                 className="absolute inset-x-0 h-10 blur-sm"
                 style={{ background: `linear-gradient(to bottom, transparent, rgba(${accent.glowRgb}, 0.6), transparent)` }}
-                animate={prefersReducedMotion ? {} : { top: ["0%", "85%", "0%"] }}
+                animate={(prefersReducedMotion || isMobile) ? {} : { top: ["0%", "85%", "0%"] }}
                 transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: index * 0.8 }}
               />
             </div>
@@ -2621,6 +2616,8 @@ function AudienceCard({ profile, index }: { profile: typeof AUDIENCE_PROFILES[nu
 
 function TargetAudienceSection() {
   const prefersReducedMotion = useReducedMotion();
+  const isMobile = useIsMobile();
+  const skipInfinite = prefersReducedMotion || isMobile;
 
   return (
     <section id="audience" className="relative py-12 md:py-16 lg:py-20 bg-white overflow-hidden">
@@ -2632,34 +2629,34 @@ function TargetAudienceSection() {
         {/* Primary cyan aurora — top left */}
         <motion.div
           initial={{ opacity: 0.25 }}
-          animate={prefersReducedMotion ? {} : { opacity: [0.25, 0.45, 0.25], scale: [1, 1.12, 1] }}
+          animate={skipInfinite ? {} : { opacity: [0.25, 0.45, 0.25], scale: [1, 1.12, 1] }}
           transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
           className="absolute -top-1/3 -left-1/4 w-[65%] h-[65%] bg-cyan-200/30 rounded-full blur-[150px]"
         />
         {/* Violet aurora — right side */}
         <motion.div
           initial={{ opacity: 0.2 }}
-          animate={prefersReducedMotion ? {} : { opacity: [0.2, 0.38, 0.2], scale: [1, 1.15, 1] }}
+          animate={skipInfinite ? {} : { opacity: [0.2, 0.38, 0.2], scale: [1, 1.15, 1] }}
           transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2 }}
           className="absolute top-1/4 -right-1/3 w-[55%] h-[55%] bg-violet-200/25 rounded-full blur-[150px]"
         />
         {/* Amber aurora — bottom */}
         <motion.div
           initial={{ opacity: 0.18 }}
-          animate={prefersReducedMotion ? {} : { opacity: [0.18, 0.32, 0.18], scale: [1, 1.1, 1] }}
+          animate={skipInfinite ? {} : { opacity: [0.18, 0.32, 0.18], scale: [1, 1.1, 1] }}
           transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 4 }}
           className="absolute -bottom-1/4 left-1/4 w-[50%] h-[50%] bg-amber-200/25 rounded-full blur-[130px]"
         />
         {/* Secondary glow — creates depth between primary orbs */}
         <motion.div
           initial={{ opacity: 0.1 }}
-          animate={prefersReducedMotion ? {} : { opacity: [0.1, 0.2, 0.1] }}
+          animate={skipInfinite ? {} : { opacity: [0.1, 0.2, 0.1] }}
           transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 1 }}
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[70%] h-[40%] bg-gradient-to-r from-cyan-200/15 via-violet-200/10 to-amber-200/15 rounded-full blur-[180px]"
         />
 
         {/* Floating luminous particles */}
-        {!prefersReducedMotion && [
+        {!skipInfinite && [
           { top: "18%", left: "12%", d: 5.2, del: 0 },
           { top: "32%", left: "78%", d: 6.8, del: 1.2 },
           { top: "55%", left: "25%", d: 4.5, del: 2.1 },
@@ -2764,7 +2761,6 @@ interface FeatureConfig {
     titleGradient: string; // Title text gradient
   };
   badge: string;
-  metric: string;
 }
 
 const FEATURES: FeatureConfig[] = [
@@ -2773,7 +2769,6 @@ const FEATURES: FeatureConfig[] = [
     description: "Décrivez votre objectif. Posty génère deux versions — Storytelling pour engager, Business pour convertir — prêtes à publier.",
     image: "/analytics.jpg",
     badge: "Génération IA",
-    metric: "2 posts / minute",
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -2789,7 +2784,7 @@ const FEATURES: FeatureConfig[] = [
       badgeText: "text-emerald-700",
       glow: "shadow-emerald-500/20",
       accent: "text-emerald-600",
-      titleGradient: "from-gray-500 to-emerald-600",
+      titleGradient: "from-emerald-600 via-emerald-400 to-slate-300",
     },
   },
   {
@@ -2797,7 +2792,6 @@ const FEATURES: FeatureConfig[] = [
     description: "Posty analyse votre secteur, votre audience et votre ton. Le résultat : du contenu authentique qui renforce votre crédibilité et attire les bons prospects.",
     image: "/img-ia.jpg",
     badge: "IA Contextuelle",
-    metric: "100% votre voix",
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
@@ -2813,7 +2807,7 @@ const FEATURES: FeatureConfig[] = [
       badgeText: "text-amber-700",
       glow: "shadow-amber-500/20",
       accent: "text-amber-600",
-      titleGradient: "from-gray-500 to-orange-500",
+      titleGradient: "from-amber-600 via-orange-400 to-slate-300",
     },
   },
   {
@@ -2821,7 +2815,6 @@ const FEATURES: FeatureConfig[] = [
     description: "L'algorithme LinkedIn récompense la régularité et le bon timing. Posty planifie vos publications aux meilleurs créneaux pour maximiser votre portée.",
     image: "/professionel.jpg",
     badge: "Timing optimal",
-    metric: "+40% de portée",
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -2837,7 +2830,7 @@ const FEATURES: FeatureConfig[] = [
       badgeText: "text-violet-700",
       glow: "shadow-violet-500/20",
       accent: "text-violet-600",
-      titleGradient: "from-violet-600 to-gray-500",
+      titleGradient: "from-violet-600 via-purple-400 to-slate-300",
     },
   },
   {
@@ -2845,7 +2838,6 @@ const FEATURES: FeatureConfig[] = [
     description: "Entre deux rendez-vous, dictez une idée à voix haute. Posty la transforme en post professionnel prêt à publier.",
     image: "/vocal.jpg",
     badge: "Voice-to-Post",
-    metric: "30 sec chrono",
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
@@ -2861,7 +2853,7 @@ const FEATURES: FeatureConfig[] = [
       badgeText: "text-orange-700",
       glow: "shadow-[#F8935D]/20",
       accent: "text-[#F76B54]",
-      titleGradient: "from-[#F8935D] to-gray-500",
+      titleGradient: "from-[#F8935D] via-[#FBB9AD] to-slate-300",
     },
   },
 ];
@@ -2955,18 +2947,6 @@ function FeatureCard({ feature, index }: { feature: FeatureConfig; index: number
               </span>
             </div>
 
-            {/* Metric badge — bottom right */}
-            <div className="absolute bottom-3 right-3 z-20">
-              <span
-                className={`
-                  inline-flex items-center gap-1 px-3 py-1.5 rounded-full
-                  bg-white/95 backdrop-blur-sm shadow-lg
-                  text-xs font-bold ${feature.color.accent}
-                `}
-              >
-                {feature.metric}
-              </span>
-            </div>
           </div>
         </div>
 
@@ -3027,18 +3007,19 @@ function FeatureCard({ feature, index }: { feature: FeatureConfig; index: number
 }
 
 function FeaturesSection() {
+  const isMobile = useIsMobile();
   return (
     <section id="features" className="py-[clamp(2.5rem,5vw,4.5rem)] px-[clamp(1rem,4vw,3rem)] bg-gradient-to-b from-[#FEF3EE] via-[#FAE8DE]/30 to-[#FEF3EE] overflow-hidden">
-      <div className="w-full max-w-[min(90vw,87.5rem)] mx-auto">
+      <div className="w-full max-w-[min(90vw,67.75rem)] mx-auto">
         {/* Section Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20, filter: "blur(8px)" }}
-          whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          initial={{ opacity: 0, y: 20, ...(isMobile ? {} : { filter: "blur(8px)" }) }}
+          whileInView={{ opacity: 1, y: 0, ...(isMobile ? {} : { filter: "blur(0px)" }) }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, ease: smoothEase }}
           className="text-center mb-[clamp(2rem,3.5vw,3rem)]"
         >
-          <h2 className="text-[clamp(1.75rem,4vw,3.25rem)] font-bold text-gray-800">
+          <h2 className="text-[clamp(1.75rem,4vw,3.25rem)] font-bold text-gray-600">
             Tout ce qu&apos;il vous faut pour{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
               dominer LinkedIn
@@ -3126,13 +3107,14 @@ const TESTIMONIALS = [
 ];
 
 function TestimonialsSection() {
+  const isMobile = useIsMobile();
   return (
     <section id="testimonials" className="py-12 md:py-16 2xl:py-20 px-4 sm:px-6 lg:px-8 2xl:px-12 bg-gradient-to-b from-[#FAE8DE]/50 to-[#FEF3EE] overflow-hidden">
       <div className="max-w-7xl 2xl:max-w-[1400px] mx-auto">
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20, filter: "blur(8px)" }}
-          whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          initial={{ opacity: 0, y: 20, ...(isMobile ? {} : { filter: "blur(8px)" }) }}
+          whileInView={{ opacity: 1, y: 0, ...(isMobile ? {} : { filter: "blur(0px)" }) }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, ease: smoothEase }}
           className="text-center mb-8 md:mb-12"
@@ -3155,13 +3137,13 @@ function TestimonialsSection() {
             <span className="text-sm text-gray-600 font-medium">+500 professionnels utilisent Posty chaque jour</span>
           </motion.div>
 
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-4">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-600 mb-4">
             Ils publient. Ils{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
               convertissent.
             </span>
           </h2>
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+          <p className="text-gray-500 text-lg max-w-2xl mx-auto">
             Ce que nos utilisateurs constatent après quelques semaines.
           </p>
         </motion.div>
@@ -3171,8 +3153,8 @@ function TestimonialsSection() {
           {TESTIMONIALS.map((testimonial, index) => (
             <motion.div
               key={testimonial.name}
-              initial={{ opacity: 0, y: 30, filter: "blur(8px)" }}
-              whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              initial={{ opacity: 0, y: 30, ...(isMobile ? {} : { filter: "blur(8px)" }) }}
+              whileInView={{ opacity: 1, y: 0, ...(isMobile ? {} : { filter: "blur(0px)" }) }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.15, duration: 0.6, ease: smoothEase }}
               className="group relative bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-[#F8935D]/30 transition-all duration-300 shadow-lg shadow-gray-100/60"
@@ -3230,6 +3212,7 @@ function TestimonialsSection() {
 // =============================================================================
 function BeforeAfterSection() {
   const prefersReducedMotion = useReducedMotion();
+  const isMobile = useIsMobile();
 
   const beforeItems = [
     { text: "Posts génériques ignorés par votre audience", icon: "❌" },
@@ -3250,8 +3233,8 @@ function BeforeAfterSection() {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20, filter: "blur(8px)" }}
-          whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          initial={{ opacity: 0, y: 20, ...(isMobile ? {} : { filter: "blur(8px)" }) }}
+          whileInView={{ opacity: 1, y: 0, ...(isMobile ? {} : { filter: "blur(0px)" }) }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, ease: smoothEase }}
           className="text-center mb-8 md:mb-12"
@@ -3282,8 +3265,8 @@ function BeforeAfterSection() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
           {/* BEFORE Card */}
           <motion.div
-            initial={{ opacity: 0, x: -30, filter: prefersReducedMotion ? "none" : "blur(10px)" }}
-            whileInView={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+            initial={{ opacity: 0, x: -30, ...((prefersReducedMotion || isMobile) ? {} : { filter: "blur(10px)" }) }}
+            whileInView={{ opacity: 1, x: 0, ...((prefersReducedMotion || isMobile) ? {} : { filter: "blur(0px)" }) }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, ease: smoothEase }}
             className="relative group"
@@ -3333,8 +3316,8 @@ function BeforeAfterSection() {
 
           {/* AFTER Card */}
           <motion.div
-            initial={{ opacity: 0, x: 30, filter: prefersReducedMotion ? "none" : "blur(10px)" }}
-            whileInView={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+            initial={{ opacity: 0, x: 30, ...((prefersReducedMotion || isMobile) ? {} : { filter: "blur(10px)" }) }}
+            whileInView={{ opacity: 1, x: 0, ...((prefersReducedMotion || isMobile) ? {} : { filter: "blur(0px)" }) }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, ease: smoothEase, delay: 0.15 }}
             className="relative group"
@@ -3346,9 +3329,9 @@ function BeforeAfterSection() {
               {/* Gradient background */}
               <div className="absolute inset-0 bg-gradient-to-br from-[#FEF3EE] via-white to-[#FFF8F5] pointer-events-none" />
 
-              {/* Animated gradient orb */}
+              {/* Animated gradient orb — static on mobile */}
               <motion.div
-                animate={prefersReducedMotion ? {} : {
+                animate={(prefersReducedMotion || isMobile) ? {} : {
                   scale: [1, 1.2, 1],
                   opacity: [0.3, 0.5, 0.3],
                 }}
@@ -3633,14 +3616,15 @@ function PricingCard({
   const secondaryFeatures = getPlanSecondaryFeatures(plan);
   const planInfo = PLAN_TAGLINES[plan.id] || { tagline: plan.description, idealFor: "" };
   const [isHovered, setIsHovered] = useState(false);
+  const isMobile = useIsMobile();
 
   const showMoreFeatures = isFeaturesExpanded;
   const includedSecondaryCount = secondaryFeatures.filter(f => f.included).length;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 40, filter: "blur(8px)" }}
-      whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      initial={{ opacity: 0, y: 40, ...(isMobile ? {} : { filter: "blur(8px)" }) }}
+      whileInView={{ opacity: 1, y: 0, ...(isMobile ? {} : { filter: "blur(0px)" }) }}
       viewport={{ once: true }}
       transition={{
         delay: index * 0.15,
@@ -3661,10 +3645,10 @@ function PricingCard({
       {/* Enhanced glow effect for popular plan */}
       {isPopular && (
         <>
-          {/* Outer pulsing glow */}
-          <div className="absolute -inset-0.5 sm:-inset-1 rounded-xl sm:rounded-2xl md:rounded-3xl bg-gradient-to-r from-[#F8935D] via-[#F76B54] to-[#F8935D] opacity-50 sm:opacity-60 blur-lg sm:blur-xl animate-pulse" />
+          {/* Outer pulsing glow — static on mobile to save GPU */}
+          <div className={`absolute -inset-0.5 sm:-inset-1 rounded-xl sm:rounded-2xl md:rounded-3xl bg-gradient-to-r from-[#F8935D] via-[#F76B54] to-[#F8935D] opacity-50 sm:opacity-60 blur-lg sm:blur-xl ${isMobile ? "" : "animate-pulse"}`} />
           {/* Inner animated gradient border */}
-          <div className="absolute inset-0 rounded-lg sm:rounded-xl md:rounded-2xl p-[1px] sm:p-[2px] bg-gradient-to-br from-[#F8935D] via-[#F76B54] to-[#F8935D] bg-[length:200%_200%] animate-gradient-slow">
+          <div className={`absolute inset-0 rounded-lg sm:rounded-xl md:rounded-2xl p-[1px] sm:p-[2px] bg-gradient-to-br from-[#F8935D] via-[#F76B54] to-[#F8935D] bg-[length:200%_200%] ${isMobile ? "" : "animate-gradient-slow"}`}>
             <div className="absolute inset-[1px] sm:inset-[2px] rounded-[7px] sm:rounded-[10px] md:rounded-[14px] bg-white" />
           </div>
         </>
@@ -3678,26 +3662,31 @@ function PricingCard({
         </>
       )}
 
-      {/* Shimmer effect on hover */}
-      <motion.div
-        className="absolute inset-0 rounded-lg sm:rounded-xl md:rounded-2xl pointer-events-none overflow-hidden hidden md:block"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: isHovered ? 1 : 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#F8935D]/[0.05] to-transparent animate-shimmer" />
-      </motion.div>
+      {/* Light color overlay on hover — plan-colored, no dark effect */}
+      <div
+        className={`
+          absolute inset-0 rounded-lg sm:rounded-xl md:rounded-2xl pointer-events-none transition-opacity duration-300
+          ${isPopular
+            ? "bg-[#F8935D]/[0.06]"
+            : isPremium
+              ? "bg-amber-500/[0.06]"
+              : "bg-[#F8935D]/[0.04]"
+          }
+          ${isHovered ? "opacity-100" : "opacity-0"}
+        `}
+      />
 
       {/* Card background */}
       <div className={`
         relative p-2 sm:p-4 md:p-6 lg:p-8 rounded-lg sm:rounded-xl md:rounded-2xl flex flex-col h-full
+        transition-all duration-300 ease-out
         ${isPopular
-          ? "bg-gradient-to-b from-[#F8935D]/10 via-white to-white"
+          ? `bg-gradient-to-b from-[#F8935D]/10 via-white to-white ${isHovered ? "shadow-lg shadow-[#F8935D]/10" : ""}`
           : isPremium
-            ? "bg-gradient-to-b from-amber-500/5 via-white to-white border sm:border-2 border-amber-500/30"
+            ? `bg-gradient-to-b from-amber-500/5 via-white to-white border sm:border-2 ${isHovered ? "border-amber-500/50 shadow-lg shadow-amber-500/10" : "border-amber-500/30"}`
             : isFree
-              ? "bg-white border border-[#F8935D]/25"
-              : "bg-white border border-gray-200"
+              ? `bg-white border ${isHovered ? "border-[#F8935D]/40 shadow-md shadow-[#F8935D]/8" : "border-[#F8935D]/25"}`
+              : `bg-white border ${isHovered ? "border-[#F8935D]/30 shadow-md shadow-[#F8935D]/8" : "border-gray-200"}`
         }
       `}>
         {/* ZONE 0: Badges */}
@@ -3709,7 +3698,7 @@ function PricingCard({
               transition={{ delay: 0.3 }}
               className="relative"
             >
-              <div className="absolute inset-0 bg-[#F8935D] rounded-full blur-md opacity-50 animate-pulse" />
+              <div className={`absolute inset-0 bg-[#F8935D] rounded-full blur-md opacity-50 ${isMobile ? "" : "animate-pulse"}`} />
               <div className="relative px-1.5 sm:px-3 md:px-4 py-0.5 sm:py-1 md:py-1.5 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white text-[10px] sm:text-xs md:text-sm font-semibold rounded-full shadow-lg shadow-[#F8935D]/30 flex items-center gap-0.5 sm:gap-1 md:gap-1.5">
                 <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
@@ -3824,7 +3813,7 @@ function PricingCard({
               `}
             >
               <span className="relative z-10 flex items-center justify-center gap-1 sm:gap-2">
-                {getCTALabel(plan.id, billingPeriod === "yearly")}
+                {getCTALabel(plan.id, billingPeriod === "yearly", plan.id !== "free")}
                 <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 hidden sm:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
@@ -3938,6 +3927,7 @@ function PricingCard({
 }
 
 function PricingSection() {
+  const isMobile = useIsMobile();
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("yearly");
   const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
 
@@ -3960,19 +3950,19 @@ function PricingSection() {
     <section id="pricing" className="py-16 md:py-24 2xl:py-28 px-4 sm:px-6 lg:px-8 2xl:px-12 bg-gradient-to-b from-[#FAE8DE]/50 to-[#FEF3EE] overflow-hidden">
       <div className="max-w-6xl 2xl:max-w-7xl mx-auto">
         <motion.div
-          initial={{ opacity: 0, y: 20, filter: "blur(8px)" }}
-          whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          initial={{ opacity: 0, y: 20, ...(isMobile ? {} : { filter: "blur(8px)" }) }}
+          whileInView={{ opacity: 1, y: 0, ...(isMobile ? {} : { filter: "blur(0px)" }) }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, ease: smoothEase }}
           className="text-center mb-12 2xl:mb-16"
         >
-          <h2 className="text-3xl md:text-4xl lg:text-5xl 2xl:text-[3.25rem] font-bold text-gray-800 mb-4">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl 2xl:text-[3.25rem] font-bold text-gray-600 mb-4">
             Investissez dans votre{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
               croissance LinkedIn
             </span>
           </h2>
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto mb-10">
+          <p className="text-gray-500 text-lg max-w-2xl mx-auto mb-10">
             Un seul client signe rembourse votre abonnement annuel. Choisissez le plan qui accelere votre acquisition.
           </p>
 
@@ -4071,15 +4061,17 @@ function CtaBanner({
   id?: string;
 }) {
   const prefersReducedMotion = useReducedMotion();
+  const isMobile = useIsMobile();
+  const skipInfinite = prefersReducedMotion || isMobile;
 
   return (
     <section id={id} className="relative py-12 md:py-18 px-4 sm:px-6 lg:px-8 overflow-hidden">
       {/* Light premium background */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#FEF3EE] via-white to-[#FFF8F5]">
-        {/* Animated gradient mesh — warm glows on dark */}
+        {/* Animated gradient mesh — static on mobile to save GPU */}
         <motion.div
           initial={{ opacity: 0.3 }}
-          animate={prefersReducedMotion ? {} : {
+          animate={skipInfinite ? {} : {
             opacity: [0.3, 0.5, 0.3],
             scale: [1, 1.1, 1],
           }}
@@ -4088,7 +4080,7 @@ function CtaBanner({
         />
         <motion.div
           initial={{ opacity: 0.2 }}
-          animate={prefersReducedMotion ? {} : {
+          animate={skipInfinite ? {} : {
             opacity: [0.2, 0.35, 0.2],
             scale: [1, 1.15, 1],
           }}
@@ -4097,7 +4089,7 @@ function CtaBanner({
         />
         <motion.div
           initial={{ opacity: 0.15 }}
-          animate={prefersReducedMotion ? {} : {
+          animate={skipInfinite ? {} : {
             opacity: [0.15, 0.25, 0.15],
             scale: [1, 1.08, 1],
           }}
@@ -4117,8 +4109,8 @@ function CtaBanner({
 
       <div className="relative z-10 max-w-5xl mx-auto">
         <motion.div
-          initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
-          whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          initial={{ opacity: 0, y: 30, ...(isMobile ? {} : { filter: "blur(10px)" }) }}
+          whileInView={{ opacity: 1, y: 0, ...(isMobile ? {} : { filter: "blur(0px)" }) }}
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.7, ease: premiumEase }}
           className="text-center"
@@ -4213,7 +4205,7 @@ function CtaBanner({
               <svg className="w-5 h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
-              <span>Sans carte bancaire</span>
+              <span>Essai gratuit 7 jours</span>
             </div>
             <div className="flex items-center gap-2">
               <svg className="w-5 h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
@@ -4338,14 +4330,15 @@ function FaqItem({
 
 function FaqSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const isMobile = useIsMobile();
 
   return (
     <section id="faq" className="py-16 md:py-24 2xl:py-28 px-4 sm:px-6 lg:px-8 2xl:px-12 bg-gradient-to-b from-[#FEF3EE] to-[#FFF8F5] overflow-hidden">
       <div className="max-w-3xl 2xl:max-w-4xl mx-auto">
         {/* Section Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20, filter: "blur(8px)" }}
-          whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          initial={{ opacity: 0, y: 20, ...(isMobile ? {} : { filter: "blur(8px)" }) }}
+          whileInView={{ opacity: 1, y: 0, ...(isMobile ? {} : { filter: "blur(0px)" }) }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, ease: smoothEase }}
           className="text-center mb-10 md:mb-16"
@@ -4571,7 +4564,7 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-gray-900">
+    <div className="min-h-screen bg-[#FEF3EE] text-gray-900">
       <Navbar />
 
       {/* Hero Demo Section — opening with descent animation */}

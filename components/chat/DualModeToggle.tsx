@@ -11,30 +11,39 @@ interface DualModeToggleProps {
   onToggle: (enabled: boolean) => void;
   responseType: "storytelling" | "business";
   onResponseTypeChange: (type: "storytelling" | "business") => void;
+  /** Weekly dual usage count (Pro plan only) */
+  dualUsedThisWeek?: number;
   className?: string;
 }
 
 /**
  * Toggle component for dual response mode (Storytelling + Business)
- * Only available for Max plan users
+ * - Pro plan: Limited to 3 dual generations per week
+ * - Max plan: Unlimited dual generations
+ * - Free plan: Locked (upgrade prompt)
  */
 export default function DualModeToggle({
   enabled,
   onToggle,
   responseType,
   onResponseTypeChange,
+  dualUsedThisWeek = 0,
   className = "",
 }: DualModeToggleProps) {
   const { t } = useLanguage();
-  const { isMaxPlan } = useSubscription();
+  const { isMaxPlan, isProPlan, planLimits } = useSubscription();
   const router = useRouter();
+
+  const canUseDualMode = isMaxPlan || isProPlan;
+  const dualLimit = planLimits?.dualResponsesPerWeek ?? 0;
+  const isUnlimited = dualLimit === -1;
+  const dualRemaining = isUnlimited ? Infinity : Math.max(0, dualLimit - dualUsedThisWeek);
+  const isLimitReached = !isUnlimited && dualRemaining <= 0;
 
   // Handle toggle click
   const handleToggle = () => {
-    if (!isMaxPlan) {
-      // Show upgrade prompt or navigate to pricing
-      return;
-    }
+    if (!canUseDualMode) return;
+    if (isLimitReached && !enabled) return; // Can't enable if limit reached
     onToggle(!enabled);
   };
 
@@ -52,14 +61,16 @@ export default function DualModeToggle({
         {/* Dual mode toggle button */}
         <button
           onClick={handleToggle}
-          disabled={!isMaxPlan}
+          disabled={!canUseDualMode || (isLimitReached && !enabled)}
           className={`
             relative flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium
             transition-all duration-200
-            ${isMaxPlan
+            ${canUseDualMode
               ? enabled
                 ? "bg-primary/20 text-primary border border-primary/30 hover:bg-primary/30"
-                : "bg-background-tertiary hover:bg-background-secondary text-text-secondary border border-border-primary hover:border-border-secondary"
+                : isLimitReached
+                  ? "bg-background-tertiary/50 text-text-muted border border-border-primary cursor-not-allowed opacity-60"
+                  : "bg-background-tertiary hover:bg-background-secondary text-text-secondary border border-border-primary hover:border-border-secondary"
               : "bg-background-tertiary/50 text-text-muted border border-border-primary cursor-not-allowed opacity-60"
             }
           `}
@@ -74,16 +85,30 @@ export default function DualModeToggle({
           {/* Label */}
           <span className="hidden sm:inline">{t.chat.dualMode.toggle}</span>
 
-          {/* Max badge */}
-          {!isMaxPlan && (
-            <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-500 border border-amber-500/30">
-              <Crown className="w-2.5 h-2.5" />
-              {t.chat.dualMode.maxOnly}
+          {/* Pro badge with remaining count */}
+          {isProPlan && !isLimitReached && (
+            <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-primary/15 text-primary border border-primary/25">
+              {dualRemaining}/{dualLimit}
             </span>
           )}
 
-          {/* Status indicator for Max users */}
-          {isMaxPlan && (
+          {/* Pro badge — limit reached */}
+          {isProPlan && isLimitReached && (
+            <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-gray-500/15 text-gray-400 border border-gray-500/25">
+              0/{dualLimit}
+            </span>
+          )}
+
+          {/* Upgrade badge for Free users */}
+          {!canUseDualMode && (
+            <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-500 border border-amber-500/30">
+              <Crown className="w-2.5 h-2.5" />
+              Pro
+            </span>
+          )}
+
+          {/* Status indicator for users with access */}
+          {canUseDualMode && !isLimitReached && (
             <motion.div
               initial={false}
               animate={{
@@ -93,14 +118,14 @@ export default function DualModeToggle({
             />
           )}
 
-          {/* Lock icon for non-Max */}
-          {!isMaxPlan && (
+          {/* Lock icon for Free users */}
+          {!canUseDualMode && (
             <Lock className="w-3 h-3 text-text-muted" />
           )}
         </button>
 
-        {/* Response type selector (only visible when dual mode is OFF) */}
-        {!enabled && isMaxPlan && (
+        {/* Response type selector (only visible when dual mode is OFF and user has style choice) */}
+        {!enabled && canUseDualMode && (
           <div className="flex items-center gap-1 p-0.5 rounded-lg bg-background-tertiary border border-border-primary">
             <button
               onClick={() => handleTypeSelect("storytelling")}
@@ -134,7 +159,7 @@ export default function DualModeToggle({
         )}
 
         {/* Dual mode active indicator */}
-        {enabled && isMaxPlan && (
+        {enabled && canUseDualMode && (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -148,8 +173,8 @@ export default function DualModeToggle({
         )}
       </div>
 
-      {/* Upgrade prompt for non-Max users */}
-      {!isMaxPlan && (
+      {/* Upgrade prompt for Free users */}
+      {!canUseDualMode && (
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: "auto" }}
@@ -158,6 +183,26 @@ export default function DualModeToggle({
           <Crown className="w-4 h-4 text-amber-500 flex-shrink-0" />
           <p className="text-xs text-amber-500/90 flex-1">
             {t.chat.dualMode.singleResponseInfo}
+          </p>
+          <button
+            onClick={() => router.push("/pricing")}
+            className="flex-shrink-0 px-2.5 py-1 rounded-md text-xs font-semibold bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600 transition-colors"
+          >
+            {t.chat.dualMode.upgradeButton}
+          </button>
+        </motion.div>
+      )}
+
+      {/* Pro limit reached info */}
+      {isProPlan && isLimitReached && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20"
+        >
+          <Crown className="w-4 h-4 text-amber-500 flex-shrink-0" />
+          <p className="text-xs text-amber-500/90 flex-1">
+            Limite atteinte ({dualLimit}/sem.). Passez au Max pour un accès illimité.
           </p>
           <button
             onClick={() => router.push("/pricing")}
