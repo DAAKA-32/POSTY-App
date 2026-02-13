@@ -416,20 +416,34 @@ function SettingsContent() {
                 </div>
               </div>
 
-              <Link
-                href="/profile"
-                className="
-                  inline-flex items-center gap-2 mt-4 px-4 py-2.5
-                  text-sm lg:text-base text-primary hover:text-accent
-                  bg-primary/5 hover:bg-primary/10
-                  rounded-xl transition-all duration-200
-                "
-              >
-                {t.settings.editProfile}
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
+              {/* Rectification RGPD */}
+              <div className="mt-4 p-3 lg:p-4 bg-violet-50 dark:bg-violet-500/5 rounded-xl border border-violet-200 dark:border-violet-500/20">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-violet-100 dark:bg-violet-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg className="w-4 h-4 text-violet-600 dark:text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">Droit de rectification (Art. 16 RGPD)</p>
+                    <p className="text-xs text-gray-500 dark:text-text-muted mt-0.5">Vous pouvez corriger ou compléter vos données personnelles à tout moment en modifiant votre profil.</p>
+                    <Link
+                      href="/profile"
+                      className="
+                        inline-flex items-center gap-2 mt-2 px-4 py-2
+                        text-sm text-primary hover:text-accent
+                        bg-primary/5 hover:bg-primary/10
+                        rounded-lg transition-all duration-200
+                      "
+                    >
+                      {t.settings.editProfile}
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </Link>
+                  </div>
+                </div>
+              </div>
             </motion.section>
 
             {/* Appearance Section - Theme Toggle */}
@@ -739,10 +753,10 @@ function SettingsContent() {
                 {t.settings.contactPrivacy}
               </p>
               <a
-                href="mailto:privacy@posty.app"
+                href="mailto:posty.contact@gmail.com"
                 className="text-primary hover:text-accent transition-colors font-medium text-sm lg:text-base"
               >
-                privacy@posty.app
+                posty.contact@gmail.com
               </a>
             </motion.div>
           </motion.div>

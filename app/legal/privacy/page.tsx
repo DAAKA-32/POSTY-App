@@ -2,29 +2,32 @@
 
 import LegalLayoutLight from "@/components/layout/LegalLayoutLight";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { LEGAL_VERSIONS } from "@/lib/i18n/legal";
 
 export default function PrivacyPolicyPage() {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const privacy = t.legal.privacy;
 
   return (
     <LegalLayoutLight title={privacy.title}>
-      <p className="text-gray-300 text-lg mb-8">
-        {t.legal.lastUpdated} {new Date().toLocaleDateString(language === "fr" ? "fr-FR" : "en-US")}
+      <p className="text-gray-100 text-lg mb-8">
+        {t.legal.version} {LEGAL_VERSIONS.privacy.version} — {t.legal.lastUpdated} {LEGAL_VERSIONS.privacy.date}
       </p>
 
       {/* Section 1 */}
       <section className="mb-8">
         <h2 className="text-xl font-semibold text-white mb-4">{privacy.section1.title}</h2>
-        <p className="text-gray-300 mb-4">{privacy.section1.content1}</p>
-        <p className="text-gray-300">{privacy.section1.content2}</p>
+        <p className="text-gray-100 mb-4">{privacy.section1.content1}</p>
+        <p className="text-gray-100">{privacy.section1.content2}</p>
       </section>
 
       {/* Section 2 */}
       <section className="mb-8">
         <h2 className="text-xl font-semibold text-white mb-4">{privacy.section2.title}</h2>
-        <div className="bg-dark-card border border-dark-border rounded-lg p-4 text-gray-300">
+        <div className="bg-dark-card border border-dark-border rounded-lg p-4 text-gray-100 space-y-1">
           <p><strong className="text-white">{privacy.section2.companyName}</strong></p>
+          <p>{privacy.section2.legalEntity}</p>
+          <p>{privacy.section2.address}</p>
           <p>{privacy.section2.email}</p>
           <p>{privacy.section2.gdprContact}</p>
         </div>
@@ -33,32 +36,39 @@ export default function PrivacyPolicyPage() {
       {/* Section 3 */}
       <section className="mb-8">
         <h2 className="text-xl font-semibold text-white mb-4">{privacy.section3.title}</h2>
-        <p className="text-gray-300 mb-4">{privacy.section3.intro}</p>
+        <p className="text-gray-100 mb-4">{privacy.section3.intro}</p>
 
         <h3 className="text-lg font-medium text-white mb-2">{privacy.section3.identification.title}</h3>
-        <ul className="list-disc list-inside text-gray-300 mb-4 space-y-1">
+        <ul className="list-disc list-inside text-gray-100 mb-4 space-y-1">
           {privacy.section3.identification.items.map((item, i) => (
             <li key={i}>{item}</li>
           ))}
         </ul>
 
         <h3 className="text-lg font-medium text-white mb-2">{privacy.section3.profile.title}</h3>
-        <ul className="list-disc list-inside text-gray-300 mb-4 space-y-1">
+        <ul className="list-disc list-inside text-gray-100 mb-4 space-y-1">
           {privacy.section3.profile.items.map((item, i) => (
             <li key={i}>{item}</li>
           ))}
         </ul>
 
         <h3 className="text-lg font-medium text-white mb-2">{privacy.section3.usage.title}</h3>
-        <ul className="list-disc list-inside text-gray-300 mb-4 space-y-1">
+        <ul className="list-disc list-inside text-gray-100 mb-4 space-y-1">
           {privacy.section3.usage.items.map((item, i) => (
             <li key={i}>{item}</li>
           ))}
         </ul>
 
         <h3 className="text-lg font-medium text-white mb-2">{privacy.section3.technical.title}</h3>
-        <ul className="list-disc list-inside text-gray-300 space-y-1">
+        <ul className="list-disc list-inside text-gray-100 mb-4 space-y-1">
           {privacy.section3.technical.items.map((item, i) => (
+            <li key={i}>{item}</li>
+          ))}
+        </ul>
+
+        <h3 className="text-lg font-medium text-white mb-2">{privacy.section3.payment.title}</h3>
+        <ul className="list-disc list-inside text-gray-100 space-y-1">
+          {privacy.section3.payment.items.map((item: string, i: number) => (
             <li key={i}>{item}</li>
           ))}
         </ul>
@@ -67,8 +77,8 @@ export default function PrivacyPolicyPage() {
       {/* Section 4 */}
       <section className="mb-8">
         <h2 className="text-xl font-semibold text-white mb-4">{privacy.section4.title}</h2>
-        <p className="text-gray-300 mb-4">{privacy.section4.intro}</p>
-        <ul className="list-disc list-inside text-gray-300 space-y-2">
+        <p className="text-gray-100 mb-4">{privacy.section4.intro}</p>
+        <ul className="list-disc list-inside text-gray-100 space-y-2">
           {privacy.section4.purposes.map((purpose, i) => (
             <li key={i}>
               <strong className="text-white">{purpose.label}</strong> {purpose.desc}
@@ -80,8 +90,8 @@ export default function PrivacyPolicyPage() {
       {/* Section 5 */}
       <section className="mb-8">
         <h2 className="text-xl font-semibold text-white mb-4">{privacy.section5.title}</h2>
-        <p className="text-gray-300 mb-4">{privacy.section5.intro}</p>
-        <ul className="list-disc list-inside text-gray-300 space-y-2">
+        <p className="text-gray-100 mb-4">{privacy.section5.intro}</p>
+        <ul className="list-disc list-inside text-gray-100 space-y-2">
           {privacy.section5.bases.map((basis, i) => (
             <li key={i}>
               <strong className="text-white">{basis.label}</strong> {basis.desc}
@@ -93,22 +103,22 @@ export default function PrivacyPolicyPage() {
       {/* Section 6 */}
       <section className="mb-8">
         <h2 className="text-xl font-semibold text-white mb-4">{privacy.section6.title}</h2>
-        <p className="text-gray-300 mb-4">{privacy.section6.intro}</p>
-        <ul className="list-disc list-inside text-gray-300 space-y-2">
+        <p className="text-gray-100 mb-4">{privacy.section6.intro}</p>
+        <ul className="list-disc list-inside text-gray-100 space-y-2">
           {privacy.section6.partners.map((partner, i) => (
             <li key={i}>
               <strong className="text-white">{partner.name}</strong> {partner.desc}
             </li>
           ))}
         </ul>
-        <p className="text-gray-300 mt-4">{privacy.section6.noSale}</p>
+        <p className="text-gray-100 mt-4">{privacy.section6.noSale}</p>
       </section>
 
       {/* Section 7 */}
       <section className="mb-8">
         <h2 className="text-xl font-semibold text-white mb-4">{privacy.section7.title}</h2>
-        <p className="text-gray-300 mb-4">{privacy.section7.intro}</p>
-        <ul className="list-disc list-inside text-gray-300 space-y-2">
+        <p className="text-gray-100 mb-4">{privacy.section7.intro}</p>
+        <ul className="list-disc list-inside text-gray-100 space-y-2">
           {privacy.section7.periods.map((period, i) => (
             <li key={i}>
               <strong className="text-white">{period.label}</strong> {period.duration}
@@ -120,23 +130,23 @@ export default function PrivacyPolicyPage() {
       {/* Section 8 */}
       <section className="mb-8">
         <h2 className="text-xl font-semibold text-white mb-4">{privacy.section8.title}</h2>
-        <p className="text-gray-300 mb-4">{privacy.section8.intro}</p>
+        <p className="text-gray-100 mb-4">{privacy.section8.intro}</p>
         <div className="grid gap-4 md:grid-cols-2">
           {privacy.section8.rights.map((right, i) => (
             <div key={i} className="bg-dark-card border border-dark-border rounded-lg p-4">
               <h3 className="font-medium text-white mb-2">{right.title}</h3>
-              <p className="text-gray-400 text-sm">{right.desc}</p>
+              <p className="text-gray-300 text-sm">{right.desc}</p>
             </div>
           ))}
         </div>
-        <p className="text-gray-300 mt-4">{privacy.section8.exercise}</p>
+        <p className="text-gray-100 mt-4">{privacy.section8.exercise}</p>
       </section>
 
       {/* Section 9 */}
       <section className="mb-8">
         <h2 className="text-xl font-semibold text-white mb-4">{privacy.section9.title}</h2>
-        <p className="text-gray-300 mb-4">{privacy.section9.intro}</p>
-        <ul className="list-disc list-inside text-gray-300 space-y-1">
+        <p className="text-gray-100 mb-4">{privacy.section9.intro}</p>
+        <ul className="list-disc list-inside text-gray-100 space-y-1">
           {privacy.section9.measures.map((measure, i) => (
             <li key={i}>{measure}</li>
           ))}
@@ -146,25 +156,28 @@ export default function PrivacyPolicyPage() {
       {/* Section 10 */}
       <section className="mb-8">
         <h2 className="text-xl font-semibold text-white mb-4">{privacy.section10.title}</h2>
-        <p className="text-gray-300">{privacy.section10.content}</p>
+        <p className="text-gray-100">
+          {privacy.section10.content}{" "}
+          <a href="/legal/cookies" className="text-primary hover:underline">Politique de cookies</a>
+        </p>
       </section>
 
       {/* Section 11 */}
       <section className="mb-8">
         <h2 className="text-xl font-semibold text-white mb-4">{privacy.section11.title}</h2>
-        <p className="text-gray-300">{privacy.section11.content}</p>
+        <p className="text-gray-100">{privacy.section11.content}</p>
       </section>
 
       {/* Section 12 */}
       <section className="mb-8">
         <h2 className="text-xl font-semibold text-white mb-4">{privacy.section12.title}</h2>
-        <p className="text-gray-300">{privacy.section12.content}</p>
+        <p className="text-gray-100">{privacy.section12.content}</p>
       </section>
 
       {/* Section 13 */}
       <section className="mb-8">
         <h2 className="text-xl font-semibold text-white mb-4">{privacy.section13.title}</h2>
-        <p className="text-gray-300">
+        <p className="text-gray-100">
           {privacy.section13.content}{" "}
           <a
             href="https://www.cnil.fr"
@@ -177,13 +190,77 @@ export default function PrivacyPolicyPage() {
         </p>
       </section>
 
-      {/* Section 14 */}
-      <section>
+      {/* Section 14 - Décisions automatisées */}
+      <section className="mb-8">
         <h2 className="text-xl font-semibold text-white mb-4">{privacy.section14.title}</h2>
-        <p className="text-gray-300 mb-4">{privacy.section14.intro}</p>
-        <div className="bg-dark-card border border-dark-border rounded-lg p-4 text-gray-300">
-          <p>{privacy.section14.emailGeneral}</p>
-          <p>{privacy.section14.emailGDPR}</p>
+        <p className="text-gray-100 mb-4">{privacy.section14.content1}</p>
+        <p className="text-gray-100 mb-4">{privacy.section14.content2}</p>
+        <p className="text-gray-100 mb-4">{privacy.section14.content3}</p>
+        <div className="bg-dark-card border border-dark-border rounded-lg p-4 text-gray-100">
+          <p>{privacy.section14.rights}</p>
+        </div>
+      </section>
+
+      {/* Section 15 - Sous-traitants et DPA */}
+      <section className="mb-8">
+        <h2 className="text-xl font-semibold text-white mb-4">{privacy.section15.title}</h2>
+        <p className="text-gray-100 mb-4">{privacy.section15.intro}</p>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left">
+            <thead>
+              <tr className="border-b border-dark-border">
+                <th className="py-3 pr-4 text-white font-medium">Sous-traitant</th>
+                <th className="py-3 pr-4 text-white font-medium">Finalité</th>
+                <th className="py-3 pr-4 text-white font-medium">Localisation</th>
+                <th className="py-3 text-white font-medium">DPA</th>
+              </tr>
+            </thead>
+            <tbody>
+              {privacy.section15.subprocessors.map((sp: { name: string; purpose: string; location: string; dpa: string }, i: number) => (
+                <tr key={i} className="border-b border-dark-border/50">
+                  <td className="py-3 pr-4 text-white font-medium">{sp.name}</td>
+                  <td className="py-3 pr-4 text-gray-300">{sp.purpose}</td>
+                  <td className="py-3 pr-4 text-gray-300">{sp.location}</td>
+                  <td className="py-3">
+                    <a href={sp.dpa} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-xs">
+                      Voir le DPA
+                    </a>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="text-gray-300 text-sm mt-4">{privacy.section15.note}</p>
+      </section>
+
+      {/* Section 16 - Notification de violations */}
+      <section className="mb-8">
+        <h2 className="text-xl font-semibold text-white mb-4">{privacy.section16.title}</h2>
+        <p className="text-gray-100 mb-4">{privacy.section16.content1}</p>
+        <ul className="list-disc list-inside text-gray-100 space-y-2 mb-4">
+          {privacy.section16.obligations.map((obligation: string, i: number) => (
+            <li key={i}>{obligation}</li>
+          ))}
+        </ul>
+        <div className="bg-dark-card border border-dark-border rounded-lg p-4 text-gray-100">
+          <p>{privacy.section16.contact}</p>
+        </div>
+      </section>
+
+      {/* Section 17 - DPIA */}
+      <section className="mb-8">
+        <h2 className="text-xl font-semibold text-white mb-4">{privacy.section17.title}</h2>
+        <p className="text-gray-100">{privacy.section17.content}</p>
+      </section>
+
+      {/* Section 18 - Contact */}
+      <section>
+        <h2 className="text-xl font-semibold text-white mb-4">{privacy.section18.title}</h2>
+        <p className="text-gray-100 mb-4">{privacy.section18.intro}</p>
+        <div className="bg-dark-card border border-dark-border rounded-lg p-4 text-gray-100">
+          <p>{privacy.section18.emailGeneral}</p>
+          <p>{privacy.section18.emailGDPR}</p>
         </div>
       </section>
     </LegalLayoutLight>

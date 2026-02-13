@@ -9,10 +9,10 @@
 
 // Legal document versions - update when content changes
 export const LEGAL_VERSIONS = {
-  privacy: { version: "1.0", date: "2025-02-07" },
-  terms: { version: "1.1", date: "2025-02-07" },
-  notices: { version: "1.0", date: "2025-02-07" },
-  cookies: { version: "1.0", date: "2025-02-07" },
+  privacy: { version: "2.0", date: "2026-02-13" },
+  terms: { version: "2.0", date: "2026-02-13" },
+  notices: { version: "1.1", date: "2026-02-13" },
+  cookies: { version: "2.0", date: "2026-02-13" },
 } as const;
 
 export const legalTranslations = {
@@ -35,8 +35,10 @@ export const legalTranslations = {
     section2: {
       title: "2. Responsable du traitement",
       companyName: "Posty",
-      email: "Email : contact@posty.app",
-      gdprContact: "Contact RGPD : privacy@posty.app",
+      legalEntity: "Emilien Nepveu, entrepreneur individuel",
+      address: "Adresse : 42170 Chambles, France",
+      email: "Email : posty.contact@gmail.com",
+      gdprContact: "Contact RGPD / DPO : posty.contact@gmail.com",
     },
 
     section3: {
@@ -57,6 +59,10 @@ export const legalTranslations = {
       technical: {
         title: "3.4 Données techniques",
         items: ["Adresse IP", "Type de navigateur", "Données de connexion"],
+      },
+      payment: {
+        title: "3.5 Données de paiement",
+        items: ["Informations de carte bancaire (traitées par Stripe, non stockées par Posty)", "Historique des transactions", "Adresse de facturation (si applicable)"],
       },
     },
 
@@ -89,6 +95,8 @@ export const legalTranslations = {
       partners: [
         { name: "Firebase (Google) :", desc: "Hébergement et authentification" },
         { name: "OpenAI / Anthropic :", desc: "Génération de contenu IA (données anonymisées)" },
+        { name: "Stripe :", desc: "Traitement sécurisé des paiements et facturation" },
+        { name: "Vercel :", desc: "Hébergement et déploiement de l'application" },
       ],
       noSale: "Nous ne vendons jamais vos données personnelles à des tiers. Tout partage est encadré par des contrats garantissant la protection de vos données.",
     },
@@ -114,8 +122,9 @@ export const legalTranslations = {
         { title: "Droit à la portabilité", desc: "Recevoir vos données dans un format structuré" },
         { title: "Droit d'opposition", desc: "Vous opposer à certains traitements" },
         { title: "Droit de limitation", desc: "Limiter le traitement de vos données" },
+        { title: "Droit de retirer le consentement", desc: "Retirer votre consentement à tout moment, sans affecter la licéité du traitement effectué avant le retrait" },
       ],
-      exercise: "Pour exercer ces droits, rendez-vous dans les Paramètres de confidentialité de l'application ou contactez-nous à : privacy@posty.app",
+      exercise: "Pour exercer ces droits ou retirer votre consentement, rendez-vous dans les Paramètres de confidentialité de l'application ou contactez-nous à : posty.contact@gmail.com",
     },
 
     section9: {
@@ -132,7 +141,8 @@ export const legalTranslations = {
 
     section10: {
       title: "10. Cookies et traceurs",
-      content: "Notre application utilise des cookies essentiels pour le fonctionnement du service. Pour les cookies non essentiels (analytics), nous demandons votre consentement explicite.",
+      content: "Notre application utilise des cookies essentiels pour le fonctionnement du service. Pour les cookies non essentiels (analytics), nous demandons votre consentement explicite. Pour plus de détails, consultez notre Politique de cookies.",
+      cookiesPolicyLink: "/legal/cookies",
     },
 
     section11: {
@@ -152,10 +162,51 @@ export const legalTranslations = {
     },
 
     section14: {
-      title: "14. Contact",
+      title: "14. Décisions automatisées et profilage",
+      content1: "Posty utilise l'intelligence artificielle (via OpenAI et Anthropic) pour générer du contenu personnalisé en fonction de vos données de profil (secteur, rôle, style, objectifs). Ce traitement constitue un profilage au sens de l'article 22 du RGPD.",
+      content2: "Cependant, aucune décision ayant un effet juridique ou significatif sur vous n'est prise de manière automatisée. La génération de contenu est un outil d'aide : vous restez maître de la décision finale de publier ou non le contenu proposé.",
+      content3: "Vos données de profil sont anonymisées avant d'être envoyées aux services d'IA. Aucune donnée directement identifiante (nom, email) n'est transmise aux modèles de langage.",
+      rights: "Vous pouvez à tout moment modifier votre profil ou retirer votre consentement au traitement personnalisé depuis les Paramètres de l'application.",
+    },
+
+    section15: {
+      title: "15. Sous-traitants et accords de traitement (DPA)",
+      intro: "Nous faisons appel aux sous-traitants suivants pour le fonctionnement du service. Chacun est lié par un accord de traitement des données (DPA) conforme au RGPD :",
+      subprocessors: [
+        { name: "Google / Firebase", purpose: "Hébergement, base de données, authentification", location: "USA (Clauses Contractuelles Types)", dpa: "https://cloud.google.com/terms/data-processing-addendum" },
+        { name: "OpenAI", purpose: "Génération de contenu IA (données anonymisées)", location: "USA (Clauses Contractuelles Types)", dpa: "https://openai.com/policies/data-processing-addendum" },
+        { name: "Anthropic", purpose: "Génération de contenu IA (données anonymisées)", location: "USA (Clauses Contractuelles Types)", dpa: "https://www.anthropic.com/policies/data-processing-addendum" },
+        { name: "Stripe", purpose: "Traitement des paiements et facturation", location: "USA (Clauses Contractuelles Types)", dpa: "https://stripe.com/fr/legal/dpa" },
+        { name: "Vercel", purpose: "Hébergement et déploiement de l'application", location: "USA (Clauses Contractuelles Types)", dpa: "https://vercel.com/legal/dpa" },
+        { name: "LinkedIn (Microsoft)", purpose: "Connexion OAuth et publication de posts", location: "USA (Clauses Contractuelles Types)", dpa: "https://learn.microsoft.com/en-us/legal/gdpr" },
+        { name: "X Corp. (Twitter)", purpose: "Connexion OAuth et publication de posts", location: "USA (Clauses Contractuelles Types)", dpa: "https://twitter.com/en/privacy" },
+        { name: "Meta Platforms", purpose: "Connexion OAuth et publication sur Facebook/Threads", location: "USA (Clauses Contractuelles Types)", dpa: "https://www.facebook.com/legal/terms/dataprocessing" },
+      ],
+      note: "Cette liste est mise à jour régulièrement. Tout ajout de sous-traitant fait l'objet d'une vérification de conformité RGPD préalable.",
+    },
+
+    section16: {
+      title: "16. Notification de violations de données",
+      content1: "En cas de violation de données personnelles susceptible d'engendrer un risque pour vos droits et libertés, nous nous engageons à :",
+      obligations: [
+        "Notifier la CNIL dans un délai de 72 heures après en avoir pris connaissance, conformément à l'article 33 du RGPD",
+        "Vous informer dans les meilleurs délais si la violation présente un risque élevé pour vos droits et libertés (article 34 du RGPD)",
+        "Documenter toute violation dans un registre interne des incidents",
+        "Mettre en œuvre les mesures correctives nécessaires pour limiter l'impact de la violation",
+      ],
+      contact: "En cas de suspicion de violation de vos données, contactez immédiatement : posty.contact@gmail.com",
+    },
+
+    section17: {
+      title: "17. Analyse d'impact (DPIA)",
+      content: "Conformément à l'article 35 du RGPD, nous réalisons des analyses d'impact relatives à la protection des données (DPIA) pour les traitements susceptibles d'engendrer un risque élevé pour les droits et libertés des personnes concernées. Le traitement de données par des modèles d'IA pour la personnalisation du contenu fait l'objet d'une DPIA documentée en interne.",
+    },
+
+    section18: {
+      title: "18. Contact",
       intro: "Pour toute question concernant cette politique ou vos données personnelles :",
-      emailGeneral: "Email général : contact@posty.app",
-      emailGDPR: "Email RGPD / DPO : privacy@posty.app",
+      emailGeneral: "Email général : posty.contact@gmail.com",
+      emailGDPR: "Email RGPD / DPO : posty.contact@gmail.com",
     },
   },
 
@@ -229,14 +280,14 @@ export const legalTranslations = {
 
     section6: {
       title: "6. Tarification et abonnements",
-      intro: "Le Service propose une offre gratuite et des abonnements payants. Les conditions détaillées sont les suivantes :",
+      intro: "Le Service propose des abonnements payants. Les conditions détaillées sont les suivantes :",
       plans: {
         title: "6.1 Plans disponibles",
-        content: "Posty propose trois niveaux de service : un plan Gratuit (fonctionnalités limitées), un plan Pro et un plan Max. Les tarifs en vigueur sont affichés dans l'application et sur la page de tarification. Posty se réserve le droit de modifier ses tarifs avec un préavis de 30 jours pour les abonnements en cours.",
+        content: "Posty propose deux abonnements payants : un plan Pro et un plan Max. Un plan Gratuit aux fonctionnalités limitées existe pour les utilisateurs historiques mais n'est plus proposé aux nouveaux inscrits. Les tarifs en vigueur sont affichés dans l'application et sur la page de tarification. Posty se réserve le droit de modifier ses tarifs avec un préavis de 30 jours pour les abonnements en cours.",
       },
       trial: {
         title: "6.2 Période d'essai gratuite",
-        content: "Les plans Pro et Max bénéficient d'une période d'essai gratuite de 3 jours. Durant cette période, l'utilisateur a accès à l'ensemble des fonctionnalités du plan choisi sans aucun frais. Une carte bancaire valide est requise pour démarrer l'essai. Si l'utilisateur ne résilie pas avant la fin de la période d'essai, l'abonnement sera automatiquement activé et le premier paiement sera prélevé. L'utilisateur peut résilier à tout moment pendant la période d'essai sans aucun frais depuis les paramètres de l'application ou en contactant le support.",
+        content: "Les plans Pro et Max bénéficient d'une période d'essai gratuite de 7 jours. Durant cette période, l'utilisateur a accès à l'ensemble des fonctionnalités du plan choisi sans aucun frais. Une carte bancaire valide est requise pour démarrer l'essai. Si l'utilisateur ne résilie pas avant la fin de la période d'essai, l'abonnement sera automatiquement activé et le premier paiement sera prélevé. L'utilisateur peut résilier à tout moment pendant la période d'essai sans aucun frais depuis les paramètres de l'application ou en contactant le support.",
       },
       billing: {
         title: "6.3 Facturation et paiement",
@@ -244,11 +295,15 @@ export const legalTranslations = {
       },
       guarantee: {
         title: "6.4 Garantie satisfait ou remboursé",
-        content: "Après la période d'essai gratuite, Posty offre une garantie satisfait ou remboursé de 7 jours à compter du premier paiement. Si l'utilisateur n'est pas satisfait du service, il peut demander un remboursement intégral dans ce délai en contactant le support à contact@posty.app. Au-delà de cette période de 7 jours, aucun remboursement ne sera effectué pour la période en cours, mais l'utilisateur peut résilier son abonnement à tout moment pour éviter les prélèvements futurs.",
+        content: "Après la période d'essai gratuite, Posty offre une garantie satisfait ou remboursé de 7 jours à compter du premier paiement. Si l'utilisateur n'est pas satisfait du service, il peut demander un remboursement intégral dans ce délai en contactant le support à posty.contact@gmail.com. Au-delà de cette période de 7 jours, aucun remboursement ne sera effectué pour la période en cours, mais l'utilisateur peut résilier son abonnement à tout moment pour éviter les prélèvements futurs.",
       },
       cancellation: {
         title: "6.5 Résiliation d'abonnement",
         content: "L'utilisateur peut résilier son abonnement à tout moment depuis les paramètres de l'application. La résiliation prend effet à la fin de la période de facturation en cours. L'utilisateur conserve l'accès aux fonctionnalités payantes jusqu'à cette date. Après résiliation, le compte est automatiquement rétrogradé au plan Gratuit.",
+      },
+      withdrawal: {
+        title: "6.6 Droit de rétractation",
+        content: "Conformément à l'article L.221-28 du Code de la consommation, en souscrivant à un abonnement Posty, l'utilisateur demande expressément l'exécution immédiate du service et reconnaît renoncer à son droit de rétractation de 14 jours pour les contenus numériques fournis dès le début de l'exécution du service.",
       },
     },
 
@@ -295,6 +350,7 @@ export const legalTranslations = {
       title: "11. Droit applicable et litiges",
       content1: "Les présentes CGU sont régies par le droit français. En cas de litige, les parties s'engagent à rechercher une solution amiable avant toute action judiciaire.",
       content2: "À défaut d'accord amiable, les tribunaux français seront seuls compétents.",
+      content3: "Conformément à l'article L.616-1 du Code de la consommation, l'utilisateur peut recourir gratuitement au médiateur de la consommation suivant : Medicys — 73 Boulevard de Clichy, 75009 Paris — https://www.medicys.fr — Le consommateur peut également utiliser la plateforme européenne de règlement en ligne des litiges : https://ec.europa.eu/consumers/odr",
     },
 
     section12: {
@@ -316,7 +372,7 @@ export const legalTranslations = {
     section13: {
       title: "13. Contact",
       intro: "Pour toute question concernant les présentes CGU :",
-      email: "Email : contact@posty.app",
+      email: "Email : posty.contact@gmail.com",
     },
   },
 
@@ -336,13 +392,13 @@ export const legalTranslations = {
       vat: "Numéro de TVA :",
       email: "Email :",
       phone: "Téléphone :",
-      toComplete: "Entreprise individuelle (en cours d'immatriculation)",
-      addressValue: "France",
-      siretValue: "En cours d'attribution",
-      capitalValue: "N/A",
-      vatValue: "En cours d'attribution",
-      phoneValue: "Non communiqué",
-      note: "* POSTY est actuellement édité par Emilien Nepveu en tant qu'entrepreneur individuel. L'immatriculation légale est en cours.",
+      toComplete: "Micro-entreprise (Entreprise Individuelle)",
+      addressValue: "42170 Chambles, France",
+      siretValue: "101 134 633 00011",
+      capitalValue: "Sans objet (Entreprise Individuelle)",
+      vatValue: "Non applicable — Franchise en base de TVA (Art. 293 B du CGI)",
+      // Phone removed: not required for micro-enterprise under LCEN
+      note: "* POSTY est édité par Emilien Nepveu en tant que micro-entrepreneur.",
     },
 
     section2: {
@@ -353,7 +409,7 @@ export const legalTranslations = {
     },
 
     section3: {
-      title: "3. Hébergeur",
+      title: "3. Hébergeurs",
       name: "Nom :",
       company: "Société :",
       address: "Adresse :",
@@ -361,6 +417,9 @@ export const legalTranslations = {
       firebase: "Google Cloud Platform / Firebase",
       google: "Google LLC",
       googleAddress: "1600 Amphitheatre Parkway, Mountain View, CA 94043, USA",
+      vercel: "Vercel Inc.",
+      vercelAddress: "340 S Lemon Ave #4133, Walnut, CA 91789, USA",
+      vercelWebsite: "https://vercel.com",
     },
 
     section4: {
@@ -392,8 +451,8 @@ export const legalTranslations = {
     section7: {
       title: "7. Cookies",
       content1: "L'application Posty utilise des cookies pour assurer le bon fonctionnement du service et améliorer l'expérience utilisateur.",
-      content2: "Pour plus d'informations sur l'utilisation des cookies et la gestion de vos préférences, consultez notre Politique de confidentialité.",
-      privacyLink: "Politique de confidentialité",
+      content2: "Pour plus d'informations sur l'utilisation des cookies et la gestion de vos préférences, consultez notre Politique de cookies.",
+      cookiesLink: "Politique de cookies",
     },
 
     section8: {
@@ -497,7 +556,7 @@ export const legalTranslations = {
     section7: {
       title: "7. Contact",
       intro: "Pour toute question concernant notre utilisation des cookies :",
-      email: "Email : privacy@posty.app",
+      email: "Email : posty.contact@gmail.com",
     },
   },
 

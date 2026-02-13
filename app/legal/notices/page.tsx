@@ -2,6 +2,7 @@
 
 import LegalLayoutLight from "@/components/layout/LegalLayoutLight";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { LEGAL_VERSIONS } from "@/lib/i18n/legal";
 import Link from "next/link";
 
 export default function LegalNoticesPage() {
@@ -10,12 +11,15 @@ export default function LegalNoticesPage() {
 
   return (
     <LegalLayoutLight title={notices.title}>
-      <p className="text-gray-300 text-lg mb-8">{notices.intro}</p>
+      <p className="text-gray-100 text-lg mb-8">
+        {t.legal.version} {LEGAL_VERSIONS.notices.version} — {t.legal.lastUpdated} {LEGAL_VERSIONS.notices.date}
+      </p>
+      <p className="text-gray-100 text-lg mb-8">{notices.intro}</p>
 
       {/* Section 1 */}
       <section className="mb-8">
         <h2 className="text-xl font-semibold text-white mb-4">{notices.section1.title}</h2>
-        <div className="bg-dark-card border border-dark-border rounded-lg p-6 text-gray-300 space-y-2">
+        <div className="bg-dark-card border border-dark-border rounded-lg p-6 text-gray-100 space-y-2">
           <p>
             <strong className="text-white">{notices.section1.appName}</strong> POSTY
           </p>
@@ -35,24 +39,21 @@ export default function LegalNoticesPage() {
             <strong className="text-white">{notices.section1.vat}</strong> {notices.section1.vatValue}
           </p>
           <p>
-            <strong className="text-white">{notices.section1.email}</strong> contact@posty.app
-          </p>
-          <p>
-            <strong className="text-white">{notices.section1.phone}</strong> {notices.section1.phoneValue}
+            <strong className="text-white">{notices.section1.email}</strong> posty.contact@gmail.com
           </p>
         </div>
-        <p className="text-gray-400 text-sm mt-2 italic">{notices.section1.note}</p>
+        <p className="text-gray-300 text-sm mt-2 italic">{notices.section1.note}</p>
       </section>
 
       {/* Section 2 */}
       <section className="mb-8">
         <h2 className="text-xl font-semibold text-white mb-4">{notices.section2.title}</h2>
-        <div className="bg-dark-card border border-dark-border rounded-lg p-6 text-gray-300 space-y-2">
+        <div className="bg-dark-card border border-dark-border rounded-lg p-6 text-gray-100 space-y-2">
           <p>
             <strong className="text-white">{notices.section2.name}</strong> {notices.section2.toComplete}
           </p>
           <p>
-            <strong className="text-white">{notices.section2.email}</strong> contact@posty.app
+            <strong className="text-white">{notices.section2.email}</strong> posty.contact@gmail.com
           </p>
           <p>
             <strong className="text-white">LinkedIn :</strong>{" "}
@@ -71,59 +72,75 @@ export default function LegalNoticesPage() {
       {/* Section 3 */}
       <section className="mb-8">
         <h2 className="text-xl font-semibold text-white mb-4">{notices.section3.title}</h2>
-        <div className="bg-dark-card border border-dark-border rounded-lg p-6 text-gray-300 space-y-2">
-          <p>
-            <strong className="text-white">{notices.section3.name}</strong> {notices.section3.firebase}
-          </p>
-          <p>
-            <strong className="text-white">{notices.section3.company}</strong> {notices.section3.google}
-          </p>
-          <p>
-            <strong className="text-white">{notices.section3.address}</strong> {notices.section3.googleAddress}
-          </p>
-          <p>
-            <strong className="text-white">{notices.section3.website}</strong>{" "}
-            <a
-              href="https://firebase.google.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline"
-            >
-              firebase.google.com
-            </a>
-          </p>
+        <div className="bg-dark-card border border-dark-border rounded-lg p-6 text-gray-100 space-y-4">
+          {/* Google / Firebase */}
+          <div className="space-y-2">
+            <p className="text-white font-medium text-sm uppercase tracking-wide">Base de données & Authentification</p>
+            <p>
+              <strong className="text-white">{notices.section3.name}</strong> {notices.section3.firebase}
+            </p>
+            <p>
+              <strong className="text-white">{notices.section3.company}</strong> {notices.section3.google}
+            </p>
+            <p>
+              <strong className="text-white">{notices.section3.address}</strong> {notices.section3.googleAddress}
+            </p>
+            <p>
+              <strong className="text-white">{notices.section3.website}</strong>{" "}
+              <a href="https://firebase.google.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                firebase.google.com
+              </a>
+            </p>
+          </div>
+          <div className="border-t border-dark-border" />
+          {/* Vercel */}
+          <div className="space-y-2">
+            <p className="text-white font-medium text-sm uppercase tracking-wide">Hébergement & Déploiement</p>
+            <p>
+              <strong className="text-white">{notices.section3.company}</strong> {notices.section3.vercel}
+            </p>
+            <p>
+              <strong className="text-white">{notices.section3.address}</strong> {notices.section3.vercelAddress}
+            </p>
+            <p>
+              <strong className="text-white">{notices.section3.website}</strong>{" "}
+              <a href={notices.section3.vercelWebsite} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                vercel.com
+              </a>
+            </p>
+          </div>
         </div>
       </section>
 
       {/* Section 4 */}
       <section className="mb-8">
         <h2 className="text-xl font-semibold text-white mb-4">{notices.section4.title}</h2>
-        <div className="bg-dark-card border border-dark-border rounded-lg p-6 text-gray-300 space-y-2">
+        <div className="bg-dark-card border border-dark-border rounded-lg p-6 text-gray-100 space-y-2">
           <p>
-            <strong className="text-white">{notices.section4.contact}</strong> privacy@posty.app
+            <strong className="text-white">{notices.section4.contact}</strong> posty.contact@gmail.com
           </p>
-          <p className="text-gray-400 text-sm mt-2">{notices.section4.description}</p>
+          <p className="text-gray-300 text-sm mt-2">{notices.section4.description}</p>
         </div>
       </section>
 
       {/* Section 5 */}
       <section className="mb-8">
         <h2 className="text-xl font-semibold text-white mb-4">{notices.section5.title}</h2>
-        <p className="text-gray-300 mb-4">{notices.section5.content1}</p>
-        <p className="text-gray-300">{notices.section5.content2}</p>
+        <p className="text-gray-100 mb-4">{notices.section5.content1}</p>
+        <p className="text-gray-100">{notices.section5.content2}</p>
       </section>
 
       {/* Section 6 */}
       <section className="mb-8">
         <h2 className="text-xl font-semibold text-white mb-4">{notices.section6.title}</h2>
-        <div className="bg-dark-card border border-dark-border rounded-lg p-6 text-gray-300 space-y-2">
+        <div className="bg-dark-card border border-dark-border rounded-lg p-6 text-gray-100 space-y-2">
           <p>
             <strong className="text-white">{notices.section6.development}</strong> {notices.section6.team}
           </p>
           <p>
             <strong className="text-white">{notices.section6.tech}</strong>
           </p>
-          <ul className="list-disc list-inside ml-4 text-gray-400 space-y-1">
+          <ul className="list-disc list-inside ml-4 text-gray-300 space-y-1">
             {notices.section6.technologies.map((tech, i) => (
               <li key={i}>{tech}</li>
             ))}
@@ -134,11 +151,11 @@ export default function LegalNoticesPage() {
       {/* Section 7 */}
       <section className="mb-8">
         <h2 className="text-xl font-semibold text-white mb-4">{notices.section7.title}</h2>
-        <p className="text-gray-300 mb-4">{notices.section7.content1}</p>
-        <p className="text-gray-300">
+        <p className="text-gray-100 mb-4">{notices.section7.content1}</p>
+        <p className="text-gray-100">
           {notices.section7.content2}{" "}
-          <Link href="/legal/privacy" className="text-primary hover:underline">
-            {notices.section7.privacyLink}
+          <Link href="/legal/cookies" className="text-primary hover:underline">
+            {notices.section7.cookiesLink}
           </Link>
           .
         </p>
@@ -147,29 +164,29 @@ export default function LegalNoticesPage() {
       {/* Section 8 */}
       <section className="mb-8">
         <h2 className="text-xl font-semibold text-white mb-4">{notices.section8.title}</h2>
-        <p className="text-gray-300 mb-4">{notices.section8.content1}</p>
-        <p className="text-gray-300">{notices.section8.content2}</p>
+        <p className="text-gray-100 mb-4">{notices.section8.content1}</p>
+        <p className="text-gray-100">{notices.section8.content2}</p>
       </section>
 
       {/* Section 9 */}
       <section className="mb-8">
         <h2 className="text-xl font-semibold text-white mb-4">{notices.section9.title}</h2>
-        <p className="text-gray-300">{notices.section9.content}</p>
+        <p className="text-gray-100">{notices.section9.content}</p>
       </section>
 
       {/* Section 10 */}
       <section>
         <h2 className="text-xl font-semibold text-white mb-4">{notices.section10.title}</h2>
-        <p className="text-gray-300 mb-4">{notices.section10.intro}</p>
-        <div className="bg-dark-card border border-dark-border rounded-lg p-6 text-gray-300 space-y-2">
+        <p className="text-gray-100 mb-4">{notices.section10.intro}</p>
+        <div className="bg-dark-card border border-dark-border rounded-lg p-6 text-gray-100 space-y-2">
           <p>
-            <strong className="text-white">{notices.section10.emailGeneral}</strong> contact@posty.app
+            <strong className="text-white">{notices.section10.emailGeneral}</strong> posty.contact@gmail.com
           </p>
           <p>
-            <strong className="text-white">{notices.section10.emailGDPR}</strong> privacy@posty.app
+            <strong className="text-white">{notices.section10.emailGDPR}</strong> posty.contact@gmail.com
           </p>
           <p>
-            <strong className="text-white">{notices.section10.emailSupport}</strong> support@posty.app
+            <strong className="text-white">{notices.section10.emailSupport}</strong> posty.contact@gmail.com
           </p>
         </div>
       </section>

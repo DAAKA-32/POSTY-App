@@ -57,8 +57,8 @@ export default function FeaturesSection() {
           <span className="text-overline text-primary mb-4 block">
             Fonctionnalités puissantes
           </span>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6">
-            Tout ce dont vous avez besoin pour{" "}
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6">
+            <span className="text-silver-shimmer">Tout ce dont vous avez besoin pour</span>{" "}
             <span className="text-gradient bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               développer votre activité
             </span>

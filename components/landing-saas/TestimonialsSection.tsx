@@ -44,8 +44,8 @@ export default function TestimonialsSection() {
           <span className="text-overline text-accent mb-4 block">
             Témoignages
           </span>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6">
-            La confiance des{" "}
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6">
+            <span className="text-silver-shimmer">La confiance des</span>{" "}
             <span className="text-gradient bg-gradient-to-r from-accent to-primary bg-clip-text text-transparent">
               leaders du secteur
             </span>

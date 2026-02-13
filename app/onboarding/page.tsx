@@ -100,6 +100,170 @@ const slideVariants = {
 };
 
 // =============================================================================
+// PROFILE RECAP SCREEN — styled like the landing page mockup
+// =============================================================================
+function ProfileRecapScreen({
+  data,
+  userName,
+  onContinue,
+}: {
+  data: OnboardingData;
+  userName: string;
+  onContinue: () => void;
+}) {
+  const initials = userName
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2) || "?";
+
+  const fields = [
+    { label: "Profil", value: data.profileType, icon: "briefcase" },
+    { label: "Secteur", value: data.sector, icon: "building" },
+    { label: "Role", value: data.role, icon: "user" },
+    { label: "Objectif", value: data.objective, icon: "target" },
+    { label: "Audience", value: data.targetAudience, icon: "users" },
+    { label: "Ton", value: data.communicationTone, icon: "mic" },
+    { label: "Frequence", value: data.publishingFrequency, icon: "calendar" },
+  ];
+
+  const iconMap: Record<string, React.ReactNode> = {
+    briefcase: (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+    ),
+    building: (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+    ),
+    user: (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+    ),
+    target: (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+    ),
+    users: (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+    ),
+    mic: (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
+    ),
+    calendar: (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+    ),
+  };
+
+  return (
+    <div className="w-full max-w-lg px-4 sm:px-6 py-6 sm:py-10 my-auto">
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: smoothEase }}
+        className="text-center mb-6"
+      >
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.15, type: "spring", stiffness: 200, damping: 15 }}
+          className="w-14 h-14 mx-auto mb-4 rounded-full bg-emerald-100 flex items-center justify-center"
+        >
+          <svg className="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+          </svg>
+        </motion.div>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">
+          Votre profil Posty est pret
+        </h1>
+        <p className="text-gray-400 text-sm">
+          L&apos;IA va personnaliser chaque post selon vos choix
+        </p>
+      </motion.div>
+
+      {/* Dark card — matching landing page mockup style */}
+      <motion.div
+        initial={{ opacity: 0, y: 30, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ delay: 0.2, duration: 0.6, ease: smoothEase }}
+        className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl p-5 sm:p-6 overflow-hidden shadow-xl"
+      >
+        {/* Decorative glows */}
+        <div className="absolute top-0 left-0 w-32 h-32 bg-[#F8935D]/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 right-0 w-24 h-24 bg-[#F76B54]/10 rounded-full blur-2xl pointer-events-none" />
+
+        {/* Header row */}
+        <div className="flex items-center gap-2 mb-4 relative z-10">
+          <div className="w-2 h-2 rounded-full bg-[#F8935D]" />
+          <span className="text-[12px] text-gray-400 font-medium">Votre profil Posty</span>
+          <span className="ml-auto text-[11px] text-emerald-400 font-medium flex items-center gap-1">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+            Complete
+          </span>
+        </div>
+
+        {/* Avatar + name */}
+        <div className="flex items-center gap-3 mb-4 relative z-10 bg-white/[0.06] rounded-xl p-3 border border-white/[0.08]">
+          <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#F8935D] to-[#F76B54] flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-[#F8935D]/20 flex-shrink-0">
+            {initials}
+          </div>
+          <div className="min-w-0">
+            <div className="text-[14px] text-white font-semibold truncate">{userName}</div>
+            <div className="text-[11px] text-gray-400 truncate">{data.profileType} &middot; {data.sector}</div>
+          </div>
+        </div>
+
+        {/* Profile fields */}
+        <div className="space-y-2 relative z-10">
+          {fields.map((field, i) => (
+            <motion.div
+              key={field.label}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.35 + i * 0.06, duration: 0.35, ease: smoothEase }}
+              className="flex items-center gap-3 bg-white/[0.06] rounded-lg px-3 py-2.5 border border-white/[0.06]"
+            >
+              <div className="w-7 h-7 rounded-lg bg-white/[0.08] flex items-center justify-center text-[#F8935D] flex-shrink-0">
+                {iconMap[field.icon]}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[9px] text-gray-500 uppercase tracking-wider leading-none mb-0.5">{field.label}</div>
+                <div className="text-[12px] text-white/90 font-medium truncate">{field.value}</div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Completion bar */}
+        <div className="mt-4 relative z-10">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[10px] text-gray-500">Personnalisation</span>
+            <span className="text-[10px] text-[#F8935D] font-semibold">100%</span>
+          </div>
+          <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: "100%" }}
+              transition={{ delay: 0.8, duration: 0.8, ease: "easeOut" }}
+              className="h-full bg-gradient-to-r from-[#F8935D] to-[#F76B54] rounded-full"
+            />
+          </div>
+        </div>
+      </motion.div>
+
+      {/* CTA */}
+      <motion.button
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.9, duration: 0.4 }}
+        onClick={onContinue}
+        className="w-full mt-6 py-3.5 px-4 bg-primary hover:bg-primary-hover text-white font-semibold rounded-xl shadow-sm transition-colors duration-200 text-sm"
+      >
+        Continuer
+      </motion.button>
+    </div>
+  );
+}
+
+// =============================================================================
 // UPSELL SCREEN
 // =============================================================================
 function UpsellScreen({ onContinue, onUpgrade }: { onContinue: () => void; onUpgrade: (plan: "pro" | "max") => void }) {
@@ -368,6 +532,7 @@ export default function OnboardingPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [direction, setDirection] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showRecap, setShowRecap] = useState(false);
   const [showUpsell, setShowUpsell] = useState(false);
   const [data, setData] = useState<OnboardingData>({
     profileType: "",
@@ -386,8 +551,8 @@ export default function OnboardingPage() {
     if (!loading) {
       if (!user) {
         router.push("/login");
-      } else if (showUpsell) {
-        // Upsell screen is active — never redirect away
+      } else if (showRecap || showUpsell) {
+        // Recap or upsell screen is active — never redirect away
         return;
       } else if (userProfile?.onboardingComplete) {
         router.push("/app");
@@ -460,18 +625,23 @@ export default function OnboardingPage() {
     setIsSubmitting(true);
     try {
       await completeOnboarding(user.uid, data);
-      // CRITICAL: Set showUpsell BEFORE refreshUserProfile/clearOnboardingFlag
+      // CRITICAL: Set showRecap BEFORE refreshUserProfile/clearOnboardingFlag
       // to prevent the redirect useEffect from navigating to /app
-      // during intermediate renders where onboardingComplete=true but showUpsell=false
-      setShowUpsell(true);
+      // during intermediate renders where onboardingComplete=true but showRecap=false
+      setShowRecap(true);
       await refreshUserProfile();
       clearOnboardingFlag();
     } catch (error) {
       console.error("Onboarding error:", error);
       toast.error("Une erreur est survenue");
-      setShowUpsell(false);
+      setShowRecap(false);
       setIsSubmitting(false);
     }
+  };
+
+  const handleRecapContinue = () => {
+    setShowRecap(false);
+    setShowUpsell(true);
   };
 
   const handleUpsellContinue = () => {
@@ -490,7 +660,7 @@ export default function OnboardingPage() {
 
   // Keyboard navigation: Enter key advances to next step (or submits on last step)
   useEffect(() => {
-    if (showUpsell) return;
+    if (showRecap || showUpsell) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key !== "Enter") return;
@@ -527,7 +697,7 @@ export default function OnboardingPage() {
           </div>
           <span className="font-bold text-gray-900 text-lg">Posty</span>
         </Link>
-        {!showUpsell && (
+        {!showRecap && !showUpsell && (
           <span className="text-sm text-gray-400 font-medium">
             {currentStep + 1} / {STEPS.length}
           </span>
@@ -535,7 +705,7 @@ export default function OnboardingPage() {
       </header>
 
       {/* Progress bar */}
-      {!showUpsell && (
+      {!showRecap && !showUpsell && (
         <div className="px-4 sm:px-8 max-w-2xl mx-auto w-full flex-shrink-0">
           <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
             <motion.div
@@ -552,6 +722,12 @@ export default function OnboardingPage() {
       <main className="flex-1 flex flex-col items-center justify-start min-h-0">
         {showUpsell ? (
           <UpsellScreen onContinue={handleUpsellContinue} onUpgrade={handleUpsellUpgrade} />
+        ) : showRecap ? (
+          <ProfileRecapScreen
+            data={data}
+            userName={user.displayName || user.email?.split("@")[0] || "Utilisateur"}
+            onContinue={handleRecapContinue}
+          />
         ) : (
           <div className="w-full max-w-lg px-4 sm:px-6 py-8 sm:py-12 my-auto">
             <AnimatePresence mode="wait" custom={direction}>

@@ -568,7 +568,7 @@ export const en = {
 
     // Contact
     dataQuestions: "Questions about your data:",
-    contactPrivacy: "Questions about your data: privacy@posty.app",
+    contactPrivacy: "Questions about your data: posty.contact@gmail.com",
 
     // Language section
     languageSection: "Language",
@@ -914,7 +914,7 @@ export const en = {
     // Support
     supportTitle: "Responsive support",
     supportDesc: "Got a question? Our team responds within 24 hours.",
-    supportEmail: "support@posty.app",
+    supportEmail: "posty.contact@gmail.com",
   },
 
   // E-E-A-T: Expertise Content

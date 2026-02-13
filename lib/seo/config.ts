@@ -32,7 +32,7 @@ export const seoConfig = {
   // Company - E-E-A-T: Trust
   company: {
     foundingYear: 2024,
-    legalStatus: "Entreprise individuelle (en cours d'immatriculation)",
+    legalStatus: "Micro-entreprise (Entreprise Individuelle) — SIRET 101 134 633 00011",
     country: "France",
   },
 
@@ -353,11 +353,7 @@ export const structuredData = {
       price: "0",
       priceCurrency: "EUR",
     },
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: "4.9",
-      ratingCount: "150",
-    },
+    // aggregateRating removed: no verified reviews yet
   },
 
   faqPage: (questions: { question: string; answer: string }[]) => ({

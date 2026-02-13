@@ -303,6 +303,7 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
+  const [confirmAge, setConfirmAge] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
@@ -410,6 +411,10 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
         setError(t.auth.acceptTermsRequired);
         return;
       }
+      if (!confirmAge) {
+        setError("Vous devez confirmer avoir au moins 18 ans.");
+        return;
+      }
     }
 
     setIsLoading(true);
@@ -435,6 +440,7 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
     setEmail("");
     setPassword("");
     setAcceptTerms(false);
+    setConfirmAge(false);
     setShowPassword(false);
     setError("");
   };
@@ -709,22 +715,31 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
 
             {/* Terms checkbox - Signup only */}
             {mode === "signup" && (
-              <PremiumCheckbox
-                checked={acceptTerms}
-                onChange={setAcceptTerms}
-                prefersReducedMotion={prefersReducedMotion}
-              >
-                {t.auth.acceptTermsText}{" "}
-                <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="text-warm-orange hover:underline">{t.common.terms}</a>
-                {" "}{t.auth.andThe}{" "}
-                <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-warm-orange hover:underline">{t.auth.privacyPolicyText}</a>
-              </PremiumCheckbox>
+              <>
+                <PremiumCheckbox
+                  checked={acceptTerms}
+                  onChange={setAcceptTerms}
+                  prefersReducedMotion={prefersReducedMotion}
+                >
+                  {t.auth.acceptTermsText}{" "}
+                  <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="text-warm-orange hover:underline">{t.common.terms}</a>
+                  {" "}{t.auth.andThe}{" "}
+                  <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-warm-orange hover:underline">{t.auth.privacyPolicyText}</a>
+                </PremiumCheckbox>
+                <PremiumCheckbox
+                  checked={confirmAge}
+                  onChange={setConfirmAge}
+                  prefersReducedMotion={prefersReducedMotion}
+                >
+                  Je confirme avoir au moins 18 ans
+                </PremiumCheckbox>
+              </>
             )}
 
             {/* Submit button - Premium Warm Orange/Coral Gradient */}
             <motion.button
               type="submit"
-              disabled={isLoading || showSuccess || (mode === "signup" && !acceptTerms)}
+              disabled={isLoading || showSuccess || (mode === "signup" && (!acceptTerms || !confirmAge))}
               className="
                 relative w-full py-3.5 sm:py-4 rounded-xl sm:rounded-2xl font-semibold text-sm sm:text-base text-white
                 bg-gradient-to-r from-warm-orange via-warm-coral to-warm-orange
@@ -788,6 +803,7 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
             onError={(msg) => setError(msg)}
             onStartAuth={() => setError("")}
             label={mode === "login" ? t.auth.signInWithGoogle : t.auth.signUpWithGoogle}
+            requireConsent={mode === "signup"}
           />
 
           {/* Toggle mode - Enhanced visibility for signup */}

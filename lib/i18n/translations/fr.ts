@@ -568,7 +568,7 @@ export const fr = {
 
     // Contact
     dataQuestions: "Pour toute question concernant vos données :",
-    contactPrivacy: "Pour toute question concernant vos données : privacy@posty.app",
+    contactPrivacy: "Pour toute question concernant vos données : posty.contact@gmail.com",
 
     // Language section
     languageSection: "Langue",
@@ -913,7 +913,7 @@ export const fr = {
     // Support
     supportTitle: "Support réactif",
     supportDesc: "Une question ? Notre équipe répond sous 24h.",
-    supportEmail: "support@posty.app",
+    supportEmail: "posty.contact@gmail.com",
   },
 
   // E-E-A-T: Expertise Content

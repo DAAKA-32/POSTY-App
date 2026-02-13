@@ -28,8 +28,8 @@ export default function CTASection() {
           </div>
 
           {/* Titre */}
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
-            Prêt à transformer{" "}
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 leading-tight">
+            <span className="text-silver-shimmer">Prêt à transformer</span>{" "}
             <span className="text-gradient bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               votre entreprise ?
             </span>
@@ -37,16 +37,16 @@ export default function CTASection() {
 
           {/* Sous-titre */}
           <p className="text-lg md:text-xl text-text-secondary mb-8 max-w-2xl mx-auto leading-relaxed">
-            Démarrez votre essai gratuit de 14 jours dès aujourd&apos;hui. Aucune carte bancaire requise. Découvrez toute la puissance de notre plateforme et obtenez des résultats dès le premier jour.
+            Démarrez votre essai gratuit de 7 jours dès aujourd&apos;hui. Découvrez toute la puissance de notre plateforme et obtenez des résultats dès le premier jour.
           </p>
 
           {/* Liste des avantages */}
           <div className="flex flex-wrap items-center justify-center gap-6 mb-10 text-text-secondary">
             {[
-              "Essai gratuit de 14 jours",
-              "Aucune carte bancaire requise",
+              "Essai gratuit de 7 jours",
+              "Garantie satisfait ou remboursé 7 jours",
               "Annulation à tout moment",
-              "Support 24h/24 et 7j/7",
+              "Support réactif par email",
             ].map((benefit, index) => (
               <div key={index} className="flex items-center gap-2">
                 <svg className="w-5 h-5 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -78,7 +78,7 @@ export default function CTASection() {
 
           {/* Texte de confiance */}
           <p className="text-text-muted text-sm mt-8">
-            Rejoignez plus de 2 500 entreprises qui utilisent déjà Posty pour développer leur activité
+            Rejoignez les professionnels qui utilisent déjà Posty pour développer leur activité
           </p>
         </div>
 
@@ -109,15 +109,15 @@ export default function CTASection() {
 
             {/* Liens */}
             <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-text-muted">
-              <a href="#" className="hover:text-white transition-colors">
+              <Link href="/legal/privacy" className="hover:text-white transition-colors">
                 Politique de confidentialité
-              </a>
-              <a href="#" className="hover:text-white transition-colors">
+              </Link>
+              <Link href="/legal/terms" className="hover:text-white transition-colors">
                 Conditions d&apos;utilisation
-              </a>
-              <a href="#" className="hover:text-white transition-colors">
-                Nous contacter
-              </a>
+              </Link>
+              <Link href="/legal/notices" className="hover:text-white transition-colors">
+                Mentions légales
+              </Link>
             </div>
 
             {/* Copyright */}

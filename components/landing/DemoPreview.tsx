@@ -69,8 +69,8 @@ export default function DemoPreview({ onSubmit }: DemoPreviewProps) {
             />
             <span className="text-sm text-accent font-medium">Essayez maintenant</span>
           </motion.span>
-          <h2 className="text-2xl md:text-4xl font-bold text-white mb-3">
-            Testez Posty en <span className="text-gradient">direct</span>
+          <h2 className="text-2xl md:text-4xl font-bold mb-3">
+            <span className="text-silver-shimmer">Testez Posty en</span> <span className="text-gradient">direct</span>
           </h2>
           <p className="text-text-secondary max-w-md mx-auto">
             Entrez votre idée et découvrez la magie de l'IA

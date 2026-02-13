@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { isTestModeAllowed } from "@/lib/plans";
@@ -13,10 +14,14 @@ import toast from "@/components/ui/Toast";
  * - Floating button in bottom-right corner
  * - Quick activate Max plan (1 click)
  * - Keyboard shortcut: Ctrl+Shift+M
- * - Only visible in dev mode
+ * - Only visible in dev mode AND on /subscription page
+ *
+ * IMPORTANT: This component is ONLY displayed on /subscription page
+ * to prevent accidental test mode activation outside of pricing flow.
  */
 
 export default function DevQuickActions() {
+  const pathname = usePathname();
   const {
     isTestMode,
     testPlan,
@@ -29,10 +34,11 @@ export default function DevQuickActions() {
   const [isActivating, setIsActivating] = useState(false);
   const [shouldShow, setShouldShow] = useState(false);
 
-  // Check if dev mode is enabled
+  // Check if dev mode is enabled AND if we're on /subscription page
   useEffect(() => {
-    setShouldShow(isTestModeAllowed());
-  }, []);
+    const isSubscriptionPage = pathname === "/subscription" || pathname === "/pricing";
+    setShouldShow(isTestModeAllowed() && isSubscriptionPage);
+  }, [pathname]);
 
   // Keyboard shortcut: Ctrl+Shift+M to activate Max plan
   useEffect(() => {

@@ -159,7 +159,7 @@ export default function Navbar({ transparent = false }: NavbarProps) {
           fixed top-0 left-0 right-0 z-50 transition-all duration-300
           ${
             isScrolled || !transparent
-              ? "bg-white/90 backdrop-blur-xl border-b border-gray-200/60 shadow-sm"
+              ? "bg-white/95 backdrop-blur-xl border-b border-gray-200 shadow-[0_1px_3px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.06)]"
               : "bg-white/60 backdrop-blur-md md:bg-transparent md:backdrop-blur-none"
           }
         `}

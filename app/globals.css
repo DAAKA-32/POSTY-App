@@ -136,30 +136,12 @@ html.dark body {
 }
 
 /* iOS Safari specific: Ensure safe areas use correct background */
+/* REMOVED: html::before and html::after pseudo-elements */
+/* These were causing layout shifts and positioning issues in PWA mode */
+/* Each component now handles its own safe area padding independently */
 @supports (padding-top: env(safe-area-inset-top)) {
-  html::before {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: env(safe-area-inset-top, 0px);
-    background-color: inherit;
-    z-index: 9999;
-    pointer-events: none;
-  }
-
-  html::after {
-    content: "";
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: env(safe-area-inset-bottom, 0px);
-    background-color: inherit;
-    z-index: 9999;
-    pointer-events: none;
-  }
+  /* Safe area utilities are defined above (lines 51-93) */
+  /* Components should use: pb-safe, pt-safe, etc. */
 }
 
 /* Prevent overscroll background color issues on iOS Safari */
@@ -1645,7 +1627,9 @@ html.light .bg-\[\#0A66C2\],
 html.light [class*="bg-gradient-to-r"][class*="from-primary"],
 html.light [class*="bg-gradient-to-br"][class*="from-primary"],
 html.light button[class*="bg-gradient"],
-html.light a[class*="bg-gradient"] {
+html.light a[class*="bg-gradient"],
+/* Keep white text on orange backgrounds */
+html.light [class*="bg-orange"] {
   color: #FFFFFF !important;
 }
 
@@ -1663,7 +1647,10 @@ html.light a[class*="bg-gradient"] .text-white,
 html.light a[class*="bg-gradient"] span,
 html.light .bg-error .text-white,
 html.light .bg-success .text-white,
-html.light .bg-\[\#0A66C2\] .text-white {
+html.light .bg-\[\#0A66C2\] .text-white,
+/* Keep white text on orange backgrounds (Nouveau post button) */
+html.light [class*="bg-orange"] .text-white,
+html.light [class*="bg-orange"] span {
   color: #FFFFFF !important;
 }
 
@@ -2982,6 +2969,74 @@ html.light .loader-track {
 
   .text-gradient-premium {
     @apply bg-gradient-to-r from-primary via-accent to-primary bg-[length:200%_auto] bg-clip-text text-transparent;
+  }
+
+  /* ============== PREMIUM SILVER TEXT - LANDING PAGE TITLES ============== */
+  /* Inspired by Linear, Stripe, Notion - Static shimmer effect without animation */
+
+  /* Silver Gradient - Premium subtle shimmer (static) */
+  .text-silver-premium {
+    background: linear-gradient(
+      135deg,
+      #C0C0C0 0%,
+      #E8E8E8 25%,
+      #D0D0D0 50%,
+      #E8E8E8 75%,
+      #C0C0C0 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 0 1px rgba(255, 255, 255, 0.1);
+  }
+
+  /* Silver Solid - Clean metallic look */
+  .text-silver-solid {
+    color: #C8C8C8;
+    text-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.1),
+      0 0 8px rgba(255, 255, 255, 0.05);
+  }
+
+  /* Silver Shimmer - Enhanced static shine */
+  .text-silver-shimmer {
+    background: linear-gradient(
+      110deg,
+      #A8A8A8 0%,
+      #C0C0C0 25%,
+      #E8E8E8 40%,
+      #F0F0F0 50%,
+      #E8E8E8 60%,
+      #C0C0C0 75%,
+      #A8A8A8 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: brightness(1.1) contrast(1.05);
+  }
+
+  /* Dark mode adjustments for silver text */
+  .dark .text-silver-premium,
+  .dark .text-silver-shimmer {
+    background: linear-gradient(
+      135deg,
+      #D0D0D0 0%,
+      #F8F8F8 25%,
+      #E0E0E0 50%,
+      #F8F8F8 75%,
+      #D0D0D0 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .dark .text-silver-solid {
+    color: #D8D8D8;
+    text-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.3),
+      0 0 12px rgba(255, 255, 255, 0.08);
   }
 
   .glass {
@@ -6644,63 +6699,45 @@ html.dark .chat-input-inner {
   }
 }
 
+/* ============== LANDING PAGE BACKGROUND ============== */
+/* Premium background image for landing page with subtle overlay */
 
-/* ============================================================================
-   LANDING PAGE BACKGROUND
-   ============================================================================ */
-
-/* Main landing page background with premium gradient and animated overlays */
 .background-landing {
   position: relative;
-  background: linear-gradient(135deg, #FFFCFA 0%, white 50%, #FEF8F4 100%);
-  min-height: 100vh;
-  overflow: hidden;
+  background-image: url('/background-landing.jpg');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
 }
 
-/* Animated gradient overlay container */
+/* Subtle overlay for better content readability without losing background beauty */
 .background-landing::before {
   content: '';
   position: absolute;
   inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(254, 243, 238, 0.85) 0%,
+    rgba(254, 243, 238, 0.75) 50%,
+    rgba(254, 243, 238, 0.85) 100%
+  );
   pointer-events: none;
   z-index: 0;
 }
 
-/* Subtle dot pattern overlay */
-.background-landing::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  opacity: 0.03;
-  background-image: radial-gradient(circle at 1px 1px, #000 1px, transparent 1px);
-  background-size: 32px 32px;
-  pointer-events: none;
+/* Ensure content stays above overlay */
+.background-landing > * {
+  position: relative;
   z-index: 1;
 }
 
-/* Content wrapper inside background */
-.background-landing > * {
-  position: relative;
-  z-index: 10;
-}
-
-/* Responsive adjustments */
+/* Mobile optimization - remove fixed attachment for better performance */
 @media (max-width: 768px) {
   .background-landing {
-    background: linear-gradient(135deg, #FFFCFA 0%, white 50%, #FEF8F4 100%);
-    /* Disable heavy animations on mobile for performance */
+    background-attachment: scroll;
   }
 }
 
-/* Dark mode support (optional) */
-@media (prefers-color-scheme: dark) {
-  .background-landing {
-    background: linear-gradient(135deg, #1a1a1a 0%, #0f0f0f 50%, #1a1a1a 100%);
-  }
-  
-  .background-landing::after {
-    background-image: radial-gradient(circle at 1px 1px, #fff 1px, transparent 1px);
-    opacity: 0.02;
-  }
-}
+
 

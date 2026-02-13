@@ -19,10 +19,6 @@ export const DynamicUpgradeProModal = dynamic(
   { loading: ModalFallback, ssr: false }
 );
 
-export const DynamicConsentModal = dynamic(
-  () => import("@/components/ui/ConsentModal").then((mod) => mod.default),
-  { loading: ModalFallback, ssr: false }
-);
 
 export const DynamicPublishToLinkedInModal = dynamic(
   () => import("@/components/linkedin/PublishToLinkedInModal").then((mod) => mod.default),

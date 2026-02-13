@@ -31,6 +31,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Verify the user exists in Firebase (prevent unauthorized checkout)
+    if (isAdminInitialized() && adminDb) {
+      try {
+        const userDoc = await adminDb.collection("users").doc(userId).get();
+        if (!userDoc.exists) {
+          return NextResponse.json(
+            { error: "User not found" },
+            { status: 401 }
+          );
+        }
+      } catch {
+        // If Firebase check fails in production, reject the request
+        if (process.env.NODE_ENV === "production") {
+          return NextResponse.json(
+            { error: "Unable to verify user" },
+            { status: 500 }
+          );
+        }
+      }
+    }
+
     // Only pro and max plans can be purchased
     if (plan !== "pro" && plan !== "max") {
       return NextResponse.json(

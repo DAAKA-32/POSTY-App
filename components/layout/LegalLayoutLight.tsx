@@ -120,7 +120,7 @@ export default function LegalLayoutLight({ children, title }: LegalLayoutLightPr
         </div>
 
         {/* Content */}
-        <div className="text-[15px] leading-relaxed text-text-secondary">
+        <div className="text-[15px] leading-relaxed text-gray-100">
           {children}
         </div>
       </main>
@@ -175,7 +175,7 @@ export default function LegalLayoutLight({ children, title }: LegalLayoutLightPr
             {/* Contact + CNIL */}
             <div className="flex flex-col items-center gap-1 mt-2">
               <p className="text-xs text-text-subtle">
-                Contact RGPD : privacy@posty.app
+                Contact RGPD : posty.contact@gmail.com
               </p>
               <p className="text-xs text-text-subtle">
                 Autorite de controle :{" "}

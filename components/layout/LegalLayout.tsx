@@ -10,9 +10,10 @@ interface LegalLayoutProps {
 }
 
 const legalLinks = [
-  { name: "Confidentialite", href: "/legal/privacy" },
+  { name: "Confidentialité", href: "/legal/privacy" },
   { name: "Conditions", href: "/legal/terms" },
   { name: "Mentions", href: "/legal/notices" },
+  { name: "Cookies", href: "/legal/cookies" },
 ];
 
 export default function LegalLayout({ children, title }: LegalLayoutProps) {
@@ -84,10 +85,10 @@ export default function LegalLayout({ children, title }: LegalLayoutProps) {
           prose-headings:text-white prose-headings:font-semibold
           prose-h2:text-xl prose-h2:mt-8 prose-h2:mb-4
           prose-h3:text-lg prose-h3:mt-6 prose-h3:mb-3
-          prose-p:text-text-secondary prose-p:leading-relaxed
+          prose-p:text-gray-100 prose-p:leading-relaxed
           prose-a:text-primary prose-a:no-underline hover:prose-a:text-accent
           prose-strong:text-white prose-strong:font-semibold
-          prose-ul:text-text-secondary prose-li:text-text-secondary
+          prose-ul:text-gray-100 prose-li:text-gray-100
           prose-hr:border-dark-border
         ">
           {children}
@@ -113,19 +114,22 @@ export default function LegalLayout({ children, title }: LegalLayoutProps) {
             </div>
             <div className="flex gap-6 text-sm">
               <Link href="/legal/privacy" className="text-text-secondary hover:text-primary transition-colors">
-                Confidentialite
+                Confidentialité
               </Link>
               <Link href="/legal/terms" className="text-text-secondary hover:text-primary transition-colors">
                 CGU
               </Link>
               <Link href="/legal/notices" className="text-text-secondary hover:text-primary transition-colors">
-                Mentions legales
+                Mentions légales
+              </Link>
+              <Link href="/legal/cookies" className="text-text-secondary hover:text-primary transition-colors">
+                Cookies
               </Link>
             </div>
           </div>
           <div className="mt-6 pt-6 border-t border-dark-border text-center">
             <p className="text-xs text-text-muted">
-              Contact RGPD : privacy@posty.app | Pour exercer vos droits : contact@posty.app
+              Contact RGPD : posty.contact@gmail.com | Pour exercer vos droits : posty.contact@gmail.com
             </p>
           </div>
         </div>

@@ -252,7 +252,7 @@ export default function FeaturesSection() {
           <motion.h2
             variants={fadeInUp}
             custom={0.2}
-            className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4"
+            className="text-3xl md:text-4xl lg:text-5xl font-bold text-silver-shimmer mb-4"
           >
             {t.landing.contentValidatedTitle ||
               "Créez du contenu validé et impactant"}

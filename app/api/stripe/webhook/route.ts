@@ -216,7 +216,7 @@ export async function POST(request: NextRequest) {
           trialEnd,
         });
 
-        console.log(`Checkout completed for user ${userId}, plan: ${plan}${isTrialing ? " (TRIAL)" : ""}`);
+        console.log(`Checkout completed: plan=${plan}${isTrialing ? " (TRIAL)" : ""}`);
         break;
       }
 
@@ -241,7 +241,7 @@ export async function POST(request: NextRequest) {
             : undefined,
         });
 
-        console.log(`Subscription updated for user ${userId}, plan: ${plan}`);
+        console.log(`Subscription updated: plan=${plan}`);
         break;
       }
 
@@ -261,7 +261,7 @@ export async function POST(request: NextRequest) {
           status: "canceled",
         });
 
-        console.log(`Subscription canceled for user ${userId}, downgraded to free`);
+        console.log("Subscription canceled: downgraded to free");
         break;
       }
 
@@ -303,11 +303,11 @@ export async function POST(request: NextRequest) {
             await userRef.update({
               "subscription.firstPaymentDate": Timestamp.now(),
             });
-            console.log(`First payment tracked for user ${userId} - guarantee period started`);
+            console.log("First payment tracked - guarantee period started");
           }
         }
 
-        console.log(`Invoice paid for user ${userId} (amount: ${amountPaid})`);
+        console.log(`Invoice paid (amount: ${amountPaid})`);
         break;
       }
 
@@ -318,7 +318,7 @@ export async function POST(request: NextRequest) {
         const userId = subscription.metadata?.userId;
 
         if (userId) {
-          console.log(`Trial ending soon for user ${userId} (3 days remaining)`);
+          console.log("Trial ending soon (3 days remaining)");
           // TODO: Send trial ending email notification here
           // For now, Stripe's built-in trial ending email handles this
         }
@@ -347,7 +347,7 @@ export async function POST(request: NextRequest) {
           description: `Payment failed: ${invoice.description || "Subscription payment"}`,
         });
 
-        console.log(`Invoice payment failed for user ${userId}`);
+        console.log("Invoice payment failed");
         break;
       }
 

@@ -213,7 +213,7 @@ export default function HowItWorksSection() {
                     transition={{ delay: 0.3 + index * 0.2 }}
                     className="bg-dark-card border border-dark-border rounded-xl p-6 md:p-8 transition-all duration-300 group feature-card-desktop"
                   >
-                    <h3 className="text-2xl md:text-3xl font-bold text-white mb-3 transition-all">
+                    <h3 className="text-2xl md:text-3xl font-bold text-silver-solid mb-3 transition-all">
                       {step.title}
                     </h3>
                     <p className="text-text-secondary text-base md:text-lg leading-relaxed mb-4">

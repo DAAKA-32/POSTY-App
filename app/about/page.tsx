@@ -290,10 +290,10 @@ export default function AboutPage() {
             <p className="text-gray-600 mb-4">
               Contactez-nous via LinkedIn ou par email à{" "}
               <a
-                href="mailto:contact@posty.app"
+                href="mailto:posty.contact@gmail.com"
                 className="text-warm-orange hover:underline"
               >
-                contact@posty.app
+                posty.contact@gmail.com
               </a>
             </p>
             <div className="flex justify-center gap-3 flex-wrap">

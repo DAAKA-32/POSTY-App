@@ -143,12 +143,7 @@ function Navbar() {
 
   useEffect(() => {
     const handleScroll = () => {
-      // Trigger navbar effect only when the content section covers the fixed hero title.
-      // The hero spacer is min-h-[38vh] (mobile) / min-h-[45vh] (md+).
-      // Activate slightly before full coverage for a natural transition.
-      const isMd = window.innerWidth >= 768;
-      const threshold = window.innerHeight * (isMd ? 0.38 : 0.3);
-      setIsScrolled(window.scrollY > threshold);
+      setIsScrolled(window.scrollY > 20);
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll(); // sync on mount
@@ -215,7 +210,7 @@ function Navbar() {
     <>
     {/* Outer fixed container — always full width for positioning */}
     <div className="fixed top-0 left-0 right-0 z-50 pointer-events-none">
-      {/* Dynamic container — changes width and border-radius on scroll */}
+      {/* Dynamic container — always visible, border/bg on scroll */}
       <motion.nav
         initial={false}
         animate={{
@@ -237,11 +232,10 @@ function Navbar() {
             mx-auto transition-all duration-400
             ${isScrolled || isMenuOpen
               ? "bg-white/95 backdrop-blur-xl shadow-lg shadow-gray-900/[0.08] border border-gray-200/60"
-              : "bg-transparent border-transparent"
+              : "bg-transparent border border-transparent"
             }
           `}
           style={{
-            // Smooth transitions for background and shadow
             transitionProperty: "background-color, box-shadow, border-color",
             transitionDuration: "400ms",
             transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)",
@@ -588,9 +582,9 @@ function HeroSection() {
             </motion.div>
 
             {/* Main headline */}
-            <h1 className="text-[2.5rem] sm:text-5xl lg:text-[3.25rem] xl:text-[3.75rem] 2xl:text-[4.25rem] font-bold text-gray-900 leading-[1.15] tracking-tight">
-              <span className="block">Vos posts LinkedIn</span>
-              <span className="block mt-1 lg:mt-2">
+            <h1 className="text-[2.5rem] sm:text-5xl lg:text-[3.25rem] xl:text-[3.75rem] 2xl:text-[4.25rem] font-bold leading-[1.15] tracking-tight">
+              <span className="block text-silver-shimmer">Vos posts LinkedIn</span>
+              <span className="block mt-1 lg:mt-2 text-silver-shimmer">
                 signent des{" "}
                 <span className="relative inline-block">
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] via-[#F76B54] to-[#F8935D] bg-[length:200%_100%] animate-[gradient-x_3s_ease_infinite]">
@@ -604,7 +598,7 @@ function HeroSection() {
                   />
                 </span>
               </span>
-              <span className="block mt-1 lg:mt-2 text-transparent bg-clip-text bg-gradient-to-r from-gray-700 to-gray-500">
+              <span className="block mt-1 lg:mt-2 text-silver-premium">
                 Pas juste des likes.
               </span>
             </h1>
@@ -867,6 +861,20 @@ function DemoSection() {
   // Text reveal state - triggered AFTER MacBook animation completes
   const [hasAnimated, setHasAnimated] = useState(heroAnimationPlayedGlobal);
 
+  // Typewriter effect state
+  const TYPEWRITER_LINE1 = "Vos posts LinkedIn,";
+  const TYPEWRITER_LINE2 = "générateurs de clients";
+  const TYPEWRITER_TOTAL = TYPEWRITER_LINE1.length + TYPEWRITER_LINE2.length;
+  const CHAR_DELAY = 35; // ms per character
+
+  const [typedCount, setTypedCount] = useState(heroAnimationPlayedGlobal ? TYPEWRITER_TOTAL : 0);
+
+  useEffect(() => {
+    if (!hasAnimated || typedCount >= TYPEWRITER_TOTAL) return;
+    const timer = setTimeout(() => setTypedCount((c) => c + 1), CHAR_DELAY);
+    return () => clearTimeout(timer);
+  }, [hasAnimated, typedCount, TYPEWRITER_TOTAL]);
+
   // Callback when MacBook animation completes
   const handleMacBookAnimationComplete = useCallback(() => {
     // Minimal delay - texts appear almost instantly after MacBook settles
@@ -1058,17 +1066,11 @@ function DemoSection() {
       <section
         ref={sectionRef}
         id="demo"
-        className="relative z-[2]"
+        className="background-landing relative z-[2]"
       >
-        {/* ============================================================ */}
-        {/* FIXED TITLE — stays locked to viewport, covered by content  */}
-        {/* z-[1] so all scrolling content passes IN FRONT              */}
-        {/* ============================================================ */}
-        <div
-          className="fixed inset-x-0 top-0 z-[1] min-h-[38vh] md:min-h-[45vh] flex items-center justify-center px-4 sm:px-6 lg:px-8 pt-16 md:pt-[68px] pointer-events-none bg-[#FEF3EE]"
-        >
-          {/* Subtle warm glow for depth — animated entrance */}
-          <div className="absolute inset-0 overflow-hidden">
+        {/* Hero title */}
+        <div className="relative pt-24 md:pt-32 pb-10 md:pb-14 px-4 sm:px-6 lg:px-8">
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
             <motion.div
               initial={{ opacity: 0, scale: 0.7 }}
               animate={hasAnimated ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.7 }}
@@ -1078,25 +1080,38 @@ function DemoSection() {
           </div>
 
           <div className="relative text-center max-w-4xl mx-auto">
-            {/* Main headline */}
             <motion.h1
-              initial={{ opacity: 0, y: 24, filter: "blur(4px)" }}
-              animate={hasAnimated ? { opacity: 1, y: 0, filter: "blur(0px)" } : { opacity: 0, y: 24, filter: "blur(4px)" }}
-              transition={{
-                duration: 0.7,
-                delay: hasAnimated ? 0.1 : 0,
-                ease: [0.16, 1, 0.3, 1],
-              }}
-              className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] 2xl:text-[4rem] font-bold text-gray-900 leading-[1.2] tracking-tight"
+              initial={{ opacity: 0 }}
+              animate={hasAnimated ? { opacity: 1 } : { opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="relative text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] 2xl:text-[4rem] font-bold leading-[1.2] tracking-tight"
             >
-              Vos posts LinkedIn,{" "}
-              <br className="hidden sm:block" />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] via-[#F76B54] to-[#F8935D]">
-                générateurs de clients
+              {/* Invisible placeholder to reserve full height — prevents layout shift */}
+              <span className="invisible" aria-hidden="true">
+                {TYPEWRITER_LINE1}{" "}
+                <br className="hidden sm:block" />
+                {TYPEWRITER_LINE2}
+              </span>
+              {/* Visible typed text layered on top */}
+              <span className="absolute inset-0">
+                <span className="text-silver-premium">
+                  {TYPEWRITER_LINE1.substring(0, Math.min(typedCount, TYPEWRITER_LINE1.length))}
+                </span>
+                {typedCount > TYPEWRITER_LINE1.length && (
+                  <>
+                    {" "}
+                    <br className="hidden sm:block" />
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] via-[#F76B54] to-[#F8935D]">
+                      {TYPEWRITER_LINE2.substring(0, typedCount - TYPEWRITER_LINE1.length)}
+                    </span>
+                  </>
+                )}
+                {typedCount < TYPEWRITER_TOTAL && (
+                  <span className="inline-block w-[3px] h-[0.85em] bg-[#F8935D] ml-0.5 align-middle animate-pulse" />
+                )}
               </span>
             </motion.h1>
 
-            {/* Subheadline */}
             <motion.p
               initial={{ opacity: 0, y: 16, filter: "blur(3px)" }}
               animate={hasAnimated ? { opacity: 1, y: 0, filter: "blur(0px)" } : { opacity: 0, y: 16, filter: "blur(3px)" }}
@@ -1112,21 +1127,14 @@ function DemoSection() {
           </div>
         </div>
 
-        {/* Spacer — reserves the height the fixed title would occupy in normal flow */}
-        <div className="min-h-[38vh] md:min-h-[45vh]" />
-
-        {/* ============================================================ */}
-        {/* CONTENT — MacBook, tabs, demo — z-[5] passes OVER the title */}
-        {/* ============================================================ */}
-        <div className="relative z-[5]">
+        {/* Content */}
+        <div className="relative">
 
           <div className="relative">
-            {/* Opaque background to fully cover the sticky title */}
-            <div className="absolute inset-0 bg-[#FEF3EE]" />
 
             <div className="relative z-10 px-4 sm:px-6 lg:px-8 pb-12">
 
-          {/* Interactive View Mode Tabs */}
+          {/* Interactive View Mode Tabs — étiquettes collées au bloc */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={hasAnimated ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
@@ -1135,28 +1143,20 @@ function DemoSection() {
               delay: hasAnimated ? 0.45 : 0,
               ease: [0.16, 1, 0.3, 1],
             }}
-            className="flex justify-center mb-4 md:mb-5"
+            className="flex justify-center max-w-[1084px] mx-auto"
           >
-            <div className="inline-flex items-center p-1 bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-2xl shadow-lg shadow-gray-200/40">
-              {/* Preview Tab - First (default) */}
+            <div className="inline-flex items-end gap-1">
+              {/* Preview Tab */}
               <button
                 onClick={() => setViewMode("preview")}
                 className={`
-                  relative px-5 py-2.5 md:px-6 md:py-3 rounded-xl text-sm md:text-base font-semibold transition-all duration-300 ease-out
+                  relative px-5 py-2 md:px-6 md:py-2.5 rounded-t-xl text-sm md:text-base font-semibold transition-all duration-300 ease-out border border-b-0
                   ${viewMode === "preview"
-                    ? "text-white"
-                    : "text-white/90 hover:text-white"
+                    ? "bg-white border-gray-200/60 text-[#F8935D] z-10"
+                    : "bg-gray-100/80 border-gray-200/40 text-gray-400 hover:text-gray-600 hover:bg-gray-100"
                   }
                 `}
               >
-                {/* Active background */}
-                {viewMode === "preview" && (
-                  <motion.div
-                    layoutId="activeTabBg"
-                    className="absolute inset-0 bg-gradient-to-r from-[#F8935D] to-[#F76B54] rounded-xl shadow-md shadow-[#F8935D]/30"
-                    transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
-                  />
-                )}
                 <span className="relative z-10 flex items-center gap-2">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -1169,21 +1169,13 @@ function DemoSection() {
               <button
                 onClick={() => setViewMode("demo")}
                 className={`
-                  relative px-5 py-2.5 md:px-6 md:py-3 rounded-xl text-sm md:text-base font-semibold transition-all duration-300 ease-out
+                  relative px-5 py-2 md:px-6 md:py-2.5 rounded-t-xl text-sm md:text-base font-semibold transition-all duration-300 ease-out border border-b-0
                   ${viewMode === "demo"
-                    ? "text-white"
-                    : "text-white/90 hover:text-white"
+                    ? "bg-white border-gray-200/60 text-[#F8935D] z-10"
+                    : "bg-gray-100/80 border-gray-200/40 text-gray-400 hover:text-gray-600 hover:bg-gray-100"
                   }
                 `}
               >
-                {/* Active background */}
-                {viewMode === "demo" && (
-                  <motion.div
-                    layoutId="activeTabBg"
-                    className="absolute inset-0 bg-gradient-to-r from-[#F8935D] to-[#F76B54] rounded-xl shadow-md shadow-[#F8935D]/30"
-                    transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
-                  />
-                )}
                 <span className="relative z-10 flex items-center gap-2">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
@@ -2034,8 +2026,8 @@ function KeyBenefitsSection() {
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           className="max-w-2xl mb-16 md:mb-20"
         >
-          <h2 className="text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-gray-900 leading-[1.15] tracking-tight mb-5">
-            Ce qui change après{" "}
+          <h2 className="text-3xl sm:text-4xl md:text-[2.75rem] font-semibold leading-[1.15] tracking-tight mb-5">
+            <span className="text-silver-shimmer">Ce qui change après</span>{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#E8824C]">
               30 jours avec Posty
             </span>
@@ -2292,8 +2284,8 @@ function _LegacyKeyBenefitsSection() {
           className="text-center max-w-3xl mx-auto mb-10 lg:mb-14"
         >
           {/* Heading */}
-          <h2 className="text-3xl md:text-4xl lg:text-[2.75rem] font-bold text-gray-900 mb-4 leading-tight tracking-tight">
-            Pourquoi les entrepreneurs choisissent{" "}
+          <h2 className="text-3xl md:text-4xl lg:text-[2.75rem] font-bold mb-4 leading-tight tracking-tight">
+            <span className="text-silver-shimmer">Pourquoi les entrepreneurs choisissent</span>{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
               Posty
             </span>
@@ -2704,8 +2696,8 @@ function TargetAudienceSection() {
             <span className="text-sm font-medium text-gray-600">Concu pour vous</span>
           </motion.div>
 
-          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 lg:mb-6 tracking-tight">
-            A qui s&apos;adresse{" "}
+          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 lg:mb-6 tracking-tight">
+            <span className="text-silver-shimmer">A qui s&apos;adresse</span>{" "}
             <span className="relative inline-block">
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
                 Posty ?
@@ -2743,7 +2735,9 @@ function TargetAudienceSection() {
 interface FeatureConfig {
   title: string;
   description: string;
-  image: string;
+  image?: string;
+  mockup?: React.ReactNode;
+  personImage?: string;       // Foreground person photo (Unsplash)
   icon: React.ReactNode;
   color: {
     primary: string;      // Main color class
@@ -2758,13 +2752,391 @@ interface FeatureConfig {
     titleGradient: string; // Title text gradient
   };
   badge: string;
+  tierBadge?: string;     // Optional plan tier badge (e.g. "Max")
+}
+
+// =============================================================================
+// FEATURE MOCKUPS — Mini app UI previews for each feature card
+// =============================================================================
+
+function MockupMultiPlatform() {
+  const platforms = [
+    { name: "LinkedIn", icon: (
+      <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+    ), color: "#0A66C2", selected: true, status: "Connecté" },
+    { name: "Reddit", icon: (
+      <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor"><path d="M12 0A12 12 0 000 12a12 12 0 0012 12 12 12 0 0012-12A12 12 0 0012 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 01-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 01.042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 014.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 01.14-.197.35.35 0 01.238-.042l2.906.617a1.214 1.214 0 011.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 00-.231.094.33.33 0 000 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 000-.462.342.342 0 00-.461 0c-.545.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 00-.206-.095z"/></svg>
+    ), color: "#FF4500", selected: true, status: "Bientôt disponible", comingSoon: true },
+    { name: "Threads", icon: (
+      <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor"><path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.29 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.59 12c.025 3.086.718 5.496 2.057 7.164 1.432 1.783 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.75-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.801-1.063-.689-1.685-1.74-1.752-2.96-.065-1.187.408-2.26 1.33-3.017.88-.724 2.10-1.14 3.531-1.208 1.027-.046 1.98.042 2.857.262-.085-.758-.286-1.373-.6-1.833-.453-.667-1.16-1.014-2.101-1.032h-.06c-.724.012-1.6.246-2.143.787l-1.46-1.39c.867-.913 2.09-1.39 3.553-1.416h.084c1.508.024 2.674.58 3.47 1.65.717.962 1.09 2.273 1.11 3.895l.003.236c.92.339 1.706.839 2.34 1.497.856.886 1.363 2.084 1.463 3.455.118 1.606-.36 3.244-1.39 4.747C18.86 22.812 16.13 23.98 12.186 24zm-1.14-8.376c-.94.042-1.672.284-2.173.72-.465.404-.685.905-.655 1.49.038.734.46 1.281 1.187 1.536.485.17 1.042.237 1.634.2 1.078-.06 1.884-.46 2.395-1.095.434-.54.704-1.28.81-2.216-.86-.2-1.791-.286-2.718-.286-.16 0-.32.003-.48.01z"/></svg>
+    ), color: "#000000", selected: true, status: "Connecté" },
+    { name: "Facebook", icon: (
+      <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+    ), color: "#1877F2", selected: true, status: "Connecté" },
+  ];
+
+  return (
+    <div className="w-full h-full bg-gradient-to-br from-white via-gray-50 to-white p-4 flex flex-col justify-between relative overflow-hidden rounded-2xl shadow-lg border border-gray-200/60">
+      {/* Decorative glow */}
+      <div className="absolute top-0 right-0 w-32 h-32 bg-[#F8935D]/10 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 left-0 w-24 h-24 bg-[#F76B54]/8 rounded-full blur-2xl" />
+
+      {/* Header - matches real app */}
+      <div className="flex items-center justify-between mb-3 relative z-10">
+        <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wide">Publier sur</span>
+      </div>
+
+      {/* Platform grid - 2 columns like real app */}
+      <div className="grid grid-cols-2 gap-2 relative z-10 flex-1">
+        {platforms.map((p, i) => (
+          <motion.div
+            key={p.name}
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.3 + i * 0.1, duration: 0.4 }}
+            className="min-h-[72px] p-3 rounded-xl border-2 flex flex-col items-center justify-center gap-1 relative"
+            style={{
+              backgroundColor: `${p.color}10`,
+              borderColor: `${p.color}40`,
+            }}
+          >
+            {/* Selection checkmark - top right like real app */}
+            {p.selected && !("comingSoon" in p && p.comingSoon) && (
+              <div className="absolute top-1.5 right-1.5">
+                <svg className="w-4 h-4" style={{ color: p.color }} fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              </div>
+            )}
+
+            {/* "Bientôt" badge for Reddit */}
+            {p.comingSoon && (
+              <div className="absolute top-1 right-1">
+                <span className="text-[8px] bg-gray-100 px-1 py-0.5 rounded text-gray-400">
+                  Bientôt
+                </span>
+              </div>
+            )}
+
+            {/* Icon */}
+            <div style={{ color: p.color }}>{p.icon}</div>
+
+            {/* Name */}
+            <span className="text-xs font-medium text-gray-900">{p.name}</span>
+
+            {/* Status */}
+            <span className={`text-[10px] ${p.comingSoon ? "text-gray-400" : "text-emerald-500"}`}>
+              {p.status}
+            </span>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Upgrade link like real app */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ delay: 0.8, duration: 0.4 }}
+        className="mt-3 relative z-10 flex items-center justify-center gap-1.5"
+      >
+        <svg className="w-3.5 h-3.5 text-[#F8935D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+        <span className="text-[11px] text-[#F8935D] font-medium">Débloquer plus de plateformes</span>
+      </motion.div>
+    </div>
+  );
+}
+
+function MockupScheduler() {
+  const days = ["Lu", "Ma", "Me", "Je", "Ve", "Sa", "Di"];
+  const scheduled = [3, 5, 8, 10, 12, 15, 17, 19, 22, 24];
+  const today = 13;
+
+  return (
+    <div className="w-full h-full bg-gradient-to-br from-white via-gray-50 to-white p-4 flex flex-col relative overflow-hidden rounded-2xl shadow-lg border border-gray-200/60">
+      {/* Decorative glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-20 bg-violet-500/8 rounded-full blur-3xl" />
+
+      {/* Header */}
+      <div className="flex items-center justify-between mb-3 relative z-10">
+        <span className="text-[11px] text-gray-500 font-medium">Planificateur</span>
+        <span className="text-[11px] text-gray-900 font-semibold">Février 2025</span>
+      </div>
+
+      {/* Calendar mini grid */}
+      <div className="relative z-10 mb-3">
+        {/* Day headers */}
+        <div className="grid grid-cols-7 gap-1 mb-1.5">
+          {days.map(d => (
+            <div key={d} className="text-[9px] text-gray-400 text-center font-medium">{d}</div>
+          ))}
+        </div>
+        {/* Dates */}
+        <div className="grid grid-cols-7 gap-1">
+          {Array.from({ length: 28 }, (_, i) => i + 1).map(day => {
+            const isScheduled = scheduled.includes(day);
+            const isToday = day === today;
+            return (
+              <div
+                key={day}
+                className={`
+                  aspect-square rounded-md flex items-center justify-center text-[10px] font-medium relative
+                  ${isToday ? "bg-violet-500 text-white ring-2 ring-violet-400/50" : ""}
+                  ${isScheduled && !isToday ? "bg-violet-100 text-violet-600" : ""}
+                  ${!isScheduled && !isToday ? "text-gray-400" : ""}
+                `}
+              >
+                {day}
+                {isScheduled && <div className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-violet-500" />}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Scheduled posts preview */}
+      <div className="space-y-1.5 relative z-10 flex-1">
+        {[
+          { time: "09:00", platform: "LinkedIn", title: "Post leadership", status: "sent" },
+          { time: "12:30", platform: "Reddit", title: "Thread stratégie", status: "ready" },
+          { time: "18:00", platform: "Threads", title: "Tip du jour", status: "scheduled" },
+        ].map((post, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, x: -15 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.5 + i * 0.12, duration: 0.35 }}
+            className="flex items-center gap-2 bg-gray-50 rounded-md px-2.5 py-1.5 border border-gray-200"
+          >
+            <span className="text-[10px] text-violet-600 font-mono w-10 flex-shrink-0">{post.time}</span>
+            <div className="w-px h-4 bg-gray-200" />
+            <span className="text-[10px] text-gray-500 flex-shrink-0 w-14">{post.platform}</span>
+            <span className="text-[10px] text-gray-700 truncate flex-1">{post.title}</span>
+            <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+              post.status === "sent" ? "bg-emerald-500" : post.status === "ready" ? "bg-amber-500" : "bg-violet-500"
+            }`} />
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MockupDualGeneration() {
+  return (
+    <div className="w-full h-full bg-gradient-to-br from-white via-gray-50 to-white p-4 flex flex-col relative overflow-hidden rounded-2xl shadow-lg border border-gray-200/60">
+      {/* Decorative */}
+      <div className="absolute top-0 right-0 w-28 h-28 bg-emerald-500/8 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 left-0 w-20 h-20 bg-green-500/5 rounded-full blur-2xl" />
+
+      {/* Header */}
+      <div className="flex items-center gap-2 mb-3 relative z-10">
+        <span className="text-[11px] text-gray-500 font-medium">2 versions générées</span>
+        <span className="ml-auto text-[10px] text-emerald-500">0.8s</span>
+      </div>
+
+      {/* Two version cards side by side */}
+      <div className="flex gap-2.5 flex-1 relative z-10">
+        {/* Version A - Storytelling */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.3, duration: 0.5 }}
+          className="flex-1 bg-[#F8935D]/5 rounded-lg border border-[#F8935D]/20 p-3 flex flex-col"
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-6 h-6 rounded-md bg-[#F8935D]/15 flex items-center justify-center text-[#F8935D] text-[10px] font-bold">A</div>
+            <div>
+              <div className="text-[10px] text-gray-900 font-semibold">Storytelling</div>
+              <div className="text-[8px] text-[#F8935D]">Engageant</div>
+            </div>
+          </div>
+          <div className="flex-1 space-y-1.5">
+            <div className="h-1.5 bg-gray-200 rounded-full w-full" />
+            <div className="h-1.5 bg-gray-200 rounded-full w-11/12" />
+            <div className="h-1.5 bg-gray-200/80 rounded-full w-10/12" />
+            <div className="h-1.5 bg-gray-200/60 rounded-full w-9/12" />
+            <div className="h-1.5 bg-gray-100 rounded-full w-8/12" />
+          </div>
+          <div className="text-[8px] text-gray-500 mt-2 leading-relaxed line-clamp-2">
+            &ldquo;Il y a 2 ans, j&apos;ai failli tout abandonner. Mon business stagnait, mes posts LinkedIn...&rdquo;
+          </div>
+          <div className="mt-2 py-1.5 bg-[#F8935D]/10 border border-[#F8935D]/25 rounded-md text-center text-[9px] text-[#F8935D] font-semibold">
+            Utiliser cette version
+          </div>
+        </motion.div>
+
+        {/* Version B - Business */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.45, duration: 0.5 }}
+          className="flex-1 bg-emerald-50/50 rounded-lg border border-emerald-500/20 p-3 flex flex-col"
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-6 h-6 rounded-md bg-emerald-500/15 flex items-center justify-center text-emerald-600 text-[10px] font-bold">B</div>
+            <div>
+              <div className="text-[10px] text-gray-900 font-semibold">Business</div>
+              <div className="text-[8px] text-emerald-600">Convertir</div>
+            </div>
+          </div>
+          <div className="flex-1 space-y-1.5">
+            <div className="h-1.5 bg-gray-200 rounded-full w-full" />
+            <div className="h-1.5 bg-gray-200 rounded-full w-10/12" />
+            <div className="h-1.5 bg-gray-200/80 rounded-full w-11/12" />
+            <div className="h-1.5 bg-gray-200/60 rounded-full w-9/12" />
+            <div className="h-1.5 bg-gray-100 rounded-full w-7/12" />
+          </div>
+          <div className="text-[8px] text-gray-500 mt-2 leading-relaxed line-clamp-2">
+            &ldquo;3 stratégies qui ont généré +40% de leads qualifiés en B2B ce trimestre...&rdquo;
+          </div>
+          <div className="mt-2 py-1.5 bg-emerald-500/10 border border-emerald-500/25 rounded-md text-center text-[9px] text-emerald-600 font-semibold">
+            Utiliser cette version
+          </div>
+        </motion.div>
+      </div>
+    </div>
+  );
+}
+
+function MockupContextProfile() {
+  const profileFields = [
+    { label: "Secteur", value: "Tech / SaaS B2B", icon: "🏢" },
+    { label: "Audience", value: "Founders, CMOs, VPs", icon: "🎯" },
+    { label: "Ton", value: "Professionnel & direct", icon: "🎤" },
+    { label: "Style", value: "Concis, data-driven", icon: "✍️" },
+  ];
+
+  return (
+    <div className="w-full h-full bg-gradient-to-br from-white via-gray-50 to-white p-4 flex flex-col relative overflow-hidden rounded-2xl shadow-lg border border-gray-200/60">
+      {/* Decorative */}
+      <div className="absolute top-0 left-0 w-32 h-32 bg-amber-500/8 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 right-0 w-24 h-24 bg-orange-500/5 rounded-full blur-2xl" />
+
+      {/* Header */}
+      <div className="flex items-center gap-2 mb-3 relative z-10">
+        <span className="text-[11px] text-gray-500 font-medium">Votre profil Posty</span>
+        <span className="ml-auto text-[10px] text-emerald-500 font-medium flex items-center gap-1">
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+          Complété
+        </span>
+      </div>
+
+      {/* Avatar + name */}
+      <div className="flex items-center gap-3 mb-3 relative z-10 bg-gray-50 rounded-lg p-2.5 border border-gray-200">
+        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-amber-500/20">
+          EN
+        </div>
+        <div>
+          <div className="text-[12px] text-gray-900 font-semibold">Emilien Nepveu</div>
+          <div className="text-[10px] text-gray-500">Entrepreneur &middot; CEO</div>
+        </div>
+      </div>
+
+      {/* Profile fields */}
+      <div className="space-y-2 flex-1 relative z-10">
+        {profileFields.map((field, i) => (
+          <motion.div
+            key={field.label}
+            initial={{ opacity: 0, x: -15 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.3 + i * 0.1, duration: 0.35 }}
+            className="flex items-center gap-2.5 bg-gray-50 rounded-lg px-3 py-2 border border-gray-200"
+          >
+            <span className="text-sm flex-shrink-0">{field.icon}</span>
+            <div className="flex-1 min-w-0">
+              <div className="text-[9px] text-gray-400 uppercase tracking-wider">{field.label}</div>
+              <div className="text-[11px] text-gray-800 font-medium truncate">{field.value}</div>
+            </div>
+            <svg className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Completion bar */}
+      <div className="mt-3 relative z-10">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-[9px] text-gray-400">Personnalisation</span>
+          <span className="text-[9px] text-amber-500 font-semibold">100%</span>
+        </div>
+        <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+          <motion.div
+            initial={{ width: 0 }}
+            whileInView={{ width: "100%" }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.6, duration: 0.8, ease: "easeOut" }}
+            className="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full"
+          />
+        </div>
+      </div>
+    </div>
+  );
 }
 
 const FEATURES: FeatureConfig[] = [
   {
+    title: "1 post, 4 plateformes",
+    description: "Publiez simultanément sur LinkedIn, Reddit, Threads et Facebook. Un seul contenu, une audience 4x plus large — sans effort supplémentaire.",
+    mockup: <MockupMultiPlatform />,
+    personImage: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&h=600&fit=crop&crop=face&facepad=3",
+    badge: "Multi-plateforme",
+    tierBadge: "Max",
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+      </svg>
+    ),
+    color: {
+      primary: "orange",
+      bg: "from-orange-50/70 via-white to-[#FBB9AD]/20",
+      border: "border-orange-200 hover:border-[#F8935D]",
+      iconBg: "bg-gradient-to-br from-[#F8935D] to-[#F76B54]",
+      iconText: "text-white",
+      badge: "bg-orange-100",
+      badgeText: "text-orange-700",
+      glow: "shadow-[#F8935D]/20",
+      accent: "text-[#F76B54]",
+      titleGradient: "from-[#F8935D] via-[#FBB9AD] to-slate-300",
+    },
+  },
+  {
+    title: "Planifiez, publiez, dormez tranquille",
+    description: "Programmez vos posts aux créneaux où votre audience est la plus active. L'algorithme récompense le bon timing — Posty s'en charge pour vous.",
+    mockup: <MockupScheduler />,
+    personImage: "https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?w=400&h=600&fit=crop&crop=face&facepad=3",
+    badge: "Planification",
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>
+    ),
+    color: {
+      primary: "violet",
+      bg: "from-violet-50 via-white to-purple-50/50",
+      border: "border-violet-200 hover:border-violet-400",
+      iconBg: "bg-gradient-to-br from-violet-500 to-purple-600",
+      iconText: "text-white",
+      badge: "bg-violet-100",
+      badgeText: "text-violet-700",
+      glow: "shadow-violet-500/20",
+      accent: "text-violet-600",
+      titleGradient: "from-violet-600 via-purple-400 to-slate-300",
+    },
+  },
+  {
     title: "De l'idée au post en 30 secondes",
     description: "Décrivez votre objectif. Posty génère deux versions — Storytelling pour engager, Business pour convertir — prêtes à publier.",
-    image: "/analytics.jpg",
+    mockup: <MockupDualGeneration />,
+    personImage: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=600&fit=crop&crop=face&facepad=3",
     badge: "Génération IA",
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2786,8 +3158,9 @@ const FEATURES: FeatureConfig[] = [
   },
   {
     title: "Chaque post sonne comme vous",
-    description: "Posty analyse votre secteur, votre audience et votre ton. Le résultat : du contenu authentique qui renforce votre crédibilité et attire les bons prospects.",
-    image: "/img-ia.jpg",
+    description: "Dès votre inscription, Posty apprend votre secteur, votre audience et votre ton. Résultat : du contenu authentique qui vous ressemble, pas du texte générique.",
+    mockup: <MockupContextProfile />,
+    personImage: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=600&fit=crop&crop=face&facepad=3",
     badge: "IA Contextuelle",
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2805,52 +3178,6 @@ const FEATURES: FeatureConfig[] = [
       glow: "shadow-amber-500/20",
       accent: "text-amber-600",
       titleGradient: "from-amber-600 via-orange-400 to-slate-300",
-    },
-  },
-  {
-    title: "Publiez quand votre audience est là",
-    description: "L'algorithme LinkedIn récompense la régularité et le bon timing. Posty planifie vos publications aux meilleurs créneaux pour maximiser votre portée.",
-    image: "/professionel.jpg",
-    badge: "Timing optimal",
-    icon: (
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-      </svg>
-    ),
-    color: {
-      primary: "violet",
-      bg: "from-violet-50 via-white to-purple-50/50",
-      border: "border-violet-200 hover:border-violet-400",
-      iconBg: "bg-gradient-to-br from-violet-500 to-purple-600",
-      iconText: "text-white",
-      badge: "bg-violet-100",
-      badgeText: "text-violet-700",
-      glow: "shadow-violet-500/20",
-      accent: "text-violet-600",
-      titleGradient: "from-violet-600 via-purple-400 to-slate-300",
-    },
-  },
-  {
-    title: "Une idée dictée, un post publié",
-    description: "Entre deux rendez-vous, dictez une idée à voix haute. Posty la transforme en post professionnel prêt à publier.",
-    image: "/vocal.jpg",
-    badge: "Voice-to-Post",
-    icon: (
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-      </svg>
-    ),
-    color: {
-      primary: "orange",
-      bg: "from-orange-50/70 via-white to-[#FBB9AD]/20",
-      border: "border-orange-200 hover:border-[#F8935D]",
-      iconBg: "bg-gradient-to-br from-[#F8935D] to-[#F76B54]",
-      iconText: "text-white",
-      badge: "bg-orange-100",
-      badgeText: "text-orange-700",
-      glow: "shadow-[#F8935D]/20",
-      accent: "text-[#F76B54]",
-      titleGradient: "from-[#F8935D] via-[#FBB9AD] to-slate-300",
     },
   },
 ];
@@ -2918,33 +3245,77 @@ function FeatureCard({ feature, index }: { feature: FeatureConfig; index: number
         {/* Inner flex layout: image + content */}
         <div className={`relative z-10 flex flex-col ${isEven ? "lg:flex-row" : "lg:flex-row-reverse"} gap-[clamp(1.5rem,3vw,2rem)] items-center`}>
 
-        {/* Image Card */}
-        <div className="w-full lg:w-1/2 flex-shrink-0">
-          <div className="relative rounded-[clamp(0.75rem,1.5vw,1rem)] overflow-hidden shadow-md transition-shadow duration-300 group-hover/card:shadow-lg aspect-[16/10]">
-            {/* Image — explicit dimensions prevent CLS */}
-            <Image
-              src={feature.image}
-              alt={feature.title}
-              width={500}
-              height={312}
-              className="w-full h-full object-cover"
-            />
+        {/* Visual — Person + Floating Mockup, breaking out of card */}
+        <div className="w-full lg:w-1/2 flex-shrink-0 relative" style={{ minHeight: "clamp(14rem, 22vw, 20rem)" }}>
 
-            {/* Badge overlay — top left */}
-            <div className="absolute top-3 left-3 z-20">
-              <span
-                className={`
-                  inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full
-                  ${feature.color.badge} ${feature.color.badgeText}
-                  text-xs font-semibold backdrop-blur-sm shadow-lg
-                `}
-              >
-                <span className={`w-2 h-2 rounded-full ${feature.color.iconBg} animate-pulse`} />
-                {feature.badge}
-              </span>
+          {/* Person photo — no background, floating cutout */}
+          {feature.personImage && (
+            <div
+              className={`absolute z-[5] ${isEven ? "-left-4 lg:-left-8" : "-right-4 lg:-right-8"} -bottom-6`}
+              style={{
+                width: "clamp(9rem, 15vw, 13rem)",
+                height: "clamp(11rem, 18vw, 16rem)",
+              }}
+            >
+              <Image
+                src={feature.personImage}
+                alt=""
+                width={400}
+                height={500}
+                className="w-full h-full object-cover object-top"
+                style={{
+                  mixBlendMode: "multiply",
+                  WebkitMaskImage: "radial-gradient(ellipse 85% 75% at 50% 35%, black 45%, transparent 72%)",
+                  maskImage: "radial-gradient(ellipse 85% 75% at 50% 35%, black 45%, transparent 72%)",
+                  filter: "contrast(1.05) saturate(1.1)",
+                }}
+              />
             </div>
+          )}
 
+          {/* App mockup — floating panel, tilted, overflows card */}
+          {feature.mockup && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              className={`absolute z-[4] ${isEven ? "right-0 lg:-right-4" : "left-0 lg:-left-4"} top-0 -bottom-2`}
+              style={{ width: "clamp(16rem, 28vw, 26rem)" }}
+            >
+              <div
+                className="w-full h-full rounded-xl overflow-hidden shadow-2xl ring-1 ring-white/10"
+                style={{
+                  transform: isEven ? "rotate(1.5deg)" : "rotate(-1.5deg)",
+                }}
+              >
+                {feature.mockup}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Badges — floating above everything */}
+          <div className={`absolute top-2 z-20 flex items-center gap-2 ${isEven ? "left-0" : "right-0"}`}>
+            <span
+              className={`
+                inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full
+                ${feature.color.badge} ${feature.color.badgeText}
+                text-xs font-semibold shadow-lg
+              `}
+            >
+              <span className={`w-2 h-2 rounded-full ${feature.color.iconBg} animate-pulse`} />
+              {feature.badge}
+            </span>
+            {feature.tierBadge && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[10px] font-bold uppercase tracking-wider shadow-lg shadow-amber-500/30 ring-1 ring-white/20">
+                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+                {feature.tierBadge}
+              </span>
+            )}
           </div>
+
         </div>
 
         {/* Content Side */}
@@ -3010,16 +3381,16 @@ function FeaturesSection() {
       <div className="w-full max-w-[min(90vw,67.75rem)] mx-auto">
         {/* Section Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20, ...(isMobile ? {} : { filter: "blur(8px)" }) }}
-          whileInView={{ opacity: 1, y: 0, ...(isMobile ? {} : { filter: "blur(0px)" }) }}
+          initial={{ opacity: 0, y: 20, scale: 0.97, ...(isMobile ? {} : { filter: "blur(8px)" }) }}
+          whileInView={{ opacity: 1, y: 0, scale: 1, ...(isMobile ? {} : { filter: "blur(0px)" }) }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6, ease: smoothEase }}
+          transition={{ duration: 0.7, ease: premiumEase }}
           className="text-center mb-[clamp(2rem,3.5vw,3rem)]"
         >
           <h2 className="text-[clamp(1.75rem,4vw,3.25rem)] font-bold text-gray-600">
             Tout ce qu&apos;il vous faut pour{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
-              dominer LinkedIn
+              dominer les réseaux
             </span>
           </h2>
         </motion.div>
@@ -3110,10 +3481,10 @@ function TestimonialsSection() {
       <div className="max-w-7xl 2xl:max-w-[1400px] mx-auto">
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20, ...(isMobile ? {} : { filter: "blur(8px)" }) }}
-          whileInView={{ opacity: 1, y: 0, ...(isMobile ? {} : { filter: "blur(0px)" }) }}
+          initial={{ opacity: 0, y: 20, scale: 0.97, ...(isMobile ? {} : { filter: "blur(8px)" }) }}
+          whileInView={{ opacity: 1, y: 0, scale: 1, ...(isMobile ? {} : { filter: "blur(0px)" }) }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6, ease: smoothEase }}
+          transition={{ duration: 0.7, ease: premiumEase }}
           className="text-center mb-8 md:mb-12"
         >
           {/* Trust Badge */}
@@ -3134,8 +3505,8 @@ function TestimonialsSection() {
             <span className="text-sm text-gray-600 font-medium">+500 professionnels utilisent Posty chaque jour</span>
           </motion.div>
 
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-600 mb-4">
-            Ils publient. Ils{" "}
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
+            <span className="text-silver-premium">Ils publient. Ils</span>{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
               convertissent.
             </span>
@@ -3150,15 +3521,12 @@ function TestimonialsSection() {
           {TESTIMONIALS.map((testimonial, index) => (
             <motion.div
               key={testimonial.name}
-              initial={{ opacity: 0, y: 30, ...(isMobile ? {} : { filter: "blur(8px)" }) }}
-              whileInView={{ opacity: 1, y: 0, ...(isMobile ? {} : { filter: "blur(0px)" }) }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.15, duration: 0.6, ease: smoothEase }}
-              className="group relative bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-[#F8935D]/30 transition-all duration-300 shadow-lg shadow-gray-100/60"
+              initial={{ opacity: 0, y: 30, scale: 0.95, ...(isMobile ? {} : { filter: "blur(8px)" }) }}
+              whileInView={{ opacity: 1, y: 0, scale: 1, ...(isMobile ? {} : { filter: "blur(0px)" }) }}
+              viewport={{ once: true, margin: "-40px" }}
+              transition={{ delay: index * 0.12, duration: 0.6, ease: premiumEase }}
+              className="group relative bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-[#F8935D]/30 transition-all duration-300 shadow-lg shadow-gray-100/60 hover:shadow-xl hover:shadow-[#F8935D]/10"
             >
-              {/* Animated accent line at top */}
-              <div className="h-[3px] bg-gradient-to-r from-[#F8935D] to-[#F76B54] w-0 group-hover:w-full transition-all duration-300 ease-out" />
-
               <div className="p-8">
                 {/* Decorative quote mark */}
                 <svg className="w-8 h-8 text-[#F8935D]/15 mb-3" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -3247,8 +3615,8 @@ function BeforeAfterSection() {
             <span className="text-sm text-gray-600 font-medium">La différence est visible</span>
           </motion.div>
 
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
-            Avant vs Après{" "}
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
+            <span className="text-silver-shimmer">Avant vs Après</span>{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
               Posty
             </span>
@@ -3947,14 +4315,14 @@ function PricingSection() {
     <section id="pricing" className="py-16 md:py-24 2xl:py-28 px-4 sm:px-6 lg:px-8 2xl:px-12 bg-gradient-to-b from-[#FAE8DE]/50 to-[#FEF3EE] overflow-hidden">
       <div className="max-w-6xl 2xl:max-w-7xl mx-auto">
         <motion.div
-          initial={{ opacity: 0, y: 20, ...(isMobile ? {} : { filter: "blur(8px)" }) }}
-          whileInView={{ opacity: 1, y: 0, ...(isMobile ? {} : { filter: "blur(0px)" }) }}
+          initial={{ opacity: 0, y: 20, scale: 0.97, ...(isMobile ? {} : { filter: "blur(8px)" }) }}
+          whileInView={{ opacity: 1, y: 0, scale: 1, ...(isMobile ? {} : { filter: "blur(0px)" }) }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6, ease: smoothEase }}
+          transition={{ duration: 0.7, ease: premiumEase }}
           className="text-center mb-12 2xl:mb-16"
         >
-          <h2 className="text-3xl md:text-4xl lg:text-5xl 2xl:text-[3.25rem] font-bold text-gray-600 mb-4">
-            Investissez dans votre{" "}
+          <h2 className="text-3xl md:text-4xl lg:text-5xl 2xl:text-[3.25rem] font-bold mb-4">
+            <span className="text-silver-premium">Investissez dans votre</span>{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
               croissance LinkedIn
             </span>
@@ -4334,10 +4702,10 @@ function FaqSection() {
       <div className="max-w-3xl 2xl:max-w-4xl mx-auto">
         {/* Section Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20, ...(isMobile ? {} : { filter: "blur(8px)" }) }}
-          whileInView={{ opacity: 1, y: 0, ...(isMobile ? {} : { filter: "blur(0px)" }) }}
+          initial={{ opacity: 0, y: 20, scale: 0.97, ...(isMobile ? {} : { filter: "blur(8px)" }) }}
+          whileInView={{ opacity: 1, y: 0, scale: 1, ...(isMobile ? {} : { filter: "blur(0px)" }) }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6, ease: smoothEase }}
+          transition={{ duration: 0.7, ease: premiumEase }}
           className="text-center mb-10 md:mb-16"
         >
           <motion.div
@@ -4388,7 +4756,13 @@ function FaqSection() {
 function Footer() {
   return (
     <footer className="border-t border-[#F0D5C8]/60 py-8 md:py-16 2xl:py-20 px-4 sm:px-6 lg:px-8 2xl:px-12 bg-[#FAE8DE]/40">
-      <div className="max-w-7xl 2xl:max-w-[1400px] mx-auto">
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-60px" }}
+        transition={{ duration: 0.6, ease: smoothEase }}
+        className="max-w-7xl 2xl:max-w-[1400px] mx-auto"
+      >
 
         {/* ─── MOBILE FOOTER (compact with all desktop content) ─── */}
         <div className="md:hidden">
@@ -4511,7 +4885,7 @@ function Footer() {
           </div>
         </div>
 
-      </div>
+      </motion.div>
     </footer>
   );
 }
@@ -4561,27 +4935,28 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FEF3EE] text-gray-900">
+    <>
       <Navbar />
+      <div className="min-h-screen bg-white text-gray-900">
+        {/* Hero Demo Section — opening with descent animation */}
+        <DemoSection />
 
-      {/* Hero Demo Section — opening with descent animation */}
-      <DemoSection />
-
-      {/* All sections with soft orange/salmon background — z-[5] to cover the fixed title */}
-      <div className="relative z-[5] bg-[#FEF3EE]">
-        <FeaturesSection />
-        <TestimonialsSection />
-        <FounderSection />
-        <PricingSection />
-        <FaqSection />
-        <CtaBanner
-          id="final-cta"
-          headline="Votre prochain client est peut-être sur LinkedIn en ce moment"
-          subtext="Il suffit d'un post pour lancer la conversation."
-          ctaLabel="Essayer Posty gratuitement"
-        />
-        <Footer />
+        {/* All sections with soft orange/salmon background — z-[5] to cover the fixed title */}
+        <div className="relative z-[5]">
+          <FeaturesSection />
+          <TestimonialsSection />
+          <FounderSection />
+          <PricingSection />
+          <FaqSection />
+          <CtaBanner
+            id="final-cta"
+            headline="Votre prochain client est peut-être sur LinkedIn en ce moment"
+            subtext="Il suffit d'un post pour lancer la conversation."
+            ctaLabel="Essayer Posty gratuitement"
+          />
+          <Footer />
+        </div>
       </div>
-    </div>
+    </>
   );
 }

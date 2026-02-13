@@ -179,7 +179,7 @@ export default function ValuePropositionSection() {
                 </motion.div>
 
                 {/* Content */}
-                <h3 className="text-xl md:text-2xl font-bold text-white mb-3 transition-colors">
+                <h3 className="text-xl md:text-2xl font-bold text-silver-solid mb-3 transition-colors">
                   {value.title}
                 </h3>
 

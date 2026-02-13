@@ -154,14 +154,13 @@ export default function BillingToggle({
             aria-label={isYearly ? "Facturation annuelle sélectionnée" : "Facturation mensuelle sélectionnée"}
           />
 
-          {/* Slider track - always orange (brand color) */}
+          {/* Slider track - orange when yearly, gray when monthly */}
           <span
             className={`
               absolute inset-0 cursor-pointer
               rounded-full
               transition-colors duration-200 ease-out
-              bg-[#F8935D]
-              hover:bg-[#F76B54]
+              ${isYearly ? "bg-[#F8935D] hover:bg-[#F76B54]" : "bg-gray-300 hover:bg-gray-400"}
               peer-focus-visible:ring-2 peer-focus-visible:ring-[#F8935D]/50 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-white dark:peer-focus-visible:ring-offset-dark-bg
             `}
           />

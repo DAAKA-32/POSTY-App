@@ -221,7 +221,7 @@ export default function UseCasesSection() {
                   </motion.div>
 
                   {/* Title */}
-                  <h3 className="text-2xl md:text-3xl font-bold text-white mb-1">
+                  <h3 className="text-2xl md:text-3xl font-bold text-silver-solid mb-1">
                     {useCase.title}
                   </h3>
                   <p className="text-white/90 text-sm md:text-base font-medium">

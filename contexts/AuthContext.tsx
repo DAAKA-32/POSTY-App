@@ -24,7 +24,7 @@ import {
   sendPasswordResetEmail,
 } from "firebase/auth";
 import { auth, googleProvider } from "@/lib/firebase";
-import { createUserProfile, getUserProfile, deleteAllUserData } from "@/lib/firestore";
+import { createUserProfile, getUserProfile, deleteAllUserData, saveUserConsent } from "@/lib/firestore";
 import { AuthContextType, UserProfile } from "@/types";
 import toast from "@/components/ui/Toast";
 
@@ -160,6 +160,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Log but don't fail - profile will be created during onboarding
           console.warn("Profile creation deferred to onboarding:", profileError);
         }
+        // Persist RGPD consent to Firestore (Art. 7.1 - proof of consent)
+        try {
+          await saveUserConsent(googleUser.uid, {
+            privacyPolicy: true,
+            termsOfService: true,
+            analytics: false,
+            marketing: false,
+          });
+        } catch (consentError) {
+          console.warn("Consent persistence deferred:", consentError);
+        }
         toast.success("Compte créé avec succès !");
       } else {
         // Existing user — this is a LOGIN, not signup.
@@ -269,6 +280,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         displayName,
         photoURL: null,
       });
+
+      // Persist RGPD consent to Firestore (Art. 7.1 - proof of consent)
+      try {
+        await saveUserConsent(newUser.uid, {
+          privacyPolicy: true,
+          termsOfService: true,
+          analytics: false,
+          marketing: false,
+        });
+      } catch (consentError) {
+        console.warn("Consent persistence deferred:", consentError);
+      }
 
       toast.success("Compte créé avec succès !");
     } catch (error: unknown) {

@@ -262,7 +262,7 @@ export function PremiumToaster() {
       containerStyle={{
         // Mobile: top with safe area (avoids overlap with inputs and keyboard)
         ...(isMobile ? {
-          top: "max(env(safe-area-inset-top, 12px), 12px)",
+          top: "calc(max(env(safe-area-inset-top, 0px), 12px) + 4px)",
           left: 0,
           right: 0,
           padding: "0 16px",
