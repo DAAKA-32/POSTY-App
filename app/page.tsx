@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence, useReducedMotion, useInView, useScroll, useTransform, useMotionValue, useSpring, useMotionTemplate } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
-import { getAllPlans, PlanConfig, PLAN_TAGLINES, getPlanCoreFeatures, getPlanSecondaryFeatures, getCTALabel, getSavingsText, FeatureItem } from "@/lib/plans";
+import { getAllPlans, getPaidPlans, PlanConfig, PLAN_TAGLINES, getPlanCoreFeatures, getPlanSecondaryFeatures, getCTALabel, getSavingsText, FeatureItem } from "@/lib/plans";
 import BillingToggle from "@/components/ui/BillingToggle";
 import { useScrollLock } from "@/hooks/useScrollLock";
 import AnimatedMacBook from "@/components/landing/AnimatedMacBook";
@@ -570,7 +570,7 @@ function HeroSection() {
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
               </span>
               <span className="text-sm font-medium text-gray-700">
-                <span className="font-bold text-gray-900">2800+</span> entrepreneurs actifs
+                Utilisé par des <span className="font-bold text-gray-900">entrepreneurs exigeants</span>
               </span>
               <div className="flex -space-x-1.5">
                 {[1, 2, 3].map((i) => (
@@ -584,8 +584,8 @@ function HeroSection() {
 
             {/* Main headline */}
             <h1 className="text-[2.5rem] sm:text-5xl lg:text-[3.25rem] xl:text-[3.75rem] 2xl:text-[4.25rem] font-bold leading-[1.15] tracking-tight">
-              <span className="block text-transparent bg-clip-text bg-gradient-to-b from-gray-900 to-gray-400">Vos posts LinkedIn</span>
-              <span className="block mt-1 lg:mt-2 text-transparent bg-clip-text bg-gradient-to-b from-gray-800 to-gray-400">
+              <span className="block text-silver-premium">Vos posts LinkedIn</span>
+              <span className="block mt-1 lg:mt-2 text-silver-premium">
                 signent des{" "}
                 <span className="relative inline-block">
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] via-[#F76B54] to-[#F8935D] bg-[length:200%_100%] animate-[gradient-x_3s_ease_infinite]">
@@ -664,13 +664,13 @@ function HeroSection() {
                 <svg className="w-5 h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                Essai gratuit 3 jours
+                Essai gratuit 7 jours
               </span>
               <span className="flex items-center gap-2 font-medium text-[#F8935D]">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                Sans CB pendant l'essai
+                Satisfait ou remboursé 7j
               </span>
               <span className="flex items-center gap-2">
                 <svg className="w-5 h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
@@ -682,7 +682,7 @@ function HeroSection() {
                 <svg className="w-5 h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                Résultats immédiats
+                Premier post en 30 sec
               </span>
             </motion.div>
           </motion.div>
@@ -778,8 +778,8 @@ function HeroSection() {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500">Taux d&apos;engagement</p>
-                    <p className="text-lg font-bold text-gray-900">+340%</p>
+                    <p className="text-xs text-gray-500">Engagement moyen</p>
+                    <p className="text-lg font-bold text-gray-900">x3</p>
                   </div>
                 </div>
               </motion.div>
@@ -836,7 +836,7 @@ const ALL_DEMO_SUGGESTIONS = [
   { label: "Attirer des clients B2B", emoji: "🎯", text: "Je veux attirer des clients B2B dans le secteur du consulting" },
   { label: "Asseoir mon expertise", emoji: "👤", text: "Je veux renforcer ma crédibilité d'expert sur mon marché" },
   { label: "Convertir mes prospects", emoji: "💼", text: "Je veux transformer mes prospects LinkedIn en clients" },
-  { label: "Booster ma visibilité", emoji: "📈", text: "Je veux maximiser ma portée et ma visibilité sur LinkedIn" },
+  { label: "Lancer une offre", emoji: "📈", text: "Je veux annoncer le lancement d'une nouvelle offre à mon audience LinkedIn" },
   { label: "Montrer mes résultats", emoji: "🤝", text: "Je veux partager un cas client concret et impactant" },
   { label: "Raconter une réussite", emoji: "✍️", text: "Je veux raconter comment j'ai aidé un client à atteindre ses objectifs" },
   { label: "Accélérer ma croissance", emoji: "🚀", text: "Je veux montrer l'impact de LinkedIn sur la croissance de mon activité" },
@@ -1067,7 +1067,7 @@ function DemoSection() {
       <section
         ref={sectionRef}
         id="demo"
-        className="relative z-[2] overflow-hidden"
+        className="relative z-[2] overflow-x-hidden"
       >
         {/* Aurora animated background */}
         <AuroraBackground />
@@ -1084,13 +1084,16 @@ function DemoSection() {
           </div>
 
           <div className="relative text-center max-w-4xl mx-auto">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] 2xl:text-[4rem] font-bold leading-[1.2] tracking-tight">
-              <span>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] 2xl:text-[4rem] font-bold tracking-tight flex flex-col items-center gap-0 [&>span]:-my-[0.2em]">
+              <span className="block">
                 {HERO_WORDS_L1.map((word, i) => (
                   <span
                     key={word}
-                    className="inline-block text-silver-premium transition-all duration-500 ease-out"
+                    className="text-silver-premium transition-all duration-500 ease-out"
                     style={{
+                      display: "inline-block",
+                      padding: "0.3em 0",
+                      lineHeight: 1,
                       opacity: revealedWords > i ? 1 : 0,
                       transform: revealedWords > i ? "translateY(0)" : "translateY(8px)",
                     }}
@@ -1099,15 +1102,17 @@ function DemoSection() {
                   </span>
                 ))}
               </span>
-              <br className="hidden sm:block" />
-              <span>
+              <span className="block">
                 {HERO_WORDS_L2.map((word, i) => {
                   const globalIndex = HERO_WORDS_L1.length + i;
                   return (
                     <span
                       key={word}
-                      className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] via-[#F76B54] to-[#F8935D] transition-all duration-500 ease-out"
+                      className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] via-[#F76B54] to-[#F8935D] transition-all duration-500 ease-out"
                       style={{
+                        display: "inline-block",
+                        padding: "0.3em 0",
+                        lineHeight: 1,
                         opacity: revealedWords > globalIndex ? 1 : 0,
                         transform: revealedWords > globalIndex ? "translateY(0)" : "translateY(8px)",
                       }}
@@ -1127,7 +1132,7 @@ function DemoSection() {
                 delay: hasAnimated ? 0.25 : 0,
                 ease: [0.16, 1, 0.3, 1],
               }}
-              className="mt-5 md:mt-6 text-gray-500 text-base md:text-lg lg:text-xl max-w-2xl mx-auto leading-relaxed"
+              className="mt-8 md:mt-10 text-gray-500 text-base md:text-lg lg:text-xl max-w-2xl mx-auto leading-relaxed"
             >
               Décrivez votre objectif. Posty fait le reste.
             </motion.p>
@@ -2756,7 +2761,7 @@ function MockupMultiPlatform() {
   ];
 
   return (
-    <div className="w-full h-full bg-gradient-to-br from-white via-gray-50 to-white p-4 flex flex-col justify-between relative overflow-hidden rounded-2xl shadow-lg border border-gray-200/60">
+    <div className="w-full h-full bg-gradient-to-br from-white via-gray-50 to-white p-4 flex flex-col justify-between relative overflow-hidden">
       {/* Decorative glow */}
       <div className="absolute top-0 right-0 w-32 h-32 bg-[#F8935D]/10 rounded-full blur-3xl" />
       <div className="absolute bottom-0 left-0 w-24 h-24 bg-[#F76B54]/8 rounded-full blur-2xl" />
@@ -2849,7 +2854,7 @@ function MockupScheduler() {
   const today = 13;
 
   return (
-    <div className="w-full h-full bg-gradient-to-br from-white via-gray-50 to-white p-4 flex flex-col relative overflow-hidden rounded-2xl shadow-lg border border-gray-200/60">
+    <div className="w-full h-full bg-gradient-to-br from-white via-gray-50 to-white p-4 flex flex-col relative overflow-hidden">
       {/* Decorative glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-20 bg-violet-500/8 rounded-full blur-3xl" />
 
@@ -2939,7 +2944,7 @@ function MockupScheduler() {
 
 function MockupDualGeneration() {
   return (
-    <div className="w-full h-full bg-gradient-to-br from-white via-gray-50 to-white p-4 flex flex-col relative overflow-hidden rounded-2xl shadow-lg border border-gray-200/60">
+    <div className="w-full h-full bg-gradient-to-br from-white via-gray-50 to-white p-4 flex flex-col relative overflow-hidden">
       {/* Decorative */}
       <div className="absolute top-0 right-0 w-28 h-28 bg-red-400/8 rounded-full blur-3xl" />
       <div className="absolute bottom-0 left-0 w-20 h-20 bg-orange-400/5 rounded-full blur-2xl" />
@@ -3028,7 +3033,7 @@ function MockupContextProfile() {
   ];
 
   return (
-    <div className="w-full h-full bg-gradient-to-br from-white via-gray-50 to-white p-4 flex flex-col relative overflow-hidden rounded-2xl shadow-lg border border-gray-200/60">
+    <div className="w-full h-full bg-gradient-to-br from-white via-gray-50 to-white p-4 flex flex-col relative overflow-hidden">
       {/* Decorative */}
       <div className="absolute top-0 left-0 w-32 h-32 bg-amber-500/8 rounded-full blur-3xl" />
       <div className="absolute bottom-0 right-0 w-24 h-24 bg-orange-500/5 rounded-full blur-2xl" />
@@ -3253,12 +3258,12 @@ function FeatureCard({ feature, index }: { feature: FeatureConfig; index: number
         />
 
         {/* Inner flex layout: image + content */}
-        <div className={`relative z-10 flex flex-col ${isEven ? "lg:flex-row" : "lg:flex-row-reverse"} gap-[clamp(1.5rem,3vw,2rem)] items-center lg:min-h-[22rem]`}>
+        <div className={`relative z-10 flex flex-col ${isEven ? "lg:flex-row" : "lg:flex-row-reverse"} gap-[clamp(1.5rem,3vw,2rem)] items-center`}>
 
         {/* Visual — Centered Mockup */}
-        <div className="w-full lg:w-1/2 flex-shrink-0 flex items-center justify-center relative" style={{ minHeight: "clamp(14rem, 22vw, 20rem)" }}>
+        <div className="w-full lg:w-[42%] flex-shrink-0 flex items-center justify-center relative">
 
-          {/* App mockup — centered, slight tilt */}
+          {/* App mockup — compact, uniform size */}
           {feature.mockup && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -3266,13 +3271,11 @@ function FeatureCard({ feature, index }: { feature: FeatureConfig; index: number
               viewport={{ once: true }}
               transition={{ delay: 0.2, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
               className="relative z-[4] w-full"
-              style={{ maxWidth: "clamp(16rem, 28vw, 26rem)" }}
+              style={{ maxWidth: "clamp(13rem, 22vw, 20rem)" }}
             >
               <div
-                className="w-full rounded-xl overflow-hidden shadow-2xl ring-1 ring-black/5"
-                style={{
-                  transform: isEven ? "rotate(1.5deg)" : "rotate(-1.5deg)",
-                }}
+                className="w-full rounded-xl overflow-hidden shadow-lg ring-1 ring-black/[0.06]"
+                style={{ aspectRatio: "4 / 5", transform: isEven ? "rotate(2deg)" : "rotate(-2deg)" }}
               >
                 {feature.mockup}
               </div>
@@ -3373,9 +3376,9 @@ function FeaturesSection() {
           className="text-center mb-[clamp(2rem,3.5vw,3rem)]"
         >
           <h2 className="text-[clamp(1.75rem,4vw,3.25rem)] font-bold">
-            <span className="text-transparent bg-clip-text bg-gradient-to-b from-gray-900 to-gray-400">Tout ce qu&apos;il vous faut pour</span>{" "}
+            <span className="text-silver-premium">Tout ce qu&apos;il vous faut pour</span>{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
-              dominer les réseaux
+              performer sur LinkedIn
             </span>
           </h2>
         </motion.div>
@@ -3417,25 +3420,31 @@ function FeaturesSection() {
 
 const TESTIMONIALS = [
   {
-    name: "Alexandre Moreau",
-    role: "Fondateur & CEO",
-    company: "GrowthLab",
-    image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&h=200&fit=crop&crop=face",
-    quote: "Avant Posty, LinkedIn était une corvée. Aujourd'hui, c'est mon premier canal d'acquisition. En 3 mois : engagement triplé, 12 clients B2B signés, et un pipeline qui ne tarit plus.",
+    name: "Alexandre M.",
+    role: "Fondateur",
+    company: "Agence B2B",
+    initials: "AM",
+    gradientFrom: "#F8935D",
+    gradientTo: "#F76B54",
+    quote: "Avant Posty, je publiais une fois par semaine sans savoir quoi dire. Aujourd'hui je poste chaque jour un contenu calibré, et LinkedIn est devenu mon premier canal d'acquisition.",
   },
   {
-    name: "Sophie Laurent",
+    name: "Sophie L.",
     role: "Directrice Marketing",
-    company: "TechVision",
-    image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&h=200&fit=crop&crop=face",
-    quote: "Mes équipes gagnent 10 heures par semaine. Mais le vrai gain, c'est la qualité : nos posts convertissent 3 fois mieux depuis qu'on utilise Posty.",
+    company: "SaaS B2B",
+    initials: "SL",
+    gradientFrom: "#6366F1",
+    gradientTo: "#8B5CF6",
+    quote: "Mon équipe gagne plusieurs heures par semaine sur la création de contenu. On réinvestit ce temps dans la stratégie. Nos posts sont plus réguliers et plus engageants.",
   },
   {
-    name: "Marc Dubois",
-    role: "Consultant Senior",
-    company: "Indépendant",
-    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face",
-    quote: "En freelance, chaque post doit rapporter. Posty me permet de publier du contenu stratégique chaque jour, sans sacrifier mes missions. Mon CA a augmenté de 40% en 4 mois.",
+    name: "Marc D.",
+    role: "Consultant indépendant",
+    company: "",
+    initials: "MD",
+    gradientFrom: "#059669",
+    gradientTo: "#10B981",
+    quote: "Posty me génère un post par jour qui sonne comme moi, sans sacrifier le temps que je consacre à mes missions clients. LinkedIn est enfin rentable pour moi.",
   },
 ];
 
@@ -3443,7 +3452,7 @@ function TestimonialsSection() {
   const isMobile = useIsMobile();
   return (
     <section id="testimonials" className="py-12 md:py-16 2xl:py-20 px-4 sm:px-6 lg:px-8 2xl:px-12 bg-gradient-to-b from-[#FAE8DE]/50 to-[#FEF3EE] overflow-hidden">
-      <div className="max-w-7xl 2xl:max-w-[1400px] mx-auto">
+      <div className="max-w-[1084px] mx-auto">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20, scale: 0.97, ...(isMobile ? {} : { filter: "blur(8px)" }) }}
@@ -3452,7 +3461,6 @@ function TestimonialsSection() {
           transition={{ duration: 0.7, ease: premiumEase }}
           className="text-center mb-8 md:mb-12"
         >
-          {/* Trust Badge */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
@@ -3462,16 +3470,16 @@ function TestimonialsSection() {
           >
             <div className="flex -space-x-2">
               {TESTIMONIALS.slice(0, 3).map((t, i) => (
-                <div key={i} className="w-6 h-6 rounded-full border-2 border-white overflow-hidden">
-                  <Image src={t.image} alt="" width={24} height={24} className="w-full h-full object-cover" />
+                <div key={i} className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-[8px] font-bold text-white" style={{ background: `linear-gradient(135deg, ${t.gradientFrom}, ${t.gradientTo})` }}>
+                  {t.initials}
                 </div>
               ))}
             </div>
-            <span className="text-sm text-gray-600 font-medium">+500 professionnels utilisent Posty chaque jour</span>
+            <span className="text-sm text-gray-600 font-medium">Retours d&apos;utilisateurs Posty</span>
           </motion.div>
 
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
-            <span className="text-transparent bg-clip-text bg-gradient-to-b from-gray-900 to-gray-400">Ils publient. Ils</span>{" "}
+            <span className="text-silver-premium">Ils publient. Ils</span>{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
               convertissent.
             </span>
@@ -3492,11 +3500,21 @@ function TestimonialsSection() {
               transition={{ delay: index * 0.12, duration: 0.6, ease: premiumEase }}
               className="group relative bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-[#F8935D]/30 transition-all duration-300 shadow-lg shadow-gray-100/60 hover:shadow-xl hover:shadow-[#F8935D]/10"
             >
-              <div className="p-8">
-                {/* Decorative quote mark */}
-                <svg className="w-8 h-8 text-[#F8935D]/15 mb-3" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path d="M4.583 17.321C3.553 16.227 3 15 3 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311C9.591 11.69 11 13.166 11 15c0 1.933-1.567 3.5-3.5 3.5-1.234 0-2.385-.597-2.917-1.179zm10 0C13.553 16.227 13 15 13 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311C19.591 11.69 21 13.166 21 15c0 1.933-1.567 3.5-3.5 3.5-1.234 0-2.385-.597-2.917-1.179z" />
-                </svg>
+              <div className="p-6">
+                {/* Author — initials avatar + name/role on same line */}
+                <div className="flex items-center gap-3 mb-4">
+                  <div
+                    className="w-10 h-10 rounded-full ring-2 ring-gray-100 group-hover:ring-[#F8935D]/30 transition-all duration-300 flex-shrink-0 flex items-center justify-center text-sm font-bold text-white"
+                    style={{ background: `linear-gradient(135deg, ${testimonial.gradientFrom}, ${testimonial.gradientTo})` }}
+                  >
+                    {testimonial.initials}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-gray-900 font-semibold text-sm truncate">{testimonial.name}</p>
+                    <p className="text-gray-500 text-xs truncate">{testimonial.role}{testimonial.company ? ` · ${testimonial.company}` : ""}</p>
+                  </div>
+                </div>
+
                 {/* Star rating */}
                 <div className="flex items-center gap-0.5 mb-3">
                   {[...Array(5)].map((_, i) => (
@@ -3505,28 +3523,11 @@ function TestimonialsSection() {
                     </svg>
                   ))}
                 </div>
-                {/* Quote */}
-                <blockquote className="text-gray-700 text-[15px] leading-relaxed mb-8">
-                  {testimonial.quote}
-                </blockquote>
 
-                {/* Author */}
-                <div className="flex items-center gap-4 pt-6 border-t border-gray-100">
-                  <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-100 ring-2 ring-gray-100 group-hover:ring-[#F8935D]/30 transition-all duration-300 flex-shrink-0">
-                    <Image
-                      src={testimonial.image}
-                      alt={testimonial.name}
-                      width={56}
-                      height={56}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-gray-900 font-semibold truncate">{testimonial.name}</p>
-                    <p className="text-gray-500 text-sm truncate">{testimonial.role}</p>
-                    <p className="text-[#F8935D] text-xs font-medium truncate">{testimonial.company}</p>
-                  </div>
-                </div>
+                {/* Quote */}
+                <blockquote className="text-gray-700 text-[15px] leading-relaxed">
+                  &ldquo;{testimonial.quote}&rdquo;
+                </blockquote>
               </div>
             </motion.div>
           ))}
@@ -3879,7 +3880,7 @@ function FounderSection() {
 // =============================================================================
 // PRICING SECTION - Replicated from Subscription Page
 // =============================================================================
-const PLANS = getAllPlans();
+const PLANS = getPaidPlans();
 
 // Feature item component for pricing cards - responsive for 2-col mobile
 function FeatureListItem({ feature, index }: { feature: FeatureItem; index: number }) {
@@ -4287,7 +4288,7 @@ function PricingSection() {
           className="text-center mb-12 2xl:mb-16"
         >
           <h2 className="text-3xl md:text-4xl lg:text-5xl 2xl:text-[3.25rem] font-bold mb-4">
-            <span className="text-transparent bg-clip-text bg-gradient-to-b from-gray-900 to-gray-400">Investissez dans votre</span>{" "}
+            <span className="text-silver-premium">Investissez dans votre</span>{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
               croissance LinkedIn
             </span>
@@ -4303,37 +4304,12 @@ function PricingSection() {
           />
         </motion.div>
 
-        {/* Pricing cards container — max-w-5xl matches subscription page */}
-        <div className="max-w-5xl mx-auto">
-          {/* Mobile: Free plan compact banner (hidden on sm+) */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4 }}
-            className="sm:hidden mb-4 p-3 bg-gradient-to-r from-[#F8935D]/5 via-[#F76B54]/5 to-[#F8935D]/5 border border-[#F8935D]/20 rounded-xl"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <h4 className="text-sm font-bold text-gray-900 mb-0.5">Plan Gratuit</h4>
-                <p className="text-[11px] text-gray-500">3 posts/jour &bull; Ideal pour decouvrir</p>
-              </div>
-              <Link
-                href="/signup"
-                className="px-3 py-1.5 bg-gray-100 hover:bg-[#F8935D]/10 active:bg-[#F8935D]/20 text-gray-700 hover:text-[#F76B54] text-[11px] font-semibold rounded-lg border border-gray-200 hover:border-[#F8935D]/40 transition-all duration-200"
-              >
-                Essayer
-              </Link>
-            </div>
-          </motion.div>
-
-          {/* Cards Grid: 2 cols mobile (Pro+Max), 3 cols sm+ (matching subscription page) */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4 md:gap-6 lg:gap-8 items-start">
+        {/* Pricing cards container */}
+        <div className="max-w-4xl mx-auto">
+          {/* Cards Grid: 2 cols (Pro + Max) */}
+          <div className="grid grid-cols-2 gap-2 sm:gap-4 md:gap-6 lg:gap-8 items-start">
             {PLANS.map((plan, index) => (
-              <div
-                key={plan.id}
-                className={plan.price.monthly === 0 ? "hidden sm:block" : ""}
-              >
+              <div key={plan.id}>
                 <PricingCard
                   plan={plan}
                   billingPeriod={billingPeriod}
@@ -4629,7 +4605,7 @@ function Footer() {
                 <span className="text-sm font-bold text-gray-900">Posty</span>
               </Link>
               <p className="text-[10px] text-gray-500 leading-tight max-w-[200px]">
-                L&apos;IA qui transforme votre LinkedIn en canal d&apos;acquisition clients.
+                Vos posts LinkedIn, calibrés pour signer des clients.
               </p>
               <p className="text-[10px] text-[#F8935D] font-medium mt-1">
                 Chaque post = opportunité business
@@ -4691,7 +4667,7 @@ function Footer() {
                 <span className="text-xl font-bold text-gray-900">Posty</span>
               </Link>
               <p className="text-gray-500 max-w-sm">
-                L&apos;IA stratégique qui transforme votre présence LinkedIn en canal d&apos;acquisition clients. Plus de contenu. Plus de visibilité. Plus de revenus.
+                Posty génère vos posts LinkedIn calibrés pour votre audience. Publiez chaque jour, attirez des prospects qualifiés, signez des clients.
               </p>
               <p className="text-[#F8935D] font-medium text-sm mt-3">
                 Chaque post est une opportunité.
@@ -4801,12 +4777,6 @@ export default function LandingPage() {
           <FounderSection />
           <PricingSection />
           <FaqSection />
-          <CtaBanner
-            id="final-cta"
-            headline="Votre prochain client est peut-être sur LinkedIn en ce moment"
-            subtext="Il suffit d'un post pour lancer la conversation."
-            ctaLabel="Essayer Posty gratuitement"
-          />
           <Footer />
         </div>
       </div>
