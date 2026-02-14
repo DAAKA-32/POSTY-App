@@ -10,6 +10,7 @@ import { getAllPlans, PlanConfig, PLAN_TAGLINES, getPlanCoreFeatures, getPlanSec
 import BillingToggle from "@/components/ui/BillingToggle";
 import { useScrollLock } from "@/hooks/useScrollLock";
 import AnimatedMacBook from "@/components/landing/AnimatedMacBook";
+import AuroraBackground from "@/components/landing/AuroraBackground";
 
 // =============================================================================
 // DESIGN SYSTEM - Soft Orange Palette (consistent with /app and /login)
@@ -218,7 +219,7 @@ function Navbar() {
           paddingRight: isScrolled && !isMenuOpen ? "16px" : "0px",
           paddingTop: isScrolled && !isMenuOpen ? "12px" : "0px",
         }}
-        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
         className="w-full pointer-events-auto"
       >
         <motion.div
@@ -227,18 +228,18 @@ function Navbar() {
             maxWidth: isScrolled && !isMenuOpen ? "1100px" : "100%",
             borderRadius: isScrolled && !isMenuOpen ? "20px" : "0px",
           }}
-          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
           className={`
-            mx-auto transition-all duration-400
+            mx-auto
             ${isScrolled || isMenuOpen
-              ? "bg-white/95 backdrop-blur-xl shadow-lg shadow-gray-900/[0.08] border border-gray-200/60"
+              ? "bg-white/90 backdrop-blur-xl shadow-md shadow-gray-900/[0.05] border border-gray-200/50"
               : "bg-transparent border border-transparent"
             }
           `}
           style={{
-            transitionProperty: "background-color, box-shadow, border-color",
-            transitionDuration: "400ms",
-            transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)",
+            transitionProperty: "background-color, box-shadow, border-color, backdrop-filter",
+            transitionDuration: "700ms",
+            transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
           }}
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -583,8 +584,8 @@ function HeroSection() {
 
             {/* Main headline */}
             <h1 className="text-[2.5rem] sm:text-5xl lg:text-[3.25rem] xl:text-[3.75rem] 2xl:text-[4.25rem] font-bold leading-[1.15] tracking-tight">
-              <span className="block text-silver-shimmer">Vos posts LinkedIn</span>
-              <span className="block mt-1 lg:mt-2 text-silver-shimmer">
+              <span className="block text-transparent bg-clip-text bg-gradient-to-b from-gray-900 to-gray-400">Vos posts LinkedIn</span>
+              <span className="block mt-1 lg:mt-2 text-transparent bg-clip-text bg-gradient-to-b from-gray-800 to-gray-400">
                 signent des{" "}
                 <span className="relative inline-block">
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] via-[#F76B54] to-[#F8935D] bg-[length:200%_100%] animate-[gradient-x_3s_ease_infinite]">
@@ -861,19 +862,19 @@ function DemoSection() {
   // Text reveal state - triggered AFTER MacBook animation completes
   const [hasAnimated, setHasAnimated] = useState(heroAnimationPlayedGlobal);
 
-  // Typewriter effect state
-  const TYPEWRITER_LINE1 = "Vos posts LinkedIn,";
-  const TYPEWRITER_LINE2 = "générateurs de clients";
-  const TYPEWRITER_TOTAL = TYPEWRITER_LINE1.length + TYPEWRITER_LINE2.length;
-  const CHAR_DELAY = 35; // ms per character
+  // Word-by-word reveal state
+  const HERO_WORDS_L1 = ["Vos", "posts", "LinkedIn,"];
+  const HERO_WORDS_L2 = ["générateurs", "de", "clients"];
+  const TOTAL_WORDS = HERO_WORDS_L1.length + HERO_WORDS_L2.length;
+  const WORD_DELAY = 110;
 
-  const [typedCount, setTypedCount] = useState(heroAnimationPlayedGlobal ? TYPEWRITER_TOTAL : 0);
+  const [revealedWords, setRevealedWords] = useState(heroAnimationPlayedGlobal ? TOTAL_WORDS : 0);
 
   useEffect(() => {
-    if (!hasAnimated || typedCount >= TYPEWRITER_TOTAL) return;
-    const timer = setTimeout(() => setTypedCount((c) => c + 1), CHAR_DELAY);
+    if (!hasAnimated || revealedWords >= TOTAL_WORDS) return;
+    const timer = setTimeout(() => setRevealedWords((c) => c + 1), WORD_DELAY);
     return () => clearTimeout(timer);
-  }, [hasAnimated, typedCount, TYPEWRITER_TOTAL]);
+  }, [hasAnimated, revealedWords, TOTAL_WORDS]);
 
   // Callback when MacBook animation completes
   const handleMacBookAnimationComplete = useCallback(() => {
@@ -1066,8 +1067,11 @@ function DemoSection() {
       <section
         ref={sectionRef}
         id="demo"
-        className="background-landing relative z-[2]"
+        className="relative z-[2] overflow-hidden"
       >
+        {/* Aurora animated background */}
+        <AuroraBackground />
+
         {/* Hero title */}
         <div className="relative pt-24 md:pt-32 pb-10 md:pb-14 px-4 sm:px-6 lg:px-8">
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -1080,37 +1084,40 @@ function DemoSection() {
           </div>
 
           <div className="relative text-center max-w-4xl mx-auto">
-            <motion.h1
-              initial={{ opacity: 0 }}
-              animate={hasAnimated ? { opacity: 1 } : { opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="relative text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] 2xl:text-[4rem] font-bold leading-[1.2] tracking-tight"
-            >
-              {/* Invisible placeholder to reserve full height — prevents layout shift */}
-              <span className="invisible" aria-hidden="true">
-                {TYPEWRITER_LINE1}{" "}
-                <br className="hidden sm:block" />
-                {TYPEWRITER_LINE2}
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] 2xl:text-[4rem] font-bold leading-[1.2] tracking-tight">
+              <span>
+                {HERO_WORDS_L1.map((word, i) => (
+                  <span
+                    key={word}
+                    className="inline-block text-silver-premium transition-all duration-500 ease-out"
+                    style={{
+                      opacity: revealedWords > i ? 1 : 0,
+                      transform: revealedWords > i ? "translateY(0)" : "translateY(8px)",
+                    }}
+                  >
+                    {word}{i < HERO_WORDS_L1.length - 1 ? "\u00A0" : ""}
+                  </span>
+                ))}
               </span>
-              {/* Visible typed text layered on top */}
-              <span className="absolute inset-0">
-                <span className="text-silver-premium">
-                  {TYPEWRITER_LINE1.substring(0, Math.min(typedCount, TYPEWRITER_LINE1.length))}
-                </span>
-                {typedCount > TYPEWRITER_LINE1.length && (
-                  <>
-                    {" "}
-                    <br className="hidden sm:block" />
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] via-[#F76B54] to-[#F8935D]">
-                      {TYPEWRITER_LINE2.substring(0, typedCount - TYPEWRITER_LINE1.length)}
+              <br className="hidden sm:block" />
+              <span>
+                {HERO_WORDS_L2.map((word, i) => {
+                  const globalIndex = HERO_WORDS_L1.length + i;
+                  return (
+                    <span
+                      key={word}
+                      className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] via-[#F76B54] to-[#F8935D] transition-all duration-500 ease-out"
+                      style={{
+                        opacity: revealedWords > globalIndex ? 1 : 0,
+                        transform: revealedWords > globalIndex ? "translateY(0)" : "translateY(8px)",
+                      }}
+                    >
+                      {word}{i < HERO_WORDS_L2.length - 1 ? "\u00A0" : ""}
                     </span>
-                  </>
-                )}
-                {typedCount < TYPEWRITER_TOTAL && (
-                  <span className="inline-block w-[3px] h-[0.85em] bg-[#F8935D] ml-0.5 align-middle animate-pulse" />
-                )}
+                  );
+                })}
               </span>
-            </motion.h1>
+            </h1>
 
             <motion.p
               initial={{ opacity: 0, y: 16, filter: "blur(3px)" }}
@@ -1190,20 +1197,9 @@ function DemoSection() {
           {/* ============================================================ */}
           {/* Demo Card — descends from above                              */}
           {/* ============================================================ */}
-          <AnimatePresence mode="wait">
-            {viewMode === "demo" && (
-              <motion.div
-                key="demo"
-                initial={{ opacity: 0, y: -25, scale: 0.98 }}
-                animate={hasAnimated ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: -25, scale: 0.98 }}
-                exit={{ opacity: 0, y: 12, scale: 0.99, transition: { duration: 0.25, ease: [0.16, 1, 0.3, 1] } }}
-                transition={{
-                  duration: 0.55,
-                  delay: hasAnimated ? 0.15 : 0,
-                  ease: [0.16, 1, 0.3, 1],
-                }}
-                className="max-w-[1084px] mx-auto"
-              >
+          {viewMode === "demo" && (
+              <div className="max-w-[1084px] mx-auto">
+
                 {/* Main demo card */}
                 <div className="relative bg-white border border-gray-200/60 rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl shadow-gray-400/20">
 
@@ -1363,32 +1359,17 @@ function DemoSection() {
                 )}
               </div>
             </div>
-          </motion.div>
+          </div>
             )}
 
-            {/* ============================================================ */}
-            {/* Product Preview — Animated MacBook with 3D Opening Effect   */}
-            {/* Cinematic sequence: Rise from bottom → Text reveal → Lid opens → Content appears → Badges float in */}
-            {/* ============================================================ */}
             {viewMode === "preview" && (
-              <motion.div
-                key="preview"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0, transition: { duration: 0.3 } }}
-                transition={{ duration: 0.3 }}
-                className="relative"
-              >
-                {/* Animated MacBook with cinematic 3D reveal - triggers text animation on complete */}
+              <div className="relative">
                 <AnimatedMacBook
                   isVisible={viewMode === "preview"}
-                  screenImage="/macimg.png"
                   onAnimationComplete={handleMacBookAnimationComplete}
-                  hasAlreadyAnimated={heroAnimationPlayed}
                 />
-              </motion.div>
+              </div>
             )}
-          </AnimatePresence>
 
             </div> {/* close content-inner (relative z-10) */}
           </div> {/* close content-bg (relative) */}
@@ -2737,7 +2718,6 @@ interface FeatureConfig {
   description: string;
   image?: string;
   mockup?: React.ReactNode;
-  personImage?: string;       // Foreground person photo (Unsplash)
   icon: React.ReactNode;
   color: {
     primary: string;      // Main color class
@@ -2851,8 +2831,21 @@ function MockupMultiPlatform() {
 }
 
 function MockupScheduler() {
-  const days = ["Lu", "Ma", "Me", "Je", "Ve", "Sa", "Di"];
-  const scheduled = [3, 5, 8, 10, 12, 15, 17, 19, 22, 24];
+  const days = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
+  // Posts scheduled on specific days with times
+  const postsOnDays: Record<number, { time: string; status: "pending" | "published" }[]> = {
+    3: [{ time: "09:00", status: "published" }],
+    5: [{ time: "12:30", status: "published" }],
+    8: [{ time: "09:00", status: "published" }, { time: "18:00", status: "published" }],
+    10: [{ time: "14:00", status: "published" }],
+    12: [{ time: "09:00", status: "published" }],
+    13: [{ time: "10:00", status: "pending" }],
+    15: [{ time: "09:00", status: "pending" }],
+    17: [{ time: "12:00", status: "pending" }, { time: "18:00", status: "pending" }],
+    19: [{ time: "09:00", status: "pending" }],
+    22: [{ time: "14:30", status: "pending" }],
+    24: [{ time: "09:00", status: "pending" }],
+  };
   const today = 13;
 
   return (
@@ -2860,67 +2853,85 @@ function MockupScheduler() {
       {/* Decorative glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-20 bg-violet-500/8 rounded-full blur-3xl" />
 
-      {/* Header */}
-      <div className="flex items-center justify-between mb-3 relative z-10">
-        <span className="text-[11px] text-gray-500 font-medium">Planificateur</span>
-        <span className="text-[11px] text-gray-900 font-semibold">Février 2025</span>
+      {/* View toggle - like real app */}
+      <div className="flex bg-gray-100 rounded-lg p-0.5 mb-2.5 relative z-10">
+        <div className="flex-1 px-2 py-1 text-[9px] font-medium rounded-md text-gray-500 text-center">
+          Liste
+        </div>
+        <div className="flex-1 px-2 py-1 text-[9px] font-medium rounded-md bg-white text-gray-900 text-center shadow-sm">
+          Calendrier
+        </div>
       </div>
 
-      {/* Calendar mini grid */}
-      <div className="relative z-10 mb-3">
+      {/* Month navigation - like real app with < > arrows */}
+      <div className="flex items-center justify-between mb-2 relative z-10">
+        <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        </svg>
+        <span className="text-[11px] text-gray-900 font-bold">Février 2025</span>
+        <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
+      </div>
+
+      {/* Calendar grid - like real app */}
+      <div className="relative z-10 flex-1">
         {/* Day headers */}
-        <div className="grid grid-cols-7 gap-1 mb-1.5">
-          {days.map(d => (
-            <div key={d} className="text-[9px] text-gray-400 text-center font-medium">{d}</div>
+        <div className="grid grid-cols-7 gap-0.5 mb-1">
+          {days.map((d, i) => (
+            <div key={d} className={`text-[8px] text-center font-semibold uppercase tracking-wider ${
+              i === 0 || i === 6 ? "text-gray-300" : "text-gray-400"
+            }`}>{d}</div>
           ))}
         </div>
-        {/* Dates */}
-        <div className="grid grid-cols-7 gap-1">
+        {/* Dates with posts inside cells - like real app */}
+        <div className="grid grid-cols-7 gap-0.5">
+          {/* Empty slots for days before Feb 1 (Saturday = 6 slots) */}
+          {Array.from({ length: 6 }, (_, i) => (
+            <div key={`empty-${i}`} className="min-h-[28px]" />
+          ))}
           {Array.from({ length: 28 }, (_, i) => i + 1).map(day => {
-            const isScheduled = scheduled.includes(day);
             const isToday = day === today;
+            const dayPosts = postsOnDays[day];
+            const hasPosts = !!dayPosts;
             return (
               <div
                 key={day}
                 className={`
-                  aspect-square rounded-md flex items-center justify-center text-[10px] font-medium relative
-                  ${isToday ? "bg-violet-500 text-white ring-2 ring-violet-400/50" : ""}
-                  ${isScheduled && !isToday ? "bg-violet-100 text-violet-600" : ""}
-                  ${!isScheduled && !isToday ? "text-gray-400" : ""}
+                  min-h-[28px] p-0.5 rounded-lg flex flex-col items-start text-[9px] font-medium relative
+                  ${isToday ? "bg-violet-500/10 border border-violet-500/30" : ""}
+                  ${hasPosts && !isToday ? "border border-gray-200 bg-gray-50/80" : ""}
+                  ${!hasPosts && !isToday ? "" : ""}
                 `}
               >
-                {day}
-                {isScheduled && <div className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-violet-500" />}
+                <div className="flex items-center justify-between w-full">
+                  <span className={`
+                    ${isToday ? "w-4 h-4 flex items-center justify-center bg-violet-500 text-white rounded text-[8px] font-bold" : ""}
+                    ${!isToday ? "text-gray-500 text-[9px] pl-0.5" : ""}
+                  `}>
+                    {day}
+                  </span>
+                  {hasPosts && !isToday && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-violet-500 mr-0.5" />
+                  )}
+                </div>
+                {/* Post time pills inside cells - like real app */}
+                {dayPosts && dayPosts.slice(0, 1).map((post, pi) => (
+                  <div
+                    key={pi}
+                    className={`text-[6px] px-1 py-0 rounded mt-0.5 font-medium truncate w-full ${
+                      post.status === "pending"
+                        ? "bg-violet-500/10 text-violet-600"
+                        : "bg-emerald-500/10 text-emerald-600"
+                    }`}
+                  >
+                    {post.time}
+                  </div>
+                ))}
               </div>
             );
           })}
         </div>
-      </div>
-
-      {/* Scheduled posts preview */}
-      <div className="space-y-1.5 relative z-10 flex-1">
-        {[
-          { time: "09:00", platform: "LinkedIn", title: "Post leadership", status: "sent" },
-          { time: "12:30", platform: "Reddit", title: "Thread stratégie", status: "ready" },
-          { time: "18:00", platform: "Threads", title: "Tip du jour", status: "scheduled" },
-        ].map((post, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, x: -15 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.5 + i * 0.12, duration: 0.35 }}
-            className="flex items-center gap-2 bg-gray-50 rounded-md px-2.5 py-1.5 border border-gray-200"
-          >
-            <span className="text-[10px] text-violet-600 font-mono w-10 flex-shrink-0">{post.time}</span>
-            <div className="w-px h-4 bg-gray-200" />
-            <span className="text-[10px] text-gray-500 flex-shrink-0 w-14">{post.platform}</span>
-            <span className="text-[10px] text-gray-700 truncate flex-1">{post.title}</span>
-            <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-              post.status === "sent" ? "bg-emerald-500" : post.status === "ready" ? "bg-amber-500" : "bg-violet-500"
-            }`} />
-          </motion.div>
-        ))}
       </div>
     </div>
   );
@@ -2930,74 +2941,77 @@ function MockupDualGeneration() {
   return (
     <div className="w-full h-full bg-gradient-to-br from-white via-gray-50 to-white p-4 flex flex-col relative overflow-hidden rounded-2xl shadow-lg border border-gray-200/60">
       {/* Decorative */}
-      <div className="absolute top-0 right-0 w-28 h-28 bg-emerald-500/8 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 left-0 w-20 h-20 bg-green-500/5 rounded-full blur-2xl" />
+      <div className="absolute top-0 right-0 w-28 h-28 bg-red-400/8 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 left-0 w-20 h-20 bg-orange-400/5 rounded-full blur-2xl" />
 
-      {/* Header */}
-      <div className="flex items-center gap-2 mb-3 relative z-10">
-        <span className="text-[11px] text-gray-500 font-medium">2 versions générées</span>
-        <span className="ml-auto text-[10px] text-emerald-500">0.8s</span>
+      {/* Header - like real app "2 versions disponibles" with dots */}
+      <div className="flex items-center justify-center gap-2 mb-3 relative z-10">
+        <span className="text-[10px] text-gray-400">2 versions disponibles</span>
+        <div className="flex items-center gap-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#F85751]" />
+          <span className="w-1.5 h-1.5 rounded-full bg-[#F8935D]" />
+        </div>
       </div>
 
-      {/* Two version cards side by side */}
-      <div className="flex gap-2.5 flex-1 relative z-10">
-        {/* Version A - Storytelling */}
+      {/* Two version cards side by side - like real app grid */}
+      <div className="flex gap-2 flex-1 relative z-10">
+        {/* Storytelling - coral/accent like real app */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.3, duration: 0.5 }}
-          className="flex-1 bg-[#F8935D]/5 rounded-lg border border-[#F8935D]/20 p-3 flex flex-col"
+          className="flex-1 bg-white rounded-xl border border-gray-200 flex flex-col overflow-hidden"
         >
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-6 h-6 rounded-md bg-[#F8935D]/15 flex items-center justify-center text-[#F8935D] text-[10px] font-bold">A</div>
-            <div>
-              <div className="text-[10px] text-gray-900 font-semibold">Storytelling</div>
-              <div className="text-[8px] text-[#F8935D]">Engageant</div>
+          {/* Gradient header bar like real app */}
+          <div className="px-2.5 py-2 bg-gradient-to-r from-[#F85751]/10 to-[#F85751]/5 border-b border-gray-100">
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[8px] font-medium rounded-full bg-[#F85751]/15 text-[#F85751] border border-[#F85751]/20">
+              <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+              </svg>
+              Storytelling
+            </span>
+          </div>
+          {/* Content preview */}
+          <div className="px-2.5 py-2 flex-1">
+            <div className="text-[8px] text-gray-600 leading-relaxed line-clamp-4">
+              Il y a 2 ans, j&apos;ai failli tout abandonner. Mon business stagnait, mes posts n&apos;avaient aucun impact...
             </div>
           </div>
-          <div className="flex-1 space-y-1.5">
-            <div className="h-1.5 bg-gray-200 rounded-full w-full" />
-            <div className="h-1.5 bg-gray-200 rounded-full w-11/12" />
-            <div className="h-1.5 bg-gray-200/80 rounded-full w-10/12" />
-            <div className="h-1.5 bg-gray-200/60 rounded-full w-9/12" />
-            <div className="h-1.5 bg-gray-100 rounded-full w-8/12" />
-          </div>
-          <div className="text-[8px] text-gray-500 mt-2 leading-relaxed line-clamp-2">
-            &ldquo;Il y a 2 ans, j&apos;ai failli tout abandonner. Mon business stagnait, mes posts LinkedIn...&rdquo;
-          </div>
-          <div className="mt-2 py-1.5 bg-[#F8935D]/10 border border-[#F8935D]/25 rounded-md text-center text-[9px] text-[#F8935D] font-semibold">
-            Utiliser cette version
+          {/* Actions like real app */}
+          <div className="px-2 py-1.5 border-t border-gray-100 flex gap-1">
+            <div className="flex-1 py-1 rounded text-center text-[7px] text-gray-500 bg-gray-50 font-medium">Copier</div>
+            <div className="flex-1 py-1 rounded text-center text-[7px] text-white bg-[#0A66C2] font-medium">Publier</div>
           </div>
         </motion.div>
 
-        {/* Version B - Business */}
+        {/* Business - primary/orange like real app */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.45, duration: 0.5 }}
-          className="flex-1 bg-emerald-50/50 rounded-lg border border-emerald-500/20 p-3 flex flex-col"
+          className="flex-1 bg-white rounded-xl border border-gray-200 flex flex-col overflow-hidden"
         >
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-6 h-6 rounded-md bg-emerald-500/15 flex items-center justify-center text-emerald-600 text-[10px] font-bold">B</div>
-            <div>
-              <div className="text-[10px] text-gray-900 font-semibold">Business</div>
-              <div className="text-[8px] text-emerald-600">Convertir</div>
+          {/* Gradient header bar like real app */}
+          <div className="px-2.5 py-2 bg-gradient-to-r from-[#F8935D]/10 to-[#F8935D]/5 border-b border-gray-100">
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[8px] font-medium rounded-full bg-[#F8935D]/15 text-[#F8935D] border border-[#F8935D]/20">
+              <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              Business
+            </span>
+          </div>
+          {/* Content preview */}
+          <div className="px-2.5 py-2 flex-1">
+            <div className="text-[8px] text-gray-600 leading-relaxed line-clamp-4">
+              3 stratégies qui ont généré +40% de leads qualifiés en B2B ce trimestre. La méthode complète...
             </div>
           </div>
-          <div className="flex-1 space-y-1.5">
-            <div className="h-1.5 bg-gray-200 rounded-full w-full" />
-            <div className="h-1.5 bg-gray-200 rounded-full w-10/12" />
-            <div className="h-1.5 bg-gray-200/80 rounded-full w-11/12" />
-            <div className="h-1.5 bg-gray-200/60 rounded-full w-9/12" />
-            <div className="h-1.5 bg-gray-100 rounded-full w-7/12" />
-          </div>
-          <div className="text-[8px] text-gray-500 mt-2 leading-relaxed line-clamp-2">
-            &ldquo;3 stratégies qui ont généré +40% de leads qualifiés en B2B ce trimestre...&rdquo;
-          </div>
-          <div className="mt-2 py-1.5 bg-emerald-500/10 border border-emerald-500/25 rounded-md text-center text-[9px] text-emerald-600 font-semibold">
-            Utiliser cette version
+          {/* Actions like real app */}
+          <div className="px-2 py-1.5 border-t border-gray-100 flex gap-1">
+            <div className="flex-1 py-1 rounded text-center text-[7px] text-gray-500 bg-gray-50 font-medium">Copier</div>
+            <div className="flex-1 py-1 rounded text-center text-[7px] text-white bg-[#0A66C2] font-medium">Publier</div>
           </div>
         </motion.div>
       </div>
@@ -3087,7 +3101,6 @@ const FEATURES: FeatureConfig[] = [
     title: "1 post, 4 plateformes",
     description: "Publiez simultanément sur LinkedIn, Reddit, Threads et Facebook. Un seul contenu, une audience 4x plus large — sans effort supplémentaire.",
     mockup: <MockupMultiPlatform />,
-    personImage: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&h=600&fit=crop&crop=face&facepad=3",
     badge: "Multi-plateforme",
     tierBadge: "Max",
     icon: (
@@ -3112,7 +3125,6 @@ const FEATURES: FeatureConfig[] = [
     title: "Planifiez, publiez, dormez tranquille",
     description: "Programmez vos posts aux créneaux où votre audience est la plus active. L'algorithme récompense le bon timing — Posty s'en charge pour vous.",
     mockup: <MockupScheduler />,
-    personImage: "https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?w=400&h=600&fit=crop&crop=face&facepad=3",
     badge: "Planification",
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -3136,7 +3148,6 @@ const FEATURES: FeatureConfig[] = [
     title: "De l'idée au post en 30 secondes",
     description: "Décrivez votre objectif. Posty génère deux versions — Storytelling pour engager, Business pour convertir — prêtes à publier.",
     mockup: <MockupDualGeneration />,
-    personImage: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=600&fit=crop&crop=face&facepad=3",
     badge: "Génération IA",
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -3160,7 +3171,6 @@ const FEATURES: FeatureConfig[] = [
     title: "Chaque post sonne comme vous",
     description: "Dès votre inscription, Posty apprend votre secteur, votre audience et votre ton. Résultat : du contenu authentique qui vous ressemble, pas du texte générique.",
     mockup: <MockupContextProfile />,
-    personImage: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=600&fit=crop&crop=face&facepad=3",
     badge: "IA Contextuelle",
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -3243,48 +3253,23 @@ function FeatureCard({ feature, index }: { feature: FeatureConfig; index: number
         />
 
         {/* Inner flex layout: image + content */}
-        <div className={`relative z-10 flex flex-col ${isEven ? "lg:flex-row" : "lg:flex-row-reverse"} gap-[clamp(1.5rem,3vw,2rem)] items-center`}>
+        <div className={`relative z-10 flex flex-col ${isEven ? "lg:flex-row" : "lg:flex-row-reverse"} gap-[clamp(1.5rem,3vw,2rem)] items-center lg:min-h-[22rem]`}>
 
-        {/* Visual — Person + Floating Mockup, breaking out of card */}
-        <div className="w-full lg:w-1/2 flex-shrink-0 relative" style={{ minHeight: "clamp(14rem, 22vw, 20rem)" }}>
+        {/* Visual — Centered Mockup */}
+        <div className="w-full lg:w-1/2 flex-shrink-0 flex items-center justify-center relative" style={{ minHeight: "clamp(14rem, 22vw, 20rem)" }}>
 
-          {/* Person photo — no background, floating cutout */}
-          {feature.personImage && (
-            <div
-              className={`absolute z-[5] ${isEven ? "-left-4 lg:-left-8" : "-right-4 lg:-right-8"} -bottom-6`}
-              style={{
-                width: "clamp(9rem, 15vw, 13rem)",
-                height: "clamp(11rem, 18vw, 16rem)",
-              }}
-            >
-              <Image
-                src={feature.personImage}
-                alt=""
-                width={400}
-                height={500}
-                className="w-full h-full object-cover object-top"
-                style={{
-                  mixBlendMode: "multiply",
-                  WebkitMaskImage: "radial-gradient(ellipse 85% 75% at 50% 35%, black 45%, transparent 72%)",
-                  maskImage: "radial-gradient(ellipse 85% 75% at 50% 35%, black 45%, transparent 72%)",
-                  filter: "contrast(1.05) saturate(1.1)",
-                }}
-              />
-            </div>
-          )}
-
-          {/* App mockup — floating panel, tilted, overflows card */}
+          {/* App mockup — centered, slight tilt */}
           {feature.mockup && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.2, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-              className={`absolute z-[4] ${isEven ? "right-0 lg:-right-4" : "left-0 lg:-left-4"} top-0 -bottom-2`}
-              style={{ width: "clamp(16rem, 28vw, 26rem)" }}
+              className="relative z-[4] w-full"
+              style={{ maxWidth: "clamp(16rem, 28vw, 26rem)" }}
             >
               <div
-                className="w-full h-full rounded-xl overflow-hidden shadow-2xl ring-1 ring-white/10"
+                className="w-full rounded-xl overflow-hidden shadow-2xl ring-1 ring-black/5"
                 style={{
                   transform: isEven ? "rotate(1.5deg)" : "rotate(-1.5deg)",
                 }}
@@ -3387,8 +3372,8 @@ function FeaturesSection() {
           transition={{ duration: 0.7, ease: premiumEase }}
           className="text-center mb-[clamp(2rem,3.5vw,3rem)]"
         >
-          <h2 className="text-[clamp(1.75rem,4vw,3.25rem)] font-bold text-gray-600">
-            Tout ce qu&apos;il vous faut pour{" "}
+          <h2 className="text-[clamp(1.75rem,4vw,3.25rem)] font-bold">
+            <span className="text-transparent bg-clip-text bg-gradient-to-b from-gray-900 to-gray-400">Tout ce qu&apos;il vous faut pour</span>{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
               dominer les réseaux
             </span>
@@ -3396,7 +3381,7 @@ function FeaturesSection() {
         </motion.div>
 
         {/* Features Grid with Connectors */}
-        <div className="relative space-y-[clamp(2.5rem,4vw,4rem)]">
+        <div className="relative space-y-[clamp(2rem,3vw,3rem)]">
           {/* Vertical connector line — desktop only */}
           <div className="hidden lg:block absolute left-1/2 top-0 bottom-0 -translate-x-1/2 pointer-events-none">
             <motion.div
@@ -3410,26 +3395,6 @@ function FeaturesSection() {
 
           {FEATURES.map((feature, index) => (
             <div key={feature.title} className="relative">
-              {/* Connector dot on the timeline — desktop only */}
-              {index < FEATURES.length && (
-                <div className="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: 0.3, type: "spring", stiffness: 300 }}
-                    className={`w-5 h-5 rounded-full ${feature.color.iconBg} ring-[5px] ring-white shadow-lg`}
-                  />
-                </div>
-              )}
-
-              {/* Mobile step connector — vertical line + dot */}
-              {index > 0 && (
-                <div className="lg:hidden flex flex-col items-center -mt-2 mb-5">
-                  <div className="w-0.5 h-8 bg-gradient-to-b from-gray-200 to-gray-300 rounded-full" />
-                  <div className={`w-3 h-3 rounded-full ${feature.color.iconBg} ring-3 ring-white shadow-md mt-0.5`} />
-                </div>
-              )}
 
               <FeatureCard feature={feature} index={index} />
             </div>
@@ -3506,7 +3471,7 @@ function TestimonialsSection() {
           </motion.div>
 
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
-            <span className="text-silver-premium">Ils publient. Ils</span>{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-b from-gray-900 to-gray-400">Ils publient. Ils</span>{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
               convertissent.
             </span>
@@ -4322,7 +4287,7 @@ function PricingSection() {
           className="text-center mb-12 2xl:mb-16"
         >
           <h2 className="text-3xl md:text-4xl lg:text-5xl 2xl:text-[3.25rem] font-bold mb-4">
-            <span className="text-silver-premium">Investissez dans votre</span>{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-b from-gray-900 to-gray-400">Investissez dans votre</span>{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
               croissance LinkedIn
             </span>
@@ -4425,167 +4390,55 @@ function CtaBanner({
   ctaLabel: string;
   id?: string;
 }) {
-  const prefersReducedMotion = useReducedMotion();
-  const isMobile = useIsMobile();
-  const skipInfinite = prefersReducedMotion || isMobile;
-
   return (
-    <section id={id} className="relative py-12 md:py-18 px-4 sm:px-6 lg:px-8 overflow-hidden">
-      {/* Light premium background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#FEF3EE] via-white to-[#FFF8F5]">
-        {/* Animated gradient mesh — static on mobile to save GPU */}
-        <motion.div
-          initial={{ opacity: 0.3 }}
-          animate={skipInfinite ? {} : {
-            opacity: [0.3, 0.5, 0.3],
-            scale: [1, 1.1, 1],
-          }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-gradient-to-br from-[#F8935D]/15 to-[#F76B54]/10 rounded-full blur-[120px]"
-        />
-        <motion.div
-          initial={{ opacity: 0.2 }}
-          animate={skipInfinite ? {} : {
-            opacity: [0.2, 0.35, 0.2],
-            scale: [1, 1.15, 1],
-          }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-          className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-gradient-to-br from-[#a855f7]/10 to-[#6366f1]/5 rounded-full blur-[100px]"
-        />
-        <motion.div
-          initial={{ opacity: 0.15 }}
-          animate={skipInfinite ? {} : {
-            opacity: [0.15, 0.25, 0.15],
-            scale: [1, 1.08, 1],
-          }}
-          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 4 }}
-          className="absolute top-1/2 right-0 w-[350px] h-[350px] bg-gradient-to-br from-[#ec4899]/8 to-[#f43f5e]/5 rounded-full blur-[100px]"
-        />
-
-        {/* Grid overlay — subtle on light */}
-        <div
-          className="absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage: `linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px)`,
-            backgroundSize: '50px 50px',
-          }}
-        />
-      </div>
-
-      <div className="relative z-10 max-w-5xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 30, ...(isMobile ? {} : { filter: "blur(10px)" }) }}
-          whileInView={{ opacity: 1, y: 0, ...(isMobile ? {} : { filter: "blur(0px)" }) }}
+    <section id={id} className="relative py-16 md:py-24 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-2xl mx-auto text-center">
+        <motion.h2
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.7, ease: premiumEase }}
-          className="text-center"
+          transition={{ duration: 0.5 }}
+          className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4 leading-tight"
         >
-          {/* Headline with gradient text */}
-          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-            <span className="text-gray-800">Chaque jour sans </span>
-            <span className="relative inline-block">
-              <span className="bg-gradient-to-r from-[#F8935D] via-[#f97316] to-[#F76B54] bg-clip-text text-transparent">
-                Posty
-              </span>
-              {/* Shimmer effect on Posty */}
-              <motion.span
-                initial={{ x: "-100%" }}
-                animate={prefersReducedMotion ? {} : { x: "200%" }}
-                transition={{ duration: 2, repeat: Infinity, repeatDelay: 3, ease: "easeInOut" }}
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent skew-x-12"
-                style={{ clipPath: "inset(0)" }}
-              />
-            </span>
-            <br className="hidden sm:block" />
-            <span className="text-gray-800"> est un </span>
-            <span className="relative inline-block">
-              <span className="bg-gradient-to-r from-[#ec4899] to-[#a855f7] bg-clip-text text-transparent">
-                client perdu
-              </span>
-            </span>
-          </h2>
+          {headline}
+        </motion.h2>
 
-          {/* Subtext */}
-          <motion.p
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="text-gray-500 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed"
+        <motion.p
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.15 }}
+          className="text-gray-500 text-base md:text-lg mb-8"
+        >
+          {subtext}
+        </motion.p>
+
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.25 }}
+        >
+          <Link
+            href="/signup"
+            className="inline-flex items-center gap-2.5 h-12 md:h-14 px-7 md:px-9 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white text-sm md:text-base font-semibold rounded-xl shadow-lg shadow-[#F8935D]/15 hover:shadow-xl hover:shadow-[#F8935D]/25 transition-all duration-300"
           >
-            {subtext}
-          </motion.p>
-
-          {/* CTA Button with glow effect */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-            className="relative inline-block"
-          >
-            {/* Glow behind button */}
-            <div className="absolute -inset-1 bg-gradient-to-r from-[#F8935D] to-[#F76B54] rounded-xl blur-lg opacity-25" />
-
-            <motion.div
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              className="relative"
-            >
-              <Link
-                href="/signup"
-                className="group relative inline-flex items-center justify-center gap-3 h-14 md:h-16 px-8 md:px-10 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white text-base md:text-lg font-semibold rounded-xl shadow-xl shadow-[#F8935D]/20 hover:shadow-2xl hover:shadow-[#F8935D]/30 transition-all duration-300 overflow-hidden"
-              >
-                {/* Button shimmer effect */}
-                <motion.span
-                  initial={{ x: "-100%" }}
-                  animate={prefersReducedMotion ? {} : { x: "200%" }}
-                  transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 2, ease: "easeInOut" }}
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"
-                />
-                <span className="relative">{ctaLabel}</span>
-                <motion.svg
-                  className="relative w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  animate={prefersReducedMotion ? {} : { x: [0, 4, 0] }}
-                  transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </motion.svg>
-              </Link>
-            </motion.div>
-          </motion.div>
-
-          {/* Trust signals */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.5 }}
-            className="mt-8 flex flex-wrap items-center justify-center gap-6 text-gray-600 text-sm"
-          >
-            <div className="flex items-center gap-2">
-              <svg className="w-5 h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <span>Essai gratuit 7 jours</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <svg className="w-5 h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <span>Configuration en 2 min</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <svg className="w-5 h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <span>Annulation libre</span>
-            </div>
-          </motion.div>
+            {ctaLabel}
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+            </svg>
+          </Link>
         </motion.div>
+
+        <motion.p
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          className="mt-5 text-xs text-gray-400"
+        >
+          Essai gratuit 7 jours &middot; Sans engagement
+        </motion.p>
       </div>
     </section>
   );

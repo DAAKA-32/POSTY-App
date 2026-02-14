@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { useReducedMotion } from "framer-motion";
 import Image from "next/image";
 
 // Screenshots displayed in the browser screen carousel
@@ -32,11 +32,9 @@ interface AnimatedMacBookProps {
 export default function AnimatedMacBook({
   isVisible,
   onAnimationComplete,
-  hasAlreadyAnimated = false,
 }: AnimatedMacBookProps) {
   const prefersReducedMotion = useReducedMotion();
   const [isMobile, setIsMobile] = useState(false);
-  const hasAnimatedOnce = useRef(false);
 
   // Carousel state
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -95,39 +93,17 @@ export default function AnimatedMacBook({
   }, [currentSlide, goToSlide]);
 
   const handleAnimationComplete = useCallback(() => {
-    hasAnimatedOnce.current = true;
     onAnimationComplete?.();
   }, [onAnimationComplete]);
 
-  const shouldSkipAnimation = hasAlreadyAnimated || hasAnimatedOnce.current;
   const shouldSimplify = prefersReducedMotion || isMobile;
 
-  // Trigger callback immediately when skipping animation
+  // Trigger callback immediately — no reveal animation
   useEffect(() => {
-    if (shouldSkipAnimation && isVisible) {
+    if (isVisible) {
       handleAnimationComplete();
     }
-  }, [shouldSkipAnimation, isVisible, handleAnimationComplete]);
-
-  // 3D tilt animation variants (prosp.ai style)
-  const tiltVariants = {
-    hidden: {
-      rotateX: shouldSimplify ? 10 : 20,
-      y: shouldSimplify ? 30 : 60,
-      opacity: 0,
-      scale: shouldSimplify ? 0.98 : 0.95,
-    },
-    visible: {
-      rotateX: 0,
-      y: 0,
-      opacity: 1,
-      scale: 1,
-      transition: {
-        duration: shouldSimplify ? 0.5 : 0.8,
-        ease: [0.22, 1, 0.36, 1] as const,
-      },
-    },
-  };
+  }, [isVisible, handleAnimationComplete]);
 
   return (
     <div className="relative w-full">
@@ -136,19 +112,9 @@ export default function AnimatedMacBook({
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] h-[90%] bg-gradient-to-br from-[#F8935D]/15 via-[#F76B54]/10 to-[#F8935D]/15 rounded-full blur-[80px]" />
       </div>
 
-      {/* Perspective container */}
-      <div style={{ perspective: "1200px" }} className="relative w-full max-w-[900px] mx-auto">
-        <motion.div
-          initial={shouldSkipAnimation ? "visible" : "hidden"}
-          animate={isVisible ? "visible" : "hidden"}
-          variants={tiltVariants}
-          onAnimationComplete={(definition) => {
-            if (definition === "visible" && !shouldSkipAnimation) {
-              handleAnimationComplete();
-            }
-          }}
-          style={{ transformStyle: "preserve-3d" }}
-        >
+      {/* Container */}
+      <div className="relative w-full max-w-[1084px] mx-auto">
+        <div>
           {/* Browser window frame */}
           <div className="relative bg-white rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl shadow-gray-400/20 border border-gray-200/60">
 
@@ -254,7 +220,7 @@ export default function AnimatedMacBook({
               <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] via-transparent to-black/[0.02] pointer-events-none" />
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
 
       {/* Drop shadow under the frame */}
