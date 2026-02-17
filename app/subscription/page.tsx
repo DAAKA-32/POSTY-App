@@ -5,15 +5,15 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { getAllPlans, PlanConfig, PlanType, getSavingsText, PLAN_TAGLINES, getPlanCoreFeatures, getPlanSecondaryFeatures, getCTALabel, FeatureItem, isTestModeAllowed, PRODUCTION_MODE, TRIAL_PERIOD_DAYS, GUARANTEE_PERIOD_DAYS } from "@/lib/plans";
+import { getPaidPlans, PlanConfig, PlanType, getSavingsText, PLAN_TAGLINES, getPlanCoreFeatures, getPlanSecondaryFeatures, getCTALabel, FeatureItem, isTestModeAllowed, PRODUCTION_MODE, TRIAL_PERIOD_DAYS, GUARANTEE_PERIOD_DAYS } from "@/lib/plans";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import Button from "@/components/ui/Button";
 import BillingToggle from "@/components/ui/BillingToggle";
 import TestModePanel from "@/components/subscription/TestModePanel";
 import toast from "@/components/ui/Toast";
 
-// Get plans from lib/plans.ts (single source of truth)
-const PLANS = getAllPlans();
+// Get paid plans only (Pro + Max) from lib/plans.ts (single source of truth)
+const PLANS = getPaidPlans();
 
 function SubscriptionContent() {
   const router = useRouter();
@@ -116,7 +116,7 @@ function SubscriptionContent() {
           userEmail: user.email,
           plan: plan.id,
           interval: billingPeriod,
-          withTrial: canStartTrial,
+          withTrial: canStartTrial && plan.trialDays > 0,
           redirectAfterSuccess: redirectAfterSuccess || undefined,
         }),
       });
@@ -205,12 +205,12 @@ function SubscriptionContent() {
               animate={{ opacity: 1, y: 0 }}
               className="max-w-2xl mx-auto mb-8"
             >
-              <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800/40 rounded-xl p-4 flex items-start gap-3">
-                <svg className="w-5 h-5 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-[#F8935D]/5 dark:bg-primary/10 border border-[#F8935D]/20 dark:border-primary/20 rounded-xl p-4 flex items-start gap-3">
+                <svg className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
                 <div className="flex-1">
-                  <p className="text-sm font-semibold text-orange-900 dark:text-orange-200 mb-1">
+                  <p className="text-sm font-semibold text-primary-dark dark:text-primary-light mb-1">
                     {searchParams.get("reason") === "subscription_required"
                       ? "Abonnement requis"
                       : searchParams.get("reason") === "trial_expired"
@@ -218,7 +218,7 @@ function SubscriptionContent() {
                       : "Mise à niveau nécessaire"
                     }
                   </p>
-                  <p className="text-xs text-orange-700 dark:text-orange-300">
+                  <p className="text-xs text-primary-dark dark:text-secondary">
                     {searchParams.get("reason") === "subscription_required"
                       ? "Un abonnement actif est nécessaire pour accéder à cette fonctionnalité. Commencez votre essai gratuit dès maintenant !"
                       : searchParams.get("reason") === "trial_expired"
@@ -244,46 +244,11 @@ function SubscriptionContent() {
           />
         </motion.div>
 
-        {/* Pricing Cards - Grid: 2 cols mobile (Pro+Max), 3 cols desktop */}
-        <div className="max-w-5xl mx-auto px-2 sm:px-4 md:px-0">
-          {/* Mobile: Free plan compact banner */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-            className="sm:hidden mb-4 p-3 bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5 border border-primary/20 rounded-xl"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-0.5">Plan Gratuit</h4>
-                <p className="text-[10px] text-gray-600 dark:text-text-muted">3 posts/jour • Idéal pour découvrir</p>
-              </div>
-              {currentPlan === "free" ? (
-                <span className="px-3 py-1.5 bg-green-500/20 text-green-400 text-[10px] font-semibold rounded-lg flex items-center gap-1">
-                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                  Actuel
-                </span>
-              ) : (
-                <button
-                  onClick={() => handleSelectPlan(PLANS[0])}
-                  disabled={isLoading === "free"}
-                  className="px-3 py-1.5 bg-gradient-to-r from-primary to-accent text-white text-[10px] font-semibold rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center disabled:opacity-50"
-                >
-                  {isLoading === "free" ? "..." : "Choisir"}
-                </button>
-              )}
-            </div>
-          </motion.div>
-
-          {/* Grid: 2 cols on mobile (Pro + Max side by side), 3 cols on desktop */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4 md:gap-6 lg:gap-8 items-start">
+        {/* Pricing Cards - Grid: 2 cols (Pro + Max) */}
+        <div className="max-w-4xl mx-auto px-2 sm:px-4 md:px-0">
+          <div className="grid grid-cols-2 gap-2 sm:gap-4 md:gap-6 lg:gap-8 items-start">
             {PLANS.map((plan, index) => (
-              <div
-                key={plan.id}
-                className={plan.price.monthly === 0 ? "hidden sm:block" : ""}
-              >
+              <div key={plan.id}>
                 <PricingCard
                   plan={plan}
                   billingPeriod={billingPeriod}
@@ -530,8 +495,8 @@ function PricingCard({
       {/* Premium glow effect */}
       {isPremium && (
         <>
-          <div className="absolute -inset-0.5 rounded-lg sm:rounded-xl md:rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 opacity-20 sm:opacity-30 blur-md sm:blur-lg" />
-          <div className="absolute inset-0 rounded-lg sm:rounded-xl md:rounded-2xl bg-gradient-to-br from-amber-500/20 via-transparent to-orange-500/20 opacity-60" />
+          <div className="absolute -inset-0.5 rounded-lg sm:rounded-xl md:rounded-2xl bg-gradient-to-r from-primary to-primary-hover opacity-20 sm:opacity-30 blur-md sm:blur-lg" />
+          <div className="absolute inset-0 rounded-lg sm:rounded-xl md:rounded-2xl bg-gradient-to-br from-primary/20 via-transparent to-primary-hover/20 opacity-60" />
         </>
       )}
 
@@ -552,7 +517,7 @@ function PricingCard({
         ${isPopular
           ? "bg-gradient-to-b from-primary/10 via-white dark:via-dark-card to-white dark:to-dark-card"
           : isPremium
-            ? "bg-gradient-to-b from-amber-500/5 via-white dark:via-dark-card to-white dark:to-dark-card border sm:border-2 border-amber-500/30"
+            ? "bg-gradient-to-b from-primary/5 via-white dark:via-dark-card to-white dark:to-dark-card border sm:border-2 border-primary/30"
             : isFree
               ? "bg-white dark:bg-dark-card border border-primary/25 dark:border-primary/20"
               : "bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border"
@@ -587,7 +552,7 @@ function PricingCard({
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
             >
-              <div className="px-1.5 sm:px-3 md:px-4 py-0.5 sm:py-1 md:py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] sm:text-xs md:text-sm font-semibold rounded-full shadow-lg shadow-amber-500/30 flex items-center gap-0.5 sm:gap-1 md:gap-1.5">
+              <div className="px-1.5 sm:px-3 md:px-4 py-0.5 sm:py-1 md:py-1.5 bg-gradient-to-r from-primary to-primary-hover text-white text-[10px] sm:text-xs md:text-sm font-semibold rounded-full shadow-lg shadow-primary/30 flex items-center gap-0.5 sm:gap-1 md:gap-1.5">
                 <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M5 2a2 2 0 00-2 2v14l3.5-2 3.5 2 3.5-2 3.5 2V4a2 2 0 00-2-2H5zm2.5 3a1.5 1.5 0 100 3 1.5 1.5 0 000-3zm6.207.293a1 1 0 00-1.414 0l-6 6a1 1 0 101.414 1.414l6-6a1 1 0 000-1.414zM12.5 10a1.5 1.5 0 100 3 1.5 1.5 0 000-3z" clipRule="evenodd" />
                 </svg>
@@ -610,12 +575,12 @@ function PricingCard({
         {/* ZONE 1: Plan header (responsive height for alignment) */}
         <div className="h-[50px] sm:h-[60px] md:h-[80px] text-center flex flex-col justify-center">
           <h3 className={`text-sm sm:text-lg md:text-2xl font-bold mb-0.5 sm:mb-1 ${
-            isPremium ? "text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400" : "text-gray-900 dark:text-white"
+            isPremium ? "text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-hover" : "text-gray-900 dark:text-white"
           }`}>
             {plan.name}
           </h3>
           <p className="text-[10px] sm:text-xs md:text-sm text-text-secondary line-clamp-1 sm:line-clamp-2">{planInfo.tagline}</p>
-          <p className={`text-[9px] sm:text-[10px] md:text-xs mt-0.5 sm:mt-1 hidden sm:block ${isPopular ? "text-primary" : isPremium ? "text-amber-400" : "text-text-muted"}`}>
+          <p className={`text-[9px] sm:text-[10px] md:text-xs mt-0.5 sm:mt-1 hidden sm:block ${isPopular ? "text-primary" : isPremium ? "text-primary" : "text-text-muted"}`}>
             {planInfo.idealFor}
           </p>
         </div>
@@ -636,7 +601,7 @@ function PricingCard({
               ) : (
                 <>
                   <span className={`text-lg sm:text-2xl md:text-4xl lg:text-5xl font-bold tabular-nums ${
-                    isPremium ? "text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400" : "text-gray-900 dark:text-white"
+                    isPremium ? "text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-hover" : "text-gray-900 dark:text-white"
                   }`}>
                     {displayPrice.toFixed(2).replace(".", ",")}
                   </span>
@@ -672,7 +637,7 @@ function PricingCard({
             <div className="absolute inset-0 bg-primary/30 rounded-lg sm:rounded-xl blur-md sm:blur-xl" />
           )}
           {isPremium && !isCurrentPlan && (
-            <div className="absolute inset-0 bg-amber-500/20 rounded-lg sm:rounded-xl blur-md sm:blur-xl" />
+            <div className="absolute inset-0 bg-primary/20 rounded-lg sm:rounded-xl blur-md sm:blur-xl" />
           )}
 
           <motion.button
@@ -689,7 +654,7 @@ function PricingCard({
                 : isPopular
                   ? "bg-gradient-to-r from-primary to-accent text-white shadow-md sm:shadow-lg shadow-primary/30 hover:shadow-lg sm:hover:shadow-xl hover:shadow-primary/40"
                   : isPremium
-                    ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md sm:shadow-lg shadow-amber-500/30 hover:shadow-lg sm:hover:shadow-xl hover:shadow-amber-500/40"
+                    ? "bg-gradient-to-r from-primary to-primary-hover text-white shadow-md sm:shadow-lg shadow-primary/30 hover:shadow-lg sm:hover:shadow-xl hover:shadow-primary/40"
                     : "bg-gray-100 dark:bg-dark-elevated hover:bg-gray-200 dark:hover:bg-dark-hover text-gray-900 dark:text-white border border-gray-200 dark:border-dark-border hover:border-primary/50"
               }
             `}
@@ -736,9 +701,9 @@ function PricingCard({
           {trialEligible && !isCurrentPlan && !isFree && (
             <div className="mt-1.5 sm:mt-2 flex items-center justify-center gap-1 text-[9px] sm:text-[10px] md:text-xs text-primary dark:text-primary-light">
               <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
-              <span className="font-medium">Sans CB pendant l'essai</span>
+              <span className="font-medium">Satisfait ou remboursé {GUARANTEE_PERIOD_DAYS}j</span>
             </div>
           )}
         </div>
@@ -820,8 +785,8 @@ function PricingCard({
               </svg>
               {trialEligible ? (
                 <>
-                  <span className="hidden md:inline">{TRIAL_PERIOD_DAYS}j gratuits • Garantie {GUARANTEE_PERIOD_DAYS}j rembourse</span>
-                  <span className="inline md:hidden">{TRIAL_PERIOD_DAYS}j gratuits + garantie</span>
+                  <span className="hidden md:inline">{plan.trialDays}j gratuits • Garantie {GUARANTEE_PERIOD_DAYS}j remboursé</span>
+                  <span className="inline md:hidden">{plan.trialDays}j gratuits + garantie</span>
                 </>
               ) : (
                 <>

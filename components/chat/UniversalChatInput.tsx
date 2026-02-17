@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PlanType } from "@/lib/plans";
+import { FileAttachment, FILE_ATTACHMENT_LIMITS, AttachmentMimeType } from "@/types";
 import PromptLimitModal from "./PromptLimitModal";
 
 /**
@@ -30,7 +31,7 @@ import PromptLimitModal from "./PromptLimitModal";
 
 interface UniversalChatInputProps {
   // Core functionality
-  onSubmit: (message: string) => void;
+  onSubmit: (message: string, file?: FileAttachment | null) => void;
   placeholder?: string | string[]; // Single string or rotating array
   disabled?: boolean;
   isLoading?: boolean;
@@ -40,6 +41,10 @@ interface UniversalChatInputProps {
   onVoiceRecordingStart?: () => void;
   onVoiceRecordingStop?: () => void;
   isRecording?: boolean;
+
+  // File attachment (Max plan only)
+  enableFileAttachment?: boolean;
+  fileAttachmentAllowed?: boolean; // true = plan Max, false = disabled with tooltip
 
   // Customization
   showHelperText?: boolean;
@@ -94,6 +99,8 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
   onVoiceRecordingStart,
   onVoiceRecordingStop,
   isRecording = false,
+  enableFileAttachment = false,
+  fileAttachmentAllowed = false,
   showHelperText = true,
   maxHeight = 128, // 4 lines max (16px * 1.5 lineHeight * 4 + 32px padding)
   minHeight = 56,
@@ -114,7 +121,10 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [hasAnimated, setHasAnimated] = useState(false);
   const [showLimitModal, setShowLimitModal] = useState(false);
+  const [attachedFile, setAttachedFile] = useState<FileAttachment | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const rotationTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Character limit calculations
@@ -238,6 +248,54 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
     }
   }, [message, effectiveMinHeight, maxHeight]);
 
+  // === File attachment handlers ===
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setFileError(null);
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate type
+    if (!(FILE_ATTACHMENT_LIMITS.ALLOWED_TYPES as readonly string[]).includes(file.type)) {
+      setFileError("Format non supporté. Acceptés : JPEG, PNG, GIF, WebP, PDF");
+      return;
+    }
+
+    // Validate size
+    if (file.size > FILE_ATTACHMENT_LIMITS.MAX_FILE_SIZE) {
+      setFileError("Fichier trop volumineux (max 5 Mo)");
+      return;
+    }
+
+    // Convert to base64
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      const base64 = result.split(",")[1];
+      setAttachedFile({
+        name: file.name,
+        type: file.type as AttachmentMimeType,
+        size: file.size,
+        base64,
+      });
+    };
+    reader.onerror = () => setFileError("Erreur lors de la lecture du fichier");
+    reader.readAsDataURL(file);
+
+    // Reset input for re-selecting same file
+    e.target.value = "";
+  }, []);
+
+  const handleRemoveFile = useCallback(() => {
+    setAttachedFile(null);
+    setFileError(null);
+  }, []);
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} o`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} Ko`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
+  };
+
   // Handle submission with character limit validation
   const handleSubmit = useCallback(
     (e?: React.FormEvent) => {
@@ -249,15 +307,17 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
           return; // Block submission - show modal instead
         }
 
-        onSubmit(message.trim());
+        onSubmit(message.trim(), attachedFile);
         setMessage("");
+        setAttachedFile(null);
+        setFileError(null);
         // Reset textarea height to minimum immediately
         if (textareaRef.current) {
           textareaRef.current.style.height = `${effectiveMinHeight}px`;
         }
       }
     },
-    [message, isLoading, disabled, trialLimitReached, quotaLimitReached, onSubmit, effectiveMinHeight, maxCharacters]
+    [message, isLoading, disabled, trialLimitReached, quotaLimitReached, onSubmit, effectiveMinHeight, maxCharacters, attachedFile]
   );
 
   // Handle keyboard shortcuts
@@ -385,7 +445,8 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
               focus:outline-none
               scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent
               hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-500
-              ${enableVoiceRecording ? "text-base py-4 pl-5 pr-28" : "text-base py-4 pl-5 pr-16"}
+              ${enableFileAttachment ? "pl-14" : "pl-5"}
+              ${enableVoiceRecording ? "text-base py-4 pr-28" : "text-base py-4 pr-16"}
               ${isMobile ? "[&::placeholder]:whitespace-nowrap [&::placeholder]:overflow-hidden [&::placeholder]:text-ellipsis [&::placeholder]:block" : ""}
             `}
             style={{
@@ -406,6 +467,59 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
               WebkitTapHighlightColor: "transparent",
             }}
           />
+
+          {/* File attachment button — absolute positioned on left */}
+          {enableFileAttachment && (
+            <div className="absolute left-3 bottom-3 z-10 group/attach">
+              <motion.button
+                type="button"
+                onClick={() => {
+                  if (fileAttachmentAllowed && !attachedFile) {
+                    fileInputRef.current?.click();
+                  }
+                }}
+                disabled={disabled || isLoading || !fileAttachmentAllowed || !!attachedFile}
+                whileTap={fileAttachmentAllowed && !attachedFile ? { scale: 0.92 } : undefined}
+                className={`
+                  w-11 h-11 rounded-full flex items-center justify-center
+                  transition-all duration-300
+                  ${!fileAttachmentAllowed
+                    ? "bg-gray-100 dark:bg-dark-elevated text-gray-300 dark:text-gray-600 cursor-not-allowed"
+                    : attachedFile
+                      ? "bg-primary/10 text-primary cursor-default"
+                      : "bg-gray-100 dark:bg-dark-elevated text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 hover:text-gray-700 dark:hover:text-gray-300"
+                  }
+                `}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                </svg>
+              </motion.button>
+
+              {/* Tooltip for non-Max users */}
+              {!fileAttachmentAllowed && (
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5
+                  bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs rounded-lg
+                  whitespace-nowrap opacity-0 group-hover/attach:opacity-100 pointer-events-none
+                  transition-opacity duration-200 shadow-lg z-50">
+                  Disponible avec le plan Max
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1
+                    border-4 border-transparent border-t-gray-900 dark:border-t-gray-100" />
+                </div>
+              )}
+
+              {/* Hidden file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/gif,image/webp,application/pdf"
+                onChange={handleFileSelect}
+                className="hidden"
+                aria-hidden="true"
+              />
+            </div>
+          )}
 
           {/* Action buttons - absolute positioned on right */}
           <div className="absolute flex items-center right-3 bottom-3 gap-2">
@@ -474,6 +588,72 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
           </div>
         </div>
       </div>
+
+      {/* File preview bar */}
+      <AnimatePresence>
+        {attachedFile && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="mt-2 px-1"
+          >
+            <div className="flex items-center gap-2 px-3 py-2 bg-primary/5 dark:bg-primary/10
+              border border-primary/20 rounded-xl">
+              {/* File type icon */}
+              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                {attachedFile.type === "application/pdf" ? (
+                  <svg className="w-4 h-4 text-primary" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+                  </svg>
+                ) : (
+                  <svg className="w-4 h-4 text-primary" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                  </svg>
+                )}
+              </div>
+              {/* File info */}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
+                  {attachedFile.name}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {formatFileSize(attachedFile.size)}
+                </p>
+              </div>
+              {/* Remove button */}
+              <motion.button
+                type="button"
+                onClick={handleRemoveFile}
+                whileTap={{ scale: 0.9 }}
+                className="flex-shrink-0 w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-700
+                  flex items-center justify-center text-gray-500 dark:text-gray-400
+                  hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-500
+                  transition-colors duration-200"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* File error message */}
+      <AnimatePresence>
+        {fileError && (
+          <motion.p
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            className="mt-1 px-3 text-xs text-red-500"
+          >
+            {fileError}
+          </motion.p>
+        )}
+      </AnimatePresence>
 
       {/* Helper text + character counter below input */}
       <div className="relative flex items-center justify-center mt-2 px-1">

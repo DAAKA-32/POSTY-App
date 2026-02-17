@@ -16,7 +16,7 @@ export default function NotFound() {
       <div className="mb-8">
         <div className="w-16 h-16 rounded-2xl overflow-hidden flex items-center justify-center mx-auto">
           <img
-            src="/logo.jpg"
+            src="/logo.png"
             alt="Posty Logo"
             className="w-full h-full object-contain"
           />

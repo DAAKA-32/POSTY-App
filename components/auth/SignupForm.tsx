@@ -231,7 +231,7 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
           `}
         >
           <img
-            src="/logo.jpg"
+            src="/logo.png"
             alt="Posty Logo"
             className="w-full h-full object-contain"
           />

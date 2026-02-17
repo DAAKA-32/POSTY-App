@@ -319,7 +319,7 @@ export default function PublishToLinkedInModal({
                 <div className="w-20 h-20 mb-4 rounded-2xl bg-gradient-to-br from-[#0A66C2] to-[#004182] flex items-center justify-center shadow-lg shadow-[#0A66C2]/30">
                   <LinkedInIcon className="w-10 h-10 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-white mb-2">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
                   Connectez LinkedIn
                 </h3>
                 <p className="text-text-secondary text-sm max-w-xs">
@@ -336,7 +336,7 @@ export default function PublishToLinkedInModal({
               { icon: "🔒", text: "Connexion sécurisée OAuth 2.0" },
               { icon: "📊", text: "Suivi de vos publications" },
             ].map((benefit, i) => (
-              <div key={i} className="flex items-center gap-3 p-3 bg-dark-elevated/50 rounded-xl border border-dark-border/50">
+              <div key={i} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-dark-elevated/50 rounded-xl border border-gray-200 dark:border-dark-border/50">
                 <span className="text-lg">{benefit.icon}</span>
                 <span className="text-sm text-text-secondary">{benefit.text}</span>
               </div>
@@ -350,7 +350,7 @@ export default function PublishToLinkedInModal({
               variant="ghost"
               fullWidth
               onClick={handleClose}
-              className="min-h-[48px] text-text-muted hover:text-white"
+              className="min-h-[48px] text-text-muted hover:text-gray-900 dark:hover:text-white"
             >
               Annuler
             </Button>
@@ -365,7 +365,7 @@ export default function PublishToLinkedInModal({
         {step === "preview" && (
           <div className="space-y-5">
             {/* LinkedIn Profile */}
-            <div className="flex items-center gap-3 p-3 bg-dark-bg rounded-lg">
+            <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-dark-bg rounded-lg">
               {linkedInConnection?.profilePicture ? (
                 <img
                   src={linkedInConnection.profilePicture}
@@ -379,7 +379,7 @@ export default function PublishToLinkedInModal({
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className="text-white font-medium truncate">{linkedInConnection?.profileName}</p>
+                <p className="text-gray-900 dark:text-white font-medium truncate">{linkedInConnection?.profileName}</p>
                 <p className="text-xs text-text-muted">Sera publié sur votre profil</p>
               </div>
             </div>
@@ -397,7 +397,7 @@ export default function PublishToLinkedInModal({
               <div
                 className={`flex items-center justify-between p-3 rounded-lg border ${
                   canPublish
-                    ? "bg-dark-bg border-dark-border"
+                    ? "bg-gray-50 dark:bg-dark-bg border-gray-200 dark:border-dark-border"
                     : "bg-error/10 border-error/30"
                 }`}
               >
@@ -406,7 +406,7 @@ export default function PublishToLinkedInModal({
                   <span className="text-sm text-text-secondary">
                     {canPublish ? (
                       <>
-                        <span className="text-white font-medium">{quota.remaining}</span> publication
+                        <span className="text-gray-900 dark:text-white font-medium">{quota.remaining}</span> publication
                         {quota.remaining > 1 ? "s" : ""} restante{quota.remaining > 1 ? "s" : ""} cette semaine
                       </>
                     ) : (
@@ -444,7 +444,7 @@ export default function PublishToLinkedInModal({
                       ${
                         visibility === option.id
                           ? "bg-[#0A66C2]/20 border-[#0A66C2] text-[#0A66C2]"
-                          : "bg-dark-bg border-dark-border text-text-secondary hover:border-dark-hover hover:text-white"
+                          : "bg-gray-50 dark:bg-dark-bg border-gray-200 dark:border-dark-border text-text-secondary hover:border-gray-300 dark:hover:border-dark-hover hover:text-gray-900 dark:hover:text-white"
                       }
                     `}
                   >
@@ -475,10 +475,10 @@ export default function PublishToLinkedInModal({
                 value={editedContent}
                 onChange={(e) => setEditedContent(e.target.value)}
                 className={`
-                  w-full p-4 bg-dark-bg border rounded-lg text-white text-sm
+                  w-full p-4 bg-gray-50 dark:bg-dark-bg border rounded-lg text-gray-900 dark:text-white text-sm
                   resize-none focus:outline-none focus:ring-2 focus:ring-[#0A66C2]/50
                   transition-all duration-200 min-h-[160px] max-h-[300px]
-                  ${isOverLimit ? "border-error" : "border-dark-border"}
+                  ${isOverLimit ? "border-error" : "border-gray-200 dark:border-dark-border"}
                 `}
                 placeholder="Rédigez votre post LinkedIn..."
               />
@@ -522,7 +522,7 @@ export default function PublishToLinkedInModal({
                 disabled={cannotPublish}
                 className={`min-h-[48px] ${
                   cannotPublish
-                    ? "bg-dark-hover border-dark-border cursor-not-allowed opacity-50"
+                    ? "bg-gray-100 dark:bg-dark-hover border-gray-200 dark:border-dark-border cursor-not-allowed opacity-50"
                     : "bg-[#0A66C2] hover:bg-[#004182] border-none"
                 }`}
               >
@@ -542,7 +542,7 @@ export default function PublishToLinkedInModal({
               </svg>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-white mb-2">Êtes-vous sûr ?</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Êtes-vous sûr ?</h3>
               <p className="text-text-secondary text-sm">
                 {visibility === "PUBLIC"
                   ? "Votre post sera publié publiquement sur LinkedIn et visible par tous."
@@ -599,7 +599,7 @@ export default function PublishToLinkedInModal({
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <LinkedInIcon className="w-6 h-6 text-[#0A66C2] mb-1" />
-                <span className="text-lg font-bold text-white">{progress}%</span>
+                <span className="text-lg font-bold text-gray-900 dark:text-white">{progress}%</span>
               </div>
             </div>
 
@@ -612,7 +612,7 @@ export default function PublishToLinkedInModal({
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.2 }}
               >
-                <p className="text-white font-semibold text-lg mb-2">
+                <p className="text-gray-900 dark:text-white font-semibold text-lg mb-2">
                   {progress === 100 ? (
                     <span className="flex items-center justify-center gap-2">
                       C'est en ligne! <span className="text-xl">\uD83D\uDE80</span>
@@ -626,7 +626,7 @@ export default function PublishToLinkedInModal({
 
             {/* Progress bar */}
             <div className="mt-6 mx-auto max-w-xs">
-              <div className="h-1.5 bg-dark-border rounded-full overflow-hidden">
+              <div className="h-1.5 bg-gray-200 dark:bg-dark-border rounded-full overflow-hidden">
                 <motion.div
                   className="h-full bg-[#0A66C2] rounded-full"
                   initial={{ width: 0 }}
@@ -659,7 +659,7 @@ export default function PublishToLinkedInModal({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
               </motion.svg>
             </motion.div>
-            <h3 className="text-xl font-bold text-white mb-2">Post publié !</h3>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Post publié !</h3>
             <p className="text-text-secondary text-sm mb-6">
               Votre post a été publié avec succès{selectedPlatforms.length > 1 ? " sur les plateformes sélectionnées" : ""}.
             </p>
@@ -691,7 +691,7 @@ export default function PublishToLinkedInModal({
               </svg>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-white mb-2">Échec de la publication</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Échec de la publication</h3>
               <p className="text-error text-sm">{error}</p>
             </div>
             <div className="flex gap-3">

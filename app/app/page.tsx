@@ -10,7 +10,7 @@ import { useChat } from "@/hooks/useChat";
 import { useSmartScroll } from "@/hooks/useSmartScroll";
 import { useKeyboardHeight } from "@/hooks/useKeyboardHeight";
 import { getUserPostsWithPinned, getDualModeUsageThisWeek } from "@/lib/firestore";
-import { Post } from "@/types";
+import { Post, FileAttachment } from "@/types";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import MainLayout from "@/components/layout/MainLayout";
 import ChatMessage, { TypingIndicator } from "@/components/chat/ChatMessage";
@@ -129,6 +129,7 @@ function AppContent() {
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [isFocused, setIsFocused] = useState(false);
   const [isInputExpanded, setIsInputExpanded] = useState(false);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const inputContainerRef = useRef<HTMLDivElement>(null);
   const chatInputRef = useRef<UniversalChatInputRef>(null);
@@ -220,6 +221,16 @@ function AppContent() {
   // Initialize analytics on mount
   useEffect(() => {
     initAnalytics();
+  }, []);
+
+  // Welcome modal after first payment (one-time)
+  useEffect(() => {
+    const shouldShow = sessionStorage.getItem("posty_show_welcome");
+    if (shouldShow === "1") {
+      sessionStorage.removeItem("posty_show_welcome");
+      const timer = setTimeout(() => setShowWelcomeModal(true), 600);
+      return () => clearTimeout(timer);
+    }
   }, []);
 
   // Fetch user posts (with pinned posts first)
@@ -466,8 +477,8 @@ function AppContent() {
     }
   }, [forceStopRecording, clearSilenceTimer]);
 
-  const handleGenerate = async (prompt: string) => {
-    await generate(prompt);
+  const handleGenerate = async (prompt: string, file?: FileAttachment | null) => {
+    await generate(prompt, file);
     // Track post generation for activation rate analytics
     trackPostGeneration();
     // Refresh dual mode usage counter for Pro users
@@ -600,7 +611,7 @@ function AppContent() {
                     <div className="absolute -inset-1 bg-gradient-to-br from-primary via-accent to-primary rounded-3xl opacity-60 blur-[2px]" />
                     <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden shadow-elevated ring-2 ring-white/50 dark:ring-dark-card/50">
                       <img
-                        src="/logo.jpg"
+                        src="/logo.png"
                         alt="Posty Logo"
                         className="w-full h-full object-contain"
                       />
@@ -713,7 +724,7 @@ function AppContent() {
                               <div className="flex items-center gap-3 mb-3">
                                 <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 shadow-sm">
                                   <img
-                                    src="/logo.jpg"
+                                    src="/logo.png"
                                     alt="Posty"
                                     className="w-full h-full object-cover"
                                   />
@@ -759,7 +770,7 @@ function AppContent() {
                               <div className="flex items-center gap-3 mb-3">
                                 <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 shadow-sm">
                                   <img
-                                    src="/logo.jpg"
+                                    src="/logo.png"
                                     alt="Posty"
                                     className="w-full h-full object-cover"
                                   />
@@ -1006,6 +1017,8 @@ function AppContent() {
                 onVoiceRecordingStart={toggleRecording}
                 onVoiceRecordingStop={toggleRecording}
                 isRecording={isRecording}
+                enableFileAttachment={true}
+                fileAttachmentAllowed={isMaxPlan}
                 showHelperText={true}
                 maxHeight={200}
                 minHeight={56}
@@ -1068,6 +1081,113 @@ function AppContent() {
         }}
         template={selectedTemplate}
       />
+
+      {/* Welcome Modal - One-time after first payment */}
+      <AnimatePresence>
+        {showWelcomeModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowWelcomeModal(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+              className="relative w-full max-w-md bg-white dark:bg-dark-card rounded-2xl p-8 shadow-2xl border border-gray-200 dark:border-dark-border text-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Close button */}
+              <button
+                onClick={() => setShowWelcomeModal(false)}
+                className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-dark-hover transition-colors text-text-muted hover:text-text-primary"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+
+              {/* Logo */}
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2, type: "spring", stiffness: 200, damping: 15 }}
+                className="w-20 h-20 mx-auto mb-6 rounded-2xl overflow-hidden shadow-lg ring-2 ring-primary/20"
+              >
+                <img src="/logo.png" alt="Posty" className="w-full h-full object-contain" />
+              </motion.div>
+
+              {/* Title */}
+              <motion.h2
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="text-2xl font-bold text-silver-shimmer dark:text-white mb-2"
+              >
+                Bienvenue sur Posty !
+              </motion.h2>
+
+              {/* Subtitle */}
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="text-text-secondary mb-6"
+              >
+                Merci pour votre confiance. Votre abonnement est actif.
+              </motion.p>
+
+              {/* Quick tips */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                className="bg-gray-50 dark:bg-dark-elevated rounded-xl p-4 mb-6 text-left space-y-3"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg className="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                  <p className="text-sm text-text-secondary">Décrivez votre idée et Posty génère un post optimisé</p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-accent/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg className="w-3.5 h-3.5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </div>
+                  <p className="text-sm text-text-secondary">Choisissez un template ou écrivez librement</p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-green-500/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg className="w-3.5 h-3.5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                    </svg>
+                  </div>
+                  <p className="text-sm text-text-secondary">Publiez directement sur LinkedIn ou copiez-collez</p>
+                </div>
+              </motion.div>
+
+              {/* CTA */}
+              <motion.button
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
+                onClick={() => setShowWelcomeModal(false)}
+                className="w-full py-3 px-6 bg-gradient-to-r from-primary to-accent text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-primary/25 transition-all duration-200"
+              >
+                Commencer
+              </motion.button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </MainLayout>
   );
 }

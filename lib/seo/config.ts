@@ -316,7 +316,7 @@ export const structuredData = {
     url: seoConfig.siteUrl,
     logo: {
       "@type": "ImageObject",
-      url: `${seoConfig.siteUrl}/logo.jpg`,
+      url: `${seoConfig.siteUrl}/logo.png`,
       width: "512",
       height: "512",
     },

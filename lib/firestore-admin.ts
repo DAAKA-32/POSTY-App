@@ -541,56 +541,6 @@ export async function saveTwitterPostAdmin(
   return docRef.id;
 }
 
-// ============== MEDIUM ADMIN FUNCTIONS ==============
-
-// Medium Connection Data type
-export interface MediumConnectionData {
-  userId: string;
-  mediumId: string;
-  username: string;
-  integrationToken: string;
-  profileName: string;
-  profilePicture?: string;
-  profileUrl?: string;
-  connectedAt: Timestamp;
-  lastUsedAt?: Timestamp;
-}
-
-export type MediumPublishStatus = "draft" | "public" | "unlisted";
-
-/**
- * Get Medium connection for a user (server-side)
- */
-export async function getMediumConnectionAdmin(
-  userId: string
-): Promise<MediumConnectionData | null> {
-  if (!adminDb) {
-    throw new Error("Firebase Admin not initialized");
-  }
-
-  const connectionRef = adminDb.collection("mediumConnections").doc(userId);
-  const connectionSnap = await connectionRef.get();
-
-  if (connectionSnap.exists) {
-    return connectionSnap.data() as MediumConnectionData;
-  }
-  return null;
-}
-
-/**
- * Update Medium last used timestamp (server-side)
- */
-export async function updateMediumLastUsedAdmin(userId: string): Promise<void> {
-  if (!adminDb) {
-    throw new Error("Firebase Admin not initialized");
-  }
-
-  const connectionRef = adminDb.collection("mediumConnections").doc(userId);
-  await connectionRef.update({
-    lastUsedAt: FieldValue.serverTimestamp(),
-  });
-}
-
 // ============== FACEBOOK ADMIN FUNCTIONS ==============
 
 // Facebook Connection Data type
@@ -831,38 +781,3 @@ export async function saveThreadsPostAdmin(
   return docRef.id;
 }
 
-/**
- * Save Medium post record (server-side)
- */
-export async function saveMediumPostAdmin(
-  userId: string,
-  data: {
-    mediumId: string;
-    articleId: string;
-    title: string;
-    content: string;
-    articleUrl?: string;
-    publishStatus: MediumPublishStatus;
-    success: boolean;
-    error?: string;
-  }
-): Promise<string> {
-  if (!adminDb) {
-    throw new Error("Firebase Admin not initialized");
-  }
-
-  const postsRef = adminDb.collection("mediumPosts");
-  const docRef = await postsRef.add({
-    userId,
-    mediumId: data.mediumId,
-    articleId: data.articleId,
-    title: data.title,
-    content: data.content,
-    articleUrl: data.articleUrl || null,
-    publishStatus: data.publishStatus,
-    success: data.success,
-    error: data.error || null,
-    publishedAt: FieldValue.serverTimestamp(),
-  });
-  return docRef.id;
-}

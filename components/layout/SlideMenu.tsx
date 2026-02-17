@@ -96,23 +96,16 @@ function groupPostsByDate(posts: Post[], labels: SidebarTranslations) {
   return groups;
 }
 
-// Brand colors from landing page Features section
-const BRAND_COLORS = {
-  primary: "#F8935D",      // Orange brand
-  primaryDark: "#F76B54",  // Coral/red accent
-  emerald: "#10B981",      // Emerald-500
-  amber: "#F59E0B",        // Amber-500
-  violet: "#8B5CF6",       // Violet-500
-};
-
 const menuItems = [
   {
     nameKey: "chat" as const,
     href: "/app",
-    color: "brand",
-    activeClasses: "bg-[#F8935D]/10 text-[#F8935D]",
+    hasBadge: false,
+    activeClasses: "bg-gradient-to-r from-[#F8935D]/12 to-transparent text-[#F8935D]",
     hoverClasses: "hover:text-[#F8935D] hover:bg-[#F8935D]/5",
     indicatorColor: "bg-gradient-to-b from-[#F8935D] to-[#F76B54]",
+    iconColor: "text-[#F8935D]",
+    badgeClasses: "bg-[#F8935D] text-white",
     glowColor: "rgba(248, 147, 93, 0.4)",
     icon: (isActive: boolean) => (
       <svg className="w-5 h-5" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
@@ -128,11 +121,13 @@ const menuItems = [
   {
     nameKey: "history" as const,
     href: "/history",
-    color: "amber",
-    activeClasses: "bg-amber-500/10 text-amber-500",
-    hoverClasses: "hover:text-amber-500 hover:bg-amber-500/5",
-    indicatorColor: "bg-gradient-to-b from-amber-500 to-orange-500",
-    glowColor: "rgba(245, 158, 11, 0.4)",
+    hasBadge: false,
+    activeClasses: "bg-gradient-to-r from-cyan-500/12 to-transparent text-cyan-600 dark:text-cyan-400",
+    hoverClasses: "hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-cyan-500/5",
+    indicatorColor: "bg-gradient-to-b from-cyan-500 to-cyan-400",
+    iconColor: "text-cyan-500",
+    badgeClasses: "bg-cyan-500 text-white",
+    glowColor: "rgba(6, 182, 212, 0.4)",
     icon: (isActive: boolean) => (
       <svg className="w-5 h-5" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -148,10 +143,11 @@ const menuItems = [
     nameKey: "schedule" as const,
     href: "/schedule",
     hasBadge: true,
-    color: "violet",
-    activeClasses: "bg-violet-500/10 text-violet-500",
-    hoverClasses: "hover:text-violet-500 hover:bg-violet-500/5",
-    indicatorColor: "bg-gradient-to-b from-violet-500 to-purple-600",
+    activeClasses: "bg-gradient-to-r from-violet-500/12 to-transparent text-violet-600 dark:text-violet-400",
+    hoverClasses: "hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-500/5",
+    indicatorColor: "bg-gradient-to-b from-violet-500 to-violet-400",
+    iconColor: "text-violet-500",
+    badgeClasses: "bg-violet-500 text-white",
     glowColor: "rgba(139, 92, 246, 0.4)",
     icon: (isActive: boolean) => (
       <svg className="w-5 h-5" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
@@ -167,10 +163,12 @@ const menuItems = [
   {
     nameKey: "analytics" as const,
     href: "/analytics",
-    color: "emerald",
-    activeClasses: "bg-emerald-500/10 text-emerald-500",
-    hoverClasses: "hover:text-emerald-500 hover:bg-emerald-500/5",
-    indicatorColor: "bg-gradient-to-b from-emerald-500 to-green-600",
+    hasBadge: false,
+    activeClasses: "bg-gradient-to-r from-emerald-500/12 to-transparent text-emerald-600 dark:text-emerald-400",
+    hoverClasses: "hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-500/5",
+    indicatorColor: "bg-gradient-to-b from-emerald-500 to-emerald-400",
+    iconColor: "text-emerald-500",
+    badgeClasses: "bg-emerald-500 text-white",
     glowColor: "rgba(16, 185, 129, 0.4)",
     icon: (isActive: boolean) => (
       <svg className="w-5 h-5" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
@@ -446,7 +444,7 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
           <Link href="/app" className="flex items-center gap-2.5 group min-w-0 flex-1" onClick={onClose}>
             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl overflow-hidden flex items-center justify-center shadow-glow transition-transform group-hover:scale-105 flex-shrink-0">
               <img
-                src="/logo.jpg"
+                src="/logo.png"
                 alt="Posty Logo"
                 className="w-full h-full object-contain"
               />
@@ -541,12 +539,8 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
               const itemName = t.nav[item.nameKey];
               const showBadge = item.hasBadge && schedulingPendingCount > 0;
 
-              // Icon color classes based on menu item color
-              const iconColorClass =
-                item.color === "brand" ? "text-[#F8935D]" :
-                item.color === "amber" ? "text-amber-500" :
-                item.color === "violet" ? "text-violet-500" :
-                item.color === "emerald" ? "text-emerald-500" : "text-primary";
+              // Icon color — per-feature color
+              const iconColorClass = item.iconColor;
 
               return (
                 <div key={item.nameKey} className="relative">
@@ -580,7 +574,7 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
                       ${
                         isActive
                           ? item.activeClasses
-                          : `text-text-secondary ${item.hoverClasses} hover:translate-x-1 active:scale-[0.98] active:transition-none`
+                          : `text-gray-900 dark:text-gray-200 ${item.hoverClasses} hover:translate-x-1 active:scale-[0.98] active:transition-none`
                       }
                     `}
                   >
@@ -601,7 +595,7 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
                     <span className="font-bold flex-1">{itemName}</span>
 
                     {showBadge && (
-                      <span className="px-2 py-0.5 text-xs font-semibold bg-violet-500 text-white rounded-full min-w-[20px] text-center">
+                      <span className={`px-2 py-0.5 text-xs font-semibold rounded-full min-w-[20px] text-center ${item.badgeClasses}`}>
                         {schedulingPendingCount}
                       </span>
                     )}
@@ -670,7 +664,7 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
                           <span className="text-xs font-medium text-text-muted">
                             {isPinned && (
                               <span className="inline-flex items-center gap-1.5">
-                                <svg className="w-3 h-3 text-violet-500" fill="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-3 h-3 text-primary" fill="currentColor" viewBox="0 0 24 24">
                                   <path d="M16 4a1 1 0 0 1 1 1v3.586l1.707 1.707a1 1 0 0 1 .293.707v2a1 1 0 0 1-1 1h-4v6a1 1 0 0 1-2 0v-6H8a1 1 0 0 1-1-1v-2a1 1 0 0 1 .293-.707L9 8.586V5a1 1 0 0 1 1-1h6z"/>
                                 </svg>
                                 {group.label}
@@ -698,14 +692,14 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
                                 ${
                                   isActive
                                     ? "bg-primary/10 dark:bg-primary/10 text-text-primary border-l-2 border-primary pl-[10px] shadow-sm"
-                                    : "text-text-secondary hover:text-text-primary hover:bg-[#F8935D]/10 dark:hover:bg-dark-hover hover:border-l-2 hover:border-primary/40 hover:pl-[10px]"
+                                    : "text-gray-900 dark:text-gray-200 hover:text-gray-950 dark:hover:text-white hover:bg-[#F8935D]/10 dark:hover:bg-dark-hover hover:border-l-2 hover:border-primary/40 hover:pl-[10px]"
                                 }
                               `}
                             >
                             {/* Pin indicator - Premium violet color */}
                             {post.isPinned && (
                               <svg
-                                className="w-3.5 h-3.5 shrink-0 text-violet-500 dark:text-violet-400 group-hover:scale-110 transition-transform duration-200"
+                                className="w-3.5 h-3.5 shrink-0 text-primary dark:text-primary group-hover:scale-110 transition-transform duration-200"
                                 fill="currentColor"
                                 viewBox="0 0 24 24"
                               >
@@ -831,7 +825,7 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
                 onClick={onClose}
                 className="
                   flex items-center justify-center gap-2 w-full px-4 py-3
-                  text-text-secondary hover:text-text-primary
+                  text-gray-900 dark:text-gray-200 hover:text-gray-950 dark:hover:text-white
                   bg-[#F8935D]/5 dark:bg-dark-elevated hover:bg-[#F8935D]/10 dark:hover:bg-dark-hover
                   border border-gray-200 dark:border-dark-border hover:border-primary/30
                   rounded-lg transition-all duration-200 haptic-feedback

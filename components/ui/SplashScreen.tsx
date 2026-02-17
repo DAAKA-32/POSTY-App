@@ -76,7 +76,7 @@ export default function SplashScreen({ isLoading, onComplete }: SplashScreenProp
               className="w-20 h-20 lg:w-24 lg:h-24 rounded-2xl overflow-hidden flex items-center justify-center shadow-xl"
             >
               <img
-                src="/logo.jpg"
+                src="/logo.png"
                 alt="Posty Logo"
                 className="w-full h-full object-contain"
               />

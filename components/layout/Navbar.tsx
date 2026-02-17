@@ -174,7 +174,7 @@ export default function Navbar({ transparent = false }: NavbarProps) {
               className="flex items-center gap-2.5 group min-h-[44px]"
             >
               <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl overflow-hidden flex-shrink-0 shadow-md group-hover:shadow-lg transition-shadow">
-                <img src="/logo.jpg" alt="Posty Logo" className="w-full h-full object-cover" />
+                <img src="/logo.png" alt="Posty Logo" className="w-full h-full object-cover" />
               </div>
               <span className="font-bold text-xl sm:text-2xl leading-none tracking-tight bg-gradient-to-r from-[#F8935D] to-[#F76B54] bg-clip-text text-transparent">
                 POSTY

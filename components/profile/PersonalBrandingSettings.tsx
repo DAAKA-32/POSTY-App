@@ -163,9 +163,9 @@ export default function PersonalBrandingSettings({
           </p>
         </div>
         {!isPro && (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-violet-500/10 to-purple-500/10 border border-violet-500/20">
-            <Crown className="w-4 h-4 text-violet-500" />
-            <span className="text-xs font-medium text-violet-600 dark:text-violet-400">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-primary/10 to-primary-hover/10 border border-primary/20">
+            <Crown className="w-4 h-4 text-primary" />
+            <span className="text-xs font-medium text-primary dark:text-primary">
               Pro
             </span>
           </div>
@@ -544,14 +544,14 @@ export default function PersonalBrandingSettings({
 
       {/* Pro upsell */}
       {!isPro && (
-        <div className="mt-6 p-4 rounded-xl bg-gradient-to-r from-violet-500/10 to-purple-500/10 border border-violet-500/20">
+        <div className="mt-6 p-4 rounded-xl bg-gradient-to-r from-primary/10 to-primary-hover/10 border border-primary/20">
           <div className="flex items-start gap-3">
-            <Crown className="w-5 h-5 text-violet-500 flex-shrink-0 mt-0.5" />
+            <Crown className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-medium text-violet-700 dark:text-violet-300">
+              <p className="text-sm font-medium text-primary-dark dark:text-primary">
                 Debloquez le Personal Branding complet
               </p>
-              <p className="text-xs text-violet-600/80 dark:text-violet-400/80 mt-1">
+              <p className="text-xs text-primary/80 dark:text-primary/80 mt-1">
                 Passez a Pro pour personnaliser votre avatar, couleurs, gradient,
                 liens sociaux et plus encore.
               </p>

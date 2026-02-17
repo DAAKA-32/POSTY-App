@@ -82,7 +82,7 @@ export function AppLoadingTransition({
                 ease: [0.25, 0.1, 0.25, 1],
               },
             }}
-            className="fixed inset-0 bg-dark-bg z-[100] flex items-center justify-center"
+            className="fixed inset-0 bg-[#FAFBFC] dark:bg-dark-bg z-[100] flex items-center justify-center"
           >
             <div className="flex flex-col items-center gap-8 px-6 w-full max-w-sm">
               {/* Logo without background - clean and professional */}
@@ -120,7 +120,7 @@ export function AppLoadingTransition({
                 {/* Logo image - no colored background */}
                 <div className="relative w-20 h-20 md:w-24 md:h-24 flex items-center justify-center">
                   <img
-                    src="/logo.jpg"
+                    src="/logo.png"
                     alt="Posty Logo"
                     className="w-full h-full object-contain drop-shadow-2xl"
                   />
@@ -136,7 +136,7 @@ export function AppLoadingTransition({
                   duration: prefersReducedMotion ? 0 : 0.4,
                   delay: 0.1,
                 }}
-                className="text-2xl md:text-3xl font-bold text-white tracking-tight"
+                className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white tracking-tight"
               >
                 POSTY
               </motion.h1>
@@ -153,7 +153,7 @@ export function AppLoadingTransition({
                 className="w-full max-w-xs"
               >
                 {/* Progress bar background */}
-                <div className="h-1 bg-dark-border rounded-full overflow-hidden">
+                <div className="h-1 bg-gray-200 dark:bg-dark-border rounded-full overflow-hidden">
                   {/* Progress bar fill */}
                   <motion.div
                     className="h-full bg-gradient-to-r from-primary via-accent to-primary rounded-full"
@@ -223,7 +223,7 @@ export function PremiumProgressBar({
 }) {
   return (
     <div className={`w-full ${className}`}>
-      <div className="h-1.5 bg-dark-border rounded-full overflow-hidden">
+      <div className="h-1.5 bg-gray-200 dark:bg-dark-border rounded-full overflow-hidden">
         <motion.div
           className="h-full bg-gradient-to-r from-primary via-accent to-primary rounded-full relative"
           initial={{ width: "0%" }}

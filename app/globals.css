@@ -1049,8 +1049,9 @@ video {
 /* ============== POSTY DESIGN SYSTEM - POPPINS TYPOGRAPHY ============== */
 
 :root {
-  /* Typography - Poppins Only */
+  /* Typography - Poppins + Playfair Display */
   --font-poppins: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
   /* Font Weights - Poppins */
@@ -1671,7 +1672,7 @@ html.light .hover\:text-text-primary:hover {
 
 /* ===== Landing page specific - Keep gradient text visible ===== */
 html.light .text-gradient {
-  background: linear-gradient(135deg, #FB923C, #FB7185) !important;
+  background: linear-gradient(135deg, #F8935D, #FB7185) !important;
   -webkit-background-clip: text !important;
   background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
@@ -1868,53 +1869,8 @@ html.light .nav-active-indicator {
 }
 
 /* ============== PROFILE PAGE - LIGHT MODE FIX ============== */
-/* Fix for elements using dark: variant classes that match [class*="from-primary"] selectors */
-/* These elements use bg-orange-50 in light mode and need orange text, not white */
-
-/* Profile badge (sector) and edit button with bg-orange-50 should have orange text */
-html.light .bg-orange-50 {
-  background-color: #FFF7ED !important;
-  color: #EA580C !important;
-}
-
-html.light .bg-orange-50 svg {
-  color: #EA580C !important;
-}
-
-html.light .bg-orange-50 span {
-  color: #EA580C !important;
-}
-
-/* Override the gradient text-white rule for elements that have bg-orange-50 */
-html.light [class*="bg-orange-50"][class*="dark:bg-gradient"] {
-  color: #EA580C !important;
-}
-
-html.light [class*="bg-orange-50"][class*="dark:from-primary"] {
-  color: #EA580C !important;
-}
-
-/* Profile edit form header icon */
-html.light .bg-orange-100 {
-  background-color: #FFEDD5 !important;
-}
-
-html.light .text-orange-500 {
-  color: #F97316 !important;
-}
-
-html.light .text-orange-600 {
-  color: #EA580C !important;
-}
-
-/* Ensure border colors are visible */
-html.light .border-orange-200 {
-  border-color: #FED7AA !important;
-}
-
-html.light .border-orange-300 {
-  border-color: #FDBA74 !important;
-}
+/* Profile components now use brand tokens (text-primary, bg-[#F8935D]/5, etc.) */
+/* No Tailwind orange-* overrides needed — brand colors handle light/dark natively */
 
 /* ============== SCROLLBAR - LIGHT MODE - POSTY ORANGE/SALMON ============== */
 /* Premium scrollbar with Posty brand colors */
@@ -1926,24 +1882,24 @@ html.light::-webkit-scrollbar {
 }
 
 html.light::-webkit-scrollbar-track {
-  background: linear-gradient(180deg, #FFF7ED 0%, #FEF3E2 100%);
+  background: linear-gradient(180deg, #FEF3EE 0%, #FFF8F5 100%);
   border-radius: 5px;
 }
 
 html.light::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #FDBA74 0%, #FB923C 50%, #F97316 100%);
+  background: linear-gradient(180deg, #FBB9AD 0%, #F89E85 50%, #F8935D 100%);
   border-radius: 5px;
-  border: 2px solid #FFF7ED;
+  border: 2px solid #FEF3EE;
   transition: all 0.2s ease;
 }
 
 html.light::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #FB923C 0%, #F97316 50%, #EA580C 100%);
-  border-color: #FEF3E2;
+  background: linear-gradient(180deg, #F89E85 0%, #F8935D 50%, #E8834D 100%);
+  border-color: #FFF8F5;
 }
 
 html.light::-webkit-scrollbar-thumb:active {
-  background: linear-gradient(180deg, #F97316 0%, #EA580C 50%, #C2410C 100%);
+  background: linear-gradient(180deg, #F8935D 0%, #E8834D 50%, #D15A3D 100%);
 }
 
 /* Scrollbar for all child elements */
@@ -1953,40 +1909,40 @@ html.light ::-webkit-scrollbar {
 }
 
 html.light ::-webkit-scrollbar-track {
-  background: linear-gradient(180deg, #FFF7ED 0%, #FEF3E2 100%);
+  background: linear-gradient(180deg, #FEF3EE 0%, #FFF8F5 100%);
   border-radius: 5px;
 }
 
 html.light ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #FDBA74 0%, #FB923C 50%, #F97316 100%);
+  background: linear-gradient(180deg, #FBB9AD 0%, #F89E85 50%, #F8935D 100%);
   border-radius: 5px;
-  border: 2px solid #FFF7ED;
+  border: 2px solid #FEF3EE;
   transition: all 0.2s ease;
 }
 
 html.light ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #FB923C 0%, #F97316 50%, #EA580C 100%);
-  border-color: #FEF3E2;
+  background: linear-gradient(180deg, #F89E85 0%, #F8935D 50%, #E8834D 100%);
+  border-color: #FFF8F5;
 }
 
 html.light ::-webkit-scrollbar-thumb:active {
-  background: linear-gradient(180deg, #F97316 0%, #EA580C 50%, #C2410C 100%);
+  background: linear-gradient(180deg, #F8935D 0%, #E8834D 50%, #D15A3D 100%);
 }
 
 /* Firefox scrollbar - Light Mode */
 html.light {
   scrollbar-width: thin;
-  scrollbar-color: #FB923C #FFF7ED;
+  scrollbar-color: #F89E85 #FEF3EE;
 }
 
 html.light * {
   scrollbar-width: thin;
-  scrollbar-color: #FB923C #FFF7ED;
+  scrollbar-color: #F89E85 #FEF3EE;
 }
 
 html.light:hover,
 html.light *:hover {
-  scrollbar-color: #FB923C #FEF3E2;
+  scrollbar-color: #F89E85 #FFF8F5;
 }
 
 /* ============== SIDEBAR SCROLLBAR - GRAY & DISCRETE ============== */
@@ -2519,6 +2475,19 @@ textarea:-ms-input-placeholder {
   color: var(--text-muted) !important;
 }
 
+/* Light input override — landing page inputs that must stay white */
+.light-input input,
+.light-input input[type="text"] {
+  background-color: transparent !important;
+  color: #111827 !important;
+  color-scheme: light !important;
+}
+.light-input input::placeholder,
+.light-input input::-webkit-input-placeholder,
+.light-input input::-moz-placeholder {
+  color: #9ca3af !important;
+}
+
 /* Focus styles - Enhanced for keyboard navigation */
 :focus-visible {
   outline: 2px solid var(--primary);
@@ -2659,24 +2628,24 @@ a:focus-visible,
 }
 
 /* ============== ADAPTIVE LOADER - THEME AWARE ============== */
-/* Loader background that adapts to current theme */
+/* Loader background — light by default, dark only in dark mode */
 .loader-bg {
-  background-color: rgba(11, 14, 17, 0.98);
-}
-
-.light .loader-bg,
-html.light .loader-bg {
   background-color: rgba(250, 251, 252, 0.98);
 }
 
-/* Loader progress track that adapts to current theme */
-.loader-track {
-  background-color: var(--border);
+.dark .loader-bg,
+html.dark .loader-bg {
+  background-color: rgba(11, 14, 17, 0.98);
 }
 
-.light .loader-track,
-html.light .loader-track {
+/* Loader progress track — light by default */
+.loader-track {
   background-color: #E5E7EB;
+}
+
+.dark .loader-track,
+html.dark .loader-track {
+  background-color: var(--border);
 }
 
 /* Loader text colors - ensure proper contrast */
@@ -2971,72 +2940,167 @@ html.light .loader-track {
     @apply bg-gradient-to-r from-primary via-accent to-primary bg-[length:200%_auto] bg-clip-text text-transparent;
   }
 
-  /* ============== PREMIUM SILVER TEXT - LANDING PAGE TITLES ============== */
-  /* Inspired by Linear, Stripe, Notion - Static shimmer effect without animation */
+  /* ============== PREMIUM SILVER TEXT ============== */
+  /* Design: subtle metallic gradient with very slow, barely-perceptible shine.
+     The effect should look elegant even when animation is disabled.
+     Single unified keyframe for all silver variants. */
 
-  /* Silver Gradient - Premium subtle shimmer (static) */
+  @keyframes silver-drift {
+    0%, 100% { background-position: 100% 0; }
+    50% { background-position: 0% 0; }
+  }
+
+  /* Primary silver — hero titles, prominent headings */
   .text-silver-premium {
     background: linear-gradient(
-      135deg,
-      #C0C0C0 0%,
-      #E8E8E8 25%,
-      #D0D0D0 50%,
-      #E8E8E8 75%,
-      #C0C0C0 100%
+      105deg,
+      #9CA3AF 0%,
+      #B0B5BD 25%,
+      #C4C8CF 45%,
+      #D4D8DE 55%,
+      #C4C8CF 65%,
+      #B0B5BD 80%,
+      #9CA3AF 100%
     );
+    background-size: 150% 100%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    text-shadow: 0 0 1px rgba(255, 255, 255, 0.1);
+    animation: silver-drift 16s ease-in-out infinite;
   }
 
-  /* Silver Solid - Clean metallic look */
-  .text-silver-solid {
-    color: #C8C8C8;
-    text-shadow:
-      0 1px 2px rgba(0, 0, 0, 0.1),
-      0 0 8px rgba(255, 255, 255, 0.05);
-  }
-
-  /* Silver Shimmer - Enhanced static shine */
+  /* Silver Shimmer — section titles, slightly lighter base */
   .text-silver-shimmer {
     background: linear-gradient(
-      110deg,
-      #A8A8A8 0%,
-      #C0C0C0 25%,
-      #E8E8E8 40%,
-      #F0F0F0 50%,
-      #E8E8E8 60%,
-      #C0C0C0 75%,
-      #A8A8A8 100%
+      105deg,
+      #A3A8B0 0%,
+      #B5BAC2 25%,
+      #C8CCD3 45%,
+      #D8DCE2 55%,
+      #C8CCD3 65%,
+      #B5BAC2 80%,
+      #A3A8B0 100%
     );
+    background-size: 150% 100%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    filter: brightness(1.1) contrast(1.05);
+    animation: silver-drift 18s ease-in-out infinite;
+    animation-delay: -6s;
   }
 
-  /* Dark mode adjustments for silver text */
+  /* Silver Vertical — Auth pages */
+  .text-silver-vertical {
+    background: linear-gradient(
+      105deg,
+      #A6A6A6 0%,
+      #B8B8B8 25%,
+      #C8C8C8 45%,
+      #D6D6D6 55%,
+      #C8C8C8 65%,
+      #B8B8B8 80%,
+      #A6A6A6 100%
+    );
+    background-size: 150% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+    animation: silver-drift 20s ease-in-out infinite;
+  }
+
+  /* Silver Solid — subtle metallic, minimal movement */
+  .text-silver-solid {
+    background: linear-gradient(
+      105deg,
+      #B0B0B0 0%,
+      #BCBCBC 25%,
+      #C8C8C8 45%,
+      #D4D4D4 55%,
+      #C8C8C8 65%,
+      #BCBCBC 80%,
+      #B0B0B0 100%
+    );
+    background-size: 150% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: none;
+    animation: silver-drift 22s ease-in-out infinite;
+  }
+
+  /* Hero floating orbs — slow organic drift */
+  @keyframes float-orb-1 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    25% { transform: translate(12px, -18px) scale(1.03); }
+    50% { transform: translate(-8px, 12px) scale(0.97); }
+    75% { transform: translate(16px, 8px) scale(1.01); }
+  }
+  @keyframes float-orb-2 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(-18px, -12px) scale(1.02); }
+    66% { transform: translate(12px, 16px) scale(0.98); }
+  }
+  @keyframes float-orb-3 {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(-12px, -20px); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-orb { animation: none !important; }
+    .text-silver-premium,
+    .text-silver-shimmer,
+    .text-silver-solid,
+    .text-silver-vertical {
+      animation: none !important;
+      background-size: 100% 100%;
+    }
+  }
+
+  /* Dark mode — slightly brighter tones, same subtlety */
   .dark .text-silver-premium,
   .dark .text-silver-shimmer {
     background: linear-gradient(
-      135deg,
-      #D0D0D0 0%,
-      #F8F8F8 25%,
-      #E0E0E0 50%,
-      #F8F8F8 75%,
-      #D0D0D0 100%
+      105deg,
+      #B8B8B8 0%,
+      #C8C8C8 25%,
+      #D4D4D4 45%,
+      #E0E0E0 55%,
+      #D4D4D4 65%,
+      #C8C8C8 80%,
+      #B8B8B8 100%
     );
+    background-size: 150% 100%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .dark .text-silver-solid {
-    color: #D8D8D8;
-    text-shadow:
-      0 1px 2px rgba(0, 0, 0, 0.3),
-      0 0 12px rgba(255, 255, 255, 0.08);
+    background: linear-gradient(
+      105deg,
+      #C0C0C0 0%,
+      #CCCCCC 25%,
+      #D8D8D8 45%,
+      #E4E4E4 55%,
+      #D8D8D8 65%,
+      #CCCCCC 80%,
+      #C0C0C0 100%
+    );
+    background-size: 150% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: none;
+  }
+
+  /* Silver separator — premium gradient divider */
+  .separator-silver {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(180, 180, 190, 0.3), transparent);
+  }
+  .dark .separator-silver {
+    background: linear-gradient(90deg, transparent, rgba(200, 200, 210, 0.15), transparent);
   }
 
   .glass {
@@ -6699,45 +6763,6 @@ html.dark .chat-input-inner {
   }
 }
 
-/* ============== LANDING PAGE BACKGROUND ============== */
-/* Premium background image for landing page with subtle overlay */
-
-.background-landing {
-  position: relative;
-  background-image: url('/background-landing.jpg');
-  background-size: cover;
-  background-position: center center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-}
-
-/* Subtle overlay for better content readability without losing background beauty */
-.background-landing::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(254, 243, 238, 0.85) 0%,
-    rgba(254, 243, 238, 0.75) 50%,
-    rgba(254, 243, 238, 0.85) 100%
-  );
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* Ensure content stays above overlay */
-.background-landing > * {
-  position: relative;
-  z-index: 1;
-}
-
-/* Mobile optimization - remove fixed attachment for better performance */
-@media (max-width: 768px) {
-  .background-landing {
-    background-attachment: scroll;
-  }
-}
 
 
 

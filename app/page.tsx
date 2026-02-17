@@ -252,7 +252,7 @@ function Navbar() {
                   transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
                   className="w-9 h-9 md:w-10 md:h-10 rounded-xl overflow-hidden shadow-md shadow-[#F8935D]/15 ring-1 ring-gray-100"
                 >
-                  <Image src="/logo-avec fond.jpg" alt="Posty" width={40} height={40} className="w-full h-full object-cover" />
+                  <Image src="/logo.png" alt="Posty" width={40} height={40} className="w-full h-full object-cover" />
                 </motion.div>
                 <span className="text-lg md:text-xl font-bold text-gray-900 tracking-tight">Posty</span>
               </Link>
@@ -363,7 +363,7 @@ function Navbar() {
             >
               <Link href="/" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl overflow-hidden shadow-md shadow-[#F8935D]/15 ring-1 ring-gray-100">
-                  <Image src="/logo-avec fond.jpg" alt="Posty" width={40} height={40} className="w-full h-full object-cover" />
+                  <Image src="/logo.png" alt="Posty" width={40} height={40} className="w-full h-full object-cover" />
                 </div>
                 <span className="text-lg font-bold text-gray-900 tracking-tight">Posty</span>
               </Link>
@@ -508,8 +508,11 @@ function HeroSection() {
   return (
     <section
       ref={sectionRef}
-      className="background-landing relative min-h-[100dvh] lg:min-h-screen flex items-center"
+      className="background-landing relative min-h-[100dvh] lg:min-h-screen flex items-center overflow-hidden"
     >
+      {/* === AURORA STAR PARTICLES (hero only) === */}
+      <AuroraBackground />
+
       {/* === PREMIUM ANIMATED BACKGROUND === */}
       <div className="absolute inset-0 pointer-events-none">
         {/* Mesh gradient overlay */}
@@ -583,7 +586,7 @@ function HeroSection() {
             </motion.div>
 
             {/* Main headline */}
-            <h1 className="text-[2.5rem] sm:text-5xl lg:text-[3.25rem] xl:text-[3.75rem] 2xl:text-[4.25rem] font-bold leading-[1.15] tracking-tight">
+            <h1 className="font-display text-[2.5rem] sm:text-5xl lg:text-[3.25rem] xl:text-[3.75rem] 2xl:text-[4.25rem] font-semibold leading-[1.1] tracking-[-0.02em]">
               <span className="block text-silver-premium">Vos posts LinkedIn</span>
               <span className="block mt-1 lg:mt-2 text-silver-premium">
                 signent des{" "}
@@ -595,11 +598,11 @@ function HeroSection() {
                     initial={{ scaleX: 0 }}
                     animate={isInView ? { scaleX: 1 } : {}}
                     transition={{ delay: 0.8, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                    className="absolute -bottom-1 left-0 right-0 h-1 bg-gradient-to-r from-[#F8935D] to-[#F76B54] rounded-full origin-left"
+                    className="absolute -bottom-1 left-0 right-0 h-[3px] bg-gradient-to-r from-[#F8935D] to-[#F76B54] rounded-full origin-left"
                   />
                 </span>
               </span>
-              <span className="block mt-1 lg:mt-2 text-silver-premium">
+              <span className="block mt-1 lg:mt-2 text-silver-premium italic">
                 Pas juste des likes.
               </span>
             </h1>
@@ -847,20 +850,23 @@ let heroAnimationPlayedGlobal = false;
 
 function DemoSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLDivElement>(null);
   const fullScreenChatRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(sectionRef, { once: true, amount: 0.15 });
   const prefersReducedMotion = useReducedMotion();
+  const [titleHeight, setTitleHeight] = useState(0);
 
   // ============================================================================
-  // ANIMATION SEQUENCING: MacBook first, then text reveal
-  // Resets on page refresh, persists during React navigation
+  // ============================================================================
+  // CINEMATIC HERO ANIMATION — Phase-based reveal
+  // Phase: "init" → "opening" → "settling" → "complete"
   // ============================================================================
 
-  // Track if MacBook animation already played (module-level for persistence across re-renders)
-  const [heroAnimationPlayed, setHeroAnimationPlayed] = useState(heroAnimationPlayedGlobal);
+  type HeroPhase = "init" | "opening" | "settling" | "complete";
+  const alreadyPlayed = heroAnimationPlayedGlobal;
 
-  // Text reveal state - triggered AFTER MacBook animation completes
-  const [hasAnimated, setHasAnimated] = useState(heroAnimationPlayedGlobal);
+  const [heroPhase, setHeroPhase] = useState<HeroPhase>(alreadyPlayed ? "complete" : "init");
+  const [hasAnimated, setHasAnimated] = useState(alreadyPlayed);
 
   // Word-by-word reveal state
   const HERO_WORDS_L1 = ["Vos", "posts", "LinkedIn,"];
@@ -868,7 +874,7 @@ function DemoSection() {
   const TOTAL_WORDS = HERO_WORDS_L1.length + HERO_WORDS_L2.length;
   const WORD_DELAY = 110;
 
-  const [revealedWords, setRevealedWords] = useState(heroAnimationPlayedGlobal ? TOTAL_WORDS : 0);
+  const [revealedWords, setRevealedWords] = useState(alreadyPlayed ? TOTAL_WORDS : 0);
 
   useEffect(() => {
     if (!hasAnimated || revealedWords >= TOTAL_WORDS) return;
@@ -876,40 +882,59 @@ function DemoSection() {
     return () => clearTimeout(timer);
   }, [hasAnimated, revealedWords, TOTAL_WORDS]);
 
-  // Callback when MacBook animation completes
-  const handleMacBookAnimationComplete = useCallback(() => {
-    // Minimal delay - texts appear almost instantly after MacBook settles
-    const delay = prefersReducedMotion ? 0 : 50;
-    setTimeout(() => {
-      setHasAnimated(true);
-      // Mark as played (module-level persists across tab switches)
-      heroAnimationPlayedGlobal = true;
-      setHeroAnimationPlayed(true);
-    }, delay);
-  }, [prefersReducedMotion]);
-
-  // If animation already played, show content immediately
+  // Phase transitions (timings: init→300ms→opening→1200ms→settling→1000ms→complete)
   useEffect(() => {
-    if (heroAnimationPlayed && !hasAnimated) {
+    if (alreadyPlayed) return;
+    if (prefersReducedMotion) {
+      setHeroPhase("complete");
       setHasAnimated(true);
+      heroAnimationPlayedGlobal = true;
+      return;
     }
-  }, [heroAnimationPlayed, hasAnimated]);
+    if (heroPhase === "init") {
+      const t = setTimeout(() => setHeroPhase("opening"), 300);
+      return () => clearTimeout(t);
+    }
+    if (heroPhase === "opening") {
+      const t = setTimeout(() => setHeroPhase("settling"), 1200);
+      return () => clearTimeout(t);
+    }
+    if (heroPhase === "settling") {
+      // Text reveal starts now
+      setHasAnimated(true);
+      heroAnimationPlayedGlobal = true;
+      const t = setTimeout(() => setHeroPhase("complete"), 1200);
+      return () => clearTimeout(t);
+    }
+  }, [heroPhase, alreadyPlayed, prefersReducedMotion]);
 
-  // View mode state: "demo" or "preview" - Default to preview for premium first impression
+  // Measure title height for the spacer (fixed positioning removes it from flow)
+  useEffect(() => {
+    if (!titleRef.current) return;
+    const measure = () => setTitleHeight(titleRef.current?.offsetHeight ?? 0);
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
+
+  // Scroll-based title fade — title disappears before content overlaps it
+  const { scrollY } = useScroll();
+  const titleOpacity = useTransform(scrollY, [0, Math.max(titleHeight * 0.7, 150)], [1, 0]);
+
+  // View mode state
   const [viewMode, setViewMode] = useState<"demo" | "preview">("preview");
 
-  // Fallback: If user switches to demo mode before MacBook finishes, trigger text animation
+  // Fallback: If user switches to demo before animation completes
   useEffect(() => {
-    if (viewMode === "demo" && !hasAnimated && !heroAnimationPlayed) {
-      // Trigger text reveal after a short delay when in demo mode
-      const timer = setTimeout(() => {
-        setHasAnimated(true);
-        heroAnimationPlayedGlobal = true;
-        setHeroAnimationPlayed(true);
-      }, prefersReducedMotion ? 0 : 300);
-      return () => clearTimeout(timer);
+    if (viewMode === "demo" && !hasAnimated) {
+      setHasAnimated(true);
+      heroAnimationPlayedGlobal = true;
+      setHeroPhase("complete");
     }
-  }, [viewMode, hasAnimated, heroAnimationPlayed, prefersReducedMotion]);
+  }, [viewMode, hasAnimated]);
+
+  // Legacy callback for AnimatedMacBook (no-op, phase system handles it)
+  const handleMacBookAnimationComplete = useCallback(() => {}, []);
 
   // Randomly pick 3 suggestions from the 7 on mount
   const [suggestions] = useState(() => {
@@ -1067,22 +1092,10 @@ function DemoSection() {
       <section
         ref={sectionRef}
         id="demo"
-        className="relative z-[2] overflow-x-hidden"
+        className="relative z-[2]"
       >
-        {/* Aurora animated background */}
-        <AuroraBackground />
-
-        {/* Hero title */}
-        <div className="relative pt-24 md:pt-32 pb-10 md:pb-14 px-4 sm:px-6 lg:px-8">
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.7 }}
-              animate={hasAnimated ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.7 }}
-              transition={{ duration: 1.2, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-              className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-[#F8935D]/[0.06] rounded-full blur-[120px]"
-            />
-          </div>
-
+        {/* Hero title — fixed: stays on screen while content scrolls over it */}
+        <motion.div ref={titleRef} style={{ opacity: titleOpacity }} className="fixed top-0 left-0 right-0 z-[1] pt-24 md:pt-32 pb-10 md:pb-14 px-4 sm:px-6 lg:px-8">
           <div className="relative text-center max-w-4xl mx-auto">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] 2xl:text-[4rem] font-bold tracking-tight flex flex-col items-center gap-0 [&>span]:-my-[0.2em]">
               <span className="block">
@@ -1130,30 +1143,42 @@ function DemoSection() {
               transition={{
                 duration: 0.6,
                 delay: hasAnimated ? 0.25 : 0,
-                ease: [0.16, 1, 0.3, 1],
+                ease: cinematicEase,
               }}
               className="mt-8 md:mt-10 text-gray-500 text-base md:text-lg lg:text-xl max-w-2xl mx-auto leading-relaxed"
             >
               Décrivez votre objectif. Posty fait le reste.
             </motion.p>
           </div>
-        </div>
+        </motion.div>
 
-        {/* Content */}
-        <div className="relative">
+        {/* Spacer: compensates for the fixed title removed from document flow */}
+        <div style={{ height: titleHeight }} />
 
+        {/* Content — cinematic reveal: starts high + clipped, descends into place */}
+        {/* z-[3] scrolls over the fixed title — transparent so aurora shows through */}
+        <motion.div
+          className="relative z-[3] overflow-x-hidden"
+          initial={alreadyPlayed ? undefined : { y: -180 }}
+          animate={
+            heroPhase === "init" || heroPhase === "opening"
+              ? { y: -180 }
+              : { y: 0 }
+          }
+          transition={{ duration: 1.2, ease: cinematicEase }}
+        >
           <div className="relative">
 
             <div className="relative z-10 px-4 sm:px-6 lg:px-8 pb-12">
 
-          {/* Interactive View Mode Tabs — étiquettes collées au bloc */}
+          {/* Interactive View Mode Tabs */}
           <motion.div
-            initial={{ opacity: 0, y: 12 }}
+            initial={alreadyPlayed ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
             animate={hasAnimated ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
             transition={{
               duration: 0.5,
-              delay: hasAnimated ? 0.45 : 0,
-              ease: [0.16, 1, 0.3, 1],
+              delay: hasAnimated ? 0.3 : 0,
+              ease: cinematicEase,
             }}
             className="flex justify-center max-w-[1084px] mx-auto"
           >
@@ -1212,7 +1237,7 @@ function DemoSection() {
               <div className="flex items-center justify-between px-5 md:px-6 py-3.5 md:py-4 border-b border-gray-100 bg-gradient-to-b from-gray-50/80 to-white">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl overflow-hidden shadow-sm ring-1 ring-gray-100">
-                    <Image src="/logo.jpg" alt="Posty" width={40} height={40} className="w-full h-full object-cover" />
+                    <Image src="/logo.png" alt="Posty" width={40} height={40} className="w-full h-full object-cover" />
                   </div>
                   <div>
                     <p className="text-gray-900 font-semibold text-sm md:text-base">Posty</p>
@@ -1278,7 +1303,7 @@ function DemoSection() {
                 {/* Initial state — centered logo + numbered suggestions + input */}
                 {!demoUsed && showCard && (
                   <motion.div
-                    initial={{ opacity: 0 }}
+                    initial={alreadyPlayed ? false : { opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.5 }}
                     className="flex-1 flex flex-col"
@@ -1287,17 +1312,17 @@ function DemoSection() {
                     <div className="flex-1 flex flex-col items-center justify-center">
                       {/* Posty logo */}
                       <motion.div
-                        initial={{ opacity: 0, scale: 0.8 }}
+                        initial={alreadyPlayed ? false : { opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.5, delay: 0.1, ease: premiumEase }}
                         className="w-14 h-14 md:w-16 md:h-16 rounded-2xl overflow-hidden shadow-lg shadow-[#F8935D]/15 ring-1 ring-gray-100 mb-5"
                       >
-                        <Image src="/logo.jpg" alt="Posty" width={64} height={64} className="w-full h-full object-cover" />
+                        <Image src="/logo.png" alt="Posty" width={64} height={64} className="w-full h-full object-cover" />
                       </motion.div>
 
                       {/* Instructional text */}
                       <motion.div
-                        initial={{ opacity: 0, y: 8 }}
+                        initial={alreadyPlayed ? false : { opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.4, delay: 0.15, ease: premiumEase }}
                         className="flex flex-col items-center mb-6 md:mb-8"
@@ -1313,7 +1338,7 @@ function DemoSection() {
                         {suggestions.map((suggestion, i) => (
                           <motion.button
                             key={suggestion.label}
-                            initial={{ opacity: 0, y: 10 }}
+                            initial={alreadyPlayed ? false : { opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.3, delay: 0.2 + i * 0.08, ease: premiumEase }}
                             onClick={() => handleSend(suggestion.text)}
@@ -1331,14 +1356,14 @@ function DemoSection() {
                     </div>
 
                     {/* Input bar — matches /app UniversalChatInput style */}
-                    <form onSubmit={handleSubmit} className="relative mt-6">
+                    <form onSubmit={handleSubmit} className="light-input relative mt-6">
                       <div className="relative rounded-[20px] border border-gray-200 bg-white shadow-sm focus-within:border-[#F8935D]/50 focus-within:ring-2 focus-within:ring-[#F8935D]/20 transition-all duration-200">
                         <input
                           type="text"
                           value={inputValue}
                           onChange={(e) => setInputValue(e.target.value)}
                           placeholder="Quel est votre objectif ? Ex: générer des leads en consulting..."
-                          className="w-full text-sm md:text-[15px] text-gray-900 placeholder-gray-400 bg-transparent py-3.5 md:py-4 pl-5 pr-16 rounded-[20px] focus:outline-none"
+                          className="w-full text-sm md:text-[15px] placeholder-gray-400 bg-transparent py-3.5 md:py-4 pl-5 pr-16 rounded-[20px] focus:outline-none"
                           disabled={isStreaming}
                         />
                         {/* Send button — right side */}
@@ -1368,17 +1393,26 @@ function DemoSection() {
             )}
 
             {viewMode === "preview" && (
-              <div className="relative">
+              <motion.div
+                className="relative"
+                initial={alreadyPlayed ? undefined : { clipPath: "inset(50% 0 50% 0)" }}
+                animate={
+                  heroPhase === "init"
+                    ? { clipPath: "inset(50% 0 50% 0)" }
+                    : { clipPath: "inset(0% 0 0% 0)" }
+                }
+                transition={{ duration: 1, ease: cinematicEase }}
+              >
                 <AnimatedMacBook
                   isVisible={viewMode === "preview"}
                   onAnimationComplete={handleMacBookAnimationComplete}
                 />
-              </div>
+              </motion.div>
             )}
 
             </div> {/* close content-inner (relative z-10) */}
           </div> {/* close content-bg (relative) */}
-        </div> {/* close content-layer (z-[5]) */}
+        </motion.div> {/* close cinematic content wrapper (motion.div with translateY) */}
       </section>
 
       {/* ================================================================== */}
@@ -1405,7 +1439,7 @@ function DemoSection() {
               </button>
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl overflow-hidden shadow-sm">
-                  <Image src="/logo.jpg" alt="Posty" width={36} height={36} className="w-full h-full object-cover" />
+                  <Image src="/logo.png" alt="Posty" width={36} height={36} className="w-full h-full object-cover" />
                 </div>
                 <div>
                   <p className="text-gray-900 font-semibold text-sm">Posty</p>
@@ -1442,11 +1476,8 @@ function DemoSection() {
                   transition={{ duration: 0.35, delay: 0.15, ease: premiumEase }}
                   className="flex gap-3"
                 >
-                  <div
-                    className="w-8 h-8 md:w-9 md:h-9 rounded-lg flex items-center justify-center flex-shrink-0 shadow-md shadow-[#F8935D]/20 mt-0.5"
-                    style={{ background: colors.gradient }}
-                  >
-                    <span className="text-white font-bold text-xs">P</span>
+                  <div className="w-8 h-8 md:w-9 md:h-9 rounded-lg overflow-hidden flex-shrink-0 shadow-md shadow-[#F8935D]/20 mt-0.5">
+                    <Image src="/logo.png" alt="Posty" width={36} height={36} className="w-full h-full object-cover" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl rounded-tl-sm">
@@ -2630,21 +2661,19 @@ function TargetAudienceSection() {
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[70%] h-[40%] bg-gradient-to-r from-cyan-200/15 via-violet-200/10 to-amber-200/15 rounded-full blur-[180px]"
         />
 
-        {/* Floating luminous particles */}
+        {/* Silver luminous particles */}
         {!skipInfinite && [
-          { top: "18%", left: "12%", d: 5.2, del: 0 },
-          { top: "32%", left: "78%", d: 6.8, del: 1.2 },
-          { top: "55%", left: "25%", d: 4.5, del: 2.1 },
-          { top: "72%", left: "65%", d: 7.2, del: 0.8 },
-          { top: "22%", left: "52%", d: 5.8, del: 3.0 },
-          { top: "68%", left: "88%", d: 6.0, del: 1.8 },
-          { top: "45%", left: "8%", d: 5.5, del: 2.6 },
+          { top: "18%", left: "10%", d: 7, del: 0, s: 2 },
+          { top: "32%", left: "82%", d: 9, del: 1.5, s: 3 },
+          { top: "55%", left: "22%", d: 6, del: 2.5, s: 2 },
+          { top: "72%", left: "68%", d: 8, del: 1, s: 2 },
+          { top: "45%", left: "6%", d: 7.5, del: 3, s: 3 },
         ].map((p, i) => (
           <motion.div
             key={i}
-            className="absolute w-[3px] h-[3px] rounded-full bg-gray-400/30"
-            style={{ top: p.top, left: p.left }}
-            animate={{ y: [0, -25, 0], opacity: [0.15, 0.5, 0.15] }}
+            className="absolute rounded-full"
+            style={{ top: p.top, left: p.left, width: p.s, height: p.s, background: "radial-gradient(circle, rgba(200,200,210,0.5) 0%, rgba(200,200,210,0) 70%)" }}
+            animate={{ y: [0, -15, 0], opacity: [0.1, 0.35, 0.1] }}
             transition={{ duration: p.d, repeat: Infinity, ease: "easeInOut", delay: p.del }}
           />
         ))}
@@ -3104,7 +3133,7 @@ function MockupContextProfile() {
 const FEATURES: FeatureConfig[] = [
   {
     title: "1 post, 4 plateformes",
-    description: "Publiez simultanément sur LinkedIn, Reddit, Threads et Facebook. Un seul contenu, une audience 4x plus large — sans effort supplémentaire.",
+    description: "Publiez simultanément sur LinkedIn, Threads et Facebook — et bientôt Reddit. Un seul contenu, une audience démultipliée sans effort.",
     mockup: <MockupMultiPlatform />,
     badge: "Multi-plateforme",
     tierBadge: "Max",
@@ -3246,7 +3275,7 @@ function FeatureCard({ feature, index }: { feature: FeatureConfig; index: number
         className={`
           relative bg-gradient-to-br ${feature.color.bg}
           border ${feature.color.border} rounded-[clamp(1rem,2vw,1.5rem)]
-          p-[clamp(1.25rem,2.5vw,2rem)]
+          px-[clamp(1.25rem,2.5vw,2rem)] py-[clamp(1rem,1.8vw,1.5rem)]
           shadow-sm hover:shadow-xl ${feature.color.glow}
           transition-shadow duration-300
         `}
@@ -3260,8 +3289,8 @@ function FeatureCard({ feature, index }: { feature: FeatureConfig; index: number
         {/* Inner flex layout: image + content */}
         <div className={`relative z-10 flex flex-col ${isEven ? "lg:flex-row" : "lg:flex-row-reverse"} gap-[clamp(1.5rem,3vw,2rem)] items-center`}>
 
-        {/* Visual — Centered Mockup */}
-        <div className="w-full lg:w-[42%] flex-shrink-0 flex items-center justify-center relative">
+        {/* Visual — Centered Mockup — overflows card vertically for premium feel */}
+        <div className="w-full lg:w-[42%] flex-shrink-0 flex items-center justify-center relative lg:my-[clamp(-1.5rem,-2vw,-2.5rem)]">
 
           {/* App mockup — compact, uniform size */}
           {feature.mockup && (
@@ -3274,7 +3303,7 @@ function FeatureCard({ feature, index }: { feature: FeatureConfig; index: number
               style={{ maxWidth: "clamp(13rem, 22vw, 20rem)" }}
             >
               <div
-                className="w-full rounded-xl overflow-hidden shadow-lg ring-1 ring-black/[0.06]"
+                className="w-full rounded-xl overflow-hidden shadow-xl ring-1 ring-black/[0.08]"
                 style={{ aspectRatio: "4 / 5", transform: isEven ? "rotate(2deg)" : "rotate(-2deg)" }}
               >
                 {feature.mockup}
@@ -3365,7 +3394,7 @@ function FeatureCard({ feature, index }: { feature: FeatureConfig; index: number
 function FeaturesSection() {
   const isMobile = useIsMobile();
   return (
-    <section id="features" className="py-[clamp(2.5rem,5vw,4.5rem)] px-[clamp(1rem,4vw,3rem)] bg-gradient-to-b from-[#FEF3EE] via-[#FAE8DE]/30 to-[#FEF3EE] overflow-hidden">
+    <section id="features" className="py-[clamp(1.5rem,3vw,2.5rem)] px-[clamp(1rem,4vw,3rem)] overflow-hidden">
       <div className="w-full max-w-[min(90vw,67.75rem)] mx-auto">
         {/* Section Header */}
         <motion.div
@@ -3373,7 +3402,7 @@ function FeaturesSection() {
           whileInView={{ opacity: 1, y: 0, scale: 1, ...(isMobile ? {} : { filter: "blur(0px)" }) }}
           viewport={{ once: true }}
           transition={{ duration: 0.7, ease: premiumEase }}
-          className="text-center mb-[clamp(2rem,3.5vw,3rem)]"
+          className="text-center mb-[clamp(1.25rem,2vw,1.75rem)]"
         >
           <h2 className="text-[clamp(1.75rem,4vw,3.25rem)] font-bold">
             <span className="text-silver-premium">Tout ce qu&apos;il vous faut pour</span>{" "}
@@ -3384,7 +3413,7 @@ function FeaturesSection() {
         </motion.div>
 
         {/* Features Grid with Connectors */}
-        <div className="relative space-y-[clamp(2rem,3vw,3rem)]">
+        <div className="relative space-y-[clamp(1.25rem,2vw,1.75rem)]">
           {/* Vertical connector line — desktop only */}
           <div className="hidden lg:block absolute left-1/2 top-0 bottom-0 -translate-x-1/2 pointer-events-none">
             <motion.div
@@ -3423,27 +3452,21 @@ const TESTIMONIALS = [
     name: "Alexandre M.",
     role: "Fondateur",
     company: "Agence B2B",
-    initials: "AM",
-    gradientFrom: "#F8935D",
-    gradientTo: "#F76B54",
+    image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&h=200&fit=crop&crop=face",
     quote: "Avant Posty, je publiais une fois par semaine sans savoir quoi dire. Aujourd'hui je poste chaque jour un contenu calibré, et LinkedIn est devenu mon premier canal d'acquisition.",
   },
   {
     name: "Sophie L.",
     role: "Directrice Marketing",
     company: "SaaS B2B",
-    initials: "SL",
-    gradientFrom: "#6366F1",
-    gradientTo: "#8B5CF6",
+    image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&h=200&fit=crop&crop=face",
     quote: "Mon équipe gagne plusieurs heures par semaine sur la création de contenu. On réinvestit ce temps dans la stratégie. Nos posts sont plus réguliers et plus engageants.",
   },
   {
     name: "Marc D.",
     role: "Consultant indépendant",
     company: "",
-    initials: "MD",
-    gradientFrom: "#059669",
-    gradientTo: "#10B981",
+    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face",
     quote: "Posty me génère un post par jour qui sonne comme moi, sans sacrifier le temps que je consacre à mes missions clients. LinkedIn est enfin rentable pour moi.",
   },
 ];
@@ -3451,7 +3474,7 @@ const TESTIMONIALS = [
 function TestimonialsSection() {
   const isMobile = useIsMobile();
   return (
-    <section id="testimonials" className="py-12 md:py-16 2xl:py-20 px-4 sm:px-6 lg:px-8 2xl:px-12 bg-gradient-to-b from-[#FAE8DE]/50 to-[#FEF3EE] overflow-hidden">
+    <section id="testimonials" className="py-12 md:py-16 2xl:py-20 px-4 sm:px-6 lg:px-8 2xl:px-12 overflow-hidden">
       <div className="max-w-[1084px] mx-auto">
         {/* Header */}
         <motion.div
@@ -3470,8 +3493,8 @@ function TestimonialsSection() {
           >
             <div className="flex -space-x-2">
               {TESTIMONIALS.slice(0, 3).map((t, i) => (
-                <div key={i} className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-[8px] font-bold text-white" style={{ background: `linear-gradient(135deg, ${t.gradientFrom}, ${t.gradientTo})` }}>
-                  {t.initials}
+                <div key={i} className="w-6 h-6 rounded-full border-2 border-white overflow-hidden">
+                  <Image src={t.image} alt="" width={24} height={24} className="w-full h-full object-cover" />
                 </div>
               ))}
             </div>
@@ -3501,13 +3524,10 @@ function TestimonialsSection() {
               className="group relative bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-[#F8935D]/30 transition-all duration-300 shadow-lg shadow-gray-100/60 hover:shadow-xl hover:shadow-[#F8935D]/10"
             >
               <div className="p-6">
-                {/* Author — initials avatar + name/role on same line */}
+                {/* Author — photo + name/role on same line */}
                 <div className="flex items-center gap-3 mb-4">
-                  <div
-                    className="w-10 h-10 rounded-full ring-2 ring-gray-100 group-hover:ring-[#F8935D]/30 transition-all duration-300 flex-shrink-0 flex items-center justify-center text-sm font-bold text-white"
-                    style={{ background: `linear-gradient(135deg, ${testimonial.gradientFrom}, ${testimonial.gradientTo})` }}
-                  >
-                    {testimonial.initials}
+                  <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-gray-100 group-hover:ring-[#F8935D]/30 transition-all duration-300 flex-shrink-0">
+                    <Image src={testimonial.image} alt={testimonial.name} width={40} height={40} className="w-full h-full object-cover" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-gray-900 font-semibold text-sm truncate">{testimonial.name}</p>
@@ -3560,7 +3580,7 @@ function BeforeAfterSection() {
   ];
 
   return (
-    <section className="py-12 md:py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-[#FEF3EE] to-white overflow-hidden">
+    <section className="py-12 md:py-16 px-4 sm:px-6 lg:px-8 overflow-hidden">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <motion.div
@@ -3789,7 +3809,7 @@ function FounderSection() {
     <section
       ref={sectionRef}
       id="founders"
-      className="relative py-14 md:py-20 lg:py-24 px-4 sm:px-6 lg:px-8 overflow-hidden bg-white"
+      className="relative py-14 md:py-20 lg:py-24 px-4 sm:px-6 lg:px-8 overflow-hidden"
     >
       {/* Zoom Container - applies scale effect */}
       <motion.div
@@ -4278,7 +4298,7 @@ function PricingSection() {
   };
 
   return (
-    <section id="pricing" className="py-16 md:py-24 2xl:py-28 px-4 sm:px-6 lg:px-8 2xl:px-12 bg-gradient-to-b from-[#FAE8DE]/50 to-[#FEF3EE] overflow-hidden">
+    <section id="pricing" className="py-16 md:py-24 2xl:py-28 px-4 sm:px-6 lg:px-8 2xl:px-12 overflow-hidden">
       <div className="max-w-6xl 2xl:max-w-7xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20, scale: 0.97, ...(isMobile ? {} : { filter: "blur(8px)" }) }}
@@ -4413,7 +4433,7 @@ function CtaBanner({
           transition={{ duration: 0.5, delay: 0.4 }}
           className="mt-5 text-xs text-gray-400"
         >
-          Essai gratuit 7 jours &middot; Sans engagement
+          Essai gratuit inclus &middot; Sans engagement
         </motion.p>
       </div>
     </section>
@@ -4527,8 +4547,8 @@ function FaqSection() {
   const isMobile = useIsMobile();
 
   return (
-    <section id="faq" className="py-16 md:py-24 2xl:py-28 px-4 sm:px-6 lg:px-8 2xl:px-12 bg-gradient-to-b from-[#FEF3EE] to-[#FFF8F5] overflow-hidden">
-      <div className="max-w-3xl 2xl:max-w-4xl mx-auto">
+    <section id="faq" className="relative py-16 md:py-24 2xl:py-28 px-4 sm:px-6 lg:px-8 2xl:px-12 overflow-hidden">
+      <div className="relative z-[1] max-w-3xl 2xl:max-w-4xl mx-auto">
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 20, scale: 0.97, ...(isMobile ? {} : { filter: "blur(8px)" }) }}
@@ -4584,7 +4604,7 @@ function FaqSection() {
 // =============================================================================
 function Footer() {
   return (
-    <footer className="border-t border-[#F0D5C8]/60 py-8 md:py-16 2xl:py-20 px-4 sm:px-6 lg:px-8 2xl:px-12 bg-[#FAE8DE]/40">
+    <footer className="border-t border-[#F0D5C8]/40 py-8 md:py-16 2xl:py-20 px-4 sm:px-6 lg:px-8 2xl:px-12">
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -4600,7 +4620,7 @@ function Footer() {
             <div className="flex-1">
               <Link href="/" className="flex items-center gap-2 mb-2">
                 <div className="w-7 h-7 rounded-lg overflow-hidden shadow-sm shadow-[#F8935D]/10">
-                  <Image src="/logo-avec fond.jpg" alt="Posty" width={28} height={28} className="w-full h-full object-cover" />
+                  <Image src="/logo.png" alt="Posty" width={28} height={28} className="w-full h-full object-cover" />
                 </div>
                 <span className="text-sm font-bold text-gray-900">Posty</span>
               </Link>
@@ -4662,7 +4682,7 @@ function Footer() {
             <div className="col-span-2">
               <Link href="/" className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-[#F8935D]/10">
-                  <Image src="/logo-avec fond.jpg" alt="Posty" width={40} height={40} className="w-full h-full object-cover" />
+                  <Image src="/logo.png" alt="Posty" width={40} height={40} className="w-full h-full object-cover" />
                 </div>
                 <span className="text-xl font-bold text-gray-900">Posty</span>
               </Link>
@@ -4757,7 +4777,7 @@ export default function LandingPage() {
 
   if (loading || user) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen bg-[#FEF3EE] flex items-center justify-center">
         <div className="w-10 h-10 border-4 border-[#F8935D] border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -4765,18 +4785,28 @@ export default function LandingPage() {
 
   return (
     <>
+      {/* Aurora background — fixed full viewport, stars stay in place on scroll */}
+      <AuroraBackground />
       <Navbar />
-      <div className="min-h-screen bg-white text-gray-900">
+      <div className="min-h-screen text-gray-900 relative">
         {/* Hero Demo Section — opening with descent animation */}
         <DemoSection />
 
-        {/* All sections with soft orange/salmon background — z-[5] to cover the fixed title */}
-        <div className="relative z-[5]">
+        {/* Opaque sections — z-[5] + bg to cover the fixed hero title */}
+        <div className="relative z-[5] bg-[#FEF3EE]">
           <FeaturesSection />
           <TestimonialsSection />
           <FounderSection />
           <PricingSection />
+        </div>
+
+        {/* FAQ — transparent so aurora stars show through */}
+        <div className="relative z-[5]">
           <FaqSection />
+        </div>
+
+        {/* Footer — opaque, no stars */}
+        <div className="relative z-[5] bg-[#FEF3EE]">
           <Footer />
         </div>
       </div>

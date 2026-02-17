@@ -16,7 +16,16 @@ import {
   PUBLISHING_FREQUENCIES,
   OnboardingData,
 } from "@/types";
-import { TRIAL_PERIOD_DAYS } from "@/lib/plans";
+import {
+  TRIAL_PERIOD_DAYS,
+  getPaidPlans,
+  getPlanCoreFeatures,
+  PLAN_TAGLINES,
+  getCTALabel,
+  isPlanTrialEligible,
+  PlanConfig,
+  PlanType,
+} from "@/lib/plans";
 import toast from "@/components/ui/Toast";
 
 // =============================================================================
@@ -165,85 +174,75 @@ function ProfileRecapScreen({
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ delay: 0.15, type: "spring", stiffness: 200, damping: 15 }}
-          className="w-14 h-14 mx-auto mb-4 rounded-full bg-emerald-100 flex items-center justify-center"
+          className="w-14 h-14 mx-auto mb-4 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center"
         >
-          <svg className="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-7 h-7 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
           </svg>
         </motion.div>
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">
-          Votre profil Posty est pret
+          Votre profil est prêt
         </h1>
         <p className="text-gray-400 text-sm">
           L&apos;IA va personnaliser chaque post selon vos choix
         </p>
       </motion.div>
 
-      {/* Dark card — matching landing page mockup style */}
+      {/* Light card */}
       <motion.div
         initial={{ opacity: 0, y: 30, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ delay: 0.2, duration: 0.6, ease: smoothEase }}
-        className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl p-5 sm:p-6 overflow-hidden shadow-xl"
+        className="relative bg-white rounded-2xl p-5 sm:p-6 overflow-hidden shadow-sm border border-gray-200/80 ring-1 ring-black/[0.03]"
       >
-        {/* Decorative glows */}
-        <div className="absolute top-0 left-0 w-32 h-32 bg-[#F8935D]/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 right-0 w-24 h-24 bg-[#F76B54]/10 rounded-full blur-2xl pointer-events-none" />
-
-        {/* Header row */}
-        <div className="flex items-center gap-2 mb-4 relative z-10">
-          <div className="w-2 h-2 rounded-full bg-[#F8935D]" />
-          <span className="text-[12px] text-gray-400 font-medium">Votre profil Posty</span>
-          <span className="ml-auto text-[11px] text-emerald-400 font-medium flex items-center gap-1">
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
-            Complete
+        {/* Avatar + name */}
+        <div className="flex items-center gap-3 mb-5 pb-4 border-b border-gray-100">
+          <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#F8935D] to-[#F76B54] flex items-center justify-center text-white font-bold text-sm shadow-sm flex-shrink-0">
+            {initials}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-[15px] text-gray-900 font-semibold truncate">{userName}</div>
+            <div className="text-[12px] text-gray-400 truncate">{data.profileType} &middot; {data.sector}</div>
+          </div>
+          <span className="text-[11px] text-emerald-500 font-medium flex items-center gap-1 flex-shrink-0">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+            Complet
           </span>
         </div>
 
-        {/* Avatar + name */}
-        <div className="flex items-center gap-3 mb-4 relative z-10 bg-white/[0.06] rounded-xl p-3 border border-white/[0.08]">
-          <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#F8935D] to-[#F76B54] flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-[#F8935D]/20 flex-shrink-0">
-            {initials}
-          </div>
-          <div className="min-w-0">
-            <div className="text-[14px] text-white font-semibold truncate">{userName}</div>
-            <div className="text-[11px] text-gray-400 truncate">{data.profileType} &middot; {data.sector}</div>
-          </div>
-        </div>
-
         {/* Profile fields */}
-        <div className="space-y-2 relative z-10">
+        <div className="space-y-1.5">
           {fields.map((field, i) => (
             <motion.div
               key={field.label}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.35 + i * 0.06, duration: 0.35, ease: smoothEase }}
-              className="flex items-center gap-3 bg-white/[0.06] rounded-lg px-3 py-2.5 border border-white/[0.06]"
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-gray-50/80 transition-colors"
             >
-              <div className="w-7 h-7 rounded-lg bg-white/[0.08] flex items-center justify-center text-[#F8935D] flex-shrink-0">
+              <div className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 flex-shrink-0">
                 {iconMap[field.icon]}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-[9px] text-gray-500 uppercase tracking-wider leading-none mb-0.5">{field.label}</div>
-                <div className="text-[12px] text-white/90 font-medium truncate">{field.value}</div>
+                <div className="text-[10px] text-gray-400 uppercase tracking-wider leading-none mb-0.5">{field.label}</div>
+                <div className="text-[13px] text-gray-900 font-medium truncate">{field.value}</div>
               </div>
             </motion.div>
           ))}
         </div>
 
         {/* Completion bar */}
-        <div className="mt-4 relative z-10">
+        <div className="mt-4 pt-4 border-t border-gray-100">
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[10px] text-gray-500">Personnalisation</span>
-            <span className="text-[10px] text-[#F8935D] font-semibold">100%</span>
+            <span className="text-[11px] text-gray-400 font-medium">Personnalisation</span>
+            <span className="text-[11px] text-emerald-500 font-semibold">100%</span>
           </div>
-          <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+          <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: "100%" }}
               transition={{ delay: 0.8, duration: 0.8, ease: "easeOut" }}
-              className="h-full bg-gradient-to-r from-[#F8935D] to-[#F76B54] rounded-full"
+              className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full"
             />
           </div>
         </div>
@@ -268,6 +267,7 @@ function ProfileRecapScreen({
 // =============================================================================
 function UpsellScreen({ onContinue, onUpgrade }: { onContinue: () => void; onUpgrade: (plan: "pro" | "max") => void }) {
   const [showReassurance, setShowReassurance] = useState(false);
+  const plans = getPaidPlans();
 
   // Auto-redirect after reassurance message
   useEffect(() => {
@@ -277,22 +277,6 @@ function UpsellScreen({ onContinue, onUpgrade }: { onContinue: () => void; onUpg
     }, 2500);
     return () => clearTimeout(timeout);
   }, [showReassurance, onContinue]);
-
-  const proFeatures = [
-    { text: "Personnalisation IA (secteur, rôle, style)", included: true },
-    { text: "Posts illimités", included: true },
-    { text: "Double génération (3/sem.)", included: true },
-    { text: "Historique complet", included: true },
-    { text: "Ciblage audience avancé", included: false },
-  ];
-
-  const maxFeatures = [
-    { text: "Tout le plan Pro inclus", included: true },
-    { text: "Double génération illimitée", included: true },
-    { text: "Ciblage audience avancé", included: true },
-    { text: "Ton de communication personnalisé", included: true },
-    { text: "Support prioritaire", included: true },
-  ];
 
   return (
     <motion.div
@@ -311,7 +295,6 @@ function UpsellScreen({ onContinue, onUpgrade }: { onContinue: () => void; onUpg
             transition={{ duration: 0.4, ease: smoothEase }}
             className="w-full max-w-md text-center"
           >
-            {/* Green checkmark */}
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
@@ -322,7 +305,6 @@ function UpsellScreen({ onContinue, onUpgrade }: { onContinue: () => void; onUpg
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
               </svg>
             </motion.div>
-
             <motion.h2
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -337,10 +319,8 @@ function UpsellScreen({ onContinue, onUpgrade }: { onContinue: () => void; onUpg
               transition={{ delay: 0.3, duration: 0.4, ease: smoothEase }}
               className="text-gray-500 text-base"
             >
-              Choisissez votre plan pour commencer a créer des posts.
+              Choisissez votre plan pour commencer à créer des posts.
             </motion.p>
-
-            {/* Loading indicator */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -360,146 +340,180 @@ function UpsellScreen({ onContinue, onUpgrade }: { onContinue: () => void; onUpg
             transition={{ duration: 0.3 }}
             className="w-full max-w-2xl"
           >
-            {/* Success check */}
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
-              className="mx-auto w-16 h-16 rounded-full bg-emerald-500 flex items-center justify-center mb-6"
-            >
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-              </svg>
-            </motion.div>
-
             {/* Title */}
             <motion.div
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2, ease: smoothEase }}
+              transition={{ duration: 0.5, delay: 0.1, ease: smoothEase }}
               className="text-center mb-8"
             >
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-600 text-xs font-semibold rounded-full mb-4 border border-emerald-200">
                 <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                Félicitations
+                Profil configuré
               </div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">
-                Tout est prêt.{" "}
-                <span className="text-primary">
-                  Activez la personnalisation IA.
-                </span>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                Choisissez votre plan
               </h1>
-              <p className="text-gray-500 text-sm sm:text-base max-w-lg mx-auto">
-                Posty va utiliser vos réponses pour générer des posts calibrés sur votre audience et votre marché.
+              <p className="text-gray-400 text-sm sm:text-base max-w-md mx-auto">
+                Un seul client signé rembourse votre abonnement.
               </p>
             </motion.div>
 
-            {/* Plan cards side by side */}
+            {/* Plan cards */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.35, ease: smoothEase }}
-              className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6"
+              transition={{ duration: 0.5, delay: 0.25, ease: smoothEase }}
+              className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 mb-6"
             >
-              {/* Pro card */}
-              <div className="relative bg-white rounded-2xl border-2 border-primary/30 p-5 shadow-sm hover:shadow-md hover:border-primary/50 transition-all duration-200">
-                {/* Popular badge */}
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="inline-flex items-center gap-1 px-3 py-1 bg-primary text-white text-xs font-semibold rounded-full shadow-sm">
-                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                    Populaire
-                  </span>
-                </div>
+              {plans.map((plan, index) => {
+                const isPopular = plan.highlight;
+                const isPremium = plan.premium;
+                const coreFeatures = getPlanCoreFeatures(plan);
+                const planInfo = PLAN_TAGLINES[plan.id];
+                const trialEligible = isPlanTrialEligible(plan.id);
 
-                <div className="text-center mt-2 mb-4">
-                  <h3 className="text-lg font-bold text-gray-900">Pro</h3>
-                  <div className="flex items-baseline justify-center gap-1 mt-1">
-                    <span className="text-3xl font-bold text-gray-900">12,90</span>
-                    <span className="text-gray-900 font-medium">€</span>
-                    <span className="text-gray-400 text-sm">/mois</span>
-                  </div>
-                </div>
+                return (
+                  <motion.div
+                    key={plan.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 + index * 0.12, duration: 0.45, ease: smoothEase }}
+                    className={`
+                      relative rounded-2xl overflow-hidden
+                      ${isPopular ? "ring-2 ring-[#F8935D]/60" : ""}
+                    `}
+                  >
+                    {/* Glow for popular */}
+                    {isPopular && (
+                      <>
+                        <div className="absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-[#F8935D] via-[#F76B54] to-[#F8935D] opacity-40 blur-lg" />
+                        <div className="absolute inset-0 rounded-2xl p-[2px] bg-gradient-to-br from-[#F8935D] via-[#F76B54] to-[#F8935D]">
+                          <div className="absolute inset-[2px] rounded-[14px] bg-white" />
+                        </div>
+                      </>
+                    )}
 
-                {/* Features */}
-                <ul className="space-y-2.5 mb-5">
-                  {proFeatures.map((feature, i) => (
-                    <li key={i} className="flex items-start gap-2">
-                      {feature.included ? (
-                        <svg className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      ) : (
-                        <svg className="w-4 h-4 text-gray-300 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M5 10a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1z" clipRule="evenodd" />
-                        </svg>
+                    {/* Glow for premium */}
+                    {isPremium && (
+                      <div className="absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 opacity-15 blur-md" />
+                    )}
+
+                    {/* Card content */}
+                    <div className={`
+                      relative p-5 sm:p-6 rounded-2xl flex flex-col h-full
+                      ${isPopular
+                        ? "bg-gradient-to-b from-[#F8935D]/8 via-white to-white"
+                        : isPremium
+                          ? "bg-gradient-to-b from-amber-500/5 via-white to-white border-2 border-amber-500/25"
+                          : "bg-white border border-gray-200"
+                      }
+                    `}>
+                      {/* Badge */}
+                      <div className="h-8 flex items-start justify-center mb-1">
+                        {isPopular && (
+                          <div className="relative">
+                            <div className="absolute inset-0 bg-[#F8935D] rounded-full blur-md opacity-40" />
+                            <div className="relative px-3 py-1 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white text-xs font-semibold rounded-full shadow-md shadow-[#F8935D]/25 flex items-center gap-1.5">
+                              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                              </svg>
+                              Le plus populaire
+                            </div>
+                          </div>
+                        )}
+                        {isPremium && !isPopular && (
+                          <div className="px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-semibold rounded-full shadow-md shadow-amber-500/25 flex items-center gap-1.5">
+                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M5 2a2 2 0 00-2 2v14l3.5-2 3.5 2 3.5-2 3.5 2V4a2 2 0 00-2-2H5zm2.5 3a1.5 1.5 0 100 3 1.5 1.5 0 000-3zm6.207.293a1 1 0 00-1.414 0l-6 6a1 1 0 101.414 1.414l6-6a1 1 0 000-1.414zM12.5 10a1.5 1.5 0 100 3 1.5 1.5 0 000-3z" clipRule="evenodd" />
+                            </svg>
+                            Elite
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Plan name + tagline */}
+                      <div className="text-center mb-3">
+                        <h3 className={`text-xl font-bold mb-0.5 ${
+                          isPremium ? "text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400" : "text-gray-900"
+                        }`}>
+                          {plan.name}
+                        </h3>
+                        <p className="text-xs text-gray-500 line-clamp-1">{planInfo?.tagline}</p>
+                      </div>
+
+                      {/* Price */}
+                      <div className="text-center mb-4">
+                        <div className="flex items-baseline justify-center gap-0.5">
+                          <span className={`text-3xl sm:text-4xl font-bold tabular-nums ${
+                            isPremium ? "text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400" : "text-gray-900"
+                          }`}>
+                            {plan.price.monthly.toFixed(2).replace(".", ",")}
+                          </span>
+                          <span className="text-base text-gray-900 font-medium">€</span>
+                          <span className="text-gray-400 text-sm">/mois</span>
+                        </div>
+                      </div>
+
+                      {/* CTA button */}
+                      <button
+                        onClick={() => onUpgrade(plan.id as "pro" | "max")}
+                        className={`
+                          w-full py-3 px-4 font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 text-sm mb-4
+                          ${isPopular
+                            ? "bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white shadow-[#F8935D]/20 hover:shadow-lg hover:shadow-[#F8935D]/30"
+                            : isPremium
+                              ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-amber-500/20 hover:shadow-lg hover:shadow-amber-500/30"
+                              : "bg-gray-100 text-gray-900 hover:bg-gray-200"
+                          }
+                        `}
+                      >
+                        {getCTALabel(plan.id, false, trialEligible)}
+                      </button>
+
+                      {/* Trial / guarantee badge */}
+                      {trialEligible && (
+                        <p className="text-center text-xs text-gray-400 mb-4">
+                          Sans engagement · Annulation à tout moment
+                        </p>
                       )}
-                      <span className={`text-sm ${feature.included ? "text-gray-700" : "text-gray-400"}`}>
-                        {feature.text}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+                      {!trialEligible && (
+                        <p className="text-center text-xs text-gray-400 mb-4">
+                          Sans engagement · Annulation à tout moment
+                        </p>
+                      )}
 
-                <button
-                  onClick={() => onUpgrade("pro")}
-                  className="w-full py-3 px-4 bg-primary hover:bg-primary-hover text-white font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 text-sm"
-                >
-                  Essayer {TRIAL_PERIOD_DAYS} jours gratuitement
-                </button>
-                <div className="mt-2 flex flex-col items-center gap-1">
-                  <p className="flex items-center gap-1 text-xs text-primary font-medium">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
-                    Sans CB pendant l'essai
-                  </p>
-                  <p className="text-xs text-gray-400">Annulation a tout moment</p>
-                </div>
-              </div>
-
-              {/* Max card */}
-              <div className="relative bg-white rounded-2xl border border-gray-200 p-5 shadow-sm hover:shadow-md hover:border-gray-300 transition-all duration-200">
-                <div className="text-center mb-4">
-                  <h3 className="text-lg font-bold text-amber-600">Max</h3>
-                  <div className="flex items-baseline justify-center gap-1 mt-1">
-                    <span className="text-3xl font-bold text-gray-900">19,90</span>
-                    <span className="text-gray-900 font-medium">€</span>
-                    <span className="text-gray-400 text-sm">/mois</span>
-                  </div>
-                </div>
-
-                {/* Features */}
-                <ul className="space-y-2.5 mb-5">
-                  {maxFeatures.map((feature, i) => (
-                    <li key={i} className="flex items-start gap-2">
-                      <svg className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                      <span className="text-sm text-gray-700">{feature.text}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <button
-                  onClick={() => onUpgrade("max")}
-                  className="w-full py-3 px-4 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 text-sm"
-                >
-                  Essayer {TRIAL_PERIOD_DAYS} jours gratuitement
-                </button>
-                <div className="mt-2 flex flex-col items-center gap-1">
-                  <p className="flex items-center gap-1 text-xs text-amber-600 font-medium">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
-                    Sans CB pendant l'essai
-                  </p>
-                  <p className="text-xs text-gray-400">Annulation a tout moment</p>
-                </div>
-              </div>
+                      {/* Features list */}
+                      <div className="pt-4 border-t border-gray-100 flex-1">
+                        <ul className="space-y-2.5">
+                          {coreFeatures.map((feature, idx) => (
+                            <li key={idx} className="flex items-start gap-2.5">
+                              {feature.included ? (
+                                <div className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 bg-green-500/15 text-green-600">
+                                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                  </svg>
+                                </div>
+                              ) : (
+                                <div className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 bg-gray-100 text-gray-300">
+                                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M5 10a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1z" clipRule="evenodd" />
+                                  </svg>
+                                </div>
+                              )}
+                              <span className={`text-sm ${feature.included ? "text-gray-700" : "text-gray-400"}`}>
+                                {feature.text}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
             </motion.div>
 
             {/* Later CTA */}
@@ -646,11 +660,12 @@ export default function OnboardingPage() {
 
   const handleUpsellContinue = () => {
     // New users must start a trial — redirect to subscription page (no free plan)
-    router.push("/subscription");
+    // Use replace to prevent back-navigation bypass
+    router.replace("/subscription");
   };
 
   const handleUpsellUpgrade = (plan: "pro" | "max") => {
-    router.push(`/subscription?plan=${plan}`);
+    router.replace(`/subscription?plan=${plan}`);
   };
 
   const step = STEPS[currentStep];
@@ -693,7 +708,7 @@ export default function OnboardingPage() {
       <header className="p-4 sm:p-6 flex items-center justify-between max-w-2xl mx-auto w-full flex-shrink-0">
         <Link href="/" className="inline-flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-xl overflow-hidden shadow-sm">
-            <Image src="/logo-avec fond.jpg" alt="Posty" width={36} height={36} className="w-full h-full object-cover" />
+            <Image src="/logo.png" alt="Posty" width={36} height={36} className="w-full h-full object-cover" />
           </div>
           <span className="font-bold text-gray-900 text-lg">Posty</span>
         </Link>

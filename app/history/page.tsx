@@ -354,7 +354,7 @@ function HistoryContent() {
         - app-content-wrapper: allows flex child to scroll
         - app-scroll-container: defines scrollable area
       */}
-      <div className="flex flex-col h-full bg-light-bg dark:bg-dark-bg app-content-wrapper">
+      <div className="flex flex-col h-full bg-background-warm dark:bg-dark-bg app-content-wrapper">
         {/*
           Responsive container with smooth scroll and pull-to-refresh (mobile only)
           - Mobile: Full height with native scroll + pull-to-refresh
@@ -362,7 +362,7 @@ function HistoryContent() {
         */}
         <PullToRefresh
           onRefresh={loadPosts}
-          className="flex-1 min-h-0 bg-light-bg dark:bg-dark-bg scroll-smooth app-scroll-container"
+          className="flex-1 min-h-0 bg-background-warm dark:bg-dark-bg scroll-smooth app-scroll-container"
           disabled={isLoading}
         >
         {/*
@@ -394,7 +394,7 @@ function HistoryContent() {
             <div>
               <h1
                 className="
-                text-xl font-bold text-gray-900 dark:text-white
+                text-xl font-bold text-silver-shimmer dark:text-white
                 md:text-2xl
                 lg:text-3xl
               "
@@ -403,40 +403,13 @@ function HistoryContent() {
               </h1>
               <p
                 className="
-                text-sm text-gray-600 dark:text-text-muted mt-1
+                text-sm text-gray-500 dark:text-text-muted mt-1
                 md:text-base md:mt-1.5
               "
               >
                 <span className="font-medium text-gray-900 dark:text-white">{filteredPosts.length}</span> {filteredPosts.length !== 1 ? t.history.postsGenerated : t.history.postGenerated}
               </p>
             </div>
-            {/* New post button - Clean professional version */}
-            <Link
-              href="/app"
-              className="
-                inline-flex items-center gap-2 px-4 py-2.5
-                bg-primary hover:bg-primary-hover
-                text-white text-sm font-semibold
-                rounded-xl shadow-sm hover:shadow-md
-                transition-all duration-200
-              "
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2.5}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
-              <span className="hidden md:inline">{t.history.newPost}</span>
-              <span className="md:hidden">{t.history.new}</span>
-            </Link>
           </motion.div>
 
           {/* Search - Premium responsive sizing */}
@@ -482,8 +455,8 @@ function HistoryContent() {
                 rounded-2xl
                 text-sm md:text-base
                 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-text-muted
-                focus:outline-none focus:border-violet-400 dark:focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20
-                shadow-sm hover:shadow-md hover:border-violet-200 dark:hover:border-violet-500/30
+                focus:outline-none focus:border-primary dark:focus:border-primary/50 focus:ring-2 focus:ring-primary/20
+                shadow-sm hover:shadow-md hover:border-[#F8935D]/30 dark:hover:border-primary/30
                 transition-all duration-200
               "
             />
@@ -559,7 +532,7 @@ function HistoryContent() {
               <p
                 className="
                 text-sm md:text-base
-                text-gray-600 dark:text-text-muted mb-8
+                text-gray-500 dark:text-text-muted mb-8
                 max-w-sm mx-auto
               "
               >
@@ -610,13 +583,13 @@ function HistoryContent() {
                       sticky top-0 z-10
                       flex items-center gap-3
                       mb-4 py-2
-                      bg-light-bg/95 dark:bg-dark-bg/95 backdrop-blur-sm
+                      bg-background-warm/95 dark:bg-dark-bg/95 backdrop-blur-sm
                       -mx-4 px-4
                     "
                     >
                       <h2 className="text-sm md:text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                         {group.isPinnedGroup && (
-                          <svg className="w-4 h-4 text-amber-500" fill="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4 text-primary" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M16 4a1 1 0 0 1 1 1v3.586l1.707 1.707a1 1 0 0 1 .293.707v2a1 1 0 0 1-1 1h-4v6a1 1 0 0 1-2 0v-6H8a1 1 0 0 1-1-1v-2a1 1 0 0 1 .293-.707L9 8.586V5a1 1 0 0 1 1-1h6z"/>
                           </svg>
                         )}

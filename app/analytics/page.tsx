@@ -787,20 +787,12 @@ function AnalyticsContent() {
             </button>
 
             {/* Page title - Centered */}
-            <h1 className="absolute left-1/2 -translate-x-1/2 text-lg font-semibold text-gray-900 dark:text-white">
+            <h1 className="absolute left-1/2 -translate-x-1/2 text-lg font-semibold text-silver-shimmer dark:text-white">
               Analytics
             </h1>
 
-            {/* Actions - Right side */}
-            <Link
-              href="/app"
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#F8935D] bg-[#F8935D]/10 rounded-xl hover:bg-[#F8935D]/20 transition-colors z-10"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              <span className="hidden sm:inline">Nouveau post</span>
-            </Link>
+            {/* Spacer for layout symmetry */}
+            <div className="w-[72px] sm:w-[88px]" />
           </div>
         </div>
       </header>
@@ -822,7 +814,7 @@ function AnalyticsContent() {
               className="flex items-center justify-between mb-8"
             >
               <div>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Vue d'ensemble</h2>
+                <h2 className="text-lg font-semibold text-silver-solid dark:text-white">Vue d'ensemble</h2>
                 <p className="text-sm text-gray-500">{filteredPosts.length} publication{filteredPosts.length > 1 ? 's' : ''} sur cette periode</p>
               </div>
               <PeriodFilter selected={periodFilter} onChange={setPeriodFilter} />
@@ -927,7 +919,7 @@ function AnalyticsContent() {
 
             {/* Posts List */}
             <div className="mb-6">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              <h2 className="text-lg font-semibold text-silver-solid dark:text-white mb-4">
                 Vos publications ({filteredPosts.length})
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -87,7 +87,7 @@ export default function ConnectionLoader({
           {/* Logo image - clean, no background */}
           <div className="relative w-20 h-20 lg:w-24 lg:h-24 flex items-center justify-center">
             <img
-              src="/logo.jpg"
+              src="/logo.png"
               alt="Posty Logo"
               className="w-full h-full object-contain drop-shadow-2xl"
             />

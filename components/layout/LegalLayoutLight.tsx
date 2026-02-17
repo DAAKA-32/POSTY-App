@@ -54,7 +54,7 @@ export default function LegalLayoutLight({ children, title }: LegalLayoutLightPr
           <Link href="/" className="flex items-center gap-3 no-underline">
             <div className="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center">
               <img
-                src="/logo.jpg"
+                src="/logo.png"
                 alt="Posty Logo"
                 className="w-full h-full object-contain"
               />
@@ -133,7 +133,7 @@ export default function LegalLayoutLight({ children, title }: LegalLayoutLightPr
             <div className="flex items-center gap-3">
               <div className="w-7 h-7 rounded-lg overflow-hidden flex items-center justify-center">
                 <img
-                  src="/logo.jpg"
+                  src="/logo.png"
                   alt="Posty Logo"
                   className="w-full h-full object-contain"
                   loading="lazy"

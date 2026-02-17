@@ -21,7 +21,7 @@ export interface OpenAIConfig {
   maxTokens?: number;
 }
 
-export type OpenAIModel = "gpt-4" | "gpt-4-turbo" | "gpt-3.5-turbo";
+export type OpenAIModel = "gpt-4" | "gpt-4o" | "gpt-4-turbo" | "gpt-3.5-turbo";
 
 export interface GeneratePostOptions {
   prompt: string;

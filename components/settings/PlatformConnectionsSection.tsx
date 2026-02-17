@@ -215,16 +215,16 @@ export default function PlatformConnectionsSection() {
         className={`
           relative p-4 rounded-xl border transition-all duration-200
           ${hasAccess
-            ? "bg-dark-bg border-dark-border hover:border-primary/20"
-            : "bg-dark-bg/50 border-dark-border/50"
+            ? "bg-gray-50 dark:bg-dark-bg border-gray-200 dark:border-dark-border hover:border-primary/20"
+            : "bg-gray-50/50 dark:bg-dark-bg/50 border-gray-200/50 dark:border-dark-border/50"
           }
         `}
       >
         {/* Locked overlay for inaccessible platforms */}
         {!hasAccess && (
-          <div className="absolute inset-0 bg-dark-bg/60 backdrop-blur-[1px] rounded-xl flex items-center justify-center z-10">
+          <div className="absolute inset-0 bg-white/60 dark:bg-dark-bg/60 backdrop-blur-[1px] rounded-xl flex items-center justify-center z-10">
             <div className="text-center px-4">
-              <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-dark-hover flex items-center justify-center">
+              <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-gray-100 dark:bg-dark-hover flex items-center justify-center">
                 <svg className="w-5 h-5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
@@ -249,7 +249,7 @@ export default function PlatformConnectionsSection() {
               <Icon className={`w-5 h-5 ${colors.text}`} />
             </div>
             <div>
-              <h3 className="text-sm font-medium text-white">{info.name}</h3>
+              <h3 className="text-sm font-medium text-gray-900 dark:text-white">{info.name}</h3>
               <p className="text-xs text-text-muted">{info.description}</p>
             </div>
           </div>
@@ -260,7 +260,7 @@ export default function PlatformConnectionsSection() {
 
         {/* Connection status / action */}
         {hasAccess && (
-          <div className="mt-3 pt-3 border-t border-dark-border">
+          <div className="mt-3 pt-3 border-t border-gray-200 dark:border-dark-border">
             {isLoading ? (
               <div className="flex items-center gap-2">
                 <motion.div
@@ -278,7 +278,7 @@ export default function PlatformConnectionsSection() {
                     <img
                       src={connectionData.profilePicture}
                       alt={connectionData.profileName}
-                      className="w-8 h-8 rounded-full object-cover border-2 border-dark-border"
+                      className="w-8 h-8 rounded-full object-cover border-2 border-gray-200 dark:border-dark-border"
                     />
                   ) : (
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center ${colors.bg}`}>
@@ -286,7 +286,7 @@ export default function PlatformConnectionsSection() {
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-white font-medium truncate">
+                    <p className="text-sm text-gray-900 dark:text-white font-medium truncate">
                       {connectionData.profileName}
                     </p>
                     {"username" in connectionData && (connectionData as any).username && (
@@ -391,7 +391,7 @@ export default function PlatformConnectionsSection() {
         variants={sectionVariants}
         initial="hidden"
         animate="visible"
-        className="group bg-dark-card border border-dark-border hover:border-primary/20 rounded-xl p-4 md:p-5 lg:p-6 transition-all duration-300 hover:shadow-[0_0_30px_rgba(232,147,77,0.08)]"
+        className="group bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border hover:border-primary/20 rounded-xl p-4 md:p-5 lg:p-6 transition-all duration-300 hover:shadow-[0_0_30px_rgba(232,147,77,0.08)]"
       >
         {/* Section Header */}
         <div className="flex items-center justify-between mb-5 lg:mb-6">
@@ -402,7 +402,7 @@ export default function PlatformConnectionsSection() {
               </svg>
             </div>
             <div>
-              <h2 className="text-base lg:text-lg font-semibold text-white">Plateformes connectées</h2>
+              <h2 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white">Plateformes connectées</h2>
               <p className="text-xs lg:text-sm text-text-muted mt-0.5">
                 Gérez vos connexions aux réseaux sociaux
               </p>
@@ -420,7 +420,7 @@ export default function PlatformConnectionsSection() {
         {/* Connection Limit Info */}
         <motion.div
           variants={itemVariants}
-          className="flex items-center justify-between p-3 mb-5 bg-dark-bg rounded-xl border border-dark-border"
+          className="flex items-center justify-between p-3 mb-5 bg-gray-50 dark:bg-dark-bg rounded-xl border border-gray-200 dark:border-dark-border"
         >
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -429,7 +429,7 @@ export default function PlatformConnectionsSection() {
               </svg>
             </div>
             <div>
-              <p className="text-sm text-white font-medium">Connexions utilisées</p>
+              <p className="text-sm text-gray-900 dark:text-white font-medium">Connexions utilisées</p>
               <p className="text-xs text-text-muted">
                 {currentPlan === "max" ? "Illimitées" : `${connectedCount} sur ${currentPlan === "pro" ? 2 : 1}`}
               </p>
@@ -453,10 +453,10 @@ export default function PlatformConnectionsSection() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
             <div>
-              <p className="text-sm text-white font-medium">Débloquez plus de plateformes</p>
+              <p className="text-sm text-gray-900 dark:text-white font-medium">Débloquez plus de plateformes</p>
               <p className="text-xs text-text-muted mt-1">
-                Passez à <span className="text-primary font-medium">Pro</span> pour Reddit ou{" "}
-                <span className="text-accent font-medium">Max</span> pour toutes les plateformes.
+                Passez à <span className="text-primary font-medium">Pro</span> ou{" "}
+                <span className="text-accent font-medium">Max</span> pour débloquer toutes les plateformes.
               </p>
               <Link
                 href="/subscription"
@@ -513,9 +513,9 @@ export default function PlatformConnectionsSection() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-dark-card border border-dark-border rounded-2xl p-6 max-w-sm w-full"
+              className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-6 max-w-sm w-full shadow-xl"
             >
-              <h3 className="text-lg font-semibold text-white mb-2">Déconnecter Facebook</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Déconnecter Facebook</h3>
               <p className="text-sm text-text-muted mb-4">
                 Voulez-vous déconnecter {facebookProfileName || "votre compte Facebook"} ? Vous pourrez vous reconnecter à tout moment.
               </p>
@@ -547,9 +547,9 @@ export default function PlatformConnectionsSection() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-dark-card border border-dark-border rounded-2xl p-6 max-w-sm w-full"
+              className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-6 max-w-sm w-full shadow-xl"
             >
-              <h3 className="text-lg font-semibold text-white mb-2">Déconnecter Threads</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Déconnecter Threads</h3>
               <p className="text-sm text-text-muted mb-4">
                 Voulez-vous déconnecter {threadsUsername ? `@${threadsUsername}` : threadsProfileName || "votre compte Threads"} ? Vous pourrez vous reconnecter à tout moment.
               </p>

@@ -303,7 +303,7 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
-  const [confirmAge, setConfirmAge] = useState(false);
+  const [showConsentReminder, setShowConsentReminder] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
@@ -408,11 +408,8 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
         return;
       }
       if (!acceptTerms) {
-        setError(t.auth.acceptTermsRequired);
-        return;
-      }
-      if (!confirmAge) {
-        setError("Vous devez confirmer avoir au moins 18 ans.");
+        setShowConsentReminder(true);
+        setTimeout(() => setShowConsentReminder(false), 3000);
         return;
       }
     }
@@ -440,7 +437,7 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
     setEmail("");
     setPassword("");
     setAcceptTerms(false);
-    setConfirmAge(false);
+    setShowConsentReminder(false);
     setShowPassword(false);
     setError("");
   };
@@ -480,7 +477,7 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
         <div className="relative">
           <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg overflow-hidden">
             <img
-              src="/logo.jpg"
+              src="/logo.png"
               alt="Posty Logo"
               className="w-full h-full object-contain"
             />
@@ -503,7 +500,7 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
         transition={{ duration: prefersReducedMotion ? 0 : 0.5, delay: 0.1 }}
         className="text-center mb-4 sm:mb-6"
       >
-        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1.5 sm:mb-2 tracking-tight">
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-silver-vertical mb-1.5 sm:mb-2 tracking-tight">
           {mode === "login" ? t.auth.welcomeBack : t.auth.createAccount}
         </h1>
         <p className="text-gray-500 text-xs sm:text-sm max-w-[280px] mx-auto leading-relaxed">
@@ -713,33 +710,47 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
               )}
             </div>
 
-            {/* Terms checkbox - Signup only */}
+            {/* Unified consent checkbox - Signup only */}
             {mode === "signup" && (
-              <>
-                <PremiumCheckbox
-                  checked={acceptTerms}
-                  onChange={setAcceptTerms}
-                  prefersReducedMotion={prefersReducedMotion}
+              <div>
+                <motion.div
+                  animate={showConsentReminder && !acceptTerms ? {
+                    x: [0, -4, 4, -3, 3, 0],
+                  } : {}}
+                  transition={{ duration: 0.4 }}
                 >
-                  {t.auth.acceptTermsText}{" "}
-                  <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="text-warm-orange hover:underline">{t.common.terms}</a>
-                  {" "}{t.auth.andThe}{" "}
-                  <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-warm-orange hover:underline">{t.auth.privacyPolicyText}</a>
-                </PremiumCheckbox>
-                <PremiumCheckbox
-                  checked={confirmAge}
-                  onChange={setConfirmAge}
-                  prefersReducedMotion={prefersReducedMotion}
-                >
-                  Je confirme avoir au moins 18 ans
-                </PremiumCheckbox>
-              </>
+                  <PremiumCheckbox
+                    checked={acceptTerms}
+                    onChange={(checked) => { setAcceptTerms(checked); if (checked) setShowConsentReminder(false); }}
+                    prefersReducedMotion={prefersReducedMotion}
+                  >
+                    {t.auth.acceptTermsText}{" "}
+                    <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="text-warm-orange hover:underline">{t.common.terms}</a>
+                    {" "}{t.auth.andThe}{" "}
+                    <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-warm-orange hover:underline">{t.auth.privacyPolicyText}</a>
+                    {" "}et je confirme avoir au moins 18 ans
+                  </PremiumCheckbox>
+                </motion.div>
+                <AnimatePresence>
+                  {showConsentReminder && !acceptTerms && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      transition={{ duration: 0.2 }}
+                      className="mt-1.5 ml-[30px] text-[11px] text-warm-coral"
+                    >
+                      Veuillez accepter pour continuer
+                    </motion.p>
+                  )}
+                </AnimatePresence>
+              </div>
             )}
 
             {/* Submit button - Premium Warm Orange/Coral Gradient */}
             <motion.button
               type="submit"
-              disabled={isLoading || showSuccess || (mode === "signup" && (!acceptTerms || !confirmAge))}
+              disabled={isLoading || showSuccess || (mode === "signup" && !acceptTerms)}
               className="
                 relative w-full py-3.5 sm:py-4 rounded-xl sm:rounded-2xl font-semibold text-sm sm:text-base text-white
                 bg-gradient-to-r from-warm-orange via-warm-coral to-warm-orange
@@ -803,7 +814,8 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
             onError={(msg) => setError(msg)}
             onStartAuth={() => setError("")}
             label={mode === "login" ? t.auth.signInWithGoogle : t.auth.signUpWithGoogle}
-            requireConsent={mode === "signup"}
+            consentGiven={mode === "signup" ? acceptTerms : undefined}
+            onConsentMissing={() => { setShowConsentReminder(true); setTimeout(() => setShowConsentReminder(false), 3000); }}
           />
 
           {/* Toggle mode - Enhanced visibility for signup */}

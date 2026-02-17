@@ -390,7 +390,7 @@ export function ArticleJsonLd({
       name: seoConfig.brandName,
       logo: {
         "@type": "ImageObject",
-        url: `${seoConfig.siteUrl}/logo.jpg`,
+        url: `${seoConfig.siteUrl}/logo.png`,
       },
     },
     mainEntityOfPage: {
@@ -441,7 +441,7 @@ export function VideoJsonLd({
       name: seoConfig.brandName,
       logo: {
         "@type": "ImageObject",
-        url: `${seoConfig.siteUrl}/logo.jpg`,
+        url: `${seoConfig.siteUrl}/logo.png`,
       },
     },
   };
@@ -594,7 +594,7 @@ export function EnhancedOrganizationJsonLd() {
     url: seoConfig.siteUrl,
     logo: {
       "@type": "ImageObject",
-      url: `${seoConfig.siteUrl}/logo.jpg`,
+      url: `${seoConfig.siteUrl}/logo.png`,
       width: "512",
       height: "512",
     },
@@ -672,7 +672,7 @@ export function AboutPageJsonLd() {
     "@id": `${seoConfig.siteUrl}/#organization`,
     name: "POSTY",
     url: seoConfig.siteUrl,
-    logo: `${seoConfig.siteUrl}/logo.jpg`,
+    logo: `${seoConfig.siteUrl}/logo.png`,
     description: "POSTY est un générateur de posts LinkedIn alimenté par l'intelligence artificielle. Notre mission : démocratiser le contenu professionnel et automatiser le personal branding pour tous.",
     foundingDate: "2024",
     founder: {

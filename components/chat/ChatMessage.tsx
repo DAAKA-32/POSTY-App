@@ -136,7 +136,7 @@ const ChatMessage = memo(function ChatMessage({
           <div className="absolute -inset-1 bg-gradient-to-br from-primary/40 to-accent/40 rounded-xl opacity-0 group-hover/avatar:opacity-100 blur-md transition-opacity duration-300" />
           <div className="relative w-8 h-8 rounded-xl overflow-hidden shrink-0 shadow-md ring-1 ring-gray-200/50 dark:ring-dark-border/50">
             <img
-              src="/logo.jpg"
+              src="/logo.png"
               alt="Posty"
               className="w-full h-full object-cover"
             />
@@ -154,7 +154,7 @@ const ChatMessage = memo(function ChatMessage({
         {/* Sender name and timestamp */}
         <div className="flex items-center gap-2 mb-1.5 px-1">
           {isUser ? (
-            <span className="text-xs font-medium text-text-secondary">
+            <span className="text-xs font-medium text-gray-900 dark:text-gray-200">
               {userName || "Vous"}
             </span>
           ) : (
@@ -310,7 +310,7 @@ export function TypingIndicator() {
         />
         <div className="relative w-8 h-8 rounded-xl overflow-hidden shrink-0 shadow-md ring-1 ring-gray-200/50 dark:ring-dark-border/50">
           <img
-            src="/logo.jpg"
+            src="/logo.png"
             alt="Posty"
             className="w-full h-full object-cover"
           />

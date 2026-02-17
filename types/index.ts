@@ -235,6 +235,41 @@ export interface PromptSuggestion {
   category: string;
 }
 
+// ============== FILE ATTACHMENT TYPES ==============
+
+/** Supported MIME types for file attachments (Max plan only) */
+export type AttachmentMimeType =
+  | "image/jpeg"
+  | "image/png"
+  | "image/gif"
+  | "image/webp"
+  | "application/pdf";
+
+/** File attachment data sent alongside a message */
+export interface FileAttachment {
+  /** Original filename */
+  name: string;
+  /** MIME type */
+  type: AttachmentMimeType;
+  /** File size in bytes */
+  size: number;
+  /** Base64-encoded file content (without data URI prefix) */
+  base64: string;
+}
+
+/** Validation constants for file attachments */
+export const FILE_ATTACHMENT_LIMITS = {
+  MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB
+  MAX_FILES_PER_MESSAGE: 1,
+  ALLOWED_TYPES: [
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+    "application/pdf",
+  ] as AttachmentMimeType[],
+} as const;
+
 // ============== ONBOARDING TYPES ==============
 
 export interface OnboardingData {
@@ -350,7 +385,7 @@ export type Platform = "linkedin" | "reddit" | "threads" | "facebook";
  * Extended platform type including legacy/additional platforms
  * Used for broader compatibility with existing features
  */
-export type ExtendedPlatform = Platform | "twitter" | "medium";
+export type ExtendedPlatform = Platform | "twitter";
 
 export interface PublishResult {
   platform: Platform | ExtendedPlatform;
@@ -392,36 +427,6 @@ export interface TwitterPostData {
   tweetId: string;
   content: string;
   tweetUrl?: string;
-  publishedAt: Timestamp;
-  success: boolean;
-  error?: string;
-}
-
-// ============== MEDIUM TYPES ==============
-
-export type MediumPublishStatus = "draft" | "public" | "unlisted";
-
-export interface MediumConnectionData {
-  userId: string;
-  mediumId: string;
-  username: string;
-  integrationToken: string;
-  profileName: string;
-  profilePicture?: string;
-  profileUrl?: string;
-  connectedAt: Timestamp;
-  lastUsedAt?: Timestamp;
-}
-
-export interface MediumPostData {
-  id: string;
-  userId: string;
-  mediumId: string;
-  articleId: string;
-  title: string;
-  content: string;
-  articleUrl?: string;
-  publishStatus: MediumPublishStatus;
   publishedAt: Timestamp;
   success: boolean;
   error?: string;

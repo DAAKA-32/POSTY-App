@@ -17,9 +17,9 @@ const menuItems = [
   {
     name: "Dashboard",
     href: "/dashboard",
-    color: "emerald",
     iconColor: "text-emerald-500",
-    glowColor: "rgba(16, 185, 129, 0.3)", // emerald glow
+    hoverBg: "hover:bg-emerald-500/10",
+    hoverText: "hover:text-emerald-600 dark:hover:text-emerald-400",
     icon: (
       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -34,9 +34,9 @@ const menuItems = [
   {
     name: "Profil",
     href: "/profile",
-    color: "cyan",
     iconColor: "text-cyan-500",
-    glowColor: "rgba(6, 182, 212, 0.3)", // cyan glow
+    hoverBg: "hover:bg-cyan-500/10",
+    hoverText: "hover:text-cyan-600 dark:hover:text-cyan-400",
     icon: (
       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -51,9 +51,9 @@ const menuItems = [
   {
     name: "Abonnement",
     href: "/subscription",
-    color: "orange",
-    iconColor: "text-orange-500",
-    glowColor: "rgba(249, 115, 22, 0.3)", // orange glow
+    iconColor: "text-[#F8935D]",
+    hoverBg: "hover:bg-[#F8935D]/10",
+    hoverText: "hover:text-[#F8935D]",
     icon: (
       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -68,9 +68,9 @@ const menuItems = [
   {
     name: "Paramètres",
     href: "/settings",
-    color: "violet",
     iconColor: "text-violet-500",
-    glowColor: "rgba(139, 92, 246, 0.3)", // violet glow
+    hoverBg: "hover:bg-violet-500/10",
+    hoverText: "hover:text-violet-600 dark:hover:text-violet-400",
     icon: (
       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -190,16 +190,16 @@ export default function ProfileMenu({ isCollapsed = false, onNavigate }: Profile
         onClick={() => setIsOpen(!isOpen)}
         className={`
           flex items-center gap-3 p-2 rounded-lg w-full
-          hover:bg-dark-hover transition-all duration-200 group
+          hover:bg-gray-100 dark:hover:bg-dark-hover transition-all duration-200 group
           ${isCollapsed ? "justify-center" : ""}
-          ${isOpen ? "bg-dark-hover" : ""}
+          ${isOpen ? "bg-gray-100 dark:bg-dark-hover" : ""}
         `}
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
         <div className={`
           relative w-10 h-10 rounded-lg overflow-hidden
-          flex items-center justify-center shrink-0 border border-dark-border
+          flex items-center justify-center shrink-0 border border-gray-200 dark:border-dark-border
           group-hover:border-primary/30 group-hover:scale-105 transition-all duration-200
           ${isOpen ? "border-primary/30 scale-105" : ""}
           ${!photoURL ? "bg-gradient-to-br from-primary/20 to-accent/20" : ""}
@@ -256,8 +256,8 @@ export default function ProfileMenu({ isCollapsed = false, onNavigate }: Profile
         className={`
           absolute z-50 w-56
           ${isCollapsed ? "left-full ml-2 bottom-0" : "bottom-full left-0 mb-2"}
-          bg-dark-card border border-dark-border rounded-xl
-          shadow-xl shadow-black/20
+          bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-xl
+          shadow-xl shadow-black/8 dark:shadow-black/20
           transform transition-all duration-200 origin-bottom
           ${isOpen
             ? "opacity-100 scale-100 translate-y-0"
@@ -268,14 +268,14 @@ export default function ProfileMenu({ isCollapsed = false, onNavigate }: Profile
         aria-orientation="vertical"
       >
         {/* User info header */}
-        <div className="px-4 py-3 border-b border-dark-border">
+        <div className="px-4 py-3 border-b border-gray-100 dark:border-dark-border">
           <p className="text-sm font-semibold text-text-primary truncate">
             {userProfile?.displayName || "Utilisateur"}
           </p>
           <p className="text-xs text-text-muted truncate">{user.email}</p>
         </div>
 
-        {/* Menu items - Enhanced with vivid colors and glow effects */}
+        {/* Menu items */}
         <div className="p-1.5">
           {menuItems.map((item) => (
             <Link
@@ -284,44 +284,31 @@ export default function ProfileMenu({ isCollapsed = false, onNavigate }: Profile
               onClick={handleItemClick}
               className={`
                 flex items-center gap-3 px-3 py-2.5 rounded-lg
-                text-text-secondary text-sm
+                text-gray-900 dark:text-gray-200 text-sm
                 transition-all duration-200 group/item
                 hover:translate-x-0.5 active:scale-[0.98]
-                ${
-                  item.color === "emerald"
-                    ? "hover:bg-emerald-500/10"
-                    : item.color === "cyan"
-                    ? "hover:bg-cyan-500/10"
-                    : item.color === "orange"
-                    ? "hover:bg-orange-500/10"
-                    : item.color === "violet"
-                    ? "hover:bg-violet-500/10"
-                    : "hover:bg-dark-hover"
-                }
+                ${item.hoverBg} ${item.hoverText}
               `}
               role="menuitem"
             >
-              {/* Vivid colored icon with glow effect */}
+              {/* Colored icon */}
               <span
                 className={`
                   transition-all duration-200
                   ${item.iconColor}
                   group-hover/item:scale-110
                 `}
-                style={{
-                  filter: `drop-shadow(0 0 4px ${item.glowColor})`,
-                }}
               >
                 {item.icon}
               </span>
-              <span className="font-medium group-hover/item:text-text-primary transition-colors duration-200">{item.name}</span>
+              <span className="font-medium transition-colors duration-200">{item.name}</span>
             </Link>
           ))}
         </div>
 
         {/* Arrow indicator for collapsed mode */}
         {isCollapsed && (
-          <div className="absolute -left-1.5 bottom-4 w-3 h-3 bg-dark-card border-l border-b border-dark-border rotate-45" />
+          <div className="absolute -left-1.5 bottom-4 w-3 h-3 bg-white dark:bg-dark-card border-l border-b border-gray-200 dark:border-dark-border rotate-45" />
         )}
       </div>
 
@@ -329,16 +316,16 @@ export default function ProfileMenu({ isCollapsed = false, onNavigate }: Profile
       {isCollapsed && !isOpen && (
         <div className="
           absolute left-full ml-2 bottom-0
-          px-3 py-2 bg-dark-elevated border border-dark-border rounded-lg
+          px-3 py-2 bg-white dark:bg-dark-elevated border border-gray-200 dark:border-dark-border rounded-lg
           text-sm whitespace-nowrap
           opacity-0 invisible group-hover:opacity-100 group-hover:visible
           transition-all duration-200 z-40
           shadow-lg
           pointer-events-none
         ">
-          <p className="font-semibold text-text-primary">{userProfile?.displayName || "Utilisateur"}</p>
-          <p className="text-xs text-text-muted">{user.email}</p>
-          <div className="absolute -left-1 bottom-3 w-2 h-2 bg-dark-elevated border-l border-b border-dark-border rotate-45" />
+          <p className="font-semibold text-gray-900 dark:text-text-primary">{userProfile?.displayName || "Utilisateur"}</p>
+          <p className="text-xs text-gray-500 dark:text-text-muted">{user.email}</p>
+          <div className="absolute -left-1 bottom-3 w-2 h-2 bg-white dark:bg-dark-elevated border-l border-b border-gray-200 dark:border-dark-border rotate-45" />
         </div>
       )}
     </div>

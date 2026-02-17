@@ -32,16 +32,16 @@ export default function ProfilePlanCard({
       border: "border-gray-200 dark:border-dark-border",
     },
     pro: {
-      bg: "bg-orange-50 dark:bg-orange-500/5",
-      badge: "bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400",
-      icon: "text-orange-500 dark:text-orange-400",
-      border: "border-orange-200 dark:border-orange-500/20",
+      bg: "bg-[#F8935D]/5 dark:bg-primary/5",
+      badge: "bg-[#F8935D]/10 dark:bg-primary/20 text-primary dark:text-primary",
+      icon: "text-primary dark:text-primary",
+      border: "border-[#F8935D]/20 dark:border-primary/20",
     },
     max: {
-      bg: "bg-violet-50 dark:bg-violet-500/5",
-      badge: "bg-violet-100 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400",
-      icon: "text-violet-500 dark:text-violet-400",
-      border: "border-violet-200 dark:border-violet-500/20",
+      bg: "bg-primary-hover/5 dark:bg-primary-hover/5",
+      badge: "bg-primary-hover/10 dark:bg-primary-hover/20 text-primary-hover dark:text-primary",
+      icon: "text-primary-hover dark:text-primary",
+      border: "border-primary-hover/20 dark:border-primary-hover/20",
     },
   };
 

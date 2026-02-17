@@ -120,15 +120,15 @@ export const ModernAIResponsePair = memo(function ModernAIResponsePair({
             <motion.span
               animate={{ scale: [1, 1.2, 1] }}
               transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              className="w-2 h-2 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.6)]"
+              className="w-2 h-2 rounded-full bg-primary-hover shadow-[0_0_8px_rgba(247,107,84,0.6)]"
             />
             <motion.span
               animate={{ scale: [1, 1.2, 1] }}
               transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-              className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]"
+              className="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(248,147,93,0.6)]"
             />
           </div>
-          <span className="bg-gradient-to-r from-purple-500 via-amber-500 to-purple-500 bg-clip-text text-transparent font-semibold">
+          <span className="bg-gradient-to-r from-primary-hover via-primary to-primary-hover bg-clip-text text-transparent font-semibold">
             2 versions disponibles
           </span>
         </motion.div>
@@ -215,12 +215,12 @@ export const ModernAIResponsePair = memo(function ModernAIResponsePair({
               transition-all duration-200
               ${activeIndex === 0
                 ? "opacity-30 cursor-not-allowed bg-gray-100 dark:bg-dark-elevated"
-                : "bg-gradient-to-br from-purple-500/10 to-violet-500/10 hover:from-purple-500/20 hover:to-violet-500/20 border border-purple-500/20"
+                : "bg-gradient-to-br from-primary/10 to-secondary/10 hover:from-primary/20 hover:to-secondary/20 border border-primary/20"
               }
             `}
             aria-label="Version précédente"
           >
-            <svg className={`w-4 h-4 ${activeIndex === 0 ? "text-text-muted" : "text-purple-500 dark:text-purple-400"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className={`w-4 h-4 ${activeIndex === 0 ? "text-text-muted" : "text-primary"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </motion.button>
@@ -240,7 +240,7 @@ export const ModernAIResponsePair = memo(function ModernAIResponsePair({
                 className={`
                   transition-all duration-300
                   ${idx === activeIndex
-                    ? `w-6 h-1.5 rounded-full ${r.variant === "storytelling" ? "bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.5)]" : "bg-primary shadow-glow"}`
+                    ? `w-6 h-1.5 rounded-full ${r.variant === "storytelling" ? "bg-primary-hover shadow-[0_0_8px_rgba(247,107,84,0.5)]" : "bg-primary shadow-glow"}`
                     : "w-1.5 h-1.5 rounded-full bg-gray-300 dark:bg-gray-600"
                   }
                 `}
@@ -250,7 +250,7 @@ export const ModernAIResponsePair = memo(function ModernAIResponsePair({
           </div>
 
           {/* Label with gradient text */}
-          <div className={`text-xs font-medium ${activeResponse.variant === "storytelling" ? "text-purple-600 dark:text-purple-400" : "text-primary"}`}>
+          <div className={`text-xs font-medium ${activeResponse.variant === "storytelling" ? "text-primary-hover" : "text-primary"}`}>
             {variantIcons[activeResponse.variant]} {variantLabels[activeResponse.variant]}
           </div>
 
@@ -265,12 +265,12 @@ export const ModernAIResponsePair = memo(function ModernAIResponsePair({
               transition-all duration-200
               ${activeIndex === responses.length - 1
                 ? "opacity-30 cursor-not-allowed bg-gray-100 dark:bg-dark-elevated"
-                : "bg-gradient-to-br from-amber-500/10 to-orange-500/10 hover:from-amber-500/20 hover:to-orange-500/20 border border-amber-500/20"
+                : "bg-gradient-to-br from-primary/10 to-primary-hover/10 hover:from-primary/20 hover:to-primary-hover/20 border border-primary/20"
               }
             `}
             aria-label="Version suivante"
           >
-            <svg className={`w-4 h-4 ${activeIndex === responses.length - 1 ? "text-text-muted" : "text-amber-600 dark:text-amber-400"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className={`w-4 h-4 ${activeIndex === responses.length - 1 ? "text-text-muted" : "text-primary"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </motion.button>

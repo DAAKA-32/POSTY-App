@@ -77,7 +77,7 @@ export const TRIAL_PERIOD_MS = TRIAL_PERIOD_DAYS * 24 * 60 * 60 * 1000;
 /** Default plan for trial (shown as primary CTA) */
 export const DEFAULT_TRIAL_PLAN: PaidPlanType = "pro";
 
-/** Plans that offer free trials */
+/** Plans that offer free trials (one trial per account, any plan) */
 export const TRIAL_ELIGIBLE_PLANS: PaidPlanType[] = ["pro", "max"];
 
 /**
@@ -114,7 +114,7 @@ export const PLATFORM_INFO: Record<Platform, PlatformInfo> = {
     name: "Reddit",
     icon: "reddit",
     color: "#FF4500",
-    description: "Communautés et discussions",
+    description: "Bientôt disponible",
     minPlan: "pro",
   },
   threads: {
@@ -255,7 +255,7 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
     id: "pro",
     name: "Pro",
     displayName: "Pro",
-    description: "Le meilleur rapport qualité/prix",
+    description: "Tout pour publier et convertir sur LinkedIn",
     price: {
       monthly: 12.90,
       yearly: 129, // -17% (10.75€/mois)
@@ -263,7 +263,7 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
     limits: {
       messagesPerDay: -1, // Unlimited
       conversationsPerWeek: -1, // Unlimited
-      conversationsPerMonth: 100, // Monthly soft cap (for future enforcement)
+      conversationsPerMonth: -1, // Unlimited (daily enforcement only)
       maxCharactersPerPrompt: 300,
       maxRelations: 10,
       responseQuality: "complete",
@@ -292,7 +292,7 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
     id: "max",
     name: "Max",
     displayName: "Max",
-    description: "Pour les créateurs ambitieux",
+    description: "Puissance maximale, 4 plateformes, zéro limite",
     price: {
       monthly: 19.90,
       yearly: 199, // -17% (16.58€/mois)
@@ -322,7 +322,7 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
     badge: "Elite",
     highlight: false,
     premium: true,
-    trialDays: TRIAL_PERIOD_DAYS,
+    trialDays: 3,
   },
 };
 
@@ -597,12 +597,12 @@ export const PLAN_TAGLINES: Record<PlanType, { tagline: string; idealFor: string
     idealFor: "Premier pas vers l'acquisition LinkedIn",
   },
   pro: {
-    tagline: "L'essentiel pour générer des clients",
-    idealFor: "Pour les professionnels en croissance",
+    tagline: "Publiez chaque jour, signez vos premiers clients",
+    idealFor: "Indépendants et petites équipes",
   },
   max: {
-    tagline: "La performance maximale, sans compromis",
-    idealFor: "Pour les professionnels les plus ambitieux",
+    tagline: "Dominez LinkedIn sur toutes les plateformes",
+    idealFor: "Équipes ambitieuses et créateurs intensifs",
   },
 };
 
@@ -613,9 +613,9 @@ export const PLAN_TAGLINES: Record<PlanType, { tagline: string; idealFor: string
 export const CORE_FEATURES = [
   { key: "creations", label: "Créations illimitées" },
   { key: "quality", label: "Posts optimisés IA" },
-  { key: "scheduling", label: "Programmation automatique" },
-  { key: "personalized", label: "Ton personnalisé" },
-  { key: "priority", label: "Génération prioritaire" },
+  { key: "scheduling", label: "Planification automatique" },
+  { key: "personalized", label: "Ton adapté à votre style" },
+  { key: "dualMode", label: "Storytelling + Business" },
   { key: "multiplatform", label: "Multi-plateformes" },
 ] as const;
 
@@ -624,16 +624,15 @@ export const CORE_FEATURES = [
  * Additional features that add value but aren't primary decision drivers
  */
 export const SECONDARY_FEATURES = [
-  { key: "insights", label: "Insights IA stratégiques" },
-  { key: "styleChoice", label: "Choix du style (Storytelling/Business)" },
-  { key: "postAnalysis", label: "Analyse détaillée de posts" },
-  { key: "improveMode", label: "Mode \"Améliorer un post\"" },
-  { key: "prompts", label: "Prompts longs et détaillés" },
+  { key: "prompts", label: "Prompts longs (jusqu'à 3000 car.)" },
   { key: "sharing", label: "Partage avec contacts" },
   { key: "conversations", label: "Organisation des conversations" },
-  { key: "dualMode", label: "Les deux styles simultanés" },
-  { key: "simultaneousPublish", label: "Publication simultanée multi-plateformes" },
-  { key: "earlyAccess", label: "Accès VIP aux nouveautés" },
+  { key: "postAnalysis", label: "Analyse détaillée de posts" },
+  { key: "improveMode", label: "Mode \"Améliorer un post\"" },
+  { key: "priority", label: "Génération prioritaire (file VIP)" },
+  { key: "fileAttachments", label: "Fichiers joints (images, PDF)" },
+  { key: "simultaneousPublish", label: "Publication simultanée 4 réseaux" },
+  { key: "earlyAccess", label: "Accès anticipé aux nouveautés" },
 ] as const;
 
 /**
@@ -653,9 +652,12 @@ export type UnifiedFeatureKey = typeof UNIFIED_FEATURES[number]["key"];
  */
 export function getCTALabel(planId: PlanType, isYearly: boolean, trialEligible: boolean = false): string {
   if (planId === "free") return "Tester gratuitement";
-  if (trialEligible) return `Essayer ${TRIAL_PERIOD_DAYS} jours gratuitement`;
-  if (planId === "pro") return "Accélérer ma croissance";
-  if (planId === "max") return "Passer au niveau supérieur";
+  if (trialEligible) {
+    const days = PLAN_CONFIGS[planId]?.trialDays || TRIAL_PERIOD_DAYS;
+    return `Essayer ${days}j gratuitement`;
+  }
+  if (planId === "pro") return "Commencer avec Pro";
+  if (planId === "max") return "Passer à Max";
   return "Choisir ce plan";
 }
 
@@ -689,7 +691,7 @@ function getFeatureIncluded(key: string, plan: PlanConfig): boolean {
     case "improveMode":
       return planId === "pro" || planId === "max";
     case "prompts":
-      return limits.maxCharactersPerPrompt >= 1000;
+      return limits.maxCharactersPerPrompt >= 300;
     case "sharing":
       return limits.maxRelations > 1 || limits.maxRelations === -1;
     case "personalized":
@@ -706,6 +708,8 @@ function getFeatureIncluded(key: string, plan: PlanConfig): boolean {
       return limits.allowedPlatforms.length > 1;
     case "simultaneousPublish":
       return limits.canPublishSimultaneously;
+    case "fileAttachments":
+      return planId === "max";
     case "earlyAccess":
       return limits.hasEarlyAccess;
     default:
@@ -726,9 +730,29 @@ export function getPlanCoreFeatures(plan: PlanConfig): FeatureItem[] {
       const platforms = plan.limits.allowedPlatforms;
       if (platforms.length === 1) {
         text = `${PLATFORM_INFO[platforms[0]]?.name || platforms[0]} uniquement`;
-      } else if (platforms.length > 1) {
-        const names = platforms.map(p => PLATFORM_INFO[p]?.name || p).join(", ");
-        text = `Multi-plateformes (${names})`;
+      } else if (platforms.length <= 2) {
+        const names = platforms.map(p => PLATFORM_INFO[p]?.name || p).join(" + ");
+        text = names;
+      } else {
+        text = `4 plateformes simultanées`;
+      }
+    }
+
+    // Dynamic text for dual mode
+    if (feature.key === "dualMode") {
+      if (plan.limits.dualResponsesPerWeek === -1) {
+        text = "Storytelling + Business illimité";
+      } else if (plan.limits.dualResponsesPerWeek > 0) {
+        text = `Storytelling + Business (${plan.limits.dualResponsesPerWeek}/sem.)`;
+      }
+    }
+
+    // Dynamic text for quality
+    if (feature.key === "quality") {
+      if (plan.limits.responseQuality === "ultra") {
+        text = "Posts IA ultra (réponses 2x plus longues)";
+      } else if (plan.limits.responseQuality === "complete") {
+        text = "Posts IA optimisés";
       }
     }
 
@@ -755,69 +779,10 @@ export function getPlanSecondaryFeatures(plan: PlanConfig): FeatureItem[] {
  * Used by Subscription page for side-by-side comparison with checkmarks/X
  */
 export function getPlanFeaturesUnified(plan: PlanConfig): FeatureItem[] {
-  const limits = plan.limits;
-  const planId = plan.id;
-
-  return UNIFIED_FEATURES.map((feature) => {
-    let included = false;
-
-    switch (feature.key) {
-      case "creations":
-        included = limits.messagesPerDay === -1;
-        break;
-      case "insights":
-        // AI Insights available for all plans
-        included = true;
-        break;
-      case "quality":
-        included = limits.responseQuality === "complete" || limits.responseQuality === "ultra";
-        break;
-      case "styleChoice":
-        // Style choice (Storytelling/Business) for PRO+
-        included = planId === "pro" || planId === "max";
-        break;
-      case "postAnalysis":
-        // Post analysis for PRO+
-        included = planId === "pro" || planId === "max";
-        break;
-      case "improveMode":
-        // "Improve a post" mode for PRO+
-        included = planId === "pro" || planId === "max";
-        break;
-      case "prompts":
-        included = limits.maxCharactersPerPrompt >= 1000;
-        break;
-      case "sharing":
-        included = limits.maxRelations > 1 || limits.maxRelations === -1;
-        break;
-      case "personalized":
-        included = limits.hasPersonalizedResponses;
-        break;
-      case "scheduling":
-        included = limits.canSchedulePosts;
-        break;
-      case "conversations":
-        included = limits.canManageConversations;
-        break;
-      case "priority":
-        included = limits.hasPriorityProcessing;
-        break;
-      case "dualMode":
-        included = limits.hasDualResponseMode;
-        break;
-      case "multiplatform":
-        included = limits.allowedPlatforms.length > 1;
-        break;
-      case "simultaneousPublish":
-        included = limits.canPublishSimultaneously;
-        break;
-      case "earlyAccess":
-        included = limits.hasEarlyAccess;
-        break;
-    }
-
-    return { text: feature.label, included };
-  });
+  return UNIFIED_FEATURES.map((feature) => ({
+    text: feature.label,
+    included: getFeatureIncluded(feature.key, plan),
+  }));
 }
 
 /**
@@ -869,13 +834,13 @@ export function getPlanFeaturesDynamic(plan: PlanConfig): FeatureItem[] {
   // Characters per prompt
   if (limits.maxCharactersPerPrompt >= 1000) {
     features.push({
-      text: "Prompts longs et détaillés",
+      text: `Prompts longs (jusqu'à ${limits.maxCharactersPerPrompt} car.)`,
       included: true,
       highlight: true
     });
   } else if (limits.maxCharactersPerPrompt >= 300) {
     features.push({
-      text: "Prompts étendus (300 car.)",
+      text: `Prompts étendus (${limits.maxCharactersPerPrompt} car.)`,
       included: true
     });
   }

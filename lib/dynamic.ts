@@ -76,11 +76,6 @@ export const DynamicProfileEditForm = dynamic(
   { loading: SectionFallback, ssr: false }
 );
 
-export const DynamicProfileLinkedInCard = dynamic(
-  () => import("@/components/profile/ProfileLinkedInCard").then((mod) => mod.default),
-  { loading: SectionFallback, ssr: false }
-);
-
 // ============== HELPER TYPE ==============
 // Type helper for dynamic components
 export type DynamicComponent<P = object> = ComponentType<P>;

@@ -18,7 +18,7 @@ interface ProfileStatsRowProps {
 // Clean color classes
 const colorClasses = {
   primary: "text-primary",
-  accent: "text-violet-500 dark:text-violet-400",
+  accent: "text-primary dark:text-primary",
   warning: "text-amber-500 dark:text-amber-400",
 };
 

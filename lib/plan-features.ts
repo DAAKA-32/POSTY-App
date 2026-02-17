@@ -14,6 +14,7 @@ export interface PlanFeatures {
   hasMultiPlatform: boolean;
   hasAdaptiveTone: boolean;
   hasAdvancedPersonalization: boolean;
+  hasFileAttachments: boolean;
 }
 
 // Feature configuration for each plan
@@ -26,6 +27,7 @@ export const PLAN_FEATURES: Record<SubscriptionPlan, PlanFeatures> = {
     hasMultiPlatform: false,
     hasAdaptiveTone: false,
     hasAdvancedPersonalization: false,
+    hasFileAttachments: false,
   },
   pro: {
     responseMode: "single-choice",
@@ -35,6 +37,7 @@ export const PLAN_FEATURES: Record<SubscriptionPlan, PlanFeatures> = {
     hasMultiPlatform: false,
     hasAdaptiveTone: true,
     hasAdvancedPersonalization: false,
+    hasFileAttachments: false,
   },
   max: {
     responseMode: "dual",
@@ -44,6 +47,7 @@ export const PLAN_FEATURES: Record<SubscriptionPlan, PlanFeatures> = {
     hasMultiPlatform: true,
     hasAdaptiveTone: true,
     hasAdvancedPersonalization: true,
+    hasFileAttachments: true,
   },
 };
 
@@ -102,6 +106,13 @@ export function canAdaptToMultiPlatform(plan: SubscriptionPlan): boolean {
 }
 
 /**
+ * Check if user can attach files to messages (Max plan only)
+ */
+export function canAttachFiles(plan: SubscriptionPlan): boolean {
+  return getPlanFeatures(plan).hasFileAttachments;
+}
+
+/**
  * Get the minimum plan required for a feature
  */
 export function getMinPlanForFeature(feature: keyof PlanFeatures): SubscriptionPlan {
@@ -147,6 +158,10 @@ export function getUpgradeMessage(
     hasAdvancedPersonalization: {
       fr: { title: "Personnalisation avancee", description: "Passez au plan Max pour une personnalisation complete." },
       en: { title: "Advanced Personalization", description: "Upgrade to Max for full personalization." },
+    },
+    hasFileAttachments: {
+      fr: { title: "Fichiers joints", description: "Passez au plan Max pour joindre des fichiers (images, PDF) à vos messages." },
+      en: { title: "File Attachments", description: "Upgrade to Max to attach files (images, PDF) to your messages." },
     },
   };
 

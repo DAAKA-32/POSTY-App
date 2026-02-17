@@ -94,7 +94,7 @@ export default function DemoPreview({ onSubmit }: DemoPreviewProps) {
             <div className="flex items-center gap-3 px-5 py-4 border-b border-dark-border/50">
               <div className="w-10 h-10 rounded-xl overflow-hidden bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-glow">
                 <img
-                  src="/logo.jpg"
+                  src="/logo.png"
                   alt="Posty"
                   className="w-full h-full object-cover"
                   onError={(e) => {

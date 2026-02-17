@@ -13,7 +13,7 @@ interface SubscriptionGuardProps {
   showLoading?: boolean;
   /**
    * Custom redirect path if subscription is not active
-   * @default "/pricing"
+   * @default "/subscription"
    */
   redirectTo?: string;
 }
@@ -26,8 +26,8 @@ interface SubscriptionGuardProps {
  *
  * Protection Rules:
  * 1. User must have subscription.status === "active" OR "trialing"
- * 2. Free plan users are redirected to /pricing
- * 3. Inactive/canceled subscriptions are redirected to /pricing
+ * 2. Free plan users are redirected to /subscription
+ * 3. Inactive/canceled subscriptions are redirected to /subscription
  *
  * Usage:
  * ```tsx
@@ -39,7 +39,7 @@ interface SubscriptionGuardProps {
 export default function SubscriptionGuard({
   children,
   showLoading = true,
-  redirectTo = "/pricing",
+  redirectTo = "/subscription",
 }: SubscriptionGuardProps) {
   const { subscription, loading } = useSubscription();
   const router = useRouter();
@@ -63,7 +63,8 @@ export default function SubscriptionGuard({
         url.searchParams.set("redirect", pathname);
         url.searchParams.set("reason", "subscription_required");
 
-        router.push(url.pathname + url.search);
+        // Use replace to prevent back-navigation bypass
+        router.replace(url.pathname + url.search);
       }
     }
   }, [subscription.status, subscription.plan, loading, router, pathname, redirectTo]);
@@ -73,10 +74,10 @@ export default function SubscriptionGuard({
     if (!showLoading) return null;
 
     return (
-      <div className="min-h-screen bg-dark-bg flex items-center justify-center">
+      <div className="min-h-screen bg-[#FAFBFC] dark:bg-dark-bg flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-gray-400">Vérification de votre abonnement...</p>
+          <p className="text-gray-500 dark:text-gray-400">Vérification de votre abonnement...</p>
         </div>
       </div>
     );

@@ -40,7 +40,7 @@ export default function Logo({
         `}
       >
         <img
-          src="/logo.jpg"
+          src="/logo.png"
           alt="Posty Logo"
           className="w-full h-full object-contain"
         />
@@ -76,7 +76,7 @@ export function AnimatedLogo({
         `}
       >
         <img
-          src="/logo.jpg"
+          src="/logo.png"
           alt="Posty Logo"
           className="w-full h-full object-contain"
         />

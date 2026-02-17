@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -50,10 +49,10 @@ const sectionVariants = {
 
 
 function SettingsContent() {
-  const { user, userProfile, deleteUserAccount, signOut } = useAuth();
+  const { user, deleteUserAccount, signOut } = useAuth();
   const { t } = useLanguage();
   const { theme, toggleTheme, isDark } = useTheme();
-  const { hasPersonalizedResponses, hasAudienceTargeting } = useSubscription();
+  useSubscription();
   const router = useRouter();
   const [consent, setConsent] = useState<UserConsent | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -227,7 +226,7 @@ function SettingsContent() {
           <div className="relative flex items-center h-16">
             <button
               onClick={() => router.back()}
-              className="flex items-center gap-2 text-gray-600 dark:text-text-secondary hover:text-gray-900 dark:hover:text-white transition-colors group z-10"
+              className="flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors group z-10"
             >
               <svg className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -258,7 +257,7 @@ function SettingsContent() {
           {/* Subtle gradient background */}
           <div className="absolute -inset-4 bg-gradient-to-r from-primary/5 via-transparent to-accent/5 rounded-2xl pointer-events-none" />
           <div className="relative">
-            <h1 className="text-2xl xl:text-3xl font-bold text-gray-900 dark:text-white mb-1">
+            <h1 className="text-2xl xl:text-3xl font-bold text-silver-shimmer dark:text-white mb-1">
               {t.settings.title}
             </h1>
             <p className="text-text-secondary md:text-lg">
@@ -283,188 +282,25 @@ function SettingsContent() {
             {/* Test Mode Panel - Dev/QA only */}
             <TestModePanel className="mt-4 md:mt-5 lg:mt-6" />
 
-            {/* Data collected section */}
-            <motion.section
-              variants={sectionVariants}
-              className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-xl p-4 md:p-5 lg:p-6 transition-colors duration-200"
-            >
-              <div className="flex items-center gap-3 mb-4 lg:mb-5">
-                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <svg className="w-5 h-5 lg:w-6 lg:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                </div>
-                <h2 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white">{t.settings.dataCollected}</h2>
-              </div>
-              {/* Basic info - always visible */}
-              <div className="space-y-0 divide-y divide-gray-200 dark:divide-dark-border">
-                <div className="flex items-center justify-between py-3 lg:py-4">
-                  <span className="text-text-secondary text-sm lg:text-base">{t.settings.emailLabel}</span>
-                  <span className="text-gray-900 dark:text-white font-medium text-sm lg:text-base truncate max-w-[180px] lg:max-w-none">
-                    {user?.email}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between py-3 lg:py-4">
-                  <span className="text-text-secondary text-sm lg:text-base">{t.settings.nameLabel}</span>
-                  <span className="text-gray-900 dark:text-white font-medium text-sm lg:text-base">
-                    {userProfile?.displayName || t.settings.notSpecified}
-                  </span>
-                </div>
-              </div>
-
-              {/* Personalization fields - locked for free users */}
-              <div className="relative mt-4">
-                {/* Locked overlay for free users */}
-                {!hasPersonalizedResponses && (
-                  <div className="absolute inset-0 bg-background-warm/60 dark:bg-dark-bg/60 backdrop-blur-[2px] rounded-xl flex items-center justify-center z-10">
-                    <div className="text-center px-4">
-                      <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-[#F8935D]/10 dark:bg-dark-hover flex items-center justify-center">
-                        <svg className="w-5 h-5 text-gray-400 dark:text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
-                      </div>
-                      <p className="text-sm text-gray-500 dark:text-text-muted mb-2">
-                        Activez un plan Pro ou Max pour exploiter ces données dans vos posts
-                      </p>
-                      <Link
-                        href="/subscription"
-                        className="inline-flex items-center gap-1 text-sm text-primary hover:text-accent transition-colors font-medium"
-                      >
-                        Voir les plans
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </Link>
-                    </div>
-                  </div>
-                )}
-
-                <div className="space-y-0 divide-y divide-gray-200 dark:divide-dark-border rounded-xl border border-gray-200 dark:border-dark-border p-1">
-                  {/* Pro-level fields */}
-                  <div className="flex items-center justify-between py-3 lg:py-4 px-3">
-                    <span className="text-text-secondary text-sm lg:text-base">Type de profil</span>
-                    <span className="text-gray-900 dark:text-white font-medium text-sm lg:text-base">
-                      {userProfile?.profile?.profileType || t.settings.notSpecified}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between py-3 lg:py-4 px-3">
-                    <span className="text-text-secondary text-sm lg:text-base">{t.settings.sectorLabel}</span>
-                    <span className="text-gray-900 dark:text-white font-medium text-sm lg:text-base">
-                      {userProfile?.profile?.sector || t.settings.notSpecified}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between py-3 lg:py-4 px-3">
-                    <span className="text-text-secondary text-sm lg:text-base">{t.settings.roleLabel}</span>
-                    <span className="text-gray-900 dark:text-white font-medium text-sm lg:text-base">
-                      {userProfile?.profile?.role || t.settings.notSpecified}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between py-3 lg:py-4 px-3">
-                    <span className="text-text-secondary text-sm lg:text-base">Objectif principal</span>
-                    <span className="text-gray-900 dark:text-white font-medium text-sm lg:text-base">
-                      {userProfile?.profile?.objective || t.settings.notSpecified}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between py-3 lg:py-4 px-3">
-                    <span className="text-text-secondary text-sm lg:text-base">{t.settings.linkedinStyleLabel}</span>
-                    <span className="text-gray-900 dark:text-white font-medium text-sm lg:text-base">
-                      {userProfile?.profile?.linkedinStyle || t.settings.notSpecified}
-                    </span>
-                  </div>
-
-                  {/* Max-level fields */}
-                  <div className="relative">
-                    {hasPersonalizedResponses && !hasAudienceTargeting && (
-                      <div className="absolute inset-0 bg-background-warm/60 dark:bg-dark-bg/60 backdrop-blur-[2px] rounded-b-xl flex items-center justify-center z-10">
-                        <div className="text-center px-4">
-                          <p className="text-xs text-gray-500 dark:text-text-muted mb-1">
-                            Disponible avec le plan Max
-                          </p>
-                          <Link
-                            href="/subscription?plan=max"
-                            className="inline-flex items-center gap-1 text-xs text-primary hover:text-accent transition-colors font-medium"
-                          >
-                            Passer au Max
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
-                          </Link>
-                        </div>
-                      </div>
-                    )}
-                    <div className="divide-y divide-gray-200 dark:divide-dark-border">
-                      <div className="flex items-center justify-between py-3 lg:py-4 px-3">
-                        <span className="text-text-secondary text-sm lg:text-base">Audience cible</span>
-                        <span className="text-gray-900 dark:text-white font-medium text-sm lg:text-base">
-                          {userProfile?.profile?.targetAudience || t.settings.notSpecified}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between py-3 lg:py-4 px-3">
-                        <span className="text-text-secondary text-sm lg:text-base">Ton de communication</span>
-                        <span className="text-gray-900 dark:text-white font-medium text-sm lg:text-base">
-                          {userProfile?.profile?.communicationTone || t.settings.notSpecified}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between py-3 lg:py-4 px-3">
-                        <span className="text-text-secondary text-sm lg:text-base">Frequence de publication</span>
-                        <span className="text-gray-900 dark:text-white font-medium text-sm lg:text-base">
-                          {userProfile?.profile?.publishingFrequency || t.settings.notSpecified}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Rectification RGPD */}
-              <div className="mt-4 p-3 lg:p-4 bg-violet-50 dark:bg-violet-500/5 rounded-xl border border-violet-200 dark:border-violet-500/20">
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-violet-100 dark:bg-violet-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <svg className="w-4 h-4 text-violet-600 dark:text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">Droit de rectification (Art. 16 RGPD)</p>
-                    <p className="text-xs text-gray-500 dark:text-text-muted mt-0.5">Vous pouvez corriger ou compléter vos données personnelles à tout moment en modifiant votre profil.</p>
-                    <Link
-                      href="/profile"
-                      className="
-                        inline-flex items-center gap-2 mt-2 px-4 py-2
-                        text-sm text-primary hover:text-accent
-                        bg-primary/5 hover:bg-primary/10
-                        rounded-lg transition-all duration-200
-                      "
-                    >
-                      {t.settings.editProfile}
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </motion.section>
-
             {/* Appearance Section - Theme Toggle */}
             <motion.section
               variants={sectionVariants}
               className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-xl p-4 md:p-5 lg:p-6 transition-colors duration-200"
             >
               <div className="flex items-center gap-3 mb-4 lg:mb-5">
-                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-[#F8935D]/10 flex items-center justify-center">
                   {isDark ? (
-                    <svg className="w-5 h-5 lg:w-6 lg:h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 lg:w-6 lg:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                     </svg>
                   ) : (
-                    <svg className="w-5 h-5 lg:w-6 lg:h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 lg:w-6 lg:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                     </svg>
                   )}
                 </div>
                 <div>
-                  <h2 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white">{t.settings.appearance || "Apparence"}</h2>
+                  <h2 className="text-base lg:text-lg font-semibold text-silver-solid dark:text-white">{t.settings.appearance || "Apparence"}</h2>
                   <p className="text-xs lg:text-sm text-text-muted mt-0.5">{t.settings.appearanceSubtitle || "Personnalisez l'interface"}</p>
                 </div>
               </div>
@@ -484,13 +320,13 @@ function SettingsContent() {
               className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-xl p-4 md:p-5 lg:p-6 transition-colors duration-200"
             >
               <div className="flex items-center gap-3 mb-4 lg:mb-5">
-                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-blue-500/10 flex items-center justify-center">
-                  <svg className="w-5 h-5 lg:w-6 lg:h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-[#F8935D]/10 flex items-center justify-center">
+                  <svg className="w-5 h-5 lg:w-6 lg:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                   </svg>
                 </div>
                 <div>
-                  <h2 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white">{t.settings.notifications}</h2>
+                  <h2 className="text-base lg:text-lg font-semibold text-silver-solid dark:text-white">{t.settings.notifications}</h2>
                   <p className="text-xs lg:text-sm text-text-muted mt-0.5">{t.settings.notificationsSubtitle}</p>
                 </div>
               </div>
@@ -518,12 +354,12 @@ function SettingsContent() {
               className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-xl p-4 md:p-5 lg:p-6 transition-colors duration-200"
             >
               <div className="flex items-center gap-3 mb-4 lg:mb-5">
-                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-                  <svg className="w-5 h-5 lg:w-6 lg:h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-[#F8935D]/10 flex items-center justify-center">
+                  <svg className="w-5 h-5 lg:w-6 lg:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
                 </div>
-                <h2 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white">{t.settings.consentPreferences}</h2>
+                <h2 className="text-base lg:text-lg font-semibold text-silver-solid dark:text-white">{t.settings.consentPreferences}</h2>
               </div>
               <div className="space-y-3 lg:space-y-4">
                 <ToggleField
@@ -553,12 +389,12 @@ function SettingsContent() {
               className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-xl p-4 md:p-5 lg:p-6 transition-colors duration-200"
             >
               <div className="flex items-center gap-3 mb-4 lg:mb-5">
-                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-violet-500/10 flex items-center justify-center">
-                  <svg className="w-5 h-5 lg:w-6 lg:h-6 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-[#F8935D]/10 flex items-center justify-center">
+                  <svg className="w-5 h-5 lg:w-6 lg:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <h2 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white">{t.settings.gdprRights}</h2>
+                <h2 className="text-base lg:text-lg font-semibold text-silver-solid dark:text-white">{t.settings.gdprRights}</h2>
               </div>
               <div className="grid gap-2 md:gap-3 grid-cols-2 lg:grid-cols-4">
                 <div className="p-3 lg:p-4 bg-[#F8935D]/5 dark:bg-dark-bg rounded-xl border border-[#F8935D]/10 dark:border-dark-border hover:border-warning/20 transition-colors duration-200">
@@ -592,7 +428,7 @@ function SettingsContent() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                 </div>
-                <h2 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white">{t.settings.actions}</h2>
+                <h2 className="text-base lg:text-lg font-semibold text-silver-solid dark:text-white">{t.settings.actions}</h2>
               </div>
               <div className="space-y-3 lg:space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 lg:p-4 bg-[#F8935D]/5 dark:bg-dark-bg rounded-xl border border-[#F8935D]/10 dark:border-dark-border hover:border-primary/20 transition-colors duration-200">
@@ -686,7 +522,7 @@ function SettingsContent() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                 </div>
-                <h2 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white">{t.settings.legalDocuments}</h2>
+                <h2 className="text-base lg:text-lg font-semibold text-silver-solid dark:text-white">{t.settings.legalDocuments}</h2>
               </div>
               <div className="space-y-2 lg:space-y-3">
                 <a

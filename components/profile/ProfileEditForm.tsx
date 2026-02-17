@@ -161,15 +161,15 @@ export default function ProfileEditForm({
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
       onSubmit={handleSubmit}
-      className="relative bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border hover:border-orange-200 dark:hover:border-primary/20 rounded-2xl p-5 lg:p-6 transition-colors duration-300 shadow-sm dark:shadow-none"
+      className="relative bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border hover:border-[#F8935D]/20 dark:hover:border-primary/20 rounded-2xl p-5 lg:p-6 transition-colors duration-300 shadow-sm dark:shadow-none"
     >
       {/* Premium gradient overlay */}
       <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/5 via-transparent to-accent/5 pointer-events-none" />
 
       {/* Header - Premium style */}
       <div className="relative flex items-center gap-3 mb-6">
-        <div className="w-12 h-12 rounded-xl bg-orange-50 dark:bg-gradient-to-br dark:from-primary/20 dark:to-accent/10 border border-orange-200 dark:border-primary/20 flex items-center justify-center shadow-sm">
-          <svg className="w-5 h-5 text-orange-500 dark:text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="w-12 h-12 rounded-xl bg-[#F8935D]/5 dark:bg-gradient-to-br dark:from-primary/20 dark:to-accent/10 border border-[#F8935D]/20 dark:border-primary/20 flex items-center justify-center shadow-sm">
+          <svg className="w-5 h-5 text-primary dark:text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
           </svg>
         </div>
@@ -242,7 +242,7 @@ export default function ProfileEditForm({
             {isFreePlan && (
               <Link
                 href="/pricing"
-                className="text-xs text-orange-500 dark:text-primary hover:text-orange-600 dark:hover:text-accent transition-colors flex items-center gap-1"
+                className="text-xs text-primary dark:text-primary hover:text-primary-hover dark:hover:text-accent transition-colors flex items-center gap-1"
               >
                 <span>Passer à Pro</span>
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -257,10 +257,10 @@ export default function ProfileEditForm({
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex items-start gap-3 p-4 bg-orange-50 dark:bg-primary/5 border border-orange-200 dark:border-primary/20 rounded-xl"
+              className="flex items-start gap-3 p-4 bg-[#F8935D]/5 dark:bg-primary/5 border border-[#F8935D]/20 dark:border-primary/20 rounded-xl"
             >
-              <div className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <svg className="w-4 h-4 text-orange-500 dark:text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-8 h-8 rounded-lg bg-[#F8935D]/10 dark:bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <svg className="w-4 h-4 text-primary dark:text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
@@ -274,7 +274,7 @@ export default function ProfileEditForm({
                 </p>
                 <Link
                   href="/pricing"
-                  className="inline-flex items-center gap-1 text-xs font-medium text-orange-500 dark:text-primary hover:text-orange-600 dark:hover:text-accent transition-colors"
+                  className="inline-flex items-center gap-1 text-xs font-medium text-primary dark:text-primary hover:text-primary-hover dark:hover:text-accent transition-colors"
                 >
                   <span>Découvrir le plan Pro</span>
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

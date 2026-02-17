@@ -1,5 +1,5 @@
 ﻿import type { Metadata, Viewport } from "next";
-import { Poppins } from "next/font/google";
+import { Poppins, Playfair_Display } from "next/font/google";
 import { PremiumToaster } from "@/components/ui/Toast";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
@@ -27,6 +27,14 @@ const poppins = Poppins({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
   style: ["normal", "italic"],
+  display: "swap",
+  preload: true,
+});
+
+const playfair = Playfair_Display({
+  variable: "--font-display",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
   preload: true,
 });
@@ -67,15 +75,15 @@ export const metadata: Metadata = {
   creator: "Emilien Nepveu",
   publisher: "POSTY",
 
-  // Icons - Using logo for favicon
+  // Icons - Using logo.png for favicon & PWA
   icons: {
     icon: [
-      { url: "/logo.jpg", type: "image/jpeg", sizes: "32x32" },
-      { url: "/logo.jpg", type: "image/jpeg", sizes: "16x16" },
+      { url: "/logo.png", type: "image/png", sizes: "32x32" },
+      { url: "/logo.png", type: "image/png", sizes: "16x16" },
     ],
-    shortcut: "/logo.jpg",
+    shortcut: "/logo.png",
     apple: [
-      { url: "/logo.jpg", sizes: "180x180", type: "image/jpeg" },
+      { url: "/logo.png", sizes: "180x180", type: "image/png" },
     ],
   },
 
@@ -165,7 +173,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className={poppins.variable} suppressHydrationWarning>
+    <html lang="fr" className={`${poppins.variable} ${playfair.variable}`} suppressHydrationWarning>
       <head>
         {/* Theme initialization + Web3/MetaMask error suppressor */}
         <script

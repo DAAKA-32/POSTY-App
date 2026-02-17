@@ -2,29 +2,28 @@
 
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import Link from "next/link";
 
 interface GoogleButtonProps {
   onSuccess?: () => void;
   onError?: (message: string) => void;
-  onStartAuth?: () => void; // Called before starting auth to clear any existing state
+  onStartAuth?: () => void;
   label?: string;
-  /** When true (signup mode), require CGU + age consent before allowing Google auth */
-  requireConsent?: boolean;
+  /** Consent state from parent. undefined = no consent needed (login), true/false = signup consent state */
+  consentGiven?: boolean;
+  /** Called when user clicks button without consent */
+  onConsentMissing?: () => void;
 }
 
-export default function GoogleButton({ onSuccess, onError, onStartAuth, label = "Continuer avec Google", requireConsent = false }: GoogleButtonProps) {
+export default function GoogleButton({ onSuccess, onError, onStartAuth, label = "Continuer avec Google", consentGiven, onConsentMissing }: GoogleButtonProps) {
   const { signInWithGoogle } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const [acceptTerms, setAcceptTerms] = useState(false);
-  const [confirmAge, setConfirmAge] = useState(false);
 
-  const consentMissing = requireConsent && (!acceptTerms || !confirmAge);
+  const needsConsent = consentGiven === false;
 
   const handleClick = async () => {
-    if (consentMissing) {
-      onError?.("Veuillez accepter les CGU et confirmer votre âge avant de continuer.");
+    if (needsConsent) {
+      onConsentMissing?.();
       return;
     }
 
@@ -46,40 +45,9 @@ export default function GoogleButton({ onSuccess, onError, onStartAuth, label = 
   };
 
   return (
-    <div className="w-full">
-      {/* Consent checkboxes for signup mode */}
-      {requireConsent && (
-        <div className="space-y-2 mb-3">
-          <label className="flex items-start gap-2.5 cursor-pointer group">
-            <input
-              type="checkbox"
-              checked={acceptTerms}
-              onChange={(e) => setAcceptTerms(e.target.checked)}
-              className="mt-0.5 w-4 h-4 rounded border-gray-300 text-[#F8935D] focus:ring-[#F8935D]/20 accent-[#F8935D]"
-            />
-            <span className="text-xs text-gray-600 leading-relaxed">
-              {"J'accepte les "}
-              <Link href="/legal/terms" target="_blank" className="text-[#F8935D] hover:underline">CGU</Link>
-              {" et la "}
-              <Link href="/legal/privacy" target="_blank" className="text-[#F8935D] hover:underline">Politique de confidentialité</Link>
-            </span>
-          </label>
-          <label className="flex items-start gap-2.5 cursor-pointer group">
-            <input
-              type="checkbox"
-              checked={confirmAge}
-              onChange={(e) => setConfirmAge(e.target.checked)}
-              className="mt-0.5 w-4 h-4 rounded border-gray-300 text-[#F8935D] focus:ring-[#F8935D]/20 accent-[#F8935D]"
-            />
-            <span className="text-xs text-gray-600 leading-relaxed">
-              Je confirme avoir au moins 18 ans
-            </span>
-          </label>
-        </div>
-      )}
     <button
       onClick={handleClick}
-      disabled={isLoading || consentMissing}
+      disabled={isLoading || needsConsent}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className="
@@ -155,6 +123,5 @@ export default function GoogleButton({ onSuccess, onError, onStartAuth, label = 
         </>
       )}
     </button>
-    </div>
   );
 }

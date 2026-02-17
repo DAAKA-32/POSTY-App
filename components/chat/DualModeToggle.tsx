@@ -101,7 +101,7 @@ export default function DualModeToggle({
 
           {/* Upgrade badge for Free users */}
           {!canUseDualMode && (
-            <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-500 border border-amber-500/30">
+            <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-gradient-to-r from-primary/20 to-primary-hover/20 text-primary border border-primary/30">
               <Crown className="w-2.5 h-2.5" />
               Pro
             </span>
@@ -133,7 +133,7 @@ export default function DualModeToggle({
                 flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium
                 transition-all duration-200
                 ${responseType === "storytelling"
-                  ? "bg-purple-500/20 text-purple-400 border border-purple-500/30"
+                  ? "bg-primary-hover/20 text-primary border border-primary-hover/30"
                   : "text-text-secondary hover:text-text-primary hover:bg-background-secondary"
                 }
               `}
@@ -147,7 +147,7 @@ export default function DualModeToggle({
                 flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium
                 transition-all duration-200
                 ${responseType === "business"
-                  ? "bg-orange-500/20 text-orange-400 border border-orange-500/30"
+                  ? "bg-primary/20 text-primary border border-primary/30"
                   : "text-text-secondary hover:text-text-primary hover:bg-background-secondary"
                 }
               `}
@@ -178,15 +178,15 @@ export default function DualModeToggle({
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: "auto" }}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-primary/10 to-primary-hover/10 border border-primary/20"
         >
-          <Crown className="w-4 h-4 text-amber-500 flex-shrink-0" />
-          <p className="text-xs text-amber-500/90 flex-1">
+          <Crown className="w-4 h-4 text-primary flex-shrink-0" />
+          <p className="text-xs text-primary/90 flex-1">
             {t.chat.dualMode.singleResponseInfo}
           </p>
           <button
             onClick={() => router.push("/pricing")}
-            className="flex-shrink-0 px-2.5 py-1 rounded-md text-xs font-semibold bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600 transition-colors"
+            className="flex-shrink-0 px-2.5 py-1 rounded-md text-xs font-semibold bg-gradient-to-r from-primary to-primary-hover text-white hover:from-primary-hover hover:to-primary-dark transition-colors"
           >
             {t.chat.dualMode.upgradeButton}
           </button>
@@ -198,15 +198,15 @@ export default function DualModeToggle({
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: "auto" }}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-primary/10 to-primary-hover/10 border border-primary/20"
         >
-          <Crown className="w-4 h-4 text-amber-500 flex-shrink-0" />
-          <p className="text-xs text-amber-500/90 flex-1">
+          <Crown className="w-4 h-4 text-primary flex-shrink-0" />
+          <p className="text-xs text-primary/90 flex-1">
             Limite atteinte ({dualLimit}/sem.). Passez au Max pour un accès illimité.
           </p>
           <button
             onClick={() => router.push("/pricing")}
-            className="flex-shrink-0 px-2.5 py-1 rounded-md text-xs font-semibold bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600 transition-colors"
+            className="flex-shrink-0 px-2.5 py-1 rounded-md text-xs font-semibold bg-gradient-to-r from-primary to-primary-hover text-white hover:from-primary-hover hover:to-primary-dark transition-colors"
           >
             {t.chat.dualMode.upgradeButton}
           </button>

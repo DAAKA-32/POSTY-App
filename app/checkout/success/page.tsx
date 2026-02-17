@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,6 +18,8 @@ function CheckoutSuccessContent() {
   const isTrialing = userProfile?.subscription?.status === "trialing";
 
   const [isLoading, setIsLoading] = useState(true);
+  const [redirectCountdown, setRedirectCountdown] = useState<number | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     // Trigger confetti animation
@@ -66,6 +68,8 @@ function CheckoutSuccessContent() {
             // Success! Status is updated
             triggerConfetti();
             setIsLoading(false);
+            sessionStorage.setItem("posty_show_welcome", "1");
+            setRedirectCountdown(5);
             return;
           }
         } catch (error) {
@@ -84,6 +88,8 @@ function CheckoutSuccessContent() {
       console.warn("Subscription status polling timeout - displaying success page");
       triggerConfetti();
       setIsLoading(false);
+      sessionStorage.setItem("posty_show_welcome", "1");
+      setRedirectCountdown(5);
     };
 
     if (sessionId) {
@@ -93,6 +99,19 @@ function CheckoutSuccessContent() {
       setIsLoading(false);
     }
   }, [sessionId, refreshUserProfile, userProfile?.subscription?.status]);
+
+  // Auto-redirect countdown after subscription confirmed
+  useEffect(() => {
+    if (redirectCountdown === null) return;
+    if (redirectCountdown <= 0) {
+      router.replace(redirectAfterSuccess || "/app");
+      return;
+    }
+    const timer = setTimeout(() => {
+      setRedirectCountdown((prev) => (prev !== null ? prev - 1 : null));
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [redirectCountdown, router, redirectAfterSuccess]);
 
   const planName = userProfile?.subscription?.plan === "max" ? "Max" :
                    userProfile?.subscription?.plan === "pro" ? "Pro" : "Gratuit";
@@ -245,7 +264,7 @@ function CheckoutSuccessContent() {
           transition={{ delay: 0.6 }}
           className="flex flex-col sm:flex-row gap-4 justify-center"
         >
-          <Link href={redirectAfterSuccess || "/chat"}>
+          <Link href={redirectAfterSuccess || "/app"}>
             <Button className="w-full sm:w-auto">
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -259,6 +278,26 @@ function CheckoutSuccessContent() {
             </Button>
           </Link>
         </motion.div>
+
+        {/* Auto-redirect countdown */}
+        {redirectCountdown !== null && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-6 flex flex-col items-center gap-2"
+          >
+            <div className="flex items-center gap-2 text-sm text-text-muted">
+              <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              Redirection automatique dans {redirectCountdown}s...
+            </div>
+            <button
+              onClick={() => setRedirectCountdown(null)}
+              className="text-xs text-text-muted hover:text-white transition-colors underline"
+            >
+              Rester sur cette page
+            </button>
+          </motion.div>
+        )}
 
         {/* Receipt info */}
         <motion.p

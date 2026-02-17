@@ -276,7 +276,7 @@ export const ModernResponseCard = memo(function ModernResponseCard({
                     text-xs font-medium text-left
                     transition-all duration-150 min-h-[44px]
                     ${canSchedule
-                      ? "text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 active:scale-[0.98]"
+                      ? "text-primary hover:bg-[#F8935D]/5 dark:hover:bg-primary/10 active:scale-[0.98]"
                       : "text-text-muted cursor-not-allowed opacity-60"
                     }
                   `}
@@ -295,15 +295,15 @@ export const ModernResponseCard = memo(function ModernResponseCard({
                 </motion.button>
               )}
 
-              {/* Insights option - VIOLET premium color */}
+              {/* Insights option - brand primary */}
               <motion.button
                 onClick={handleInsights}
                 whileHover={{ x: 2 }}
                 className="
                   group/insights w-full flex items-center gap-2.5 px-3 py-2.5
                   text-xs font-medium text-left
-                  text-violet-600 dark:text-violet-400
-                  hover:bg-violet-50 dark:hover:bg-violet-500/10
+                  text-primary
+                  hover:bg-[#F8935D]/5 dark:hover:bg-primary/10
                   transition-all duration-150 min-h-[44px]
                   active:scale-[0.98]
                 "
@@ -330,7 +330,7 @@ export const ModernResponseCard = memo(function ModernResponseCard({
         <motion.div
           initial={{ opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
-          className="inline-flex items-center gap-1.5 mb-2 text-xs font-medium text-text-muted"
+          className="inline-flex items-center gap-1.5 mb-2 text-xs font-medium text-text-secondary"
         >
           <span>{currentVariant.icon}</span>
           <span>{currentVariant.label}</span>
@@ -400,29 +400,29 @@ export const ModernResponseCard = memo(function ModernResponseCard({
               group/more relative overflow-hidden
               inline-flex items-center justify-center
               w-8 h-8 rounded-lg
-              bg-gradient-to-br from-violet-500/10 to-purple-500/10
-              hover:from-violet-500/20 hover:to-purple-500/20
-              border border-violet-500/20
+              bg-gradient-to-br from-primary/10 to-primary-hover/10
+              hover:from-primary/20 hover:to-primary-hover/20
+              border border-primary/20
               active:scale-95
               transition-all duration-200
-              ${isMenuOpen ? "from-violet-500/20 to-purple-500/20 shadow-[0_0_12px_rgba(139,92,246,0.3)]" : ""}
+              ${isMenuOpen ? "from-primary/20 to-primary-hover/20 shadow-[0_0_12px_rgba(248,147,93,0.3)]" : ""}
             `}
             aria-label="Plus d'actions"
             aria-expanded={isMenuOpen}
             aria-haspopup="menu"
             title="Plus d'options"
           >
-            {/* Shimmer effect - VIOLET premium */}
+            {/* Shimmer effect - brand primary */}
             <span
               className="absolute inset-0 opacity-0 group-hover/more:opacity-100 transition-opacity duration-300 pointer-events-none"
               style={{
-                background: "linear-gradient(135deg, transparent 0%, rgba(139,92,246,0.2) 50%, transparent 100%)",
+                background: "linear-gradient(135deg, transparent 0%, rgba(248,147,93,0.2) 50%, transparent 100%)",
                 backgroundSize: "200% 200%",
                 animation: "shimmer 2s infinite linear",
               }}
             />
             <svg
-              className={`w-4 h-4 text-violet-500 dark:text-violet-400 transition-transform duration-200 relative z-10 ${isMenuOpen ? "rotate-45" : ""}`}
+              className={`w-4 h-4 text-primary transition-transform duration-200 relative z-10 ${isMenuOpen ? "rotate-45" : ""}`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"

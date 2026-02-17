@@ -400,7 +400,7 @@ export function PageLoader({ message = "Chargement...", showProgress = true }: P
           {/* Logo container */}
           <div className="relative w-16 h-16 lg:w-20 lg:h-20 rounded-2xl overflow-hidden flex items-center justify-center">
             <img
-              src="/logo.jpg"
+              src="/logo.png"
               alt="Posty Logo"
               className="w-full h-full object-contain"
             />

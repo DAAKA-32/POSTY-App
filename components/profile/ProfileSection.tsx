@@ -38,7 +38,7 @@ export default function ProfileSection({
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -2 }}
       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-      className="group bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border hover:border-orange-200 dark:hover:border-primary/20 rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-md dark:hover:shadow-[0_0_30px_rgba(232,147,77,0.08)]"
+      className="group bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border hover:border-[#F8935D]/20 dark:hover:border-primary/20 rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-md dark:hover:shadow-[0_0_30px_rgba(232,147,77,0.08)]"
     >
       {/* Header */}
       <button
@@ -52,7 +52,7 @@ export default function ProfileSection({
       >
         <div className="flex items-center gap-3">
           {/* Icon with premium gradient */}
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconColor} border border-orange-200 dark:border-primary/10 group-hover:shadow-glow transition-shadow duration-300`}>
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconColor} border border-[#F8935D]/20 dark:border-primary/10 group-hover:shadow-glow transition-shadow duration-300`}>
             {icon}
           </div>
 

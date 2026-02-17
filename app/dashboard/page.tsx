@@ -141,23 +141,12 @@ function DashboardContent() {
             </div>
 
             {/* Actions - Right side */}
-            <div className="flex items-center gap-3">
-              <Link
-                href="/app"
-                className="hidden sm:flex items-center gap-1.5 px-3 py-2 text-sm text-text-muted hover:text-primary transition-colors duration-200"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Créer
-              </Link>
-              <Link
-                href="/profile"
-                className="px-3 py-2 bg-[#F8935D]/10 dark:bg-dark-hover hover:bg-[#F8935D]/15 dark:hover:bg-dark-active border border-[#F8935D]/15 dark:border-dark-border text-gray-700 dark:text-text-secondary hover:text-gray-900 dark:hover:text-white text-sm font-medium rounded-xl transition-all duration-200"
-              >
-                Mon profil
-              </Link>
-            </div>
+            <Link
+              href="/profile"
+              className="px-3 py-2 bg-[#F8935D]/10 dark:bg-dark-hover hover:bg-[#F8935D]/15 dark:hover:bg-dark-active border border-[#F8935D]/15 dark:border-dark-border text-gray-700 dark:text-text-secondary hover:text-gray-900 dark:hover:text-white text-sm font-medium rounded-xl transition-all duration-200"
+            >
+              Mon profil
+            </Link>
           </div>
         </div>
       </header>
@@ -173,7 +162,7 @@ function DashboardContent() {
         >
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
-              <h1 className="text-2xl lg:text-3xl font-bold text-text-primary mb-2">
+              <h1 className="text-2xl lg:text-3xl font-bold text-silver-shimmer dark:text-white mb-2">
                 Bonjour {firstName} !
               </h1>
               <p className="text-text-secondary">
@@ -185,18 +174,18 @@ function DashboardContent() {
             <div className="flex items-center gap-3">
               <div className={`px-4 py-3 rounded-xl transition-colors duration-200 ${
                 userProfile?.subscription?.plan === "max"
-                  ? "bg-violet-500/10 border border-violet-500/20 hover:border-violet-500/30"
+                  ? "bg-primary-hover/10 border border-primary-hover/20 hover:border-primary-hover/30"
                   : userProfile?.subscription?.plan === "pro"
-                    ? "bg-blue-500/10 border border-blue-500/20 hover:border-blue-500/30"
+                    ? "bg-primary/10 border border-primary/20 hover:border-primary/30"
                     : "bg-gray-100 dark:bg-dark-card border border-gray-200 dark:border-dark-border hover:border-gray-300 dark:hover:border-dark-border-hover"
               }`}>
                 <p className="text-xs text-text-muted mb-1">Plan actuel</p>
                 <p className={`text-sm font-semibold ${
                   userProfile?.subscription?.plan === "max"
-                    ? "text-violet-600 dark:text-violet-400"
+                    ? "text-primary-hover"
                     : userProfile?.subscription?.plan === "pro"
-                      ? "text-blue-600 dark:text-blue-400"
-                      : "text-amber-600 dark:text-amber-400"
+                      ? "text-primary"
+                      : "text-primary"
                 }`}>
                   {userProfile?.subscription?.plan === "pro"
                     ? "Pro"
@@ -361,31 +350,6 @@ function DashboardContent() {
           </div>
         )}
 
-        {/* CTA section - Clean professional design */}
-        <div
-          className={`
-            mt-10 text-center transition-all duration-700 ease-out delay-500
-            ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}
-          `}
-        >
-          <div className="bg-primary/5 dark:bg-primary/10 border border-primary/20 rounded-2xl p-8">
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-              Prêt à créer votre prochain post ?
-            </h3>
-            <p className="text-gray-600 dark:text-text-secondary mb-6">
-              Continuez à développer votre présence LinkedIn avec Posty.
-            </p>
-            <Link
-              href="/app"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary-hover text-white font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
-            >
-              Générer un post
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-              </svg>
-            </Link>
-          </div>
-        </div>
       </main>
 
       {/* Footer */}

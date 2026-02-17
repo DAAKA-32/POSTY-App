@@ -11,28 +11,18 @@ import { updateUserProfile, getUserPosts, getUserSessions } from "@/lib/firestor
 import { SubscriptionPlan } from "@/types";
 import { PlanType, DAILY_MESSAGE_LIMITS } from "@/lib/plans";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
-import Button from "@/components/ui/Button";
 import {
   ProfileHeader,
   ProfilePlanCard,
   ProfileStatsRow,
   ProfileSection,
-  ProfileLinkedInCard,
   ProfileEditForm,
 } from "@/components/profile";
 import toast from "@/components/ui/Toast";
 
 function ProfileContent() {
-  const { user, userProfile, signOut, refreshUserProfile } = useAuth();
-  const {
-    isConnected: linkedInConnected,
-    isTokenValid,
-    profileName,
-    profilePicture,
-    connectLinkedIn,
-    disconnectLinkedIn,
-    isLoading: linkedInLoading,
-  } = useLinkedIn();
+  const { user, userProfile, refreshUserProfile } = useAuth();
+  const { isConnected: linkedInConnected } = useLinkedIn();
   const { t, language } = useLanguage();
   const router = useRouter();
 
@@ -153,13 +143,6 @@ function ProfileContent() {
     }
   };
 
-  // Handle sign out
-  const handleSignOut = async () => {
-    await signOut();
-    toast.success(t.toasts.logoutSuccess);
-    router.push("/");
-  };
-
   // Initial form data
   const initialFormData = {
     displayName: userProfile?.displayName || "",
@@ -188,7 +171,7 @@ function ProfileContent() {
           <div className="relative flex items-center h-16">
             <button
               onClick={() => router.back()}
-              className="flex items-center gap-2 text-gray-600 dark:text-text-secondary hover:text-gray-900 dark:hover:text-white transition-colors group z-10"
+              className="flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors group z-10"
             >
               <svg className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -250,25 +233,14 @@ function ProfileContent() {
                 {/* Stats Row */}
                 <ProfileStatsRow stats={stats} />
 
-                {/* LinkedIn Card */}
-                <ProfileLinkedInCard
-                  isConnected={linkedInConnected}
-                  isTokenValid={isTokenValid}
-                  profileName={profileName}
-                  profilePicture={profilePicture}
-                  onConnect={connectLinkedIn}
-                  onDisconnect={disconnectLinkedIn}
-                  isLoading={linkedInLoading}
-                />
-
-                {/* Profile Info Section - Violet (matches Features section) */}
+                {/* Profile Info Section */}
                 <ProfileSection
                   icon={
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   }
-                  iconColor="bg-violet-500/10 text-violet-500 dark:text-violet-400"
+                  iconColor="bg-[#F8935D]/10 text-primary dark:text-primary"
                   title={t.profile.profileInfo}
                   subtitle={t.profile.profileInfoSubtitle}
                   defaultOpen={false}
@@ -295,14 +267,14 @@ function ProfileContent() {
                   </div>
                 </ProfileSection>
 
-                {/* Quick Actions Section - Premium violet (engagement/interactive) */}
+                {/* Quick Actions Section */}
                 <ProfileSection
                   icon={
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
                   }
-                  iconColor="bg-violet-500/10 text-violet-500 dark:text-violet-400"
+                  iconColor="bg-[#F8935D]/10 text-primary dark:text-primary"
                   title={t.profile.quickActions}
                   collapsible={false}
                 >
@@ -318,8 +290,8 @@ function ProfileContent() {
                         "
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                            <svg className="w-4 h-4 text-amber-500 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <div className="w-9 h-9 rounded-lg bg-[#F8935D]/10 flex items-center justify-center">
+                            <svg className="w-4 h-4 text-primary dark:text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                           </div>
@@ -342,8 +314,8 @@ function ProfileContent() {
                         "
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                            <svg className="w-4 h-4 text-emerald-500 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <div className="w-9 h-9 rounded-lg bg-[#F8935D]/10 flex items-center justify-center">
+                            <svg className="w-4 h-4 text-primary dark:text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                             </svg>
                           </div>
@@ -356,30 +328,6 @@ function ProfileContent() {
                     </Link>
                   </div>
                 </ProfileSection>
-
-                {/* Logout Button */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  <Button
-                    variant="danger"
-                    fullWidth
-                    onClick={handleSignOut}
-                    className="py-3"
-                  >
-                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                      />
-                    </svg>
-                    {t.profile.signOut}
-                  </Button>
-                </motion.div>
 
                 {/* Footer */}
                 <motion.p

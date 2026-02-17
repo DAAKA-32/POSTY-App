@@ -9,6 +9,9 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useQuota } from "@/contexts/QuotaContext";
 import { useSidebar } from "@/contexts/SidebarContext";
 import { useSchedulingPendingCount } from "@/contexts/SchedulingContext";
+import { useLinkedIn } from "@/contexts/LinkedInContext";
+import { useFacebook } from "@/contexts/FacebookContext";
+import { useThreads } from "@/contexts/ThreadsContext";
 import SlideMenu from "./SlideMenu";
 import ChatHistoryModal from "./ChatHistoryModal";
 import ProfileMenu from "./ProfileMenu";
@@ -146,11 +149,13 @@ function getNavItems(t: ReturnType<typeof useLanguage>["t"]) {
     {
       name: t.nav.chat,
       href: "/app",
-      color: "orange",
-      activeClasses: "bg-orange-500/10 text-orange-500",
-      hoverClasses: "hover:text-orange-500 hover:bg-orange-500/5",
-      indicatorColor: "bg-orange-500",
-      glowColor: "rgba(249, 115, 22, 0.35)",
+      hasBadge: false,
+      activeClasses: "bg-gradient-to-r from-[#F8935D]/12 to-transparent text-[#F8935D]",
+      hoverClasses: "hover:text-[#F8935D] hover:bg-[#F8935D]/5",
+      indicatorColor: "bg-gradient-to-r from-[#F8935D] to-[#F76B54]",
+      iconColor: "text-[#F8935D]",
+      badgeClasses: "bg-[#F8935D] text-white",
+      glowColor: "rgba(248, 147, 93, 0.35)",
       icon: (isActive: boolean) => (
         <svg className="w-5 h-5" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -165,10 +170,12 @@ function getNavItems(t: ReturnType<typeof useLanguage>["t"]) {
     {
       name: t.nav.history,
       href: "/history",
-      color: "cyan",
-      activeClasses: "bg-cyan-500/10 text-cyan-500",
-      hoverClasses: "hover:text-cyan-500 hover:bg-cyan-500/5",
-      indicatorColor: "bg-cyan-500",
+      hasBadge: false,
+      activeClasses: "bg-gradient-to-r from-cyan-500/12 to-transparent text-cyan-600 dark:text-cyan-400",
+      hoverClasses: "hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-cyan-500/5",
+      indicatorColor: "bg-gradient-to-r from-cyan-500 to-cyan-400",
+      iconColor: "text-cyan-500",
+      badgeClasses: "bg-cyan-500 text-white",
       glowColor: "rgba(6, 182, 212, 0.35)",
       icon: (isActive: boolean) => (
         <svg className="w-5 h-5" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
@@ -185,10 +192,11 @@ function getNavItems(t: ReturnType<typeof useLanguage>["t"]) {
       name: t.nav.schedule,
       href: "/schedule",
       hasBadge: true,
-      color: "violet",
-      activeClasses: "bg-violet-500/10 text-violet-500",
-      hoverClasses: "hover:text-violet-500 hover:bg-violet-500/5",
-      indicatorColor: "bg-violet-500",
+      activeClasses: "bg-gradient-to-r from-violet-500/12 to-transparent text-violet-600 dark:text-violet-400",
+      hoverClasses: "hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-500/5",
+      indicatorColor: "bg-gradient-to-r from-violet-500 to-violet-400",
+      iconColor: "text-violet-500",
+      badgeClasses: "bg-violet-500 text-white",
       glowColor: "rgba(139, 92, 246, 0.35)",
       icon: (isActive: boolean) => (
         <svg className="w-5 h-5" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
@@ -204,10 +212,12 @@ function getNavItems(t: ReturnType<typeof useLanguage>["t"]) {
     {
       name: t.nav.analytics,
       href: "/analytics",
-      color: "emerald",
-      activeClasses: "bg-emerald-500/10 text-emerald-500",
-      hoverClasses: "hover:text-emerald-500 hover:bg-emerald-500/5",
-      indicatorColor: "bg-emerald-500",
+      hasBadge: false,
+      activeClasses: "bg-gradient-to-r from-emerald-500/12 to-transparent text-emerald-600 dark:text-emerald-400",
+      hoverClasses: "hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-500/5",
+      indicatorColor: "bg-gradient-to-r from-emerald-500 to-emerald-400",
+      iconColor: "text-emerald-500",
+      badgeClasses: "bg-emerald-500 text-white",
       glowColor: "rgba(16, 185, 129, 0.35)",
       icon: (isActive: boolean) => (
         <svg className="w-5 h-5" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
@@ -256,12 +266,48 @@ export default function MainLayout({
   const { t } = useLanguage();
   const prefersReducedMotion = useReducedMotion();
   const schedulingPendingCount = useSchedulingPendingCount();
+  const { connection: linkedInConnection } = useLinkedIn();
+  const { connection: facebookConnection } = useFacebook();
+  const { connection: threadsConnection } = useThreads();
+  const tokenWarningShown = useRef(false);
 
   // Get nav items with translations
   const navItems = getNavItems(t);
 
   // Pages where we should NOT load conversations (subscription page)
   const isSubscriptionPage = pathname === "/subscription" || pathname === "/pricing";
+
+  // Proactive token expiration notification (once per session)
+  useEffect(() => {
+    if (tokenWarningShown.current) return;
+
+    const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    const expiring: string[] = [];
+
+    const connections = [
+      { name: "LinkedIn", conn: linkedInConnection },
+      { name: "Facebook", conn: facebookConnection },
+      { name: "Threads", conn: threadsConnection },
+    ];
+
+    for (const { name, conn } of connections) {
+      if (!conn?.expiresAt) continue;
+      const expiresMs = conn.expiresAt.toDate().getTime();
+      const remaining = expiresMs - now;
+      if (remaining > 0 && remaining <= THREE_DAYS_MS) {
+        const days = Math.ceil(remaining / (24 * 60 * 60 * 1000));
+        expiring.push(`${name} (${days}j)`);
+      }
+    }
+
+    if (expiring.length > 0) {
+      tokenWarningShown.current = true;
+      toast.warning(
+        `Connexion${expiring.length > 1 ? "s" : ""} ${expiring.join(", ")} expire${expiring.length > 1 ? "nt" : ""} bientôt. Reconnectez-vous dans les paramètres.`
+      );
+    }
+  }, [linkedInConnection, facebookConnection, threadsConnection]);
 
   // Auto-load posts for sidebar when not provided and not on subscription page
   useEffect(() => {
@@ -544,7 +590,7 @@ export default function MainLayout({
                   <div className="absolute -inset-1 bg-gradient-to-br from-primary/30 to-accent/30 rounded-2xl opacity-0 group-hover:opacity-100 blur-md transition-opacity duration-300" />
                   <div className="relative w-10 h-10 shrink-0 rounded-xl overflow-hidden flex items-center justify-center shadow-md ring-1 ring-gray-200/50 dark:ring-dark-border/50">
                     <img
-                      src="/logo.jpg"
+                      src="/logo.png"
                       alt="Posty Logo"
                       className="w-full h-full object-contain"
                     />
@@ -634,7 +680,7 @@ export default function MainLayout({
               href="/app"
               className={`
                 relative w-full h-11 rounded-xl flex items-center gap-2.5
-                bg-orange-500 hover:bg-orange-600
+                bg-primary hover:bg-primary-hover
                 text-white shadow-md hover:shadow-lg
                 transition-all duration-200 ease-out
                 ${isCollapsed ? "justify-center px-0" : "px-3"}
@@ -675,17 +721,7 @@ export default function MainLayout({
                 {/* Enhanced active indicator with glow */}
                 {isActive && (
                   <div
-                    className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-full ${
-                      item.color === "orange"
-                        ? "bg-orange-500"
-                        : item.color === "cyan"
-                        ? "bg-cyan-500"
-                        : item.color === "violet"
-                        ? "bg-violet-500"
-                        : item.color === "emerald"
-                        ? "bg-emerald-500"
-                        : "bg-primary"
-                    }`}
+                    className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-full bg-primary"
                     style={{
                       boxShadow: `0 0 12px ${item.glowColor}`,
                     }}
@@ -710,20 +746,17 @@ export default function MainLayout({
                     ${
                       isActive
                         ? item.activeClasses
-                        : `text-text-secondary ${item.hoverClasses} hover:translate-x-0.5 active:scale-[0.98]`
+                        : `text-gray-900 dark:text-gray-200 ${item.hoverClasses} hover:translate-x-0.5 active:scale-[0.98]`
                     }
                   `}
                   title={item.name}
                 >
-                  {/* Vivid colored icon with enhanced glow */}
+                  {/* Colored icon — full saturation when active, muted when inactive */}
                   <span
                     className={`
                       relative shrink-0 transition-all duration-200
-                      ${isActive ? "scale-110" : "group-hover:scale-110"}
-                      ${item.color === "orange" ? "text-orange-500" : ""}
-                      ${item.color === "cyan" ? "text-cyan-500" : ""}
-                      ${item.color === "violet" ? "text-violet-500" : ""}
-                      ${item.color === "emerald" ? "text-emerald-500" : ""}
+                      ${isActive ? "scale-110" : "opacity-70 group-hover:opacity-100 group-hover:scale-110"}
+                      ${item.iconColor}
                     `}
                     style={isActive ? {
                       filter: `drop-shadow(0 0 6px ${item.glowColor})`
@@ -732,17 +765,17 @@ export default function MainLayout({
                     {item.icon(isActive)}
                     {/* Badge on icon when collapsed */}
                     {isCollapsed && showBadge && (
-                      <span className="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 text-2xs font-bold bg-violet-500 text-white rounded-full min-w-[16px] text-center">
+                      <span className={`absolute -top-1.5 -right-1.5 px-1.5 py-0.5 text-2xs font-bold rounded-full min-w-[16px] text-center ${item.badgeClasses}`}>
                         {schedulingPendingCount}
                       </span>
                     )}
                   </span>
                   {!isCollapsed && (
                     <>
-                      <span className="font-bold whitespace-nowrap flex-1">{item.name}</span>
+                      <span className={`whitespace-nowrap flex-1 ${isActive ? "font-semibold" : "font-medium"}`}>{item.name}</span>
                       {/* Badge after name when expanded */}
                       {showBadge && (
-                        <span className="px-2 py-0.5 text-xs font-semibold bg-violet-500 text-white rounded-full min-w-[24px] text-center">
+                        <span className={`px-2 py-0.5 text-xs font-semibold rounded-full min-w-[24px] text-center ${item.badgeClasses}`}>
                           {schedulingPendingCount}
                         </span>
                       )}
@@ -752,13 +785,7 @@ export default function MainLayout({
                   {/* Arrow indicator for active state */}
                   {!isCollapsed && isActive && (
                     <svg
-                      className={`
-                        w-4 h-4 transition-all duration-200
-                        ${item.color === "orange" ? "text-orange-500" : ""}
-                        ${item.color === "cyan" ? "text-cyan-500" : ""}
-                        ${item.color === "violet" ? "text-violet-500" : ""}
-                        ${item.color === "emerald" ? "text-emerald-500" : ""}
-                      `}
+                      className={`w-4 h-4 transition-all duration-200 ${item.iconColor}`}
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -785,15 +812,15 @@ export default function MainLayout({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.4, delay: 0.3, ease: smoothEase }}
-              className="mt-4 pt-4 border-t border-gray-200 dark:border-dark-border"
+              className="mt-4 pt-4 border-t border-[#F8935D]/10 dark:border-dark-border"
             >
               <button
                 onClick={() => setShowChatList(!showChatList)}
                 className="group flex items-center justify-between w-full px-3 py-2 text-text-muted hover:text-text-primary hover:bg-[#F8935D]/10 dark:hover:bg-dark-hover transition-all duration-200 rounded-lg"
               >
-                <span className="text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-silver-solid flex items-center gap-2">
                   <svg
-                    className="w-4 h-4 text-blue-500 group-hover:text-blue-600 transition-colors"
+                    className="w-4 h-4 text-primary group-hover:text-primary-hover transition-colors"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -808,13 +835,13 @@ export default function MainLayout({
                   {t.sidebar.conversations}
                 </span>
                 <div className="flex items-center gap-2">
-                  <span className="text-2xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-500/20 px-2 py-0.5 rounded-full">
+                  <span className="text-2xs font-semibold text-primary dark:text-primary bg-[#F8935D]/10 dark:bg-[#F8935D]/20 px-2 py-0.5 rounded-full">
                     {localPosts.length}
                   </span>
                   <motion.svg
                     animate={{ rotate: showChatList ? 0 : -90 }}
                     transition={{ duration: 0.2, ease: smoothEase }}
-                    className="w-4 h-4 text-blue-500"
+                    className="w-4 h-4 text-primary"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -851,7 +878,7 @@ export default function MainLayout({
                           {/* Simple colored icon based on group type */}
                           {isPinned && (
                             <svg
-                              className="w-3.5 h-3.5 text-violet-500 dark:text-violet-400"
+                              className="w-3.5 h-3.5 text-primary dark:text-primary"
                               fill="currentColor"
                               viewBox="0 0 24 24"
                             >
@@ -860,7 +887,7 @@ export default function MainLayout({
                           )}
                           {isToday && (
                             <svg
-                              className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400"
+                              className="w-3.5 h-3.5 text-primary dark:text-primary"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -875,7 +902,7 @@ export default function MainLayout({
                           )}
                           {isYesterday && (
                             <svg
-                              className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400"
+                              className="w-3.5 h-3.5 text-text-muted dark:text-text-muted"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -934,14 +961,14 @@ export default function MainLayout({
                                 ${
                                   isActive
                                     ? "bg-primary/10 dark:bg-primary/10 text-text-primary border-l-2 border-primary pl-[10px] shadow-sm"
-                                    : "text-text-secondary hover:text-text-primary hover:bg-[#F8935D]/10 dark:hover:bg-dark-hover hover:border-l-2 hover:border-primary/40 hover:pl-[10px]"
+                                    : "text-gray-900 dark:text-gray-200 hover:text-gray-950 dark:hover:text-white hover:bg-[#F8935D]/10 dark:hover:bg-dark-hover hover:border-l-2 hover:border-primary/40 hover:pl-[10px]"
                                 }
                               `}
                             >
                               {/* Pin indicator - Premium violet color */}
                               {post.isPinned && (
                                 <svg
-                                  className="w-3.5 h-3.5 shrink-0 text-violet-500 dark:text-violet-400 group-hover:scale-110 transition-transform duration-200"
+                                  className="w-3.5 h-3.5 shrink-0 text-primary dark:text-primary group-hover:scale-110 transition-transform duration-200"
                                   fill="currentColor"
                                   viewBox="0 0 24 24"
                                 >
@@ -1004,7 +1031,7 @@ export default function MainLayout({
           {isCollapsed && localPosts.length > 0 && (
             <button
               onClick={() => setShowHistoryModal(true)}
-              className="w-full h-11 rounded-xl flex items-center justify-center text-blue-500 hover:text-blue-600 hover:bg-blue-500/5 transition-colors group relative mt-4 pt-4 border-t border-gray-200 dark:border-dark-border"
+              className="w-full h-11 rounded-xl flex items-center justify-center text-primary hover:text-primary-hover hover:bg-[#F8935D]/5 transition-colors group relative mt-4 pt-4 border-t border-[#F8935D]/10 dark:border-dark-border"
               title={t.sidebar.conversations}
             >
               <div className="relative">
@@ -1012,7 +1039,7 @@ export default function MainLayout({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
                 {/* Badge count - simple solid */}
-                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-blue-500 text-white text-2xs font-semibold rounded-full flex items-center justify-center">
+                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-primary text-white text-2xs font-semibold rounded-full flex items-center justify-center">
                   {localPosts.length > 9 ? "9+" : localPosts.length}
                 </span>
               </div>
@@ -1025,7 +1052,7 @@ export default function MainLayout({
         </nav>
 
         {/* Profile */}
-        <div className="p-2 border-t border-gray-200 dark:border-dark-border shrink-0">
+        <div className="p-2 border-t border-[#F8935D]/10 dark:border-dark-border shrink-0">
           <ProfileMenu isCollapsed={isCollapsed} />
         </div>
       </aside>
@@ -1072,7 +1099,7 @@ export default function MainLayout({
                   <div className="absolute -inset-0.5 bg-gradient-to-br from-primary/20 to-accent/20 rounded-xl blur-sm" />
                   <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden flex items-center justify-center shadow-md ring-1 ring-white/50 dark:ring-dark-border/50 flex-shrink-0">
                     <img
-                      src="/logo.jpg"
+                      src="/logo.png"
                       alt="Posty Logo"
                       className="w-full h-full object-contain"
                     />

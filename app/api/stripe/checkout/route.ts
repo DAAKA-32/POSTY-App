@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getStripeServer, getPriceId, getAppUrl, BillingInterval } from "@/lib/stripe";
 import { SubscriptionPlan } from "@/types";
 import { adminDb, isAdminInitialized } from "@/lib/firebase-admin";
-import { TRIAL_PERIOD_DAYS, checkTrialEligibility } from "@/lib/plans";
+import { PLAN_CONFIGS, TRIAL_PERIOD_DAYS, checkTrialEligibility, isPlanTrialEligible } from "@/lib/plans";
 
 export async function POST(request: NextRequest) {
   try {
@@ -68,6 +68,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Reject trial requests for non-trial-eligible plans (e.g., Max)
+    if (withTrial && !isPlanTrialEligible(plan)) {
+      return NextResponse.json(
+        {
+          error: "trial_not_available",
+          message: "L'essai gratuit n'est pas disponible pour ce plan.",
+        },
+        { status: 400 }
+      );
+    }
+
     // Check trial eligibility if trial requested
     let trialEligible = false;
     if (withTrial && isAdminInitialized() && adminDb) {
@@ -113,9 +124,10 @@ export async function POST(request: NextRequest) {
       },
     };
 
-    // Add trial period if eligible
+    // Add trial period if eligible (use per-plan trialDays: Pro=7, Max=3)
     if (withTrial && trialEligible) {
-      subscriptionData.trial_period_days = TRIAL_PERIOD_DAYS;
+      const planTrialDays = PLAN_CONFIGS[plan as keyof typeof PLAN_CONFIGS]?.trialDays || TRIAL_PERIOD_DAYS;
+      subscriptionData.trial_period_days = planTrialDays;
     }
 
     // Create Stripe Checkout Session

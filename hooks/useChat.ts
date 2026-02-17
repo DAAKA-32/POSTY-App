@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef } from "react";
 import { savePost, addMessagesToConversation, getConversationHistory } from "@/lib/firestore";
-import { MockResponse, PostInsights, ConversationTurn } from "@/types";
+import { MockResponse, PostInsights, ConversationTurn, FileAttachment } from "@/types";
 
 const GUEST_GENERATION_LIMIT = 2;
 const GUEST_STORAGE_KEY = "posty_guest_generations";
@@ -45,7 +45,7 @@ interface UseChatReturn {
   error: string | null;
   generationCount: number;
   canGenerate: boolean;
-  generate: (prompt: string) => Promise<void>;
+  generate: (prompt: string, file?: FileAttachment | null) => Promise<void>;
   reset: () => void;
   loadConversation: (post: { prompt: string; responseA: string; responseB: string; id: string; messages?: ConversationTurn[] }) => void;
   lastPrompt: string;
@@ -106,7 +106,7 @@ export function useChat({
 
   // Generate responses with streaming
   const generate = useCallback(
-    async (prompt: string) => {
+    async (prompt: string, file?: FileAttachment | null) => {
       if (!prompt.trim()) {
         setError("Veuillez entrer une description");
         return;
@@ -169,9 +169,18 @@ export function useChat({
             requestDualMode: dualMode, // Server-side dual mode enforcement
             responseType: effectiveStyle,
             selectedStyle: effectiveStyle,
-            // NEW: Send conversation context for follow-ups
+            // Send conversation context for follow-ups
             conversationId: currentPostId,
             conversationHistory,
+            // File attachment (Max plan only)
+            ...(file && {
+              fileAttachment: {
+                name: file.name,
+                type: file.type,
+                size: file.size,
+                base64: file.base64,
+              },
+            }),
           }),
           signal: abortControllerRef.current.signal,
         });

@@ -62,7 +62,7 @@ export default function RefineSlider({
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary-hover flex items-center justify-center">
             <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
             </svg>
@@ -82,10 +82,10 @@ export default function RefineSlider({
           key={getToneLabel(value)}
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-violet-500/10 to-purple-500/10 border border-violet-500/20"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-primary/10 to-primary-hover/10 border border-primary/20"
         >
           <span className="text-base">{getToneEmoji(value)}</span>
-          <span className="text-xs font-medium text-violet-600 dark:text-violet-400">
+          <span className="text-xs font-medium text-primary dark:text-primary">
             {getToneLabel(value)}
           </span>
         </motion.div>
@@ -103,7 +103,7 @@ export default function RefineSlider({
         <div className="relative h-3 rounded-full bg-gray-100 dark:bg-dark-bg overflow-hidden">
           {/* Gradient Fill */}
           <motion.div
-            className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-violet-400 via-purple-500 to-indigo-600"
+            className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-secondary via-primary to-primary-dark"
             style={{ width: getGradientPosition(value) }}
             animate={{ width: getGradientPosition(value) }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
@@ -125,12 +125,12 @@ export default function RefineSlider({
 
           {/* Custom Thumb */}
           <motion.div
-            className="absolute top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white shadow-lg border-2 border-violet-500 flex items-center justify-center cursor-grab active:cursor-grabbing z-5"
+            className="absolute top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white shadow-lg border-2 border-primary flex items-center justify-center cursor-grab active:cursor-grabbing z-5"
             style={{ left: `calc(${value}% - 12px)` }}
             animate={{
               scale: isDragging ? 1.2 : 1,
               boxShadow: isDragging
-                ? "0 0 0 8px rgba(139, 92, 246, 0.2)"
+                ? "0 0 0 8px rgba(248, 147, 93, 0.2)"
                 : "0 2px 8px rgba(0,0,0,0.15)",
             }}
             transition={{ type: "spring", stiffness: 400, damping: 25 }}
@@ -168,7 +168,7 @@ export default function RefineSlider({
               flex-1 px-3 py-2 rounded-lg text-xs font-medium
               transition-all duration-200
               ${Math.abs(value - preset.value) < 15
-                ? "bg-violet-500 text-white shadow-md"
+                ? "bg-primary text-white shadow-md"
                 : "bg-gray-100 dark:bg-dark-bg text-gray-600 dark:text-text-secondary hover:bg-gray-200 dark:hover:bg-dark-hover"
               }
             `}
@@ -185,7 +185,7 @@ export default function RefineSlider({
           onClick={onApply}
           whileHover={{ scale: 1.01 }}
           whileTap={{ scale: 0.99 }}
-          className="w-full mt-4 px-4 py-3 rounded-xl bg-gradient-to-r from-violet-500 to-purple-500 text-white font-semibold text-sm shadow-lg shadow-violet-500/30 hover:shadow-xl hover:shadow-violet-500/40 transition-shadow"
+          className="w-full mt-4 px-4 py-3 rounded-xl bg-gradient-to-r from-primary to-primary-hover text-white font-semibold text-sm shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-shadow"
         >
           Appliquer le ton
         </motion.button>
@@ -226,7 +226,7 @@ export function CompactRefineSlider({
             [&::-webkit-slider-thumb]:w-4
             [&::-webkit-slider-thumb]:h-4
             [&::-webkit-slider-thumb]:rounded-full
-            [&::-webkit-slider-thumb]:bg-violet-500
+            [&::-webkit-slider-thumb]:bg-primary
             [&::-webkit-slider-thumb]:shadow-md
             [&::-webkit-slider-thumb]:cursor-grab
             [&::-webkit-slider-thumb]:active:cursor-grabbing

@@ -65,7 +65,7 @@ export default function TypingIndicator({
       {/* Avatar */}
       <div className="w-6 h-6 rounded-md overflow-hidden flex items-center justify-center shrink-0">
         <img
-          src="/logo.jpg"
+          src="/logo.png"
           alt="Posty Logo"
           className="w-full h-full object-contain"
         />

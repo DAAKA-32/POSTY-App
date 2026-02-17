@@ -57,9 +57,9 @@ export default function UpgradeCTA({
     if (isProPlan) {
       return {
         title: "Passez au plan Max",
-        description: "Créations illimitées, multi-plateformes et génération prioritaire",
+        description: "4 plateformes, fichiers joints, prompts 3000 car. et posts IA ultra",
         cta: "Découvrir Max",
-        highlight: "Illimité",
+        highlight: "4 plateformes",
         icon: "star",
       };
     }
@@ -101,7 +101,7 @@ export default function UpgradeCTA({
           >
             <div className="relative overflow-hidden rounded-xl border-2 border-dark-border hover:border-primary/30 bg-dark-elevated/80 backdrop-blur-sm transition-all duration-200 group glow-tips">
               {/* Premium gradient shimmer */}
-              <div className="absolute inset-0 bg-gradient-to-r from-amber-500/5 via-orange-500/5 to-pink-500/5 pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-primary-hover/5 to-secondary/5 pointer-events-none" />
 
               {/* Close button - top right, perfectly centered */}
               <button
@@ -125,7 +125,7 @@ export default function UpgradeCTA({
                     <div className={`shrink-0 w-7 h-7 rounded-lg flex items-center justify-center ${
                       isFreePlan
                         ? "bg-primary/10 text-primary"
-                        : "bg-amber-500/10 text-amber-400"
+                        : "bg-primary/10 text-primary"
                     }`}>
                       {message.icon === "star" ? (
                         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -146,7 +146,7 @@ export default function UpgradeCTA({
                         <span className={`hidden sm:inline px-1.5 py-0.5 text-2xs font-bold rounded-full ${
                           isFreePlan
                             ? "bg-primary/20 text-primary"
-                            : "bg-amber-500/20 text-amber-400"
+                            : "bg-primary/20 text-primary"
                         }`}>
                           {message.highlight}
                         </span>
@@ -181,8 +181,8 @@ export default function UpgradeCTA({
         >
           <div className={`relative overflow-hidden rounded-xl border-2 ${
             isFreePlan
-              ? "bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-orange-500/10 border-purple-500/20 glow-storytelling"
-              : "bg-gradient-to-r from-amber-500/10 to-orange-500/10 border-amber-500/20 glow-tips"
+              ? "bg-gradient-to-r from-primary/10 via-secondary/10 to-primary-hover/10 border-primary/20 glow-storytelling"
+              : "bg-gradient-to-r from-primary/10 to-primary-hover/10 border-primary/20 glow-tips"
           }`}>
             {/* Dismiss button - perfectly centered with matching background */}
             <button
@@ -204,7 +204,7 @@ export default function UpgradeCTA({
               <div className={`shrink-0 w-10 h-10 rounded-xl flex items-center justify-center ${
                 isFreePlan
                   ? "bg-primary/20 text-primary"
-                  : "bg-amber-500/20 text-amber-400"
+                  : "bg-primary/20 text-primary"
               }`}>
                 {message.icon === "star" ? (
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -230,7 +230,7 @@ export default function UpgradeCTA({
                   className={`inline-flex items-center gap-2 px-4 py-2 text-xs sm:text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 ${
                     isFreePlan
                       ? "bg-gradient-to-r from-primary to-accent"
-                      : "bg-gradient-to-r from-amber-500 to-orange-500"
+                      : "bg-gradient-to-r from-primary to-primary-hover"
                   }`}
                 >
                   {message.cta}

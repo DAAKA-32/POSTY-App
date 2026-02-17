@@ -56,32 +56,32 @@ export default function PostInsightsModal({
       icon: "✨",
       title: "Pourquoi ça fonctionne",
       content: insights.whyEffective,
-      iconBg: "bg-violet-500/10 border border-violet-500/20",
-      textColor: "text-violet-600 dark:text-violet-400",
+      iconBg: "bg-primary/10 border border-primary/20",
+      textColor: "text-primary",
     },
     {
       id: "timing",
       icon: "⏰",
       title: "Meilleur moment",
       content: insights.bestTimeToPost,
-      iconBg: "bg-amber-500/10 border border-amber-500/20",
-      textColor: "text-amber-600 dark:text-amber-400",
+      iconBg: "bg-primary/10 border border-primary/20",
+      textColor: "text-primary",
     },
     {
       id: "engagement",
       icon: "📈",
       title: "Engagement attendu",
       content: insights.expectedEngagement,
-      iconBg: "bg-emerald-500/10 border border-emerald-500/20",
-      textColor: "text-emerald-600 dark:text-emerald-400",
+      iconBg: "bg-primary/10 border border-primary/20",
+      textColor: "text-primary",
     },
     {
       id: "takeaway",
       icon: "🎯",
       title: "Point clé",
       content: insights.keyTakeaway,
-      iconBg: "bg-blue-500/10 border border-blue-500/20",
-      textColor: "text-blue-600 dark:text-blue-400",
+      iconBg: "bg-primary/10 border border-primary/20",
+      textColor: "text-primary",
     },
   ];
 
@@ -122,7 +122,7 @@ export default function PostInsightsModal({
               <div className="relative px-6 py-5 border-b border-gray-200 dark:border-dark-border bg-gray-50 dark:bg-dark-elevated">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
                       <span className="text-2xl">💡</span>
                     </div>
                     <div>
@@ -197,14 +197,14 @@ export default function PostInsightsModal({
                   className="mt-6 p-4 bg-gray-50 dark:bg-dark-elevated rounded-xl border border-gray-200 dark:border-dark-border"
                 >
                   <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center shrink-0">
-                      <svg className="w-4 h-4 text-violet-600 dark:text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                      <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
                     <div className="flex-1">
                       <p className="text-xs text-gray-600 dark:text-text-muted leading-relaxed">
-                        <span className="font-semibold text-violet-600 dark:text-violet-400">Astuce :</span> Ces insights sont générés par IA pour vous aider à comprendre les points forts de votre post et optimiser votre stratégie de contenu.
+                        <span className="font-semibold text-primary">Astuce :</span> Ces insights sont générés par IA pour vous aider à comprendre les points forts de votre post et optimiser votre stratégie de contenu.
                       </p>
                     </div>
                   </div>

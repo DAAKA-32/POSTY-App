@@ -326,7 +326,7 @@ const ExpandableHistoryCard = memo(function ExpandableHistoryCard({
                   transition-all duration-300
                   ${isExpanded
                     ? "text-gray-900 dark:text-white"
-                    : "text-text-secondary group-hover:text-gray-900 dark:group-hover:text-white"
+                    : "text-gray-900 dark:text-gray-200 group-hover:text-gray-950 dark:group-hover:text-white"
                   }
                 `}
               >

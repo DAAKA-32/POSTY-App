@@ -59,7 +59,7 @@ export default function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
             className="relative w-full max-w-md bg-dark-card border border-dark-border rounded-2xl shadow-elevated overflow-hidden"
           >
             {/* Gradient top decoration */}
-            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-purple-500 to-primary" />
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-accent to-primary" />
 
             {/* Close button */}
             <button
@@ -74,7 +74,7 @@ export default function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
             {/* Content */}
             <div className="p-6 pt-8">
               {/* Icon */}
-              <div className="mx-auto w-16 h-16 bg-gradient-to-br from-primary/20 to-purple-500/20 rounded-2xl flex items-center justify-center mb-6">
+              <div className="mx-auto w-16 h-16 bg-gradient-to-br from-primary/20 to-accent/20 rounded-2xl flex items-center justify-center mb-6">
                 <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>

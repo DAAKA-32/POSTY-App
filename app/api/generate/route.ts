@@ -65,6 +65,8 @@ export async function POST(request: NextRequest) {
       // NEW: Conversation context for multi-turn support
       conversationId,
       conversationHistory,
+      // File attachment (Max plan only)
+      fileAttachment,
     } = body;
 
     // Validate required fields
@@ -150,6 +152,92 @@ export async function POST(request: NextRequest) {
         }),
         { status: 400, headers: { "Content-Type": "application/json" } }
       );
+    }
+
+    // ========== FILE ATTACHMENT VALIDATION (MAX PLAN ONLY) ==========
+    let processedFileContent: {
+      type: "image";
+      mimeType: string;
+      base64: string;
+    } | {
+      type: "pdf";
+      extractedText: string;
+    } | null = null;
+
+    if (fileAttachment) {
+      // Plan check: Only Max plan can use file attachments
+      if (userPlan !== "max") {
+        return new Response(
+          JSON.stringify({
+            error: "plan_required",
+            message: language === "fr"
+              ? "Les fichiers joints sont réservés au plan Max."
+              : "File attachments require the Max plan.",
+            requiredPlan: "max",
+          }),
+          { status: 403, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      // Validate file type
+      const ALLOWED_TYPES = [
+        "image/jpeg", "image/png", "image/gif", "image/webp", "application/pdf",
+      ];
+      if (!fileAttachment.type || !ALLOWED_TYPES.includes(fileAttachment.type)) {
+        return new Response(
+          JSON.stringify({ error: "invalid_file_type", message: "Type de fichier non supporté." }),
+          { status: 400, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      // Validate file size (5MB)
+      if (!fileAttachment.size || fileAttachment.size > 5 * 1024 * 1024) {
+        return new Response(
+          JSON.stringify({ error: "file_too_large", message: "Fichier trop volumineux (max 5 Mo)." }),
+          { status: 400, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      // Validate base64 content
+      if (!fileAttachment.base64 || typeof fileAttachment.base64 !== "string") {
+        return new Response(
+          JSON.stringify({ error: "invalid_file", message: "Contenu du fichier invalide." }),
+          { status: 400, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      // Process based on type
+      if (fileAttachment.type === "application/pdf") {
+        try {
+          const { PDFParse } = await import("pdf-parse");
+          const pdfBuffer = Buffer.from(fileAttachment.base64, "base64");
+          const parser = new PDFParse({ data: pdfBuffer, verbosity: 0 });
+          const result = await parser.getText();
+          const extractedText = result.pages.map((p: { text: string }) => p.text).join("\n").trim().substring(0, 8000);
+
+          if (!extractedText) {
+            return new Response(
+              JSON.stringify({ error: "empty_pdf", message: "Le PDF ne contient pas de texte extractible." }),
+              { status: 400, headers: { "Content-Type": "application/json" } }
+            );
+          }
+
+          processedFileContent = { type: "pdf", extractedText };
+        } catch (pdfError) {
+          console.error("PDF parsing error:", pdfError);
+          return new Response(
+            JSON.stringify({ error: "pdf_parse_error", message: "Impossible de lire le contenu du PDF." }),
+            { status: 400, headers: { "Content-Type": "application/json" } }
+          );
+        }
+      } else {
+        // Image — pass for GPT-4o Vision
+        processedFileContent = {
+          type: "image",
+          mimeType: fileAttachment.type,
+          base64: fileAttachment.base64,
+        };
+      }
     }
 
     // Plan-based max tokens for response length
@@ -300,7 +388,8 @@ export async function POST(request: NextRequest) {
                 sendEvent,
                 typesToGenerate,
                 maxTokens,
-                conversationHistory as Array<{ role: "user" | "assistant"; content: string }> | undefined
+                conversationHistory as Array<{ role: "user" | "assistant"; content: string }> | undefined,
+                processedFileContent
               );
             }
           } else {
@@ -399,12 +488,16 @@ async function generateWithOpenAI(
   sendEvent: (event: string, data: object) => void,
   typesToGenerate: Array<"storytelling" | "business">,
   maxTokens: number,
-  conversationHistory?: Array<{ role: "user" | "assistant"; content: string }>
+  conversationHistory?: Array<{ role: "user" | "assistant"; content: string }>,
+  fileContent?: { type: "image"; mimeType: string; base64: string } | { type: "pdf"; extractedText: string } | null
 ): Promise<string> {
   let firstPostContent = "";
 
   // Check if this is a follow-up message (continuing a conversation)
   const isFollowUp = conversationHistory && conversationHistory.length > 0;
+
+  // Determine if we need GPT-4o for image vision
+  const needsVision = fileContent?.type === "image";
 
   for (const type of typesToGenerate) {
     const title =
@@ -429,8 +522,20 @@ async function generateWithOpenAI(
       systemPrompt += followUpContext;
     }
 
-    // Build messages array
-    const messages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
+    // If file is attached, add context to system prompt
+    if (fileContent) {
+      const fileContext = fileContent.type === "image"
+        ? (language === "fr"
+          ? "\n\nL'utilisateur a joint une image. Analyse-la et utilise son contenu comme contexte pour générer le post LinkedIn. Décris ce que tu vois si pertinent."
+          : "\n\nThe user attached an image. Analyze it and use its content as context to generate the LinkedIn post.")
+        : (language === "fr"
+          ? "\n\nL'utilisateur a joint un document PDF. Utilise le contenu extrait ci-dessous comme contexte pour générer le post LinkedIn."
+          : "\n\nThe user attached a PDF document. Use the extracted content below as context to generate the LinkedIn post.");
+      systemPrompt += fileContext;
+    }
+
+    // Build messages array (use any[] to support multimodal content parts)
+    const messages: any[] = [
       { role: "system", content: systemPrompt },
     ];
 
@@ -446,17 +551,43 @@ async function generateWithOpenAI(
       }
     }
 
-    // Add current prompt
+    // Add current prompt with file content
     const userContent = isFollowUp
       ? prompt // For follow-ups, just send the refinement
       : language === "fr"
         ? `Crée un post LinkedIn sur le sujet suivant: ${prompt}`
         : `Create a LinkedIn post about the following topic: ${prompt}`;
 
-    messages.push({ role: "user", content: userContent });
+    if (fileContent?.type === "image") {
+      // Multimodal message with image for GPT-4o Vision
+      messages.push({
+        role: "user",
+        content: [
+          { type: "text", text: userContent },
+          {
+            type: "image_url",
+            image_url: {
+              url: `data:${fileContent.mimeType};base64,${fileContent.base64}`,
+              detail: "auto",
+            },
+          },
+        ],
+      });
+    } else if (fileContent?.type === "pdf") {
+      // PDF: inject extracted text into the prompt
+      const pdfContext = language === "fr"
+        ? `\n\n--- Contenu du document joint ---\n${fileContent.extractedText}\n--- Fin du document ---`
+        : `\n\n--- Attached document content ---\n${fileContent.extractedText}\n--- End of document ---`;
+      messages.push({ role: "user", content: userContent + pdfContext });
+    } else {
+      messages.push({ role: "user", content: userContent });
+    }
+
+    // Use GPT-4o for image vision, otherwise default model
+    const modelToUse = needsVision ? "gpt-4o" : service["model"];
 
     const stream = await service["client"].chat.completions.create({
-      model: service["model"],
+      model: modelToUse,
       messages,
       temperature: type === "storytelling" ? 0.8 : 0.7,
       max_tokens: maxTokens,

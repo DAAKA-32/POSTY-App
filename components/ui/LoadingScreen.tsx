@@ -67,7 +67,7 @@ export default function LoadingScreen({
           {/* Logo image - clean, no background */}
           <div className="relative w-20 h-20 md:w-24 md:h-24 flex items-center justify-center">
             <img
-              src="/logo.jpg"
+              src="/logo.png"
               alt="Posty Logo"
               className="w-full h-full object-contain drop-shadow-2xl"
             />
@@ -92,7 +92,7 @@ export default function LoadingScreen({
           className="w-full max-w-xs"
         >
           {/* Progress bar */}
-          <div className="h-1.5 bg-dark-border dark:bg-dark-border rounded-full overflow-hidden">
+          <div className="h-1.5 bg-gray-200 dark:bg-dark-border rounded-full overflow-hidden">
             <motion.div
               className="h-full bg-gradient-to-r from-primary via-accent to-primary rounded-full relative overflow-hidden"
               initial={{ width: "0%" }}

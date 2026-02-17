@@ -209,7 +209,7 @@ export default function ImmersiveDemoView({
               >
                 <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl overflow-hidden shadow-lg shadow-orange-500/20">
                   <img
-                    src="/logo.jpg"
+                    src="/logo.png"
                     alt="Posty"
                     className="w-full h-full object-cover"
                   />
@@ -271,7 +271,7 @@ export default function ImmersiveDemoView({
                   className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex-shrink-0 overflow-hidden shadow-lg shadow-orange-500/25"
                 >
                   <img
-                    src="/logo.jpg"
+                    src="/logo.png"
                     alt="Posty AI"
                     className="w-full h-full object-cover"
                   />

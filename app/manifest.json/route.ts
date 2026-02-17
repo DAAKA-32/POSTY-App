@@ -24,15 +24,15 @@ export async function GET() {
     categories: ["business", "productivity", "social"],
     icons: [
       {
-        src: "/logo.jpg",
+        src: "/logo.png",
         sizes: "192x192",
-        type: "image/jpeg",
+        type: "image/png",
         purpose: "any",
       },
       {
-        src: "/logo.jpg",
+        src: "/logo.png",
         sizes: "512x512",
-        type: "image/jpeg",
+        type: "image/png",
         purpose: "any maskable",
       },
     ],
@@ -51,14 +51,14 @@ export async function GET() {
         short_name: "New",
         description: "Create a new LinkedIn post",
         url: "/app",
-        icons: [{ src: "/logo.jpg", sizes: "192x192" }],
+        icons: [{ src: "/logo.png", sizes: "192x192" }],
       },
       {
         name: "History",
         short_name: "History",
         description: "View your post history",
         url: "/history",
-        icons: [{ src: "/logo.jpg", sizes: "192x192" }],
+        icons: [{ src: "/logo.png", sizes: "192x192" }],
       },
     ],
     related_applications: [],
@@ -99,7 +99,7 @@ export async function GET() {
     status: 200,
     headers: {
       "Content-Type": "application/manifest+json",
-      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Cache-Control": "no-cache, no-store, must-revalidate",
     },
   });
 }

@@ -7,22 +7,17 @@ export default {
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   safelist: [
-    // Sidebar navigation colors - ensure these are always included
-    'bg-orange-500', 'bg-orange-500/10', 'bg-orange-500/5',
-    'text-orange-500', 'hover:text-orange-500', 'hover:bg-orange-500/5',
-    'bg-cyan-500', 'bg-cyan-500/10', 'bg-cyan-500/5',
-    'text-cyan-500', 'hover:text-cyan-500', 'hover:bg-cyan-500/5',
-    'bg-violet-500', 'bg-violet-500/10', 'bg-violet-500/5',
-    'text-violet-500', 'hover:text-violet-500', 'hover:bg-violet-500/5',
-    // Profile menu colors
-    'bg-emerald-500/10', 'text-emerald-500', 'hover:bg-emerald-500/10',
-    'group-hover/item:text-emerald-500',
-    'bg-blue-500/10', 'text-blue-500', 'hover:bg-blue-500/10',
-    'group-hover/item:text-blue-500',
-    'bg-amber-500/10', 'text-amber-500', 'hover:bg-amber-500/10',
-    'group-hover/item:text-amber-500',
-    'bg-slate-500/10', 'text-slate-400', 'hover:bg-slate-500/10',
-    'group-hover/item:text-slate-400',
+    // Brand primary colors - used dynamically in sidebar, profile, components
+    'bg-primary', 'bg-primary/5', 'bg-primary/10', 'bg-primary/20',
+    'text-primary', 'hover:text-primary', 'hover:bg-primary/5',
+    'border-primary', 'border-primary/20', 'border-primary/30',
+    // Brand primary-hover for premium variants
+    'bg-primary-hover', 'text-primary-hover',
+    'bg-primary-hover/5', 'bg-primary-hover/10', 'bg-primary-hover/20',
+    // Semantic colors (kept for status indicators)
+    'text-success', 'bg-success/10',
+    'text-error', 'bg-error/10',
+    'text-warning', 'bg-warning/10',
   ],
   darkMode: "class",
   theme: {
@@ -220,6 +215,7 @@ export default {
 
       fontFamily: {
         sans: ["var(--font-poppins)", "Poppins", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
+        display: ["var(--font-display)", "Playfair Display", "Georgia", "serif"],
         mono: ["var(--font-mono)", "JetBrains Mono", "Fira Code", "monospace"],
       },
 

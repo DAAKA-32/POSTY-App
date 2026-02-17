@@ -177,7 +177,7 @@ export default function ChatPage() {
           <Link href="/" className="flex items-center gap-3 group">
             <div className="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center shadow-glow transition-transform group-hover:scale-105">
               <img
-                src="/logo.jpg"
+                src="/logo.png"
                 alt="Posty Logo"
                 className="w-full h-full object-contain"
               />
@@ -308,7 +308,7 @@ export default function ChatPage() {
                                   className={`
                                     inline-block px-2.5 py-1 text-xs font-medium rounded-lg
                                     ${message.type === "storytelling"
-                                      ? "bg-purple-500/20 text-purple-400"
+                                      ? "bg-primary-hover/20 text-primary"
                                       : "bg-primary/20 text-primary"
                                     }
                                   `}

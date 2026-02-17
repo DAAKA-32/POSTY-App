@@ -185,7 +185,7 @@ function ScheduleContent() {
     >
       <PullToRefresh
         onRefresh={refreshScheduledPosts}
-        className="min-h-full bg-light-bg dark:bg-dark-bg scroll-smooth lg:overflow-y-auto"
+        className="min-h-full bg-background-warm dark:bg-dark-bg scroll-smooth lg:overflow-y-auto"
         disabled={isLoading}
       >
         <div className="w-full mx-auto px-4 py-6 md:px-6 md:py-8 md:max-w-2xl lg:px-8 lg:py-10 lg:max-w-3xl xl:max-w-4xl 2xl:max-w-5xl">
@@ -196,7 +196,7 @@ function ScheduleContent() {
             className="flex items-center justify-between mb-8"
           >
             <div>
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white md:text-2xl lg:text-3xl">
+              <h1 className="text-xl font-bold text-silver-shimmer dark:text-white md:text-2xl lg:text-3xl">
                 Posts programmés
               </h1>
               <div className="flex items-center gap-3 mt-1.5">
@@ -211,23 +211,6 @@ function ScheduleContent() {
                 )}
               </div>
             </div>
-            {/* Create button - Clean professional version */}
-            <Link
-              href="/app"
-              className="
-                inline-flex items-center gap-2 px-4 py-2.5
-                bg-primary hover:bg-primary-hover
-                text-white text-sm font-semibold
-                rounded-xl shadow-sm hover:shadow-md
-                transition-all duration-200
-              "
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-              </svg>
-              <span className="hidden md:inline">Créer un post</span>
-              <span className="md:hidden">Créer</span>
-            </Link>
           </motion.div>
 
           {/* View mode toggle & Filters - Premium design */}
@@ -238,7 +221,7 @@ function ScheduleContent() {
             className="flex flex-col md:flex-row md:items-center gap-4 mb-8"
           >
             {/* View mode toggle - Clean design */}
-            <div className="flex bg-gray-100 dark:bg-dark-card rounded-xl p-1 border border-gray-200 dark:border-dark-border">
+            <div className="flex bg-gray-100 dark:bg-dark-hover rounded-xl p-1 border border-gray-200 dark:border-dark-border">
               <button
                 onClick={() => setViewMode("list")}
                 className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
@@ -273,14 +256,15 @@ function ScheduleContent() {
                 const isActive = filter === option.value;
                 const getFilterColors = () => {
                   if (!isActive) {
-                    return "bg-white dark:bg-dark-card text-gray-600 dark:text-text-muted hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-dark-border";
+                    return "bg-white dark:bg-dark-hover text-gray-600 dark:text-text-muted hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-dark-border";
                   }
+                  // All active states: colored bg + forced white text for guaranteed contrast
                   switch (option.value) {
-                    case "pending": return "bg-primary text-white";
-                    case "published": return "bg-emerald-500 text-white";
-                    case "failed": return "bg-red-500 text-white";
-                    case "cancelled": return "bg-gray-500 text-white";
-                    default: return "bg-gray-900 dark:bg-white text-white dark:text-gray-900";
+                    case "pending": return "bg-primary !text-white border border-transparent";
+                    case "published": return "bg-emerald-500 !text-white border border-transparent";
+                    case "failed": return "bg-red-500 !text-white border border-transparent";
+                    case "cancelled": return "bg-gray-500 !text-white border border-transparent";
+                    default: return "bg-gray-900 dark:bg-white !text-white dark:!text-gray-900 border border-transparent shadow-sm";
                   }
                 };
                 return (
@@ -330,12 +314,12 @@ function ScheduleContent() {
               className="text-center py-16 md:py-20 lg:py-24"
             >
               {/* Empty state icon - Clean version */}
-              <div className="w-16 h-16 md:w-20 md:h-20 mx-auto mb-6 bg-gray-100 dark:bg-dark-card rounded-2xl border border-gray-200 dark:border-dark-border flex items-center justify-center">
+              <div className="w-16 h-16 md:w-20 md:h-20 mx-auto mb-6 bg-gray-100 dark:bg-primary/10 rounded-2xl border border-gray-200 dark:border-primary/15 flex items-center justify-center">
                 <svg className="w-8 h-8 md:w-10 md:h-10 text-gray-400 dark:text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h3 className="text-lg md:text-xl lg:text-2xl font-semibold text-gray-900 dark:text-white mb-2">
+              <h3 className="text-lg md:text-xl lg:text-2xl font-semibold text-silver-solid dark:text-white mb-2">
                 {filter === "all"
                   ? "Aucun post programmé"
                   : `Aucun post ${FILTER_OPTIONS.find((o) => o.value === filter)?.label.toLowerCase()}`}
@@ -375,12 +359,12 @@ function ScheduleContent() {
                     transition={{ delay: groupIndex * 0.05 }}
                   >
                     {/* Date header - Clean professional styling */}
-                    <div className="sticky top-0 z-10 flex items-center gap-3 mb-4 py-2 bg-light-bg/95 dark:bg-dark-bg/95 backdrop-blur-sm -mx-4 px-4">
+                    <div className="sticky top-0 z-10 flex items-center gap-3 mb-4 py-2 bg-background-warm/95 dark:bg-dark-bg/95 backdrop-blur-sm -mx-4 px-4">
                       <h2 className="text-sm md:text-base font-semibold text-gray-900 dark:text-white">
                         {group.date}
                       </h2>
                       <div className="flex-1 h-px bg-gray-200 dark:bg-dark-border" />
-                      <span className="text-xs md:text-sm px-2.5 py-1 rounded-lg font-medium text-gray-500 dark:text-text-muted bg-gray-100 dark:bg-dark-card border border-gray-200 dark:border-dark-border">
+                      <span className="text-xs md:text-sm px-2.5 py-1 rounded-lg font-medium text-gray-500 dark:text-text-muted bg-gray-100 dark:bg-primary/10 border border-gray-200 dark:border-primary/15">
                         {group.posts.length} post{group.posts.length !== 1 ? "s" : ""}
                       </span>
                     </div>
@@ -465,8 +449,8 @@ function ScheduleContent() {
                         ${isToday
                           ? "bg-primary/10 border-2 border-primary/30"
                           : hasPosts
-                            ? "border border-gray-200 dark:border-dark-border bg-gray-50 dark:bg-dark-elevated/50 hover:bg-gray-100 dark:hover:bg-dark-elevated"
-                            : "border border-gray-100 dark:border-dark-border/50 hover:bg-gray-50 dark:hover:bg-dark-elevated/30"
+                            ? "border border-gray-200 dark:border-primary/15 bg-gray-50 dark:bg-primary/8 hover:bg-gray-100 dark:hover:bg-primary/12"
+                            : "border border-gray-100 dark:border-dark-border/50 hover:bg-gray-50 dark:hover:bg-primary/5"
                         }
                       `}
                     >
@@ -502,7 +486,7 @@ function ScheduleContent() {
                                         ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                                         : post.status === "failed"
                                           ? "bg-red-500/10 text-red-600 dark:text-red-400"
-                                          : "bg-gray-100 dark:bg-dark-elevated text-gray-500 dark:text-text-muted"
+                                          : "bg-gray-100 dark:bg-dark-hover text-gray-500 dark:text-text-muted"
                                     }
                                   `}
                                   title={post.content}
