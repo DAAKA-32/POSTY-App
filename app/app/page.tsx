@@ -10,6 +10,8 @@ import { useChat } from "@/hooks/useChat";
 import { useSmartScroll } from "@/hooks/useSmartScroll";
 import { useKeyboardHeight } from "@/hooks/useKeyboardHeight";
 import { getUserPostsWithPinned, getDualModeUsageThisWeek } from "@/lib/firestore";
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { Post, FileAttachment } from "@/types";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import MainLayout from "@/components/layout/MainLayout";
@@ -223,15 +225,17 @@ function AppContent() {
     initAnalytics();
   }, []);
 
-  // Welcome modal after first payment (one-time)
+  // Welcome modal after first payment (one-time, dual-source: sessionStorage + Firestore)
   useEffect(() => {
-    const shouldShow = sessionStorage.getItem("posty_show_welcome");
-    if (shouldShow === "1") {
+    const fromSession = sessionStorage.getItem("posty_show_welcome") === "1";
+    const fromFirestore = userProfile?.showWelcomeModal === true;
+
+    if (fromSession || fromFirestore) {
       sessionStorage.removeItem("posty_show_welcome");
       const timer = setTimeout(() => setShowWelcomeModal(true), 600);
       return () => clearTimeout(timer);
     }
-  }, []);
+  }, [userProfile?.showWelcomeModal]);
 
   // Fetch user posts (with pinned posts first)
   useEffect(() => {
@@ -538,7 +542,16 @@ function AppContent() {
 
   const userInitial = userProfile?.displayName?.charAt(0) || user?.email?.charAt(0) || "U";
   const userName = userProfile?.displayName || "Vous";
+  const userFirstName = userProfile?.displayName?.split(" ")[0] || "";
   const userPhotoURL = user?.photoURL || userProfile?.photoURL || null;
+
+  // Dismiss welcome modal and clear Firestore flag
+  const dismissWelcomeModal = useCallback(() => {
+    setShowWelcomeModal(false);
+    if (user) {
+      updateDoc(doc(db, "users", user.uid), { showWelcomeModal: false }).catch(() => {});
+    }
+  }, [user]);
 
   // Determine if scroll should be disabled (no messages = welcome screen)
   const shouldDisableScroll = messages.length === 0 && !isLoading;
@@ -1091,7 +1104,7 @@ function AppContent() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
             className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-            onClick={() => setShowWelcomeModal(false)}
+            onClick={dismissWelcomeModal}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -1103,7 +1116,7 @@ function AppContent() {
             >
               {/* Close button */}
               <button
-                onClick={() => setShowWelcomeModal(false)}
+                onClick={dismissWelcomeModal}
                 className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-dark-hover transition-colors text-text-muted hover:text-text-primary"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1128,7 +1141,7 @@ function AppContent() {
                 transition={{ delay: 0.3 }}
                 className="text-2xl font-bold text-silver-shimmer dark:text-white mb-2"
               >
-                Bienvenue sur Posty !
+                {userFirstName ? `Bienvenue, ${userFirstName} !` : "Bienvenue sur Posty !"}
               </motion.h2>
 
               {/* Subtitle */}
@@ -1179,7 +1192,7 @@ function AppContent() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 }}
-                onClick={() => setShowWelcomeModal(false)}
+                onClick={dismissWelcomeModal}
                 className="w-full py-3 px-6 bg-gradient-to-r from-primary to-accent text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-primary/25 transition-all duration-200"
               >
                 Commencer

@@ -14,6 +14,11 @@ import RenameConversationModal from "@/components/conversation/RenameConversatio
 import DeleteConfirmModal from "@/components/conversation/DeleteConfirmModal";
 import ProfileMenu from "@/components/layout/ProfileMenu";
 import { useScrollLock } from "@/hooks/useScrollLock";
+import { AnimatePresence } from "framer-motion";
+import { usePageHelp } from "@/hooks/usePageHelp";
+import HelpNotificationDot from "@/components/help/HelpNotificationDot";
+import HelpPopover from "@/components/help/HelpPopover";
+import { PAGE_HELP_CONFIG } from "@/lib/help-content";
 
 interface SlideMenuProps {
   isOpen: boolean;
@@ -195,6 +200,11 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
   const [localPosts, setLocalPosts] = useState<Post[]>(posts);
   const [postToDelete, setPostToDelete] = useState<Post | null>(null);
   const [postToRename, setPostToRename] = useState<Post | null>(null);
+
+  // Help notification system
+  const { isPathRead, markPathAsRead } = usePageHelp();
+  const [activeHelpPath, setActiveHelpPath] = useState<string | null>(null);
+  const mobileHelpAnchorRef = useRef<HTMLSpanElement | null>(null);
 
   // Sync local posts with prop
   useEffect(() => {
@@ -580,6 +590,7 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
                   >
                     {/* Vivid colored icon matching Features section palette */}
                     <span
+                      ref={(el) => { if (activeHelpPath === item.href) mobileHelpAnchorRef.current = el; }}
                       className={`
                         relative transition-all duration-200
                         ${isActive ? "scale-110" : "group-hover:scale-110"}
@@ -590,6 +601,15 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
                       } : undefined}
                     >
                       {item.icon(isActive)}
+                      {/* Help notification dot */}
+                      <AnimatePresence>
+                        {PAGE_HELP_CONFIG[item.href] && !isPathRead(item.href) && (
+                          <HelpNotificationDot
+                            accentColor={PAGE_HELP_CONFIG[item.href].accentColor}
+                            onClick={(e) => setActiveHelpPath(item.href)}
+                          />
+                        )}
+                      </AnimatePresence>
                     </span>
 
                     <span className="font-bold flex-1">{itemName}</span>
@@ -616,6 +636,18 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
               );
             })}
           </div>
+
+          {/* Help Popover for mobile nav items */}
+          {activeHelpPath && PAGE_HELP_CONFIG[activeHelpPath] && (
+            <HelpPopover
+              isOpen={true}
+              onClose={() => setActiveHelpPath(null)}
+              onMarkRead={() => markPathAsRead(activeHelpPath)}
+              config={PAGE_HELP_CONFIG[activeHelpPath]}
+              anchorRef={mobileHelpAnchorRef}
+              mobileMode
+            />
+          )}
 
           {/* Chat list section */}
           <div className="mt-4">

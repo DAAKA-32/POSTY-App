@@ -121,6 +121,7 @@ export const STORAGE_KEYS = {
   LAST_VISITED_PAGE: "posty_last_visited_page",
   ONBOARDING_COMPLETED: "posty_onboarding_completed",
   COOKIE_CONSENT: "posty_cookie_consent",
+  HELP_READ_PAGES: "posty_help_read_pages",
 } as const;
 
 export default useLocalStorage;

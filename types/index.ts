@@ -160,6 +160,8 @@ export interface UserProfile {
     weeklyPublishCount?: number;
     weekStartDate?: Timestamp;
   };
+  // Welcome modal flag (set by webhook after first payment, cleared on dismiss)
+  showWelcomeModal?: boolean;
   createdAt: Timestamp;
 }
 

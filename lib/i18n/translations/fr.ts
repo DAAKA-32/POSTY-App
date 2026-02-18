@@ -1146,6 +1146,49 @@ export const fr = {
     logoutSuccess: "Déconnexion réussie",
     errorLogout: "Erreur lors de la déconnexion",
   },
+
+  // Help / First-visit notifications
+  help: {
+    gotIt: "Compris !",
+    pages: {
+      chat: {
+        title: "Chat IA",
+        description: "Décrivez votre idée de post et l'IA générera du contenu LinkedIn optimisé pour vous.",
+        features: [
+          "Générez des posts en un clic",
+          "Choisissez parmi plusieurs styles d'écriture",
+          "Publiez directement sur LinkedIn",
+        ],
+      },
+      history: {
+        title: "Historique",
+        description: "Retrouvez tous vos posts générés, organisez-les et réutilisez vos meilleurs contenus.",
+        features: [
+          "Filtrez et recherchez vos posts",
+          "Épinglez vos favoris",
+          "Réutilisez un post en un clic",
+        ],
+      },
+      schedule: {
+        title: "Programmation",
+        description: "Planifiez la publication automatique de vos posts sur LinkedIn.",
+        features: [
+          "Programmez à l'avance",
+          "Choisissez la date et l'heure",
+          "Suivez le statut de publication",
+        ],
+      },
+      analytics: {
+        title: "Analytics",
+        description: "Analysez les performances de vos posts LinkedIn pour améliorer votre stratégie.",
+        features: [
+          "Suivez vos impressions et réactions",
+          "Identifiez vos meilleurs contenus",
+          "Analysez les tendances",
+        ],
+      },
+    },
+  },
 } as const;
 
 export type TranslationKeys = typeof fr;

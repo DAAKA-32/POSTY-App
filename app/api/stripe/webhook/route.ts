@@ -101,6 +101,9 @@ async function updateUserSubscription(
     updateData["subscription.expiresAt"] = Timestamp.fromDate(data.currentPeriodEnd);
   }
 
+  // Set welcome modal flag for post-payment display
+  updateData["showWelcomeModal"] = true;
+
   // Handle trial tracking - mark trial as used on first trial start
   if (data.isTrialStart && data.status === "trialing") {
     updateData["subscription.trialUsed"] = true;

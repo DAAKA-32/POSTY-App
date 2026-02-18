@@ -24,6 +24,11 @@ import { AnimatedSlideIn, AnimatedPageWrapper } from "@/components/animations/An
 import toast from "@/components/ui/Toast";
 import TestModeIndicator from "@/components/subscription/TestModeIndicator";
 import TrialBanner from "@/components/subscription/TrialBanner";
+import { usePageHelp } from "@/hooks/usePageHelp";
+import HelpNotificationDot from "@/components/help/HelpNotificationDot";
+import HelpPopover from "@/components/help/HelpPopover";
+import HelpFloatingButton from "@/components/help/HelpFloatingButton";
+import { PAGE_HELP_CONFIG } from "@/lib/help-content";
 
 // Premium animation easings - consistent across app
 const smoothEase = [0.25, 0.1, 0.25, 1] as const;
@@ -270,6 +275,14 @@ export default function MainLayout({
   const { connection: facebookConnection } = useFacebook();
   const { connection: threadsConnection } = useThreads();
   const tokenWarningShown = useRef(false);
+
+  // Help notification system
+  const { isPathRead, markPathAsRead } = usePageHelp();
+  const [activeHelpPath, setActiveHelpPath] = useState<string | null>(null);
+  const navItemRefs = useRef<Record<string, HTMLSpanElement | null>>({});
+  const activeHelpAnchorRef = useRef<HTMLSpanElement | null>(null);
+  // Keep the anchor ref in sync with the active help path
+  activeHelpAnchorRef.current = activeHelpPath ? navItemRefs.current[activeHelpPath] ?? null : null;
 
   // Get nav items with translations
   const navItems = getNavItems(t);
@@ -753,6 +766,7 @@ export default function MainLayout({
                 >
                   {/* Colored icon — full saturation when active, muted when inactive */}
                   <span
+                    ref={(el) => { navItemRefs.current[item.href] = el; }}
                     className={`
                       relative shrink-0 transition-all duration-200
                       ${isActive ? "scale-110" : "opacity-70 group-hover:opacity-100 group-hover:scale-110"}
@@ -769,6 +783,15 @@ export default function MainLayout({
                         {schedulingPendingCount}
                       </span>
                     )}
+                    {/* Help notification dot */}
+                    <AnimatePresence>
+                      {PAGE_HELP_CONFIG[item.href] && !isPathRead(item.href) && (
+                        <HelpNotificationDot
+                          accentColor={PAGE_HELP_CONFIG[item.href].accentColor}
+                          onClick={(e) => setActiveHelpPath(item.href)}
+                        />
+                      )}
+                    </AnimatePresence>
                   </span>
                   {!isCollapsed && (
                     <>
@@ -805,6 +828,17 @@ export default function MainLayout({
               </motion.div>
             );
           })}
+
+          {/* Help Popover for sidebar nav items */}
+          {activeHelpPath && PAGE_HELP_CONFIG[activeHelpPath] && (
+            <HelpPopover
+              isOpen={true}
+              onClose={() => setActiveHelpPath(null)}
+              onMarkRead={() => markPathAsRead(activeHelpPath)}
+              config={PAGE_HELP_CONFIG[activeHelpPath]}
+              anchorRef={activeHelpAnchorRef}
+            />
+          )}
 
           {/* Conversations - Only show when expanded */}
           {!isCollapsed && localPosts.length > 0 && (
@@ -1131,6 +1165,9 @@ export default function MainLayout({
         <AnimatedPageWrapper delay={0.2} className="flex-1 overflow-hidden lg:overflow-y-auto lg:overflow-x-hidden lg:overscroll-contain">
           {children}
         </AnimatedPageWrapper>
+
+        {/* Help floating "?" button */}
+        <HelpFloatingButton />
       </main>
 
       {/* Chat History Modal */}

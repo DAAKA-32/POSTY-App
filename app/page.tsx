@@ -3393,24 +3393,76 @@ function FeatureCard({ feature, index }: { feature: FeatureConfig; index: number
 
 function FeaturesSection() {
   const isMobile = useIsMobile();
+  const sectionRef = useRef<HTMLElement>(null);
+  const anchorRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLDivElement>(null);
+  const [isFixed, setIsFixed] = useState(false);
+  const [titleH, setTitleH] = useState(0);
+  const [anchorLeft, setAnchorLeft] = useState(0);
+  const [anchorWidth, setAnchorWidth] = useState(0);
+
+  useEffect(() => {
+    const section = sectionRef.current;
+    const anchor = anchorRef.current;
+    const title = titleRef.current;
+    if (!section || !anchor || !title) return;
+
+    const measure = () => {
+      setTitleH(title.offsetHeight);
+      const r = anchor.getBoundingClientRect();
+      setAnchorLeft(r.left);
+      setAnchorWidth(r.width);
+    };
+    measure();
+
+    const handleScroll = () => {
+      const navH = window.innerWidth < 768 ? 76 : 84;
+      const r = anchor.getBoundingClientRect();
+      const sectionBottom = section.getBoundingClientRect().bottom;
+      const h = title.offsetHeight;
+      const shouldFix = r.top < navH && sectionBottom > navH + h + 50;
+      if (shouldFix) {
+        setAnchorLeft(r.left);
+        setAnchorWidth(r.width);
+      }
+      setIsFixed(shouldFix);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", measure);
+    handleScroll();
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", measure);
+    };
+  }, []);
+
   return (
-    <section id="features" className="py-[clamp(1.5rem,3vw,2.5rem)] px-[clamp(1rem,4vw,3rem)] overflow-hidden">
+    <section id="features" ref={sectionRef} className="py-[clamp(1.5rem,3vw,2.5rem)] px-[clamp(1rem,4vw,3rem)] overflow-hidden">
       <div className="w-full max-w-[min(90vw,67.75rem)] mx-auto">
-        {/* Section Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20, scale: 0.97, ...(isMobile ? {} : { filter: "blur(8px)" }) }}
-          whileInView={{ opacity: 1, y: 0, scale: 1, ...(isMobile ? {} : { filter: "blur(0px)" }) }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.7, ease: premiumEase }}
-          className="text-center mb-[clamp(1.25rem,2vw,1.75rem)]"
+        {/* Anchor — preserves layout space when title becomes fixed */}
+        <div
+          ref={anchorRef}
+          style={{ minHeight: isFixed ? titleH : undefined }}
+          className="mb-[clamp(1.25rem,2vw,1.75rem)]"
         >
-          <h2 className="text-[clamp(1.75rem,4vw,3.25rem)] font-bold">
-            <span className="text-silver-premium">Tout ce qu&apos;il vous faut pour</span>{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
-              performer sur LinkedIn
-            </span>
-          </h2>
-        </motion.div>
+          <motion.div
+            ref={titleRef}
+            initial={{ opacity: 0, y: 20, scale: 0.97, ...(isMobile ? {} : { filter: "blur(8px)" }) }}
+            whileInView={{ opacity: 1, y: 0, scale: 1, ...(isMobile ? {} : { filter: "blur(0px)" }) }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7, ease: premiumEase }}
+            className={`text-center ${isFixed ? "fixed z-40 bg-[#FEF3EE]" : ""}`}
+            style={isFixed ? { top: 0, left: 0, width: "100%", paddingTop: isMobile ? 76 + 16 : 84 + 20, paddingBottom: 16, paddingLeft: anchorLeft, paddingRight: anchorLeft } : undefined}
+          >
+            <h2 className="text-[clamp(1.75rem,4vw,3.25rem)] font-bold">
+              <span className="text-silver-premium">Tout ce qu&apos;il vous faut pour</span>{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
+                performer sur LinkedIn
+              </span>
+            </h2>
+          </motion.div>
+        </div>
 
         {/* Features Grid with Connectors */}
         <div className="relative space-y-[clamp(1.25rem,2vw,1.75rem)]">
@@ -3427,7 +3479,6 @@ function FeaturesSection() {
 
           {FEATURES.map((feature, index) => (
             <div key={feature.title} className="relative">
-
               <FeatureCard feature={feature} index={index} />
             </div>
           ))}

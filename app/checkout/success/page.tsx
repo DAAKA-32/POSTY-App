@@ -154,7 +154,7 @@ function CheckoutSuccessContent() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="text-3xl lg:text-4xl font-bold text-white mb-4"
+          className="text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-4"
         >
           {isTrialing ? `Votre essai ${planName} a commence !` : `Bienvenue dans ${planName} !`}
         </motion.h1>
@@ -179,7 +179,7 @@ function CheckoutSuccessContent() {
           transition={{ delay: 0.5 }}
           className="bg-gradient-to-br from-primary/10 via-accent/5 to-transparent border border-primary/20 rounded-2xl p-6 mb-6 text-left"
         >
-          <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
+          <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
             <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
@@ -191,7 +191,7 @@ function CheckoutSuccessContent() {
                 1
               </div>
               <div>
-                <p className="text-sm font-medium text-white">Décrivez votre objectif</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">Décrivez votre objectif</p>
                 <p className="text-xs text-text-muted mt-0.5">Ex: "Générer des leads pour mon agence de développement web"</p>
               </div>
             </div>
@@ -200,7 +200,7 @@ function CheckoutSuccessContent() {
                 2
               </div>
               <div>
-                <p className="text-sm font-medium text-white">Posty analyse votre profil</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">Posty analyse votre profil</p>
                 <p className="text-xs text-text-muted mt-0.5">L'IA calibre le message pour votre audience et votre marché</p>
               </div>
             </div>
@@ -209,7 +209,7 @@ function CheckoutSuccessContent() {
                 3
               </div>
               <div>
-                <p className="text-sm font-medium text-white">Publiez ou programmez</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">Publiez ou programmez</p>
                 <p className="text-xs text-text-muted mt-0.5">Copiez-collez sur LinkedIn ou planifiez pour plus tard</p>
               </div>
             </div>
@@ -221,9 +221,9 @@ function CheckoutSuccessContent() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.55 }}
-          className="bg-dark-card border border-dark-border rounded-2xl p-6 mb-8 text-left"
+          className="bg-gray-50 dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-6 mb-8 text-left"
         >
-          <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
+          <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
             <svg className="w-5 h-5 text-primary" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zM12 2a1 1 0 01.967.744L14.146 7.2 17.5 9.134a1 1 0 010 1.732l-3.354 1.935-1.18 4.455a1 1 0 01-1.933 0L9.854 12.8 6.5 10.866a1 1 0 010-1.732l3.354-1.935 1.18-4.455A1 1 0 0112 2z" clipRule="evenodd" />
             </svg>
@@ -292,7 +292,7 @@ function CheckoutSuccessContent() {
             </div>
             <button
               onClick={() => setRedirectCountdown(null)}
-              className="text-xs text-text-muted hover:text-white transition-colors underline"
+              className="text-xs text-text-muted hover:text-gray-900 dark:hover:text-white transition-colors underline"
             >
               Rester sur cette page
             </button>

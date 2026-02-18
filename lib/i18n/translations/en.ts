@@ -1147,4 +1147,47 @@ export const en = {
     logoutSuccess: "Logged out successfully",
     errorLogout: "Error logging out",
   },
+
+  // Help / First-visit notifications
+  help: {
+    gotIt: "Got it!",
+    pages: {
+      chat: {
+        title: "AI Chat",
+        description: "Describe your post idea and the AI will generate optimized LinkedIn content for you.",
+        features: [
+          "Generate posts in one click",
+          "Choose from multiple writing styles",
+          "Publish directly to LinkedIn",
+        ],
+      },
+      history: {
+        title: "History",
+        description: "Find all your generated posts, organize them and reuse your best content.",
+        features: [
+          "Filter and search your posts",
+          "Pin your favorites",
+          "Reuse a post in one click",
+        ],
+      },
+      schedule: {
+        title: "Scheduling",
+        description: "Schedule automatic publication of your posts on LinkedIn.",
+        features: [
+          "Schedule posts in advance",
+          "Choose date and time",
+          "Track publication status",
+        ],
+      },
+      analytics: {
+        title: "Analytics",
+        description: "Analyze the performance of your LinkedIn posts to improve your strategy.",
+        features: [
+          "Track impressions and reactions",
+          "Identify your best content",
+          "Analyze trends",
+        ],
+      },
+    },
+  },
 } as const;

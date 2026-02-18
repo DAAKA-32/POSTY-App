@@ -1,12 +1,40 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, type ReactNode } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { MOCKUP_SCREENS } from "./MockupScreens";
 
 const SLIDE_COUNT = MOCKUP_SCREENS.length;
 const CAROUSEL_INTERVAL = 5000; // Auto-advance every 5s
 const SWIPE_THRESHOLD = 40; // px — minimum distance for a swipe to register
+
+/** Screen descriptions for the navigation tabs below the carousel */
+const SCREEN_DESCRIPTIONS: Record<string, { icon: ReactNode; desc: string }> = {
+  "chat-welcome": {
+    icon: <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>,
+    desc: "Décrivez votre idée",
+  },
+  "conversation": {
+    icon: <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
+    desc: "2 versions générées",
+  },
+  "history": {
+    icon: <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
+    desc: "Tous vos posts",
+  },
+  "schedule": {
+    icon: <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
+    desc: "Programmez à l'avance",
+  },
+  "analytics": {
+    icon: <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>,
+    desc: "Suivez vos résultats",
+  },
+  "profile": {
+    icon: <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>,
+    desc: "Votre profil",
+  },
+};
 
 interface AnimatedMacBookProps {
   isVisible: boolean;
@@ -163,7 +191,7 @@ export default function AnimatedMacBook({
           <div className="relative bg-white rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl shadow-gray-400/20 border border-gray-200/60">
 
             {/* Title bar */}
-            <div className="flex items-center justify-between px-4 md:px-5 py-2.5 md:py-3 border-b border-gray-100 bg-gradient-to-b from-gray-50/80 to-white">
+            <div className="flex items-center justify-between px-5 md:px-6 py-3.5 md:py-4 border-b border-gray-100 bg-gradient-to-b from-gray-50/80 to-white">
               {/* Traffic light dots */}
               <div className="flex items-center gap-1.5 md:gap-2">
                 <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-[#FF5F57] shadow-sm shadow-[#FF5F57]/30" />
@@ -190,7 +218,7 @@ export default function AnimatedMacBook({
             {/* Screen content area — taller on mobile for better readability */}
             <div
               ref={containerRef}
-              className="relative aspect-[4/3] sm:aspect-[3/2] lg:aspect-[16/10] bg-[#FAFAF8] overflow-hidden touch-pan-y"
+              className="relative min-h-[400px] md:min-h-[520px] bg-[#FAFAF8] overflow-hidden touch-pan-y"
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
@@ -347,6 +375,36 @@ export default function AnimatedMacBook({
 
       {/* Drop shadow under the frame */}
       <div className="absolute -bottom-4 left-[8%] right-[8%] h-8 bg-black/8 blur-2xl rounded-[50%] pointer-events-none" />
+
+      {/* Screen navigation tabs — below the browser frame */}
+      <div className="mt-6 sm:mt-8 flex justify-center">
+        <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto px-2 pb-1 max-w-full scrollbar-hide">
+          {MOCKUP_SCREENS.map((screen, i) => {
+            const meta = SCREEN_DESCRIPTIONS[screen.id];
+            const isActive = i === currentSlide;
+            return (
+              <button
+                key={screen.id}
+                onClick={() => goToSlide(i)}
+                className={`
+                  flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-[10px] sm:text-xs font-medium whitespace-nowrap transition-all duration-300 flex-shrink-0
+                  ${isActive
+                    ? "bg-white shadow-md shadow-gray-200/60 text-[#F8935D] border border-[#F8935D]/20 scale-[1.02]"
+                    : "bg-white/60 text-gray-400 border border-transparent hover:bg-white hover:text-gray-600 hover:shadow-sm"
+                  }
+                `}
+                aria-label={screen.label}
+              >
+                <span className={isActive ? "text-[#F8935D]" : "text-gray-400"}>
+                  {meta?.icon}
+                </span>
+                <span className="hidden sm:inline">{screen.label}</span>
+                <span className="sm:hidden">{screen.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
