@@ -61,7 +61,6 @@ export const fr = {
     terms: "Conditions",
     privacy: "Confidentialité",
     legalNotices: "Mentions légales",
-    free: "Gratuit",
     pro: "Pro",
     premium: "Premium",
     upgrade: "Passer en Pro",
@@ -130,8 +129,8 @@ export const fr = {
 
     // CTA - Conversion oriented
     startFree: "Essayer gratuitement",
-    startFreeDesc: "3 posts LinkedIn gratuits par semaine. Sans engagement.",
-    startFreeDescFull: "Commencez avec 3 posts gratuits par semaine. Passez en Pro pour un accès illimité.",
+    startFreeDesc: "Essayez Posty gratuitement pendant 7 jours. Sans engagement.",
+    startFreeDescFull: "Commencez votre essai gratuit de 7 jours. Annulez à tout moment.",
     viewPlans: "Voir les offres",
     noCardRequired: "Essai gratuit 7 jours",
     noCardRequiredFull: "Essai gratuit 7 jours, annulation a tout moment",
@@ -143,8 +142,6 @@ export const fr = {
     storyResponse: "Il y a 3 ans, j'ai commis ma plus grande erreur de manager...",
     businessResponse: "Les leaders les plus efficaces écoutent plus qu'ils ne parlent. Voici pourquoi...",
     generativeAI: "IA Générative",
-    freeLabel: "Gratuit",
-
     // Discover
     discoverPosty: "Découvrir l'outil",
 
@@ -172,7 +169,7 @@ export const fr = {
     // Additional feature cards
     inSeconds: "Posts créés en quelques secondes",
     storytellingBusiness: "Storytelling & Business",
-    freePercent: "100% gratuit",
+    freePercent: "Essai gratuit 7 jours",
   },
 
   // Auth
@@ -637,8 +634,6 @@ export const fr = {
     currentPlan: "Plan actuel",
 
     // Plans
-    freePlan: "Gratuit",
-    freePlanDesc: "3 posts par semaine",
     proPlan: "Pro",
     proPlanDesc: "Posts illimités",
     maxPlan: "Max",
@@ -811,14 +806,14 @@ export const fr = {
     subscription: "Abonnement",
     paymentCanceled: "Le paiement a été annulé",
     subscriptionActivated: "Votre abonnement est activé !",
-    alreadyFreePlan: "Vous utilisez déjà le plan gratuit",
+    alreadyFreePlan: "Vous n'avez pas d'abonnement actif",
     checkoutError: "Erreur lors du paiement",
     paymentError: "Une erreur est survenue lors du paiement",
     faqTitle: "Questions fréquentes",
     faqChangePlan: "Comment changer de plan ?",
     faqChangePlanAnswer: "Vous pouvez changer de plan à tout moment depuis les paramètres de votre compte.",
     faqDailyLimit: "Y a-t-il une limite quotidienne ?",
-    faqDailyLimitAnswer: "Non, la limite est hebdomadaire pour le plan gratuit et il n'y a pas de limite pour les plans payants.",
+    faqDailyLimitAnswer: "Non, il n'y a pas de limite quotidienne sur les plans payants.",
     faqCommitment: "Y a-t-il un engagement ?",
     faqCommitmentAnswer: "Non, vous pouvez annuler votre abonnement à tout moment, sans frais.",
     faqYearlySavings: "Combien puis-je économiser avec le plan annuel ?",
@@ -827,7 +822,6 @@ export const fr = {
     noCommitment: "Sans engagement, annulez à tout moment",
     responsiveSupport: "Support réactif par email",
     recommended: "Recommandé",
-    free: "Gratuit",
     perMonth: "/mois",
     billedYearly: "Facturé annuellement",
     savingsYearly: "Économisez {amount}%",
@@ -882,8 +876,8 @@ export const fr = {
   seo: {
     homeTitle: "Posty - Générateur de Posts LinkedIn IA | Créez du Contenu Impactant",
     homeDescription: "Générez des posts LinkedIn percutants en quelques secondes avec l'IA. Posty crée 2 versions (Storytelling & Business) pour chaque idée. Essayez gratuitement.",
-    pricingTitle: "Tarifs Posty - Plans Gratuit, Pro et Max | Générateur LinkedIn IA",
-    pricingDescription: "Découvrez nos offres Posty : 3 posts gratuits/semaine ou illimité en Pro. Générez des posts LinkedIn professionnels avec l'IA sans engagement.",
+    pricingTitle: "Tarifs Posty - Plans Pro et Max | Générateur LinkedIn IA",
+    pricingDescription: "Découvrez nos offres Posty : Pro et Max. Générez des posts LinkedIn professionnels avec l'IA. Essai gratuit 7 jours, sans engagement.",
   },
 
   // E-E-A-T: Trust Signals
@@ -1015,7 +1009,7 @@ export const fr = {
     feature7: "Personnalisation avancée du style",
 
     // Plan details
-    freeDetails: "Parfait pour tester Posty ou publier occasionnellement.",
+    freeTrialDetails: "Essayez Posty gratuitement pendant 7 jours avec toutes les fonctionnalités Pro.",
     proDetails: "Pour les créateurs réguliers qui veulent développer leur présence LinkedIn.",
     maxDetails: "Pour les professionnels exigeants qui publient intensivement.",
 
@@ -1063,7 +1057,7 @@ export const fr = {
 
     // Value Reminders (Soft, not aggressive)
     proAdvantage: "Avantage Pro",
-    freeUserReminder: "3 posts gratuits par semaine",
+    trialReminder: "Commencez votre essai gratuit de 7 jours",
     proUserBenefit: "Générations illimitées actives",
 
     // Soft Scarcity (Honest, not manipulative)

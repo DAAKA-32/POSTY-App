@@ -336,7 +336,7 @@ export const seoAuditReport = {
     differentiators: [
       "Dual output (Storytelling + Business versions)",
       "French-first with US expansion",
-      "Generous free tier (3 posts/week)",
+      "7-day free trial with full Pro features",
       "Mobile-first design",
       "Clean, modern UI",
     ],

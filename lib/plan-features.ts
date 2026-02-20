@@ -19,16 +19,6 @@ export interface PlanFeatures {
 
 // Feature configuration for each plan
 export const PLAN_FEATURES: Record<SubscriptionPlan, PlanFeatures> = {
-  free: {
-    responseMode: "business-only",
-    hasInsights: true,
-    hasAnalysis: false,
-    hasImproveMode: false,
-    hasMultiPlatform: false,
-    hasAdaptiveTone: false,
-    hasAdvancedPersonalization: false,
-    hasFileAttachments: false,
-  },
   pro: {
     responseMode: "single-choice",
     hasInsights: true,
@@ -54,15 +44,16 @@ export const PLAN_FEATURES: Record<SubscriptionPlan, PlanFeatures> = {
 /**
  * Get features available for a specific plan
  */
-export function getPlanFeatures(plan: SubscriptionPlan): PlanFeatures {
-  return PLAN_FEATURES[plan] || PLAN_FEATURES.free;
+export function getPlanFeatures(plan: SubscriptionPlan | null): PlanFeatures {
+  if (!plan) return PLAN_FEATURES.pro; // Safe default for unsubscribed users (they're blocked anyway)
+  return PLAN_FEATURES[plan] || PLAN_FEATURES.pro;
 }
 
 /**
  * Check if a plan has access to a specific feature
  */
 export function hasFeature(
-  plan: SubscriptionPlan,
+  plan: SubscriptionPlan | null,
   feature: keyof PlanFeatures
 ): boolean {
   const features = getPlanFeatures(plan);
@@ -72,14 +63,14 @@ export function hasFeature(
 /**
  * Check if user can access dual mode (both storytelling and business)
  */
-export function canAccessDualMode(plan: SubscriptionPlan): boolean {
+export function canAccessDualMode(plan: SubscriptionPlan | null): boolean {
   return getPlanFeatures(plan).responseMode === "dual";
 }
 
 /**
  * Check if user can choose their response style
  */
-export function canChooseStyle(plan: SubscriptionPlan): boolean {
+export function canChooseStyle(plan: SubscriptionPlan | null): boolean {
   const mode = getPlanFeatures(plan).responseMode;
   return mode === "single-choice" || mode === "dual";
 }
@@ -87,28 +78,28 @@ export function canChooseStyle(plan: SubscriptionPlan): boolean {
 /**
  * Check if user can analyze posts
  */
-export function canAnalyzePosts(plan: SubscriptionPlan): boolean {
+export function canAnalyzePosts(plan: SubscriptionPlan | null): boolean {
   return getPlanFeatures(plan).hasAnalysis;
 }
 
 /**
  * Check if user can improve existing posts
  */
-export function canImprovePost(plan: SubscriptionPlan): boolean {
+export function canImprovePost(plan: SubscriptionPlan | null): boolean {
   return getPlanFeatures(plan).hasImproveMode;
 }
 
 /**
  * Check if user can adapt posts to other platforms
  */
-export function canAdaptToMultiPlatform(plan: SubscriptionPlan): boolean {
+export function canAdaptToMultiPlatform(plan: SubscriptionPlan | null): boolean {
   return getPlanFeatures(plan).hasMultiPlatform;
 }
 
 /**
  * Check if user can attach files to messages (Max plan only)
  */
-export function canAttachFiles(plan: SubscriptionPlan): boolean {
+export function canAttachFiles(plan: SubscriptionPlan | null): boolean {
   return getPlanFeatures(plan).hasFileAttachments;
 }
 
@@ -116,7 +107,6 @@ export function canAttachFiles(plan: SubscriptionPlan): boolean {
  * Get the minimum plan required for a feature
  */
 export function getMinPlanForFeature(feature: keyof PlanFeatures): SubscriptionPlan {
-  if (PLAN_FEATURES.free[feature]) return "free";
   if (PLAN_FEATURES.pro[feature]) return "pro";
   return "max";
 }

@@ -45,7 +45,7 @@ const PLATFORMS: PlatformOption[] = [
     color: "text-[#0A66C2]",
     bgColor: "bg-[#0A66C2]/20",
     borderColor: "border-[#0A66C2]",
-    minPlan: "free",
+    minPlan: "pro",
   },
   {
     id: "reddit",
@@ -78,13 +78,12 @@ const PLATFORMS: PlatformOption[] = [
 
 // Plan badge component
 function PlanBadge({ plan }: { plan: PlanType }) {
-  const colors = {
-    free: "bg-text-muted/20 text-text-muted",
+  const colors: Record<string, string> = {
     pro: "bg-primary/20 text-primary",
     max: "bg-accent/20 text-accent",
   };
   return (
-    <span className={`px-1.5 py-0.5 text-[9px] font-semibold rounded ${colors[plan]}`}>
+    <span className={`px-1.5 py-0.5 text-[9px] font-semibold rounded ${colors[plan] || "bg-text-muted/20 text-text-muted"}`}>
       {plan.toUpperCase()}
     </span>
   );

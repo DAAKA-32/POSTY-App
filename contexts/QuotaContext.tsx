@@ -18,7 +18,7 @@ interface QuotaContextType {
   isLoading: boolean;
   canSendMessage: boolean;
   // Plan info
-  currentPlan: SubscriptionPlan;
+  currentPlan: SubscriptionPlan | null;
   planName: string;
   isPremium: boolean;
   // Usage info
@@ -35,15 +35,15 @@ interface QuotaContextType {
 }
 
 const defaultQuota: QuotaInfo = {
-  plan: "free",
-  dailyLimit: 3,
+  plan: null,
+  dailyLimit: 0,
   usedToday: 0,
-  remaining: 3,
-  canSendMessage: true,
+  remaining: 0,
+  canSendMessage: false,
   resetsAt: new Date(),
-  weeklyLimit: 3,
+  weeklyLimit: 0,
   usedThisWeek: 0,
-  canPublish: true,
+  canPublish: false,
 };
 
 const QuotaContext = createContext<QuotaContextType | undefined>(undefined);
@@ -92,9 +92,9 @@ export function QuotaProvider({ children }: { children: ReactNode }) {
   }, [user, loadQuota]);
 
   // Derived values
-  const currentPlan: SubscriptionPlan = quota?.plan || "free";
-  const planConfig = getPlanConfig(currentPlan);
-  const isPremium = currentPlan !== "free";
+  const currentPlan: SubscriptionPlan | null = quota?.plan || null;
+  const planConfig = getPlanConfig(currentPlan ?? "pro");
+  const isPremium = currentPlan !== null;
 
   const value: QuotaContextType = {
     quota,

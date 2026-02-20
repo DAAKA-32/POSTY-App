@@ -14,7 +14,7 @@ import { TRIAL_PERIOD_DAYS, GUARANTEE_PERIOD_DAYS } from "@/lib/plans";
  * - Last day of trial: urgent message
  *
  * Does NOT show:
- * - For free plan users who haven't started trial
+ * - For users without a subscription who haven't started trial
  * - For active paid users past guarantee period
  */
 export default function TrialBanner() {
@@ -25,14 +25,13 @@ export default function TrialBanner() {
     guaranteeEligible,
     guaranteeDaysRemaining,
     currentPlan,
-    isFreePlan,
   } = useSubscription();
 
   // Don't show anything if not relevant
   if (!isTrialing && !guaranteeEligible) return null;
 
-  // Don't show for free plan (they need to subscribe first)
-  if (isFreePlan && !isTrialing) return null;
+  // Don't show for unsubscribed users (they need to subscribe first)
+  if (!currentPlan && !isTrialing) return null;
 
   // Trial banner
   if (isTrialing && trialDaysRemaining > 0) {

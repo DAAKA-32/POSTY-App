@@ -16,7 +16,7 @@ interface ResponseData {
 interface ModernAIResponsePairProps {
   storytellingResponse: ResponseData;
   businessResponse: ResponseData;
-  userPlan: SubscriptionPlan;
+  userPlan: SubscriptionPlan | null;
   onPublishToLinkedIn?: (content: string) => void;
   onSchedule?: (content: string) => void;
 }

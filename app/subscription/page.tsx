@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { getPaidPlans, PlanConfig, PlanType, getSavingsText, PLAN_TAGLINES, getPlanCoreFeatures, getPlanSecondaryFeatures, getCTALabel, FeatureItem, isTestModeAllowed, PRODUCTION_MODE, TRIAL_PERIOD_DAYS, GUARANTEE_PERIOD_DAYS } from "@/lib/plans";
+import { getPaidPlans, PlanConfig, PlanType, getSavingsText, PLAN_TAGLINES, getPlanFeaturesUnified, getCTALabel, FeatureItem, isTestModeAllowed, PRODUCTION_MODE, TRIAL_PERIOD_DAYS, GUARANTEE_PERIOD_DAYS } from "@/lib/plans";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import Button from "@/components/ui/Button";
 import BillingToggle from "@/components/ui/BillingToggle";
@@ -25,24 +25,6 @@ function SubscriptionContent() {
   const [isLoading, setIsLoading] = useState<PlanType | null>(null);
   const [selectedTestPlan, setSelectedTestPlan] = useState<PlanType | null>(null);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
-  // Multi-open accordion: up to 3 cards can have expanded features simultaneously
-  // If a 4th card is opened, the oldest one closes automatically
-  const [expandedCardIds, setExpandedCardIds] = useState<string[]>([]);
-
-  const handleToggleFeatures = (planId: string) => {
-    setExpandedCardIds((prev) => {
-      // If already open, close it
-      if (prev.includes(planId)) {
-        return prev.filter((id) => id !== planId);
-      }
-      // If less than 3 open, add it
-      if (prev.length < 3) {
-        return [...prev, planId];
-      }
-      // If 3 already open, remove oldest (first) and add new one
-      return [...prev.slice(1), planId];
-    });
-  };
 
   // ============================================
   // PRODUCTION MODE: Test mode is completely disabled
@@ -104,12 +86,6 @@ function SubscriptionContent() {
       return;
     }
 
-    // Free plan - no action needed (production only)
-    if (plan.id === "free") {
-      toast.success(t.pricing.alreadyFreePlan);
-      return;
-    }
-
     setIsLoading(plan.id);
 
     try {
@@ -151,14 +127,12 @@ function SubscriptionContent() {
   };
 
   const getYearlySavings = (plan: PlanConfig) => {
-    if (plan.price.monthly === 0) return 0;
     const monthlyTotal = plan.price.monthly * 12;
     const savings = monthlyTotal - plan.price.yearly;
     return Math.round(savings * 100) / 100;
   };
 
   const getYearlyMonthlyPrice = (plan: PlanConfig) => {
-    if (plan.price.yearly === 0) return 0;
     return Math.round((plan.price.yearly / 12) * 100) / 100;
   };
 
@@ -268,8 +242,6 @@ function SubscriptionContent() {
                   isLoading={isLoading === plan.id}
                   index={index}
                   translations={t.pricing}
-                  isFeaturesExpanded={expandedCardIds.includes(plan.id)}
-                  onToggleFeatures={() => handleToggleFeatures(plan.id)}
                   trialEligible={canStartTrial && plan.trialDays > 0}
                 />
               </div>
@@ -376,7 +348,6 @@ export default function SubscriptionPage() {
 interface PricingTranslations {
   recommended: string;
   currentPlan: string;
-  free: string;
   perMonth: string;
   billedYearly: string;
   savingsYearly: string;
@@ -392,15 +363,11 @@ interface PricingCardProps {
   isLoading?: boolean;
   index: number;
   translations: PricingTranslations;
-  /** Whether the secondary features are expanded (controlled by parent) */
-  isFeaturesExpanded?: boolean;
-  /** Callback to toggle the features expansion (controlled by parent) */
-  onToggleFeatures?: () => void;
   /** Whether the user is eligible for a free trial on this plan */
   trialEligible?: boolean;
 }
 
-// PLAN_TAGLINES, getPlanCoreFeatures, getPlanSecondaryFeatures, getCTALabel are now imported from @/lib/plans
+// PLAN_TAGLINES, getPlanFeaturesUnified, getCTALabel are imported from @/lib/plans
 
 // Feature item component for reuse - responsive version
 function FeatureListItem({ feature, index }: { feature: FeatureItem; index: number }) {
@@ -449,25 +416,14 @@ function PricingCard({
   isLoading = false,
   index,
   translations,
-  isFeaturesExpanded = false,
-  onToggleFeatures,
   trialEligible = false,
 }: PricingCardProps) {
   const displayPrice = billingPeriod === "monthly" ? plan.price.monthly : yearlyMonthlyPrice;
   const isPopular = plan.highlight;
   const isPremium = plan.premium;
-  const isFree = plan.price.monthly === 0;
-  const coreFeatures = getPlanCoreFeatures(plan);
-  const secondaryFeatures = getPlanSecondaryFeatures(plan);
+  const allFeatures = getPlanFeaturesUnified(plan);
   const planInfo = PLAN_TAGLINES[plan.id] || { tagline: plan.description, idealFor: "" };
   const [isHovered, setIsHovered] = useState(false);
-
-  // Use controlled state from parent (multi-open accordion - up to 3 cards can be expanded)
-  const showMoreFeatures = isFeaturesExpanded;
-  const toggleShowMoreFeatures = () => onToggleFeatures?.();
-
-  // Count included secondary features
-  const includedSecondaryCount = secondaryFeatures.filter(f => f.included).length;
 
   return (
     <motion.div
@@ -527,9 +483,7 @@ function PricingCard({
           ? "bg-gradient-to-b from-primary/10 via-white dark:via-dark-card to-white dark:to-dark-card"
           : isPremium
             ? "bg-gradient-to-b from-primary/5 via-white dark:via-dark-card to-white dark:to-dark-card border sm:border-2 border-primary/30"
-            : isFree
-              ? "bg-white dark:bg-dark-card border border-primary/25 dark:border-primary/20"
-              : "bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border"
+            : "bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border"
         }
       `}>
 
@@ -605,25 +559,19 @@ function PricingCard({
               transition={{ duration: 0.15 }}
               className="flex items-baseline justify-center gap-0.5 sm:gap-1"
             >
-              {isFree ? (
-                <span className="text-lg sm:text-2xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white">Gratuit</span>
-              ) : (
-                <>
-                  <span className={`text-lg sm:text-2xl md:text-4xl lg:text-5xl font-bold tabular-nums ${
-                    isPremium ? "text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-hover" : "text-gray-900 dark:text-white"
-                  }`}>
-                    {displayPrice.toFixed(2).replace(".", ",")}
-                  </span>
-                  <span className="text-sm sm:text-base md:text-xl text-gray-900 dark:text-white font-medium">€</span>
-                  <span className="text-text-secondary text-[10px] sm:text-xs md:text-sm">/mois</span>
-                </>
-              )}
+              <span className={`text-lg sm:text-2xl md:text-4xl lg:text-5xl font-bold tabular-nums ${
+                isPremium ? "text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-hover" : "text-gray-900 dark:text-white"
+              }`}>
+                {displayPrice.toFixed(2).replace(".", ",")}
+              </span>
+              <span className="text-sm sm:text-base md:text-xl text-gray-900 dark:text-white font-medium">€</span>
+              <span className="text-text-secondary text-[10px] sm:text-xs md:text-sm">/mois</span>
             </motion.div>
           </div>
 
           {/* Savings badge (responsive height for alignment) */}
           <div className={`h-[32px] sm:h-[42px] md:h-[56px] flex flex-col items-center justify-center transition-opacity duration-200 ${
-            billingPeriod === "yearly" && !isFree ? "opacity-100" : "opacity-0 pointer-events-none"
+            billingPeriod === "yearly" ? "opacity-100" : "opacity-0 pointer-events-none"
           }`}>
             <div className="inline-flex items-center gap-0.5 sm:gap-1 md:gap-1.5 px-1.5 sm:px-2 md:px-3 py-0.5 sm:py-1 bg-green-500/10 rounded-full border border-green-500/20">
               <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
@@ -707,7 +655,7 @@ function PricingCard({
           </motion.button>
 
           {/* Trial reassurance badge - shown below CTA if trial eligible */}
-          {trialEligible && !isCurrentPlan && !isFree && (
+          {trialEligible && !isCurrentPlan && (
             <div className="mt-1.5 sm:mt-2 flex items-center justify-center gap-1 text-[9px] sm:text-[10px] md:text-xs text-primary dark:text-primary-light">
               <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -717,99 +665,38 @@ function PricingCard({
           )}
         </div>
 
-        {/* ZONE 4: Features list (flexible, grows to fill space) */}
+        {/* ZONE 4: Features list — ALL features visible */}
         <div className="flex-1 pt-2 sm:pt-3 md:pt-4 border-t border-gray-200 dark:border-dark-border/50">
           <ul className="space-y-1 sm:space-y-1.5 md:space-y-2.5">
-            {coreFeatures.map((feature, idx) => (
+            {allFeatures.map((feature, idx) => (
               <FeatureListItem key={idx} feature={feature} index={idx} />
             ))}
           </ul>
-
-          {/* "Voir plus" toggle for secondary features */}
-          {includedSecondaryCount > 0 && (
-            <div className="mt-2 sm:mt-3 md:mt-4">
-              <button
-                onClick={toggleShowMoreFeatures}
-                className={`
-                  w-full flex items-center justify-center gap-1 sm:gap-2 py-1.5 sm:py-2 px-2 sm:px-3
-                  text-[10px] sm:text-xs md:text-sm font-medium rounded-md sm:rounded-lg
-                  transition-all duration-200
-                  ${showMoreFeatures
-                    ? "bg-primary/10 text-primary border border-primary/20"
-                    : "bg-gray-100 dark:bg-dark-elevated text-text-secondary hover:bg-gray-200 dark:hover:bg-dark-hover border border-gray-200 dark:border-dark-border"
-                  }
-                `}
-              >
-                <span className="hidden sm:inline">
-                  {showMoreFeatures ? "Voir moins" : `+${includedSecondaryCount} fonctionnalités`}
-                </span>
-                <span className="inline sm:hidden">
-                  {showMoreFeatures ? "Moins" : `+${includedSecondaryCount}`}
-                </span>
-                <motion.svg
-                  className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  animate={{ rotate: showMoreFeatures ? 180 : 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </motion.svg>
-              </button>
-
-              {/* Secondary features - Collapsible */}
-              <AnimatePresence initial={false}>
-                {showMoreFeatures && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.25, ease: "easeInOut" }}
-                    className="overflow-hidden"
-                  >
-                    <ul className="space-y-1 sm:space-y-1.5 md:space-y-2.5 mt-2 sm:mt-3 md:mt-4 pt-2 sm:pt-3 md:pt-4 border-t border-gray-200 dark:border-dark-border/50">
-                      {secondaryFeatures.filter(f => f.included).map((feature, idx) => (
-                        <FeatureListItem key={idx} feature={feature} index={idx} />
-                      ))}
-                    </ul>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          )}
         </div>
 
         {/* ZONE 5: Trust badge (responsive height for alignment) */}
         <div className="h-8 sm:h-10 md:h-12 mt-auto pt-2 sm:pt-2.5 md:pt-3 border-t border-gray-200 dark:border-dark-border/50 flex items-center justify-center">
-          {!isFree ? (
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6 }}
-              className="text-[9px] sm:text-[10px] md:text-xs text-text-muted flex items-center justify-center gap-0.5 sm:gap-1 md:gap-1.5"
-            >
-              <svg className="w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3.5 md:h-3.5 text-green-500 hidden sm:inline" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-              </svg>
-              {trialEligible ? (
-                <>
-                  <span className="hidden md:inline">{plan.trialDays}j gratuits • Garantie {GUARANTEE_PERIOD_DAYS}j remboursé</span>
-                  <span className="inline md:hidden">{plan.trialDays}j gratuits + garantie</span>
-                </>
-              ) : (
-                <>
-                  <span className="hidden md:inline">Garantie {GUARANTEE_PERIOD_DAYS}j rembourse • Sans engagement</span>
-                  <span className="inline md:hidden">Garantie {GUARANTEE_PERIOD_DAYS}j</span>
-                </>
-              )}
-            </motion.p>
-          ) : (
-            <p className="text-[9px] sm:text-[10px] md:text-xs text-text-muted">
-              <span className="hidden sm:inline">Ideal pour decouvrir Posty</span>
-              <span className="inline sm:hidden">Gratuit</span>
-            </p>
-          )}
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+            className="text-[9px] sm:text-[10px] md:text-xs text-text-muted flex items-center justify-center gap-0.5 sm:gap-1 md:gap-1.5"
+          >
+            <svg className="w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3.5 md:h-3.5 text-green-500 hidden sm:inline" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+            </svg>
+            {trialEligible ? (
+              <>
+                <span className="hidden md:inline">{plan.trialDays}j gratuits • Garantie {GUARANTEE_PERIOD_DAYS}j remboursé</span>
+                <span className="inline md:hidden">{plan.trialDays}j gratuits + garantie</span>
+              </>
+            ) : (
+              <>
+                <span className="hidden md:inline">Garantie {GUARANTEE_PERIOD_DAYS}j rembourse • Sans engagement</span>
+                <span className="inline md:hidden">Garantie {GUARANTEE_PERIOD_DAYS}j</span>
+              </>
+            )}
+          </motion.p>
         </div>
       </div>
     </motion.div>

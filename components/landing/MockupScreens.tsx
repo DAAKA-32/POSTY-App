@@ -87,7 +87,7 @@ function MockSidebar({ activePage }: { activePage: string }) {
     <div className="w-[18%] min-w-0 bg-[#FFFBF9] border-r border-[#F8935D]/10 flex flex-col h-full select-none">
       {/* Logo */}
       <div className="px-[8%] pt-[6%] pb-[4%] flex items-center gap-[6%]">
-        <div className="w-[28px] h-[28px] min-w-[28px] rounded-xl shadow-md overflow-hidden">
+        <div className="w-[28px] h-[28px] min-w-[28px] shadow-md">
           <PostyLogo size={28} className="w-full h-full" />
         </div>
         <span className="text-[12px] font-bold text-gray-900 truncate">Posty</span>
@@ -208,7 +208,7 @@ function ChatWelcomeScreen() {
           <div className="relative mb-[12px]">
             <div className="absolute -inset-[16px] bg-gradient-to-br from-[#F8935D]/20 via-[#F76B54]/10 to-[#F8935D]/20 rounded-full blur-xl opacity-60" />
             <div className="absolute -inset-[8px] bg-[#F8935D]/10 rounded-full blur-md" />
-            <div className="relative w-[48px] h-[48px] rounded-2xl shadow-lg shadow-[#F8935D]/15 overflow-hidden ring-1 ring-white/50">
+            <div className="relative w-[48px] h-[48px] shadow-lg shadow-[#F8935D]/15 ring-1 ring-white/50">
               <PostyLogo size={48} className="w-full h-full" />
             </div>
           </div>
@@ -307,7 +307,7 @@ function ConversationScreen() {
 
           {/* AI intro message */}
           <div className="flex items-start gap-[5px]">
-            <div className="w-[20px] h-[20px] min-w-[20px] rounded-lg shadow-sm overflow-hidden">
+            <div className="w-[20px] h-[20px] min-w-[20px] shadow-sm">
               <PostyLogo size={20} className="w-full h-full" />
             </div>
             <p className="text-[8px] text-gray-500 leading-relaxed pt-[3px]">
@@ -960,5 +960,4 @@ export const MOCKUP_SCREENS = [
   { id: "history", component: HistoryScreen, label: "Historique" },
   { id: "schedule", component: ScheduleScreen, label: "Programmé" },
   { id: "analytics", component: AnalyticsScreen, label: "Analytics" },
-  { id: "profile", component: ProfileScreen, label: "Profil" },
 ];

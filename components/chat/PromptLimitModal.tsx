@@ -9,7 +9,7 @@ import { PlanType, getPlanConfig, getPlanLimits } from "@/lib/plans";
 interface PromptLimitModalProps {
   isOpen: boolean;
   onClose: () => void;
-  currentPlan: PlanType;
+  currentPlan: PlanType | null;
   currentLength: number;
   maxLength: number;
 }
@@ -40,7 +40,7 @@ export default function PromptLimitModal({
 
   // Determine upgrade target plan
   const getUpgradePlan = (): PlanType | null => {
-    if (currentPlan === "free") return "pro";
+    if (!currentPlan) return "pro";
     if (currentPlan === "pro") return "max";
     return null;
   };
@@ -159,7 +159,7 @@ export default function PromptLimitModal({
 // ============================================
 
 interface UsePromptLimitModalOptions {
-  currentPlan: PlanType;
+  currentPlan: PlanType | null;
   maxCharacters: number;
 }
 
@@ -177,7 +177,7 @@ interface UsePromptLimitModalReturn {
  * Usage:
  * ```tsx
  * const { checkAndProceed, ModalComponent } = usePromptLimitModal({
- *   currentPlan: "free",
+ *   currentPlan: null,
  *   maxCharacters: 100,
  * });
  *

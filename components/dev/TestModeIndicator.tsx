@@ -89,7 +89,7 @@ export default function TestModeIndicator({ showInProduction = false }: TestMode
     );
   }
 
-  const plans = ["free", "pro", "max"] as const;
+  const plans = ["pro", "max"] as const;
 
   return (
     <AnimatePresence>
@@ -169,7 +169,7 @@ export default function TestModeIndicator({ showInProduction = false }: TestMode
           <div className="flex items-center justify-between text-xs">
             <span className="text-white/60">Plan effectif :</span>
             <span className={`font-semibold ${isTestMode ? "text-purple-300" : "text-accent"}`}>
-              {getPlanConfig(currentPlan).name}
+              {currentPlan ? getPlanConfig(currentPlan).name : "Aucun"}
               {isTestMode && " (test)"}
             </span>
           </div>

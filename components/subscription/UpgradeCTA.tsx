@@ -22,7 +22,6 @@ export default function UpgradeCTA({
 }: UpgradeCTAProps) {
   const {
     currentPlan,
-    isFreePlan,
     isProPlan,
     isMaxPlan,
     isTestMode,
@@ -45,7 +44,7 @@ export default function UpgradeCTA({
 
   // Determine upgrade message based on current plan
   const getUpgradeMessage = () => {
-    if (isFreePlan) {
+    if (!currentPlan) {
       return {
         title: "Passez au plan Pro",
         description: "Débloquez les programmations, plus de créations et un historique illimité",
@@ -123,7 +122,7 @@ export default function UpgradeCTA({
                   {/* Left: Icon + Message */}
                   <div className="flex items-center gap-2.5 min-w-0 flex-1">
                     <div className={`shrink-0 w-7 h-7 rounded-lg flex items-center justify-center ${
-                      isFreePlan
+                      !currentPlan
                         ? "bg-primary/10 text-primary"
                         : "bg-primary/10 text-primary"
                     }`}>
@@ -144,7 +143,7 @@ export default function UpgradeCTA({
                           {message.title}
                         </span>
                         <span className={`hidden sm:inline px-1.5 py-0.5 text-2xs font-bold rounded-full ${
-                          isFreePlan
+                          !currentPlan
                             ? "bg-primary/20 text-primary"
                             : "bg-primary/20 text-primary"
                         }`}>
@@ -180,7 +179,7 @@ export default function UpgradeCTA({
           className={`relative ${className}`}
         >
           <div className={`relative overflow-hidden rounded-xl border-2 ${
-            isFreePlan
+            !currentPlan
               ? "bg-gradient-to-r from-primary/10 via-secondary/10 to-primary-hover/10 border-primary/20 glow-storytelling"
               : "bg-gradient-to-r from-primary/10 to-primary-hover/10 border-primary/20 glow-tips"
           }`}>
@@ -202,7 +201,7 @@ export default function UpgradeCTA({
             <div className="flex items-start gap-3">
               {/* Icon */}
               <div className={`shrink-0 w-10 h-10 rounded-xl flex items-center justify-center ${
-                isFreePlan
+                !currentPlan
                   ? "bg-primary/20 text-primary"
                   : "bg-primary/20 text-primary"
               }`}>
@@ -228,7 +227,7 @@ export default function UpgradeCTA({
                 <Link
                   href="/subscription"
                   className={`inline-flex items-center gap-2 px-4 py-2 text-xs sm:text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 ${
-                    isFreePlan
+                    !currentPlan
                       ? "bg-gradient-to-r from-primary to-accent"
                       : "bg-gradient-to-r from-primary to-primary-hover"
                   }`}
@@ -257,7 +256,7 @@ export default function UpgradeCTA({
 
 // Simple text-based upgrade prompt
 export function UpgradePrompt({ className = "" }: { className?: string }) {
-  const { isFreePlan, isProPlan, isMaxPlan, loading } = useSubscription();
+  const { currentPlan, isProPlan, isMaxPlan, loading } = useSubscription();
 
   if (loading || isMaxPlan) return null;
 
@@ -270,7 +269,7 @@ export function UpgradePrompt({ className = "" }: { className?: string }) {
         <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
       </svg>
       <span>
-        {isFreePlan ? "Passer au Pro" : "Passer au Max"}
+        {!currentPlan ? "Passer au Pro" : "Passer au Max"}
       </span>
     </Link>
   );

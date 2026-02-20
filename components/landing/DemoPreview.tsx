@@ -92,7 +92,7 @@ export default function DemoPreview({ onSubmit }: DemoPreviewProps) {
           <div className="relative bg-dark-card/90 backdrop-blur-xl border border-dark-border rounded-2xl overflow-hidden shadow-elevated">
             {/* Card header - mimics chat interface */}
             <div className="flex items-center gap-3 px-5 py-4 border-b border-dark-border/50">
-              <div className="w-10 h-10 rounded-xl overflow-hidden bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-glow">
+              <div className="w-10 h-10 flex items-center justify-center shadow-glow">
                 <img
                   src="/logo.png"
                   alt="Posty"

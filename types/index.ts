@@ -3,7 +3,7 @@ import { User as FirebaseUser } from "firebase/auth";
 
 // ============== SUBSCRIPTION TYPES ==============
 
-export type SubscriptionPlan = "free" | "pro" | "max";
+export type SubscriptionPlan = "pro" | "max";
 
 // ============== RESPONSE & GENERATION TYPES ==============
 
@@ -404,7 +404,7 @@ export interface PlatformConnection {
   username?: string;
   expiresAt?: Date;
   /** Minimum plan required for this platform */
-  minPlan?: "free" | "pro" | "max";
+  minPlan?: SubscriptionPlan;
 }
 
 // ============== TWITTER TYPES ==============

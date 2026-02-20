@@ -172,9 +172,6 @@ function AppContent() {
   const [isProcessingVoice, setIsProcessingVoice] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
-  // Silence detection timer - auto-stop after 1.5s of silence
-  const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const lastSpeechTimeRef = useRef<number>(0);
   const isRecordingRef = useRef(false); // Mirror for callbacks
 
   const {
@@ -309,139 +306,75 @@ function AppContent() {
     return () => clearInterval(interval);
   }, [isFocused, inputValue.length]);
 
-  // Clear silence timer helper
-  const clearSilenceTimer = useCallback(() => {
-    if (silenceTimerRef.current) {
-      clearTimeout(silenceTimerRef.current);
-      silenceTimerRef.current = null;
-    }
-  }, []);
-
   // Force stop recording helper - cleans up all state
   const forceStopRecording = useCallback(() => {
-    clearSilenceTimer();
-
     if (recognitionRef.current) {
       try {
-        // Use abort() for more reliable cleanup on iOS Safari
         recognitionRef.current.abort();
       } catch {
         // Ignore errors
       }
     }
-
-    // Force clear all recording states
     isRecordingRef.current = false;
     setIsRecording(false);
     setIsProcessingVoice(false);
-  }, [clearSilenceTimer]);
-
-  // Start silence detection timer
-  const startSilenceTimer = useCallback(() => {
-    clearSilenceTimer();
-
-    // Auto-stop after 1.5 seconds of silence
-    silenceTimerRef.current = setTimeout(() => {
-      if (isRecordingRef.current) {
-        forceStopRecording();
-      }
-    }, 1500);
-  }, [clearSilenceTimer, forceStopRecording]);
+  }, []);
 
   // Initialize speech recognition
   useEffect(() => {
-    // Check if Web Speech API is supported
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
       setSpeechSupported(true);
       const recognition = new SpeechRecognition();
-      recognition.continuous = false;
+      recognition.continuous = true;
       recognition.interimResults = true;
       recognition.lang = "fr-FR";
 
-      // Track when speech is detected - reset silence timer
-      recognition.onspeechstart = () => {
-        lastSpeechTimeRef.current = Date.now();
-        clearSilenceTimer();
-      };
-
-      // Track when speech ends - start silence timer
-      recognition.onspeechend = () => {
-        startSilenceTimer();
-      };
-
-      // Handle audio start - user granted permission and mic is active
-      recognition.onaudiostart = () => {
-        // Start silence timer when audio begins (in case no speech detected)
-        startSilenceTimer();
-      };
-
       recognition.onresult = (event: SpeechRecognitionEvent) => {
         let finalTranscript = "";
-        let hasInterim = false;
 
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const transcript = event.results[i][0].transcript;
           if (event.results[i].isFinal) {
             finalTranscript += transcript;
-          } else {
-            hasInterim = true;
           }
         }
 
-        // Reset silence timer on any speech input (interim or final)
-        if (hasInterim || finalTranscript) {
-          lastSpeechTimeRef.current = Date.now();
-          clearSilenceTimer();
-          startSilenceTimer();
-        }
-
         if (finalTranscript) {
-          // Show processing state briefly for smooth transition
-          setIsProcessingVoice(true);
-
-          // Stop recording after final transcript
-          forceStopRecording();
-
-          setTimeout(() => {
-            // Inject transcribed text into the chat input via ref
-            chatInputRef.current?.appendValue(finalTranscript);
-            setIsProcessingVoice(false);
-          }, 300);
+          chatInputRef.current?.appendValue(finalTranscript);
         }
       };
 
       recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-        clearSilenceTimer();
-        isRecordingRef.current = false;
-        setIsRecording(false);
-        setIsProcessingVoice(false);
-
-        // Only show user-friendly errors, don't pollute console with permission denials
         if (event.error === "not-allowed") {
+          isRecordingRef.current = false;
+          setIsRecording(false);
+          setIsProcessingVoice(false);
           toast.error("Microphone non autorisé. Vérifiez les permissions.");
         } else if (event.error === "no-speech") {
-          // Silently handle no-speech - this is expected when user doesn't speak
-          // Don't show error toast for better UX
+          // Silently handle - expected when user pauses
         } else if (event.error !== "aborted") {
-          // Log unexpected errors (but not "aborted" which is normal when user stops)
           console.warn("Speech recognition error:", event.error);
         }
       };
 
       recognition.onend = () => {
-        // Ensure all state is updated immediately when recognition ends
-        clearSilenceTimer();
-        isRecordingRef.current = false;
-        setIsRecording(false);
+        // With continuous=true, the browser may still stop unexpectedly
+        // (e.g. prolonged silence, network issue). Auto-restart if user hasn't stopped manually.
+        if (isRecordingRef.current) {
+          try {
+            recognition.start();
+          } catch {
+            isRecordingRef.current = false;
+            setIsRecording(false);
+          }
+        }
       };
 
       recognitionRef.current = recognition;
     }
 
-    // Cleanup: abort recognition and release microphone on unmount
     return () => {
-      clearSilenceTimer();
       if (recognitionRef.current) {
         try {
           recognitionRef.current.abort();
@@ -454,21 +387,17 @@ function AppContent() {
       setIsRecording(false);
       setIsProcessingVoice(false);
     };
-  }, [clearSilenceTimer, startSilenceTimer, forceStopRecording]);
+  }, []);
 
-  // Toggle voice recording with immediate state updates
+  // Toggle voice recording — user controls start/stop manually
   const toggleRecording = useCallback(() => {
     if (!recognitionRef.current) return;
 
     if (isRecordingRef.current) {
-      // Stop recording - use forceStopRecording for reliable cleanup
       forceStopRecording();
     } else {
       try {
-        // Clear any lingering state before starting
-        clearSilenceTimer();
         setIsProcessingVoice(false);
-
         recognitionRef.current.start();
         isRecordingRef.current = true;
         setIsRecording(true);
@@ -479,7 +408,7 @@ function AppContent() {
         toast.error("Impossible de démarrer l'enregistrement");
       }
     }
-  }, [forceStopRecording, clearSilenceTimer]);
+  }, [forceStopRecording]);
 
   const handleGenerate = async (prompt: string, file?: FileAttachment | null) => {
     await generate(prompt, file);
@@ -622,7 +551,7 @@ function AppContent() {
                   >
                     {/* Gradient border ring */}
                     <div className="absolute -inset-1 bg-gradient-to-br from-primary via-accent to-primary rounded-3xl opacity-60 blur-[2px]" />
-                    <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden shadow-elevated ring-2 ring-white/50 dark:ring-dark-card/50">
+                    <div className="relative w-20 h-20 sm:w-24 sm:h-24 shadow-elevated ring-2 ring-white/50 dark:ring-dark-card/50">
                       <img
                         src="/logo.png"
                         alt="Posty Logo"
@@ -735,11 +664,11 @@ function AppContent() {
                             <div key={`pair-${message.id || i}-${pairIndex}`}>
                               {/* POSTY Avatar and Label */}
                               <div className="flex items-center gap-3 mb-3">
-                                <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 shadow-sm">
+                                <div className="w-8 h-8 shrink-0 shadow-sm">
                                   <img
                                     src="/logo.png"
                                     alt="Posty"
-                                    className="w-full h-full object-cover"
+                                    className="w-full h-full object-contain"
                                   />
                                 </div>
                                 <span className="text-xs text-text-muted font-medium">POSTY</span>
@@ -781,11 +710,11 @@ function AppContent() {
                             >
                               {/* POSTY Avatar and Label */}
                               <div className="flex items-center gap-3 mb-3">
-                                <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 shadow-sm">
+                                <div className="w-8 h-8 shrink-0 shadow-sm">
                                   <img
                                     src="/logo.png"
                                     alt="Posty"
-                                    className="w-full h-full object-cover"
+                                    className="w-full h-full object-contain"
                                   />
                                 </div>
                                 <span className="text-xs text-text-muted font-medium">POSTY</span>
@@ -1129,7 +1058,7 @@ function AppContent() {
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.2, type: "spring", stiffness: 200, damping: 15 }}
-                className="w-20 h-20 mx-auto mb-6 rounded-2xl overflow-hidden shadow-lg ring-2 ring-primary/20"
+                className="w-20 h-20 mx-auto mb-6 shadow-lg ring-2 ring-primary/20"
               >
                 <img src="/logo.png" alt="Posty" className="w-full h-full object-contain" />
               </motion.div>

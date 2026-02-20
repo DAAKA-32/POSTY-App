@@ -921,7 +921,7 @@ export async function getLinkedInPostById(
 import { SubscriptionPlan } from "@/types";
 
 export interface QuotaInfo {
-  plan: SubscriptionPlan;
+  plan: SubscriptionPlan | null;
   dailyLimit: number;
   usedToday: number;
   remaining: number;
@@ -971,20 +971,19 @@ export async function getUserQuota(userId: string): Promise<QuotaInfo> {
 
   const todayEnd = getTodayEnd();
 
-  // If user document doesn't exist, return default free quota
+  // If user document doesn't exist, return default (no subscription)
   if (!userSnap.exists()) {
-    const dailyLimit = DAILY_MESSAGE_LIMITS.free;
     return {
-      plan: "free",
-      dailyLimit,
+      plan: null,
+      dailyLimit: 0,
       usedToday: 0,
-      remaining: dailyLimit,
-      canSendMessage: true,
+      remaining: 0,
+      canSendMessage: false,
       resetsAt: todayEnd,
       // Legacy
-      weeklyLimit: dailyLimit,
+      weeklyLimit: 0,
       usedThisWeek: 0,
-      canPublish: true,
+      canPublish: false,
     };
   }
 
@@ -996,13 +995,29 @@ export async function getUserQuota(userId: string): Promise<QuotaInfo> {
   const testPlan = testModeResult.plan;
 
   // Determine effective plan (test mode overrides actual subscription)
-  // Handle legacy "starter" plan name from database
-  const rawPlan = data.subscription?.plan || "free";
-  let effectivePlan: SubscriptionPlan = (rawPlan === "starter" ? "pro" : rawPlan) as SubscriptionPlan;
+  // Handle legacy "starter" and "free" plan names from database
+  let rawPlan: string | null = data.subscription?.plan || null;
+  if (rawPlan === "free") rawPlan = null; // Migrate legacy "free" plan
+  let effectivePlan: SubscriptionPlan | null = rawPlan ? (rawPlan === "starter" ? "pro" : rawPlan) as SubscriptionPlan : null;
 
   // Use test plan if active
   if (isTestMode && testPlan) {
     effectivePlan = testPlan as SubscriptionPlan;
+  }
+
+  // No subscription and no test mode = no messages
+  if (!effectivePlan) {
+    return {
+      plan: null,
+      dailyLimit: 0,
+      usedToday: 0,
+      remaining: 0,
+      canSendMessage: false,
+      resetsAt: todayEnd,
+      weeklyLimit: 0,
+      usedThisWeek: 0,
+      canPublish: false,
+    };
   }
 
   const dailyLimit = DAILY_MESSAGE_LIMITS[effectivePlan];
@@ -1710,11 +1725,12 @@ export async function createScheduledPost(
 
   // Check for test mode - use test plan if active and not expired
   const testModeResult = isTestModeValid(userData?.testMode);
-  const subscriptionPlan: PlanType = userData?.subscription?.plan || "free";
-  const effectivePlan: PlanType = testModeResult.isActive && testModeResult.plan ? testModeResult.plan : subscriptionPlan;
+  let subscriptionPlan: PlanType | null = userData?.subscription?.plan || null;
+  if (subscriptionPlan === ("free" as string)) subscriptionPlan = null; // Migrate legacy "free" plan
+  const effectivePlan: PlanType | null = testModeResult.isActive && testModeResult.plan ? testModeResult.plan : subscriptionPlan;
 
   // Check if the user's effective plan allows scheduling
-  if (!planHasFeature(effectivePlan, "canSchedulePosts")) {
+  if (!effectivePlan || !planHasFeature(effectivePlan, "canSchedulePosts")) {
     throw new Error("La programmation de posts necessite un abonnement Pro ou Max");
   }
 
@@ -1888,10 +1904,11 @@ export async function reschedulePost(
 
     // Check for test mode - use test plan if active and not expired
     const testModeResult = isTestModeValid(userData?.testMode);
-    const subscriptionPlan: PlanType = userData?.subscription?.plan || "free";
-    const effectivePlan: PlanType = testModeResult.isActive && testModeResult.plan ? testModeResult.plan : subscriptionPlan;
+    let subscriptionPlan: PlanType | null = userData?.subscription?.plan || null;
+    if (subscriptionPlan === ("free" as string)) subscriptionPlan = null; // Migrate legacy "free" plan
+    const effectivePlan: PlanType | null = testModeResult.isActive && testModeResult.plan ? testModeResult.plan : subscriptionPlan;
 
-    if (!planHasFeature(effectivePlan, "canSchedulePosts")) {
+    if (!effectivePlan || !planHasFeature(effectivePlan, "canSchedulePosts")) {
       throw new Error("La reprogrammation necessite un abonnement Pro ou Max");
     }
   }

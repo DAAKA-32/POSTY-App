@@ -47,8 +47,8 @@ const FEATURE_CHECKS = [
 ];
 
 // Plan colors and styles
-const PLAN_STYLES: Record<PlanType, { gradient: string; badge: string; glow: string }> = {
-  free: {
+const PLAN_STYLES: Record<string, { gradient: string; badge: string; glow: string }> = {
+  none: {
     gradient: "from-gray-500/20 to-gray-600/20",
     badge: "bg-gray-500/20 text-gray-400 border-gray-500/30",
     glow: "",
@@ -76,7 +76,6 @@ export default function PlanInfoCard({
     planConfig,
     planLimits,
     isTestMode,
-    isFreePlan,
     isMaxPlan,
     isTrialing,
     trialDaysRemaining,
@@ -92,8 +91,9 @@ export default function PlanInfoCard({
     );
   }
 
-  const styles = PLAN_STYLES[currentPlan];
-  const nextPlan = isFreePlan ? "pro" : isMaxPlan ? null : "max";
+  const styles = PLAN_STYLES[currentPlan ?? "none"];
+  const hasNoPlan = !currentPlan;
+  const nextPlan = hasNoPlan ? "pro" : isMaxPlan ? null : "max";
   const nextPlanConfig = nextPlan ? getPlanConfig(nextPlan) : null;
 
   return (
@@ -207,7 +207,7 @@ export default function PlanInfoCard({
         </div>
       )}
 
-      {/* Upgrade CTA for free users */}
+      {/* Upgrade CTA for users without max plan */}
       {!isMaxPlan && nextPlanConfig && !compact && (
         <div className="px-3 sm:px-4 pb-3 sm:pb-4 bg-dark-card">
           <Link
@@ -215,7 +215,7 @@ export default function PlanInfoCard({
             onClick={onNavigate}
             className="block w-full text-center px-3 py-2.5 text-xs font-semibold bg-gradient-to-r from-primary to-accent text-white rounded-lg hover:opacity-90 transition-opacity"
           >
-            {isFreePlan ? "Passer au plan Pro" : "Passer au plan Max"}
+            {hasNoPlan ? "Choisir un plan" : "Passer au plan Max"}
           </Link>
         </div>
       )}
@@ -233,7 +233,7 @@ export function PlanBadge({ className = "" }: { className?: string }) {
     );
   }
 
-  const styles = PLAN_STYLES[currentPlan];
+  const styles = PLAN_STYLES[currentPlan ?? "none"];
 
   return (
     <Link href="/subscription" className={`inline-flex items-center gap-1.5 ${className}`}>

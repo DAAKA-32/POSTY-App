@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     }
 
     // ========== QUOTA CHECK (SERVER-SIDE) ==========
-    let userPlan: PlanType = "free";
+    let userPlan: PlanType | null = null;
     if (isAdminInitialized()) {
       try {
         const quotaCheck = await checkUserQuotaAdmin(userId);
@@ -103,6 +103,19 @@ export async function POST(request: NextRequest) {
             : "Service temporarily unavailable. Please try again.",
         }),
         { status: 503, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // ========== PLAN GUARD ==========
+    if (!userPlan) {
+      return new Response(
+        JSON.stringify({
+          error: "no_active_plan",
+          message: language === "fr"
+            ? "Vous devez souscrire à un abonnement pour utiliser cette fonctionnalité."
+            : "You need an active subscription to use this feature.",
+        }),
+        { status: 403, headers: { "Content-Type": "application/json" } }
       );
     }
 

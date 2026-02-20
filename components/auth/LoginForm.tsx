@@ -149,7 +149,6 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
         <div
           className={`
             inline-flex items-center justify-center w-16 h-16 mb-6
-            rounded-xl overflow-hidden
             shadow-glow animate-logo-float
             transition-all duration-500 delay-100
             ${isVisible ? "opacity-100 scale-100" : "opacity-0 scale-75"}

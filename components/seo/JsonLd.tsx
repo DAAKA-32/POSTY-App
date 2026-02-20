@@ -777,9 +777,9 @@ export const postyFaqData = {
         "POSTY uses artificial intelligence to generate professional LinkedIn posts. Simply enter your idea or topic, and AI instantly creates 2 versions: an emotional Storytelling version and a factual Business version.",
     },
     {
-      question: "Is POSTY free?",
+      question: "Does POSTY offer a free trial?",
       answer:
-        "Yes, POSTY offers a free plan with 3 posts per week. For unlimited usage, check out our Pro ($9.99/month) and Max ($19.99/month) plans.",
+        "Yes, POSTY offers a 7-day free trial with full access to Pro features. A credit card is required to start the trial. You can cancel anytime during the trial period without being charged.",
     },
     {
       question: "Can I edit the generated posts?",
@@ -837,7 +837,7 @@ export const postyHowToData = {
     steps: [
       {
         name: "Sign in to POSTY",
-        text: "Create a free account or sign in with Google/LinkedIn to access the generator.",
+        text: "Create an account or sign in with Google/LinkedIn to access the generator.",
       },
       {
         name: "Enter your idea",

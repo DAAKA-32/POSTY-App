@@ -188,7 +188,7 @@ function ScheduleContent() {
         className="min-h-full bg-background-warm dark:bg-dark-bg scroll-smooth lg:overflow-y-auto"
         disabled={isLoading}
       >
-        <div className="w-full mx-auto px-4 py-6 md:px-6 md:py-8 md:max-w-2xl lg:px-8 lg:py-10 lg:max-w-3xl xl:max-w-4xl 2xl:max-w-5xl">
+        <div className="w-full mx-auto px-4 py-6 md:px-6 md:py-8 md:max-w-2xl lg:px-8 lg:py-10 lg:max-w-3xl xl:max-w-4xl 2xl:max-w-5xl overflow-x-hidden">
           {/* Premium Header */}
           <motion.div
             initial={{ opacity: 0, y: -10 }}
@@ -392,7 +392,7 @@ function ScheduleContent() {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-4 md:p-6"
+              className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-2 sm:p-4 md:p-6 overflow-hidden"
             >
               {/* Calendar header */}
               <div className="flex items-center justify-between mb-6">
@@ -420,9 +420,9 @@ function ScheduleContent() {
               </div>
 
               {/* Days of week header */}
-              <div className="grid grid-cols-7 gap-1 mb-3">
+              <div className="grid grid-cols-7 gap-0.5 sm:gap-1 mb-2 sm:mb-3">
                 {DAYS_FR.map((day, index) => (
-                  <div key={day} className={`text-center text-xs font-semibold py-2 uppercase tracking-wider ${
+                  <div key={day} className={`text-center text-[10px] sm:text-xs font-semibold py-1.5 sm:py-2 uppercase tracking-wider ${
                     index === 0 || index === 6
                       ? "text-gray-400 dark:text-text-muted"
                       : "text-gray-600 dark:text-text-secondary"
@@ -433,7 +433,7 @@ function ScheduleContent() {
               </div>
 
               {/* Calendar grid */}
-              <div className="grid grid-cols-7 gap-1.5">
+              <div className="grid grid-cols-7 gap-0.5 sm:gap-1 md:gap-1.5">
                 {calendarDays.map((dayData, index) => {
                   const isToday =
                     dayData.date &&
@@ -444,7 +444,7 @@ function ScheduleContent() {
                     <div
                       key={index}
                       className={`
-                        min-h-[80px] md:min-h-[100px] p-1.5 md:p-2 rounded-xl transition-colors duration-200
+                        min-h-[52px] sm:min-h-[72px] md:min-h-[100px] p-1 sm:p-1.5 md:p-2 rounded-lg sm:rounded-xl transition-colors duration-200
                         ${!dayData.date ? "invisible" : "cursor-pointer"}
                         ${isToday
                           ? "bg-primary/10 border-2 border-primary/30"
@@ -456,12 +456,12 @@ function ScheduleContent() {
                     >
                       {dayData.date && (
                         <>
-                          <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center justify-between mb-0.5 sm:mb-1">
                             <span
                               className={`
-                                text-sm font-semibold
+                                text-[11px] sm:text-sm font-semibold
                                 ${isToday
-                                  ? "w-7 h-7 flex items-center justify-center bg-primary text-white rounded-lg"
+                                  ? "w-5 h-5 sm:w-7 sm:h-7 flex items-center justify-center bg-primary text-white rounded-md sm:rounded-lg text-[10px] sm:text-sm"
                                   : "text-gray-700 dark:text-white"
                                 }
                               `}
@@ -469,17 +469,17 @@ function ScheduleContent() {
                               {dayData.date.getDate()}
                             </span>
                             {hasPosts && !isToday && (
-                              <span className="w-2 h-2 rounded-full bg-primary" />
+                              <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-primary" />
                             )}
                           </div>
 
                           {hasPosts && (
-                            <div className="mt-1.5 space-y-1">
+                            <div className="mt-0.5 sm:mt-1.5 space-y-0.5 sm:space-y-1">
                               {dayData.posts.slice(0, 2).map((post) => (
                                 <div
                                   key={post.id}
                                   className={`
-                                    text-[10px] md:text-xs px-1.5 py-1 rounded-md truncate font-medium
+                                    text-[8px] sm:text-[10px] md:text-xs px-1 sm:px-1.5 py-0.5 sm:py-1 rounded-sm sm:rounded-md truncate font-medium
                                     ${post.status === "pending"
                                       ? "bg-primary/10 text-primary"
                                       : post.status === "published"
@@ -501,7 +501,7 @@ function ScheduleContent() {
                                 </div>
                               ))}
                               {dayData.posts.length > 2 && (
-                                <div className="text-[10px] md:text-xs text-gray-500 dark:text-text-muted px-1.5 font-medium">
+                                <div className="text-[8px] sm:text-[10px] md:text-xs text-gray-500 dark:text-text-muted px-1 sm:px-1.5 font-medium">
                                   +{dayData.posts.length - 2} autre{dayData.posts.length - 2 > 1 ? "s" : ""}
                                 </div>
                               )}

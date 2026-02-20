@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
     // ========== QUOTA CHECK (SERVER-SIDE) ==========
     // This prevents users from bypassing quota by directly calling the API
     let quotaCheck = null;
-    let userPlan = "free";
+    let userPlan: PlanType | null = null;
     if (isAdminInitialized()) {
       try {
         quotaCheck = await checkUserQuotaAdmin(userId);
@@ -138,8 +138,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // ========== PLAN GUARD ==========
+    // Users without a valid plan cannot use the API
+    if (!userPlan) {
+      return new Response(
+        JSON.stringify({
+          error: "no_active_plan",
+          message: language === "fr"
+            ? "Vous devez souscrire à un abonnement pour utiliser cette fonctionnalité."
+            : "You need an active subscription to use this feature.",
+        }),
+        { status: 403, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     // ========== PROMPT LENGTH ENFORCEMENT ==========
-    const planLimits = getPlanLimits(userPlan as PlanType);
+    const planLimits = getPlanLimits(userPlan);
     if (prompt.length > planLimits.maxCharactersPerPrompt) {
       return new Response(
         JSON.stringify({
@@ -241,7 +255,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Plan-based max tokens for response length
-    const maxTokens = getMaxTokensForPlan(userPlan as PlanType);
+    const maxTokens = getMaxTokensForPlan(userPlan);
 
     // ========== SERVER-SIDE PROFILE LOADING + PLAN GATING ==========
     // Load profile from Firestore (server-side, ignores client-sent userProfile)
@@ -274,7 +288,7 @@ export async function POST(request: NextRequest) {
               };
             }
           }
-          // Free plan: serverUserProfile stays undefined (no personalization)
+          // No personalization if plan doesn't support it
         }
       } catch (profileError) {
         console.error("Profile loading error:", profileError);
@@ -283,7 +297,6 @@ export async function POST(request: NextRequest) {
     }
 
     // ========== PLAN-BASED FEATURE ENFORCEMENT ==========
-    // FREE: business-only (always business, no choice)
     // PRO: single-choice by default, limited dual mode (3/week) when requested
     // MAX: dual (generates both storytelling & business, unlimited)
     const planFeatures = getPlanFeatures(userPlan as SubscriptionPlan);
@@ -321,12 +334,9 @@ export async function POST(request: NextRequest) {
           typesToGenerate = [selectedStyle as "storytelling" | "business"];
         }
       }
-    } else if (responseMode === "single-choice") {
-      // PRO plan: user chooses
-      typesToGenerate = [selectedStyle as "storytelling" | "business"];
     } else {
-      // FREE plan: business only
-      typesToGenerate = ["business"];
+      // PRO plan (or default): user chooses
+      typesToGenerate = [selectedStyle as "storytelling" | "business"];
     }
 
     // Determine if we should use OpenAI or mock responses

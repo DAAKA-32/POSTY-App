@@ -26,7 +26,7 @@ interface SubscriptionGuardProps {
  *
  * Protection Rules:
  * 1. User must have subscription.status === "active" OR "trialing"
- * 2. Free plan users are redirected to /subscription
+ * 2. Users without a plan (plan is null) are redirected to /subscription
  * 3. Inactive/canceled subscriptions are redirected to /subscription
  *
  * Usage:
@@ -50,10 +50,7 @@ export default function SubscriptionGuard({
       const hasActiveSubscription =
         subscription.status === "active" || subscription.status === "trialing";
 
-      // Block free plan users from accessing paid features
-      const isFreePlan = subscription.plan === "free";
-
-      if (!hasActiveSubscription || isFreePlan) {
+      if (!hasActiveSubscription || !subscription.plan) {
         console.warn(
           `[SubscriptionGuard] Blocking access to ${pathname} - Status: ${subscription.status}, Plan: ${subscription.plan}`
         );
@@ -86,10 +83,9 @@ export default function SubscriptionGuard({
   // Check subscription status
   const hasActiveSubscription =
     subscription.status === "active" || subscription.status === "trialing";
-  const isFreePlan = subscription.plan === "free";
 
-  // Block access if subscription is not active or if user is on free plan
-  if (!hasActiveSubscription || isFreePlan) {
+  // Block access if subscription is not active or if user has no plan
+  if (!hasActiveSubscription || !subscription.plan) {
     // Don't render children - redirect will happen in useEffect
     return null;
   }

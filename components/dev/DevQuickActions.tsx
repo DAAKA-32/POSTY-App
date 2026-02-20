@@ -197,7 +197,7 @@ export default function DevQuickActions() {
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-text-muted">Plan actif :</span>
                   <span className={`font-bold ${isTestMode ? "text-purple-400" : "text-green-400"}`}>
-                    {currentPlan.toUpperCase()}
+                    {(currentPlan ?? "none").toUpperCase()}
                     {isTestMode && " (TEST)"}
                   </span>
                 </div>

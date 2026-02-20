@@ -96,7 +96,7 @@ export default function TestModePanel({
     }
   }, [selectedPlan, testPlan, shouldShow]);
 
-  const plans: PlanType[] = ["free", "pro", "max"];
+  const plans: PlanType[] = ["pro", "max"];
 
   // Don't render if not in dev/admin mode
   if (!shouldShow) {
@@ -188,7 +188,7 @@ export default function TestModePanel({
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-text-muted">Abonnement Stripe réel :</span>
                   <span className="text-white font-medium capitalize">
-                    {subscription.planSource === "stripe" && !isTestMode
+                    {subscription.planSource === "stripe" && !isTestMode && currentPlan
                       ? getPlanConfig(currentPlan).name
                       : "—"
                     }
@@ -197,7 +197,7 @@ export default function TestModePanel({
                 <div className="flex items-center justify-between text-sm mt-2">
                   <span className="text-text-muted">Plan actif (effectif) :</span>
                   <span className={`font-medium ${isTestMode ? "text-purple-400" : "text-green-400"}`}>
-                    {getPlanConfig(currentPlan).name}
+                    {currentPlan ? getPlanConfig(currentPlan).name : "Aucun"}
                     {isTestMode && " (test)"}
                   </span>
                 </div>
@@ -236,7 +236,7 @@ export default function TestModePanel({
                           </div>
                         )}
                         <span className="text-xs font-medium uppercase tracking-wide block mb-1 opacity-70">
-                          {plan === "free" ? "Free" : plan === "pro" ? "Pro" : "Max"}
+                          {plan === "pro" ? "Pro" : "Max"}
                         </span>
                         <span className="text-sm font-bold">{config.name}</span>
                         {isActive && (

@@ -1,12 +1,11 @@
 "use client";
 
-import { motion, useInView, AnimatePresence } from "framer-motion";
-import { useRef, useState } from "react";
+import { motion, useInView } from "framer-motion";
+import { useRef } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCanHover } from "@/hooks/useCanHover";
 import {
   AnimatedFeatureIcon,
-  FadeInSection,
   StaggerOnScroll,
 } from "@/components/animations";
 
@@ -52,29 +51,9 @@ export default function FeaturesSection() {
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
   const canHover = useCanHover();
 
-  // Track active feature for mobile tap interaction
-  const [activeFeatureIndex, setActiveFeatureIndex] = useState<number | null>(null);
-
   // Only apply hover animations on desktop with mouse - completely disabled on mobile
-  // Removed scale effects for a more subtle, professional feel
   const hoverAnimation = canHover ? { y: -4 } : undefined;
   const featureHoverAnimation = canHover ? { y: -4 } : undefined;
-
-  // Handle tap on feature for mobile - toggle active state
-  const handleFeatureTap = (index: number) => {
-    if (canHover) return; // Don't handle taps on desktop with hover
-    setActiveFeatureIndex(prev => prev === index ? null : index);
-  };
-
-  // Close active feature when tapping outside
-  const handleSectionClick = (e: React.MouseEvent) => {
-    if (!canHover && activeFeatureIndex !== null) {
-      const target = e.target as HTMLElement;
-      if (!target.closest('.feature-card')) {
-        setActiveFeatureIndex(null);
-      }
-    }
-  };
 
   const features = [
     {
@@ -217,7 +196,6 @@ export default function FeaturesSection() {
       id="features"
       ref={sectionRef}
       className="relative py-20 md:py-32 px-4 md:px-8 overflow-hidden"
-      onClick={handleSectionClick}
     >
       {/* Background gradient */}
       <div className="absolute inset-0 pointer-events-none">
@@ -341,61 +319,39 @@ export default function FeaturesSection() {
 
         {/* Features Grid */}
         <StaggerOnScroll className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-          {features.map((feature, index) => {
-            const isActive = activeFeatureIndex === index;
-            const isMobileActive = !canHover && isActive;
-
-            return (
+          {features.map((feature) => (
               <motion.div
                 key={feature.title}
                 variants={staggerItem}
                 whileHover={featureHoverAnimation}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 className={`
-                  group relative feature-card cursor-pointer
+                  group relative feature-card
                   transition-transform duration-300 ease-out
-                  ${isMobileActive ? 'mobile-active' : ''}
+                  ${canHover ? 'cursor-pointer' : ''}
                 `}
-                onClick={() => handleFeatureTap(index)}
               >
-                {/* Glow effect - desktop: CSS hover, mobile: JS active class */}
-                <div
-                  className={`
-                    glow-effect absolute -inset-0.5 rounded-2xl blur-md
-                    transition-opacity duration-300 pointer-events-none
-                    ${
-                      feature.color === "primary"
-                        ? "bg-gradient-to-r from-primary/60 to-primary/30"
-                        : feature.color === "accent"
-                          ? "bg-gradient-to-r from-accent/60 to-accent/30"
-                          : "bg-gradient-to-r from-warning/60 to-warning/30"
-                    }
-                    ${canHover ? 'opacity-0 group-hover:opacity-100' : ''}
-                  `}
-                  style={isMobileActive ? { opacity: 1 } : undefined}
-                />
+                {/* Glow effect - desktop only */}
+                {canHover && (
+                  <div
+                    className={`
+                      glow-effect absolute -inset-0.5 rounded-2xl blur-md
+                      transition-opacity duration-300 pointer-events-none
+                      opacity-0 group-hover:opacity-100
+                      ${
+                        feature.color === "primary"
+                          ? "bg-gradient-to-r from-primary/60 to-primary/30"
+                          : feature.color === "accent"
+                            ? "bg-gradient-to-r from-accent/60 to-accent/30"
+                            : "bg-gradient-to-r from-warning/60 to-warning/30"
+                      }
+                    `}
+                  />
+                )}
 
                 {/* Card Inner */}
-                <div
-                  className={`
-                    feature-card-inner relative bg-dark-card rounded-2xl p-6 h-full
-                    border transition-all duration-300
-                    ${isMobileActive
-                      ? `border-${feature.color}/40 shadow-lg`
-                      : 'border-dark-border'
-                    }
-                  `}
-                  style={isMobileActive ? {
-                    borderColor: feature.color === 'primary'
-                      ? 'rgba(232, 147, 77, 0.4)'
-                      : feature.color === 'accent'
-                        ? 'rgba(248, 87, 81, 0.4)'
-                        : 'rgba(251, 191, 36, 0.4)',
-                    boxShadow: '0 8px 25px rgba(0, 0, 0, 0.2)'
-                  } : undefined}
-                >
+                <div className="feature-card-inner relative bg-dark-card rounded-2xl p-6 h-full border border-dark-border transition-all duration-300">
                   <div className="flex items-start gap-4">
-                    {/* Animated Icon */}
                     <AnimatedFeatureIcon
                       animation={feature.animation}
                       color={feature.color}
@@ -411,43 +367,9 @@ export default function FeaturesSection() {
                       </p>
                     </div>
                   </div>
-
-                  {/* Mobile "Découvrir" button - only shown on mobile when active */}
-                  <AnimatePresence>
-                    {isMobileActive && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                        animate={{ opacity: 1, height: "auto", marginTop: 16 }}
-                        exit={{ opacity: 0, height: 0, marginTop: 0 }}
-                        transition={{ duration: 0.2, ease: "easeOut" }}
-                        className="overflow-hidden"
-                      >
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            // Scroll to top to access the main CTA
-                            window.scrollTo({ top: 0, behavior: "smooth" });
-                          }}
-                          className={`
-                            w-full py-3 rounded-xl font-medium text-sm transition-all duration-200
-                            active:scale-[0.98]
-                            ${feature.color === "primary"
-                              ? "bg-primary/20 text-primary border border-primary/40 active:bg-primary/30"
-                              : feature.color === "accent"
-                                ? "bg-accent/20 text-accent border border-accent/40 active:bg-accent/30"
-                                : "bg-warning/20 text-warning border border-warning/40 active:bg-warning/30"
-                            }
-                          `}
-                        >
-                          {t.common.discover || "Découvrir"}
-                        </button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
                 </div>
               </motion.div>
-            );
-          })}
+            ))}
         </StaggerOnScroll>
 
         {/* Bottom CTA */}

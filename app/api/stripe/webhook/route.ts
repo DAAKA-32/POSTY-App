@@ -34,7 +34,8 @@ function getFirebaseAdmin() {
 
 // Map Stripe price IDs to plan names
 // Note: Old env vars (STARTER) map to new "pro" plan, old PRO maps to new "max"
-function getPlanFromPriceId(priceId: string): SubscriptionPlan {
+// Returns null if the price ID doesn't match any known plan
+function getPlanFromPriceId(priceId: string): SubscriptionPlan | null {
   // PRO plan price IDs (new naming or legacy STARTER naming)
   const proMonthly = process.env.STRIPE_PRICE_PRO_MONTHLY || process.env.STRIPE_PRICE_STARTER_MONTHLY;
   const proYearly = process.env.STRIPE_PRICE_PRO_YEARLY || process.env.STRIPE_PRICE_STARTER_YEARLY;
@@ -58,14 +59,14 @@ function getPlanFromPriceId(priceId: string): SubscriptionPlan {
   if (priceId === proMonthly || priceId === proYearly) {
     return "pro";
   }
-  return "free";
+  return null;
 }
 
 // Update user subscription in Firebase
 async function updateUserSubscription(
   userId: string,
   data: {
-    plan: SubscriptionPlan;
+    plan?: SubscriptionPlan | null;
     stripeCustomerId?: string;
     stripeSubscriptionId?: string;
     status?: string;
@@ -79,9 +80,12 @@ async function updateUserSubscription(
   const db = getFirebaseAdmin();
   const userRef = db.collection("users").doc(userId);
 
-  const updateData: Record<string, unknown> = {
-    "subscription.plan": data.plan,
-  };
+  const updateData: Record<string, unknown> = {};
+
+  // Only update plan if explicitly provided (not undefined)
+  if (data.plan !== undefined) {
+    updateData["subscription.plan"] = data.plan;
+  }
 
   // Only set subscribedAt if not in trial (set when trial ends or direct subscription)
   if (data.status !== "trialing") {
@@ -258,13 +262,12 @@ export async function POST(request: NextRequest) {
           break;
         }
 
-        // Downgrade to free plan
+        // Mark subscription as canceled (keep existing plan for reference)
         await updateUserSubscription(userId, {
-          plan: "free",
           status: "canceled",
         });
 
-        console.log("Subscription canceled: downgraded to free");
+        console.log("Subscription canceled");
         break;
       }
 

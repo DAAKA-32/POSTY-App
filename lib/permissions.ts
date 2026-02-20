@@ -29,7 +29,7 @@ export type { Platform } from "./plans";
 // ============================================
 
 export interface UserSubscription {
-  plan: PlanType;
+  plan: PlanType | null;
   planSource: PlanSource;
   status: "active" | "inactive" | "canceled" | "past_due" | "trialing";
   currentPeriodStart?: Date;
@@ -74,6 +74,15 @@ export function canSendMessage(
   subscription: UserSubscription,
   usage: UserUsage
 ): PermissionCheckResult {
+  // No subscription = not allowed
+  if (!subscription.plan) {
+    return {
+      allowed: false,
+      reason: "Abonnement requis",
+      requiredPlan: "pro",
+    };
+  }
+
   const limits = getPlanLimits(subscription.plan);
 
   // Check subscription status
@@ -84,7 +93,7 @@ export function canSendMessage(
     };
   }
 
-  // Check daily limit (for free plan)
+  // Check daily limit
   if (limits.quotaResetPeriod === "daily" && limits.messagesPerDay !== -1) {
     if (usage.messagesUsedToday >= limits.messagesPerDay) {
       return {
@@ -133,13 +142,16 @@ export function canUsePromptLength(
   subscription: UserSubscription,
   promptLength: number
 ): PermissionCheckResult {
+  if (!subscription.plan) {
+    return { allowed: false, reason: "Abonnement requis", requiredPlan: "pro" };
+  }
+
   const limits = getPlanLimits(subscription.plan);
 
   if (promptLength > limits.maxCharactersPerPrompt) {
     // Find which plan allows this length
     let requiredPlan: PlanType = "max";
-    if (promptLength <= 100) requiredPlan = "free";
-    else if (promptLength <= 300) requiredPlan = "pro";
+    if (promptLength <= 300) requiredPlan = "pro";
 
     return {
       allowed: false,
@@ -160,6 +172,10 @@ export function canSendToRelations(
   subscription: UserSubscription,
   relationsCount: number
 ): PermissionCheckResult {
+  if (!subscription.plan) {
+    return { allowed: false, reason: "Abonnement requis", requiredPlan: "pro" };
+  }
+
   const limits = getPlanLimits(subscription.plan);
 
   // Unlimited relations
@@ -171,7 +187,7 @@ export function canSendToRelations(
     return {
       allowed: false,
       reason: `Votre plan limite l'envoi à ${limits.maxRelations} relation(s)`,
-      requiredPlan: relationsCount <= 1 ? "free" : relationsCount <= 10 ? "pro" : "max",
+      requiredPlan: relationsCount <= 10 ? "pro" : "max",
       currentUsage: relationsCount,
       limit: limits.maxRelations,
     };
@@ -187,6 +203,9 @@ export function canUsePlatform(
   subscription: UserSubscription,
   platform: Platform
 ): PermissionCheckResult {
+  if (!subscription.plan) {
+    return { allowed: false, reason: "Abonnement requis", requiredPlan: "pro" };
+  }
   if (!isPlatformAllowed(subscription.plan, platform)) {
     const requiredPlan = getMinimumPlanForPlatform(platform);
     const platformNames: Record<Platform, string> = {
@@ -210,6 +229,9 @@ export function canUsePlatform(
  * Check if user can schedule posts
  */
 export function canSchedulePosts(subscription: UserSubscription): PermissionCheckResult {
+  if (!subscription.plan) {
+    return { allowed: false, reason: "Abonnement requis", requiredPlan: "pro" };
+  }
   if (!planHasFeature(subscription.plan, "canSchedulePosts")) {
     return {
       allowed: false,
@@ -225,6 +247,9 @@ export function canSchedulePosts(subscription: UserSubscription): PermissionChec
  * Check if user can manage conversations (rename, pin, delete)
  */
 export function canManageConversations(subscription: UserSubscription): PermissionCheckResult {
+  if (!subscription.plan) {
+    return { allowed: false, reason: "Abonnement requis", requiredPlan: "pro" };
+  }
   if (!planHasFeature(subscription.plan, "canManageConversations")) {
     return {
       allowed: false,
@@ -240,6 +265,7 @@ export function canManageConversations(subscription: UserSubscription): Permissi
  * Check if user has personalized responses
  */
 export function hasPersonalizedResponses(subscription: UserSubscription): boolean {
+  if (!subscription.plan) return false;
   return planHasFeature(subscription.plan, "hasPersonalizedResponses");
 }
 
@@ -247,6 +273,7 @@ export function hasPersonalizedResponses(subscription: UserSubscription): boolea
  * Check if user has audience targeting
  */
 export function hasAudienceTargeting(subscription: UserSubscription): boolean {
+  if (!subscription.plan) return false;
   return planHasFeature(subscription.plan, "hasAudienceTargeting");
 }
 
@@ -254,6 +281,7 @@ export function hasAudienceTargeting(subscription: UserSubscription): boolean {
  * Check if user has priority processing
  */
 export function hasPriorityProcessing(subscription: UserSubscription): boolean {
+  if (!subscription.plan) return false;
   return planHasFeature(subscription.plan, "hasPriorityProcessing");
 }
 
@@ -261,6 +289,7 @@ export function hasPriorityProcessing(subscription: UserSubscription): boolean {
  * Check if user has early access to new features
  */
 export function hasEarlyAccess(subscription: UserSubscription): boolean {
+  if (!subscription.plan) return false;
   return planHasFeature(subscription.plan, "hasEarlyAccess");
 }
 
@@ -268,6 +297,7 @@ export function hasEarlyAccess(subscription: UserSubscription): boolean {
  * Check if user has dual response mode (Storytelling + Business)
  */
 export function hasDualResponseMode(subscription: UserSubscription): boolean {
+  if (!subscription.plan) return false;
   return planHasFeature(subscription.plan, "hasDualResponseMode");
 }
 
@@ -279,6 +309,9 @@ export function hasDualResponseMode(subscription: UserSubscription): boolean {
  * Check if user can publish to multiple platforms simultaneously
  */
 export function canPublishSimultaneously(subscription: UserSubscription): PermissionCheckResult {
+  if (!subscription.plan) {
+    return { allowed: false, reason: "Abonnement requis", requiredPlan: "max" };
+  }
   if (!canPublishToMultiplePlatforms(subscription.plan)) {
     return {
       allowed: false,
@@ -296,6 +329,9 @@ export function canConnectPlatform(
   subscription: UserSubscription,
   currentConnectionCount: number
 ): PermissionCheckResult {
+  if (!subscription.plan) {
+    return { allowed: false, reason: "Abonnement requis", requiredPlan: "pro" };
+  }
   const maxConnections = getMaxPlatformConnections(subscription.plan);
 
   if (currentConnectionCount >= maxConnections) {
@@ -330,7 +366,7 @@ export function getPlatformAccessInfo(
   upgradeMessage?: string;
 } {
   const info = PLATFORM_INFO[platform];
-  const hasAccess = isPlatformAllowed(subscription.plan, platform);
+  const hasAccess = subscription.plan ? isPlatformAllowed(subscription.plan, platform) : false;
 
   return {
     hasAccess,
@@ -361,7 +397,7 @@ export function getAllPlatformsAccessStatus(subscription: UserSubscription): Arr
       platform,
       name: info.name,
       color: info.color,
-      hasAccess: isPlatformAllowed(subscription.plan, platform),
+      hasAccess: subscription.plan ? isPlatformAllowed(subscription.plan, platform) : false,
       minPlan: info.minPlan,
     };
   });
@@ -519,6 +555,7 @@ export function getMonthStartDate(): Date {
  * Get system prompt modifier based on plan's response quality
  */
 export function getResponseQualityModifier(subscription: UserSubscription): string {
+  if (!subscription.plan) return "";
   const limits = getPlanLimits(subscription.plan);
 
   switch (limits.responseQuality) {
@@ -537,6 +574,7 @@ export function getResponseQualityModifier(subscription: UserSubscription): stri
  * Get max response tokens based on plan
  */
 export function getMaxResponseTokens(subscription: UserSubscription): number {
+  if (!subscription.plan) return 500;
   const limits = getPlanLimits(subscription.plan);
 
   switch (limits.responseLength) {

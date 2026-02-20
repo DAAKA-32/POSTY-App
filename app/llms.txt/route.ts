@@ -22,7 +22,7 @@ POSTY helps professionals, entrepreneurs, and content creators build their perso
 - **AI-Powered**: Uses advanced language models for natural, engaging content
 - **LinkedIn Optimized**: Posts are structured for maximum algorithm visibility
 - **Bilingual**: Supports French and English (US)
-- **Free Tier**: 3 posts per week at no cost
+- **Free Trial**: 7-day free trial with full Pro features
 
 ### Target Audience
 - Marketing professionals
@@ -36,9 +36,8 @@ POSTY helps professionals, entrepreneurs, and content creators build their perso
 
 | Plan | Price | Features |
 |------|-------|----------|
-| Free | 0€/month | 3 posts/week, basic features |
-| Pro | 9.99€/month | Unlimited posts, priority support |
-| Max | 19.99€/month | Unlimited posts, advanced features, API access |
+| Pro | 9.99€/month | Unlimited posts, priority support, 7-day free trial |
+| Max | 19.99€/month | Unlimited posts, advanced features, API access, 7-day free trial |
 
 ## Important Pages
 
@@ -51,7 +50,7 @@ POSTY helps professionals, entrepreneurs, and content creators build their perso
 
 ## How POSTY Works
 
-1. **Sign in** - Create a free account or sign in with Google/LinkedIn
+1. **Sign in** - Create an account or sign in with Google/LinkedIn
 2. **Enter your idea** - Describe your LinkedIn post topic or idea
 3. **Generate posts** - AI creates 2 versions: Storytelling and Business
 4. **Customize** - Edit the generated text to your preferences

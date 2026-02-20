@@ -89,11 +89,11 @@ function ProfileContent() {
   );
 
   // Current plan info
-  // subscriptionPlan = plan from Firestore (free/pro/max)
-  const subscriptionPlan: SubscriptionPlan = (userProfile?.subscription?.plan || "free") as SubscriptionPlan;
-  // profileEditPlan = same as subscriptionPlan now (both use free/pro/max)
-  const profileEditPlan: PlanType = subscriptionPlan;
-  const dailyLimit = DAILY_MESSAGE_LIMITS[subscriptionPlan];
+  // subscriptionPlan = plan from Firestore (pro/max) or null if no subscription
+  const subscriptionPlan = (userProfile?.subscription?.plan as SubscriptionPlan | undefined) || null;
+  // profileEditPlan = same as subscriptionPlan now (pro/max or null)
+  const profileEditPlan: PlanType | null = subscriptionPlan;
+  const dailyLimit = subscriptionPlan ? DAILY_MESSAGE_LIMITS[subscriptionPlan] : 0;
   const dailyMessagesUsed = userProfile?.quota?.dailyMessageCount || 0;
 
   // Handle save profile
@@ -125,7 +125,7 @@ function ProfileContent() {
           targetAudience: formData.targetAudience,
           communicationTone: formData.communicationTone,
         } : {
-          // Free users keep existing profile data (from onboarding)
+          // Unsubscribed users keep existing profile data (from onboarding)
           sector: userProfile?.profile?.sector || "",
           role: userProfile?.profile?.role || "",
           linkedinStyle: userProfile?.profile?.linkedinStyle || "",

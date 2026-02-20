@@ -151,14 +151,14 @@ export const localizedPageSeo = {
       ],
     },
     en: {
-      title: "POSTY Pricing - Free, Pro & Max Plans | AI LinkedIn Generator",
+      title: "POSTY Pricing - Pro & Max Plans | AI LinkedIn Generator",
       description:
-        "Explore POSTY plans: 3 free posts/week or unlimited with Pro. Create professional LinkedIn posts with AI. No commitment required.",
+        "Explore POSTY plans: Pro and Max. Create professional LinkedIn posts with AI. 7-day free trial included. No commitment required.",
       keywords: [
         "POSTY pricing",
         "LinkedIn generator price",
         "LinkedIn AI subscription",
-        "POSTY free",
+        "POSTY trial",
         "POSTY Pro plan",
       ],
     },

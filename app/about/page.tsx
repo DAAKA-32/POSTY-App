@@ -79,7 +79,7 @@ export default function AboutPage() {
               <span className="text-sm font-medium">Retour</span>
             </Link>
             <Link href="/" className="flex items-center gap-2">
-              <Image src="/logo.png" alt="Posty" width={32} height={32} className="rounded-lg" />
+              <Image src="/logo.png" alt="Posty" width={32} height={32} />
               <span className="font-bold text-lg text-gray-900">Posty</span>
             </Link>
           </div>
@@ -320,7 +320,7 @@ export default function AboutPage() {
         <footer className="border-t border-gray-200 py-8 bg-white/50">
           <div className="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <Image src="/logo.png" alt="Posty" width={24} height={24} className="rounded" />
+              <Image src="/logo.png" alt="Posty" width={24} height={24} />
               <span className="text-sm text-gray-600">
                 © {new Date().getFullYear()} Posty. Tous droits réservés.
               </span>

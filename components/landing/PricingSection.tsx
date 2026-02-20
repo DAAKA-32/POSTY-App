@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { motion, useInView, AnimatePresence } from "framer-motion";
+import { motion, useInView } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCanHover } from "@/hooks/useCanHover";
 import Link from "next/link";
-import { getAvailablePlansForNewUsers, PLAN_TAGLINES, getPlanCoreFeatures, getPlanSecondaryFeatures, getYearlyMonthlyEquivalent, getSavingsText, PlanConfig, FeatureItem, TRIAL_PERIOD_DAYS } from "@/lib/plans";
+import { getAvailablePlansForNewUsers, PLAN_TAGLINES, getPlanFeaturesUnified, getYearlyMonthlyEquivalent, getSavingsText, PlanConfig, FeatureItem, TRIAL_PERIOD_DAYS } from "@/lib/plans";
 import BillingToggle from "@/components/ui/BillingToggle";
 
 // Get available plans for new users (excludes deprecated free plan)
@@ -68,7 +68,7 @@ function getPlanColors(plan: PlanConfig) {
   };
 }
 
-// Feature item component
+// Feature item component — unified across all plans
 function FeatureItemDisplay({ feature }: { feature: FeatureItem }) {
   return (
     <li className="flex items-start gap-3">
@@ -77,12 +77,12 @@ function FeatureItemDisplay({ feature }: { feature: FeatureItem }) {
           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
         </svg>
       ) : (
-        <svg className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+        <svg className="w-5 h-5 text-gray-300 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
         </svg>
       )}
       <span className={`text-sm leading-relaxed ${
-        feature.included ? 'text-gray-600' : 'text-gray-400 line-through'
+        feature.included ? 'text-gray-700' : 'text-gray-400'
       }`}>
         {feature.text}
       </span>
@@ -90,36 +90,25 @@ function FeatureItemDisplay({ feature }: { feature: FeatureItem }) {
   );
 }
 
-// Plan card component
+// Plan card component — all features visible, uniform structure
 function PlanCard({
   plan,
   billingPeriod,
   index,
   canHover,
   isInView,
-  isFeaturesExpanded = false,
-  onToggleFeatures,
 }: {
   plan: PlanConfig;
   billingPeriod: "monthly" | "yearly";
   index: number;
   canHover: boolean;
   isInView: boolean;
-  /** Whether the secondary features are expanded (synchronized across all plans) */
-  isFeaturesExpanded?: boolean;
-  /** Callback to toggle the features expansion (synchronized across all plans) */
-  onToggleFeatures?: () => void;
 }) {
-  // Use synchronized state from parent — all plans expand/collapse together
-  const showMoreFeatures = isFeaturesExpanded;
-  const toggleShowMoreFeatures = () => onToggleFeatures?.();
   const colors = getPlanColors(plan);
   const planInfo = PLAN_TAGLINES[plan.id] || { tagline: plan.description, idealFor: "" };
-  const coreFeatures = getPlanCoreFeatures(plan);
-  const secondaryFeatures = getPlanSecondaryFeatures(plan);
-  const includedSecondaryCount = secondaryFeatures.filter(f => f.included).length;
+  // Single unified feature list — ALL features, same order across all plans
+  const allFeatures = getPlanFeaturesUnified(plan);
 
-  const isFree = plan.price.monthly === 0;
   const displayPrice = billingPeriod === "monthly"
     ? plan.price.monthly
     : getYearlyMonthlyEquivalent(plan.id);
@@ -128,14 +117,14 @@ function PlanCard({
   // Conditional hover animations - desktop only
   const getHoverAnimation = () => {
     if (!canHover) return {};
-    return plan.highlight ? { y: -12, scale: 1.02 } : { y: -8 };
+    return { y: -8 };
   };
 
   return (
     <motion.div
       variants={staggerItem}
       whileHover={getHoverAnimation()}
-      className={`group relative no-hover-mobile ${plan.highlight ? 'md:scale-105' : ''}`}
+      className="group relative no-hover-mobile"
     >
       {/* Popular badge */}
       {plan.highlight && (
@@ -171,7 +160,7 @@ function PlanCard({
         </motion.div>
       )}
 
-      {/* Card - HARMONIZED STRUCTURE with fixed height zones */}
+      {/* Card */}
       <div
         className={`
           relative h-full bg-white rounded-3xl overflow-hidden flex flex-col
@@ -185,10 +174,10 @@ function PlanCard({
           }
         `}
       >
-        {/* ZONE 1: Header with gradient (fixed height: 200px) */}
-        <div className={`h-[200px] relative px-6 md:px-8 pt-8 pb-4 bg-gradient-to-br ${colors.gradient} flex flex-col`}>
+        {/* ZONE 1: Header with gradient */}
+        <div className={`relative px-6 md:px-8 pt-8 pb-4 bg-gradient-to-br ${colors.gradient} flex flex-col`}>
           {/* Plan name and tagline */}
-          <div className="h-[60px]">
+          <div className="min-h-[60px]">
             <h3 className="text-2xl md:text-3xl font-bold text-white mb-1">
               {plan.name}
             </h3>
@@ -197,23 +186,17 @@ function PlanCard({
             </p>
           </div>
 
-          {/* ZONE 2: Price (fixed height: 80px) */}
-          <div className="h-[80px] flex flex-col justify-center">
+          {/* ZONE 2: Price */}
+          <div className="min-h-[80px] flex flex-col justify-center">
             <div className="flex items-baseline gap-2">
-              {isFree ? (
-                <span className="text-4xl md:text-5xl font-bold text-white">Gratuit</span>
-              ) : (
-                <>
-                  <span className="text-4xl md:text-5xl font-bold text-white tabular-nums">
-                    {displayPrice.toFixed(2).replace(".", ",")}€
-                  </span>
-                  <span className="text-white/70 text-base">/ mois</span>
-                </>
-              )}
+              <span className="text-4xl md:text-5xl font-bold text-white tabular-nums">
+                {displayPrice.toFixed(2).replace(".", ",")}€
+              </span>
+              <span className="text-white/70 text-base">/ mois</span>
             </div>
           </div>
 
-          {/* ZONE 3: Savings badge (fixed height: 44px - always rendered for alignment) */}
+          {/* Savings badge */}
           <div className={`h-[44px] flex items-center ${billingPeriod === "yearly" && savingsText ? "opacity-100" : "opacity-0"}`}>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full border border-white/30">
               <svg className="w-4 h-4 text-green-300" fill="currentColor" viewBox="0 0 20 20">
@@ -224,82 +207,8 @@ function PlanCard({
           </div>
         </div>
 
-        {/* Ideal for text - outside gradient */}
-        <div className="h-[36px] px-6 md:px-8 flex items-center border-b border-gray-200">
-          <p className="text-gray-500 text-xs">
-            {planInfo.idealFor}
-          </p>
-        </div>
-
-        {/* ZONE 4: Features list (flexible, grows) */}
-        <div className="flex-1 px-6 md:px-8 py-4">
-          <ul className="space-y-3" role="list" aria-label={`Fonctionnalités du plan ${plan.name}`}>
-            {coreFeatures.map((feature, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, x: -20 }}
-                animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
-                transition={{ delay: 0.3 + index * 0.1 + i * 0.03 }}
-              >
-                <FeatureItemDisplay feature={feature} />
-              </motion.div>
-            ))}
-          </ul>
-
-          {/* "Voir plus" toggle for secondary features */}
-          {includedSecondaryCount > 0 && (
-            <div className="mt-4">
-              <button
-                onClick={toggleShowMoreFeatures}
-                className={`
-                  w-full flex items-center justify-center gap-2 py-2 px-3
-                  text-sm font-medium rounded-lg
-                  transition-all duration-200
-                  ${showMoreFeatures
-                    ? "bg-primary/10 text-primary border border-primary/20"
-                    : "bg-gray-100 text-gray-500 hover:bg-gray-200 border border-gray-200"
-                  }
-                `}
-              >
-                <span>
-                  {showMoreFeatures ? "Voir moins" : `+${includedSecondaryCount} fonctionnalités`}
-                </span>
-                <motion.svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  animate={{ rotate: showMoreFeatures ? 180 : 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </motion.svg>
-              </button>
-
-              {/* Secondary features - Collapsible */}
-              <AnimatePresence initial={false}>
-                {showMoreFeatures && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.25, ease: "easeInOut" }}
-                    className="overflow-hidden"
-                  >
-                    <ul className="space-y-3 mt-4 pt-4 border-t border-gray-200">
-                      {secondaryFeatures.filter(f => f.included).map((feature, idx) => (
-                        <FeatureItemDisplay key={idx} feature={feature} />
-                      ))}
-                    </ul>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          )}
-        </div>
-
-        {/* ZONE 5: CTA Button (fixed height: 72px, always at bottom) */}
-        <div className="h-[72px] px-6 md:px-8 pb-6 mt-auto">
+        {/* CTA Button */}
+        <div className="px-6 md:px-8 py-4">
           <Link
             href={plan.trialDays > 0 ? `/subscription?plan=${plan.id}&trial=true` : `/subscription?plan=${plan.id}`}
             className={`
@@ -320,6 +229,28 @@ function PlanCard({
             }
           </Link>
         </div>
+
+        {/* "Ce qui est inclus" divider */}
+        <div className="px-6 md:px-8">
+          <div className="border-t border-gray-200" />
+          <p className="text-sm font-semibold text-gray-900 pt-4 pb-2">Ce qui est inclus</p>
+        </div>
+
+        {/* ZONE: ALL features — unified list, no "Voir plus" */}
+        <div className="flex-1 px-6 md:px-8 pb-6">
+          <ul className="space-y-3" role="list" aria-label={`Fonctionnalités du plan ${plan.name}`}>
+            {allFeatures.map((feature, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: -20 }}
+                animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
+                transition={{ delay: 0.3 + index * 0.1 + i * 0.03 }}
+              >
+                <FeatureItemDisplay feature={feature} />
+              </motion.div>
+            ))}
+          </ul>
+        </div>
       </div>
     </motion.div>
   );
@@ -331,12 +262,6 @@ export default function PricingSection() {
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
   const canHover = useCanHover();
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("yearly");
-  // Synchronized toggle: clicking any plan's "more features" expands/collapses ALL plans
-  const [allFeaturesExpanded, setAllFeaturesExpanded] = useState(false);
-
-  const handleToggleFeatures = () => {
-    setAllFeaturesExpanded((prev) => !prev);
-  };
 
   return (
     <section
@@ -401,7 +326,7 @@ export default function PricingSection() {
           initial="hidden"
           animate={isInView ? "visible" : "hidden"}
           variants={staggerContainer}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mb-12 items-start"
+          className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 max-w-4xl mx-auto mb-12 items-start"
         >
           {PLANS.map((plan, index) => (
             <PlanCard
@@ -411,8 +336,6 @@ export default function PricingSection() {
               index={index}
               canHover={canHover}
               isInView={isInView}
-              isFeaturesExpanded={allFeaturesExpanded}
-              onToggleFeatures={handleToggleFeatures}
             />
           ))}
         </motion.div>

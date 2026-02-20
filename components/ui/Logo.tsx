@@ -34,7 +34,6 @@ export default function Logo({
       <div
         className={`
           ${sizeClasses[size]}
-          rounded-xl overflow-hidden
           flex items-center justify-center
           shadow-glow transition-transform hover:scale-105
         `}
@@ -69,7 +68,6 @@ export function AnimatedLogo({
       <div
         className={`
           ${sizeClasses[size]}
-          rounded-xl overflow-hidden
           flex items-center justify-center
           shadow-glow
           animate-pulse

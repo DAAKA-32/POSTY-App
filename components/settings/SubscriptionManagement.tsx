@@ -27,9 +27,18 @@ interface StripeSubscriptionDetails {
 }
 
 // Format date for French locale
-const formatDate = (timestamp: number | Date | undefined): string => {
+const formatDate = (timestamp: number | Date | { toDate: () => Date } | undefined): string => {
   if (!timestamp) return "—";
-  const date = typeof timestamp === "number" ? new Date(timestamp * 1000) : timestamp;
+  let date: Date;
+  if (typeof timestamp === "number") {
+    date = new Date(timestamp * 1000);
+  } else if (timestamp instanceof Date) {
+    date = timestamp;
+  } else if (typeof (timestamp as { toDate?: () => Date }).toDate === "function") {
+    date = (timestamp as { toDate: () => Date }).toDate();
+  } else {
+    return "—";
+  }
   return date.toLocaleDateString("fr-FR", {
     day: "numeric",
     month: "long",
@@ -68,7 +77,6 @@ export default function SubscriptionManagement() {
   const {
     currentPlan,
     subscription,
-    isFreePlan,
     loading: contextLoading,
     guaranteeEligible,
     guaranteeDaysRemaining,
@@ -90,7 +98,7 @@ export default function SubscriptionManagement() {
   // Fetch subscription details from Stripe
   const fetchStripeDetails = useCallback(async () => {
     if (!stripeSubscriptionId && !stripeCustomerId) return;
-    if (isFreePlan) return;
+    if (!currentPlan) return;
 
     setIsLoading(true);
     try {
@@ -110,7 +118,7 @@ export default function SubscriptionManagement() {
     } finally {
       setIsLoading(false);
     }
-  }, [stripeSubscriptionId, stripeCustomerId, isFreePlan]);
+  }, [stripeSubscriptionId, stripeCustomerId, currentPlan]);
 
   useEffect(() => {
     fetchStripeDetails();
@@ -233,8 +241,8 @@ export default function SubscriptionManagement() {
 
   // Determine subscription status display
   const getStatusDisplay = () => {
-    if (isFreePlan) {
-      return { label: "Gratuit", color: "text-text-secondary", bg: "bg-dark-hover" };
+    if (!currentPlan) {
+      return { label: "Aucun abonnement", color: "text-text-secondary", bg: "bg-dark-hover" };
     }
 
     if (stripeDetails?.cancelAtPeriodEnd) {
@@ -305,7 +313,7 @@ export default function SubscriptionManagement() {
             <div>
               <p className="text-text-muted text-xs mb-1">Plan actuel</p>
               <p className="text-gray-900 dark:text-white font-semibold text-lg capitalize">
-                {currentPlan === "free" ? "Gratuit" : currentPlan === "pro" ? "Pro" : "Max"}
+                {!currentPlan ? "Aucun abonnement" : currentPlan === "pro" ? "Pro" : "Max"}
               </p>
             </div>
             <div className="text-right">
@@ -322,55 +330,34 @@ export default function SubscriptionManagement() {
           </motion.div>
 
           {/* Billing Info - Only for paid plans */}
-          {!isFreePlan && stripeDetails && (
+          {!!currentPlan && (
             <>
-              {/* Billing Interval */}
-              <motion.div
-                variants={itemVariants}
-                className="flex items-center justify-between p-4 bg-dark-bg rounded-xl border border-dark-border"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-text-muted text-xs">Facturation</p>
-                    <p className="text-gray-900 dark:text-white font-medium">
-                      {stripeDetails.interval === "year" ? "Annuelle" : "Mensuelle"}
-                    </p>
-                  </div>
-                </div>
-                {stripeDetails.interval === "year" && (
-                  <span className="px-2 py-1 bg-accent/10 text-accent text-xs font-medium rounded-lg">
-                    2 mois gratuits
-                  </span>
-                )}
-              </motion.div>
-
-              {/* Dates */}
+              {/* Subscription date — always visible using Firestore fallback */}
               <motion.div
                 variants={itemVariants}
                 className="grid grid-cols-2 gap-3"
               >
-                {/* Start Date */}
+                {/* Start Date — Stripe startDate or Firestore subscribedAt */}
                 <div className="p-4 bg-dark-bg rounded-xl border border-dark-border">
-                  <p className="text-text-muted text-xs mb-1">Début de l'abonnement</p>
-                  <p className="text-gray-900 dark:text-white font-medium text-sm">
-                    {formatDate(stripeDetails.startDate)}
+                  <p className="text-text-muted text-xs mb-1">Abonné depuis le</p>
+                  <p className="text-gray-900 dark:text-white font-semibold text-sm">
+                    {stripeDetails?.startDate
+                      ? formatDate(stripeDetails.startDate)
+                      : formatDate(userProfile?.subscription?.subscribedAt)}
                   </p>
                 </div>
 
                 {/* Next Renewal / End Date */}
                 <div className="p-4 bg-dark-bg rounded-xl border border-dark-border">
                   <p className="text-text-muted text-xs mb-1">
-                    {stripeDetails.cancelAtPeriodEnd ? "Fin d'accès" : "Prochain renouvellement"}
+                    {stripeDetails?.cancelAtPeriodEnd ? "Fin d'accès" : "Prochain renouvellement"}
                   </p>
-                  <p className={`font-medium text-sm ${stripeDetails.cancelAtPeriodEnd ? "text-warning" : "text-gray-900 dark:text-white"}`}>
-                    {formatDate(stripeDetails.currentPeriodEnd)}
+                  <p className={`font-semibold text-sm ${stripeDetails?.cancelAtPeriodEnd ? "text-warning" : "text-gray-900 dark:text-white"}`}>
+                    {stripeDetails?.currentPeriodEnd
+                      ? formatDate(stripeDetails.currentPeriodEnd)
+                      : formatDate(userProfile?.subscription?.expiresAt)}
                   </p>
-                  {!stripeDetails.cancelAtPeriodEnd && daysRemaining <= 7 && (
+                  {stripeDetails && !stripeDetails.cancelAtPeriodEnd && daysRemaining <= 7 && daysRemaining > 0 && (
                     <p className="text-xs text-text-muted mt-1">
                       Dans {daysRemaining} jour{daysRemaining > 1 ? "s" : ""}
                     </p>
@@ -378,9 +365,36 @@ export default function SubscriptionManagement() {
                 </div>
               </motion.div>
 
+              {/* Billing Interval — only when Stripe details are loaded */}
+              {stripeDetails && (
+                <motion.div
+                  variants={itemVariants}
+                  className="flex items-center justify-between p-4 bg-dark-bg rounded-xl border border-dark-border"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-text-muted text-xs">Facturation</p>
+                      <p className="text-gray-900 dark:text-white font-medium">
+                        {stripeDetails.interval === "year" ? "Annuelle" : "Mensuelle"}
+                      </p>
+                    </div>
+                  </div>
+                  {stripeDetails.interval === "year" && (
+                    <span className="px-2 py-1 bg-accent/10 text-accent text-xs font-medium rounded-lg">
+                      2 mois gratuits
+                    </span>
+                  )}
+                </motion.div>
+              )}
+
               {/* Cancellation Warning */}
               <AnimatePresence>
-                {stripeDetails.cancelAtPeriodEnd && (
+                {stripeDetails?.cancelAtPeriodEnd && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
@@ -413,7 +427,7 @@ export default function SubscriptionManagement() {
               </AnimatePresence>
 
               {/* Auto-Renewal Info */}
-              {!stripeDetails.cancelAtPeriodEnd && (
+              {stripeDetails && !stripeDetails.cancelAtPeriodEnd && (
                 <motion.div
                   variants={itemVariants}
                   className="flex items-center gap-3 p-3 bg-accent/5 border border-accent/10 rounded-xl"
@@ -431,7 +445,7 @@ export default function SubscriptionManagement() {
           )}
 
           {/* Money-back Guarantee Banner */}
-          {!isFreePlan && guaranteeEligible && (
+          {!!currentPlan && guaranteeEligible && (
             <motion.div
               variants={itemVariants}
               className="p-4 bg-accent/5 border border-accent/20 rounded-xl"
@@ -462,7 +476,7 @@ export default function SubscriptionManagement() {
           )}
 
           {/* Free Plan Upgrade CTA */}
-          {isFreePlan && (
+          {!currentPlan && (
             <motion.div
               variants={itemVariants}
               className="p-4 bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 border border-primary/20 rounded-xl"
@@ -493,7 +507,7 @@ export default function SubscriptionManagement() {
           )}
 
           {/* Action Buttons - Only for paid plans */}
-          {!isFreePlan && stripeCustomerId && (
+          {!!currentPlan && stripeCustomerId && (
             <motion.div
               variants={itemVariants}
               className="flex flex-col sm:flex-row gap-3 pt-2"
@@ -533,8 +547,8 @@ export default function SubscriptionManagement() {
             variants={itemVariants}
             className="text-xs text-text-muted text-center pt-2"
           >
-            {isFreePlan
-              ? "Plan gratuit sans engagement. Passez à Pro ou Max à tout moment."
+            {!currentPlan
+              ? "Aucun abonnement actif. Passez à Pro ou Max à tout moment."
               : `Garantie satisfait ou remboursé ${GUARANTEE_PERIOD_DAYS} jours. Annulation possible à tout moment.`}
           </motion.p>
         </div>

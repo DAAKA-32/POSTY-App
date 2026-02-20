@@ -56,7 +56,7 @@ export function isTestModeAllowed(): boolean {
 }
 
 // Plan Types
-export type PlanType = "free" | "pro" | "max";
+export type PlanType = "pro" | "max";
 export type PaidPlanType = "pro" | "max"; // Plans that can be purchased/trialed
 export type PlanSource = "stripe" | "test" | "trial";
 export type SubscriptionStatus = "active" | "inactive" | "canceled" | "past_due" | "trialing";
@@ -107,7 +107,7 @@ export const PLATFORM_INFO: Record<Platform, PlatformInfo> = {
     icon: "linkedin",
     color: "#0A66C2",
     description: "Réseau professionnel #1",
-    minPlan: "free",
+    minPlan: "pro",
   },
   reddit: {
     id: "reddit",
@@ -141,8 +141,9 @@ export function getAllPlatforms(): Platform[] {
 }
 
 // Get platforms available for a specific plan
-export function getPlatformsForPlan(plan: PlanType): Platform[] {
-  const planOrder: Record<PlanType, number> = { free: 0, pro: 1, max: 2 };
+export function getPlatformsForPlan(plan: PlanType | null): Platform[] {
+  if (!plan) return [];
+  const planOrder: Record<PlanType, number> = { pro: 1, max: 2 };
   const currentPlanLevel = planOrder[plan];
 
   return getAllPlatforms().filter(platform => {
@@ -205,7 +206,7 @@ export interface PlanConfig {
   premium: boolean;
   /** Trial period in days (0 = no trial, only for paid plans) */
   trialDays: number;
-  /** Whether this plan is deprecated (free plan after trial system) */
+  /** Whether this plan is deprecated */
   deprecated?: boolean;
 }
 
@@ -214,43 +215,6 @@ export interface PlanConfig {
 // ============================================
 
 export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
-  free: {
-    id: "free",
-    name: "Découverte",
-    displayName: "Free",
-    description: "Plan réservé aux utilisateurs existants",
-    price: {
-      monthly: 0,
-      yearly: 0,
-    },
-    limits: {
-      messagesPerDay: 3,
-      conversationsPerWeek: -1, // Not used (daily enforcement)
-      conversationsPerMonth: -1, // Not used (daily enforcement)
-      maxCharactersPerPrompt: 100,
-      maxRelations: 1,
-      responseQuality: "essential",
-      responseLength: "short",
-      canSchedulePosts: false,
-      canManageConversations: false,
-      hasPersonalizedResponses: false,
-      hasAudienceTargeting: false,
-      hasPriorityProcessing: false,
-      hasEarlyAccess: false,
-      hasDualResponseMode: false,
-      dualResponsesPerWeek: 0, // No dual mode
-      // Multi-Platform: LinkedIn only
-      allowedPlatforms: ["linkedin"],
-      maxPlatformConnections: 1,
-      canPublishSimultaneously: false,
-      quotaResetPeriod: "daily",
-    },
-    highlight: false,
-    premium: false,
-    trialDays: 0,
-    deprecated: true, // Free plan no longer available for new users
-  },
-
   pro: {
     id: "pro",
     name: "Pro",
@@ -334,7 +298,7 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
  * Get plan configuration by type
  */
 export function getPlanConfig(plan: PlanType): PlanConfig {
-  return PLAN_CONFIGS[plan] || PLAN_CONFIGS.free;
+  return PLAN_CONFIGS[plan] || PLAN_CONFIGS.pro;
 }
 
 /**
@@ -419,9 +383,9 @@ export function canConnectMorePlatforms(plan: PlanType, currentConnections: numb
 /**
  * Compare two plans - returns positive if plan1 > plan2
  */
-export function comparePlans(plan1: PlanType, plan2: PlanType): number {
-  const order: Record<PlanType, number> = { free: 0, pro: 1, max: 2 };
-  return order[plan1] - order[plan2];
+export function comparePlans(plan1: PlanType | null, plan2: PlanType | null): number {
+  const order: Record<string, number> = { pro: 1, max: 2 };
+  return (plan1 ? order[plan1] : 0) - (plan2 ? order[plan2] : 0);
 }
 
 /**
@@ -446,7 +410,7 @@ export function getMinimumPlanForFeature(
     | "canPublishSimultaneously"
   >
 ): PlanType {
-  const plans: PlanType[] = ["free", "pro", "max"];
+  const plans: PlanType[] = ["pro", "max"];
   for (const plan of plans) {
     if (planHasFeature(plan, feature)) {
       return plan;
@@ -503,8 +467,8 @@ export const STRIPE_PRICE_TO_PLAN: Record<string, PlanType> = {
 /**
  * Convert Stripe price ID to plan type
  */
-export function stripePriceToPlan(priceId: string): PlanType {
-  return STRIPE_PRICE_TO_PLAN[priceId] || "free";
+export function stripePriceToPlan(priceId: string): PlanType | null {
+  return STRIPE_PRICE_TO_PLAN[priceId] || null;
 }
 
 // ============================================
@@ -514,10 +478,10 @@ export function stripePriceToPlan(priceId: string): PlanType {
 /**
  * Get formatted price string
  */
-export function formatPlanPrice(plan: PlanType, interval: "monthly" | "yearly" = "monthly"): string {
+export function formatPlanPrice(plan: PlanType | null, interval: "monthly" | "yearly" = "monthly"): string {
+  if (!plan) return "—";
   const config = getPlanConfig(plan);
   const price = interval === "monthly" ? config.price.monthly : config.price.yearly;
-  if (price === 0) return "Gratuit";
   return `${price.toFixed(2).replace(".", ",")}€`;
 }
 
@@ -544,7 +508,6 @@ export function getPaidPlans(): PlanConfig[] {
  */
 export function getYearlySavings(plan: PlanType): number {
   const config = getPlanConfig(plan);
-  if (config.price.monthly === 0) return 0;
   const monthlyTotal = config.price.monthly * 12;
   return Math.round((monthlyTotal - config.price.yearly) * 100) / 100;
 }
@@ -563,7 +526,6 @@ export function getYearlyMonthlyEquivalent(plan: PlanType): number {
  */
 export function getSavingsText(plan: PlanType): string | null {
   const config = getPlanConfig(plan);
-  if (config.price.monthly === 0) return null;
   const savings = getYearlySavings(plan);
   const monthsSaved = Math.round(savings / config.price.monthly);
   if (monthsSaved >= 1) {
@@ -577,7 +539,6 @@ export function getSavingsText(plan: PlanType): string | null {
  */
 export function getYearlyDiscountPercent(plan: PlanType): number {
   const config = getPlanConfig(plan);
-  if (config.price.monthly === 0) return 0;
   const monthlyTotal = config.price.monthly * 12;
   const discount = ((monthlyTotal - config.price.yearly) / monthlyTotal) * 100;
   return Math.round(discount);
@@ -592,10 +553,6 @@ export function getYearlyDiscountPercent(plan: PlanType): number {
  * Used by both Landing page and Subscription page
  */
 export const PLAN_TAGLINES: Record<PlanType, { tagline: string; idealFor: string }> = {
-  free: {
-    tagline: "Découvrez la puissance de Posty",
-    idealFor: "Premier pas vers l'acquisition LinkedIn",
-  },
   pro: {
     tagline: "Publiez chaque jour, signez vos premiers clients",
     idealFor: "Indépendants et petites équipes",
@@ -620,8 +577,8 @@ export const CORE_FEATURES = [
 ] as const;
 
 /**
- * SECONDARY Features - Shown in "Voir plus" section
- * Additional features that add value but aren't primary decision drivers
+ * SECONDARY Features - Additional features beyond core differentiators
+ * Displayed alongside core features in unified list
  */
 export const SECONDARY_FEATURES = [
   { key: "prompts", label: "Prompts longs (jusqu'à 3000 car.)" },
@@ -651,7 +608,6 @@ export type UnifiedFeatureKey = typeof UNIFIED_FEATURES[number]["key"];
  * Get CTA button label based on plan - action-oriented
  */
 export function getCTALabel(planId: PlanType, isYearly: boolean, trialEligible: boolean = false): string {
-  if (planId === "free") return "Tester gratuitement";
   if (trialEligible) {
     const days = PLAN_CONFIGS[planId]?.trialDays || TRIAL_PERIOD_DAYS;
     return `Essayer ${days}j gratuitement`;
@@ -764,8 +720,8 @@ export function getPlanCoreFeatures(plan: PlanConfig): FeatureItem[] {
 }
 
 /**
- * Get SECONDARY features for a plan (shown in "Voir plus")
- * Returns additional features
+ * Get SECONDARY features for a plan
+ * Returns additional features beyond core differentiators
  */
 export function getPlanSecondaryFeatures(plan: PlanConfig): FeatureItem[] {
   return SECONDARY_FEATURES.map((feature) => ({
@@ -990,10 +946,10 @@ export function isTestModeValid(testModeData: {
 // ============================================
 
 /**
- * Get all available plans for new users (excludes deprecated free plan)
+ * Get all available plans for new users
  */
 export function getAvailablePlansForNewUsers(): PlanConfig[] {
-  return Object.values(PLAN_CONFIGS).filter(plan => !plan.deprecated);
+  return getAllPlans();
 }
 
 /**
@@ -1042,7 +998,7 @@ export function checkTrialEligibility(userData: {
   }
 
   // Active paid subscription = not eligible (they're already paying)
-  if (status === "active" && plan && plan !== "free") {
+  if (status === "active" && plan) {
     return {
       eligible: false,
       reason: "Vous avez déjà un abonnement actif.",

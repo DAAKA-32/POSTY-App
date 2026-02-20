@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     }
 
     // PLAN CHECK: Verify user's plan allows Facebook publishing
-    let userPlan: PlanType = "free";
+    let userPlan: PlanType | null = null;
     try {
       const quotaCheck = await checkUserQuotaAdmin(userId);
       userPlan = quotaCheck.plan as PlanType;
@@ -53,6 +53,16 @@ export async function POST(request: NextRequest) {
           { status: 503 }
         );
       }
+    }
+
+    if (!userPlan) {
+      return NextResponse.json(
+        {
+          error: "no_active_plan",
+          message: "Vous devez souscrire à un abonnement pour publier.",
+        },
+        { status: 403 }
+      );
     }
 
     if (!isPlatformAllowed(userPlan, "facebook")) {

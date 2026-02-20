@@ -117,7 +117,7 @@ function isTodayUTC(date: Date): boolean {
 
 export interface QuotaCheckResult {
   canGenerate: boolean;
-  plan: SubscriptionPlan;
+  plan: SubscriptionPlan | null;
   dailyLimit: number;
   usedToday: number;
   remaining: number;
@@ -139,17 +139,18 @@ export async function checkUserQuotaAdmin(userId: string): Promise<QuotaCheckRes
   const userRef = adminDb.collection("users").doc(userId);
   const userSnap = await userRef.get();
 
-  // Default free plan limits
+  // Default result for users without a subscription
   const defaultResult: QuotaCheckResult = {
-    canGenerate: true,
-    plan: "free",
-    dailyLimit: DAILY_MESSAGE_LIMITS.free,
+    canGenerate: false,
+    plan: null,
+    dailyLimit: 0,
     usedToday: 0,
-    remaining: DAILY_MESSAGE_LIMITS.free,
+    remaining: 0,
+    reason: "Aucun abonnement actif",
   };
 
   if (!userSnap.exists) {
-    // New user, use free limits
+    // New user, no subscription
     return defaultResult;
   }
 
@@ -162,13 +163,19 @@ export async function checkUserQuotaAdmin(userId: string): Promise<QuotaCheckRes
   const testPlan = testModeResult.plan;
 
   // Determine effective plan (test mode overrides actual subscription)
-  // Handle legacy "starter" plan name from database
-  const rawPlan = data.subscription?.plan || "free";
-  let effectivePlan: SubscriptionPlan = (rawPlan === "starter" ? "pro" : rawPlan) as SubscriptionPlan;
+  // Handle legacy "starter" and "free" plan names from database
+  let rawPlan: string | null = data.subscription?.plan || null;
+  if (rawPlan === "free") rawPlan = null; // Migrate legacy "free" plan
+  let effectivePlan: SubscriptionPlan | null = rawPlan ? (rawPlan === "starter" ? "pro" : rawPlan) as SubscriptionPlan : null;
 
   // Use test plan if test mode is active
   if (isTestMode && testPlan) {
     effectivePlan = testPlan as SubscriptionPlan;
+  }
+
+  // No subscription and no test mode = no generation
+  if (!effectivePlan) {
+    return defaultResult;
   }
 
   const dailyLimit = DAILY_MESSAGE_LIMITS[effectivePlan];
@@ -324,7 +331,7 @@ export async function incrementDualModeUsageAdmin(userId: string): Promise<void>
  * instead of the actual Stripe subscription.
  */
 export async function getUserProfileAdmin(userId: string): Promise<{
-  plan: SubscriptionPlan;
+  plan: SubscriptionPlan | null;
   profile?: {
     profileType?: string;
     sector?: string;
@@ -355,9 +362,10 @@ export async function getUserProfileAdmin(userId: string): Promise<{
   const isTestMode = testModeResult2.isActive;
   const testPlan = testModeResult2.plan;
 
-  // Determine effective plan (handle legacy "starter" plan name)
-  const rawPlan2 = data?.subscription?.plan || "free";
-  let effectivePlan: SubscriptionPlan = (rawPlan2 === "starter" ? "pro" : rawPlan2) as SubscriptionPlan;
+  // Determine effective plan (handle legacy "starter" and "free" plan names)
+  let rawPlan2: string | null = data?.subscription?.plan || null;
+  if (rawPlan2 === "free") rawPlan2 = null; // Migrate legacy "free" plan
+  let effectivePlan: SubscriptionPlan | null = rawPlan2 ? (rawPlan2 === "starter" ? "pro" : rawPlan2) as SubscriptionPlan : null;
 
   // Use test plan if active
   if (isTestMode && testPlan) {

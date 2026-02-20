@@ -61,7 +61,6 @@ export const en = {
     terms: "Terms",
     privacy: "Privacy",
     legalNotices: "Legal notices",
-    free: "Free",
     pro: "Pro",
     premium: "Premium",
     upgrade: "Upgrade to Pro",
@@ -130,8 +129,8 @@ export const en = {
 
     // CTA - Conversion oriented
     startFree: "Try for free",
-    startFreeDesc: "3 free LinkedIn posts per week. No strings attached.",
-    startFreeDescFull: "Start with 3 free posts per week. Upgrade to Pro for unlimited access.",
+    startFreeDesc: "Try Posty free for 7 days. No strings attached.",
+    startFreeDescFull: "Start your free 7-day trial. Cancel anytime.",
     viewPlans: "See pricing",
     noCardRequired: "Free 7-day trial",
     noCardRequiredFull: "Free 7-day trial, cancel anytime",
@@ -143,8 +142,6 @@ export const en = {
     storyResponse: "Three years ago, I made my biggest mistake as a manager...",
     businessResponse: "The most effective leaders listen more than they speak. Here's why...",
     generativeAI: "Generative AI",
-    freeLabel: "Free",
-
     // Discover
     discoverPosty: "Explore the tool",
 
@@ -172,7 +169,7 @@ export const en = {
     // Additional feature cards
     inSeconds: "Posts created in seconds",
     storytellingBusiness: "Storytelling & Business",
-    freePercent: "100% free",
+    freePercent: "Free 7-day trial",
   },
 
   // Auth
@@ -637,8 +634,6 @@ export const en = {
     currentPlan: "Current plan",
 
     // Plans
-    freePlan: "Free",
-    freePlanDesc: "3 posts per week",
     proPlan: "Pro",
     proPlanDesc: "Unlimited posts",
     maxPlan: "Max",
@@ -811,14 +806,14 @@ export const en = {
     subscription: "Subscription",
     paymentCanceled: "Payment was canceled",
     subscriptionActivated: "Your subscription is now active!",
-    alreadyFreePlan: "You are already on the free plan",
+    alreadyFreePlan: "You don't have an active subscription",
     checkoutError: "Checkout error",
     paymentError: "Payment error occurred",
     faqTitle: "Frequently asked questions",
     faqChangePlan: "How do I change my plan?",
     faqChangePlanAnswer: "You can change your plan at any time from your account settings.",
     faqDailyLimit: "Is there a daily limit?",
-    faqDailyLimitAnswer: "No, the limit is weekly for the free plan and there is no limit for paid plans.",
+    faqDailyLimitAnswer: "No, there is no daily limit on paid plans.",
     faqCommitment: "Is there a commitment?",
     faqCommitmentAnswer: "No, you can cancel your subscription at any time, at no cost.",
     faqYearlySavings: "How much can I save with the yearly plan?",
@@ -827,7 +822,6 @@ export const en = {
     noCommitment: "No commitment, cancel anytime",
     responsiveSupport: "Responsive email support",
     recommended: "Recommended",
-    free: "Free",
     perMonth: "/month",
     billedYearly: "Billed yearly",
     savingsYearly: "Save {amount}%",
@@ -838,9 +832,9 @@ export const en = {
     title: "Frequently asked questions",
     subtitle: "Everything you need to know about Posty",
 
-    // Question 1 - Free/pricing
-    q1: "Is Posty free to use?",
-    a1: "Yes, Posty offers a free plan with 3 LinkedIn posts per week. For unlimited access, you can upgrade to Pro. No credit card required to get started.",
+    // Question 1 - Free trial/pricing
+    q1: "Does Posty offer a free trial?",
+    a1: "Yes, Posty offers a free 7-day trial with full access to Pro features. A credit card is required to start the trial. You can cancel anytime during the trial period without being charged.",
 
     // Question 2 - Core feature differentiation
     q2: "What's the difference between Storytelling and Business versions?",
@@ -883,8 +877,8 @@ export const en = {
   seo: {
     homeTitle: "Posty - AI LinkedIn Post Generator | Create Engaging Content",
     homeDescription: "Generate high-performing LinkedIn posts in seconds with AI. Posty creates 2 versions (Storytelling & Business) for every idea. Try free today.",
-    pricingTitle: "Posty Pricing - Free, Pro & Max Plans | AI LinkedIn Generator",
-    pricingDescription: "Explore Posty plans: 3 free posts/week or unlimited with Pro. Create professional LinkedIn posts with AI. No commitment required.",
+    pricingTitle: "Posty Pricing - Pro & Max Plans | AI LinkedIn Generator",
+    pricingDescription: "Explore Posty plans: Pro and Max. Create professional LinkedIn posts with AI. Free 7-day trial, no commitment required.",
   },
 
   // E-E-A-T: Trust Signals
@@ -1016,7 +1010,7 @@ export const en = {
     feature7: "Advanced style customization",
 
     // Plan details
-    freeDetails: "Perfect for trying Posty or posting occasionally.",
+    freeTrialDetails: "Try Posty free for 7 days with full Pro features.",
     proDetails: "For regular creators who want to grow their LinkedIn presence.",
     maxDetails: "For demanding professionals who publish intensively.",
 
@@ -1064,7 +1058,7 @@ export const en = {
 
     // Value Reminders (Soft, not aggressive)
     proAdvantage: "Pro advantage",
-    freeUserReminder: "3 free posts per week",
+    trialReminder: "Start your free 7-day trial",
     proUserBenefit: "Unlimited generations active",
 
     // Soft Scarcity (Honest, not manipulative)

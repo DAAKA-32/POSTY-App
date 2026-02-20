@@ -66,7 +66,7 @@ interface UniversalChatInputProps {
   quotaLimitReached?: boolean;
 
   // Character limit validation (plan-based)
-  currentPlan?: PlanType;
+  currentPlan?: PlanType | null;
   maxCharacters?: number;
   showCharacterCount?: boolean;
 }
@@ -112,7 +112,7 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
   trialLimitReached = false,
   quotaLimitReached = false,
   // Character limit props
-  currentPlan = "free",
+  currentPlan = null,
   maxCharacters = 100,
   showCharacterCount = true,
 }, ref) => {

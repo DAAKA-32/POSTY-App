@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { SubscriptionPlan } from "@/types";
+import { PlanType } from "@/lib/plans";
 
 interface UpgradeCTAState {
   shouldShow: boolean;
@@ -24,13 +24,13 @@ interface DismissalData {
  * - Separate tracking per variant and upgrade path
  *
  * @param variant - CTA variant (inline, banner, minimal)
- * @param currentPlan - User's current plan
+ * @param currentPlan - User's current plan (null if unsubscribed)
  * @param messageCount - Number of messages sent in current session
  * @param sessionDuration - Time spent in current session (seconds)
  */
 export function useUpgradeCTA(
   variant: "inline" | "banner" | "minimal",
-  currentPlan: SubscriptionPlan,
+  currentPlan: PlanType | null,
   messageCount: number = 0,
   sessionDuration: number = 0
 ): UpgradeCTAState {
@@ -38,7 +38,7 @@ export function useUpgradeCTA(
 
   // Generate unique key for this CTA instance
   const getStorageKey = () => {
-    const upgradePath = currentPlan === "free" ? "free_to_pro" : "pro_to_max";
+    const upgradePath = !currentPlan ? "none_to_pro" : "pro_to_max";
     return `upgrade_cta_${variant}_${upgradePath}`;
   };
 

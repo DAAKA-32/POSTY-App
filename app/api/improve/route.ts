@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     }
 
     // ========== PLAN & QUOTA CHECK ==========
-    let userPlan: SubscriptionPlan = "free";
+    let userPlan: SubscriptionPlan | null = null;
     let canGenerate = true;
 
     if (isAdminInitialized()) {
@@ -102,6 +102,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Users without a plan cannot use the API
+    if (!userPlan) {
+      return new Response(
+        JSON.stringify({
+          error: "no_active_plan",
+          message:
+            language === "fr"
+              ? "Vous devez souscrire à un abonnement pour utiliser cette fonctionnalité."
+              : "You need an active subscription to use this feature.",
+        }),
+        { status: 403, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     // Only PRO and MAX users can improve posts
     if (!canImprovePost(userPlan)) {
       return new Response(
@@ -118,7 +132,7 @@ export async function POST(request: NextRequest) {
     }
 
     // ========== PROMPT LENGTH ENFORCEMENT ==========
-    const planLimits = getPlanLimits(userPlan as PlanType);
+    const planLimits = getPlanLimits(userPlan as PlanType); // userPlan is non-null after guard above
     const inputLength = existingPost.length + (instructions?.length || 0);
     if (inputLength > planLimits.maxCharactersPerPrompt) {
       return new Response(

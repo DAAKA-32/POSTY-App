@@ -175,7 +175,7 @@ export default function ChatPage() {
       <header className="flex-shrink-0 bg-white/95 dark:bg-dark-card/95 backdrop-blur-xl border-b border-gray-200 dark:border-dark-border z-40 pwa-fixed-header">
         <div className="max-w-2xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center shadow-glow transition-transform group-hover:scale-105">
+            <div className="w-9 h-9 flex items-center justify-center shadow-glow transition-transform group-hover:scale-105">
               <img
                 src="/logo.png"
                 alt="Posty Logo"
@@ -406,8 +406,8 @@ export default function ChatPage() {
             browserMode={browserMode}
             context="guest"
             trialLimitReached={!canGenerate}
-            currentPlan="free"
-            maxCharacters={getPlanLimits("free").maxCharactersPerPrompt}
+            currentPlan={null}
+            maxCharacters={getPlanLimits("pro").maxCharactersPerPrompt}
             showCharacterCount={true}
           />
 

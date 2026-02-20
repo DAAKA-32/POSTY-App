@@ -123,10 +123,10 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(pricingUrl);
     }
 
-    // Additional check: Free plan users should not access paid features
-    // (This is a secondary check - primary check is subscription status)
-    if (subscriptionPlan === "free" && pathname !== "/profile") {
-      console.warn(`[Middleware] Blocking free plan user from ${pathname}`);
+    // Additional check: users without a valid plan should not access paid features
+    // (keeps "free" check for legacy cookies that may still carry that value)
+    if ((!subscriptionPlan || subscriptionPlan === "free") && pathname !== "/profile") {
+      console.warn(`[Middleware] Blocking user without valid plan from ${pathname}`);
       const pricingUrl = new URL("/pricing", request.url);
       pricingUrl.searchParams.set("reason", "upgrade_required");
       return NextResponse.redirect(pricingUrl);

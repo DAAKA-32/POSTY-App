@@ -24,7 +24,7 @@ interface ProfileEditFormProps {
   onSave: (data: ProfileFormData) => Promise<void>;
   onCancel: () => void;
   isSaving?: boolean;
-  currentPlan?: PlanType;
+  currentPlan?: PlanType | null;
 }
 
 // Lock icon component
@@ -84,13 +84,13 @@ export default function ProfileEditForm({
   onSave,
   onCancel,
   isSaving = false,
-  currentPlan = "free",
+  currentPlan = null,
 }: ProfileEditFormProps) {
   const [formData, setFormData] = useState<ProfileFormData>(initialData);
 
   // Check if user has access to advanced profile fields
   const canEditAdvancedFields = currentPlan === "pro" || currentPlan === "max";
-  const isFreePlan = currentPlan === "free";
+  const isUnsubscribed = !currentPlan;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -239,7 +239,7 @@ export default function ProfileEditForm({
               </span>
               <ProBadge />
             </div>
-            {isFreePlan && (
+            {isUnsubscribed && (
               <Link
                 href="/pricing"
                 className="text-xs text-primary dark:text-primary hover:text-primary-hover dark:hover:text-accent transition-colors flex items-center gap-1"
@@ -252,8 +252,8 @@ export default function ProfileEditForm({
             )}
           </div>
 
-          {/* Info banner for free users */}
-          {isFreePlan && (
+          {/* Info banner for unsubscribed users */}
+          {isUnsubscribed && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -285,63 +285,63 @@ export default function ProfileEditForm({
             </motion.div>
           )}
 
-          {/* Role - Locked for free users */}
-          <LockedFieldWrapper isLocked={isFreePlan} label="Rôle / Métier">
+          {/* Role - Locked for unsubscribed users */}
+          <LockedFieldWrapper isLocked={isUnsubscribed} label="Rôle / Métier">
             <Input
               label="Rôle / Métier"
               value={formData.role}
               onChange={(e) => updateField("role", e.target.value)}
               placeholder="Ex: Chef de projet, Développeur..."
-              disabled={isFreePlan}
+              disabled={isUnsubscribed}
             />
           </LockedFieldWrapper>
 
-          {/* Sector - Locked for free users */}
+          {/* Sector - Locked for unsubscribed users */}
           <SelectField
             label="Secteur d'activité"
             value={formData.sector}
             onChange={(value) => updateField("sector", value)}
             options={SECTORS}
-            locked={isFreePlan}
+            locked={isUnsubscribed}
           />
 
-          {/* LinkedIn Style - Locked for free users */}
+          {/* LinkedIn Style - Locked for unsubscribed users */}
           <SelectField
             label="Style LinkedIn préféré"
             value={formData.linkedinStyle}
             onChange={(value) => updateField("linkedinStyle", value)}
             options={LINKEDIN_STYLES}
-            locked={isFreePlan}
+            locked={isUnsubscribed}
           />
 
-          {/* Objective - Locked for free users */}
+          {/* Objective - Locked for unsubscribed users */}
           <SelectField
             label="Objectif principal"
             value={formData.objective}
             onChange={(value) => updateField("objective", value)}
             options={OBJECTIVES}
-            locked={isFreePlan}
+            locked={isUnsubscribed}
           />
 
-          {/* Target Audience - Locked for free users */}
+          {/* Target Audience - Locked for unsubscribed users */}
           <SelectField
             label="Audience ciblée"
             value={formData.targetAudience}
             onChange={(value) => updateField("targetAudience", value)}
             options={TARGET_AUDIENCES}
             placeholder="À qui parlez-vous ?"
-            locked={isFreePlan}
+            locked={isUnsubscribed}
             showProBadge={canEditAdvancedFields}
           />
 
-          {/* Communication Tone - Locked for free users */}
+          {/* Communication Tone - Locked for unsubscribed users */}
           <SelectField
             label="Ton de communication"
             value={formData.communicationTone}
             onChange={(value) => updateField("communicationTone", value)}
             options={COMMUNICATION_TONES}
             placeholder="Comment souhaitez-vous communiquer ?"
-            locked={isFreePlan}
+            locked={isUnsubscribed}
             showProBadge={canEditAdvancedFields}
           />
         </div>

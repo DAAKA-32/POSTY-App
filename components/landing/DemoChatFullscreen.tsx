@@ -243,7 +243,7 @@ export default function DemoChatFullscreen({
                 transition={{ delay: 0.3 }}
                 className="flex items-center gap-2.5"
               >
-                <div className="w-9 h-9 rounded-xl overflow-hidden shadow-lg shadow-primary/20 bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                <div className="w-9 h-9 shadow-lg shadow-primary/20 flex items-center justify-center">
                   <img
                     src="/logo.png"
                     alt="Posty"
@@ -301,7 +301,7 @@ export default function DemoChatFullscreen({
                 <motion.div
                   animate={isLoading && !displayedResponse ? { scale: [1, 1.1, 1] } : {}}
                   transition={{ duration: 1.5, repeat: isLoading && !displayedResponse ? Infinity : 0 }}
-                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex-shrink-0 overflow-hidden shadow-lg shadow-primary/25 bg-gradient-to-br from-primary to-accent flex items-center justify-center"
+                  className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 shadow-lg shadow-primary/25 flex items-center justify-center"
                 >
                   <img
                     src="/logo.png"

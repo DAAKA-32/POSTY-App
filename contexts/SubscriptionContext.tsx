@@ -85,8 +85,7 @@ interface SubscriptionState {
 
 interface SubscriptionContextValue extends SubscriptionState {
   // Plan info
-  currentPlan: PlanType;
-  isFreePlan: boolean;
+  currentPlan: PlanType | null;
   isProPlan: boolean;
   isMaxPlan: boolean;
 
@@ -131,9 +130,9 @@ interface SubscriptionContextValue extends SubscriptionState {
 // ============================================
 
 const defaultSubscription: UserSubscription = {
-  plan: "free",
+  plan: null,
   planSource: "stripe",
-  status: "active",
+  status: "inactive",
 };
 
 const defaultUsage: UserUsage = {
@@ -145,8 +144,8 @@ const defaultUsage: UserUsage = {
 const defaultState: SubscriptionState = {
   subscription: defaultSubscription,
   usage: defaultUsage,
-  planConfig: getPlanConfig("free"),
-  planLimits: getPlanLimits("free"),
+  planConfig: getPlanConfig("pro"),
+  planLimits: getPlanLimits("pro"),
   isTestMode: false,
   testPlan: null,
   // Trial state
@@ -211,10 +210,11 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       const testPlan = testModeResult.plan;
 
       // Map old plan names to new ones
-      let stripePlan: PlanType = "free";
+      let stripePlan: PlanType | null = null;
       if (subscriptionData.plan === "starter") stripePlan = "pro";
+      else if (subscriptionData.plan === "free") stripePlan = null;
       else if (subscriptionData.plan === "pro") stripePlan = "max";
-      else if (["free", "pro", "max"].includes(subscriptionData.plan)) {
+      else if (["pro", "max"].includes(subscriptionData.plan)) {
         stripePlan = subscriptionData.plan as PlanType;
       }
 
@@ -224,7 +224,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       const subscription: UserSubscription = {
         plan: effectivePlan,
         planSource: isTestMode ? "test" : "stripe",
-        status: subscriptionData.status || "active",
+        status: subscriptionData.status || "inactive",
         currentPeriodStart: subscriptionData.subscribedAt?.toDate(),
         currentPeriodEnd: subscriptionData.expiresAt?.toDate(),
       };
@@ -285,8 +285,8 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       setState({
         subscription,
         usage,
-        planConfig: getPlanConfig(effectivePlan),
-        planLimits: getPlanLimits(effectivePlan),
+        planConfig: getPlanConfig(effectivePlan ?? "pro"),
+        planLimits: getPlanLimits(effectivePlan ?? "pro"),
         isTestMode,
         testPlan,
         // Trial state
@@ -299,8 +299,8 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
         guaranteeEligible: guaranteeResult.eligible && !refundRequested,
         guaranteeDaysRemaining: guaranteeResult.daysRemaining,
         refundRequested,
-        // Migration: user on deprecated free plan who hasn't used trial yet
-        needsMigration: stripePlan === "free" && trialEligibility.eligible,
+        // Migration: user without a paid plan who hasn't used trial yet
+        needsMigration: stripePlan === null && trialEligibility.eligible,
         loading: false,
         error: null,
       });
@@ -452,10 +452,11 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       const subscriptionData = userData?.subscription || {};
 
       // Map old plan names
-      let stripePlan: PlanType = "free";
+      let stripePlan: PlanType | null = null;
       if (subscriptionData.plan === "starter") stripePlan = "pro";
+      else if (subscriptionData.plan === "free") stripePlan = null;
       else if (subscriptionData.plan === "pro") stripePlan = "max";
-      else if (["free", "pro", "max"].includes(subscriptionData.plan)) {
+      else if (["pro", "max"].includes(subscriptionData.plan)) {
         stripePlan = subscriptionData.plan as PlanType;
       }
 
@@ -473,8 +474,8 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
           plan: stripePlan,
           planSource: "stripe",
         },
-        planConfig: getPlanConfig(stripePlan),
-        planLimits: getPlanLimits(stripePlan),
+        planConfig: getPlanConfig(stripePlan ?? "pro"),
+        planLimits: getPlanLimits(stripePlan ?? "pro"),
         isTestMode: false,
         testPlan: null,
       }));
@@ -551,7 +552,6 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
 
     // Plan info
     currentPlan: state.subscription.plan,
-    isFreePlan: state.subscription.plan === "free",
     isProPlan: state.subscription.plan === "pro",
     isMaxPlan: state.subscription.plan === "max",
 

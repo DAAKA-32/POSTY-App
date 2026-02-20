@@ -475,7 +475,7 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
         className="flex justify-center mb-3 sm:mb-6 lg:hidden"
       >
         <div className="relative">
-          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg overflow-hidden">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center shadow-lg">
             <img
               src="/logo.png"
               alt="Posty Logo"

@@ -62,21 +62,19 @@ const itemVariants = {
 
 // Plan badge component
 function PlanBadge({ plan, className = "" }: { plan: PlanType; className?: string }) {
-  const colors = {
-    free: "bg-text-muted/10 text-text-muted border-text-muted/20",
+  const colors: Record<string, string> = {
     pro: "bg-primary/10 text-primary border-primary/20",
     max: "bg-accent/10 text-accent border-accent/20",
   };
 
-  const labels = {
-    free: "Gratuit",
+  const labels: Record<string, string> = {
     pro: "Pro",
     max: "Max",
   };
 
   return (
-    <span className={`px-2 py-0.5 text-xs font-medium rounded-md border ${colors[plan]} ${className}`}>
-      {labels[plan]}
+    <span className={`px-2 py-0.5 text-xs font-medium rounded-md border ${colors[plan] || "bg-text-muted/10 text-text-muted border-text-muted/20"} ${className}`}>
+      {labels[plan] || "Gratuit"}
     </span>
   );
 }
@@ -253,7 +251,7 @@ export default function PlatformConnectionsSection() {
               <p className="text-xs text-text-muted">{info.description}</p>
             </div>
           </div>
-          {requiredPlan !== "free" && (
+          {requiredPlan && (
             <PlanBadge plan={requiredPlan} />
           )}
         </div>
@@ -431,7 +429,7 @@ export default function PlatformConnectionsSection() {
             <div>
               <p className="text-sm text-gray-900 dark:text-white font-medium">Connexions utilisées</p>
               <p className="text-xs text-text-muted">
-                {currentPlan === "max" ? "Illimitées" : `${connectedCount} sur ${currentPlan === "pro" ? 2 : 1}`}
+                {currentPlan === "max" ? "Illimitées" : currentPlan === "pro" ? `${connectedCount} sur 2` : `${connectedCount} sur 1`}
               </p>
             </div>
           </div>
@@ -444,7 +442,7 @@ export default function PlatformConnectionsSection() {
         </motion.div>
 
         {/* Plan Benefits Info */}
-        {currentPlan === "free" && (
+        {!currentPlan && (
           <motion.div
             variants={itemVariants}
             className="flex items-start gap-3 p-3 mb-5 bg-primary/5 border border-primary/20 rounded-xl"

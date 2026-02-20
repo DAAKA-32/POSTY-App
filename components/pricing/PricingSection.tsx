@@ -2,17 +2,15 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import BillingToggle from "@/components/ui/BillingToggle";
 import {
-  getAllPlans,
+  getPaidPlans,
   PlanConfig,
   PlanType,
   getSavingsText,
   PLAN_TAGLINES,
   getPlanFeaturesUnified,
-  getPlanCoreFeatures,
-  getPlanSecondaryFeatures,
   getCTALabel,
   FeatureItem,
 } from "@/lib/plans";
@@ -22,7 +20,7 @@ import {
 // Single source of truth for Landing Page & Subscription Page
 // ============================================================
 
-const PLANS = getAllPlans();
+const PLANS = getPaidPlans();
 
 // Smooth animation easing
 const smoothEase = [0.22, 1, 0.36, 1] as const;
@@ -51,24 +49,6 @@ export default function PricingSection({
   className = "",
 }: PricingSectionProps) {
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("yearly");
-  // Multi-open accordion: up to 3 cards can have expanded features simultaneously
-  // If a 4th card is opened, the oldest one closes automatically
-  const [expandedCardIds, setExpandedCardIds] = useState<string[]>([]);
-
-  const handleToggleFeatures = (planId: string) => {
-    setExpandedCardIds((prev) => {
-      // If already open, close it
-      if (prev.includes(planId)) {
-        return prev.filter((id) => id !== planId);
-      }
-      // If less than 3 open, add it
-      if (prev.length < 3) {
-        return [...prev, planId];
-      }
-      // If 3 already open, remove oldest (first) and add new one
-      return [...prev.slice(1), planId];
-    });
-  };
 
   const getYearlyMonthlyPrice = (plan: PlanConfig) => {
     if (plan.price.yearly === 0) return 0;
@@ -134,41 +114,10 @@ export default function PricingSection({
 
       {/* Pricing Cards - Unified Grid Layout */}
       <div className="max-w-5xl mx-auto px-2 sm:px-4 md:px-0">
-        {/* Mobile: Free plan banner */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.4, ease: smoothEase }}
-          className="sm:hidden mb-4 p-3 bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5 border border-primary/20 rounded-xl"
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <h4 className="text-sm font-bold text-gray-900 mb-0.5">Gratuit</h4>
-              <p className="text-[10px] text-gray-600">Idéal pour découvrir Posty</p>
-            </div>
-            <Link
-              href={isAuthenticated ? "#" : "/login?mode=signup"}
-              onClick={(e) => {
-                if (isAuthenticated) {
-                  e.preventDefault();
-                  onSelectPlan?.(PLANS[0], billingPeriod);
-                }
-              }}
-              className="px-3 py-1.5 bg-gradient-to-r from-primary to-accent text-white text-[10px] font-semibold rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center"
-            >
-              Commencer
-            </Link>
-          </div>
-        </motion.div>
-
-        {/* Grid layout - 2 cols on mobile (Pro + Max), 3 cols on desktop */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4 md:gap-6 lg:gap-8 items-start">
+        {/* Grid layout - 2 cols (Pro + Max) */}
+        <div className="grid grid-cols-2 gap-2 sm:gap-4 md:gap-6 lg:gap-8 items-start max-w-4xl mx-auto">
           {PLANS.map((plan, index) => (
-            <div
-              key={plan.id}
-              className={plan.price.monthly === 0 ? "hidden sm:block" : ""}
-            >
+            <div key={plan.id}>
               <PricingCard
                 plan={plan}
                 billingPeriod={billingPeriod}
@@ -181,8 +130,6 @@ export default function PricingSection({
                 isAuthenticated={isAuthenticated}
                 isMobile={false}
                 isActiveInCarousel={true}
-                isFeaturesExpanded={expandedCardIds.includes(plan.id)}
-                onToggleFeatures={() => handleToggleFeatures(plan.id)}
               />
             </div>
           ))}
@@ -248,10 +195,6 @@ interface PricingCardProps {
   isAuthenticated: boolean;
   isMobile: boolean;
   isActiveInCarousel?: boolean;
-  /** Whether the secondary features are expanded (controlled by parent) */
-  isFeaturesExpanded?: boolean;
-  /** Callback to toggle the features expansion (controlled by parent) */
-  onToggleFeatures?: () => void;
 }
 
 function PricingCard({
@@ -266,22 +209,14 @@ function PricingCard({
   isAuthenticated,
   isMobile,
   isActiveInCarousel = true,
-  isFeaturesExpanded = false,
-  onToggleFeatures,
 }: PricingCardProps) {
   const displayPrice = billingPeriod === "monthly" ? plan.price.monthly : yearlyMonthlyPrice;
   const isPopular = plan.highlight;
   const isPremium = plan.premium;
-  const isFree = plan.price.monthly === 0;
-  const coreFeatures = getPlanCoreFeatures(plan);
-  const secondaryFeatures = getPlanSecondaryFeatures(plan);
-  const includedSecondaryCount = secondaryFeatures.filter(f => f.included).length;
+  // Single unified feature list — ALL features, same order across all plans
+  const allFeatures = getPlanFeaturesUnified(plan);
   const planInfo = PLAN_TAGLINES[plan.id] || { tagline: plan.description, idealFor: "" };
   const [isHovered, setIsHovered] = useState(false);
-
-  // Use controlled state from parent (multi-open accordion - up to 3 cards can be expanded)
-  const showMoreFeatures = isFeaturesExpanded;
-  const toggleShowMoreFeatures = () => onToggleFeatures?.();
 
   const handleClick = () => {
     if (isAuthenticated) {
@@ -310,20 +245,20 @@ function PricingCard({
         ${isPopular
           ? isMobile
             ? isActiveInCarousel
-              ? "scale-100 z-20 ring-2 ring-primary/70 shadow-2xl shadow-primary/40"
-              : "scale-100 z-20 ring-2 ring-primary/40 shadow-xl shadow-primary/20"
-            : "scale-[1.02] md:scale-105 z-20 hover:shadow-xl hover:shadow-primary/20"
+              ? "z-20 ring-2 ring-primary/70 shadow-2xl shadow-primary/40"
+              : "z-20 ring-2 ring-primary/40 shadow-xl shadow-primary/20"
+            : "z-20 hover:shadow-xl hover:shadow-primary/20"
           : isPremium
             ? isMobile
               ? isActiveInCarousel
                 ? "z-10 shadow-xl"
                 : "z-10 shadow-lg opacity-90"
-              : "z-10 hover:shadow-xl hover:shadow-amber-500/15 hover:scale-[1.01]"
+              : "z-10 hover:shadow-xl hover:shadow-amber-500/15"
           : isMobile
             ? isActiveInCarousel
               ? "z-10 shadow-xl"
               : "z-10 shadow-lg opacity-90"
-            : "z-10 hover:shadow-lg hover:shadow-primary/10 hover:scale-[1.01]"
+            : "z-10 hover:shadow-lg hover:shadow-primary/10"
         }
         ${isCurrentPlan ? "ring-2 ring-green-500/50" : ""}
       `}
@@ -360,8 +295,6 @@ function PricingCard({
             ? "bg-gradient-to-b from-primary/10 via-white to-white"
             : isPremium
             ? "bg-gradient-to-b from-amber-500/5 via-white to-white border sm:border-2 border-amber-500/30 hover:from-amber-500/8"
-            : isFree
-            ? "bg-white hover:bg-primary/[0.02] border border-primary/25 hover:border-primary/40"
             : "bg-white hover:bg-primary/[0.02] border border-gray-200 hover:border-primary/25"
         }
       `}
@@ -448,28 +381,22 @@ function PricingCard({
               transition={{ duration: 0.15 }}
               className="flex items-baseline justify-center gap-0.5 sm:gap-1"
             >
-              {isFree ? (
-                <span className="text-lg sm:text-2xl md:text-4xl lg:text-5xl font-bold text-gray-900">Gratuit</span>
-              ) : (
-                <>
-                  <span
-                    className={`text-lg sm:text-2xl md:text-4xl lg:text-5xl font-bold tabular-nums ${
-                      isPremium ? "text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400" : "text-gray-900"
-                    }`}
-                  >
-                    {displayPrice.toFixed(2).replace(".", ",")}
-                  </span>
-                  <span className="text-sm sm:text-base md:text-xl text-gray-900 font-medium">€</span>
-                  <span className="text-gray-600 text-[10px] sm:text-xs md:text-sm">/mois</span>
-                </>
-              )}
+              <span
+                className={`text-lg sm:text-2xl md:text-4xl lg:text-5xl font-bold tabular-nums ${
+                  isPremium ? "text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400" : "text-gray-900"
+                }`}
+              >
+                {displayPrice.toFixed(2).replace(".", ",")}
+              </span>
+              <span className="text-sm sm:text-base md:text-xl text-gray-900 font-medium">€</span>
+              <span className="text-gray-600 text-[10px] sm:text-xs md:text-sm">/mois</span>
             </motion.div>
           </div>
 
           {/* Savings badge (responsive height for alignment) */}
           <div
             className={`h-[32px] sm:h-[42px] md:h-[56px] flex flex-col items-center justify-center transition-opacity duration-200 ${
-              billingPeriod === "yearly" && !isFree ? "opacity-100" : "opacity-0 pointer-events-none"
+              billingPeriod === "yearly" ? "opacity-100" : "opacity-0 pointer-events-none"
             }`}
           >
             <div className="inline-flex items-center gap-0.5 sm:gap-1 md:gap-1.5 px-1.5 sm:px-2 md:px-3 py-0.5 sm:py-1 bg-green-500/10 rounded-full border border-green-500/20">
@@ -583,100 +510,35 @@ function PricingCard({
           )}
         </div>
 
-        {/* ZONE 4: Features list (flexible, grows to fill) */}
+        {/* ZONE 4: Features list (flexible, grows to fill) — ALL features, no toggle */}
         <div className="flex-1 pt-2 sm:pt-3 md:pt-4 border-t border-gray-200">
-          {/* Core features */}
+          <p className="text-[10px] sm:text-xs md:text-sm font-semibold text-gray-900 mb-1.5 sm:mb-2 md:mb-3">Ce qui est inclus</p>
           <ul className="space-y-1 sm:space-y-1.5 md:space-y-2.5">
-            {coreFeatures.map((feature, idx) => (
+            {allFeatures.map((feature, idx) => (
               <FeatureListItem key={idx} feature={feature} index={idx} />
             ))}
           </ul>
-
-          {/* "Voir plus" toggle for secondary features */}
-          {includedSecondaryCount > 0 && (
-            <div className="mt-2 sm:mt-3 md:mt-4">
-              <button
-                onClick={toggleShowMoreFeatures}
-                className={`
-                  w-full flex items-center justify-center gap-1 sm:gap-2 py-1.5 sm:py-2 md:py-2.5 px-2 sm:px-3
-                  text-[10px] sm:text-xs md:text-sm font-medium rounded-md sm:rounded-lg
-                  transition-all duration-200
-                  ${showMoreFeatures
-                    ? isPopular
-                      ? "bg-primary/10 text-primary border border-primary/20"
-                      : isPremium
-                        ? "bg-amber-500/10 text-amber-500 border border-amber-500/20"
-                        : "bg-primary/10 text-primary border border-primary/20"
-                    : "bg-gray-50 text-gray-600 hover:bg-primary/5 hover:text-primary border border-gray-200 hover:border-primary/20"
-                  }
-                `}
-              >
-                <span className="hidden sm:inline">
-                  {showMoreFeatures ? "Voir moins" : `Voir toutes les fonctionnalités (+${includedSecondaryCount})`}
-                </span>
-                <span className="inline sm:hidden">
-                  {showMoreFeatures ? "Moins" : `+${includedSecondaryCount}`}
-                </span>
-                <motion.svg
-                  className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  animate={{ rotate: showMoreFeatures ? 180 : 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </motion.svg>
-              </button>
-
-              {/* Secondary features - Collapsible */}
-              <AnimatePresence initial={false}>
-                {showMoreFeatures && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.25, ease: "easeInOut" }}
-                    className="overflow-hidden"
-                  >
-                    <ul className="space-y-1 sm:space-y-1.5 md:space-y-2.5 mt-2 sm:mt-3 md:mt-4 pt-2 sm:pt-3 md:pt-4 border-t border-gray-200">
-                      {secondaryFeatures.filter(f => f.included).map((feature, idx) => (
-                        <FeatureListItem key={idx} feature={feature} index={idx} />
-                      ))}
-                    </ul>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          )}
         </div>
 
         {/* ZONE 5: Trust badge (responsive height) */}
         <div className="h-8 sm:h-10 md:h-12 mt-auto pt-2 sm:pt-2.5 md:pt-3 border-t border-gray-200 flex items-center justify-center">
-          {!isFree ? (
-            <motion.p
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.6 }}
-              className="text-[9px] sm:text-[10px] md:text-xs text-gray-500 flex items-center justify-center gap-0.5 sm:gap-1 md:gap-1.5"
-            >
-              <svg className="w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3.5 md:h-3.5 text-green-500 hidden sm:inline" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span className="hidden md:inline">Sans engagement • Annulation à tout moment</span>
-              <span className="inline md:hidden">Sans engagement</span>
-            </motion.p>
-          ) : (
-            <p className="text-[9px] sm:text-[10px] md:text-xs text-gray-500">
-              <span className="hidden sm:inline">Idéal pour découvrir Posty</span>
-              <span className="inline sm:hidden">Gratuit</span>
-            </p>
-          )}
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.6 }}
+            className="text-[9px] sm:text-[10px] md:text-xs text-gray-500 flex items-center justify-center gap-0.5 sm:gap-1 md:gap-1.5"
+          >
+            <svg className="w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3.5 md:h-3.5 text-green-500 hidden sm:inline" fill="currentColor" viewBox="0 0 20 20">
+              <path
+                fillRule="evenodd"
+                d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <span className="hidden md:inline">Sans engagement • Annulation à tout moment</span>
+            <span className="inline md:hidden">Sans engagement</span>
+          </motion.p>
         </div>
       </div>
     </motion.div>

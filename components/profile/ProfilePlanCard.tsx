@@ -1,31 +1,31 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { SubscriptionPlan } from "@/types";
+import { PlanType } from "@/lib/plans";
 import { getPlanConfig } from "@/lib/plans";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ProfilePlanCardProps {
-  currentPlan: SubscriptionPlan;
+  currentPlan: PlanType | null;
   dailyMessagesUsed?: number;
   dailyLimit?: number;
   onUpgrade?: () => void;
 }
 
 export default function ProfilePlanCard({
-  currentPlan = "free",
+  currentPlan = null,
   dailyMessagesUsed = 0,
   dailyLimit = 3,
   onUpgrade,
 }: ProfilePlanCardProps) {
   const { t } = useLanguage();
-  const plan = getPlanConfig(currentPlan);
+  const plan = currentPlan ? getPlanConfig(currentPlan) : null;
   const isUnlimited = dailyLimit === -1;
   const usagePercentage = isUnlimited ? 0 : Math.min((dailyMessagesUsed / dailyLimit) * 100, 100);
 
   // Plan styles - Clean professional design
   const planStyles = {
-    free: {
+    none: {
       bg: "bg-gray-50 dark:bg-dark-card",
       badge: "bg-gray-100 dark:bg-dark-hover text-gray-600 dark:text-text-secondary",
       icon: "text-gray-500 dark:text-text-muted",
@@ -45,7 +45,7 @@ export default function ProfilePlanCard({
     },
   };
 
-  const style = planStyles[currentPlan];
+  const style = planStyles[currentPlan ?? "none"];
 
   return (
     <motion.div
@@ -64,7 +64,7 @@ export default function ProfilePlanCard({
         <div className="flex items-center gap-3">
           {/* Plan icon */}
           <div className={`w-10 h-10 rounded-xl bg-white dark:bg-dark-elevated flex items-center justify-center ${style.icon}`}>
-            {currentPlan === "free" ? (
+            {!currentPlan ? (
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -80,19 +80,19 @@ export default function ProfilePlanCard({
           </div>
 
           <div>
-            <h3 className="font-semibold text-gray-900 dark:text-text-primary text-lg">{plan.name}</h3>
-            <p className="text-sm text-gray-500 dark:text-text-muted">{plan.description}</p>
+            <h3 className="font-semibold text-gray-900 dark:text-text-primary text-lg">{plan ? plan.name : "Aucun abonnement"}</h3>
+            <p className="text-sm text-gray-500 dark:text-text-muted">{plan ? plan.description : "Vous n'avez pas d'abonnement actif"}</p>
           </div>
         </div>
 
         {/* Plan badge */}
         <span className={`px-3 py-1 text-xs font-medium rounded-full ${style.badge}`}>
-          {currentPlan === "free" ? t.common.free : plan.price.monthly.toFixed(2) + " EUR/mois"}
+          {!currentPlan ? "Aucun abonnement" : plan!.price.monthly.toFixed(2) + " EUR/mois"}
         </span>
       </div>
 
-      {/* Usage meter (only for free plan) */}
-      {currentPlan === "free" && (
+      {/* Usage meter (only for unsubscribed users) */}
+      {!currentPlan && (
         <div className="mb-4">
           <div className="flex items-center justify-between text-sm mb-2">
             <span className="text-gray-500 dark:text-text-muted">{t.sidebar.messagesToday}</span>
@@ -117,8 +117,8 @@ export default function ProfilePlanCard({
         </div>
       )}
 
-      {/* Upgrade CTA (only for free plan) */}
-      {currentPlan === "free" && onUpgrade && (
+      {/* Upgrade CTA (only for unsubscribed users) */}
+      {!currentPlan && onUpgrade && (
         <button
           onClick={onUpgrade}
           className="
@@ -136,7 +136,7 @@ export default function ProfilePlanCard({
       )}
 
       {/* Pro/Max benefits - Premium design */}
-      {currentPlan !== "free" && (
+      {!!currentPlan && (
         <div className="flex items-center gap-2 px-3 py-2 bg-success/5 border border-success/20 rounded-lg text-sm">
           <svg className="w-4 h-4 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />

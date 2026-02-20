@@ -168,13 +168,16 @@ function ConversationContent() {
     return () => clearInterval(interval);
   }, [isFocused, inputValue]);
 
+  // Mirror ref for reliable state in callbacks
+  const isRecordingRef = useRef(false);
+
   // Initialize speech recognition
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
       setSpeechSupported(true);
       const recognition = new SpeechRecognition();
-      recognition.continuous = false;
+      recognition.continuous = true;
       recognition.interimResults = true;
       recognition.lang = "fr-FR";
 
@@ -187,25 +190,36 @@ function ConversationContent() {
           }
         }
         if (finalTranscript) {
-          // Inject transcribed text into the chat input via ref
           chatInputRef.current?.appendValue(finalTranscript);
         }
       };
 
       recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-        console.error("Speech recognition error:", event.error);
-        setIsRecording(false);
         if (event.error === "not-allowed") {
+          isRecordingRef.current = false;
+          setIsRecording(false);
           toast.error("Microphone non autorisé. Vérifiez les permissions.");
         } else if (event.error === "no-speech") {
-          toast.error("Aucune voix détectée. Réessayez.");
+          // Silently handle — expected during pauses
+        } else if (event.error !== "aborted") {
+          console.warn("Speech recognition error:", event.error);
         }
       };
 
-      recognition.onend = () => setIsRecording(false);
+      recognition.onend = () => {
+        // Auto-restart if user hasn't stopped manually (browser may cut unexpectedly)
+        if (isRecordingRef.current) {
+          try {
+            recognition.start();
+          } catch {
+            isRecordingRef.current = false;
+            setIsRecording(false);
+          }
+        }
+      };
+
       recognitionRef.current = recognition;
     }
-    // Cleanup: abort recognition and release microphone on unmount
     return () => {
       if (recognitionRef.current) {
         try {
@@ -215,41 +229,43 @@ function ConversationContent() {
         }
         recognitionRef.current = null;
       }
+      isRecordingRef.current = false;
       setIsRecording(false);
     };
   }, []);
 
-  // Toggle voice recording with immediate state updates
+  // Toggle voice recording — user controls start/stop manually
   const toggleRecording = useCallback(() => {
     if (!recognitionRef.current) return;
-    if (isRecording) {
-      // Stop recognition - this releases the microphone
+    if (isRecordingRef.current) {
       try {
-        recognitionRef.current.stop();
-      } catch {
-        // Force abort if stop fails
         recognitionRef.current.abort();
+      } catch {
+        // Ignore errors
       }
-      // Update state immediately (don't wait for onend)
+      isRecordingRef.current = false;
       setIsRecording(false);
     } else {
       try {
         recognitionRef.current.start();
+        isRecordingRef.current = true;
         setIsRecording(true);
       } catch (error) {
         console.error("Failed to start recording:", error);
+        isRecordingRef.current = false;
         setIsRecording(false);
         toast.error("Impossible de démarrer l'enregistrement");
       }
     }
-  }, [isRecording]);
+  }, []);
 
   // Handle submit
   const handleSubmit = useCallback(async () => {
     if (!inputValue.trim() || isLoading) return;
     // Stop recording if active
-    if (isRecording && recognitionRef.current) {
-      recognitionRef.current.stop();
+    if (isRecordingRef.current && recognitionRef.current) {
+      try { recognitionRef.current.abort(); } catch { /* ignore */ }
+      isRecordingRef.current = false;
       setIsRecording(false);
     }
 
@@ -261,7 +277,7 @@ function ConversationContent() {
     } catch (error) {
       console.error("Generation error:", error);
     }
-  }, [inputValue, isLoading, isRecording, generate]);
+  }, [inputValue, isLoading, generate]);
 
   // Handle keyboard submit
   const handleKeyDown = useCallback(
@@ -383,11 +399,11 @@ function ConversationContent() {
                             <div key={`pair-${message.id || i}-${pairIndex}`}>
                               {/* POSTY Avatar and Label */}
                               <div className="flex items-center gap-3 mb-3">
-                                <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 shadow-sm">
+                                <div className="w-8 h-8 shrink-0 shadow-sm">
                                   <img
                                     src="/logo.png"
                                     alt="Posty"
-                                    className="w-full h-full object-cover"
+                                    className="w-full h-full object-contain"
                                   />
                                 </div>
                                 <span className="text-xs text-text-muted font-medium">POSTY</span>
@@ -429,11 +445,11 @@ function ConversationContent() {
                             >
                               {/* POSTY Avatar and Label */}
                               <div className="flex items-center gap-3 mb-3">
-                                <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 shadow-sm">
+                                <div className="w-8 h-8 shrink-0 shadow-sm">
                                   <img
                                     src="/logo.png"
                                     alt="Posty"
-                                    className="w-full h-full object-cover"
+                                    className="w-full h-full object-contain"
                                   />
                                 </div>
                                 <span className="text-xs text-text-muted font-medium">POSTY</span>
@@ -516,8 +532,9 @@ function ConversationContent() {
               ref={chatInputRef}
               onSubmit={async (message) => {
                 // Stop recording if active
-                if (isRecording && recognitionRef.current) {
-                  recognitionRef.current.stop();
+                if (isRecordingRef.current && recognitionRef.current) {
+                  try { recognitionRef.current.abort(); } catch { /* ignore */ }
+                  isRecordingRef.current = false;
                   setIsRecording(false);
                 }
                 await generate(message);

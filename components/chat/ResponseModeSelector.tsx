@@ -1,11 +1,12 @@
 "use client";
 
-import { ResponseMode, SubscriptionPlan } from "@/types";
+import { ResponseMode } from "@/types";
+import { PlanType } from "@/lib/plans";
 import { getPlanFeatures } from "@/lib/plan-features";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ResponseModeSelectorProps {
-  plan: SubscriptionPlan;
+  plan: PlanType | null;
   selectedStyle: "storytelling" | "business";
   onStyleChange: (style: "storytelling" | "business") => void;
   disabled?: boolean;
@@ -15,7 +16,7 @@ interface ResponseModeSelectorProps {
 /**
  * ResponseModeSelector Component
  * Displays style selection based on user's plan:
- * - FREE: Shows locked message (business only)
+ * - No plan (null): Shows locked message (business only)
  * - PRO: Toggle between Storytelling/Business
  * - MAX: Shows "Both styles" badge (no toggle needed)
  */
@@ -51,7 +52,7 @@ export function ResponseModeSelector({
 
   const t = labels[language] || labels.fr;
 
-  // FREE plan: Show locked indicator
+  // No plan / unsubscribed: Show locked indicator
   if (responseMode === "business-only") {
     return (
       <div

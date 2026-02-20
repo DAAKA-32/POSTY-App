@@ -134,11 +134,11 @@ const ChatMessage = memo(function ChatMessage({
         // Posty avatar - official logo with premium glow
         <div className="relative group/avatar">
           <div className="absolute -inset-1 bg-gradient-to-br from-primary/40 to-accent/40 rounded-xl opacity-0 group-hover/avatar:opacity-100 blur-md transition-opacity duration-300" />
-          <div className="relative w-8 h-8 rounded-xl overflow-hidden shrink-0 shadow-md ring-1 ring-gray-200/50 dark:ring-dark-border/50">
+          <div className="relative w-8 h-8 shrink-0 shadow-md ring-1 ring-gray-200/50 dark:ring-dark-border/50">
             <img
               src="/logo.png"
               alt="Posty"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
             />
           </div>
         </div>
@@ -308,11 +308,11 @@ export function TypingIndicator() {
           animate={{ opacity: [0.5, 0.8, 0.5] }}
           transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
         />
-        <div className="relative w-8 h-8 rounded-xl overflow-hidden shrink-0 shadow-md ring-1 ring-gray-200/50 dark:ring-dark-border/50">
+        <div className="relative w-8 h-8 shrink-0 shadow-md ring-1 ring-gray-200/50 dark:ring-dark-border/50">
           <img
             src="/logo.png"
             alt="Posty"
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain"
           />
         </div>
       </div>

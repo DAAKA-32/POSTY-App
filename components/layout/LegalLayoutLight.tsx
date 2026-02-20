@@ -52,7 +52,7 @@ export default function LegalLayoutLight({ children, title }: LegalLayoutLightPr
         <div className="max-w-[960px] mx-auto px-6 py-4 flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 no-underline">
-            <div className="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center">
+            <div className="w-9 h-9 flex items-center justify-center">
               <img
                 src="/logo.png"
                 alt="Posty Logo"
@@ -120,7 +120,7 @@ export default function LegalLayoutLight({ children, title }: LegalLayoutLightPr
         </div>
 
         {/* Content */}
-        <div className="text-[15px] leading-relaxed text-gray-100">
+        <div className="text-[15px] leading-relaxed text-text-primary">
           {children}
         </div>
       </main>
@@ -131,7 +131,7 @@ export default function LegalLayoutLight({ children, title }: LegalLayoutLightPr
           <div className="flex flex-col items-center gap-4">
             {/* Logo and copyright */}
             <div className="flex items-center gap-3">
-              <div className="w-7 h-7 rounded-lg overflow-hidden flex items-center justify-center">
+              <div className="w-7 h-7 flex items-center justify-center">
                 <img
                   src="/logo.png"
                   alt="Posty Logo"

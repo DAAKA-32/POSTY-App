@@ -7,7 +7,7 @@ import { LinkedInIcon } from "@/components/linkedin/LinkedInConnectButton";
 import { useHapticFeedback } from "@/hooks/useHapticFeedback";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { SubscriptionPlan } from "@/types";
+import { PlanType } from "@/lib/plans";
 import PostInsightsModal from "./PostInsightsModal";
 import { generatePostInsights } from "@/lib/generateInsights";
 
@@ -16,7 +16,7 @@ interface ModernResponseCardProps {
   variant?: "storytelling" | "business";
   timestamp?: Date;
   isStreaming?: boolean;
-  userPlan: SubscriptionPlan;
+  userPlan: PlanType | null;
   onPublishToLinkedIn?: (content: string) => void;
   onSchedule?: (content: string) => void;
   showVariantBadge?: boolean; // Only show for PRO/MAX when needed
@@ -326,7 +326,7 @@ export const ModernResponseCard = memo(function ModernResponseCard({
   return (
     <div className="w-full max-w-3xl">
       {/* Optional variant badge - only for PRO/MAX when explicitly enabled */}
-      {showVariantBadge && userPlan !== "free" && (
+      {showVariantBadge && !!userPlan && (
         <motion.div
           initial={{ opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}

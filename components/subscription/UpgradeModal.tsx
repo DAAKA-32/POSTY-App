@@ -158,7 +158,7 @@ export function useUpgradeModal() {
   // Check quota before sending message
   const checkQuotaAndProceed = useCallback(
     (onSuccess: () => void) => {
-      if (!canSendMessage && currentPlan === "free") {
+      if (!canSendMessage && !currentPlan) {
         openModal();
         return false;
       }
@@ -173,6 +173,6 @@ export function useUpgradeModal() {
     openModal,
     closeModal,
     checkQuotaAndProceed,
-    shouldShowUpgrade: !canSendMessage && currentPlan === "free",
+    shouldShowUpgrade: !canSendMessage && !currentPlan,
   };
 }

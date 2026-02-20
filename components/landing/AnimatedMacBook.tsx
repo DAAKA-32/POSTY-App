@@ -1,12 +1,16 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, type ReactNode } from "react";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { MOCKUP_SCREENS } from "./MockupScreens";
 
 const SLIDE_COUNT = MOCKUP_SCREENS.length;
-const CAROUSEL_INTERVAL = 5000; // Auto-advance every 5s
-const SWIPE_THRESHOLD = 40; // px — minimum distance for a swipe to register
+const CAROUSEL_INTERVAL = 5000;
+const SWIPE_THRESHOLD = 40;
+
+// Mockup design reference — screens are authored at this size, then CSS-scaled to fit
+const MOCKUP_DESIGN_W = 960;
+const MOCKUP_DESIGN_H = 540;
 
 /** Screen descriptions for the navigation tabs below the carousel */
 const SCREEN_DESCRIPTIONS: Record<string, { icon: ReactNode; desc: string }> = {
@@ -30,25 +34,18 @@ const SCREEN_DESCRIPTIONS: Record<string, { icon: ReactNode; desc: string }> = {
     icon: <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>,
     desc: "Suivez vos résultats",
   },
-  "profile": {
-    icon: <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>,
-    desc: "Votre profil",
-  },
 };
+
+// Clone first slide at end for seamless forward loop
+const LOOP_SLIDES = [...MOCKUP_SCREENS, MOCKUP_SCREENS[0]];
 
 interface AnimatedMacBookProps {
   isVisible: boolean;
   screenImage?: string;
   onAnimationComplete?: () => void;
-  /** If true, skip animation and show final state immediately (from parent state) */
   hasAlreadyAnimated?: boolean;
 }
 
-/**
- * AnimatedMacBook — Browser window frame with realistic app mockup carousel.
- * Displays live React components instead of static screenshots.
- * Fully responsive: arrows, swipe, and dots adapt to mobile/tablet/desktop.
- */
 export default function AnimatedMacBook({
   isVisible,
   onAnimationComplete,
@@ -59,6 +56,7 @@ export default function AnimatedMacBook({
 
   // Carousel state
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [skipTransition, setSkipTransition] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState(0);
   const touchStartX = useRef(0);
@@ -67,11 +65,15 @@ export default function AnimatedMacBook({
   const isHorizontalSwipe = useRef<boolean | null>(null);
   const carouselTimerRef = useRef<NodeJS.Timeout | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const isResettingRef = useRef(false);
 
-  // Swipe hint — show once on mobile
-  const [showSwipeHint, setShowSwipeHint] = useState(false);
+  // Contain-fit scale: render mockups at design size, scale to fit container
+  const [mockupTransform, setMockupTransform] = useState({ scale: 1, x: 0, y: 0 });
 
-  // Detect device type on mount and resize
+  // Real index for UI (dots, tabs, label) — clone position maps back to 0
+  const realIndex = currentSlide >= SLIDE_COUNT ? 0 : currentSlide;
+
+
   useEffect(() => {
     const check = () => {
       const w = window.innerWidth;
@@ -83,44 +85,50 @@ export default function AnimatedMacBook({
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  // Show swipe hint on mobile after a short delay, then hide after 3s
-  useEffect(() => {
-    if (!isMobile || !isVisible) return;
-    const showTimer = setTimeout(() => setShowSwipeHint(true), 1500);
-    const hideTimer = setTimeout(() => setShowSwipeHint(false), 4500);
-    return () => {
-      clearTimeout(showTimer);
-      clearTimeout(hideTimer);
-    };
-  }, [isMobile, isVisible]);
 
-  // Carousel auto-advance — starts when visible, pauses during drag
+  // Auto-advance — increments past last slide into clone position
   useEffect(() => {
     if (!isVisible || isDragging) return;
     carouselTimerRef.current = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % SLIDE_COUNT);
+      if (isResettingRef.current) return;
+      setCurrentSlide((prev) => (prev < SLIDE_COUNT ? prev + 1 : prev));
     }, CAROUSEL_INTERVAL);
     return () => {
       if (carouselTimerRef.current) clearInterval(carouselTimerRef.current);
     };
   }, [isVisible, isDragging]);
 
-  // Reset auto-advance timer on manual navigation
   const resetCarouselTimer = useCallback(() => {
     if (carouselTimerRef.current) clearInterval(carouselTimerRef.current);
     carouselTimerRef.current = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % SLIDE_COUNT);
+      if (isResettingRef.current) return;
+      setCurrentSlide((prev) => (prev < SLIDE_COUNT ? prev + 1 : prev));
     }, CAROUSEL_INTERVAL);
   }, []);
 
   const goToSlide = useCallback((index: number) => {
+    if (isResettingRef.current) return;
     setCurrentSlide(index);
     resetCarouselTimer();
-    // Dismiss swipe hint on first interaction
-    setShowSwipeHint(false);
   }, [resetCarouselTimer]);
 
-  // --- Touch handling with direction lock ---
+  // Seamless loop: after transition to clone finishes, snap back to real slide 0
+  const handleTransitionEnd = useCallback((e: React.TransitionEvent<HTMLDivElement>) => {
+    if (e.propertyName !== "transform") return;
+    if (currentSlide === SLIDE_COUNT) {
+      isResettingRef.current = true;
+      setSkipTransition(true);
+      setCurrentSlide(0);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setSkipTransition(false);
+          isResettingRef.current = false;
+        });
+      });
+    }
+  }, [currentSlide]);
+
+  // --- Touch handling ---
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
@@ -134,17 +142,13 @@ export default function AnimatedMacBook({
     const dx = e.touches[0].clientX - touchStartX.current;
     const dy = e.touches[0].clientY - touchStartY.current;
 
-    // Determine swipe direction on first significant move
     if (isHorizontalSwipe.current === null && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
       isHorizontalSwipe.current = Math.abs(dx) > Math.abs(dy);
     }
 
-    // Only track horizontal swipes — let vertical scroll through
     if (isHorizontalSwipe.current) {
-      e.preventDefault(); // Prevent page scroll during horizontal swipe
+      e.preventDefault();
       touchDeltaX.current = dx;
-
-      // Apply rubber-band drag offset for visual feedback
       const containerWidth = containerRef.current?.offsetWidth || 375;
       const clampedDrag = Math.max(-containerWidth * 0.3, Math.min(containerWidth * 0.3, dx));
       setDragOffset(clampedDrag);
@@ -154,15 +158,14 @@ export default function AnimatedMacBook({
   const handleTouchEnd = useCallback(() => {
     setIsDragging(false);
     setDragOffset(0);
-
     if (!isHorizontalSwipe.current) return;
 
     if (touchDeltaX.current < -SWIPE_THRESHOLD) {
-      goToSlide((currentSlide + 1) % SLIDE_COUNT);
+      goToSlide((realIndex + 1) % SLIDE_COUNT);
     } else if (touchDeltaX.current > SWIPE_THRESHOLD) {
-      goToSlide((currentSlide - 1 + SLIDE_COUNT) % SLIDE_COUNT);
+      goToSlide((realIndex - 1 + SLIDE_COUNT) % SLIDE_COUNT);
     }
-  }, [currentSlide, goToSlide]);
+  }, [realIndex, goToSlide]);
 
   const handleAnimationComplete = useCallback(() => {
     onAnimationComplete?.();
@@ -170,17 +173,36 @@ export default function AnimatedMacBook({
 
   const shouldSimplify = prefersReducedMotion || isMobile;
 
-  // Trigger callback immediately — no reveal animation
   useEffect(() => {
-    if (isVisible) {
-      handleAnimationComplete();
-    }
+    if (isVisible) handleAnimationComplete();
   }, [isVisible, handleAnimationComplete]);
 
-  // Compute carousel transform with drag offset
+  // Compute contain-fit scale whenever the container resizes
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(([entry]) => {
+      const cw = entry.contentRect.width;
+      const ch = entry.contentRect.height;
+      const s = Math.min(cw / MOCKUP_DESIGN_W, ch / MOCKUP_DESIGN_H);
+      setMockupTransform({
+        scale: s,
+        x: (cw - MOCKUP_DESIGN_W * s) / 2,
+        y: (ch - MOCKUP_DESIGN_H * s) / 2,
+      });
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  // Transform + transition control
   const carouselTransform = isDragging
     ? `translateX(calc(-${currentSlide * 100}% + ${dragOffset}px))`
     : `translateX(-${currentSlide * 100}%)`;
+
+  const carouselTransition = skipTransition || isDragging
+    ? "none"
+    : "transform 500ms cubic-bezier(0.16, 1, 0.3, 1)";
 
   return (
     <div className="relative w-full">
@@ -192,14 +214,11 @@ export default function AnimatedMacBook({
 
             {/* Title bar */}
             <div className="flex items-center justify-between px-5 md:px-6 py-3.5 md:py-4 border-b border-gray-100 bg-gradient-to-b from-gray-50/80 to-white">
-              {/* Traffic light dots */}
               <div className="flex items-center gap-1.5 md:gap-2">
                 <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-[#FF5F57] shadow-sm shadow-[#FF5F57]/30" />
                 <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-[#FEBC2E] shadow-sm shadow-[#FEBC2E]/30" />
                 <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-[#28C840] shadow-sm shadow-[#28C840]/30" />
               </div>
-
-              {/* URL bar */}
               <div className="flex-1 mx-4 md:mx-8">
                 <div className="bg-gray-100/80 rounded-lg px-3 py-1 md:py-1.5 flex items-center justify-center gap-1.5">
                   <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -210,38 +229,43 @@ export default function AnimatedMacBook({
                   </span>
                 </div>
               </div>
-
-              {/* Spacer for symmetry */}
               <div className="w-[52px] md:w-[62px]" />
             </div>
 
-            {/* Screen content area — taller on mobile for better readability */}
+            {/* Screen content area */}
             <div
               ref={containerRef}
-              className="relative min-h-[400px] md:min-h-[520px] bg-[#FAFAF8] overflow-hidden touch-pan-y"
+              className="relative aspect-[16/9] min-h-[260px] sm:min-h-0 bg-[#FAFAF8] overflow-hidden touch-pan-y"
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
             >
-              {/* Carousel slides — React component mockups */}
+              {/* Carousel — includes clone of first slide at end for seamless loop */}
               <div
-                className={`absolute inset-0 flex ${
-                  isDragging ? "" : "transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]"
-                }`}
-                style={{ transform: carouselTransform }}
+                className="absolute inset-0 flex"
+                style={{ transform: carouselTransform, transition: carouselTransition }}
+                onTransitionEnd={handleTransitionEnd}
               >
-                {MOCKUP_SCREENS.map((screen) => (
-                  <div key={screen.id} className="relative w-full h-full flex-shrink-0">
-                    <screen.component />
+                {LOOP_SLIDES.map((screen, i) => (
+                  <div key={`${screen.id}-${i}`} className="relative w-full h-full flex-shrink-0">
+                    <div
+                      className="absolute origin-top-left will-change-transform"
+                      style={{
+                        width: MOCKUP_DESIGN_W,
+                        height: MOCKUP_DESIGN_H,
+                        transform: `translate(${mockupTransform.x}px, ${mockupTransform.y}px) scale(${mockupTransform.scale})`,
+                      }}
+                    >
+                      <screen.component />
+                    </div>
                   </div>
                 ))}
               </div>
 
-              {/* Navigation arrows — MOBILE: always visible, small, semi-transparent */}
-              {/* On small screens, arrows sit outside the content flow at edges */}
+              {/* Navigation arrows — MOBILE */}
               <div className="absolute inset-y-0 left-0 z-10 flex items-center pl-1.5 sm:pl-2 lg:pl-3 sm:hidden">
                 <button
-                  onClick={() => goToSlide((currentSlide - 1 + SLIDE_COUNT) % SLIDE_COUNT)}
+                  onClick={() => goToSlide((realIndex - 1 + SLIDE_COUNT) % SLIDE_COUNT)}
                   className="w-7 h-7 rounded-full bg-white/80 shadow-md border border-gray-200/50 flex items-center justify-center text-gray-500 active:scale-90 transition-transform"
                   aria-label="Ecran precedent"
                 >
@@ -252,7 +276,7 @@ export default function AnimatedMacBook({
               </div>
               <div className="absolute inset-y-0 right-0 z-10 flex items-center pr-1.5 sm:pr-2 lg:pr-3 sm:hidden">
                 <button
-                  onClick={() => goToSlide((currentSlide + 1) % SLIDE_COUNT)}
+                  onClick={() => goToSlide((realIndex + 1) % SLIDE_COUNT)}
                   className="w-7 h-7 rounded-full bg-white/80 shadow-md border border-gray-200/50 flex items-center justify-center text-gray-500 active:scale-90 transition-transform"
                   aria-label="Ecran suivant"
                 >
@@ -262,10 +286,10 @@ export default function AnimatedMacBook({
                 </button>
               </div>
 
-              {/* Navigation arrows — TABLET: always visible, medium size */}
+              {/* Navigation arrows — TABLET */}
               <div className="absolute inset-y-0 left-0 z-10 hidden sm:flex lg:hidden items-center pl-2.5">
                 <button
-                  onClick={() => goToSlide((currentSlide - 1 + SLIDE_COUNT) % SLIDE_COUNT)}
+                  onClick={() => goToSlide((realIndex - 1 + SLIDE_COUNT) % SLIDE_COUNT)}
                   className="w-9 h-9 rounded-full bg-white/90 shadow-lg border border-gray-200/50 flex items-center justify-center text-gray-600 hover:bg-white hover:text-gray-900 active:scale-95 transition-all"
                   aria-label="Ecran precedent"
                 >
@@ -276,7 +300,7 @@ export default function AnimatedMacBook({
               </div>
               <div className="absolute inset-y-0 right-0 z-10 hidden sm:flex lg:hidden items-center pr-2.5">
                 <button
-                  onClick={() => goToSlide((currentSlide + 1) % SLIDE_COUNT)}
+                  onClick={() => goToSlide((realIndex + 1) % SLIDE_COUNT)}
                   className="w-9 h-9 rounded-full bg-white/90 shadow-lg border border-gray-200/50 flex items-center justify-center text-gray-600 hover:bg-white hover:text-gray-900 active:scale-95 transition-all"
                   aria-label="Ecran suivant"
                 >
@@ -286,10 +310,10 @@ export default function AnimatedMacBook({
                 </button>
               </div>
 
-              {/* Navigation arrows — DESKTOP: appear on hover (unchanged) */}
+              {/* Navigation arrows — DESKTOP: appear on hover */}
               <div className="absolute inset-0 z-10 hidden lg:flex items-center justify-between px-3 opacity-0 hover:opacity-100 transition-opacity duration-300">
                 <button
-                  onClick={() => goToSlide((currentSlide - 1 + SLIDE_COUNT) % SLIDE_COUNT)}
+                  onClick={() => goToSlide((realIndex - 1 + SLIDE_COUNT) % SLIDE_COUNT)}
                   className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white/80 hover:bg-black/60 hover:text-white transition-all"
                   aria-label="Ecran precedent"
                 >
@@ -298,7 +322,7 @@ export default function AnimatedMacBook({
                   </svg>
                 </button>
                 <button
-                  onClick={() => goToSlide((currentSlide + 1) % SLIDE_COUNT)}
+                  onClick={() => goToSlide((realIndex + 1) % SLIDE_COUNT)}
                   className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white/80 hover:bg-black/60 hover:text-white transition-all"
                   aria-label="Ecran suivant"
                 >
@@ -308,10 +332,10 @@ export default function AnimatedMacBook({
                 </button>
               </div>
 
-              {/* Slide label + dot indicators — responsive sizing */}
-              <div className="absolute bottom-2 sm:bottom-3 lg:bottom-4 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 sm:gap-3 bg-black/30 backdrop-blur-sm rounded-full px-2.5 sm:px-3 py-1 sm:py-1.5">
+              {/* Slide label + dot indicators — hidden on mobile */}
+              <div className="absolute bottom-2 sm:bottom-3 lg:bottom-4 left-1/2 -translate-x-1/2 z-10 hidden sm:flex items-center gap-2 sm:gap-3 bg-black/30 backdrop-blur-sm rounded-full px-2.5 sm:px-3 py-1 sm:py-1.5">
                 <span className="text-[9px] sm:text-[10px] text-white/80 font-medium">
-                  {MOCKUP_SCREENS[currentSlide].label}
+                  {MOCKUP_SCREENS[realIndex].label}
                 </span>
                 <div className="flex items-center gap-1 sm:gap-1.5">
                   {MOCKUP_SCREENS.map((_, i) => (
@@ -319,7 +343,7 @@ export default function AnimatedMacBook({
                       key={i}
                       onClick={() => goToSlide(i)}
                       className={`rounded-full transition-all duration-300 ${
-                        i === currentSlide
+                        i === realIndex
                           ? "w-4 sm:w-5 h-1.5 bg-white/90"
                           : "w-1.5 h-1.5 bg-white/40 hover:bg-white/60"
                       }`}
@@ -329,34 +353,7 @@ export default function AnimatedMacBook({
                 </div>
               </div>
 
-              {/* Swipe hint — mobile only, shown briefly */}
-              <AnimatePresence>
-                {showSwipeHint && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.4 }}
-                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none sm:hidden"
-                  >
-                    <div className="flex items-center gap-2 bg-black/50 backdrop-blur-sm text-white text-xs font-medium px-4 py-2 rounded-full shadow-lg">
-                      <motion.svg
-                        animate={{ x: [0, -6, 6, 0] }}
-                        transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4M16 17H4m0 0l4-4m-4 4l4 4" />
-                      </motion.svg>
-                      Swipez pour naviguer
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Glass reflection — diagonal light streak (desktop only) */}
+              {/* Glass reflection — desktop only */}
               {!shouldSimplify && (
                 <div
                   className="absolute inset-0 pointer-events-none z-10"
@@ -376,12 +373,12 @@ export default function AnimatedMacBook({
       {/* Drop shadow under the frame */}
       <div className="absolute -bottom-4 left-[8%] right-[8%] h-8 bg-black/8 blur-2xl rounded-[50%] pointer-events-none" />
 
-      {/* Screen navigation tabs — below the browser frame */}
-      <div className="mt-6 sm:mt-8 flex justify-center">
+      {/* Screen navigation tabs — hidden on mobile */}
+      <div className="mt-6 sm:mt-8 hidden sm:flex justify-center">
         <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto px-2 pb-1 max-w-full scrollbar-hide">
           {MOCKUP_SCREENS.map((screen, i) => {
             const meta = SCREEN_DESCRIPTIONS[screen.id];
-            const isActive = i === currentSlide;
+            const isActive = i === realIndex;
             return (
               <button
                 key={screen.id}
@@ -398,8 +395,7 @@ export default function AnimatedMacBook({
                 <span className={isActive ? "text-[#F8935D]" : "text-gray-400"}>
                   {meta?.icon}
                 </span>
-                <span className="hidden sm:inline">{screen.label}</span>
-                <span className="sm:hidden">{screen.label}</span>
+                <span>{screen.label}</span>
               </button>
             );
           })}

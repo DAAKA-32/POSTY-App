@@ -393,7 +393,7 @@ export default function PublishToLinkedInModal({
             />
 
             {/* Quota Info */}
-            {quota && quota.plan === "free" && (
+            {quota && !quota.plan && (
               <div
                 className={`flex items-center justify-between p-3 rounded-lg border ${
                   canPublish

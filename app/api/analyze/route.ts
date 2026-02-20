@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 
     // ========== PLAN CHECK ==========
     // Only PRO and MAX users can analyze posts
-    let userPlan: SubscriptionPlan = "free";
+    let userPlan: SubscriptionPlan | null = null;
     if (isAdminInitialized()) {
       try {
         const quotaCheck = await checkUserQuotaAdmin(userId);
@@ -52,6 +52,19 @@ export async function POST(request: NextRequest) {
       } catch (error) {
         console.error("Plan check error:", error);
       }
+    }
+
+    if (!userPlan) {
+      return new Response(
+        JSON.stringify({
+          error: "no_active_plan",
+          message:
+            language === "fr"
+              ? "Vous devez souscrire à un abonnement pour utiliser cette fonctionnalité."
+              : "You need an active subscription to use this feature.",
+        }),
+        { status: 403, headers: { "Content-Type": "application/json" } }
+      );
     }
 
     if (!canAnalyzePosts(userPlan)) {

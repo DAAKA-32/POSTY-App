@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence, useReducedMotion, useInView, useScroll, useTransform, useMotionValue, useSpring, useMotionTemplate } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
-import { getAllPlans, getPaidPlans, PlanConfig, PLAN_TAGLINES, getPlanCoreFeatures, getPlanSecondaryFeatures, getCTALabel, getSavingsText, FeatureItem } from "@/lib/plans";
+import { getAllPlans, getPaidPlans, PlanConfig, PLAN_TAGLINES, getPlanFeaturesUnified, getCTALabel, getSavingsText, FeatureItem } from "@/lib/plans";
 import BillingToggle from "@/components/ui/BillingToggle";
 import { useScrollLock } from "@/hooks/useScrollLock";
 import AnimatedMacBook from "@/components/landing/AnimatedMacBook";
@@ -29,7 +29,8 @@ const premiumEase = [0.22, 1, 0.36, 1] as const;
 
 // Lightweight mobile detection — avoids heavy infinite animations on mobile
 function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(false);
+  // Default true to prevent blur flash on mobile (race condition with useEffect)
+  const [isMobile, setIsMobile] = useState(true);
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
     check();
@@ -210,7 +211,7 @@ function Navbar() {
   return (
     <>
     {/* Outer fixed container — always full width for positioning */}
-    <div className="fixed top-0 left-0 right-0 z-50 pointer-events-none">
+    <div className={`fixed top-0 left-0 right-0 z-50 pointer-events-none transition-colors duration-700 ${isScrolled && !isMenuOpen ? "bg-[#FEF3EE]" : ""}`}>
       {/* Dynamic container — always visible, border/bg on scroll */}
       <motion.nav
         initial={false}
@@ -232,7 +233,7 @@ function Navbar() {
           className={`
             mx-auto
             ${isScrolled || isMenuOpen
-              ? "bg-white/90 backdrop-blur-xl shadow-md shadow-gray-900/[0.05] border border-gray-200/50"
+              ? "bg-white backdrop-blur-xl shadow-md shadow-gray-900/[0.05] border border-gray-200/50"
               : "bg-transparent border border-transparent"
             }
           `}
@@ -250,9 +251,9 @@ function Navbar() {
                   whileHover={{ scale: 1.05, rotate: 2 }}
                   whileTap={{ scale: 0.95 }}
                   transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-                  className="w-9 h-9 md:w-10 md:h-10 rounded-xl overflow-hidden shadow-md shadow-[#F8935D]/15 ring-1 ring-gray-100"
+                  className="w-9 h-9 md:w-10 md:h-10 shadow-md shadow-[#F8935D]/15 ring-1 ring-gray-100"
                 >
-                  <Image src="/logo.png" alt="Posty" width={40} height={40} className="w-full h-full object-cover" />
+                  <Image src="/logo.png" alt="Posty" width={40} height={40} className="w-full h-full object-contain" />
                 </motion.div>
                 <span className="text-lg md:text-xl font-bold text-gray-900 tracking-tight">Posty</span>
               </Link>
@@ -362,8 +363,8 @@ function Navbar() {
               style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
             >
               <Link href="/" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl overflow-hidden shadow-md shadow-[#F8935D]/15 ring-1 ring-gray-100">
-                  <Image src="/logo.png" alt="Posty" width={40} height={40} className="w-full h-full object-cover" />
+                <div className="w-9 h-9 shadow-md shadow-[#F8935D]/15 ring-1 ring-gray-100">
+                  <Image src="/logo.png" alt="Posty" width={40} height={40} className="w-full h-full object-contain" />
                 </div>
                 <span className="text-lg font-bold text-gray-900 tracking-tight">Posty</span>
               </Link>
@@ -1236,8 +1237,8 @@ function DemoSection() {
               {/* MacBook-style title bar */}
               <div className="flex items-center justify-between px-5 md:px-6 py-3.5 md:py-4 border-b border-gray-100 bg-gradient-to-b from-gray-50/80 to-white">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl overflow-hidden shadow-sm ring-1 ring-gray-100">
-                    <Image src="/logo.png" alt="Posty" width={40} height={40} className="w-full h-full object-cover" />
+                  <div className="w-9 h-9 md:w-10 md:h-10 shadow-sm ring-1 ring-gray-100">
+                    <Image src="/logo.png" alt="Posty" width={40} height={40} className="w-full h-full object-contain" />
                   </div>
                   <div>
                     <p className="text-gray-900 font-semibold text-sm md:text-base">Posty</p>
@@ -1315,9 +1316,9 @@ function DemoSection() {
                         initial={alreadyPlayed ? false : { opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.5, delay: 0.1, ease: premiumEase }}
-                        className="w-14 h-14 md:w-16 md:h-16 rounded-2xl overflow-hidden shadow-lg shadow-[#F8935D]/15 ring-1 ring-gray-100 mb-5"
+                        className="w-14 h-14 md:w-16 md:h-16 shadow-lg shadow-[#F8935D]/15 ring-1 ring-gray-100 mb-5"
                       >
-                        <Image src="/logo.png" alt="Posty" width={64} height={64} className="w-full h-full object-cover" />
+                        <Image src="/logo.png" alt="Posty" width={64} height={64} className="w-full h-full object-contain" />
                       </motion.div>
 
                       {/* Instructional text */}
@@ -1438,8 +1439,8 @@ function DemoSection() {
                 </svg>
               </button>
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl overflow-hidden shadow-sm">
-                  <Image src="/logo.png" alt="Posty" width={36} height={36} className="w-full h-full object-cover" />
+                <div className="w-9 h-9 shadow-sm">
+                  <Image src="/logo.png" alt="Posty" width={36} height={36} className="w-full h-full object-contain" />
                 </div>
                 <div>
                   <p className="text-gray-900 font-semibold text-sm">Posty</p>
@@ -1476,8 +1477,8 @@ function DemoSection() {
                   transition={{ duration: 0.35, delay: 0.15, ease: premiumEase }}
                   className="flex gap-3"
                 >
-                  <div className="w-8 h-8 md:w-9 md:h-9 rounded-lg overflow-hidden flex-shrink-0 shadow-md shadow-[#F8935D]/20 mt-0.5">
-                    <Image src="/logo.png" alt="Posty" width={36} height={36} className="w-full h-full object-cover" />
+                  <div className="w-8 h-8 md:w-9 md:h-9 flex-shrink-0 shadow-md shadow-[#F8935D]/20 mt-0.5">
+                    <Image src="/logo.png" alt="Posty" width={36} height={36} className="w-full h-full object-contain" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl rounded-tl-sm">
@@ -3229,30 +3230,36 @@ const FEATURES: FeatureConfig[] = [
 function FeatureCard({ feature, index }: { feature: FeatureConfig; index: number }) {
   const isEven = index % 2 === 0;
   const prefersReducedMotion = useReducedMotion();
+  const isMobile = useIsMobile();
   const cardRef = useRef<HTMLDivElement>(null);
 
   // 3D perspective tilt — desktop only, driven by cursor position
   const mouseX = useMotionValue(0.5);
   const mouseY = useMotionValue(0.5);
-  const rawRotateX = useTransform(mouseY, [0, 1], [4, -4]); // Slightly less than AudienceCard for larger cards
+  const rawRotateX = useTransform(mouseY, [0, 1], [4, -4]);
   const rawRotateY = useTransform(mouseX, [0, 1], [-4, 4]);
   const rotateX = useSpring(rawRotateX, { stiffness: 120, damping: 20 });
   const rotateY = useSpring(rawRotateY, { stiffness: 120, damping: 20 });
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     const card = cardRef.current;
-    if (!card || prefersReducedMotion) return;
+    if (!card || prefersReducedMotion || isMobile) return;
     const rect = card.getBoundingClientRect();
     const nx = (e.clientX - rect.left) / rect.width;
     const ny = (e.clientY - rect.top) / rect.height;
     mouseX.set(nx);
     mouseY.set(ny);
-  }, [mouseX, mouseY, prefersReducedMotion]);
+  }, [mouseX, mouseY, prefersReducedMotion, isMobile]);
 
   const handleMouseLeave = useCallback(() => {
     mouseX.set(0.5);
     mouseY.set(0.5);
   }, [mouseX, mouseY]);
+
+  // Strip hover: classes from border string on mobile
+  const borderClasses = isMobile
+    ? feature.color.border.replace(/hover:\S+/g, "")
+    : feature.color.border;
 
   return (
     <motion.div
@@ -3261,30 +3268,32 @@ function FeatureCard({ feature, index }: { feature: FeatureConfig; index: number
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-60px" }}
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      className="group/card"
-      style={{ perspective: 1200 }}
+      onMouseMove={isMobile ? undefined : handleMouseMove}
+      onMouseLeave={isMobile ? undefined : handleMouseLeave}
+      className={isMobile ? "" : "group/card"}
+      style={isMobile ? undefined : { perspective: 1200 }}
     >
       <motion.div
-        style={{
+        style={isMobile ? undefined : {
           rotateX: prefersReducedMotion ? 0 : rotateX,
           rotateY: prefersReducedMotion ? 0 : rotateY,
           transformStyle: "preserve-3d",
         }}
         className={`
           relative bg-gradient-to-br ${feature.color.bg}
-          border ${feature.color.border} rounded-[clamp(1rem,2vw,1.5rem)]
+          border ${borderClasses} rounded-[clamp(1rem,2vw,1.5rem)]
           px-[clamp(1.25rem,2.5vw,2rem)] py-[clamp(1rem,1.8vw,1.5rem)]
-          shadow-sm hover:shadow-xl ${feature.color.glow}
+          shadow-sm ${isMobile ? '' : `hover:shadow-xl ${feature.color.glow}`}
           transition-shadow duration-300
         `}
       >
-        {/* Ambient hover glow */}
-        <div
-          className="absolute -inset-4 rounded-3xl opacity-0 group-hover/card:opacity-100 transition-opacity duration-500 blur-2xl pointer-events-none -z-10"
-          style={{ background: `radial-gradient(min(500px, 35vw) circle at 50% 30%, rgba(248, 147, 93, 0.12), transparent 60%)` }}
-        />
+        {/* Ambient hover glow — desktop only */}
+        {!isMobile && (
+          <div
+            className="absolute -inset-4 rounded-3xl opacity-0 group-hover/card:opacity-100 transition-opacity duration-500 blur-2xl pointer-events-none -z-10"
+            style={{ background: `radial-gradient(min(500px, 35vw) circle at 50% 30%, rgba(248, 147, 93, 0.12), transparent 60%)` }}
+          />
+        )}
 
         {/* Inner flex layout: image + content */}
         <div className={`relative z-10 flex flex-col ${isEven ? "lg:flex-row" : "lg:flex-row-reverse"} gap-[clamp(1.5rem,3vw,2rem)] items-center`}>
@@ -3393,76 +3402,24 @@ function FeatureCard({ feature, index }: { feature: FeatureConfig; index: number
 
 function FeaturesSection() {
   const isMobile = useIsMobile();
-  const sectionRef = useRef<HTMLElement>(null);
-  const anchorRef = useRef<HTMLDivElement>(null);
-  const titleRef = useRef<HTMLDivElement>(null);
-  const [isFixed, setIsFixed] = useState(false);
-  const [titleH, setTitleH] = useState(0);
-  const [anchorLeft, setAnchorLeft] = useState(0);
-  const [anchorWidth, setAnchorWidth] = useState(0);
-
-  useEffect(() => {
-    const section = sectionRef.current;
-    const anchor = anchorRef.current;
-    const title = titleRef.current;
-    if (!section || !anchor || !title) return;
-
-    const measure = () => {
-      setTitleH(title.offsetHeight);
-      const r = anchor.getBoundingClientRect();
-      setAnchorLeft(r.left);
-      setAnchorWidth(r.width);
-    };
-    measure();
-
-    const handleScroll = () => {
-      const navH = window.innerWidth < 768 ? 76 : 84;
-      const r = anchor.getBoundingClientRect();
-      const sectionBottom = section.getBoundingClientRect().bottom;
-      const h = title.offsetHeight;
-      const shouldFix = r.top < navH && sectionBottom > navH + h + 50;
-      if (shouldFix) {
-        setAnchorLeft(r.left);
-        setAnchorWidth(r.width);
-      }
-      setIsFixed(shouldFix);
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    window.addEventListener("resize", measure);
-    handleScroll();
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", measure);
-    };
-  }, []);
 
   return (
-    <section id="features" ref={sectionRef} className="py-[clamp(1.5rem,3vw,2.5rem)] px-[clamp(1rem,4vw,3rem)] overflow-hidden">
+    <section id="features" className="py-[clamp(1.5rem,3vw,2.5rem)] px-[clamp(1rem,4vw,3rem)] overflow-hidden">
       <div className="w-full max-w-[min(90vw,67.75rem)] mx-auto">
-        {/* Anchor — preserves layout space when title becomes fixed */}
-        <div
-          ref={anchorRef}
-          style={{ minHeight: isFixed ? titleH : undefined }}
-          className="mb-[clamp(1.25rem,2vw,1.75rem)]"
+        <motion.div
+          initial={{ opacity: 0, y: 20, scale: 0.97, ...(isMobile ? {} : { filter: "blur(8px)" }) }}
+          whileInView={{ opacity: 1, y: 0, scale: 1, ...(isMobile ? {} : { filter: "blur(0px)" }) }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.7, ease: premiumEase }}
+          className="text-center mb-[clamp(1.25rem,2vw,1.75rem)]"
         >
-          <motion.div
-            ref={titleRef}
-            initial={{ opacity: 0, y: 20, scale: 0.97, ...(isMobile ? {} : { filter: "blur(8px)" }) }}
-            whileInView={{ opacity: 1, y: 0, scale: 1, ...(isMobile ? {} : { filter: "blur(0px)" }) }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7, ease: premiumEase }}
-            className={`text-center ${isFixed ? "fixed z-40 bg-[#FEF3EE]" : ""}`}
-            style={isFixed ? { top: 0, left: 0, width: "100%", paddingTop: isMobile ? 76 + 16 : 84 + 20, paddingBottom: 16, paddingLeft: anchorLeft, paddingRight: anchorLeft } : undefined}
-          >
-            <h2 className="text-[clamp(1.75rem,4vw,3.25rem)] font-bold">
-              <span className="text-silver-premium">Tout ce qu&apos;il vous faut pour</span>{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
-                performer sur LinkedIn
-              </span>
-            </h2>
-          </motion.div>
-        </div>
+          <h2 className="text-[clamp(1.75rem,4vw,3.25rem)] font-bold">
+            <span className="text-silver-premium">Tout ce qu&apos;il vous faut pour</span>{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
+              performer sur LinkedIn
+            </span>
+          </h2>
+        </motion.div>
 
         {/* Features Grid with Connectors */}
         <div className="relative space-y-[clamp(1.25rem,2vw,1.75rem)]">
@@ -3829,6 +3786,7 @@ function BeforeAfterSection() {
 // With Progressive Scroll-Based Zoom Effect
 // =============================================================================
 const FOUNDER_LINKEDIN_URL = "https://www.linkedin.com/in/emilien-nepveu/";
+const CMO_LINKEDIN_URL = "https://www.linkedin.com/in/come-maubert/";
 
 function FounderSection() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -3884,7 +3842,6 @@ function FounderSection() {
           transition={{ duration: 0.8, ease: smoothEase }}
           className="text-center mb-10 md:mb-14"
         >
-          {/* Opening quote mark */}
           <div className="flex justify-center mb-6">
             <svg className="w-10 h-10 md:w-12 md:h-12 text-[#F8935D]/20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M4.583 17.321C3.553 16.227 3 15 3 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311C9.591 11.69 11 13.166 11 15c0 1.933-1.567 3.5-3.5 3.5-1.234 0-2.385-.597-2.917-1.179zm10 0C13.553 16.227 13 15 13 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311C19.591 11.69 21 13.166 21 15c0 1.933-1.567 3.5-3.5 3.5-1.234 0-2.385-.597-2.917-1.179z" />
@@ -3899,49 +3856,67 @@ function FounderSection() {
           </p>
         </motion.blockquote>
 
-        {/* Author Info */}
+        {/* Co-founders */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, ease: smoothEase, delay: 0.2 }}
-          className="flex flex-col items-center text-center"
+          className="flex items-center justify-center gap-8 sm:gap-12"
         >
-          {/* Avatar - clickable, no hover effects (minimalist) */}
-          <Link
-            href={FOUNDER_LINKEDIN_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="relative mb-4 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F8935D] focus-visible:ring-offset-2"
-            aria-label="Voir le profil LinkedIn d'Emilien Nepveu"
-          >
-            <div className="w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden ring-4 ring-white shadow-xl shadow-gray-200/50">
-              <Image
-                src="/ceo.png"
-                alt="Emilien Nepveu"
-                width={64}
-                height={64}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          </Link>
+          {/* CEO */}
+          <div className="flex flex-col items-center text-center">
+            <Link
+              href={FOUNDER_LINKEDIN_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="relative mb-3 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F8935D] focus-visible:ring-offset-2"
+              aria-label="Voir le profil LinkedIn d'Emilien Nepveu"
+            >
+              <div className="w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden ring-4 ring-white shadow-xl shadow-gray-200/50">
+                <Image src="/ceo.png" alt="Emilien Nepveu" width={64} height={64} className="w-full h-full object-cover" />
+              </div>
+            </Link>
+            <Link
+              href={FOUNDER_LINKEDIN_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group relative focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F8935D] focus-visible:ring-offset-2 rounded"
+            >
+              <span className="text-gray-900 font-semibold text-sm md:text-base relative inline-block">
+                Emilien Nepveu
+                <span className="absolute left-0 -bottom-0.5 w-full h-[2px] bg-gradient-to-r from-[#F8935D] to-[#F76B54] origin-left scale-x-0 md:group-hover:scale-x-100 transition-transform duration-300 ease-out rounded-full" />
+              </span>
+            </Link>
+            <p className="text-gray-500 text-xs md:text-sm">Founder & CEO</p>
+          </div>
 
-          {/* Name - clickable with hover underline effect */}
-          <Link
-            href={FOUNDER_LINKEDIN_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group relative focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F8935D] focus-visible:ring-offset-2 rounded"
-          >
-            <span className="text-gray-900 font-semibold text-base md:text-lg mb-0.5 relative inline-block">
-              Emilien Nepveu
-              {/* Animated underline - desktop only */}
-              <span className="absolute left-0 -bottom-0.5 w-full h-[2px] bg-gradient-to-r from-[#F8935D] to-[#F76B54] origin-left scale-x-0 md:group-hover:scale-x-100 transition-transform duration-300 ease-out rounded-full" />
-            </span>
-          </Link>
-          <p className="text-gray-500 text-sm md:text-base">
-            Founder & CEO chez Posty
-          </p>
+          {/* CMO */}
+          <div className="flex flex-col items-center text-center">
+            <Link
+              href={CMO_LINKEDIN_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="relative mb-3 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F8935D] focus-visible:ring-offset-2"
+              aria-label="Voir le profil LinkedIn de Côme Maubert"
+            >
+              <div className="w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden ring-4 ring-white shadow-xl shadow-gray-200/50">
+                <Image src="/cmo.jpg" alt="Côme Maubert" width={64} height={64} className="w-full h-full object-cover" />
+              </div>
+            </Link>
+            <Link
+              href={CMO_LINKEDIN_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group relative focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F8935D] focus-visible:ring-offset-2 rounded"
+            >
+              <span className="text-gray-900 font-semibold text-sm md:text-base relative inline-block">
+                Côme Maubert
+                <span className="absolute left-0 -bottom-0.5 w-full h-[2px] bg-gradient-to-r from-[#F8935D] to-[#F76B54] origin-left scale-x-0 md:group-hover:scale-x-100 transition-transform duration-300 ease-out rounded-full" />
+              </span>
+            </Link>
+            <p className="text-gray-500 text-xs md:text-sm">Co-founder & CMO</p>
+          </div>
         </motion.div>
       </motion.div>
     </section>
@@ -3997,8 +3972,6 @@ interface PricingCardProps {
   yearlySavings: number;
   yearlyMonthlyPrice: number;
   index: number;
-  isFeaturesExpanded: boolean;
-  onToggleFeatures: () => void;
 }
 
 function PricingCard({
@@ -4007,21 +3980,14 @@ function PricingCard({
   yearlySavings,
   yearlyMonthlyPrice,
   index,
-  isFeaturesExpanded,
-  onToggleFeatures,
 }: PricingCardProps) {
   const displayPrice = billingPeriod === "monthly" ? plan.price.monthly : yearlyMonthlyPrice;
   const isPopular = plan.highlight;
   const isPremium = plan.premium;
-  const isFree = plan.price.monthly === 0;
-  const coreFeatures = getPlanCoreFeatures(plan);
-  const secondaryFeatures = getPlanSecondaryFeatures(plan);
+  const allFeatures = getPlanFeaturesUnified(plan);
   const planInfo = PLAN_TAGLINES[plan.id] || { tagline: plan.description, idealFor: "" };
   const [isHovered, setIsHovered] = useState(false);
   const isMobile = useIsMobile();
-
-  const showMoreFeatures = isFeaturesExpanded;
-  const includedSecondaryCount = secondaryFeatures.filter(f => f.included).length;
 
   return (
     <motion.div
@@ -4086,9 +4052,7 @@ function PricingCard({
           ? `bg-gradient-to-b from-[#F8935D]/10 via-white to-white ${isHovered ? "shadow-lg shadow-[#F8935D]/10" : ""}`
           : isPremium
             ? `bg-gradient-to-b from-amber-500/5 via-white to-white border sm:border-2 ${isHovered ? "border-amber-500/50 shadow-lg shadow-amber-500/10" : "border-amber-500/30"}`
-            : isFree
-              ? `bg-white border ${isHovered ? "border-[#F8935D]/40 shadow-md shadow-[#F8935D]/8" : "border-[#F8935D]/25"}`
-              : `bg-white border ${isHovered ? "border-[#F8935D]/30 shadow-md shadow-[#F8935D]/8" : "border-gray-200"}`
+            : `bg-white border ${isHovered ? "border-[#F8935D]/30 shadow-md shadow-[#F8935D]/8" : "border-gray-200"}`
         }
       `}>
         {/* ZONE 0: Badges */}
@@ -4151,25 +4115,19 @@ function PricingCard({
               transition={{ duration: 0.15 }}
               className="flex items-baseline justify-center gap-0.5 sm:gap-1"
             >
-              {isFree ? (
-                <span className="text-lg sm:text-2xl md:text-4xl lg:text-5xl font-bold text-gray-900">Gratuit</span>
-              ) : (
-                <>
-                  <span className={`text-lg sm:text-2xl md:text-4xl lg:text-5xl font-bold tabular-nums ${
-                    isPremium ? "text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400" : "text-gray-900"
-                  }`}>
-                    {displayPrice.toFixed(2).replace(".", ",")}
-                  </span>
-                  <span className="text-sm sm:text-base md:text-xl text-gray-900 font-medium">€</span>
-                  <span className="text-gray-500 text-[10px] sm:text-xs md:text-sm">/mois</span>
-                </>
-              )}
+              <span className={`text-lg sm:text-2xl md:text-4xl lg:text-5xl font-bold tabular-nums ${
+                isPremium ? "text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400" : "text-gray-900"
+              }`}>
+                {displayPrice.toFixed(2).replace(".", ",")}
+              </span>
+              <span className="text-sm sm:text-base md:text-xl text-gray-900 font-medium">€</span>
+              <span className="text-gray-500 text-[10px] sm:text-xs md:text-sm">/mois</span>
             </motion.div>
           </div>
 
           {/* Savings badge */}
           <div className={`h-[32px] sm:h-[42px] md:h-[56px] flex flex-col items-center justify-center transition-opacity duration-200 ${
-            billingPeriod === "yearly" && !isFree ? "opacity-100" : "opacity-0 pointer-events-none"
+            billingPeriod === "yearly" ? "opacity-100" : "opacity-0 pointer-events-none"
           }`}>
             <div className="inline-flex items-center gap-0.5 sm:gap-1 md:gap-1.5 px-1.5 sm:px-2 md:px-3 py-0.5 sm:py-1 bg-green-500/10 rounded-full border border-green-500/20">
               <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
@@ -4215,7 +4173,7 @@ function PricingCard({
               `}
             >
               <span className="relative z-10 flex items-center justify-center gap-1 sm:gap-2">
-                {getCTALabel(plan.id, billingPeriod === "yearly", plan.id !== "free")}
+                {getCTALabel(plan.id, billingPeriod === "yearly", true)}
                 <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 hidden sm:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
@@ -4224,104 +4182,29 @@ function PricingCard({
           </motion.div>
         </div>
 
-        {/* ZONE 4: Features list */}
+        {/* ZONE 4: Features list — ALL features visible */}
         <div className="flex-1 pt-2 sm:pt-3 md:pt-4 border-t border-gray-200">
           <ul className="space-y-1 sm:space-y-1.5 md:space-y-2.5">
-            {coreFeatures.map((feature, idx) => (
+            {allFeatures.map((feature, idx) => (
               <FeatureListItem key={idx} feature={feature} index={idx} />
             ))}
           </ul>
-
-          {/* "Voir plus" toggle for secondary features */}
-          {includedSecondaryCount > 0 && (
-            <div className="mt-2 sm:mt-3 md:mt-4">
-              <motion.button
-                onClick={onToggleFeatures}
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
-                className={`
-                  w-full flex items-center justify-center gap-1 sm:gap-2 py-1.5 sm:py-2 px-2 sm:px-3 md:px-4
-                  text-[10px] sm:text-xs md:text-sm font-medium rounded-md sm:rounded-lg md:rounded-xl
-                  transition-colors duration-200 cursor-pointer
-                  ${showMoreFeatures
-                    ? "bg-[#F8935D]/10 text-[#F8935D] border border-[#F8935D]/30 shadow-sm"
-                    : "bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-gray-800 border border-gray-200"
-                  }
-                `}
-              >
-                <span className="hidden sm:inline">{showMoreFeatures ? "Voir moins" : `Voir +${includedSecondaryCount} fonctionnalites`}</span>
-                <span className="inline sm:hidden">{showMoreFeatures ? "Moins" : `+${includedSecondaryCount}`}</span>
-                <motion.svg
-                  className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  animate={{ rotate: showMoreFeatures ? 180 : 0 }}
-                  transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </motion.svg>
-              </motion.button>
-
-              {/* Secondary features - Collapsible */}
-              <AnimatePresence initial={false}>
-                {showMoreFeatures && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{
-                      height: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
-                      opacity: { duration: 0.2, ease: "easeOut" }
-                    }}
-                    className="overflow-hidden"
-                  >
-                    <ul className="space-y-1 sm:space-y-1.5 md:space-y-2.5 mt-2 sm:mt-3 md:mt-4 pt-2 sm:pt-3 md:pt-4 border-t border-gray-100">
-                      {secondaryFeatures.filter(f => f.included).map((feature, idx) => (
-                        <motion.li
-                          key={idx}
-                          initial={{ opacity: 0, x: -8 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: idx * 0.03, duration: 0.2 }}
-                          className="flex items-start gap-1.5 sm:gap-2 md:gap-3"
-                        >
-                          <div className="flex-shrink-0 w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded-full flex items-center justify-center mt-0.5 bg-green-500/20 text-green-600">
-                            <svg className="w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
-                          </div>
-                          <span className="text-[10px] sm:text-xs md:text-sm text-gray-600">{feature.text}</span>
-                        </motion.li>
-                      ))}
-                    </ul>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          )}
         </div>
 
         {/* ZONE 5: Trust badge */}
         <div className="h-8 sm:h-10 md:h-12 mt-auto pt-2 sm:pt-2.5 md:pt-3 border-t border-gray-200 flex items-center justify-center">
-          {!isFree ? (
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6 }}
-              className="text-[9px] sm:text-[10px] md:text-xs text-gray-400 flex items-center justify-center gap-0.5 sm:gap-1 md:gap-1.5"
-            >
-              <svg className="w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3.5 md:h-3.5 text-green-500 hidden sm:inline" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-              </svg>
-              <span className="hidden md:inline">Sans engagement &bull; Annulation à tout moment</span>
-              <span className="inline md:hidden">Sans engagement</span>
-            </motion.p>
-          ) : (
-            <p className="text-[9px] sm:text-[10px] md:text-xs text-gray-400">
-              <span className="hidden sm:inline">Découvrez Posty sans engagement</span>
-              <span className="inline sm:hidden">Gratuit</span>
-            </p>
-          )}
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+            className="text-[9px] sm:text-[10px] md:text-xs text-gray-400 flex items-center justify-center gap-0.5 sm:gap-1 md:gap-1.5"
+          >
+            <svg className="w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3.5 md:h-3.5 text-green-500 hidden sm:inline" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+            </svg>
+            <span className="hidden md:inline">Sans engagement &bull; Annulation à tout moment</span>
+            <span className="inline md:hidden">Sans engagement</span>
+          </motion.p>
         </div>
       </div>
     </motion.div>
@@ -4331,20 +4214,12 @@ function PricingCard({
 function PricingSection() {
   const isMobile = useIsMobile();
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("yearly");
-  const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
-
-  // Only one card can be expanded at a time
-  const handleToggleFeatures = (planId: string) => {
-    setExpandedCardId((prev) => prev === planId ? null : planId);
-  };
 
   const getYearlyMonthlyPrice = (plan: PlanConfig) => {
-    if (plan.price.yearly === 0) return 0;
     return Math.round((plan.price.yearly / 12) * 100) / 100;
   };
 
   const getYearlySavings = (plan: PlanConfig) => {
-    if (plan.price.monthly === 0) return 0;
     return Math.round((plan.price.monthly * 12 - plan.price.yearly) * 100) / 100;
   };
 
@@ -4387,8 +4262,6 @@ function PricingSection() {
                   yearlySavings={getYearlySavings(plan)}
                   yearlyMonthlyPrice={getYearlyMonthlyPrice(plan)}
                   index={index}
-                  isFeaturesExpanded={expandedCardId === plan.id}
-                  onToggleFeatures={() => handleToggleFeatures(plan.id)}
                 />
               </div>
             ))}
@@ -4670,8 +4543,8 @@ function Footer() {
           <div className="flex items-start justify-between gap-3 mb-4">
             <div className="flex-1">
               <Link href="/" className="flex items-center gap-2 mb-2">
-                <div className="w-7 h-7 rounded-lg overflow-hidden shadow-sm shadow-[#F8935D]/10">
-                  <Image src="/logo.png" alt="Posty" width={28} height={28} className="w-full h-full object-cover" />
+                <div className="w-7 h-7 shadow-sm shadow-[#F8935D]/10">
+                  <Image src="/logo.png" alt="Posty" width={28} height={28} className="w-full h-full object-contain" />
                 </div>
                 <span className="text-sm font-bold text-gray-900">Posty</span>
               </Link>
@@ -4732,8 +4605,8 @@ function Footer() {
             {/* Brand */}
             <div className="col-span-2">
               <Link href="/" className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-[#F8935D]/10">
-                  <Image src="/logo.png" alt="Posty" width={40} height={40} className="w-full h-full object-cover" />
+                <div className="w-10 h-10 shadow-lg shadow-[#F8935D]/10">
+                  <Image src="/logo.png" alt="Posty" width={40} height={40} className="w-full h-full object-contain" />
                 </div>
                 <span className="text-xl font-bold text-gray-900">Posty</span>
               </Link>

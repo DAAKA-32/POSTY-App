@@ -127,15 +127,15 @@ export function getLocalizedMetadata(
     },
     pricing: {
       fr: {
-        title: "Tarifs POSTY - Plans Gratuit, Pro et Max | Générateur LinkedIn IA",
+        title: "Tarifs POSTY - Plans Pro et Max | Générateur LinkedIn IA",
         description:
-          "Découvrez nos offres POSTY : 3 posts gratuits/semaine ou illimité en Pro. Générez des posts LinkedIn professionnels avec l'IA sans engagement.",
+          "Découvrez nos offres POSTY : Pro et Max. Générez des posts LinkedIn professionnels avec l'IA. Essai gratuit 7 jours, sans engagement.",
         keywords: ["tarifs POSTY", "prix générateur LinkedIn", "abonnement LinkedIn IA"],
       },
       en: {
-        title: "POSTY Pricing - Free, Pro & Max Plans | AI LinkedIn Generator",
+        title: "POSTY Pricing - Pro & Max Plans | AI LinkedIn Generator",
         description:
-          "Explore POSTY plans: 3 free posts/week or unlimited with Pro. Create professional LinkedIn posts with AI. No commitment required.",
+          "Explore POSTY plans: Pro and Max. Create professional LinkedIn posts with AI. Free 7-day trial, no commitment required.",
         keywords: ["POSTY pricing", "LinkedIn generator price", "LinkedIn AI subscription"],
       },
     },

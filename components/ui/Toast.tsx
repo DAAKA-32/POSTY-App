@@ -141,10 +141,10 @@ function ActionToast({ t, type, message, action }: ActionToastProps) {
       exit={animationVariants.exit}
       transition={{ duration: 0.2, ease: smoothEase }}
       className={`
-        flex items-center gap-3 px-3.5 py-2.5
+        flex items-center gap-3 px-4 py-2.5
         bg-background/95 backdrop-blur-lg
         border ${variant.border}
-        rounded-xl shadow-lg shadow-black/10
+        rounded-full shadow-lg shadow-black/10
         max-w-[calc(100vw-32px)] sm:max-w-sm
       `}
       role="alert"
@@ -206,10 +206,10 @@ function MinimalToast({ t, type, message }: CustomToastProps) {
       transition={{ duration: 0.2, ease: smoothEase }}
       onClick={() => hotToast.dismiss(t.id)}
       className={`
-        flex items-center gap-2.5 px-3.5 py-2.5
+        flex items-center gap-2.5 px-4 py-2.5
         bg-background/95 backdrop-blur-lg
         border ${variant.border}
-        rounded-xl shadow-lg shadow-black/10
+        rounded-full shadow-lg shadow-black/10
         cursor-pointer select-none
         transition-all duration-150
         hover:bg-dark-elevated/80

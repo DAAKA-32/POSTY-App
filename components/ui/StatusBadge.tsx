@@ -2,7 +2,7 @@
 
 import { ReactNode } from "react";
 
-type BadgeVariant = "vip" | "verified" | "creator" | "influencer" | "pro" | "free";
+type BadgeVariant = "vip" | "verified" | "creator" | "influencer" | "pro";
 
 interface StatusBadgeProps {
   variant: BadgeVariant;
@@ -68,16 +68,6 @@ const badgeConfig: Record<BadgeVariant, { icon: ReactNode; label: string; colors
     // ORANGE SAUMON: Couleur dominante CTA principale
     colors: "from-primary via-orange-500 to-accent text-white",
     glow: "shadow-[0_0_24px_rgba(248,147,93,0.6)]",
-  },
-  free: {
-    icon: (
-      <svg className="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-      </svg>
-    ),
-    label: "Free",
-    colors: "from-dark-border to-dark-hover text-text-muted",
-    glow: "",
   },
 };
 
