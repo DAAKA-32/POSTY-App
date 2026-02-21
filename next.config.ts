@@ -46,6 +46,9 @@ const nextConfig: NextConfig = {
     optimizeCss: true,
   },
 
+  // Disable Vercel Toolbar in production
+  devIndicators: false,
+
   // Allow ngrok dev origins (cross-origin HMR)
   allowedDevOrigins: ["*.ngrok-free.dev", "*.ngrok.io"],
 
