@@ -192,7 +192,8 @@ export function LinkedInProvider({ children }: { children: ReactNode }) {
   );
 
   // Profile data shortcuts
-  const profilePicture = isTokenValid && connection?.profilePicture ? connection.profilePicture : null;
+  // Photo URL is a CDN link (media.licdn.com), works independently of OAuth token validity
+  const profilePicture = connection?.profilePicture || null;
   const profileName = isTokenValid && connection?.profileName ? connection.profileName : null;
 
   const value: LinkedInContextType = {

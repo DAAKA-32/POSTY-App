@@ -224,6 +224,7 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
         <div
           className={`
             inline-flex items-center justify-center w-16 h-16 mb-6
+            rounded-2xl overflow-hidden
             shadow-glow animate-logo-float
             transition-all duration-500 delay-100
             ${isVisible ? "opacity-100 scale-100" : "opacity-0 scale-75"}

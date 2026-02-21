@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLinkedIn } from "@/contexts/LinkedInContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useSubscription } from "@/contexts/SubscriptionContext";
 import { updateUserProfile, getUserPosts, getUserSessions } from "@/lib/firestore";
 import { SubscriptionPlan } from "@/types";
 import { PlanType, DAILY_MESSAGE_LIMITS } from "@/lib/plans";
@@ -22,8 +23,9 @@ import toast from "@/components/ui/Toast";
 
 function ProfileContent() {
   const { user, userProfile, refreshUserProfile } = useAuth();
-  const { isConnected: linkedInConnected } = useLinkedIn();
+  const { isConnected: linkedInConnected, profilePicture: linkedInPhoto } = useLinkedIn();
   const { t, language } = useLanguage();
+  const { currentPlan } = useSubscription();
   const router = useRouter();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -88,12 +90,11 @@ function ProfileContent() {
     [postsCount, sessionsCount, memberSince, t.profile.postsCreated, t.profile.sessions, t.profile.memberSince]
   );
 
-  // Current plan info
-  // subscriptionPlan = plan from Firestore (pro/max) or null if no subscription
-  const subscriptionPlan = (userProfile?.subscription?.plan as SubscriptionPlan | undefined) || null;
-  // profileEditPlan = same as subscriptionPlan now (pro/max or null)
-  const profileEditPlan: PlanType | null = subscriptionPlan;
-  const dailyLimit = subscriptionPlan ? DAILY_MESSAGE_LIMITS[subscriptionPlan] : 0;
+  // Current plan info — use SubscriptionContext as single source of truth
+  // This handles test mode, Stripe, and legacy plan mapping correctly
+  const subscriptionPlan: PlanType | null = currentPlan;
+  const profileEditPlan: PlanType | null = currentPlan;
+  const dailyLimit = currentPlan ? DAILY_MESSAGE_LIMITS[currentPlan] : 0;
   const dailyMessagesUsed = userProfile?.quota?.dailyMessageCount || 0;
 
   // Handle save profile
@@ -221,6 +222,8 @@ function ProfileContent() {
                   linkedInConnected={linkedInConnected}
                   onEdit={() => setIsEditing(true)}
                   isEditing={isEditing}
+                  photoURL={linkedInPhoto || userProfile?.photoURL || user?.photoURL || null}
+                  branding={userProfile?.branding}
                 />
 
                 {/* Plan Card */}

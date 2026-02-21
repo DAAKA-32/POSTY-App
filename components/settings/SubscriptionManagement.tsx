@@ -10,6 +10,7 @@ import { SubscriptionBadge } from "@/components/stripe";
 import toast from "@/components/ui/Toast";
 import Link from "next/link";
 import { GUARANTEE_PERIOD_DAYS } from "@/lib/plans";
+import { getAuthHeaders } from "@/lib/api-client";
 
 // Types for Stripe subscription details
 interface StripeSubscriptionDetails {
@@ -106,7 +107,10 @@ export default function SubscriptionManagement() {
       if (stripeSubscriptionId) params.set("subscriptionId", stripeSubscriptionId);
       else if (stripeCustomerId) params.set("customerId", stripeCustomerId);
 
-      const response = await fetch(`/api/stripe/subscription?${params}`);
+      const authHeaders = await getAuthHeaders();
+      const response = await fetch(`/api/stripe/subscription?${params}`, {
+        headers: { ...authHeaders },
+      });
       if (response.ok) {
         const data = await response.json();
         if (data.id) {
@@ -130,9 +134,10 @@ export default function SubscriptionManagement() {
 
     setIsCanceling(true);
     try {
+      const cancelAuthHeaders = await getAuthHeaders();
       const response = await fetch("/api/stripe/subscription", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...cancelAuthHeaders },
         body: JSON.stringify({
           subscriptionId: stripeSubscriptionId,
           action: "cancel",
@@ -163,9 +168,10 @@ export default function SubscriptionManagement() {
 
     setIsReactivating(true);
     try {
+      const reactivateAuthHeaders = await getAuthHeaders();
       const response = await fetch("/api/stripe/subscription", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...reactivateAuthHeaders },
         body: JSON.stringify({
           subscriptionId: stripeSubscriptionId,
           action: "reactivate",
@@ -218,9 +224,10 @@ export default function SubscriptionManagement() {
 
     setIsLoading(true);
     try {
+      const portalAuthHeaders = await getAuthHeaders();
       const response = await fetch("/api/stripe/portal", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...portalAuthHeaders },
         body: JSON.stringify({ customerId: stripeCustomerId }),
       });
 

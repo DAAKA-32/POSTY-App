@@ -39,7 +39,7 @@ export default function LegalNoticesPage() {
             <strong className="text-white">{notices.section1.vat}</strong> {notices.section1.vatValue}
           </p>
           <p>
-            <strong className="text-white">{notices.section1.email}</strong> posty.contact@gmail.com
+            <strong className="text-white">{notices.section1.email}</strong> postygroup@gmail.com
           </p>
         </div>
         <p className="text-text-muted text-sm mt-2 italic">{notices.section1.note}</p>
@@ -53,7 +53,7 @@ export default function LegalNoticesPage() {
             <strong className="text-white">{notices.section2.name}</strong> {notices.section2.toComplete}
           </p>
           <p>
-            <strong className="text-white">{notices.section2.email}</strong> posty.contact@gmail.com
+            <strong className="text-white">{notices.section2.email}</strong> postygroup@gmail.com
           </p>
           <p>
             <strong className="text-white">LinkedIn :</strong>{" "}
@@ -117,7 +117,7 @@ export default function LegalNoticesPage() {
         <h2 className="text-xl font-semibold text-white mb-4">{notices.section4.title}</h2>
         <div className="bg-dark-card border border-dark-border rounded-lg p-6 text-text-primary space-y-2">
           <p>
-            <strong className="text-white">{notices.section4.contact}</strong> posty.contact@gmail.com
+            <strong className="text-white">{notices.section4.contact}</strong> postygroup@gmail.com
           </p>
           <p className="text-text-muted text-sm mt-2">{notices.section4.description}</p>
         </div>
@@ -180,13 +180,13 @@ export default function LegalNoticesPage() {
         <p className="text-text-secondary mb-4">{notices.section10.intro}</p>
         <div className="bg-dark-card border border-dark-border rounded-lg p-6 text-text-primary space-y-2">
           <p>
-            <strong className="text-white">{notices.section10.emailGeneral}</strong> posty.contact@gmail.com
+            <strong className="text-white">{notices.section10.emailGeneral}</strong> postygroup@gmail.com
           </p>
           <p>
-            <strong className="text-white">{notices.section10.emailGDPR}</strong> posty.contact@gmail.com
+            <strong className="text-white">{notices.section10.emailGDPR}</strong> postygroup@gmail.com
           </p>
           <p>
-            <strong className="text-white">{notices.section10.emailSupport}</strong> posty.contact@gmail.com
+            <strong className="text-white">{notices.section10.emailSupport}</strong> postygroup@gmail.com
           </p>
         </div>
       </section>

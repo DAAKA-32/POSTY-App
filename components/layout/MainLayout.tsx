@@ -601,7 +601,7 @@ export default function MainLayout({
                 >
                   {/* Subtle glow on hover */}
                   <div className="absolute -inset-1 bg-gradient-to-br from-primary/30 to-accent/30 rounded-2xl opacity-0 group-hover:opacity-100 blur-md transition-opacity duration-300" />
-                  <div className="relative w-10 h-10 shrink-0 flex items-center justify-center shadow-md ring-1 ring-gray-200/50 dark:ring-dark-border/50">
+                  <div className="relative w-10 h-10 shrink-0 flex items-center justify-center rounded-2xl overflow-hidden shadow-md ring-1 ring-gray-200/50 dark:ring-dark-border/50">
                     <img
                       src="/logo.png"
                       alt="Posty Logo"
@@ -1131,7 +1131,7 @@ export default function MainLayout({
                 <div className="relative">
                   {/* Subtle glow */}
                   <div className="absolute -inset-0.5 bg-gradient-to-br from-primary/20 to-accent/20 rounded-xl blur-sm" />
-                  <div className="relative w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center shadow-md ring-1 ring-white/50 dark:ring-dark-border/50 flex-shrink-0">
+                  <div className="relative w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-2xl overflow-hidden shadow-md ring-1 ring-white/50 dark:ring-dark-border/50 flex-shrink-0">
                     <img
                       src="/logo.png"
                       alt="Posty Logo"

@@ -1,3 +1,5 @@
+import { getAuthHeaders } from "@/lib/api-client";
+
 // LinkedIn OAuth 2.0 Configuration and API utilities
 
 export const LINKEDIN_CONFIG = {
@@ -99,10 +101,12 @@ export async function postToLinkedIn(
   postId?: string
 ): Promise<LinkedInPostResult> {
   try {
+    const authHeaders = await getAuthHeaders();
     const response = await fetch("/api/linkedin/publish", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        ...authHeaders,
       },
       body: JSON.stringify({
         userId,

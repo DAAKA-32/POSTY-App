@@ -1,9 +1,13 @@
 /**
- * Centralized plan feature configuration
- * Defines what features are available for each subscription plan
+ * Plan feature configuration — DERIVED from lib/plans.ts (single source of truth)
+ *
+ * This file provides a convenience layer for API routes and components
+ * that need simple boolean feature checks. All values are derived from
+ * PLAN_CONFIGS in lib/plans.ts to prevent contradictions.
  */
 
 import { SubscriptionPlan, ResponseMode } from "@/types";
+import { PLAN_CONFIGS, PlanType } from "./plans";
 
 // Plan feature configuration
 export interface PlanFeatures {
@@ -17,28 +21,42 @@ export interface PlanFeatures {
   hasFileAttachments: boolean;
 }
 
-// Feature configuration for each plan
+/**
+ * Derive PlanFeatures from the canonical PLAN_CONFIGS.
+ * This ensures plan-features.ts never contradicts plans.ts.
+ */
+function derivePlanFeatures(planId: PlanType): PlanFeatures {
+  const limits = PLAN_CONFIGS[planId].limits;
+
+  // Derive responseMode from dual mode config:
+  // - Unlimited dual (dualResponsesPerWeek === -1) → "dual"
+  // - Limited dual (dualResponsesPerWeek > 0) → "single-choice" (default UI is single, can request dual on demand)
+  // - No dual → "business-only"
+  let responseMode: ResponseMode;
+  if (limits.hasDualResponseMode && limits.dualResponsesPerWeek === -1) {
+    responseMode = "dual";
+  } else if (limits.hasDualResponseMode) {
+    responseMode = "single-choice";
+  } else {
+    responseMode = "business-only";
+  }
+
+  return {
+    responseMode,
+    hasInsights: true, // All paid plans have insights
+    hasAnalysis: true, // All paid plans have analysis
+    hasImproveMode: true, // All paid plans have improve mode
+    hasMultiPlatform: limits.allowedPlatforms.length > 2,
+    hasAdaptiveTone: limits.hasPersonalizedResponses,
+    hasAdvancedPersonalization: limits.hasAudienceTargeting,
+    hasFileAttachments: planId === "max",
+  };
+}
+
+// Feature configuration derived from PLAN_CONFIGS
 export const PLAN_FEATURES: Record<SubscriptionPlan, PlanFeatures> = {
-  pro: {
-    responseMode: "single-choice",
-    hasInsights: true,
-    hasAnalysis: true,
-    hasImproveMode: true,
-    hasMultiPlatform: false,
-    hasAdaptiveTone: true,
-    hasAdvancedPersonalization: false,
-    hasFileAttachments: false,
-  },
-  max: {
-    responseMode: "dual",
-    hasInsights: true,
-    hasAnalysis: true,
-    hasImproveMode: true,
-    hasMultiPlatform: true,
-    hasAdaptiveTone: true,
-    hasAdvancedPersonalization: true,
-    hasFileAttachments: true,
-  },
+  pro: derivePlanFeatures("pro"),
+  max: derivePlanFeatures("max"),
 };
 
 /**

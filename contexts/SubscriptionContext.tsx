@@ -23,7 +23,6 @@ import {
   checkGuaranteeEligibility,
   formatTrialStatusMessage,
   isTestModeAllowed,
-  PRODUCTION_MODE,
 } from "@/lib/plans";
 import {
   UserSubscription,
@@ -47,6 +46,7 @@ import {
 } from "@/lib/permissions";
 import { doc, getDoc, updateDoc, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { getAuthHeaders } from "@/lib/api-client";
 
 // ============================================
 // TYPES
@@ -209,12 +209,11 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       const isTestMode = testModeResult.isActive;
       const testPlan = testModeResult.plan;
 
-      // Map old plan names to new ones
+      // Map old plan names to new ones (legacy migration)
       let stripePlan: PlanType | null = null;
       if (subscriptionData.plan === "starter") stripePlan = "pro";
       else if (subscriptionData.plan === "free") stripePlan = null;
-      else if (subscriptionData.plan === "pro") stripePlan = "max";
-      else if (["pro", "max"].includes(subscriptionData.plan)) {
+      else if (subscriptionData.plan === "pro" || subscriptionData.plan === "max") {
         stripePlan = subscriptionData.plan as PlanType;
       }
 
@@ -400,9 +399,9 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   // To re-enable: set NEXT_PUBLIC_ENABLE_TEST_MODE=true in .env.local
 
   const enableTestMode = useCallback(async (plan: PlanType) => {
-    // Block in production mode - security guard
-    if (PRODUCTION_MODE || !isTestModeAllowed()) {
-      console.warn("[SubscriptionContext] Test mode is disabled in production.");
+    // Block unless user is a founder or test mode is globally enabled
+    if (!isTestModeAllowed(user?.email)) {
+      console.warn("[SubscriptionContext] Test mode is disabled for this user.");
       return;
     }
 
@@ -440,9 +439,9 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   }, [user?.uid]);
 
   const disableTestMode = useCallback(async () => {
-    // Block in production mode - security guard
-    if (PRODUCTION_MODE || !isTestModeAllowed()) {
-      console.warn("[SubscriptionContext] Test mode is disabled in production.");
+    // Block unless user is a founder or test mode is globally enabled
+    if (!isTestModeAllowed(user?.email)) {
+      console.warn("[SubscriptionContext] Test mode is disabled for this user.");
       return;
     }
 
@@ -497,9 +496,10 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     if (!user?.uid) return { success: false, error: "Non connecté" };
 
     try {
+      const authHeaders = await getAuthHeaders();
       const response = await fetch("/api/stripe/refund", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({ userId: user.uid }),
       });
 

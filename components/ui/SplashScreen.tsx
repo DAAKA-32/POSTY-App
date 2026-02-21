@@ -73,7 +73,7 @@ export default function SplashScreen({ isLoading, onComplete }: SplashScreenProp
                 duration: prefersReducedMotion ? 0 : 0.3,
                 ease: "easeOut",
               }}
-              className="w-20 h-20 lg:w-24 lg:h-24 flex items-center justify-center shadow-xl"
+              className="w-20 h-20 lg:w-24 lg:h-24 flex items-center justify-center rounded-2xl overflow-hidden shadow-xl"
             >
               <img
                 src="/logo.png"

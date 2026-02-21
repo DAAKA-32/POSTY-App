@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 import { MessageSquare, Briefcase, Sparkles, Crown, Lock } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import { useRouter } from "next/navigation";
 
 interface DualModeToggleProps {
   enabled: boolean;
@@ -13,6 +12,8 @@ interface DualModeToggleProps {
   onResponseTypeChange: (type: "storytelling" | "business") => void;
   /** Weekly dual usage count (Pro plan only) */
   dualUsedThisWeek?: number;
+  /** Callback to trigger the inline upgrade banner (replaces this zone) */
+  onUpgradePrompt?: (reason: "dual-limit" | "max-feature") => void;
   className?: string;
 }
 
@@ -28,12 +29,11 @@ export default function DualModeToggle({
   responseType,
   onResponseTypeChange,
   dualUsedThisWeek = 0,
+  onUpgradePrompt,
   className = "",
 }: DualModeToggleProps) {
   const { t } = useLanguage();
   const { isMaxPlan, isProPlan, planLimits } = useSubscription();
-  const router = useRouter();
-
   const canUseDualMode = isMaxPlan || isProPlan;
   const dualLimit = planLimits?.dualResponsesPerWeek ?? 0;
   const isUnlimited = dualLimit === -1;
@@ -42,8 +42,14 @@ export default function DualModeToggle({
 
   // Handle toggle click
   const handleToggle = () => {
-    if (!canUseDualMode) return;
-    if (isLimitReached && !enabled) return; // Can't enable if limit reached
+    if (!canUseDualMode) {
+      onUpgradePrompt?.("max-feature");
+      return;
+    }
+    if (isLimitReached && !enabled) {
+      onUpgradePrompt?.("dual-limit");
+      return;
+    }
     onToggle(!enabled);
   };
 
@@ -173,43 +179,39 @@ export default function DualModeToggle({
         )}
       </div>
 
-      {/* Upgrade prompt for Free users */}
-      {!canUseDualMode && (
+      {/* Upgrade prompt for Free users — triggers inline banner */}
+      {!canUseDualMode && onUpgradePrompt && (
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: "auto" }}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-primary/10 to-primary-hover/10 border border-primary/20"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-primary/10 to-primary-hover/10 border border-primary/20 cursor-pointer"
+          onClick={() => onUpgradePrompt("max-feature")}
         >
           <Crown className="w-4 h-4 text-primary flex-shrink-0" />
           <p className="text-xs text-primary/90 flex-1">
             {t.chat.dualMode.singleResponseInfo}
           </p>
-          <button
-            onClick={() => router.push("/pricing")}
-            className="flex-shrink-0 px-2.5 py-1 rounded-md text-xs font-semibold bg-gradient-to-r from-primary to-primary-hover text-white hover:from-primary-hover hover:to-primary-dark transition-colors"
-          >
+          <span className="flex-shrink-0 px-2.5 py-1 rounded-md text-xs font-semibold bg-gradient-to-r from-primary to-primary-hover text-white">
             {t.chat.dualMode.upgradeButton}
-          </button>
+          </span>
         </motion.div>
       )}
 
-      {/* Pro limit reached info */}
-      {isProPlan && isLimitReached && (
+      {/* Pro limit reached — triggers inline banner */}
+      {isProPlan && isLimitReached && onUpgradePrompt && (
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: "auto" }}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-primary/10 to-primary-hover/10 border border-primary/20"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-primary/10 to-primary-hover/10 border border-primary/20 cursor-pointer"
+          onClick={() => onUpgradePrompt("dual-limit")}
         >
           <Crown className="w-4 h-4 text-primary flex-shrink-0" />
           <p className="text-xs text-primary/90 flex-1">
             Limite atteinte ({dualLimit}/sem.). Passez au Max pour un accès illimité.
           </p>
-          <button
-            onClick={() => router.push("/pricing")}
-            className="flex-shrink-0 px-2.5 py-1 rounded-md text-xs font-semibold bg-gradient-to-r from-primary to-primary-hover text-white hover:from-primary-hover hover:to-primary-dark transition-colors"
-          >
+          <span className="flex-shrink-0 px-2.5 py-1 rounded-md text-xs font-semibold bg-gradient-to-r from-primary to-primary-hover text-white">
             {t.chat.dualMode.upgradeButton}
-          </button>
+          </span>
         </motion.div>
       )}
     </div>

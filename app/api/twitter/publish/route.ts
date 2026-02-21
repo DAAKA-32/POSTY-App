@@ -7,6 +7,7 @@ import {
 import { adminDb, isAdminInitialized } from "@/lib/firebase-admin";
 import { Timestamp } from "firebase-admin/firestore";
 import { TWITTER_CONFIG, TWITTER_CHAR_LIMIT, getTweetUrl } from "@/lib/twitter";
+import { verifyAuth } from "@/lib/auth";
 
 /**
  * Route de publication sur Twitter
@@ -24,6 +25,9 @@ import { TWITTER_CONFIG, TWITTER_CHAR_LIMIT, getTweetUrl } from "@/lib/twitter";
  */
 export async function POST(request: NextRequest) {
   try {
+    const auth = await verifyAuth(request);
+    if (auth.error) return auth.error;
+
     // 🔍 Vérification de l'initialisation Firebase Admin
     if (!isAdminInitialized() || !adminDb) {
       console.error("Firebase Admin not initialized");
@@ -38,7 +42,10 @@ export async function POST(request: NextRequest) {
 
     // 🔐 ÉTAPE 1: Récupération et validation des données
     const body = await request.json();
-    const { userId, content, postId } = body;
+    const { userId: bodyUserId, content, postId } = body;
+
+    // Use authenticated uid, fall back to body userId only in dev bypass mode
+    const userId = auth.uid === "__dev_bypass__" ? bodyUserId : auth.uid;
 
     if (!userId || !content) {
       return NextResponse.json(
@@ -142,11 +149,11 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      console.error("Twitter publish error details:", errorData);
       return NextResponse.json(
         {
           error: "publish_failed",
           message: "Échec de la publication sur Twitter. Veuillez réessayer.",
-          details: errorData,
         },
         { status: tweetResponse.status }
       );

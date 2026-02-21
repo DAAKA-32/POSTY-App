@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef } from "react";
 import { savePost, addMessagesToConversation, getConversationHistory } from "@/lib/firestore";
 import { MockResponse, PostInsights, ConversationTurn, FileAttachment } from "@/types";
+import { getAuthHeaders } from "@/lib/api-client";
 
 const GUEST_GENERATION_LIMIT = 2;
 const GUEST_STORAGE_KEY = "posty_guest_generations";
@@ -159,9 +160,10 @@ export function useChat({
           }
         }
 
+        const authHeaders = await getAuthHeaders();
         const response = await fetch("/api/generate", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...authHeaders },
           body: JSON.stringify({
             userId: userId || "guest",
             prompt,
@@ -189,10 +191,23 @@ export function useChat({
           const errorData = await response.json().catch(() => ({}));
           if (errorData.error === "quota_exceeded") {
             // Professional limit handling: Create an AI system message instead of throwing
+            const resetMinutes = errorData.resetInSeconds
+              ? Math.ceil(errorData.resetInSeconds / 60)
+              : 60;
+            const plan = errorData.plan;
+            const hourlyLimit = errorData.hourlyLimit;
+
+            let content: string;
+            if (plan === "pro") {
+              content = `Vous avez utilisé vos ${hourlyLimit} messages cette heure. Réessayez dans ${resetMinutes} min, ou passez au plan Max pour un accès quasi illimité.`;
+            } else {
+              content = `Pause automatique — réessayez dans ${resetMinutes} min.`;
+            }
+
             const limitMessage: ConversationMessage = {
               id: `ai-limit-${Date.now()}`,
               type: "ai",
-              content: "Limite atteinte pour aujourd'hui. Revenez demain pour continuer ✨",
+              content,
               timestamp: new Date(),
               isStreaming: false,
             };

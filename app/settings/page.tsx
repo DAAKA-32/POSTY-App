@@ -589,10 +589,10 @@ function SettingsContent() {
                 {t.settings.contactPrivacy}
               </p>
               <a
-                href="mailto:posty.contact@gmail.com"
+                href="mailto:postygroup@gmail.com"
                 className="text-primary hover:text-accent transition-colors font-medium text-sm lg:text-base"
               >
-                posty.contact@gmail.com
+                postygroup@gmail.com
               </a>
             </motion.div>
           </motion.div>

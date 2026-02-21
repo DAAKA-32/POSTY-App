@@ -1,7 +1,6 @@
 "use client";
 
 import { motion } from "framer-motion";
-import ProfileAvatar from "@/components/ui/ProfileAvatar";
 import { PersonalBranding, GRADIENT_PRESETS } from "@/types";
 import { Globe, Linkedin, Twitter, Github, Instagram, Youtube } from "lucide-react";
 

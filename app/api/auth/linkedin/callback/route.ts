@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { saveLinkedInConnectionAdmin } from "@/lib/firestore-admin";
-import { isAdminInitialized } from "@/lib/firebase-admin";
+import { isAdminInitialized, adminDb } from "@/lib/firebase-admin";
 
 /**
  * Route de callback OAuth 2.0 LinkedIn
@@ -115,6 +115,17 @@ export async function GET(request: NextRequest) {
       profilePicture: profileData.picture || undefined,
       email: profileData.email || undefined,
     });
+
+    // 🖼️ ÉTAPE 3b: Synchronisation de la photo LinkedIn vers le profil utilisateur
+    if (profileData.picture && adminDb) {
+      try {
+        const userRef = adminDb.collection("users").doc(userId);
+        await userRef.update({ photoURL: profileData.picture });
+      } catch (photoSyncError) {
+        // Non-bloquant : la photo LinkedIn reste disponible via LinkedInContext
+        console.warn("Failed to sync LinkedIn photo to user profile:", photoSyncError);
+      }
+    }
 
     // ✅ ÉTAPE 4: Redirection avec succès
     return NextResponse.redirect(

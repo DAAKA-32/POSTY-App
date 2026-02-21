@@ -8,6 +8,7 @@ import {
 import { adminDb, isAdminInitialized } from "@/lib/firebase-admin";
 import { Timestamp } from "firebase-admin/firestore";
 import { isPlatformAllowed, PlanType } from "@/lib/plans";
+import { verifyAuth } from "@/lib/auth";
 
 /**
  * Route de publication sur LinkedIn
@@ -26,6 +27,9 @@ import { isPlatformAllowed, PlanType } from "@/lib/plans";
  */
 export async function POST(request: NextRequest) {
   try {
+    const auth = await verifyAuth(request);
+    if (auth.error) return auth.error;
+
     // 🔍 Vérification de l'initialisation Firebase Admin
     if (!isAdminInitialized() || !adminDb) {
       console.error("Firebase Admin not initialized");
@@ -40,7 +44,10 @@ export async function POST(request: NextRequest) {
 
     // 🔐 ÉTAPE 1: Récupération et validation des données
     const body = await request.json();
-    const { userId, content, postId, platforms, visibility = "PUBLIC" } = body;
+    const { userId: bodyUserId, content, postId, platforms, visibility = "PUBLIC" } = body;
+
+    // Use authenticated uid, fall back to body userId only in dev bypass mode
+    const userId = auth.uid === "__dev_bypass__" ? bodyUserId : auth.uid;
 
     // Validate visibility value
     const validVisibilities = ["PUBLIC", "CONNECTIONS"];
@@ -187,12 +194,12 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      console.error("LinkedIn publish error details:", errorData);
       return NextResponse.json(
         {
           error: "publish_failed",
           message:
             "Échec de la publication sur LinkedIn. Veuillez réessayer.",
-          details: errorData,
         },
         { status: shareResponse.status }
       );

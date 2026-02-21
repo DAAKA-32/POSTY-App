@@ -118,7 +118,7 @@ export function AppLoadingTransition({
                 />
 
                 {/* Logo image - no colored background */}
-                <div className="relative w-20 h-20 md:w-24 md:h-24 flex items-center justify-center">
+                <div className="relative w-20 h-20 md:w-24 md:h-24 flex items-center justify-center rounded-2xl overflow-hidden">
                   <img
                     src="/logo.png"
                     alt="Posty Logo"

@@ -87,7 +87,7 @@ export async function saveLinkedInPostAdmin(
 // ============== QUOTA MANAGEMENT (SERVER-SIDE) ==============
 
 import { SubscriptionPlan } from "@/types";
-import { DAILY_MESSAGE_LIMITS, isTestModeValid } from "@/lib/plans";
+import { DAILY_MESSAGE_LIMITS, HOURLY_MESSAGE_LIMITS, HOURLY_WINDOW_MS, isTestModeValid } from "@/lib/plans";
 
 /**
  * Get the start of today (00:00:00 UTC)
@@ -212,6 +212,106 @@ export async function checkUserQuotaAdmin(userId: string): Promise<QuotaCheckRes
   };
 }
 
+// ============== HOURLY QUOTA (ROLLING WINDOW) ==============
+
+export interface HourlyQuotaCheckResult {
+  canGenerate: boolean;
+  plan: SubscriptionPlan | null;
+  hourlyLimit: number;
+  usedThisHour: number;
+  remaining: number;
+  /** Seconds until the oldest message in the window expires (0 if not at limit) */
+  resetInSeconds: number;
+  reason?: string;
+}
+
+/**
+ * Check if user can generate content based on hourly rolling window.
+ * Server-side check using Admin SDK.
+ *
+ * Uses a 1-hour sliding window: counts messages with timestamps within
+ * the last 60 minutes. Respects test mode.
+ */
+export async function checkHourlyQuotaAdmin(userId: string): Promise<HourlyQuotaCheckResult> {
+  if (!adminDb) {
+    throw new Error("Firebase Admin not initialized");
+  }
+
+  const userRef = adminDb.collection("users").doc(userId);
+  const userSnap = await userRef.get();
+
+  const defaultResult: HourlyQuotaCheckResult = {
+    canGenerate: false,
+    plan: null,
+    hourlyLimit: 0,
+    usedThisHour: 0,
+    remaining: 0,
+    resetInSeconds: 0,
+    reason: "Aucun abonnement actif",
+  };
+
+  if (!userSnap.exists) return defaultResult;
+
+  const data = userSnap.data();
+  if (!data) return defaultResult;
+
+  // Determine effective plan (test mode overrides Stripe subscription)
+  const testModeResult = isTestModeValid(data.testMode);
+  const isTestMode = testModeResult.isActive;
+  const testPlan = testModeResult.plan;
+
+  let rawPlan: string | null = data.subscription?.plan || null;
+  if (rawPlan === "free") rawPlan = null;
+  let effectivePlan: SubscriptionPlan | null = rawPlan ? (rawPlan === "starter" ? "pro" : rawPlan) as SubscriptionPlan : null;
+
+  if (isTestMode && testPlan) {
+    effectivePlan = testPlan as SubscriptionPlan;
+  }
+
+  if (!effectivePlan) return defaultResult;
+
+  const hourlyLimit = HOURLY_MESSAGE_LIMITS[effectivePlan];
+
+  // Unlimited plan (-1)
+  if (hourlyLimit === -1) {
+    return {
+      canGenerate: true,
+      plan: effectivePlan,
+      hourlyLimit: -1,
+      usedThisHour: 0,
+      remaining: -1,
+      resetInSeconds: 0,
+    };
+  }
+
+  // Get timestamps and filter to rolling window
+  const now = Date.now();
+  const windowStart = now - HOURLY_WINDOW_MS;
+  const allTimestamps: number[] = data.quota?.messageTimestamps || [];
+  const recentTimestamps = allTimestamps.filter((ts: number) => ts > windowStart);
+  const usedThisHour = recentTimestamps.length;
+  const remaining = Math.max(0, hourlyLimit - usedThisHour);
+  const canGenerate = usedThisHour < hourlyLimit;
+
+  // Calculate reset time: when will the oldest message in window expire?
+  let resetInSeconds = 0;
+  if (!canGenerate && recentTimestamps.length > 0) {
+    const oldestInWindow = Math.min(...recentTimestamps);
+    const expiresAt = oldestInWindow + HOURLY_WINDOW_MS;
+    resetInSeconds = Math.max(0, Math.ceil((expiresAt - now) / 1000));
+  }
+
+  return {
+    canGenerate,
+    plan: effectivePlan,
+    hourlyLimit,
+    usedThisHour,
+    remaining,
+    resetInSeconds,
+    reason: canGenerate ? undefined : "Limite horaire atteinte",
+  };
+}
+
 /**
  * Increment user's daily message count
  * Server-side update using Admin SDK
@@ -225,6 +325,8 @@ export async function incrementUserQuotaAdmin(userId: string): Promise<void> {
   const userSnap = await userRef.get();
 
   const today = getTodayStartUTC();
+  const now = Date.now();
+  const windowStart = now - HOURLY_WINDOW_MS;
 
   if (!userSnap.exists) {
     // Create user document with initial quota
@@ -233,6 +335,7 @@ export async function incrementUserQuotaAdmin(userId: string): Promise<void> {
       quota: {
         dailyMessageCount: 1,
         lastMessageDate: Timestamp.fromDate(today),
+        messageTimestamps: [now],
       },
       createdAt: FieldValue.serverTimestamp(),
     });
@@ -250,9 +353,15 @@ export async function incrementUserQuotaAdmin(userId: string): Promise<void> {
   }
   // Otherwise, it's a new day, start fresh at 1
 
+  // Clean old timestamps (keep only last hour) and append new one
+  const existingTimestamps: number[] = data?.quota?.messageTimestamps || [];
+  const cleanedTimestamps = existingTimestamps.filter((ts: number) => ts > windowStart);
+  cleanedTimestamps.push(now);
+
   await userRef.update({
     "quota.dailyMessageCount": newCount,
     "quota.lastMessageDate": Timestamp.fromDate(today),
+    "quota.messageTimestamps": cleanedTimestamps,
   });
 }
 

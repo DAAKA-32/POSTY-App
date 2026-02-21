@@ -452,7 +452,7 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-[#F8935D]/10 dark:border-dark-border">
           <Link href="/app" className="flex items-center gap-2.5 group min-w-0 flex-1" onClick={onClose}>
-            <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center shadow-glow transition-transform group-hover:scale-105 flex-shrink-0">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-2xl overflow-hidden shadow-glow transition-transform group-hover:scale-105 flex-shrink-0">
               <img
                 src="/logo.png"
                 alt="Posty Logo"

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { verifyAuth } from "@/lib/auth";
 import { getStripeServer, getPriceId, getAppUrl, BillingInterval } from "@/lib/stripe";
 import { SubscriptionPlan } from "@/types";
 import { adminDb, isAdminInitialized } from "@/lib/firebase-admin";
@@ -6,9 +7,13 @@ import { PLAN_CONFIGS, TRIAL_PERIOD_DAYS, checkTrialEligibility, isPlanTrialElig
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify Firebase auth token
+    const auth = await verifyAuth(request);
+    if (auth.error) return auth.error;
+
     const body = await request.json();
     const {
-      userId,
+      userId: bodyUserId,
       userEmail,
       plan,
       interval = "monthly",
@@ -22,6 +27,9 @@ export async function POST(request: NextRequest) {
       withTrial?: boolean;
       redirectAfterSuccess?: string;
     };
+
+    // Use authenticated uid (fallback to body userId in dev bypass mode)
+    const userId = auth.uid === "__dev_bypass__" ? bodyUserId : auth.uid;
 
     // Validate required fields
     if (!userId || !userEmail) {

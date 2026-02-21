@@ -22,12 +22,12 @@ import ModernResponseCard from "@/components/chat/ModernResponseCard";
 import ModernStyleSelector from "@/components/chat/ModernStyleSelector";
 import DualModeToggle from "@/components/chat/DualModeToggle";
 import MaxModeSelector from "@/components/chat/MaxModeSelector";
+import InlineUpgradeBanner from "@/components/chat/InlineUpgradeBanner";
 import { getPlanFeatures } from "@/lib/plan-features";
 import NewResponseIndicator from "@/components/chat/NewResponseIndicator";
 import { PostInsights } from "@/components/post";
 import PublishToLinkedInModal from "@/components/linkedin/PublishToLinkedInModal";
 import ScheduleModal from "@/components/schedule/ScheduleModal";
-import UpgradeCTA from "@/components/subscription/UpgradeCTA";
 import { AnimatedScaleFade } from "@/components/animations/AnimatedPageWrapper";
 import toast from "@/components/ui/Toast";
 import VoiceWaveform, { ListeningIndicator } from "@/components/chat/VoiceWaveform";
@@ -149,10 +149,10 @@ function AppContent() {
   // Max mode selector state (Max plan: choose between dual/storytelling/business)
   const [maxMode, setMaxMode] = useState<"dual" | "storytelling" | "business">("dual");
 
-  // Track session activity for intelligent upgrade CTA timing
-  const [sessionStartTime] = useState(Date.now());
-  const [sessionMessageCount, setSessionMessageCount] = useState(0);
-  const [sessionDuration, setSessionDuration] = useState(0);
+  // Inline upgrade banner state (replaces mode selector zone for Pro users)
+  const [showUpgradeBanner, setShowUpgradeBanner] = useState(false);
+  const [upgradeBannerReason, setUpgradeBannerReason] = useState<"dual-limit" | "max-feature">("max-feature");
+
 
   // Detect mobile keyboard
   const { keyboardHeight, isKeyboardVisible } = useKeyboardHeight();
@@ -215,19 +215,6 @@ function AppContent() {
     threshold: 200,
   });
 
-  // Track session duration for intelligent upgrade CTA timing
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setSessionDuration(Math.floor((Date.now() - sessionStartTime) / 1000));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [sessionStartTime]);
-
-  // Track message count for intelligent upgrade CTA timing
-  useEffect(() => {
-    const userMessages = messages.filter((m) => m.type === "user");
-    setSessionMessageCount(userMessages.length);
-  }, [messages]);
 
   // Initialize analytics on mount
   useEffect(() => {
@@ -560,7 +547,7 @@ function AppContent() {
                   >
                     {/* Gradient border ring */}
                     <div className="absolute -inset-1 bg-gradient-to-br from-primary via-accent to-primary rounded-3xl opacity-60 blur-[2px]" />
-                    <div className="relative w-20 h-20 sm:w-24 sm:h-24 shadow-elevated ring-2 ring-white/50 dark:ring-dark-card/50">
+                    <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-3xl overflow-hidden shadow-elevated ring-2 ring-white/50 dark:ring-dark-card/50">
                       <Image
                         src="/logo.png"
                         alt="Posty Logo"
@@ -672,7 +659,7 @@ function AppContent() {
                             <div key={`pair-${message.id || i}-${pairIndex}`}>
                               {/* POSTY Avatar and Label */}
                               <div className="flex items-center gap-3 mb-3">
-                                <div className="w-8 h-8 shrink-0 shadow-sm">
+                                <div className="w-8 h-8 shrink-0 rounded-xl overflow-hidden shadow-sm">
                                   <Image
                                     src="/logo.png"
                                     alt="Posty"
@@ -720,7 +707,7 @@ function AppContent() {
                             >
                               {/* POSTY Avatar and Label */}
                               <div className="flex items-center gap-3 mb-3">
-                                <div className="w-8 h-8 shrink-0 shadow-sm">
+                                <div className="w-8 h-8 shrink-0 rounded-xl overflow-hidden shadow-sm">
                                   <Image
                                     src="/logo.png"
                                     alt="Posty"
@@ -854,34 +841,39 @@ function AppContent() {
           }}
         >
           <div className="max-w-3xl mx-auto px-3 sm:px-4 py-1 lg:py-2">
-            {/* Upgrade CTA - Dynamic based on plan with intelligent timing */}
-            <UpgradeCTA
-              variant="inline"
-              className="mb-2 sm:mb-3"
-              messageCount={sessionMessageCount}
-              sessionDuration={sessionDuration}
-            />
-
-            {/* Mode Selector — Max: 3-way selector, Pro: DualModeToggle */}
-            {isMaxPlan && (
-              <div className="mb-3 flex justify-center">
-                <MaxModeSelector
-                  selectedMode={maxMode}
-                  onModeChange={setMaxMode}
-                />
-              </div>
-            )}
-            {isProPlan && !isMaxPlan && (
-              <div className="mb-3 flex justify-center">
-                <DualModeToggle
-                  enabled={dualMode}
-                  onToggle={(val) => setDualMode(val)}
-                  responseType={selectedStyle}
-                  onResponseTypeChange={setSelectedStyle}
-                  dualUsedThisWeek={dualUsedThisWeek}
-                />
-              </div>
-            )}
+            {/* Mode Selector / Upgrade Banner zone */}
+            <AnimatePresence mode="wait">
+              {isMaxPlan && (
+                <div className="mb-3 flex justify-center">
+                  <MaxModeSelector
+                    selectedMode={maxMode}
+                    onModeChange={setMaxMode}
+                  />
+                </div>
+              )}
+              {isProPlan && !isMaxPlan && (
+                <div className="mb-3 flex justify-center">
+                  {showUpgradeBanner ? (
+                    <InlineUpgradeBanner
+                      reason={upgradeBannerReason}
+                      onClose={() => setShowUpgradeBanner(false)}
+                    />
+                  ) : (
+                    <DualModeToggle
+                      enabled={dualMode}
+                      onToggle={(val) => setDualMode(val)}
+                      responseType={selectedStyle}
+                      onResponseTypeChange={setSelectedStyle}
+                      dualUsedThisWeek={dualUsedThisWeek}
+                      onUpgradePrompt={(reason) => {
+                        setUpgradeBannerReason(reason);
+                        setShowUpgradeBanner(true);
+                      }}
+                    />
+                  )}
+                </div>
+              )}
+            </AnimatePresence>
 
             <motion.div
               initial={{ opacity: 0, scale: 0.98 }}
@@ -1079,7 +1071,7 @@ function AppContent() {
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.2, type: "spring", stiffness: 200, damping: 15 }}
-                className="w-20 h-20 mx-auto mb-6 shadow-lg ring-2 ring-primary/20"
+                className="w-20 h-20 mx-auto mb-6 rounded-3xl overflow-hidden shadow-lg ring-2 ring-primary/20"
               >
                 <Image src="/logo.png" alt="Posty" width={80} height={80} className="w-full h-full object-contain" />
               </motion.div>

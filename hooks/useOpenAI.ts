@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import { getAuthHeaders } from "@/lib/api-client";
 
 // ============== TYPES ==============
 
@@ -173,9 +174,10 @@ export function useChat(options?: { language?: "fr" | "en" }) {
       setMessages((prev) => [...prev, assistantMessage]);
 
       try {
+        const authHeaders = await getAuthHeaders();
         const response = await fetch("/api/chat", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...authHeaders },
           body: JSON.stringify({
             messages: [...messages, userMessage].map((m) => ({
               role: m.role,
@@ -285,9 +287,10 @@ export function usePostGeneration(options?: { language?: "fr" | "en" }) {
       setIsGenerating(true);
 
       try {
+        const genAuthHeaders = await getAuthHeaders();
         const response = await fetch("/api/generate", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...genAuthHeaders },
           body: JSON.stringify({
             prompt: prompt.trim(),
             language,

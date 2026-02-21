@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStripeServer, getAppUrl } from "@/lib/stripe";
+import { verifyAuth } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await verifyAuth(request);
+    if (auth.error) return auth.error;
+
     const body = await request.json();
     const { customerId } = body as { customerId: string };
 

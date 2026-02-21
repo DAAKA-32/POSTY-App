@@ -358,7 +358,7 @@ function Navbar() {
               style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
             >
               <Link href="/" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-2.5">
-                <div className="w-9 h-9 shadow-md shadow-[#F8935D]/15 ring-1 ring-gray-100">
+                <div className="w-9 h-9 rounded-2xl overflow-hidden shadow-md shadow-[#F8935D]/15 ring-1 ring-gray-100">
                   <Image src="/logo.png" alt="Posty" width={40} height={40} className="w-full h-full object-contain" />
                 </div>
                 <span className="text-lg font-bold text-gray-900 tracking-tight">Posty</span>
@@ -1232,7 +1232,7 @@ function DemoSection() {
               {/* MacBook-style title bar */}
               <div className="flex items-center justify-between px-5 md:px-6 py-3.5 md:py-4 border-b border-gray-100 bg-gradient-to-b from-gray-50/80 to-white">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 md:w-10 md:h-10 shadow-sm ring-1 ring-gray-100">
+                  <div className="w-9 h-9 md:w-10 md:h-10 rounded-2xl overflow-hidden shadow-sm ring-1 ring-gray-100">
                     <Image src="/logo.png" alt="Posty" width={40} height={40} className="w-full h-full object-contain" />
                   </div>
                   <div>
@@ -1311,7 +1311,7 @@ function DemoSection() {
                         initial={alreadyPlayed ? false : { opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.5, delay: 0.1, ease: premiumEase }}
-                        className="w-14 h-14 md:w-16 md:h-16 shadow-lg shadow-[#F8935D]/15 ring-1 ring-gray-100 mb-5"
+                        className="w-14 h-14 md:w-16 md:h-16 rounded-2xl overflow-hidden shadow-lg shadow-[#F8935D]/15 ring-1 ring-gray-100 mb-5"
                       >
                         <Image src="/logo.png" alt="Posty" width={64} height={64} className="w-full h-full object-contain" />
                       </motion.div>
@@ -1434,7 +1434,7 @@ function DemoSection() {
                 </svg>
               </button>
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 shadow-sm">
+                <div className="w-9 h-9 rounded-2xl overflow-hidden shadow-sm">
                   <Image src="/logo.png" alt="Posty" width={36} height={36} className="w-full h-full object-contain" />
                 </div>
                 <div>
@@ -1472,7 +1472,7 @@ function DemoSection() {
                   transition={{ duration: 0.35, delay: 0.15, ease: premiumEase }}
                   className="flex gap-3"
                 >
-                  <div className="w-8 h-8 md:w-9 md:h-9 flex-shrink-0 shadow-md shadow-[#F8935D]/20 mt-0.5">
+                  <div className="w-8 h-8 md:w-9 md:h-9 flex-shrink-0 rounded-xl overflow-hidden shadow-md shadow-[#F8935D]/20 mt-0.5">
                     <Image src="/logo.png" alt="Posty" width={36} height={36} className="w-full h-full object-contain" />
                   </div>
                   <div className="flex-1 min-w-0">

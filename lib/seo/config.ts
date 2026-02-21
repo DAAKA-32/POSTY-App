@@ -19,8 +19,8 @@ export const seoConfig = {
   ogImageDefault: "/og-image.jpg",
 
   // Contact
-  supportEmail: "posty.contact@gmail.com",
-  privacyEmail: "posty.contact@gmail.com",
+  supportEmail: "postygroup@gmail.com",
+  privacyEmail: "postygroup@gmail.com",
 
   // Founder - E-E-A-T: Authoritativeness
   founder: {

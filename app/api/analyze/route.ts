@@ -8,6 +8,7 @@ import { checkUserQuotaAdmin } from "@/lib/firestore-admin";
 import { isAdminInitialized } from "@/lib/firebase-admin";
 import { canAnalyzePosts } from "@/lib/plan-features";
 import { SubscriptionPlan, PostAnalysis } from "@/types";
+import { verifyAuth } from "@/lib/auth";
 
 /**
  * POST /api/analyze
@@ -24,8 +25,14 @@ import { SubscriptionPlan, PostAnalysis } from "@/types";
  */
 export async function POST(request: NextRequest) {
   try {
+    const auth = await verifyAuth(request);
+    if (auth.error) return auth.error;
+
     const body = await request.json();
-    const { userId, postContent, language = "fr" } = body;
+    const { userId: bodyUserId, postContent, language = "fr" } = body;
+
+    // Use authenticated uid, fall back to body userId only in dev bypass mode
+    const userId = auth.uid === "__dev_bypass__" ? bodyUserId : auth.uid;
 
     // Validate required fields
     if (!postContent || typeof postContent !== "string") {

@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { verifyAuth } from "@/lib/auth";
 import { getMockResponses } from "@/lib/mock-responses";
 import {
   createOpenAIService,
@@ -12,7 +13,7 @@ import {
   INTENT_CLASSIFICATION_PROMPT,
 } from "@/lib/openai";
 import {
-  checkUserQuotaAdmin,
+  checkHourlyQuotaAdmin,
   incrementUserQuotaAdmin,
   getUserProfileAdmin,
   getDualModeUsageThisWeek,
@@ -52,9 +53,13 @@ const MOCK_CHUNK_DELAY = 20;
  */
 export async function POST(request: NextRequest) {
   try {
+    // Verify Firebase auth token
+    const auth = await verifyAuth(request);
+    if (auth.error) return auth.error;
+
     const body = await request.json();
     const {
-      userId,
+      userId: bodyUserId,
       prompt,
       language = "fr",
       userApiKey,
@@ -68,6 +73,9 @@ export async function POST(request: NextRequest) {
       // File attachment (Max plan only)
       fileAttachment,
     } = body;
+
+    // Use authenticated uid (fallback to body userId in dev bypass mode)
+    const userId = auth.uid === "__dev_bypass__" ? bodyUserId : auth.uid;
 
     // Validate required fields
     if (!prompt || typeof prompt !== "string") {
@@ -84,24 +92,27 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // ========== QUOTA CHECK (SERVER-SIDE) ==========
+    // ========== QUOTA CHECK (SERVER-SIDE — HOURLY ROLLING WINDOW) ==========
     // This prevents users from bypassing quota by directly calling the API
     let quotaCheck = null;
     let userPlan: PlanType | null = null;
     if (isAdminInitialized()) {
       try {
-        quotaCheck = await checkUserQuotaAdmin(userId);
+        quotaCheck = await checkHourlyQuotaAdmin(userId);
         userPlan = quotaCheck.plan;
 
         if (!quotaCheck.canGenerate) {
+          const resetMinutes = Math.ceil(quotaCheck.resetInSeconds / 60);
           return new Response(
             JSON.stringify({
               error: "quota_exceeded",
               message: language === "fr"
-                ? "Vous avez atteint votre limite quotidienne de messages."
-                : "You have reached your daily message limit.",
-              limit: quotaCheck.dailyLimit,
-              used: quotaCheck.usedToday,
+                ? `Vous avez utilisé vos ${quotaCheck.hourlyLimit} messages cette heure. Réessayez dans ${resetMinutes} min.`
+                : `You've used your ${quotaCheck.hourlyLimit} messages this hour. Try again in ${resetMinutes} min.`,
+              hourlyLimit: quotaCheck.hourlyLimit,
+              usedThisHour: quotaCheck.usedThisHour,
+              remaining: 0,
+              resetInSeconds: quotaCheck.resetInSeconds,
               plan: quotaCheck.plan,
             }),
             {
@@ -446,12 +457,12 @@ export async function POST(request: NextRequest) {
               }
 
               // Send updated quota info in the complete event
-              const updatedQuota = await checkUserQuotaAdmin(userId);
+              const updatedQuota = await checkHourlyQuotaAdmin(userId);
               sendEvent("complete", {
                 usedOpenAI: !!openaiService,
                 quota: {
-                  used: updatedQuota.usedToday,
-                  limit: updatedQuota.dailyLimit,
+                  usedThisHour: updatedQuota.usedThisHour,
+                  hourlyLimit: updatedQuota.hourlyLimit,
                   remaining: updatedQuota.remaining,
                 }
               });

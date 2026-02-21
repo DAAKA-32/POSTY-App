@@ -1,3 +1,5 @@
+import { getAuthHeaders } from "@/lib/api-client";
+
 // Meta (Facebook & Threads) OAuth 2.0 Configuration and API utilities
 // Facebook and Threads use separate OAuth flows but share the same Meta App credentials
 
@@ -159,9 +161,10 @@ export async function postToFacebook(
   postId?: string
 ): Promise<FacebookPostResult> {
   try {
+    const authHeaders = await getAuthHeaders();
     const response = await fetch("/api/facebook/publish", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...authHeaders },
       body: JSON.stringify({ userId, content, postId }),
     });
 
@@ -198,9 +201,10 @@ export async function postToThreads(
   postId?: string
 ): Promise<ThreadsPostResult> {
   try {
+    const threadsAuthHeaders = await getAuthHeaders();
     const response = await fetch("/api/threads/publish", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...threadsAuthHeaders },
       body: JSON.stringify({ userId, content, postId }),
     });
 

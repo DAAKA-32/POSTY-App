@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import { PlanType, getPlanConfig, PLAN_CONFIGS, isTestModeAllowed, PRODUCTION_MODE } from "@/lib/plans";
+import { useAuth } from "@/contexts/AuthContext";
+import { PlanType, getPlanConfig, PLAN_CONFIGS, isTestModeAllowed } from "@/lib/plans";
 import Button from "@/components/ui/Button";
 import toast from "@/components/ui/Toast";
 
@@ -39,6 +40,7 @@ export default function TestModePanel({
     disableTestMode,
     loading,
   } = useSubscription();
+  const { user } = useAuth();
 
   const [isExpanded, setIsExpanded] = useState(false);
   const [isActivating, setIsActivating] = useState<PlanType | null>(null);
@@ -52,11 +54,9 @@ export default function TestModePanel({
   const [shouldShow, setShouldShow] = useState(false);
 
   useEffect(() => {
-    // Use centralized isTestModeAllowed() check from lib/plans.ts
-    // This respects PRODUCTION_MODE flag as single source of truth
-    const allowed = isTestModeAllowed() || showInProduction;
+    const allowed = isTestModeAllowed(user?.email) || showInProduction;
     setShouldShow(allowed);
-  }, [showInProduction]);
+  }, [showInProduction, user?.email]);
 
   const handleEnableTestMode = async (plan: PlanType) => {
     if (!shouldShow) return;

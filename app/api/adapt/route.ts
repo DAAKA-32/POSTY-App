@@ -8,6 +8,7 @@ import { checkUserQuotaAdmin } from "@/lib/firestore-admin";
 import { isAdminInitialized } from "@/lib/firebase-admin";
 import { canAdaptToMultiPlatform } from "@/lib/plan-features";
 import { SubscriptionPlan, AdaptationPlatform, PlatformAdaptation } from "@/types";
+import { verifyAuth } from "@/lib/auth";
 
 /**
  * POST /api/adapt
@@ -25,8 +26,14 @@ import { SubscriptionPlan, AdaptationPlatform, PlatformAdaptation } from "@/type
  */
 export async function POST(request: NextRequest) {
   try {
+    const auth = await verifyAuth(request);
+    if (auth.error) return auth.error;
+
     const body = await request.json();
-    const { userId, postContent, platform, language = "fr" } = body;
+    const { userId: bodyUserId, postContent, platform, language = "fr" } = body;
+
+    // Use authenticated uid, fall back to body userId only in dev bypass mode
+    const userId = auth.uid === "__dev_bypass__" ? bodyUserId : auth.uid;
 
     // Validate required fields
     if (!postContent || typeof postContent !== "string") {

@@ -1,3 +1,5 @@
+import { getAuthHeaders } from "@/lib/api-client";
+
 // Twitter (X) OAuth 2.0 Configuration and API utilities
 // Uses PKCE (Proof Key for Code Exchange) for enhanced security
 
@@ -153,10 +155,12 @@ export async function postToTwitter(
       };
     }
 
+    const authHeaders = await getAuthHeaders();
     const response = await fetch("/api/twitter/publish", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        ...authHeaders,
       },
       body: JSON.stringify({
         userId,
@@ -198,10 +202,12 @@ export async function refreshTwitterToken(
   userId: string
 ): Promise<{ success: boolean; expiresAt?: Date; error?: string }> {
   try {
+    const refreshAuthHeaders = await getAuthHeaders();
     const response = await fetch("/api/twitter/refresh", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        ...refreshAuthHeaders,
       },
       body: JSON.stringify({ userId }),
     });

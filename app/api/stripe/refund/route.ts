@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { verifyAuth } from "@/lib/auth";
 import { getStripeServer } from "@/lib/stripe";
 import { GUARANTEE_PERIOD_DAYS } from "@/lib/plans";
 import { adminDb, isAdminInitialized } from "@/lib/firebase-admin";
@@ -6,8 +7,13 @@ import { Timestamp } from "firebase-admin/firestore";
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify Firebase auth token
+    const auth = await verifyAuth(request);
+    if (auth.error) return auth.error;
+
     const body = await request.json();
-    const { userId } = body as { userId: string };
+    const { userId: bodyUserId } = body as { userId: string };
+    const userId = auth.uid === "__dev_bypass__" ? bodyUserId : auth.uid;
 
     if (!userId) {
       return NextResponse.json(

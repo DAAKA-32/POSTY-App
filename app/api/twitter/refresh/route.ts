@@ -5,6 +5,7 @@ import {
 } from "@/lib/firestore-admin";
 import { isAdminInitialized } from "@/lib/firebase-admin";
 import { TWITTER_CONFIG, TwitterTokenResponse } from "@/lib/twitter";
+import { verifyAuth } from "@/lib/auth";
 
 /**
  * Route de rafraîchissement du token Twitter
@@ -21,6 +22,9 @@ import { TWITTER_CONFIG, TwitterTokenResponse } from "@/lib/twitter";
  */
 export async function POST(request: NextRequest) {
   try {
+    const auth = await verifyAuth(request);
+    if (auth.error) return auth.error;
+
     // 🔍 Vérification de l'initialisation Firebase Admin
     if (!isAdminInitialized()) {
       console.error("Firebase Admin not initialized");
@@ -35,7 +39,10 @@ export async function POST(request: NextRequest) {
 
     // 🔐 ÉTAPE 1: Récupération et validation des données
     const body = await request.json();
-    const { userId } = body;
+    const { userId: bodyUserId } = body;
+
+    // Use authenticated uid, fall back to body userId only in dev bypass mode
+    const userId = auth.uid === "__dev_bypass__" ? bodyUserId : auth.uid;
 
     if (!userId) {
       return NextResponse.json(

@@ -37,8 +37,8 @@ export const legalTranslations = {
       companyName: "Posty",
       legalEntity: "Emilien Nepveu, entrepreneur individuel",
       address: "Adresse : 42170 Chambles, France",
-      email: "Email : posty.contact@gmail.com",
-      gdprContact: "Contact RGPD / DPO : posty.contact@gmail.com",
+      email: "Email : postygroup@gmail.com",
+      gdprContact: "Contact RGPD / DPO : postygroup@gmail.com",
     },
 
     section3: {
@@ -124,7 +124,7 @@ export const legalTranslations = {
         { title: "Droit de limitation", desc: "Limiter le traitement de vos données" },
         { title: "Droit de retirer le consentement", desc: "Retirer votre consentement à tout moment, sans affecter la licéité du traitement effectué avant le retrait" },
       ],
-      exercise: "Pour exercer ces droits ou retirer votre consentement, rendez-vous dans les Paramètres de confidentialité de l'application ou contactez-nous à : posty.contact@gmail.com",
+      exercise: "Pour exercer ces droits ou retirer votre consentement, rendez-vous dans les Paramètres de confidentialité de l'application ou contactez-nous à : postygroup@gmail.com",
     },
 
     section9: {
@@ -194,7 +194,7 @@ export const legalTranslations = {
         "Documenter toute violation dans un registre interne des incidents",
         "Mettre en œuvre les mesures correctives nécessaires pour limiter l'impact de la violation",
       ],
-      contact: "En cas de suspicion de violation de vos données, contactez immédiatement : posty.contact@gmail.com",
+      contact: "En cas de suspicion de violation de vos données, contactez immédiatement : postygroup@gmail.com",
     },
 
     section17: {
@@ -205,8 +205,8 @@ export const legalTranslations = {
     section18: {
       title: "18. Contact",
       intro: "Pour toute question concernant cette politique ou vos données personnelles :",
-      emailGeneral: "Email général : posty.contact@gmail.com",
-      emailGDPR: "Email RGPD / DPO : posty.contact@gmail.com",
+      emailGeneral: "Email général : postygroup@gmail.com",
+      emailGDPR: "Email RGPD / DPO : postygroup@gmail.com",
     },
   },
 
@@ -295,7 +295,7 @@ export const legalTranslations = {
       },
       guarantee: {
         title: "6.4 Garantie satisfait ou remboursé",
-        content: "Après la période d'essai gratuite, Posty offre une garantie satisfait ou remboursé de 7 jours à compter du premier paiement. Si l'utilisateur n'est pas satisfait du service, il peut demander un remboursement intégral dans ce délai en contactant le support à posty.contact@gmail.com. Au-delà de cette période de 7 jours, aucun remboursement ne sera effectué pour la période en cours, mais l'utilisateur peut résilier son abonnement à tout moment pour éviter les prélèvements futurs.",
+        content: "Après la période d'essai gratuite, Posty offre une garantie satisfait ou remboursé de 7 jours à compter du premier paiement. Si l'utilisateur n'est pas satisfait du service, il peut demander un remboursement intégral dans ce délai en contactant le support à postygroup@gmail.com. Au-delà de cette période de 7 jours, aucun remboursement ne sera effectué pour la période en cours, mais l'utilisateur peut résilier son abonnement à tout moment pour éviter les prélèvements futurs.",
       },
       cancellation: {
         title: "6.5 Résiliation d'abonnement",
@@ -372,7 +372,7 @@ export const legalTranslations = {
     section13: {
       title: "13. Contact",
       intro: "Pour toute question concernant les présentes CGU :",
-      email: "Email : posty.contact@gmail.com",
+      email: "Email : postygroup@gmail.com",
     },
   },
 
@@ -556,7 +556,7 @@ export const legalTranslations = {
     section7: {
       title: "7. Contact",
       intro: "Pour toute question concernant notre utilisation des cookies :",
-      email: "Email : posty.contact@gmail.com",
+      email: "Email : postygroup@gmail.com",
     },
   },
 

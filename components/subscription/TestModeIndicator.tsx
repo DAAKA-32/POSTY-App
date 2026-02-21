@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import { getPlanConfig, isTestModeAllowed } from "@/lib/plans";
+import { useAuth } from "@/contexts/AuthContext";
+import { getPlanConfig, getPlanCoreFeatures, isTestModeAllowed } from "@/lib/plans";
 
 /**
  * TestModeIndicator - Floating indicator when test mode is active
@@ -13,6 +14,7 @@ import { getPlanConfig, isTestModeAllowed } from "@/lib/plans";
  */
 export default function TestModeIndicator() {
   const { isTestMode, testPlan, disableTestMode, loading } = useSubscription();
+  const { user } = useAuth();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isDisabling, setIsDisabling] = useState(false);
 
@@ -23,10 +25,8 @@ export default function TestModeIndicator() {
   const [shouldShow, setShouldShow] = useState(false);
 
   useEffect(() => {
-    // Use centralized isTestModeAllowed() check from lib/plans.ts
-    // This respects PRODUCTION_MODE flag as single source of truth
-    setShouldShow(isTestModeAllowed());
-  }, []);
+    setShouldShow(isTestModeAllowed(user?.email));
+  }, [user?.email]);
 
   const handleDisable = async () => {
     setIsDisabling(true);
@@ -155,69 +155,32 @@ export default function TestModeIndicator() {
                   </p>
                 </div>
 
-                {/* Features preview */}
-                {testPlan === "max" && (
+                {/* Features preview - dynamic from plan config */}
+                {testPlan && planConfig && (
                   <div className="text-xs space-y-1">
                     <p className="text-text-muted font-medium">
                       Fonctionnalités actives:
                     </p>
                     <ul className="space-y-0.5 text-purple-300">
-                      <li className="flex items-center gap-1">
-                        <svg
-                          className="w-3 h-3 text-green-400"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        Conversations illimitées
-                      </li>
-                      <li className="flex items-center gap-1">
-                        <svg
-                          className="w-3 h-3 text-green-400"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        Toutes les plateformes
-                      </li>
-                      <li className="flex items-center gap-1">
-                        <svg
-                          className="w-3 h-3 text-green-400"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        Programmation des posts
-                      </li>
-                      <li className="flex items-center gap-1">
-                        <svg
-                          className="w-3 h-3 text-green-400"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        Publication simultanée
-                      </li>
+                      {getPlanCoreFeatures(planConfig)
+                        .filter((f) => f.included)
+                        .slice(0, 4)
+                        .map((feature, idx) => (
+                          <li key={idx} className="flex items-center gap-1">
+                            <svg
+                              className="w-3 h-3 text-green-400"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                            {feature.text}
+                          </li>
+                        ))}
                     </ul>
                   </div>
                 )}

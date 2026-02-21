@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSubscription } from "@/contexts/SubscriptionContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { isTestModeAllowed } from "@/lib/plans";
 import toast from "@/components/ui/Toast";
 
@@ -29,6 +30,7 @@ export default function DevQuickActions() {
     enableTestMode,
     disableTestMode,
   } = useSubscription();
+  const { user } = useAuth();
 
   const [isOpen, setIsOpen] = useState(false);
   const [isActivating, setIsActivating] = useState(false);
@@ -37,8 +39,8 @@ export default function DevQuickActions() {
   // Check if dev mode is enabled AND if we're on /subscription page
   useEffect(() => {
     const isSubscriptionPage = pathname === "/subscription" || pathname === "/pricing";
-    setShouldShow(isTestModeAllowed() && isSubscriptionPage);
-  }, [pathname]);
+    setShouldShow(isTestModeAllowed(user?.email) && isSubscriptionPage);
+  }, [pathname, user?.email]);
 
   // Keyboard shortcut: Ctrl+Shift+M to activate Max plan
   useEffect(() => {

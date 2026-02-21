@@ -6,13 +6,14 @@ import {
   INSIGHTS_PROMPT,
 } from "@/lib/openai";
 import {
-  checkUserQuotaAdmin,
+  checkHourlyQuotaAdmin,
   incrementUserQuotaAdmin,
 } from "@/lib/firestore-admin";
 import { isAdminInitialized } from "@/lib/firebase-admin";
 import { canImprovePost } from "@/lib/plan-features";
 import { getPlanLimits, getMaxTokensForPlan, PlanType } from "@/lib/plans";
 import { SubscriptionPlan, PostInsights } from "@/types";
+import { verifyAuth } from "@/lib/auth";
 
 /**
  * POST /api/improve
@@ -36,8 +37,14 @@ import { SubscriptionPlan, PostInsights } from "@/types";
  */
 export async function POST(request: NextRequest) {
   try {
+    const auth = await verifyAuth(request);
+    if (auth.error) return auth.error;
+
     const body = await request.json();
-    const { userId, existingPost, instructions = "", language = "fr" } = body;
+    const { userId: bodyUserId, existingPost, instructions = "", language = "fr" } = body;
+
+    // Use authenticated uid, fall back to body userId only in dev bypass mode
+    const userId = auth.uid === "__dev_bypass__" ? bodyUserId : auth.uid;
 
     // Validate required fields
     if (!existingPost || typeof existingPost !== "string") {
@@ -54,24 +61,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ========== PLAN & QUOTA CHECK ==========
+    // ========== PLAN & QUOTA CHECK (HOURLY ROLLING WINDOW) ==========
     let userPlan: SubscriptionPlan | null = null;
     let canGenerate = true;
 
     if (isAdminInitialized()) {
       try {
-        const quotaCheck = await checkUserQuotaAdmin(userId);
+        const quotaCheck = await checkHourlyQuotaAdmin(userId);
         userPlan = quotaCheck.plan as SubscriptionPlan;
         canGenerate = quotaCheck.canGenerate;
 
         if (!canGenerate) {
+          const resetMinutes = Math.ceil(quotaCheck.resetInSeconds / 60);
           return new Response(
             JSON.stringify({
               error: "quota_exceeded",
               message:
                 language === "fr"
-                  ? "Vous avez atteint votre limite quotidienne de messages."
-                  : "You have reached your daily message limit.",
+                  ? `Vous avez utilisé vos ${quotaCheck.hourlyLimit} messages cette heure. Réessayez dans ${resetMinutes} min.`
+                  : `You've used your ${quotaCheck.hourlyLimit} messages this hour. Try again in ${resetMinutes} min.`,
+              hourlyLimit: quotaCheck.hourlyLimit,
+              usedThisHour: quotaCheck.usedThisHour,
+              remaining: 0,
+              resetInSeconds: quotaCheck.resetInSeconds,
+              plan: quotaCheck.plan,
             }),
             { status: 429, headers: { "Content-Type": "application/json" } }
           );

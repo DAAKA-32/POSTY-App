@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { verifyAuth } from "@/lib/auth";
 import {
   getFacebookConnectionAdmin,
   updateFacebookLastUsedAdmin,
@@ -18,6 +19,10 @@ import { FACEBOOK_CONFIG } from "@/lib/meta";
  */
 export async function POST(request: NextRequest) {
   try {
+    // Verify Firebase auth token
+    const auth = await verifyAuth(request);
+    if (auth.error) return auth.error;
+
     // Vérification Firebase Admin
     if (!isAdminInitialized() || !adminDb) {
       return NextResponse.json(
@@ -31,7 +36,8 @@ export async function POST(request: NextRequest) {
 
     // Récupération et validation des données
     const body = await request.json();
-    const { userId, content, postId } = body;
+    const { userId: bodyUserId, content, postId } = body;
+    const userId = auth.uid === "__dev_bypass__" ? bodyUserId : auth.uid;
 
     if (!userId || !content) {
       return NextResponse.json(
@@ -142,11 +148,11 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      console.error("Facebook publish error details:", errorData);
       return NextResponse.json(
         {
           error: "publish_failed",
           message: "Échec de la publication sur Facebook. Veuillez réessayer.",
-          details: errorData,
         },
         { status: publishResponse.status }
       );

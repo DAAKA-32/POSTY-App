@@ -25,16 +25,32 @@
  */
 export const PRODUCTION_MODE = process.env.NEXT_PUBLIC_ENABLE_TEST_MODE !== "true";
 
+// ============================================
+// FOUNDER ACCESS
+// ============================================
+
+/** Emails with permanent test mode access (even in production) */
+const FOUNDER_EMAILS: string[] = ["emilien.nepveu@gmail.com"];
+
+/** Check if an email belongs to a founder */
+export function isFounderEmail(email?: string | null): boolean {
+  if (!email) return false;
+  return FOUNDER_EMAILS.includes(email.toLowerCase());
+}
+
 /**
  * Check if test mode functionality should be available
- * Returns true only if:
- * - PRODUCTION_MODE is false (test mode explicitly enabled)
- * - AND (in development OR admin mode OR localhost)
- *
- * In production (PRODUCTION_MODE=true), this ALWAYS returns false
+ * Returns true if:
+ * - The user is a founder (always allowed, even in production)
+ * - OR PRODUCTION_MODE is false AND (in development OR admin mode OR localhost)
  */
-export function isTestModeAllowed(): boolean {
-  // Production mode blocks all test mode functionality
+export function isTestModeAllowed(email?: string | null): boolean {
+  // Founders always have test mode access
+  if (isFounderEmail(email)) {
+    return true;
+  }
+
+  // Production mode blocks all test mode functionality for non-founders
   if (PRODUCTION_MODE) {
     return false;
   }
@@ -154,8 +170,11 @@ export function getPlatformsForPlan(plan: PlanType | null): Platform[] {
 
 // Plan Limits Interface
 export interface PlanLimits {
-  // Daily message limit (actually enforced)
+  // Daily message limit (legacy — kept for analytics)
   messagesPerDay: number; // -1 = unlimited
+
+  // Hourly message limit (rolling window — actively enforced)
+  messagesPerHour: number; // -1 = unlimited
 
   // Conversations (weekly/monthly — for future use)
   conversationsPerWeek: number; // -1 = unlimited
@@ -225,7 +244,8 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
       yearly: 129, // -17% (10.75€/mois)
     },
     limits: {
-      messagesPerDay: -1, // Unlimited
+      messagesPerDay: -1, // Unlimited (legacy — kept for analytics)
+      messagesPerHour: 50, // Rolling window: 50 msg/hour
       conversationsPerWeek: -1, // Unlimited
       conversationsPerMonth: -1, // Unlimited (daily enforcement only)
       maxCharactersPerPrompt: 300,
@@ -262,7 +282,8 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
       yearly: 199, // -17% (16.58€/mois)
     },
     limits: {
-      messagesPerDay: -1, // Unlimited
+      messagesPerDay: -1, // Unlimited (legacy — kept for analytics)
+      messagesPerHour: 300, // Rolling window: 300 msg/hour (anti-abuse only)
       conversationsPerWeek: -1, // Unlimited
       conversationsPerMonth: -1, // Unlimited
       maxCharactersPerPrompt: 3000,
@@ -446,6 +467,17 @@ export const DAILY_MESSAGE_LIMITS: Record<PlanType, number> = Object.fromEntries
   ])
 ) as Record<PlanType, number>;
 
+// Derived from PLAN_CONFIGS.limits.messagesPerHour (rolling window enforcement)
+export const HOURLY_MESSAGE_LIMITS: Record<PlanType, number> = Object.fromEntries(
+  (Object.keys(PLAN_CONFIGS) as PlanType[]).map((plan) => [
+    plan,
+    PLAN_CONFIGS[plan].limits.messagesPerHour,
+  ])
+) as Record<PlanType, number>;
+
+/** Rolling window duration in milliseconds (1 hour) */
+export const HOURLY_WINDOW_MS = 60 * 60 * 1000;
+
 // ============================================
 // STRIPE PRICE ID MAPPING
 // ============================================
@@ -581,7 +613,7 @@ export const CORE_FEATURES = [
  * Displayed alongside core features in unified list
  */
 export const SECONDARY_FEATURES = [
-  { key: "prompts", label: "Prompts longs (jusqu'à 3000 car.)" },
+  { key: "prompts", label: "Prompts étendus" },
   { key: "sharing", label: "Partage avec contacts" },
   { key: "conversations", label: "Organisation des conversations" },
   { key: "postAnalysis", label: "Analyse détaillée de posts" },
@@ -674,46 +706,68 @@ function getFeatureIncluded(key: string, plan: PlanConfig): boolean {
 }
 
 /**
+ * Get dynamic, plan-specific label for a feature.
+ * Returns a label that accurately reflects the plan's actual limits,
+ * or an empty string to signal "use the static fallback label".
+ */
+function getDynamicFeatureLabel(key: string, plan: PlanConfig): string {
+  const limits = plan.limits;
+
+  switch (key) {
+    case "prompts":
+      if (limits.maxCharactersPerPrompt >= 1000) {
+        return `Prompts longs (jusqu'à ${limits.maxCharactersPerPrompt} car.)`;
+      }
+      return `Prompts (${limits.maxCharactersPerPrompt} car.)`;
+
+    case "dualMode":
+      if (limits.dualResponsesPerWeek === -1) {
+        return "Storytelling + Business illimité";
+      } else if (limits.dualResponsesPerWeek > 0) {
+        return `Storytelling + Business (${limits.dualResponsesPerWeek}/sem.)`;
+      }
+      return "";
+
+    case "multiplatform": {
+      const platforms = limits.allowedPlatforms;
+      if (platforms.length === 1) {
+        return `${PLATFORM_INFO[platforms[0]]?.name || platforms[0]} uniquement`;
+      } else if (platforms.length <= 2) {
+        return platforms.map(p => PLATFORM_INFO[p]?.name || p).join(" + ");
+      }
+      return `4 plateformes simultanées`;
+    }
+
+    case "sharing":
+      if (limits.maxRelations === -1) {
+        return "Partage illimité";
+      } else if (limits.maxRelations > 1) {
+        return `Partage avec ${limits.maxRelations} contacts`;
+      }
+      return "";
+
+    case "quality":
+      if (limits.responseQuality === "ultra") {
+        return "Posts IA ultra (réponses 2x plus longues)";
+      } else if (limits.responseQuality === "complete") {
+        return "Posts IA optimisés";
+      }
+      return "";
+
+    default:
+      return "";
+  }
+}
+
+/**
  * Get CORE features for a plan (always visible)
  * Returns only the primary differentiating features
  */
 export function getPlanCoreFeatures(plan: PlanConfig): FeatureItem[] {
   return CORE_FEATURES.map((feature) => {
-    let text: string = feature.label;
-
-    // Dynamic text for multiplatform feature
-    if (feature.key === "multiplatform") {
-      const platforms = plan.limits.allowedPlatforms;
-      if (platforms.length === 1) {
-        text = `${PLATFORM_INFO[platforms[0]]?.name || platforms[0]} uniquement`;
-      } else if (platforms.length <= 2) {
-        const names = platforms.map(p => PLATFORM_INFO[p]?.name || p).join(" + ");
-        text = names;
-      } else {
-        text = `4 plateformes simultanées`;
-      }
-    }
-
-    // Dynamic text for dual mode
-    if (feature.key === "dualMode") {
-      if (plan.limits.dualResponsesPerWeek === -1) {
-        text = "Storytelling + Business illimité";
-      } else if (plan.limits.dualResponsesPerWeek > 0) {
-        text = `Storytelling + Business (${plan.limits.dualResponsesPerWeek}/sem.)`;
-      }
-    }
-
-    // Dynamic text for quality
-    if (feature.key === "quality") {
-      if (plan.limits.responseQuality === "ultra") {
-        text = "Posts IA ultra (réponses 2x plus longues)";
-      } else if (plan.limits.responseQuality === "complete") {
-        text = "Posts IA optimisés";
-      }
-    }
-
+    const dynamicLabel = getDynamicFeatureLabel(feature.key, plan);
     return {
-      text,
+      text: dynamicLabel || feature.label,
       included: getFeatureIncluded(feature.key, plan),
     };
   });
@@ -724,10 +778,13 @@ export function getPlanCoreFeatures(plan: PlanConfig): FeatureItem[] {
  * Returns additional features beyond core differentiators
  */
 export function getPlanSecondaryFeatures(plan: PlanConfig): FeatureItem[] {
-  return SECONDARY_FEATURES.map((feature) => ({
-    text: feature.label,
-    included: getFeatureIncluded(feature.key, plan),
-  }));
+  return SECONDARY_FEATURES.map((feature) => {
+    const dynamicLabel = getDynamicFeatureLabel(feature.key, plan);
+    return {
+      text: dynamicLabel || feature.label,
+      included: getFeatureIncluded(feature.key, plan),
+    };
+  });
 }
 
 /**
@@ -735,10 +792,13 @@ export function getPlanSecondaryFeatures(plan: PlanConfig): FeatureItem[] {
  * Used by Subscription page for side-by-side comparison with checkmarks/X
  */
 export function getPlanFeaturesUnified(plan: PlanConfig): FeatureItem[] {
-  return UNIFIED_FEATURES.map((feature) => ({
-    text: feature.label,
-    included: getFeatureIncluded(feature.key, plan),
-  }));
+  return UNIFIED_FEATURES.map((feature) => {
+    const dynamicLabel = getDynamicFeatureLabel(feature.key, plan);
+    return {
+      text: dynamicLabel || feature.label,
+      included: getFeatureIncluded(feature.key, plan),
+    };
+  });
 }
 
 /**

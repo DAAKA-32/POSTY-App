@@ -432,11 +432,11 @@ const AIResponsePair = memo(function AIResponsePair({
     >
       {/* POSTY Avatar and Label */}
       <div className="flex items-center gap-3 mb-3">
-        <div className="w-8 h-8 shrink-0 shadow-sm">
+        <div className="w-8 h-8 shrink-0 rounded-xl overflow-hidden shadow-sm">
           <img
             src="/logo.png"
             alt="Posty"
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain"
           />
         </div>
         <span className="text-xs text-text-muted font-medium">POSTY</span>

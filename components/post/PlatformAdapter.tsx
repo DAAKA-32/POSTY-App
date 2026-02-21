@@ -4,6 +4,7 @@ import { useState } from "react";
 import { AdaptationPlatform, PlatformAdaptation } from "@/types";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { getAuthHeaders } from "@/lib/api-client";
 
 interface PlatformAdapterProps {
   postContent: string;
@@ -74,9 +75,10 @@ export function PlatformAdapter({
     setAdaptation(null);
 
     try {
+      const authHeaders = await getAuthHeaders();
       const response = await fetch("/api/adapt", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({
           userId: user.uid,
           postContent,

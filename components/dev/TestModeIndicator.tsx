@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSubscription } from "@/contexts/SubscriptionContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { getPlanConfig, isTestModeAllowed } from "@/lib/plans";
 
 /**
@@ -29,6 +30,7 @@ export default function TestModeIndicator({ showInProduction = false }: TestMode
     disableTestMode,
     loading,
   } = useSubscription();
+  const { user } = useAuth();
 
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
@@ -42,10 +44,8 @@ export default function TestModeIndicator({ showInProduction = false }: TestMode
   const isAdmin = process.env.NEXT_PUBLIC_ADMIN_MODE === "true";
 
   useEffect(() => {
-    // Use centralized isTestModeAllowed() check from lib/plans.ts
-    // This respects PRODUCTION_MODE flag as single source of truth
-    setShouldShow(isTestModeAllowed() || showInProduction);
-  }, [showInProduction]);
+    setShouldShow(isTestModeAllowed(user?.email) || showInProduction);
+  }, [showInProduction, user?.email]);
 
   if (!shouldShow) {
     return null;

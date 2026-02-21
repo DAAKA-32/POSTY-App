@@ -400,7 +400,7 @@ function ConversationContent() {
                             <div key={`pair-${message.id || i}-${pairIndex}`}>
                               {/* POSTY Avatar and Label */}
                               <div className="flex items-center gap-3 mb-3">
-                                <div className="w-8 h-8 shrink-0 shadow-sm">
+                                <div className="w-8 h-8 shrink-0 rounded-xl overflow-hidden shadow-sm">
                                   <img
                                     src="/logo.png"
                                     alt="Posty"
@@ -446,7 +446,7 @@ function ConversationContent() {
                             >
                               {/* POSTY Avatar and Label */}
                               <div className="flex items-center gap-3 mb-3">
-                                <div className="w-8 h-8 shrink-0 shadow-sm">
+                                <div className="w-8 h-8 shrink-0 rounded-xl overflow-hidden shadow-sm">
                                   <img
                                     src="/logo.png"
                                     alt="Posty"

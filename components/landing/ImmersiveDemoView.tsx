@@ -207,11 +207,11 @@ export default function ImmersiveDemoView({
                 transition={{ delay: 0.3 }}
                 className="flex items-center gap-2"
               >
-                <div className="w-8 h-8 sm:w-9 sm:h-9 shadow-lg shadow-orange-500/20">
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl overflow-hidden shadow-lg shadow-orange-500/20">
                   <img
                     src="/logo.png"
                     alt="Posty"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                   />
                 </div>
                 <span className={`${theme.textPrimary} font-bold text-lg hidden sm:inline`}>
@@ -268,12 +268,12 @@ export default function ImmersiveDemoView({
                 <motion.div
                   animate={isLoading ? { scale: [1, 1.1, 1] } : {}}
                   transition={{ duration: 1.5, repeat: isLoading ? Infinity : 0 }}
-                  className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 shadow-lg shadow-orange-500/25"
+                  className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 rounded-2xl overflow-hidden shadow-lg shadow-orange-500/25"
                 >
                   <img
                     src="/logo.png"
                     alt="Posty AI"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                   />
                 </motion.div>
 

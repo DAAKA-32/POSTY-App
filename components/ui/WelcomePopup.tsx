@@ -66,7 +66,7 @@ export default function WelcomePopup({ isOpen, onClose }: WelcomePopupProps) {
       >
         {/* Logo */}
         <div className="flex justify-center mb-4">
-          <div className="w-16 h-16">
+          <div className="w-16 h-16 rounded-2xl overflow-hidden">
             <Image src="/logo.png" alt="Posty Logo" width={64} height={64} className="w-full h-full object-contain" />
           </div>
         </div>

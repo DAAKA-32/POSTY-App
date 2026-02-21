@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStripeServer } from "@/lib/stripe";
 import Stripe from "stripe";
+import { verifyAuth } from "@/lib/auth";
 
 // Helper to extract subscription data
 function extractSubscriptionData(subscription: Stripe.Subscription) {
@@ -22,6 +23,9 @@ function extractSubscriptionData(subscription: Stripe.Subscription) {
 // GET - Fetch subscription details from Stripe
 export async function GET(request: NextRequest) {
   try {
+    const auth = await verifyAuth(request);
+    if (auth.error) return auth.error;
+
     const { searchParams } = new URL(request.url);
     const subscriptionId = searchParams.get("subscriptionId");
     const customerId = searchParams.get("customerId");
@@ -70,6 +74,9 @@ export async function GET(request: NextRequest) {
 // POST - Cancel subscription (at period end)
 export async function POST(request: NextRequest) {
   try {
+    const auth = await verifyAuth(request);
+    if (auth.error) return auth.error;
+
     const body = await request.json();
     const { subscriptionId, action } = body as {
       subscriptionId: string;

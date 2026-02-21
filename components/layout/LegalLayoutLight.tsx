@@ -52,7 +52,7 @@ export default function LegalLayoutLight({ children, title }: LegalLayoutLightPr
         <div className="max-w-[960px] mx-auto px-6 py-4 flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 no-underline">
-            <div className="w-9 h-9 flex items-center justify-center">
+            <div className="w-9 h-9 flex items-center justify-center rounded-2xl overflow-hidden">
               <img
                 src="/logo.png"
                 alt="Posty Logo"
@@ -131,7 +131,7 @@ export default function LegalLayoutLight({ children, title }: LegalLayoutLightPr
           <div className="flex flex-col items-center gap-4">
             {/* Logo and copyright */}
             <div className="flex items-center gap-3">
-              <div className="w-7 h-7 flex items-center justify-center">
+              <div className="w-7 h-7 flex items-center justify-center rounded-xl overflow-hidden">
                 <img
                   src="/logo.png"
                   alt="Posty Logo"
@@ -175,7 +175,7 @@ export default function LegalLayoutLight({ children, title }: LegalLayoutLightPr
             {/* Contact + CNIL */}
             <div className="flex flex-col items-center gap-1 mt-2">
               <p className="text-xs text-text-subtle">
-                Contact RGPD : posty.contact@gmail.com
+                Contact RGPD : postygroup@gmail.com
               </p>
               <p className="text-xs text-text-subtle">
                 Autorite de controle :{" "}

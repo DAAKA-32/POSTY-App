@@ -79,7 +79,7 @@ export default function AboutPage() {
               <span className="text-sm font-medium">Retour</span>
             </Link>
             <Link href="/" className="flex items-center gap-2">
-              <Image src="/logo.png" alt="Posty" width={32} height={32} />
+              <Image src="/logo.png" alt="Posty" width={32} height={32} className="rounded-lg overflow-hidden" />
               <span className="font-bold text-lg text-gray-900">Posty</span>
             </Link>
           </div>
@@ -290,10 +290,10 @@ export default function AboutPage() {
             <p className="text-gray-600 mb-4">
               Contactez-nous via LinkedIn ou par email à{" "}
               <a
-                href="mailto:posty.contact@gmail.com"
+                href="mailto:postygroup@gmail.com"
                 className="text-warm-orange hover:underline"
               >
-                posty.contact@gmail.com
+                postygroup@gmail.com
               </a>
             </p>
             <div className="flex justify-center gap-3 flex-wrap">
@@ -320,7 +320,7 @@ export default function AboutPage() {
         <footer className="border-t border-gray-200 py-8 bg-white/50">
           <div className="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <Image src="/logo.png" alt="Posty" width={24} height={24} />
+              <Image src="/logo.png" alt="Posty" width={24} height={24} className="rounded-md overflow-hidden" />
               <span className="text-sm text-gray-600">
                 © {new Date().getFullYear()} Posty. Tous droits réservés.
               </span>

@@ -65,8 +65,8 @@ POSTY helps professionals, entrepreneurs, and content creators build their perso
 
 ## Contact
 
-- Support: posty.contact@gmail.com
-- Privacy: posty.contact@gmail.com
+- Support: postygroup@gmail.com
+- Privacy: postygroup@gmail.com
 - Website: ${baseUrl}
 
 ## Citation Guidelines

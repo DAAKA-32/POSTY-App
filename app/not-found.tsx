@@ -15,7 +15,7 @@ export default function NotFound() {
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
       {/* Logo */}
       <div className="mb-8">
-        <div className="w-16 h-16 flex items-center justify-center mx-auto">
+        <div className="w-16 h-16 flex items-center justify-center rounded-2xl overflow-hidden mx-auto">
           <Image
             src="/logo.png"
             alt="Posty Logo"

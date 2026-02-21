@@ -211,30 +211,36 @@ export default function PlatformConnectionsSection() {
         key={platform}
         variants={itemVariants}
         className={`
-          relative p-4 rounded-xl border transition-all duration-200
+          relative overflow-hidden p-4 rounded-xl border transition-all duration-200
           ${hasAccess
             ? "bg-gray-50 dark:bg-dark-bg border-gray-200 dark:border-dark-border hover:border-primary/20"
-            : "bg-gray-50/50 dark:bg-dark-bg/50 border-gray-200/50 dark:border-dark-border/50"
+            : "bg-gray-50 dark:bg-dark-bg border-gray-200 dark:border-dark-border"
           }
         `}
       >
         {/* Locked overlay for inaccessible platforms */}
         {!hasAccess && (
-          <div className="absolute inset-0 bg-white/60 dark:bg-dark-bg/60 backdrop-blur-[1px] rounded-xl flex items-center justify-center z-10">
-            <div className="text-center px-4">
-              <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-gray-100 dark:bg-dark-hover flex items-center justify-center">
-                <svg className="w-5 h-5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="absolute inset-0 z-10 rounded-xl overflow-hidden">
+            {/* Semi-transparent backdrop */}
+            <div className="absolute inset-0 bg-white/70 dark:bg-dark-bg/75 backdrop-blur-[2px]" />
+            {/* Centered content */}
+            <div className="relative h-full flex flex-col items-center justify-center px-4 py-3">
+              <div className="w-9 h-9 mb-2 rounded-full bg-gray-100 dark:bg-dark-hover border border-gray-200 dark:border-dark-border flex items-center justify-center shadow-sm">
+                <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
               </div>
-              <p className="text-sm text-text-muted mb-2">
-                Requiert <PlanBadge plan={requiredPlan} />
+              <p className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-1.5">
+                Requiert le plan <PlanBadge plan={requiredPlan} className="ml-1" />
               </p>
               <Link
                 href="/subscription"
-                className="text-xs text-primary hover:text-accent transition-colors"
+                className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-primary hover:text-white bg-primary/10 hover:bg-primary border border-primary/20 hover:border-primary rounded-full transition-all duration-200"
               >
-                Voir les plans →
+                Voir les plans
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
               </Link>
             </div>
           </div>

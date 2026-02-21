@@ -4,8 +4,9 @@ import { Suspense, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { getAuthHeaders } from "@/lib/api-client";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { getPaidPlans, PlanConfig, PlanType, getSavingsText, PLAN_TAGLINES, getPlanFeaturesUnified, getCTALabel, FeatureItem, isTestModeAllowed, PRODUCTION_MODE, TRIAL_PERIOD_DAYS, GUARANTEE_PERIOD_DAYS } from "@/lib/plans";
+import { getPaidPlans, PlanConfig, PlanType, getSavingsText, PLAN_TAGLINES, getPlanFeaturesUnified, getCTALabel, FeatureItem, isTestModeAllowed, TRIAL_PERIOD_DAYS, GUARANTEE_PERIOD_DAYS } from "@/lib/plans";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import Button from "@/components/ui/Button";
 import BillingToggle from "@/components/ui/BillingToggle";
@@ -36,10 +37,8 @@ function SubscriptionContent() {
   const [canUseTestMode, setCanUseTestMode] = useState(false);
 
   useEffect(() => {
-    // Use centralized isTestModeAllowed() check from lib/plans.ts
-    // This respects PRODUCTION_MODE flag as single source of truth
-    setCanUseTestMode(isTestModeAllowed());
-  }, []);
+    setCanUseTestMode(isTestModeAllowed(user?.email));
+  }, [user?.email]);
 
   // Enable full scrolling on Subscription page (mouse wheel, trackpad, touch, keyboard)
   useEffect(() => {
@@ -109,9 +108,10 @@ function SubscriptionContent() {
       const redirectAfterSuccess = searchParams.get("redirect");
 
       // Create checkout session (with trial if eligible)
+      const authHeaders = await getAuthHeaders();
       const response = await fetch("/api/stripe/checkout", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({
           userId: user.uid,
           userEmail: user.email,

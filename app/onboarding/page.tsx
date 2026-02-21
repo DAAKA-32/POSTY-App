@@ -707,7 +707,7 @@ export default function OnboardingPage() {
       {/* Header */}
       <header className="p-4 sm:p-6 flex items-center justify-between max-w-2xl mx-auto w-full flex-shrink-0">
         <Link href="/" className="inline-flex items-center gap-2.5">
-          <div className="w-9 h-9 shadow-sm">
+          <div className="w-9 h-9 rounded-2xl overflow-hidden shadow-sm">
             <Image src="/logo.png" alt="Posty" width={36} height={36} className="w-full h-full object-contain" />
           </div>
           <span className="font-bold text-gray-900 text-lg">Posty</span>
