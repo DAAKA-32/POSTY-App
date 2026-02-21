@@ -12,7 +12,6 @@ import {
   PlanSource,
   getPlanLimits,
   Platform,
-  isTestModeValid,
 } from "./plans";
 import {
   UserSubscription,
@@ -78,27 +77,24 @@ export async function getUserSubscriptionData(userId: string): Promise<Subscript
     // Parse subscription data
     const subscriptionData = userData.subscription || {};
     const usageData = userData.usage || {};
-    // Determine effective plan (test mode takes precedence if active and not expired)
-    const testModeResult = isTestModeValid(userData.testMode);
-    const isTestMode = testModeResult.isActive;
-    const testPlan = testModeResult.plan;
+    // Test mode is disabled — ignore testMode data
+    const isTestMode = false;
 
     // Map old plan names to new ones
     let stripePlan: PlanType | null = null;
     if (subscriptionData.plan === "starter") stripePlan = "pro";
-    else if (subscriptionData.plan === "pro") stripePlan = "max";
-    else if (["pro", "max"].includes(subscriptionData.plan)) {
+    else if (subscriptionData.plan === "free") stripePlan = null;
+    else if (subscriptionData.plan === "pro" || subscriptionData.plan === "max") {
       stripePlan = subscriptionData.plan as PlanType;
     }
 
-    const effectivePlan = isTestMode && testPlan ? testPlan : stripePlan;
+    const effectivePlan = stripePlan;
 
     // Build subscription object
-    // When test mode is active, force status to "active" so all permission checks pass
     const subscription: UserSubscription = {
       plan: effectivePlan,
-      planSource: isTestMode ? "test" : "stripe",
-      status: isTestMode && testPlan ? "active" : (subscriptionData.status || "active"),
+      planSource: "stripe",
+      status: subscriptionData.status || "active",
       currentPeriodStart: subscriptionData.subscribedAt?.toDate(),
       currentPeriodEnd: subscriptionData.expiresAt?.toDate(),
     };

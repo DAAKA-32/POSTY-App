@@ -19,7 +19,7 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { UserProfile, Post, Session, ChatMessage } from "@/types";
-import { planHasFeature, PlanType, DAILY_MESSAGE_LIMITS, isTestModeValid } from "./plans";
+import { planHasFeature, PlanType, DAILY_MESSAGE_LIMITS } from "./plans";
 
 // ============== USER OPERATIONS ==============
 // Collection: users
@@ -989,23 +989,13 @@ export async function getUserQuota(userId: string): Promise<QuotaInfo> {
 
   const data = userSnap.data();
 
-  // Check for test mode - test plan takes precedence if active and not expired
-  const testModeResult = isTestModeValid(data.testMode);
-  const isTestMode = testModeResult.isActive;
-  const testPlan = testModeResult.plan;
-
-  // Determine effective plan (test mode overrides actual subscription)
+  // Determine effective plan
   // Handle legacy "starter" and "free" plan names from database
   let rawPlan: string | null = data.subscription?.plan || null;
-  if (rawPlan === "free") rawPlan = null; // Migrate legacy "free" plan
-  let effectivePlan: SubscriptionPlan | null = rawPlan ? (rawPlan === "starter" ? "pro" : rawPlan) as SubscriptionPlan : null;
+  if (rawPlan === "free") rawPlan = null;
+  const effectivePlan: SubscriptionPlan | null = rawPlan ? (rawPlan === "starter" ? "pro" : rawPlan) as SubscriptionPlan : null;
 
-  // Use test plan if active
-  if (isTestMode && testPlan) {
-    effectivePlan = testPlan as SubscriptionPlan;
-  }
-
-  // No subscription and no test mode = no messages
+  // No subscription = no messages
   if (!effectivePlan) {
     return {
       plan: null,
@@ -1752,11 +1742,9 @@ export async function createScheduledPost(
 
   const userData = userSnap.data();
 
-  // Check for test mode - use test plan if active and not expired
-  const testModeResult = isTestModeValid(userData?.testMode);
   let subscriptionPlan: PlanType | null = userData?.subscription?.plan || null;
-  if (subscriptionPlan === ("free" as string)) subscriptionPlan = null; // Migrate legacy "free" plan
-  const effectivePlan: PlanType | null = testModeResult.isActive && testModeResult.plan ? testModeResult.plan : subscriptionPlan;
+  if (subscriptionPlan === ("free" as string)) subscriptionPlan = null;
+  const effectivePlan: PlanType | null = subscriptionPlan;
 
   // Check if the user's effective plan allows scheduling
   if (!effectivePlan || !planHasFeature(effectivePlan, "canSchedulePosts")) {
@@ -1931,11 +1919,9 @@ export async function reschedulePost(
   if (userSnap.exists()) {
     const userData = userSnap.data();
 
-    // Check for test mode - use test plan if active and not expired
-    const testModeResult = isTestModeValid(userData?.testMode);
     let subscriptionPlan: PlanType | null = userData?.subscription?.plan || null;
-    if (subscriptionPlan === ("free" as string)) subscriptionPlan = null; // Migrate legacy "free" plan
-    const effectivePlan: PlanType | null = testModeResult.isActive && testModeResult.plan ? testModeResult.plan : subscriptionPlan;
+    if (subscriptionPlan === ("free" as string)) subscriptionPlan = null;
+    const effectivePlan: PlanType | null = subscriptionPlan;
 
     if (!effectivePlan || !planHasFeature(effectivePlan, "canSchedulePosts")) {
       throw new Error("La reprogrammation necessite un abonnement Pro ou Max");

@@ -21,7 +21,6 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import toast from "@/components/ui/Toast";
 import { SubscriptionManagement, PlatformConnectionsSection } from "@/components/settings";
-import TestModePanel from "@/components/subscription/TestModePanel";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 
 // Animation variants for staggered sections
@@ -279,8 +278,6 @@ function SettingsContent() {
             {/* Subscription Management Section */}
             <SubscriptionManagement />
 
-            {/* Test Mode Panel - Dev/QA only */}
-            <TestModePanel className="mt-4 md:mt-5 lg:mt-6" />
 
             {/* Appearance Section - Theme Toggle */}
             <motion.section

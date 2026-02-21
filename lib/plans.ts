@@ -6,31 +6,17 @@
  */
 
 // ============================================
-// PRODUCTION MODE FLAG
+// PRODUCTION MODE — TEST MODE FULLY DISABLED
 // ============================================
-/**
- * Production mode flag - Single source of truth
- *
- * When true, ALL test mode functionality is disabled:
- * - TestModePanel is hidden
- * - TestModeIndicator is hidden
- * - enableTestMode() function is blocked
- * - No test mode UI is visible to any user
- *
- * To re-enable test mode for development/QA:
- * 1. Set this flag to false
- * 2. Or set NEXT_PUBLIC_ENABLE_TEST_MODE=true in .env.local
- *
- * Note: This flag takes precedence over NODE_ENV and ADMIN_MODE checks
- */
-export const PRODUCTION_MODE = process.env.NEXT_PUBLIC_ENABLE_TEST_MODE !== "true";
+export const PRODUCTION_MODE = true;
 
 // ============================================
-// FOUNDER ACCESS
+// FOUNDER PLAN OVERRIDE
 // ============================================
 
-/** Emails with permanent test mode access (even in production) */
+/** Founder emails receive permanent Max plan access */
 const FOUNDER_EMAILS: string[] = ["emilien.nepveu@gmail.com"];
+const FOUNDER_OVERRIDE_PLAN: PlanType = "max";
 
 /** Check if an email belongs to a founder */
 export function isFounderEmail(email?: string | null): boolean {
@@ -39,36 +25,21 @@ export function isFounderEmail(email?: string | null): boolean {
 }
 
 /**
- * Check if test mode functionality should be available
- * Returns true if:
- * - The user is a founder (always allowed, even in production)
- * - OR PRODUCTION_MODE is false AND (in development OR admin mode OR localhost)
+ * Get the plan override for a founder.
+ * Returns "max" for founder emails, null otherwise.
  */
-export function isTestModeAllowed(email?: string | null): boolean {
-  // Founders always have test mode access
-  if (isFounderEmail(email)) {
-    return true;
-  }
+export function getFounderOverridePlan(email?: string | null): PlanType | null {
+  if (isFounderEmail(email)) return FOUNDER_OVERRIDE_PLAN;
+  return null;
+}
 
-  // Production mode blocks all test mode functionality for non-founders
-  if (PRODUCTION_MODE) {
-    return false;
-  }
-
-  // Only in non-production mode, check additional conditions
-  // This code path is only reached if NEXT_PUBLIC_ENABLE_TEST_MODE=true
-  if (typeof window === "undefined") {
-    // Server-side: only allow in development
-    return process.env.NODE_ENV === "development";
-  }
-
-  // Client-side checks
-  const isDev = process.env.NODE_ENV === "development";
-  const isAdmin = process.env.NEXT_PUBLIC_ADMIN_MODE === "true";
-  const hostname = window.location.hostname;
-  const isLocalhost = hostname === "localhost" || hostname === "127.0.0.1";
-
-  return isDev || isAdmin || isLocalhost;
+/**
+ * Test mode is permanently disabled.
+ * This function always returns false.
+ * @deprecated Test mode has been removed. Use getFounderOverridePlan() instead.
+ */
+export function isTestModeAllowed(_email?: string | null): boolean {
+  return false;
 }
 
 // Plan Types

@@ -16,13 +16,11 @@ import {
   getPlanLimits,
   PlanConfig,
   PlanLimits,
-  isTestModeValid,
-  TEST_MODE_DURATION_MS,
   getTrialDaysRemaining,
   checkTrialEligibility,
   checkGuaranteeEligibility,
   formatTrialStatusMessage,
-  isTestModeAllowed,
+  getFounderOverridePlan,
 } from "@/lib/plans";
 import {
   UserSubscription,
@@ -204,10 +202,9 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       const usageData = userData.usage || {};
       const quotaData = userData.quota || {};
 
-      // Determine effective plan (test mode takes precedence if active and not expired)
-      const testModeResult = isTestModeValid(userData.testMode);
-      const isTestMode = testModeResult.isActive;
-      const testPlan = testModeResult.plan;
+      // Test mode is fully disabled — ignore any leftover testMode data
+      const isTestMode = false;
+      const testPlan: PlanType | null = null;
 
       // Map old plan names to new ones (legacy migration)
       let stripePlan: PlanType | null = null;
@@ -217,14 +214,16 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
         stripePlan = subscriptionData.plan as PlanType;
       }
 
-      const effectivePlan = isTestMode && testPlan ? testPlan : stripePlan;
+      // Founder override: founders get Max plan if they don't have an active Stripe subscription
+      const founderPlan = getFounderOverridePlan(user?.email);
+      const effectivePlan = stripePlan || founderPlan;
+      const isFounderOverride = !stripePlan && !!founderPlan;
 
       // Build subscription object
-      // When test mode is active, force status to "active" so SubscriptionGuard allows access
       const subscription: UserSubscription = {
         plan: effectivePlan,
-        planSource: isTestMode ? "test" : "stripe",
-        status: isTestMode && testPlan ? "active" : (subscriptionData.status || "inactive"),
+        planSource: isFounderOverride ? "test" : "stripe",
+        status: isFounderOverride ? "active" : (subscriptionData.status || "inactive"),
         currentPeriodStart: subscriptionData.subscribedAt?.toDate(),
         currentPeriodEnd: subscriptionData.expiresAt?.toDate(),
       };
@@ -398,95 +397,15 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   // PRODUCTION MODE: These functions are blocked in production
   // To re-enable: set NEXT_PUBLIC_ENABLE_TEST_MODE=true in .env.local
 
-  const enableTestMode = useCallback(async (plan: PlanType) => {
-    // Block unless user is a founder or test mode is globally enabled
-    if (!isTestModeAllowed(user?.email)) {
-      console.warn("[SubscriptionContext] Test mode is disabled for this user.");
-      return;
-    }
-
-    if (!user?.uid) return;
-
-    try {
-      const now = new Date();
-      const expiresAt = new Date(now.getTime() + TEST_MODE_DURATION_MS);
-      await updateDoc(doc(db, "users", user.uid), {
-        "testMode.active": true,
-        "testMode.plan": plan,
-        "testMode.activatedAt": Timestamp.fromDate(now),
-        "testMode.expiresAt": Timestamp.fromDate(expiresAt),
-      });
-
-      // Update local state immediately — must set status to "active" so
-      // SubscriptionGuard allows access (it checks status === "active" || "trialing")
-      setState(prev => ({
-        ...prev,
-        subscription: {
-          ...prev.subscription,
-          plan,
-          planSource: "test",
-          status: "active",
-        },
-        planConfig: getPlanConfig(plan),
-        planLimits: getPlanLimits(plan),
-        isTestMode: true,
-        testPlan: plan,
-      }));
-    } catch (error) {
-      console.error("Error enabling test mode:", error);
-      throw error;
-    }
-  }, [user?.uid]);
+  const enableTestMode = useCallback(async (_plan: PlanType) => {
+    // Test mode is permanently disabled
+    console.warn("[SubscriptionContext] Test mode has been permanently disabled.");
+  }, []);
 
   const disableTestMode = useCallback(async () => {
-    // Block unless user is a founder or test mode is globally enabled
-    if (!isTestModeAllowed(user?.email)) {
-      console.warn("[SubscriptionContext] Test mode is disabled for this user.");
-      return;
-    }
-
-    if (!user?.uid) return;
-
-    try {
-      // Get the actual Stripe subscription
-      const userDoc = await getDoc(doc(db, "users", user.uid));
-      const userData = userDoc.data();
-      const subscriptionData = userData?.subscription || {};
-
-      // Map old plan names
-      let stripePlan: PlanType | null = null;
-      if (subscriptionData.plan === "starter") stripePlan = "pro";
-      else if (subscriptionData.plan === "free") stripePlan = null;
-      else if (subscriptionData.plan === "pro") stripePlan = "max";
-      else if (["pro", "max"].includes(subscriptionData.plan)) {
-        stripePlan = subscriptionData.plan as PlanType;
-      }
-
-      await updateDoc(doc(db, "users", user.uid), {
-        "testMode.active": false,
-        "testMode.plan": null,
-        "testMode.deactivatedAt": Timestamp.fromDate(new Date()),
-      });
-
-      // Update local state to real Stripe subscription (restore real status)
-      setState(prev => ({
-        ...prev,
-        subscription: {
-          ...prev.subscription,
-          plan: stripePlan,
-          planSource: "stripe",
-          status: subscriptionData.status || "inactive",
-        },
-        planConfig: getPlanConfig(stripePlan ?? "pro"),
-        planLimits: getPlanLimits(stripePlan ?? "pro"),
-        isTestMode: false,
-        testPlan: null,
-      }));
-    } catch (error) {
-      console.error("Error disabling test mode:", error);
-      throw error;
-    }
-  }, [user?.uid]);
+    // Test mode is permanently disabled
+    console.warn("[SubscriptionContext] Test mode has been permanently disabled.");
+  }, []);
 
   // ============================================
   // REFUND / GUARANTEE

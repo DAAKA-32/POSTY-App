@@ -15,7 +15,6 @@ import GlobalCommandPalette from "@/components/providers/GlobalCommandPalette";
 import KeyboardNavigationProvider from "@/components/providers/KeyboardNavigationProvider";
 import SkipLinks from "@/components/accessibility/SkipLinks";
 import DevTools from "@/components/dev/DevTools";
-import DevQuickActions from "@/components/dev/DevQuickActions";
 import CookieBanner from "@/components/ui/CookieBanner";
 import LegalUpdateNotification from "@/components/ui/LegalUpdateNotification";
 import { HomepageJsonLd } from "@/components/seo/JsonLd";
@@ -271,7 +270,6 @@ export default function RootLayout({
                         <SchedulingProvider>
                           {children}
                           <GlobalCommandPalette />
-                          <DevQuickActions />
                         </SchedulingProvider>
                       </ThreadsProvider>
                     </FacebookProvider>

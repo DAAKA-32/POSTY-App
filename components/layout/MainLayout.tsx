@@ -22,7 +22,6 @@ import { Post } from "@/types";
 import { getUserPostsWithPinned, pinPost, renamePost, deletePost } from "@/lib/firestore";
 import { AnimatedSlideIn, AnimatedPageWrapper } from "@/components/animations/AnimatedPageWrapper";
 import toast from "@/components/ui/Toast";
-import TestModeIndicator from "@/components/subscription/TestModeIndicator";
 import TrialBanner from "@/components/subscription/TrialBanner";
 import { usePageHelp } from "@/hooks/usePageHelp";
 import HelpNotificationDot from "@/components/help/HelpNotificationDot";
@@ -1193,10 +1192,6 @@ export default function MainLayout({
         onConfirm={handleDeleteConfirm}
       />
 
-      {/* Test Mode Indicator - Only on /settings and /subscription */}
-      {(pathname === "/settings" || pathname === "/subscription") && (
-        <TestModeIndicator />
-      )}
     </div>
   );
 }

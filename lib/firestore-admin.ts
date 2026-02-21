@@ -87,7 +87,7 @@ export async function saveLinkedInPostAdmin(
 // ============== QUOTA MANAGEMENT (SERVER-SIDE) ==============
 
 import { SubscriptionPlan } from "@/types";
-import { DAILY_MESSAGE_LIMITS, HOURLY_MESSAGE_LIMITS, HOURLY_WINDOW_MS, isTestModeValid } from "@/lib/plans";
+import { DAILY_MESSAGE_LIMITS, HOURLY_MESSAGE_LIMITS, HOURLY_WINDOW_MS } from "@/lib/plans";
 
 /**
  * Get the start of today (00:00:00 UTC)
@@ -157,23 +157,13 @@ export async function checkUserQuotaAdmin(userId: string): Promise<QuotaCheckRes
   const data = userSnap.data();
   if (!data) return defaultResult;
 
-  // Check for test mode - test plan takes precedence if active and not expired
-  const testModeResult = isTestModeValid(data.testMode);
-  const isTestMode = testModeResult.isActive;
-  const testPlan = testModeResult.plan;
-
-  // Determine effective plan (test mode overrides actual subscription)
+  // Determine effective plan
   // Handle legacy "starter" and "free" plan names from database
   let rawPlan: string | null = data.subscription?.plan || null;
-  if (rawPlan === "free") rawPlan = null; // Migrate legacy "free" plan
-  let effectivePlan: SubscriptionPlan | null = rawPlan ? (rawPlan === "starter" ? "pro" : rawPlan) as SubscriptionPlan : null;
+  if (rawPlan === "free") rawPlan = null;
+  const effectivePlan: SubscriptionPlan | null = rawPlan ? (rawPlan === "starter" ? "pro" : rawPlan) as SubscriptionPlan : null;
 
-  // Use test plan if test mode is active
-  if (isTestMode && testPlan) {
-    effectivePlan = testPlan as SubscriptionPlan;
-  }
-
-  // No subscription and no test mode = no generation
+  // No subscription = no generation
   if (!effectivePlan) {
     return defaultResult;
   }
@@ -255,18 +245,10 @@ export async function checkHourlyQuotaAdmin(userId: string): Promise<HourlyQuota
   const data = userSnap.data();
   if (!data) return defaultResult;
 
-  // Determine effective plan (test mode overrides Stripe subscription)
-  const testModeResult = isTestModeValid(data.testMode);
-  const isTestMode = testModeResult.isActive;
-  const testPlan = testModeResult.plan;
-
+  // Determine effective plan
   let rawPlan: string | null = data.subscription?.plan || null;
   if (rawPlan === "free") rawPlan = null;
-  let effectivePlan: SubscriptionPlan | null = rawPlan ? (rawPlan === "starter" ? "pro" : rawPlan) as SubscriptionPlan : null;
-
-  if (isTestMode && testPlan) {
-    effectivePlan = testPlan as SubscriptionPlan;
-  }
+  const effectivePlan: SubscriptionPlan | null = rawPlan ? (rawPlan === "starter" ? "pro" : rawPlan) as SubscriptionPlan : null;
 
   if (!effectivePlan) return defaultResult;
 
@@ -466,25 +448,15 @@ export async function getUserProfileAdmin(userId: string): Promise<{
 
   const data = userSnap.data();
 
-  // Check for test mode - test plan takes precedence if active and not expired
-  const testModeResult2 = isTestModeValid(data?.testMode);
-  const isTestMode = testModeResult2.isActive;
-  const testPlan = testModeResult2.plan;
-
   // Determine effective plan (handle legacy "starter" and "free" plan names)
   let rawPlan2: string | null = data?.subscription?.plan || null;
-  if (rawPlan2 === "free") rawPlan2 = null; // Migrate legacy "free" plan
-  let effectivePlan: SubscriptionPlan | null = rawPlan2 ? (rawPlan2 === "starter" ? "pro" : rawPlan2) as SubscriptionPlan : null;
-
-  // Use test plan if active
-  if (isTestMode && testPlan) {
-    effectivePlan = testPlan as SubscriptionPlan;
-  }
+  if (rawPlan2 === "free") rawPlan2 = null;
+  const effectivePlan: SubscriptionPlan | null = rawPlan2 ? (rawPlan2 === "starter" ? "pro" : rawPlan2) as SubscriptionPlan : null;
 
   return {
     plan: effectivePlan,
     profile: data?.profile,
-    isTestMode,
+    isTestMode: false,
   };
 }
 

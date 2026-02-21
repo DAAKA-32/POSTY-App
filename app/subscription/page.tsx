@@ -6,11 +6,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { getAuthHeaders } from "@/lib/api-client";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { getPaidPlans, PlanConfig, PlanType, getSavingsText, PLAN_TAGLINES, getPlanFeaturesUnified, getCTALabel, FeatureItem, isTestModeAllowed, TRIAL_PERIOD_DAYS, GUARANTEE_PERIOD_DAYS } from "@/lib/plans";
+import { getPaidPlans, PlanConfig, PlanType, getSavingsText, PLAN_TAGLINES, getPlanFeaturesUnified, getCTALabel, FeatureItem, TRIAL_PERIOD_DAYS, GUARANTEE_PERIOD_DAYS } from "@/lib/plans";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import Button from "@/components/ui/Button";
 import BillingToggle from "@/components/ui/BillingToggle";
-import TestModePanel from "@/components/subscription/TestModePanel";
 import toast from "@/components/ui/Toast";
 import WelcomeModal from "@/components/ui/WelcomeModal";
 
@@ -25,20 +24,10 @@ function SubscriptionContent() {
   const { t } = useLanguage();
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("yearly");
   const [isLoading, setIsLoading] = useState<PlanType | null>(null);
-  const [selectedTestPlan, setSelectedTestPlan] = useState<PlanType | null>(null);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [welcomePlanName, setWelcomePlanName] = useState<string | undefined>();
 
-  // ============================================
-  // PRODUCTION MODE: Test mode is completely disabled
-  // To re-enable: set NEXT_PUBLIC_ENABLE_TEST_MODE=true in .env.local
-  // ============================================
-  const [canUseTestMode, setCanUseTestMode] = useState(false);
-
-  useEffect(() => {
-    setCanUseTestMode(isTestModeAllowed(user?.email));
-  }, [user?.email]);
 
   // Enable full scrolling on Subscription page (mouse wheel, trackpad, touch, keyboard)
   useEffect(() => {
@@ -91,13 +80,7 @@ function SubscriptionContent() {
       return;
     }
 
-    if (plan.id === currentPlan && !isTestMode) {
-      return;
-    }
-
-    // In dev/admin mode, use test mode instead of Stripe
-    if (canUseTestMode) {
-      setSelectedTestPlan(plan.id);
+    if (plan.id === currentPlan) {
       return;
     }
 
@@ -269,25 +252,6 @@ function SubscriptionContent() {
 
         {/* Test Mode Panel - Hidden in Production Mode
             To re-enable: set NEXT_PUBLIC_ENABLE_TEST_MODE=true in .env.local */}
-        {canUseTestMode && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.35 }}
-            className="mt-12 max-w-md mx-auto"
-          >
-            <TestModePanel
-              selectedPlan={selectedTestPlan ?? undefined}
-              onPlanActivated={(plan) => {
-                setSelectedTestPlan(null);
-                const name = plan === "max" ? "Max" : "Pro";
-                setWelcomePlanName(name);
-                setShowWelcomeModal(true);
-              }}
-            />
-          </motion.div>
-        )}
-
         {/* FAQ Section - Single Column Layout */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
