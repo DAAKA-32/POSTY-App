@@ -221,10 +221,11 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       const effectivePlan = isTestMode && testPlan ? testPlan : stripePlan;
 
       // Build subscription object
+      // When test mode is active, force status to "active" so SubscriptionGuard allows access
       const subscription: UserSubscription = {
         plan: effectivePlan,
         planSource: isTestMode ? "test" : "stripe",
-        status: subscriptionData.status || "inactive",
+        status: isTestMode && testPlan ? "active" : (subscriptionData.status || "inactive"),
         currentPeriodStart: subscriptionData.subscribedAt?.toDate(),
         currentPeriodEnd: subscriptionData.expiresAt?.toDate(),
       };
@@ -417,13 +418,15 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
         "testMode.expiresAt": Timestamp.fromDate(expiresAt),
       });
 
-      // Update local state immediately
+      // Update local state immediately — must set status to "active" so
+      // SubscriptionGuard allows access (it checks status === "active" || "trialing")
       setState(prev => ({
         ...prev,
         subscription: {
           ...prev.subscription,
           plan,
           planSource: "test",
+          status: "active",
         },
         planConfig: getPlanConfig(plan),
         planLimits: getPlanLimits(plan),
@@ -466,13 +469,14 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
         "testMode.deactivatedAt": Timestamp.fromDate(new Date()),
       });
 
-      // Update local state to real Stripe subscription
+      // Update local state to real Stripe subscription (restore real status)
       setState(prev => ({
         ...prev,
         subscription: {
           ...prev.subscription,
           plan: stripePlan,
           planSource: "stripe",
+          status: subscriptionData.status || "inactive",
         },
         planConfig: getPlanConfig(stripePlan ?? "pro"),
         planLimits: getPlanLimits(stripePlan ?? "pro"),

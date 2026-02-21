@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
+import ProtectedRoute from "@/components/layout/ProtectedRoute";
+import MainLayout from "@/components/layout/MainLayout";
+import PullToRefresh from "@/components/ui/PullToRefresh";
 import {
   getLinkedInPosts,
   getLinkedInAnalytics,
@@ -19,34 +21,11 @@ import {
 
 type PeriodFilter = "7d" | "30d" | "all";
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push("/login");
-    }
-  }, [user, loading, router]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background-warm dark:bg-background flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#F8935D]/30 border-t-[#F8935D] rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  if (!user) return null;
-
-  return <>{children}</>;
-}
-
 // Premium animation easing
 const premiumEase = [0.22, 1, 0.36, 1] as const;
 
 // Period Filter Component
-function PeriodFilter({
+function PeriodFilterComponent({
   selected,
   onChange,
 }: {
@@ -299,7 +278,7 @@ function StatsCard({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3, delay }}
-      className="bg-white dark:bg-dark-card rounded-2xl border border-gray-200 dark:border-dark-border p-6 transition-colors duration-200"
+      className="bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-6 transition-colors duration-200"
     >
       <div className="flex items-start justify-between">
         <div>
@@ -638,7 +617,6 @@ function EmptyState() {
 // Main Analytics Content
 function AnalyticsContent() {
   const { user } = useAuth();
-  const router = useRouter();
   const [posts, setPosts] = useState<LinkedInPostData[]>([]);
   const [analytics, setAnalytics] = useState<LinkedInAnalyticsSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -751,191 +729,178 @@ function AnalyticsContent() {
     metrics: { likes: number; comments: number; shares: number; impressions?: number }
   ) => {
     await updateLinkedInPostMetrics(postId, { ...metrics, source: 'manual' });
-    await loadData(); // Refresh data
+    await loadData();
+  };
+
+  const handleRefresh = async () => {
+    await loadData();
   };
 
   return (
-    <div
-      className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-dark-bg dark:to-dark-card"
-      style={{
-        overflowY: "auto",
-        overflowX: "hidden",
-        minHeight: "100vh",
-        WebkitOverflowScrolling: "touch",
-        touchAction: "pan-y",
-      }}
+    <MainLayout
+      posts={[]}
+      showMobileHeader={true}
+      headerTitle="Analytics"
     >
-      {/* Header - Unified style with Dashboard & Profile */}
-      <header className="sticky top-0 z-40 bg-background-warm/80 dark:bg-dark-bg/80 backdrop-blur-xl border-b border-[#F8935D]/10 dark:border-dark-border">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative flex items-center justify-between h-16">
-            {/* Back button - Consistent with Dashboard/Profile */}
-            <button
-              onClick={() => router.back()}
-              className="flex items-center gap-2 text-gray-600 dark:text-text-secondary hover:text-gray-900 dark:hover:text-white transition-colors group z-10"
-              aria-label="Retour"
+      <PullToRefresh
+        onRefresh={handleRefresh}
+        className="min-h-full bg-background-warm dark:bg-dark-bg scroll-smooth lg:overflow-y-auto"
+        disabled={loading}
+      >
+        <div className="w-full mx-auto px-4 py-6 md:px-6 md:py-8 lg:px-8 lg:py-10 lg:max-w-4xl xl:max-w-5xl 2xl:max-w-6xl overflow-x-hidden">
+          {loading ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex flex-col items-center justify-center py-16 md:py-20 lg:py-24"
             >
-              <svg
-                className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+              <div className="relative">
+                <div className="w-12 h-12 md:w-14 md:h-14 border-3 border-primary/20 rounded-full" />
+                <div className="absolute inset-0 w-12 h-12 md:w-14 md:h-14 border-3 border-primary border-t-transparent rounded-full animate-spin" />
+              </div>
+              <p className="mt-4 text-sm text-gray-500 dark:text-text-muted">Chargement...</p>
+            </motion.div>
+          ) : posts.length === 0 ? (
+            <EmptyState />
+          ) : (
+            <>
+              {/* Period Filter & Overview header */}
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center justify-between mb-8"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              <span className="hidden sm:inline">Retour</span>
-            </button>
+                <div>
+                  <h1 className="text-xl font-bold text-silver-shimmer dark:text-white md:text-2xl lg:text-3xl">
+                    Analytics
+                  </h1>
+                  <p className="text-sm text-gray-600 dark:text-text-muted md:text-base mt-1.5">
+                    {filteredPosts.length} publication{filteredPosts.length > 1 ? 's' : ''} sur cette periode
+                  </p>
+                </div>
+                <PeriodFilterComponent selected={periodFilter} onChange={setPeriodFilter} />
+              </motion.div>
 
-            {/* Page title - Centered */}
-            <h1 className="absolute left-1/2 -translate-x-1/2 text-lg font-semibold text-silver-shimmer dark:text-white">
-              Analytics
-            </h1>
+              {/* Stats Cards */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                <StatsCard
+                  title="Publications"
+                  value={filteredAnalytics.totalPosts}
+                  icon={
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  }
+                  color="#F8935D"
+                  delay={0}
+                />
+                <StatsCard
+                  title="Total Likes"
+                  value={filteredAnalytics.totalLikes}
+                  icon={
+                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
+                    </svg>
+                  }
+                  color="#3B82F6"
+                  delay={0.1}
+                />
+                <StatsCard
+                  title="Commentaires"
+                  value={filteredAnalytics.totalComments}
+                  icon={
+                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zM7 8H5v2h2V8zm2 0h2v2H9V8zm6 0h-2v2h2V8z" clipRule="evenodd" />
+                    </svg>
+                  }
+                  color="#10B981"
+                  delay={0.2}
+                />
+                <StatsCard
+                  title="Partages"
+                  value={filteredAnalytics.totalShares}
+                  icon={
+                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" />
+                    </svg>
+                  }
+                  color="#8B5CF6"
+                  delay={0.3}
+                />
+              </div>
 
-            {/* Spacer for layout symmetry */}
-            <div className="w-[72px] sm:w-[88px]" />
-          </div>
+              {/* Engagement Chart */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.4, ease: premiumEase }}
+                className="bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-6 mb-8"
+              >
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
+                  Evolution de l'engagement
+                </h3>
+                <EngagementChart data={chartData} period={periodFilter} />
+              </motion.div>
+
+              {/* Activity Overview */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.5, ease: premiumEase }}
+                  className="bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-6"
+                >
+                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-4">Cette semaine</h3>
+                  <p className="text-4xl font-bold text-gray-900 dark:text-white">{analytics?.postsThisWeek || 0}</p>
+                  <p className="text-sm text-gray-500 mt-1">publications</p>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.6, ease: premiumEase }}
+                  className="bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-6"
+                >
+                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-4">Ce mois</h3>
+                  <p className="text-4xl font-bold text-gray-900 dark:text-white">{analytics?.postsThisMonth || 0}</p>
+                  <p className="text-sm text-gray-500 mt-1">publications</p>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.7, ease: premiumEase }}
+                  className="bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-6"
+                >
+                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-4">Taux d'engagement moyen</h3>
+                  <p className="text-4xl font-bold text-gray-900 dark:text-white">
+                    {filteredAnalytics.avgEngagementRate ? `${filteredAnalytics.avgEngagementRate.toFixed(1)}%` : "\u2014"}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">sur les posts avec impressions</p>
+                </motion.div>
+              </div>
+
+              {/* Posts List */}
+              <div className="mb-6">
+                <h2 className="text-lg font-semibold text-silver-solid dark:text-white mb-4">
+                  Vos publications ({filteredPosts.length})
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {filteredPosts.map((post, index) => (
+                    <PostCard
+                      key={post.id}
+                      post={post}
+                      onEditMetrics={handleEditMetrics}
+                      delay={0.1 * Math.min(index, 5)}
+                    />
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Bottom spacing for mobile navigation */}
+          <div className="h-20 md:h-8" />
         </div>
-      </header>
-
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 border-2 border-[#F8935D]/30 border-t-[#F8935D] rounded-full animate-spin" />
-          </div>
-        ) : posts.length === 0 ? (
-          <EmptyState />
-        ) : (
-          <>
-            {/* Period Filter */}
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              className="flex items-center justify-between mb-8"
-            >
-              <div>
-                <h2 className="text-lg font-semibold text-silver-solid dark:text-white">Vue d'ensemble</h2>
-                <p className="text-sm text-gray-500">{filteredPosts.length} publication{filteredPosts.length > 1 ? 's' : ''} sur cette periode</p>
-              </div>
-              <PeriodFilter selected={periodFilter} onChange={setPeriodFilter} />
-            </motion.div>
-
-            {/* Stats Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-              <StatsCard
-                title="Publications"
-                value={filteredAnalytics.totalPosts}
-                icon={
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                }
-                color="#F8935D"
-                delay={0}
-              />
-              <StatsCard
-                title="Total Likes"
-                value={filteredAnalytics.totalLikes}
-                icon={
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
-                  </svg>
-                }
-                color="#3B82F6"
-                delay={0.1}
-              />
-              <StatsCard
-                title="Commentaires"
-                value={filteredAnalytics.totalComments}
-                icon={
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zM7 8H5v2h2V8zm2 0h2v2H9V8zm6 0h-2v2h2V8z" clipRule="evenodd" />
-                  </svg>
-                }
-                color="#10B981"
-                delay={0.2}
-              />
-              <StatsCard
-                title="Partages"
-                value={filteredAnalytics.totalShares}
-                icon={
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" />
-                  </svg>
-                }
-                color="#8B5CF6"
-                delay={0.3}
-              />
-            </div>
-
-            {/* Engagement Chart */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.4, ease: premiumEase }}
-              className="bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-6 mb-8"
-            >
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
-                Evolution de l'engagement
-              </h3>
-              <EngagementChart data={chartData} period={periodFilter} />
-            </motion.div>
-
-            {/* Activity Overview */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.5, ease: premiumEase }}
-                className="bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-6"
-              >
-                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-4">Cette semaine</h3>
-                <p className="text-4xl font-bold text-gray-900 dark:text-white">{analytics?.postsThisWeek || 0}</p>
-                <p className="text-sm text-gray-500 mt-1">publications</p>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.6, ease: premiumEase }}
-                className="bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-6"
-              >
-                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-4">Ce mois</h3>
-                <p className="text-4xl font-bold text-gray-900 dark:text-white">{analytics?.postsThisMonth || 0}</p>
-                <p className="text-sm text-gray-500 mt-1">publications</p>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.7, ease: premiumEase }}
-                className="bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-6"
-              >
-                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-4">Taux d'engagement moyen</h3>
-                <p className="text-4xl font-bold text-gray-900 dark:text-white">
-                  {filteredAnalytics.avgEngagementRate ? `${filteredAnalytics.avgEngagementRate.toFixed(1)}%` : "—"}
-                </p>
-                <p className="text-sm text-gray-500 mt-1">sur les posts avec impressions</p>
-              </motion.div>
-            </div>
-
-            {/* Posts List */}
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold text-silver-solid dark:text-white mb-4">
-                Vos publications ({filteredPosts.length})
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredPosts.map((post, index) => (
-                  <PostCard
-                    key={post.id}
-                    post={post}
-                    onEditMetrics={handleEditMetrics}
-                    delay={0.1 * Math.min(index, 5)}
-                  />
-                ))}
-              </div>
-            </div>
-          </>
-        )}
-      </div>
+      </PullToRefresh>
 
       {/* Metrics Modal */}
       <MetricsModal
@@ -947,7 +912,7 @@ function AnalyticsContent() {
         }}
         onSave={handleSaveMetrics}
       />
-    </div>
+    </MainLayout>
   );
 }
 

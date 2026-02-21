@@ -22,13 +22,65 @@ interface ModernAIResponsePairProps {
 }
 
 /**
+ * StreamingSkeleton — placeholder shown while a response column
+ * is waiting for content. Keeps the dual layout stable.
+ */
+const StreamingSkeleton = memo(function StreamingSkeleton({
+  variant,
+}: {
+  variant: "storytelling" | "business";
+}) {
+  const icons: Record<string, string> = { storytelling: "📖", business: "💼" };
+  const labels: Record<string, string> = { storytelling: "Storytelling", business: "Business" };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="w-full max-w-3xl"
+    >
+      {/* Variant badge */}
+      <div className="inline-flex items-center gap-1.5 mb-2 text-xs font-medium text-text-secondary">
+        <span>{icons[variant]}</span>
+        <span>{labels[variant]}</span>
+      </div>
+
+      {/* Skeleton lines */}
+      <div className="space-y-3 mb-4">
+        {[85, 100, 70, 55].map((width, i) => (
+          <motion.div
+            key={i}
+            animate={{ opacity: [0.3, 0.6, 0.3] }}
+            transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.15 }}
+            className="h-3.5 rounded-md bg-dark-border/40"
+            style={{ width: `${width}%` }}
+          />
+        ))}
+      </div>
+
+      {/* Waiting label */}
+      <div className="flex items-center gap-2 text-xs text-text-muted">
+        <motion.span
+          animate={{ opacity: [0.4, 1, 0.4] }}
+          transition={{ duration: 1.2, repeat: Infinity }}
+          className="inline-block w-1.5 h-1.5 rounded-full bg-primary"
+        />
+        En attente...
+      </div>
+    </motion.div>
+  );
+});
+
+/**
  * ModernAIResponsePair - Clean dual response view for MAX plan
  *
  * Features:
- * - Side-by-side on desktop/tablet
+ * - Side-by-side on desktop/tablet — fixed grid from the start
  * - Swipeable carousel on mobile
  * - No heavy borders/blocks
  * - Subtle variant indicators
+ * - Skeleton placeholder for pending responses
  */
 export const ModernAIResponsePair = memo(function ModernAIResponsePair({
   storytellingResponse,
@@ -106,11 +158,15 @@ export const ModernAIResponsePair = memo(function ModernAIResponsePair({
     business: "Business",
   };
 
+  // Check if a response is waiting (placeholder with no content yet)
+  const isWaiting = (response: ResponseData) =>
+    !response.content && response.isStreaming;
+
   return (
     <div className="w-full">
       {/* Desktop/Tablet: Side-by-side view */}
       <div className="hidden md:block">
-        {/* Indicator that 2 versions are available - AUTOSCROLL colors enhanced */}
+        {/* Indicator that 2 versions are available */}
         <motion.div
           initial={{ opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
@@ -128,36 +184,44 @@ export const ModernAIResponsePair = memo(function ModernAIResponsePair({
               className="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(248,147,93,0.6)]"
             />
           </div>
-          <span className="bg-gradient-to-r from-primary-hover via-primary to-primary-hover bg-clip-text text-transparent font-semibold">
+          <span className="text-primary font-semibold">
             2 versions disponibles
           </span>
         </motion.div>
 
-        {/* Two columns */}
-        <div className="grid grid-cols-2 gap-8">
-          <div>
-            <ModernResponseCard
-              content={storytellingResponse.content}
-              variant="storytelling"
-              timestamp={storytellingResponse.timestamp}
-              isStreaming={storytellingResponse.isStreaming}
-              userPlan={userPlan}
-              onPublishToLinkedIn={onPublishToLinkedIn}
-              onSchedule={onSchedule}
-              showVariantBadge={true}
-            />
+        {/* Two columns — card backgrounds for clear readability */}
+        <div className="grid grid-cols-2 gap-5">
+          <div className="min-h-[120px] bg-dark-card border border-dark-border/50 border-t-2 border-t-primary-hover/60 rounded-2xl p-5">
+            {isWaiting(storytellingResponse) ? (
+              <StreamingSkeleton variant="storytelling" />
+            ) : (
+              <ModernResponseCard
+                content={storytellingResponse.content}
+                variant="storytelling"
+                timestamp={storytellingResponse.timestamp}
+                isStreaming={storytellingResponse.isStreaming}
+                userPlan={userPlan}
+                onPublishToLinkedIn={onPublishToLinkedIn}
+                onSchedule={onSchedule}
+                showVariantBadge={true}
+              />
+            )}
           </div>
-          <div>
-            <ModernResponseCard
-              content={businessResponse.content}
-              variant="business"
-              timestamp={businessResponse.timestamp}
-              isStreaming={businessResponse.isStreaming}
-              userPlan={userPlan}
-              onPublishToLinkedIn={onPublishToLinkedIn}
-              onSchedule={onSchedule}
-              showVariantBadge={true}
-            />
+          <div className="min-h-[120px] bg-dark-card border border-dark-border/50 border-t-2 border-t-primary/60 rounded-2xl p-5">
+            {isWaiting(businessResponse) ? (
+              <StreamingSkeleton variant="business" />
+            ) : (
+              <ModernResponseCard
+                content={businessResponse.content}
+                variant="business"
+                timestamp={businessResponse.timestamp}
+                isStreaming={businessResponse.isStreaming}
+                userPlan={userPlan}
+                onPublishToLinkedIn={onPublishToLinkedIn}
+                onSchedule={onSchedule}
+                showVariantBadge={true}
+              />
+            )}
           </div>
         </div>
       </div>
@@ -188,16 +252,22 @@ export const ModernAIResponsePair = memo(function ModernAIResponsePair({
               }}
               className="w-full"
             >
-              <ModernResponseCard
-                content={activeResponse.content}
-                variant={activeResponse.variant}
-                timestamp={activeResponse.timestamp}
-                isStreaming={activeResponse.isStreaming}
-                userPlan={userPlan}
-                onPublishToLinkedIn={onPublishToLinkedIn}
-                onSchedule={onSchedule}
-                showVariantBadge={true}
-              />
+              <div className="bg-dark-card border border-dark-border/50 rounded-2xl p-5">
+                {isWaiting(activeResponse) ? (
+                  <StreamingSkeleton variant={activeResponse.variant} />
+                ) : (
+                  <ModernResponseCard
+                    content={activeResponse.content}
+                    variant={activeResponse.variant}
+                    timestamp={activeResponse.timestamp}
+                    isStreaming={activeResponse.isStreaming}
+                    userPlan={userPlan}
+                    onPublishToLinkedIn={onPublishToLinkedIn}
+                    onSchedule={onSchedule}
+                    showVariantBadge={true}
+                  />
+                )}
+              </div>
             </motion.div>
           </AnimatePresence>
         </motion.div>

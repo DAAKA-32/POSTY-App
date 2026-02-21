@@ -42,8 +42,11 @@ export interface ChatMessageProps {
   type: "user" | "ai";
   content: string;
   timestamp?: Date;
+  /** @deprecated No longer displayed */
   userName?: string;
+  /** @deprecated No longer displayed */
   userInitial?: string;
+  /** @deprecated No longer displayed */
   userPhotoURL?: string;
   variant?: "storytelling" | "business";
   showActions?: boolean;
@@ -57,9 +60,6 @@ const ChatMessage = memo(function ChatMessage({
   type,
   content,
   timestamp,
-  userName,
-  userInitial,
-  userPhotoURL,
   variant,
   showActions = false,
   onCopy,
@@ -68,7 +68,6 @@ const ChatMessage = memo(function ChatMessage({
   isStreaming = false,
 }: ChatMessageProps) {
   const [copied, setCopied] = useState(false);
-  const [imageError, setImageError] = useState(false);
   const { trigger: triggerHaptic } = useHapticFeedback();
 
   const handleCopy = async () => {
@@ -107,31 +106,10 @@ const ChatMessage = memo(function ChatMessage({
         delay: index * 0.05,
         ease: smoothEase,
       }}
-      className={`flex gap-3 ${isUser ? "flex-row-reverse" : "flex-row"}`}
+      className={`flex ${isUser ? "justify-end" : "flex-row gap-3"}`}
     >
-      {/* Avatar */}
-      {isUser ? (
-        // User avatar - photo or initial with premium ring
-        userPhotoURL && !imageError ? (
-          <div className="relative shrink-0">
-            <img
-              src={userPhotoURL}
-              alt={userName || "User"}
-              className="w-8 h-8 rounded-xl object-cover ring-1 ring-primary/20 shadow-sm"
-              onError={() => setImageError(true)}
-            />
-          </div>
-        ) : (
-          <div className="relative shrink-0">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary via-primary-hover to-accent flex items-center justify-center shadow-sm ring-1 ring-primary/20">
-              <span className="text-white font-bold text-sm">
-                {userInitial || "U"}
-              </span>
-            </div>
-          </div>
-        )
-      ) : (
-        // Posty avatar - official logo with premium glow
+      {/* Posty avatar - AI messages only */}
+      {!isUser && (
         <div className="relative group/avatar">
           <div className="absolute -inset-1 bg-gradient-to-br from-primary/40 to-accent/40 rounded-xl opacity-0 group-hover/avatar:opacity-100 blur-md transition-opacity duration-300" />
           <div className="relative w-8 h-8 shrink-0 shadow-md ring-1 ring-gray-200/50 dark:ring-dark-border/50">
@@ -151,23 +129,21 @@ const ChatMessage = memo(function ChatMessage({
           ${isUser ? "items-end" : "items-start"}
         `}
       >
-        {/* Sender name and timestamp */}
-        <div className="flex items-center gap-2 mb-1.5 px-1">
-          {isUser ? (
-            <span className="text-xs font-medium text-gray-900 dark:text-gray-200">
-              {userName || "Vous"}
-            </span>
-          ) : (
-            <span className="text-xs font-bold tracking-wider bg-gradient-to-r from-primary via-accent to-primary bg-[length:200%_auto] animate-shimmer-slow bg-clip-text text-transparent">
-              POSTY
-            </span>
-          )}
-          {timestamp && (
-            <span className="text-2xs text-text-muted/60">
-              {formatTimeAgo(timestamp)}
-            </span>
-          )}
-        </div>
+        {/* Sender label and timestamp */}
+        {(!isUser || timestamp) && (
+          <div className={`flex items-center gap-2 mb-1.5 px-1 ${isUser ? "justify-end" : ""}`}>
+            {!isUser && (
+              <span className="text-xs font-bold tracking-wider bg-gradient-to-r from-primary via-accent to-primary bg-[length:200%_auto] animate-shimmer-slow bg-clip-text text-transparent">
+                POSTY
+              </span>
+            )}
+            {timestamp && (
+              <span className="text-2xs text-text-muted/60">
+                {formatTimeAgo(timestamp)}
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Bubble */}
         <div

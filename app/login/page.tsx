@@ -268,11 +268,11 @@ export default function LoginPage() {
               transition={{ type: "spring", stiffness: 300 }}
               className="relative"
             >
-              <div className="w-24 h-24 lg:w-32 lg:h-32 flex items-center justify-center shadow-lg">
+              <div className="w-24 h-24 lg:w-32 lg:h-32 rounded-2xl overflow-hidden shadow-lg">
                 <img
-                  src="/logo.png"
+                  src="/og-image.jpg"
                   alt="Posty Logo"
-                  className="w-full h-full object-contain"
+                  className="w-full h-full object-cover"
                 />
               </div>
               {/* Warm glow effect */}

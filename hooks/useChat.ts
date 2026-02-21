@@ -243,15 +243,32 @@ export function useChat({
 
                 switch (eventType) {
                   case "start": {
+                    const variantType = data.type as "storytelling" | "business";
                     const newMessage: ConversationMessage = {
-                      id: messageIds[data.type as keyof typeof messageIds],
+                      id: messageIds[variantType],
                       type: "ai",
                       content: "",
                       timestamp: new Date(),
-                      variant: data.type,
+                      variant: variantType,
                       isStreaming: true,
                     };
-                    setMessages((prev) => [...prev, newMessage]);
+
+                    if (dualMode && variantType === "storytelling") {
+                      // Pre-create business placeholder for stable dual layout
+                      const businessPlaceholder: ConversationMessage = {
+                        id: messageIds.business,
+                        type: "ai",
+                        content: "",
+                        timestamp: new Date(),
+                        variant: "business",
+                        isStreaming: true,
+                      };
+                      setMessages((prev) => [...prev, newMessage, businessPlaceholder]);
+                    } else if (dualMode && variantType === "business") {
+                      // Business placeholder already exists from storytelling start — skip
+                    } else {
+                      setMessages((prev) => [...prev, newMessage]);
+                    }
                     break;
                   }
 
@@ -370,7 +387,11 @@ export function useChat({
                             userId,
                             prompt,
                             dualMode ? accumulatedContent.storytelling : accumulatedContent[responseType],
-                            dualMode ? accumulatedContent.business : ""
+                            dualMode ? accumulatedContent.business : "",
+                            {
+                              responseMode: dualMode ? "dual" : "single-choice",
+                              selectedStyle: dualMode ? undefined : effectiveStyle,
+                            }
                           );
                           setPostId(newPostId);
                         }

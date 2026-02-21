@@ -247,14 +247,9 @@ function Navbar() {
             <div className="flex items-center justify-between h-16 md:h-[68px]">
               {/* Logo */}
               <Link href="/" className="flex items-center gap-2.5 relative z-[60]">
-                <motion.div
-                  whileHover={{ scale: 1.05, rotate: 2 }}
-                  whileTap={{ scale: 0.95 }}
-                  transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-                  className="w-9 h-9 md:w-10 md:h-10 shadow-md shadow-[#F8935D]/15 ring-1 ring-gray-100"
-                >
-                  <Image src="/logo.png" alt="Posty" width={40} height={40} className="w-full h-full object-contain" />
-                </motion.div>
+                <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl overflow-hidden shadow-md shadow-[#F8935D]/15 ring-1 ring-gray-100">
+                  <Image src="/og-image.jpg" alt="Posty" width={40} height={40} className="w-full h-full object-cover" />
+                </div>
                 <span className="text-lg md:text-xl font-bold text-gray-900 tracking-tight">Posty</span>
               </Link>
 
@@ -1098,7 +1093,7 @@ function DemoSection() {
         {/* Hero title — fixed: stays on screen while content scrolls over it */}
         <motion.div ref={titleRef} style={{ opacity: titleOpacity }} className="fixed top-0 left-0 right-0 z-[1] pt-24 md:pt-32 pb-10 md:pb-14 px-4 sm:px-6 lg:px-8">
           <div className="relative text-center max-w-4xl mx-auto">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] 2xl:text-[4rem] font-bold tracking-tight flex flex-col items-center gap-0 [&>span]:-my-[0.2em]">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] 2xl:text-[4rem] font-bold tracking-tight flex flex-col items-center gap-0 [&>span]:-my-[0.2em]">
               <span className="block">
                 {HERO_WORDS_L1.map((word, i) => (
                   <span
@@ -1136,7 +1131,7 @@ function DemoSection() {
                   );
                 })}
               </span>
-            </h1>
+            </h2>
 
             <motion.p
               initial={{ opacity: 0, y: 16, filter: "blur(3px)" }}
@@ -1256,8 +1251,8 @@ function DemoSection() {
                 </div>
               </div>
 
-              {/* Chat area — input only, never shows AI response */}
-              <div className="relative p-5 md:p-8 bg-gradient-to-b from-gray-50/80 to-gray-50/40 min-h-[400px] md:min-h-[520px] flex flex-col">
+              {/* Chat area — same aspect ratio as product preview carousel */}
+              <div className="relative p-5 md:p-8 bg-gradient-to-b from-gray-50/80 to-gray-50/40 aspect-[96/45] flex flex-col">
 
                 {/* Already used — option to revisit response */}
                 {demoUsed && (
@@ -2277,7 +2272,7 @@ function _LegacyKeyBenefitsSection() {
   };
 
   return (
-    <section id="benefices" className="relative py-12 md:py-16 lg:py-20 bg-gradient-to-b from-white via-gray-50/50 to-white overflow-hidden">
+    <section id="benefices-comparison" className="relative py-12 md:py-16 lg:py-20 bg-gradient-to-b from-white via-gray-50/50 to-white overflow-hidden">
       {/* Animated background elements */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <motion.div
@@ -3502,7 +3497,7 @@ function TestimonialsSection() {
             <div className="flex -space-x-2">
               {TESTIMONIALS.slice(0, 3).map((t, i) => (
                 <div key={i} className="w-6 h-6 rounded-full border-2 border-white overflow-hidden">
-                  <Image src={t.image} alt="" width={24} height={24} className="w-full h-full object-cover" />
+                  <Image src={t.image} alt={`Photo de ${t.name}`} width={24} height={24} className="w-full h-full object-cover" />
                 </div>
               ))}
             </div>
@@ -4543,8 +4538,8 @@ function Footer() {
           <div className="flex items-start justify-between gap-3 mb-4">
             <div className="flex-1">
               <Link href="/" className="flex items-center gap-2 mb-2">
-                <div className="w-7 h-7 shadow-sm shadow-[#F8935D]/10">
-                  <Image src="/logo.png" alt="Posty" width={28} height={28} className="w-full h-full object-contain" />
+                <div className="w-7 h-7 rounded-lg overflow-hidden shadow-sm shadow-[#F8935D]/10">
+                  <Image src="/og-image.jpg" alt="Posty" width={28} height={28} className="w-full h-full object-cover" />
                 </div>
                 <span className="text-sm font-bold text-gray-900">Posty</span>
               </Link>
@@ -4605,8 +4600,8 @@ function Footer() {
             {/* Brand */}
             <div className="col-span-2">
               <Link href="/" className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 shadow-lg shadow-[#F8935D]/10">
-                  <Image src="/logo.png" alt="Posty" width={40} height={40} className="w-full h-full object-contain" />
+                <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-[#F8935D]/10">
+                  <Image src="/og-image.jpg" alt="Posty" width={40} height={40} className="w-full h-full object-cover" />
                 </div>
                 <span className="text-xl font-bold text-gray-900">Posty</span>
               </Link>

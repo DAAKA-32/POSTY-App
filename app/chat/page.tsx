@@ -6,10 +6,12 @@ import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useChat } from "@/hooks/useChat";
+import { useSmartScroll } from "@/hooks/useSmartScroll";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import ChatBubble from "@/components/chat/ChatBubble";
 import AIResponsePair from "@/components/chat/AIResponsePair";
+import NewResponseIndicator from "@/components/chat/NewResponseIndicator";
 import toast from "@/components/ui/Toast";
 import { useBrowserMode, setBrowserModeCSSVars } from "@/hooks/useBrowserMode";
 import UniversalChatInput from "@/components/chat/UniversalChatInput";
@@ -28,7 +30,6 @@ export default function ChatPage() {
   const { user, loading: authLoading } = useAuth();
   const { t } = useLanguage();
   const router = useRouter();
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [showSignupPrompt, setShowSignupPrompt] = useState(false);
@@ -45,6 +46,20 @@ export default function ChatPage() {
     lastPrompt,
   } = useChat({
     isGuest: !user,
+  });
+
+  // Smart scroll with arrow indicator
+  const {
+    containerRef: scrollContainerRef,
+    bottomRef: messagesEndRef,
+    isNearBottom,
+    hasNewContent,
+    newContentCount,
+    scrollToBottom,
+  } = useSmartScroll({
+    dependencies: messages,
+    isLoading,
+    threshold: 200,
   });
 
   // Detect browser mode vs PWA for input positioning
@@ -98,11 +113,6 @@ export default function ChatPage() {
       });
     }
   }, [responses, lastPrompt]);
-
-  // Scroll to bottom when messages change
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -201,7 +211,7 @@ export default function ChatPage() {
       </header>
 
       {/* Messages area - with padding for content to scroll behind fixed input */}
-      <main className={`flex-1 gpu-scroll app-scroll-container app-content-wrapper ${messages.length === 0 ? 'overflow-hidden lg:overflow-y-auto scroll-disabled' : 'overflow-y-auto'}`}>
+      <main ref={scrollContainerRef} className={`flex-1 gpu-scroll app-scroll-container app-content-wrapper ${messages.length === 0 ? 'overflow-hidden lg:overflow-y-auto scroll-disabled' : 'overflow-y-auto'}`}>
         <div
           className={`max-w-2xl mx-auto px-4 pt-6 space-y-4 content-with-fixed-input ${browserMode.isMobileBrowser ? 'mobile-browser-mode' : ''}`}
         >
@@ -377,6 +387,14 @@ export default function ChatPage() {
           <div ref={messagesEndRef} />
         </div>
       </main>
+
+      {/* Scroll arrow — visible whenever user is scrolled up and there are messages */}
+      <NewResponseIndicator
+        isVisible={!isNearBottom && messages.length > 0}
+        onClick={scrollToBottom}
+        newCount={newContentCount}
+        mode={hasNewContent ? "new-content" : "scroll-down"}
+      />
 
       {/* Input area - Always fixed at bottom on all devices */}
       <div

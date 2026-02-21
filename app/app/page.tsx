@@ -12,6 +12,7 @@ import { useKeyboardHeight } from "@/hooks/useKeyboardHeight";
 import { getUserPostsWithPinned, getDualModeUsageThisWeek } from "@/lib/firestore";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import Image from "next/image";
 import { Post, FileAttachment } from "@/types";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import MainLayout from "@/components/layout/MainLayout";
@@ -20,6 +21,7 @@ import ModernAIResponsePair from "@/components/chat/ModernAIResponsePair";
 import ModernResponseCard from "@/components/chat/ModernResponseCard";
 import ModernStyleSelector from "@/components/chat/ModernStyleSelector";
 import DualModeToggle from "@/components/chat/DualModeToggle";
+import MaxModeSelector from "@/components/chat/MaxModeSelector";
 import { getPlanFeatures } from "@/lib/plan-features";
 import NewResponseIndicator from "@/components/chat/NewResponseIndicator";
 import { PostInsights } from "@/components/post";
@@ -144,6 +146,9 @@ function AppContent() {
   const [dualMode, setDualMode] = useState(false);
   const [dualUsedThisWeek, setDualUsedThisWeek] = useState(0);
 
+  // Max mode selector state (Max plan: choose between dual/storytelling/business)
+  const [maxMode, setMaxMode] = useState<"dual" | "storytelling" | "business">("dual");
+
   // Track session activity for intelligent upgrade CTA timing
   const [sessionStartTime] = useState(Date.now());
   const [sessionMessageCount, setSessionMessageCount] = useState(0);
@@ -174,6 +179,12 @@ function AppContent() {
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const isRecordingRef = useRef(false); // Mirror for callbacks
 
+  // Derive effective dual mode and style from Max selector or Pro toggle
+  const effectiveDualMode = isMaxPlan ? maxMode === "dual" : dualMode;
+  const effectiveStyle = isMaxPlan
+    ? (maxMode === "dual" ? "business" : maxMode)
+    : selectedStyle;
+
   const {
     messages,
     isLoading,
@@ -185,14 +196,15 @@ function AppContent() {
   } = useChat({
     userId: user?.uid,
     isGuest: false,
-    selectedStyle,
-    dualMode: dualMode || isMaxPlan, // Max always dual, Pro when toggled
+    selectedStyle: effectiveStyle,
+    dualMode: effectiveDualMode,
   });
 
   // Smart scroll: only auto-scroll when user is near bottom
   const {
     containerRef: scrollContainerRef,
     bottomRef: messagesEndRef,
+    isNearBottom,
     hasNewContent,
     newContentCount,
     scrollToBottom,
@@ -469,10 +481,7 @@ function AppContent() {
     setShowScheduleModal(true);
   };
 
-  const userInitial = userProfile?.displayName?.charAt(0) || user?.email?.charAt(0) || "U";
-  const userName = userProfile?.displayName || "Vous";
   const userFirstName = userProfile?.displayName?.split(" ")[0] || "";
-  const userPhotoURL = user?.photoURL || userProfile?.photoURL || null;
 
   // Dismiss welcome modal and clear Firestore flag
   const dismissWelcomeModal = useCallback(() => {
@@ -552,9 +561,11 @@ function AppContent() {
                     {/* Gradient border ring */}
                     <div className="absolute -inset-1 bg-gradient-to-br from-primary via-accent to-primary rounded-3xl opacity-60 blur-[2px]" />
                     <div className="relative w-20 h-20 sm:w-24 sm:h-24 shadow-elevated ring-2 ring-white/50 dark:ring-dark-card/50">
-                      <img
+                      <Image
                         src="/logo.png"
                         alt="Posty Logo"
+                        width={96}
+                        height={96}
                         className="w-full h-full object-contain"
                       />
                     </div>
@@ -639,9 +650,6 @@ function AppContent() {
                             type={message.type}
                             content={message.content}
                             timestamp={message.timestamp}
-                            userName={userName}
-                            userInitial={userInitial}
-                            userPhotoURL={userPhotoURL || undefined}
                             showActions={false}
                             index={i}
                           />
@@ -665,9 +673,11 @@ function AppContent() {
                               {/* POSTY Avatar and Label */}
                               <div className="flex items-center gap-3 mb-3">
                                 <div className="w-8 h-8 shrink-0 shadow-sm">
-                                  <img
+                                  <Image
                                     src="/logo.png"
                                     alt="Posty"
+                                    width={32}
+                                    height={32}
                                     className="w-full h-full object-contain"
                                   />
                                 </div>
@@ -711,9 +721,11 @@ function AppContent() {
                               {/* POSTY Avatar and Label */}
                               <div className="flex items-center gap-3 mb-3">
                                 <div className="w-8 h-8 shrink-0 shadow-sm">
-                                  <img
+                                  <Image
                                     src="/logo.png"
                                     alt="Posty"
+                                    width={32}
+                                    height={32}
                                     className="w-full h-full object-contain"
                                   />
                                 </div>
@@ -816,11 +828,12 @@ function AppContent() {
           </div>
         </div>
 
-        {/* New response indicator - shown when user scrolled up and new content is available */}
+        {/* Scroll arrow — visible whenever user is scrolled up and there are messages */}
         <NewResponseIndicator
-          isVisible={hasNewContent && !isLoading && !isStreaming}
+          isVisible={!isNearBottom && messages.length > 0}
           onClick={scrollToBottom}
           newCount={newContentCount}
+          mode={hasNewContent ? "new-content" : "scroll-down"}
         />
 
         {/* Input area - Always fixed at bottom on all devices */}
@@ -849,11 +862,19 @@ function AppContent() {
               sessionDuration={sessionDuration}
             />
 
-            {/* Style Selector + Dual Mode Toggle - PRO and MAX plans */}
-            {(isProPlan || isMaxPlan) && (
+            {/* Mode Selector — Max: 3-way selector, Pro: DualModeToggle */}
+            {isMaxPlan && (
+              <div className="mb-3 flex justify-center">
+                <MaxModeSelector
+                  selectedMode={maxMode}
+                  onModeChange={setMaxMode}
+                />
+              </div>
+            )}
+            {isProPlan && !isMaxPlan && (
               <div className="mb-3 flex justify-center">
                 <DualModeToggle
-                  enabled={dualMode || isMaxPlan}
+                  enabled={dualMode}
                   onToggle={(val) => setDualMode(val)}
                   responseType={selectedStyle}
                   onResponseTypeChange={setSelectedStyle}
@@ -1060,7 +1081,7 @@ function AppContent() {
                 transition={{ delay: 0.2, type: "spring", stiffness: 200, damping: 15 }}
                 className="w-20 h-20 mx-auto mb-6 shadow-lg ring-2 ring-primary/20"
               >
-                <img src="/logo.png" alt="Posty" className="w-full h-full object-contain" />
+                <Image src="/logo.png" alt="Posty" width={80} height={80} className="w-full h-full object-contain" />
               </motion.div>
 
               {/* Title */}

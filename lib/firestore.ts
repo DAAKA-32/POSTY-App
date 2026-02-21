@@ -1570,6 +1570,7 @@ export interface DashboardStats {
   postsLast30Days: number;
   postsByDay: { date: string; count: number }[];
   styleDistribution: { style: string; count: number }[];
+  responseModeDistribution: { mode: string; count: number }[];
   recentActivity: { date: string; type: string; content: string }[];
 }
 
@@ -1615,9 +1616,20 @@ export async function getDashboardStats(userId: string): Promise<DashboardStats>
     "Storytelling": 0,
     "Business": 0,
   };
+  const responseModeCount: Record<string, number> = {
+    "Storytelling seul": 0,
+    "Business seul": 0,
+    "Double Reponse": 0,
+  };
 
   posts.forEach((post) => {
-    const postData = post as { createdAt?: Timestamp; chosenVersion?: string };
+    const postData = post as {
+      createdAt?: Timestamp;
+      chosenVersion?: string;
+      contentB?: string;
+      responseMode?: string;
+      selectedStyle?: string;
+    };
     if (postData.createdAt) {
       const postDate = postData.createdAt.toDate();
       const dateKey = postDate.toISOString().split("T")[0];
@@ -1636,6 +1648,16 @@ export async function getDashboardStats(userId: string): Promise<DashboardStats>
     } else if (postData.chosenVersion === "B") {
       styleCount["Business"]++;
     }
+
+    // Count response mode distribution
+    const hasContentB = postData.contentB && postData.contentB.trim().length > 0;
+    if (postData.responseMode === "dual" || hasContentB) {
+      responseModeCount["Double Reponse"]++;
+    } else if (postData.selectedStyle === "storytelling") {
+      responseModeCount["Storytelling seul"]++;
+    } else {
+      responseModeCount["Business seul"]++;
+    }
   });
 
   // Convert postsByDay to sorted array (last 30 days)
@@ -1652,6 +1674,12 @@ export async function getDashboardStats(userId: string): Promise<DashboardStats>
   // Style distribution
   const styleDistribution = Object.entries(styleCount).map(([style, count]) => ({
     style,
+    count,
+  }));
+
+  // Response mode distribution
+  const responseModeDistribution = Object.entries(responseModeCount).map(([mode, count]) => ({
+    mode,
     count,
   }));
 
@@ -1673,6 +1701,7 @@ export async function getDashboardStats(userId: string): Promise<DashboardStats>
     postsLast30Days,
     postsByDay,
     styleDistribution,
+    responseModeDistribution,
     recentActivity,
   };
 }

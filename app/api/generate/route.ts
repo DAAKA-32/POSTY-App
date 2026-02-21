@@ -307,9 +307,16 @@ export async function POST(request: NextRequest) {
     let isDualGeneration = false;
 
     if (responseMode === "dual") {
-      // MAX plan: always generate both (unlimited)
-      typesToGenerate = ["storytelling", "business"];
-      isDualGeneration = true;
+      // MAX plan: default to both, but respect user's explicit single-style choice
+      if (requestDualMode === false) {
+        // User explicitly chose single mode via MaxModeSelector
+        typesToGenerate = [selectedStyle as "storytelling" | "business"];
+        isDualGeneration = false;
+      } else {
+        // Default: generate both (unlimited)
+        typesToGenerate = ["storytelling", "business"];
+        isDualGeneration = true;
+      }
     } else if (responseMode === "single-choice" && requestDualMode && planLimits.dualResponsesPerWeek !== 0) {
       // PRO plan: user explicitly requested dual mode — check weekly limit
       const dualLimit = planLimits.dualResponsesPerWeek;

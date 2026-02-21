@@ -188,7 +188,7 @@ function ScheduleContent() {
         className="min-h-full bg-background-warm dark:bg-dark-bg scroll-smooth lg:overflow-y-auto"
         disabled={isLoading}
       >
-        <div className="w-full mx-auto px-4 py-6 md:px-6 md:py-8 md:max-w-2xl lg:px-8 lg:py-10 lg:max-w-3xl xl:max-w-4xl 2xl:max-w-5xl overflow-x-hidden">
+        <div className="w-full mx-auto px-4 py-6 md:px-6 md:py-8 lg:px-8 lg:py-10 lg:max-w-4xl xl:max-w-5xl 2xl:max-w-6xl overflow-x-hidden">
           {/* Premium Header */}
           <motion.div
             initial={{ opacity: 0, y: -10 }}
@@ -271,7 +271,7 @@ function ScheduleContent() {
                   <button
                     key={option.value}
                     onClick={() => setFilter(option.value)}
-                    className={`px-3.5 py-2 text-sm font-medium rounded-xl whitespace-nowrap transition-colors duration-200 ${getFilterColors()}`}
+                    className={`px-3.5 py-2 text-sm font-medium rounded-full whitespace-nowrap transition-colors duration-200 ${getFilterColors()}`}
                   >
                     {option.label}
                     {option.value === "pending" && pendingCount > 0 && (

@@ -94,10 +94,11 @@ export async function getUserSubscriptionData(userId: string): Promise<Subscript
     const effectivePlan = isTestMode && testPlan ? testPlan : stripePlan;
 
     // Build subscription object
+    // When test mode is active, force status to "active" so all permission checks pass
     const subscription: UserSubscription = {
       plan: effectivePlan,
       planSource: isTestMode ? "test" : "stripe",
-      status: subscriptionData.status || "active",
+      status: isTestMode && testPlan ? "active" : (subscriptionData.status || "active"),
       currentPeriodStart: subscriptionData.subscribedAt?.toDate(),
       currentPeriodEnd: subscriptionData.expiresAt?.toDate(),
     };

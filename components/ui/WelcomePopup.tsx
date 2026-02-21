@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import Button from "./Button";
 
 interface WelcomePopupProps {
@@ -66,7 +67,7 @@ export default function WelcomePopup({ isOpen, onClose }: WelcomePopupProps) {
         {/* Logo */}
         <div className="flex justify-center mb-4">
           <div className="w-16 h-16">
-            <img src="/logo.png" alt="Posty Logo" className="w-full h-full object-contain" />
+            <Image src="/logo.png" alt="Posty Logo" width={64} height={64} className="w-full h-full object-contain" />
           </div>
         </div>
 

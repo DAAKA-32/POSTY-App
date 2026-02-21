@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 /**
@@ -15,9 +16,11 @@ export default function NotFound() {
       {/* Logo */}
       <div className="mb-8">
         <div className="w-16 h-16 flex items-center justify-center mx-auto">
-          <img
+          <Image
             src="/logo.png"
             alt="Posty Logo"
+            width={64}
+            height={64}
             className="w-full h-full object-contain"
           />
         </div>
@@ -128,7 +131,7 @@ export default function NotFound() {
                 "@type": "ListItem",
                 position: 1,
                 name: "Accueil",
-                item: "https://posty-app.vercel.app/",
+                item: "https://tink-xi.vercel.app/",
               },
               {
                 "@type": "ListItem",

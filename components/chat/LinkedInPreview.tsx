@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 import { useState, useEffect } from "react";
 
 interface LinkedInPreviewProps {
@@ -116,7 +117,7 @@ export default function LinkedInPreview({
           {/* Avatar */}
           <div className="w-12 h-12 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center flex-shrink-0 overflow-hidden">
             {authorAvatar ? (
-              <img src={authorAvatar} alt={authorName} className="w-full h-full object-cover" />
+              <Image src={authorAvatar} alt={authorName} width={48} height={48} className="w-full h-full object-cover" />
             ) : (
               <span className="text-lg font-semibold text-gray-500">
                 {authorName.charAt(0).toUpperCase()}

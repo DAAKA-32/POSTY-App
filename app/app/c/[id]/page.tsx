@@ -86,6 +86,7 @@ function ConversationContent() {
   const {
     containerRef: scrollContainerRef,
     bottomRef: messagesEndRef,
+    isNearBottom,
     hasNewContent,
     newContentCount,
     scrollToBottom,
@@ -512,11 +513,12 @@ function ConversationContent() {
           </div>
         </div>
 
-        {/* New response indicator */}
+        {/* Scroll arrow — visible whenever user is scrolled up and there are messages */}
         <NewResponseIndicator
-          isVisible={hasNewContent && !isLoading && !isStreaming}
+          isVisible={!isNearBottom && messages.length > 0}
           onClick={scrollToBottom}
           newCount={newContentCount}
+          mode={hasNewContent ? "new-content" : "scroll-down"}
         />
 
         {/* Input area - Always fixed at bottom on all devices */}

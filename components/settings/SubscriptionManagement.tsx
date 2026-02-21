@@ -392,53 +392,69 @@ export default function SubscriptionManagement() {
                 </motion.div>
               )}
 
-              {/* Cancellation Warning */}
-              <AnimatePresence>
-                {stripeDetails?.cancelAtPeriodEnd && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="p-4 bg-warning/10 border border-warning/20 rounded-xl"
-                  >
-                    <div className="flex items-start gap-3">
-                      <svg className="w-5 h-5 text-warning shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                      </svg>
-                      <div>
-                        <p className="text-warning font-medium text-sm">Annulation programmée</p>
-                        <p className="text-text-secondary text-xs mt-1">
-                          Votre abonnement ne sera pas renouvelé. Vous conservez l'accès à toutes les fonctionnalités
-                          jusqu'au <span className="text-gray-900 dark:text-white font-medium">{formatDate(stripeDetails.currentPeriodEnd)}</span>.
-                        </p>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={handleReactivateSubscription}
-                          isLoading={isReactivating}
-                          className="mt-3 hover:border-accent/40 hover:text-accent"
-                        >
-                          Réactiver l'abonnement
-                        </Button>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Auto-Renewal Info */}
-              {stripeDetails && !stripeDetails.cancelAtPeriodEnd && (
+              {/* Toggle "Continuer l'abonnement" */}
+              {stripeDetails && (
                 <motion.div
                   variants={itemVariants}
-                  className="flex items-center gap-3 p-3 bg-accent/5 border border-accent/10 rounded-xl"
+                  className={`p-4 rounded-xl border transition-colors duration-300 ${
+                    stripeDetails.cancelAtPeriodEnd
+                      ? "bg-warning/5 border-warning/20"
+                      : "bg-accent/5 border-accent/15"
+                  }`}
                 >
-                  <svg className="w-5 h-5 text-accent shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                  <p className="text-text-secondary text-xs">
-                    <span className="text-accent font-medium">Renouvellement automatique activé.</span>{" "}
-                    Votre abonnement sera renouvelé automatiquement le {formatDate(stripeDetails.currentPeriodEnd)}.
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors duration-300 ${
+                        stripeDetails.cancelAtPeriodEnd ? "bg-warning/10" : "bg-accent/10"
+                      }`}>
+                        <svg className={`w-4 h-4 transition-colors duration-300 ${
+                          stripeDetails.cancelAtPeriodEnd ? "text-warning" : "text-accent"
+                        }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-gray-900 dark:text-white font-medium text-sm">Continuer l'abonnement</p>
+                        <p className="text-text-muted text-xs mt-0.5">
+                          {stripeDetails.cancelAtPeriodEnd
+                            ? <>Votre abonnement s'arrêtera le <span className="text-warning font-medium">{formatDate(stripeDetails.currentPeriodEnd)}</span></>
+                            : <>Prochain renouvellement le <span className="text-accent font-medium">{formatDate(stripeDetails.currentPeriodEnd)}</span></>
+                          }
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Toggle switch */}
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={!stripeDetails.cancelAtPeriodEnd}
+                      aria-label="Continuer l'abonnement"
+                      disabled={isCanceling || isReactivating}
+                      onClick={() => {
+                        if (stripeDetails.cancelAtPeriodEnd) {
+                          handleReactivateSubscription();
+                        } else {
+                          setShowCancelModal(true);
+                        }
+                      }}
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-dark-card disabled:opacity-50 disabled:cursor-not-allowed ${
+                        !stripeDetails.cancelAtPeriodEnd ? "bg-accent" : "bg-gray-400 dark:bg-gray-600"
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-md ring-0 transition-transform duration-300 ease-in-out ${
+                          !stripeDetails.cancelAtPeriodEnd ? "translate-x-5" : "translate-x-0"
+                        }`}
+                      />
+                      {/* Loading spinner overlay */}
+                      {(isCanceling || isReactivating) && (
+                        <span className="absolute inset-0 flex items-center justify-center">
+                          <span className="w-3.5 h-3.5 border-2 border-white/60 border-t-white rounded-full animate-spin" />
+                        </span>
+                      )}
+                    </button>
+                  </div>
                 </motion.div>
               )}
             </>
@@ -526,19 +542,6 @@ export default function SubscriptionManagement() {
                 Gérer la facturation
               </Button>
 
-              {!stripeDetails?.cancelAtPeriodEnd && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setShowCancelModal(true)}
-                  className="flex-1 hover:border-error/40 hover:text-error"
-                >
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                  Annuler l'abonnement
-                </Button>
-              )}
             </motion.div>
           )}
 

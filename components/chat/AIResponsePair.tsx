@@ -86,6 +86,64 @@ const variantStyles = {
   },
 };
 
+// Skeleton placeholder for waiting responses (stable dual layout)
+const ResponseSkeleton = memo(function ResponseSkeleton({
+  variant,
+  isMobile = false,
+}: {
+  variant: "storytelling" | "business";
+  isMobile?: boolean;
+}) {
+  const styles = variantStyles[variant];
+
+  return (
+    <div
+      className={`
+        flex flex-col h-full
+        bg-dark-card border border-dark-border rounded-xl
+        overflow-hidden
+        ${isMobile ? "min-h-[320px]" : ""}
+      `}
+    >
+      {/* Header with badge */}
+      <div className={`px-4 py-3 border-b border-dark-border bg-gradient-to-r ${styles.gradient}`}>
+        <span
+          className={`
+            inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full
+            border ${styles.badge}
+          `}
+        >
+          {styles.icon}
+          {styles.label}
+        </span>
+      </div>
+
+      {/* Skeleton lines */}
+      <div className="flex-1 px-4 py-4">
+        <div className="space-y-3">
+          {[85, 100, 70, 55, 90].map((width, i) => (
+            <motion.div
+              key={i}
+              animate={{ opacity: [0.25, 0.5, 0.25] }}
+              transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.12 }}
+              className="h-3 rounded-md bg-dark-border/40"
+              style={{ width: `${width}%` }}
+            />
+          ))}
+        </div>
+        <div className="flex items-center gap-2 mt-4 text-xs text-text-muted">
+          <motion.span
+            animate={{ opacity: [0.4, 1, 0.4] }}
+            transition={{ duration: 1.2, repeat: Infinity }}
+            className={`inline-block w-1.5 h-1.5 rounded-full ${styles.dotColor}`}
+          />
+          En attente...
+        </div>
+      </div>
+    </div>
+  );
+});
+
 // Single Response Card Component
 const ResponseCard = memo(function ResponseCard({
   response,
@@ -388,7 +446,7 @@ const AIResponsePair = memo(function AIResponsePair({
       <div className="hidden md:block">
         {/* Desktop pagination indicator */}
         <div className="flex items-center justify-center gap-3 mb-3">
-          <span className="text-xs text-text-muted">2 versions disponibles</span>
+          <span className="text-xs text-primary font-medium">2 versions disponibles</span>
           <div className="flex items-center gap-1.5">
             <span className={`w-2 h-2 rounded-full ${variantStyles.storytelling.dotColor}`} />
             <span className={`w-2 h-2 rounded-full ${variantStyles.business.dotColor}`} />
@@ -396,23 +454,31 @@ const AIResponsePair = memo(function AIResponsePair({
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <ResponseCard
-              response={storytellingResponse}
-              onCopy={onCopy}
-              onPublishToLinkedIn={onPublishToLinkedIn}
-              onSchedule={onSchedule}
-              onSelectVersion={onSelectVersion}
-            />
+          <div className="min-h-[120px]">
+            {!storytellingResponse.content && storytellingResponse.isStreaming ? (
+              <ResponseSkeleton variant="storytelling" />
+            ) : (
+              <ResponseCard
+                response={storytellingResponse}
+                onCopy={onCopy}
+                onPublishToLinkedIn={onPublishToLinkedIn}
+                onSchedule={onSchedule}
+                onSelectVersion={onSelectVersion}
+              />
+            )}
           </div>
-          <div>
-            <ResponseCard
-              response={businessResponse}
-              onCopy={onCopy}
-              onPublishToLinkedIn={onPublishToLinkedIn}
-              onSchedule={onSchedule}
-              onSelectVersion={onSelectVersion}
-            />
+          <div className="min-h-[120px]">
+            {!businessResponse.content && businessResponse.isStreaming ? (
+              <ResponseSkeleton variant="business" />
+            ) : (
+              <ResponseCard
+                response={businessResponse}
+                onCopy={onCopy}
+                onPublishToLinkedIn={onPublishToLinkedIn}
+                onSchedule={onSchedule}
+                onSelectVersion={onSelectVersion}
+              />
+            )}
           </div>
         </div>
       </div>
@@ -487,14 +553,18 @@ const AIResponsePair = memo(function AIResponsePair({
               }}
               className="w-full"
             >
-              <ResponseCard
-                response={activeResponse}
-                onCopy={onCopy}
-                onPublishToLinkedIn={onPublishToLinkedIn}
-                onSchedule={onSchedule}
-                onSelectVersion={onSelectVersion}
-                isMobile={true}
-              />
+              {!activeResponse.content && activeResponse.isStreaming ? (
+                <ResponseSkeleton variant={activeResponse.variant} isMobile />
+              ) : (
+                <ResponseCard
+                  response={activeResponse}
+                  onCopy={onCopy}
+                  onPublishToLinkedIn={onPublishToLinkedIn}
+                  onSchedule={onSchedule}
+                  onSelectVersion={onSelectVersion}
+                  isMobile={true}
+                />
+              )}
             </motion.div>
           </AnimatePresence>
         </motion.div>

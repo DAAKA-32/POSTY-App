@@ -11,6 +11,7 @@ import Button from "@/components/ui/Button";
 import BillingToggle from "@/components/ui/BillingToggle";
 import TestModePanel from "@/components/subscription/TestModePanel";
 import toast from "@/components/ui/Toast";
+import WelcomeModal from "@/components/ui/WelcomeModal";
 
 // Get paid plans only (Pro + Max) from lib/plans.ts (single source of truth)
 const PLANS = getPaidPlans();
@@ -25,6 +26,8 @@ function SubscriptionContent() {
   const [isLoading, setIsLoading] = useState<PlanType | null>(null);
   const [selectedTestPlan, setSelectedTestPlan] = useState<PlanType | null>(null);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [welcomePlanName, setWelcomePlanName] = useState<string | undefined>();
 
   // ============================================
   // PRODUCTION MODE: Test mode is completely disabled
@@ -51,24 +54,37 @@ function SubscriptionContent() {
     };
   }, []);
 
-  // Prevent back-navigation to /app when redirected here for subscription_required
+  // Prevent back-navigation when user has no active plan (protect payment flow)
+  // Skip this guard in test mode so dev can navigate freely
   const isRedirectedFromGuard = searchParams.get("reason") === "subscription_required" || searchParams.get("reason") === "trial_expired";
   useEffect(() => {
-    if (isRedirectedFromGuard) {
-      // Replace current history entry so browser back button goes to home, not /app
+    if (!currentPlan && !isTestMode) {
       window.history.replaceState(null, "", window.location.href);
+
+      const handlePopState = () => {
+        window.history.pushState(null, "", window.location.href);
+      };
+      window.addEventListener("popstate", handlePopState);
+      return () => window.removeEventListener("popstate", handlePopState);
     }
-  }, [isRedirectedFromGuard]);
+  }, [currentPlan, isTestMode]);
 
   // Show toast if redirected from canceled checkout
   useEffect(() => {
     if (searchParams.get("canceled")) {
       toast.error(t.pricing.paymentCanceled);
     }
+  }, [searchParams, t.pricing.paymentCanceled]);
+
+  // Show welcome modal after successful Stripe payment
+  useEffect(() => {
     if (searchParams.get("success")) {
-      toast.success(t.pricing.subscriptionActivated);
+      const plan = currentPlan;
+      const name = plan === "max" ? "Max" : plan === "pro" ? "Pro" : undefined;
+      setWelcomePlanName(name);
+      setShowWelcomeModal(true);
     }
-  }, [searchParams, t.pricing.paymentCanceled, t.pricing.subscriptionActivated]);
+  }, [searchParams, currentPlan]);
 
   const handleSelectPlan = async (plan: PlanConfig) => {
     if (!user) {
@@ -151,15 +167,17 @@ function SubscriptionContent() {
       <div className="sticky top-0 z-40 bg-background-warm/80 dark:bg-dark-bg/80 backdrop-blur-xl border-b border-[#F8935D]/10 dark:border-dark-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="relative flex items-center h-16">
-            <button
-              onClick={() => isRedirectedFromGuard ? router.push("/") : router.back()}
-              className="flex items-center gap-2 text-gray-600 dark:text-text-secondary hover:text-gray-900 dark:hover:text-white transition-colors group z-10"
-            >
-              <svg className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              <span className="hidden sm:inline">{t.pricing.back}</span>
-            </button>
+            {currentPlan && (
+              <button
+                onClick={() => isRedirectedFromGuard ? router.push("/") : router.back()}
+                className="flex items-center gap-2 text-gray-600 dark:text-text-secondary hover:text-gray-900 dark:hover:text-white transition-colors group z-10"
+              >
+                <svg className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                <span className="hidden sm:inline">{t.pricing.back}</span>
+              </button>
+            )}
             <div className="absolute left-1/2 -translate-x-1/2 text-lg font-semibold text-gray-900 dark:text-white">
               {t.pricing.subscription}
             </div>
@@ -262,7 +280,9 @@ function SubscriptionContent() {
               selectedPlan={selectedTestPlan ?? undefined}
               onPlanActivated={(plan) => {
                 setSelectedTestPlan(null);
-                toast.success(`Plan ${plan.charAt(0).toUpperCase() + plan.slice(1)} activé en mode test`);
+                const name = plan === "max" ? "Max" : "Pro";
+                setWelcomePlanName(name);
+                setShowWelcomeModal(true);
               }}
             />
           </motion.div>
@@ -320,6 +340,13 @@ function SubscriptionContent() {
         {/* Bottom spacing */}
         <div className="h-12" />
       </div>
+
+      {/* Welcome modal — shown after successful payment (real or test) */}
+      <WelcomeModal
+        isOpen={showWelcomeModal}
+        planName={welcomePlanName}
+        redirectTo={searchParams.get("redirect") || "/app"}
+      />
     </div>
   );
 }

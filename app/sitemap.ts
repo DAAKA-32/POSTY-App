@@ -1,7 +1,7 @@
 import { MetadataRoute } from "next";
 
 const baseUrl =
-  process.env.NEXT_PUBLIC_BASE_URL || "https://posty-app.vercel.app";
+  process.env.NEXT_PUBLIC_BASE_URL || "https://tink-xi.vercel.app";
 
 // Supported languages for international SEO
 const languages = ["fr", "en"] as const;

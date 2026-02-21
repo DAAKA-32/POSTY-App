@@ -13,6 +13,7 @@ import {
 import KPICard from "@/components/dashboard/KPICard";
 import ActivityChart from "@/components/dashboard/ActivityChart";
 import StyleDistributionChart from "@/components/dashboard/StyleDistributionChart";
+import ResponseModeChart from "@/components/dashboard/ResponseModeChart";
 import InsightsSection from "@/components/dashboard/InsightsSection";
 import DashboardOnboarding from "@/components/dashboard/DashboardOnboarding";
 import { AnimatedLogo } from "@/components/ui/Logo";
@@ -281,6 +282,18 @@ function DashboardContent() {
             subtitle="Evolution de vos posts dans le temps"
           />
           <StyleDistributionChart data={stats.styleDistribution} />
+        </div>
+
+        {/* Response Mode chart */}
+        <div
+          className={`
+            grid lg:grid-cols-2 gap-6 mb-10
+            transition-all duration-700 ease-out
+            ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}
+          `}
+          style={{ transitionDelay: "250ms" }}
+        >
+          <ResponseModeChart data={stats.responseModeDistribution} />
         </div>
 
         {/* Insights section */}

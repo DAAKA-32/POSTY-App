@@ -16,7 +16,7 @@ const CONSENT_VERSION = "2.0";
 const CONSENT_COOKIE_NAME = "posty_cookie_consent";
 const COOKIE_EXPIRY_DAYS = 365;
 const CONSENT_MAX_AGE_MS = 365 * 24 * 60 * 60 * 1000; // 12 months
-const APPEARANCE_DELAY = 1500;
+const APPEARANCE_DELAY = 5000;
 
 function setCookie(name: string, value: string, days: number) {
   if (typeof window === "undefined") return;
@@ -146,58 +146,71 @@ export default function CookieBanner() {
   return (
     <div
       className={`
-        fixed bottom-0 left-0 right-0 z-[95]
-        transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]
+        fixed bottom-4 left-4 right-4 sm:bottom-6 sm:left-auto sm:right-6 z-[95]
+        sm:max-w-[420px]
+        transition-all duration-300 ease-out
         ${isShown
           ? "translate-y-0 opacity-100"
-          : "translate-y-full opacity-0 pointer-events-none"
+          : "translate-y-4 opacity-0 pointer-events-none"
         }
       `}
       style={{
+        fontFamily: "'Inter', system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif",
         paddingBottom: "max(env(safe-area-inset-bottom, 0px), 0px)",
       }}
     >
-      <div className="bg-white dark:bg-[#1c1f26] border-t border-gray-200/80 dark:border-gray-700/50 shadow-[0_-4px_24px_rgba(0,0,0,0.06)] dark:shadow-[0_-4px_24px_rgba(0,0,0,0.3)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-5">
+      <div className="bg-white dark:bg-[#1a1d24] border border-gray-200 dark:border-gray-700/60 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+        <div className="px-5 py-5">
 
           {/* Main banner content */}
           {!showPreferences ? (
             <div className="flex flex-col gap-4">
-              {/* Message */}
-              <div>
-                <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">
-                  Nous respectons votre vie privée
-                </p>
-                <p className="text-[13px] leading-relaxed text-gray-600 dark:text-gray-400">
-                  Posty utilise des cookies essentiels pour son fonctionnement. Les cookies fonctionnels et analytiques sont optionnels et nous aident à améliorer votre expérience.{" "}
-                  <Link
-                    href="/legal/cookies"
-                    className="text-[#F8935D] hover:text-[#F76B54] transition-colors duration-200 whitespace-nowrap"
-                  >
-                    En savoir plus
-                  </Link>
-                </p>
+              {/* Header with shield icon */}
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <svg className="w-[18px] h-[18px] text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[14px] font-semibold text-gray-900 dark:text-white leading-tight">
+                    Confidentialité
+                  </p>
+                  <p className="text-[13px] leading-relaxed text-gray-500 dark:text-gray-400 mt-1">
+                    Nous utilisons des cookies essentiels et, avec votre accord, des cookies optionnels pour améliorer votre expérience.{" "}
+                    <Link
+                      href="/legal/cookies"
+                      className="text-gray-700 dark:text-gray-300 underline underline-offset-2 decoration-gray-300 dark:decoration-gray-600 hover:decoration-gray-500 dark:hover:decoration-gray-400 transition-colors duration-200"
+                    >
+                      En savoir plus
+                    </Link>
+                  </p>
+                </div>
               </div>
 
               {/* Actions */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+              <div className="flex items-center gap-2">
                 <button
                   onClick={handleAcceptAll}
-                  className="px-5 py-2.5 bg-[#F8935D] hover:bg-[#F76B54] text-white text-[13px] font-semibold rounded-lg active:scale-[0.97] transition-all duration-150 order-1"
+                  className="flex-1 px-4 py-2 bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100 text-white dark:text-gray-900 text-[13px] font-semibold rounded-lg active:scale-[0.97] transition-all duration-150"
                 >
-                  Tout accepter
+                  Accepter
                 </button>
                 <button
                   onClick={handleRefuseOptional}
-                  className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-[13px] font-semibold rounded-lg active:scale-[0.97] transition-all duration-150 order-2"
+                  className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-[13px] font-semibold rounded-lg active:scale-[0.97] transition-all duration-150"
                 >
-                  Refuser les optionnels
+                  Refuser
                 </button>
                 <button
                   onClick={() => setShowPreferences(true)}
-                  className="px-5 py-2.5 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-[13px] font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-150 order-3"
+                  className="px-3 py-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-150"
+                  aria-label="Personnaliser les cookies"
                 >
-                  Personnaliser
+                  <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
                 </button>
               </div>
             </div>
@@ -205,67 +218,67 @@ export default function CookieBanner() {
             /* Preferences panel */
             <div className="flex flex-col gap-4">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  Préférences de cookies
+                <p className="text-[14px] font-semibold text-gray-900 dark:text-white">
+                  Préférences
                 </p>
                 <button
                   onClick={() => setShowPreferences(false)}
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1"
                   aria-label="Fermer les préférences"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {/* Essential - always on */}
-                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                <div className="flex items-center justify-between py-2.5 px-3 bg-gray-50 dark:bg-gray-800/40 rounded-lg">
                   <div className="flex-1 mr-3">
-                    <p className="text-[13px] font-medium text-gray-900 dark:text-white">Cookies essentiels</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Nécessaires au fonctionnement (authentification, sécurité). Ne peuvent pas être désactivés.</p>
+                    <p className="text-[13px] font-medium text-gray-900 dark:text-white">Essentiels</p>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-500 mt-0.5 leading-relaxed">Authentification et sécurité. Toujours actifs.</p>
                   </div>
-                  <div className="relative w-10 h-6 bg-[#F8935D] rounded-full cursor-not-allowed opacity-70 flex-shrink-0">
-                    <div className="absolute right-0.5 top-0.5 w-5 h-5 bg-white rounded-full shadow-sm" />
+                  <div className="relative w-9 h-[22px] bg-gray-900 dark:bg-white rounded-full cursor-not-allowed opacity-50 flex-shrink-0">
+                    <div className="absolute right-0.5 top-0.5 w-[18px] h-[18px] bg-white dark:bg-gray-900 rounded-full" />
                   </div>
                 </div>
 
                 {/* Functional */}
-                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                <div className="flex items-center justify-between py-2.5 px-3 bg-gray-50 dark:bg-gray-800/40 rounded-lg">
                   <div className="flex-1 mr-3">
-                    <p className="text-[13px] font-medium text-gray-900 dark:text-white">Cookies fonctionnels</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Améliorent votre expérience (préférences d&apos;interface, barre latérale).</p>
+                    <p className="text-[13px] font-medium text-gray-900 dark:text-white">Fonctionnels</p>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-500 mt-0.5 leading-relaxed">Préférences d&apos;interface et personnalisation.</p>
                   </div>
                   <button
                     onClick={() => setFunctional(!functional)}
-                    className={`relative w-10 h-6 rounded-full transition-colors duration-200 flex-shrink-0 ${
-                      functional ? "bg-[#F8935D]" : "bg-gray-300 dark:bg-gray-600"
+                    className={`relative w-9 h-[22px] rounded-full transition-colors duration-200 flex-shrink-0 ${
+                      functional ? "bg-gray-900 dark:bg-white" : "bg-gray-300 dark:bg-gray-600"
                     }`}
                     role="switch"
                     aria-checked={functional}
                   >
-                    <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${
+                    <div className={`absolute top-0.5 w-[18px] h-[18px] bg-white dark:bg-gray-900 rounded-full transition-all duration-200 ${
                       functional ? "right-0.5" : "left-0.5"
                     }`} />
                   </button>
                 </div>
 
                 {/* Analytics */}
-                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                <div className="flex items-center justify-between py-2.5 px-3 bg-gray-50 dark:bg-gray-800/40 rounded-lg">
                   <div className="flex-1 mr-3">
-                    <p className="text-[13px] font-medium text-gray-900 dark:text-white">Cookies analytiques</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Nous aident à comprendre l&apos;utilisation de l&apos;application pour l&apos;améliorer. Aucun tiers.</p>
+                    <p className="text-[13px] font-medium text-gray-900 dark:text-white">Analytiques</p>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-500 mt-0.5 leading-relaxed">Statistiques d&apos;usage anonymes. Aucun tiers.</p>
                   </div>
                   <button
                     onClick={() => setAnalytics(!analytics)}
-                    className={`relative w-10 h-6 rounded-full transition-colors duration-200 flex-shrink-0 ${
-                      analytics ? "bg-[#F8935D]" : "bg-gray-300 dark:bg-gray-600"
+                    className={`relative w-9 h-[22px] rounded-full transition-colors duration-200 flex-shrink-0 ${
+                      analytics ? "bg-gray-900 dark:bg-white" : "bg-gray-300 dark:bg-gray-600"
                     }`}
                     role="switch"
                     aria-checked={analytics}
                   >
-                    <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${
+                    <div className={`absolute top-0.5 w-[18px] h-[18px] bg-white dark:bg-gray-900 rounded-full transition-all duration-200 ${
                       analytics ? "right-0.5" : "left-0.5"
                     }`} />
                   </button>
@@ -276,15 +289,15 @@ export default function CookieBanner() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleSavePreferences}
-                  className="px-5 py-2.5 bg-[#F8935D] hover:bg-[#F76B54] text-white text-[13px] font-semibold rounded-lg active:scale-[0.97] transition-all duration-150"
+                  className="flex-1 px-4 py-2 bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100 text-white dark:text-gray-900 text-[13px] font-semibold rounded-lg active:scale-[0.97] transition-all duration-150"
                 >
-                  Enregistrer mes choix
+                  Enregistrer
                 </button>
                 <Link
                   href="/legal/cookies"
-                  className="text-xs text-gray-500 dark:text-gray-400 hover:text-[#F8935D] transition-colors ml-2"
+                  className="text-[11px] text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 underline underline-offset-2 transition-colors ml-1"
                 >
-                  Politique de cookies
+                  Politique cookies
                 </Link>
               </div>
             </div>

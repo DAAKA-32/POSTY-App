@@ -1,7 +1,7 @@
 import { MetadataRoute } from "next";
 
 const baseUrl =
-  process.env.NEXT_PUBLIC_BASE_URL || "https://posty-app.vercel.app";
+  process.env.NEXT_PUBLIC_BASE_URL || "https://tink-xi.vercel.app";
 
 /**
  * Robots.txt Configuration for POSTY
@@ -32,6 +32,7 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: "*",
         allow: [
           "/",
+          "/about",
           "/pricing",
           "/subscription",
           "/login",
@@ -46,6 +47,7 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: "Googlebot",
         allow: [
           "/",
+          "/about",
           "/pricing",
           "/subscription",
           "/login",
@@ -60,6 +62,7 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: "Bingbot",
         allow: [
           "/",
+          "/about",
           "/pricing",
           "/subscription",
           "/login",
@@ -72,25 +75,25 @@ export default function robots(): MetadataRoute.Robots {
       // ChatGPT/OpenAI crawler - AI search
       {
         userAgent: "GPTBot",
-        allow: ["/", "/pricing", "/subscription", "/llms.txt"],
+        allow: ["/", "/about", "/pricing", "/subscription", "/llms.txt"],
         disallow: [...protectedPaths, "/login", "/signup"],
       },
       // Claude/Anthropic crawler - AI search
       {
         userAgent: "ClaudeBot",
-        allow: ["/", "/pricing", "/subscription", "/llms.txt"],
+        allow: ["/", "/about", "/pricing", "/subscription", "/llms.txt"],
         disallow: [...protectedPaths, "/login", "/signup"],
       },
       // Perplexity AI crawler
       {
         userAgent: "PerplexityBot",
-        allow: ["/", "/pricing", "/subscription", "/llms.txt"],
+        allow: ["/", "/about", "/pricing", "/subscription", "/llms.txt"],
         disallow: [...protectedPaths, "/login", "/signup"],
       },
       // Google AI crawler (Gemini)
       {
         userAgent: "Google-Extended",
-        allow: ["/", "/pricing", "/subscription", "/llms.txt"],
+        allow: ["/", "/about", "/pricing", "/subscription", "/llms.txt"],
         disallow: [...protectedPaths, "/login", "/signup"],
       },
       // Common AI training bots - allow limited access

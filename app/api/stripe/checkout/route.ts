@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
         ...(redirectAfterSuccess && { redirectAfterSuccess }),
       },
       subscription_data: subscriptionData,
-      success_url: `${appUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}${redirectAfterSuccess ? `&redirect=${encodeURIComponent(redirectAfterSuccess)}` : ''}`,
+      success_url: `${appUrl}/subscription?success=true${redirectAfterSuccess ? `&redirect=${encodeURIComponent(redirectAfterSuccess)}` : ''}`,
       cancel_url: `${appUrl}/subscription?canceled=true`,
       allow_promotion_codes: true,
       billing_address_collection: "auto",

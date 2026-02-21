@@ -1,16 +1,13 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, type ReactNode } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { useReducedMotion } from "framer-motion";
+import Image from "next/image";
 import { MOCKUP_SCREENS } from "./MockupScreens";
 
 const SLIDE_COUNT = MOCKUP_SCREENS.length;
 const CAROUSEL_INTERVAL = 5000;
 const SWIPE_THRESHOLD = 40;
-
-// Mockup design reference — screens are authored at this size, then CSS-scaled to fit
-const MOCKUP_DESIGN_W = 960;
-const MOCKUP_DESIGN_H = 540;
 
 /** Screen descriptions for the navigation tabs below the carousel */
 const SCREEN_DESCRIPTIONS: Record<string, { icon: ReactNode; desc: string }> = {
@@ -52,7 +49,6 @@ export default function AnimatedMacBook({
 }: AnimatedMacBookProps) {
   const prefersReducedMotion = useReducedMotion();
   const [isMobile, setIsMobile] = useState(false);
-  const [isTablet, setIsTablet] = useState(false);
 
   // Carousel state
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -67,24 +63,17 @@ export default function AnimatedMacBook({
   const containerRef = useRef<HTMLDivElement>(null);
   const isResettingRef = useRef(false);
 
-  // Contain-fit scale: render mockups at design size, scale to fit container
-  const [mockupTransform, setMockupTransform] = useState({ scale: 1, x: 0, y: 0 });
-
   // Real index for UI (dots, tabs, label) — clone position maps back to 0
   const realIndex = currentSlide >= SLIDE_COUNT ? 0 : currentSlide;
 
-
   useEffect(() => {
     const check = () => {
-      const w = window.innerWidth;
-      setIsMobile(w < 640);
-      setIsTablet(w >= 640 && w < 1024);
+      setIsMobile(window.innerWidth < 640);
     };
     check();
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
   }, []);
-
 
   // Auto-advance — increments past last slide into clone position
   useEffect(() => {
@@ -177,24 +166,6 @@ export default function AnimatedMacBook({
     if (isVisible) handleAnimationComplete();
   }, [isVisible, handleAnimationComplete]);
 
-  // Compute contain-fit scale whenever the container resizes
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const observer = new ResizeObserver(([entry]) => {
-      const cw = entry.contentRect.width;
-      const ch = entry.contentRect.height;
-      const s = Math.min(cw / MOCKUP_DESIGN_W, ch / MOCKUP_DESIGN_H);
-      setMockupTransform({
-        scale: s,
-        x: (cw - MOCKUP_DESIGN_W * s) / 2,
-        y: (ch - MOCKUP_DESIGN_H * s) / 2,
-      });
-    });
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
   // Transform + transition control
   const carouselTransform = isDragging
     ? `translateX(calc(-${currentSlide * 100}% + ${dragOffset}px))`
@@ -225,17 +196,17 @@ export default function AnimatedMacBook({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
                   <span className="text-[11px] md:text-xs text-gray-400 font-medium truncate">
-                    app.posty.ai
+                    postyapp.ai
                   </span>
                 </div>
               </div>
               <div className="w-[52px] md:w-[62px]" />
             </div>
 
-            {/* Screen content area */}
+            {/* Screen content area — aspect ratio matches actual screenshots (~1918×906 ≈ 96/45) */}
             <div
               ref={containerRef}
-              className="relative aspect-[16/9] min-h-[260px] sm:min-h-0 bg-[#FAFAF8] overflow-hidden touch-pan-y"
+              className="relative aspect-[96/45] min-h-[180px] sm:min-h-0 bg-[#FAFAF8] overflow-hidden touch-pan-y"
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
@@ -248,16 +219,15 @@ export default function AnimatedMacBook({
               >
                 {LOOP_SLIDES.map((screen, i) => (
                   <div key={`${screen.id}-${i}`} className="relative w-full h-full flex-shrink-0">
-                    <div
-                      className="absolute origin-top-left will-change-transform"
-                      style={{
-                        width: MOCKUP_DESIGN_W,
-                        height: MOCKUP_DESIGN_H,
-                        transform: `translate(${mockupTransform.x}px, ${mockupTransform.y}px) scale(${mockupTransform.scale})`,
-                      }}
-                    >
-                      <screen.component />
-                    </div>
+                    <Image
+                      src={screen.src}
+                      alt={screen.alt}
+                      fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 1084px"
+                      className="object-contain"
+                      priority={i <= 1}
+                      loading={i <= 1 ? "eager" : "lazy"}
+                    />
                   </div>
                 ))}
               </div>

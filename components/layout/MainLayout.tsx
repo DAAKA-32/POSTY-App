@@ -1193,8 +1193,10 @@ export default function MainLayout({
         onConfirm={handleDeleteConfirm}
       />
 
-      {/* Test Mode Indicator - Shows when test mode is active */}
-      <TestModeIndicator />
+      {/* Test Mode Indicator - Only on /settings and /subscription */}
+      {(pathname === "/settings" || pathname === "/subscription") && (
+        <TestModeIndicator />
+      )}
     </div>
   );
 }
