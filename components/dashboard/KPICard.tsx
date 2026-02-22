@@ -63,7 +63,7 @@ export default function KPICard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
       className={`
-        group relative bg-white dark:bg-dark-card border ${colors.border} ${colors.borderHover} rounded-2xl p-5
+        group relative bg-white dark:bg-dark-card border ${colors.border} ${colors.borderHover} rounded-2xl p-3 sm:p-5
         transition-colors duration-200
       `}
       onMouseEnter={() => setShowTooltip(true)}
@@ -71,17 +71,17 @@ export default function KPICard({
     >
       {/* Tooltip */}
       {tooltip && showTooltip && (
-        <div className="absolute -top-12 left-1/2 -translate-x-1/2 z-20 px-3 py-2 bg-white dark:bg-dark-elevated border border-gray-200 dark:border-dark-border rounded-lg shadow-md whitespace-nowrap">
+        <div className="absolute -top-12 left-1/2 -translate-x-1/2 z-20 px-3 py-2 bg-white dark:bg-dark-elevated border border-gray-200 dark:border-dark-border rounded-lg shadow-md max-w-[200px] sm:max-w-none sm:whitespace-nowrap">
           <p className="text-xs text-gray-600 dark:text-text-secondary">{tooltip}</p>
           <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-white dark:bg-dark-elevated border-r border-b border-gray-200 dark:border-dark-border rotate-45" />
         </div>
       )}
 
-      <div className="flex items-start justify-between mb-4">
+      <div className="flex items-start justify-between mb-3 sm:mb-4">
         {/* Icon */}
         <div
           className={`
-            w-12 h-12 rounded-xl ${colors.bg} border ${colors.border}
+            w-10 h-10 sm:w-12 sm:h-12 rounded-xl ${colors.bg} border ${colors.border}
             flex items-center justify-center
             transition-colors duration-200
           `}
@@ -119,7 +119,7 @@ export default function KPICard({
       </div>
 
       {/* Value */}
-      <p className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
+      <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-1">
         {value.toLocaleString("fr-FR")}
       </p>
 

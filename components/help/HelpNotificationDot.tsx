@@ -22,8 +22,8 @@ export default function HelpNotificationDot({
         e.stopPropagation();
         onClick(e);
       }}
-      className="absolute -top-0.5 -right-0.5 z-10 w-3 h-3 rounded-full cursor-pointer"
-      style={{ backgroundColor: accentColor }}
+      className="absolute -top-0.5 -right-0.5 z-10 w-3 h-3 min-w-[12px] min-h-[12px] rounded-full cursor-pointer p-0 border-0 appearance-none"
+      style={{ backgroundColor: accentColor, boxSizing: "border-box" }}
       aria-label="Aide disponible"
     >
       {/* Pulsing ring */}

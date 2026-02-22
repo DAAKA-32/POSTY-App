@@ -3780,8 +3780,8 @@ function BeforeAfterSection() {
 // FOUNDER MESSAGE SECTION - Supabase-Inspired Editorial Design (Light)
 // With Progressive Scroll-Based Zoom Effect
 // =============================================================================
-const FOUNDER_LINKEDIN_URL = "https://www.linkedin.com/in/emilien-nepveu/";
-const CMO_LINKEDIN_URL = "https://www.linkedin.com/in/come-maubert/";
+const FOUNDER_LINKEDIN_URL = "https://www.linkedin.com/in/e-nepveu-58a38127a/";
+const CMO_LINKEDIN_URL = "https://www.instagram.com/come27m/";
 
 function FounderSection() {
   const sectionRef = useRef<HTMLElement>(null);

@@ -753,7 +753,7 @@ export default function MainLayout({
                 <Link
                   href={item.href}
                   className={`
-                    relative w-full h-11 rounded-xl flex items-center gap-3 transition-all duration-200 ease-out group transform-gpu overflow-hidden
+                    relative w-full h-11 rounded-xl flex items-center gap-3 transition-all duration-200 ease-out group transform-gpu
                     ${isCollapsed ? "justify-center px-0" : "px-3"}
                     ${
                       isActive
@@ -778,7 +778,7 @@ export default function MainLayout({
                     {item.icon(isActive)}
                     {/* Badge on icon when collapsed */}
                     {isCollapsed && showBadge && (
-                      <span className={`absolute -top-1.5 -right-1.5 w-[18px] h-[18px] text-2xs font-bold rounded-full flex items-center justify-center ${item.badgeClasses}`}>
+                      <span className={`absolute -top-1.5 -right-1.5 w-[18px] h-[18px] min-w-[18px] min-h-[18px] text-2xs font-bold rounded-full flex items-center justify-center ${item.badgeClasses}`}>
                         {schedulingPendingCount}
                       </span>
                     )}
@@ -797,7 +797,7 @@ export default function MainLayout({
                       <span className={`whitespace-nowrap flex-1 ${isActive ? "font-semibold" : "font-medium"}`}>{item.name}</span>
                       {/* Badge after name when expanded */}
                       {showBadge && (
-                        <span className={`w-6 h-6 text-xs font-semibold rounded-full flex items-center justify-center ${item.badgeClasses}`}>
+                        <span className={`w-6 h-6 min-w-[24px] min-h-[24px] shrink-0 text-xs font-semibold rounded-full flex items-center justify-center ${item.badgeClasses}`}>
                           {schedulingPendingCount}
                         </span>
                       )}
@@ -1072,7 +1072,7 @@ export default function MainLayout({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
                 {/* Badge count - simple solid */}
-                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-primary text-white text-2xs font-semibold rounded-full flex items-center justify-center">
+                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 min-w-[20px] min-h-[20px] bg-primary text-white text-2xs font-semibold rounded-full flex items-center justify-center">
                   {localPosts.length > 9 ? "9+" : localPosts.length}
                 </span>
               </div>

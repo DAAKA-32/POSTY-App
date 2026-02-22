@@ -26,9 +26,9 @@ export default function ActivityChart({ data, title, subtitle }: ActivityChartPr
   };
 
   return (
-    <div className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-6 hover:border-gray-300 dark:hover:border-dark-border-hover transition-colors duration-200">
+    <div className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-4 sm:p-6 hover:border-gray-300 dark:hover:border-dark-border-hover transition-colors duration-200">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h3>
           {subtitle && <p className="text-gray-500 dark:text-text-muted text-sm">{subtitle}</p>}

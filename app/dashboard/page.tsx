@@ -153,7 +153,7 @@ function DashboardContent() {
       </header>
 
       {/* Main content */}
-      <main className="relative z-10 px-6 lg:px-12 py-8 max-w-7xl mx-auto">
+      <main className="relative z-10 px-4 sm:px-6 lg:px-12 py-6 sm:py-8 max-w-7xl mx-auto">
         {/* Welcome section */}
         <div
           className={`
@@ -172,7 +172,7 @@ function DashboardContent() {
             </div>
 
             {/* Plan badge */}
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <div className={`px-4 py-3 rounded-xl transition-colors duration-200 ${
                 userProfile?.subscription?.plan === "max"
                   ? "bg-primary-hover/10 border border-primary-hover/20 hover:border-primary-hover/30"
@@ -208,7 +208,7 @@ function DashboardContent() {
         {/* KPI Cards */}
         <div
           className={`
-            grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-10
+            grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-10
             transition-all duration-700 ease-out delay-100
             ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}
           `}
@@ -318,7 +318,7 @@ function DashboardContent() {
               ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}
             `}
           >
-            <div className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-6 hover:border-gray-300 dark:hover:border-dark-border-hover transition-colors duration-200">
+            <div className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-4 sm:p-6 hover:border-gray-300 dark:hover:border-dark-border-hover transition-colors duration-200">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Activite recente</h3>
               <div className="space-y-3">
                 {stats.recentActivity.map((activity, index) => (
@@ -366,7 +366,7 @@ function DashboardContent() {
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 py-8 px-6 text-center border-t border-[#F8935D]/10 mt-12">
+      <footer className="relative z-10 py-8 px-4 sm:px-6 text-center border-t border-[#F8935D]/10 mt-12">
         <div className="flex items-center justify-center gap-6 text-xs text-text-subtle">
           <Link href="/legal/privacy" className="hover:text-[#F8935D] transition-colors duration-200">
             Confidentialite

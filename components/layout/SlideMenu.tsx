@@ -580,7 +580,7 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
                     className={`
                       relative flex items-center gap-3 px-4 py-2 rounded-lg
                       transition-all duration-200 ease-out group haptic-feedback
-                      transform-gpu overflow-hidden
+                      transform-gpu
                       ${
                         isActive
                           ? item.activeClasses
@@ -615,7 +615,7 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
                     <span className="font-bold flex-1">{itemName}</span>
 
                     {showBadge && (
-                      <span className={`w-6 h-6 text-xs font-semibold rounded-full flex items-center justify-center ${item.badgeClasses}`}>
+                      <span className={`w-6 h-6 min-w-[24px] min-h-[24px] shrink-0 text-xs font-semibold rounded-full flex items-center justify-center ${item.badgeClasses}`}>
                         {schedulingPendingCount}
                       </span>
                     )}

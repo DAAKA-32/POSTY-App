@@ -45,7 +45,7 @@ function PeriodFilterComponent({
           key={option.value}
           onClick={() => onChange(option.value)}
           className={`
-            relative px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200
+            relative px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors duration-200
             ${selected === option.value
               ? "text-white bg-primary shadow-sm"
               : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
@@ -124,8 +124,8 @@ function EngagementChart({
   }
 
   return (
-    <div className="relative w-full overflow-x-auto">
-      <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full min-w-[400px]" preserveAspectRatio="xMidYMid meet">
+    <div className="relative w-full">
+      <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full" preserveAspectRatio="xMidYMid meet">
         {/* Grid lines */}
         {yAxisLabels.map((value, i) => {
           const y = padding.top + innerHeight - (value / maxValue) * innerHeight;
@@ -239,18 +239,18 @@ function EngagementChart({
       </svg>
 
       {/* Legend */}
-      <div className="flex items-center justify-center gap-6 mt-4">
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-blue-500" />
-          <span className="text-sm text-gray-600 dark:text-gray-400">Likes</span>
+      <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 mt-4">
+        <div className="flex items-center gap-1.5">
+          <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+          <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Likes</span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-emerald-500" />
-          <span className="text-sm text-gray-600 dark:text-gray-400">Commentaires</span>
+        <div className="flex items-center gap-1.5">
+          <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+          <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Commentaires</span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-violet-500" />
-          <span className="text-sm text-gray-600 dark:text-gray-400">Partages</span>
+        <div className="flex items-center gap-1.5">
+          <div className="w-2.5 h-2.5 rounded-full bg-violet-500" />
+          <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Partages</span>
         </div>
       </div>
     </div>
@@ -278,23 +278,23 @@ function StatsCard({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3, delay }}
-      className="bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-6 transition-colors duration-200"
+      className="bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-4 sm:p-6 transition-colors duration-200"
     >
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">{title}</p>
-          <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">{value}</p>
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-medium truncate">{title}</p>
+          <p className="mt-1.5 sm:mt-2 text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{value}</p>
           {trend && (
-            <p className={`mt-1 text-sm font-medium ${trend.value >= 0 ? "text-emerald-600" : "text-red-500"}`}>
+            <p className={`mt-1 text-xs sm:text-sm font-medium ${trend.value >= 0 ? "text-emerald-600" : "text-red-500"}`}>
               {trend.value >= 0 ? "+" : ""}{trend.value}% {trend.label}
             </p>
           )}
         </div>
         <div
-          className="w-12 h-12 rounded-xl flex items-center justify-center"
+          className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center flex-shrink-0"
           style={{ background: `${color}15` }}
         >
-          <div style={{ color }}>{icon}</div>
+          <div className="[&>svg]:w-5 [&>svg]:h-5 sm:[&>svg]:w-6 sm:[&>svg]:h-6" style={{ color }}>{icon}</div>
         </div>
       </div>
     </motion.div>
@@ -319,7 +319,7 @@ function PostCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay, ease: premiumEase }}
-      className="bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-5 hover:shadow-lg transition-all duration-300"
+      className="bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-4 sm:p-5 hover:shadow-lg transition-all duration-300"
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
@@ -768,7 +768,7 @@ function AnalyticsContent() {
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex items-center justify-between mb-8"
+                className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8"
               >
                 <div>
                   <h1 className="text-xl font-bold text-silver-shimmer dark:text-white md:text-2xl lg:text-3xl">
@@ -834,47 +834,47 @@ function AnalyticsContent() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.4, ease: premiumEase }}
-                className="bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-6 mb-8"
+                className="bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-4 sm:p-6 mb-8"
               >
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4 sm:mb-6">
                   Evolution de l'engagement
                 </h3>
                 <EngagementChart data={chartData} period={periodFilter} />
               </motion.div>
 
               {/* Activity Overview */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-8">
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: 0.5, ease: premiumEase }}
-                  className="bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-6"
+                  className="bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-4 sm:p-6"
                 >
-                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-4">Cette semaine</h3>
-                  <p className="text-4xl font-bold text-gray-900 dark:text-white">{analytics?.postsThisWeek || 0}</p>
-                  <p className="text-sm text-gray-500 mt-1">publications</p>
+                  <h3 className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 sm:mb-4">Cette semaine</h3>
+                  <p className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">{analytics?.postsThisWeek || 0}</p>
+                  <p className="text-xs sm:text-sm text-gray-500 mt-1">publications</p>
                 </motion.div>
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: 0.6, ease: premiumEase }}
-                  className="bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-6"
+                  className="bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-4 sm:p-6"
                 >
-                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-4">Ce mois</h3>
-                  <p className="text-4xl font-bold text-gray-900 dark:text-white">{analytics?.postsThisMonth || 0}</p>
-                  <p className="text-sm text-gray-500 mt-1">publications</p>
+                  <h3 className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 sm:mb-4">Ce mois</h3>
+                  <p className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">{analytics?.postsThisMonth || 0}</p>
+                  <p className="text-xs sm:text-sm text-gray-500 mt-1">publications</p>
                 </motion.div>
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: 0.7, ease: premiumEase }}
-                  className="bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-6"
+                  className="bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-4 sm:p-6"
                 >
-                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-4">Taux d'engagement moyen</h3>
-                  <p className="text-4xl font-bold text-gray-900 dark:text-white">
+                  <h3 className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 sm:mb-4">Taux d'engagement moyen</h3>
+                  <p className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
                     {filteredAnalytics.avgEngagementRate ? `${filteredAnalytics.avgEngagementRate.toFixed(1)}%` : "\u2014"}
                   </p>
-                  <p className="text-sm text-gray-500 mt-1">sur les posts avec impressions</p>
+                  <p className="text-xs sm:text-sm text-gray-500 mt-1">sur les posts avec impressions</p>
                 </motion.div>
               </div>
 
