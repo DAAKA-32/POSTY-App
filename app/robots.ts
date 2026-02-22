@@ -1,7 +1,7 @@
 import { MetadataRoute } from "next";
 
 const baseUrl =
-  process.env.NEXT_PUBLIC_BASE_URL || "https://tink-xi.vercel.app";
+  process.env.NEXT_PUBLIC_BASE_URL || "https://postyapp.ai";
 
 /**
  * Robots.txt Configuration for POSTY

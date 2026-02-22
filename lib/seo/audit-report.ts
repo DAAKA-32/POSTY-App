@@ -9,7 +9,7 @@ export const seoAuditReport = {
     name: "POSTY",
     type: "SaaS Application",
     markets: ["France (FR)", "United States (EN-US)"],
-    domain: "tink-xi.vercel.app",
+    domain: "postyapp.ai",
     techStack: "Next.js 16.1.1, React, Firebase, Vercel",
   },
 

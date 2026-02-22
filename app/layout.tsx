@@ -40,7 +40,7 @@ const playfair = Playfair_Display({
 // SEO Configuration
 const siteConfig = {
   name: "POSTY",
-  url: process.env.NEXT_PUBLIC_BASE_URL || "https://tink-xi.vercel.app",
+  url: process.env.NEXT_PUBLIC_BASE_URL || "https://postyapp.ai",
   defaultLocale: "fr" as const,
   supportedLocales: ["fr", "en"] as const,
 };

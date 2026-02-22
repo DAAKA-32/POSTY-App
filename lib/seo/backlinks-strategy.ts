@@ -233,7 +233,7 @@ J'ai lu votre excellent article "{ArticleTitle}" et je pense qu'il pourrait bén
 POSTY est un générateur de posts LinkedIn par IA qui crée 2 versions (Storytelling & Business) en quelques secondes. Il pourrait être utile à vos lecteurs car {Reason}.
 
 Voici quelques infos :
-- Site : tink-xi.vercel.app
+- Site : postyapp.ai
 - Prix : Gratuit (3 posts/semaine) ou Pro 9,99€/mois
 - Différence : Double version unique (narratif + factuel)
 

@@ -131,7 +131,7 @@ export default function NotFound() {
                 "@type": "ListItem",
                 position: 1,
                 name: "Accueil",
-                item: "https://tink-xi.vercel.app/",
+                item: "https://postyapp.ai/",
               },
               {
                 "@type": "ListItem",

@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 
 const baseUrl =
-  process.env.NEXT_PUBLIC_BASE_URL || "https://tink-xi.vercel.app";
+  process.env.NEXT_PUBLIC_BASE_URL || "https://postyapp.ai";
 
 export const metadata: Metadata = {
   title: "Connexion",

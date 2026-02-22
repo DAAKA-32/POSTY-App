@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import SwipeBackProvider from "@/components/providers/SwipeBackProvider";
 
 const baseUrl =
-  process.env.NEXT_PUBLIC_BASE_URL || "https://tink-xi.vercel.app";
+  process.env.NEXT_PUBLIC_BASE_URL || "https://postyapp.ai";
 
 export const metadata: Metadata = {
   title: "Tarifs - Plans Pro et Max",

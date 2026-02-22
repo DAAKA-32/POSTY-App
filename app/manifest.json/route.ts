@@ -5,7 +5,7 @@
 
 import { NextResponse } from "next/server";
 
-const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://tink-xi.vercel.app";
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://postyapp.ai";
 
 export async function GET() {
   const manifest = {
