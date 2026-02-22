@@ -19,7 +19,7 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { UserProfile, Post, Session, ChatMessage } from "@/types";
-import { planHasFeature, PlanType, DAILY_MESSAGE_LIMITS } from "./plans";
+import { planHasFeature, PlanType, DAILY_MESSAGE_LIMITS, getFounderOverridePlan } from "./plans";
 
 // ============== USER OPERATIONS ==============
 // Collection: users
@@ -995,7 +995,13 @@ export async function getUserQuota(userId: string): Promise<QuotaInfo> {
   // Handle legacy "starter" and "free" plan names from database
   let rawPlan: string | null = data.subscription?.plan || null;
   if (rawPlan === "free") rawPlan = null;
-  const effectivePlan: SubscriptionPlan | null = rawPlan ? (rawPlan === "starter" ? "pro" : rawPlan) as SubscriptionPlan : null;
+  let effectivePlan: SubscriptionPlan | null = rawPlan ? (rawPlan === "starter" ? "pro" : rawPlan) as SubscriptionPlan : null;
+
+  // Founder override: founders always get max plan access
+  const founderPlan = getFounderOverridePlan(data.email);
+  if (founderPlan) {
+    effectivePlan = founderPlan;
+  }
 
   // No subscription = no messages
   if (!effectivePlan) {

@@ -87,7 +87,7 @@ export async function saveLinkedInPostAdmin(
 // ============== QUOTA MANAGEMENT (SERVER-SIDE) ==============
 
 import { SubscriptionPlan } from "@/types";
-import { DAILY_MESSAGE_LIMITS, HOURLY_MESSAGE_LIMITS, HOURLY_WINDOW_MS } from "@/lib/plans";
+import { DAILY_MESSAGE_LIMITS, HOURLY_MESSAGE_LIMITS, HOURLY_WINDOW_MS, getFounderOverridePlan } from "@/lib/plans";
 
 /**
  * Get the start of today (00:00:00 UTC)
@@ -161,7 +161,13 @@ export async function checkUserQuotaAdmin(userId: string): Promise<QuotaCheckRes
   // Handle legacy "starter" and "free" plan names from database
   let rawPlan: string | null = data.subscription?.plan || null;
   if (rawPlan === "free") rawPlan = null;
-  const effectivePlan: SubscriptionPlan | null = rawPlan ? (rawPlan === "starter" ? "pro" : rawPlan) as SubscriptionPlan : null;
+  let effectivePlan: SubscriptionPlan | null = rawPlan ? (rawPlan === "starter" ? "pro" : rawPlan) as SubscriptionPlan : null;
+
+  // Founder override: founders always get max plan access
+  const founderPlan = getFounderOverridePlan(data.email);
+  if (founderPlan) {
+    effectivePlan = founderPlan;
+  }
 
   // No subscription = no generation
   if (!effectivePlan) {
@@ -170,7 +176,7 @@ export async function checkUserQuotaAdmin(userId: string): Promise<QuotaCheckRes
 
   const dailyLimit = DAILY_MESSAGE_LIMITS[effectivePlan];
 
-  // Unlimited plan (-1) - Max plan and test mode with max plan
+  // Unlimited plan (-1) - Max plan
   if (dailyLimit === -1) {
     return {
       canGenerate: true,
@@ -248,7 +254,13 @@ export async function checkHourlyQuotaAdmin(userId: string): Promise<HourlyQuota
   // Determine effective plan
   let rawPlan: string | null = data.subscription?.plan || null;
   if (rawPlan === "free") rawPlan = null;
-  const effectivePlan: SubscriptionPlan | null = rawPlan ? (rawPlan === "starter" ? "pro" : rawPlan) as SubscriptionPlan : null;
+  let effectivePlan: SubscriptionPlan | null = rawPlan ? (rawPlan === "starter" ? "pro" : rawPlan) as SubscriptionPlan : null;
+
+  // Founder override: founders always get max plan access
+  const founderPlan = getFounderOverridePlan(data.email);
+  if (founderPlan) {
+    effectivePlan = founderPlan;
+  }
 
   if (!effectivePlan) return defaultResult;
 

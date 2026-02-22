@@ -102,7 +102,7 @@ export function QuotaProvider({ children }: { children: ReactNode }) {
   const isPremium = currentPlan !== null;
   const isProPlan = currentPlan === "pro";
   const isMaxPlan = currentPlan === "max";
-  // Pro has a visible daily limit (60); Max (500) is treated as "unlimited" in UI
+  // Pro has a visible daily limit (60); Max is truly unlimited (-1)
   const hasDailyLimit = isProPlan;
   const dailyLimit = quota?.dailyLimit ?? 0;
   const usedToday = quota?.usedToday ?? 0;
