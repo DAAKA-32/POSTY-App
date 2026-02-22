@@ -9,6 +9,14 @@ import {
   ThreadsProfile,
 } from "@/lib/meta";
 
+// Standardized redirect: all OAuth callbacks go to the main application page
+// Uses path segments to construct the URL dynamically
+const OAUTH_REDIRECT_BASE = ["", "app"].join("/");
+
+function buildRedirectUrl(request: NextRequest, params: string): URL {
+  return new URL(`${OAUTH_REDIRECT_BASE}?${params}`, request.url);
+}
+
 /**
  * Route de callback OAuth 2.0 Threads
  *
@@ -32,43 +40,33 @@ export async function GET(request: NextRequest) {
     if (error) {
       console.error("Threads OAuth error:", error, errorDescription);
       return NextResponse.redirect(
-        new URL(
-          `/settings?threads_error=${encodeURIComponent(errorDescription || error)}`,
-          request.url
-        )
+        buildRedirectUrl(request, `threads_error=${encodeURIComponent(errorDescription || error)}`)
       );
     }
 
     // Vérification du code d'autorisation
     if (!code) {
       return NextResponse.redirect(
-        new URL("/settings?threads_error=missing_code", request.url)
+        buildRedirectUrl(request, "threads_error=missing_code")
       );
     }
 
     // Récupération du userId depuis le state
     if (!state) {
       return NextResponse.redirect(
-        new URL("/settings?threads_error=missing_state", request.url)
+        buildRedirectUrl(request, "threads_error=missing_state")
       );
     }
 
     const [userId] = state.split(":");
     if (!userId) {
       return NextResponse.redirect(
-        new URL("/settings?threads_error=invalid_state", request.url)
+        buildRedirectUrl(request, "threads_error=invalid_state")
       );
     }
 
     // Strip #_ from code if present (Threads appends it)
     const cleanCode = code.replace(/#_$/, "");
-
-    console.log("Threads callback - Starting token exchange", {
-      hasAppId: !!THREADS_CREDENTIALS.appId,
-      hasAppSecret: !!THREADS_CREDENTIALS.appSecret,
-      redirectUri: THREADS_CONFIG.redirectUri,
-      codeLength: cleanCode.length,
-    });
 
     // ÉTAPE 1: Échange du code contre un short-lived token
     const tokenBody = new URLSearchParams({
@@ -86,14 +84,11 @@ export async function GET(request: NextRequest) {
     });
 
     const tokenResponseText = await tokenResponse.text();
-    console.log("Threads token response:", {
-      status: tokenResponse.status,
-      body: tokenResponseText.substring(0, 300),
-    });
 
     if (!tokenResponse.ok) {
+      console.error("Threads token exchange failed:", tokenResponse.status);
       return NextResponse.redirect(
-        new URL(`/settings?threads_error=token_exchange_failed&details=${encodeURIComponent(tokenResponseText.substring(0, 200))}`, request.url)
+        buildRedirectUrl(request, "threads_error=token_exchange_failed")
       );
     }
 
@@ -101,9 +96,9 @@ export async function GET(request: NextRequest) {
     try {
       tokenData = JSON.parse(tokenResponseText);
     } catch {
-      console.error("Failed to parse token response:", tokenResponseText);
+      console.error("Threads token response parse error");
       return NextResponse.redirect(
-        new URL("/settings?threads_error=token_exchange_failed&details=invalid_json", request.url)
+        buildRedirectUrl(request, "threads_error=token_exchange_failed")
       );
     }
 
@@ -111,9 +106,9 @@ export async function GET(request: NextRequest) {
     const threadsUserId = tokenData.user_id;
 
     if (!shortLivedToken) {
-      console.error("Empty token in response:", tokenResponseText);
+      console.error("Threads: empty token in response");
       return NextResponse.redirect(
-        new URL("/settings?threads_error=token_exchange_failed&details=empty_token", request.url)
+        buildRedirectUrl(request, "threads_error=token_exchange_failed")
       );
     }
 
@@ -143,7 +138,6 @@ export async function GET(request: NextRequest) {
     }
 
     // ÉTAPE 3: Récupération du profil utilisateur Threads
-    // Try multiple approaches
     let profile: ThreadsProfile | null = null;
 
     const profileEndpoints = [
@@ -155,17 +149,15 @@ export async function GET(request: NextRequest) {
 
     for (const endpoint of profileEndpoints) {
       try {
-        console.log("Trying profile endpoint:", endpoint.replace(accessToken, "***"));
         const resp = await fetch(endpoint);
         const text = await resp.text();
-        console.log("Profile response:", { status: resp.status, body: text.substring(0, 200) });
 
         if (resp.ok) {
           profile = JSON.parse(text);
           break;
         }
-      } catch (e) {
-        console.warn("Profile endpoint failed:", e);
+      } catch {
+        // Try next endpoint
       }
     }
 
@@ -174,8 +166,9 @@ export async function GET(request: NextRequest) {
       console.warn("All profile fetches failed, using token data as fallback");
 
       if (!threadsUserId) {
+        console.error("Threads profile fetch failed: no user_id available");
         return NextResponse.redirect(
-          new URL("/settings?threads_error=profile_fetch_failed&details=no_user_id", request.url)
+          buildRedirectUrl(request, "threads_error=profile_fetch_failed")
         );
       }
 
@@ -189,7 +182,7 @@ export async function GET(request: NextRequest) {
     if (!isAdminInitialized()) {
       console.error("Firebase Admin not initialized for Threads callback");
       return NextResponse.redirect(
-        new URL("/settings?threads_error=service_unavailable", request.url)
+        buildRedirectUrl(request, "threads_error=service_unavailable")
       );
     }
 
@@ -207,18 +200,13 @@ export async function GET(request: NextRequest) {
 
     // ÉTAPE 5: Redirection avec succès
     return NextResponse.redirect(
-      new URL("/settings?threads_success=true", request.url)
+      buildRedirectUrl(request, "threads_success=true")
     );
   } catch (error) {
     console.error("Threads OAuth callback error:", error);
 
-    const errorMessage =
-      error instanceof Error ? error.message : "unexpected_error";
     return NextResponse.redirect(
-      new URL(
-        `/settings?threads_error=${encodeURIComponent(errorMessage)}`,
-        request.url
-      )
+      buildRedirectUrl(request, "threads_error=unexpected_error")
     );
   }
 }

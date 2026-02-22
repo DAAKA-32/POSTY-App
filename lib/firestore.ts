@@ -576,31 +576,37 @@ export async function exportUserData(userId: string): Promise<{
 
 // Delete all user data (RGPD right to erasure)
 export async function deleteAllUserData(userId: string): Promise<void> {
-  // Delete user profile
-  const userRef = doc(db, "users", userId);
-  await deleteDoc(userRef);
+  const BATCH_SIZE = 500;
 
-  // Delete consent record
-  const consentRef = doc(db, "consents", userId);
-  await deleteDoc(consentRef);
+  // Delete user profile and consent record (single docs)
+  const initialBatch = writeBatch(db);
+  initialBatch.delete(doc(db, "users", userId));
+  initialBatch.delete(doc(db, "consents", userId));
+  await initialBatch.commit();
 
-  // Delete all user posts
+  // Delete all user posts in batches
   const postsRef = collection(db, "posts");
   const postsQuery = query(postsRef, where("userId", "==", userId));
   const postsSnapshot = await getDocs(postsQuery);
-  const deletePostPromises = postsSnapshot.docs.map((docSnap) =>
-    deleteDoc(doc(db, "posts", docSnap.id))
-  );
-  await Promise.all(deletePostPromises);
 
-  // Delete all user sessions
+  for (let i = 0; i < postsSnapshot.docs.length; i += BATCH_SIZE) {
+    const batchOp = writeBatch(db);
+    const chunk = postsSnapshot.docs.slice(i, i + BATCH_SIZE);
+    chunk.forEach((docSnap) => batchOp.delete(doc(db, "posts", docSnap.id)));
+    await batchOp.commit();
+  }
+
+  // Delete all user sessions in batches
   const sessionsRef = collection(db, "sessions");
   const sessionsQuery = query(sessionsRef, where("userId", "==", userId));
   const sessionsSnapshot = await getDocs(sessionsQuery);
-  const deleteSessionPromises = sessionsSnapshot.docs.map((docSnap) =>
-    deleteDoc(doc(db, "sessions", docSnap.id))
-  );
-  await Promise.all(deleteSessionPromises);
+
+  for (let i = 0; i < sessionsSnapshot.docs.length; i += BATCH_SIZE) {
+    const batchOp = writeBatch(db);
+    const chunk = sessionsSnapshot.docs.slice(i, i + BATCH_SIZE);
+    chunk.forEach((docSnap) => batchOp.delete(doc(db, "sessions", docSnap.id)));
+    await batchOp.commit();
+  }
 }
 
 // Withdraw consent (keeps account but removes consent-based data processing)

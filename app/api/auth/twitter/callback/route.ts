@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       console.error("Twitter OAuth error:", error, errorDescription);
       return NextResponse.redirect(
         new URL(
-          `/settings?twitter_error=${encodeURIComponent(errorDescription || error)}`,
+          `/app?twitter_error=${encodeURIComponent(errorDescription || error)}`,
           request.url
         )
       );
@@ -39,21 +39,21 @@ export async function GET(request: NextRequest) {
     // Vérification de la présence du code d'autorisation
     if (!code) {
       return NextResponse.redirect(
-        new URL("/settings?twitter_error=missing_code", request.url)
+        new URL("/app?twitter_error=missing_code", request.url)
       );
     }
 
     // Récupération du userId depuis le state (format: userId:randomState)
     if (!state) {
       return NextResponse.redirect(
-        new URL("/settings?twitter_error=missing_state", request.url)
+        new URL("/app?twitter_error=missing_state", request.url)
       );
     }
 
     const [userId] = state.split(":");
     if (!userId) {
       return NextResponse.redirect(
-        new URL("/settings?twitter_error=invalid_state", request.url)
+        new URL("/app?twitter_error=invalid_state", request.url)
       );
     }
 
@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
     if (!codeVerifier) {
       console.error("Missing code_verifier cookie");
       return NextResponse.redirect(
-        new URL("/settings?twitter_error=missing_verifier", request.url)
+        new URL("/app?twitter_error=missing_verifier", request.url)
       );
     }
 
@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
       const errorData = await tokenResponse.text();
       console.error("Twitter token exchange failed:", errorData);
       return NextResponse.redirect(
-        new URL("/settings?twitter_error=token_exchange_failed", request.url)
+        new URL("/app?twitter_error=token_exchange_failed", request.url)
       );
     }
 
@@ -110,7 +110,7 @@ export async function GET(request: NextRequest) {
       const errorData = await profileResponse.text();
       console.error("Twitter profile fetch failed:", errorData);
       return NextResponse.redirect(
-        new URL("/settings?twitter_error=profile_fetch_failed", request.url)
+        new URL("/app?twitter_error=profile_fetch_failed", request.url)
       );
     }
 
@@ -121,7 +121,7 @@ export async function GET(request: NextRequest) {
     if (!isAdminInitialized()) {
       console.error("Firebase Admin not initialized for Twitter callback");
       return NextResponse.redirect(
-        new URL("/settings?twitter_error=service_unavailable", request.url)
+        new URL("/app?twitter_error=service_unavailable", request.url)
       );
     }
 
@@ -140,7 +140,7 @@ export async function GET(request: NextRequest) {
 
     // ✅ ÉTAPE 4: Redirection avec succès (et suppression du cookie)
     const response = NextResponse.redirect(
-      new URL("/settings?twitter_success=true", request.url)
+      new URL("/app?twitter_success=true", request.url)
     );
 
     // Supprimer le cookie code_verifier
@@ -158,7 +158,7 @@ export async function GET(request: NextRequest) {
       error instanceof Error ? error.message : "unexpected_error";
     return NextResponse.redirect(
       new URL(
-        `/settings?twitter_error=${encodeURIComponent(errorMessage)}`,
+        `/app?twitter_error=${encodeURIComponent(errorMessage)}`,
         request.url
       )
     );

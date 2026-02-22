@@ -102,13 +102,13 @@ export function LinkedInProvider({ children }: { children: ReactNode }) {
       const errorMessages: { [key: string]: string } = {
         missing_code: "Code d'autorisation manquant",
         missing_user_id: "ID utilisateur manquant",
-        token_exchange_failed: "Échec de l'échange du token",
-        profile_fetch_failed: "Échec de la récupération du profil",
-        unexpected_error: "Erreur inattendue",
+        token_exchange_failed: "Échec de la connexion LinkedIn",
+        profile_fetch_failed: "Impossible de récupérer le profil LinkedIn",
+        unexpected_error: "Une erreur inattendue est survenue",
         service_unavailable: "Service temporairement indisponible",
       };
 
-      const errorMessage = errorMessages[linkedInError] || decodeURIComponent(linkedInError);
+      const errorMessage = errorMessages[linkedInError] || "Échec de la connexion LinkedIn";
       toast.error(errorMessage, { duration: 5000 });
 
       // Clean URL and restore previous location if available

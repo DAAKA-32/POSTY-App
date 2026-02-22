@@ -84,7 +84,7 @@ export function getPriceId(
 }
 
 export function getAppUrl(): string {
-  return process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  return (process.env.NEXT_PUBLIC_BASE_URL || "https://postyapp.ai").trim();
 }
 
 // ============== WEBHOOK EVENTS ==============

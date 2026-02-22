@@ -103,7 +103,7 @@ export function TwitterProvider({ children }: { children: ReactNode }) {
     const twitterError = params.get("twitter_error");
 
     if (twitterSuccess === "true") {
-      toast.success("X (Twitter) connecté");
+      toast.success("Compte X (Twitter) connecté avec succès", { duration: 4000 });
       loadConnection();
       window.history.replaceState({}, "", window.location.pathname);
       return;
@@ -112,17 +112,17 @@ export function TwitterProvider({ children }: { children: ReactNode }) {
     if (twitterError) {
       const errorMessages: { [key: string]: string } = {
         missing_code: "Code d'autorisation manquant",
-        missing_state: "État manquant",
-        invalid_state: "État invalide",
-        missing_verifier: "Code verifier manquant",
-        token_exchange_failed: "Échec de l'échange du token",
-        profile_fetch_failed: "Échec de la récupération du profil",
+        missing_state: "État de la requête manquant",
+        invalid_state: "État de la requête invalide",
+        missing_verifier: "Code de vérification manquant",
+        token_exchange_failed: "Échec de la connexion X (Twitter)",
+        profile_fetch_failed: "Impossible de récupérer le profil X (Twitter)",
         service_unavailable: "Service temporairement indisponible",
-        unexpected_error: "Erreur inattendue",
+        unexpected_error: "Une erreur inattendue est survenue",
       };
 
-      const errorMessage = errorMessages[twitterError] || decodeURIComponent(twitterError);
-      toast.error(errorMessage);
+      const errorMessage = errorMessages[twitterError] || "Échec de la connexion X (Twitter)";
+      toast.error(errorMessage, { duration: 5000 });
       window.history.replaceState({}, "", window.location.pathname);
     }
   }, [user, loadConnection]);

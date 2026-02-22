@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
       console.error("Facebook OAuth error:", error, errorDescription);
       return NextResponse.redirect(
         new URL(
-          `/settings?facebook_error=${encodeURIComponent(errorDescription || error)}`,
+          `/app?facebook_error=${encodeURIComponent(errorDescription || error)}`,
           request.url
         )
       );
@@ -43,21 +43,21 @@ export async function GET(request: NextRequest) {
     // Vérification du code d'autorisation
     if (!code) {
       return NextResponse.redirect(
-        new URL("/settings?facebook_error=missing_code", request.url)
+        new URL("/app?facebook_error=missing_code", request.url)
       );
     }
 
     // Récupération du userId depuis le state
     if (!state) {
       return NextResponse.redirect(
-        new URL("/settings?facebook_error=missing_state", request.url)
+        new URL("/app?facebook_error=missing_state", request.url)
       );
     }
 
     const [userId] = state.split(":");
     if (!userId) {
       return NextResponse.redirect(
-        new URL("/settings?facebook_error=invalid_state", request.url)
+        new URL("/app?facebook_error=invalid_state", request.url)
       );
     }
 
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
       const errorData = await tokenResponse.text();
       console.error("Facebook token exchange failed:", errorData);
       return NextResponse.redirect(
-        new URL("/settings?facebook_error=token_exchange_failed", request.url)
+        new URL("/app?facebook_error=token_exchange_failed", request.url)
       );
     }
 
@@ -114,7 +114,7 @@ export async function GET(request: NextRequest) {
       const errorData = await profileResponse.text();
       console.error("Facebook profile fetch failed:", errorData);
       return NextResponse.redirect(
-        new URL("/settings?facebook_error=profile_fetch_failed", request.url)
+        new URL("/app?facebook_error=profile_fetch_failed", request.url)
       );
     }
 
@@ -140,7 +140,7 @@ export async function GET(request: NextRequest) {
     if (!isAdminInitialized()) {
       console.error("Firebase Admin not initialized for Facebook callback");
       return NextResponse.redirect(
-        new URL("/settings?facebook_error=service_unavailable", request.url)
+        new URL("/app?facebook_error=service_unavailable", request.url)
       );
     }
 
@@ -160,18 +160,13 @@ export async function GET(request: NextRequest) {
 
     // ÉTAPE 6: Redirection avec succès
     return NextResponse.redirect(
-      new URL("/settings?facebook_success=true", request.url)
+      new URL("/app?facebook_success=true", request.url)
     );
   } catch (error) {
     console.error("Facebook OAuth callback error:", error);
 
-    const errorMessage =
-      error instanceof Error ? error.message : "unexpected_error";
     return NextResponse.redirect(
-      new URL(
-        `/settings?facebook_error=${encodeURIComponent(errorMessage)}`,
-        request.url
-      )
+      new URL("/app?facebook_error=unexpected_error", request.url)
     );
   }
 }

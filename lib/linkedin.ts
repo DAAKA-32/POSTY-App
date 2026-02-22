@@ -17,11 +17,14 @@ export const LINKEDIN_CONFIG = {
  * @returns URL de redirection vers LinkedIn
  */
 export function getLinkedInAuthUrl(userId: string): string {
+  const randomState = generateOAuthState();
+  const state = `${userId}:${randomState}`;
+
   const params = new URLSearchParams({
     response_type: "code",
     client_id: LINKEDIN_CONFIG.clientId,
     redirect_uri: LINKEDIN_CONFIG.redirectUri,
-    state: userId, // Le userId est passé comme state pour être récupéré au callback
+    state,
     scope: LINKEDIN_CONFIG.scope,
   });
 

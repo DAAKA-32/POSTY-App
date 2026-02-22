@@ -179,9 +179,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setShouldShowOnboarding(false);
         toast.success("Connexion réussie !");
       }
-
-      // Refresh profile after sign in
-      await refreshUserProfile();
+      // Profile will be loaded by onAuthStateChanged listener - no extra read needed
     } catch (error: unknown) {
       // Reset onboarding flags on failure — no account was created/logged in
       setIsNewUser(false);
@@ -412,9 +410,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       toast.success("Email de réinitialisation envoyé !");
     } catch (error: unknown) {
       const firebaseError = error as { code?: string };
+      // Silently succeed for user-not-found to prevent email enumeration
       if (firebaseError.code === "auth/user-not-found") {
-        throw new Error("Aucun compte n'est associé à cette adresse e-mail.");
-      } else if (firebaseError.code === "auth/invalid-email") {
+        toast.success("Email de réinitialisation envoyé !");
+        return;
+      }
+      if (firebaseError.code === "auth/invalid-email") {
         throw new Error("Le format de l'adresse e-mail n'est pas valide.");
       } else if (firebaseError.code === "auth/too-many-requests") {
         throw new Error("Trop de tentatives. Veuillez réessayer plus tard.");

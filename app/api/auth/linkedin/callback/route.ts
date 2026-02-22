@@ -42,11 +42,17 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Récupération du userId depuis le state (passé lors de l'initialisation OAuth)
-    const userId = state;
+    // Récupération du userId depuis le state (format: userId:randomState)
+    if (!state) {
+      return NextResponse.redirect(
+        new URL("/app?linkedin_error=missing_state", request.url)
+      );
+    }
+
+    const [userId] = state.split(":");
     if (!userId) {
       return NextResponse.redirect(
-        new URL("/app?linkedin_error=missing_user_id", request.url)
+        new URL("/app?linkedin_error=invalid_state", request.url)
       );
     }
 
@@ -134,12 +140,9 @@ export async function GET(request: NextRequest) {
     );
   } catch (error) {
     console.error("LinkedIn OAuth callback error:", error);
-    console.error("Error details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
 
-    // Return more specific error message
-    const errorMessage = error instanceof Error ? error.message : "unexpected_error";
     return NextResponse.redirect(
-      new URL(`/app?linkedin_error=${encodeURIComponent(errorMessage)}`, request.url)
+      new URL("/app?linkedin_error=unexpected_error", request.url)
     );
   }
 }

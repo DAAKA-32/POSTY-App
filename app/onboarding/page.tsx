@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -588,33 +588,6 @@ export default function OnboardingPage() {
     };
   }, []);
 
-  // Prevent pull-to-refresh
-  const preventPullToRefresh = useCallback((e: TouchEvent) => {
-    const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
-    if (scrollTop <= 0 && e.touches.length === 1) {
-      const touch = e.touches[0];
-      const startY = (e.target as HTMLElement & { touchStartY?: number })?.touchStartY || 0;
-      if (touch.clientY > startY) {
-        e.preventDefault();
-      }
-    }
-  }, []);
-
-  const handleTouchStart = useCallback((e: TouchEvent) => {
-    if (e.touches.length === 1 && e.target) {
-      (e.target as HTMLElement & { touchStartY?: number }).touchStartY = e.touches[0].clientY;
-    }
-  }, []);
-
-  useEffect(() => {
-    document.addEventListener("touchstart", handleTouchStart, { passive: true });
-    document.addEventListener("touchmove", preventPullToRefresh, { passive: false });
-    return () => {
-      document.removeEventListener("touchstart", handleTouchStart);
-      document.removeEventListener("touchmove", preventPullToRefresh);
-    };
-  }, [handleTouchStart, preventPullToRefresh]);
-
   const handleSelect = (field: StepId, value: string) => {
     setData((prev) => ({ ...prev, [field]: value }));
   };
@@ -703,7 +676,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen max-h-screen bg-[#FFF8F5] flex flex-col overflow-y-auto overflow-x-hidden overscroll-contain">
+    <div className="min-h-[100dvh] bg-[#FFF8F5] flex flex-col">
       {/* Header */}
       <header className="p-4 sm:p-6 flex items-center justify-between max-w-2xl mx-auto w-full flex-shrink-0">
         <Link href="/" className="inline-flex items-center gap-2.5">
@@ -734,7 +707,7 @@ export default function OnboardingPage() {
       )}
 
       {/* Main content */}
-      <main className="flex-1 flex flex-col items-center justify-start min-h-0">
+      <main className="flex-1 flex flex-col items-center justify-start">
         {showUpsell ? (
           <UpsellScreen onContinue={handleUpsellContinue} onUpgrade={handleUpsellUpgrade} />
         ) : showRecap ? (

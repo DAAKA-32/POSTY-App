@@ -83,7 +83,7 @@ export function FacebookProvider({ children }: { children: ReactNode }) {
     const facebookError = params.get("facebook_error");
 
     if (facebookSuccess === "true") {
-      toast.success("Facebook connecté");
+      toast.success("Compte Facebook connecté avec succès", { duration: 4000 });
       loadConnection();
       window.history.replaceState({}, "", window.location.pathname);
       return;
@@ -92,16 +92,16 @@ export function FacebookProvider({ children }: { children: ReactNode }) {
     if (facebookError) {
       const errorMessages: { [key: string]: string } = {
         missing_code: "Code d'autorisation manquant",
-        missing_state: "État manquant",
-        invalid_state: "État invalide",
-        token_exchange_failed: "Échec de l'échange du token",
-        profile_fetch_failed: "Échec de la récupération du profil",
+        missing_state: "État de la requête manquant",
+        invalid_state: "État de la requête invalide",
+        token_exchange_failed: "Échec de la connexion Facebook",
+        profile_fetch_failed: "Impossible de récupérer le profil Facebook",
         service_unavailable: "Service temporairement indisponible",
-        unexpected_error: "Erreur inattendue",
+        unexpected_error: "Une erreur inattendue est survenue",
       };
 
-      const errorMessage = errorMessages[facebookError] || decodeURIComponent(facebookError);
-      toast.error(errorMessage);
+      const errorMessage = errorMessages[facebookError] || "Échec de la connexion Facebook";
+      toast.error(errorMessage, { duration: 5000 });
       window.history.replaceState({}, "", window.location.pathname);
     }
   }, [user, loadConnection]);

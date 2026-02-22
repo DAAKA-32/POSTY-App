@@ -81,7 +81,7 @@ export function ThreadsProvider({ children }: { children: ReactNode }) {
     const threadsError = params.get("threads_error");
 
     if (threadsSuccess === "true") {
-      toast.success("Threads connecté");
+      toast.success("Compte Threads connecté avec succès", { duration: 4000 });
       loadConnection();
       window.history.replaceState({}, "", window.location.pathname);
       return;
@@ -90,18 +90,17 @@ export function ThreadsProvider({ children }: { children: ReactNode }) {
     if (threadsError) {
       const errorMessages: { [key: string]: string } = {
         missing_code: "Code d'autorisation manquant",
-        missing_state: "État manquant",
-        invalid_state: "État invalide",
-        token_exchange_failed: "Échec de l'échange du token",
-        profile_fetch_failed: "Échec de la récupération du profil",
+        missing_state: "État de la requête manquant",
+        invalid_state: "État de la requête invalide",
+        token_exchange_failed: "Échec de la connexion Threads",
+        profile_fetch_failed: "Impossible de récupérer le profil Threads",
         service_unavailable: "Service temporairement indisponible",
-        unexpected_error: "Erreur inattendue",
+        unexpected_error: "Une erreur inattendue est survenue",
       };
 
-      const details = params.get("details");
-      const errorMessage = errorMessages[threadsError] || decodeURIComponent(threadsError);
-      toast.error(details ? `${errorMessage}: ${decodeURIComponent(details)}` : errorMessage);
-      console.error("Threads OAuth error:", threadsError, details);
+      const errorMessage = errorMessages[threadsError] || "Échec de la connexion Threads";
+      toast.error(errorMessage, { duration: 5000 });
+      console.error("Threads OAuth error:", threadsError);
       window.history.replaceState({}, "", window.location.pathname);
     }
   }, [user, loadConnection]);
