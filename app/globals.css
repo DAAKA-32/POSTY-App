@@ -6763,6 +6763,23 @@ html.dark .chat-input-inner {
   }
 }
 
-
-
-
+/* =============================================================================
+   VERCEL TOOLBAR / BADGE REMOVAL
+   Hides any Vercel-injected UI elements (toolbar, badge, feedback widget)
+   ============================================================================= */
+#vercel-live-feedback,
+.vercel-live-feedback,
+[data-vercel-toolbar],
+[data-nextjs-dialog-overlay],
+vercel-toolbar,
+vercel-live-feedback {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  position: absolute !important;
+  z-index: -1 !important;
+}
