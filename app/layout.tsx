@@ -110,7 +110,7 @@ export const metadata: Metadata = {
       "Créez des posts LinkedIn percutants en quelques secondes grâce à l'IA. Générez du contenu professionnel optimisé pour maximiser votre engagement.",
     images: [
       {
-        url: "/og-image.png",
+        url: `${siteConfig.url}/og-image.png`,
         width: 1200,
         height: 630,
         alt: "POSTY - Générateur de Posts LinkedIn IA",
@@ -125,7 +125,7 @@ export const metadata: Metadata = {
     title: "POSTY - Générateur de Posts LinkedIn IA",
     description:
       "Créez des posts LinkedIn percutants en quelques secondes grâce à l'IA.",
-    images: ["/og-image.jpg"],
+    images: [`${siteConfig.url}/og-image.png`],
     creator: "@posty_app",
   },
 

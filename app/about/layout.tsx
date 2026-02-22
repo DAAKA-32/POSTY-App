@@ -35,7 +35,7 @@ export const metadata: Metadata = {
       "Posty : l'outil SaaS qui automatise votre présence LinkedIn. Rencontrez Emilien Nepveu (CEO) et Côme Maubert (CMO).",
     images: [
       {
-        url: "/og-image.png",
+        url: `${seoConfig.siteUrl}/og-image.png`,
         width: 1200,
         height: 630,
         alt: "Posty - À propos de l'équipe",
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     title: "À propos de Posty - Notre Équipe & Notre Mission",
     description:
       "Posty : l'outil SaaS qui automatise votre présence LinkedIn. Rencontrez notre équipe d'experts.",
-    images: ["/og-image.png"],
+    images: [`${seoConfig.siteUrl}/og-image.png`],
     creator: "@posty_app",
   },
 

@@ -16,7 +16,7 @@ export const seoConfig = {
 
   // Social
   twitterHandle: "@posty_app",
-  ogImageDefault: "/og-image.jpg",
+  ogImageDefault: "/og-image.png",
 
   // Contact
   supportEmail: "postygroup@gmail.com",
