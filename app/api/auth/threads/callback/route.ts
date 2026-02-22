@@ -109,9 +109,17 @@ export async function GET(request: NextRequest) {
     }
 
     // ÉTAPE 3: Récupération du profil utilisateur Threads
-    const profileResponse = await fetch(
+    // Try with all fields first, fallback without 'name' if it fails
+    let profileResponse = await fetch(
       `${THREADS_CONFIG.apiUrl}/me?fields=id,username,threads_profile_picture_url,name&access_token=${accessToken}`
     );
+
+    if (!profileResponse.ok) {
+      // Retry without 'name' field (may not be available for all apps)
+      profileResponse = await fetch(
+        `${THREADS_CONFIG.apiUrl}/me?fields=id,username,threads_profile_picture_url&access_token=${accessToken}`
+      );
+    }
 
     if (!profileResponse.ok) {
       const errorData = await profileResponse.text();
