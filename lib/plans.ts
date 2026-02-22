@@ -573,7 +573,7 @@ export const PLAN_TAGLINES: Record<PlanType, { tagline: string; idealFor: string
 export const CORE_FEATURES = [
   { key: "creations", label: "Créations illimitées" },
   { key: "quality", label: "Posts optimisés IA" },
-  { key: "scheduling", label: "Planification automatique" },
+  { key: "scheduling", label: "Planification automatique (arrive tres bientot)" },
   { key: "personalized", label: "Ton adapté à votre style" },
   { key: "dualMode", label: "Storytelling + Business" },
   { key: "multiplatform", label: "Multi-plateformes" },
@@ -847,7 +847,7 @@ export function getPlanFeaturesDynamic(plan: PlanConfig): FeatureItem[] {
   // Scheduling
   if (limits.canSchedulePosts) {
     features.push({
-      text: "Programmation automatique",
+      text: "Programmation automatique (arrive tres bientot)",
       included: true,
       highlight: true
     });
