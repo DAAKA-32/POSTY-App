@@ -1,7 +1,7 @@
 import { MetadataRoute } from "next";
 
 const baseUrl =
-  process.env.NEXT_PUBLIC_BASE_URL || "https://postyapp.ai";
+  (process.env.NEXT_PUBLIC_BASE_URL || "https://postyapp.ai").trim();
 
 // Supported languages for international SEO
 const languages = ["fr", "en"] as const;
