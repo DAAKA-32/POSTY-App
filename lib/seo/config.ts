@@ -5,14 +5,14 @@
 
 export const seoConfig = {
   // Site info
-  siteName: "POSTY",
+  siteName: "Posty App",
   siteUrl: process.env.NEXT_PUBLIC_BASE_URL || "https://postyapp.ai",
   defaultLocale: "fr" as const,
   supportedLocales: ["fr", "en"] as const,
 
   // Branding
-  brandName: "POSTY",
-  tagline: "Générateur de Posts LinkedIn IA",
+  brandName: "Posty App",
+  tagline: "Générez plus de prospects LinkedIn avec l'IA",
 
   // Social
   twitterHandle: "@posty_app",
@@ -109,86 +109,86 @@ export const i18nSeoConfig = {
 export const localizedPageSeo = {
   home: {
     fr: {
-      title: "POSTY - Générateur de Posts LinkedIn IA | Créez du Contenu Impactant",
+      title: "Posty App – Générez plus de prospects LinkedIn avec l'IA",
       description:
-        "Générez des posts LinkedIn percutants en quelques secondes avec l'IA. POSTY crée 2 versions (Storytelling & Business) pour chaque idée. Essayez gratuitement.",
+        "Automatisez votre présence LinkedIn et attirez des prospects qualifiés grâce à l'IA. Créez des posts professionnels percutants en quelques secondes. Essai gratuit.",
       keywords: [
-        "générateur posts LinkedIn",
+        "Posty App",
+        "prospects LinkedIn",
+        "automatisation LinkedIn",
         "IA LinkedIn",
-        "créer post LinkedIn",
+        "générer prospects",
         "contenu LinkedIn IA",
-        "storytelling LinkedIn",
         "personal branding LinkedIn",
-        "automatiser posts LinkedIn",
       ],
     },
     en: {
-      title: "POSTY - AI LinkedIn Post Generator | Create Engaging Content",
+      title: "Posty App – Generate More LinkedIn Leads with AI",
       description:
-        "Generate high-performing LinkedIn posts in seconds with AI. POSTY creates 2 versions (Storytelling & Business) for every idea. Try free today.",
+        "Automate your LinkedIn presence and attract qualified prospects with AI. Create professional posts in seconds. Free trial included.",
       keywords: [
-        "LinkedIn post generator",
+        "Posty App",
+        "LinkedIn leads",
+        "LinkedIn automation",
         "AI LinkedIn tool",
-        "create LinkedIn post",
+        "generate prospects",
         "LinkedIn content AI",
-        "LinkedIn storytelling",
         "personal branding LinkedIn",
-        "automate LinkedIn posts",
       ],
     },
   },
   pricing: {
     fr: {
-      title: "Tarifs POSTY - Plans Gratuit, Pro et Max | Générateur LinkedIn IA",
+      title: "Tarifs Posty App - Plans Pro et Max | Automatisation LinkedIn IA",
       description:
-        "Découvrez nos offres POSTY : 3 posts gratuits/semaine ou illimité en Pro. Générez des posts LinkedIn professionnels avec l'IA sans engagement.",
+        "Découvrez les offres Posty App : Pro et Max. Automatisez LinkedIn et générez des prospects qualifiés avec l'IA. Essai gratuit 7 jours.",
       keywords: [
-        "tarifs POSTY",
-        "prix générateur LinkedIn",
+        "tarifs Posty App",
+        "prix automatisation LinkedIn",
         "abonnement LinkedIn IA",
-        "POSTY gratuit",
-        "POSTY Pro",
+        "Posty App Pro",
+        "Posty App Max",
       ],
     },
     en: {
-      title: "POSTY Pricing - Pro & Max Plans | AI LinkedIn Generator",
+      title: "Posty App Pricing - Pro & Max Plans | LinkedIn AI Automation",
       description:
-        "Explore POSTY plans: Pro and Max. Create professional LinkedIn posts with AI. 7-day free trial included. No commitment required.",
+        "Explore Posty App plans: Pro and Max. Automate LinkedIn and generate qualified leads with AI. 7-day free trial included.",
       keywords: [
-        "POSTY pricing",
-        "LinkedIn generator price",
+        "Posty App pricing",
+        "LinkedIn automation price",
         "LinkedIn AI subscription",
-        "POSTY trial",
-        "POSTY Pro plan",
+        "Posty App trial",
+        "Posty App Pro plan",
       ],
     },
   },
   login: {
     fr: {
-      title: "Connexion | POSTY - Générateur de Posts LinkedIn IA",
+      title: "Connexion | Posty App - Automatisation LinkedIn IA",
       description:
-        "Connectez-vous à votre compte POSTY pour générer des posts LinkedIn impactants avec l'IA.",
-      keywords: ["connexion POSTY", "login POSTY"],
+        "Connectez-vous à Posty App pour automatiser votre LinkedIn et générer des prospects qualifiés avec l'IA.",
+      keywords: ["connexion Posty App", "login Posty App"],
     },
     en: {
-      title: "Login | POSTY - AI LinkedIn Post Generator",
+      title: "Login | Posty App - LinkedIn AI Automation",
       description:
-        "Sign in to your POSTY account to generate impactful LinkedIn posts with AI.",
-      keywords: ["POSTY login", "sign in POSTY"],
+        "Sign in to Posty App to automate your LinkedIn and generate qualified leads with AI.",
+      keywords: ["Posty App login", "sign in Posty App"],
     },
   },
   signup: {
     fr: {
-      title: "Inscription Gratuite | POSTY - Générateur de Posts LinkedIn IA",
+      title: "Inscription Gratuite | Posty App - Automatisation LinkedIn IA",
       description:
-        "Créez votre compte POSTY et commencez à générer des posts LinkedIn impactants avec l'IA. Essai gratuit 7 jours.",
-      keywords: ["inscription POSTY", "créer compte POSTY", "essai gratuit LinkedIn IA"],
+        "Créez votre compte Posty App et automatisez votre LinkedIn. Générez des prospects qualifiés avec l'IA. Essai gratuit 7 jours.",
+      keywords: ["inscription Posty App", "créer compte Posty App", "essai gratuit LinkedIn IA"],
     },
     en: {
-      title: "Free Sign Up | POSTY - AI LinkedIn Post Generator",
+      title: "Free Sign Up | Posty App - LinkedIn AI Automation",
       description:
-        "Create your free POSTY account and start generating impactful LinkedIn posts with AI. No credit card required.",
-      keywords: ["POSTY signup", "create POSTY account", "free trial LinkedIn AI"],
+        "Create your free Posty App account and start automating LinkedIn. Generate qualified leads with AI.",
+      keywords: ["Posty App signup", "create Posty App account", "free trial LinkedIn AI"],
     },
   },
 };
@@ -264,42 +264,42 @@ export const seoSilos = {
  */
 export const pageSeo = {
   home: {
-    title: "POSTY - Générateur de Posts LinkedIn IA | Créez du Contenu Impactant",
+    title: "Posty App – Générez plus de prospects LinkedIn avec l'IA",
     description:
-      "Générez des posts LinkedIn percutants en quelques secondes avec l'IA. POSTY crée 2 versions (Storytelling & Business) pour chaque idée. Essayez gratuitement.",
+      "Automatisez votre présence LinkedIn et attirez des prospects qualifiés grâce à l'IA. Créez des posts professionnels percutants en quelques secondes. Essai gratuit.",
     keywords: [
-      "générateur posts LinkedIn",
+      "Posty App",
+      "prospects LinkedIn",
+      "automatisation LinkedIn",
       "IA LinkedIn",
-      "créer post LinkedIn",
-      "contenu LinkedIn IA",
-      "storytelling LinkedIn",
+      "générer prospects",
     ],
   },
   pricing: {
-    title: "Tarifs POSTY - Plans Gratuit, Pro et Max | Générateur LinkedIn IA",
+    title: "Tarifs Posty App - Plans Pro et Max | Automatisation LinkedIn IA",
     description:
-      "Découvrez nos offres POSTY : 3 posts gratuits/semaine ou illimité en Pro. Générez des posts LinkedIn professionnels avec l'IA sans engagement.",
+      "Découvrez les offres Posty App : Pro et Max. Automatisez LinkedIn et générez des prospects qualifiés avec l'IA. Essai gratuit 7 jours.",
     keywords: [
-      "tarifs POSTY",
-      "prix générateur LinkedIn",
+      "tarifs Posty App",
+      "prix automatisation LinkedIn",
       "abonnement LinkedIn IA",
     ],
   },
   legal: {
     privacy: {
-      title: "Politique de Confidentialité | POSTY",
+      title: "Politique de Confidentialité | Posty App",
       description:
-        "Découvrez comment POSTY protège vos données personnelles conformément au RGPD.",
+        "Découvrez comment Posty App protège vos données personnelles conformément au RGPD.",
     },
     terms: {
-      title: "Conditions Générales d'Utilisation | POSTY",
+      title: "Conditions Générales d'Utilisation | Posty App",
       description:
-        "CGU de POSTY : consultez les conditions d'utilisation de notre générateur de posts LinkedIn IA.",
+        "CGU de Posty App : consultez les conditions d'utilisation de notre outil d'automatisation LinkedIn IA.",
     },
     notices: {
-      title: "Mentions Légales | POSTY",
+      title: "Mentions Légales | Posty App",
       description:
-        "Mentions légales de POSTY : informations sur l'éditeur, l'hébergeur et les droits applicables.",
+        "Mentions légales de Posty App : informations sur l'éditeur, l'hébergeur et les droits applicables.",
     },
   },
 };
@@ -312,7 +312,7 @@ export const structuredData = {
     "@context": "https://schema.org",
     "@type": "Organization",
     "@id": `${seoConfig.siteUrl}/#organization`,
-    name: "POSTY",
+    name: "Posty App",
     url: seoConfig.siteUrl,
     logo: {
       "@type": "ImageObject",
@@ -339,13 +339,13 @@ export const structuredData = {
       "@type": "PostalAddress",
       addressCountry: "FR",
     },
-    slogan: "Démocratiser le contenu professionnel",
+    slogan: "Générez plus de prospects LinkedIn avec l'IA",
   },
 
   softwareApplication: {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    name: "POSTY",
+    name: "Posty App",
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web",
     offers: {

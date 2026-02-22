@@ -9,10 +9,10 @@ const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://postyapp.ai";
 
 export async function GET() {
   const manifest = {
-    name: "POSTY - AI LinkedIn Post Generator",
-    short_name: "POSTY",
+    name: "Posty App – Generate More LinkedIn Leads with AI",
+    short_name: "Posty",
     description:
-      "Generate professional LinkedIn posts in seconds with AI. Create Storytelling and Business versions for every idea.",
+      "Automate your LinkedIn presence and attract qualified prospects with AI. Create professional posts in seconds.",
     start_url: "/",
     display: "standalone",
     background_color: "#FAFBFC",

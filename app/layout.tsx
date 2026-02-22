@@ -39,7 +39,7 @@ const playfair = Playfair_Display({
 
 // SEO Configuration
 const siteConfig = {
-  name: "POSTY",
+  name: "Posty App",
   url: process.env.NEXT_PUBLIC_BASE_URL || "https://postyapp.ai",
   defaultLocale: "fr" as const,
   supportedLocales: ["fr", "en"] as const,
@@ -49,21 +49,21 @@ export const metadata: Metadata = {
   // Base metadata
   metadataBase: new URL(siteConfig.url),
   title: {
-    default: "POSTY - Générateur de Posts LinkedIn IA",
-    template: "%s | POSTY",
+    default: "Posty App – Générez plus de prospects LinkedIn avec l'IA",
+    template: "%s | Posty App",
   },
   description:
-    "Créez des posts LinkedIn percutants en quelques secondes grâce à l'IA. Générez du contenu professionnel optimisé pour maximiser votre engagement.",
+    "Automatisez votre présence LinkedIn et attirez des prospects qualifiés grâce à l'IA. Créez des posts professionnels percutants en quelques secondes. Essai gratuit.",
   keywords: [
-    "LinkedIn",
-    "générateur posts",
+    "Posty App",
+    "prospects LinkedIn",
+    "automatisation LinkedIn",
     "IA",
     "intelligence artificielle",
-    "marketing LinkedIn",
+    "générer prospects",
     "contenu professionnel",
-    "réseaux sociaux",
     "personal branding",
-    "copywriting",
+    "marketing LinkedIn",
     "engagement LinkedIn",
   ],
   authors: [
@@ -71,7 +71,7 @@ export const metadata: Metadata = {
     { name: "Emilien Nepveu", url: "https://www.linkedin.com/in/e-nepveu-58a38127a/" },
   ],
   creator: "Emilien Nepveu",
-  publisher: "POSTY",
+  publisher: "Posty App",
 
   // Icons - Using logo.png for favicon & PWA
   icons: {
@@ -86,11 +86,11 @@ export const metadata: Metadata = {
   },
 
   // PWA / App config
-  applicationName: "POSTY",
+  applicationName: "Posty",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "POSTY",
+    title: "Posty",
   },
   formatDetection: {
     telephone: false,
@@ -104,16 +104,16 @@ export const metadata: Metadata = {
     locale: "fr_FR",
     alternateLocale: "en_US",
     url: siteConfig.url,
-    siteName: "POSTY",
-    title: "POSTY - Générateur de Posts LinkedIn IA",
+    siteName: "Posty App",
+    title: "Posty App – Générez plus de prospects LinkedIn avec l'IA",
     description:
-      "Créez des posts LinkedIn percutants en quelques secondes grâce à l'IA. Générez du contenu professionnel optimisé pour maximiser votre engagement.",
+      "Automatisez votre présence LinkedIn et attirez des prospects qualifiés grâce à l'IA. Posts professionnels percutants en quelques secondes.",
     images: [
       {
         url: `${siteConfig.url}/og-image.png`,
         width: 1200,
         height: 630,
-        alt: "POSTY - Générateur de Posts LinkedIn IA",
+        alt: "Posty App – Générez plus de prospects LinkedIn avec l'IA",
         type: "image/png",
       },
     ],
@@ -122,9 +122,9 @@ export const metadata: Metadata = {
   // Twitter Cards
   twitter: {
     card: "summary_large_image",
-    title: "POSTY - Générateur de Posts LinkedIn IA",
+    title: "Posty App – Générez plus de prospects LinkedIn avec l'IA",
     description:
-      "Créez des posts LinkedIn percutants en quelques secondes grâce à l'IA.",
+      "Automatisez votre présence LinkedIn et attirez des prospects qualifiés grâce à l'IA. Essai gratuit.",
     images: [`${siteConfig.url}/og-image.png`],
     creator: "@posty_app",
   },
@@ -236,7 +236,7 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="POSTY" />
+        <meta name="apple-mobile-web-app-title" content="Posty" />
 
         {/* Theme color for Safari iOS status bar and browser chrome */}
         {/* Light mode: White/Light gray background */}

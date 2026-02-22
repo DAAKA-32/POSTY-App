@@ -6,18 +6,18 @@ const baseUrl =
 export const metadata: Metadata = {
   title: "Tarifs - Plans et Abonnements",
   description:
-    "Découvrez nos offres POSTY : Pro et Max. Choisissez le plan adapté à vos besoins pour générer des posts LinkedIn percutants avec l'IA.",
+    "Découvrez les offres Posty App : Pro et Max. Automatisez LinkedIn et générez des prospects qualifiés avec l'IA. Essai gratuit 7 jours.",
   openGraph: {
-    title: "Tarifs POSTY - Plans et Abonnements",
+    title: "Tarifs Posty App - Plans et Abonnements",
     description:
-      "Découvrez nos offres POSTY : Pro et Max. Générez des posts LinkedIn percutants avec l'IA.",
+      "Découvrez les offres Posty App : Pro et Max. Générez des prospects LinkedIn qualifiés avec l'IA.",
     url: `${baseUrl}/pricing`,
     type: "website",
   },
   twitter: {
-    title: "Tarifs POSTY - Plans et Abonnements",
+    title: "Tarifs Posty App - Plans et Abonnements",
     description:
-      "Découvrez nos offres POSTY : Pro et Max. Générez des posts LinkedIn percutants avec l'IA.",
+      "Découvrez les offres Posty App : Pro et Max. Générez des prospects LinkedIn qualifiés avec l'IA.",
   },
   alternates: {
     canonical: `${baseUrl}/pricing`,

@@ -6,15 +6,15 @@ const baseUrl =
 export const metadata: Metadata = {
   title: "Inscription Gratuite",
   description:
-    "Créez votre compte POSTY gratuitement. Commencez à générer des posts LinkedIn percutants en quelques secondes avec l'IA.",
+    "Créez votre compte Posty App gratuitement. Automatisez votre LinkedIn et générez des prospects qualifiés avec l'IA. Essai gratuit 7 jours.",
   robots: {
     index: true,
     follow: true,
   },
   openGraph: {
-    title: "Inscription Gratuite - POSTY",
+    title: "Inscription Gratuite - Posty App",
     description:
-      "Créez votre compte POSTY gratuitement. Générez des posts LinkedIn percutants avec l'IA.",
+      "Créez votre compte Posty App gratuitement. Générez des prospects LinkedIn qualifiés avec l'IA.",
     url: `${baseUrl}/signup`,
     type: "website",
   },

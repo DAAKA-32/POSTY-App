@@ -6,15 +6,15 @@ const baseUrl =
 export const metadata: Metadata = {
   title: "Connexion",
   description:
-    "Connectez-vous à POSTY pour créer des posts LinkedIn percutants. Accédez à votre espace de génération de contenu IA.",
+    "Connectez-vous à Posty App pour automatiser votre LinkedIn et générer des prospects qualifiés avec l'IA.",
   robots: {
     index: true,
     follow: true,
   },
   openGraph: {
-    title: "Connexion - POSTY",
+    title: "Connexion - Posty App",
     description:
-      "Connectez-vous à POSTY pour créer des posts LinkedIn percutants avec l'IA.",
+      "Connectez-vous à Posty App pour automatiser votre LinkedIn et générer des prospects avec l'IA.",
     url: `${baseUrl}/login`,
     type: "website",
   },
