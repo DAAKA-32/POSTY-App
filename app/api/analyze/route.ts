@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     let userPlan: SubscriptionPlan | null = null;
     if (isAdminInitialized()) {
       try {
-        const quotaCheck = await checkUserQuotaAdmin(userId);
+        const quotaCheck = await checkUserQuotaAdmin(userId, auth.email);
         userPlan = quotaCheck.plan as SubscriptionPlan;
       } catch (error) {
         console.error("Plan check error:", error);

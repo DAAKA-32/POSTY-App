@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSubscription } from "@/contexts/SubscriptionContext";
 import { completeOnboarding } from "@/lib/firestore";
 import {
   PROFILE_TYPES,
@@ -542,6 +543,7 @@ function UpsellScreen({ onContinue, onUpgrade }: { onContinue: () => void; onUpg
 // =============================================================================
 export default function OnboardingPage() {
   const { user, userProfile, loading, refreshUserProfile, needsOnboarding, clearOnboardingFlag } = useAuth();
+  const { subscription, loading: subscriptionLoading } = useSubscription();
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
   const [direction, setDirection] = useState(0);
@@ -559,22 +561,53 @@ export default function OnboardingPage() {
   });
 
   const shouldShowOnboarding = needsOnboarding();
+  const hasActiveSubscription =
+    subscription.status === "active" || subscription.status === "trialing";
 
-  // Redirect logic — showUpsell must block ALL redirects to /app
+  // Edit mode: user already completed onboarding but hasn't paid yet
+  const isEditMode = userProfile?.onboardingComplete === true && !hasActiveSubscription;
+
+  // Pre-fill onboarding data when returning to edit (unpaid user)
   useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        router.push("/login");
-      } else if (showRecap || showUpsell) {
-        // Recap or upsell screen is active — never redirect away
-        return;
-      } else if (userProfile?.onboardingComplete) {
-        router.push("/app");
-      } else if (!shouldShowOnboarding && userProfile) {
+    if (isEditMode && userProfile?.profile) {
+      const profile = userProfile.profile;
+      setData({
+        profileType: profile.profileType || "",
+        sector: profile.sector || "",
+        role: profile.role || "",
+        objective: profile.objective || "",
+        targetAudience: profile.targetAudience || "",
+        communicationTone: profile.communicationTone || "",
+        publishingFrequency: profile.publishingFrequency || "",
+      });
+    }
+  }, [isEditMode, userProfile]);
+
+  // Redirect logic — subscription-aware
+  useEffect(() => {
+    if (loading || subscriptionLoading) return;
+
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+
+    // Recap or upsell screen is active — never redirect away
+    if (showRecap || showUpsell) return;
+
+    if (userProfile?.onboardingComplete) {
+      if (hasActiveSubscription) {
+        // PAID user → cannot access onboarding, go to app
         router.push("/app");
       }
+      // UNPAID user → stay on onboarding to edit choices
+      return;
     }
-  }, [user, userProfile, loading, router, shouldShowOnboarding, showUpsell]);
+
+    if (!shouldShowOnboarding && userProfile) {
+      router.push("/app");
+    }
+  }, [user, userProfile, loading, subscriptionLoading, router, shouldShowOnboarding, showUpsell, showRecap, hasActiveSubscription]);
 
   // Enable full scrolling on Onboarding page (mouse wheel, trackpad, touch, keyboard)
   useEffect(() => {
@@ -612,12 +645,20 @@ export default function OnboardingPage() {
     setIsSubmitting(true);
     try {
       await completeOnboarding(user.uid, data);
-      // CRITICAL: Set showRecap BEFORE refreshUserProfile/clearOnboardingFlag
-      // to prevent the redirect useEffect from navigating to /app
-      // during intermediate renders where onboardingComplete=true but showRecap=false
-      setShowRecap(true);
-      await refreshUserProfile();
-      clearOnboardingFlag();
+
+      if (isEditMode) {
+        // Returning user editing their profile — go straight to subscription
+        await refreshUserProfile();
+        router.replace("/subscription");
+      } else {
+        // First-time onboarding — show recap then upsell
+        // CRITICAL: Set showRecap BEFORE refreshUserProfile/clearOnboardingFlag
+        // to prevent the redirect useEffect from navigating to /app
+        // during intermediate renders where onboardingComplete=true but showRecap=false
+        setShowRecap(true);
+        await refreshUserProfile();
+        clearOnboardingFlag();
+      }
     } catch (error) {
       console.error("Onboarding error:", error);
       toast.error("Une erreur est survenue");
@@ -667,7 +708,7 @@ export default function OnboardingPage() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [canProceed, isSubmitting, isLastStep, showUpsell]);
 
-  if (loading || !user) {
+  if (loading || subscriptionLoading || !user) {
     return (
       <div className="min-h-screen bg-[#FFF8F5] flex items-center justify-center">
         <div className="w-10 h-10 border-3 border-primary border-t-transparent rounded-full animate-spin" />
@@ -680,9 +721,7 @@ export default function OnboardingPage() {
       {/* Header */}
       <header className="p-4 sm:p-6 flex items-center justify-between max-w-2xl mx-auto w-full flex-shrink-0">
         <Link href="/" className="inline-flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-2xl overflow-hidden shadow-sm">
-            <Image src="/logo.png" alt="Posty" width={36} height={36} className="w-full h-full object-contain" />
-          </div>
+          <Image src="/logo.png" alt="Posty" width={36} height={36} className="w-9 h-9 rounded-xl" />
           <span className="font-bold text-gray-900 text-lg">Posty</span>
         </Link>
         {!showRecap && !showUpsell && (

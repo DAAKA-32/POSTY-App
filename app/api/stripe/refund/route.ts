@@ -110,8 +110,9 @@ export async function POST(request: NextRequest) {
     // Cancel the subscription immediately
     await stripe.subscriptions.cancel(subscription.stripeSubscriptionId);
 
-    // Update user in Firestore (keep existing plan for reference)
+    // Update user in Firestore: remove plan access immediately
     await adminDb.collection("users").doc(userId).update({
+      "subscription.plan": null,
       "subscription.refundRequested": true,
       "subscription.refundRequestedAt": Timestamp.now(),
       "subscription.status": "canceled",

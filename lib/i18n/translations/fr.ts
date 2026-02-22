@@ -833,7 +833,7 @@ export const fr = {
 
     // Question 1 - Free/pricing
     q1: "Posty propose-t-il un essai gratuit ?",
-    a1: "Oui, Posty propose un essai gratuit de 3 jours avec accès complet aux fonctionnalités Pro. Une carte bancaire est requise pour activer l'essai. Vous pouvez annuler à tout moment pendant la période d'essai sans être débité. Après l'essai, vous bénéficiez d'une garantie satisfait ou remboursé de 7 jours.",
+    a1: "Oui, Posty propose un essai gratuit de 7 jours pour le plan Pro (3 jours pour Max). Une carte bancaire est requise pour activer l'essai. Vous pouvez annuler à tout moment pendant la période d'essai sans être débité. Après l'essai, vous bénéficiez d'une garantie satisfait ou remboursé de 7 jours.",
 
     // Question 2 - Core feature differentiation
     q2: "Quelle est la différence entre les versions Storytelling et Business ?",
@@ -1015,7 +1015,7 @@ export const fr = {
 
     // Guarantees
     guaranteeTitle: "Nos garanties",
-    guarantee1: "Satisfait ou remboursé sous 14 jours",
+    guarantee1: "Satisfait ou remboursé sous 7 jours",
     guarantee2: "Annulation en 1 clic, sans justification",
     guarantee3: "Pas d'engagement, résiliez quand vous voulez",
 

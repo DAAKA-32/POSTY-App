@@ -87,7 +87,20 @@ export async function saveLinkedInPostAdmin(
 // ============== QUOTA MANAGEMENT (SERVER-SIDE) ==============
 
 import { SubscriptionPlan } from "@/types";
-import { DAILY_MESSAGE_LIMITS, HOURLY_MESSAGE_LIMITS, HOURLY_WINDOW_MS, getFounderOverridePlan } from "@/lib/plans";
+import { DAILY_MESSAGE_LIMITS, HOURLY_MESSAGE_LIMITS, HOURLY_WINDOW_MS, getFounderOverridePlan, PlanType } from "@/lib/plans";
+
+/**
+ * Normalize plan name from Firestore to a valid PlanType.
+ * Handles legacy names, case mismatches, and unknown values.
+ */
+function normalizePlan(raw: string | null | undefined): SubscriptionPlan | null {
+  if (!raw) return null;
+  const lower = raw.toLowerCase().trim();
+  if (lower === "free") return null;
+  if (lower === "starter") return "pro";
+  if (lower === "pro" || lower === "max") return lower as SubscriptionPlan;
+  return null;
+}
 
 /**
  * Get the start of today (00:00:00 UTC)
@@ -131,7 +144,7 @@ export interface QuotaCheckResult {
  * IMPORTANT: Respects test mode - if test mode is active, uses the test plan
  * for quota calculations instead of the actual Stripe subscription.
  */
-export async function checkUserQuotaAdmin(userId: string): Promise<QuotaCheckResult> {
+export async function checkUserQuotaAdmin(userId: string, authEmail?: string): Promise<QuotaCheckResult> {
   if (!adminDb) {
     throw new Error("Firebase Admin not initialized");
   }
@@ -157,14 +170,11 @@ export async function checkUserQuotaAdmin(userId: string): Promise<QuotaCheckRes
   const data = userSnap.data();
   if (!data) return defaultResult;
 
-  // Determine effective plan
-  // Handle legacy "starter" and "free" plan names from database
-  let rawPlan: string | null = data.subscription?.plan || null;
-  if (rawPlan === "free") rawPlan = null;
-  let effectivePlan: SubscriptionPlan | null = rawPlan ? (rawPlan === "starter" ? "pro" : rawPlan) as SubscriptionPlan : null;
+  // Determine effective plan (normalize to handle casing/legacy names)
+  let effectivePlan = normalizePlan(data.subscription?.plan);
 
-  // Founder override: founders always get max plan access
-  const founderPlan = getFounderOverridePlan(data.email);
+  // Founder override: use Firestore email, fallback to Firebase Auth email
+  const founderPlan = getFounderOverridePlan(data.email || authEmail);
   if (founderPlan) {
     effectivePlan = founderPlan;
   }
@@ -174,9 +184,9 @@ export async function checkUserQuotaAdmin(userId: string): Promise<QuotaCheckRes
     return defaultResult;
   }
 
-  const dailyLimit = DAILY_MESSAGE_LIMITS[effectivePlan];
+  const dailyLimit = DAILY_MESSAGE_LIMITS[effectivePlan] ?? 0;
 
-  // Unlimited plan (-1) - Max plan
+  // Unlimited plan (-1) — Max plan: no daily quota
   if (dailyLimit === -1) {
     return {
       canGenerate: true,
@@ -228,7 +238,7 @@ export interface HourlyQuotaCheckResult {
  * Uses a 1-hour sliding window: counts messages with timestamps within
  * the last 60 minutes. Respects test mode.
  */
-export async function checkHourlyQuotaAdmin(userId: string): Promise<HourlyQuotaCheckResult> {
+export async function checkHourlyQuotaAdmin(userId: string, authEmail?: string): Promise<HourlyQuotaCheckResult> {
   if (!adminDb) {
     throw new Error("Firebase Admin not initialized");
   }
@@ -251,20 +261,18 @@ export async function checkHourlyQuotaAdmin(userId: string): Promise<HourlyQuota
   const data = userSnap.data();
   if (!data) return defaultResult;
 
-  // Determine effective plan
-  let rawPlan: string | null = data.subscription?.plan || null;
-  if (rawPlan === "free") rawPlan = null;
-  let effectivePlan: SubscriptionPlan | null = rawPlan ? (rawPlan === "starter" ? "pro" : rawPlan) as SubscriptionPlan : null;
+  // Determine effective plan (normalize to handle casing/legacy names)
+  let effectivePlan = normalizePlan(data.subscription?.plan);
 
-  // Founder override: founders always get max plan access
-  const founderPlan = getFounderOverridePlan(data.email);
+  // Founder override: use Firestore email, fallback to Firebase Auth email
+  const founderPlan = getFounderOverridePlan(data.email || authEmail);
   if (founderPlan) {
     effectivePlan = founderPlan;
   }
 
   if (!effectivePlan) return defaultResult;
 
-  const hourlyLimit = HOURLY_MESSAGE_LIMITS[effectivePlan];
+  const hourlyLimit = HOURLY_MESSAGE_LIMITS[effectivePlan] ?? 0;
 
   // Unlimited plan (-1)
   if (hourlyLimit === -1) {

@@ -206,12 +206,14 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       const isTestMode = false;
       const testPlan: PlanType | null = null;
 
-      // Map old plan names to new ones (legacy migration)
+      // Normalize plan name (handles legacy names, casing, unknown values)
+      const rawPlan = subscriptionData.plan as string | undefined;
       let stripePlan: PlanType | null = null;
-      if (subscriptionData.plan === "starter") stripePlan = "pro";
-      else if (subscriptionData.plan === "free") stripePlan = null;
-      else if (subscriptionData.plan === "pro" || subscriptionData.plan === "max") {
-        stripePlan = subscriptionData.plan as PlanType;
+      if (rawPlan) {
+        const lower = rawPlan.toLowerCase().trim();
+        if (lower === "starter") stripePlan = "pro";
+        else if (lower === "pro" || lower === "max") stripePlan = lower as PlanType;
+        // "free" and unknown values → null
       }
 
       // Founder override: founders get Max plan if they don't have an active Stripe subscription

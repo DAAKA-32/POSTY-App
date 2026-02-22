@@ -574,7 +574,7 @@ export const translations = {
     ctaDiscover: "Découvrir Posty",
     ctaCreatePost: "Créer un post",
     limitedOffer: "Offre limitée",
-    freeTrialDays: "14 jours d'essai gratuit",
+    freeTrialDays: "7 jours d'essai gratuit",
     saveTimeHook: "Gagnez 2h par semaine",
     visibilityHook: "Améliorez votre visibilité",
     credibilityHook: "Renforcez votre crédibilité",

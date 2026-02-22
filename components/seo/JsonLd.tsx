@@ -752,7 +752,7 @@ export const postyFaqData = {
     {
       question: "POSTY est-il gratuit ?",
       answer:
-        "Oui, POSTY propose un plan gratuit avec 3 posts par semaine. Pour un usage illimité, découvrez nos plans Pro (9,99€/mois) et Max (19,99€/mois).",
+        "POSTY propose un essai gratuit de 7 jours pour le plan Pro. Ensuite, choisissez entre le plan Pro (12,90€/mois) et le plan Max (19,90€/mois). Garantie satisfait ou remboursé 7 jours.",
     },
     {
       question: "Puis-je modifier les posts générés ?",

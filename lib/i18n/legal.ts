@@ -299,7 +299,7 @@ export const legalTranslations = {
       },
       cancellation: {
         title: "6.5 Résiliation d'abonnement",
-        content: "L'utilisateur peut résilier son abonnement à tout moment depuis les paramètres de l'application. La résiliation prend effet à la fin de la période de facturation en cours. L'utilisateur conserve l'accès aux fonctionnalités payantes jusqu'à cette date. Après résiliation, le compte est automatiquement rétrogradé au plan Gratuit.",
+        content: "L'utilisateur peut résilier son abonnement à tout moment depuis les paramètres de l'application. La résiliation prend effet à la fin de la période de facturation en cours. L'utilisateur conserve l'accès aux fonctionnalités payantes jusqu'à cette date. Après résiliation, l'accès aux fonctionnalités premium est retiré.",
       },
       withdrawal: {
         title: "6.6 Droit de rétractation",

@@ -68,11 +68,13 @@ export function QuotaProvider({ children }: { children: ReactNode }) {
 
     setIsLoading(true);
     try {
-      const userQuota = await getUserQuota(user.uid);
+      const userQuota = await getUserQuota(user.uid, user.email);
       setQuota(userQuota);
     } catch (error) {
       console.error("Error loading quota:", error);
-      setQuota(defaultQuota);
+      // Fail open: don't block the user on client-side errors.
+      // The server-side API always performs its own quota check.
+      setQuota(null);
     } finally {
       setIsLoading(false);
     }

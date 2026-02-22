@@ -42,20 +42,8 @@ function SubscriptionContent() {
     };
   }, []);
 
-  // Prevent back-navigation when user has no active plan (protect payment flow)
-  // Skip this guard in test mode so dev can navigate freely
+  // Determine if user was redirected from a guard (for back button behavior)
   const isRedirectedFromGuard = searchParams.get("reason") === "subscription_required" || searchParams.get("reason") === "trial_expired";
-  useEffect(() => {
-    if (!currentPlan && !isTestMode) {
-      window.history.replaceState(null, "", window.location.href);
-
-      const handlePopState = () => {
-        window.history.pushState(null, "", window.location.href);
-      };
-      window.addEventListener("popstate", handlePopState);
-      return () => window.removeEventListener("popstate", handlePopState);
-    }
-  }, [currentPlan, isTestMode]);
 
   // Show toast if redirected from canceled checkout
   useEffect(() => {
@@ -150,7 +138,7 @@ function SubscriptionContent() {
       <div className="sticky top-0 z-40 bg-background-warm/80 dark:bg-dark-bg/80 backdrop-blur-xl border-b border-[#F8935D]/10 dark:border-dark-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="relative flex items-center h-16">
-            {currentPlan && (
+            {currentPlan ? (
               <button
                 onClick={() => isRedirectedFromGuard ? router.push("/") : router.back()}
                 className="flex items-center gap-2 text-gray-600 dark:text-text-secondary hover:text-gray-900 dark:hover:text-white transition-colors group z-10"
@@ -159,6 +147,16 @@ function SubscriptionContent() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
                 <span className="hidden sm:inline">{t.pricing.back}</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => router.push("/onboarding")}
+                className="flex items-center gap-2 text-gray-600 dark:text-text-secondary hover:text-gray-900 dark:hover:text-white transition-colors group z-10"
+              >
+                <svg className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                <span className="hidden sm:inline">Modifier mon profil</span>
               </button>
             )}
             <div className="absolute left-1/2 -translate-x-1/2 text-lg font-semibold text-gray-900 dark:text-white">
@@ -248,6 +246,17 @@ function SubscriptionContent() {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* Legal notice — EU withdrawal waiver (Directive 2011/83/EU, art. L.221-28) */}
+        <div className="max-w-2xl mx-auto mt-8 text-center">
+          <p className="text-[10px] sm:text-xs text-text-muted leading-relaxed">
+            En souscrivant, vous acceptez nos{" "}
+            <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary transition-colors">
+              Conditions Générales d&apos;Utilisation
+            </a>{" "}
+            et consentez à l&apos;accès immédiat au service. Conformément à l&apos;article L.221-28 du Code de la consommation, vous renoncez à votre droit de rétractation de 14 jours dès le début de l&apos;utilisation du service. Garantie satisfait ou remboursé {GUARANTEE_PERIOD_DAYS} jours.
+          </p>
         </div>
 
         {/* Test Mode Panel - Hidden in Production Mode

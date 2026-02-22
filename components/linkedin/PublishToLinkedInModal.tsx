@@ -9,6 +9,7 @@ import UpgradeProModal from "@/components/ui/UpgradeProModal";
 import LinkedInConnectButton, { LinkedInIcon } from "./LinkedInConnectButton";
 import { LinkedInConnectionData } from "@/lib/firestore";
 import { useQuota } from "@/contexts/QuotaContext";
+import { useSubscription } from "@/contexts/SubscriptionContext";
 import toast from "@/components/ui/Toast";
 import PlatformSelector from "@/components/publish/PlatformSelector";
 import { Platform } from "@/types";
@@ -76,7 +77,11 @@ export default function PublishToLinkedInModal({
   linkedInConnection,
   onPublish,
 }: PublishToLinkedInModalProps) {
-  const { quota, canPublish, recordPublish } = useQuota();
+  const { quota, canPublish, recordPublish, isMaxPlan: quotaIsMax, currentPlan: quotaPlan } = useQuota();
+  const { isMaxPlan: subIsMax, currentPlan: subPlan } = useSubscription();
+  // Use either context to detect Max — SubscriptionContext is more reliable (normalizes plan names)
+  const isMaxPlan = subIsMax || quotaIsMax;
+  const currentPlan = subPlan || quotaPlan;
   const { isConnected: facebookConnected, publishToFacebook } = useFacebook();
   const { isConnected: threadsConnected, publishToThreads } = useThreads();
   const [step, setStep] = useState<PublishStep>("preview");
@@ -178,8 +183,8 @@ export default function PublishToLinkedInModal({
       triggerHaptic("error");
       return;
     }
-    // Check quota before confirming
-    if (!canPublish) {
+    // Max plan = unlimited, never block. Pro = check daily quota.
+    if (!isMaxPlan && !canPublish) {
       triggerHaptic("warning");
       setShowUpgradeModal(true);
       return;
@@ -392,8 +397,8 @@ export default function PublishToLinkedInModal({
               showAllPlatforms={true}
             />
 
-            {/* Quota Info */}
-            {quota && !quota.plan && (
+            {/* Quota Info — only for Pro users with a daily limit */}
+            {quota && quota.plan === "pro" && (
               <div
                 className={`flex items-center justify-between p-3 rounded-lg border ${
                   canPublish
@@ -407,10 +412,10 @@ export default function PublishToLinkedInModal({
                     {canPublish ? (
                       <>
                         <span className="text-gray-900 dark:text-white font-medium">{quota.remaining}</span> publication
-                        {quota.remaining > 1 ? "s" : ""} restante{quota.remaining > 1 ? "s" : ""} cette semaine
+                        {quota.remaining > 1 ? "s" : ""} restante{quota.remaining > 1 ? "s" : ""} aujourd&apos;hui
                       </>
                     ) : (
-                      <span className="text-error">Limite hebdomadaire atteinte</span>
+                      <span className="text-error">Limite quotidienne atteinte</span>
                     )}
                   </span>
                 </div>
@@ -419,7 +424,7 @@ export default function PublishToLinkedInModal({
                     onClick={() => setShowUpgradeModal(true)}
                     className="text-xs text-accent hover:text-accent/80 font-medium min-h-[44px] px-2 flex items-center"
                   >
-                    Passer Pro
+                    Passer Max
                   </button>
                 )}
               </div>
@@ -731,12 +736,13 @@ export default function PublishToLinkedInModal({
         </Modal>
       )}
 
-      {/* Upgrade Pro Modal */}
+      {/* Upgrade Modal */}
       <UpgradeProModal
         isOpen={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}
         remaining={quota?.remaining}
         resetsAt={quota?.resetsAt}
+        currentPlan={currentPlan}
       />
     </>
   );

@@ -548,6 +548,8 @@ function ConversationContent() {
               onVoiceRecordingStart={toggleRecording}
               onVoiceRecordingStop={toggleRecording}
               isRecording={isRecording}
+              enableFileAttachment={true}
+              fileAttachmentAllowed={isMaxPlan}
               showHelperText={true}
               maxHeight={200}
               minHeight={56}

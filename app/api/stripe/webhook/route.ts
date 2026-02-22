@@ -71,6 +71,7 @@ async function updateUserSubscription(
     stripeSubscriptionId?: string;
     status?: string;
     currentPeriodEnd?: Date;
+    cancelAtPeriodEnd?: boolean;
     // Trial-specific fields
     trialStart?: Date;
     trialEnd?: Date;
@@ -103,6 +104,9 @@ async function updateUserSubscription(
   }
   if (data.currentPeriodEnd) {
     updateData["subscription.expiresAt"] = Timestamp.fromDate(data.currentPeriodEnd);
+  }
+  if (data.cancelAtPeriodEnd !== undefined) {
+    updateData["subscription.cancelAtPeriodEnd"] = data.cancelAtPeriodEnd;
   }
 
   // Set welcome modal flag for post-payment display
@@ -246,9 +250,10 @@ export async function POST(request: NextRequest) {
           currentPeriodEnd: subscription.current_period_end
             ? new Date(subscription.current_period_end * 1000)
             : undefined,
+          cancelAtPeriodEnd: !!subscription.cancel_at_period_end,
         });
 
-        console.log(`Subscription updated: plan=${plan}`);
+        console.log(`Subscription updated: plan=${plan}, cancelAtPeriodEnd=${!!subscription.cancel_at_period_end}`);
         break;
       }
 
@@ -262,12 +267,13 @@ export async function POST(request: NextRequest) {
           break;
         }
 
-        // Mark subscription as canceled (keep existing plan for reference)
+        // Remove plan access: subscription is permanently canceled
         await updateUserSubscription(userId, {
+          plan: null,
           status: "canceled",
         });
 
-        console.log("Subscription canceled");
+        console.log("Subscription deleted — plan access removed");
         break;
       }
 
@@ -285,35 +291,42 @@ export async function POST(request: NextRequest) {
 
         if (!userId) break;
 
-        // Only track paid invoices (amount > 0 = real payment, not trial $0 invoice)
         const amountPaid = invoice.amount_paid || 0;
 
-        await savePaymentHistory(userId, {
-          stripePaymentId: invoice.payment_intent || invoice.id,
-          amount: amountPaid,
-          currency: invoice.currency || "eur",
-          status: "succeeded",
-          description: invoice.description || `Subscription payment`,
-          invoiceUrl: invoice.hosted_invoice_url || undefined,
-        });
-
-        // Track first real payment date for money-back guarantee eligibility
+        // Only save real payments to history (skip $0 trial invoices)
         if (amountPaid > 0) {
+          await savePaymentHistory(userId, {
+            stripePaymentId: invoice.payment_intent || invoice.id,
+            amount: amountPaid,
+            currency: invoice.currency || "eur",
+            status: "succeeded",
+            description: invoice.description || `Subscription payment`,
+            invoiceUrl: invoice.hosted_invoice_url || undefined,
+          });
+
+          // Track first real payment date for money-back guarantee eligibility
           const db = getFirebaseAdmin();
           const userRef = db.collection("users").doc(userId);
           const userDoc = await userRef.get();
           const userData = userDoc.data();
 
-          // Only set firstPaymentDate if not already set (first payment ever)
           if (!userData?.subscription?.firstPaymentDate) {
             await userRef.update({
               "subscription.firstPaymentDate": Timestamp.now(),
             });
             console.log("First payment tracked - guarantee period started");
           }
+
+          // Update status to active (trial → active transition)
+          await updateUserSubscription(userId, {
+            status: subscription.status,
+            currentPeriodEnd: subscription.current_period_end
+              ? new Date(subscription.current_period_end * 1000)
+              : undefined,
+          });
         }
 
-        console.log(`Invoice paid (amount: ${amountPaid})`);
+        console.log(`Invoice paid (amount: ${amountPaid}${amountPaid === 0 ? " - trial invoice, skipped" : ""})`);
         break;
       }
 

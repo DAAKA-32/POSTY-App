@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     // PLAN CHECK: Verify user's plan allows Threads publishing
     let userPlan: PlanType | null = null;
     try {
-      const quotaCheck = await checkUserQuotaAdmin(userId);
+      const quotaCheck = await checkUserQuotaAdmin(userId, auth.email);
       userPlan = quotaCheck.plan as PlanType;
     } catch (planError) {
       console.error("Plan check error:", planError);

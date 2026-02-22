@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
     let userPlan: PlanType | null = null;
     if (isAdminInitialized()) {
       try {
-        quotaCheck = await checkHourlyQuotaAdmin(userId);
+        quotaCheck = await checkHourlyQuotaAdmin(userId, auth.email);
         userPlan = quotaCheck.plan;
 
         if (!quotaCheck.canGenerate) {
@@ -124,14 +124,19 @@ export async function POST(request: NextRequest) {
         }
 
         // ========== DAILY QUOTA CHECK ==========
-        const dailyQuota = await checkUserQuotaAdmin(userId);
+        const dailyQuota = await checkUserQuotaAdmin(userId, auth.email);
         if (!dailyQuota.canGenerate) {
+          const isMaxPlan = dailyQuota.plan === "max";
           return new Response(
             JSON.stringify({
               error: "daily_quota_exceeded",
               message: language === "fr"
-                ? "Quota quotidien atteint. Revenez demain ou passez au plan Max pour une création illimitée."
-                : `You've reached your daily limit of ${dailyQuota.dailyLimit} messages. Come back tomorrow or upgrade to Max.`,
+                ? isMaxPlan
+                  ? "Limite temporaire atteinte. Veuillez réessayer dans quelques instants."
+                  : "Quota quotidien atteint. Revenez demain ou passez au plan Max pour une création illimitée."
+                : isMaxPlan
+                  ? "Temporary limit reached. Please try again shortly."
+                  : `You've reached your daily limit of ${dailyQuota.dailyLimit} messages. Come back tomorrow or upgrade to Max.`,
               dailyLimit: dailyQuota.dailyLimit,
               usedToday: dailyQuota.usedToday,
               remaining: 0,
@@ -476,7 +481,7 @@ export async function POST(request: NextRequest) {
               }
 
               // Send updated quota info in the complete event
-              const updatedQuota = await checkHourlyQuotaAdmin(userId);
+              const updatedQuota = await checkHourlyQuotaAdmin(userId, auth.email);
               sendEvent("complete", {
                 usedOpenAI: !!openaiService,
                 quota: {

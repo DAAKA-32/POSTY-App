@@ -253,8 +253,8 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
       yearly: 199, // -17% (16.58€/mois)
     },
     limits: {
-      messagesPerDay: -1, // Truly unlimited — anti-abuse via hourly rate limit (300/h)
-      messagesPerHour: 300, // Rolling window: 300 msg/hour (anti-abuse only)
+      messagesPerDay: -1, // Truly unlimited — no daily quota
+      messagesPerHour: -1, // Truly unlimited — no hourly quota
       conversationsPerWeek: -1, // Unlimited
       conversationsPerMonth: -1, // Unlimited
       maxCharactersPerPrompt: 3000,

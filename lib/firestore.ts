@@ -21,6 +21,19 @@ import { db } from "./firebase";
 import { UserProfile, Post, Session, ChatMessage } from "@/types";
 import { planHasFeature, PlanType, DAILY_MESSAGE_LIMITS, getFounderOverridePlan } from "./plans";
 
+/**
+ * Normalize plan name from Firestore to a valid SubscriptionPlan.
+ * Handles legacy names, case mismatches, and unknown values.
+ */
+function normalizePlanName(raw: string | null | undefined): SubscriptionPlan | null {
+  if (!raw) return null;
+  const lower = raw.toLowerCase().trim();
+  if (lower === "free") return null;
+  if (lower === "starter") return "pro";
+  if (lower === "pro" || lower === "max") return lower as SubscriptionPlan;
+  return null;
+}
+
 // ============== USER OPERATIONS ==============
 // Collection: users
 // Fields: uid, email, name, sector, role, linkedinStyle, createdAt
@@ -139,7 +152,7 @@ interface SavePostOptions {
     expectedEngagement: string;
     keyTakeaway: string;
   };
-  responseMode?: "business-only" | "single-choice" | "dual";
+  responseMode?: "business-only" | "single-choice" | "dual" | "conversational";
   selectedStyle?: "storytelling" | "business";
 }
 
@@ -973,7 +986,7 @@ function isToday(date: Date): boolean {
  * IMPORTANT: Respects test mode - if test mode is active, uses the test plan
  * for quota calculations instead of the actual Stripe subscription.
  */
-export async function getUserQuota(userId: string): Promise<QuotaInfo> {
+export async function getUserQuota(userId: string, authEmail?: string | null): Promise<QuotaInfo> {
   const userRef = doc(db, "users", userId);
   const userSnap = await getDoc(userRef);
 
@@ -997,14 +1010,11 @@ export async function getUserQuota(userId: string): Promise<QuotaInfo> {
 
   const data = userSnap.data();
 
-  // Determine effective plan
-  // Handle legacy "starter" and "free" plan names from database
-  let rawPlan: string | null = data.subscription?.plan || null;
-  if (rawPlan === "free") rawPlan = null;
-  let effectivePlan: SubscriptionPlan | null = rawPlan ? (rawPlan === "starter" ? "pro" : rawPlan) as SubscriptionPlan : null;
+  // Determine effective plan (normalize to handle casing/legacy names)
+  let effectivePlan = normalizePlanName(data.subscription?.plan);
 
-  // Founder override: founders always get max plan access
-  const founderPlan = getFounderOverridePlan(data.email);
+  // Founder override: use Firestore email, fallback to Firebase Auth email
+  const founderPlan = getFounderOverridePlan(data.email || authEmail);
   if (founderPlan) {
     effectivePlan = founderPlan;
   }

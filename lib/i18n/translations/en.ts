@@ -1016,7 +1016,7 @@ export const en = {
 
     // Guarantees
     guaranteeTitle: "Our guarantees",
-    guarantee1: "14-day money-back guarantee",
+    guarantee1: "7-day money-back guarantee",
     guarantee2: "Cancel in one click, no questions asked",
     guarantee3: "No commitment, cancel whenever you want",
 

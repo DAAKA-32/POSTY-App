@@ -619,7 +619,7 @@ export default function SubscriptionManagement() {
                     <svg className="w-4 h-4 text-warning shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01" />
                     </svg>
-                    Retour au plan gratuit
+                    Perte de l'accès premium
                   </li>
                 </ul>
               </div>
@@ -689,7 +689,7 @@ export default function SubscriptionManagement() {
                 <span className="text-gray-900 dark:text-white font-medium">
                   {stripeDetails?.currentPeriodEnd ? formatDate(stripeDetails.currentPeriodEnd) : "—"}
                 </span>.
-                Après cette date, vous passerez automatiquement au plan gratuit.
+                Après cette date, vous perdrez l'accès aux fonctionnalités premium.
               </p>
 
               {/* What you'll lose */}

@@ -22,6 +22,7 @@ export interface ConversationMessage {
 interface StreamingContent {
   storytelling: string;
   business: string;
+  conversational: string;
 }
 
 interface UseChatOptions {
@@ -72,6 +73,7 @@ export function useChat({
   const [streamingContent, setStreamingContent] = useState<StreamingContent>({
     storytelling: "",
     business: "",
+    conversational: "",
   });
   const [error, setError] = useState<string | null>(null);
   const [lastPrompt, setLastPrompt] = useState("");
@@ -128,7 +130,7 @@ export function useChat({
       setIsStreaming(false);
       setError(null);
       setLastPrompt(prompt);
-      setStreamingContent({ storytelling: "", business: "" });
+      setStreamingContent({ storytelling: "", business: "", conversational: "" });
 
       // Determine if this is a follow-up message in existing conversation
       const currentPostId = postId;
@@ -143,11 +145,12 @@ export function useChat({
       };
       setMessages((prev) => [...prev, userMessage]);
 
-      // Track accumulated content for saving
-      const accumulatedContent = { storytelling: "", business: "" };
-      const messageIds = {
+      // Track accumulated content for saving (includes conversational for SOCIAL/EXPLORATORY intents)
+      const accumulatedContent: Record<string, string> = { storytelling: "", business: "", conversational: "" };
+      const messageIds: Record<string, string> = {
         storytelling: `ai-${Date.now()}-storytelling`,
         business: `ai-${Date.now()}-business`,
+        conversational: `ai-${Date.now()}-conversational`,
       };
 
       try {
@@ -258,17 +261,20 @@ export function useChat({
 
                 switch (eventType) {
                   case "start": {
-                    const variantType = data.type as "storytelling" | "business";
+                    const variantType = data.type as string;
                     const newMessage: ConversationMessage = {
                       id: messageIds[variantType],
                       type: "ai",
                       content: "",
                       timestamp: new Date(),
-                      variant: variantType,
+                      variant: variantType === "conversational" ? undefined : variantType as "storytelling" | "business",
                       isStreaming: true,
                     };
 
-                    if (dualMode && variantType === "storytelling") {
+                    if (variantType === "conversational") {
+                      // Conversational response (SOCIAL/EXPLORATORY) — single message, no dual layout
+                      setMessages((prev) => [...prev, newMessage]);
+                    } else if (dualMode && variantType === "storytelling") {
                       // Pre-create business placeholder for stable dual layout
                       const businessPlaceholder: ConversationMessage = {
                         id: messageIds.business,
@@ -332,8 +338,18 @@ export function useChat({
                       console.log("Quota updated:", data.quota);
                     }
 
+                    // Determine if this was a conversational response (SOCIAL/EXPLORATORY)
+                    const isConversational = !!accumulatedContent.conversational;
+
                     // Set final responses based on mode
-                    if (dualMode) {
+                    if (isConversational) {
+                      // Conversational responses are not "posts" — store for display only
+                      setResponses([{
+                        title: "POSTY",
+                        content: accumulatedContent.conversational,
+                        type: "business", // fallback type for compatibility
+                      }]);
+                    } else if (dualMode) {
                       setResponses([
                         {
                           title: "Version Storytelling",
@@ -352,7 +368,7 @@ export function useChat({
                           title: responseType === "storytelling"
                             ? "Version Storytelling"
                             : "Version Business",
-                          content: accumulatedContent[responseType],
+                          content: accumulatedContent[responseType] || "",
                           type: responseType,
                         },
                       ]);
@@ -364,6 +380,13 @@ export function useChat({
 
                     // CRITICAL: Save to Firestore based on conversation state
                     if (userId && !isGuest) {
+                      // Get the actual content to save (conversational or post content)
+                      const primaryContent = isConversational
+                        ? accumulatedContent.conversational
+                        : dualMode
+                          ? accumulatedContent.storytelling
+                          : accumulatedContent[responseType] || "";
+
                       try {
                         if (isExistingConversation && currentPostId) {
                           // FOLLOW-UP: Add messages to existing conversation
@@ -375,16 +398,16 @@ export function useChat({
                               timestamp: userMessage.timestamp,
                             },
                             {
-                              id: messageIds.business,
+                              id: isConversational ? messageIds.conversational : messageIds.business,
                               role: "assistant",
-                              content: dualMode ? accumulatedContent.storytelling : accumulatedContent[responseType],
-                              variant: dualMode ? "storytelling" : responseType,
+                              content: primaryContent,
+                              variant: isConversational ? undefined : (dualMode ? "storytelling" : responseType),
                               timestamp: new Date(),
                             },
                           ];
 
-                          // Add business response if dual mode
-                          if (dualMode && accumulatedContent.business) {
+                          // Add business response if dual mode (not conversational)
+                          if (!isConversational && dualMode && accumulatedContent.business) {
                             newMessages.push({
                               id: messageIds.storytelling,
                               role: "assistant",
@@ -401,11 +424,11 @@ export function useChat({
                           const newPostId = await savePost(
                             userId,
                             prompt,
-                            dualMode ? accumulatedContent.storytelling : accumulatedContent[responseType],
-                            dualMode ? accumulatedContent.business : "",
+                            primaryContent,
+                            (!isConversational && dualMode) ? accumulatedContent.business : "",
                             {
-                              responseMode: dualMode ? "dual" : "single-choice",
-                              selectedStyle: dualMode ? undefined : effectiveStyle,
+                              responseMode: isConversational ? "conversational" : (dualMode ? "dual" : "single-choice"),
+                              selectedStyle: (isConversational || dualMode) ? undefined : effectiveStyle,
                             }
                           );
                           setPostId(newPostId);
@@ -454,7 +477,7 @@ export function useChat({
     setLastPrompt("");
     setPostId(null); // Clear postId to start fresh
     setIsStreaming(false);
-    setStreamingContent({ storytelling: "", business: "" });
+    setStreamingContent({ storytelling: "", business: "", conversational: "" });
     setInsights(null);
   }, []);
 
@@ -544,6 +567,7 @@ export function useChat({
       setStreamingContent({
         storytelling: post.responseA,
         business: post.responseB,
+        conversational: "",
       });
     },
     []

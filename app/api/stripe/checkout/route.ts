@@ -162,6 +162,14 @@ export async function POST(request: NextRequest) {
       cancel_url: `${appUrl}/subscription?canceled=true`,
       allow_promotion_codes: true,
       billing_address_collection: "auto",
+      consent_collection: {
+        terms_of_service: "required",
+      },
+      custom_text: {
+        terms_of_service_acceptance: {
+          message: `J'accepte les [Conditions Générales d'Utilisation](${appUrl}/legal/terms) et je consens à l'accès immédiat au service, renonçant à mon droit de rétractation de 14 jours (art. L.221-28).`,
+        },
+      },
       locale: "fr",
     });
 

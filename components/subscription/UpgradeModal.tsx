@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuota } from "@/contexts/QuotaContext";
-import { getPlanConfig, getPlanCoreFeatures } from "@/lib/plans";
+import { getPlanConfig, getPlanCoreFeatures, GUARANTEE_PERIOD_DAYS } from "@/lib/plans";
 import Button from "@/components/ui/Button";
 
 interface UpgradeModalProps {
@@ -130,7 +130,7 @@ export default function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
             {/* Footer note */}
             <div className="px-6 py-4 bg-dark-hover/30 border-t border-dark-border">
               <p className="text-xs text-text-secondary text-center">
-                Annulation possible à tout moment. Satisfait ou remboursé 14 jours.
+                Annulation possible à tout moment. Satisfait ou remboursé {GUARANTEE_PERIOD_DAYS} jours.
               </p>
             </div>
           </motion.div>
