@@ -63,40 +63,55 @@ export async function GET(request: NextRequest) {
     // Strip #_ from code if present (Threads appends it)
     const cleanCode = code.replace(/#_$/, "");
 
+    console.log("Threads callback - Starting token exchange", {
+      hasAppId: !!THREADS_CREDENTIALS.appId,
+      hasAppSecret: !!THREADS_CREDENTIALS.appSecret,
+      redirectUri: THREADS_CONFIG.redirectUri,
+      codeLength: cleanCode.length,
+    });
+
     // ÉTAPE 1: Échange du code contre un short-lived token
+    const tokenBody = new URLSearchParams({
+      client_id: THREADS_CREDENTIALS.appId,
+      client_secret: THREADS_CREDENTIALS.appSecret,
+      grant_type: "authorization_code",
+      redirect_uri: THREADS_CONFIG.redirectUri,
+      code: cleanCode,
+    });
+
     const tokenResponse = await fetch(THREADS_CONFIG.tokenUrl, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        client_id: THREADS_CREDENTIALS.appId,
-        client_secret: THREADS_CREDENTIALS.appSecret,
-        grant_type: "authorization_code",
-        redirect_uri: THREADS_CONFIG.redirectUri,
-        code: cleanCode,
-      }),
+      body: tokenBody,
+    });
+
+    const tokenResponseText = await tokenResponse.text();
+    console.log("Threads token response:", {
+      status: tokenResponse.status,
+      body: tokenResponseText.substring(0, 300),
     });
 
     if (!tokenResponse.ok) {
-      const errorData = await tokenResponse.text();
-      console.error("Threads token exchange failed:", errorData);
       return NextResponse.redirect(
-        new URL("/settings?threads_error=token_exchange_failed", request.url)
+        new URL(`/settings?threads_error=token_exchange_failed&details=${encodeURIComponent(tokenResponseText.substring(0, 200))}`, request.url)
       );
     }
 
-    const tokenData: ThreadsTokenResponse = await tokenResponse.json();
+    let tokenData: ThreadsTokenResponse;
+    try {
+      tokenData = JSON.parse(tokenResponseText);
+    } catch {
+      console.error("Failed to parse token response:", tokenResponseText);
+      return NextResponse.redirect(
+        new URL("/settings?threads_error=token_exchange_failed&details=invalid_json", request.url)
+      );
+    }
+
     const shortLivedToken = tokenData.access_token;
     const threadsUserId = tokenData.user_id;
 
-    console.log("Threads token exchange success:", {
-      hasToken: !!shortLivedToken,
-      userId: threadsUserId,
-      tokenLength: shortLivedToken?.length
-    });
-
-    // Verify we got a valid token
     if (!shortLivedToken) {
-      console.error("Threads token exchange returned empty token:", JSON.stringify(tokenData));
+      console.error("Empty token in response:", tokenResponseText);
       return NextResponse.redirect(
         new URL("/settings?threads_error=token_exchange_failed&details=empty_token", request.url)
       );
@@ -114,59 +129,61 @@ export async function GET(request: NextRequest) {
     );
 
     let accessToken = shortLivedToken;
-    let expiresIn = 3600; // 1 hour default for short-lived
+    let expiresIn = 3600;
 
     if (longLivedResponse.ok) {
       const longLivedData: ThreadsLongLivedTokenResponse = await longLivedResponse.json();
       if (longLivedData.access_token) {
         accessToken = longLivedData.access_token;
-        expiresIn = longLivedData.expires_in || 5184000; // ~60 days
-        console.log("Threads long-lived token obtained");
+        expiresIn = longLivedData.expires_in || 5184000;
       }
     } else {
-      console.warn("Threads long-lived token exchange failed, using short-lived token");
+      const llError = await longLivedResponse.text();
+      console.warn("Long-lived token failed:", llError);
     }
 
     // ÉTAPE 3: Récupération du profil utilisateur Threads
-    // Try with user_id first, then /me as fallback
-    const profileFields = "id,username,threads_profile_picture_url";
-    let profileUrl = threadsUserId
-      ? `${THREADS_CONFIG.apiUrl}/${threadsUserId}?fields=${profileFields}&access_token=${accessToken}`
-      : `${THREADS_CONFIG.apiUrl}/me?fields=${profileFields}&access_token=${accessToken}`;
+    // Try multiple approaches
+    let profile: ThreadsProfile | null = null;
 
-    console.log("Fetching Threads profile:", {
-      useUserId: !!threadsUserId,
-      url: profileUrl.replace(accessToken, "***")
-    });
+    const profileEndpoints = [
+      `https://graph.threads.net/v1.0/me?fields=id,username,threads_profile_picture_url&access_token=${accessToken}`,
+      `https://graph.threads.net/me?fields=id,username,threads_profile_picture_url&access_token=${accessToken}`,
+      `https://graph.threads.net/v1.0/${threadsUserId}?fields=id,username,threads_profile_picture_url&access_token=${accessToken}`,
+      `https://graph.threads.net/v1.0/me?fields=id,username&access_token=${accessToken}`,
+    ];
 
-    let profileResponse = await fetch(profileUrl);
+    for (const endpoint of profileEndpoints) {
+      try {
+        console.log("Trying profile endpoint:", endpoint.replace(accessToken, "***"));
+        const resp = await fetch(endpoint);
+        const text = await resp.text();
+        console.log("Profile response:", { status: resp.status, body: text.substring(0, 200) });
 
-    // Fallback to /me if user_id fetch failed
-    if (!profileResponse.ok && threadsUserId) {
-      console.warn("Profile fetch with user_id failed, trying /me");
-      profileResponse = await fetch(
-        `${THREADS_CONFIG.apiUrl}/me?fields=${profileFields}&access_token=${accessToken}`
-      );
+        if (resp.ok) {
+          profile = JSON.parse(text);
+          break;
+        }
+      } catch (e) {
+        console.warn("Profile endpoint failed:", e);
+      }
     }
 
-    // Final fallback: minimal fields
-    if (!profileResponse.ok) {
-      console.warn("Profile fetch failed, trying minimal fields");
-      profileResponse = await fetch(
-        `${THREADS_CONFIG.apiUrl}/me?fields=id,username&access_token=${accessToken}`
-      );
-    }
+    // If all profile fetches failed, save with minimal data from token exchange
+    if (!profile || !profile.id) {
+      console.warn("All profile fetches failed, using token data as fallback");
 
-    if (!profileResponse.ok) {
-      const errorData = await profileResponse.text();
-      console.error("Threads profile fetch failed:", profileResponse.status, errorData);
-      return NextResponse.redirect(
-        new URL(`/settings?threads_error=profile_fetch_failed&details=${encodeURIComponent(errorData.substring(0, 200))}`, request.url)
-      );
-    }
+      if (!threadsUserId) {
+        return NextResponse.redirect(
+          new URL("/settings?threads_error=profile_fetch_failed&details=no_user_id", request.url)
+        );
+      }
 
-    const profile: ThreadsProfile = await profileResponse.json();
-    console.log("Threads profile fetched:", { id: profile.id, username: profile.username });
+      profile = {
+        id: String(threadsUserId),
+        username: `threads_user_${threadsUserId}`,
+      };
+    }
 
     // Vérification de l'initialisation Firebase Admin
     if (!isAdminInitialized()) {
@@ -180,7 +197,7 @@ export async function GET(request: NextRequest) {
     const expiresAt = new Date(Date.now() + expiresIn * 1000);
 
     await saveThreadsConnectionAdmin(userId, {
-      threadsId: threadsUserId || profile.id,
+      threadsId: String(threadsUserId || profile.id),
       username: profile.username,
       accessToken,
       expiresAt,
