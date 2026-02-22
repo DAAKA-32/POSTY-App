@@ -157,7 +157,7 @@ export const metadata: Metadata = {
 
   // Google Search Console verification
   verification: {
-    google: "EtdktdQnbKJzQeVQzF4eBQlxAkkvipVLzZl0GyeLnn8",
+    google: "zcr5lILEk8sjfmbrfGc-P8sprWmLx4bg6-Q8gD38TGo",
   },
 };
 
