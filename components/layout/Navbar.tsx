@@ -434,7 +434,7 @@ export default function Navbar({ transparent = false }: NavbarProps) {
                     Essai gratuit 7 jours
                   </span>
                   <span className="w-1 h-1 rounded-full bg-gray-300" />
-                  <span>Annulation a tout moment</span>
+                  <span>Annulation à tout moment</span>
                 </div>
               </motion.div>
             </div>

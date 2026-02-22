@@ -115,7 +115,7 @@ export default function UpgradeProModal({
           <span className="text-text-secondary">e/mois</span>
         </div>
         <p className="text-xs text-text-muted mt-1">
-          Annulation a tout moment
+          Annulation à tout moment
         </p>
       </div>
 

@@ -133,7 +133,7 @@ export const fr = {
     startFreeDescFull: "Commencez votre essai gratuit de 7 jours. Annulez à tout moment.",
     viewPlans: "Voir les offres",
     noCardRequired: "Essai gratuit 7 jours",
-    noCardRequiredFull: "Essai gratuit 7 jours, annulation a tout moment",
+    noCardRequiredFull: "Essai gratuit 7 jours, annulation à tout moment",
     privateData: "Données sécurisées",
 
     // Chat mockup - Contextual

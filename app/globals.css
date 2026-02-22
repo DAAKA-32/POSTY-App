@@ -1651,7 +1651,10 @@ html.light .bg-success .text-white,
 html.light .bg-\[\#0A66C2\] .text-white,
 /* Keep white text on orange backgrounds (Nouveau post button) */
 html.light [class*="bg-orange"] .text-white,
-html.light [class*="bg-orange"] span {
+html.light [class*="bg-orange"] span,
+/* Keep white text on dark buttons (cookie banner, etc.) */
+html.light [class*="bg-gray-900"].text-white,
+html.light [class*="bg-gray-800"].text-white {
   color: #FFFFFF !important;
 }
 

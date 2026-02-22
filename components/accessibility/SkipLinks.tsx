@@ -33,7 +33,7 @@ export default function SkipLinks({ links = defaultLinks }: SkipLinksProps) {
 
   return (
     <nav
-      aria-label="Liens d'acces rapide"
+      aria-label="Liens d'accès rapide"
       className="skip-links-container"
     >
       {links.map((link) => (
