@@ -88,6 +88,20 @@ export async function GET(request: NextRequest) {
     const shortLivedToken = tokenData.access_token;
     const threadsUserId = tokenData.user_id;
 
+    console.log("Threads token exchange success:", {
+      hasToken: !!shortLivedToken,
+      userId: threadsUserId,
+      tokenLength: shortLivedToken?.length
+    });
+
+    // Verify we got a valid token
+    if (!shortLivedToken) {
+      console.error("Threads token exchange returned empty token:", JSON.stringify(tokenData));
+      return NextResponse.redirect(
+        new URL("/settings?threads_error=token_exchange_failed&details=empty_token", request.url)
+      );
+    }
+
     // ÉTAPE 2: Échange du short-lived token contre un long-lived token
     const longLivedParams = new URLSearchParams({
       grant_type: "th_exchange_token",
@@ -104,19 +118,40 @@ export async function GET(request: NextRequest) {
 
     if (longLivedResponse.ok) {
       const longLivedData: ThreadsLongLivedTokenResponse = await longLivedResponse.json();
-      accessToken = longLivedData.access_token;
-      expiresIn = longLivedData.expires_in || 5184000; // ~60 days
+      if (longLivedData.access_token) {
+        accessToken = longLivedData.access_token;
+        expiresIn = longLivedData.expires_in || 5184000; // ~60 days
+        console.log("Threads long-lived token obtained");
+      }
+    } else {
+      console.warn("Threads long-lived token exchange failed, using short-lived token");
     }
 
     // ÉTAPE 3: Récupération du profil utilisateur Threads
-    // Use minimal fields first (id, username), then try to get extras
-    const profileUrl = `${THREADS_CONFIG.apiUrl}/me?fields=id,username,threads_profile_picture_url&access_token=${accessToken}`;
-    console.log("Fetching Threads profile from:", profileUrl.replace(accessToken, "***"));
+    // Try with user_id first, then /me as fallback
+    const profileFields = "id,username,threads_profile_picture_url";
+    let profileUrl = threadsUserId
+      ? `${THREADS_CONFIG.apiUrl}/${threadsUserId}?fields=${profileFields}&access_token=${accessToken}`
+      : `${THREADS_CONFIG.apiUrl}/me?fields=${profileFields}&access_token=${accessToken}`;
+
+    console.log("Fetching Threads profile:", {
+      useUserId: !!threadsUserId,
+      url: profileUrl.replace(accessToken, "***")
+    });
 
     let profileResponse = await fetch(profileUrl);
 
+    // Fallback to /me if user_id fetch failed
+    if (!profileResponse.ok && threadsUserId) {
+      console.warn("Profile fetch with user_id failed, trying /me");
+      profileResponse = await fetch(
+        `${THREADS_CONFIG.apiUrl}/me?fields=${profileFields}&access_token=${accessToken}`
+      );
+    }
+
+    // Final fallback: minimal fields
     if (!profileResponse.ok) {
-      // Fallback: try with just id and username
+      console.warn("Profile fetch failed, trying minimal fields");
       profileResponse = await fetch(
         `${THREADS_CONFIG.apiUrl}/me?fields=id,username&access_token=${accessToken}`
       );
