@@ -98,8 +98,10 @@ export function ThreadsProvider({ children }: { children: ReactNode }) {
         unexpected_error: "Erreur inattendue",
       };
 
+      const details = params.get("details");
       const errorMessage = errorMessages[threadsError] || decodeURIComponent(threadsError);
-      toast.error(errorMessage);
+      toast.error(details ? `${errorMessage}: ${decodeURIComponent(details)}` : errorMessage);
+      console.error("Threads OAuth error:", threadsError, details);
       window.history.replaceState({}, "", window.location.pathname);
     }
   }, [user, loadConnection]);

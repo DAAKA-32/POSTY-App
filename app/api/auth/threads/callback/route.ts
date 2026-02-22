@@ -109,27 +109,29 @@ export async function GET(request: NextRequest) {
     }
 
     // ÉTAPE 3: Récupération du profil utilisateur Threads
-    // Try with all fields first, fallback without 'name' if it fails
-    let profileResponse = await fetch(
-      `${THREADS_CONFIG.apiUrl}/me?fields=id,username,threads_profile_picture_url,name&access_token=${accessToken}`
-    );
+    // Use minimal fields first (id, username), then try to get extras
+    const profileUrl = `${THREADS_CONFIG.apiUrl}/me?fields=id,username,threads_profile_picture_url&access_token=${accessToken}`;
+    console.log("Fetching Threads profile from:", profileUrl.replace(accessToken, "***"));
+
+    let profileResponse = await fetch(profileUrl);
 
     if (!profileResponse.ok) {
-      // Retry without 'name' field (may not be available for all apps)
+      // Fallback: try with just id and username
       profileResponse = await fetch(
-        `${THREADS_CONFIG.apiUrl}/me?fields=id,username,threads_profile_picture_url&access_token=${accessToken}`
+        `${THREADS_CONFIG.apiUrl}/me?fields=id,username&access_token=${accessToken}`
       );
     }
 
     if (!profileResponse.ok) {
       const errorData = await profileResponse.text();
-      console.error("Threads profile fetch failed:", errorData);
+      console.error("Threads profile fetch failed:", profileResponse.status, errorData);
       return NextResponse.redirect(
-        new URL("/settings?threads_error=profile_fetch_failed", request.url)
+        new URL(`/settings?threads_error=profile_fetch_failed&details=${encodeURIComponent(errorData.substring(0, 200))}`, request.url)
       );
     }
 
     const profile: ThreadsProfile = await profileResponse.json();
+    console.log("Threads profile fetched:", { id: profile.id, username: profile.username });
 
     // Vérification de l'initialisation Firebase Admin
     if (!isAdminInitialized()) {
