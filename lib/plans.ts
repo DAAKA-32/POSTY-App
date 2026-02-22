@@ -215,8 +215,8 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
       yearly: 129, // -17% (10.75€/mois)
     },
     limits: {
-      messagesPerDay: -1, // Unlimited (legacy — kept for analytics)
-      messagesPerHour: 50, // Rolling window: 50 msg/hour
+      messagesPerDay: 60, // 60 créations par jour (reset minuit UTC)
+      messagesPerHour: 50, // Rolling window: 50 msg/hour (anti-abuse)
       conversationsPerWeek: -1, // Unlimited
       conversationsPerMonth: -1, // Unlimited (daily enforcement only)
       maxCharactersPerPrompt: 300,
@@ -235,7 +235,7 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
       allowedPlatforms: ["linkedin", "reddit"],
       maxPlatformConnections: 2,
       canPublishSimultaneously: false, // One platform at a time
-      quotaResetPeriod: "monthly",
+      quotaResetPeriod: "daily",
     },
     badge: "Recommandé",
     highlight: true,
@@ -253,7 +253,7 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
       yearly: 199, // -17% (16.58€/mois)
     },
     limits: {
-      messagesPerDay: -1, // Unlimited (legacy — kept for analytics)
+      messagesPerDay: 500, // Soft cap anti-abus (affiché "illimité" en UI)
       messagesPerHour: 300, // Rolling window: 300 msg/hour (anti-abuse only)
       conversationsPerWeek: -1, // Unlimited
       conversationsPerMonth: -1, // Unlimited
@@ -571,7 +571,7 @@ export const PLAN_TAGLINES: Record<PlanType, { tagline: string; idealFor: string
  * These are the main differentiators that drive conversion
  */
 export const CORE_FEATURES = [
-  { key: "creations", label: "Créations illimitées" },
+  { key: "creations", label: "Créations par jour" },
   { key: "quality", label: "Posts optimisés IA" },
   { key: "scheduling", label: "Planification automatique (arrive tres bientot)" },
   { key: "personalized", label: "Ton adapté à votre style" },
@@ -638,7 +638,7 @@ function getFeatureIncluded(key: string, plan: PlanConfig): boolean {
 
   switch (key) {
     case "creations":
-      return limits.messagesPerDay === -1;
+      return limits.messagesPerDay > 0 || limits.messagesPerDay === -1;
     case "insights":
       return true; // AI Insights available for all plans
     case "quality":
@@ -725,6 +725,12 @@ function getDynamicFeatureLabel(key: string, plan: PlanConfig): string {
       }
       return "";
 
+    case "creations":
+      if (limits.messagesPerDay === -1 || limits.messagesPerDay >= 500) {
+        return "Création illimitée";
+      }
+      return `${limits.messagesPerDay} créations par jour`;
+
     default:
       return "";
   }
@@ -782,10 +788,10 @@ export function getPlanFeaturesDynamic(plan: PlanConfig): FeatureItem[] {
   const features: FeatureItem[] = [];
 
   // Conversations quota - benefit-oriented language
-  if (limits.messagesPerDay === -1) {
-    features.push({ text: "Créations illimitées", included: true, highlight: true });
+  if (limits.messagesPerDay === -1 || limits.messagesPerDay >= 500) {
+    features.push({ text: "Création illimitée", included: true, highlight: true });
   } else {
-    features.push({ text: `${limits.messagesPerDay} créations / jour`, included: true });
+    features.push({ text: `${limits.messagesPerDay} créations par jour`, included: true });
   }
 
   // AI Insights - All plans

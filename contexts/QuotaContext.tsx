@@ -21,6 +21,11 @@ interface QuotaContextType {
   currentPlan: SubscriptionPlan | null;
   planName: string;
   isPremium: boolean;
+  isProPlan: boolean;
+  isMaxPlan: boolean;
+  // Quota UI helpers
+  hasDailyLimit: boolean; // true for Pro (shows gauge), false for Max
+  usagePercent: number; // 0-100, percentage of daily quota used
   // Usage info
   messagesUsedToday: number;
   messagesRemaining: number;
@@ -95,6 +100,13 @@ export function QuotaProvider({ children }: { children: ReactNode }) {
   const currentPlan: SubscriptionPlan | null = quota?.plan || null;
   const planConfig = getPlanConfig(currentPlan ?? "pro");
   const isPremium = currentPlan !== null;
+  const isProPlan = currentPlan === "pro";
+  const isMaxPlan = currentPlan === "max";
+  // Pro has a visible daily limit (60); Max (500) is treated as "unlimited" in UI
+  const hasDailyLimit = isProPlan;
+  const dailyLimit = quota?.dailyLimit ?? 0;
+  const usedToday = quota?.usedToday ?? 0;
+  const usagePercent = dailyLimit > 0 ? Math.min(100, Math.round((usedToday / dailyLimit) * 100)) : 0;
 
   const value: QuotaContextType = {
     quota,
@@ -104,10 +116,15 @@ export function QuotaProvider({ children }: { children: ReactNode }) {
     currentPlan,
     planName: planConfig.name,
     isPremium,
+    isProPlan,
+    isMaxPlan,
+    // Quota UI helpers
+    hasDailyLimit,
+    usagePercent,
     // Usage info
-    messagesUsedToday: quota?.usedToday ?? 0,
+    messagesUsedToday: usedToday,
     messagesRemaining: quota?.remaining ?? 3,
-    dailyLimit: quota?.dailyLimit ?? 3,
+    dailyLimit,
     resetsAt: quota?.resetsAt ?? null,
     // Actions
     refreshQuota: loadQuota,

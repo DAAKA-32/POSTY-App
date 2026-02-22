@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useMemo } from "react";
 import Link from "next/link";
@@ -13,6 +13,11 @@ export default function UsageBanner({ className = "" }: UsageBannerProps) {
   const {
     currentPlan,
     isPremium,
+    isProPlan,
+    isMaxPlan,
+    hasDailyLimit,
+    usagePercent,
+    messagesUsedToday,
     messagesRemaining,
     dailyLimit,
     isLoading,
@@ -21,63 +26,61 @@ export default function UsageBanner({ className = "" }: UsageBannerProps) {
 
   // Determine banner state and content
   const bannerState = useMemo(() => {
-    if (isPremium) {
-      return {
-        type: "premium" as const,
-        show: false, // Don't show banner for premium users
-      };
+    // Max users: never show banner (unlimited experience)
+    if (isMaxPlan) {
+      return { type: "hidden" as const, show: false };
     }
 
-    // Free user states
-    if (messagesRemaining === 0) {
-      return {
-        type: "limit-reached" as const,
-        show: true,
-        icon: "warning",
-        title: "Limite atteinte",
-        message: "Vous avez utilisé vos 3 messages du jour.",
-        cta: "Passer au plan Pro",
-        ctaHighlight: true,
-      };
-    }
+    // Pro users: show daily quota gauge
+    if (isProPlan && hasDailyLimit) {
+      if (!canSendMessage || messagesRemaining <= 0) {
+        return {
+          type: "pro-limit-reached" as const,
+          show: true,
+          icon: "warning",
+          title: "Quota quotidien atteint",
+          message: "Revenez demain ou passez au plan Max pour une création illimitée.",
+          cta: "Passer à Max",
+          ctaHref: "/subscription?plan=max",
+          ctaHighlight: true,
+        };
+      }
 
-    if (messagesRemaining === 1) {
-      return {
-        type: "low" as const,
-        show: true,
-        icon: "info",
-        title: `${messagesRemaining} message restant`,
-        message: "Votre créativité mérite plus ! Historique limité a 7 jours.",
-        cta: "Débloquer l'illimité",
-        ctaHighlight: true,
-      };
-    }
+      if (usagePercent >= 80) {
+        return {
+          type: "pro-warning" as const,
+          show: true,
+          icon: "info",
+          title: `${messagesUsedToday} / ${dailyLimit} créations aujourd'hui`,
+          message: "Votre quota quotidien arrive à sa fin.",
+          cta: "Passer à Max",
+          ctaHref: "/subscription?plan=max",
+          ctaHighlight: true,
+        };
+      }
 
-    if (messagesRemaining <= 2) {
       return {
-        type: "moderate" as const,
+        type: "pro-normal" as const,
         show: true,
-        icon: "info",
-        title: `${messagesRemaining} messages restants`,
-        message: "Historique limité. Passez à Pro pour un acces complet.",
-        cta: "Voir les plans",
+        icon: "sparkle",
+        title: `${messagesUsedToday} / ${dailyLimit} créations aujourd'hui`,
+        message: "Plan Pro • Quota quotidien",
+        cta: "Passer à Max",
+        ctaHref: "/subscription?plan=max",
         ctaHighlight: false,
       };
     }
 
-    // Full quota - subtle reminder
-    return {
-      type: "full" as const,
-      show: true,
-      icon: "sparkle",
-      title: `${messagesRemaining}/${dailyLimit} messages`,
-      message: "Plan gratuit • Historique 7 jours",
-      cta: "Passer à Pro",
-      ctaHighlight: false,
-    };
-  }, [isPremium, messagesRemaining, dailyLimit]);
+    // Premium without daily limit (shouldn't happen but safe fallback)
+    if (isPremium) {
+      return { type: "hidden" as const, show: false };
+    }
 
-  // Don't render for premium users or while loading
+    // No subscription: hidden (user can't access the app)
+    return { type: "hidden" as const, show: false };
+  }, [isMaxPlan, isProPlan, hasDailyLimit, isPremium, canSendMessage, messagesRemaining, usagePercent, messagesUsedToday, dailyLimit]);
+
+  // Don't render while loading or if banner is hidden
   if (isLoading || !bannerState.show) {
     return null;
   }
@@ -99,9 +102,9 @@ export default function UsageBanner({ className = "" }: UsageBannerProps) {
             relative overflow-hidden
             rounded-xl border backdrop-blur-sm
             transition-all duration-200
-            ${bannerState.type === "limit-reached"
+            ${bannerState.type === "pro-limit-reached"
               ? "bg-error/5 border-error/20"
-              : bannerState.type === "low"
+              : bannerState.type === "pro-warning"
                 ? "bg-warning/5 border-warning/20"
                 : "bg-dark-elevated/80 border-dark-border"
             }
@@ -120,9 +123,9 @@ export default function UsageBanner({ className = "" }: UsageBannerProps) {
                 <div
                   className={`
                     shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center
-                    ${bannerState.type === "limit-reached"
+                    ${bannerState.type === "pro-limit-reached"
                       ? "bg-error/10 text-error"
-                      : bannerState.type === "low"
+                      : bannerState.type === "pro-warning"
                         ? "bg-warning/10 text-warning"
                         : "bg-primary/10 text-primary"
                     }
@@ -138,7 +141,7 @@ export default function UsageBanner({ className = "" }: UsageBannerProps) {
                     </svg>
                   ) : (
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
+                      <path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
                     </svg>
                   )}
                 </div>
@@ -149,9 +152,9 @@ export default function UsageBanner({ className = "" }: UsageBannerProps) {
                     <span
                       className={`
                         text-xs sm:text-sm font-semibold
-                        ${bannerState.type === "limit-reached"
+                        ${bannerState.type === "pro-limit-reached"
                           ? "text-error"
-                          : bannerState.type === "low"
+                          : bannerState.type === "pro-warning"
                             ? "text-warning"
                             : "text-white"
                         }
@@ -172,42 +175,42 @@ export default function UsageBanner({ className = "" }: UsageBannerProps) {
               </div>
 
               {/* Right: CTA Button */}
-              <Link
-                href="/pricing"
-                className={`
-                  shrink-0 px-2.5 sm:px-3 py-1.5 text-2xs sm:text-xs font-semibold rounded-lg whitespace-nowrap
-                  transition-all duration-200 haptic-feedback
-                  ${bannerState.ctaHighlight
-                    ? "bg-gradient-to-r from-primary to-primary-hover text-white shadow-glow hover:shadow-lg"
-                    : "bg-dark-hover text-white hover:bg-dark-border"
-                  }
-                `}
-              >
-                {bannerState.cta}
-              </Link>
+              {'ctaHref' in bannerState && bannerState.ctaHref && (
+                <Link
+                  href={bannerState.ctaHref}
+                  className={`
+                    shrink-0 px-2.5 sm:px-3 py-1.5 text-2xs sm:text-xs font-semibold rounded-lg whitespace-nowrap
+                    transition-all duration-200 haptic-feedback
+                    ${bannerState.ctaHighlight
+                      ? "bg-gradient-to-r from-primary to-primary-hover text-white shadow-glow hover:shadow-lg"
+                      : "bg-dark-hover text-white hover:bg-dark-border"
+                    }
+                  `}
+                >
+                  {bannerState.cta}
+                </Link>
+              )}
             </div>
 
-            {/* Progress bar for remaining messages */}
-            {!canSendMessage ? null : (
+            {/* Progress bar for Pro daily quota */}
+            {bannerState.type !== "pro-limit-reached" && (
               <div
                 className="mt-2 sm:mt-3 h-1 bg-dark-border/50 rounded-full overflow-hidden"
                 role="progressbar"
-                aria-valuenow={messagesRemaining}
+                aria-valuenow={messagesUsedToday}
                 aria-valuemin={0}
                 aria-valuemax={dailyLimit}
-                aria-label={`${messagesRemaining} messages restants sur ${dailyLimit}`}
+                aria-label={`${messagesUsedToday} créations utilisées sur ${dailyLimit}`}
               >
                 <motion.div
                   initial={{ width: 0 }}
-                  animate={{ width: `${(messagesRemaining / dailyLimit) * 100}%` }}
+                  animate={{ width: `${usagePercent}%` }}
                   transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
                   className={`
                     h-full rounded-full
-                    ${messagesRemaining === 0
-                      ? "bg-error"
-                      : messagesRemaining === 1
-                        ? "bg-warning"
-                        : "bg-gradient-to-r from-primary to-accent"
+                    ${usagePercent >= 80
+                      ? "bg-warning"
+                      : "bg-gradient-to-r from-primary to-accent"
                     }
                   `}
                 />
@@ -216,7 +219,7 @@ export default function UsageBanner({ className = "" }: UsageBannerProps) {
           </div>
 
           {/* Limit reached overlay effect */}
-          {bannerState.type === "limit-reached" && (
+          {bannerState.type === "pro-limit-reached" && (
             <div className="absolute inset-0 bg-gradient-to-r from-error/5 to-transparent pointer-events-none animate-pulse" />
           )}
         </div>
@@ -227,56 +230,65 @@ export default function UsageBanner({ className = "" }: UsageBannerProps) {
 
 // Compact version for sidebar
 export function UsageBadge() {
-  const { currentPlan, isPremium, messagesRemaining, dailyLimit, isLoading } = useQuota();
+  const { isProPlan, isMaxPlan, isPremium, messagesUsedToday, dailyLimit, messagesRemaining, isLoading, usagePercent } = useQuota();
 
-  if (isLoading || isPremium) return null;
+  // Max users: show premium badge instead
+  if (isLoading || isMaxPlan) return null;
 
-  const isLow = messagesRemaining <= 1;
-  const isEmpty = messagesRemaining === 0;
+  // Pro users: show compact daily quota
+  if (isProPlan) {
+    const isEmpty = messagesRemaining <= 0;
+    const isLow = usagePercent >= 80;
 
-  return (
-    <Link href="/pricing" className="group">
-      <div
-        className={`
-          flex items-center gap-2 px-3 py-2 rounded-xl
-          transition-all duration-200
-          ${isEmpty
-            ? "bg-error/10 border border-error/20"
-            : isLow
-              ? "bg-warning/10 border border-warning/20"
-              : "bg-dark-elevated border border-dark-border"
-          }
-          group-hover:border-primary/30
-        `}
-      >
+    return (
+      <Link href="/subscription?plan=max" className="group">
         <div
           className={`
-            w-2 h-2 rounded-full
-            ${isEmpty ? "bg-error" : isLow ? "bg-warning" : "bg-primary"}
+            flex items-center gap-2 px-3 py-2 rounded-xl
+            transition-all duration-200
+            ${isEmpty
+              ? "bg-error/10 border border-error/20"
+              : isLow
+                ? "bg-warning/10 border border-warning/20"
+                : "bg-dark-elevated border border-dark-border"
+            }
+            group-hover:border-primary/30
           `}
-        />
-        <span className="text-xs text-text-secondary">
-          {isEmpty
-            ? "0 message"
-            : `${messagesRemaining}/${dailyLimit}`
-          }
-        </span>
-        <svg
-          className="w-3 h-3 text-text-muted group-hover:text-primary transition-colors"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
         >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-        </svg>
-      </div>
-    </Link>
-  );
+          <div
+            className={`
+              w-2 h-2 rounded-full
+              ${isEmpty ? "bg-error" : isLow ? "bg-warning" : "bg-primary"}
+            `}
+          />
+          <span className="text-xs text-text-secondary">
+            {isEmpty
+              ? "Quota atteint"
+              : `${messagesUsedToday}/${dailyLimit}`
+            }
+          </span>
+          <svg
+            className="w-3 h-3 text-text-muted group-hover:text-primary transition-colors"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </div>
+      </Link>
+    );
+  }
+
+  // Non-premium users: hidden
+  if (!isPremium) return null;
+
+  return null;
 }
 
-// Premium badge for paid users
+// Premium badge for paid users (Max plan)
 export function PremiumBadge() {
-  const { isPremium, planName, isLoading } = useQuota();
+  const { isPremium, isMaxPlan, planName, isLoading } = useQuota();
 
   if (isLoading || !isPremium) return null;
 
@@ -286,7 +298,7 @@ export function PremiumBadge() {
         <path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
       </svg>
       <span className="text-xs font-semibold text-white">{planName}</span>
-      <span className="text-2xs text-accent">Illimité</span>
+      {isMaxPlan && <span className="text-2xs text-accent">Illimité</span>}
     </div>
   );
 }

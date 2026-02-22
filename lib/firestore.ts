@@ -934,24 +934,26 @@ export interface QuotaInfo {
 }
 
 /**
- * Get the start of today (00:00:00 local time)
+ * Get the start of today (00:00:00 UTC)
+ * Aligned with server-side isTodayUTC() for consistent quota tracking
  */
 function getTodayStart(): Date {
   const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
 }
 
 /**
- * Get the end of today (23:59:59 local time)
+ * Get the end of today (00:00:00 UTC tomorrow)
+ * Aligned with server-side for consistent quota reset
  */
 function getTodayEnd(): Date {
   const today = getTodayStart();
-  today.setDate(today.getDate() + 1);
+  today.setUTCDate(today.getUTCDate() + 1);
   return today;
 }
 
 /**
- * Check if a date is today
+ * Check if a date is today (UTC)
  */
 function isToday(date: Date): boolean {
   const today = getTodayStart();

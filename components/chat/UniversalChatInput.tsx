@@ -192,7 +192,7 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
   const currentPlaceholder = isRecording
     ? "🎤 Parlez maintenant..."
     : quotaLimitReached
-    ? "Limite atteinte pour aujourd'hui"
+    ? "Quota quotidien atteint"
     : trialLimitReached
     ? "Limite d'essai atteinte"
     : placeholders[placeholderIndex % placeholders.length];
@@ -666,7 +666,11 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
           >
             {quotaLimitReached ? (
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                Votre limite quotidienne est atteinte. Revenez demain ou passez à un plan supérieur.
+                Quota quotidien atteint. Revenez demain ou{" "}
+                <a href="/subscription?plan=max" className="text-primary hover:underline font-medium">
+                  passez au plan Max
+                </a>{" "}
+                pour une création illimitée.
               </p>
             ) : trialLimitReached ? (
               <p className="text-xs text-gray-500 dark:text-gray-400">
