@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { saveLinkedInConnectionAdmin } from "@/lib/firestore-admin";
 import { isAdminInitialized, adminDb } from "@/lib/firebase-admin";
+import { LINKEDIN_CONFIG } from "@/lib/linkedin";
 
 /**
  * Route de callback OAuth 2.0 LinkedIn
@@ -62,7 +63,7 @@ export async function GET(request: NextRequest) {
           code: code,
           client_id: process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID!,
           client_secret: process.env.LINKEDIN_CLIENT_SECRET!,
-          redirect_uri: process.env.NEXT_PUBLIC_LINKEDIN_REDIRECT_URI!,
+          redirect_uri: LINKEDIN_CONFIG.redirectUri,
         }),
       }
     );

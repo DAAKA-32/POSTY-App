@@ -3,18 +3,26 @@ import { getAuthHeaders } from "@/lib/api-client";
 // Meta (Facebook & Threads) OAuth 2.0 Configuration and API utilities
 // Facebook and Threads use separate OAuth flows but share the same Meta App credentials
 
-// Shared Meta App credentials
+// Shared Meta App credentials (Facebook)
 export const META_CONFIG = {
   appId: process.env.NEXT_PUBLIC_META_APP_ID || "",
   appSecret: process.env.META_APP_SECRET || "",
 };
+
+// Threads-specific credentials (separate Meta app)
+export const THREADS_CREDENTIALS = {
+  appId: process.env.NEXT_PUBLIC_THREADS_APP_ID || "",
+  appSecret: process.env.THREADS_APP_SECRET || "",
+};
+
+const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://postyapp.ai").trim();
 
 // Facebook OAuth Configuration
 export const FACEBOOK_CONFIG = {
   authorizationUrl: "https://www.facebook.com/v21.0/dialog/oauth",
   tokenUrl: "https://graph.facebook.com/v21.0/oauth/access_token",
   apiUrl: "https://graph.facebook.com/v21.0",
-  redirectUri: process.env.NEXT_PUBLIC_META_REDIRECT_URI?.replace("/meta/", "/facebook/") || "",
+  redirectUri: `${baseUrl}/api/auth/facebook/callback`,
   scope: "pages_manage_posts,pages_read_engagement,public_profile,email",
 };
 
@@ -24,7 +32,7 @@ export const THREADS_CONFIG = {
   tokenUrl: "https://graph.threads.net/oauth/access_token",
   longLivedTokenUrl: "https://graph.threads.net/access_token",
   apiUrl: "https://graph.threads.net/v1.0",
-  redirectUri: process.env.NEXT_PUBLIC_META_REDIRECT_URI?.replace("/meta/", "/threads/") || "",
+  redirectUri: `${baseUrl}/api/auth/threads/callback`,
   scope: "threads_basic,threads_content_publish",
 };
 
@@ -56,7 +64,7 @@ export function getThreadsAuthUrl(userId: string): string {
   const state = `${userId}:${generateRandomState()}`;
 
   const params = new URLSearchParams({
-    client_id: META_CONFIG.appId,
+    client_id: THREADS_CREDENTIALS.appId,
     redirect_uri: THREADS_CONFIG.redirectUri,
     scope: THREADS_CONFIG.scope,
     response_type: "code",

@@ -2,9 +2,11 @@ import { getAuthHeaders } from "@/lib/api-client";
 
 // LinkedIn OAuth 2.0 Configuration and API utilities
 
+const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://postyapp.ai").trim();
+
 export const LINKEDIN_CONFIG = {
   clientId: process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID || "",
-  redirectUri: process.env.NEXT_PUBLIC_LINKEDIN_REDIRECT_URI || "",
+  redirectUri: `${baseUrl}/api/auth/linkedin/callback`,
   scope: "openid profile email w_member_social",
   authorizationUrl: "https://www.linkedin.com/oauth/v2/authorization",
 };

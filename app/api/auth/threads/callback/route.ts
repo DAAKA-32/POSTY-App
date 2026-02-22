@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { saveThreadsConnectionAdmin } from "@/lib/firestore-admin";
 import { isAdminInitialized } from "@/lib/firebase-admin";
 import {
-  META_CONFIG,
+  THREADS_CREDENTIALS,
   THREADS_CONFIG,
   ThreadsTokenResponse,
   ThreadsLongLivedTokenResponse,
@@ -68,8 +68,8 @@ export async function GET(request: NextRequest) {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
-        client_id: META_CONFIG.appId,
-        client_secret: META_CONFIG.appSecret,
+        client_id: THREADS_CREDENTIALS.appId,
+        client_secret: THREADS_CREDENTIALS.appSecret,
         grant_type: "authorization_code",
         redirect_uri: THREADS_CONFIG.redirectUri,
         code: cleanCode,
@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
     // ÉTAPE 2: Échange du short-lived token contre un long-lived token
     const longLivedParams = new URLSearchParams({
       grant_type: "th_exchange_token",
-      client_secret: META_CONFIG.appSecret,
+      client_secret: THREADS_CREDENTIALS.appSecret,
       access_token: shortLivedToken,
     });
 
