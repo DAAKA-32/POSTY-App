@@ -154,6 +154,11 @@ export const metadata: Metadata = {
 
   // Category
   category: "technology",
+
+  // Google Search Console verification
+  verification: {
+    google: "EtdktdQnbKJzQeVQzF4eBQlxAkkvipVLzZl0GyeLnn8",
+  },
 };
 
 // Disable zoom for native mobile experience
