@@ -463,7 +463,13 @@ export async function getUserProfileAdmin(userId: string): Promise<{
   // Determine effective plan (handle legacy "starter" and "free" plan names)
   let rawPlan2: string | null = data?.subscription?.plan || null;
   if (rawPlan2 === "free") rawPlan2 = null;
-  const effectivePlan: SubscriptionPlan | null = rawPlan2 ? (rawPlan2 === "starter" ? "pro" : rawPlan2) as SubscriptionPlan : null;
+  let effectivePlan: SubscriptionPlan | null = rawPlan2 ? (rawPlan2 === "starter" ? "pro" : rawPlan2) as SubscriptionPlan : null;
+
+  // Founder override: founders always get max plan access
+  const founderPlan = getFounderOverridePlan(data?.email);
+  if (founderPlan) {
+    effectivePlan = founderPlan;
+  }
 
   return {
     plan: effectivePlan,

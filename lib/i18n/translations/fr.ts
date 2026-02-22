@@ -813,7 +813,7 @@ export const fr = {
     faqChangePlan: "Comment changer de plan ?",
     faqChangePlanAnswer: "Vous pouvez changer de plan à tout moment depuis les paramètres de votre compte.",
     faqDailyLimit: "Y a-t-il une limite quotidienne ?",
-    faqDailyLimitAnswer: "Non, il n'y a pas de limite quotidienne sur les plans payants.",
+    faqDailyLimitAnswer: "Le plan Pro inclut 60 créations par jour. Le plan Max offre une création illimitée.",
     faqCommitment: "Y a-t-il un engagement ?",
     faqCommitmentAnswer: "Non, vous pouvez annuler votre abonnement à tout moment, sans frais.",
     faqYearlySavings: "Combien puis-je économiser avec le plan annuel ?",
