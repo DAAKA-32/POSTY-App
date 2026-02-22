@@ -471,7 +471,7 @@ function Navbar() {
                   Essai gratuit 7 jours
                 </span>
                 <span className="w-1 h-1 rounded-full bg-gray-300" />
-                <span>Annulation a tout moment</span>
+                <span>Annulation à tout moment</span>
               </div>
             </motion.div>
           </div>
@@ -3869,7 +3869,7 @@ function FounderSection() {
               aria-label="Voir le profil LinkedIn d'Emilien Nepveu"
             >
               <div className="w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden ring-4 ring-white shadow-xl shadow-gray-200/50">
-                <Image src="/ceo.png" alt="Emilien Nepveu" width={64} height={64} className="w-full h-full object-cover" />
+                <Image src="/founder.jpg" alt="Emilien Nepveu" width={64} height={64} className="w-full h-full object-cover" />
               </div>
             </Link>
             <Link
