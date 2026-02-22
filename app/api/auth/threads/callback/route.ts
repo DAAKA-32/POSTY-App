@@ -112,29 +112,44 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // ÉTAPE 2: Échange du short-lived token contre un long-lived token
-    const longLivedParams = new URLSearchParams({
-      grant_type: "th_exchange_token",
-      client_secret: THREADS_CREDENTIALS.appSecret,
-      access_token: shortLivedToken,
-    });
-
-    const longLivedResponse = await fetch(
-      `${THREADS_CONFIG.longLivedTokenUrl}?${longLivedParams.toString()}`
-    );
-
+    // ÉTAPE 2: Échange du short-lived token contre un long-lived token (~60 jours)
     let accessToken = shortLivedToken;
     let expiresIn = 3600;
 
-    if (longLivedResponse.ok) {
-      const longLivedData: ThreadsLongLivedTokenResponse = await longLivedResponse.json();
-      if (longLivedData.access_token) {
-        accessToken = longLivedData.access_token;
-        expiresIn = longLivedData.expires_in || 5184000;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const longLivedParams = new URLSearchParams({
+          grant_type: "th_exchange_token",
+          client_secret: THREADS_CREDENTIALS.appSecret,
+          access_token: shortLivedToken,
+        });
+
+        const longLivedResponse = await fetch(
+          `${THREADS_CONFIG.longLivedTokenUrl}?${longLivedParams.toString()}`
+        );
+
+        const llResponseText = await longLivedResponse.text();
+
+        if (longLivedResponse.ok) {
+          const longLivedData: ThreadsLongLivedTokenResponse = JSON.parse(llResponseText);
+          if (longLivedData.access_token) {
+            accessToken = longLivedData.access_token;
+            expiresIn = longLivedData.expires_in || 5184000;
+            console.log(`Threads: Long-lived token obtained, expires in ${Math.round(expiresIn / 86400)} days`);
+            break;
+          }
+        }
+
+        console.warn(`Threads: Long-lived exchange attempt ${attempt + 1} failed:`, longLivedResponse.status, llResponseText);
+        if (attempt === 0) await new Promise(r => setTimeout(r, 500));
+      } catch (err) {
+        console.warn(`Threads: Long-lived exchange attempt ${attempt + 1} error:`, err);
+        if (attempt === 0) await new Promise(r => setTimeout(r, 500));
       }
-    } else {
-      const llError = await longLivedResponse.text();
-      console.warn("Long-lived token failed:", llError);
+    }
+
+    if (expiresIn <= 3600) {
+      console.error("Threads: FAILED to obtain long-lived token, falling back to short-lived (1h)");
     }
 
     // ÉTAPE 3: Récupération du profil utilisateur Threads

@@ -7,6 +7,7 @@ import {
   useState,
   ReactNode,
   useCallback,
+  useRef,
 } from "react";
 import { useAuth } from "./AuthContext";
 import {
@@ -19,7 +20,11 @@ import {
   getThreadsAuthUrl,
   postToThreads as postToThreadsApi,
 } from "@/lib/meta";
+import { getAuthHeaders } from "@/lib/api-client";
 import toast from "@/components/ui/Toast";
+
+// Refresh when token has less than 7 days remaining
+const REFRESH_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000;
 
 interface ThreadsContextType {
   connection: ThreadsConnectionData | null;
@@ -47,6 +52,7 @@ export function ThreadsProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [connection, setConnection] = useState<ThreadsConnectionData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const refreshAttempted = useRef(false);
 
   // Load connection from Firestore
   const loadConnection = useCallback(async () => {
@@ -104,6 +110,41 @@ export function ThreadsProvider({ children }: { children: ReactNode }) {
       window.history.replaceState({}, "", window.location.pathname);
     }
   }, [user, loadConnection]);
+
+  // Auto-refresh token if it expires within 7 days (once per session)
+  useEffect(() => {
+    if (!user || !connection?.expiresAt || refreshAttempted.current) return;
+
+    const expiresAt = connection.expiresAt.toDate();
+    const remaining = expiresAt.getTime() - Date.now();
+
+    // Token already expired or not close to expiring → skip
+    if (remaining <= 0 || remaining > REFRESH_THRESHOLD_MS) return;
+
+    refreshAttempted.current = true;
+
+    (async () => {
+      try {
+        const authHeaders = await getAuthHeaders();
+        const response = await fetch("/api/threads/refresh", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...authHeaders },
+          body: JSON.stringify({ userId: user.uid }),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          console.log("Threads: Token auto-refreshed successfully");
+          await loadConnection();
+        } else if (result.reconnectRequired) {
+          console.warn("Threads: Token refresh failed, reconnection required");
+        }
+      } catch (error) {
+        console.error("Threads: Auto-refresh error:", error);
+      }
+    })();
+  }, [user, connection, loadConnection]);
 
   // Check if token is valid
   const isTokenValid = connection && connection.expiresAt
