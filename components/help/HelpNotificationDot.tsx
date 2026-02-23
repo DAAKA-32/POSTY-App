@@ -22,14 +22,14 @@ export default function HelpNotificationDot({
         e.stopPropagation();
         onClick(e);
       }}
-      className="absolute -top-0.5 -right-0.5 z-10 w-3 h-3 min-w-[12px] min-h-[12px] rounded-full cursor-pointer p-0 border-0 appearance-none"
-      style={{ backgroundColor: accentColor, boxSizing: "border-box" }}
+      className="absolute -top-0.5 -right-0.5 z-10 rounded-full cursor-pointer p-0 border-0 appearance-none"
+      style={{ backgroundColor: accentColor, boxSizing: "border-box", width: 12, height: 12, minWidth: 12, minHeight: 12, borderRadius: "50%", aspectRatio: "1 / 1" }}
       aria-label="Aide disponible"
     >
       {/* Pulsing ring */}
       <motion.span
         className="absolute inset-0 rounded-full"
-        style={{ backgroundColor: accentColor }}
+        style={{ backgroundColor: accentColor, borderRadius: "50%" }}
         animate={{
           scale: [1, 1.8, 1],
           opacity: [0.6, 0, 0.6],
