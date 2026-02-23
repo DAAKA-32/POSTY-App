@@ -5,13 +5,13 @@
 
 export const seoConfig = {
   // Site info
-  siteName: "Posty App",
+  siteName: "Posty",
   siteUrl: process.env.NEXT_PUBLIC_BASE_URL || "https://postyapp.ai",
   defaultLocale: "fr" as const,
   supportedLocales: ["fr", "en"] as const,
 
   // Branding
-  brandName: "Posty App",
+  brandName: "Posty",
   tagline: "Générez plus de prospects LinkedIn avec l'IA",
 
   // Social
@@ -109,11 +109,13 @@ export const i18nSeoConfig = {
 export const localizedPageSeo = {
   home: {
     fr: {
-      title: "Posty App – Générez plus de prospects LinkedIn avec l'IA",
+      title: "Posty – Générez plus de prospects LinkedIn avec l'IA",
       description:
         "Automatisez votre présence LinkedIn et attirez des prospects qualifiés grâce à l'IA. Créez des posts professionnels percutants en quelques secondes. Essai gratuit.",
       keywords: [
+        "Posty",
         "Posty App",
+        "Posty AI",
         "prospects LinkedIn",
         "automatisation LinkedIn",
         "IA LinkedIn",
@@ -123,11 +125,13 @@ export const localizedPageSeo = {
       ],
     },
     en: {
-      title: "Posty App – Generate More LinkedIn Leads with AI",
+      title: "Posty – Generate More LinkedIn Leads with AI",
       description:
         "Automate your LinkedIn presence and attract qualified prospects with AI. Create professional posts in seconds. Free trial included.",
       keywords: [
+        "Posty",
         "Posty App",
+        "Posty AI",
         "LinkedIn leads",
         "LinkedIn automation",
         "AI LinkedIn tool",
@@ -139,56 +143,56 @@ export const localizedPageSeo = {
   },
   pricing: {
     fr: {
-      title: "Tarifs Posty App - Plans Pro et Max | Automatisation LinkedIn IA",
+      title: "Tarifs Posty - Plans Pro et Max | Automatisation LinkedIn IA",
       description:
-        "Découvrez les offres Posty App : Pro et Max. Automatisez LinkedIn et générez des prospects qualifiés avec l'IA. Essai gratuit 7 jours.",
+        "Découvrez les offres Posty : Pro et Max. Automatisez LinkedIn et générez des prospects qualifiés avec l'IA. Essai gratuit 7 jours.",
       keywords: [
-        "tarifs Posty App",
+        "tarifs Posty",
         "prix automatisation LinkedIn",
         "abonnement LinkedIn IA",
-        "Posty App Pro",
-        "Posty App Max",
+        "Posty Pro",
+        "Posty Max",
       ],
     },
     en: {
-      title: "Posty App Pricing - Pro & Max Plans | LinkedIn AI Automation",
+      title: "Posty Pricing - Pro & Max Plans | LinkedIn AI Automation",
       description:
-        "Explore Posty App plans: Pro and Max. Automate LinkedIn and generate qualified leads with AI. 7-day free trial included.",
+        "Explore Posty plans: Pro and Max. Automate LinkedIn and generate qualified leads with AI. 7-day free trial included.",
       keywords: [
-        "Posty App pricing",
+        "Posty pricing",
         "LinkedIn automation price",
         "LinkedIn AI subscription",
-        "Posty App trial",
-        "Posty App Pro plan",
+        "Posty trial",
+        "Posty Pro plan",
       ],
     },
   },
   login: {
     fr: {
-      title: "Connexion | Posty App - Automatisation LinkedIn IA",
+      title: "Connexion | Posty - Automatisation LinkedIn IA",
       description:
-        "Connectez-vous à Posty App pour automatiser votre LinkedIn et générer des prospects qualifiés avec l'IA.",
-      keywords: ["connexion Posty App", "login Posty App"],
+        "Connectez-vous à Posty pour automatiser votre LinkedIn et générer des prospects qualifiés avec l'IA.",
+      keywords: ["connexion Posty", "login Posty"],
     },
     en: {
-      title: "Login | Posty App - LinkedIn AI Automation",
+      title: "Login | Posty - LinkedIn AI Automation",
       description:
-        "Sign in to Posty App to automate your LinkedIn and generate qualified leads with AI.",
-      keywords: ["Posty App login", "sign in Posty App"],
+        "Sign in to Posty to automate your LinkedIn and generate qualified leads with AI.",
+      keywords: ["Posty login", "sign in Posty"],
     },
   },
   signup: {
     fr: {
-      title: "Inscription Gratuite | Posty App - Automatisation LinkedIn IA",
+      title: "Inscription Gratuite | Posty - Automatisation LinkedIn IA",
       description:
-        "Créez votre compte Posty App et automatisez votre LinkedIn. Générez des prospects qualifiés avec l'IA. Essai gratuit 7 jours.",
-      keywords: ["inscription Posty App", "créer compte Posty App", "essai gratuit LinkedIn IA"],
+        "Créez votre compte Posty et automatisez votre LinkedIn. Générez des prospects qualifiés avec l'IA. Essai gratuit 7 jours.",
+      keywords: ["inscription Posty", "créer compte Posty", "essai gratuit LinkedIn IA"],
     },
     en: {
-      title: "Free Sign Up | Posty App - LinkedIn AI Automation",
+      title: "Free Sign Up | Posty - LinkedIn AI Automation",
       description:
-        "Create your free Posty App account and start automating LinkedIn. Generate qualified leads with AI.",
-      keywords: ["Posty App signup", "create Posty App account", "free trial LinkedIn AI"],
+        "Create your free Posty account and start automating LinkedIn. Generate qualified leads with AI.",
+      keywords: ["Posty signup", "create Posty account", "free trial LinkedIn AI"],
     },
   },
 };
@@ -264,10 +268,11 @@ export const seoSilos = {
  */
 export const pageSeo = {
   home: {
-    title: "Posty App – Générez plus de prospects LinkedIn avec l'IA",
+    title: "Posty – Générez plus de prospects LinkedIn avec l'IA",
     description:
       "Automatisez votre présence LinkedIn et attirez des prospects qualifiés grâce à l'IA. Créez des posts professionnels percutants en quelques secondes. Essai gratuit.",
     keywords: [
+      "Posty",
       "Posty App",
       "prospects LinkedIn",
       "automatisation LinkedIn",
@@ -276,30 +281,30 @@ export const pageSeo = {
     ],
   },
   pricing: {
-    title: "Tarifs Posty App - Plans Pro et Max | Automatisation LinkedIn IA",
+    title: "Tarifs Posty - Plans Pro et Max | Automatisation LinkedIn IA",
     description:
-      "Découvrez les offres Posty App : Pro et Max. Automatisez LinkedIn et générez des prospects qualifiés avec l'IA. Essai gratuit 7 jours.",
+      "Découvrez les offres Posty : Pro et Max. Automatisez LinkedIn et générez des prospects qualifiés avec l'IA. Essai gratuit 7 jours.",
     keywords: [
-      "tarifs Posty App",
+      "tarifs Posty",
       "prix automatisation LinkedIn",
       "abonnement LinkedIn IA",
     ],
   },
   legal: {
     privacy: {
-      title: "Politique de Confidentialité | Posty App",
+      title: "Politique de Confidentialité | Posty",
       description:
-        "Découvrez comment Posty App protège vos données personnelles conformément au RGPD.",
+        "Découvrez comment Posty protège vos données personnelles conformément au RGPD.",
     },
     terms: {
-      title: "Conditions Générales d'Utilisation | Posty App",
+      title: "Conditions Générales d'Utilisation | Posty",
       description:
-        "CGU de Posty App : consultez les conditions d'utilisation de notre outil d'automatisation LinkedIn IA.",
+        "CGU de Posty : consultez les conditions d'utilisation de notre outil d'automatisation LinkedIn IA.",
     },
     notices: {
-      title: "Mentions Légales | Posty App",
+      title: "Mentions Légales | Posty",
       description:
-        "Mentions légales de Posty App : informations sur l'éditeur, l'hébergeur et les droits applicables.",
+        "Mentions légales de Posty : informations sur l'éditeur, l'hébergeur et les droits applicables.",
     },
   },
 };
@@ -312,11 +317,11 @@ export const structuredData = {
     "@context": "https://schema.org",
     "@type": "Organization",
     "@id": `${seoConfig.siteUrl}/#organization`,
-    name: "Posty App",
+    name: "Posty",
     url: seoConfig.siteUrl,
     logo: {
       "@type": "ImageObject",
-      url: `${seoConfig.siteUrl}/logo.png`,
+      url: `${seoConfig.siteUrl}/favicon-512.png`,
       width: "512",
       height: "512",
     },
@@ -345,7 +350,7 @@ export const structuredData = {
   softwareApplication: {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    name: "Posty App",
+    name: "Posty",
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web",
     offers: {

@@ -39,7 +39,7 @@ const playfair = Playfair_Display({
 
 // SEO Configuration
 const siteConfig = {
-  name: "Posty App",
+  name: "Posty",
   url: process.env.NEXT_PUBLIC_BASE_URL || "https://postyapp.ai",
   defaultLocale: "fr" as const,
   supportedLocales: ["fr", "en"] as const,
@@ -49,13 +49,15 @@ export const metadata: Metadata = {
   // Base metadata
   metadataBase: new URL(siteConfig.url),
   title: {
-    default: "Posty App – Générez plus de prospects LinkedIn avec l'IA",
-    template: "%s | Posty App",
+    default: "Posty – Générez plus de prospects LinkedIn avec l'IA",
+    template: "%s | Posty",
   },
   description:
     "Automatisez votre présence LinkedIn et attirez des prospects qualifiés grâce à l'IA. Créez des posts professionnels percutants en quelques secondes. Essai gratuit.",
   keywords: [
+    "Posty",
     "Posty App",
+    "Posty AI",
     "prospects LinkedIn",
     "automatisation LinkedIn",
     "IA",
@@ -71,17 +73,17 @@ export const metadata: Metadata = {
     { name: "Emilien Nepveu", url: "https://www.linkedin.com/in/e-nepveu-58a38127a/" },
   ],
   creator: "Emilien Nepveu",
-  publisher: "Posty App",
+  publisher: "Posty",
 
-  // Icons - Using logo.png for favicon & PWA
+  // Icons - Optimized favicons (no transparent corners for circular display)
   icons: {
     icon: [
-      { url: "/logo.png", type: "image/png", sizes: "32x32" },
-      { url: "/logo.png", type: "image/png", sizes: "16x16" },
+      { url: "/favicon-32.png", type: "image/png", sizes: "32x32" },
+      { url: "/favicon-16.png", type: "image/png", sizes: "16x16" },
     ],
-    shortcut: "/logo.png",
+    shortcut: "/favicon-32.png",
     apple: [
-      { url: "/logo.png", sizes: "180x180", type: "image/png" },
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
     ],
   },
 
@@ -104,8 +106,8 @@ export const metadata: Metadata = {
     locale: "fr_FR",
     alternateLocale: "en_US",
     url: siteConfig.url,
-    siteName: "Posty App",
-    title: "Posty App – Générez plus de prospects LinkedIn avec l'IA",
+    siteName: "Posty",
+    title: "Posty – Générez plus de prospects LinkedIn avec l'IA",
     description:
       "Automatisez votre présence LinkedIn et attirez des prospects qualifiés grâce à l'IA. Posts professionnels percutants en quelques secondes.",
     images: [
@@ -113,7 +115,7 @@ export const metadata: Metadata = {
         url: `${siteConfig.url}/og-image.png`,
         width: 1200,
         height: 630,
-        alt: "Posty App – Générez plus de prospects LinkedIn avec l'IA",
+        alt: "Posty – Générez plus de prospects LinkedIn avec l'IA",
         type: "image/png",
       },
     ],
@@ -122,7 +124,7 @@ export const metadata: Metadata = {
   // Twitter Cards
   twitter: {
     card: "summary_large_image",
-    title: "Posty App – Générez plus de prospects LinkedIn avec l'IA",
+    title: "Posty – Générez plus de prospects LinkedIn avec l'IA",
     description:
       "Automatisez votre présence LinkedIn et attirez des prospects qualifiés grâce à l'IA. Essai gratuit.",
     images: [`${siteConfig.url}/og-image.png`],

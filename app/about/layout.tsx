@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { seoConfig, i18nSeoConfig } from "@/lib/seo/config";
 
 export const metadata: Metadata = {
-  title: "À propos | Posty App - SaaS LinkedIn & Automatisation IA",
+  title: "À propos | Posty - SaaS LinkedIn & Automatisation IA",
   description:
-    "Découvrez Posty App, l'outil SaaS qui automatise votre présence LinkedIn et génère des prospects qualifiés grâce à l'IA. Rencontrez Emilien Nepveu (CEO) et Côme Maubert (CMO).",
+    "Découvrez Posty, l'outil SaaS qui automatise votre présence LinkedIn et génère des prospects qualifiés grâce à l'IA. Rencontrez Emilien Nepveu (CEO) et Côme Maubert (CMO).",
   keywords: [
     "Posty",
     "à propos",
@@ -29,10 +29,10 @@ export const metadata: Metadata = {
     locale: "fr_FR",
     alternateLocale: "en_US",
     url: `${seoConfig.siteUrl}/about`,
-    siteName: "Posty App",
-    title: "À propos de Posty App - Notre Équipe & Notre Mission",
+    siteName: "Posty",
+    title: "À propos de Posty - Notre Équipe & Notre Mission",
     description:
-      "Posty App : automatisez votre présence LinkedIn et générez des prospects qualifiés. Rencontrez Emilien Nepveu (CEO) et Côme Maubert (CMO).",
+      "Posty : automatisez votre présence LinkedIn et générez des prospects qualifiés. Rencontrez Emilien Nepveu (CEO) et Côme Maubert (CMO).",
     images: [
       {
         url: `${seoConfig.siteUrl}/og-image.png`,
@@ -46,9 +46,9 @@ export const metadata: Metadata = {
 
   twitter: {
     card: "summary_large_image",
-    title: "À propos de Posty App - Notre Équipe & Notre Mission",
+    title: "À propos de Posty - Notre Équipe & Notre Mission",
     description:
-      "Posty App : automatisez votre présence LinkedIn et générez des prospects qualifiés. Rencontrez notre équipe.",
+      "Posty : automatisez votre présence LinkedIn et générez des prospects qualifiés. Rencontrez notre équipe.",
     images: [`${seoConfig.siteUrl}/og-image.png`],
     creator: "@posty_app",
   },

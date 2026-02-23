@@ -1,7 +1,7 @@
 /**
  * JSON-LD Structured Data Components
  * Rich snippets for search engines
- * Comprehensive Schema.org implementation for POSTY
+ * Comprehensive Schema.org implementation for Posty
  */
 
 import { seoConfig, structuredData } from "@/lib/seo/config";
@@ -212,7 +212,7 @@ export function HowToJsonLd({
     })),
     tool: {
       "@type": "HowToTool",
-      name: "POSTY - AI LinkedIn Post Generator",
+      name: "Posty - AI LinkedIn Post Generator",
     },
   };
 
@@ -268,7 +268,7 @@ export function ServiceJsonLd({
     },
     hasOfferCatalog: {
       "@type": "OfferCatalog",
-      name: lang === "fr" ? "Plans POSTY" : "POSTY Plans",
+      name: lang === "fr" ? "Plans Posty" : "Posty Plans",
       itemListElement: [
         {
           "@type": "Offer",
@@ -312,7 +312,7 @@ export function ReviewJsonLd({ reviews }: { reviews: ReviewData[] }) {
   const schema = {
     "@context": "https://schema.org",
     "@type": "Product",
-    name: "POSTY",
+    name: "Posty",
     description: "AI-powered LinkedIn post generator",
     brand: {
       "@type": "Brand",
@@ -390,7 +390,7 @@ export function ArticleJsonLd({
       name: seoConfig.brandName,
       logo: {
         "@type": "ImageObject",
-        url: `${seoConfig.siteUrl}/logo.png`,
+        url: `${seoConfig.siteUrl}/favicon-512.png`,
       },
     },
     mainEntityOfPage: {
@@ -441,7 +441,7 @@ export function VideoJsonLd({
       name: seoConfig.brandName,
       logo: {
         "@type": "ImageObject",
-        url: `${seoConfig.siteUrl}/logo.png`,
+        url: `${seoConfig.siteUrl}/favicon-512.png`,
       },
     },
   };
@@ -463,18 +463,18 @@ export function PricingPageJsonLd({ lang = "fr" }: { lang?: "fr" | "en" }) {
   const schema = {
     "@context": "https://schema.org",
     "@type": "WebPage",
-    name: lang === "fr" ? "Tarifs POSTY" : "POSTY Pricing",
+    name: lang === "fr" ? "Tarifs Posty" : "Posty Pricing",
     description:
       lang === "fr"
-        ? "Découvrez nos offres POSTY : Gratuit, Pro et Max"
-        : "Explore POSTY plans: Free, Pro, and Max",
+        ? "Découvrez nos offres Posty : Gratuit, Pro et Max"
+        : "Explore Posty plans: Free, Pro, and Max",
     mainEntity: {
       "@type": "ItemList",
       itemListElement: [
         {
           "@type": "Product",
           position: 1,
-          name: "POSTY Free",
+          name: "Posty Free",
           description: lang === "fr" ? "3 posts par semaine" : "3 posts per week",
           offers: {
             "@type": "Offer",
@@ -486,7 +486,7 @@ export function PricingPageJsonLd({ lang = "fr" }: { lang?: "fr" | "en" }) {
         {
           "@type": "Product",
           position: 2,
-          name: "POSTY Pro",
+          name: "Posty Pro",
           description: lang === "fr" ? "Posts illimités" : "Unlimited posts",
           offers: {
             "@type": "Offer",
@@ -499,7 +499,7 @@ export function PricingPageJsonLd({ lang = "fr" }: { lang?: "fr" | "en" }) {
         {
           "@type": "Product",
           position: 3,
-          name: "POSTY Max",
+          name: "Posty Max",
           description:
             lang === "fr" ? "Posts illimités + fonctionnalités avancées" : "Unlimited + advanced features",
           offers: {
@@ -590,15 +590,15 @@ export function EnhancedOrganizationJsonLd() {
     "@context": "https://schema.org",
     "@type": "Organization",
     "@id": `${seoConfig.siteUrl}/#organization`,
-    name: "POSTY",
+    name: "Posty",
     url: seoConfig.siteUrl,
     logo: {
       "@type": "ImageObject",
-      url: `${seoConfig.siteUrl}/logo.png`,
+      url: `${seoConfig.siteUrl}/favicon-512.png`,
       width: "512",
       height: "512",
     },
-    description: "POSTY est un générateur de posts LinkedIn alimenté par l'intelligence artificielle. Notre mission : démocratiser le contenu professionnel et automatiser le personal branding.",
+    description: "Posty est un générateur de posts LinkedIn alimenté par l'intelligence artificielle. Notre mission : démocratiser le contenu professionnel et automatiser le personal branding.",
     foundingDate: "2024",
     founder: {
       "@type": "Person",
@@ -650,13 +650,13 @@ export function AboutPageJsonLd() {
     "@id": `${seoConfig.siteUrl}/#founder`,
     name: "Emilien Nepveu",
     jobTitle: "Fondateur & CEO",
-    description: "Fondateur de POSTY, passionné par l'intersection entre technologie et création de contenu.",
+    description: "Fondateur de Posty, passionné par l'intersection entre technologie et création de contenu.",
     url: `${seoConfig.siteUrl}/about`,
     sameAs: ["https://www.linkedin.com/in/e-nepveu-58a38127a/"],
     worksFor: {
       "@type": "Organization",
       "@id": `${seoConfig.siteUrl}/#organization`,
-      name: "POSTY",
+      name: "Posty",
     },
     knowsAbout: [
       "Intelligence Artificielle",
@@ -670,10 +670,10 @@ export function AboutPageJsonLd() {
     "@context": "https://schema.org",
     "@type": "Organization",
     "@id": `${seoConfig.siteUrl}/#organization`,
-    name: "POSTY",
+    name: "Posty",
     url: seoConfig.siteUrl,
-    logo: `${seoConfig.siteUrl}/logo.png`,
-    description: "POSTY est un générateur de posts LinkedIn alimenté par l'intelligence artificielle. Notre mission : démocratiser le contenu professionnel et automatiser le personal branding pour tous.",
+    logo: `${seoConfig.siteUrl}/favicon-512.png`,
+    description: "Posty est un générateur de posts LinkedIn alimenté par l'intelligence artificielle. Notre mission : démocratiser le contenu professionnel et automatiser le personal branding pour tous.",
     foundingDate: "2024",
     founder: {
       "@id": `${seoConfig.siteUrl}/#founder`,
@@ -698,13 +698,13 @@ export function AboutPageJsonLd() {
     "@context": "https://schema.org",
     "@type": "AboutPage",
     "@id": `${seoConfig.siteUrl}/about`,
-    name: "À propos de POSTY",
-    description: "Découvrez POSTY, l'IA qui démocratise le contenu LinkedIn professionnel. Notre mission, notre vision, et notre équipe.",
+    name: "À propos de Posty",
+    description: "Découvrez Posty, l'IA qui démocratise le contenu LinkedIn professionnel. Notre mission, notre vision, et notre équipe.",
     url: `${seoConfig.siteUrl}/about`,
     isPartOf: {
       "@type": "WebSite",
       "@id": `${seoConfig.siteUrl}/#website`,
-      name: "POSTY",
+      name: "Posty",
     },
     about: {
       "@id": `${seoConfig.siteUrl}/#organization`,
@@ -740,19 +740,19 @@ export function AboutPageJsonLd() {
 }
 
 /**
- * Pre-built FAQ data for POSTY (bilingual)
+ * Pre-built FAQ data for Posty (bilingual)
  */
 export const postyFaqData = {
   fr: [
     {
-      question: "Comment fonctionne POSTY ?",
+      question: "Comment fonctionne Posty ?",
       answer:
-        "POSTY utilise l'intelligence artificielle pour générer des posts LinkedIn professionnels. Entrez simplement votre idée ou sujet, et l'IA crée instantanément 2 versions : une version Storytelling émotionnelle et une version Business factuelle.",
+        "Posty utilise l'intelligence artificielle pour générer des posts LinkedIn professionnels. Entrez simplement votre idée ou sujet, et l'IA crée instantanément 2 versions : une version Storytelling émotionnelle et une version Business factuelle.",
     },
     {
-      question: "POSTY est-il gratuit ?",
+      question: "Posty est-il gratuit ?",
       answer:
-        "POSTY propose un essai gratuit de 7 jours pour le plan Pro. Ensuite, choisissez entre le plan Pro (12,90€/mois) et le plan Max (19,90€/mois). Garantie satisfait ou remboursé 7 jours.",
+        "Posty propose un essai gratuit de 7 jours pour le plan Pro. Ensuite, choisissez entre le plan Pro (12,90€/mois) et le plan Max (19,90€/mois). Garantie satisfait ou remboursé 7 jours.",
     },
     {
       question: "Puis-je modifier les posts générés ?",
@@ -760,9 +760,9 @@ export const postyFaqData = {
         "Absolument ! Les posts générés sont entièrement éditables. Vous pouvez les personnaliser, ajuster le ton, ou combiner des éléments des deux versions avant de les publier.",
     },
     {
-      question: "POSTY peut-il publier directement sur LinkedIn ?",
+      question: "Posty peut-il publier directement sur LinkedIn ?",
       answer:
-        "Oui, avec la connexion LinkedIn, vous pouvez publier vos posts directement depuis POSTY en un clic. Vous pouvez également copier le texte pour le coller manuellement.",
+        "Oui, avec la connexion LinkedIn, vous pouvez publier vos posts directement depuis Posty en un clic. Vous pouvez également copier le texte pour le coller manuellement.",
     },
     {
       question: "Les posts sont-ils optimisés pour l'algorithme LinkedIn ?",
@@ -772,14 +772,14 @@ export const postyFaqData = {
   ],
   en: [
     {
-      question: "How does POSTY work?",
+      question: "How does Posty work?",
       answer:
-        "POSTY uses artificial intelligence to generate professional LinkedIn posts. Simply enter your idea or topic, and AI instantly creates 2 versions: an emotional Storytelling version and a factual Business version.",
+        "Posty uses artificial intelligence to generate professional LinkedIn posts. Simply enter your idea or topic, and AI instantly creates 2 versions: an emotional Storytelling version and a factual Business version.",
     },
     {
-      question: "Does POSTY offer a free trial?",
+      question: "Does Posty offer a free trial?",
       answer:
-        "Yes, POSTY offers a 7-day free trial with full access to Pro features. A credit card is required to start the trial. You can cancel anytime during the trial period without being charged.",
+        "Yes, Posty offers a 7-day free trial with full access to Pro features. A credit card is required to start the trial. You can cancel anytime during the trial period without being charged.",
     },
     {
       question: "Can I edit the generated posts?",
@@ -787,9 +787,9 @@ export const postyFaqData = {
         "Absolutely! Generated posts are fully editable. You can customize them, adjust the tone, or combine elements from both versions before publishing.",
     },
     {
-      question: "Can POSTY post directly to LinkedIn?",
+      question: "Can Posty post directly to LinkedIn?",
       answer:
-        "Yes, with LinkedIn connection, you can publish your posts directly from POSTY with one click. You can also copy the text to paste manually.",
+        "Yes, with LinkedIn connection, you can publish your posts directly from Posty with one click. You can also copy the text to paste manually.",
     },
     {
       question: "Are posts optimized for the LinkedIn algorithm?",
@@ -800,16 +800,16 @@ export const postyFaqData = {
 };
 
 /**
- * Pre-built HowTo steps for POSTY (bilingual)
+ * Pre-built HowTo steps for Posty (bilingual)
  */
 export const postyHowToData = {
   fr: {
-    name: "Comment créer un post LinkedIn avec POSTY",
+    name: "Comment créer un post LinkedIn avec Posty",
     description:
-      "Guide étape par étape pour générer des posts LinkedIn professionnels avec l'IA POSTY en moins de 30 secondes.",
+      "Guide étape par étape pour générer des posts LinkedIn professionnels avec l'IA Posty en moins de 30 secondes.",
     steps: [
       {
-        name: "Connectez-vous à POSTY",
+        name: "Connectez-vous à Posty",
         text: "Créez un compte gratuit ou connectez-vous avec Google/LinkedIn pour accéder au générateur.",
       },
       {
@@ -831,12 +831,12 @@ export const postyHowToData = {
     ],
   },
   en: {
-    name: "How to create a LinkedIn post with POSTY",
+    name: "How to create a LinkedIn post with Posty",
     description:
-      "Step-by-step guide to generate professional LinkedIn posts with POSTY AI in under 30 seconds.",
+      "Step-by-step guide to generate professional LinkedIn posts with Posty AI in under 30 seconds.",
     steps: [
       {
-        name: "Sign in to POSTY",
+        name: "Sign in to Posty",
         text: "Create an account or sign in with Google/LinkedIn to access the generator.",
       },
       {

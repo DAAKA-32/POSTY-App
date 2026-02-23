@@ -1,5 +1,5 @@
 /**
- * Web App Manifest for POSTY
+ * Web App Manifest for Posty
  * Enables PWA features and app store discoverability
  */
 
@@ -9,7 +9,7 @@ const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://postyapp.ai";
 
 export async function GET() {
   const manifest = {
-    name: "Posty App – Generate More LinkedIn Leads with AI",
+    name: "Posty – Generate More LinkedIn Leads with AI",
     short_name: "Posty",
     description:
       "Automate your LinkedIn presence and attract qualified prospects with AI. Create professional posts in seconds.",
@@ -24,13 +24,13 @@ export async function GET() {
     categories: ["business", "productivity", "social"],
     icons: [
       {
-        src: "/logo.png",
+        src: "/favicon-192.png",
         sizes: "192x192",
         type: "image/png",
         purpose: "any",
       },
       {
-        src: "/logo.png",
+        src: "/favicon-512.png",
         sizes: "512x512",
         type: "image/png",
         purpose: "any maskable",
@@ -42,7 +42,7 @@ export async function GET() {
         sizes: "1200x630",
         type: "image/png",
         form_factor: "wide",
-        label: "POSTY Homepage",
+        label: "Posty Homepage",
       },
     ],
     shortcuts: [
@@ -51,14 +51,14 @@ export async function GET() {
         short_name: "New",
         description: "Create a new LinkedIn post",
         url: "/app",
-        icons: [{ src: "/logo.png", sizes: "192x192" }],
+        icons: [{ src: "/favicon-192.png", sizes: "192x192" }],
       },
       {
         name: "History",
         short_name: "History",
         description: "View your post history",
         url: "/history",
-        icons: [{ src: "/logo.png", sizes: "192x192" }],
+        icons: [{ src: "/favicon-192.png", sizes: "192x192" }],
       },
     ],
     related_applications: [],
