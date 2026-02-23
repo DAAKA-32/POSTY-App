@@ -104,14 +104,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const languageSpecificRoutes: MetadataRoute.Sitemap = [];
 
   // Add explicit language URLs for main pages
-  const mainPaths = ["", "/about", "/subscription", "/login", "/signup"];
+  const mainPaths = ["", "/about", "/login", "/signup"];
   languages.forEach((lang) => {
     mainPaths.forEach((path) => {
       languageSpecificRoutes.push({
         url: `${baseUrl}${path}?lang=${lang}`,
         lastModified: currentDate,
-        changeFrequency: path === "" || path === "/subscription" ? "weekly" : "monthly",
-        priority: path === "" ? 0.9 : path === "/subscription" ? 0.8 : 0.6,
+        changeFrequency: path === "" ? "weekly" : "monthly",
+        priority: path === "" ? 0.9 : 0.6,
       });
     });
   });
