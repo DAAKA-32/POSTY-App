@@ -49,16 +49,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       },
     },
     {
-      // /subscription is the canonical pricing page
-      url: `${baseUrl}/subscription`,
-      lastModified: currentDate,
-      changeFrequency: "weekly",
-      priority: 0.9,
-      alternates: {
-        languages: generateAlternates("/subscription"),
-      },
-    },
-    {
       url: `${baseUrl}/login`,
       lastModified: currentDate,
       changeFrequency: "monthly",

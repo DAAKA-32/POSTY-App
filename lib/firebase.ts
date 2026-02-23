@@ -60,6 +60,8 @@ if (isConfigValid()) {
     // Configure persistent session - user stays logged in until manual sign out
     setPersistence(authInstance, browserLocalPersistence).catch(console.error);
     googleProviderInstance = new GoogleAuthProvider();
+    // Force account selection on every sign-in (no auto-login)
+    googleProviderInstance.setCustomParameters({ prompt: "select_account" });
   } else {
     // Server-side: Use standard Firestore without persistence
     dbInstance = getFirestore(app);

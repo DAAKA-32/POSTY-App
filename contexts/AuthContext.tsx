@@ -359,6 +359,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (isGoogleUser) {
         // For Google users, reauthenticate with Google popup
         const googleProviderInstance = new GoogleAuthProvider();
+        googleProviderInstance.setCustomParameters({ prompt: "select_account" });
         await reauthenticateWithPopup(user, googleProviderInstance);
       } else {
         // For email/password users, reauthenticate with password
@@ -405,7 +406,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const resetPassword = async (email: string): Promise<void> => {
     try {
       await sendPasswordResetEmail(auth, email, {
-        url: `${window.location.origin}/login`, // Redirect to login after reset
+        url: `${window.location.origin}/auth/action`,
+        handleCodeInApp: true,
       });
       toast.success("Email de réinitialisation envoyé !");
     } catch (error: unknown) {
