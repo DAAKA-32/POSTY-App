@@ -38,7 +38,7 @@ export function ResponseModeSelector({
       bothStyles: "Les deux styles",
       businessOnly: "Business uniquement",
       upgradeForChoice: "Passez au Pro pour choisir",
-      selectStyle: "Style de reponse",
+      selectStyle: "Style de réponse",
     },
     en: {
       storytelling: "Storytelling",

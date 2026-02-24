@@ -19,7 +19,7 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { UserProfile, Post, Session, ChatMessage } from "@/types";
-import { planHasFeature, PlanType, DAILY_MESSAGE_LIMITS, getFounderOverridePlan } from "./plans";
+import { PlanType, DAILY_MESSAGE_LIMITS, getFounderOverridePlan } from "./plans";
 
 /**
  * Normalize plan name from Firestore to a valid SubscriptionPlan.
@@ -99,14 +99,20 @@ export async function updateUserProfile(
   if (data.bio !== undefined) updateData.bio = data.bio;
   if (data.photoURL !== undefined) updateData.photoURL = data.photoURL;
   if (data.profile) {
-    updateData.profileType = data.profile.profileType;
-    updateData.sector = data.profile.sector;
-    updateData.role = data.profile.role;
-    updateData.objective = data.profile.objective;
-    updateData.targetAudience = data.profile.targetAudience;
-    updateData.communicationTone = data.profile.communicationTone;
-    updateData.publishingFrequency = data.profile.publishingFrequency;
-    updateData.profile = data.profile;
+    // Only write defined values to prevent Firestore from deleting fields
+    if (data.profile.profileType !== undefined) updateData.profileType = data.profile.profileType;
+    if (data.profile.sector !== undefined) updateData.sector = data.profile.sector;
+    if (data.profile.role !== undefined) updateData.role = data.profile.role;
+    if (data.profile.objective !== undefined) updateData.objective = data.profile.objective;
+    if (data.profile.targetAudience !== undefined) updateData.targetAudience = data.profile.targetAudience;
+    if (data.profile.communicationTone !== undefined) updateData.communicationTone = data.profile.communicationTone;
+    if (data.profile.publishingFrequency !== undefined) updateData.publishingFrequency = data.profile.publishingFrequency;
+    // Build clean nested profile object (no undefined values)
+    const cleanProfile: Record<string, string> = {};
+    for (const [key, val] of Object.entries(data.profile)) {
+      if (val !== undefined) cleanProfile[key] = val;
+    }
+    updateData.profile = cleanProfile;
   }
   if (data.branding !== undefined) {
     updateData.branding = data.branding;
@@ -313,13 +319,18 @@ export async function addMessagesToConversation(
 ): Promise<void> {
   const postRef = doc(db, "posts", postId);
 
-  // Convert Date to Timestamp for Firestore
-  const messagesForFirestore = newMessages.map(msg => ({
-    ...msg,
-    timestamp: msg.timestamp instanceof Date
-      ? Timestamp.fromDate(msg.timestamp)
-      : msg.timestamp,
-  }));
+  // Convert Date to Timestamp and strip undefined fields (Firestore rejects undefined values)
+  const messagesForFirestore = newMessages.map(msg => {
+    const clean: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(msg)) {
+      if (value !== undefined) {
+        clean[key] = key === "timestamp" && value instanceof Date
+          ? Timestamp.fromDate(value)
+          : value;
+      }
+    }
+    return clean;
+  });
 
   await updateDoc(postRef, {
     messages: arrayUnion(...messagesForFirestore),
@@ -1633,7 +1644,7 @@ export async function getDashboardStats(userId: string): Promise<DashboardStats>
   const responseModeCount: Record<string, number> = {
     "Storytelling seul": 0,
     "Business seul": 0,
-    "Double Reponse": 0,
+    "Double Réponse": 0,
   };
 
   posts.forEach((post) => {
@@ -1666,7 +1677,7 @@ export async function getDashboardStats(userId: string): Promise<DashboardStats>
     // Count response mode distribution
     const hasContentB = postData.contentB && postData.contentB.trim().length > 0;
     if (postData.responseMode === "dual" || hasContentB) {
-      responseModeCount["Double Reponse"]++;
+      responseModeCount["Double Réponse"]++;
     } else if (postData.selectedStyle === "storytelling") {
       responseModeCount["Storytelling seul"]++;
     } else {
@@ -1703,7 +1714,7 @@ export async function getDashboardStats(userId: string): Promise<DashboardStats>
     return {
       date: postData.createdAt?.toDate().toISOString() || new Date().toISOString(),
       type: "post",
-      content: postData.prompt?.substring(0, 50) || "Post genere",
+      content: postData.prompt?.substring(0, 50) || "Post généré",
     };
   });
 
@@ -1756,25 +1767,7 @@ export async function createScheduledPost(
   userId: string,
   data: CreateScheduledPostData
 ): Promise<string> {
-  // Backend validation: Check if user's plan allows scheduling
-  const userRef = doc(db, "users", userId);
-  const userSnap = await getDoc(userRef);
-
-  if (!userSnap.exists()) {
-    throw new Error("Utilisateur non trouve");
-  }
-
-  const userData = userSnap.data();
-
-  let subscriptionPlan: PlanType | null = userData?.subscription?.plan || null;
-  if (subscriptionPlan === ("free" as string)) subscriptionPlan = null;
-  const effectivePlan: PlanType | null = subscriptionPlan;
-
-  // Check if the user's effective plan allows scheduling
-  if (!effectivePlan || !planHasFeature(effectivePlan, "canSchedulePosts")) {
-    throw new Error("La programmation de posts necessite un abonnement Pro ou Max");
-  }
-
+  // Permission check is handled upstream by SchedulingContext (supports founder overrides, trial status, etc.)
   const scheduledPostsRef = collection(db, "scheduledPosts");
   const docRef = await addDoc(scheduledPostsRef, {
     userId,
@@ -1929,28 +1922,7 @@ export async function reschedulePost(
     throw new Error("Post programme non trouve");
   }
 
-  const postData = postSnap.data();
-  const userId = postData?.userId;
-
-  if (!userId) {
-    throw new Error("Utilisateur non trouve pour ce post");
-  }
-
-  // Backend validation: Check if user's plan still allows scheduling
-  const userRef = doc(db, "users", userId);
-  const userSnap = await getDoc(userRef);
-
-  if (userSnap.exists()) {
-    const userData = userSnap.data();
-
-    let subscriptionPlan: PlanType | null = userData?.subscription?.plan || null;
-    if (subscriptionPlan === ("free" as string)) subscriptionPlan = null;
-    const effectivePlan: PlanType | null = subscriptionPlan;
-
-    if (!effectivePlan || !planHasFeature(effectivePlan, "canSchedulePosts")) {
-      throw new Error("La reprogrammation necessite un abonnement Pro ou Max");
-    }
-  }
+  // Permission check is handled upstream by SchedulingContext (supports founder overrides, trial status, etc.)
 
   await updateDoc(postRef, {
     scheduledAt: Timestamp.fromDate(newScheduledAt),

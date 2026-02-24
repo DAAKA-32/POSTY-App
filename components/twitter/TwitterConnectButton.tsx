@@ -61,7 +61,7 @@ export default function TwitterConnectButton({
           onClick={handleDisconnect}
           className="shrink-0"
         >
-          Deconnecter
+          Déconnecter
         </Button>
       </div>
     );

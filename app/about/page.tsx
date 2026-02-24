@@ -21,7 +21,7 @@ const teamMembers = [
   },
   {
     name: "Côme Maubert",
-    role: "CMO & Co-Fondateur",
+    role: "CFO & Co-Fondateur",
     photo: "/cmo.jpg",
     linkedIn: null,
     bio: "En charge du financement et de la stratégie publicitaire de Posty. Je pilote les campagnes d'acquisition et le développement commercial pour accélérer la croissance de l'entreprise.",

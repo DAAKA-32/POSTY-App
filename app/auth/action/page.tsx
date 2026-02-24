@@ -146,7 +146,7 @@ function AuthActionContent() {
               />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-white mb-3">
+          <h1 className="text-2xl font-bold text-foreground mb-3">
             Lien invalide
           </h1>
           <p className="text-text-secondary">{errorMessage}</p>
@@ -159,7 +159,7 @@ function AuthActionContent() {
           </Link>
           <Link
             href="/login"
-            className="block text-center text-text-secondary hover:text-white transition-colors text-sm py-2"
+            className="block text-center text-text-secondary hover:text-foreground transition-colors text-sm py-2"
           >
             Retour à la connexion
           </Link>
@@ -194,7 +194,7 @@ function AuthActionContent() {
               />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-white mb-3">
+          <h1 className="text-2xl font-bold text-foreground mb-3">
             {isReset ? "Mot de passe modifié" : "Email vérifié"}
           </h1>
           <p className="text-text-secondary">
@@ -236,12 +236,12 @@ function AuthActionContent() {
             />
           </svg>
         </div>
-        <h1 className="text-2xl font-bold text-white mb-3">
+        <h1 className="text-2xl font-bold text-foreground mb-3">
           Nouveau mot de passe
         </h1>
         <p className="text-text-secondary">
           Choisissez un nouveau mot de passe pour{" "}
-          <span className="text-white font-medium">{email}</span>
+          <span className="text-foreground font-medium">{email}</span>
         </p>
       </div>
 
@@ -274,6 +274,7 @@ function AuthActionContent() {
           required
           minLength={6}
           autoComplete="new-password"
+          helperText="6 caractères minimum"
         />
 
         <Input
@@ -338,7 +339,7 @@ export default function AuthActionPage() {
       <header className="relative z-10 px-6 py-6">
         <Link
           href="/login"
-          className="inline-flex items-center gap-2 text-text-secondary hover:text-white transition-colors"
+          className="inline-flex items-center gap-2 text-text-secondary hover:text-foreground transition-colors"
         >
           <svg
             className="w-5 h-5"

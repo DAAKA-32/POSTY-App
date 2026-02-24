@@ -8,7 +8,13 @@ import Button from "@/components/ui/Button";
 import IOSTimePicker, { SmartTimeSuggestions } from "@/components/ui/IOSTimePicker";
 import { useScheduling } from "@/contexts/SchedulingContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
+import { useLinkedIn } from "@/contexts/LinkedInContext";
+import { useFacebook } from "@/contexts/FacebookContext";
+import { useThreads } from "@/contexts/ThreadsContext";
 import { SchedulePlatform, LinkedInPostType } from "@/types";
+import { canUsePlatform } from "@/lib/permissions";
+import { PLATFORMS } from "@/components/publish/PlatformSelector";
+import { LinkedInIcon } from "@/components/linkedin/LinkedInConnectButton";
 import { useRouter } from "next/navigation";
 import { useHapticFeedback } from "@/hooks/useHapticFeedback";
 import toast from "@/components/ui/Toast";
@@ -47,13 +53,39 @@ export default function ScheduleModal({
   onSuccess,
 }: ScheduleModalProps) {
   const { schedulePost } = useScheduling();
-  const { canSchedulePosts, currentPlan } = useSubscription();
+  const { canSchedulePosts, currentPlan, subscription } = useSubscription();
+  const { isConnected: linkedInConnected } = useLinkedIn();
+  const { isConnected: facebookConnected } = useFacebook();
+  const { isConnected: threadsConnected } = useThreads();
   const router = useRouter();
   const { trigger: triggerHaptic } = useHapticFeedback();
 
   // Check if user can schedule posts
   const schedulePermission = canSchedulePosts();
   const canSchedule = schedulePermission.allowed;
+
+  // Build available platforms based on plan + connection status
+  const availablePlatforms = useMemo(() => {
+    const connectionStatus: Record<string, boolean> = {
+      linkedin: linkedInConnected,
+      facebook: facebookConnected,
+      threads: threadsConnected,
+      reddit: false,
+    };
+
+    return PLATFORMS.map((p) => {
+      const hasAccess = canUsePlatform(subscription, p.id).allowed;
+      const isConnected = connectionStatus[p.id] || false;
+      const isReddit = p.id === "reddit";
+      return {
+        ...p,
+        hasAccess,
+        isConnected,
+        isComingSoon: isReddit,
+        selectable: hasAccess && isConnected && !isReddit,
+      };
+    }).filter((p) => p.hasAccess);
+  }, [linkedInConnected, facebookConnected, threadsConnected, subscription]);
 
   // Detect mobile - SSR-safe initialization
   const [isMobile, setIsMobile] = useState(() => {
@@ -125,8 +157,13 @@ export default function ScheduleModal({
       setSelectedTime({ hour: 9, minute: 0 });
       setStep("date");
       setCurrentMonth(new Date());
+
+      // Auto-select first connected platform
+      const firstSelectable = availablePlatforms.find((p) => p.selectable);
+      setPlatform(firstSelectable ? firstSelectable.id as SchedulePlatform : "linkedin");
+      setPostType("feed");
     }
-  }, [isOpen]);
+  }, [isOpen, availablePlatforms]);
 
   // Generate calendar days
   const calendarDays = useMemo(() => {
@@ -420,7 +457,7 @@ export default function ScheduleModal({
     router.push("/pricing");
   };
 
-  // Render upgrade prompt for Free users
+  // Render upgrade prompt for users without active scheduling access
   const renderUpgradeContent = () => (
     <div className="py-4">
       {/* Lock icon with gradient background */}
@@ -436,12 +473,12 @@ export default function ScheduleModal({
       </div>
 
       <h3 className="text-xl font-semibold text-white text-center mb-3">
-        Passez a la vitesse superieure
+        Passez à la vitesse supérieure
       </h3>
 
       <p className="text-text-secondary text-center text-sm mb-6 max-w-sm mx-auto">
-        La programmation de posts est une fonctionnalite premium qui vous permet de
-        planifier vos publications a l'avance.
+        La programmation de posts est une fonctionnalité premium qui vous permet de
+        planifier vos publications à l'avance.
       </p>
 
       {/* Benefits list */}
@@ -454,7 +491,7 @@ export default function ScheduleModal({
           </div>
           <div>
             <p className="text-sm font-medium text-white">Gain de temps</p>
-            <p className="text-xs text-text-muted">Preparez vos posts a l'avance</p>
+            <p className="text-xs text-text-muted">Préparez vos posts à l'avance</p>
           </div>
         </div>
 
@@ -847,48 +884,125 @@ export default function ScheduleModal({
               <p className="text-xs text-text-muted mt-1">{timezone}</p>
             </div>
 
+            {/* Platform selector - single select */}
+            {availablePlatforms.length > 1 && (
+              <div className="mb-4">
+                <p className="text-xs text-text-muted mb-2 uppercase tracking-wide">
+                  Plateforme de publication
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {availablePlatforms.map((p) => {
+                    const isSelected = platform === p.id;
+                    return (
+                      <button
+                        key={p.id}
+                        onClick={() => {
+                          if (p.selectable) {
+                            triggerHaptic("selection");
+                            setPlatform(p.id as SchedulePlatform);
+                            if (p.id !== "linkedin") setPostType("feed");
+                          } else {
+                            triggerHaptic("error");
+                          }
+                        }}
+                        disabled={!p.selectable}
+                        className={`
+                          relative p-3 rounded-xl border-2 transition-all duration-200
+                          flex items-center gap-2.5
+                          ${!p.selectable
+                            ? "bg-dark-bg/30 border-dark-border/30 opacity-50 cursor-not-allowed"
+                            : isSelected
+                              ? `${p.bgColor} ${p.borderColor} ${p.color}`
+                              : "bg-dark-elevated border-dark-border text-text-secondary hover:border-dark-hover hover:text-white"
+                          }
+                        `}
+                      >
+                        <div className={isSelected && p.selectable ? p.color : "text-text-muted"}>
+                          {p.icon}
+                        </div>
+                        <div className="flex flex-col items-start">
+                          <span className="text-sm font-medium">{p.name}</span>
+                          {p.isComingSoon && (
+                            <span className="text-[9px] text-text-muted">Bientôt disponible</span>
+                          )}
+                          {!p.isConnected && !p.isComingSoon && (
+                            <span className="text-[9px] text-text-muted">Non connecté</span>
+                          )}
+                        </div>
+                        {isSelected && p.selectable && (
+                          <div className="absolute top-1.5 right-1.5">
+                            <svg className={`w-4 h-4 ${p.color}`} fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Post preview */}
             <div className="bg-dark-elevated rounded-xl p-4 mb-4 border border-dark-border">
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-full bg-[#0A66C2] flex items-center justify-center">
-                  <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                  </svg>
-                </div>
-                <span className="text-sm text-white font-medium">LinkedIn</span>
-                <span className="text-xs px-2 py-0.5 bg-dark-card rounded-full text-text-muted border border-dark-border">
-                  {postType === "feed" ? "Post" : "Article"}
-                </span>
+                {(() => {
+                  const selectedP = PLATFORMS.find((p) => p.id === platform) || PLATFORMS[0];
+                  const bgColors: Record<string, string> = {
+                    linkedin: "#0A66C2",
+                    facebook: "#1877F2",
+                    threads: "#000000",
+                    reddit: "#FF4500",
+                  };
+                  return (
+                    <>
+                      <div
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-white"
+                        style={{ backgroundColor: bgColors[platform] || "#0A66C2" }}
+                      >
+                        <div className="w-4 h-4">{selectedP.icon}</div>
+                      </div>
+                      <span className="text-sm text-white font-medium">{selectedP.name}</span>
+                    </>
+                  );
+                })()}
+                {platform === "linkedin" && postType && (
+                  <span className="text-xs px-2 py-0.5 bg-dark-card rounded-full text-text-muted border border-dark-border">
+                    {postType === "feed" ? "Post" : "Article"}
+                  </span>
+                )}
               </div>
               <p className="text-sm text-text-secondary line-clamp-3">{content}</p>
             </div>
 
-            {/* Type selection */}
-            <div className="mb-5">
-              <p className="text-xs text-text-muted mb-2 uppercase tracking-wide">Type de publication</p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setPostType("feed")}
-                  className={`flex-1 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                    postType === "feed"
-                      ? "bg-primary text-white shadow-lg shadow-primary/20"
-                      : "bg-dark-elevated text-text-secondary hover:text-white border border-dark-border"
-                  }`}
-                >
-                  Post
-                </button>
-                <button
-                  onClick={() => setPostType("article")}
-                  className={`flex-1 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                    postType === "article"
-                      ? "bg-primary text-white shadow-lg shadow-primary/20"
-                      : "bg-dark-elevated text-text-secondary hover:text-white border border-dark-border"
-                  }`}
-                >
-                  Article
-                </button>
+            {/* Type selection - LinkedIn only */}
+            {platform === "linkedin" && (
+              <div className="mb-5">
+                <p className="text-xs text-text-muted mb-2 uppercase tracking-wide">Type de publication</p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setPostType("feed")}
+                    className={`flex-1 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                      postType === "feed"
+                        ? "bg-primary text-white shadow-lg shadow-primary/20"
+                        : "bg-dark-elevated text-text-secondary hover:text-white border border-dark-border"
+                    }`}
+                  >
+                    Post
+                  </button>
+                  <button
+                    onClick={() => setPostType("article")}
+                    className={`flex-1 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                      postType === "article"
+                        ? "bg-primary text-white shadow-lg shadow-primary/20"
+                        : "bg-dark-elevated text-text-secondary hover:text-white border border-dark-border"
+                    }`}
+                  >
+                    Article
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Action buttons */}
             <div className="flex gap-3">
@@ -916,7 +1030,7 @@ export default function ScheduleModal({
     </div>
   );
 
-  // Free users see upgrade prompt
+  // Users without active scheduling access see upgrade prompt
   if (!canSchedule) {
     return isMobile ? (
       <BottomSheet
@@ -932,7 +1046,7 @@ export default function ScheduleModal({
         onClose={onClose}
         title="Programmation de posts"
         size="md"
-        description="Fonctionnalite disponible avec Pro ou Max"
+        description="Abonnement actif requis"
       >
         {renderUpgradeContent()}
       </Modal>
@@ -956,7 +1070,7 @@ export default function ScheduleModal({
       onClose={onClose}
       title="Programmer ce post"
       size="md"
-      description="Selectionnez une date et une heure pour publier automatiquement"
+      description="Sélectionnez une date et une heure pour publier automatiquement"
     >
       {renderSchedulingContent()}
     </Modal>

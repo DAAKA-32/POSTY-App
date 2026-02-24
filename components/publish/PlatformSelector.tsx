@@ -252,4 +252,4 @@ export default function PlatformSelector({
   );
 }
 
-export { PLATFORMS };
+export { PLATFORMS, RedditIcon, ThreadsIcon, FacebookIcon };

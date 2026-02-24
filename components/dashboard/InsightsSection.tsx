@@ -120,9 +120,9 @@ export default function InsightsSection({ stats, userStyle, userProfile }: Insig
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
             </svg>
           ),
-          title: "Engagement maximise",
-          description: "Pour l'engagement : posez des questions qui divisent (opinion A vs B). Les debats constructifs generent 3x plus de commentaires que les posts classiques.",
-          action: "Exemple : \"Je pense que [opinion tranchee]. D'accord ou pas d'accord ?\"",
+          title: "Engagement maximisé",
+          description: "Pour l'engagement : posez des questions qui divisent (opinion A vs B). Les débats constructifs génèrent 3x plus de commentaires que les posts classiques.",
+          action: "Exemple : \"Je pense que [opinion tranchée]. D'accord ou pas d'accord ?\"",
           type: "coaching",
           priority: 5,
         },
@@ -170,9 +170,9 @@ export default function InsightsSection({ stats, userStyle, userProfile }: Insig
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           ),
-          title: "Passez a la vitesse superieure",
-          description: `Seulement ${stats.postsLast7Days} post(s) cette semaine. L'algorithme LinkedIn favorise les createurs reguliers (3-5 posts/semaine minimum).`,
-          action: "Commencez petit : 1 post tous les 2 jours pendant 2 semaines. Vous verrez la difference !",
+          title: "Passez à la vitesse supérieure",
+          description: `Seulement ${stats.postsLast7Days} post(s) cette semaine. L'algorithme LinkedIn favorise les créateurs réguliers (3-5 posts/semaine minimum).`,
+          action: "Commencez petit : 1 post tous les 2 jours pendant 2 semaines. Vous verrez la différence !",
           type: "tip",
           priority: 4,
         });
@@ -203,7 +203,7 @@ export default function InsightsSection({ stats, userStyle, userProfile }: Insig
             </svg>
           ),
           title: "Taux de publication exemplaire",
-          description: `${publishRate}% de vos posts sont publies sur LinkedIn (${stats.publishedPosts}/${stats.totalPosts}). Vous mettez en pratique ce que vous creez !`,
+          description: `${publishRate}% de vos posts sont publiés sur LinkedIn (${stats.publishedPosts}/${stats.totalPosts}). Vous mettez en pratique ce que vous créez !`,
           type: "success",
           priority: 2,
         });
@@ -358,7 +358,7 @@ export default function InsightsSection({ stats, userStyle, userProfile }: Insig
   if (insights.length === 0) {
     return (
       <div className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-4 sm:p-6 hover:border-gray-300 dark:hover:border-dark-border-hover transition-colors duration-200">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Coach IA</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Insights</h3>
         <div className="text-center py-8">
           <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-dark-elevated rounded-full flex items-center justify-center border border-gray-200 dark:border-dark-border">
             <svg className="w-8 h-8 text-gray-400 dark:text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -375,8 +375,8 @@ export default function InsightsSection({ stats, userStyle, userProfile }: Insig
     <div className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-4 sm:p-6 hover:border-gray-300 dark:hover:border-dark-border-hover transition-colors duration-200">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Coach IA</h3>
-          <p className="text-gray-500 dark:text-text-muted text-sm">Conseils personnalises pour votre croissance</p>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Insights</h3>
+          <p className="text-gray-500 dark:text-text-muted text-sm">Conseils personnalisés pour votre croissance</p>
         </div>
         <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center border border-primary/20">
           <span className="text-lg">🎯</span>

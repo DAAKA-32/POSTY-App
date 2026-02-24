@@ -19,6 +19,7 @@ export interface PlanFeatures {
   hasAdaptiveTone: boolean;
   hasAdvancedPersonalization: boolean;
   hasFileAttachments: boolean;
+  hasUrlAnalysis: boolean;
 }
 
 /**
@@ -50,6 +51,7 @@ function derivePlanFeatures(planId: PlanType): PlanFeatures {
     hasAdaptiveTone: limits.hasPersonalizedResponses,
     hasAdvancedPersonalization: limits.hasAudienceTargeting,
     hasFileAttachments: planId === "max",
+    hasUrlAnalysis: limits.hasUrlAnalysis,
   };
 }
 
@@ -170,6 +172,10 @@ export function getUpgradeMessage(
     hasFileAttachments: {
       fr: { title: "Fichiers joints", description: "Passez au plan Max pour joindre des fichiers (images, PDF) à vos messages." },
       en: { title: "File Attachments", description: "Upgrade to Max to attach files (images, PDF) to your messages." },
+    },
+    hasUrlAnalysis: {
+      fr: { title: "Analyse de lien", description: "Passez au plan Pro pour analyser le contenu d'un lien et générer un post basé dessus." },
+      en: { title: "URL Analysis", description: "Upgrade to Pro to analyze link content and generate posts from it." },
     },
   };
 

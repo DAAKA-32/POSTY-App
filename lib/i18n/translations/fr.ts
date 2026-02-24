@@ -1052,7 +1052,7 @@ export const fr = {
     postGenerated: "Post généré",
     postGeneratedDesc: "Prêt à publier sur LinkedIn",
     postCopied: "Copié dans le presse-papiers",
-    postPublished: "Publié sur LinkedIn",
+    postPublished: "Publié avec succès",
     postSaved: "Post enregistré",
 
     // Value Reminders (Soft, not aggressive)

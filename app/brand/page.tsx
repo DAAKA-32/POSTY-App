@@ -24,9 +24,9 @@ const brandColors = {
   primary: [
     { name: "Primary Orange", hex: "#F8935D", rgb: "248, 147, 93", usage: "CTAs, boutons principaux" },
     { name: "Coral Vif", hex: "#F76B54", rgb: "247, 107, 84", usage: "Hover states" },
-    { name: "Rose Peche", hex: "#FBB9AD", rgb: "251, 185, 173", usage: "Backgrounds subtils" },
+    { name: "Rose Pêche", hex: "#FBB9AD", rgb: "251, 185, 173", usage: "Backgrounds subtils" },
     { name: "Orange Profond", hex: "#E8834D", rgb: "232, 131, 77", usage: "Dark mode" },
-    { name: "Corail Moyen", hex: "#F89E85", rgb: "248, 158, 133", usage: "Etats intermediaires" },
+    { name: "Corail Moyen", hex: "#F89E85", rgb: "248, 158, 133", usage: "États intermédiaires" },
   ],
   accent: [
     { name: "Accent Rose", hex: "#F13452", rgb: "241, 52, 82", usage: "Notifications, badges" },
@@ -60,7 +60,7 @@ const iconShowcase = [
   { icon: BarChart3, name: "Analytics", description: "Statistiques" },
   { icon: Target, name: "Coach", description: "Coaching IA" },
   { icon: MessageSquare, name: "Post", description: "Posts LinkedIn" },
-  { icon: Settings, name: "Settings", description: "Parametres" },
+  { icon: Settings, name: "Settings", description: "Paramètres" },
   { icon: User, name: "Profile", description: "Profil utilisateur" },
   { icon: Clock, name: "History", description: "Historique" },
   { icon: Palette, name: "Style", description: "Style de post" },
@@ -380,7 +380,7 @@ export default function BrandPage() {
 
               {/* States */}
               <div>
-                <h4 className="font-semibold text-gray-900 dark:text-white mb-4">Etats</h4>
+                <h4 className="font-semibold text-gray-900 dark:text-white mb-4">États</h4>
                 <div className="flex flex-wrap gap-4">
                   <Button variant="primary">Default</Button>
                   <Button variant="primary" disabled>Disabled</Button>

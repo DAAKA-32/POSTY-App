@@ -150,7 +150,7 @@ export default function LegalLayoutLight({ children, title }: LegalLayoutLightPr
                 href="/legal/privacy"
                 className="text-text-muted hover:text-white no-underline transition-colors duration-200"
               >
-                Confidentialite
+                Confidentialité
               </Link>
               <Link
                 href="/legal/terms"
@@ -162,7 +162,7 @@ export default function LegalLayoutLight({ children, title }: LegalLayoutLightPr
                 href="/legal/notices"
                 className="text-text-muted hover:text-white no-underline transition-colors duration-200"
               >
-                Mentions legales
+                Mentions légales
               </Link>
               <Link
                 href="/legal/cookies"

@@ -118,7 +118,7 @@ function EngagementChart({
   if (data.length === 0) {
     return (
       <div className="flex items-center justify-center h-[200px] text-gray-400">
-        Aucune donnee pour cette periode
+        Aucune donnée pour cette période
       </div>
     );
   }
@@ -599,7 +599,7 @@ function EmptyState() {
         Aucune publication
       </h3>
       <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto mb-6">
-        Publiez votre premier post LinkedIn via Posty pour commencer a suivre vos performances.
+        Publiez votre premier post LinkedIn via Posty pour commencer à suivre vos performances.
       </p>
       <Link
         href="/app"
@@ -608,7 +608,7 @@ function EmptyState() {
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
         </svg>
-        Creer un post
+        Créer un post
       </Link>
     </motion.div>
   );
@@ -775,7 +775,7 @@ function AnalyticsContent() {
                     Analytics
                   </h1>
                   <p className="text-sm text-gray-600 dark:text-text-muted md:text-base mt-1.5">
-                    {filteredPosts.length} publication{filteredPosts.length > 1 ? 's' : ''} sur cette periode
+                    {filteredPosts.length} publication{filteredPosts.length > 1 ? 's' : ''} sur cette période
                   </p>
                 </div>
                 <PeriodFilterComponent selected={periodFilter} onChange={setPeriodFilter} />

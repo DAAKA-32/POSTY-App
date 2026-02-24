@@ -199,7 +199,7 @@ function DashboardContent() {
                 href="/app"
                 className="px-5 py-3 bg-primary hover:bg-primary-hover text-white text-sm font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
               >
-                Creer un post
+                Créer un post
               </Link>
             </div>
           </div>
@@ -214,19 +214,19 @@ function DashboardContent() {
           `}
         >
           <KPICard
-            title="Posts generes"
+            title="Posts générés"
             value={stats.totalPosts}
-            subtitle="Depuis le debut"
+            subtitle="Depuis le début"
             icon={
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             }
             color="primary"
-            tooltip="Nombre total de posts que vous avez generes avec Posty"
+            tooltip="Nombre total de posts que vous avez générés avec Posty"
           />
           <KPICard
-            title="Posts publies"
+            title="Posts publiés"
             value={stats.publishedPosts}
             subtitle="Sur LinkedIn"
             icon={
@@ -235,7 +235,7 @@ function DashboardContent() {
               </svg>
             }
             color="accent"
-            tooltip="Posts que vous avez publies directement sur LinkedIn via Posty"
+            tooltip="Posts que vous avez publiés directement sur LinkedIn via Posty"
           />
           <KPICard
             title="Cette semaine"
@@ -252,7 +252,7 @@ function DashboardContent() {
               </svg>
             }
             color="warning"
-            tooltip="Nombre de posts generes ces 7 derniers jours"
+            tooltip="Nombre de posts générés ces 7 derniers jours"
           />
           <KPICard
             title="Sessions"
@@ -264,7 +264,7 @@ function DashboardContent() {
               </svg>
             }
             color="success"
-            tooltip="Nombre de sessions de generation que vous avez lancees"
+            tooltip="Nombre de sessions de génération que vous avez lancées"
           />
         </div>
 
@@ -278,8 +278,8 @@ function DashboardContent() {
         >
           <ActivityChart
             data={stats.postsByDay}
-            title="Activite de generation"
-            subtitle="Evolution de vos posts dans le temps"
+            title="Activité de génération"
+            subtitle="Évolution de vos posts dans le temps"
           />
           <StyleDistributionChart data={stats.styleDistribution} />
         </div>
@@ -319,7 +319,7 @@ function DashboardContent() {
             `}
           >
             <div className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-4 sm:p-6 hover:border-gray-300 dark:hover:border-dark-border-hover transition-colors duration-200">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Activite recente</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Activité récente</h3>
               <div className="space-y-3">
                 {stats.recentActivity.map((activity, index) => (
                   <div
@@ -369,7 +369,7 @@ function DashboardContent() {
       <footer className="relative z-10 py-8 px-4 sm:px-6 text-center border-t border-[#F8935D]/10 mt-12">
         <div className="flex items-center justify-center gap-6 text-xs text-text-subtle">
           <Link href="/legal/privacy" className="hover:text-[#F8935D] transition-colors duration-200">
-            Confidentialite
+            Confidentialité
           </Link>
           <Link href="/legal/terms" className="hover:text-[#F8935D] transition-colors duration-200">
             CGU

@@ -1,6 +1,6 @@
 "use client";
 
-import { InputHTMLAttributes, forwardRef, useState, useEffect } from "react";
+import { InputHTMLAttributes, forwardRef, useState, useEffect, useId } from "react";
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -11,7 +11,11 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, success, helperText, className = "", type, showPasswordToggle, value, ...props }, ref) => {
+  ({ label, error, success, helperText, className = "", type, showPasswordToggle, value, id: externalId, ...props }, ref) => {
+    const generatedId = useId();
+    const inputId = externalId || `input-${generatedId}`;
+    const errorId = `${inputId}-error`;
+    const helperTextId = `${inputId}-helper`;
     const [isFocused, setIsFocused] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [isDarkMode, setIsDarkMode] = useState(true);
@@ -45,8 +49,9 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           {/* Floating Label */}
           {label && (
             <label
+              htmlFor={inputId}
               className={`
-                absolute left-4 transition-all duration-200 ease-out pointer-events-none
+                absolute left-4 z-10 transition-all duration-200 ease-out pointer-events-none
                 ${isFloating
                   ? "top-1 text-xs font-medium"
                   : "top-1/2 -translate-y-1/2 text-base text-text-muted"
@@ -60,8 +65,11 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
 
           <input
             ref={ref}
+            id={inputId}
             type={inputType}
             value={value}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? errorId : helperText ? helperTextId : undefined}
             onFocus={(e) => {
               setIsFocused(true);
               props.onFocus?.(e);
@@ -132,7 +140,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
 
         {/* Error message with animation */}
         {error && (
-          <p className="mt-2 text-sm text-error flex items-center gap-1.5 animate-fade-in">
+          <p id={errorId} role="alert" className="mt-2 text-sm text-error flex items-center gap-1.5 animate-fade-in">
             <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -152,7 +160,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
 
         {/* Helper text */}
         {helperText && !error && !success && (
-          <p className="mt-2 text-sm text-text-muted">{helperText}</p>
+          <p id={helperTextId} className="mt-2 text-sm text-text-muted">{helperText}</p>
         )}
       </div>
     );

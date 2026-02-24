@@ -44,7 +44,7 @@ export default function TwitterDisconnectModal({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Deconnecter X (Twitter)"
+      title="Déconnecter X (Twitter)"
       size="sm"
     >
       <div className="space-y-5">
@@ -56,15 +56,15 @@ export default function TwitterDisconnectModal({
           <div>
             <p className="text-white font-medium text-sm">
               {profileName
-                ? `Deconnecter ${profileName} ?`
-                : "Deconnecter votre compte X ?"}
+                ? `Déconnecter ${profileName} ?`
+                : "Déconnecter votre compte X ?"}
             </p>
             {username && (
               <p className="text-text-secondary text-xs">@{username}</p>
             )}
             <p className="text-text-secondary text-xs mt-2">
               Vous ne pourrez plus publier directement sur X depuis POSTY.
-              Vous pourrez vous reconnecter a tout moment.
+              Vous pourrez vous reconnecter à tout moment.
             </p>
           </div>
         </div>

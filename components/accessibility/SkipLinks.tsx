@@ -9,8 +9,8 @@ interface SkipLink {
 
 const defaultLinks: SkipLink[] = [
   { id: "main-content", label: "Aller au contenu principal" },
-  { id: "navigation", label: "Aller a la navigation" },
-  { id: "chat-input", label: "Aller a la zone de saisie" },
+  { id: "navigation", label: "Aller à la navigation" },
+  { id: "chat-input", label: "Aller à la zone de saisie" },
 ];
 
 interface SkipLinksProps {

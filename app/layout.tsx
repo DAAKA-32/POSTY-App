@@ -71,8 +71,9 @@ export const metadata: Metadata = {
   authors: [
     { name: "POSTY Team" },
     { name: "Emilien Nepveu", url: "https://www.linkedin.com/in/e-nepveu-58a38127a/" },
+    { name: "Côme Maubert" },
   ],
-  creator: "Emilien Nepveu",
+  creator: "Emilien Nepveu & Côme Maubert",
   publisher: "Posty",
 
   // Icons - Optimized favicons (no transparent corners for circular display)

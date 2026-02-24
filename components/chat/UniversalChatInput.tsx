@@ -655,6 +655,24 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
         )}
       </AnimatePresence>
 
+      {/* URL detection indicator */}
+      <AnimatePresence>
+        {/https:\/\/[^\s]+/.test(message) && (
+          <motion.div
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            className="mt-1 px-3 flex items-center gap-1.5 text-xs text-primary"
+          >
+            <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.172 13.828a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.102 1.101" />
+            </svg>
+            <span>Le contenu du lien sera analysé</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Helper text + character counter below input */}
       <div className="relative flex items-center justify-center mt-2 px-1">
         {/* Centered instruction or limit message */}

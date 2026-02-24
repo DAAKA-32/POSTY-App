@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { LinkedInIcon } from "@/components/linkedin/LinkedInConnectButton";
 import { useHapticFeedback } from "@/hooks/useHapticFeedback";
+import { useVisibilityObserver } from "@/hooks/useVisibilityObserver";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { PlanType } from "@/lib/plans";
@@ -19,7 +20,9 @@ interface ModernResponseCardProps {
   userPlan: PlanType | null;
   onPublishToLinkedIn?: (content: string) => void;
   onSchedule?: (content: string) => void;
-  showVariantBadge?: boolean; // Only show for PRO/MAX when needed
+  showVariantBadge?: boolean;
+  /** When true, actions are always visible. When false, hover (desktop) / scroll (mobile). */
+  isLastMessage?: boolean;
 }
 
 interface MenuPosition {
@@ -47,11 +50,45 @@ export const ModernResponseCard = memo(function ModernResponseCard({
   onPublishToLinkedIn,
   onSchedule,
   showVariantBadge = false,
+  isLastMessage = true,
 }: ModernResponseCardProps) {
   const { trigger: triggerHaptic } = useHapticFeedback();
   const { canSchedulePosts } = useSubscription();
   const { userProfile } = useAuth();
   const canSchedule = canSchedulePosts().allowed;
+
+  // Mobile detection for scroll-based visibility
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  // IntersectionObserver for mobile scroll-based action visibility
+  const { ref: visibilityRef, isVisible: isInViewport } = useVisibilityObserver({
+    threshold: 0.4,
+    enabled: isMobile && !isLastMessage,
+  });
+
+  // Should actions be visible right now?
+  const actionsVisible = isLastMessage || (isMobile ? isInViewport : false);
+
+  // Copy state
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopied(true);
+      triggerHaptic("success");
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      triggerHaptic("error");
+    }
+  };
 
   // Menu dropdown state
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -280,7 +317,7 @@ export const ModernResponseCard = memo(function ModernResponseCard({
                       : "text-text-muted cursor-not-allowed opacity-60"
                     }
                   `}
-                  title={canSchedule ? "Programmer ce post" : "Plan Pro requis"}
+                  title={canSchedule ? "Programmer ce post" : "Abonnement actif requis"}
                   role="menuitem"
                 >
                   <svg className={`w-4 h-4 shrink-0 transition-transform ${canSchedule ? "group-hover/schedule:scale-110" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -324,7 +361,7 @@ export const ModernResponseCard = memo(function ModernResponseCard({
   };
 
   return (
-    <div className="w-full max-w-3xl">
+    <div ref={visibilityRef} className="w-full max-w-3xl group/card">
       {/* Optional variant badge - only for PRO/MAX when explicitly enabled */}
       {showVariantBadge && !!userPlan && (
         <motion.div
@@ -351,14 +388,73 @@ export const ModernResponseCard = memo(function ModernResponseCard({
         </div>
       </div>
 
-      {/* Action buttons - modern design with dropdown menu + AUTOSCROLL COLORS */}
+      {/* Action buttons - visible on last message, hover (desktop) / scroll (mobile) for others */}
       {!isStreaming && content && (
-        <motion.div
-          initial={{ opacity: 0, y: 4 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="flex items-center gap-2 mb-6"
+        <div
+          className={`
+            flex items-center gap-2 mb-6
+            transition-all duration-200 ease-out
+            ${isLastMessage
+              ? "opacity-100 translate-y-0"
+              : isMobile
+                ? (actionsVisible
+                  ? "opacity-100 translate-y-0"
+                  : "opacity-0 translate-y-1.5 pointer-events-none")
+                : "opacity-0 translate-y-1.5 pointer-events-none group-hover/card:opacity-100 group-hover/card:translate-y-0 group-hover/card:pointer-events-auto"
+            }
+          `}
         >
+          {/* Copy button */}
+          <motion.button
+            onClick={handleCopy}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="
+              group/copy relative overflow-hidden
+              inline-flex items-center justify-center
+              w-8 h-8 rounded-lg
+              bg-gray-100 dark:bg-dark-elevated
+              hover:bg-gray-200 dark:hover:bg-dark-hover
+              border border-gray-200 dark:border-dark-border
+              hover:border-primary/30
+              transition-all duration-200
+            "
+            aria-label="Copier le message"
+            title="Copier"
+          >
+            <AnimatePresence mode="wait" initial={false}>
+              {copied ? (
+                <motion.svg
+                  key="check"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  exit={{ scale: 0 }}
+                  transition={{ duration: 0.15 }}
+                  className="w-4 h-4 text-green-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </motion.svg>
+              ) : (
+                <motion.svg
+                  key="copy"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  exit={{ scale: 0 }}
+                  transition={{ duration: 0.15 }}
+                  className="w-4 h-4 text-text-muted group-hover/copy:text-primary transition-colors"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </motion.svg>
+              )}
+            </AnimatePresence>
+          </motion.button>
+
           {/* Publish to LinkedIn - Primary action with ORANGE DOMINANT glow */}
           {onPublishToLinkedIn && (
             <motion.button
@@ -433,7 +529,7 @@ export const ModernResponseCard = memo(function ModernResponseCard({
 
           {/* Portal-rendered menu with intelligent positioning */}
           {renderMenu()}
-        </motion.div>
+        </div>
       )}
 
       {/* Insights Modal */}

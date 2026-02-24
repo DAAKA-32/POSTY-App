@@ -55,6 +55,7 @@ function ScheduleContent() {
   const [filter, setFilter] = useState<ScheduleStatus | "all">("all");
   const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [showSetupBanner, setShowSetupBanner] = useState(true);
 
   // Reschedule modal
   const [rescheduleModalOpen, setRescheduleModalOpen] = useState(false);
@@ -212,6 +213,44 @@ function ScheduleContent() {
               </div>
             </div>
           </motion.div>
+
+          {/* Setup banner */}
+          <AnimatePresence>
+            {showSetupBanner && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10, height: 0, marginBottom: 0 }}
+                transition={{ duration: 0.3 }}
+                className="relative mb-6 p-4 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl"
+              >
+                <button
+                  onClick={() => setShowSetupBanner(false)}
+                  className="absolute top-3 right-3 p-1 text-amber-400 hover:text-amber-600 dark:hover:text-amber-300 transition-colors"
+                  aria-label="Fermer"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+                <div className="flex items-start gap-3 pr-6">
+                  <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                    <svg className="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+                      Finalisation en cours
+                    </p>
+                    <p className="text-xs text-amber-600 dark:text-amber-400/80 mt-1 leading-relaxed">
+                      Nous finalisons la mise en place de la publication automatique. Vos posts programmés seront publiés très prochainement. Merci de votre patience.
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* View mode toggle & Filters - Premium design */}
           <motion.div

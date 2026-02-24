@@ -1310,16 +1310,17 @@ html.theme-transitioning .no-theme-transition {
   background: var(--text-muted);
 }
 
-/* Light mode selection */
+/* Text selection - high contrast in both themes */
+/* Light mode: coral background + dark text (WCAG AA) */
 .light ::selection {
-  background: rgba(247, 107, 84, 0.2);
-  color: var(--foreground);
+  background: rgba(248, 147, 93, 0.35);
+  color: #1A1D21;
 }
 
-/* Dark mode selection */
+/* Dark mode: coral background + white text (WCAG AA) */
 .dark ::selection {
-  background: rgba(247, 107, 84, 0.3);
-  color: var(--foreground);
+  background: rgba(248, 147, 93, 0.45);
+  color: #FFFFFF;
 }
 
 /* Light mode autofill override */
@@ -2547,9 +2548,9 @@ a:focus-visible,
   box-shadow: 0 0 0 4px rgba(248, 87, 81, 0.2);
 }
 
-/* Selection */
+/* Selection fallback - uses dark mode values by default */
 ::selection {
-  background: rgba(248, 163, 93, 0.3);
+  background: rgba(248, 147, 93, 0.45);
   color: #FFFFFF;
 }
 
@@ -6387,24 +6388,24 @@ html.dark .fixed-input-area {
   }
 }
 
-/* Content padding to prevent overlap with fixed input */
+/* Content padding to prevent overlap with fixed input + mode selector */
 .content-with-fixed-input {
-  /* Default padding for desktop */
-  padding-bottom: calc(120px + env(safe-area-inset-bottom, 16px));
+  /* Desktop: input (~56px) + mode selector (~50px) + margin (~74px) */
+  padding-bottom: calc(180px + env(safe-area-inset-bottom, 16px));
 }
 
 /* Mobile content padding */
 @media (max-width: 1023px) {
   .content-with-fixed-input {
-    /* Extra padding on mobile */
-    padding-bottom: calc(140px + env(safe-area-inset-bottom, 16px));
+    /* Mobile: input + mode selector + bottom nav + margin */
+    padding-bottom: calc(200px + env(safe-area-inset-bottom, 16px));
   }
 
   /* Mobile browser mode - account for browser UI */
   @media not all and (display-mode: standalone) {
     .content-with-fixed-input.mobile-browser-mode {
       padding-bottom: calc(
-        140px +
+        200px +
         env(safe-area-inset-bottom, 16px) +
         var(--input-bottom-padding, 60px)
       );

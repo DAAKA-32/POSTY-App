@@ -42,27 +42,27 @@ export function PostInsights({ insights, className = "" }: PostInsightsProps) {
 
   const labels = {
     fr: {
-      title: "Coach IA",
+      title: "Insight",
       subtitle: "Analyse de votre post",
       whyEffective: "Pourquoi ca fonctionne",
       bestTime: "Meilleur moment",
       engagement: "Engagement attendu",
       takeaway: "Action prioritaire",
       strengths: "Points forts",
-      improvements: "A ameliorer",
-      coaching: "Conseil personnalise",
+      improvements: "À améliorer",
+      coaching: "Conseil personnalisé",
       hook: "Analyse de l'accroche",
       cta: "Analyse du CTA",
-      expand: "Voir l'analyse complete",
+      expand: "Voir l'analyse complète",
       collapse: "Masquer",
-      overview: "Apercu",
-      details: "Details",
+      overview: "Aperçu",
+      details: "Détails",
       coachingTab: "Coaching",
       engagementScore: "Engagement",
       readabilityScore: "Lisibilite",
     },
     en: {
-      title: "AI Coach",
+      title: "Insight",
       subtitle: "Post analysis",
       whyEffective: "Why it works",
       bestTime: "Best time",
@@ -351,7 +351,7 @@ export function PostInsights({ insights, className = "" }: PostInsightsProps) {
                       {/* Pro tip box */}
                       <div className="rounded-lg bg-gray-50 dark:bg-dark-hover p-4 border border-gray-200 dark:border-dark-border">
                         <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                          <span className="font-semibold text-gray-700 dark:text-gray-300">Pro tip:</span> Repondez aux premiers commentaires dans les 30 minutes suivant la publication. L'algorithme LinkedIn favorise les posts qui generent des conversations rapidement.
+                          <span className="font-semibold text-gray-700 dark:text-gray-300">Pro tip:</span> Répondez aux premiers commentaires dans les 30 minutes suivant la publication. L'algorithme LinkedIn favorise les posts qui génèrent des conversations rapidement.
                         </p>
                       </div>
                     </motion.div>

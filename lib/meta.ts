@@ -182,7 +182,7 @@ export async function postToFacebook(
       return {
         id: "",
         success: false,
-        error: result.message || result.error || "Echec de la publication",
+        error: result.message || result.error || "Échec de la publication",
       };
     }
 
@@ -222,7 +222,7 @@ export async function postToThreads(
       return {
         id: "",
         success: false,
-        error: result.message || result.error || "Echec de la publication",
+        error: result.message || result.error || "Échec de la publication",
       };
     }
 

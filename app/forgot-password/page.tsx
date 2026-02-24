@@ -50,7 +50,7 @@ export default function ForgotPasswordPage() {
 
       {/* Header */}
       <header className="relative z-10 px-6 py-6">
-        <Link href="/login" className="inline-flex items-center gap-2 text-text-secondary hover:text-white transition-colors">
+        <Link href="/login" className="inline-flex items-center gap-2 text-text-secondary hover:text-foreground transition-colors">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
@@ -84,7 +84,7 @@ export default function ForgotPasswordPage() {
             </div>
             <h1
               className={`
-                text-2xl lg:text-3xl font-bold text-white mb-3
+                text-2xl lg:text-3xl font-bold text-foreground mb-3
                 transition-all duration-500 delay-200
                 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}
               `}
@@ -121,11 +121,11 @@ export default function ForgotPasswordPage() {
 
               {/* Success message */}
               <div className="bg-accent/10 border border-accent/30 rounded-2xl p-6 mb-6">
-                <h2 className="text-lg font-semibold text-white mb-3 text-center">
+                <h2 className="text-lg font-semibold text-foreground mb-3 text-center">
                   Email envoyé avec succès
                 </h2>
                 <p className="text-text-secondary text-sm text-center mb-4">
-                  Si un compte est associé à l&apos;adresse <span className="text-white font-medium">{email}</span>, vous recevrez un lien pour réinitialiser votre mot de passe dans quelques instants.
+                  Si un compte est associé à l&apos;adresse <span className="text-foreground font-medium">{email}</span>, vous recevrez un lien pour réinitialiser votre mot de passe dans quelques instants.
                 </p>
                 <p className="text-text-muted text-xs text-center italic">
                   (Pensez a vérifier votre dossier spam ou courrier indésirable si vous ne voyez pas l&apos;email.)
@@ -142,7 +142,7 @@ export default function ForgotPasswordPage() {
                   </div>
                   <div>
                     <p className="text-sm text-text-secondary">
-                      L&apos;email peut prendre jusqu&apos;à <span className="text-white">5 minutes</span> pour arriver. Si vous ne le recevez toujours pas, verifiez que l&apos;adresse email est correcte.
+                      L&apos;email peut prendre jusqu&apos;à <span className="text-foreground">5 minutes</span> pour arriver. Si vous ne le recevez toujours pas, verifiez que l&apos;adresse email est correcte.
                     </p>
                   </div>
                 </div>
@@ -160,7 +160,7 @@ export default function ForgotPasswordPage() {
                     setEmailSent(false);
                     setEmail("");
                   }}
-                  className="w-full py-3 text-text-secondary hover:text-white transition-colors text-sm"
+                  className="w-full py-3 text-text-secondary hover:text-foreground transition-colors text-sm"
                 >
                   Essayer avec une autre adresse
                 </button>

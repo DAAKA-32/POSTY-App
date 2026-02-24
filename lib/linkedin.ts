@@ -145,6 +145,59 @@ export async function postToLinkedIn(
   }
 }
 
+/**
+ * Publie du contenu avec images sur LinkedIn via FormData
+ *
+ * Les images sont streamées vers LinkedIn puis détruites — aucun stockage permanent.
+ */
+export async function postToLinkedInWithMedia(
+  userId: string,
+  content: string,
+  visibility: "PUBLIC" | "CONNECTIONS" = "PUBLIC",
+  images: File[],
+  postId?: string
+): Promise<LinkedInPostResult> {
+  try {
+    const authHeaders = await getAuthHeaders();
+
+    const formData = new FormData();
+    formData.append("userId", userId);
+    formData.append("content", content);
+    formData.append("visibility", visibility);
+    if (postId) formData.append("postId", postId);
+    images.forEach((image) => formData.append("images", image));
+
+    // Do NOT set Content-Type — browser sets multipart boundary automatically
+    const response = await fetch("/api/linkedin/publish-with-media", {
+      method: "POST",
+      headers: { ...authHeaders },
+      body: formData,
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      return {
+        id: "",
+        success: false,
+        error: result.message || result.error || "Échec de la publication",
+      };
+    }
+
+    return {
+      id: result.shareId || "",
+      success: true,
+      postUrl: result.shareUrl,
+    };
+  } catch (error) {
+    return {
+      id: "",
+      success: false,
+      error: error instanceof Error ? error.message : "Erreur inattendue",
+    };
+  }
+}
+
 // Check if token is expired or about to expire (within 5 minutes)
 export function isTokenExpired(expiresAt: Date): boolean {
   const now = new Date();

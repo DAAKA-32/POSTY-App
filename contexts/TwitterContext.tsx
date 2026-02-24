@@ -135,7 +135,7 @@ export function TwitterProvider({ children }: { children: ReactNode }) {
   // Connect Twitter (redirect to OAuth via API route)
   const connectTwitter = useCallback(() => {
     if (!user) {
-      toast.error("Vous devez etre connecte pour lier votre compte X");
+      toast.error("Vous devez être connecté pour lier votre compte X");
       return;
     }
 
@@ -153,7 +153,7 @@ export function TwitterProvider({ children }: { children: ReactNode }) {
       toast.success("X (Twitter) déconnecté");
     } catch (error) {
       console.error("Error disconnecting Twitter:", error);
-      toast.error("Impossible de deconnecter X (Twitter)");
+      toast.error("Impossible de déconnecter X (Twitter)");
     }
   }, [user]);
 
@@ -161,14 +161,14 @@ export function TwitterProvider({ children }: { children: ReactNode }) {
   const publishToTwitter = useCallback(
     async (content: string, postId?: string): Promise<{ success: boolean; tweetUrl?: string; error?: string }> => {
       if (!user || !connection) {
-        return { success: false, error: "Non connecte a X (Twitter)" };
+        return { success: false, error: "Non connecté à X (Twitter)" };
       }
 
       if (!isTokenValid) {
         // Try to refresh token
         const refreshResult = await refreshTwitterToken(user.uid);
         if (!refreshResult.success) {
-          return { success: false, error: "Session X expiree. Veuillez vous reconnecter." };
+          return { success: false, error: "Session X expirée. Veuillez vous reconnecter." };
         }
       }
 

@@ -19,7 +19,7 @@ const PLANS = getPaidPlans();
 function SubscriptionContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { currentPlan, isTestMode, canStartTrial, isTrialing, trialDaysRemaining } = useSubscription();
   const { t } = useLanguage();
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("yearly");
@@ -329,7 +329,7 @@ function SubscriptionContent() {
         {!currentPlan && (
           <div className="max-w-2xl mx-auto mt-10 flex justify-end px-2">
             <button
-              onClick={() => router.push("/login")}
+              onClick={async () => { await signOut(); router.push("/login"); }}
               className="flex items-center gap-2 text-sm text-text-secondary hover:text-primary transition-colors group"
               aria-label="Retour à la connexion"
             >

@@ -32,6 +32,7 @@ function ProfileContent() {
   const [isSaving, setIsSaving] = useState(false);
   const [postsCount, setPostsCount] = useState(0);
   const [sessionsCount, setSessionsCount] = useState(0);
+  const [statsLoading, setStatsLoading] = useState(true);
 
   // Enable full scrolling on Profile page (mouse wheel, trackpad, touch, keyboard)
   useEffect(() => {
@@ -59,6 +60,8 @@ function ProfileContent() {
           setSessionsCount(sessions.length);
         } catch (error) {
           console.error("Error fetching stats:", error);
+        } finally {
+          setStatsLoading(false);
         }
       }
     }
@@ -112,26 +115,55 @@ function ProfileContent() {
 
     setIsSaving(true);
     try {
-      // Only save advanced fields if user is Pro or Max
-      const isProOrMax = profileEditPlan === "pro" || profileEditPlan === "max";
+      const isMax = profileEditPlan === "max";
+      const isPro = profileEditPlan === "pro";
 
-      await updateUserProfile(user.uid, {
-        displayName: formData.displayName,
-        bio: formData.bio,
-        profile: isProOrMax ? {
+      // Build profile object based on plan permissions:
+      // - Max: all fields from form
+      // - Pro: role, targetAudience, communicationTone from form + keep existing sector, linkedinStyle, objective
+      // - Free: keep all existing profile data unchanged
+      let profileData: {
+        sector: string;
+        role: string;
+        objective: string;
+        linkedinStyle?: string;
+        targetAudience?: string;
+        communicationTone?: string;
+      };
+      if (isMax) {
+        profileData = {
           sector: formData.sector,
           role: formData.role,
           linkedinStyle: formData.linkedinStyle,
           objective: formData.objective,
           targetAudience: formData.targetAudience,
           communicationTone: formData.communicationTone,
-        } : {
-          // Unsubscribed users keep existing profile data (from onboarding)
+        };
+      } else if (isPro) {
+        profileData = {
+          // Pro-editable fields: from form
+          role: formData.role,
+          targetAudience: formData.targetAudience,
+          communicationTone: formData.communicationTone,
+          // Max-only fields: keep existing values
+          sector: userProfile?.profile?.sector || "",
+          linkedinStyle: userProfile?.profile?.linkedinStyle || "",
+          objective: userProfile?.profile?.objective || "",
+        };
+      } else {
+        // Free: keep all existing profile data
+        profileData = {
           sector: userProfile?.profile?.sector || "",
           role: userProfile?.profile?.role || "",
           linkedinStyle: userProfile?.profile?.linkedinStyle || "",
           objective: userProfile?.profile?.objective || "",
-        },
+        };
+      }
+
+      await updateUserProfile(user.uid, {
+        displayName: formData.displayName,
+        bio: formData.bio,
+        profile: profileData,
       });
       await refreshUserProfile();
       setIsEditing(false);
@@ -234,7 +266,7 @@ function ProfileContent() {
                 />
 
                 {/* Stats Row */}
-                <ProfileStatsRow stats={stats} />
+                <ProfileStatsRow stats={stats} isLoading={statsLoading} />
 
                 {/* Profile Info Section */}
                 <ProfileSection

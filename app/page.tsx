@@ -1012,7 +1012,7 @@ function DemoSection() {
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.message || "Erreur lors de la generation");
+        throw new Error(errData.message || "Erreur lors de la génération");
       }
 
       const reader = res.body?.getReader();
@@ -1441,7 +1441,7 @@ function DemoSection() {
                   <p className="text-gray-900 font-semibold text-sm">Posty</p>
                   <p className="text-[11px] text-emerald-600 flex items-center gap-1">
                     <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                    {isStreaming ? "Ecrit..." : "IA disponible"}
+                    {isStreaming ? "Écrit..." : "IA disponible"}
                   </p>
                 </div>
               </div>
@@ -2198,7 +2198,7 @@ function KeyBenefitsSection() {
                   </div>
                   <div>
                     <p className="text-white font-medium">Marie Dubois</p>
-                    <p className="text-white/60 text-sm">Consultante en strategie</p>
+                    <p className="text-white/60 text-sm">Consultante en stratégie</p>
                   </div>
                 </div>
               </div>
@@ -2337,7 +2337,7 @@ function _LegacyKeyBenefitsSection() {
           <button
             onClick={goPrev}
             className="hidden md:flex absolute left-2 lg:left-4 xl:-left-4 top-1/2 -translate-y-1/2 z-40 w-11 h-11 rounded-full bg-white/95 backdrop-blur-sm shadow-lg shadow-gray-200/50 border border-gray-100 items-center justify-center text-gray-500 hover:text-gray-800 hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200"
-            aria-label="Precedent"
+            aria-label="Précédent"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -3781,7 +3781,7 @@ function BeforeAfterSection() {
 // With Progressive Scroll-Based Zoom Effect
 // =============================================================================
 const FOUNDER_LINKEDIN_URL = "https://www.linkedin.com/in/e-nepveu-58a38127a/";
-const CMO_LINKEDIN_URL = "https://www.instagram.com/come27m/";
+const CFO_LINKEDIN_URL = "https://www.instagram.com/come27m/";
 
 function FounderSection() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -3886,21 +3886,21 @@ function FounderSection() {
             <p className="text-gray-500 text-xs md:text-sm">Founder & CEO</p>
           </div>
 
-          {/* CMO */}
+          {/* CFO */}
           <div className="flex flex-col items-center text-center">
             <Link
-              href={CMO_LINKEDIN_URL}
+              href={CFO_LINKEDIN_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="relative mb-3 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F8935D] focus-visible:ring-offset-2"
-              aria-label="Voir le profil LinkedIn de Côme Maubert"
+              aria-label="Voir le profil de Côme Maubert"
             >
               <div className="w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden ring-4 ring-white shadow-xl shadow-gray-200/50">
                 <Image src="/cmo.jpg" alt="Côme Maubert" width={64} height={64} className="w-full h-full object-cover" />
               </div>
             </Link>
             <Link
-              href={CMO_LINKEDIN_URL}
+              href={CFO_LINKEDIN_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="group relative focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F8935D] focus-visible:ring-offset-2 rounded"
@@ -3910,7 +3910,7 @@ function FounderSection() {
                 <span className="absolute left-0 -bottom-0.5 w-full h-[2px] bg-gradient-to-r from-[#F8935D] to-[#F76B54] origin-left scale-x-0 md:group-hover:scale-x-100 transition-transform duration-300 ease-out rounded-full" />
               </span>
             </Link>
-            <p className="text-gray-500 text-xs md:text-sm">Co-founder & CMO</p>
+            <p className="text-gray-500 text-xs md:text-sm">Co-founder & CFO</p>
           </div>
         </motion.div>
       </motion.div>

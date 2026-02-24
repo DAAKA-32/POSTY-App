@@ -600,13 +600,21 @@ export function EnhancedOrganizationJsonLd() {
     },
     description: "Posty est un générateur de posts LinkedIn alimenté par l'intelligence artificielle. Notre mission : démocratiser le contenu professionnel et automatiser le personal branding.",
     foundingDate: "2024",
-    founder: {
-      "@type": "Person",
-      "@id": `${seoConfig.siteUrl}/#founder`,
-      name: "Emilien Nepveu",
-      jobTitle: "Fondateur & CEO",
-      sameAs: ["https://www.linkedin.com/in/e-nepveu-58a38127a/"],
-    },
+    founder: [
+      {
+        "@type": "Person",
+        "@id": `${seoConfig.siteUrl}/#founder-emilien`,
+        name: "Emilien Nepveu",
+        jobTitle: "Co-Fondateur & CEO",
+        sameAs: ["https://www.linkedin.com/in/e-nepveu-58a38127a/"],
+      },
+      {
+        "@type": "Person",
+        "@id": `${seoConfig.siteUrl}/#founder-come`,
+        name: "Côme Maubert",
+        jobTitle: "Co-Fondateur & CFO",
+      },
+    ],
     sameAs: [
       "https://www.linkedin.com/company/posty-app",
     ],
@@ -644,27 +652,48 @@ export function EnhancedOrganizationJsonLd() {
  * About Page Schema - Complete E-E-A-T structured data
  */
 export function AboutPageJsonLd() {
-  const founderSchema = {
-    "@context": "https://schema.org",
-    "@type": "Person",
-    "@id": `${seoConfig.siteUrl}/#founder`,
-    name: "Emilien Nepveu",
-    jobTitle: "Fondateur & CEO",
-    description: "Fondateur de Posty, passionné par l'intersection entre technologie et création de contenu.",
-    url: `${seoConfig.siteUrl}/about`,
-    sameAs: ["https://www.linkedin.com/in/e-nepveu-58a38127a/"],
-    worksFor: {
-      "@type": "Organization",
-      "@id": `${seoConfig.siteUrl}/#organization`,
-      name: "Posty",
+  const foundersSchema = [
+    {
+      "@context": "https://schema.org",
+      "@type": "Person",
+      "@id": `${seoConfig.siteUrl}/#founder-emilien`,
+      name: "Emilien Nepveu",
+      jobTitle: "Co-Fondateur & CEO",
+      description: "Co-fondateur de Posty, responsable de la partie technique, UX/UI et intégration IA.",
+      url: `${seoConfig.siteUrl}/about`,
+      sameAs: ["https://www.linkedin.com/in/e-nepveu-58a38127a/"],
+      worksFor: {
+        "@type": "Organization",
+        "@id": `${seoConfig.siteUrl}/#organization`,
+        name: "Posty",
+      },
+      knowsAbout: [
+        "Intelligence Artificielle",
+        "Growth Marketing",
+        "Product Development",
+        "Personal Branding",
+      ],
     },
-    knowsAbout: [
-      "Intelligence Artificielle",
-      "Growth Marketing",
-      "Product Development",
-      "Personal Branding",
-    ],
-  };
+    {
+      "@context": "https://schema.org",
+      "@type": "Person",
+      "@id": `${seoConfig.siteUrl}/#founder-come`,
+      name: "Côme Maubert",
+      jobTitle: "Co-Fondateur & CFO",
+      description: "Co-fondateur de Posty, en charge du financement et de la stratégie commerciale.",
+      url: `${seoConfig.siteUrl}/about`,
+      worksFor: {
+        "@type": "Organization",
+        "@id": `${seoConfig.siteUrl}/#organization`,
+        name: "Posty",
+      },
+      knowsAbout: [
+        "Financement",
+        "Stratégie Commerciale",
+        "Publicité & Acquisition",
+      ],
+    },
+  ];
 
   const organizationSchema = {
     "@context": "https://schema.org",
@@ -675,9 +704,10 @@ export function AboutPageJsonLd() {
     logo: `${seoConfig.siteUrl}/favicon-512.png`,
     description: "Posty est un générateur de posts LinkedIn alimenté par l'intelligence artificielle. Notre mission : démocratiser le contenu professionnel et automatiser le personal branding pour tous.",
     foundingDate: "2024",
-    founder: {
-      "@id": `${seoConfig.siteUrl}/#founder`,
-    },
+    founder: [
+      { "@id": `${seoConfig.siteUrl}/#founder-emilien` },
+      { "@id": `${seoConfig.siteUrl}/#founder-come` },
+    ],
     slogan: "Démocratiser le contenu professionnel",
     numberOfEmployees: {
       "@type": "QuantitativeValue",
@@ -717,12 +747,15 @@ export function AboutPageJsonLd() {
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(founderSchema),
-        }}
-      />
+      {foundersSchema.map((schema, i) => (
+        <script
+          key={`founder-${i}`}
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(schema),
+          }}
+        />
+      ))}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{

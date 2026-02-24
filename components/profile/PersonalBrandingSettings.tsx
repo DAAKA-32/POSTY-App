@@ -228,8 +228,8 @@ export default function PersonalBrandingSettings({
             </h4>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
               {isPro
-                ? "Uploadez une photo personnalisee"
-                : "Passez a Pro pour uploader une photo personnalisee"}
+                ? "Uploadez une photo personnalisée"
+                : "Passez à Pro pour uploader une photo personnalisée"}
             </p>
             {branding.customAvatarURL && (
               <button
@@ -239,7 +239,7 @@ export default function PersonalBrandingSettings({
                 }}
                 className="text-xs text-red-500 hover:text-red-600"
               >
-                Supprimer la photo personnalisee
+                Supprimer la photo personnalisée
               </button>
             )}
           </div>
@@ -461,7 +461,7 @@ export default function PersonalBrandingSettings({
       <Card className="p-5">
         <h4 className="font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
           <Eye className="w-4 h-4 text-gray-400" />
-          Visibilite du profil
+          Visibilité du profil
         </h4>
 
         <div className="space-y-3">
@@ -549,10 +549,10 @@ export default function PersonalBrandingSettings({
             <Crown className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-sm font-medium text-primary-dark dark:text-primary">
-                Debloquez le Personal Branding complet
+                Débloquez le Personal Branding complet
               </p>
               <p className="text-xs text-primary/80 dark:text-primary/80 mt-1">
-                Passez a Pro pour personnaliser votre avatar, couleurs, gradient,
+                Passez à Pro pour personnaliser votre avatar, couleurs, gradient,
                 liens sociaux et plus encore.
               </p>
             </div>

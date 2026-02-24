@@ -53,10 +53,12 @@ function LockedFieldWrapper({
   children,
   isLocked,
   label,
+  requiredPlan = "Pro",
 }: {
   children: React.ReactNode;
   isLocked: boolean;
   label: string;
+  requiredPlan?: "Pro" | "Max";
 }) {
   if (!isLocked) {
     return <>{children}</>;
@@ -68,7 +70,7 @@ function LockedFieldWrapper({
       <div className="absolute inset-0 z-10 bg-gray-100/80 dark:bg-dark-bg/60 backdrop-blur-[1px] rounded-xl flex flex-col items-center justify-center gap-2 cursor-not-allowed">
         <div className="flex items-center gap-2 text-gray-500 dark:text-text-muted">
           <LockIcon className="w-4 h-4" />
-          <span className="text-sm font-medium">Disponible avec le plan Pro</span>
+          <span className="text-sm font-medium">Disponible avec le plan {requiredPlan}</span>
         </div>
       </div>
       {/* Disabled field underneath */}
@@ -88,8 +90,10 @@ export default function ProfileEditForm({
 }: ProfileEditFormProps) {
   const [formData, setFormData] = useState<ProfileFormData>(initialData);
 
-  // Check if user has access to advanced profile fields
-  const canEditAdvancedFields = currentPlan === "pro" || currentPlan === "max";
+  // Plan-based field access control
+  const isMaxPlan = currentPlan === "max";
+  const isProPlan = currentPlan === "pro";
+  const canEditAdvancedFields = isProPlan || isMaxPlan;
   const isUnsubscribed = !currentPlan;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -110,6 +114,7 @@ export default function ProfileEditForm({
     placeholder = "Sélectionnez...",
     locked = false,
     showProBadge = false,
+    requiredPlan = "Pro",
   }: {
     label: string;
     value: string;
@@ -118,13 +123,14 @@ export default function ProfileEditForm({
     placeholder?: string;
     locked?: boolean;
     showProBadge?: boolean;
+    requiredPlan?: "Pro" | "Max";
   }) => (
     <div>
       <label className="flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-text-secondary mb-2">
         {label}
         {showProBadge && <ProBadge />}
       </label>
-      <LockedFieldWrapper isLocked={locked} label={label}>
+      <LockedFieldWrapper isLocked={locked} label={label} requiredPlan={requiredPlan}>
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -285,8 +291,8 @@ export default function ProfileEditForm({
             </motion.div>
           )}
 
-          {/* Role - Locked for unsubscribed users */}
-          <LockedFieldWrapper isLocked={isUnsubscribed} label="Rôle / Métier">
+          {/* Role - Pro & Max only */}
+          <LockedFieldWrapper isLocked={isUnsubscribed} label="Rôle / Métier" requiredPlan="Pro">
             <Input
               label="Rôle / Métier"
               value={formData.role}
@@ -296,34 +302,7 @@ export default function ProfileEditForm({
             />
           </LockedFieldWrapper>
 
-          {/* Sector - Locked for unsubscribed users */}
-          <SelectField
-            label="Secteur d'activité"
-            value={formData.sector}
-            onChange={(value) => updateField("sector", value)}
-            options={SECTORS}
-            locked={isUnsubscribed}
-          />
-
-          {/* LinkedIn Style - Locked for unsubscribed users */}
-          <SelectField
-            label="Style LinkedIn préféré"
-            value={formData.linkedinStyle}
-            onChange={(value) => updateField("linkedinStyle", value)}
-            options={LINKEDIN_STYLES}
-            locked={isUnsubscribed}
-          />
-
-          {/* Objective - Locked for unsubscribed users */}
-          <SelectField
-            label="Objectif principal"
-            value={formData.objective}
-            onChange={(value) => updateField("objective", value)}
-            options={OBJECTIVES}
-            locked={isUnsubscribed}
-          />
-
-          {/* Target Audience - Locked for unsubscribed users */}
+          {/* Target Audience - Pro & Max only */}
           <SelectField
             label="Audience ciblée"
             value={formData.targetAudience}
@@ -331,10 +310,10 @@ export default function ProfileEditForm({
             options={TARGET_AUDIENCES}
             placeholder="À qui parlez-vous ?"
             locked={isUnsubscribed}
-            showProBadge={canEditAdvancedFields}
+            requiredPlan="Pro"
           />
 
-          {/* Communication Tone - Locked for unsubscribed users */}
+          {/* Communication Tone - Pro & Max only */}
           <SelectField
             label="Ton de communication"
             value={formData.communicationTone}
@@ -342,7 +321,37 @@ export default function ProfileEditForm({
             options={COMMUNICATION_TONES}
             placeholder="Comment souhaitez-vous communiquer ?"
             locked={isUnsubscribed}
-            showProBadge={canEditAdvancedFields}
+            requiredPlan="Pro"
+          />
+
+          {/* Sector - Max only */}
+          <SelectField
+            label="Secteur d'activité"
+            value={formData.sector}
+            onChange={(value) => updateField("sector", value)}
+            options={SECTORS}
+            locked={!isMaxPlan}
+            requiredPlan="Max"
+          />
+
+          {/* LinkedIn Style - Max only */}
+          <SelectField
+            label="Style LinkedIn préféré"
+            value={formData.linkedinStyle}
+            onChange={(value) => updateField("linkedinStyle", value)}
+            options={LINKEDIN_STYLES}
+            locked={!isMaxPlan}
+            requiredPlan="Max"
+          />
+
+          {/* Objective - Max only */}
+          <SelectField
+            label="Objectif principal"
+            value={formData.objective}
+            onChange={(value) => updateField("objective", value)}
+            options={OBJECTIVES}
+            locked={!isMaxPlan}
+            requiredPlan="Max"
           />
         </div>
 

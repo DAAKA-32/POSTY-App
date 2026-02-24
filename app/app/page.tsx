@@ -25,7 +25,6 @@ import MaxModeSelector from "@/components/chat/MaxModeSelector";
 import InlineUpgradeBanner from "@/components/chat/InlineUpgradeBanner";
 import { getPlanFeatures } from "@/lib/plan-features";
 import NewResponseIndicator from "@/components/chat/NewResponseIndicator";
-import { PostInsights } from "@/components/post";
 import PublishToLinkedInModal from "@/components/linkedin/PublishToLinkedInModal";
 import ScheduleModal from "@/components/schedule/ScheduleModal";
 import { AnimatedScaleFade } from "@/components/animations/AnimatedPageWrapper";
@@ -91,18 +90,6 @@ const suggestionButtonVariants = {
       ease: smoothEase,
     },
   }),
-};
-
-const newConversationVariants = {
-  hidden: { opacity: 0, y: 10 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.4,
-      ease: smoothEase,
-    },
-  },
 };
 
 // Dynamic placeholder examples that rotate
@@ -306,7 +293,11 @@ function AppContent() {
   }, [isFocused, inputValue.length]);
 
   // Force stop recording helper - cleans up all state
+  // IMPORTANT: Set ref to false BEFORE abort() so the onend handler doesn't auto-restart
   const forceStopRecording = useCallback(() => {
+    isRecordingRef.current = false;
+    setIsRecording(false);
+    setIsProcessingVoice(false);
     if (recognitionRef.current) {
       try {
         recognitionRef.current.abort();
@@ -314,9 +305,6 @@ function AppContent() {
         // Ignore errors
       }
     }
-    isRecordingRef.current = false;
-    setIsRecording(false);
-    setIsProcessingVoice(false);
   }, []);
 
   // Initialize speech recognition
@@ -621,6 +609,15 @@ function AppContent() {
                     const planFeatures = getPlanFeatures(currentPlan);
                     const isDualMode = planFeatures.responseMode === "dual" || planLimits.hasDualResponseMode;
 
+                    // Find the last AI message index (for action visibility)
+                    let lastAIIndex = -1;
+                    for (let j = messages.length - 1; j >= 0; j--) {
+                      if (messages[j].type === "ai") {
+                        lastAIIndex = j;
+                        break;
+                      }
+                    }
+
                     // Group messages: user messages standalone, AI responses based on plan
                     const elements: React.ReactNode[] = [];
                     let i = 0;
@@ -686,6 +683,7 @@ function AppContent() {
                                 userPlan={currentPlan}
                                 onPublishToLinkedIn={handlePublishToLinkedIn}
                                 onSchedule={handleSchedulePost}
+                                isLastMessage={i === lastAIIndex || i + 1 === lastAIIndex}
                               />
                             </div>
                           );
@@ -729,6 +727,7 @@ function AppContent() {
                                 onPublishToLinkedIn={handlePublishToLinkedIn}
                                 onSchedule={handleSchedulePost}
                                 showVariantBadge={planFeatures.responseMode === "single-choice"}
+                                isLastMessage={i === lastAIIndex}
                               />
                             </motion.div>
                           );
@@ -748,54 +747,6 @@ function AppContent() {
                   {isLoading && !isStreaming && <TypingIndicator />}
                 </AnimatePresence>
 
-                {/* AI-generated insights (all plans) */}
-                {insights && !isLoading && !isStreaming && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: 0.2 }}
-                    className="mt-4"
-                  >
-                    <PostInsights insights={insights} />
-                  </motion.div>
-                )}
-
-                {/* New conversation button - Premium version */}
-                {!isLoading && !isStreaming && (
-                  <motion.div
-                    initial="hidden"
-                    animate="visible"
-                    variants={newConversationVariants}
-                    className="flex justify-center pt-6"
-                  >
-                    <motion.button
-                      onClick={handleNewConversation}
-                      whileHover={{ scale: 1.02, y: -2 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="
-                        group relative flex items-center gap-2.5 px-6 py-3.5
-                        bg-white/80 dark:bg-dark-elevated
-                        hover:bg-[#F8935D]/5 dark:hover:bg-dark-hover
-                        border border-[#F8935D]/15 dark:border-dark-border
-                        hover:border-primary/40 dark:hover:border-primary/40
-                        text-text-primary font-medium rounded-2xl
-                        transition-all duration-300
-                        shadow-sm hover:shadow-md hover:shadow-primary/10
-                        haptic-feedback
-                      "
-                    >
-                      {/* Gradient icon background on hover */}
-                      <span className="relative flex items-center justify-center w-8 h-8 rounded-xl bg-[#F8935D]/10 dark:bg-dark-hover group-hover:bg-gradient-to-br group-hover:from-primary/20 group-hover:to-accent/20 transition-all duration-300">
-                        <svg className="w-4 h-4 text-text-secondary group-hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                        </svg>
-                      </span>
-                      <span className="group-hover:text-primary transition-colors">
-                        Nouvelle conversation
-                      </span>
-                    </motion.button>
-                  </motion.div>
-                )}
               </div>
             )}
 
@@ -964,7 +915,10 @@ function AppContent() {
               {/* UniversalChatInput - Unified premium input component */}
               <UniversalChatInput
                 ref={chatInputRef}
-                onSubmit={handleGenerate}
+                onSubmit={async (message, file) => {
+                  if (isRecordingRef.current) forceStopRecording();
+                  await handleGenerate(message, file);
+                }}
                 placeholder={PLACEHOLDER_EXAMPLES}
                 disabled={!canSendMessage}
                 isLoading={isLoading || isStreaming}

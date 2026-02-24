@@ -171,6 +171,9 @@ export interface PlanLimits {
   hasDualResponseMode: boolean; // Storytelling + Business dual responses
   dualResponsesPerWeek: number; // -1 = unlimited, 0 = disabled
 
+  // URL Analysis
+  hasUrlAnalysis: boolean; // Analyze URL content for post generation (Pro+)
+
   // Multi-Platform Publishing
   allowedPlatforms: Platform[];
   maxPlatformConnections: number; // Maximum number of platforms that can be connected
@@ -231,6 +234,8 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
       hasEarlyAccess: false,
       hasDualResponseMode: true, // Limited dual mode (3/week)
       dualResponsesPerWeek: 3, // 3 dual generations per week
+      // URL Analysis
+      hasUrlAnalysis: true,
       // Multi-Platform: LinkedIn + Reddit
       allowedPlatforms: ["linkedin", "reddit"],
       maxPlatformConnections: 2,
@@ -269,6 +274,8 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
       hasEarlyAccess: true,
       hasDualResponseMode: true, // Storytelling + Business simultanés
       dualResponsesPerWeek: -1, // Unlimited
+      // URL Analysis
+      hasUrlAnalysis: true,
       // Multi-Platform: All 4 platforms + simultaneous publishing
       allowedPlatforms: ["linkedin", "reddit", "threads", "facebook"],
       maxPlatformConnections: 4, // All platforms
@@ -331,6 +338,7 @@ export function planHasFeature(
     | "hasEarlyAccess"
     | "hasDualResponseMode"
     | "canPublishSimultaneously"
+    | "hasUrlAnalysis"
   >
 ): boolean {
   return getPlanLimits(plan)[feature];
@@ -400,6 +408,7 @@ export function getMinimumPlanForFeature(
     | "hasEarlyAccess"
     | "hasDualResponseMode"
     | "canPublishSimultaneously"
+    | "hasUrlAnalysis"
   >
 ): PlanType {
   const plans: PlanType[] = ["pro", "max"];

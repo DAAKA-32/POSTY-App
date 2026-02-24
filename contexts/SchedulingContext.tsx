@@ -82,15 +82,14 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
         return { success: false, error: "Vous devez etre connecte" };
       }
 
-      // Validate subscription plan - prevent bypassing via API
-      // Use currentPlan directly to ensure we have the latest value (including test mode)
-      const isPaidPlan = currentPlan === "pro" || currentPlan === "max";
-      if (!isPaidPlan) {
-        console.log("[SchedulingContext] Access denied - currentPlan:", currentPlan, "isTestMode:", isTestMode);
-        toast.error("La programmation est reservee aux plans Pro et Max");
+      // Validate subscription — use canSchedulePosts() which handles plan resolution correctly
+      const schedulePermission = canSchedulePosts();
+      if (!schedulePermission.allowed) {
+        console.log("[SchedulingContext] Access denied - currentPlan:", currentPlan, "reason:", schedulePermission.reason);
+        toast.error(schedulePermission.reason || "Votre abonnement n'est pas actif. Merci de verifier votre paiement.");
         return {
           success: false,
-          error: "La programmation de posts necessite un abonnement Pro ou Max",
+          error: schedulePermission.reason || "Abonnement inactif",
         };
       }
 

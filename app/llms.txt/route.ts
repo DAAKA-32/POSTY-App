@@ -63,6 +63,12 @@ POSTY helps professionals, entrepreneurs, and content creators build their perso
 - **Languages**: French (default), English (US)
 - **Data Privacy**: GDPR compliant, data stored in EU
 
+## Founders
+
+POSTY was co-founded by:
+- **Emilien Nepveu** — Co-Founder & CEO. Responsible for all technical development, UX/UI design, and AI integration.
+- **Côme Maubert** — Co-Founder & CFO. Responsible for financing, advertising strategy, and business development.
+
 ## Contact
 
 - Support: postygroup@gmail.com

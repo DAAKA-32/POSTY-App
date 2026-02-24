@@ -239,13 +239,14 @@ function ConversationContent() {
   const toggleRecording = useCallback(() => {
     if (!recognitionRef.current) return;
     if (isRecordingRef.current) {
+      // Set ref to false BEFORE abort() so the onend handler doesn't auto-restart
+      isRecordingRef.current = false;
+      setIsRecording(false);
       try {
         recognitionRef.current.abort();
       } catch {
         // Ignore errors
       }
-      isRecordingRef.current = false;
-      setIsRecording(false);
     } else {
       try {
         recognitionRef.current.start();
@@ -263,11 +264,11 @@ function ConversationContent() {
   // Handle submit
   const handleSubmit = useCallback(async () => {
     if (!inputValue.trim() || isLoading) return;
-    // Stop recording if active
+    // Stop recording if active — set ref BEFORE abort() to prevent onend auto-restart
     if (isRecordingRef.current && recognitionRef.current) {
-      try { recognitionRef.current.abort(); } catch { /* ignore */ }
       isRecordingRef.current = false;
       setIsRecording(false);
+      try { recognitionRef.current.abort(); } catch { /* ignore */ }
     }
 
     const prompt = inputValue.trim();
@@ -357,6 +358,15 @@ function ConversationContent() {
                     const planFeatures = getPlanFeatures(currentPlan);
                     const isDualMode = planFeatures.responseMode === "dual" || planLimits.hasDualResponseMode;
 
+                    // Find the last AI message index (for action visibility)
+                    let lastAIIndex = -1;
+                    for (let j = messages.length - 1; j >= 0; j--) {
+                      if (messages[j].type === "ai") {
+                        lastAIIndex = j;
+                        break;
+                      }
+                    }
+
                     const elements: React.ReactNode[] = [];
                     let i = 0;
                     let pairIndex = 0;
@@ -425,6 +435,7 @@ function ConversationContent() {
                                 userPlan={currentPlan}
                                 onPublishToLinkedIn={handlePublishToLinkedIn}
                                 onSchedule={handleSchedulePost}
+                                isLastMessage={i === lastAIIndex || i + 1 === lastAIIndex}
                               />
                             </div>
                           );
@@ -466,6 +477,7 @@ function ConversationContent() {
                                 onPublishToLinkedIn={handlePublishToLinkedIn}
                                 onSchedule={handleSchedulePost}
                                 showVariantBadge={planFeatures.responseMode === "single-choice"}
+                                isLastMessage={i === lastAIIndex}
                               />
                             </motion.div>
                           );
@@ -533,11 +545,11 @@ function ConversationContent() {
             <UniversalChatInput
               ref={chatInputRef}
               onSubmit={async (message) => {
-                // Stop recording if active
+                // Stop recording if active — set ref BEFORE abort() to prevent onend auto-restart
                 if (isRecordingRef.current && recognitionRef.current) {
-                  try { recognitionRef.current.abort(); } catch { /* ignore */ }
                   isRecordingRef.current = false;
                   setIsRecording(false);
+                  try { recognitionRef.current.abort(); } catch { /* ignore */ }
                 }
                 await generate(message);
               }}

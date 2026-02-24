@@ -175,7 +175,7 @@ export async function postToTwitter(
       return {
         id: "",
         success: false,
-        error: result.message || result.error || "Echec de la publication",
+        error: result.message || result.error || "Échec de la publication",
       };
     }
 
@@ -217,7 +217,7 @@ export async function refreshTwitterToken(
     if (!response.ok) {
       return {
         success: false,
-        error: result.message || result.error || "Echec du rafraichissement",
+        error: result.message || result.error || "Échec du rafraîchissement",
       };
     }
 

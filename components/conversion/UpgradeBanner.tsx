@@ -203,7 +203,7 @@ export function getSuccessMessage(type: "generated" | "copied" | "published" | "
       subtitle: null,
     },
     published: {
-      title: t.conversion?.postPublished || "Publié sur LinkedIn",
+      title: t.conversion?.postPublished || "Publié avec succès",
       subtitle: null,
     },
     saved: {

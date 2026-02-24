@@ -28,7 +28,7 @@ export default function ResponseModeChart({ data }: ResponseModeChartProps) {
       text: "text-primary",
       stroke: "#F8935D",
     },
-    "Double Reponse": {
+    "Double Réponse": {
       bg: "bg-violet-500/10",
       bar: "bg-violet-500",
       border: "border-violet-500/20",
@@ -58,8 +58,8 @@ export default function ResponseModeChart({ data }: ResponseModeChartProps) {
     <div className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-4 sm:p-6 hover:border-gray-300 dark:hover:border-dark-border-hover transition-colors duration-200">
       {/* Header */}
       <div className="mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Mode de reponse</h3>
-        <p className="text-gray-500 dark:text-text-muted text-sm">Frequence d&apos;utilisation par mode</p>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Mode de réponse</h3>
+        <p className="text-gray-500 dark:text-text-muted text-sm">Fréquence d&apos;utilisation par mode</p>
       </div>
 
       {/* Distribution bars */}
@@ -102,7 +102,7 @@ export default function ResponseModeChart({ data }: ResponseModeChartProps) {
             </svg>
           </div>
           <p className="text-gray-500 dark:text-text-muted text-sm">
-            Aucun post genere pour le moment
+            Aucun post généré pour le moment
           </p>
         </div>
       )}

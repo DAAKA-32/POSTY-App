@@ -13,22 +13,31 @@ interface FounderBadgeProps {
 }
 
 // =============================================================================
-// FOUNDER DATA - E-E-A-T: Authoritativeness
+// FOUNDERS DATA - E-E-A-T: Authoritativeness
 // =============================================================================
-const founderData = {
-  name: "Emilien Nepveu",
-  role: "Fondateur & CEO",
-  linkedIn: "https://www.linkedin.com/in/e-nepveu-58a38127a/",
-  initials: "EN",
-  tagline: "Passionné par l'IA et le personal branding",
-};
+const foundersData = [
+  {
+    name: "Emilien Nepveu",
+    role: "Co-Fondateur & CEO",
+    linkedIn: "https://www.linkedin.com/in/e-nepveu-58a38127a/",
+    initials: "EN",
+    tagline: "Passionné par l'IA et le personal branding",
+  },
+  {
+    name: "Côme Maubert",
+    role: "Co-Fondateur & CFO",
+    linkedIn: null as string | null,
+    initials: "CM",
+    tagline: "Financement et stratégie commerciale",
+  },
+];
 
 // =============================================================================
 // COMPONENTS
 // =============================================================================
 
 /**
- * Founder Badge - Display founder info for E-E-A-T authority
+ * Founder Badge - Display founders info for E-E-A-T authority
  */
 export function FounderBadge({
   variant = "compact",
@@ -41,51 +50,70 @@ export function FounderBadge({
         <span className="text-sm text-gray-600 dark:text-gray-400">
           Créé par
         </span>
-        <a
-          href={founderData.linkedIn}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-900 dark:text-white
-            hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-        >
-          <span className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600
-            flex items-center justify-center text-[10px] font-bold text-white">
-            {founderData.initials}
+        {foundersData.map((founder, i) => (
+          <span key={founder.initials} className="inline-flex items-center gap-1.5">
+            {i > 0 && <span className="text-sm text-gray-400 dark:text-gray-500">&</span>}
+            {founder.linkedIn ? (
+              <a
+                href={founder.linkedIn}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-900 dark:text-white
+                  hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+              >
+                <span className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600
+                  flex items-center justify-center text-[10px] font-bold text-white">
+                  {founder.initials}
+                </span>
+                {founder.name}
+                {showLinkedIn && <Linkedin className="w-3.5 h-3.5 text-[#0A66C2]" />}
+              </a>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-900 dark:text-white">
+                <span className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600
+                  flex items-center justify-center text-[10px] font-bold text-white">
+                  {founder.initials}
+                </span>
+                {founder.name}
+              </span>
+            )}
           </span>
-          {founderData.name}
-          {showLinkedIn && <Linkedin className="w-3.5 h-3.5 text-[#0A66C2]" />}
-        </a>
+        ))}
       </div>
     );
   }
 
   if (variant === "compact") {
     return (
-      <div className={`flex items-center gap-3 ${className}`}>
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600
-          flex items-center justify-center">
-          <span className="text-sm font-bold text-white">{founderData.initials}</span>
-        </div>
-        <div>
-          <p className="font-medium text-gray-900 dark:text-white text-sm">
-            {founderData.name}
-          </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            {founderData.role}
-          </p>
-        </div>
-        {showLinkedIn && (
-          <a
-            href={founderData.linkedIn}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="ml-auto p-2 rounded-lg bg-[#0A66C2]/10 hover:bg-[#0A66C2]/20
-              text-[#0A66C2] transition-colors"
-            aria-label={`Voir le profil LinkedIn de ${founderData.name}`}
-          >
-            <Linkedin className="w-4 h-4" />
-          </a>
-        )}
+      <div className={`flex items-center gap-4 ${className}`}>
+        {foundersData.map((founder) => (
+          <div key={founder.initials} className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600
+              flex items-center justify-center">
+              <span className="text-sm font-bold text-white">{founder.initials}</span>
+            </div>
+            <div>
+              <p className="font-medium text-gray-900 dark:text-white text-sm">
+                {founder.name}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {founder.role}
+              </p>
+            </div>
+            {showLinkedIn && founder.linkedIn && (
+              <a
+                href={founder.linkedIn}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 rounded-lg bg-[#0A66C2]/10 hover:bg-[#0A66C2]/20
+                  text-[#0A66C2] transition-colors"
+                aria-label={`Voir le profil LinkedIn de ${founder.name}`}
+              >
+                <Linkedin className="w-4 h-4" />
+              </a>
+            )}
+          </div>
+        ))}
       </div>
     );
   }
@@ -94,41 +122,45 @@ export function FounderBadge({
   return (
     <div className={`bg-white dark:bg-white/5 rounded-2xl p-6 border border-gray-200
       dark:border-white/10 ${className}`}>
-      <div className="flex items-center gap-4">
-        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600
-          flex items-center justify-center flex-shrink-0">
-          <span className="text-xl font-bold text-white">{founderData.initials}</span>
-        </div>
-        <div className="flex-1">
-          <h4 className="font-bold text-gray-900 dark:text-white">
-            {founderData.name}
-          </h4>
-          <p className="text-blue-600 dark:text-blue-400 text-sm font-medium">
-            {founderData.role}
-          </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            {founderData.tagline}
-          </p>
-        </div>
+      <div className="space-y-4">
+        {foundersData.map((founder) => (
+          <div key={founder.initials} className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600
+              flex items-center justify-center flex-shrink-0">
+              <span className="text-lg font-bold text-white">{founder.initials}</span>
+            </div>
+            <div className="flex-1">
+              <h4 className="font-bold text-gray-900 dark:text-white">
+                {founder.name}
+              </h4>
+              <p className="text-blue-600 dark:text-blue-400 text-sm font-medium">
+                {founder.role}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {founder.tagline}
+              </p>
+            </div>
+            {showLinkedIn && founder.linkedIn && (
+              <a
+                href={founder.linkedIn}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 rounded-lg bg-[#0A66C2]/10 hover:bg-[#0A66C2]/20
+                  text-[#0A66C2] transition-colors flex-shrink-0"
+                aria-label={`Voir le profil LinkedIn de ${founder.name}`}
+              >
+                <Linkedin className="w-5 h-5" />
+              </a>
+            )}
+          </div>
+        ))}
       </div>
-      {showLinkedIn && (
-        <a
-          href={founderData.linkedIn}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-4 flex items-center justify-center gap-2 w-full py-2.5 rounded-xl
-            bg-[#0A66C2] hover:bg-[#004182] text-white text-sm font-medium transition-colors"
-        >
-          <Linkedin className="w-4 h-4" />
-          Voir sur LinkedIn
-        </a>
-      )}
     </div>
   );
 }
 
 /**
- * About Link - Link to About page with founder info
+ * About Link - Link to About page with founders info
  */
 export function AboutLink({ className = "" }: { className?: string }) {
   return (
@@ -137,14 +169,21 @@ export function AboutLink({ className = "" }: { className?: string }) {
       className={`inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400
         hover:text-gray-900 dark:hover:text-white transition-colors ${className}`}
     >
-      <span className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600
-        flex items-center justify-center text-[10px] font-bold text-white">
-        {founderData.initials}
-      </span>
+      <div className="flex -space-x-1">
+        {foundersData.map((f) => (
+          <span
+            key={f.initials}
+            className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600
+              flex items-center justify-center text-[10px] font-bold text-white ring-1 ring-white dark:ring-gray-900"
+          >
+            {f.initials}
+          </span>
+        ))}
+      </div>
       <span>
         Créé par{" "}
         <span className="font-medium text-gray-900 dark:text-white">
-          {founderData.name}
+          {foundersData.map((f) => f.name).join(" & ")}
         </span>
       </span>
     </Link>

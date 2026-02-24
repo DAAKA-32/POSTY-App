@@ -987,28 +987,31 @@ export default function MainLayout({
                               animate="visible"
                               onMouseEnter={() => setHoveredPostId(post.id)}
                               onMouseLeave={() => setHoveredPostId(null)}
-                              className={`
-                                relative flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm
-                                transition-all duration-200 ease-out group cursor-pointer transform-gpu
-                                active:scale-[0.98] active:transition-none
-                                ${
-                                  isActive
-                                    ? "bg-primary/10 dark:bg-primary/10 text-text-primary border-l-2 border-primary pl-[10px] shadow-sm"
-                                    : "text-gray-900 dark:text-gray-200 hover:text-gray-950 dark:hover:text-white hover:bg-[#F8935D]/10 dark:hover:bg-dark-hover hover:border-l-2 hover:border-primary/40 hover:pl-[10px]"
-                                }
-                              `}
+                              className="relative group"
                             >
-                              {/* Pin indicator - Premium violet color */}
-                              {post.isPinned && (
-                                <svg
-                                  className="w-3.5 h-3.5 shrink-0 text-primary dark:text-primary group-hover:scale-110 transition-transform duration-200"
-                                  fill="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path d="M16 4a1 1 0 0 1 1 1v3.586l1.707 1.707a1 1 0 0 1 .293.707v2a1 1 0 0 1-1 1h-4v6a1 1 0 0 1-2 0v-6H8a1 1 0 0 1-1-1v-2a1 1 0 0 1 .293-.707L9 8.586V5a1 1 0 0 1 1-1h6z"/>
-                                </svg>
-                              )}
-                              <Link href={`/app/c/${post.id}`} className="flex items-center gap-2 flex-1 min-w-0">
+                              <Link
+                                href={`/app/c/${post.id}`}
+                                className={`
+                                  flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm w-full
+                                  transition-all duration-200 ease-out cursor-pointer transform-gpu
+                                  active:scale-[0.98] active:transition-none
+                                  ${
+                                    isActive
+                                      ? "bg-primary/10 dark:bg-primary/10 text-text-primary border-l-2 border-primary pl-[10px] shadow-sm"
+                                      : "text-gray-900 dark:text-gray-200 hover:text-gray-950 dark:hover:text-white hover:bg-[#F8935D]/10 dark:hover:bg-dark-hover hover:border-l-2 hover:border-primary/40 hover:pl-[10px]"
+                                  }
+                                `}
+                              >
+                                {/* Pin indicator */}
+                                {post.isPinned && (
+                                  <svg
+                                    className="w-3.5 h-3.5 shrink-0 text-primary dark:text-primary group-hover:scale-110 transition-transform duration-200"
+                                    fill="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path d="M16 4a1 1 0 0 1 1 1v3.586l1.707 1.707a1 1 0 0 1 .293.707v2a1 1 0 0 1-1 1h-4v6a1 1 0 0 1-2 0v-6H8a1 1 0 0 1-1-1v-2a1 1 0 0 1 .293-.707L9 8.586V5a1 1 0 0 1 1-1h6z"/>
+                                  </svg>
+                                )}
                                 {!post.isPinned && (
                                   <svg
                                     className={`w-4 h-4 shrink-0 group-hover:scale-110 transition-all duration-200 ${
@@ -1032,7 +1035,7 @@ export default function MainLayout({
                                   {(post.title || post.prompt).slice(0, 25)}{(post.title || post.prompt).length > 25 ? "..." : ""}
                                 </span>
                               </Link>
-                              <div className="shrink-0">
+                              <div className="absolute right-1 top-1/2 -translate-y-1/2 shrink-0 z-10">
                                 <ConversationOptionsMenu post={post} onPin={handlePin} onRename={handleRename} onDelete={handleDeleteClick} isVisible={hoveredPostId === post.id} />
                               </div>
                             </motion.div>

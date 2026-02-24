@@ -131,11 +131,11 @@ function ProfileRecapScreen({
   const fields = [
     { label: "Profil", value: data.profileType, icon: "briefcase" },
     { label: "Secteur", value: data.sector, icon: "building" },
-    { label: "Role", value: data.role, icon: "user" },
+    { label: "Rôle", value: data.role, icon: "user" },
     { label: "Objectif", value: data.objective, icon: "target" },
     { label: "Audience", value: data.targetAudience, icon: "users" },
     { label: "Ton", value: data.communicationTone, icon: "mic" },
-    { label: "Frequence", value: data.publishingFrequency, icon: "calendar" },
+    { label: "Fréquence", value: data.publishingFrequency, icon: "calendar" },
   ];
 
   const iconMap: Record<string, React.ReactNode> = {

@@ -6,6 +6,8 @@ import { ScheduledPost, ScheduleStatus } from "@/types";
 import Button from "@/components/ui/Button";
 import { ConfirmModal } from "@/components/ui/Modal";
 import { triggerHaptic } from "@/hooks/useHapticFeedback";
+import { LinkedInIcon } from "@/components/linkedin/LinkedInConnectButton";
+import { RedditIcon, ThreadsIcon, FacebookIcon } from "@/components/publish/PlatformSelector";
 
 interface ScheduledPostCardProps {
   post: ScheduledPost;
@@ -13,6 +15,14 @@ interface ScheduledPostCardProps {
   onReschedule: (post: ScheduledPost) => void;
   onEdit: (post: ScheduledPost) => void;
 }
+
+// Platform display labels
+const PLATFORM_LABELS: Record<string, string> = {
+  linkedin: "LinkedIn",
+  facebook: "Facebook",
+  threads: "Threads",
+  reddit: "Reddit",
+};
 
 // Days and months in French
 const DAYS_FR = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
@@ -48,6 +58,44 @@ const STATUS_CONFIG: Record<ScheduleStatus, {
     color: "text-gray-500 dark:text-text-muted",
     bgColor: "bg-gray-100 dark:bg-dark-hover",
     borderColor: "border-gray-200 dark:border-dark-border",
+  },
+};
+
+// Platform badge config for all supported platforms
+const PLATFORM_BADGE_CONFIG: Record<string, {
+  icon: React.ReactNode;
+  name: string;
+  textColor: string;
+  bgColor: string;
+  borderColor: string;
+}> = {
+  linkedin: {
+    icon: <LinkedInIcon className="w-3.5 h-3.5" />,
+    name: "LinkedIn",
+    textColor: "text-[#0A66C2] dark:text-[#4B9FE1]",
+    bgColor: "bg-[#0A66C2]/10 dark:bg-[#0A66C2]/20",
+    borderColor: "border-[#0A66C2]/10 dark:border-[#0A66C2]/25",
+  },
+  facebook: {
+    icon: <FacebookIcon className="w-3.5 h-3.5" />,
+    name: "Facebook",
+    textColor: "text-[#1877F2] dark:text-[#5B9BF2]",
+    bgColor: "bg-[#1877F2]/10 dark:bg-[#1877F2]/20",
+    borderColor: "border-[#1877F2]/10 dark:border-[#1877F2]/25",
+  },
+  threads: {
+    icon: <ThreadsIcon className="w-3.5 h-3.5" />,
+    name: "Threads",
+    textColor: "text-black dark:text-white",
+    bgColor: "bg-black/10 dark:bg-white/15",
+    borderColor: "border-black/10 dark:border-white/20",
+  },
+  reddit: {
+    icon: <RedditIcon className="w-3.5 h-3.5" />,
+    name: "Reddit",
+    textColor: "text-[#FF4500] dark:text-[#FF6B3D]",
+    bgColor: "bg-[#FF4500]/10 dark:bg-[#FF4500]/20",
+    borderColor: "border-[#FF4500]/10 dark:border-[#FF4500]/25",
   },
 };
 
@@ -176,15 +224,17 @@ export default function ScheduledPostCard({
 
         {/* Platform indicator */}
         <div className="relative flex items-center gap-2 mb-4">
-          {post.platform === "linkedin" && (
-            <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#0A66C2]/10 dark:bg-[#0A66C2]/20 rounded-lg text-[#0A66C2] dark:text-[#4B9FE1] border border-[#0A66C2]/10 dark:border-[#0A66C2]/25">
-              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-              </svg>
-              <span className="text-xs font-medium">LinkedIn</span>
-            </div>
-          )}
-          {post.postType && (
+          {(() => {
+            const config = PLATFORM_BADGE_CONFIG[post.platform];
+            if (!config) return null;
+            return (
+              <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg ${config.textColor} ${config.bgColor} border ${config.borderColor}`}>
+                {config.icon}
+                <span className="text-xs font-medium">{config.name}</span>
+              </div>
+            );
+          })()}
+          {post.platform === "linkedin" && post.postType && (
             <span className="text-xs text-gray-500 dark:text-text-muted px-2 py-1 bg-gray-100 dark:bg-primary/10 rounded-md">
               {post.postType === "feed" ? "Post" : "Article"}
             </span>
@@ -224,12 +274,13 @@ export default function ScheduledPostCard({
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 text-sm text-primary hover:text-primary/80 font-medium mb-4 group/link"
             whileHover={{ x: 2 }}
+            aria-label={`Voir le post sur ${PLATFORM_LABELS[post.platform] || post.platform}`}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
             </svg>
-            Voir le post
+            Voir le post sur {PLATFORM_LABELS[post.platform] || post.platform}
             <svg className="w-3.5 h-3.5 transition-transform group-hover/link:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
             </svg>

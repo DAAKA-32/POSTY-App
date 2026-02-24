@@ -7,11 +7,11 @@ import {
   isOpenAIConfigured,
   isValidApiKeyFormat,
   OpenAIModel,
-  SYSTEM_PROMPTS,
   INSIGHTS_PROMPT,
   CONVERSATIONAL_PROMPT,
   INTENT_CLASSIFICATION_PROMPT,
 } from "@/lib/openai";
+import { buildOptimizedPrompt, synthesizeProfile, estimateTokens, ProfileFields } from "@/lib/prompt-builder";
 import {
   checkHourlyQuotaAdmin,
   checkUserQuotaAdmin,
@@ -24,6 +24,7 @@ import { isAdminInitialized } from "@/lib/firebase-admin";
 import { getPlanFeatures } from "@/lib/plan-features";
 import { planHasFeature, PlanType, getPlanLimits, getMaxTokensForPlan } from "@/lib/plans";
 import { SubscriptionPlan, PostInsights } from "@/types";
+import { detectUrl, removeUrlFromPrompt, extractUrlContent, ExtractedUrlContent } from "@/lib/url-extract";
 
 // Streaming configuration for mock responses
 const MOCK_CHUNK_SIZE = 3;
@@ -289,13 +290,56 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // ========== URL CONTENT EXTRACTION (PRO & MAX PLANS) ==========
+    let extractedUrlContent: ExtractedUrlContent | null = null;
+    let cleanedPrompt = prompt;
+
+    const detectedUrl = detectUrl(prompt);
+    if (detectedUrl) {
+      // Plan check: Only Pro and Max plans can use URL analysis
+      if (!planHasFeature(userPlan, "hasUrlAnalysis")) {
+        return new Response(
+          JSON.stringify({
+            error: "plan_required",
+            message: language === "fr"
+              ? "L'analyse de contenu d'URL est réservée aux plans Pro et Max."
+              : "URL content analysis requires a Pro or Max plan.",
+            requiredPlan: "pro",
+          }),
+          { status: 403, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      try {
+        const result = await extractUrlContent(detectedUrl);
+
+        if (result.success) {
+          extractedUrlContent = result.data;
+          cleanedPrompt = removeUrlFromPrompt(prompt, detectedUrl);
+
+          // If prompt is empty after removing URL, use generic topic
+          if (!cleanedPrompt.trim()) {
+            cleanedPrompt = language === "fr"
+              ? "le contenu de cette page"
+              : "the content of this page";
+          }
+        } else {
+          // URL extraction failed — log and continue without URL content
+          console.warn("URL extraction failed:", result.error.message, detectedUrl);
+        }
+      } catch (urlError) {
+        console.error("URL extraction error:", urlError);
+        // Continue without URL content — non-blocking
+      }
+    }
+
     // Plan-based max tokens for response length
     const maxTokens = getMaxTokensForPlan(userPlan);
 
     // ========== SERVER-SIDE PROFILE LOADING + PLAN GATING ==========
     // Load profile from Firestore (server-side, ignores client-sent userProfile)
     // Filter fields based on user's plan permissions
-    let serverUserProfile: Record<string, string> | undefined;
+    let serverUserProfile: ProfileFields | undefined;
     if (isAdminInitialized()) {
       try {
         const userProfileData = await getUserProfileAdmin(userId);
@@ -413,19 +457,21 @@ export async function POST(request: NextRequest) {
 
           if (openaiService) {
             // ========== INTENT CLASSIFICATION ==========
-            // Classify user intent BEFORE generating
-            const intent = await classifyIntent(
-              openaiService,
-              prompt,
-              language as "fr" | "en"
-            );
+            // Force PRODUCTION intent when URL content was extracted (user clearly wants a post from a link)
+            const intent = extractedUrlContent
+              ? ("PRODUCTION" as const)
+              : await classifyIntent(
+                  openaiService,
+                  cleanedPrompt,
+                  language as "fr" | "en"
+                );
 
             if (intent === "SOCIAL" || intent === "EXPLORATORY") {
               // Conversational response - no post generation
               isConversational = true;
               generatedContent = await generateConversational(
                 openaiService,
-                prompt,
+                cleanedPrompt,
                 language as "fr" | "en",
                 sendEvent,
                 conversationHistory as Array<{ role: "user" | "assistant"; content: string }> | undefined
@@ -434,14 +480,15 @@ export async function POST(request: NextRequest) {
               // Production intent - generate LinkedIn post
               generatedContent = await generateWithOpenAI(
                 openaiService,
-                prompt,
+                cleanedPrompt,
                 language,
                 serverUserProfile,
                 sendEvent,
                 typesToGenerate,
                 maxTokens,
                 conversationHistory as Array<{ role: "user" | "assistant"; content: string }> | undefined,
-                processedFileContent
+                processedFileContent,
+                extractedUrlContent
               );
             }
           } else {
@@ -536,12 +583,13 @@ async function generateWithOpenAI(
   service: NonNullable<ReturnType<typeof createOpenAIService>>,
   prompt: string,
   language: "fr" | "en",
-  userProfile: Record<string, string> | undefined,
+  userProfile: ProfileFields | undefined,
   sendEvent: (event: string, data: object) => void,
   typesToGenerate: Array<"storytelling" | "business">,
   maxTokens: number,
   conversationHistory?: Array<{ role: "user" | "assistant"; content: string }>,
-  fileContent?: { type: "image"; mimeType: string; base64: string } | { type: "pdf"; extractedText: string } | null
+  fileContent?: { type: "image"; mimeType: string; base64: string } | { type: "pdf"; extractedText: string } | null,
+  urlContent?: ExtractedUrlContent | null
 ): Promise<string> {
   let firstPostContent = "";
 
@@ -563,8 +611,8 @@ async function generateWithOpenAI(
 
     sendEvent("start", { type, title });
 
-    // Build system prompt - include conversation context mode if follow-up
-    let systemPrompt = buildSystemPrompt(type, language, userProfile);
+    // Build optimized system prompt with synthesized profile
+    let systemPrompt = buildOptimizedPrompt(type, language, userProfile);
 
     if (isFollowUp) {
       // Add context for follow-up conversations
@@ -584,6 +632,14 @@ async function generateWithOpenAI(
           ? "\n\nL'utilisateur a joint un document PDF. Utilise le contenu extrait ci-dessous comme contexte pour générer le post LinkedIn."
           : "\n\nThe user attached a PDF document. Use the extracted content below as context to generate the LinkedIn post.");
       systemPrompt += fileContext;
+    }
+
+    // If URL content was extracted, add context to system prompt
+    if (urlContent) {
+      const urlContext = language === "fr"
+        ? "\n\nL'utilisateur a partagé un lien. Utilise le contenu extrait de cette page comme contexte principal pour générer le post LinkedIn. Fais référence aux idées clés de l'article sans copier le texte mot pour mot."
+        : "\n\nThe user shared a link. Use the extracted page content as the main context to generate the LinkedIn post. Reference key ideas from the article without copying text verbatim.";
+      systemPrompt += urlContext;
     }
 
     // Build messages array (use any[] to support multimodal content parts)
@@ -631,8 +687,22 @@ async function generateWithOpenAI(
         ? `\n\n--- Contenu du document joint ---\n${fileContent.extractedText}\n--- Fin du document ---`
         : `\n\n--- Attached document content ---\n${fileContent.extractedText}\n--- End of document ---`;
       messages.push({ role: "user", content: userContent + pdfContext });
+    } else if (urlContent) {
+      // URL: inject extracted page content into the prompt
+      const urlTitle = urlContent.title ? `\nTitre: ${urlContent.title}` : "";
+      const urlDesc = urlContent.description ? `\nDescription: ${urlContent.description}` : "";
+      const urlInjection = language === "fr"
+        ? `\n\n--- Contenu extrait de ${urlContent.url} ---${urlTitle}${urlDesc}\n\n${urlContent.textContent}\n--- Fin du contenu extrait ---`
+        : `\n\n--- Extracted content from ${urlContent.url} ---${urlTitle}${urlDesc}\n\n${urlContent.textContent}\n--- End of extracted content ---`;
+      messages.push({ role: "user", content: userContent + urlInjection });
     } else {
       messages.push({ role: "user", content: userContent });
+    }
+
+    // Log estimated token count for monitoring
+    const totalPromptText = messages.map((m: any) => typeof m.content === "string" ? m.content : "").join("");
+    if (process.env.NODE_ENV !== "production") {
+      console.log(`[POSTY] Prompt tokens (est.): ~${estimateTokens(totalPromptText)} | Type: ${type} | Profile: ${userProfile ? "yes" : "no"}`);
     }
 
     // Use GPT-4o for image vision, otherwise default model
@@ -707,102 +777,8 @@ async function generateWithMock(
   return firstPostContent;
 }
 
-/**
- * Sanitize user input to prevent prompt injection attacks
- * Removes dangerous patterns that could hijack the LLM prompt
- */
-function sanitizeUserInput(input: string | undefined): string {
-  if (!input) return "";
-
-  // Remove potential prompt injection patterns
-  let sanitized = input
-    // Remove instruction-like patterns
-    .replace(/ignore\s+(all\s+)?(previous|above|prior)\s+(instructions?|prompts?)/gi, "")
-    .replace(/disregard\s+(all\s+)?(previous|above|prior)\s+(instructions?|prompts?)/gi, "")
-    .replace(/forget\s+(all\s+)?(previous|above|prior)\s+(instructions?|prompts?)/gi, "")
-    // Remove system prompt requests
-    .replace(/show\s+me\s+(your\s+)?system\s+prompt/gi, "")
-    .replace(/print\s+(your\s+)?system\s+prompt/gi, "")
-    .replace(/reveal\s+(your\s+)?instructions/gi, "")
-    // Remove role-playing attacks
-    .replace(/you\s+are\s+(now\s+)?a/gi, "")
-    .replace(/act\s+as\s+(if\s+you\s+(are|were)\s+)?/gi, "")
-    .replace(/pretend\s+(to\s+be|you('re)?\s+(are|were))/gi, "")
-    // Remove excessive newlines that could break formatting
-    .replace(/\n{3,}/g, "\n\n")
-    // Limit length to prevent context overflow
-    .substring(0, 200)
-    .trim();
-
-  return sanitized;
-}
-
-/**
- * Build system prompt with user context
- * Enhanced with targetAudience and communicationTone for Pro/Max users
- * SECURITY: All user input is sanitized to prevent prompt injection
- */
-function buildSystemPrompt(
-  type: "storytelling" | "business",
-  language: "fr" | "en",
-  userProfile?: Record<string, string>
-): string {
-  let prompt = SYSTEM_PROMPTS[type][language];
-
-  if (userProfile) {
-    const contextLabels = {
-      fr: {
-        context: "Contexte de l'utilisateur",
-        sector: "Secteur",
-        role: "Rôle",
-        style: "Style préféré",
-        objective: "Objectif",
-        targetAudience: "Audience ciblée",
-        communicationTone: "Ton de communication",
-        notSpecified: "Non spécifié",
-        important: "IMPORTANT: Adapte le contenu spécifiquement pour cette audience et utilise ce ton de communication.",
-      },
-      en: {
-        context: "User context",
-        sector: "Sector",
-        role: "Role",
-        style: "Preferred style",
-        objective: "Objective",
-        targetAudience: "Target audience",
-        communicationTone: "Communication tone",
-        notSpecified: "Not specified",
-        important: "IMPORTANT: Adapt the content specifically for this audience and use this communication tone.",
-      },
-    };
-
-    const labels = contextLabels[language];
-
-    // SECURITY: Sanitize all user input before injection into prompt
-    const sector = sanitizeUserInput(userProfile.sector) || labels.notSpecified;
-    const role = sanitizeUserInput(userProfile.role) || labels.notSpecified;
-    const linkedinStyle = sanitizeUserInput(userProfile.linkedinStyle) || labels.notSpecified;
-    const objective = sanitizeUserInput(userProfile.objective) || labels.notSpecified;
-    const targetAudience = sanitizeUserInput(userProfile.targetAudience) || labels.notSpecified;
-    const communicationTone = sanitizeUserInput(userProfile.communicationTone) || labels.notSpecified;
-
-    // Build base context with sanitized values
-    prompt += `\n\n${labels.context}:
-- ${labels.sector}: ${sector}
-- ${labels.role}: ${role}
-- ${labels.style}: ${linkedinStyle}
-- ${labels.objective}: ${objective}`;
-
-    // Add enhanced context for Pro/Max users (if targetAudience or communicationTone is set)
-    const hasEnhancedProfile = userProfile.targetAudience || userProfile.communicationTone;
-    if (hasEnhancedProfile) {
-      prompt += `\n- ${labels.targetAudience}: ${targetAudience}`;
-      prompt += `\n- ${labels.communicationTone}: ${communicationTone}`;
-      prompt += `\n\n${labels.important}`;
-    }
-  }
-
-  return prompt;
-}
+// buildSystemPrompt and sanitizeUserInput moved to lib/prompt-builder.ts
+// Now using buildOptimizedPrompt() with synthesizeProfile() for token-efficient injection
 
 /**
  * Generate AI insights for a post

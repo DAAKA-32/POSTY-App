@@ -22,12 +22,18 @@ export const seoConfig = {
   supportEmail: "postygroup@gmail.com",
   privacyEmail: "postygroup@gmail.com",
 
-  // Founder - E-E-A-T: Authoritativeness
-  founder: {
-    name: "Emilien Nepveu",
-    role: "Fondateur & CEO",
-    linkedIn: "https://www.linkedin.com/in/e-nepveu-58a38127a/",
-  },
+  // Founders - E-E-A-T: Authoritativeness
+  founders: [
+    {
+      name: "Emilien Nepveu",
+      role: "Co-Fondateur & CEO",
+      linkedIn: "https://www.linkedin.com/in/e-nepveu-58a38127a/",
+    },
+    {
+      name: "Côme Maubert",
+      role: "Co-Fondateur & CFO",
+    },
+  ],
 
   // Company - E-E-A-T: Trust
   company: {
@@ -327,13 +333,13 @@ export const structuredData = {
     },
     description: seoConfig.mission,
     foundingDate: "2024",
-    founder: {
+    founder: seoConfig.founders.map((f) => ({
       "@type": "Person",
-      name: seoConfig.founder.name,
-      jobTitle: seoConfig.founder.role,
-      sameAs: [seoConfig.founder.linkedIn],
-    },
-    sameAs: [seoConfig.founder.linkedIn],
+      name: f.name,
+      jobTitle: f.role,
+      ...(f.linkedIn ? { sameAs: [f.linkedIn] } : {}),
+    })),
+    sameAs: [seoConfig.founders[0].linkedIn].filter(Boolean),
     contactPoint: {
       "@type": "ContactPoint",
       email: seoConfig.supportEmail,

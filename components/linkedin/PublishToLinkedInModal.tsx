@@ -17,6 +17,13 @@ import { usePlatformSelection } from "@/hooks/usePlatformSelection";
 import { triggerHaptic } from "@/hooks/useHapticFeedback";
 import { useFacebook } from "@/contexts/FacebookContext";
 import { useThreads } from "@/contexts/ThreadsContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { postToLinkedInWithMedia } from "@/lib/linkedin";
+
+// Image upload constraints (match backend)
+const MAX_IMAGES = 9;
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10 MB
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 
 // Visibility options for LinkedIn posts
 type PostVisibility = "PUBLIC" | "CONNECTIONS";
@@ -53,12 +60,19 @@ const VISIBILITY_OPTIONS: VisibilityOption[] = [
 
 // Publishing step messages
 const PUBLISHING_MESSAGES = [
-  { progress: 0, message: "Connexion à LinkedIn..." },
+  { progress: 0, message: "Connexion aux plateformes..." },
   { progress: 30, message: "Préparation du contenu..." },
   { progress: 60, message: "Publication en cours..." },
   { progress: 90, message: "Finalisation..." },
   { progress: 100, message: "C'est en ligne!" },
 ];
+
+// Platform brand colors and labels for success links
+const PLATFORM_LINK_CONFIG: Record<string, { color: string; label: string }> = {
+  LinkedIn: { color: "text-[#0A66C2] hover:text-[#004182]", label: "LinkedIn" },
+  Facebook: { color: "text-[#1877F2] hover:text-[#0C5DC7]", label: "Facebook" },
+  Threads: { color: "text-foreground hover:text-text-secondary", label: "Threads" },
+};
 
 type PublishStep = "preview" | "confirm" | "publishing" | "success" | "error";
 
@@ -77,6 +91,7 @@ export default function PublishToLinkedInModal({
   linkedInConnection,
   onPublish,
 }: PublishToLinkedInModalProps) {
+  const { user } = useAuth();
   const { quota, canPublish, recordPublish, isMaxPlan: quotaIsMax, currentPlan: quotaPlan } = useQuota();
   const { isMaxPlan: subIsMax, currentPlan: subPlan } = useSubscription();
   // Use either context to detect Max — SubscriptionContext is more reliable (normalizes plan names)
@@ -87,7 +102,7 @@ export default function PublishToLinkedInModal({
   const [step, setStep] = useState<PublishStep>("preview");
   const [editedContent, setEditedContent] = useState(initialContent);
   const [visibility, setVisibility] = useState<PostVisibility>("PUBLIC");
-  const [postUrl, setPostUrl] = useState<string | undefined>();
+  const [publishedLinks, setPublishedLinks] = useState<{ platform: string; url: string }[]>([]);
   const [error, setError] = useState<string | undefined>();
   const [progress, setProgress] = useState(0);
   const [publishMessage, setPublishMessage] = useState(PUBLISHING_MESSAGES[0].message);
@@ -100,6 +115,11 @@ export default function PublishToLinkedInModal({
     return false;
   });
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+
+  // Image state
+  const [images, setImages] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Connected platforms
   const connectedPlatforms: Platform[] = [
@@ -145,12 +165,25 @@ export default function PublishToLinkedInModal({
       setStep("preview");
       setEditedContent(initialContent);
       setVisibility("PUBLIC");
-      setPostUrl(undefined);
+      setPublishedLinks([]);
       setError(undefined);
       setProgress(0);
       setPublishMessage(PUBLISHING_MESSAGES[0].message);
+      // Reset images
+      imagePreviews.forEach((url) => URL.revokeObjectURL(url));
+      setImages([]);
+      setImagePreviews([]);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, initialContent]);
+
+  // Cleanup object URLs on unmount
+  useEffect(() => {
+    return () => {
+      imagePreviews.forEach((url) => URL.revokeObjectURL(url));
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Cleanup progress interval
   useEffect(() => {
@@ -170,6 +203,49 @@ export default function PublishToLinkedInModal({
       setPublishMessage(currentMessage.message);
     }
   }, [progress]);
+
+  // ── Image handlers ────────────────────────────────────────────────
+  const handleAddImages = (files: FileList | null) => {
+    if (!files) return;
+
+    const newFiles: File[] = [];
+    const errors: string[] = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+        errors.push(`${file.name} : format non supporté`);
+        continue;
+      }
+      if (file.size > MAX_IMAGE_SIZE) {
+        errors.push(`${file.name} : trop lourde (max 10 Mo)`);
+        continue;
+      }
+      if (images.length + newFiles.length >= MAX_IMAGES) {
+        errors.push(`Maximum ${MAX_IMAGES} images`);
+        break;
+      }
+      newFiles.push(file);
+    }
+
+    if (errors.length > 0) {
+      toast.error(errors[0]);
+    }
+
+    if (newFiles.length > 0) {
+      const previews = newFiles.map((f) => URL.createObjectURL(f));
+      setImages((prev) => [...prev, ...newFiles]);
+      setImagePreviews((prev) => [...prev, ...previews]);
+      triggerHaptic("light");
+    }
+  };
+
+  const handleRemoveImage = (index: number) => {
+    URL.revokeObjectURL(imagePreviews[index]);
+    setImages((prev) => prev.filter((_, i) => i !== index));
+    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+    triggerHaptic("light");
+  };
 
   const handleClose = () => {
     if (step !== "publishing") {
@@ -223,7 +299,13 @@ export default function PublishToLinkedInModal({
 
       // Publish to LinkedIn if selected
       if (selectedPlatforms.includes("linkedin")) {
-        const result = await onPublish(editedContent, visibility);
+        let result: { success: boolean; postUrl?: string; error?: string };
+        if (images.length > 0 && user) {
+          // Use media endpoint for posts with images
+          result = await postToLinkedInWithMedia(user.uid, editedContent, visibility, images);
+        } else {
+          result = await onPublish(editedContent, visibility);
+        }
         results.push({
           platform: "LinkedIn",
           success: result.success,
@@ -267,8 +349,12 @@ export default function PublishToLinkedInModal({
         await new Promise((resolve) => setTimeout(resolve, 600));
         // Success haptic feedback - celebratory pattern
         triggerHaptic("success");
-        // Use the first successful URL
-        setPostUrl(successResults[0].url);
+        // Store all successful platform links
+        setPublishedLinks(
+          successResults
+            .filter((r) => r.url)
+            .map((r) => ({ platform: r.platform, url: r.url! }))
+        );
         setStep("success");
 
         const platformNames = successResults.map((r) => r.platform).join(", ");
@@ -430,37 +516,136 @@ export default function PublishToLinkedInModal({
               </div>
             )}
 
-            {/* Visibility Selector */}
-            <div>
-              <p className="text-xs text-text-muted mb-2 font-medium uppercase tracking-wide">
-                Visibilité
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                {VISIBILITY_OPTIONS.map((option) => (
-                  <button
-                    key={option.id}
-                    onClick={() => {
-                      triggerHaptic("selection");
-                      setVisibility(option.id);
-                    }}
-                    className={`
-                      min-h-[44px] p-3 rounded-lg border transition-all duration-200
-                      flex items-center gap-3
-                      ${
-                        visibility === option.id
-                          ? "bg-[#0A66C2]/20 border-[#0A66C2] text-[#0A66C2]"
-                          : "bg-gray-50 dark:bg-dark-bg border-gray-200 dark:border-dark-border text-text-secondary hover:border-gray-300 dark:hover:border-dark-hover hover:text-gray-900 dark:hover:text-white"
-                      }
-                    `}
-                  >
-                    {option.icon}
-                    <div className="text-left">
-                      <span className="text-sm font-medium block">{option.label}</span>
-                      <span className="text-xs opacity-70">{option.description}</span>
-                    </div>
-                  </button>
-                ))}
+            {/* Visibility Selector — LinkedIn-specific, conditional display */}
+            {isConnected && (
+              <div className={`transition-opacity duration-200 ${selectedPlatforms.includes("linkedin") ? "opacity-100" : "opacity-40 pointer-events-none"}`}>
+                <div className="flex items-center gap-2 mb-2">
+                  <p className="text-xs text-text-muted font-medium uppercase tracking-wide">
+                    Visibilité
+                  </p>
+                  <span className="text-[10px] text-text-muted/70 font-normal normal-case tracking-normal">
+                    LinkedIn
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {VISIBILITY_OPTIONS.map((option) => (
+                    <button
+                      key={option.id}
+                      onClick={() => {
+                        if (selectedPlatforms.includes("linkedin")) {
+                          triggerHaptic("selection");
+                          setVisibility(option.id);
+                        }
+                      }}
+                      disabled={!selectedPlatforms.includes("linkedin")}
+                      className={`
+                        min-h-[44px] p-3 rounded-lg border transition-all duration-200
+                        flex items-center gap-3
+                        ${
+                          !selectedPlatforms.includes("linkedin")
+                            ? "bg-gray-50 dark:bg-dark-bg border-gray-200 dark:border-dark-border text-text-muted cursor-not-allowed"
+                            : visibility === option.id
+                            ? "bg-[#0A66C2]/20 border-[#0A66C2] text-[#0A66C2]"
+                            : "bg-gray-50 dark:bg-dark-bg border-gray-200 dark:border-dark-border text-text-secondary hover:border-gray-300 dark:hover:border-dark-hover hover:text-gray-900 dark:hover:text-white"
+                        }
+                      `}
+                    >
+                      {option.icon}
+                      <div className="text-left">
+                        <span className="text-sm font-medium block">{option.label}</span>
+                        <span className="text-xs opacity-70">{option.description}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                {!selectedPlatforms.includes("linkedin") && (
+                  <p className="text-[11px] text-text-muted mt-1.5">
+                    Activez LinkedIn pour gérer la visibilité.
+                  </p>
+                )}
               </div>
+            )}
+
+            {/* Image Picker */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs text-text-muted font-medium uppercase tracking-wide">
+                  Photos
+                </p>
+                <span className="text-xs text-text-muted">
+                  {images.length}/{MAX_IMAGES}
+                </span>
+              </div>
+
+              {/* Image preview grid + add button */}
+              <div className="flex flex-wrap gap-2">
+                {imagePreviews.map((preview, idx) => (
+                  <div
+                    key={idx}
+                    className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden border border-gray-200 dark:border-dark-border group"
+                  >
+                    <img
+                      src={preview}
+                      alt={`Image ${idx + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(idx)}
+                      className="
+                        absolute top-0.5 right-0.5
+                        w-5 h-5 rounded-full
+                        bg-black/60 text-white
+                        flex items-center justify-center
+                        opacity-0 group-hover:opacity-100
+                        sm:opacity-0 sm:group-hover:opacity-100
+                        transition-opacity duration-150
+                        active:opacity-100
+                      "
+                      style={{ opacity: isMobile ? 1 : undefined }}
+                      aria-label={`Supprimer image ${idx + 1}`}
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+
+                {images.length < MAX_IMAGES && (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="
+                      w-16 h-16 sm:w-20 sm:h-20 rounded-lg
+                      border-2 border-dashed border-gray-300 dark:border-dark-border
+                      hover:border-primary/50 dark:hover:border-primary/50
+                      flex flex-col items-center justify-center gap-1
+                      text-text-muted hover:text-primary
+                      transition-colors duration-200
+                    "
+                    aria-label="Ajouter une photo"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span className="text-[10px]">Photo</span>
+                  </button>
+                )}
+              </div>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/gif,image/webp"
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  handleAddImages(e.target.files);
+                  // Reset so the same file can be re-selected
+                  e.target.value = "";
+                }}
+              />
             </div>
 
             {/* Editable Content */}
@@ -481,11 +666,11 @@ export default function PublishToLinkedInModal({
                 onChange={(e) => setEditedContent(e.target.value)}
                 className={`
                   w-full p-4 bg-gray-50 dark:bg-dark-bg border rounded-lg text-gray-900 dark:text-white text-sm
-                  resize-none focus:outline-none focus:ring-2 focus:ring-[#0A66C2]/50
+                  resize-none focus:outline-none focus:ring-2 focus:ring-primary/50
                   transition-all duration-200 min-h-[160px] max-h-[300px]
                   ${isOverLimit ? "border-error" : "border-gray-200 dark:border-dark-border"}
                 `}
-                placeholder="Rédigez votre post LinkedIn..."
+                placeholder="Rédigez votre contenu..."
               />
               <div className="flex justify-between mt-2 text-xs">
                 <span className="text-text-muted">
@@ -528,10 +713,12 @@ export default function PublishToLinkedInModal({
                 className={`min-h-[48px] ${
                   cannotPublish
                     ? "bg-gray-100 dark:bg-dark-hover border-gray-200 dark:border-dark-border cursor-not-allowed opacity-50"
-                    : "bg-[#0A66C2] hover:bg-[#004182] border-none"
+                    : "bg-primary hover:bg-primary-hover border-none"
                 }`}
               >
-                <LinkedInIcon className="w-4 h-4 mr-2" />
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                </svg>
                 Publier
               </Button>
             </div>
@@ -547,11 +734,18 @@ export default function PublishToLinkedInModal({
               </svg>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Êtes-vous sûr ?</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Confirmer la publication</h3>
               <p className="text-text-secondary text-sm">
-                {visibility === "PUBLIC"
-                  ? "Votre post sera publié publiquement sur LinkedIn et visible par tous."
-                  : "Votre post sera visible uniquement par vos connexions LinkedIn."}
+                Votre contenu sera publié sur{" "}
+                <span className="font-medium text-gray-900 dark:text-white">
+                  {selectedPlatforms.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(", ")}
+                </span>
+                {selectedPlatforms.includes("linkedin") && (
+                  <span>
+                    {" "}({visibility === "PUBLIC" ? "public" : "connexions uniquement"})
+                  </span>
+                )}
+                .
               </p>
             </div>
             <div className="flex gap-3">
@@ -566,7 +760,7 @@ export default function PublishToLinkedInModal({
               <Button
                 fullWidth
                 onClick={handlePublish}
-                className="bg-[#0A66C2] hover:bg-[#004182] border-none min-h-[48px]"
+                className="bg-primary hover:bg-primary-hover border-none min-h-[48px]"
               >
                 Oui, publier
               </Button>
@@ -585,7 +779,7 @@ export default function PublishToLinkedInModal({
                   cy="50"
                   r="42"
                   fill="none"
-                  stroke="rgba(10, 102, 194, 0.2)"
+                  stroke="rgba(248, 147, 93, 0.2)"
                   strokeWidth="8"
                 />
                 <motion.circle
@@ -593,7 +787,7 @@ export default function PublishToLinkedInModal({
                   cy="50"
                   r="42"
                   fill="none"
-                  stroke="#0A66C2"
+                  stroke="#F8935D"
                   strokeWidth="8"
                   strokeLinecap="round"
                   strokeDasharray={2 * Math.PI * 42}
@@ -603,7 +797,9 @@ export default function PublishToLinkedInModal({
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <LinkedInIcon className="w-6 h-6 text-[#0A66C2] mb-1" />
+                <svg className="w-6 h-6 text-primary mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                </svg>
                 <span className="text-lg font-bold text-gray-900 dark:text-white">{progress}%</span>
               </div>
             </div>
@@ -633,7 +829,7 @@ export default function PublishToLinkedInModal({
             <div className="mt-6 mx-auto max-w-xs">
               <div className="h-1.5 bg-gray-200 dark:bg-dark-border rounded-full overflow-hidden">
                 <motion.div
-                  className="h-full bg-[#0A66C2] rounded-full"
+                  className="h-full bg-primary rounded-full"
                   initial={{ width: 0 }}
                   animate={{ width: `${progress}%` }}
                   transition={{ duration: 0.3, ease: "easeOut" }}
@@ -666,20 +862,29 @@ export default function PublishToLinkedInModal({
             </motion.div>
             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Post publié !</h3>
             <p className="text-text-secondary text-sm mb-6">
-              Votre post a été publié avec succès{selectedPlatforms.length > 1 ? " sur les plateformes sélectionnées" : ""}.
+              Votre post a été publié avec succès{publishedLinks.length > 1 ? " sur les plateformes sélectionnées" : ""}.
             </p>
-            {postUrl && (
-              <a
-                href={postUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-[#0A66C2] hover:text-[#004182] transition-colors mb-6 min-h-[44px] px-4"
-              >
-                Voir le post
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-              </a>
+            {publishedLinks.length > 0 && (
+              <div className="flex flex-col gap-2 mb-6">
+                {publishedLinks.map((link) => {
+                  const config = PLATFORM_LINK_CONFIG[link.platform] || { color: "text-primary hover:text-primary/80", label: link.platform };
+                  return (
+                    <a
+                      key={link.platform}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`inline-flex items-center justify-center gap-2 ${config.color} transition-colors min-h-[44px] px-4 text-sm font-medium`}
+                      aria-label={`Voir le post sur ${config.label}`}
+                    >
+                      Voir le post sur {config.label}
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    </a>
+                  );
+                })}
+              </div>
             )}
             <Button fullWidth onClick={handleClose} className="min-h-[48px]">
               Fermer
@@ -720,7 +925,7 @@ export default function PublishToLinkedInModal({
         <BottomSheet
           isOpen={isOpen}
           onClose={handleClose}
-          title={step === "success" ? "" : step === "error" ? "Erreur" : "Publier sur LinkedIn"}
+          title={step === "success" ? "" : step === "error" ? "Erreur" : "Publier votre contenu"}
           swipeToDismiss={step !== "publishing"}
         >
           {renderContent()}
@@ -729,7 +934,7 @@ export default function PublishToLinkedInModal({
         <Modal
           isOpen={isOpen}
           onClose={handleClose}
-          title={step === "success" ? "" : step === "error" ? "Erreur" : "Publier sur LinkedIn"}
+          title={step === "success" ? "" : step === "error" ? "Erreur" : "Publier votre contenu"}
           size="md"
         >
           {renderContent()}

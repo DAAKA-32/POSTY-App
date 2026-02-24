@@ -19,6 +19,8 @@ interface ModernAIResponsePairProps {
   userPlan: SubscriptionPlan | null;
   onPublishToLinkedIn?: (content: string) => void;
   onSchedule?: (content: string) => void;
+  /** When true, actions are always visible on both cards */
+  isLastMessage?: boolean;
 }
 
 /**
@@ -88,6 +90,7 @@ export const ModernAIResponsePair = memo(function ModernAIResponsePair({
   userPlan,
   onPublishToLinkedIn,
   onSchedule,
+  isLastMessage = true,
 }: ModernAIResponsePairProps) {
   // Mobile navigation state
   const [activeIndex, setActiveIndex] = useState(0);
@@ -204,6 +207,7 @@ export const ModernAIResponsePair = memo(function ModernAIResponsePair({
                 onPublishToLinkedIn={onPublishToLinkedIn}
                 onSchedule={onSchedule}
                 showVariantBadge={true}
+                isLastMessage={isLastMessage}
               />
             )}
           </div>
@@ -220,6 +224,7 @@ export const ModernAIResponsePair = memo(function ModernAIResponsePair({
                 onPublishToLinkedIn={onPublishToLinkedIn}
                 onSchedule={onSchedule}
                 showVariantBadge={true}
+                isLastMessage={isLastMessage}
               />
             )}
           </div>
@@ -265,6 +270,7 @@ export const ModernAIResponsePair = memo(function ModernAIResponsePair({
                     onPublishToLinkedIn={onPublishToLinkedIn}
                     onSchedule={onSchedule}
                     showVariantBadge={true}
+                    isLastMessage={isLastMessage}
                   />
                 )}
               </div>

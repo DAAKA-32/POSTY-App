@@ -420,7 +420,7 @@ export default function ValidationPanel() {
 
                     {/* 8.5 - Accessibility */}
                     <Section
-                      title="8.5 - Accessibilite"
+                      title="8.5 - Accessibilité"
                       icon={<Eye className="w-4 h-4 text-primary" />}
                     >
                       <CheckItem
@@ -479,16 +479,16 @@ export default function ValidationPanel() {
 
                     {/* Security */}
                     <Section
-                      title="Securite"
+                      title="Sécurité"
                       icon={<AlertTriangle className="w-4 h-4 text-primary" />}
                     >
                       <CheckItem
-                        label="Secrets non exposes"
+                        label="Secrets non exposés"
                         passed={results.security.exposedSecrets.passed}
                         details={
                           results.security.exposedSecrets.passed
-                            ? "Aucun secret detecte dans le client"
-                            : `${results.security.exposedSecrets.issues.length} problemes trouves`
+                            ? "Aucun secret détecté dans le client"
+                            : `${results.security.exposedSecrets.issues.length} problèmes trouvés`
                         }
                       >
                         {results.security.exposedSecrets.issues.length > 0 && (

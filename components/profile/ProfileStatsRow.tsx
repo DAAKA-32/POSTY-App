@@ -13,6 +13,7 @@ interface StatItem {
 
 interface ProfileStatsRowProps {
   stats: StatItem[];
+  isLoading?: boolean;
 }
 
 // Clean color classes
@@ -22,7 +23,7 @@ const colorClasses = {
   warning: "text-amber-500 dark:text-amber-400",
 };
 
-export default function ProfileStatsRow({ stats }: ProfileStatsRowProps) {
+export default function ProfileStatsRow({ stats, isLoading }: ProfileStatsRowProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -40,7 +41,9 @@ export default function ProfileStatsRow({ stats }: ProfileStatsRowProps) {
         >
           {/* Value */}
           <div className={`text-2xl lg:text-3xl font-bold mb-1 ${stat.color ? colorClasses[stat.color] : "text-gray-900 dark:text-white"}`}>
-            {typeof stat.value === "number" ? (
+            {isLoading && typeof stat.value === "number" ? (
+              <div className="h-8 lg:h-9 w-10 mx-auto rounded-md bg-gray-200 dark:bg-dark-hover animate-pulse" />
+            ) : typeof stat.value === "number" ? (
               <CountUp end={stat.value} duration={1000} />
             ) : (
               stat.value

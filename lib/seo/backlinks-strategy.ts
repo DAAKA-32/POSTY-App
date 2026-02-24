@@ -255,32 +255,32 @@ Proposition :
 - Intégration technique si pertinent
 
 En échange, nous pourrions :
-- Promouvoir {TheirBrand} aupres de notre audience
-- Creer du contenu conjoint
+- Promouvoir {TheirBrand} auprès de notre audience
+- Créer du contenu conjoint
 - {CustomOffer}
 
-Interesse pour en discuter ?
+Intéressé pour en discuter ?
 
 Cordialement,
 {YourName}`,
   },
 
   influencerReview: {
-    subject: "Acces Pro gratuit a POSTY - Votre avis ?",
+    subject: "Accès Pro gratuit à POSTY - Votre avis ?",
     body: `Bonjour {Name},
 
 Je suis fan de votre contenu LinkedIn sur {Topic}. Je suis {YourName}, fondateur de POSTY.
 
-J'aimerais vous offrir un acces Pro illimite (valeur 120€/an) pour tester notre outil de generation de posts LinkedIn par IA.
+J'aimerais vous offrir un accès Pro illimité (valeur 120€/an) pour tester notre outil de génération de posts LinkedIn par IA.
 
-Ce qui nous differencie :
-- 2 versions par idee : Storytelling + Business
-- Generation en 30 secondes
-- Optimise pour l'algorithme LinkedIn
+Ce qui nous différencie :
+- 2 versions par idée : Storytelling + Business
+- Génération en 30 secondes
+- Optimisé pour l'algorithme LinkedIn
 
-Aucune obligation de publication, mais si vous aimez l'outil, un post ou une mention serait apprecie.
+Aucune obligation de publication, mais si vous aimez l'outil, un post ou une mention serait apprécié.
 
-Interesse ?
+Intéressé ?
 
 Cordialement,
 {YourName}`,
