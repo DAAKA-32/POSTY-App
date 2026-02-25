@@ -15,7 +15,7 @@ export const PRODUCTION_MODE = true;
 // ============================================
 
 /** Founder emails receive permanent Max plan access */
-const FOUNDER_EMAILS: string[] = ["emilien.nepveu@gmail.com"];
+const FOUNDER_EMAILS: string[] = ["emilien.nepveu@gmail.com", "maubertcome27@gmail.com"];
 const FOUNDER_OVERRIDE_PLAN: PlanType = "max";
 
 /** Check if an email belongs to a founder */
