@@ -13,7 +13,7 @@ import { AboutPageJsonLd } from "@/components/seo/JsonLd";
 const teamMembers = [
   {
     name: "Emilien Nepveu",
-    role: "CTO, CEO & Fondateur",
+    role: "CTO, CEO & Co-Fondateur",
     photo: "/founder.jpg",
     linkedIn: "https://www.linkedin.com/in/e-nepveu-58a38127a/",
     bio: "Responsable de toute la partie technique de Posty. J'ai conçu et développé l'ensemble de l'application : interface utilisateur (UI), expérience utilisateur (UX), et intégration des appels API avec l'intelligence artificielle.",

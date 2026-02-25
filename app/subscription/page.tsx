@@ -19,7 +19,7 @@ const PLANS = getPaidPlans();
 function SubscriptionContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, signOut } = useAuth();
+  const { user, signOut, userProfile } = useAuth();
   const { currentPlan, isTestMode, canStartTrial, isTrialing, trialDaysRemaining } = useSubscription();
   const { t } = useLanguage();
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("yearly");
@@ -138,7 +138,7 @@ function SubscriptionContent() {
       <div className="sticky top-0 z-40 bg-background-warm/80 dark:bg-dark-bg/80 backdrop-blur-xl border-b border-[#F8935D]/10 dark:border-dark-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="relative flex items-center h-16">
-            {currentPlan ? (
+            {currentPlan && (
               <button
                 onClick={() => isRedirectedFromGuard ? router.push("/") : router.back()}
                 className="flex items-center gap-2 text-gray-600 dark:text-text-secondary hover:text-gray-900 dark:hover:text-white transition-colors group z-10"
@@ -147,16 +147,6 @@ function SubscriptionContent() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
                 <span className="hidden sm:inline">{t.pricing.back}</span>
-              </button>
-            ) : (
-              <button
-                onClick={() => router.push("/onboarding")}
-                className="flex items-center gap-2 text-gray-600 dark:text-text-secondary hover:text-gray-900 dark:hover:text-white transition-colors group z-10"
-              >
-                <svg className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                <span className="hidden sm:inline">Modifier mon profil</span>
               </button>
             )}
             <div className="absolute left-1/2 -translate-x-1/2 text-lg font-semibold text-gray-900 dark:text-white">
@@ -248,21 +238,6 @@ function SubscriptionContent() {
           </div>
         </div>
 
-        {/* Maintenance Banner - Threads & Facebook */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="flex items-center justify-center gap-3 p-4 mt-6 mx-auto max-w-2xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/50 rounded-2xl"
-        >
-          <svg className="w-5 h-5 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-          <p className="text-sm text-red-600 dark:text-red-400 font-medium">
-            Threads & Facebook sont en maintenance temporaire. Le service sera rétabli sous peu.
-          </p>
-        </motion.div>
-
         {/* Legal notice — EU withdrawal waiver (Directive 2011/83/EU, art. L.221-28) */}
         <div className="max-w-2xl mx-auto mt-8 text-center">
           <p className="text-[10px] sm:text-xs text-text-muted leading-relaxed">
@@ -325,9 +300,23 @@ function SubscriptionContent() {
           </div>
         </motion.div>
 
-        {/* Back to login — only for users without an active plan */}
+        {/* Bottom actions — only for users without an active plan */}
         {!currentPlan && (
-          <div className="max-w-2xl mx-auto mt-10 flex justify-end px-2">
+          <div className="max-w-2xl mx-auto mt-10 flex items-center justify-between px-2">
+            {userProfile?.onboardingComplete ? (
+              <button
+                onClick={() => { window.location.href = "/onboarding?edit=true"; }}
+                className="flex items-center gap-2 text-sm text-text-secondary hover:text-primary transition-colors group"
+                aria-label="Modifier mon profil"
+              >
+                <svg className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                <span>Modifier mon profil</span>
+              </button>
+            ) : (
+              <div />
+            )}
             <button
               onClick={async () => { await signOut(); router.push("/login"); }}
               className="flex items-center gap-2 text-sm text-text-secondary hover:text-primary transition-colors group"

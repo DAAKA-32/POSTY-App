@@ -9,9 +9,8 @@ import {
   ThreadsProfile,
 } from "@/lib/meta";
 
-// Standardized redirect: all OAuth callbacks go to the main application page
-// Uses path segments to construct the URL dynamically
-const OAUTH_REDIRECT_BASE = ["", "app"].join("/");
+// Standardized redirect: OAuth callbacks go to settings page (where connections are managed)
+const OAUTH_REDIRECT_BASE = "/settings";
 
 function buildRedirectUrl(request: NextRequest, params: string): URL {
   return new URL(`${OAUTH_REDIRECT_BASE}?${params}`, request.url);

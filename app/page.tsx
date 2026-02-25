@@ -303,7 +303,7 @@ function Navbar() {
                     href="/signup"
                     className="inline-flex items-center justify-center gap-2 h-9 px-4 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white text-[13px] font-semibold rounded-xl shadow-md shadow-[#F8935D]/20 hover:shadow-lg hover:shadow-[#F8935D]/25 transition-shadow duration-200"
                   >
-                    Commencer
+                    Essai gratuit
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                     </svg>
@@ -569,7 +569,7 @@ function HeroSection() {
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
               </span>
               <span className="text-sm font-medium text-gray-700">
-                Utilisé par des <span className="font-bold text-gray-900">entrepreneurs exigeants</span>
+                Choisi par des <span className="font-bold text-gray-900">entrepreneurs qui signent des clients sur LinkedIn</span>
               </span>
               <div className="flex -space-x-1.5">
                 {[1, 2, 3].map((i) => (
@@ -675,7 +675,7 @@ function HeroSection() {
                 <svg className="w-5 h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                Configuration en 2 min
+                Prêt en 2 minutes
               </span>
               <span className="flex items-center gap-2">
                 <svg className="w-5 h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
@@ -832,13 +832,13 @@ function HeroSection() {
 // =============================================================================
 
 const ALL_DEMO_SUGGESTIONS = [
-  { label: "Attirer des clients B2B", emoji: "🎯", text: "Je veux attirer des clients B2B dans le secteur du consulting" },
-  { label: "Asseoir mon expertise", emoji: "👤", text: "Je veux renforcer ma crédibilité d'expert sur mon marché" },
-  { label: "Convertir mes prospects", emoji: "💼", text: "Je veux transformer mes prospects LinkedIn en clients" },
-  { label: "Lancer une offre", emoji: "📈", text: "Je veux annoncer le lancement d'une nouvelle offre à mon audience LinkedIn" },
-  { label: "Montrer mes résultats", emoji: "🤝", text: "Je veux partager un cas client concret et impactant" },
-  { label: "Raconter une réussite", emoji: "✍️", text: "Je veux raconter comment j'ai aidé un client à atteindre ses objectifs" },
-  { label: "Accélérer ma croissance", emoji: "🚀", text: "Je veux montrer l'impact de LinkedIn sur la croissance de mon activité" },
+  { label: "Signer un client B2B", emoji: "🎯", text: "Je suis consultant et je veux attirer des décideurs B2B qui ont besoin de mon expertise" },
+  { label: "Prouver mon expertise", emoji: "👤", text: "Je veux que mes prospects me voient comme la référence de mon secteur" },
+  { label: "Transformer mes vues en RDV", emoji: "💼", text: "Mes posts LinkedIn ont des vues mais ne génèrent aucun RDV client" },
+  { label: "Lancer mon offre", emoji: "📈", text: "Je lance une nouvelle offre et je veux que mon réseau LinkedIn en parle" },
+  { label: "Partager un cas client", emoji: "🤝", text: "J'ai aidé un client à doubler son CA et je veux le raconter pour attirer des prospects similaires" },
+  { label: "Raconter mon parcours", emoji: "✍️", text: "Je veux partager une leçon business tirée de mon expérience pour engager mon audience" },
+  { label: "Booster ma visibilité", emoji: "🚀", text: "Je publie rarement sur LinkedIn et je veux enfin être visible auprès de mes prospects" },
 ];
 
 // Module-level flag to track if hero animation played (persists across re-renders, resets on page refresh)
@@ -865,8 +865,8 @@ function DemoSection() {
   const [hasAnimated, setHasAnimated] = useState(alreadyPlayed);
 
   // Word-by-word reveal state
-  const HERO_WORDS_L1 = ["Vos", "posts", "LinkedIn,"];
-  const HERO_WORDS_L2 = ["générateurs", "de", "clients"];
+  const HERO_WORDS_L1 = ["Vos", "posts", "LinkedIn"];
+  const HERO_WORDS_L2 = ["signent", "vos", "clients"];
   const TOTAL_WORDS = HERO_WORDS_L1.length + HERO_WORDS_L2.length;
   const WORD_DELAY = 110;
 
@@ -1143,7 +1143,7 @@ function DemoSection() {
               }}
               className="mt-8 md:mt-10 text-gray-500 text-base md:text-lg lg:text-xl max-w-2xl mx-auto leading-relaxed"
             >
-              Décrivez votre objectif. Posty fait le reste.
+              Décrivez votre objectif. Posty génère un post LinkedIn prêt à publier en 30 secondes.
             </motion.p>
           </div>
         </motion.div>
@@ -1194,7 +1194,7 @@ function DemoSection() {
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
-                  Apercu produit
+                  Aperçu produit
                 </span>
               </button>
 
@@ -1266,9 +1266,9 @@ function DemoSection() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
-                    <p className="text-gray-900 font-semibold text-base mb-1">Votre premier post est prêt</p>
+                    <p className="text-gray-900 font-semibold text-base mb-1">Votre premier post LinkedIn est prêt</p>
                     <p className="text-gray-500 text-sm mb-5 max-w-xs">
-                      Créez un compte pour le sauvegarder et en générer autant que vous voulez.
+                      Créez votre compte pour le publier et en générer un chaque jour.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-3">
                       {aiResponse && (
@@ -1287,7 +1287,7 @@ function DemoSection() {
                         href="/signup"
                         className="inline-flex items-center justify-center gap-2 h-11 px-6 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white text-sm font-semibold rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200"
                       >
-                        Créer mon compte gratuitement
+                        Publier mon premier post — 7 jours gratuits
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                         </svg>
@@ -1324,7 +1324,7 @@ function DemoSection() {
                         className="flex flex-col items-center mb-6 md:mb-8"
                       >
                         <p className="text-gray-500 text-sm md:text-base">
-                          Decrivez votre objectif business
+                          Quel client voulez-vous attirer ?
                         </p>
                         <div className="mt-2.5 h-[2px] w-16 bg-gradient-to-r from-[#F8935D] to-[#F76B54] rounded-full" />
                       </motion.div>
@@ -1358,7 +1358,7 @@ function DemoSection() {
                           type="text"
                           value={inputValue}
                           onChange={(e) => setInputValue(e.target.value)}
-                          placeholder="Quel est votre objectif ? Ex: générer des leads en consulting..."
+                          placeholder="Ex : Je veux attirer des dirigeants SaaS vers mon offre de consulting..."
                           className="w-full text-sm md:text-[15px] placeholder-gray-400 bg-transparent py-3.5 md:py-4 pl-5 pr-16 rounded-[20px] focus:outline-none"
                           disabled={isStreaming}
                         />
@@ -1530,13 +1530,13 @@ function DemoSection() {
 
                         <div className="px-5 py-4 bg-gradient-to-r from-[#F8935D]/5 to-[#F76B54]/5 border border-[#F8935D]/15 rounded-xl">
                           <p className="text-gray-600 text-sm mb-3">
-                            Ce post pourrait vous rapporter votre prochain client.
+                            Ce post peut vous amener votre prochain prospect demain matin.
                           </p>
                           <Link
                             href="/signup"
                             className="inline-flex items-center justify-center gap-2 h-11 px-6 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white text-sm font-semibold rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200"
                           >
-                            Créer mon compte gratuitement
+                            Publier mon premier post — 7 jours gratuits
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                             </svg>
@@ -2091,7 +2091,7 @@ function KeyBenefitsSection() {
                 {/* Metric highlight */}
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl sm:text-4xl font-semibold text-gray-900">5h</span>
-                  <span className="text-gray-500">economisees par semaine en moyenne</span>
+                  <span className="text-gray-500">économisées par semaine en moyenne</span>
                 </div>
               </div>
             </div>
@@ -2430,10 +2430,14 @@ const audienceAccents = {
 const AUDIENCE_PROFILES = [
   {
     title: "Entrepreneurs & Fondateurs",
-    subtitle: "CEOs · Solopreneurs · Fondateurs",
-    painPoint: "Vous savez que LinkedIn peut générer des clients, mais vous n\u2019avez pas le temps de publier régulièrement ni de trouver le bon angle.",
-    solution: "Posty génère des posts stratégiques en 30 secondes, alignés sur votre offre et votre positionnement. Votre LinkedIn travaille pendant que vous gérez votre business.",
-    tag: "Idéal pour les CEOs et solopreneurs",
+    subtitle: "CEOs \u00b7 Solopreneurs \u00b7 Fondateurs",
+    painPoint: "Pas le temps de publier. Pas d\u2019angle. LinkedIn reste un potentiel inexploit\u00e9.",
+    solution: "Un post strat\u00e9gique en 30 secondes. Votre LinkedIn g\u00e9n\u00e8re des leads pendant que vous d\u00e9veloppez votre business.",
+    metrics: [
+      { value: "30s", label: "Par post" },
+      { value: "1/jour", label: "Fr\u00e9quence" },
+    ],
+    tag: "Id\u00e9al pour les CEOs et solopreneurs",
     accent: "cyan" as const,
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
@@ -2443,10 +2447,14 @@ const AUDIENCE_PROFILES = [
   },
   {
     title: "Agences & Directeurs Marketing",
-    subtitle: "CMOs · Agences · Équipes marketing",
-    painPoint: "Gérer le contenu LinkedIn de plusieurs clients prend un temps fou, et la qualité varie d\u2019un rédacteur à l\u2019autre.",
-    solution: "Posty vous permet de produire du contenu premium à grande échelle, avec un ton cohérent par client. Scalez votre offre sans recruter.",
-    tag: "Idéal pour les agences et CMOs",
+    subtitle: "CMOs \u00b7 Agences \u00b7 \u00c9quipes marketing",
+    painPoint: "Multi-clients = temps fou et qualit\u00e9 in\u00e9gale. Impossible de scaler manuellement.",
+    solution: "Contenu premium \u00e0 grande \u00e9chelle, ton coh\u00e9rent par client. Scalez votre offre sans recruter.",
+    metrics: [
+      { value: "10+", label: "Clients g\u00e9r\u00e9s" },
+      { value: "100%", label: "Ton coh\u00e9rent" },
+    ],
+    tag: "Id\u00e9al pour les agences et CMOs",
     accent: "violet" as const,
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
@@ -2456,10 +2464,14 @@ const AUDIENCE_PROFILES = [
   },
   {
     title: "Freelances & Consultants",
-    subtitle: "Indépendants · Experts · Consultants B2B",
-    painPoint: "Vos missions ne laissent pas de temps pour le marketing. Pourtant, sans visibilité LinkedIn, le prochain contrat est incertain.",
-    solution: "Posty transforme vos idées en posts qui attirent des prospects qualifiés. Dictez une idée entre deux RDV, Posty fait le reste.",
-    tag: "Idéal pour les indépendants B2B",
+    subtitle: "Ind\u00e9pendants \u00b7 Experts \u00b7 Consultants B2B",
+    painPoint: "Z\u00e9ro temps pour le marketing. Sans visibilit\u00e9 LinkedIn, le prochain contrat reste incertain.",
+    solution: "Dictez une id\u00e9e entre deux RDV. Posty cr\u00e9e le post qui attire vos prochains clients.",
+    metrics: [
+      { value: "2 min", label: "Entre 2 RDV" },
+      { value: "\u00d73", label: "Visibilit\u00e9" },
+    ],
+    tag: "Id\u00e9al pour les ind\u00e9pendants B2B",
     accent: "amber" as const,
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
@@ -2475,7 +2487,7 @@ function AudienceCard({ profile, index }: { profile: typeof AUDIENCE_PROFILES[nu
   const isMobile = useIsMobile();
   const cardRef = useRef<HTMLDivElement>(null);
 
-  // 3D perspective tilt — desktop only, driven by cursor position
+  // 3D perspective tilt — desktop only
   const mouseX = useMotionValue(0.5);
   const mouseY = useMotionValue(0.5);
   const rawRotateX = useTransform(mouseY, [0, 1], [5, -5]);
@@ -2483,14 +2495,17 @@ function AudienceCard({ profile, index }: { profile: typeof AUDIENCE_PROFILES[nu
   const rotateX = useSpring(rawRotateX, { stiffness: 150, damping: 20 });
   const rotateY = useSpring(rawRotateY, { stiffness: 150, damping: 20 });
 
-  // Spotlight position for cursor-tracking glow
+  // Cursor-tracking spotlight
   const spotlightX = useMotionValue(50);
   const spotlightY = useMotionValue(50);
   const spotlightBg = useMotionTemplate`radial-gradient(350px circle at ${spotlightX}% ${spotlightY}%, rgba(${accent.glowRgb}, 0.08), transparent 60%)`;
 
+  const enableHover = !isMobile && !prefersReducedMotion;
+
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!enableHover) return;
     const card = cardRef.current;
-    if (!card || prefersReducedMotion) return;
+    if (!card) return;
     const rect = card.getBoundingClientRect();
     const nx = (e.clientX - rect.left) / rect.width;
     const ny = (e.clientY - rect.top) / rect.height;
@@ -2498,17 +2513,15 @@ function AudienceCard({ profile, index }: { profile: typeof AUDIENCE_PROFILES[nu
     mouseY.set(ny);
     spotlightX.set(nx * 100);
     spotlightY.set(ny * 100);
-  }, [mouseX, mouseY, spotlightX, spotlightY, prefersReducedMotion]);
+  }, [mouseX, mouseY, spotlightX, spotlightY, enableHover]);
 
   const handleMouseLeave = useCallback(() => {
+    if (!enableHover) return;
     mouseX.set(0.5);
     mouseY.set(0.5);
     spotlightX.set(50);
     spotlightY.set(50);
-  }, [mouseX, mouseY, spotlightX, spotlightY]);
-
-  // Vertical rhythm offset — cards 1 & 3 shift up on desktop
-  const yOffset = index === 1 ? "md:translate-y-4" : "";
+  }, [mouseX, mouseY, spotlightX, spotlightY, enableHover]);
 
   return (
     <motion.div
@@ -2517,36 +2530,36 @@ function AudienceCard({ profile, index }: { profile: typeof AUDIENCE_PROFILES[nu
       whileInView={{ opacity: 1, y: 0, ...((prefersReducedMotion || isMobile) ? {} : { filter: "blur(0px)" }) }}
       viewport={{ once: true, margin: "-80px" }}
       transition={{ delay: index * 0.15, duration: 0.7, ease: smoothEase }}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      className={`group relative ${yOffset}`}
-      style={{ perspective: 1000 }}
+      onMouseMove={enableHover ? handleMouseMove : undefined}
+      onMouseLeave={enableHover ? handleMouseLeave : undefined}
+      className={`${enableHover ? "group" : ""} relative h-full`}
+      style={enableHover ? { perspective: 1000 } : undefined}
     >
       <motion.div
-        style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
+        style={enableHover ? { rotateX, rotateY, transformStyle: "preserve-3d" } : undefined}
         className="relative h-full"
       >
-        {/* Large ambient hover glow */}
+        {/* Ambient hover glow */}
         <div
           className="absolute -inset-6 rounded-3xl opacity-0 group-hover:opacity-100 transition-all duration-700 blur-3xl pointer-events-none"
           style={{ background: `radial-gradient(400px circle at 50% 30%, rgba(${accent.glowRgb}, 0.15), transparent 70%)` }}
         />
 
-        {/* Card container with border + shadow */}
+        {/* Card shell */}
         <div className="relative h-full rounded-2xl overflow-hidden shadow-sm group-hover:shadow-xl transition-shadow duration-500">
-          {/* Gradient border layer — accent-colored shimmer */}
-          <div className={`absolute inset-0 rounded-2xl bg-gradient-to-b ${accent.gradient} opacity-[0.12] group-hover:opacity-[0.25] transition-opacity duration-500`} />
+          {/* Gradient border shimmer */}
+          <div className={`absolute inset-0 rounded-2xl bg-gradient-to-b ${accent.gradient} ${enableHover ? "opacity-[0.12] group-hover:opacity-[0.25]" : "opacity-[0.18]"} transition-opacity duration-500`} />
 
-          {/* Cursor-tracking spotlight — reactive via useMotionTemplate */}
+          {/* Cursor spotlight */}
           <motion.div
             className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
             style={{ background: spotlightBg }}
           />
 
           {/* Inner card */}
-          <div className="relative h-full m-[1px] rounded-[15px] bg-white backdrop-blur-2xl overflow-hidden">
-            {/* Left accent bar with traveling glow */}
-            <div className={`absolute left-0 top-0 bottom-0 w-[3px] bg-gradient-to-b ${accent.accentBar} opacity-40 group-hover:opacity-90 transition-opacity duration-500`}>
+          <div className="relative h-full m-[1px] rounded-[15px] bg-white overflow-hidden">
+            {/* Left accent bar + traveling glow */}
+            <div className={`absolute left-0 top-0 bottom-0 w-[3px] bg-gradient-to-b ${accent.accentBar} ${enableHover ? "opacity-40 group-hover:opacity-90" : "opacity-70"} transition-opacity duration-500`}>
               <motion.div
                 className="absolute inset-x-0 h-10 blur-sm"
                 style={{ background: `linear-gradient(to bottom, transparent, rgba(${accent.glowRgb}, 0.6), transparent)` }}
@@ -2556,55 +2569,62 @@ function AudienceCard({ profile, index }: { profile: typeof AUDIENCE_PROFILES[nu
             </div>
 
             {/* Top accent gradient line */}
-            <div className={`h-[2px] bg-gradient-to-r ${accent.gradient} opacity-40 group-hover:opacity-90 transition-opacity duration-500`} />
+            <div className={`h-[2px] bg-gradient-to-r ${accent.gradient} ${enableHover ? "opacity-40 group-hover:opacity-90" : "opacity-70"} transition-opacity duration-500`} />
 
-            <div className="p-7 sm:p-8 lg:p-9 pl-8 sm:pl-9 lg:pl-10">
-              {/* Number + Icon row */}
-              <div className="flex items-start justify-between mb-7">
+            <div className="p-6 sm:p-7 lg:p-8 pl-7 sm:pl-8 lg:pl-9">
+              {/* Icon + Title row */}
+              <div className="flex items-start gap-4 mb-5">
                 <div
-                  className={`w-12 h-12 rounded-xl ${accent.iconBg} ring-1 ${accent.iconRing} flex items-center justify-center ${accent.iconColor} transition-all duration-300 group-hover:scale-110`}
-                  style={{ boxShadow: `0 0 20px -4px rgba(${accent.glowRgb}, 0)`, transition: "all 0.4s ease" }}
+                  className={`w-12 h-12 rounded-xl ${accent.iconBg} ring-1 ${accent.iconRing} flex items-center justify-center ${accent.iconColor} flex-shrink-0 transition-transform duration-300 group-hover:scale-110`}
                 >
                   {profile.icon}
                 </div>
-                <span className={`text-6xl font-black ${accent.numberColor} select-none leading-none`}>
-                  0{index + 1}
-                </span>
+                <div className="min-w-0">
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-900 tracking-tight leading-tight">
+                    {profile.title}
+                  </h3>
+                  <p className="text-xs text-gray-500 font-medium mt-1">{profile.subtitle}</p>
+                </div>
               </div>
 
-              {/* Title & Subtitle */}
-              <h3 className="text-xl sm:text-[22px] font-bold text-gray-900 mb-2 tracking-tight leading-tight">{profile.title}</h3>
-              <p className="text-[13px] text-gray-500 mb-7 font-medium tracking-wide">{profile.subtitle}</p>
+              {/* Pain point — muted quote */}
+              <p className="text-sm text-gray-400 italic leading-relaxed mb-5">
+                &ldquo;{profile.painPoint}&rdquo;
+              </p>
 
               {/* Separator */}
-              <div className="h-px bg-gray-200 mb-7" />
+              <div className="h-px bg-gray-100 mb-5" />
 
-              {/* Pain Point */}
-              <div className="mb-6">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0" />
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-red-500/70">Le problème</span>
-                </div>
-                <p className="text-sm text-gray-500 leading-relaxed pl-4 border-l border-gray-200">
-                  {profile.painPoint}
-                </p>
-              </div>
+              {/* Solution — prominent */}
+              <p className="text-[15px] text-gray-700 leading-relaxed mb-6">
+                {profile.solution}
+              </p>
 
-              {/* Solution */}
-              <div className="mb-7">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className={`w-1.5 h-1.5 rounded-full ${accent.solutionDot} flex-shrink-0`} />
-                  <span className={`text-[11px] font-semibold uppercase tracking-[0.15em] ${accent.solutionLabel}`}>La solution Posty</span>
-                </div>
-                <p className="text-[14.5px] text-gray-700 leading-relaxed pl-4 border-l border-gray-200">
-                  {profile.solution}
-                </p>
+              {/* Metrics */}
+              <div className="flex gap-3 mb-6">
+                {profile.metrics.map((m) => (
+                  <div
+                    key={m.label}
+                    className={`flex-1 rounded-xl ${accent.iconBg} p-3 text-center`}
+                  >
+                    <p className={`text-lg font-bold ${accent.iconColor}`}>{m.value}</p>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wide mt-0.5">
+                      {m.label}
+                    </p>
+                  </div>
+                ))}
               </div>
 
               {/* Tag */}
-              <div className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-medium ${accent.tag}`}>
+              <div
+                className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-medium ${accent.tag}`}
+              >
                 <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clipRule="evenodd"
+                  />
                 </svg>
                 {profile.tag}
               </div>
@@ -2621,35 +2641,110 @@ function TargetAudienceSection() {
   const isMobile = useIsMobile();
   const skipInfinite = prefersReducedMotion || isMobile;
 
-  return (
-    <section id="audience" className="relative py-12 md:py-16 lg:py-20 bg-white overflow-hidden">
-      {/* Smooth edge transition — blends into Features (peach) below */}
-      <div className="absolute bottom-0 left-0 right-0 h-16 md:h-32 bg-gradient-to-t from-[#FEF3EE] to-white z-[1] pointer-events-none" />
+  // ── 3D Infinite Carousel (mobile & tablet < 1024px) ──
+  const TOTAL = AUDIENCE_PROFILES.length;
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+  const touchRef = useRef({ startX: 0, startY: 0 });
+  const isSnapping = useRef(false);
 
-      {/* Enhanced aurora background — soft pastel washes on white */}
+  // Extended track: [clone-last, real-0, real-1, real-2, clone-first]
+  const extendedIndices = [TOTAL - 1, ...Array.from({ length: TOTAL }, (_, i) => i), 0];
+  // slideIndex 1..TOTAL = real items, 0 and TOTAL+1 = clones
+  const [slideIndex, setSlideIndex] = useState(1);
+  const [shouldAnimate, setShouldAnimate] = useState(true);
+
+  // Real active index for dots (0-based)
+  const realIndex = slideIndex <= 0 ? TOTAL - 1
+    : slideIndex > TOTAL ? 0
+    : slideIndex - 1;
+
+  // Measure carousel container
+  useEffect(() => {
+    const el = carouselRef.current;
+    if (!el) return;
+    const measure = () => setContainerWidth(el.offsetWidth);
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
+
+  // Carousel geometry — center the active card
+  const carouselGap = 16;
+  const cardWidth = containerWidth > 0 ? Math.min(containerWidth * 0.85, 420) : 0;
+  const trackX = containerWidth > 0
+    ? (containerWidth / 2) - (cardWidth / 2) - slideIndex * (cardWidth + carouselGap)
+    : 0;
+
+  // Infinite loop: snap from clone back to real item
+  useEffect(() => {
+    if (slideIndex === 0 || slideIndex === TOTAL + 1) {
+      isSnapping.current = true;
+      const snapTarget = slideIndex === 0 ? TOTAL : 1;
+      const timer = setTimeout(() => {
+        setShouldAnimate(false);
+        setSlideIndex(snapTarget);
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            setShouldAnimate(true);
+            isSnapping.current = false;
+          });
+        });
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [slideIndex, TOTAL]);
+
+  // Navigation — guarded against rapid-fire during snap
+  const goNext = useCallback(() => {
+    if (isSnapping.current) return;
+    setSlideIndex(prev => prev + 1);
+  }, []);
+  const goPrev = useCallback(() => {
+    if (isSnapping.current) return;
+    setSlideIndex(prev => prev - 1);
+  }, []);
+
+  // Touch swipe
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchRef.current = { startX: e.touches[0].clientX, startY: e.touches[0].clientY };
+  }, []);
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (isSnapping.current) return;
+    const dx = e.changedTouches[0].clientX - touchRef.current.startX;
+    const dy = e.changedTouches[0].clientY - touchRef.current.startY;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+      if (dx < 0) setSlideIndex(prev => prev + 1);
+      else setSlideIndex(prev => prev - 1);
+    }
+  }, []);
+
+  return (
+    <section id="audience" className="relative py-12 md:py-16 lg:py-20 overflow-hidden">
+      {/* Smooth edge transitions */}
+      <div className="absolute top-0 left-0 right-0 h-16 md:h-32 bg-gradient-to-b from-[#FEF3EE] to-transparent z-[1] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 right-0 h-16 md:h-32 bg-gradient-to-t from-[#FEF3EE] to-transparent z-[1] pointer-events-none" />
+
+      {/* Aurora background */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {/* Primary cyan aurora — top left */}
         <motion.div
           initial={{ opacity: 0.25 }}
           animate={skipInfinite ? {} : { opacity: [0.25, 0.45, 0.25], scale: [1, 1.12, 1] }}
           transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
           className="absolute -top-1/3 -left-1/4 w-[65%] h-[65%] bg-cyan-200/30 rounded-full blur-[150px]"
         />
-        {/* Violet aurora — right side */}
         <motion.div
           initial={{ opacity: 0.2 }}
           animate={skipInfinite ? {} : { opacity: [0.2, 0.38, 0.2], scale: [1, 1.15, 1] }}
           transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2 }}
           className="absolute top-1/4 -right-1/3 w-[55%] h-[55%] bg-violet-200/25 rounded-full blur-[150px]"
         />
-        {/* Amber aurora — bottom */}
         <motion.div
           initial={{ opacity: 0.18 }}
           animate={skipInfinite ? {} : { opacity: [0.18, 0.32, 0.18], scale: [1, 1.1, 1] }}
           transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 4 }}
           className="absolute -bottom-1/4 left-1/4 w-[50%] h-[50%] bg-amber-200/25 rounded-full blur-[130px]"
         />
-        {/* Secondary glow — creates depth between primary orbs */}
         <motion.div
           initial={{ opacity: 0.1 }}
           animate={skipInfinite ? {} : { opacity: [0.1, 0.2, 0.1] }}
@@ -2657,7 +2752,6 @@ function TargetAudienceSection() {
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[70%] h-[40%] bg-gradient-to-r from-cyan-200/15 via-violet-200/10 to-amber-200/15 rounded-full blur-[180px]"
         />
 
-        {/* Silver luminous particles */}
         {!skipInfinite && [
           { top: "18%", left: "10%", d: 7, del: 0, s: 2 },
           { top: "32%", left: "82%", d: 9, del: 1.5, s: 3 },
@@ -2674,7 +2768,6 @@ function TargetAudienceSection() {
           />
         ))}
 
-        {/* Grid pattern */}
         <div
           className="absolute inset-0 opacity-[0.025]"
           style={{
@@ -2685,7 +2778,7 @@ function TargetAudienceSection() {
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header — bolder, with glow effect */}
+        {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -2698,32 +2791,133 @@ function TargetAudienceSection() {
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-50 border border-gray-200 backdrop-blur-sm mb-6 lg:mb-8"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/60 border border-gray-200/60 backdrop-blur-md mb-6 lg:mb-8"
           >
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-[#F8935D] opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-[#F8935D]" />
             </span>
-            <span className="text-sm font-medium text-gray-600">Concu pour vous</span>
+            <span className="text-sm font-medium text-gray-600">Conçu pour vous</span>
           </motion.div>
 
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 lg:mb-6 tracking-tight">
-            <span className="text-silver-shimmer">A qui s&apos;adresse</span>{" "}
+            <span className="text-silver-shimmer">À qui s&apos;adresse</span>{" "}
             <span className="relative inline-block">
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
                 Posty ?
               </span>
-              {/* Glow behind gradient text */}
               <span className="absolute inset-0 bg-gradient-to-r from-[#F8935D]/20 to-[#F76B54]/20 blur-2xl -z-10" aria-hidden="true" />
             </span>
           </h2>
-          <p className="text-gray-500 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
-            Si vous vendez en B2B et voulez que LinkedIn génère des clients, Posty est fait pour vous.
+          <p className="text-gray-600 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
+            Chaque professionnel a un d&eacute;fi LinkedIn. Posty le r&eacute;sout en 30 secondes.
           </p>
         </motion.div>
 
-        {/* Audience Cards Grid - 3 columns on desktop */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+        {/* ────────────────────────────────────────────────────────────── */}
+        {/* Mobile & Tablet: 3D Infinite Carousel (< 1024px)             */}
+        {/* ────────────────────────────────────────────────────────────── */}
+        <div className="lg:hidden" ref={carouselRef}>
+          <div className="relative">
+            {/* ← Arrow */}
+            <button
+              onClick={goPrev}
+              className="absolute left-1 sm:left-2 top-1/2 -translate-y-1/2 z-20
+                w-11 h-11 rounded-full bg-white/80 backdrop-blur-sm border border-gray-200/60
+                shadow-sm flex items-center justify-center text-gray-500
+                hover:bg-white hover:text-gray-900 active:scale-90 transition-all duration-150"
+              aria-label="Carte précédente"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+
+            {/* → Arrow */}
+            <button
+              onClick={goNext}
+              className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 z-20
+                w-11 h-11 rounded-full bg-white/80 backdrop-blur-sm border border-gray-200/60
+                shadow-sm flex items-center justify-center text-gray-500
+                hover:bg-white hover:text-gray-900 active:scale-90 transition-all duration-150"
+              aria-label="Carte suivante"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+
+            {/* Carousel viewport */}
+            <div
+              className="overflow-hidden"
+              style={{ perspective: "1200px" }}
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+            >
+              <motion.div
+                className="flex"
+                style={{ gap: `${carouselGap}px` }}
+                animate={{ x: trackX }}
+                transition={
+                  !shouldAnimate
+                    ? { duration: 0 }
+                    : prefersReducedMotion
+                      ? { duration: 0.3, ease: "easeOut" }
+                      : { type: "spring", stiffness: 260, damping: 28 }
+                }
+              >
+                {extendedIndices.map((profileIdx, trackPos) => {
+                  const offset = trackPos - slideIndex;
+                  return (
+                    <motion.div
+                      key={`carousel-${trackPos}`}
+                      className="flex-shrink-0"
+                      style={{
+                        width: cardWidth > 0 ? `${cardWidth}px` : "85vw",
+                        transformStyle: "preserve-3d",
+                      }}
+                      animate={{
+                        rotateY: prefersReducedMotion ? 0 : offset * -15,
+                        scale: offset === 0 ? 1 : 0.85,
+                        opacity: offset === 0 ? 1 : 0.5,
+                      }}
+                      transition={
+                        !shouldAnimate
+                          ? { duration: 0 }
+                          : prefersReducedMotion
+                            ? { duration: 0.3, ease: "easeOut" }
+                            : { type: "spring", stiffness: 260, damping: 28 }
+                      }
+                    >
+                      <AudienceCard profile={AUDIENCE_PROFILES[profileIdx]} index={profileIdx} />
+                    </motion.div>
+                  );
+                })}
+              </motion.div>
+            </div>
+          </div>
+
+          {/* Dot indicators */}
+          <div className="flex justify-center items-center gap-2.5 mt-8">
+            {AUDIENCE_PROFILES.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setSlideIndex(i + 1)}
+                className={`rounded-full transition-all duration-300 ${
+                  i === realIndex
+                    ? "h-2.5 w-8 bg-gradient-to-r from-[#F8935D] to-[#F76B54] shadow-sm shadow-[#F8935D]/30"
+                    : "h-2.5 w-2.5 bg-gray-300 hover:bg-gray-400"
+                }`}
+                aria-label={`Voir ${AUDIENCE_PROFILES[i].title}`}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* ────────────────────────────────────────────────────────────── */}
+        {/* Desktop: 3-column Grid (>= 1024px)                           */}
+        {/* ────────────────────────────────────────────────────────────── */}
+        <div className="hidden lg:grid grid-cols-3 gap-8">
           {AUDIENCE_PROFILES.map((profile, index) => (
             <AudienceCard key={profile.title} profile={profile} index={index} />
           ))}
@@ -3079,7 +3273,7 @@ function MockupContextProfile() {
         </div>
         <div>
           <div className="text-[12px] text-gray-900 font-semibold">Emilien Nepveu</div>
-          <div className="text-[10px] text-gray-500">Entrepreneur &middot; CEO</div>
+          <div className="text-[10px] text-gray-500">Co-fondateur &middot; CEO</div>
         </div>
       </div>
 
@@ -3128,8 +3322,8 @@ function MockupContextProfile() {
 
 const FEATURES: FeatureConfig[] = [
   {
-    title: "1 post, 4 plateformes",
-    description: "Publiez simultanément sur LinkedIn, Threads et Facebook — et bientôt Reddit. Un seul contenu, une audience démultipliée sans effort.",
+    title: "1 post, 4 plateformes, 4x plus de visibilité",
+    description: "Publiez sur LinkedIn, Threads, Facebook — et bientôt Reddit. Un seul contenu touche 4 audiences. Plus de visibilité, plus de prospects entrants.",
     mockup: <MockupMultiPlatform />,
     badge: "Multi-plateforme",
     tierBadge: "Max",
@@ -3152,10 +3346,10 @@ const FEATURES: FeatureConfig[] = [
     },
   },
   {
-    title: "Planifiez, publiez, dormez tranquille",
+    title: "Publiez au bon moment, chaque jour, sans y penser",
     description: "Programmez vos posts aux créneaux où votre audience est la plus active. L'algorithme récompense le bon timing — Posty s'en charge pour vous.",
     mockup: <MockupScheduler />,
-    badge: "Arrive tres bientot",
+    badge: "Arrive très bientôt",
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -3176,7 +3370,7 @@ const FEATURES: FeatureConfig[] = [
   },
   {
     title: "De l'idée au post en 30 secondes",
-    description: "Décrivez votre objectif. Posty génère deux versions — Storytelling pour engager, Business pour convertir — prêtes à publier.",
+    description: "Décrivez votre objectif. Posty génère deux versions calibrées : Storytelling pour créer le lien, Business pour déclencher la prise de contact.",
     mockup: <MockupDualGeneration />,
     badge: "Génération IA",
     icon: (
@@ -3199,7 +3393,7 @@ const FEATURES: FeatureConfig[] = [
   },
   {
     title: "Chaque post sonne comme vous",
-    description: "Dès votre inscription, Posty apprend votre secteur, votre audience et votre ton. Résultat : du contenu authentique qui vous ressemble, pas du texte générique.",
+    description: "Dès votre inscription, Posty apprend votre secteur, votre audience cible et votre ton. Résultat : des posts que vos prospects reconnaissent comme experts, pas du contenu IA générique.",
     mockup: <MockupContextProfile />,
     badge: "IA Contextuelle",
     icon: (
@@ -3375,7 +3569,7 @@ function FeatureCard({ feature, index }: { feature: FeatureConfig; index: number
               `}
             >
               <span className="relative">
-                En savoir plus
+                Essayer gratuitement
                 <span className={`absolute -bottom-0.5 left-0 w-0 h-[2px] ${feature.color.iconBg} transition-all duration-300 group-hover/link:w-full`} />
               </span>
               <svg
@@ -3411,7 +3605,7 @@ function FeaturesSection() {
           <h2 className="text-[clamp(1.75rem,4vw,3.25rem)] font-bold">
             <span className="text-silver-premium">Tout ce qu&apos;il vous faut pour</span>{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
-              performer sur LinkedIn
+              attirer des clients sur LinkedIn
             </span>
           </h2>
         </motion.div>
@@ -3456,14 +3650,14 @@ const TESTIMONIALS = [
     role: "Fondateur",
     company: "Agence B2B",
     image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&h=200&fit=crop&crop=face",
-    quote: "Avant Posty, je publiais une fois par semaine sans savoir quoi dire. Aujourd'hui je poste chaque jour un contenu calibré, et LinkedIn est devenu mon premier canal d'acquisition.",
+    quote: "Avant Posty, je publiais une fois par semaine sans savoir quoi dire. Aujourd'hui, je poste chaque jour et LinkedIn est devenu mon premier canal d'acquisition. J'ai signé 3 clients en 2 mois.",
   },
   {
     name: "Sophie L.",
     role: "Directrice Marketing",
     company: "SaaS B2B",
     image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&h=200&fit=crop&crop=face",
-    quote: "Mon équipe gagne plusieurs heures par semaine sur la création de contenu. On réinvestit ce temps dans la stratégie. Nos posts sont plus réguliers et plus engageants.",
+    quote: "Mon équipe gagne 5 heures par semaine sur le contenu. On réinvestit ce temps en stratégie et prospection. Nos posts sont plus réguliers, et l'engagement a triplé en 30 jours.",
   },
   {
     name: "Marc D.",
@@ -3511,7 +3705,7 @@ function TestimonialsSection() {
             </span>
           </h2>
           <p className="text-gray-500 text-lg max-w-2xl mx-auto">
-            Ce que nos utilisateurs constatent après quelques semaines.
+            Des professionnels comme vous qui signent des clients grâce à LinkedIn.
           </p>
         </motion.div>
 
@@ -3568,22 +3762,8 @@ function BeforeAfterSection() {
   const prefersReducedMotion = useReducedMotion();
   const isMobile = useIsMobile();
 
-  const beforeItems = [
-    { text: "Posts génériques ignorés par votre audience", icon: "❌" },
-    { text: "Des heures perdues à chercher quoi écrire", icon: "❌" },
-    { text: "Une audience inactive et désengagée", icon: "❌" },
-    { text: "LinkedIn = perte de temps", icon: "❌" },
-  ];
-
-  const afterItems = [
-    { text: "Posts stratégiques qui attirent des prospects", icon: "✓" },
-    { text: "30 secondes pour un post optimisé", icon: "✓" },
-    { text: "Engagement qui génère des conversations", icon: "✓" },
-    { text: "LinkedIn = canal d'acquisition rentable", icon: "✓" },
-  ];
-
   return (
-    <section className="py-12 md:py-16 px-4 sm:px-6 lg:px-8 overflow-hidden">
+    <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <motion.div
@@ -3591,157 +3771,221 @@ function BeforeAfterSection() {
           whileInView={{ opacity: 1, y: 0, ...(isMobile ? {} : { filter: "blur(0px)" }) }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, ease: smoothEase }}
-          className="text-center mb-8 md:mb-12"
+          className="text-center mb-12 md:mb-16"
         >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, delay: 0.1 }}
-            className="inline-flex items-center gap-2 px-4 py-2 mb-6 bg-white border border-gray-200 rounded-full shadow-sm"
-          >
-            <span className="text-lg">⚡</span>
-            <span className="text-sm text-gray-600 font-medium">La différence est visible</span>
-          </motion.div>
-
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
-            <span className="text-silver-shimmer">Avant vs Après</span>{" "}
+            <span className="text-silver-shimmer">Ce qui change</span>{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
-              Posty
+              avec Posty
             </span>
           </h2>
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-            Découvrez comment Posty transforme votre présence LinkedIn
+          <p className="text-gray-500 text-base md:text-lg max-w-xl mx-auto">
+            Le quotidien LinkedIn de nos utilisateurs, avant et après.
           </p>
         </motion.div>
 
-        {/* Comparison Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
-          {/* BEFORE Card */}
+        {/* Mock-up Comparison — Two browser panels */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr,auto,1fr] gap-6 lg:gap-0 items-start">
+
+          {/* ── BEFORE — Mock LinkedIn (gray, empty, frustrating) ── */}
           <motion.div
-            initial={{ opacity: 0, x: -30, ...((prefersReducedMotion || isMobile) ? {} : { filter: "blur(10px)" }) }}
-            whileInView={{ opacity: 1, x: 0, ...((prefersReducedMotion || isMobile) ? {} : { filter: "blur(0px)" }) }}
+            initial={{ opacity: 0, x: isMobile ? 0 : -24 }}
+            whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6, ease: smoothEase }}
-            className="relative group"
+            transition={{ duration: 0.6, ease: premiumEase }}
           >
-            <div className="relative h-full bg-white rounded-3xl border border-gray-200 p-8 md:p-10 shadow-lg shadow-gray-100/60 overflow-hidden">
-              {/* Subtle red tint background */}
-              <div className="absolute inset-0 bg-gradient-to-br from-red-50/50 to-transparent pointer-events-none" />
-
-              {/* Header */}
-              <div className="relative flex items-center gap-4 mb-8">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center shadow-inner">
-                  <svg className="w-7 h-7 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-xl md:text-2xl font-bold text-gray-400">Sans Posty</h3>
-                  <p className="text-sm text-gray-400">LinkedIn reste une contrainte</p>
-                </div>
-              </div>
-
-              {/* Items */}
-              <div className="relative space-y-5">
-                {beforeItems.map((item, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: index * 0.1, duration: 0.4 }}
-                    className="flex items-start gap-4 group/item"
-                  >
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
-                      <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </div>
-                    <p className="text-gray-500 text-[15px] md:text-base leading-relaxed pt-1">{item.text}</p>
-                  </motion.div>
-                ))}
-              </div>
-
-              {/* Decorative blur */}
-              <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-gray-200/30 rounded-full blur-3xl pointer-events-none" />
+            <div className="flex items-center gap-2 mb-3">
+              <span className="px-3 py-1 rounded-full bg-gray-100 text-gray-500 text-xs font-semibold uppercase tracking-wider">
+                Sans Posty
+              </span>
             </div>
+
+            {/* Browser window */}
+            <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+              {/* Title bar */}
+              <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 border-b border-gray-100">
+                <div className="flex gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-gray-300" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-gray-300" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-gray-300" />
+                </div>
+                <div className="flex-1 mx-2">
+                  <div className="bg-white rounded-md px-3 py-1 text-[11px] text-gray-400 border border-gray-200 w-fit">
+                    linkedin.com/feed
+                  </div>
+                </div>
+              </div>
+
+              {/* Compose area — empty & frustrating */}
+              <div className="p-5 md:p-6">
+                <div className="flex items-start gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-full bg-gray-200 flex-shrink-0" />
+                  <div className="flex-1 rounded-xl border border-dashed border-gray-200 p-4 min-h-[88px] relative bg-gray-50/50">
+                    <span className="text-gray-300 text-sm">À quoi pensez-vous ?</span>
+                    <div className="absolute bottom-3 right-3 flex items-center gap-1.5 text-gray-300">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span className="text-[11px] font-mono">2h14</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Fake engagement */}
+                <div className="flex items-center gap-4 pt-3 border-t border-gray-100">
+                  <span className="text-xs text-gray-300 flex items-center gap-1">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017a2 2 0 01-.95-.24l-3.296-1.883" /></svg>
+                    3
+                  </span>
+                  <span className="text-xs text-gray-300 flex items-center gap-1">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                    0
+                  </span>
+                  <span className="text-xs text-gray-300 flex items-center gap-1">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                    0
+                  </span>
+                </div>
+              </div>
+
+              {/* KPI strip */}
+              <div className="grid grid-cols-3 divide-x divide-gray-100 border-t border-gray-100">
+                <div className="py-3.5 text-center">
+                  <p className="text-lg font-bold text-gray-300">0</p>
+                  <p className="text-[10px] text-gray-400 uppercase tracking-wide mt-0.5">Prospect</p>
+                </div>
+                <div className="py-3.5 text-center">
+                  <p className="text-lg font-bold text-gray-300">~2h</p>
+                  <p className="text-[10px] text-gray-400 uppercase tracking-wide mt-0.5">Par post</p>
+                </div>
+                <div className="py-3.5 text-center">
+                  <p className="text-lg font-bold text-gray-300">1×/mois</p>
+                  <p className="text-[10px] text-gray-400 uppercase tracking-wide mt-0.5">Fréquence</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Quote */}
+            <p className="mt-4 text-sm text-gray-400 italic text-center px-2">
+              &ldquo;Le dimanche soir, je cherche encore quoi poster...&rdquo;
+            </p>
           </motion.div>
 
-          {/* AFTER Card */}
+          {/* ── ARROW ── */}
+          <div className="hidden lg:flex items-center justify-center self-center px-5">
+            <motion.div
+              initial={prefersReducedMotion ? false : { scale: 0, rotate: -90 }}
+              whileInView={{ scale: 1, rotate: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3, type: "spring", stiffness: 200, damping: 15 }}
+              className="w-12 h-12 rounded-full bg-gradient-to-r from-[#F8935D] to-[#F76B54] flex items-center justify-center shadow-lg shadow-[#F8935D]/25"
+            >
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </motion.div>
+          </div>
+          <div className="flex lg:hidden items-center justify-center py-1">
+            <motion.div
+              initial={prefersReducedMotion ? false : { scale: 0 }}
+              whileInView={{ scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3, type: "spring", stiffness: 200, damping: 15 }}
+              className="w-10 h-10 rounded-full bg-gradient-to-r from-[#F8935D] to-[#F76B54] flex items-center justify-center shadow-lg shadow-[#F8935D]/25"
+            >
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+              </svg>
+            </motion.div>
+          </div>
+
+          {/* ── AFTER — Mock Posty dashboard (warm, filled, successful) ── */}
           <motion.div
-            initial={{ opacity: 0, x: 30, ...((prefersReducedMotion || isMobile) ? {} : { filter: "blur(10px)" }) }}
-            whileInView={{ opacity: 1, x: 0, ...((prefersReducedMotion || isMobile) ? {} : { filter: "blur(0px)" }) }}
+            initial={{ opacity: 0, x: isMobile ? 0 : 24 }}
+            whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6, ease: smoothEase, delay: 0.15 }}
-            className="relative group"
+            transition={{ duration: 0.6, delay: 0.15, ease: premiumEase }}
           >
-            {/* Glow effect behind card */}
-            <div className="absolute -inset-1 bg-gradient-to-r from-[#F8935D]/20 to-[#F76B54]/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-            <div className="relative h-full bg-white rounded-3xl border border-[#F8935D]/20 p-8 md:p-10 shadow-xl shadow-[#F8935D]/10 overflow-hidden group-hover:border-[#F8935D]/40 transition-colors duration-300">
-              {/* Gradient background */}
-              <div className="absolute inset-0 bg-gradient-to-br from-[#FEF3EE] via-white to-[#FFF8F5] pointer-events-none" />
-
-              {/* Animated gradient orb — static on mobile */}
-              <motion.div
-                animate={(prefersReducedMotion || isMobile) ? {} : {
-                  scale: [1, 1.2, 1],
-                  opacity: [0.3, 0.5, 0.3],
-                }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#F8935D]/20 to-[#F76B54]/10 rounded-full blur-3xl pointer-events-none"
-              />
-
-              {/* Header */}
-              <div className="relative flex items-center gap-4 mb-8">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#F8935D] to-[#F76B54] flex items-center justify-center shadow-lg shadow-[#F8935D]/30">
-                  <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-xl md:text-2xl font-bold text-gray-900">Avec Posty</h3>
-                  <p className="text-sm text-[#F8935D] font-medium">LinkedIn devient votre meilleur commercial</p>
-                </div>
-              </div>
-
-              {/* Items */}
-              <div className="relative space-y-5">
-                {afterItems.map((item, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, x: 20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: 0.15 + index * 0.1, duration: 0.4 }}
-                    className="flex items-start gap-4 group/item"
-                  >
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      whileInView={{ scale: 1 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: 0.3 + index * 0.1, type: "spring", stiffness: 300 }}
-                      className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-500 flex items-center justify-center shadow-md shadow-emerald-200"
-                    >
-                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </motion.div>
-                    <p className="text-gray-700 text-[15px] md:text-base leading-relaxed pt-1 font-medium">{item.text}</p>
-                  </motion.div>
-                ))}
-              </div>
-
-              {/* Accent line at bottom */}
-              <motion.div
-                initial={{ scaleX: 0 }}
-                whileInView={{ scaleX: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.5, duration: 0.8, ease: premiumEase }}
-                className="absolute bottom-0 left-8 right-8 h-1 bg-gradient-to-r from-[#F8935D] to-[#F76B54] rounded-full origin-left"
-              />
+            <div className="flex items-center gap-2 mb-3">
+              <span className="px-3 py-1 rounded-full bg-[#F8935D]/10 text-[#F8935D] text-xs font-semibold uppercase tracking-wider">
+                Avec Posty
+              </span>
             </div>
+
+            {/* Browser window */}
+            <div className="rounded-2xl border border-[#F8935D]/20 bg-white shadow-lg shadow-[#F8935D]/[0.07] overflow-hidden">
+              {/* Title bar */}
+              <div className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#FEF3EE] to-[#FFF8F5] border-b border-[#F8935D]/10">
+                <div className="flex gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#F8935D]/40" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#F8935D]/25" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#F8935D]/15" />
+                </div>
+                <div className="flex-1 mx-2">
+                  <div className="bg-white rounded-md px-3 py-1 text-[11px] text-[#F8935D] border border-[#F8935D]/15 w-fit font-medium">
+                    postyapp.ai
+                  </div>
+                </div>
+              </div>
+
+              {/* Generated post — ready to publish */}
+              <div className="p-5 md:p-6">
+                {/* Status badges */}
+                <div className="flex flex-wrap items-center gap-2 mb-3">
+                  <motion.span
+                    initial={prefersReducedMotion ? false : { scale: 0 }}
+                    whileInView={{ scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.4, type: "spring", stiffness: 300, damping: 20 }}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 text-xs font-medium"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Généré en 30s
+                  </motion.span>
+                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-[#F8935D]/10 text-[#F8935D] text-[10px] font-medium">
+                    Optimisé pour l&apos;algorithme
+                  </span>
+                </div>
+
+                {/* Post preview */}
+                <div className="rounded-xl border border-[#F8935D]/15 bg-gradient-to-br from-[#FEF3EE]/30 to-transparent p-4 min-h-[88px]">
+                  <p className="text-gray-700 text-sm leading-relaxed">
+                    &ldquo;Les dirigeants qui réussissent sur LinkedIn partagent une habitude : ils publient chaque jour un contenu qui parle à leur audience...&rdquo;
+                  </p>
+                  <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[#F8935D]/10">
+                    <span className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white text-xs font-semibold shadow-sm">
+                      Publier maintenant
+                    </span>
+                    <span className="text-[11px] text-gray-400">
+                      ou planifier pour demain 8h
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* KPI strip */}
+              <div className="grid grid-cols-3 divide-x divide-[#F8935D]/10 border-t border-[#F8935D]/10">
+                <div className="py-3.5 text-center">
+                  <p className="text-lg font-bold text-[#F8935D]">12</p>
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wide mt-0.5">Prospects/mois</p>
+                </div>
+                <div className="py-3.5 text-center">
+                  <p className="text-lg font-bold text-[#F8935D]">×3</p>
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wide mt-0.5">Engagement</p>
+                </div>
+                <div className="py-3.5 text-center">
+                  <p className="text-lg font-bold text-[#F8935D]">1/jour</p>
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wide mt-0.5">Fréquence</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Quote */}
+            <p className="mt-4 text-sm text-[#F8935D] font-medium text-center px-2">
+              &ldquo;LinkedIn est devenu mon premier canal d&apos;acquisition.&rdquo;
+            </p>
           </motion.div>
         </div>
 
@@ -3750,11 +3994,11 @@ function BeforeAfterSection() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ delay: 0.4, duration: 0.5 }}
-          className="text-center mt-12 md:mt-16"
+          transition={{ delay: 0.3, duration: 0.5 }}
+          className="text-center mt-14 md:mt-20"
         >
-          <p className="text-gray-500 text-sm md:text-base mb-6">
-            Rejoignez les professionnels qui ont fait le choix de la performance
+          <p className="text-gray-500 text-sm md:text-base mb-5">
+            Rejoignez les professionnels qui signent des clients chaque mois grâce à LinkedIn
           </p>
           <motion.div
             whileHover={{ scale: 1.03 }}
@@ -3764,7 +4008,7 @@ function BeforeAfterSection() {
               href="/signup"
               className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white font-semibold rounded-xl shadow-lg shadow-[#F8935D]/20 hover:shadow-xl hover:shadow-[#F8935D]/30 transition-all duration-300"
             >
-              Passer a Posty maintenant
+              Commencer mon essai gratuit
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
@@ -3847,7 +4091,7 @@ function FounderSection() {
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
               Posty
             </span>
-            {" "}pour que chaque entrepreneur puisse transformer sa présence LinkedIn en vrai canal d&apos;acquisition.
+            {" "}parce que chaque entrepreneur mérite de signer des clients grâce à ses posts — sans y passer des heures.
           </p>
         </motion.blockquote>
 
@@ -3883,7 +4127,7 @@ function FounderSection() {
                 <span className="absolute left-0 -bottom-0.5 w-full h-[2px] bg-gradient-to-r from-[#F8935D] to-[#F76B54] origin-left scale-x-0 md:group-hover:scale-x-100 transition-transform duration-300 ease-out rounded-full" />
               </span>
             </Link>
-            <p className="text-gray-500 text-xs md:text-sm">Founder & CEO</p>
+            <p className="text-gray-500 text-xs md:text-sm">Co-founder & CEO</p>
           </div>
 
           {/* CFO */}
@@ -4229,13 +4473,13 @@ function PricingSection() {
           className="text-center mb-12 2xl:mb-16"
         >
           <h2 className="text-3xl md:text-4xl lg:text-5xl 2xl:text-[3.25rem] font-bold mb-4">
-            <span className="text-silver-premium">Investissez dans votre</span>{" "}
+            <span className="text-silver-premium">Le prix d&apos;un café par jour.</span>{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
-              croissance LinkedIn
+              Le retour d&apos;un commercial à plein temps.
             </span>
           </h2>
           <p className="text-gray-500 text-lg max-w-2xl mx-auto mb-10">
-            Un seul client signe rembourse votre abonnement annuel. Choisissez le plan qui accelere votre acquisition.
+            Un seul client signé via LinkedIn rembourse votre année entière. Quel plan correspond à vos ambitions ?
           </p>
 
           {/* Billing Toggle - Replicated from subscription page */}
@@ -4377,7 +4621,7 @@ const FAQ_ITEMS = [
   },
   {
     question: "Quels résultats vais-je obtenir ?",
-    answer: "Nos utilisateurs constatent en moyenne un engagement triplé en 30 jours et signent leurs premiers clients LinkedIn en 60 à 90 jours. Un seul client signé rembourse généralement un an d\u2019abonnement.",
+    answer: "En publiant régulièrement avec Posty, nos utilisateurs constatent un engagement triplé en 30 jours. Les premiers clients signés via LinkedIn arrivent entre 60 et 90 jours. À ce stade, un seul contrat rembourse généralement une année entière d\u2019abonnement.",
   },
   {
     question: "Puis-je annuler à tout moment ?",
@@ -4393,7 +4637,7 @@ const FAQ_ITEMS = [
   },
   {
     question: "Qu\u2019est-ce qui différencie Posty de ChatGPT ?",
-    answer: "ChatGPT est généraliste. Posty est un expert LinkedIn B2B. Chaque post est optimisé pour l\u2019algorithme, structuré pour la conversion, et calibré sur votre positionnement. C\u2019est la différence entre un outil générique et un expert dédié à votre croissance LinkedIn.",
+    answer: "ChatGPT écrit du texte. Posty écrit des posts LinkedIn qui génèrent des prospects. Chaque post est optimisé pour l\u2019algorithme, structuré pour déclencher des prises de contact, et calibré sur votre positionnement exact. C\u2019est la différence entre un outil générique et un expert dédié à votre acquisition LinkedIn.",
   },
 ];
 
@@ -4487,17 +4731,17 @@ function FaqSection() {
               <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-[#F8935D] opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-[#F8935D]"></span>
             </span>
-            <span className="text-sm font-medium text-gray-700">Questions frequentes</span>
+            <span className="text-sm font-medium text-gray-700">Questions fréquentes</span>
           </motion.div>
 
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-5">
-            Vous avez des{" "}
+            Tout ce que vous devez savoir{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
-              questions ?
+              avant de commencer
             </span>
           </h2>
           <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-            Les réponses aux questions que vous vous posez avant de commencer.
+            Si la réponse à votre question n&apos;est pas ici, écrivez-nous : on répond en moins de 24h.
           </p>
         </motion.div>
 
@@ -4547,7 +4791,7 @@ function Footer() {
                 Vos posts LinkedIn, calibrés pour signer des clients.
               </p>
               <p className="text-[10px] text-[#F8935D] font-medium mt-1">
-                Chaque post = opportunité business
+                Chaque post peut vous amener un client
               </p>
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
@@ -4606,7 +4850,7 @@ function Footer() {
                 <span className="text-xl font-bold text-gray-900">Posty</span>
               </Link>
               <p className="text-gray-500 max-w-sm">
-                Posty génère vos posts LinkedIn calibrés pour votre audience. Publiez chaque jour, attirez des prospects qualifiés, signez des clients.
+                Posty génère vos posts LinkedIn, calibrés pour votre audience et optimisés pour l&apos;algorithme. Publiez chaque jour, attirez des prospects qualifiés, signez des clients.
               </p>
               <p className="text-[#F8935D] font-medium text-sm mt-3">
                 Chaque post est une opportunité.
@@ -4714,6 +4958,14 @@ export default function LandingPage() {
         {/* Opaque sections — z-[5] + bg to cover the fixed hero title */}
         <div className="relative z-[5] bg-[#FEF3EE]">
           <FeaturesSection />
+        </div>
+
+        {/* TargetAudience — transparent so aurora stars show through */}
+        <div className="relative z-[5]">
+          <TargetAudienceSection />
+        </div>
+
+        <div className="relative z-[5] bg-[#FEF3EE]">
           <TestimonialsSection />
           <FounderSection />
           <PricingSection />

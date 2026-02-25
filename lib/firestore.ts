@@ -291,6 +291,9 @@ export async function getPost(postId: string): Promise<Post | null> {
       responseB: data.contentB || data.responseB,
       selectedVersion: data.chosenVersion || data.selectedVersion,
       createdAt: data.createdAt,
+      // Style metadata for toggle restoration
+      responseMode: data.responseMode,
+      selectedStyle: data.selectedStyle,
       // Conversation messages for multi-turn support
       messages: data.messages || [],
     } as Post;

@@ -24,6 +24,12 @@ export async function GET() {
     categories: ["business", "productivity", "social"],
     icons: [
       {
+        src: "/favicon-48.png",
+        sizes: "48x48",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
         src: "/favicon-192.png",
         sizes: "192x192",
         type: "image/png",
@@ -33,7 +39,13 @@ export async function GET() {
         src: "/favicon-512.png",
         sizes: "512x512",
         type: "image/png",
-        purpose: "any maskable",
+        purpose: "any",
+      },
+      {
+        src: "/favicon-maskable-512.png",
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "maskable",
       },
     ],
     screenshots: [

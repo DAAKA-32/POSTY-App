@@ -165,9 +165,9 @@ export function FacebookProvider({ children }: { children: ReactNode }) {
   const profilePicture = isTokenValid && connection?.profilePicture ? connection.profilePicture : null;
   const profileName = isTokenValid && connection?.profileName ? connection.profileName : null;
 
-  // Pages
-  const pages = connection?.pageIds
-    ? connection.pageIds.map((id) => ({ id, name: id }))
+  // Pages (read from Firestore 'pages' array saved by OAuth callback)
+  const pages = connection?.pages
+    ? connection.pages.map((p) => ({ id: p.id, name: p.name }))
     : [];
   const selectedPageId = connection?.selectedPageId || null;
 

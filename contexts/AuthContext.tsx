@@ -103,13 +103,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (firebaseUser) {
         // Fetch user profile from Firestore
-        const profile = await getUserProfile(firebaseUser.uid);
-        setUserProfile(profile);
+        try {
+          const profile = await getUserProfile(firebaseUser.uid);
+          setUserProfile(profile);
 
-        // If user has completed onboarding, clear any stale localStorage flags
-        if (profile?.onboardingComplete) {
-          setShouldShowOnboarding(false);
-          setIsNewUser(false);
+          // If user has completed onboarding, clear any stale localStorage flags
+          if (profile?.onboardingComplete) {
+            setShouldShowOnboarding(false);
+            setIsNewUser(false);
+          }
+        } catch (error) {
+          console.error("Error fetching user profile:", error);
+          setUserProfile(null);
         }
       } else {
         setUserProfile(null);

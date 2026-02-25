@@ -11,7 +11,7 @@ import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useChat } from "@/hooks/useChat";
 import { useSmartScroll } from "@/hooks/useSmartScroll";
 import { useBrowserMode } from "@/hooks/useBrowserMode";
-import { getPost, getUserPostsWithPinned } from "@/lib/firestore";
+import { getPost, getUserPostsWithPinned, getDualModeUsageThisWeek } from "@/lib/firestore";
 import { getPlanFeatures } from "@/lib/plan-features";
 import { Post } from "@/types";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
@@ -19,6 +19,9 @@ import MainLayout from "@/components/layout/MainLayout";
 import ChatMessage, { TypingIndicator } from "@/components/chat/ChatMessage";
 import ModernAIResponsePair from "@/components/chat/ModernAIResponsePair";
 import ModernResponseCard from "@/components/chat/ModernResponseCard";
+import MaxModeSelector from "@/components/chat/MaxModeSelector";
+import DualModeToggle from "@/components/chat/DualModeToggle";
+import InlineUpgradeBanner from "@/components/chat/InlineUpgradeBanner";
 import NewResponseIndicator from "@/components/chat/NewResponseIndicator";
 import PublishToLinkedInModal from "@/components/linkedin/PublishToLinkedInModal";
 import ScheduleModal from "@/components/schedule/ScheduleModal";
@@ -61,11 +64,32 @@ function ConversationContent() {
   const [isFocused, setIsFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Style selection state (restored from loaded post)
+  const [selectedStyle, setSelectedStyle] = useState<"storytelling" | "business">("business");
+  const [dualMode, setDualMode] = useState(false);
+  const [dualUsedThisWeek, setDualUsedThisWeek] = useState(0);
+  const [maxMode, setMaxMode] = useState<"dual" | "storytelling" | "business">("dual");
+  const [showUpgradeBanner, setShowUpgradeBanner] = useState(false);
+  const [upgradeBannerReason, setUpgradeBannerReason] = useState<"dual-limit" | "max-feature">("max-feature");
+
   // Voice recording state
   const [isRecording, setIsRecording] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const chatInputRef = useRef<UniversalChatInputRef>(null);
+
+  // Derive effective dual mode and style from Max selector or Pro toggle
+  const effectiveDualMode = isMaxPlan ? maxMode === "dual" : dualMode;
+  const effectiveStyle = isMaxPlan
+    ? (maxMode === "dual" ? "business" : maxMode)
+    : selectedStyle;
+
+  // Load dual mode usage for Pro users
+  useEffect(() => {
+    if (user?.uid && isProPlan && planLimits.dualResponsesPerWeek > 0) {
+      getDualModeUsageThisWeek(user.uid).then(setDualUsedThisWeek).catch(() => {});
+    }
+  }, [user?.uid, isProPlan, planLimits.dualResponsesPerWeek]);
 
   const {
     messages,
@@ -79,7 +103,8 @@ function ConversationContent() {
     userId: user?.uid,
     isGuest: false,
     conversationId,
-    dualMode: isMaxPlan || (isProPlan && planLimits.hasDualResponseMode),
+    dualMode: effectiveDualMode,
+    selectedStyle: effectiveStyle,
   });
 
   // Smart scroll
@@ -107,6 +132,25 @@ function ConversationContent() {
         const post = await getPost(conversationId);
         if (post && post.userId === user.uid) {
           setOriginalPost(post);
+
+          // Restore toggle state from the post's saved metadata
+          if (post.responseMode === "dual") {
+            if (isMaxPlan) {
+              setMaxMode("dual");
+            } else {
+              setDualMode(true);
+            }
+          } else if (post.responseMode === "single-choice" && post.selectedStyle) {
+            if (isMaxPlan) {
+              setMaxMode(post.selectedStyle);
+            } else {
+              setDualMode(false);
+              setSelectedStyle(post.selectedStyle);
+            }
+          } else if (post.selectedStyle) {
+            setSelectedStyle(post.selectedStyle);
+          }
+
           // Load the conversation into chat - including follow-up messages
           loadConversation?.({
             id: post.id,
@@ -541,6 +585,40 @@ function ConversationContent() {
           `}
         >
           <div className="max-w-3xl mx-auto px-3 sm:px-4 py-1 lg:py-2">
+            {/* Mode Selector / Upgrade Banner zone */}
+            <AnimatePresence mode="wait">
+              {isMaxPlan && (
+                <div className="mb-3 flex justify-center">
+                  <MaxModeSelector
+                    selectedMode={maxMode}
+                    onModeChange={setMaxMode}
+                  />
+                </div>
+              )}
+              {isProPlan && !isMaxPlan && (
+                <div className="mb-3 flex justify-center">
+                  {showUpgradeBanner ? (
+                    <InlineUpgradeBanner
+                      reason={upgradeBannerReason}
+                      onClose={() => setShowUpgradeBanner(false)}
+                    />
+                  ) : (
+                    <DualModeToggle
+                      enabled={dualMode}
+                      onToggle={(val) => setDualMode(val)}
+                      responseType={selectedStyle}
+                      onResponseTypeChange={setSelectedStyle}
+                      dualUsedThisWeek={dualUsedThisWeek}
+                      onUpgradePrompt={(reason) => {
+                        setUpgradeBannerReason(reason);
+                        setShowUpgradeBanner(true);
+                      }}
+                    />
+                  )}
+                </div>
+              )}
+            </AnimatePresence>
+
             {/* UniversalChatInput - Unified premium input component */}
             <UniversalChatInput
               ref={chatInputRef}

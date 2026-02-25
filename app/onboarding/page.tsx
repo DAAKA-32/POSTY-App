@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -284,7 +284,7 @@ function UpsellScreen({ onContinue, onUpgrade }: { onContinue: () => void; onUpg
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className="flex-1 flex flex-col items-center justify-center px-4 py-8"
+      className="flex-1 flex flex-col items-center px-4 py-8"
     >
       <AnimatePresence mode="wait">
         {showReassurance ? (
@@ -294,7 +294,7 @@ function UpsellScreen({ onContinue, onUpgrade }: { onContinue: () => void; onUpg
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.4, ease: smoothEase }}
-            className="w-full max-w-md text-center"
+            className="w-full max-w-md text-center my-auto"
           >
             <motion.div
               initial={{ scale: 0 }}
@@ -339,7 +339,7 @@ function UpsellScreen({ onContinue, onUpgrade }: { onContinue: () => void; onUpg
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.3 }}
-            className="w-full max-w-2xl"
+            className="w-full max-w-2xl my-auto"
           >
             {/* Title */}
             <motion.div
@@ -550,6 +550,15 @@ export default function OnboardingPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showRecap, setShowRecap] = useState(false);
   const [showUpsell, setShowUpsell] = useState(false);
+
+  // Read ?edit=true from URL on client only (avoids useSearchParams + Suspense hydration issues)
+  // Lazy initializer runs synchronously on first render, before any useEffect
+  const isExplicitEdit = useRef(
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("edit") === "true"
+      : false
+  );
+
   const [data, setData] = useState<OnboardingData>({
     profileType: "",
     sector: "",
@@ -565,7 +574,8 @@ export default function OnboardingPage() {
     subscription.status === "active" || subscription.status === "trialing";
 
   // Edit mode: user already completed onboarding but hasn't paid yet
-  const isEditMode = userProfile?.onboardingComplete === true && !hasActiveSubscription;
+  // Also true when explicitly navigated with ?edit=true from subscription page
+  const isEditMode = (userProfile?.onboardingComplete === true && !hasActiveSubscription) || isExplicitEdit.current;
 
   // Pre-fill onboarding data when returning to edit (unpaid user)
   useEffect(() => {
@@ -592,6 +602,9 @@ export default function OnboardingPage() {
       return;
     }
 
+    // Explicit edit mode from subscription page — NEVER redirect away
+    if (isExplicitEdit.current) return;
+
     // Recap or upsell screen is active — never redirect away
     if (showRecap || showUpsell) return;
 
@@ -609,15 +622,27 @@ export default function OnboardingPage() {
     }
   }, [user, userProfile, loading, subscriptionLoading, router, shouldShowOnboarding, showUpsell, showRecap, hasActiveSubscription]);
 
-  // Enable full scrolling on Onboarding page (mouse wheel, trackpad, touch, keyboard)
+  // Enable scrolling on Onboarding page
+  // Strategy: The page uses a fixed scroll container (position:fixed + overflow-y:auto)
+  // so it doesn't depend on body scroll. We still add classes as fallback and remove
+  // any conflicting classes from other pages/providers.
   useEffect(() => {
-    document.documentElement.classList.add("onboarding-scroll-enabled");
-    document.body.classList.add("onboarding-scroll-enabled");
-    document.body.classList.remove("pwa-mobile", "no-scroll", "scroll-locked", "modal-open");
+    const html = document.documentElement;
+    const body = document.body;
+
+    html.classList.add("onboarding-scroll-enabled");
+    body.classList.add("onboarding-scroll-enabled");
+
+    // Remove ALL classes that could block scroll (from other pages, modals, PWA shell)
+    const blocking = ["pwa-mobile", "no-scroll", "scroll-locked", "modal-open", "bottomsheet-open", "no-bounce", "page-fixed"];
+    blocking.forEach(cls => {
+      html.classList.remove(cls);
+      body.classList.remove(cls);
+    });
 
     return () => {
-      document.documentElement.classList.remove("onboarding-scroll-enabled");
-      document.body.classList.remove("onboarding-scroll-enabled");
+      html.classList.remove("onboarding-scroll-enabled");
+      body.classList.remove("onboarding-scroll-enabled");
     };
   }, []);
 
@@ -717,7 +742,8 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-[#FFF8F5] flex flex-col">
+    <div className="fixed inset-0 overflow-y-auto overflow-x-hidden bg-[#FFF8F5]">
+    <div className="min-h-full flex flex-col">
       {/* Header */}
       <header className="p-4 sm:p-6 flex items-center justify-between max-w-2xl mx-auto w-full flex-shrink-0">
         <Link href="/" className="inline-flex items-center gap-2.5">
@@ -881,5 +907,8 @@ export default function OnboardingPage() {
         )}
       </main>
     </div>
+    </div>
   );
 }
+
+

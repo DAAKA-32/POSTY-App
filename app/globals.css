@@ -719,21 +719,20 @@ body.history-scroll-enabled {
 }
 
 /* ONBOARDING PAGE - Full scroll enabled */
-/* Enables all scroll methods: mouse wheel, trackpad, touch, keyboard */
-/* overscroll-behavior-y: none prevents pull-to-refresh without blocking scroll */
+/* Ensures body doesn't block scroll when onboarding is active */
 html.onboarding-scroll-enabled,
 html.onboarding-scroll-enabled body,
 body.onboarding-scroll-enabled {
-  overflow: visible !important;
-  overflow-y: auto !important;
   overflow-x: hidden !important;
+  overflow-y: auto !important;
   position: static !important;
   height: auto !important;
+  max-height: none !important;
   min-height: 100dvh !important;
   min-height: 100vh !important;
   width: 100% !important;
   overscroll-behavior-y: none !important;
-  touch-action: manipulation !important;
+  touch-action: auto !important;
   -webkit-overflow-scrolling: touch !important;
 }
 

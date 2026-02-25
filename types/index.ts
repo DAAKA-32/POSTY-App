@@ -550,8 +550,8 @@ export interface FacebookConnectionData {
   profileName: string;
   profilePicture?: string;
   email?: string;
-  /** Facebook Page IDs the user can manage */
-  pageIds?: string[];
+  /** Facebook Pages the user can manage (saved by OAuth callback) */
+  pages?: Array<{ id: string; name: string; accessToken: string }>;
   /** Selected page for publishing */
   selectedPageId?: string;
   connectedAt: Timestamp;
