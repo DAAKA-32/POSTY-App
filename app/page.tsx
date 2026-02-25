@@ -3273,7 +3273,7 @@ function MockupContextProfile() {
         </div>
         <div>
           <div className="text-[12px] text-gray-900 font-semibold">Emilien Nepveu</div>
-          <div className="text-[10px] text-gray-500">Co-fondateur &middot; CEO</div>
+          <div className="text-[10px] text-gray-500">Co-fondateur &middot; Co-CEO</div>
         </div>
       </div>
 
@@ -4103,7 +4103,7 @@ function FounderSection() {
           transition={{ duration: 0.6, ease: smoothEase, delay: 0.2 }}
           className="flex items-center justify-center gap-8 sm:gap-12"
         >
-          {/* CEO */}
+          {/* Co-CEO — Emilien */}
           <div className="flex flex-col items-center text-center">
             <Link
               href={FOUNDER_LINKEDIN_URL}
@@ -4127,10 +4127,10 @@ function FounderSection() {
                 <span className="absolute left-0 -bottom-0.5 w-full h-[2px] bg-gradient-to-r from-[#F8935D] to-[#F76B54] origin-left scale-x-0 md:group-hover:scale-x-100 transition-transform duration-300 ease-out rounded-full" />
               </span>
             </Link>
-            <p className="text-gray-500 text-xs md:text-sm">Co-founder & CEO</p>
+            <p className="text-gray-500 text-xs md:text-sm">Co-founder & Co-CEO</p>
           </div>
 
-          {/* CFO */}
+          {/* Co-CEO — Côme */}
           <div className="flex flex-col items-center text-center">
             <Link
               href={CFO_LINKEDIN_URL}
@@ -4154,7 +4154,7 @@ function FounderSection() {
                 <span className="absolute left-0 -bottom-0.5 w-full h-[2px] bg-gradient-to-r from-[#F8935D] to-[#F76B54] origin-left scale-x-0 md:group-hover:scale-x-100 transition-transform duration-300 ease-out rounded-full" />
               </span>
             </Link>
-            <p className="text-gray-500 text-xs md:text-sm">Co-founder & CFO</p>
+            <p className="text-gray-500 text-xs md:text-sm">Co-founder & Co-CEO</p>
           </div>
         </motion.div>
       </motion.div>
