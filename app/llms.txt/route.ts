@@ -66,8 +66,8 @@ POSTY helps professionals, entrepreneurs, and content creators build their perso
 ## Founders
 
 POSTY was co-founded by:
-- **Emilien Nepveu** — Co-Founder & CEO. Responsible for all technical development, UX/UI design, and AI integration.
-- **Côme Maubert** — Co-Founder & CFO. Responsible for financing, advertising strategy, and business development.
+- **Emilien Nepveu** — Co-Founder & Co-CEO, CTO. Responsible for all technical development, UX/UI design, and AI integration.
+- **Côme Maubert** — Co-Founder & Co-CEO, CFO. Responsible for financing, advertising strategy, and business development.
 
 ## Contact
 

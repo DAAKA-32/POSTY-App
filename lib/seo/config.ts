@@ -26,12 +26,12 @@ export const seoConfig = {
   founders: [
     {
       name: "Emilien Nepveu",
-      role: "Co-Fondateur & CEO",
+      role: "Co-Founder & Co-CEO, CTO",
       linkedIn: "https://www.linkedin.com/in/e-nepveu-58a38127a/",
     },
     {
       name: "Côme Maubert",
-      role: "Co-Fondateur & CFO",
+      role: "Co-Founder & Co-CEO, CFO",
     },
   ],
 

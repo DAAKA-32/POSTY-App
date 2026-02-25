@@ -19,19 +19,21 @@ export default function SplashScreen({ isLoading, onComplete }: SplashScreenProp
   const [show, setShow] = useState(true);
   const prefersReducedMotion = useReducedMotion();
 
-  // Start with dark to match SSR, then update after hydration
-  const [isDark, setIsDark] = useState(true);
-  const [mounted, setMounted] = useState(false);
+  // Read theme from DOM class (set by inline script before hydration) to avoid flash
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof document !== "undefined") {
+      return !document.documentElement.classList.contains("light");
+    }
+    return true; // SSR fallback
+  });
 
-  // Read theme after mount to avoid hydration mismatch
+  // Sync after mount in case DOM wasn't available during SSR
   useEffect(() => {
-    setMounted(true);
     const storedTheme = localStorage.getItem("posty-theme");
     if (storedTheme) {
       setIsDark(storedTheme === "dark");
     } else {
-      // Fallback to system preference
-      setIsDark(window.matchMedia("(prefers-color-scheme: dark)").matches);
+      setIsDark(!document.documentElement.classList.contains("light"));
     }
   }, []);
 

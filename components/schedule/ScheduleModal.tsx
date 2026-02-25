@@ -22,6 +22,11 @@ import toast from "@/components/ui/Toast";
 // Minimum scheduling buffer in minutes (prevent scheduling too close to now)
 const MIN_SCHEDULE_BUFFER_MINUTES = 5;
 
+// Image constraints (match LinkedIn limits)
+const MAX_IMAGES = 9;
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10 MB
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+
 interface ScheduleModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -52,7 +57,7 @@ export default function ScheduleModal({
   title,
   onSuccess,
 }: ScheduleModalProps) {
-  const { schedulePost } = useScheduling();
+  const { schedulePost, isUploading } = useScheduling();
   const { canSchedulePosts, currentPlan, subscription } = useSubscription();
   const { isConnected: linkedInConnected } = useLinkedIn();
   const { isConnected: facebookConnected } = useFacebook();
@@ -145,6 +150,11 @@ export default function ScheduleModal({
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [step, setStep] = useState<"date" | "time" | "confirm">("date");
 
+  // Image state (LinkedIn only)
+  const [images, setImages] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const timezone = useMemo(() => getUserTimezone(), []);
 
   // Reset state when modal opens
@@ -162,8 +172,22 @@ export default function ScheduleModal({
       const firstSelectable = availablePlatforms.find((p) => p.selectable);
       setPlatform(firstSelectable ? firstSelectable.id as SchedulePlatform : "linkedin");
       setPostType("feed");
+
+      // Reset images
+      imagePreviews.forEach((url) => URL.revokeObjectURL(url));
+      setImages([]);
+      setImagePreviews([]);
     }
   }, [isOpen, availablePlatforms]);
+
+  // Cleanup object URLs on unmount only (not on every state change)
+  const imagePreviewsRef = useRef<string[]>([]);
+  imagePreviewsRef.current = imagePreviews;
+  useEffect(() => {
+    return () => {
+      imagePreviewsRef.current.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, []);
 
   // Generate calendar days
   const calendarDays = useMemo(() => {
@@ -362,6 +386,48 @@ export default function ScheduleModal({
     setStep("confirm");
   };
 
+  // ── Image handlers (LinkedIn only) ─────────────────────────────
+  const handleAddImages = (files: FileList | null) => {
+    if (!files) return;
+    const newFiles: File[] = [];
+    const errors: string[] = [];
+
+    for (const file of Array.from(files)) {
+      if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+        errors.push(`${file.name}: format non supporté`);
+        continue;
+      }
+      if (file.size > MAX_IMAGE_SIZE) {
+        errors.push(`${file.name}: trop lourd (max 10 Mo)`);
+        continue;
+      }
+      if (images.length + newFiles.length >= MAX_IMAGES) {
+        errors.push(`Maximum ${MAX_IMAGES} images`);
+        break;
+      }
+      newFiles.push(file);
+    }
+
+    if (errors.length > 0) {
+      toast.error(errors[0]);
+    }
+
+    if (newFiles.length > 0) {
+      const previews = newFiles.map((f) => URL.createObjectURL(f));
+      setImages((prev) => [...prev, ...newFiles]);
+      setImagePreviews((prev) => [...prev, ...previews]);
+    }
+  };
+
+  const handleRemoveImage = (index: number) => {
+    URL.revokeObjectURL(imagePreviews[index]);
+    setImages((prev) => prev.filter((_, i) => i !== index));
+    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // Whether image picker should be shown (LinkedIn only, feed post type)
+  const showImagePicker = platform === "linkedin" && postType === "feed";
+
   // Navigate months
   const goToPreviousMonth = () => {
     triggerHaptic("light");
@@ -439,6 +505,7 @@ export default function ScheduleModal({
         timezone,
         platform,
         postType,
+        imageFiles: showImagePicker && images.length > 0 ? images : undefined,
       });
 
       if (result.success && result.scheduledPostId) {
@@ -973,6 +1040,15 @@ export default function ScheduleModal({
                 )}
               </div>
               <p className="text-sm text-text-secondary line-clamp-3">{content}</p>
+              {/* Show image count badge in preview if images attached */}
+              {images.length > 0 && (
+                <div className="mt-2 flex items-center gap-1.5 text-xs text-text-muted">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  {images.length} photo{images.length > 1 ? "s" : ""} jointe{images.length > 1 ? "s" : ""}
+                </div>
+              )}
             </div>
 
             {/* Type selection - LinkedIn only */}
@@ -1004,6 +1080,72 @@ export default function ScheduleModal({
               </div>
             )}
 
+            {/* Image picker (LinkedIn feed only) */}
+            {showImagePicker && (
+              <div className="mb-5">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs text-text-muted font-medium uppercase tracking-wide">
+                    Photos
+                  </p>
+                  <span className="text-xs text-text-muted">
+                    {images.length}/{MAX_IMAGES}
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {imagePreviews.map((preview, idx) => (
+                    <div
+                      key={idx}
+                      className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden border border-dark-border group"
+                    >
+                      <img
+                        src={preview}
+                        alt={`Image ${idx + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveImage(idx)}
+                        className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150 active:opacity-100"
+                        style={{ opacity: isMobile ? 1 : undefined }}
+                        aria-label={`Supprimer image ${idx + 1}`}
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+
+                  {images.length < MAX_IMAGES && (
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg border-2 border-dashed border-dark-border hover:border-primary/50 flex flex-col items-center justify-center gap-1 text-text-muted hover:text-primary transition-colors duration-200"
+                      aria-label="Ajouter une photo"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <span className="text-[10px]">Photo</span>
+                    </button>
+                  )}
+                </div>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif,image/webp"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => {
+                    handleAddImages(e.target.files);
+                    e.target.value = "";
+                  }}
+                />
+              </div>
+            )}
+
             {/* Action buttons */}
             <div className="flex gap-3">
               <Button
@@ -1015,13 +1157,25 @@ export default function ScheduleModal({
               </Button>
               <Button
                 onClick={handleSubmit}
-                isLoading={isSubmitting}
+                isLoading={isSubmitting || isUploading}
                 className="flex-1 bg-gradient-to-r from-primary to-accent hover:opacity-90"
               >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                Programmer
+                {isUploading ? (
+                  <>
+                    <svg className="w-4 h-4 mr-2 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Upload...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Programmer
+                  </>
+                )}
               </Button>
             </div>
           </motion.div>

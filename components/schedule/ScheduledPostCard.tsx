@@ -147,8 +147,8 @@ export default function ScheduledPostCard({
         transition={{ duration: 0.2 }}
         className={`
           group relative
-          bg-white dark:bg-dark-card
-          border rounded-2xl p-4
+          bg-white dark:bg-dark-card min-w-0
+          border rounded-xl sm:rounded-2xl p-3 sm:p-4
           transition-all duration-300 ease-out
           ${post.status === "cancelled"
             ? "opacity-60 border-gray-200 dark:border-dark-border"
@@ -159,26 +159,26 @@ export default function ScheduledPostCard({
         `}
       >
         {/* Subtle gradient overlay on hover */}
-        <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+        <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-br from-primary/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
         {/* Header: Date & Status */}
-        <div className="relative flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3">
+        <div className="relative flex items-start justify-between gap-2 mb-4 min-w-0">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
             {/* Date badge - Clean design */}
-            <div className="relative">
+            <div className="relative shrink-0">
               <div className={`
                 ${scheduledDate.toDateString() === new Date().toDateString()
                   ? "bg-primary/10 border-primary/20"
                   : "bg-gray-100 dark:bg-primary/10 border-gray-200 dark:border-primary/15"
                 }
-                rounded-xl p-2.5 text-center min-w-[64px] border
+                rounded-xl p-2 sm:p-2.5 text-center min-w-[52px] sm:min-w-[64px] border
               `}>
                 <span className={`block text-[10px] font-semibold uppercase tracking-wider ${
                   scheduledDate.toDateString() === new Date().toDateString()
                     ? "text-primary"
                     : "text-gray-500 dark:text-text-muted"
                 }`}>{month}</span>
-                <span className={`block text-2xl font-bold leading-tight ${
+                <span className={`block text-xl sm:text-2xl font-bold leading-tight ${
                   scheduledDate.toDateString() === new Date().toDateString()
                     ? "text-primary"
                     : "text-gray-900 dark:text-white"
@@ -191,29 +191,29 @@ export default function ScheduledPostCard({
             </div>
 
             {/* Time and day */}
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-gray-900 dark:text-white font-semibold text-lg">{time}</span>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <span className="text-gray-900 dark:text-white font-semibold text-base sm:text-lg">{time}</span>
                 {isPastDue && (
                   <motion.span
                     initial={{ scale: 0.9 }}
                     animate={{ scale: 1 }}
-                    className="inline-flex items-center gap-1 text-xs px-2 py-0.5 bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 rounded-full font-medium"
+                    className="inline-flex items-center gap-1 text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 rounded-full font-medium"
                   >
                     <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" />
                     En retard
                   </motion.span>
                 )}
               </div>
-              <span className="text-sm text-gray-500 dark:text-text-muted">{dayName}</span>
+              <span className="text-xs sm:text-sm text-gray-500 dark:text-text-muted">{dayName}</span>
             </div>
           </div>
 
           {/* Status badge */}
           <span
             className={`
-              inline-flex items-center
-              text-xs px-3 py-1.5 rounded-full font-medium
+              inline-flex items-center shrink-0
+              text-[10px] sm:text-xs px-2 sm:px-3 py-1 sm:py-1.5 rounded-full font-medium
               border ${statusConfig.borderColor}
               ${statusConfig.bgColor} ${statusConfig.color}
             `}
@@ -223,7 +223,7 @@ export default function ScheduledPostCard({
         </div>
 
         {/* Platform indicator */}
-        <div className="relative flex items-center gap-2 mb-4">
+        <div className="relative flex flex-wrap items-center gap-2 mb-3 sm:mb-4">
           {(() => {
             const config = PLATFORM_BADGE_CONFIG[post.platform];
             if (!config) return null;
@@ -242,13 +242,38 @@ export default function ScheduledPostCard({
         </div>
 
         {/* Content preview with premium styling */}
-        <div className="relative mb-4">
-          <p className="text-sm text-gray-700 dark:text-text-secondary line-clamp-2 leading-relaxed">
+        <div className="relative mb-3 sm:mb-4">
+          <p className="text-xs sm:text-sm text-gray-700 dark:text-text-secondary line-clamp-2 leading-relaxed break-words">
             {post.content}
           </p>
           {/* Fade out effect for long content */}
           <div className="absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-t from-white dark:from-dark-card to-transparent pointer-events-none" />
         </div>
+
+        {/* Image thumbnails */}
+        {post.images && post.images.length > 0 && (
+          <div className="relative flex gap-1.5 mb-3 sm:mb-4 overflow-x-auto">
+            {post.images.slice(0, 4).map((img, idx) => (
+              <div
+                key={idx}
+                className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-lg overflow-hidden border border-gray-200 dark:border-dark-border shrink-0"
+              >
+                <img
+                  src={img.downloadURL}
+                  alt={img.fileName || `Image ${idx + 1}`}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+                {/* Show +N overlay on the 4th image if there are more */}
+                {idx === 3 && post.images!.length > 4 && (
+                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                    <span className="text-white text-xs font-bold">+{post.images!.length - 4}</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Error message if failed - Premium alert style */}
         {post.status === "failed" && post.failureReason && (
@@ -287,49 +312,49 @@ export default function ScheduledPostCard({
           </motion.a>
         )}
 
-        {/* Actions - Clean design */}
+        {/* Actions - Clean design, responsive for mobile */}
         {post.status === "pending" && (
-          <div className="relative flex gap-2 pt-4 mt-1 border-t border-gray-200 dark:border-dark-border">
+          <div className="relative flex gap-1.5 sm:gap-2 pt-4 mt-1 border-t border-gray-200 dark:border-dark-border">
             <button
               onClick={() => {
                 triggerHaptic("light");
                 onEdit(post);
               }}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium
+              className="flex-1 inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium
                 text-gray-700 dark:text-text-secondary
                 bg-gray-100 dark:bg-dark-hover
                 hover:bg-gray-200 dark:hover:bg-dark-active
                 border border-gray-200 dark:border-dark-border
-                rounded-xl transition-colors duration-200"
+                rounded-xl transition-colors duration-200 min-w-0"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
-              Modifier
+              <span className="truncate">Modifier</span>
             </button>
             <button
               onClick={() => {
                 triggerHaptic("medium");
                 onReschedule(post);
               }}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium
+              className="flex-1 inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium
                 text-primary
                 bg-primary/10
                 hover:bg-primary/15
                 border border-primary/20
-                rounded-xl transition-colors duration-200"
+                rounded-xl transition-colors duration-200 min-w-0"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              Reprogrammer
+              <span className="truncate">Reprogrammer</span>
             </button>
             <button
               onClick={() => {
                 triggerHaptic("warning");
                 setShowCancelConfirm(true);
               }}
-              className="p-2 text-gray-400 dark:text-text-muted
+              className="p-2 shrink-0 text-gray-400 dark:text-text-muted
                 hover:text-red-500 dark:hover:text-red-400
                 hover:bg-red-50 dark:hover:bg-red-500/10
                 border border-gray-200 dark:border-dark-border

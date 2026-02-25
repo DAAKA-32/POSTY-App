@@ -18,17 +18,17 @@ interface FounderBadgeProps {
 const foundersData = [
   {
     name: "Emilien Nepveu",
-    role: "Co-Fondateur & CEO",
+    role: "Co-Founder & Co-CEO",
     linkedIn: "https://www.linkedin.com/in/e-nepveu-58a38127a/",
     initials: "EN",
-    tagline: "Passionné par l'IA et le personal branding",
+    tagline: "CTO — Passionné par l'IA et le personal branding",
   },
   {
     name: "Côme Maubert",
-    role: "Co-Fondateur & CFO",
+    role: "Co-Founder & Co-CEO",
     linkedIn: null as string | null,
     initials: "CM",
-    tagline: "Financement et stratégie commerciale",
+    tagline: "CFO — Financement et stratégie commerciale",
   },
 ];
 

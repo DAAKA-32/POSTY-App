@@ -131,10 +131,142 @@ async function postToLinkedIn(
 }
 
 // ============================================================
+// LinkedIn post with images (for scheduled posts)
+// ============================================================
+
+interface ScheduledPostImage {
+  storagePath: string;
+  downloadURL: string;
+  fileName: string;
+  contentType: string;
+  size: number;
+}
+
+async function postToLinkedInWithImages(
+  accessToken: string,
+  linkedInId: string,
+  content: string,
+  images: ScheduledPostImage[]
+): Promise<{ success: boolean; id?: string; postUrl?: string; error?: string }> {
+  const personUrn = `urn:li:person:${linkedInId}`;
+  const mediaAssets: string[] = [];
+
+  for (const image of images) {
+    // Step 1: Register upload with LinkedIn
+    const registerRes = await fetch(
+      "https://api.linkedin.com/v2/assets?action=registerUpload",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          registerUploadRequest: {
+            recipes: ["urn:li:digitalmediaRecipe:feedshare-image"],
+            owner: personUrn,
+            serviceRelationships: [
+              {
+                relationshipType: "OWNER",
+                identifier: "urn:li:userGeneratedContent",
+              },
+            ],
+          },
+        }),
+      }
+    );
+
+    if (!registerRes.ok) {
+      const errText = await registerRes.text();
+      console.error("LinkedIn register upload failed:", errText);
+      return { success: false, error: "Échec de l'enregistrement de l'image sur LinkedIn." };
+    }
+
+    const registerData = (await registerRes.json()) as any;
+    const uploadUrl =
+      registerData.value.uploadMechanism[
+        "com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest"
+      ].uploadUrl;
+    const asset = registerData.value.asset as string;
+
+    // Step 2: Download image from Firebase Storage
+    const imageResponse = await fetch(image.downloadURL);
+    if (!imageResponse.ok) {
+      console.error(`Failed to download image from Storage: ${image.storagePath}`);
+      return { success: false, error: "Impossible de télécharger l'image depuis le stockage." };
+    }
+    const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+
+    // Step 3: Upload binary to LinkedIn
+    const uploadRes = await fetch(uploadUrl, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": image.contentType,
+      },
+      body: imageBuffer,
+    });
+
+    if (!uploadRes.ok) {
+      const errText = await uploadRes.text();
+      console.error("LinkedIn image upload failed:", errText);
+      return { success: false, error: "Échec de l'upload de l'image vers LinkedIn." };
+    }
+
+    mediaAssets.push(asset);
+  }
+
+  // Step 4: Create post with media
+  const shareBody = {
+    author: personUrn,
+    lifecycleState: "PUBLISHED",
+    specificContent: {
+      "com.linkedin.ugc.ShareContent": {
+        shareCommentary: { text: content },
+        shareMediaCategory: "IMAGE",
+        media: mediaAssets.map((asset) => ({
+          status: "READY",
+          media: asset,
+        })),
+      },
+    },
+    visibility: {
+      "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC",
+    },
+  };
+
+  const shareRes = await fetch("https://api.linkedin.com/v2/ugcPosts", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+      "X-Restli-Protocol-Version": "2.0.0",
+    },
+    body: JSON.stringify(shareBody),
+  });
+
+  if (!shareRes.ok) {
+    const errorData = await shareRes.text();
+    console.error("LinkedIn publish with media failed:", errorData);
+    return { success: false, error: `LinkedIn API error: ${shareRes.status}` };
+  }
+
+  const shareData = await shareRes.json();
+  const postId = shareData.id;
+  const postUrl = postId ? `https://www.linkedin.com/feed/update/${postId}/` : undefined;
+
+  return { success: true, id: postId || undefined, postUrl };
+}
+
+// ============================================================
 // Platform publish functions for scheduled posts
 // ============================================================
 
-async function publishToLinkedIn(userId: string, content: string): Promise<PublishResult> {
+async function publishToLinkedIn(
+  userId: string,
+  content: string,
+  images?: ScheduledPostImage[]
+): Promise<PublishResult> {
   const connectionSnap = await db.collection("linkedinConnections").doc(userId).get();
   if (!connectionSnap.exists) {
     return { success: false, error: "Aucune connexion LinkedIn trouvée" };
@@ -147,7 +279,10 @@ async function publishToLinkedIn(userId: string, content: string): Promise<Publi
     return { success: false, error: "Token LinkedIn expiré. Reconnexion nécessaire." };
   }
 
-  const result = await postToLinkedIn(connection.accessToken, connection.linkedInId, content);
+  // Use image upload flow if images are present
+  const result = images && images.length > 0
+    ? await postToLinkedInWithImages(connection.accessToken, connection.linkedInId, content, images)
+    : await postToLinkedIn(connection.accessToken, connection.linkedInId, content);
 
   if (!result.success) {
     return { success: false, error: result.error };
@@ -328,11 +463,12 @@ async function publishToThreads(userId: string, content: string): Promise<Publis
 async function publishScheduledPost(
   platform: string,
   userId: string,
-  content: string
+  content: string,
+  images?: ScheduledPostImage[]
 ): Promise<PublishResult> {
   switch (platform) {
     case "linkedin":
-      return publishToLinkedIn(userId, content);
+      return publishToLinkedIn(userId, content, images);
     case "facebook":
       return publishToFacebook(userId, content);
     case "threads":
@@ -349,7 +485,7 @@ async function publishScheduledPost(
 // ============================================================
 
 export const executeScheduledPosts = functions
-  .runWith({ timeoutSeconds: 120, memory: "256MB" })
+  .runWith({ timeoutSeconds: 240, memory: "512MB" })
   .pubsub.schedule("every 1 minutes")
   .timeZone("Europe/Paris")
   .onRun(async () => {
@@ -410,10 +546,21 @@ export const executeScheduledPosts = functions
         });
 
         try {
+          // Parse images array if present
+          const postImages: ScheduledPostImage[] | undefined =
+            post.images && Array.isArray(post.images) && post.images.length > 0
+              ? post.images
+              : undefined;
+
+          if (postImages) {
+            console.log(`[Scheduler] Post ${doc.id} has ${postImages.length} image(s)`);
+          }
+
           const result = await publishScheduledPost(
             post.platform,
             post.userId,
-            post.content
+            post.content,
+            postImages
           );
 
           if (result.success) {
@@ -425,6 +572,24 @@ export const executeScheduledPosts = functions
               updatedAt: admin.firestore.FieldValue.serverTimestamp(),
             });
             console.log(`[Scheduler] Post ${doc.id} published on ${post.platform} | url=${result.publishedUrl}`);
+
+            // Clean up images from Firebase Storage after successful publish
+            if (postImages && postImages.length > 0) {
+              try {
+                const bucket = admin.storage().bucket();
+                await Promise.all(
+                  postImages.map((img) =>
+                    bucket.file(img.storagePath).delete().catch((e: Error) => {
+                      console.warn(`[Scheduler] Failed to delete ${img.storagePath}:`, e.message);
+                    })
+                  )
+                );
+                console.log(`[Scheduler] Cleaned up ${postImages.length} image(s) from Storage`);
+              } catch (cleanupError) {
+                console.warn("[Scheduler] Image cleanup failed (non-blocking):", cleanupError);
+              }
+            }
+
             publishedCount++;
           } else {
             const nextAttempts = currentAttempts + 1;

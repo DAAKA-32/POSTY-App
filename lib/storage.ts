@@ -8,8 +8,10 @@ import {
   uploadBytes,
   getDownloadURL,
   deleteObject,
+  listAll,
 } from "firebase/storage";
 import app from "./firebase";
+import { ScheduledPostImage } from "@/types";
 
 // Initialize Firebase Storage
 const storage = getStorage(app);
@@ -202,4 +204,99 @@ export async function cropImage(
     };
     reader.onerror = () => reject(new Error("Could not read file"));
   });
+}
+
+// ============== SCHEDULED POST IMAGES ==============
+
+const SCHEDULED_IMAGE_ALLOWED_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+]);
+const SCHEDULED_IMAGE_MAX_SIZE = 10 * 1024 * 1024; // 10 MB (LinkedIn limit)
+const SCHEDULED_IMAGE_MAX_COUNT = 9; // LinkedIn max images per post
+
+/**
+ * Upload images for a scheduled post to Firebase Storage
+ * @param scheduledPostId - Pre-generated Firestore document ID
+ * @param userId - The user's ID
+ * @param files - Image File objects from the picker
+ * @returns Array of ScheduledPostImage metadata
+ */
+export async function uploadScheduledPostImages(
+  scheduledPostId: string,
+  userId: string,
+  files: File[]
+): Promise<ScheduledPostImage[]> {
+  if (files.length === 0) return [];
+  if (files.length > SCHEDULED_IMAGE_MAX_COUNT) {
+    throw new Error(`Maximum ${SCHEDULED_IMAGE_MAX_COUNT} images autorisées.`);
+  }
+
+  const results: ScheduledPostImage[] = [];
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+
+    // Validate type
+    if (!SCHEDULED_IMAGE_ALLOWED_TYPES.has(file.type)) {
+      throw new Error(`Format non supporté : ${file.type}. Utilisez JPG, PNG, GIF ou WebP.`);
+    }
+
+    // Validate size
+    if (file.size > SCHEDULED_IMAGE_MAX_SIZE) {
+      throw new Error(`Image trop lourde (max ${SCHEDULED_IMAGE_MAX_SIZE / 1024 / 1024} Mo).`);
+    }
+
+    // Build storage path: scheduled-posts/{userId}/{postId}/{index}_{timestamp}.{ext}
+    const extension = file.name.split(".").pop() || "jpg";
+    const filename = `${i}_${Date.now()}.${extension}`;
+    const storagePath = `scheduled-posts/${userId}/${scheduledPostId}/${filename}`;
+    const storageRef = ref(storage, storagePath);
+
+    // Upload
+    const snapshot = await uploadBytes(storageRef, file, {
+      contentType: file.type,
+      customMetadata: {
+        uploadedBy: userId,
+        scheduledPostId,
+        originalName: file.name,
+      },
+    });
+
+    const downloadURL = await getDownloadURL(snapshot.ref);
+
+    results.push({
+      storagePath,
+      downloadURL,
+      fileName: file.name,
+      contentType: file.type,
+      size: file.size,
+    });
+  }
+
+  return results;
+}
+
+/**
+ * Delete all images for a scheduled post from Firebase Storage
+ * @param userId - The user's ID
+ * @param scheduledPostId - The scheduled post document ID
+ */
+export async function deleteScheduledPostImages(
+  userId: string,
+  scheduledPostId: string
+): Promise<void> {
+  try {
+    const folderRef = ref(storage, `scheduled-posts/${userId}/${scheduledPostId}`);
+    const listResult = await listAll(folderRef);
+
+    await Promise.all(
+      listResult.items.map((itemRef) => deleteObject(itemRef))
+    );
+  } catch (error) {
+    // Ignore if folder doesn't exist
+    console.warn("Could not delete scheduled post images:", error);
+  }
 }

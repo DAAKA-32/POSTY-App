@@ -1757,22 +1757,35 @@ export async function hasDashboardBeenVisited(userId: string): Promise<boolean> 
 
 import {
   ScheduledPost,
+  ScheduledPostImage,
   CreateScheduledPostData,
   ScheduleStatus,
   SchedulePlatform,
 } from "@/types";
 
 /**
- * Create a new scheduled post
- * Validates user's subscription plan before creating
+ * Generate a Firestore document ID for a scheduled post BEFORE upload.
+ * This allows images to be uploaded to Storage under this ID,
+ * then the document is created with the image metadata.
+ */
+export function generateScheduledPostId(): string {
+  const scheduledPostsRef = collection(db, "scheduledPosts");
+  return doc(scheduledPostsRef).id;
+}
+
+/**
+ * Create a new scheduled post (with optional image metadata)
+ * Permission check is handled upstream by SchedulingContext.
  */
 export async function createScheduledPost(
   userId: string,
-  data: CreateScheduledPostData
+  data: CreateScheduledPostData,
+  images?: ScheduledPostImage[],
+  preGeneratedId?: string
 ): Promise<string> {
-  // Permission check is handled upstream by SchedulingContext (supports founder overrides, trial status, etc.)
   const scheduledPostsRef = collection(db, "scheduledPosts");
-  const docRef = await addDoc(scheduledPostsRef, {
+
+  const postData: Record<string, unknown> = {
     userId,
     content: data.content,
     postId: data.postId || null,
@@ -1789,8 +1802,22 @@ export async function createScheduledPost(
     publishedUrl: null,
     lastAttemptAt: null,
     failureReason: null,
-  });
-  return docRef.id;
+  };
+
+  // Add images array if provided
+  if (images && images.length > 0) {
+    postData.images = images;
+  }
+
+  if (preGeneratedId) {
+    // Use the pre-generated ID (images were uploaded under this ID)
+    const docRef = doc(scheduledPostsRef, preGeneratedId);
+    await setDoc(docRef, postData);
+    return preGeneratedId;
+  } else {
+    const docRef = await addDoc(scheduledPostsRef, postData);
+    return docRef.id;
+  }
 }
 
 /**

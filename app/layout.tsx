@@ -232,6 +232,7 @@ export default function RootLayout({
                   }
                 } catch (e) {
                   document.documentElement.classList.add('dark');
+                  document.documentElement.style.colorScheme = 'dark';
                   document.documentElement.setAttribute('data-theme', 'dark');
                 }
               })();

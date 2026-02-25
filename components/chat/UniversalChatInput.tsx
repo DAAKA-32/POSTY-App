@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback, forwardRef, useImperativeHand
 import { motion, AnimatePresence } from "framer-motion";
 import { PlanType } from "@/lib/plans";
 import { FileAttachment, FILE_ATTACHMENT_LIMITS, AttachmentMimeType } from "@/types";
+import { InlineVoiceWaveform } from "./VoiceWaveform";
 import PromptLimitModal from "./PromptLimitModal";
 
 /**
@@ -41,6 +42,10 @@ interface UniversalChatInputProps {
   onVoiceRecordingStart?: () => void;
   onVoiceRecordingStop?: () => void;
   isRecording?: boolean;
+  interimText?: string;
+  isVoiceProcessing?: boolean;
+  autoSendCountdown?: number;
+  onCancelAutoSend?: () => void;
 
   // File attachment (Max plan only)
   enableFileAttachment?: boolean;
@@ -99,6 +104,10 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
   onVoiceRecordingStart,
   onVoiceRecordingStop,
   isRecording = false,
+  interimText = "",
+  isVoiceProcessing = false,
+  autoSendCountdown = 0,
+  onCancelAutoSend,
   enableFileAttachment = false,
   fileAttachmentAllowed = false,
   showHelperText = true,
@@ -191,6 +200,8 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
   // Determine placeholder based on state
   const currentPlaceholder = isRecording
     ? "🎤 Parlez maintenant..."
+    : isVoiceProcessing
+    ? "Traitement de votre message..."
     : quotaLimitReached
     ? "Quota quotidien atteint"
     : trialLimitReached
@@ -341,15 +352,16 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
 
   // Handle voice recording toggle
   const handleVoiceToggle = useCallback(() => {
+    if (isVoiceProcessing) return; // Don't toggle during processing
     if (isRecording) {
       onVoiceRecordingStop?.();
     } else {
       onVoiceRecordingStart?.();
     }
-  }, [isRecording, onVoiceRecordingStart, onVoiceRecordingStop]);
+  }, [isRecording, isVoiceProcessing, onVoiceRecordingStart, onVoiceRecordingStop]);
 
   // Determine if input should show premium effects
-  const showPremiumEffects = isFocused || isRecording;
+  const showPremiumEffects = isFocused || isRecording || isVoiceProcessing;
 
   return (
     <motion.div
@@ -423,7 +435,10 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
           <textarea
             ref={textareaRef}
             value={message}
-            onChange={(e) => setMessage(e.target.value)}
+            onChange={(e) => {
+              setMessage(e.target.value);
+              if (autoSendCountdown > 0 && onCancelAutoSend) onCancelAutoSend();
+            }}
             onKeyDown={handleKeyDown}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
@@ -540,14 +555,22 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
                     transition-all duration-300
                     disabled:opacity-40 disabled:cursor-not-allowed
                     ${isRecording
-                      ? "bg-primary text-white animate-pulse shadow-[0_0_0_0_rgba(248,147,93,0.7)] animate-glow-pulse"
-                      : "bg-gray-100 dark:bg-dark-elevated text-text-muted"
+                      ? "bg-primary text-white shadow-[0_0_15px_rgba(248,147,93,0.5)] animate-glow-pulse"
+                      : isVoiceProcessing
+                        ? "bg-primary/80 text-white"
+                        : "bg-gray-100 dark:bg-dark-elevated text-text-muted hover:bg-gray-200 dark:hover:bg-gray-600 hover:text-gray-700 dark:hover:text-gray-300"
                     }
                   `}
+                  title={isRecording ? "Arrêter l'enregistrement" : isVoiceProcessing ? "Traitement en cours..." : "Enregistrement vocal"}
                 >
                   {isRecording ? (
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                       <rect x="6" y="6" width="8" height="8" rx="1" />
+                    </svg>
+                  ) : isVoiceProcessing ? (
+                    <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>
                   ) : (
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -588,6 +611,61 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
           </div>
         </div>
       </div>
+
+      {/* Voice status bar — recording / processing / auto-send countdown */}
+      <AnimatePresence>
+        {(isRecording || isVoiceProcessing || autoSendCountdown > 0) && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="mt-2 px-1"
+          >
+            <div className="flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-primary/5 dark:bg-primary/10 border border-primary/10 dark:border-primary/20">
+              {isRecording && (
+                <>
+                  <InlineVoiceWaveform isRecording={true} />
+                  <span className="text-sm text-primary font-medium">Écoute en cours...</span>
+                  {interimText && (
+                    <span className="text-xs text-gray-400 dark:text-gray-500 truncate ml-auto italic max-w-[50%]">
+                      {interimText}
+                    </span>
+                  )}
+                </>
+              )}
+              {isVoiceProcessing && !isRecording && (
+                <>
+                  <InlineVoiceWaveform isRecording={false} isProcessing={true} />
+                  <span className="text-sm text-primary font-medium">Traitement...</span>
+                </>
+              )}
+              {autoSendCountdown > 0 && !isRecording && !isVoiceProcessing && (
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm text-primary font-medium">Envoi dans {autoSendCountdown}s...</span>
+                    <button
+                      type="button"
+                      onClick={onCancelAutoSend}
+                      className="text-xs text-gray-500 dark:text-gray-400 hover:text-primary transition-colors font-medium px-2 py-0.5 rounded-lg hover:bg-primary/5"
+                    >
+                      Annuler
+                    </button>
+                  </div>
+                  <div className="h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full bg-gradient-to-r from-primary to-accent rounded-full"
+                      initial={{ width: "100%" }}
+                      animate={{ width: "0%" }}
+                      transition={{ duration: 3, ease: "linear" }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* File preview bar */}
       <AnimatePresence>

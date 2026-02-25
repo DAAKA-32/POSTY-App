@@ -42,6 +42,16 @@ body.scroll-locked {
   left: 0 !important;
 }
 
+/* Ensure scroll-locked state preserves theme background (prevents flash on iOS) */
+html.light.scroll-locked,
+html.light.scroll-locked body {
+  background-color: #FAFBFC !important;
+}
+html.dark.scroll-locked,
+html.dark.scroll-locked body {
+  background-color: #0F1115 !important;
+}
+
 /* ============================================================================
    END SCROLL MANAGEMENT SYSTEM
    ============================================================================ */
@@ -1172,6 +1182,9 @@ video {
   /* Safe Area */
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
   --safe-area-top: env(safe-area-inset-top, 0px);
+
+  /* Popup overlay */
+  --popup-overlay-bg: rgba(0, 0, 0, 0.4);
 }
 
 /* ============== THEME TRANSITION - PREMIUM SMOOTH EFFECT ============== */
@@ -1278,6 +1291,9 @@ html.theme-transitioning .no-theme-transition {
   --chart-bar-inactive: rgba(248, 147, 93, 0.5);  /* Barre inactive */
   --chart-grid: rgba(148, 163, 184, 0.1);         /* Grilles subtiles */
   --chart-label: #94A3B8;                 /* Labels axes */
+
+  /* Popup overlay */
+  --popup-overlay-bg: rgba(11, 14, 17, 0.85);
 
   /* Color scheme for inputs */
   color-scheme: dark;
@@ -2436,16 +2452,17 @@ input:-webkit-autofill {
   -webkit-animation-fill-mode: both;
 }
 
-/* Force color scheme to dark */
-html {
+/* Color scheme follows theme class - prevents iOS flash during overscroll/swipe */
+/* NOTE: html.dark/html.light color-scheme is set in the theme blocks above (lines ~1289/1296) */
+/* Input color-scheme inherits from parent — only override if needed */
+.dark input, .dark textarea, .dark select {
   color-scheme: dark;
 }
-
-input, textarea, select {
-  color-scheme: dark;
+.light input, .light textarea, .light select {
+  color-scheme: light;
 }
 
-/* Additional dark mode enforcement */
+/* Theme-aware input styling */
 input[type="email"],
 input[type="password"],
 input[type="text"],
@@ -2454,7 +2471,7 @@ input[type="number"],
 input[type="search"],
 input[type="url"] {
   background-color: var(--card-bg) !important;
-  color: #FFFFFF !important;
+  color: var(--text-primary) !important;
 }
 
 /* Placeholder styling - always light on dark */
@@ -3208,9 +3225,9 @@ html.dark .loader-track {
     0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
-/* Popup overlay */
+/* Popup overlay - theme-aware to prevent dark flash in light mode */
 .popup-overlay {
-  background: rgba(11, 14, 17, 0.85);
+  background: var(--popup-overlay-bg, rgba(11, 14, 17, 0.85));
   backdrop-filter: blur(8px);
 }
 

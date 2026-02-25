@@ -23,26 +23,34 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 const THEME_STORAGE_KEY = "posty-theme";
 
+// Read the theme that was already applied by the inline script in layout.tsx
+// This avoids a flash by matching what's already on the DOM
+function getInitialTheme(): Theme {
+  if (typeof document !== "undefined") {
+    // The inline script already set the class — read from it
+    if (document.documentElement.classList.contains("light")) return "light";
+    if (document.documentElement.classList.contains("dark")) return "dark";
+  }
+  return "dark";
+}
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("dark");
+  const [theme, setThemeState] = useState<Theme>(getInitialTheme);
   const [mounted, setMounted] = useState(false);
 
-  // Load theme from localStorage on mount
+  // Sync with localStorage on mount (inline script already applied the correct theme)
   useEffect(() => {
     setMounted(true);
 
-    // Check localStorage first
+    // Check localStorage to ensure React state matches what the inline script applied
     const storedTheme = localStorage.getItem(THEME_STORAGE_KEY) as Theme | null;
 
     if (storedTheme && (storedTheme === "light" || storedTheme === "dark")) {
       setThemeState(storedTheme);
-      applyTheme(storedTheme);
+      // No need to call applyTheme — the inline script already did it
     } else {
-      // Check system preference - respect user's OS setting, default to dark if no preference
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      const systemTheme = prefersDark ? "dark" : "light"; // Respect system preference
-      setThemeState(systemTheme);
-      applyTheme(systemTheme);
+      // No stored theme: keep whatever the inline script set (defaults to dark)
+      // Don't check system preference here — it could override the user's choice
     }
   }, []);
 

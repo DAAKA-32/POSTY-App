@@ -422,6 +422,7 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
   return (
     <>
       {/* Overlay - blocks all touch gestures when open */}
+      {/* Uses will-change and contain to prevent repaints on body during animation */}
       <div
         className={`
           fixed inset-0 z-[60] popup-overlay
@@ -431,7 +432,11 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
         `}
         onClick={onClose}
         aria-hidden="true"
-        style={{ touchAction: isOpen ? "none" : "auto" }}
+        style={{
+          touchAction: isOpen ? "none" : "auto",
+          contain: "strict",
+          willChange: "opacity",
+        }}
       />
 
       {/* Slide Menu - PWA Safe Area Support */}
@@ -447,6 +452,8 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
         style={{
           touchAction: "pan-y",
           paddingTop: "env(safe-area-inset-top, 0px)",
+          contain: "layout style",
+          willChange: "transform",
         }}
       >
         {/* Header */}

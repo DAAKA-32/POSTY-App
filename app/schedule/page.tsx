@@ -55,7 +55,6 @@ function ScheduleContent() {
   const [filter, setFilter] = useState<ScheduleStatus | "all">("all");
   const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [showSetupBanner, setShowSetupBanner] = useState(true);
 
   // Reschedule modal
   const [rescheduleModalOpen, setRescheduleModalOpen] = useState(false);
@@ -189,23 +188,23 @@ function ScheduleContent() {
         className="min-h-full bg-background-warm dark:bg-dark-bg scroll-smooth lg:overflow-y-auto"
         disabled={isLoading}
       >
-        <div className="w-full mx-auto px-4 py-6 md:px-6 md:py-8 lg:px-8 lg:py-10 lg:max-w-4xl xl:max-w-5xl 2xl:max-w-6xl overflow-x-hidden">
+        <div className="w-full min-w-0 mx-auto px-4 py-6 md:px-6 md:py-8 lg:px-8 lg:py-10 lg:max-w-4xl xl:max-w-5xl 2xl:max-w-6xl overflow-x-hidden">
           {/* Premium Header */}
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-between mb-8"
+            className="flex flex-wrap items-center justify-between gap-2 mb-8"
           >
-            <div>
-              <h1 className="text-xl font-bold text-silver-shimmer dark:text-white md:text-2xl lg:text-3xl">
+            <div className="min-w-0">
+              <h1 className="text-xl font-bold text-silver-shimmer dark:text-white md:text-2xl lg:text-3xl truncate">
                 Posts programmés
               </h1>
-              <div className="flex items-center gap-3 mt-1.5">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-1.5">
                 <p className="text-sm text-gray-600 dark:text-text-muted md:text-base">
                   <span className="font-medium text-gray-900 dark:text-white">{pendingCount}</span> post{pendingCount !== 1 ? "s" : ""} à venir
                 </p>
                 {failedCount > 0 && (
-                  <span className="inline-flex items-center gap-1.5 text-sm px-2.5 py-0.5 bg-red-100 dark:bg-red-500/15 text-red-600 dark:text-red-400 rounded-full font-medium">
+                  <span className="inline-flex items-center gap-1.5 text-xs sm:text-sm px-2 sm:px-2.5 py-0.5 bg-red-100 dark:bg-red-500/15 text-red-600 dark:text-red-400 rounded-full font-medium">
                     <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
                     {failedCount} en échec
                   </span>
@@ -213,44 +212,6 @@ function ScheduleContent() {
               </div>
             </div>
           </motion.div>
-
-          {/* Setup banner */}
-          <AnimatePresence>
-            {showSetupBanner && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10, height: 0, marginBottom: 0 }}
-                transition={{ duration: 0.3 }}
-                className="relative mb-6 p-4 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl"
-              >
-                <button
-                  onClick={() => setShowSetupBanner(false)}
-                  className="absolute top-3 right-3 p-1 text-amber-400 hover:text-amber-600 dark:hover:text-amber-300 transition-colors"
-                  aria-label="Fermer"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-                <div className="flex items-start gap-3 pr-6">
-                  <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center shrink-0 mt-0.5">
-                    <svg className="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
-                      Finalisation en cours
-                    </p>
-                    <p className="text-xs text-amber-600 dark:text-amber-400/80 mt-1 leading-relaxed">
-                      Nous finalisons la mise en place de la publication automatique. Vos posts programmés seront publiés très prochainement. Merci de votre patience.
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
 
           {/* View mode toggle & Filters - Premium design */}
           <motion.div
@@ -290,7 +251,7 @@ function ScheduleContent() {
             </div>
 
             {/* Status filter - Clean pills */}
-            <div className="flex gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-hide">
+            <div className="flex gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
               {FILTER_OPTIONS.map((option) => {
                 const isActive = filter === option.value;
                 const getFilterColors = () => {
@@ -310,7 +271,7 @@ function ScheduleContent() {
                   <button
                     key={option.value}
                     onClick={() => setFilter(option.value)}
-                    className={`px-3.5 py-2 text-sm font-medium rounded-full whitespace-nowrap transition-colors duration-200 ${getFilterColors()}`}
+                    className={`shrink-0 px-3.5 py-2 text-sm font-medium rounded-full whitespace-nowrap transition-colors duration-200 ${getFilterColors()}`}
                   >
                     {option.label}
                     {option.value === "pending" && pendingCount > 0 && (
@@ -431,7 +392,7 @@ function ScheduleContent() {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-2 sm:p-4 md:p-6 overflow-hidden"
+              className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-xl sm:rounded-2xl p-1.5 sm:p-4 md:p-6 overflow-hidden"
             >
               {/* Calendar header */}
               <div className="flex items-center justify-between mb-6">

@@ -579,6 +579,15 @@ export type SchedulePlatform = "linkedin" | "reddit" | "threads" | "facebook";
 
 export type LinkedInPostType = "feed" | "article";
 
+// Image attached to a scheduled post (stored in Firebase Storage)
+export interface ScheduledPostImage {
+  storagePath: string;   // Firebase Storage path (e.g., "scheduled-posts/{postId}/{filename}")
+  downloadURL: string;   // Public download URL for preview & Cloud Function
+  fileName: string;      // Original filename
+  contentType: string;   // MIME type (image/jpeg, image/png, etc.)
+  size: number;          // File size in bytes
+}
+
 export interface ScheduledPost {
   id: string;
   userId: string;
@@ -586,6 +595,8 @@ export interface ScheduledPost {
   content: string;
   postId?: string; // Reference to original Post if from history
   title?: string; // Optional title for identification
+  // Images (optional, LinkedIn only for now)
+  images?: ScheduledPostImage[];
   // Scheduling
   scheduledAt: Timestamp; // When to publish
   timezone: string; // User's timezone (e.g., "Europe/Paris")
@@ -614,12 +625,15 @@ export interface CreateScheduledPostData {
   timezone: string;
   platform: SchedulePlatform;
   postType?: LinkedInPostType;
+  // Images to upload (File objects from the picker, client-side only)
+  imageFiles?: File[];
 }
 
 // Scheduling context type
 export interface SchedulingContextType {
   scheduledPosts: ScheduledPost[];
   isLoading: boolean;
+  isUploading: boolean; // True while images are being uploaded to Storage
   // Actions
   schedulePost: (data: CreateScheduledPostData) => Promise<{ success: boolean; scheduledPostId?: string; error?: string }>;
   cancelSchedule: (scheduledPostId: string) => Promise<{ success: boolean; error?: string }>;

@@ -3273,7 +3273,7 @@ function MockupContextProfile() {
         </div>
         <div>
           <div className="text-[12px] text-gray-900 font-semibold">Emilien Nepveu</div>
-          <div className="text-[10px] text-gray-500">Co-fondateur &middot; Co-CEO</div>
+          <div className="text-[10px] text-gray-500">Co-Founder &middot; Co-CEO</div>
         </div>
       </div>
 
@@ -4127,7 +4127,8 @@ function FounderSection() {
                 <span className="absolute left-0 -bottom-0.5 w-full h-[2px] bg-gradient-to-r from-[#F8935D] to-[#F76B54] origin-left scale-x-0 md:group-hover:scale-x-100 transition-transform duration-300 ease-out rounded-full" />
               </span>
             </Link>
-            <p className="text-gray-500 text-xs md:text-sm">Co-founder & Co-CEO</p>
+            <p className="text-gray-500 text-xs md:text-sm font-medium">Co-Founder & Co-CEO</p>
+            <p className="text-gray-400 text-[11px] md:text-xs tracking-wide">CTO</p>
           </div>
 
           {/* Co-CEO — Côme */}
@@ -4154,7 +4155,8 @@ function FounderSection() {
                 <span className="absolute left-0 -bottom-0.5 w-full h-[2px] bg-gradient-to-r from-[#F8935D] to-[#F76B54] origin-left scale-x-0 md:group-hover:scale-x-100 transition-transform duration-300 ease-out rounded-full" />
               </span>
             </Link>
-            <p className="text-gray-500 text-xs md:text-sm">Co-founder & Co-CEO</p>
+            <p className="text-gray-500 text-xs md:text-sm font-medium">Co-Founder & Co-CEO</p>
+            <p className="text-gray-400 text-[11px] md:text-xs tracking-wide">CFO</p>
           </div>
         </motion.div>
       </motion.div>

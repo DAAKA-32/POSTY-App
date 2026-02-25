@@ -13,7 +13,8 @@ import { AboutPageJsonLd } from "@/components/seo/JsonLd";
 const teamMembers = [
   {
     name: "Emilien Nepveu",
-    role: "Co-CEO & Co-Fondateur",
+    role: "Co-Founder & Co-CEO",
+    operationalRole: "CTO",
     photo: "/founder.jpg",
     linkedIn: "https://www.linkedin.com/in/e-nepveu-58a38127a/",
     bio: "Responsable de toute la partie technique de Posty. J'ai conçu et développé l'ensemble de l'application : interface utilisateur (UI), expérience utilisateur (UX), et intégration des appels API avec l'intelligence artificielle.",
@@ -21,7 +22,8 @@ const teamMembers = [
   },
   {
     name: "Côme Maubert",
-    role: "Co-CEO & Co-Fondateur",
+    role: "Co-Founder & Co-CEO",
+    operationalRole: "CFO",
     photo: "/cmo.jpg",
     linkedIn: null,
     bio: "En charge du financement et de la stratégie publicitaire de Posty. Je pilote les campagnes d'acquisition et le développement commercial pour accélérer la croissance de l'entreprise.",
@@ -30,6 +32,7 @@ const teamMembers = [
   {
     name: "Jean Bouchand",
     role: "Designer Marketing",
+    operationalRole: null,
     photo: "/mark.jpg",
     linkedIn: null,
     bio: "Responsable de l'identité visuelle et de la stratégie de marque de Posty. Je conçois les supports marketing et m'assure que chaque point de contact reflète notre vision d'un SaaS premium et accessible.",
@@ -211,9 +214,15 @@ export default function AboutPage() {
                     <h3 className="text-xl font-bold text-gray-900 mb-1">
                       {member.name}
                     </h3>
-                    <p className="text-warm-orange font-medium mb-4">
+                    <p className="text-warm-orange font-medium mb-1">
                       {member.role}
                     </p>
+                    {member.operationalRole && (
+                      <p className="text-gray-400 text-sm tracking-wide mb-3">
+                        {member.operationalRole}
+                      </p>
+                    )}
+                    {!member.operationalRole && <div className="mb-3" />}
 
                     {/* Bio */}
                     <p className="text-gray-600 text-sm leading-relaxed mb-4">

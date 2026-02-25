@@ -19,6 +19,7 @@ import {
 } from "@/types";
 import {
   createScheduledPost,
+  generateScheduledPostId,
   getScheduledPosts,
   cancelScheduledPost as cancelScheduledPostFirestore,
   reschedulePost as reschedulePostFirestore,
@@ -26,6 +27,7 @@ import {
   getPendingScheduledPostsCount,
   getUpcomingScheduledPosts,
 } from "@/lib/firestore";
+import { uploadScheduledPostImages, deleteScheduledPostImages } from "@/lib/storage";
 import toast from "@/components/ui/Toast";
 
 const SchedulingContext = createContext<SchedulingContextType | undefined>(
@@ -37,6 +39,7 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
   const { canSchedulePosts, currentPlan, isTestMode } = useSubscription();
   const [scheduledPosts, setScheduledPosts] = useState<ScheduledPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUploading, setIsUploading] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
 
   // Load scheduled posts from Firestore
@@ -103,16 +106,47 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
       }
 
       try {
-        const scheduledPostId = await createScheduledPost(user.uid, data);
+        const hasImages = data.imageFiles && data.imageFiles.length > 0;
+        let scheduledPostId: string;
+
+        if (hasImages) {
+          // Pre-generate ID so images are stored under it
+          scheduledPostId = generateScheduledPostId();
+          setIsUploading(true);
+
+          try {
+            // Upload images to Firebase Storage
+            const uploadedImages = await uploadScheduledPostImages(
+              scheduledPostId,
+              user.uid,
+              data.imageFiles!
+            );
+
+            // Create Firestore doc with image metadata
+            await createScheduledPost(user.uid, data, uploadedImages, scheduledPostId);
+          } catch (uploadError) {
+            // Clean up any partially uploaded images
+            try {
+              await deleteScheduledPostImages(user.uid, scheduledPostId);
+            } catch { /* ignore cleanup errors */ }
+            throw uploadError;
+          } finally {
+            setIsUploading(false);
+          }
+        } else {
+          // Text-only post (existing flow)
+          scheduledPostId = await createScheduledPost(user.uid, data);
+        }
 
         // Refresh the list
         await loadScheduledPosts();
 
-        toast.success("Post programme avec succes !");
+        toast.success("Post programmé avec succès !");
 
         return { success: true, scheduledPostId };
       } catch (error) {
         console.error("Error scheduling post:", error);
+        setIsUploading(false);
         const errorMessage =
           error instanceof Error
             ? error.message
@@ -234,6 +268,7 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
     () => ({
       scheduledPosts,
       isLoading,
+      isUploading,
       schedulePost,
       cancelSchedule,
       reschedulePost,
@@ -245,6 +280,7 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
     [
       scheduledPosts,
       isLoading,
+      isUploading,
       schedulePost,
       cancelSchedule,
       reschedulePost,

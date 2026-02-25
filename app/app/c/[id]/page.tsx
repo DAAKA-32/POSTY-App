@@ -75,8 +75,15 @@ function ConversationContent() {
   // Voice recording state
   const [isRecording, setIsRecording] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
+  const [interimText, setInterimText] = useState("");
+  const [isVoiceProcessing, setIsVoiceProcessing] = useState(false);
+  const [autoSendCountdown, setAutoSendCountdown] = useState(0);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const chatInputRef = useRef<UniversalChatInputRef>(null);
+  const preRecordingTextRef = useRef("");
+  const accumulatedTranscriptRef = useRef("");
+  const autoSendTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Derive effective dual mode and style from Max selector or Pro toggle
   const effectiveDualMode = isMaxPlan ? maxMode === "dual" : dualMode;
@@ -106,6 +113,10 @@ function ConversationContent() {
     dualMode: effectiveDualMode,
     selectedStyle: effectiveStyle,
   });
+
+  // Keep generate ref in sync for use in voice auto-send callbacks
+  const generateRef = useRef(generate);
+  useEffect(() => { generateRef.current = generate; }, [generate]);
 
   // Smart scroll
   const {
@@ -227,16 +238,27 @@ function ConversationContent() {
       recognition.lang = "fr-FR";
 
       recognition.onresult = (event: SpeechRecognitionEvent) => {
-        let finalTranscript = "";
+        let newFinals = "";
+        let currentInterim = "";
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const transcript = event.results[i][0].transcript;
           if (event.results[i].isFinal) {
-            finalTranscript += transcript;
+            newFinals += transcript;
+          } else {
+            currentInterim += transcript;
           }
         }
-        if (finalTranscript) {
-          chatInputRef.current?.appendValue(finalTranscript);
+        // Accumulate finalized transcripts
+        if (newFinals) {
+          accumulatedTranscriptRef.current += newFinals;
         }
+        // Build full display: pre-recording text + voice text
+        const prefix = preRecordingTextRef.current;
+        const voiceText = accumulatedTranscriptRef.current + currentInterim;
+        const separator = prefix && voiceText ? " " : "";
+        const fullText = voiceText ? prefix + separator + voiceText : prefix;
+        chatInputRef.current?.setValue(fullText);
+        setInterimText(currentInterim);
       };
 
       recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
@@ -276,26 +298,81 @@ function ConversationContent() {
       }
       isRecordingRef.current = false;
       setIsRecording(false);
+      // Clean up voice auto-send timers
+      if (autoSendTimerRef.current) clearTimeout(autoSendTimerRef.current);
+      if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
     };
   }, []);
+
+  // Cancel any pending auto-send countdown
+  const cancelAutoSend = useCallback(() => {
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+    }
+    if (autoSendTimerRef.current) {
+      clearTimeout(autoSendTimerRef.current);
+      autoSendTimerRef.current = null;
+    }
+    setAutoSendCountdown(0);
+  }, []);
+
+  // Start 3-second auto-send countdown after voice processing
+  const startAutoSendCountdown = useCallback(() => {
+    cancelAutoSend();
+    setAutoSendCountdown(3);
+    countdownIntervalRef.current = setInterval(() => {
+      setAutoSendCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(countdownIntervalRef.current!);
+          countdownIntervalRef.current = null;
+          // Auto-send the message
+          const currentText = chatInputRef.current?.getValue() || "";
+          if (currentText.trim()) {
+            generateRef.current(currentText.trim());
+            chatInputRef.current?.setValue("");
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }, [cancelAutoSend]);
 
   // Toggle voice recording — user controls start/stop manually
   const toggleRecording = useCallback(() => {
     if (!recognitionRef.current) return;
     if (isRecordingRef.current) {
-      // Set ref to false BEFORE abort() so the onend handler doesn't auto-restart
+      // Graceful stop — keeps last words (unlike abort())
       isRecordingRef.current = false;
       setIsRecording(false);
+      setIsVoiceProcessing(true);
+      setInterimText("");
       try {
-        recognitionRef.current.abort();
+        recognitionRef.current.stop();
       } catch {
         // Ignore errors
       }
+      // 800ms processing animation, then auto-send countdown
+      autoSendTimerRef.current = setTimeout(() => {
+        setIsVoiceProcessing(false);
+        const currentText = chatInputRef.current?.getValue() || "";
+        if (currentText.trim()) {
+          startAutoSendCountdown();
+        }
+      }, 800);
     } else {
+      // Save pre-existing text and reset accumulated transcript
+      cancelAutoSend();
+      preRecordingTextRef.current = chatInputRef.current?.getValue() || "";
+      accumulatedTranscriptRef.current = "";
       try {
         recognitionRef.current.start();
         isRecordingRef.current = true;
         setIsRecording(true);
+        setInterimText("");
+        // Haptic feedback on mobile
+        if (navigator.vibrate) navigator.vibrate(50);
       } catch (error) {
         console.error("Failed to start recording:", error);
         isRecordingRef.current = false;
@@ -303,7 +380,7 @@ function ConversationContent() {
         toast.error("Impossible de démarrer l'enregistrement");
       }
     }
-  }, []);
+  }, [cancelAutoSend, startAutoSendCountdown]);
 
   // Handle submit
   const handleSubmit = useCallback(async () => {
@@ -623,11 +700,13 @@ function ConversationContent() {
             <UniversalChatInput
               ref={chatInputRef}
               onSubmit={async (message) => {
-                // Stop recording if active — set ref BEFORE abort() to prevent onend auto-restart
+                // Cancel voice auto-send and stop recording if active
+                cancelAutoSend();
+                setIsVoiceProcessing(false);
                 if (isRecordingRef.current && recognitionRef.current) {
                   isRecordingRef.current = false;
                   setIsRecording(false);
-                  try { recognitionRef.current.abort(); } catch { /* ignore */ }
+                  try { recognitionRef.current.stop(); } catch { /* ignore */ }
                 }
                 await generate(message);
               }}
@@ -638,6 +717,10 @@ function ConversationContent() {
               onVoiceRecordingStart={toggleRecording}
               onVoiceRecordingStop={toggleRecording}
               isRecording={isRecording}
+              interimText={interimText}
+              isVoiceProcessing={isVoiceProcessing}
+              autoSendCountdown={autoSendCountdown}
+              onCancelAutoSend={cancelAutoSend}
               enableFileAttachment={true}
               fileAttachmentAllowed={isMaxPlan}
               showHelperText={true}

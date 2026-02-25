@@ -4,7 +4,7 @@ import { seoConfig, i18nSeoConfig } from "@/lib/seo/config";
 export const metadata: Metadata = {
   title: "À propos | Posty - SaaS LinkedIn & Automatisation IA",
   description:
-    "Découvrez Posty, l'outil SaaS qui automatise votre présence LinkedIn et génère des prospects qualifiés grâce à l'IA. Rencontrez Emilien Nepveu (CEO) et Côme Maubert (CFO).",
+    "Découvrez Posty, l'outil SaaS qui automatise votre présence LinkedIn et génère des prospects qualifiés grâce à l'IA. Rencontrez Emilien Nepveu (Co-CEO & CTO) et Côme Maubert (Co-CEO & CFO).",
   keywords: [
     "Posty",
     "à propos",
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     siteName: "Posty",
     title: "À propos de Posty - Notre Équipe & Notre Mission",
     description:
-      "Posty : automatisez votre présence LinkedIn et générez des prospects qualifiés. Rencontrez Emilien Nepveu (CEO) et Côme Maubert (CFO).",
+      "Posty : automatisez votre présence LinkedIn et générez des prospects qualifiés. Rencontrez Emilien Nepveu (Co-CEO & CTO) et Côme Maubert (Co-CEO & CFO).",
     images: [
       {
         url: `${seoConfig.siteUrl}/og-image.png`,
