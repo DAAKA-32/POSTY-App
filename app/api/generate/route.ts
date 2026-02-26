@@ -11,7 +11,7 @@ import {
   CONVERSATIONAL_PROMPT,
   INTENT_CLASSIFICATION_PROMPT,
 } from "@/lib/openai";
-import { buildOptimizedPrompt, synthesizeProfile, estimateTokens, ProfileFields } from "@/lib/prompt-builder";
+import { buildOptimizedPrompt, getGenerationTemperature, synthesizeProfile, estimateTokens, ProfileFields, PlanTier } from "@/lib/prompt-builder";
 import {
   checkHourlyQuotaAdmin,
   checkUserQuotaAdmin,
@@ -486,6 +486,7 @@ export async function POST(request: NextRequest) {
                 sendEvent,
                 typesToGenerate,
                 maxTokens,
+                (userPlan as PlanTier) ?? null,
                 conversationHistory as Array<{ role: "user" | "assistant"; content: string }> | undefined,
                 processedFileContent,
                 extractedUrlContent
@@ -587,6 +588,7 @@ async function generateWithOpenAI(
   sendEvent: (event: string, data: object) => void,
   typesToGenerate: Array<"storytelling" | "business">,
   maxTokens: number,
+  plan: PlanTier,
   conversationHistory?: Array<{ role: "user" | "assistant"; content: string }>,
   fileContent?: { type: "image"; mimeType: string; base64: string } | { type: "pdf"; extractedText: string } | null,
   urlContent?: ExtractedUrlContent | null
@@ -611,8 +613,8 @@ async function generateWithOpenAI(
 
     sendEvent("start", { type, title });
 
-    // Build optimized system prompt with synthesized profile
-    let systemPrompt = buildOptimizedPrompt(type, language, userProfile);
+    // Build optimized system prompt with synthesized profile (plan-tier aware)
+    let systemPrompt = buildOptimizedPrompt(type, language, userProfile, plan);
 
     if (isFollowUp) {
       // Add context for follow-up conversations
@@ -711,7 +713,7 @@ async function generateWithOpenAI(
     const stream = await service["client"].chat.completions.create({
       model: modelToUse,
       messages,
-      temperature: type === "storytelling" ? 0.8 : 0.7,
+      temperature: getGenerationTemperature(type, plan),
       max_tokens: maxTokens,
       stream: true,
     });

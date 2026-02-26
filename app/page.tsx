@@ -4101,15 +4101,15 @@ function FounderSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, ease: smoothEase, delay: 0.2 }}
-          className="flex items-center justify-center gap-8 sm:gap-12"
+          className="flex flex-col items-center"
         >
-          {/* Co-CEO — Emilien */}
-          <div className="flex flex-col items-center text-center">
+          {/* Photos row */}
+          <div className="flex items-center justify-center gap-8 sm:gap-12 mb-4">
             <Link
               href={FOUNDER_LINKEDIN_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="relative mb-3 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F8935D] focus-visible:ring-offset-2"
+              className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F8935D] focus-visible:ring-offset-2"
               aria-label="Voir le profil LinkedIn d'Emilien Nepveu"
             >
               <div className="w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden ring-4 ring-white shadow-xl shadow-gray-200/50">
@@ -4117,46 +4117,60 @@ function FounderSection() {
               </div>
             </Link>
             <Link
-              href={FOUNDER_LINKEDIN_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group relative focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F8935D] focus-visible:ring-offset-2 rounded"
-            >
-              <span className="text-gray-900 font-semibold text-sm md:text-base relative inline-block">
-                Emilien Nepveu
-                <span className="absolute left-0 -bottom-0.5 w-full h-[2px] bg-gradient-to-r from-[#F8935D] to-[#F76B54] origin-left scale-x-0 md:group-hover:scale-x-100 transition-transform duration-300 ease-out rounded-full" />
-              </span>
-            </Link>
-            <p className="text-gray-500 text-xs md:text-sm font-medium">Co-Founder & Co-CEO</p>
-            <p className="text-gray-400 text-[11px] md:text-xs tracking-wide">CTO</p>
-          </div>
-
-          {/* Co-CEO — Côme */}
-          <div className="flex flex-col items-center text-center">
-            <Link
               href={CFO_LINKEDIN_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="relative mb-3 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F8935D] focus-visible:ring-offset-2"
+              className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F8935D] focus-visible:ring-offset-2"
               aria-label="Voir le profil de Côme Maubert"
             >
               <div className="w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden ring-4 ring-white shadow-xl shadow-gray-200/50">
                 <Image src="/cmo.jpg" alt="Côme Maubert" width={64} height={64} className="w-full h-full object-cover" />
               </div>
             </Link>
-            <Link
-              href={CFO_LINKEDIN_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group relative focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F8935D] focus-visible:ring-offset-2 rounded"
-            >
-              <span className="text-gray-900 font-semibold text-sm md:text-base relative inline-block">
-                Côme Maubert
-                <span className="absolute left-0 -bottom-0.5 w-full h-[2px] bg-gradient-to-r from-[#F8935D] to-[#F76B54] origin-left scale-x-0 md:group-hover:scale-x-100 transition-transform duration-300 ease-out rounded-full" />
-              </span>
-            </Link>
-            <p className="text-gray-500 text-xs md:text-sm font-medium">Co-Founder & Co-CEO</p>
-            <p className="text-gray-400 text-[11px] md:text-xs tracking-wide">CFO</p>
+          </div>
+
+          {/* Shared role badge — juste sous les photos */}
+          <div className="flex items-center justify-center gap-4 mb-4">
+            <div className="h-px w-10 sm:w-14 bg-gradient-to-r from-transparent to-[#F8935D]/30" />
+            <span className="text-gray-500 text-[11px] md:text-xs font-medium tracking-[0.14em] uppercase select-none">
+              Co-fondateurs & Co-CEO
+            </span>
+            <div className="h-px w-10 sm:w-14 bg-gradient-to-l from-transparent to-[#F8935D]/30" />
+          </div>
+
+          {/* Names + roles row */}
+          <div className="flex items-start justify-center gap-8 sm:gap-12">
+            {/* Emilien */}
+            <div className="flex flex-col items-center text-center">
+              <Link
+                href={FOUNDER_LINKEDIN_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group relative focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F8935D] focus-visible:ring-offset-2 rounded"
+              >
+                <span className="text-gray-900 font-semibold text-sm md:text-base relative inline-block">
+                  Emilien Nepveu
+                  <span className="absolute left-0 -bottom-0.5 w-full h-[2px] bg-gradient-to-r from-[#F8935D] to-[#F76B54] origin-left scale-x-0 md:group-hover:scale-x-100 transition-transform duration-300 ease-out rounded-full" />
+                </span>
+              </Link>
+              <p className="text-gray-400 text-[11px] md:text-xs tracking-wide mt-0.5">CTO</p>
+            </div>
+
+            {/* Côme */}
+            <div className="flex flex-col items-center text-center">
+              <Link
+                href={CFO_LINKEDIN_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group relative focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F8935D] focus-visible:ring-offset-2 rounded"
+              >
+                <span className="text-gray-900 font-semibold text-sm md:text-base relative inline-block">
+                  Côme Maubert
+                  <span className="absolute left-0 -bottom-0.5 w-full h-[2px] bg-gradient-to-r from-[#F8935D] to-[#F76B54] origin-left scale-x-0 md:group-hover:scale-x-100 transition-transform duration-300 ease-out rounded-full" />
+                </span>
+              </Link>
+              <p className="text-gray-400 text-[11px] md:text-xs tracking-wide mt-0.5">CFO</p>
+            </div>
           </div>
         </motion.div>
       </motion.div>

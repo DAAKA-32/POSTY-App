@@ -56,6 +56,98 @@ html.dark.scroll-locked body {
    END SCROLL MANAGEMENT SYSTEM
    ============================================================================ */
 
+/* ============================================================================
+   LANDSCAPE BLOCKER — Mobile portrait-only enforcement
+   ============================================================================
+   Shows a full-screen overlay when a phone is held in landscape orientation.
+   Condition: orientation=landscape AND max-height=500px → phones only.
+   Tablets (iPad, etc.) and desktops are never affected.
+   ============================================================================ */
+
+.landscape-blocker {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  background-color: #0B0E11;
+  /* Ensure it covers everything including safe areas */
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
+    env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+}
+
+/* Light mode variant */
+html.light .landscape-blocker {
+  background-color: #FAFBFC;
+}
+
+.landscape-blocker__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 32px;
+  text-align: center;
+  max-width: 280px;
+}
+
+.landscape-blocker__icon {
+  width: 64px;
+  height: 64px;
+  color: #F8A35D;
+  animation: landscape-rotate 2s ease-in-out infinite;
+}
+
+.landscape-blocker__icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.landscape-blocker__title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0;
+  line-height: 1.4;
+}
+
+html.light .landscape-blocker__title {
+  color: #0B0E11;
+}
+
+.landscape-blocker__subtitle {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 0;
+  line-height: 1.5;
+}
+
+html.light .landscape-blocker__subtitle {
+  color: rgba(11, 14, 17, 0.55);
+}
+
+@keyframes landscape-rotate {
+  0%   { transform: rotate(0deg); }
+  20%  { transform: rotate(0deg); }
+  50%  { transform: rotate(90deg); }
+  70%  { transform: rotate(90deg); }
+  100% { transform: rotate(0deg); }
+}
+
+/* Activate ONLY on phones in landscape (height < 500px in landscape = phone, not tablet) */
+@media screen and (orientation: landscape) and (max-height: 500px) {
+  .landscape-blocker {
+    display: flex;
+  }
+}
+
+/* ============================================================================
+   END LANDSCAPE BLOCKER
+   ============================================================================ */
+
 /* ============== IOS SAFE AREA UTILITIES ============== */
 /* Support for iPhone notch and status bar */
 @supports (padding-top: env(safe-area-inset-top)) {

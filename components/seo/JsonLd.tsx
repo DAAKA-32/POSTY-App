@@ -212,7 +212,7 @@ export function HowToJsonLd({
     })),
     tool: {
       "@type": "HowToTool",
-      name: "Posty - AI LinkedIn Post Generator",
+      name: "Posty AI - LinkedIn Post Generator",
     },
   };
 
@@ -312,7 +312,7 @@ export function ReviewJsonLd({ reviews }: { reviews: ReviewData[] }) {
   const schema = {
     "@context": "https://schema.org",
     "@type": "Product",
-    name: "Posty",
+    name: "Posty AI",
     description: "AI-powered LinkedIn post generator",
     brand: {
       "@type": "Brand",
@@ -590,7 +590,7 @@ export function EnhancedOrganizationJsonLd() {
     "@context": "https://schema.org",
     "@type": "Organization",
     "@id": `${seoConfig.siteUrl}/#organization`,
-    name: "Posty",
+    name: "Posty AI",
     url: seoConfig.siteUrl,
     logo: {
       "@type": "ImageObject",
@@ -598,7 +598,7 @@ export function EnhancedOrganizationJsonLd() {
       width: "512",
       height: "512",
     },
-    description: "Posty est un générateur de posts LinkedIn alimenté par l'intelligence artificielle. Notre mission : démocratiser le contenu professionnel et automatiser le personal branding.",
+    description: "Posty AI est un générateur de posts LinkedIn alimenté par l'intelligence artificielle. Notre mission : démocratiser le contenu professionnel et automatiser le personal branding.",
     foundingDate: "2024",
     founder: [
       {
@@ -659,13 +659,13 @@ export function AboutPageJsonLd() {
       "@id": `${seoConfig.siteUrl}/#founder-emilien`,
       name: "Emilien Nepveu",
       jobTitle: "Co-Founder & Co-CEO, CTO",
-      description: "Co-fondateur de Posty, responsable de la partie technique, UX/UI et intégration IA.",
+      description: "Co-fondateur de Posty AI, responsable de la partie technique, UX/UI et intégration IA.",
       url: `${seoConfig.siteUrl}/about`,
       sameAs: ["https://www.linkedin.com/in/e-nepveu-58a38127a/"],
       worksFor: {
         "@type": "Organization",
         "@id": `${seoConfig.siteUrl}/#organization`,
-        name: "Posty",
+        name: "Posty AI",
       },
       knowsAbout: [
         "Intelligence Artificielle",
@@ -680,12 +680,12 @@ export function AboutPageJsonLd() {
       "@id": `${seoConfig.siteUrl}/#founder-come`,
       name: "Côme Maubert",
       jobTitle: "Co-Founder & Co-CEO, CFO",
-      description: "Co-fondateur de Posty, en charge du financement et de la stratégie commerciale.",
+      description: "Co-fondateur de Posty AI, en charge du financement et de la stratégie commerciale.",
       url: `${seoConfig.siteUrl}/about`,
       worksFor: {
         "@type": "Organization",
         "@id": `${seoConfig.siteUrl}/#organization`,
-        name: "Posty",
+        name: "Posty AI",
       },
       knowsAbout: [
         "Financement",
@@ -699,10 +699,10 @@ export function AboutPageJsonLd() {
     "@context": "https://schema.org",
     "@type": "Organization",
     "@id": `${seoConfig.siteUrl}/#organization`,
-    name: "Posty",
+    name: "Posty AI",
     url: seoConfig.siteUrl,
     logo: `${seoConfig.siteUrl}/favicon-512.png`,
-    description: "Posty est un générateur de posts LinkedIn alimenté par l'intelligence artificielle. Notre mission : démocratiser le contenu professionnel et automatiser le personal branding pour tous.",
+    description: "Posty AI est un générateur de posts LinkedIn alimenté par l'intelligence artificielle. Notre mission : démocratiser le contenu professionnel et automatiser le personal branding pour tous.",
     foundingDate: "2024",
     founder: [
       { "@id": `${seoConfig.siteUrl}/#founder-emilien` },
@@ -728,13 +728,13 @@ export function AboutPageJsonLd() {
     "@context": "https://schema.org",
     "@type": "AboutPage",
     "@id": `${seoConfig.siteUrl}/about`,
-    name: "À propos de Posty",
-    description: "Découvrez Posty, l'IA qui démocratise le contenu LinkedIn professionnel. Notre mission, notre vision, et notre équipe.",
+    name: "À propos de Posty AI",
+    description: "Découvrez Posty AI, l'IA qui démocratise le contenu LinkedIn professionnel. Notre mission, notre vision, et notre équipe.",
     url: `${seoConfig.siteUrl}/about`,
     isPartOf: {
       "@type": "WebSite",
       "@id": `${seoConfig.siteUrl}/#website`,
-      name: "Posty",
+      name: "Posty AI",
     },
     about: {
       "@id": `${seoConfig.siteUrl}/#organization`,

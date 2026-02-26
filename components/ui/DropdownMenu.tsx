@@ -26,9 +26,6 @@ interface MenuPosition {
   placement: "bottom" | "top";
 }
 
-// Minimum delay (ms) before backdrop can close menu - prevents race condition
-const OPEN_PROTECTION_DELAY = 100;
-
 export default function DropdownMenu({
   items,
   trigger,
@@ -46,73 +43,42 @@ export default function DropdownMenu({
   const menuRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
-  // Protection against immediate close after open (race condition fix)
-  const openTimestampRef = useRef<number>(0);
-  const isProtectedRef = useRef(false);
-
-  // Check if we're in browser for portal
+  // Client-side only — avoids SSR hydration mismatch with portal
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  // Safe close function that respects the protection delay
-  const safeClose = useCallback(() => {
-    const now = Date.now();
-    const timeSinceOpen = now - openTimestampRef.current;
-
-    // Don't close if we're still in the protection window
-    if (isProtectedRef.current && timeSinceOpen < OPEN_PROTECTION_DELAY) {
-      return;
-    }
-
-    isProtectedRef.current = false;
-    setIsOpen(false);
-  }, []);
-
-  // Close menu when clicking outside
+  // Click-outside via window pointerdown in CAPTURE phase — no backdrop needed.
+  // The backdrop pattern causes click-through: mousedown on the backdrop removes
+  // it from the DOM, then mouseup/click land on the trigger button, reopening
+  // the menu. Capture-phase pointerdown fires before any element's own handler,
+  // so we can safely ignore clicks on the trigger (it handles its own toggle).
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
-      // Check if click was on trigger or menu
-      if (
-        menuRef.current &&
-        !menuRef.current.contains(event.target as Node) &&
-        triggerRef.current &&
-        !triggerRef.current.contains(event.target as Node)
-      ) {
-        safeClose();
-      }
+    if (!isOpen) return;
+
+    const handlePointerDown = (e: PointerEvent) => {
+      const target = e.target as Node;
+      if (triggerRef.current?.contains(target)) return;
+      if (menuRef.current?.contains(target)) return;
+      setIsOpen(false);
     };
 
-    if (isOpen) {
-      // Delay adding listener to avoid capturing the opening click
-      const timer = setTimeout(() => {
-        document.addEventListener("mousedown", handleClickOutside);
-        document.addEventListener("touchstart", handleClickOutside as EventListener);
-      }, 10);
+    window.addEventListener("pointerdown", handlePointerDown, { capture: true });
+    return () => window.removeEventListener("pointerdown", handlePointerDown, { capture: true });
+  }, [isOpen]);
 
-      return () => {
-        clearTimeout(timer);
-        document.removeEventListener("mousedown", handleClickOutside);
-        document.removeEventListener("touchstart", handleClickOutside as EventListener);
-      };
-    }
-  }, [isOpen, safeClose]);
-
-  // Close menu on escape key
+  // Close on Escape key
   useEffect(() => {
+    if (!isOpen) return;
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
+        e.preventDefault();
         setIsOpen(false);
+        triggerRef.current?.focus();
       }
     };
-
-    if (isOpen) {
-      document.addEventListener("keydown", handleEscape);
-    }
-
-    return () => {
-      document.removeEventListener("keydown", handleEscape);
-    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
   }, [isOpen]);
 
   // Calculate menu position dynamically
@@ -189,24 +155,17 @@ export default function DropdownMenu({
   }, [isOpen, calculatePosition]);
 
   const handleItemClick = useCallback((item: MenuItem) => {
-    item.onClick();
-    isProtectedRef.current = false;
     setIsOpen(false);
+    item.onClick();
   }, []);
 
   const toggleMenu = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-
     if (!isOpen) {
-      // Opening: set protection and timestamp
-      openTimestampRef.current = Date.now();
-      isProtectedRef.current = true;
       calculatePosition();
       setIsOpen(true);
     } else {
-      // Closing via trigger button: bypass protection
-      isProtectedRef.current = false;
       setIsOpen(false);
     }
   }, [isOpen, calculatePosition]);
@@ -216,77 +175,70 @@ export default function DropdownMenu({
     if (!isMounted) return null;
 
     return createPortal(
+      // motion.div is the DIRECT child of AnimatePresence (no Fragment wrapper)
+      // so Framer Motion can correctly track mount/unmount for exit animations.
       <AnimatePresence>
         {isOpen && (
-          <>
-            {/* Invisible backdrop for tap-to-close */}
-            <div
-              className="fixed inset-0 z-[9998]"
-              onClick={safeClose}
-              onTouchEnd={safeClose}
-              aria-hidden="true"
-            />
-
-            {/* Menu */}
-            <motion.div
-              ref={menuRef}
-              initial={{
-                opacity: 0,
-                scale: 0.95,
-                y: menuPosition.placement === "bottom" ? -8 : 8
-              }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{
-                opacity: 0,
-                scale: 0.95,
-                y: menuPosition.placement === "bottom" ? -8 : 8
-              }}
-              transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-              style={{
-                position: "fixed",
-                top: menuPosition.top,
-                left: menuPosition.left,
-                transformOrigin: menuPosition.transformOrigin,
-                zIndex: 9999,
-              }}
-              className="
-                min-w-[180px] py-2
-                bg-light-card dark:bg-dark-card border border-light-border dark:border-dark-border
-                rounded-xl shadow-2xl shadow-black/20 dark:shadow-black/40
-                backdrop-blur-xl
-              "
-              role="menu"
-              aria-orientation="vertical"
-            >
-              {items.map((item, index) => (
-                <button
-                  key={item.id}
-                  onClick={() => handleItemClick(item)}
-                  className={`
-                    w-full flex items-center gap-3 px-4 py-3 min-h-[44px] text-sm
-                    font-medium transition-all duration-150 ease-out
-                    transform-gpu
-                    ${
-                      item.variant === "danger"
-                        ? "text-error hover:text-error hover:bg-error/10 active:bg-error/15"
-                        : "text-text-secondary hover:bg-light-hover dark:hover:bg-dark-hover hover:text-text-primary hover:translate-x-0.5"
-                    }
-                    ${item.variant === "danger" && index > 0 ? "border-t border-light-border dark:border-dark-border mt-1" : ""}
-                    active:scale-[0.98] active:transition-none
-                    focus-visible:outline-none focus-visible:bg-primary/10
-                  `}
-                  role="menuitem"
-                >
-                  {item.icon && (
-                    <span className="w-5 h-5 flex items-center justify-center shrink-0 transition-transform duration-150 group-hover:scale-110">
-                      {item.icon}
-                    </span>
-                  )}
-                  <span>{item.label}</span>
-                </button>
-              ))}
-            </motion.div>
-          </>
+          <motion.div
+            key="dropdown-menu"
+            ref={menuRef}
+            role="menu"
+            aria-orientation="vertical"
+            initial={{
+              opacity: 0,
+              scale: 0.95,
+              y: menuPosition.placement === "bottom" ? -8 : 8,
+            }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{
+              opacity: 0,
+              scale: 0.95,
+              y: menuPosition.placement === "bottom" ? -8 : 8,
+            }}
+            transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+            style={{
+              position: "fixed",
+              top: menuPosition.top,
+              left: menuPosition.left,
+              transformOrigin: menuPosition.transformOrigin,
+              zIndex: 9999,
+            }}
+            className="
+              min-w-[180px] py-2
+              bg-light-card dark:bg-dark-card border border-light-border dark:border-dark-border
+              rounded-xl shadow-2xl shadow-black/20 dark:shadow-black/40
+              backdrop-blur-xl
+            "
+            onClick={(e) => e.stopPropagation()}
+          >
+            {items.map((item, index) => (
+              <button
+                key={item.id}
+                onClick={() => handleItemClick(item)}
+                className={`
+                  w-full flex items-center gap-3 px-4 py-3 min-h-[44px] text-sm
+                  font-medium transition-all duration-150 ease-out
+                  transform-gpu
+                  ${
+                    item.variant === "danger"
+                      ? "text-error hover:text-error hover:bg-error/10 active:bg-error/15"
+                      : "text-text-secondary hover:bg-light-hover dark:hover:bg-dark-hover hover:text-text-primary hover:translate-x-0.5"
+                  }
+                  ${item.variant === "danger" && index > 0 ? "border-t border-light-border dark:border-dark-border mt-1" : ""}
+                  active:scale-[0.98] active:transition-none
+                  focus-visible:outline-none focus-visible:bg-primary/10
+                `}
+                role="menuitem"
+              >
+                {item.icon && (
+                  <span className="w-5 h-5 flex items-center justify-center shrink-0 transition-transform duration-150 group-hover:scale-110">
+                    {item.icon}
+                  </span>
+                )}
+                <span>{item.label}</span>
+              </button>
+            ))}
+          </motion.div>
         )}
       </AnimatePresence>,
       document.body

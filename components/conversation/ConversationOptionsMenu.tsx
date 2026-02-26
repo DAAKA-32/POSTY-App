@@ -10,7 +10,6 @@ interface ConversationOptionsMenuProps {
   onPin: (postId: string, isPinned: boolean) => void;
   onRename: (postId: string) => void;
   onDelete: (postId: string) => void;
-  /** Contrôle la visibilité de l'icône (pour le hover) */
   isVisible?: boolean;
 }
 
@@ -21,15 +20,11 @@ interface MenuPosition {
   placement: "bottom" | "top";
 }
 
-// Minimum delay (ms) before backdrop can close menu - prevents race condition
-const OPEN_PROTECTION_DELAY = 100;
-
 export default function ConversationOptionsMenu({
   post,
   onPin,
   onRename,
   onDelete,
-  isVisible = true,
 }: ConversationOptionsMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState<MenuPosition>({
@@ -43,20 +38,15 @@ export default function ConversationOptionsMenu({
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  // Protection against immediate close after open (race condition fix)
-  const openTimestampRef = useRef<number>(0);
-  const isProtectedRef = useRef(false);
-
-  // Check if we're in browser for portal
+  // Client-side only — avoids SSR hydration mismatch with portal
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  // Define menu items with useMemo to avoid recreation on each render
   const menuItems = useMemo(() => [
     {
       id: "pin",
-      label: post.isPinned ? "Desepingler" : "Epingler",
+      label: post.isPinned ? "Désépingler" : "Épingler",
       icon: post.isPinned ? (
         <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
           <path d="M16 4a1 1 0 0 1 1 1v3.586l1.707 1.707a1 1 0 0 1 .293.707v2a1 1 0 0 1-1 1h-4v6a1 1 0 0 1-2 0v-6H8a1 1 0 0 1-1-1v-2a1 1 0 0 1 .293-.707L9 8.586V5a1 1 0 0 1 1-1h6z"/>
@@ -105,64 +95,99 @@ export default function ConversationOptionsMenu({
   ], [post.id, post.isPinned, onPin, onRename, onDelete]);
 
   const handleAction = useCallback((action: () => void) => {
-    action();
-    isProtectedRef.current = false;
     setIsOpen(false);
+    action();
   }, []);
 
-  // Safe close function that respects the protection delay
-  const safeClose = useCallback(() => {
-    const now = Date.now();
-    const timeSinceOpen = now - openTimestampRef.current;
+  // Calculate menu position from the button's bounding rect
+  const calculatePosition = useCallback(() => {
+    if (!buttonRef.current) return;
 
-    // Don't close if we're still in the protection window
-    if (isProtectedRef.current && timeSinceOpen < OPEN_PROTECTION_DELAY) {
-      return;
+    const buttonRect = buttonRef.current.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+    const menuWidth = 180;
+    const menuHeight = 160;
+    const padding = 12;
+
+    let top: number;
+    let left: number;
+    let transformOrigin: string;
+    let placement: "bottom" | "top";
+
+    // Horizontal: right-align with the button, clamp to viewport
+    left = buttonRect.right - menuWidth;
+    if (left < padding) {
+      left = buttonRect.left;
+      transformOrigin = "top left";
+    } else {
+      transformOrigin = "top right";
+    }
+    if (left + menuWidth > viewportWidth - padding) {
+      left = viewportWidth - menuWidth - padding;
     }
 
-    isProtectedRef.current = false;
-    setIsOpen(false);
+    // Vertical: prefer below, fall back to above
+    const spaceBelow = viewportHeight - buttonRect.bottom;
+    const spaceAbove = buttonRect.top;
+    if (spaceBelow >= menuHeight + padding || spaceBelow >= spaceAbove) {
+      top = buttonRect.bottom + 4;
+      placement = "bottom";
+    } else {
+      top = buttonRect.top - menuHeight - 4;
+      placement = "top";
+      transformOrigin = transformOrigin.replace("top", "bottom");
+    }
+
+    // Clamp vertically
+    top = Math.max(padding, Math.min(top, viewportHeight - menuHeight - padding));
+
+    setMenuPosition({ top, left, transformOrigin, placement });
   }, []);
 
-  // Close menu when clicking outside
+  // ─── Click-outside via window pointerdown in CAPTURE phase ───────────────────
+  //
+  // WHY NOT A BACKDROP:
+  //   A fixed full-screen backdrop at z-9998 sits visually on top of the toggle
+  //   button. When the user clicks the button to close the menu, mousedown lands
+  //   on the backdrop → React synchronously removes the backdrop → mouseup/click
+  //   land on the button → handleToggle() reopens the menu. This is the classic
+  //   "click-through" race condition, causing the visible flicker.
+  //
+  // WHY CAPTURE PHASE:
+  //   capture: true means our handler fires BEFORE any element's own handler.
+  //   We check if the click target is inside the button or menu and return early,
+  //   letting the button's own onClick handle the toggle. Everything else closes.
+  //
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
-      if (
-        menuRef.current &&
-        !menuRef.current.contains(event.target as Node) &&
-        buttonRef.current &&
-        !buttonRef.current.contains(event.target as Node)
-      ) {
-        safeClose();
-      }
+    if (!isOpen) return;
+
+    const handlePointerDown = (e: PointerEvent) => {
+      const target = e.target as Node;
+      // Button handles its own open/close — don't interfere
+      if (buttonRef.current?.contains(target)) return;
+      // Clicks inside the menu are valid interactions
+      if (menuRef.current?.contains(target)) return;
+      // Anything else closes the menu
+      setIsOpen(false);
     };
 
-    if (isOpen) {
-      // Delay adding listener to avoid capturing the opening click
-      const timer = setTimeout(() => {
-        document.addEventListener("mousedown", handleClickOutside);
-        document.addEventListener("touchstart", handleClickOutside as EventListener);
-      }, 10);
+    window.addEventListener("pointerdown", handlePointerDown, { capture: true });
+    return () => window.removeEventListener("pointerdown", handlePointerDown, { capture: true });
+  }, [isOpen]);
 
-      return () => {
-        clearTimeout(timer);
-        document.removeEventListener("mousedown", handleClickOutside);
-        document.removeEventListener("touchstart", handleClickOutside as EventListener);
-      };
-    }
-  }, [isOpen, safeClose]);
-
-  // Close on escape key + keyboard navigation
+  // Escape + arrow key navigation
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
+      if (event.key === "Escape" && isOpen) {
+        event.preventDefault();
         setIsOpen(false);
         buttonRef.current?.focus();
+        return;
       }
 
       if (!isOpen) return;
 
-      // Arrow navigation
       if (event.key === "ArrowDown") {
         event.preventDefault();
         setFocusedIndex((prev) => (prev + 1) % menuItems.length);
@@ -181,171 +206,102 @@ export default function ConversationOptionsMenu({
 
   // Reset focused index when menu closes
   useEffect(() => {
-    if (!isOpen) {
-      setFocusedIndex(-1);
-    }
+    if (!isOpen) setFocusedIndex(-1);
   }, [isOpen]);
-
-  // Calculate menu position dynamically
-  const calculatePosition = useCallback(() => {
-    if (!buttonRef.current) return;
-
-    const buttonRect = buttonRef.current.getBoundingClientRect();
-    const viewportHeight = window.innerHeight;
-    const viewportWidth = window.innerWidth;
-    const menuWidth = 180;
-    const menuHeight = 160; // Approximate height for 3 items
-    const padding = 12;
-
-    let top: number;
-    let left: number;
-    let transformOrigin: string;
-    let placement: "bottom" | "top";
-
-    // Calculate horizontal position
-    // Default: align right edge of menu with right edge of button
-    left = buttonRect.right - menuWidth;
-
-    // If menu would go off-screen left, align left edges instead
-    if (left < padding) {
-      left = buttonRect.left;
-      transformOrigin = "top left";
-    } else {
-      transformOrigin = "top right";
-    }
-
-    // If menu would go off-screen right, clamp it
-    if (left + menuWidth > viewportWidth - padding) {
-      left = viewportWidth - menuWidth - padding;
-    }
-
-    // Calculate vertical position
-    const spaceBelow = viewportHeight - buttonRect.bottom;
-    const spaceAbove = buttonRect.top;
-
-    if (spaceBelow >= menuHeight + padding || spaceBelow >= spaceAbove) {
-      // Show below
-      top = buttonRect.bottom + 4;
-      placement = "bottom";
-    } else {
-      // Show above
-      top = buttonRect.top - menuHeight - 4;
-      placement = "top";
-      transformOrigin = transformOrigin.replace("top", "bottom");
-    }
-
-    // Ensure menu stays within viewport vertically
-    if (top < padding) {
-      top = padding;
-    } else if (top + menuHeight > viewportHeight - padding) {
-      top = viewportHeight - menuHeight - padding;
-    }
-
-    setMenuPosition({ top, left, transformOrigin, placement });
-  }, []);
 
   // Recalculate position on scroll or resize while open
   useEffect(() => {
     if (!isOpen) return;
 
     const handleUpdate = () => calculatePosition();
-
-    window.addEventListener("scroll", handleUpdate, true);
+    window.addEventListener("scroll", handleUpdate, { capture: true });
     window.addEventListener("resize", handleUpdate);
-
     return () => {
-      window.removeEventListener("scroll", handleUpdate, true);
+      window.removeEventListener("scroll", handleUpdate, { capture: true });
       window.removeEventListener("resize", handleUpdate);
     };
   }, [isOpen, calculatePosition]);
 
-  const handleToggle = useCallback(() => {
+  const handleToggle = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (!isOpen) {
-      // Opening: set protection and timestamp
-      openTimestampRef.current = Date.now();
-      isProtectedRef.current = true;
       calculatePosition();
       setIsOpen(true);
     } else {
-      // Closing via trigger button: bypass protection
-      isProtectedRef.current = false;
       setIsOpen(false);
     }
   }, [isOpen, calculatePosition]);
 
-  // Render menu in portal
   const renderMenu = () => {
     if (!isMounted) return null;
 
     return createPortal(
+      // AnimatePresence with motion.div as DIRECT child (no Fragment wrapper)
+      // so Framer Motion can correctly track mount/unmount for exit animations.
       <AnimatePresence>
         {isOpen && (
-          <>
-            {/* Invisible backdrop for mobile tap-to-close */}
-            <div
-              className="fixed inset-0 z-[9998]"
-              onClick={safeClose}
-              onTouchEnd={safeClose}
-              aria-hidden="true"
-            />
-
-            {/* Menu */}
-            <motion.div
-              ref={menuRef}
-              role="menu"
-              initial={{
-                opacity: 0,
-                scale: 0.95,
-                y: menuPosition.placement === "bottom" ? -8 : 8
-              }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{
-                opacity: 0,
-                scale: 0.95,
-                y: menuPosition.placement === "bottom" ? -8 : 8
-              }}
-              transition={{ duration: 0.15, ease: [0.22, 1, 0.36, 1] }}
-              style={{
-                position: "fixed",
-                top: menuPosition.top,
-                left: menuPosition.left,
-                transformOrigin: menuPosition.transformOrigin,
-                zIndex: 9999,
-              }}
-              className="
-                min-w-[180px] py-2
-                bg-dark-card border border-dark-border
-                rounded-xl shadow-2xl shadow-black/40
-                backdrop-blur-xl
-              "
-              onClick={(e) => e.stopPropagation()}
-            >
-              {menuItems.map((item, index) => (
-                <button
-                  key={item.id}
-                  role="menuitem"
-                  onClick={() => handleAction(item.action)}
-                  onMouseEnter={() => setFocusedIndex(index)}
-                  className={`
-                    w-full flex items-center gap-3 px-4 py-3
-                    text-sm font-medium transition-colors duration-150
-                    min-h-[44px]
-                    ${item.variant === "danger"
-                      ? "text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                      : "text-text-secondary hover:text-text-primary hover:bg-dark-hover"
-                    }
-                    ${focusedIndex === index ? (item.variant === "danger" ? "bg-red-500/10" : "bg-dark-hover") : ""}
-                    ${item.id === "delete" ? "border-t border-dark-border mt-1" : ""}
-                  `}
-                >
-                  <span className="w-5 h-5 flex items-center justify-center shrink-0">
-                    {item.icon}
-                  </span>
-                  <span>{item.label}</span>
-                </button>
-              ))}
-            </motion.div>
-          </>
+          <motion.div
+            key="conversation-options-menu"
+            ref={menuRef}
+            role="menu"
+            initial={{
+              opacity: 0,
+              scale: 0.95,
+              y: menuPosition.placement === "bottom" ? -6 : 6,
+            }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{
+              opacity: 0,
+              scale: 0.95,
+              y: menuPosition.placement === "bottom" ? -6 : 6,
+            }}
+            transition={{ duration: 0.15, ease: [0.22, 1, 0.36, 1] }}
+            style={{
+              position: "fixed",
+              top: menuPosition.top,
+              left: menuPosition.left,
+              transformOrigin: menuPosition.transformOrigin,
+              zIndex: 9999,
+            }}
+            className="
+              min-w-[180px] py-2
+              bg-dark-card border border-dark-border
+              rounded-xl shadow-2xl shadow-black/40
+              backdrop-blur-xl
+            "
+            onClick={(e) => e.stopPropagation()}
+          >
+            {menuItems.map((item, index) => (
+              <button
+                key={item.id}
+                role="menuitem"
+                onClick={() => handleAction(item.action)}
+                onMouseEnter={() => setFocusedIndex(index)}
+                className={`
+                  w-full flex items-center gap-3 px-4 py-3
+                  text-sm font-medium transition-colors duration-150
+                  min-h-[44px]
+                  ${item.variant === "danger"
+                    ? "text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                    : "text-text-secondary hover:text-text-primary hover:bg-dark-hover"
+                  }
+                  ${focusedIndex === index
+                    ? item.variant === "danger"
+                      ? "bg-red-500/10"
+                      : "bg-dark-hover"
+                    : ""
+                  }
+                  ${item.id === "delete" ? "border-t border-dark-border mt-1" : ""}
+                `}
+              >
+                <span className="w-5 h-5 flex items-center justify-center shrink-0">
+                  {item.icon}
+                </span>
+                <span>{item.label}</span>
+              </button>
+            ))}
+          </motion.div>
         )}
       </AnimatePresence>,
       document.body
@@ -354,14 +310,9 @@ export default function ConversationOptionsMenu({
 
   return (
     <>
-      {/* Three dots button */}
       <button
         ref={buttonRef}
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          handleToggle();
-        }}
+        onClick={handleToggle}
         className={`
           flex items-center justify-center
           w-9 h-9 md:w-8 md:h-8 rounded-lg
@@ -375,7 +326,6 @@ export default function ConversationOptionsMenu({
         aria-expanded={isOpen}
         aria-haspopup="menu"
       >
-        {/* Horizontal ellipsis icon */}
         <svg
           className="w-5 h-5"
           viewBox="0 0 24 24"
@@ -388,7 +338,6 @@ export default function ConversationOptionsMenu({
         </svg>
       </button>
 
-      {/* Portal-rendered menu */}
       {renderMenu()}
     </>
   );

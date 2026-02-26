@@ -16,6 +16,7 @@ import KeyboardNavigationProvider from "@/components/providers/KeyboardNavigatio
 import SkipLinks from "@/components/accessibility/SkipLinks";
 import CookieBanner from "@/components/ui/CookieBanner";
 import LegalUpdateNotification from "@/components/ui/LegalUpdateNotification";
+import LandscapeBlocker from "@/components/ui/LandscapeBlocker";
 import { HomepageJsonLd } from "@/components/seo/JsonLd";
 import HreflangTags from "@/components/seo/HreflangTags";
 import "./globals.css";
@@ -39,7 +40,7 @@ const playfair = Playfair_Display({
 
 // SEO Configuration
 const siteConfig = {
-  name: "Posty",
+  name: "Posty AI",
   url: process.env.NEXT_PUBLIC_BASE_URL || "https://postyapp.ai",
   defaultLocale: "fr" as const,
   supportedLocales: ["fr", "en"] as const,
@@ -49,14 +50,13 @@ export const metadata: Metadata = {
   // Base metadata
   metadataBase: new URL(siteConfig.url),
   title: {
-    default: "Posty – Générez plus de prospects LinkedIn avec l'IA",
-    template: "%s | Posty",
+    default: "Posty AI – Attirez plus de prospects avec l'intelligence artificielle",
+    template: "%s | Posty AI",
   },
   description:
     "Automatisez votre présence LinkedIn et attirez des prospects qualifiés grâce à l'IA. Créez des posts professionnels percutants en quelques secondes. Essai gratuit.",
   keywords: [
     "Posty",
-    "Posty App",
     "Posty AI",
     "prospects LinkedIn",
     "automatisation LinkedIn",
@@ -74,7 +74,7 @@ export const metadata: Metadata = {
     { name: "Côme Maubert" },
   ],
   creator: "Emilien Nepveu & Côme Maubert",
-  publisher: "Posty",
+  publisher: "Posty AI",
 
   // Icons - Rounded PNG logo (borders baked into the PNG)
   icons: {
@@ -93,11 +93,11 @@ export const metadata: Metadata = {
   },
 
   // PWA / App config
-  applicationName: "Posty",
+  applicationName: "Posty AI",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Posty",
+    title: "Posty AI",
   },
   formatDetection: {
     telephone: false,
@@ -111,8 +111,8 @@ export const metadata: Metadata = {
     locale: "fr_FR",
     alternateLocale: "en_US",
     url: siteConfig.url,
-    siteName: "Posty",
-    title: "Posty – Générez plus de prospects LinkedIn avec l'IA",
+    siteName: "Posty AI",
+    title: "Posty AI – Attirez plus de prospects avec l'intelligence artificielle",
     description:
       "Automatisez votre présence LinkedIn et attirez des prospects qualifiés grâce à l'IA. Posts professionnels percutants en quelques secondes.",
     images: [
@@ -120,7 +120,7 @@ export const metadata: Metadata = {
         url: `${siteConfig.url}/og-image.png`,
         width: 1200,
         height: 630,
-        alt: "Posty – Générez plus de prospects LinkedIn avec l'IA",
+        alt: "Posty AI – Attirez plus de prospects avec l'intelligence artificielle",
         type: "image/png",
       },
     ],
@@ -129,7 +129,7 @@ export const metadata: Metadata = {
   // Twitter Cards
   twitter: {
     card: "summary_large_image",
-    title: "Posty – Générez plus de prospects LinkedIn avec l'IA",
+    title: "Posty AI – Attirez plus de prospects avec l'intelligence artificielle",
     description:
       "Automatisez votre présence LinkedIn et attirez des prospects qualifiés grâce à l'IA. Essai gratuit.",
     images: [`${siteConfig.url}/og-image.png`],
@@ -244,7 +244,7 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="Posty" />
+        <meta name="apple-mobile-web-app-title" content="Posty AI" />
 
         {/* Theme color for Safari iOS status bar and browser chrome */}
         {/* Light mode: White/Light gray background */}
@@ -268,6 +268,8 @@ export default function RootLayout({
         <HomepageJsonLd />
       </head>
       <body className={`antialiased ${poppins.className}`}>
+        {/* Portrait-only enforcement: blocks landscape on mobile phones */}
+        <LandscapeBlocker />
         <SkipLinks />
         <ThemeProvider>
         <KeyboardNavigationProvider>

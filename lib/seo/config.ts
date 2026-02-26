@@ -5,13 +5,13 @@
 
 export const seoConfig = {
   // Site info
-  siteName: "Posty",
+  siteName: "Posty AI",
   siteUrl: process.env.NEXT_PUBLIC_BASE_URL || "https://postyapp.ai",
   defaultLocale: "fr" as const,
   supportedLocales: ["fr", "en"] as const,
 
   // Branding
-  brandName: "Posty",
+  brandName: "Posty AI",
   tagline: "Générez plus de prospects LinkedIn avec l'IA",
 
   // Social
@@ -115,12 +115,11 @@ export const i18nSeoConfig = {
 export const localizedPageSeo = {
   home: {
     fr: {
-      title: "Posty – Générez plus de prospects LinkedIn avec l'IA",
+      title: "Posty AI – Attirez plus de prospects avec l'intelligence artificielle",
       description:
         "Automatisez votre présence LinkedIn et attirez des prospects qualifiés grâce à l'IA. Créez des posts professionnels percutants en quelques secondes. Essai gratuit.",
       keywords: [
         "Posty",
-        "Posty App",
         "Posty AI",
         "prospects LinkedIn",
         "automatisation LinkedIn",
@@ -131,12 +130,11 @@ export const localizedPageSeo = {
       ],
     },
     en: {
-      title: "Posty – Generate More LinkedIn Leads with AI",
+      title: "Posty AI – Generate More LinkedIn Leads with Artificial Intelligence",
       description:
         "Automate your LinkedIn presence and attract qualified prospects with AI. Create professional posts in seconds. Free trial included.",
       keywords: [
         "Posty",
-        "Posty App",
         "Posty AI",
         "LinkedIn leads",
         "LinkedIn automation",
@@ -274,12 +272,12 @@ export const seoSilos = {
  */
 export const pageSeo = {
   home: {
-    title: "Posty – Générez plus de prospects LinkedIn avec l'IA",
+    title: "Posty AI – Attirez plus de prospects avec l'intelligence artificielle",
     description:
       "Automatisez votre présence LinkedIn et attirez des prospects qualifiés grâce à l'IA. Créez des posts professionnels percutants en quelques secondes. Essai gratuit.",
     keywords: [
       "Posty",
-      "Posty App",
+      "Posty AI",
       "prospects LinkedIn",
       "automatisation LinkedIn",
       "IA LinkedIn",
@@ -323,7 +321,7 @@ export const structuredData = {
     "@context": "https://schema.org",
     "@type": "Organization",
     "@id": `${seoConfig.siteUrl}/#organization`,
-    name: "Posty",
+    name: "Posty AI",
     url: seoConfig.siteUrl,
     logo: {
       "@type": "ImageObject",
@@ -356,7 +354,7 @@ export const structuredData = {
   softwareApplication: {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    name: "Posty",
+    name: "Posty AI",
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web",
     offers: {
