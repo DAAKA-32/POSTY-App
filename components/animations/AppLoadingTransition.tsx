@@ -122,7 +122,7 @@ export function AppLoadingTransition({
                   <img
                     src="/logo.png"
                     alt="Posty Logo"
-                    className="w-full h-full object-contain drop-shadow-2xl"
+                    className="w-full h-full object-cover drop-shadow-2xl"
                   />
                 </div>
               </motion.div>

@@ -479,7 +479,7 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
             <img
               src="/logo.png"
               alt="Posty Logo"
-              className="w-full h-full object-contain"
+              className="w-full h-full object-cover"
             />
           </div>
           <motion.div

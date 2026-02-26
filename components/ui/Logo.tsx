@@ -42,7 +42,7 @@ export default function Logo({
         <img
           src="/logo.png"
           alt="Posty Logo"
-          className="w-full h-full object-contain"
+          className="w-full h-full object-cover"
         />
       </div>
       {showText && (
@@ -78,7 +78,7 @@ export function AnimatedLogo({
         <img
           src="/logo.png"
           alt="Posty Logo"
-          className="w-full h-full object-contain"
+          className="w-full h-full object-cover"
         />
       </div>
     </div>

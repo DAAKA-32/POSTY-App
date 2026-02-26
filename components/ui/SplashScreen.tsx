@@ -19,15 +19,11 @@ export default function SplashScreen({ isLoading, onComplete }: SplashScreenProp
   const [show, setShow] = useState(true);
   const prefersReducedMotion = useReducedMotion();
 
-  // Read theme from DOM class (set by inline script before hydration) to avoid flash
-  const [isDark, setIsDark] = useState(() => {
-    if (typeof document !== "undefined") {
-      return !document.documentElement.classList.contains("light");
-    }
-    return true; // SSR fallback
-  });
+  // Always start dark to match SSR (prevents hydration mismatch).
+  // useEffect corrects the theme after hydration — no flicker since the
+  // splash screen is already showing (loading state).
+  const [isDark, setIsDark] = useState(true);
 
-  // Sync after mount in case DOM wasn't available during SSR
   useEffect(() => {
     const storedTheme = localStorage.getItem("posty-theme");
     if (storedTheme) {
@@ -80,7 +76,7 @@ export default function SplashScreen({ isLoading, onComplete }: SplashScreenProp
               <img
                 src="/logo.png"
                 alt="Posty Logo"
-                className="w-full h-full object-contain"
+                className="w-full h-full object-cover"
               />
             </motion.div>
 
