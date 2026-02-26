@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useSchedulingPendingCount } from "@/contexts/SchedulingContext";
+import { useScheduling } from "@/contexts/SchedulingContext";
 import { Post } from "@/types";
 import { pinPost, renamePost, deletePost } from "@/lib/firestore";
 import toast from "@/components/ui/Toast";
@@ -192,7 +192,7 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
   const pathname = usePathname();
   const { user, userProfile } = useAuth();
   const { t } = useLanguage();
-  const schedulingPendingCount = useSchedulingPendingCount();
+  const { pendingCount: schedulingPendingCount, refreshScheduledPosts } = useScheduling();
   const [searchQuery, setSearchQuery] = useState("");
   const [showChatList, setShowChatList] = useState(true);
 
@@ -411,6 +411,8 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
       await deletePost(postId);
       toast.success(t.toasts.conversationDeleted);
       onPostUpdate?.();
+      // Refresh badge in case a linked scheduled post was cascade-deleted
+      await refreshScheduledPosts();
     } catch (error) {
       console.error("Error deleting post:", error);
       // Revert - re-fetch posts

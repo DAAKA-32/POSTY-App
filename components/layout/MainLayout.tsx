@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useQuota } from "@/contexts/QuotaContext";
 import { useSidebar } from "@/contexts/SidebarContext";
-import { useSchedulingPendingCount } from "@/contexts/SchedulingContext";
+import { useScheduling } from "@/contexts/SchedulingContext";
 import { useLinkedIn } from "@/contexts/LinkedInContext";
 import { useFacebook } from "@/contexts/FacebookContext";
 import { useThreads } from "@/contexts/ThreadsContext";
@@ -269,7 +269,7 @@ export default function MainLayout({
   const { user, userProfile } = useAuth();
   const { t } = useLanguage();
   const prefersReducedMotion = useReducedMotion();
-  const schedulingPendingCount = useSchedulingPendingCount();
+  const { pendingCount: schedulingPendingCount, refreshScheduledPosts } = useScheduling();
   const { connection: linkedInConnection } = useLinkedIn();
   const { connection: facebookConnection } = useFacebook();
   const { connection: threadsConnection } = useThreads();
@@ -410,6 +410,8 @@ export default function MainLayout({
       await deletePost(postId);
       toast.success(t.toasts.conversationDeleted);
       onPostUpdate?.();
+      // Refresh badge in case a linked scheduled post was cascade-deleted
+      await refreshScheduledPosts();
     } catch (error) {
       console.error("Error deleting post:", error);
       // Revert - re-fetch posts

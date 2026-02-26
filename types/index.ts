@@ -634,6 +634,7 @@ export interface SchedulingContextType {
   scheduledPosts: ScheduledPost[];
   isLoading: boolean;
   isUploading: boolean; // True while images are being uploaded to Storage
+  pendingCount: number; // Count of pending scheduled posts (for badge display)
   // Actions
   schedulePost: (data: CreateScheduledPostData) => Promise<{ success: boolean; scheduledPostId?: string; error?: string }>;
   cancelSchedule: (scheduledPostId: string) => Promise<{ success: boolean; error?: string }>;

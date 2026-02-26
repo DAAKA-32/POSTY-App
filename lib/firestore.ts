@@ -377,8 +377,24 @@ export async function getConversationHistory(postId: string): Promise<{
 }
 
 export async function deletePost(postId: string): Promise<void> {
-  const postRef = doc(db, "posts", postId);
-  await deleteDoc(postRef);
+  // Cascade: find linked records in parallel before deleting
+  const [linkedInSnap, scheduledSnap] = await Promise.all([
+    getDocs(query(collection(db, "linkedinPosts"), where("postId", "==", postId))),
+    getDocs(query(collection(db, "scheduledPosts"), where("postId", "==", postId))),
+  ]);
+
+  const batch = writeBatch(db);
+
+  // Delete the primary post document
+  batch.delete(doc(db, "posts", postId));
+
+  // Cascade: delete associated linkedinPosts (removes from analytics)
+  linkedInSnap.docs.forEach((d) => batch.delete(d.ref));
+
+  // Cascade: delete associated scheduledPosts (removes from schedule)
+  scheduledSnap.docs.forEach((d) => batch.delete(d.ref));
+
+  await batch.commit();
 }
 
 /**
@@ -1350,9 +1366,14 @@ export async function batchDeletePosts(postIds: string[]): Promise<void> {
 export async function deleteAllUserConversations(userId: string): Promise<{
   postsDeleted: number;
   sessionsDeleted: number;
+  linkedInPostsDeleted: number;
+  scheduledPostsDeleted: number;
 }> {
   let postsDeleted = 0;
   let sessionsDeleted = 0;
+  let linkedInPostsDeleted = 0;
+  let scheduledPostsDeleted = 0;
+  const BATCH_SIZE = 500;
 
   // Delete all user posts (conversations)
   const postsRef = collection(db, "posts");
@@ -1360,8 +1381,6 @@ export async function deleteAllUserConversations(userId: string): Promise<{
   const postsSnapshot = await getDocs(postsQuery);
 
   if (postsSnapshot.docs.length > 0) {
-    // Use batch delete for efficiency (Firestore limits batch to 500 operations)
-    const BATCH_SIZE = 500;
     const postDocs = postsSnapshot.docs;
 
     for (let i = 0; i < postDocs.length; i += BATCH_SIZE) {
@@ -1383,7 +1402,6 @@ export async function deleteAllUserConversations(userId: string): Promise<{
   const sessionsSnapshot = await getDocs(sessionsQuery);
 
   if (sessionsSnapshot.docs.length > 0) {
-    const BATCH_SIZE = 500;
     const sessionDocs = sessionsSnapshot.docs;
 
     for (let i = 0; i < sessionDocs.length; i += BATCH_SIZE) {
@@ -1399,7 +1417,33 @@ export async function deleteAllUserConversations(userId: string): Promise<{
     }
   }
 
-  return { postsDeleted, sessionsDeleted };
+  // Cascade: delete all linkedinPosts for the user (analytics records)
+  const linkedInSnap = await getDocs(
+    query(collection(db, "linkedinPosts"), where("userId", "==", userId))
+  );
+  if (linkedInSnap.docs.length > 0) {
+    for (let i = 0; i < linkedInSnap.docs.length; i += BATCH_SIZE) {
+      const batchOp = writeBatch(db);
+      linkedInSnap.docs.slice(i, i + BATCH_SIZE).forEach((d) => batchOp.delete(d.ref));
+      await batchOp.commit();
+      linkedInPostsDeleted += Math.min(BATCH_SIZE, linkedInSnap.docs.length - i);
+    }
+  }
+
+  // Cascade: delete all scheduledPosts for the user
+  const scheduledSnap = await getDocs(
+    query(collection(db, "scheduledPosts"), where("userId", "==", userId))
+  );
+  if (scheduledSnap.docs.length > 0) {
+    for (let i = 0; i < scheduledSnap.docs.length; i += BATCH_SIZE) {
+      const batchOp = writeBatch(db);
+      scheduledSnap.docs.slice(i, i + BATCH_SIZE).forEach((d) => batchOp.delete(d.ref));
+      await batchOp.commit();
+      scheduledPostsDeleted += Math.min(BATCH_SIZE, scheduledSnap.docs.length - i);
+    }
+  }
+
+  return { postsDeleted, sessionsDeleted, linkedInPostsDeleted, scheduledPostsDeleted };
 }
 
 /**
