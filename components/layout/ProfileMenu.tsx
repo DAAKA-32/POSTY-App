@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLinkedIn } from "@/contexts/LinkedInContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
@@ -94,6 +95,7 @@ export default function ProfileMenu({ isCollapsed = false, onNavigate }: Profile
   const { user, userProfile } = useAuth();
   const { profilePicture: linkedInPhoto } = useLinkedIn();
   const { planConfig, isTestMode } = useSubscription();
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -280,7 +282,7 @@ export default function ProfileMenu({ isCollapsed = false, onNavigate }: Profile
           {menuItems.map((item) => (
             <Link
               key={item.name}
-              href={item.href}
+              href={item.name === "Paramètres" ? `/settings?from=${encodeURIComponent(pathname)}` : item.href}
               onClick={handleItemClick}
               className={`
                 flex items-center gap-3 px-3 py-2.5 rounded-lg

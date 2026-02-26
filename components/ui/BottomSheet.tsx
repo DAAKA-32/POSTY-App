@@ -266,13 +266,16 @@ export default function BottomSheet({
             data-bottomsheet-content
             className={`
               relative w-full bg-white dark:bg-dark-card border-t border-gray-200 dark:border-dark-border
-              rounded-t-3xl shadow-elevated max-h-[85vh] overflow-hidden
+              rounded-t-3xl shadow-elevated overflow-hidden
               ios-bottomsheet-content will-change-transform
               ${isDragging ? 'cursor-grabbing' : ''}
             `}
             style={{
               ...getHeightStyle(),
               scale: isDragging ? sheetScale : 1,
+              // dvh updates dynamically when virtual keyboard opens/closes
+              maxHeight: 'min(85dvh, 85vh)',
+              // Safe area handled via content padding — sheet itself needs no bottom padding
             }}
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
@@ -348,19 +351,25 @@ export default function BottomSheet({
               </div>
             )}
 
-            {/* Content - scrollable area */}
+            {/* Content - scrollable area.
+                paddingBottom accounts for iOS home indicator (safe-area-inset-bottom)
+                so action buttons at the bottom are never hidden behind it.
+                max-height uses dvh for proper keyboard handling. */}
             <div
-              className="p-5 overflow-y-auto max-h-[calc(90vh-100px)] gpu-scroll overscroll-contain scrollbar-none"
+              className="overflow-y-auto gpu-scroll overscroll-contain scrollbar-none"
               style={{
+                padding: '20px',
+                // Extra bottom clearance = 20px standard + safe area (home indicator)
+                paddingBottom: 'max(20px, calc(16px + env(safe-area-inset-bottom, 0px)))',
+                // 85dvh - drag handle (~22px) - header (~58px) = ~85dvh - 80px
+                // Slightly reduced to ensure no overflow at the sheet boundary
+                maxHeight: 'calc(min(85dvh, 85vh) - 80px)',
                 WebkitOverflowScrolling: 'touch',
                 scrollbarWidth: 'none',
               }}
             >
               {children}
             </div>
-
-            {/* Safe area padding for iOS */}
-            <div className="h-[env(safe-area-inset-bottom)]" />
           </motion.div>
         </div>
       )}

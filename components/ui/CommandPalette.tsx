@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -79,6 +79,7 @@ export default function CommandPalette({ posts = [] }: CommandPaletteProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const pathname = usePathname();
   const { user, signOut } = useAuth();
   const { t } = useLanguage();
 
@@ -127,7 +128,7 @@ export default function CommandPalette({ posts = [] }: CommandPaletteProps) {
         label: "Paramètres",
         description: "Configurer l'application",
         icon: <SettingsIcon />,
-        action: () => router.push("/settings"),
+        action: () => router.push(`/settings?from=${encodeURIComponent(pathname)}`),
         category: "navigation",
         keywords: ["settings", "paramètres", "config", "préférences"],
       },

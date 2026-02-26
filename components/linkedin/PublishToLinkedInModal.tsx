@@ -18,12 +18,32 @@ import { triggerHaptic } from "@/hooks/useHapticFeedback";
 import { useFacebook } from "@/contexts/FacebookContext";
 import { useThreads } from "@/contexts/ThreadsContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { postToLinkedInWithMedia } from "@/lib/linkedin";
+import { postToLinkedInWithMedia, postToLinkedInWithVideo } from "@/lib/linkedin";
 
 // Image upload constraints (match backend)
 const MAX_IMAGES = 9;
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10 MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+
+// Video upload constraints
+const MAX_VIDEO_SIZE = 200 * 1024 * 1024; // 200 MB
+const ACCEPTED_VIDEO_TYPES = ["video/mp4", "video/quicktime", "video/webm"];
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} Ko`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
+}
+
+function formatDuration(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+function getVideoFormatLabel(type: string): string {
+  const map: Record<string, string> = { "video/mp4": "MP4", "video/quicktime": "MOV", "video/webm": "WebM" };
+  return map[type] || "Vidéo";
+}
 
 // Visibility options for LinkedIn posts
 type PostVisibility = "PUBLIC" | "CONNECTIONS";
@@ -121,6 +141,12 @@ export default function PublishToLinkedInModal({
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Video state
+  const [video, setVideo] = useState<File | null>(null);
+  const [videoPreview, setVideoPreview] = useState<string | null>(null);
+  const [videoDuration, setVideoDuration] = useState<number | null>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
+
   // Connected platforms
   const connectedPlatforms: Platform[] = [
     ...(linkedInConnection ? ["linkedin" as Platform] : []),
@@ -173,6 +199,11 @@ export default function PublishToLinkedInModal({
       imagePreviews.forEach((url) => URL.revokeObjectURL(url));
       setImages([]);
       setImagePreviews([]);
+      // Reset video
+      if (videoPreview) URL.revokeObjectURL(videoPreview);
+      setVideo(null);
+      setVideoPreview(null);
+      setVideoDuration(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, initialContent]);
@@ -181,6 +212,7 @@ export default function PublishToLinkedInModal({
   useEffect(() => {
     return () => {
       imagePreviews.forEach((url) => URL.revokeObjectURL(url));
+      if (videoPreview) URL.revokeObjectURL(videoPreview);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -247,6 +279,38 @@ export default function PublishToLinkedInModal({
     triggerHaptic("light");
   };
 
+  // ── Video handlers ─────────────────────────────────────────────────
+  const handleAddVideo = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    if (!ACCEPTED_VIDEO_TYPES.includes(file.type)) {
+      toast.error("Format non supporté. Utilisez MP4, MOV ou WebM.");
+      return;
+    }
+    if (file.size > MAX_VIDEO_SIZE) {
+      toast.error("Vidéo trop lourde (max 200 Mo)");
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    setVideo(file);
+    setVideoPreview(url);
+    setVideoDuration(null);
+    // Extract duration from video metadata
+    const el = document.createElement("video");
+    el.preload = "metadata";
+    el.src = url;
+    el.onloadedmetadata = () => setVideoDuration(el.duration);
+    triggerHaptic("light");
+  };
+
+  const handleRemoveVideo = () => {
+    if (videoPreview) URL.revokeObjectURL(videoPreview);
+    setVideo(null);
+    setVideoPreview(null);
+    setVideoDuration(null);
+    triggerHaptic("light");
+  };
+
   const handleClose = () => {
     if (step !== "publishing") {
       onClose();
@@ -301,8 +365,9 @@ export default function PublishToLinkedInModal({
       if (selectedPlatforms.includes("linkedin")) {
         let result: { success: boolean; postUrl?: string; error?: string };
         if (images.length > 0 && user) {
-          // Use media endpoint for posts with images
           result = await postToLinkedInWithMedia(user.uid, editedContent, visibility, images);
+        } else if (video && user) {
+          result = await postToLinkedInWithVideo(user.uid, editedContent, visibility, video);
         } else {
           result = await onPublish(editedContent, visibility);
         }
@@ -566,85 +631,138 @@ export default function PublishToLinkedInModal({
               </div>
             )}
 
-            {/* Image Picker */}
+            {/* Media Picker — Images / Vidéos */}
             <div>
               <div className="flex items-center justify-between mb-2">
                 <p className="text-xs text-text-muted font-medium uppercase tracking-wide">
-                  Photos
+                  Images / Vidéos
                 </p>
-                <span className="text-xs text-text-muted">
-                  {images.length}/{MAX_IMAGES}
-                </span>
+                {images.length > 0 && (
+                  <span className="text-xs text-text-muted">{images.length}/{MAX_IMAGES}</span>
+                )}
+                {video && (
+                  <span className="text-xs text-text-muted">1 vidéo</span>
+                )}
               </div>
 
-              {/* Image preview grid + add button */}
-              <div className="flex flex-wrap gap-2">
-                {imagePreviews.map((preview, idx) => (
-                  <div
-                    key={idx}
-                    className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden border border-gray-200 dark:border-dark-border group"
+              {/* No media selected — two add buttons */}
+              {images.length === 0 && !video && (
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex-1 h-11 rounded-lg border-2 border-dashed border-gray-300 dark:border-dark-border hover:border-primary/50 flex items-center justify-center gap-2 text-text-muted hover:text-primary transition-colors duration-200 text-sm"
+                    aria-label="Ajouter des images"
                   >
-                    <img
-                      src={preview}
-                      alt={`Image ${idx + 1}`}
-                      className="w-full h-full object-cover"
-                    />
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    Images
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => videoInputRef.current?.click()}
+                    className="flex-1 h-11 rounded-lg border-2 border-dashed border-gray-300 dark:border-dark-border hover:border-primary/50 flex items-center justify-center gap-2 text-text-muted hover:text-primary transition-colors duration-200 text-sm"
+                    aria-label="Ajouter une vidéo"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    Vidéo
+                  </button>
+                </div>
+              )}
+
+              {/* Image preview grid */}
+              {images.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {imagePreviews.map((preview, idx) => (
+                    <div
+                      key={idx}
+                      className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden border border-gray-200 dark:border-dark-border group"
+                    >
+                      <img src={preview} alt={`Image ${idx + 1}`} className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveImage(idx)}
+                        className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150 active:opacity-100"
+                        style={{ opacity: isMobile ? 1 : undefined }}
+                        aria-label={`Supprimer image ${idx + 1}`}
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                  {images.length < MAX_IMAGES && (
                     <button
                       type="button"
-                      onClick={() => handleRemoveImage(idx)}
-                      className="
-                        absolute top-0.5 right-0.5
-                        w-5 h-5 rounded-full
-                        bg-black/60 text-white
-                        flex items-center justify-center
-                        opacity-0 group-hover:opacity-100
-                        sm:opacity-0 sm:group-hover:opacity-100
-                        transition-opacity duration-150
-                        active:opacity-100
-                      "
-                      style={{ opacity: isMobile ? 1 : undefined }}
-                      aria-label={`Supprimer image ${idx + 1}`}
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg border-2 border-dashed border-gray-300 dark:border-dark-border hover:border-primary/50 flex flex-col items-center justify-center gap-1 text-text-muted hover:text-primary transition-colors duration-200"
+                      aria-label="Ajouter une image"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Video preview */}
+              {video && videoPreview && (
+                <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-dark-border">
+                  <video
+                    src={videoPreview}
+                    className="w-full max-h-44 object-contain bg-black"
+                    preload="metadata"
+                    muted
+                    playsInline
+                  />
+                  <div className="flex items-center justify-between px-3 py-2 bg-dark-elevated/90 border-t border-dark-border/50">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <svg className="w-4 h-4 text-accent shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                      <span className="text-xs text-white font-medium truncate max-w-[110px]">{video.name}</span>
+                      <span className="text-xs text-text-muted shrink-0">{formatFileSize(video.size)}</span>
+                      {videoDuration !== null && (
+                        <span className="text-xs text-text-muted shrink-0">{formatDuration(videoDuration)}</span>
+                      )}
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-dark-hover text-text-muted shrink-0">
+                        {getVideoFormatLabel(video.type)}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleRemoveVideo}
+                      className="w-6 h-6 rounded-full bg-black/60 text-white flex items-center justify-center ml-2 shrink-0 hover:bg-black/80 transition-colors"
+                      aria-label="Supprimer la vidéo"
                     >
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
                   </div>
-                ))}
+                </div>
+              )}
 
-                {images.length < MAX_IMAGES && (
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="
-                      w-16 h-16 sm:w-20 sm:h-20 rounded-lg
-                      border-2 border-dashed border-gray-300 dark:border-dark-border
-                      hover:border-primary/50 dark:hover:border-primary/50
-                      flex flex-col items-center justify-center gap-1
-                      text-text-muted hover:text-primary
-                      transition-colors duration-200
-                    "
-                    aria-label="Ajouter une photo"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <span className="text-[10px]">Photo</span>
-                  </button>
-                )}
-              </div>
-
+              {/* Hidden file inputs */}
               <input
                 ref={fileInputRef}
                 type="file"
                 accept="image/jpeg,image/png,image/gif,image/webp"
                 multiple
                 className="hidden"
-                onChange={(e) => {
-                  handleAddImages(e.target.files);
-                  // Reset so the same file can be re-selected
-                  e.target.value = "";
-                }}
+                onChange={(e) => { handleAddImages(e.target.files); e.target.value = ""; }}
+              />
+              <input
+                ref={videoInputRef}
+                type="file"
+                accept="video/mp4,video/quicktime,video/webm"
+                className="hidden"
+                onChange={(e) => { handleAddVideo(e.target.files); e.target.value = ""; }}
               />
             </div>
 
@@ -696,31 +814,33 @@ export default function PublishToLinkedInModal({
               </div>
             )}
 
-            {/* Actions */}
-            <div className="flex gap-3 pt-2">
-              <Button
-                variant="secondary"
-                fullWidth
-                onClick={handleClose}
-                className="min-h-[48px]"
-              >
-                Annuler
-              </Button>
-              <Button
-                fullWidth
-                onClick={handleConfirm}
-                disabled={cannotPublish}
-                className={`min-h-[48px] ${
-                  cannotPublish
-                    ? "bg-gray-100 dark:bg-dark-hover border-gray-200 dark:border-dark-border cursor-not-allowed opacity-50"
-                    : "bg-primary hover:bg-primary-hover border-none"
-                }`}
-              >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                </svg>
-                Publier
-              </Button>
+            {/* Actions — sticky so buttons stay visible even when content is tall */}
+            <div className="sticky bottom-0 -mx-5 px-5 pt-3 pb-1 bg-white dark:bg-dark-card border-t border-gray-100 dark:border-dark-border/50 mt-2">
+              <div className="flex gap-3">
+                <Button
+                  variant="secondary"
+                  fullWidth
+                  onClick={handleClose}
+                  className="min-h-[52px]"
+                >
+                  Annuler
+                </Button>
+                <Button
+                  fullWidth
+                  onClick={handleConfirm}
+                  disabled={cannotPublish}
+                  className={`min-h-[52px] ${
+                    cannotPublish
+                      ? "bg-gray-100 dark:bg-dark-hover border-gray-200 dark:border-dark-border cursor-not-allowed opacity-50"
+                      : "bg-primary hover:bg-primary-hover border-none"
+                  }`}
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                  </svg>
+                  Publier
+                </Button>
+              </div>
             </div>
           </div>
         )}
@@ -748,22 +868,25 @@ export default function PublishToLinkedInModal({
                 .
               </p>
             </div>
-            <div className="flex gap-3">
-              <Button
-                variant="secondary"
-                fullWidth
-                onClick={() => setStep("preview")}
-                className="min-h-[48px]"
-              >
-                Retour
-              </Button>
-              <Button
-                fullWidth
-                onClick={handlePublish}
-                className="bg-primary hover:bg-primary-hover border-none min-h-[48px]"
-              >
-                Oui, publier
-              </Button>
+            {/* Actions — sticky footer */}
+            <div className="sticky bottom-0 -mx-5 px-5 pt-3 pb-1 bg-white dark:bg-dark-card border-t border-gray-100 dark:border-dark-border/50 mt-4">
+              <div className="flex gap-3">
+                <Button
+                  variant="secondary"
+                  fullWidth
+                  onClick={() => setStep("preview")}
+                  className="min-h-[52px]"
+                >
+                  Retour
+                </Button>
+                <Button
+                  fullWidth
+                  onClick={handlePublish}
+                  className="bg-primary hover:bg-primary-hover border-none min-h-[52px]"
+                >
+                  Oui, publier
+                </Button>
+              </div>
             </div>
           </div>
         )}
@@ -886,7 +1009,7 @@ export default function PublishToLinkedInModal({
                 })}
               </div>
             )}
-            <Button fullWidth onClick={handleClose} className="min-h-[48px]">
+            <Button fullWidth onClick={handleClose} className="min-h-[52px]">
               Fermer
             </Button>
           </div>
@@ -904,13 +1027,16 @@ export default function PublishToLinkedInModal({
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Échec de la publication</h3>
               <p className="text-error text-sm">{error}</p>
             </div>
-            <div className="flex gap-3">
-              <Button variant="secondary" fullWidth onClick={handleClose} className="min-h-[48px]">
-                Fermer
-              </Button>
-              <Button fullWidth onClick={handleRetry} className="min-h-[48px]">
-                Réessayer
-              </Button>
+            {/* Actions — sticky footer */}
+            <div className="sticky bottom-0 -mx-5 px-5 pt-3 pb-1 bg-white dark:bg-dark-card border-t border-gray-100 dark:border-dark-border/50 mt-4">
+              <div className="flex gap-3">
+                <Button variant="secondary" fullWidth onClick={handleClose} className="min-h-[52px]">
+                  Fermer
+                </Button>
+                <Button fullWidth onClick={handleRetry} className="min-h-[52px]">
+                  Réessayer
+                </Button>
+              </div>
             </div>
           </div>
         )}

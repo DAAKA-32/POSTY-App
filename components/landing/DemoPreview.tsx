@@ -82,7 +82,7 @@ export default function DemoPreview({ onSubmit }: DemoPreviewProps) {
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.1 }}
+          transition={{ duration: 0.5, delay: 0 }}
           className="relative"
         >
           {/* Glow effect behind card */}
@@ -126,7 +126,7 @@ export default function DemoPreview({ onSubmit }: DemoPreviewProps) {
                 initial={{ opacity: 0, x: 20 }}
                 whileInView={{ opacity: 0.6, x: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: 0.3 }}
+                transition={{ delay: 0.15 }}
                 className="flex justify-end"
               >
                 <div className="max-w-[70%] px-4 py-2.5 bg-primary/20 border border-primary/30 rounded-xl rounded-br-sm">
@@ -139,7 +139,7 @@ export default function DemoPreview({ onSubmit }: DemoPreviewProps) {
                 initial={{ opacity: 0, x: -20 }}
                 whileInView={{ opacity: 0.6, x: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: 0.5 }}
+                transition={{ delay: 0.3 }}
                 className="flex gap-3"
               >
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center flex-shrink-0">
@@ -171,7 +171,7 @@ export default function DemoPreview({ onSubmit }: DemoPreviewProps) {
                     initial={{ opacity: 0, y: 10 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    transition={{ delay: 0.1 * idx }}
+                    transition={{ delay: 0.07 * idx }}
                     whileHover={{ scale: 1.03, borderColor: "rgba(99, 102, 241, 0.5)" }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => handleSuggestionClick(suggestion)}
@@ -214,7 +214,7 @@ export default function DemoPreview({ onSubmit }: DemoPreviewProps) {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          transition={{ delay: 0.4 }}
+          transition={{ delay: 0.25 }}
           className="text-center mt-6 text-xs text-text-muted"
         >
           Gratuit et sans inscription pour tester

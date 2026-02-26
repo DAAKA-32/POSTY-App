@@ -198,6 +198,58 @@ export async function postToLinkedInWithMedia(
   }
 }
 
+/**
+ * Publie du contenu avec une vidéo sur LinkedIn via FormData
+ *
+ * La vidéo est streamée vers LinkedIn puis détruite — aucun stockage permanent.
+ */
+export async function postToLinkedInWithVideo(
+  userId: string,
+  content: string,
+  visibility: "PUBLIC" | "CONNECTIONS" = "PUBLIC",
+  video: File,
+  postId?: string
+): Promise<LinkedInPostResult> {
+  try {
+    const authHeaders = await getAuthHeaders();
+
+    const formData = new FormData();
+    formData.append("userId", userId);
+    formData.append("content", content);
+    formData.append("visibility", visibility);
+    if (postId) formData.append("postId", postId);
+    formData.append("video", video);
+
+    const response = await fetch("/api/linkedin/publish-with-video", {
+      method: "POST",
+      headers: { ...authHeaders },
+      body: formData,
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      return {
+        id: "",
+        success: false,
+        error: result.message || result.error || "Échec de la publication",
+      };
+    }
+
+    return {
+      id: result.shareId || "",
+      success: true,
+      postUrl: result.shareUrl,
+    };
+  } catch (error) {
+    return {
+      id: "",
+      success: false,
+      error: error instanceof Error ? error.message : "Erreur inattendue",
+    };
+  }
+}
+
 // Check if token is expired or about to expire (within 5 minutes)
 export function isTokenExpired(expiresAt: Date): boolean {
   const now = new Date();

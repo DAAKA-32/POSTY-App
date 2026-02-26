@@ -1,7 +1,7 @@
 ﻿"use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -53,6 +53,7 @@ function SettingsContent() {
   const { theme, toggleTheme, isDark } = useTheme();
   useSubscription();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [consent, setConsent] = useState<UserConsent | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
@@ -71,6 +72,25 @@ function SettingsContent() {
       document.body.classList.remove("settings-scroll-enabled");
     };
   }, []);
+
+  // Track safe back URL through OAuth redirects via sessionStorage + from param
+  useEffect(() => {
+    const from = searchParams.get("from");
+    if (from) {
+      sessionStorage.setItem("settings_back_url", from);
+      // Clean the URL bar without navigation (avoids re-triggering on re-render)
+      const url = new URL(window.location.href);
+      url.searchParams.delete("from");
+      window.history.replaceState({}, "", url.toString());
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleBack = useCallback(() => {
+    const backUrl = sessionStorage.getItem("settings_back_url") || "/app";
+    sessionStorage.removeItem("settings_back_url");
+    router.push(backUrl);
+  }, [router]);
 
   // Check if user signed in with Google
   const isGoogleUser = user?.providerData.some(
@@ -224,7 +244,7 @@ function SettingsContent() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="relative flex items-center h-16">
             <button
-              onClick={() => router.back()}
+              onClick={handleBack}
               className="flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors group z-10"
             >
               <svg className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">

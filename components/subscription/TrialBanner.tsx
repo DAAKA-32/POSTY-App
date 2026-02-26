@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { TRIAL_PERIOD_DAYS, GUARANTEE_PERIOD_DAYS } from "@/lib/plans";
 
@@ -26,6 +27,7 @@ export default function TrialBanner() {
     guaranteeDaysRemaining,
     currentPlan,
   } = useSubscription();
+  const pathname = usePathname();
 
   // Don't show anything if not relevant
   if (!isTrialing && !guaranteeEligible) return null;
@@ -75,7 +77,7 @@ export default function TrialBanner() {
 
           {/* Link to manage */}
           <Link
-            href="/settings"
+            href={`/settings?from=${encodeURIComponent(pathname)}`}
             className={`
               ml-auto px-3 py-1 rounded-lg text-xs font-medium transition-colors
               ${isUrgent

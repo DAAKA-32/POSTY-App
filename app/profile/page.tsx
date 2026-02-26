@@ -338,7 +338,7 @@ function ProfileContent() {
                       </motion.div>
                     </Link>
 
-                    <Link href="/settings">
+                    <Link href="/settings?from=/profile">
                       <motion.div
                         whileHover={{ x: 4 }}
                         className="
