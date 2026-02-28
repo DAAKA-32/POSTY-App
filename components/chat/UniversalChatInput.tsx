@@ -6,6 +6,7 @@ import { PlanType } from "@/lib/plans";
 import { FileAttachment, FILE_ATTACHMENT_LIMITS, AttachmentMimeType } from "@/types";
 import { InlineVoiceWaveform } from "./VoiceWaveform";
 import PromptLimitModal from "./PromptLimitModal";
+import { useQuota } from "@/contexts/QuotaContext";
 
 /**
  * UniversalChatInput - Unified, premium chat input component
@@ -132,6 +133,9 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [attachedFile, setAttachedFile] = useState<FileAttachment | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
+
+  // Quota modal trigger
+  const { openQuotaModal, isFreePlan: isFreePlanQuota } = useQuota();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const rotationTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -203,7 +207,7 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
     : isVoiceProcessing
     ? "Traitement de votre message..."
     : quotaLimitReached
-    ? "Quota quotidien atteint"
+    ? (isFreePlanQuota ? "Quota mensuel atteint" : "Quota quotidien atteint")
     : trialLimitReached
     ? "Limite d'essai atteinte"
     : placeholders[placeholderIndex % placeholders.length];
@@ -584,8 +588,8 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
             {/* Submit button */}
             <motion.button
               type="button"
-              onClick={handleSubmit}
-              disabled={!message.trim() || isLoading || disabled || trialLimitReached || quotaLimitReached}
+              onClick={quotaLimitReached ? openQuotaModal : handleSubmit}
+              disabled={!message.trim() || isLoading || disabled || trialLimitReached}
               whileTap={{ scale: message.trim() && !isLoading && !disabled ? 0.95 : 1 }}
               className={`
                 w-11 h-11 rounded-full
@@ -761,13 +765,14 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
             transition={{ delay: 0.3 }}
           >
             {quotaLimitReached ? (
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Quota quotidien atteint. Revenez demain ou{" "}
-                <a href="/subscription?plan=max" className="text-primary hover:underline font-medium">
-                  passez au plan Max
-                </a>{" "}
-                pour une création illimitée.
-              </p>
+              <button
+                type="button"
+                onClick={openQuotaModal}
+                className="text-xs text-gray-500 dark:text-gray-400 hover:text-primary transition-colors cursor-pointer"
+              >
+                {isFreePlanQuota ? "Quota mensuel atteint." : "Quota quotidien atteint."}{" "}
+                <span className="text-primary font-medium underline">En savoir plus</span>
+              </button>
             ) : trialLimitReached ? (
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 Limite d&apos;essai atteinte. Inscrivez-vous pour continuer.

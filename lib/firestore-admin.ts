@@ -163,8 +163,16 @@ export async function checkUserQuotaAdmin(userId: string, authEmail?: string): P
   };
 
   if (!userSnap.exists) {
-    // New user, no subscription
-    return defaultResult;
+    // Document doesn't exist yet (race condition during signup).
+    // Default to Free plan with full quota — the document will be created shortly.
+    const monthlyLimit = PLAN_CONFIGS.free.limits.conversationsPerMonth;
+    return {
+      canGenerate: true,
+      plan: "free",
+      dailyLimit: monthlyLimit,
+      usedToday: 0,
+      remaining: monthlyLimit,
+    };
   }
 
   const data = userSnap.data();
@@ -179,9 +187,15 @@ export async function checkUserQuotaAdmin(userId: string, authEmail?: string): P
     effectivePlan = founderPlan;
   }
 
-  // No subscription = no generation
+  // No subscription — check if recently created user (race condition)
   if (!effectivePlan) {
-    return defaultResult;
+    const createdAt = data.createdAt?.toDate?.();
+    const isRecentlyCreated = createdAt && (Date.now() - createdAt.getTime()) < 5 * 60 * 1000;
+    if (isRecentlyCreated) {
+      effectivePlan = "free";
+    } else {
+      return defaultResult;
+    }
   }
 
   // ========== FREE PLAN: MONTHLY QUOTA ENFORCEMENT ==========
@@ -285,7 +299,19 @@ export async function checkHourlyQuotaAdmin(userId: string, authEmail?: string):
     reason: "Aucun abonnement actif",
   };
 
-  if (!userSnap.exists) return defaultResult;
+  if (!userSnap.exists) {
+    // Document doesn't exist yet (race condition during signup).
+    // Default to Free plan — allow generation.
+    const freeHourlyLimit = HOURLY_MESSAGE_LIMITS["free"] ?? 2;
+    return {
+      canGenerate: true,
+      plan: "free",
+      hourlyLimit: freeHourlyLimit,
+      usedThisHour: 0,
+      remaining: freeHourlyLimit,
+      resetInSeconds: 0,
+    };
+  }
 
   const data = userSnap.data();
   if (!data) return defaultResult;
@@ -299,7 +325,16 @@ export async function checkHourlyQuotaAdmin(userId: string, authEmail?: string):
     effectivePlan = founderPlan;
   }
 
-  if (!effectivePlan) return defaultResult;
+  // No subscription — check if recently created user (race condition)
+  if (!effectivePlan) {
+    const createdAt = data.createdAt?.toDate?.();
+    const isRecentlyCreated = createdAt && (Date.now() - createdAt.getTime()) < 5 * 60 * 1000;
+    if (isRecentlyCreated) {
+      effectivePlan = "free";
+    } else {
+      return defaultResult;
+    }
+  }
 
   const hourlyLimit = HOURLY_MESSAGE_LIMITS[effectivePlan] ?? 0;
 

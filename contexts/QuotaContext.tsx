@@ -13,6 +13,30 @@ import { getUserQuota, incrementMessageCount, QuotaInfo } from "@/lib/firestore"
 import { SubscriptionPlan } from "@/types";
 import { getPlanConfig } from "@/lib/plans";
 
+// Month names for reset label
+const MONTH_NAMES = [
+  "janvier", "février", "mars", "avril", "mai", "juin",
+  "juillet", "août", "septembre", "octobre", "novembre", "décembre",
+];
+
+/**
+ * Compute a human-readable reset label based on plan type.
+ */
+function computeResetLabel(plan: SubscriptionPlan | null, resetsAt: Date | null): string {
+  if (!resetsAt || !plan) return "";
+
+  if (plan === "free") {
+    // Monthly reset — show next month's 1st
+    return `Le 1er ${MONTH_NAMES[resetsAt.getUTCMonth()]}`;
+  }
+
+  if (plan === "pro") {
+    return "Demain à minuit";
+  }
+
+  return ""; // Max has no limit
+}
+
 interface QuotaContextType {
   quota: QuotaInfo | null;
   isLoading: boolean;
@@ -21,16 +45,28 @@ interface QuotaContextType {
   currentPlan: SubscriptionPlan | null;
   planName: string;
   isPremium: boolean;
+  isFreePlan: boolean;
   isProPlan: boolean;
   isMaxPlan: boolean;
   // Quota UI helpers
-  hasDailyLimit: boolean; // true for Pro (shows gauge), false for Max
-  usagePercent: number; // 0-100, percentage of daily quota used
+  hasDailyLimit: boolean;    // true for Pro (shows daily gauge)
+  hasMonthlyLimit: boolean;  // true for Free (shows monthly gauge)
+  usagePercent: number;      // 0-100, percentage of quota used (daily or monthly)
   // Usage info
   messagesUsedToday: number;
   messagesRemaining: number;
   dailyLimit: number;
   resetsAt: Date | null;
+  // Monthly quota (Free plan)
+  messagesUsedThisMonth: number;
+  monthlyLimit: number;
+  monthlyRemaining: number;
+  // Reset label
+  quotaResetLabel: string;   // "Demain à minuit" / "Le 1er mars"
+  // Quota exceeded modal
+  showQuotaModal: boolean;
+  openQuotaModal: () => void;
+  closeQuotaModal: () => void;
   // Actions
   refreshQuota: () => Promise<void>;
   recordMessage: () => Promise<void>;
@@ -46,6 +82,10 @@ const defaultQuota: QuotaInfo = {
   remaining: 0,
   canSendMessage: false,
   resetsAt: new Date(),
+  monthlyLimit: 0,
+  usedThisMonth: 0,
+  monthlyRemaining: 0,
+  hasMonthlyLimit: false,
   weeklyLimit: 0,
   usedThisWeek: 0,
   canPublish: false,
@@ -57,6 +97,7 @@ export function QuotaProvider({ children }: { children: ReactNode }) {
   const { user, loading: authLoading } = useAuth();
   const [quota, setQuota] = useState<QuotaInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showQuotaModal, setShowQuotaModal] = useState(false);
 
   // Load quota from Firestore
   const loadQuota = useCallback(async () => {
@@ -98,17 +139,38 @@ export function QuotaProvider({ children }: { children: ReactNode }) {
     }
   }, [user, loadQuota]);
 
+  // Modal callbacks
+  const openQuotaModal = useCallback(() => setShowQuotaModal(true), []);
+  const closeQuotaModal = useCallback(() => setShowQuotaModal(false), []);
+
   // Derived values
   const currentPlan: SubscriptionPlan | null = quota?.plan || null;
   const planConfig = getPlanConfig(currentPlan ?? "pro");
   const isPremium = currentPlan !== null;
+  const isFreePlan = currentPlan === "free";
   const isProPlan = currentPlan === "pro";
   const isMaxPlan = currentPlan === "max";
-  // Pro has a visible daily limit (60); Max is truly unlimited (-1)
+
+  // Quota type flags
   const hasDailyLimit = isProPlan;
+  const hasMonthlyLimit = quota?.hasMonthlyLimit ?? false;
+
+  // Daily usage (Pro)
   const dailyLimit = quota?.dailyLimit ?? 0;
   const usedToday = quota?.usedToday ?? 0;
-  const usagePercent = dailyLimit > 0 ? Math.min(100, Math.round((usedToday / dailyLimit) * 100)) : 0;
+
+  // Monthly usage (Free)
+  const messagesUsedThisMonth = quota?.usedThisMonth ?? 0;
+  const monthlyLimit = quota?.monthlyLimit ?? 0;
+  const monthlyRemaining = quota?.monthlyRemaining ?? 0;
+
+  // Usage percent — adapts to plan type
+  const usagePercent = hasMonthlyLimit
+    ? (monthlyLimit > 0 ? Math.min(100, Math.round((messagesUsedThisMonth / monthlyLimit) * 100)) : 0)
+    : (dailyLimit > 0 ? Math.min(100, Math.round((usedToday / dailyLimit) * 100)) : 0);
+
+  // Reset label
+  const quotaResetLabel = computeResetLabel(currentPlan, quota?.resetsAt ?? null);
 
   const value: QuotaContextType = {
     quota,
@@ -118,16 +180,28 @@ export function QuotaProvider({ children }: { children: ReactNode }) {
     currentPlan,
     planName: planConfig.name,
     isPremium,
+    isFreePlan,
     isProPlan,
     isMaxPlan,
     // Quota UI helpers
     hasDailyLimit,
+    hasMonthlyLimit,
     usagePercent,
     // Usage info
     messagesUsedToday: usedToday,
     messagesRemaining: quota?.remaining ?? 3,
     dailyLimit,
     resetsAt: quota?.resetsAt ?? null,
+    // Monthly quota
+    messagesUsedThisMonth,
+    monthlyLimit,
+    monthlyRemaining,
+    // Reset label
+    quotaResetLabel,
+    // Modal
+    showQuotaModal,
+    openQuotaModal,
+    closeQuotaModal,
     // Actions
     refreshQuota: loadQuota,
     recordMessage,

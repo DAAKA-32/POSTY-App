@@ -19,7 +19,7 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { UserProfile, Post, Session, ChatMessage } from "@/types";
-import { PlanType, DAILY_MESSAGE_LIMITS, getFounderOverridePlan } from "./plans";
+import { PlanType, DAILY_MESSAGE_LIMITS, PLAN_CONFIGS, getFounderOverridePlan } from "./plans";
 
 /**
  * Normalize plan name from Firestore to a valid SubscriptionPlan.
@@ -43,6 +43,9 @@ export async function createUserProfile(
   data: Partial<UserProfile>
 ): Promise<void> {
   const userRef = doc(db, "users", userId);
+  const now = new Date();
+  const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0, 0));
+
   await setDoc(userRef, {
     uid: userId,
     email: data.email || "",
@@ -54,6 +57,16 @@ export async function createUserProfile(
     subscription: {
       plan: "free",
       status: "active",
+    },
+    // Initialize quota tracking to prevent race condition false positives
+    quota: {
+      dailyMessageCount: 0,
+      lastMessageDate: null,
+      messageTimestamps: [],
+    },
+    usage: {
+      conversationsThisMonth: 0,
+      monthStartDate: Timestamp.fromDate(monthStart),
     },
     createdAt: serverTimestamp(),
   });
@@ -992,6 +1005,11 @@ export interface QuotaInfo {
   remaining: number;
   canSendMessage: boolean;
   resetsAt: Date;
+  // Monthly quota (Free plan)
+  monthlyLimit: number;       // 3 for free, -1 for paid
+  usedThisMonth: number;      // usage.conversationsThisMonth
+  monthlyRemaining: number;   // monthlyLimit - usedThisMonth
+  hasMonthlyLimit: boolean;   // true when plan uses monthly enforcement
   // Legacy fields for backwards compatibility
   weeklyLimit?: number;
   usedThisWeek?: number;
@@ -1027,6 +1045,23 @@ function isToday(date: Date): boolean {
 }
 
 /**
+ * Check if a date is in the same UTC month as now
+ */
+function isSameMonthUTC(date: Date): boolean {
+  const now = new Date();
+  return date.getUTCMonth() === now.getUTCMonth() &&
+         date.getUTCFullYear() === now.getUTCFullYear();
+}
+
+/**
+ * Get the start of next month (UTC) for reset display
+ */
+function getNextMonthStartUTC(): Date {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1, 0, 0, 0, 0));
+}
+
+/**
  * Get quota information for a user (daily message limits)
  *
  * IMPORTANT: Respects test mode - if test mode is active, uses the test plan
@@ -1038,19 +1073,25 @@ export async function getUserQuota(userId: string, authEmail?: string | null): P
 
   const todayEnd = getTodayEnd();
 
-  // If user document doesn't exist, return default (no subscription)
+  // If user document doesn't exist yet (race condition during signup),
+  // treat as a new Free plan user with full quota available.
+  // The server-side check is the real authority — this prevents false "quota exceeded" UI.
   if (!userSnap.exists()) {
+    const monthlyLimit = PLAN_CONFIGS.free.limits.conversationsPerMonth;
     return {
-      plan: null,
-      dailyLimit: 0,
+      plan: "free",
+      dailyLimit: monthlyLimit,
       usedToday: 0,
-      remaining: 0,
-      canSendMessage: false,
-      resetsAt: todayEnd,
-      // Legacy
-      weeklyLimit: 0,
+      remaining: monthlyLimit,
+      canSendMessage: true,
+      resetsAt: getNextMonthStartUTC(),
+      monthlyLimit,
+      usedThisMonth: 0,
+      monthlyRemaining: monthlyLimit,
+      hasMonthlyLimit: true,
+      weeklyLimit: monthlyLimit,
       usedThisWeek: 0,
-      canPublish: false,
+      canPublish: true,
     };
   }
 
@@ -1065,8 +1106,33 @@ export async function getUserQuota(userId: string, authEmail?: string | null): P
     effectivePlan = founderPlan;
   }
 
-  // No subscription = no messages
+  // No subscription found — default to Free for recently created users (< 5 min ago),
+  // otherwise treat as no plan. This handles the race condition where the document
+  // exists but subscription fields haven't been written yet.
   if (!effectivePlan) {
+    const createdAt = data.createdAt?.toDate?.();
+    const isRecentlyCreated = createdAt && (Date.now() - createdAt.getTime()) < 5 * 60 * 1000;
+
+    if (isRecentlyCreated) {
+      // Likely a new user whose subscription field hasn't been set yet
+      const monthlyLimit = PLAN_CONFIGS.free.limits.conversationsPerMonth;
+      return {
+        plan: "free",
+        dailyLimit: monthlyLimit,
+        usedToday: 0,
+        remaining: monthlyLimit,
+        canSendMessage: true,
+        resetsAt: getNextMonthStartUTC(),
+        monthlyLimit,
+        usedThisMonth: 0,
+        monthlyRemaining: monthlyLimit,
+        hasMonthlyLimit: true,
+        weeklyLimit: monthlyLimit,
+        usedThisWeek: 0,
+        canPublish: true,
+      };
+    }
+
     return {
       plan: null,
       dailyLimit: 0,
@@ -1074,9 +1140,47 @@ export async function getUserQuota(userId: string, authEmail?: string | null): P
       remaining: 0,
       canSendMessage: false,
       resetsAt: todayEnd,
+      monthlyLimit: 0,
+      usedThisMonth: 0,
+      monthlyRemaining: 0,
+      hasMonthlyLimit: false,
       weeklyLimit: 0,
       usedThisWeek: 0,
       canPublish: false,
+    };
+  }
+
+  // ========== FREE PLAN: MONTHLY QUOTA ENFORCEMENT ==========
+  if (effectivePlan === "free") {
+    const monthlyLimit = PLAN_CONFIGS.free.limits.conversationsPerMonth; // 3
+    const usageData = data.usage || {};
+    let usedThisMonth = usageData.conversationsThisMonth || 0;
+
+    // Reset if different month
+    const monthStartDate = usageData.monthStartDate?.toDate?.();
+    if (monthStartDate && !isSameMonthUTC(monthStartDate)) {
+      usedThisMonth = 0;
+    }
+
+    const monthlyRemaining = Math.max(0, monthlyLimit - usedThisMonth);
+    const canSendMessage = usedThisMonth < monthlyLimit;
+
+    return {
+      plan: effectivePlan,
+      dailyLimit: monthlyLimit, // Backwards compat: treat as "daily" limit for UI
+      usedToday: usedThisMonth, // Backwards compat
+      remaining: monthlyRemaining,
+      canSendMessage,
+      resetsAt: getNextMonthStartUTC(),
+      // Monthly-specific
+      monthlyLimit,
+      usedThisMonth,
+      monthlyRemaining,
+      hasMonthlyLimit: true,
+      // Legacy
+      weeklyLimit: monthlyLimit,
+      usedThisWeek: usedThisMonth,
+      canPublish: canSendMessage,
     };
   }
 
@@ -1102,6 +1206,11 @@ export async function getUserQuota(userId: string, authEmail?: string | null): P
     remaining,
     canSendMessage,
     resetsAt: todayEnd,
+    // Monthly (not applicable for Pro/Max)
+    monthlyLimit: -1,
+    usedThisMonth: 0,
+    monthlyRemaining: -1,
+    hasMonthlyLimit: false,
     // Legacy compatibility
     weeklyLimit: dailyLimit,
     usedThisWeek: usedToday,

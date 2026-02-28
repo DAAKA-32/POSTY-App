@@ -23,6 +23,8 @@ import { getUserPostsWithPinned, pinPost, renamePost, deletePost } from "@/lib/f
 import { AnimatedSlideIn, AnimatedPageWrapper } from "@/components/animations/AnimatedPageWrapper";
 import toast from "@/components/ui/Toast";
 import TrialBanner from "@/components/subscription/TrialBanner";
+import UsageBanner from "@/components/ui/UsageBanner";
+import QuotaExceededModal from "@/components/ui/QuotaExceededModal";
 import { usePageHelp } from "@/hooks/usePageHelp";
 import HelpNotificationDot from "@/components/help/HelpNotificationDot";
 import HelpPopover from "@/components/help/HelpPopover";
@@ -1165,6 +1167,9 @@ export default function MainLayout({
         {/* Trial / Guarantee Banner */}
         <TrialBanner />
 
+        {/* Quota Usage Banner (Free + Pro plans) */}
+        <UsageBanner className="px-3 sm:px-4 pt-2" />
+
         {/* Page Content - No scroll on mobile (children handle scroll), scroll on desktop */}
         <AnimatedPageWrapper delay={0.2} className="flex-1 overflow-hidden lg:overflow-y-auto lg:overflow-x-hidden lg:overscroll-contain">
           {children}
@@ -1172,6 +1177,9 @@ export default function MainLayout({
 
         {/* Help floating "?" button */}
         <HelpFloatingButton />
+
+        {/* Quota Exceeded Modal (opens when user attempts action at limit) */}
+        <QuotaExceededModal />
       </main>
 
       {/* Chat History Modal */}

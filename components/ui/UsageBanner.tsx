@@ -9,40 +9,108 @@ interface UsageBannerProps {
   className?: string;
 }
 
+type BannerState =
+  | { type: "hidden"; show: false }
+  | {
+      type: "free-normal" | "free-warning" | "free-limit-reached" | "pro-normal" | "pro-warning" | "pro-limit-reached";
+      show: true;
+      icon: "warning" | "info" | "sparkle";
+      title: string;
+      message: string;
+      cta: string;
+      ctaHref: string;
+      ctaHighlight: boolean;
+      usagePercent: number;
+    };
+
 export default function UsageBanner({ className = "" }: UsageBannerProps) {
   const {
     currentPlan,
     isPremium,
+    isFreePlan,
     isProPlan,
     isMaxPlan,
     hasDailyLimit,
+    hasMonthlyLimit,
     usagePercent,
     messagesUsedToday,
     messagesRemaining,
     dailyLimit,
+    messagesUsedThisMonth,
+    monthlyLimit,
+    monthlyRemaining,
+    quotaResetLabel,
     isLoading,
     canSendMessage,
   } = useQuota();
 
   // Determine banner state and content
-  const bannerState = useMemo(() => {
+  const bannerState: BannerState = useMemo(() => {
     // Max users: never show banner (unlimited experience)
     if (isMaxPlan) {
       return { type: "hidden" as const, show: false };
     }
 
-    // Pro users: show daily quota gauge
+    // ========== FREE PLAN: MONTHLY QUOTA ==========
+    if (isFreePlan && hasMonthlyLimit) {
+      const freeUsagePercent = monthlyLimit > 0
+        ? Math.min(100, Math.round((messagesUsedThisMonth / monthlyLimit) * 100))
+        : 0;
+
+      if (monthlyRemaining <= 0) {
+        return {
+          type: "free-limit-reached" as const,
+          show: true,
+          icon: "warning" as const,
+          title: "Quota mensuel atteint",
+          message: `${quotaResetLabel}, votre quota sera réinitialisé. Passez à Pro pour 60 créations/jour.`,
+          cta: "Passer à Pro",
+          ctaHref: "/subscription?plan=pro",
+          ctaHighlight: true,
+          usagePercent: 100,
+        };
+      }
+
+      if (monthlyRemaining <= 1) {
+        return {
+          type: "free-warning" as const,
+          show: true,
+          icon: "info" as const,
+          title: `${messagesUsedThisMonth} / ${monthlyLimit} créations ce mois`,
+          message: "Dernière création restante !",
+          cta: "Passer à Pro",
+          ctaHref: "/subscription?plan=pro",
+          ctaHighlight: true,
+          usagePercent: freeUsagePercent,
+        };
+      }
+
+      return {
+        type: "free-normal" as const,
+        show: true,
+        icon: "sparkle" as const,
+        title: `${messagesUsedThisMonth} / ${monthlyLimit} créations ce mois`,
+        message: "Plan Gratuit • Quota mensuel",
+        cta: "Passer à Pro",
+        ctaHref: "/subscription?plan=pro",
+        ctaHighlight: false,
+        usagePercent: freeUsagePercent,
+      };
+    }
+
+    // ========== PRO PLAN: DAILY QUOTA ==========
     if (isProPlan && hasDailyLimit) {
       if (!canSendMessage || messagesRemaining <= 0) {
         return {
           type: "pro-limit-reached" as const,
           show: true,
-          icon: "warning",
+          icon: "warning" as const,
           title: "Quota quotidien atteint",
           message: "Revenez demain ou passez au plan Max pour une création illimitée.",
           cta: "Passer à Max",
           ctaHref: "/subscription?plan=max",
           ctaHighlight: true,
+          usagePercent: 100,
         };
       }
 
@@ -50,24 +118,26 @@ export default function UsageBanner({ className = "" }: UsageBannerProps) {
         return {
           type: "pro-warning" as const,
           show: true,
-          icon: "info",
+          icon: "info" as const,
           title: `${messagesUsedToday} / ${dailyLimit} créations aujourd'hui`,
           message: "Votre quota quotidien arrive à sa fin.",
           cta: "Passer à Max",
           ctaHref: "/subscription?plan=max",
           ctaHighlight: true,
+          usagePercent,
         };
       }
 
       return {
         type: "pro-normal" as const,
         show: true,
-        icon: "sparkle",
+        icon: "sparkle" as const,
         title: `${messagesUsedToday} / ${dailyLimit} créations aujourd'hui`,
         message: "Plan Pro • Quota quotidien",
         cta: "Passer à Max",
         ctaHref: "/subscription?plan=max",
         ctaHighlight: false,
+        usagePercent,
       };
     }
 
@@ -78,12 +148,18 @@ export default function UsageBanner({ className = "" }: UsageBannerProps) {
 
     // No subscription: hidden (user can't access the app)
     return { type: "hidden" as const, show: false };
-  }, [isMaxPlan, isProPlan, hasDailyLimit, isPremium, canSendMessage, messagesRemaining, usagePercent, messagesUsedToday, dailyLimit]);
+  }, [isMaxPlan, isFreePlan, isProPlan, hasDailyLimit, hasMonthlyLimit, isPremium, canSendMessage, messagesRemaining, usagePercent, messagesUsedToday, dailyLimit, messagesUsedThisMonth, monthlyLimit, monthlyRemaining, quotaResetLabel]);
 
   // Don't render while loading or if banner is hidden
   if (isLoading || !bannerState.show) {
     return null;
   }
+
+  const isLimitReached = bannerState.type === "pro-limit-reached" || bannerState.type === "free-limit-reached";
+  const isWarning = bannerState.type === "pro-warning" || bannerState.type === "free-warning";
+  const displayPercent = bannerState.usagePercent;
+  const ariaUsed = bannerState.type.startsWith("free-") ? messagesUsedThisMonth : messagesUsedToday;
+  const ariaMax = bannerState.type.startsWith("free-") ? monthlyLimit : dailyLimit;
 
   return (
     <AnimatePresence>
@@ -102,9 +178,9 @@ export default function UsageBanner({ className = "" }: UsageBannerProps) {
             relative overflow-hidden
             rounded-xl border backdrop-blur-sm
             transition-all duration-200
-            ${bannerState.type === "pro-limit-reached"
+            ${isLimitReached
               ? "bg-error/5 border-error/20"
-              : bannerState.type === "pro-warning"
+              : isWarning
                 ? "bg-warning/5 border-warning/20"
                 : "bg-dark-elevated/80 border-dark-border"
             }
@@ -123,9 +199,9 @@ export default function UsageBanner({ className = "" }: UsageBannerProps) {
                 <div
                   className={`
                     shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center
-                    ${bannerState.type === "pro-limit-reached"
+                    ${isLimitReached
                       ? "bg-error/10 text-error"
-                      : bannerState.type === "pro-warning"
+                      : isWarning
                         ? "bg-warning/10 text-warning"
                         : "bg-primary/10 text-primary"
                     }
@@ -152,9 +228,9 @@ export default function UsageBanner({ className = "" }: UsageBannerProps) {
                     <span
                       className={`
                         text-xs sm:text-sm font-semibold
-                        ${bannerState.type === "pro-limit-reached"
+                        ${isLimitReached
                           ? "text-error"
-                          : bannerState.type === "pro-warning"
+                          : isWarning
                             ? "text-warning"
                             : "text-white"
                         }
@@ -162,7 +238,7 @@ export default function UsageBanner({ className = "" }: UsageBannerProps) {
                     >
                       {bannerState.title}
                     </span>
-                    <span className="text-xs text-text-muted hidden lg:inline">•</span>
+                    <span className="text-xs text-text-muted hidden lg:inline">&bull;</span>
                     <span className="text-xs text-text-muted hidden lg:inline truncate">
                       {bannerState.message}
                     </span>
@@ -175,40 +251,38 @@ export default function UsageBanner({ className = "" }: UsageBannerProps) {
               </div>
 
               {/* Right: CTA Button */}
-              {'ctaHref' in bannerState && bannerState.ctaHref && (
-                <Link
-                  href={bannerState.ctaHref}
-                  className={`
-                    shrink-0 px-2.5 sm:px-3 py-1.5 text-2xs sm:text-xs font-semibold rounded-lg whitespace-nowrap
-                    transition-all duration-200 haptic-feedback
-                    ${bannerState.ctaHighlight
-                      ? "bg-gradient-to-r from-primary to-primary-hover text-white shadow-glow hover:shadow-lg"
-                      : "bg-dark-hover text-white hover:bg-dark-border"
-                    }
-                  `}
-                >
-                  {bannerState.cta}
-                </Link>
-              )}
+              <Link
+                href={bannerState.ctaHref}
+                className={`
+                  shrink-0 px-2.5 sm:px-3 py-1.5 text-2xs sm:text-xs font-semibold rounded-lg whitespace-nowrap
+                  transition-all duration-200 haptic-feedback
+                  ${bannerState.ctaHighlight
+                    ? "bg-gradient-to-r from-primary to-primary-hover text-white shadow-glow hover:shadow-lg"
+                    : "bg-dark-hover text-white hover:bg-dark-border"
+                  }
+                `}
+              >
+                {bannerState.cta}
+              </Link>
             </div>
 
-            {/* Progress bar for Pro daily quota */}
-            {bannerState.type !== "pro-limit-reached" && (
+            {/* Progress bar */}
+            {!isLimitReached && (
               <div
                 className="mt-2 sm:mt-3 h-1 bg-dark-border/50 rounded-full overflow-hidden"
                 role="progressbar"
-                aria-valuenow={messagesUsedToday}
+                aria-valuenow={ariaUsed}
                 aria-valuemin={0}
-                aria-valuemax={dailyLimit}
-                aria-label={`${messagesUsedToday} créations utilisées sur ${dailyLimit}`}
+                aria-valuemax={ariaMax}
+                aria-label={`${ariaUsed} créations utilisées sur ${ariaMax}`}
               >
                 <motion.div
                   initial={{ width: 0 }}
-                  animate={{ width: `${usagePercent}%` }}
+                  animate={{ width: `${displayPercent}%` }}
                   transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
                   className={`
                     h-full rounded-full
-                    ${usagePercent >= 80
+                    ${isWarning
                       ? "bg-warning"
                       : "bg-gradient-to-r from-primary to-accent"
                     }
@@ -219,7 +293,7 @@ export default function UsageBanner({ className = "" }: UsageBannerProps) {
           </div>
 
           {/* Limit reached overlay effect */}
-          {bannerState.type === "pro-limit-reached" && (
+          {isLimitReached && (
             <div className="absolute inset-0 bg-gradient-to-r from-error/5 to-transparent pointer-events-none animate-pulse" />
           )}
         </div>
@@ -230,10 +304,69 @@ export default function UsageBanner({ className = "" }: UsageBannerProps) {
 
 // Compact version for sidebar
 export function UsageBadge() {
-  const { isProPlan, isMaxPlan, isPremium, messagesUsedToday, dailyLimit, messagesRemaining, isLoading, usagePercent } = useQuota();
+  const {
+    isFreePlan,
+    isProPlan,
+    isMaxPlan,
+    isPremium,
+    messagesUsedToday,
+    dailyLimit,
+    messagesRemaining,
+    messagesUsedThisMonth,
+    monthlyLimit,
+    monthlyRemaining,
+    isLoading,
+    usagePercent,
+    hasMonthlyLimit,
+  } = useQuota();
 
-  // Max users: show premium badge instead
+  // Max users: no badge
   if (isLoading || isMaxPlan) return null;
+
+  // Free users: show compact monthly quota
+  if (isFreePlan && hasMonthlyLimit) {
+    const isEmpty = monthlyRemaining <= 0;
+    const isLow = monthlyRemaining <= 1 && monthlyRemaining > 0;
+
+    return (
+      <Link href="/subscription?plan=pro" className="group">
+        <div
+          className={`
+            flex items-center gap-2 px-3 py-2 rounded-xl
+            transition-all duration-200
+            ${isEmpty
+              ? "bg-error/10 border border-error/20"
+              : isLow
+                ? "bg-warning/10 border border-warning/20"
+                : "bg-dark-elevated border border-dark-border"
+            }
+            group-hover:border-primary/30
+          `}
+        >
+          <div
+            className={`
+              w-2 h-2 rounded-full
+              ${isEmpty ? "bg-error" : isLow ? "bg-warning" : "bg-primary"}
+            `}
+          />
+          <span className="text-xs text-text-secondary">
+            {isEmpty
+              ? "Quota atteint"
+              : `${messagesUsedThisMonth}/${monthlyLimit}/mois`
+            }
+          </span>
+          <svg
+            className="w-3 h-3 text-text-muted group-hover:text-primary transition-colors"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </div>
+      </Link>
+    );
+  }
 
   // Pro users: show compact daily quota
   if (isProPlan) {
