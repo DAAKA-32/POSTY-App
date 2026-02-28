@@ -49,6 +49,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
       },
     },
     {
+      // Subscription page - transactional
+      url: `${baseUrl}/subscription`,
+      lastModified: currentDate,
+      changeFrequency: "weekly",
+      priority: 0.9,
+      alternates: {
+        languages: generateAlternates("/subscription"),
+      },
+    },
+    {
       url: `${baseUrl}/login`,
       lastModified: currentDate,
       changeFrequency: "monthly",
@@ -104,7 +114,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const languageSpecificRoutes: MetadataRoute.Sitemap = [];
 
   // Add explicit language URLs for main pages
-  const mainPaths = ["", "/about", "/login", "/signup"];
+  const mainPaths = ["", "/about", "/subscription", "/login", "/signup"];
   languages.forEach((lang) => {
     mainPaths.forEach((path) => {
       languageSpecificRoutes.push({

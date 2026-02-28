@@ -264,7 +264,7 @@ export default function PricingCard({
           ) : (
             <div>
               <Link
-                href={ctaHref || "/signup"}
+                href={ctaHref || "/login?mode=signup"}
                 className={`
                   block w-full text-center px-4 py-3 sm:py-3.5 md:py-4 rounded-xl font-semibold text-xs sm:text-sm md:text-base
                   transition-all duration-200

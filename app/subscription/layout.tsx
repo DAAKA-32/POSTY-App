@@ -9,8 +9,8 @@ export const metadata: Metadata = {
   description:
     "Découvrez les offres Posty : Pro à 12,90€/mois ou Max à 19,90€/mois. Automatisez LinkedIn et générez des prospects avec l'IA. Essai gratuit 7 jours.",
   robots: {
-    index: false,
-    follow: false,
+    index: true,
+    follow: true,
   },
 };
 

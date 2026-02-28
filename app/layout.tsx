@@ -76,19 +76,14 @@ export const metadata: Metadata = {
   creator: "Emilien Nepveu & Côme Maubert",
   publisher: "Posty AI",
 
-  // Icons - Rounded PNG logo (borders baked into the PNG)
+  // Icons - Logo PNG
   icons: {
     icon: [
-      { url: "/favicon.ico", sizes: "32x32" },
-      { url: "/favicon-16.png", type: "image/png", sizes: "16x16" },
-      { url: "/favicon-32.png", type: "image/png", sizes: "32x32" },
-      { url: "/favicon-48.png", type: "image/png", sizes: "48x48" },
-      { url: "/favicon-192.png", type: "image/png", sizes: "192x192" },
-      { url: "/favicon-512.png", type: "image/png", sizes: "512x512" },
+      { url: "/logo.png", type: "image/png", sizes: "any" },
     ],
-    shortcut: "/favicon.ico",
+    shortcut: "/logo.png",
     apple: [
-      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+      { url: "/logo.png", type: "image/png", sizes: "180x180" },
     ],
   },
 
@@ -117,11 +112,11 @@ export const metadata: Metadata = {
       "Automatisez votre présence LinkedIn et attirez des prospects qualifiés grâce à l'IA. Posts professionnels percutants en quelques secondes.",
     images: [
       {
-        url: `${siteConfig.url}/og-image.png`,
+        url: `${siteConfig.url}/og-image.jpg`,
         width: 1200,
         height: 630,
         alt: "Posty AI – Attirez plus de prospects avec l'intelligence artificielle",
-        type: "image/png",
+        type: "image/jpeg",
       },
     ],
   },
@@ -132,7 +127,7 @@ export const metadata: Metadata = {
     title: "Posty AI – Attirez plus de prospects avec l'intelligence artificielle",
     description:
       "Automatisez votre présence LinkedIn et attirez des prospects qualifiés grâce à l'IA. Essai gratuit.",
-    images: [`${siteConfig.url}/og-image.png`],
+    images: [`${siteConfig.url}/og-image.jpg`],
     creator: "@posty_app",
   },
 

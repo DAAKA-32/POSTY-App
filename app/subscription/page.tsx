@@ -65,7 +65,7 @@ function SubscriptionContent() {
 
   const handleSelectPlan = async (plan: PlanConfig) => {
     if (!user) {
-      router.push("/?auth=signup");
+      router.push("/login?mode=signup");
       return;
     }
 
