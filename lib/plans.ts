@@ -433,6 +433,15 @@ export function isHigherPlan(plan1: PlanType, plan2: PlanType): boolean {
 }
 
 /**
+ * Check if a user's plan meets the minimum required plan level.
+ * Returns true if userPlan >= requiredPlan in the hierarchy (free < pro < max).
+ */
+export function meetsMinimumPlan(userPlan: PlanType | null, requiredPlan: PlanType): boolean {
+  if (!userPlan) return false;
+  return comparePlans(userPlan, requiredPlan) >= 0;
+}
+
+/**
  * Get the minimum plan required for a feature
  */
 export function getMinimumPlanForFeature(

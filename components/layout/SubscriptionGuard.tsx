@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useSubscription } from "@/contexts/SubscriptionContext";
+import { PlanType, meetsMinimumPlan } from "@/lib/plans";
 
 interface SubscriptionGuardProps {
   children: React.ReactNode;
@@ -16,6 +17,12 @@ interface SubscriptionGuardProps {
    * @default "/subscription"
    */
   redirectTo?: string;
+  /**
+   * Minimum plan level required to access this content.
+   * If set, users with a lower plan will be redirected.
+   * Uses plan hierarchy: free < pro < max
+   */
+  minimumPlan?: PlanType;
 }
 
 /**
@@ -40,6 +47,7 @@ export default function SubscriptionGuard({
   children,
   showLoading = true,
   redirectTo = "/subscription",
+  minimumPlan,
 }: SubscriptionGuardProps) {
   const { subscription, loading } = useSubscription();
   const router = useRouter();
@@ -50,21 +58,33 @@ export default function SubscriptionGuard({
       const hasActiveSubscription =
         subscription.status === "active" || subscription.status === "trialing";
 
+      // Check 1: Active subscription with a plan
       if (!hasActiveSubscription || !subscription.plan) {
         console.warn(
           `[SubscriptionGuard] Blocking access to ${pathname} - Status: ${subscription.status}, Plan: ${subscription.plan}`
         );
 
-        // Redirect to pricing with context
         const url = new URL(redirectTo, window.location.origin);
         url.searchParams.set("redirect", pathname);
         url.searchParams.set("reason", "subscription_required");
+        router.replace(url.pathname + url.search);
+        return;
+      }
 
-        // Use replace to prevent back-navigation bypass
+      // Check 2: Minimum plan level (if specified)
+      if (minimumPlan && !meetsMinimumPlan(subscription.plan as PlanType, minimumPlan)) {
+        console.warn(
+          `[SubscriptionGuard] Plan too low for ${pathname} - Current: ${subscription.plan}, Required: ${minimumPlan}+`
+        );
+
+        const url = new URL(redirectTo, window.location.origin);
+        url.searchParams.set("redirect", pathname);
+        url.searchParams.set("reason", "plan_required");
+        url.searchParams.set("required", minimumPlan);
         router.replace(url.pathname + url.search);
       }
     }
-  }, [subscription.status, subscription.plan, loading, router, pathname, redirectTo]);
+  }, [subscription.status, subscription.plan, loading, router, pathname, redirectTo, minimumPlan]);
 
   // Show loading state while checking subscription
   if (loading) {
@@ -86,7 +106,11 @@ export default function SubscriptionGuard({
 
   // Block access if subscription is not active or if user has no plan
   if (!hasActiveSubscription || !subscription.plan) {
-    // Don't render children - redirect will happen in useEffect
+    return null;
+  }
+
+  // Block access if plan level is insufficient
+  if (minimumPlan && !meetsMinimumPlan(subscription.plan as PlanType, minimumPlan)) {
     return null;
   }
 

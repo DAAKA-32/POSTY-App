@@ -4,17 +4,21 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import SubscriptionGuard from "./SubscriptionGuard";
+import { PlanType } from "@/lib/plans";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requireOnboarding?: boolean;
   requireSubscription?: boolean;
+  /** Minimum plan required (e.g. "pro"). Implies requireSubscription. */
+  minimumPlan?: PlanType;
 }
 
 export default function ProtectedRoute({
   children,
   requireOnboarding = false,
   requireSubscription = false,
+  minimumPlan,
 }: ProtectedRouteProps) {
   const { user, userProfile, loading } = useAuth();
   const router = useRouter();
@@ -57,9 +61,9 @@ export default function ProtectedRoute({
     return null;
   }
 
-  // If subscription is required, wrap children with SubscriptionGuard
-  if (requireSubscription) {
-    return <SubscriptionGuard>{children}</SubscriptionGuard>;
+  // If subscription or minimum plan is required, wrap children with SubscriptionGuard
+  if (requireSubscription || minimumPlan) {
+    return <SubscriptionGuard minimumPlan={minimumPlan}>{children}</SubscriptionGuard>;
   }
 
   return <>{children}</>;

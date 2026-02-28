@@ -385,7 +385,7 @@ function DashboardContent() {
 
 export default function DashboardPage() {
   return (
-    <ProtectedRoute requireOnboarding requireSubscription>
+    <ProtectedRoute requireOnboarding minimumPlan="pro">
       <DashboardContent />
     </ProtectedRoute>
   );

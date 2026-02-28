@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useScheduling } from "@/contexts/SchedulingContext";
+import { useSubscription } from "@/contexts/SubscriptionContext";
+import { PlanType, meetsMinimumPlan } from "@/lib/plans";
 import { Post } from "@/types";
 import { pinPost, renamePost, deletePost } from "@/lib/firestore";
 import toast from "@/components/ui/Toast";
@@ -101,7 +103,19 @@ function groupPostsByDate(posts: Post[], labels: SidebarTranslations) {
   return groups;
 }
 
-const menuItems = [
+const menuItems: {
+  nameKey: "chat" | "history" | "schedule" | "analytics";
+  href: string;
+  hasBadge: boolean;
+  activeClasses: string;
+  hoverClasses: string;
+  indicatorColor: string;
+  iconColor: string;
+  badgeClasses: string;
+  glowColor: string;
+  icon: (isActive: boolean) => React.ReactNode;
+  requiredPlan?: PlanType;
+}[] = [
   {
     nameKey: "chat" as const,
     href: "/app",
@@ -148,6 +162,7 @@ const menuItems = [
     nameKey: "schedule" as const,
     href: "/schedule",
     hasBadge: true,
+    requiredPlan: "pro",
     activeClasses: "bg-gradient-to-r from-violet-500/12 to-transparent text-violet-600 dark:text-violet-400",
     hoverClasses: "hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-500/5",
     indicatorColor: "bg-gradient-to-b from-violet-500 to-violet-400",
@@ -193,6 +208,7 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
   const { user, userProfile } = useAuth();
   const { t } = useLanguage();
   const { pendingCount: schedulingPendingCount, refreshScheduledPosts } = useScheduling();
+  const { currentPlan } = useSubscription();
   const [searchQuery, setSearchQuery] = useState("");
   const [showChatList, setShowChatList] = useState(true);
 
@@ -556,10 +572,11 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
             {menuItems.map((item) => {
               const isActive = pathname === item.href || (item.href === "/app" && pathname === "/chat");
               const itemName = t.nav[item.nameKey];
-              const showBadge = item.hasBadge && schedulingPendingCount > 0;
+              const isLocked = item.requiredPlan && !meetsMinimumPlan(currentPlan as PlanType, item.requiredPlan);
+              const showBadge = item.hasBadge && schedulingPendingCount > 0 && !isLocked;
 
-              // Icon color — per-feature color
-              const iconColorClass = item.iconColor;
+              // Icon color — per-feature color (dimmed if locked)
+              const iconColorClass = isLocked ? "text-gray-400 dark:text-gray-500" : item.iconColor;
 
               return (
                 <div key={item.nameKey} className="relative">
@@ -590,8 +607,9 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
                       relative flex items-center gap-3 px-4 py-2 rounded-lg
                       transition-all duration-200 ease-out group haptic-feedback
                       transform-gpu
-                      ${
-                        isActive
+                      ${isLocked
+                        ? "text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-dark-hover"
+                        : isActive
                           ? item.activeClasses
                           : `text-gray-900 dark:text-gray-200 ${item.hoverClasses} hover:translate-x-1 active:scale-[0.98] active:transition-none`
                       }
@@ -626,6 +644,13 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
                     {showBadge && (
                       <span className={`w-6 h-6 min-w-[24px] min-h-[24px] shrink-0 text-xs font-semibold rounded-full flex items-center justify-center ${item.badgeClasses}`}>
                         {schedulingPendingCount}
+                      </span>
+                    )}
+
+                    {/* PRO badge for locked items */}
+                    {isLocked && (
+                      <span className="px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide bg-gradient-to-r from-primary/15 to-accent/15 text-primary border border-primary/20 rounded shrink-0">
+                        PRO
                       </span>
                     )}
 

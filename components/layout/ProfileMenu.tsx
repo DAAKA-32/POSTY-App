@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLinkedIn } from "@/contexts/LinkedInContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { PlanBadge } from "@/components/subscription/PlanInfoCard";
+import { PlanType, meetsMinimumPlan } from "@/lib/plans";
 import Image from "next/image";
 
 interface ProfileMenuProps {
@@ -14,13 +15,22 @@ interface ProfileMenuProps {
   onNavigate?: () => void;
 }
 
-const menuItems = [
+const menuItems: {
+  name: string;
+  href: string;
+  iconColor: string;
+  hoverBg: string;
+  hoverText: string;
+  icon: React.ReactNode;
+  requiredPlan?: PlanType;
+}[] = [
   {
     name: "Dashboard",
     href: "/dashboard",
     iconColor: "text-emerald-500",
     hoverBg: "hover:bg-emerald-500/10",
     hoverText: "hover:text-emerald-600 dark:hover:text-emerald-400",
+    requiredPlan: "pro",
     icon: (
       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -94,7 +104,7 @@ const menuItems = [
 export default function ProfileMenu({ isCollapsed = false, onNavigate }: ProfileMenuProps) {
   const { user, userProfile } = useAuth();
   const { profilePicture: linkedInPhoto } = useLinkedIn();
-  const { planConfig, isTestMode } = useSubscription();
+  const { planConfig, isTestMode, currentPlan } = useSubscription();
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -279,33 +289,44 @@ export default function ProfileMenu({ isCollapsed = false, onNavigate }: Profile
 
         {/* Menu items */}
         <div className="p-1.5">
-          {menuItems.map((item) => (
-            <Link
-              key={item.name}
-              href={item.name === "Paramètres" ? `/settings?from=${encodeURIComponent(pathname)}` : item.href}
-              onClick={handleItemClick}
-              className={`
-                flex items-center gap-3 px-3 py-2.5 rounded-lg
-                text-gray-900 dark:text-gray-200 text-sm
-                transition-all duration-200 group/item
-                hover:translate-x-0.5 active:scale-[0.98]
-                ${item.hoverBg} ${item.hoverText}
-              `}
-              role="menuitem"
-            >
-              {/* Colored icon */}
-              <span
+          {menuItems.map((item) => {
+            const isLocked = item.requiredPlan && !meetsMinimumPlan(currentPlan as PlanType, item.requiredPlan);
+
+            return (
+              <Link
+                key={item.name}
+                href={item.name === "Paramètres" ? `/settings?from=${encodeURIComponent(pathname)}` : item.href}
+                onClick={handleItemClick}
                 className={`
-                  transition-all duration-200
-                  ${item.iconColor}
-                  group-hover/item:scale-110
+                  flex items-center gap-3 px-3 py-2.5 rounded-lg
+                  text-sm transition-all duration-200 group/item
+                  ${isLocked
+                    ? "text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-dark-hover"
+                    : `text-gray-900 dark:text-gray-200 hover:translate-x-0.5 active:scale-[0.98] ${item.hoverBg} ${item.hoverText}`
+                  }
                 `}
+                role="menuitem"
               >
-                {item.icon}
-              </span>
-              <span className="font-medium transition-colors duration-200">{item.name}</span>
-            </Link>
-          ))}
+                {/* Colored icon */}
+                <span
+                  className={`
+                    transition-all duration-200
+                    ${isLocked ? "text-gray-400 dark:text-gray-500" : item.iconColor}
+                    group-hover/item:scale-110
+                  `}
+                >
+                  {item.icon}
+                </span>
+                <span className="font-medium transition-colors duration-200 flex-1">{item.name}</span>
+                {/* PRO badge for locked items */}
+                {isLocked && (
+                  <span className="px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide bg-gradient-to-r from-primary/15 to-accent/15 text-primary border border-primary/20 rounded">
+                    PRO
+                  </span>
+                )}
+              </Link>
+            );
+          })}
         </div>
 
         {/* Arrow indicator for collapsed mode */}
