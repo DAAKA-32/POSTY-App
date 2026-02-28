@@ -109,6 +109,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Free plan cannot publish with video
+    if (userPlan === "free") {
+      return NextResponse.json(
+        { error: "feature_locked", message: "La publication avec vidéo nécessite le plan Pro ou Max.", requiredPlan: "pro" },
+        { status: 403 }
+      );
+    }
+
     // ── LinkedIn connection ────────────────────────────────────────────
     const connection = await getLinkedInConnectionAdmin(userId);
 

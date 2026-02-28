@@ -31,6 +31,12 @@ export default function ProfilePlanCard({
       icon: "text-gray-500 dark:text-text-muted",
       border: "border-gray-200 dark:border-dark-border",
     },
+    free: {
+      bg: "bg-gray-50 dark:bg-dark-card",
+      badge: "bg-gray-100 dark:bg-dark-hover text-gray-600 dark:text-text-secondary",
+      icon: "text-gray-500 dark:text-text-muted",
+      border: "border-gray-200 dark:border-dark-border",
+    },
     pro: {
       bg: "bg-[#F8935D]/5 dark:bg-primary/5",
       badge: "bg-[#F8935D]/10 dark:bg-primary/20 text-primary dark:text-primary",

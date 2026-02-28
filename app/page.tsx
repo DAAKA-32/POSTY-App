@@ -6,8 +6,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence, useReducedMotion, useInView, useScroll, useTransform, useMotionValue, useSpring, useMotionTemplate } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
-import { getAllPlans, getPaidPlans, PlanConfig, PLAN_TAGLINES, getPlanFeaturesUnified, getCTALabel, getSavingsText, FeatureItem } from "@/lib/plans";
+import { getAllPlans, getPaidPlans, PlanConfig, GUARANTEE_PERIOD_DAYS } from "@/lib/plans";
 import BillingToggle from "@/components/ui/BillingToggle";
+import PricingCard from "@/components/pricing/PricingCard";
+import PricingTrustBadges from "@/components/pricing/PricingTrustBadges";
 import { useScrollLock } from "@/hooks/useScrollLock";
 import AnimatedMacBook from "@/components/landing/AnimatedMacBook";
 import AuroraBackground from "@/components/landing/AuroraBackground";
@@ -4179,373 +4181,56 @@ function FounderSection() {
 }
 
 // =============================================================================
-// PRICING SECTION - Replicated from Subscription Page
+// PRICING SECTION - Uses shared PricingCard component
 // =============================================================================
-const PLANS = getPaidPlans();
-
-// Feature item component for pricing cards - responsive for 2-col mobile
-function FeatureListItem({ feature, index }: { feature: FeatureItem; index: number }) {
-  return (
-    <motion.li
-      initial={{ opacity: 0, x: -10 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: 0.4 + index * 0.05 }}
-      className="flex items-start gap-1.5 sm:gap-2 md:gap-3"
-    >
-      <div className={`
-        flex-shrink-0 w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded-full flex items-center justify-center mt-0.5
-        ${feature.included
-          ? "bg-green-500/20 text-green-600"
-          : "bg-red-500/15 text-red-500"
-        }
-      `}>
-        {feature.included ? (
-          <svg className="w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-          </svg>
-        ) : (
-          <svg className="w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-          </svg>
-        )}
-      </div>
-      <span className={`text-[11px] sm:text-xs md:text-sm ${
-        feature.included
-          ? "text-gray-600"
-          : "text-gray-400 line-through"
-      }`}>
-        {feature.text}
-      </span>
-    </motion.li>
-  );
-}
-
-// Pricing Card Component - matches subscription page
-interface PricingCardProps {
-  plan: PlanConfig;
-  billingPeriod: "monthly" | "yearly";
-  yearlySavings: number;
-  yearlyMonthlyPrice: number;
-  index: number;
-}
-
-function PricingCard({
-  plan,
-  billingPeriod,
-  yearlySavings,
-  yearlyMonthlyPrice,
-  index,
-}: PricingCardProps) {
-  const displayPrice = billingPeriod === "monthly" ? plan.price.monthly : yearlyMonthlyPrice;
-  const isPopular = plan.highlight;
-  const isPremium = plan.premium;
-  const allFeatures = getPlanFeaturesUnified(plan);
-  const planInfo = PLAN_TAGLINES[plan.id] || { tagline: plan.description, idealFor: "" };
-  const [isHovered, setIsHovered] = useState(false);
-  const isMobile = useIsMobile();
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 40, ...(isMobile ? {} : { filter: "blur(8px)" }) }}
-      whileInView={{ opacity: 1, y: 0, ...(isMobile ? {} : { filter: "blur(0px)" }) }}
-      viewport={{ once: true }}
-      transition={{
-        delay: index * 0.15,
-        duration: 0.5,
-        ease: [0.22, 1, 0.36, 1]
-      }}
-      onHoverStart={() => setIsHovered(true)}
-      onHoverEnd={() => setIsHovered(false)}
-      whileHover={!isPopular ? { y: -6, transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] } } : undefined}
-      className={`
-        relative rounded-lg sm:rounded-xl md:rounded-2xl overflow-hidden self-start
-        ${isPopular
-          ? "z-20 ring-2 ring-[#F8935D]/50 sm:ring-[#F8935D]/70"
-          : "z-10"
-        }
-      `}
-    >
-      {/* Enhanced glow effect for popular plan */}
-      {isPopular && (
-        <>
-          {/* Outer pulsing glow — static on mobile to save GPU */}
-          <div className={`absolute -inset-0.5 sm:-inset-1 rounded-xl sm:rounded-2xl md:rounded-3xl bg-gradient-to-r from-[#F8935D] via-[#F76B54] to-[#F8935D] opacity-50 sm:opacity-60 blur-lg sm:blur-xl ${isMobile ? "" : "animate-pulse"}`} />
-          {/* Inner animated gradient border */}
-          <div className={`absolute inset-0 rounded-lg sm:rounded-xl md:rounded-2xl p-[1px] sm:p-[2px] bg-gradient-to-br from-[#F8935D] via-[#F76B54] to-[#F8935D] bg-[length:200%_200%] ${isMobile ? "" : "animate-gradient-slow"}`}>
-            <div className="absolute inset-[1px] sm:inset-[2px] rounded-[7px] sm:rounded-[10px] md:rounded-[14px] bg-white" />
-          </div>
-        </>
-      )}
-
-      {/* Premium glow effect */}
-      {isPremium && (
-        <>
-          <div className="absolute -inset-0.5 rounded-lg sm:rounded-xl md:rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 opacity-20 sm:opacity-25 blur-md sm:blur-lg" />
-          <div className="absolute inset-0 rounded-lg sm:rounded-xl md:rounded-2xl bg-gradient-to-br from-amber-500/15 via-transparent to-orange-500/15 opacity-80" />
-        </>
-      )}
-
-      {/* Light color overlay on hover — plan-colored, no dark effect */}
-      <div
-        className={`
-          absolute inset-0 rounded-lg sm:rounded-xl md:rounded-2xl pointer-events-none transition-opacity duration-300
-          ${isPopular
-            ? "bg-[#F8935D]/[0.06]"
-            : isPremium
-              ? "bg-amber-500/[0.06]"
-              : "bg-[#F8935D]/[0.04]"
-          }
-          ${isHovered ? "opacity-100" : "opacity-0"}
-        `}
-      />
-
-      {/* Card background */}
-      <div className={`
-        relative p-2 sm:p-4 md:p-6 lg:p-8 rounded-lg sm:rounded-xl md:rounded-2xl flex flex-col h-full
-        transition-all duration-300 ease-out
-        ${isPopular
-          ? `bg-gradient-to-b from-[#F8935D]/10 via-white to-white ${isHovered ? "shadow-lg shadow-[#F8935D]/10" : ""}`
-          : isPremium
-            ? `bg-gradient-to-b from-amber-500/5 via-white to-white border sm:border-2 ${isHovered ? "border-amber-500/50 shadow-lg shadow-amber-500/10" : "border-amber-500/30"}`
-            : `bg-white border ${isHovered ? "border-[#F8935D]/30 shadow-md shadow-[#F8935D]/8" : "border-gray-200"}`
-        }
-      `}>
-        {/* ZONE 0: Badges */}
-        <div className="h-[24px] sm:h-[32px] md:h-[44px] flex items-start justify-center relative mb-1 sm:mb-2">
-          {isPopular && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="relative"
-            >
-              <div className={`absolute inset-0 bg-[#F8935D] rounded-full blur-md opacity-50 ${isMobile ? "" : "animate-pulse"}`} />
-              <div className="relative px-1.5 sm:px-3 md:px-4 py-0.5 sm:py-1 md:py-1.5 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white text-[10px] sm:text-xs md:text-sm font-semibold rounded-full shadow-lg shadow-[#F8935D]/30 flex items-center gap-0.5 sm:gap-1 md:gap-1.5">
-                <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                </svg>
-                <span className="hidden sm:inline">Le plus populaire</span>
-                <span className="inline sm:hidden">Top</span>
-              </div>
-            </motion.div>
-          )}
-
-          {isPremium && !isPopular && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-            >
-              <div className="px-1.5 sm:px-3 md:px-4 py-0.5 sm:py-1 md:py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] sm:text-xs md:text-sm font-semibold rounded-full shadow-lg shadow-amber-500/30 flex items-center gap-0.5 sm:gap-1 md:gap-1.5">
-                <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M5 2a2 2 0 00-2 2v14l3.5-2 3.5 2 3.5-2 3.5 2V4a2 2 0 00-2-2H5zm2.5 3a1.5 1.5 0 100 3 1.5 1.5 0 000-3zm6.207.293a1 1 0 00-1.414 0l-6 6a1 1 0 101.414 1.414l6-6a1 1 0 000-1.414zM12.5 10a1.5 1.5 0 100 3 1.5 1.5 0 000-3z" clipRule="evenodd" />
-                </svg>
-                Elite
-              </div>
-            </motion.div>
-          )}
-        </div>
-
-        {/* ZONE 1: Plan header */}
-        <div className="h-[50px] sm:h-[60px] md:h-[80px] text-center flex flex-col justify-center">
-          <h3 className={`text-sm sm:text-lg md:text-2xl font-bold mb-0.5 sm:mb-1 ${
-            isPremium ? "text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400" : "text-gray-900"
-          }`}>
-            {plan.name}
-          </h3>
-          <p className="text-[10px] sm:text-xs md:text-sm text-gray-500 line-clamp-1 sm:line-clamp-2">{planInfo.tagline}</p>
-          <p className={`text-[9px] sm:text-[10px] md:text-xs mt-0.5 sm:mt-1 hidden sm:block ${isPopular ? "text-[#F8935D]" : isPremium ? "text-amber-500" : "text-gray-400"}`}>
-            {planInfo.idealFor}
-          </p>
-        </div>
-
-        {/* ZONE 2: Price section */}
-        <div className="h-[70px] sm:h-[90px] md:h-[130px] text-center flex flex-col justify-center">
-          {/* Price display */}
-          <div className="h-[32px] sm:h-[42px] md:h-[56px] flex items-center justify-center">
-            <motion.div
-              key={`${plan.id}-${billingPeriod}`}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.15 }}
-              className="flex items-baseline justify-center gap-0.5 sm:gap-1"
-            >
-              <span className={`text-lg sm:text-2xl md:text-4xl lg:text-5xl font-bold tabular-nums ${
-                isPremium ? "text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400" : "text-gray-900"
-              }`}>
-                {displayPrice.toFixed(2).replace(".", ",")}
-              </span>
-              <span className="text-sm sm:text-base md:text-xl text-gray-900 font-medium">€</span>
-              <span className="text-gray-500 text-[10px] sm:text-xs md:text-sm">/mois</span>
-            </motion.div>
-          </div>
-
-          {/* Savings badge */}
-          <div className={`h-[32px] sm:h-[42px] md:h-[56px] flex flex-col items-center justify-center transition-opacity duration-200 ${
-            billingPeriod === "yearly" ? "opacity-100" : "opacity-0 pointer-events-none"
-          }`}>
-            <div className="inline-flex items-center gap-0.5 sm:gap-1 md:gap-1.5 px-1.5 sm:px-2 md:px-3 py-0.5 sm:py-1 bg-green-500/10 rounded-full border border-green-500/20">
-              <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <span className="text-[10px] sm:text-xs md:text-sm text-green-600 font-semibold">
-                {getSavingsText(plan.id) || `${yearlySavings.toFixed(0)}€`}
-              </span>
-            </div>
-            <p className="text-[9px] sm:text-[10px] md:text-xs text-gray-400 mt-0.5 sm:mt-1 hidden sm:block">
-              Facture {plan.price.yearly}€/an
-            </p>
-          </div>
-        </div>
-
-        {/* ZONE 3: CTA Button */}
-        <div className="h-[32px] sm:h-[42px] md:h-[56px] relative flex items-center mb-2 sm:mb-4 md:mb-6">
-          {/* Glow effect behind button for popular plan */}
-          {isPopular && (
-            <div className="absolute inset-0 bg-[#F8935D]/30 rounded-lg sm:rounded-xl blur-md sm:blur-xl" />
-          )}
-          {isPremium && (
-            <div className="absolute inset-0 bg-amber-500/20 rounded-lg sm:rounded-xl blur-md sm:blur-xl" />
-          )}
-
-          <motion.div
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="relative w-full h-full"
-          >
-            <Link
-              href="/signup"
-              className={`
-                relative w-full h-full flex items-center justify-center px-2 sm:px-3 md:px-4 rounded-lg sm:rounded-xl font-semibold text-[10px] sm:text-xs md:text-sm
-                transition-all duration-300 overflow-hidden
-                ${(isPopular || isPremium) ? "shimmer-cta" : ""}
-                ${isPopular
-                  ? "bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white shadow-md sm:shadow-lg shadow-[#F8935D]/30 hover:shadow-xl hover:shadow-[#F8935D]/40"
-                  : isPremium
-                    ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md sm:shadow-lg shadow-amber-500/30 hover:shadow-xl hover:shadow-amber-500/40"
-                    : "bg-gray-100 hover:bg-[#F8935D]/10 text-gray-900 border border-gray-200 hover:border-[#F8935D]/40 hover:text-[#F76B54]"
-                }
-              `}
-            >
-              <span className="relative z-10 flex items-center justify-center gap-1 sm:gap-2">
-                {getCTALabel(plan.id, billingPeriod === "yearly", true)}
-                <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 hidden sm:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                </svg>
-              </span>
-            </Link>
-          </motion.div>
-        </div>
-
-        {/* ZONE 4: Features list — ALL features visible */}
-        <div className="flex-1 pt-2 sm:pt-3 md:pt-4 border-t border-gray-200">
-          <ul className="space-y-1 sm:space-y-1.5 md:space-y-2.5">
-            {allFeatures.map((feature, idx) => (
-              <FeatureListItem key={idx} feature={feature} index={idx} />
-            ))}
-          </ul>
-        </div>
-
-        {/* ZONE 5: Trust badge */}
-        <div className="h-8 sm:h-10 md:h-12 mt-auto pt-2 sm:pt-2.5 md:pt-3 border-t border-gray-200 flex items-center justify-center">
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
-            className="text-[9px] sm:text-[10px] md:text-xs text-gray-400 flex items-center justify-center gap-0.5 sm:gap-1 md:gap-1.5"
-          >
-            <svg className="w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3.5 md:h-3.5 text-green-500 hidden sm:inline" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-            </svg>
-            <span className="hidden md:inline">Sans engagement &bull; Annulation à tout moment</span>
-            <span className="inline md:hidden">Sans engagement</span>
-          </motion.p>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
+const PLANS = getAllPlans();
 
 function PricingSection() {
-  const isMobile = useIsMobile();
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("yearly");
-
-  const getYearlyMonthlyPrice = (plan: PlanConfig) => {
-    return Math.round((plan.price.yearly / 12) * 100) / 100;
-  };
-
-  const getYearlySavings = (plan: PlanConfig) => {
-    return Math.round((plan.price.monthly * 12 - plan.price.yearly) * 100) / 100;
-  };
 
   return (
     <section id="pricing" className="py-16 md:py-24 2xl:py-28 px-4 sm:px-6 lg:px-8 2xl:px-12 overflow-hidden">
-      <div className="max-w-6xl 2xl:max-w-7xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20, scale: 0.97, ...(isMobile ? {} : { filter: "blur(8px)" }) }}
-          whileInView={{ opacity: 1, y: 0, scale: 1, ...(isMobile ? {} : { filter: "blur(0px)" }) }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.7, ease: premiumEase }}
-          className="text-center mb-12 2xl:mb-16"
-        >
-          <h2 className="text-3xl md:text-4xl lg:text-5xl 2xl:text-[3.25rem] font-bold mb-4">
-            <span className="text-silver-premium">Le prix d&apos;un café par jour.</span>{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
-              Le retour d&apos;un commercial à plein temps.
-            </span>
-          </h2>
-          <p className="text-gray-500 text-lg max-w-2xl mx-auto mb-10">
-            Un seul client signé via LinkedIn rembourse votre année entière. Quel plan correspond à vos ambitions ?
-          </p>
-
-          {/* Billing Toggle - Replicated from subscription page */}
-          <BillingToggle
-            isYearly={billingPeriod === "yearly"}
-            onChange={(isYearly) => setBillingPeriod(isYearly ? "yearly" : "monthly")}
-          />
-        </motion.div>
-
-        {/* Pricing cards container */}
-        <div className="max-w-4xl mx-auto">
-          {/* Cards Grid: 2 cols (Pro + Max) */}
-          <div className="grid grid-cols-2 gap-2 sm:gap-4 md:gap-6 lg:gap-8 items-start">
-            {PLANS.map((plan, index) => (
-              <div key={plan.id}>
-                <PricingCard
-                  plan={plan}
-                  billingPeriod={billingPeriod}
-                  yearlySavings={getYearlySavings(plan)}
-                  yearlyMonthlyPrice={getYearlyMonthlyPrice(plan)}
-                  index={index}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Trust Section */}
+      <div className="max-w-5xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          className="mt-16 text-center"
+          transition={{ duration: 0.6, ease: premiumEase }}
+          className="text-center mb-10 sm:mb-12 md:mb-14"
         >
-          <div className="flex flex-wrap justify-center gap-6 md:gap-10 text-gray-500 text-sm">
-            <div className="flex items-center gap-2">
-              <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-              </svg>
-              <span>Paiement sécurisé</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <svg className="w-5 h-5 text-[#F8935D]" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <span>Sans engagement</span>
-            </div>
-          </div>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4 leading-tight">
+            <span className="text-gray-900">Le prix d&apos;un café par jour.</span>{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
+              Le retour d&apos;un commercial à plein temps.
+            </span>
+          </h2>
+          <p className="text-gray-500 text-sm sm:text-base md:text-lg max-w-2xl mx-auto mb-8 sm:mb-10">
+            Un seul client signé via LinkedIn rembourse votre année entière. Quel plan correspond à vos ambitions ?
+          </p>
+
+          <BillingToggle
+            isYearly={billingPeriod === "yearly"}
+            onChange={(isYearly) => setBillingPeriod(isYearly ? "yearly" : "monthly")}
+            savingsLabel="2 mois offerts"
+            showSavings={true}
+          />
         </motion.div>
+
+        {/* Cards grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5 md:gap-6 lg:gap-8 max-w-5xl mx-auto items-start">
+          {PLANS.map((plan, index) => (
+            <PricingCard
+              key={plan.id}
+              plan={plan}
+              billingPeriod={billingPeriod}
+              index={index}
+              ctaHref="/signup"
+            />
+          ))}
+        </div>
+
+        {/* Trust badges */}
+        <PricingTrustBadges className="mt-10 sm:mt-12 md:mt-16" />
       </div>
     </section>
   );

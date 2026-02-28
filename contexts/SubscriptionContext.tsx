@@ -84,6 +84,7 @@ interface SubscriptionState {
 interface SubscriptionContextValue extends SubscriptionState {
   // Plan info
   currentPlan: PlanType | null;
+  isFreePlan: boolean;
   isProPlan: boolean;
   isMaxPlan: boolean;
 
@@ -142,8 +143,8 @@ const defaultUsage: UserUsage = {
 const defaultState: SubscriptionState = {
   subscription: defaultSubscription,
   usage: defaultUsage,
-  planConfig: getPlanConfig("pro"),
-  planLimits: getPlanLimits("pro"),
+  planConfig: getPlanConfig("free"),
+  planLimits: getPlanLimits("free"),
   isTestMode: false,
   testPlan: null,
   // Trial state
@@ -212,8 +213,8 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       if (rawPlan) {
         const lower = rawPlan.toLowerCase().trim();
         if (lower === "starter") stripePlan = "pro";
-        else if (lower === "pro" || lower === "max") stripePlan = lower as PlanType;
-        // "free" and unknown values → null
+        else if (lower === "free" || lower === "pro" || lower === "max") stripePlan = lower as PlanType;
+        // unknown values → null
       }
 
       // Founder override: founders get Max plan if they don't have an active Stripe subscription
@@ -286,8 +287,8 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       setState({
         subscription,
         usage,
-        planConfig: getPlanConfig(effectivePlan ?? "pro"),
-        planLimits: getPlanLimits(effectivePlan ?? "pro"),
+        planConfig: getPlanConfig(effectivePlan ?? "free"),
+        planLimits: getPlanLimits(effectivePlan ?? "free"),
         isTestMode,
         testPlan,
         // Trial state
@@ -477,6 +478,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
 
     // Plan info
     currentPlan: state.subscription.plan,
+    isFreePlan: state.subscription.plan === "free",
     isProPlan: state.subscription.plan === "pro",
     isMaxPlan: state.subscription.plan === "max",
 

@@ -267,13 +267,13 @@ export async function POST(request: NextRequest) {
           break;
         }
 
-        // Remove plan access: subscription is permanently canceled
+        // Downgrade to free plan: subscription is permanently canceled
         await updateUserSubscription(userId, {
-          plan: null,
+          plan: "free" as SubscriptionPlan,
           status: "canceled",
         });
 
-        console.log("Subscription deleted — plan access removed");
+        console.log("Subscription deleted — downgraded to free plan");
         break;
       }
 

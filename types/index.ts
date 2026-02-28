@@ -3,7 +3,7 @@ import { User as FirebaseUser } from "firebase/auth";
 
 // ============== SUBSCRIPTION TYPES ==============
 
-export type SubscriptionPlan = "pro" | "max";
+export type SubscriptionPlan = "free" | "pro" | "max";
 
 // ============== RESPONSE & GENERATION TYPES ==============
 

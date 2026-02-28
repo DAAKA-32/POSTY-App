@@ -188,6 +188,36 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // ========== FREE PLAN RESTRICTIONS ==========
+    if (userPlan === "free") {
+      // Block dual mode for free plan
+      if (requestDualMode) {
+        return new Response(
+          JSON.stringify({
+            error: "plan_required",
+            message: language === "fr"
+              ? "Le mode double réponse nécessite le plan Pro ou Max."
+              : "Dual response mode requires the Pro or Max plan.",
+            requiredPlan: "pro",
+          }),
+          { status: 403, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      // Block file attachments for free plan
+      if (fileAttachment) {
+        return new Response(
+          JSON.stringify({
+            error: "plan_required",
+            message: language === "fr"
+              ? "Les fichiers joints nécessitent le plan Max."
+              : "File attachments require the Max plan.",
+            requiredPlan: "max",
+          }),
+          { status: 403, headers: { "Content-Type": "application/json" } }
+        );
+      }
+    }
+
     // ========== PROMPT LENGTH ENFORCEMENT ==========
     const planLimits = getPlanLimits(userPlan);
     if (prompt.length > planLimits.maxCharactersPerPrompt) {

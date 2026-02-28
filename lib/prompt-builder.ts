@@ -33,7 +33,7 @@ export interface ProfileFields {
 
 type Language = "fr" | "en";
 type PostType = "storytelling" | "business";
-export type PlanTier = "pro" | "max" | null;
+export type PlanTier = "free" | "pro" | "max" | null;
 
 // ============== TONE → WRITING STYLE TRANSLATION ==============
 

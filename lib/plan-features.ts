@@ -44,9 +44,9 @@ function derivePlanFeatures(planId: PlanType): PlanFeatures {
 
   return {
     responseMode,
-    hasInsights: true, // All paid plans have insights
-    hasAnalysis: true, // All paid plans have analysis
-    hasImproveMode: true, // All paid plans have improve mode
+    hasInsights: true, // All plans have basic insights
+    hasAnalysis: planId !== "free", // Pro+ only
+    hasImproveMode: planId !== "free", // Pro+ only
     hasMultiPlatform: limits.allowedPlatforms.length > 2,
     hasAdaptiveTone: limits.hasPersonalizedResponses,
     hasAdvancedPersonalization: limits.hasAudienceTargeting,
@@ -57,6 +57,7 @@ function derivePlanFeatures(planId: PlanType): PlanFeatures {
 
 // Feature configuration derived from PLAN_CONFIGS
 export const PLAN_FEATURES: Record<SubscriptionPlan, PlanFeatures> = {
+  free: derivePlanFeatures("free"),
   pro: derivePlanFeatures("pro"),
   max: derivePlanFeatures("max"),
 };
@@ -65,7 +66,7 @@ export const PLAN_FEATURES: Record<SubscriptionPlan, PlanFeatures> = {
  * Get features available for a specific plan
  */
 export function getPlanFeatures(plan: SubscriptionPlan | null): PlanFeatures {
-  if (!plan) return PLAN_FEATURES.pro; // Safe default for unsubscribed users (they're blocked anyway)
+  if (!plan) return PLAN_FEATURES.free; // Safe default for users without a plan
   return PLAN_FEATURES[plan] || PLAN_FEATURES.pro;
 }
 
@@ -127,6 +128,7 @@ export function canAttachFiles(plan: SubscriptionPlan | null): boolean {
  * Get the minimum plan required for a feature
  */
 export function getMinPlanForFeature(feature: keyof PlanFeatures): SubscriptionPlan {
+  if (PLAN_FEATURES.free[feature]) return "free";
   if (PLAN_FEATURES.pro[feature]) return "pro";
   return "max";
 }

@@ -87,7 +87,7 @@ export async function saveLinkedInPostAdmin(
 // ============== QUOTA MANAGEMENT (SERVER-SIDE) ==============
 
 import { SubscriptionPlan } from "@/types";
-import { DAILY_MESSAGE_LIMITS, HOURLY_MESSAGE_LIMITS, HOURLY_WINDOW_MS, getFounderOverridePlan, PlanType } from "@/lib/plans";
+import { DAILY_MESSAGE_LIMITS, HOURLY_MESSAGE_LIMITS, HOURLY_WINDOW_MS, getFounderOverridePlan, PlanType, PLAN_CONFIGS } from "@/lib/plans";
 
 /**
  * Normalize plan name from Firestore to a valid PlanType.
@@ -96,7 +96,7 @@ import { DAILY_MESSAGE_LIMITS, HOURLY_MESSAGE_LIMITS, HOURLY_WINDOW_MS, getFound
 function normalizePlan(raw: string | null | undefined): SubscriptionPlan | null {
   if (!raw) return null;
   const lower = raw.toLowerCase().trim();
-  if (lower === "free") return null;
+  if (lower === "free") return "free";
   if (lower === "starter") return "pro";
   if (lower === "pro" || lower === "max") return lower as SubscriptionPlan;
   return null;
@@ -182,6 +182,35 @@ export async function checkUserQuotaAdmin(userId: string, authEmail?: string): P
   // No subscription = no generation
   if (!effectivePlan) {
     return defaultResult;
+  }
+
+  // ========== FREE PLAN: MONTHLY QUOTA ENFORCEMENT ==========
+  if (effectivePlan === "free") {
+    const monthlyLimit = PLAN_CONFIGS.free.limits.conversationsPerMonth;
+    const usageData = data.usage || {};
+    let usedThisMonth = usageData.conversationsThisMonth || 0;
+
+    // Reset monthly counter if different month
+    const monthStartDate = usageData.monthStartDate?.toDate?.();
+    if (monthStartDate) {
+      const now = new Date();
+      if (now.getUTCMonth() !== monthStartDate.getUTCMonth() ||
+          now.getUTCFullYear() !== monthStartDate.getUTCFullYear()) {
+        usedThisMonth = 0;
+      }
+    }
+
+    const remaining = Math.max(0, monthlyLimit - usedThisMonth);
+    const canGenerate = usedThisMonth < monthlyLimit;
+
+    return {
+      canGenerate,
+      plan: effectivePlan,
+      dailyLimit: monthlyLimit,
+      usedToday: usedThisMonth,
+      remaining,
+      reason: canGenerate ? undefined : `Limite mensuelle atteinte (${monthlyLimit} posts/mois)`,
+    };
   }
 
   const dailyLimit = DAILY_MESSAGE_LIMITS[effectivePlan] ?? 0;
@@ -360,10 +389,29 @@ export async function incrementUserQuotaAdmin(userId: string): Promise<void> {
   const cleanedTimestamps = existingTimestamps.filter((ts: number) => ts > windowStart);
   cleanedTimestamps.push(now);
 
+  // Monthly usage tracking (for free plan)
+  const usageData = data?.usage || {};
+  let monthlyCount = (usageData.conversationsThisMonth || 0) + 1;
+  const monthStartDate = usageData.monthStartDate?.toDate?.();
+  const currentDate = new Date();
+
+  // Reset if different month
+  if (monthStartDate &&
+      (currentDate.getUTCMonth() !== monthStartDate.getUTCMonth() ||
+       currentDate.getUTCFullYear() !== monthStartDate.getUTCFullYear())) {
+    monthlyCount = 1;
+  }
+
   await userRef.update({
     "quota.dailyMessageCount": newCount,
     "quota.lastMessageDate": Timestamp.fromDate(today),
     "quota.messageTimestamps": cleanedTimestamps,
+    "usage.conversationsThisMonth": monthlyCount,
+    "usage.monthStartDate": monthStartDate &&
+      currentDate.getUTCMonth() === monthStartDate.getUTCMonth() &&
+      currentDate.getUTCFullYear() === monthStartDate.getUTCFullYear()
+        ? usageData.monthStartDate
+        : Timestamp.fromDate(new Date(Date.UTC(currentDate.getUTCFullYear(), currentDate.getUTCMonth(), 1))),
   });
 }
 

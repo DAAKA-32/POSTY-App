@@ -43,7 +43,7 @@ export function isTestModeAllowed(_email?: string | null): boolean {
 }
 
 // Plan Types
-export type PlanType = "pro" | "max";
+export type PlanType = "free" | "pro" | "max";
 export type PaidPlanType = "pro" | "max"; // Plans that can be purchased/trialed
 export type PlanSource = "stripe" | "test" | "trial";
 export type SubscriptionStatus = "active" | "inactive" | "canceled" | "past_due" | "trialing";
@@ -52,8 +52,8 @@ export type SubscriptionStatus = "active" | "inactive" | "canceled" | "past_due"
 // TRIAL CONFIGURATION
 // ============================================
 
-/** Trial period duration in days */
-export const TRIAL_PERIOD_DAYS = 7;
+/** Trial period duration in days (disabled — Free plan replaces trial) */
+export const TRIAL_PERIOD_DAYS = 0;
 
 /** Money-back guarantee period in days (after first payment post-trial) */
 export const GUARANTEE_PERIOD_DAYS = 7;
@@ -94,7 +94,7 @@ export const PLATFORM_INFO: Record<Platform, PlatformInfo> = {
     icon: "linkedin",
     color: "#0A66C2",
     description: "Réseau professionnel #1",
-    minPlan: "pro",
+    minPlan: "free",
   },
   reddit: {
     id: "reddit",
@@ -130,7 +130,7 @@ export function getAllPlatforms(): Platform[] {
 // Get platforms available for a specific plan
 export function getPlatformsForPlan(plan: PlanType | null): Platform[] {
   if (!plan) return [];
-  const planOrder: Record<PlanType, number> = { pro: 1, max: 2 };
+  const planOrder: Record<PlanType, number> = { free: 0, pro: 1, max: 2 };
   const currentPlanLevel = planOrder[plan];
 
   return getAllPlatforms().filter(platform => {
@@ -208,6 +208,43 @@ export interface PlanConfig {
 // ============================================
 
 export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
+  free: {
+    id: "free",
+    name: "Free",
+    displayName: "Gratuit",
+    description: "Testez Posty gratuitement et publiez vos premiers posts LinkedIn",
+    price: {
+      monthly: 0,
+      yearly: 0,
+    },
+    limits: {
+      messagesPerDay: 3, // Soft daily cap (real limit is monthly)
+      messagesPerHour: 2, // Anti-abuse
+      conversationsPerWeek: -1,
+      conversationsPerMonth: 3, // 3 posts per month — primary enforcement
+      maxCharactersPerPrompt: 300,
+      maxRelations: 0,
+      responseQuality: "essential",
+      responseLength: "short",
+      canSchedulePosts: false,
+      canManageConversations: false,
+      hasPersonalizedResponses: false,
+      hasAudienceTargeting: false,
+      hasPriorityProcessing: false,
+      hasEarlyAccess: false,
+      hasDualResponseMode: false,
+      dualResponsesPerWeek: 0,
+      hasUrlAnalysis: false,
+      allowedPlatforms: ["linkedin"],
+      maxPlatformConnections: 1,
+      canPublishSimultaneously: false,
+      quotaResetPeriod: "monthly",
+    },
+    highlight: false,
+    premium: false,
+    trialDays: 0,
+  },
+
   pro: {
     id: "pro",
     name: "Pro",
@@ -282,10 +319,10 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
       canPublishSimultaneously: true, // Publish to multiple platforms at once
       quotaResetPeriod: "monthly",
     },
-    badge: "Elite",
+    badge: "Le plus performant",
     highlight: false,
     premium: true,
-    trialDays: 3,
+    trialDays: 0,
   },
 };
 
@@ -384,8 +421,8 @@ export function canConnectMorePlatforms(plan: PlanType, currentConnections: numb
  * Compare two plans - returns positive if plan1 > plan2
  */
 export function comparePlans(plan1: PlanType | null, plan2: PlanType | null): number {
-  const order: Record<string, number> = { pro: 1, max: 2 };
-  return (plan1 ? order[plan1] : 0) - (plan2 ? order[plan2] : 0);
+  const order: Record<string, number> = { free: 0, pro: 1, max: 2 };
+  return (plan1 ? (order[plan1] ?? 0) : -1) - (plan2 ? (order[plan2] ?? 0) : -1);
 }
 
 /**
@@ -411,7 +448,7 @@ export function getMinimumPlanForFeature(
     | "hasUrlAnalysis"
   >
 ): PlanType {
-  const plans: PlanType[] = ["pro", "max"];
+  const plans: PlanType[] = ["free", "pro", "max"];
   for (const plan of plans) {
     if (planHasFeature(plan, feature)) {
       return plan;
@@ -492,6 +529,7 @@ export function stripePriceToPlan(priceId: string): PlanType | null {
  */
 export function formatPlanPrice(plan: PlanType | null, interval: "monthly" | "yearly" = "monthly"): string {
   if (!plan) return "—";
+  if (plan === "free") return "Gratuit";
   const config = getPlanConfig(plan);
   const price = interval === "monthly" ? config.price.monthly : config.price.yearly;
   return `${price.toFixed(2).replace(".", ",")}€`;
@@ -519,6 +557,7 @@ export function getPaidPlans(): PlanConfig[] {
  * Calculate yearly savings in euros
  */
 export function getYearlySavings(plan: PlanType): number {
+  if (plan === "free") return 0;
   const config = getPlanConfig(plan);
   const monthlyTotal = config.price.monthly * 12;
   return Math.round((monthlyTotal - config.price.yearly) * 100) / 100;
@@ -528,6 +567,7 @@ export function getYearlySavings(plan: PlanType): number {
  * Calculate equivalent monthly price for yearly subscription
  */
 export function getYearlyMonthlyEquivalent(plan: PlanType): number {
+  if (plan === "free") return 0;
   const config = getPlanConfig(plan);
   if (config.price.yearly === 0) return 0;
   return Math.round((config.price.yearly / 12) * 100) / 100;
@@ -537,6 +577,7 @@ export function getYearlyMonthlyEquivalent(plan: PlanType): number {
  * Get savings as "X mois gratuits" text
  */
 export function getSavingsText(plan: PlanType): string | null {
+  if (plan === "free") return null;
   const config = getPlanConfig(plan);
   const savings = getYearlySavings(plan);
   const monthsSaved = Math.round(savings / config.price.monthly);
@@ -550,8 +591,10 @@ export function getSavingsText(plan: PlanType): string | null {
  * Get discount percentage for yearly subscription
  */
 export function getYearlyDiscountPercent(plan: PlanType): number {
+  if (plan === "free") return 0;
   const config = getPlanConfig(plan);
   const monthlyTotal = config.price.monthly * 12;
+  if (monthlyTotal === 0) return 0;
   const discount = ((monthlyTotal - config.price.yearly) / monthlyTotal) * 100;
   return Math.round(discount);
 }
@@ -565,13 +608,17 @@ export function getYearlyDiscountPercent(plan: PlanType): number {
  * Used by both Landing page and Subscription page
  */
 export const PLAN_TAGLINES: Record<PlanType, { tagline: string; idealFor: string }> = {
+  free: {
+    tagline: "Testez Posty et publiez vos premiers posts",
+    idealFor: "Idéal pour découvrir",
+  },
   pro: {
-    tagline: "Publiez chaque jour, signez vos premiers clients",
-    idealFor: "Indépendants et petites équipes",
+    tagline: "Publiez régulièrement, attirez vos premiers clients",
+    idealFor: "Pour les freelances et indépendants",
   },
   max: {
-    tagline: "Dominez LinkedIn sur toutes les plateformes",
-    idealFor: "Équipes ambitieuses et créateurs intensifs",
+    tagline: "Puissance maximale pour dominer votre marché",
+    idealFor: "Pour les agences et créateurs ambitieux",
   },
 };
 
@@ -580,11 +627,11 @@ export const PLAN_TAGLINES: Record<PlanType, { tagline: string; idealFor: string
  * These are the main differentiators that drive conversion
  */
 export const CORE_FEATURES = [
-  { key: "creations", label: "Créations par jour" },
-  { key: "quality", label: "Posts optimisés IA" },
-  { key: "scheduling", label: "Planification automatique (arrive très bientôt)" },
-  { key: "personalized", label: "Ton adapté à votre style" },
-  { key: "dualMode", label: "Storytelling + Business" },
+  { key: "creations", label: "Créations quotidiennes" },
+  { key: "quality", label: "Qualité de contenu IA" },
+  { key: "scheduling", label: "Programmation de posts" },
+  { key: "personalized", label: "Ton adapté à votre profil" },
+  { key: "dualMode", label: "Double format Story + Business" },
   { key: "multiplatform", label: "Multi-plateformes" },
 ] as const;
 
@@ -593,14 +640,14 @@ export const CORE_FEATURES = [
  * Displayed alongside core features in unified list
  */
 export const SECONDARY_FEATURES = [
-  { key: "prompts", label: "Prompts étendus" },
-  { key: "sharing", label: "Partage avec contacts" },
-  { key: "conversations", label: "Organisation des conversations" },
-  { key: "postAnalysis", label: "Analyse détaillée de posts" },
-  { key: "improveMode", label: "Mode \"Améliorer un post\"" },
-  { key: "priority", label: "Génération prioritaire (file VIP)" },
+  { key: "prompts", label: "Briefs personnalisés" },
+  { key: "sharing", label: "Collaboration & partage" },
+  { key: "conversations", label: "Gestion des conversations" },
+  { key: "postAnalysis", label: "Analyse de posts existants" },
+  { key: "improveMode", label: "Réécriture & amélioration de posts" },
+  { key: "priority", label: "Accès prioritaire (file VIP)" },
   { key: "fileAttachments", label: "Fichiers joints (images, PDF)" },
-  { key: "simultaneousPublish", label: "Publication simultanée 4 réseaux" },
+  { key: "simultaneousPublish", label: "Publication simultanée multi-réseaux" },
   { key: "earlyAccess", label: "Accès anticipé aux nouveautés" },
 ] as const;
 
@@ -620,12 +667,13 @@ export type UnifiedFeatureKey = typeof UNIFIED_FEATURES[number]["key"];
  * Get CTA button label based on plan - action-oriented
  */
 export function getCTALabel(planId: PlanType, isYearly: boolean, trialEligible: boolean = false): string {
+  if (planId === "free") return "Commencer gratuitement";
   if (trialEligible) {
     const days = PLAN_CONFIGS[planId]?.trialDays || TRIAL_PERIOD_DAYS;
-    return `Essayer ${days}j gratuitement`;
+    if (days > 0) return `Essayer ${days}j gratuitement`;
   }
-  if (planId === "pro") return "Commencer avec Pro";
-  if (planId === "max") return "Passer à Max";
+  if (planId === "pro") return "Démarrer avec Pro";
+  if (planId === "max") return "Tout débloquer";
   return "Choisir ce plan";
 }
 
@@ -696,15 +744,15 @@ function getDynamicFeatureLabel(key: string, plan: PlanConfig): string {
   switch (key) {
     case "prompts":
       if (limits.maxCharactersPerPrompt >= 1000) {
-        return `Prompts longs (jusqu'à ${limits.maxCharactersPerPrompt} car.)`;
+        return `Briefs détaillés (${limits.maxCharactersPerPrompt} car.)`;
       }
-      return `Prompts (${limits.maxCharactersPerPrompt} car.)`;
+      return `Briefs jusqu'à ${limits.maxCharactersPerPrompt} caractères`;
 
     case "dualMode":
       if (limits.dualResponsesPerWeek === -1) {
-        return "Storytelling + Business illimité";
+        return "Story + Business illimité";
       } else if (limits.dualResponsesPerWeek > 0) {
-        return `Storytelling + Business (${limits.dualResponsesPerWeek}/sem.)`;
+        return `Story + Business (${limits.dualResponsesPerWeek}/semaine)`;
       }
       return "";
 
@@ -715,12 +763,12 @@ function getDynamicFeatureLabel(key: string, plan: PlanConfig): string {
       } else if (platforms.length <= 2) {
         return platforms.map(p => PLATFORM_INFO[p]?.name || p).join(" + ");
       }
-      return `4 plateformes simultanées`;
+      return `4 réseaux connectés`;
     }
 
     case "sharing":
       if (limits.maxRelations === -1) {
-        return "Partage illimité";
+        return "Partage illimité avec votre équipe";
       } else if (limits.maxRelations > 1) {
         return `Partage avec ${limits.maxRelations} contacts`;
       }
@@ -728,15 +776,18 @@ function getDynamicFeatureLabel(key: string, plan: PlanConfig): string {
 
     case "quality":
       if (limits.responseQuality === "ultra") {
-        return "Posts IA ultra (réponses 2x plus longues)";
+        return "Posts IA ultra-précis, 2x plus complets";
       } else if (limits.responseQuality === "complete") {
-        return "Posts IA optimisés";
+        return "Posts IA optimisés pour l'engagement";
       }
       return "";
 
     case "creations":
       if (limits.messagesPerDay === -1 || limits.messagesPerDay >= 500) {
-        return "Création illimitée";
+        return "Créations illimitées, zéro quota";
+      }
+      if (limits.quotaResetPeriod === "monthly" && limits.conversationsPerMonth > 0) {
+        return `${limits.conversationsPerMonth} créations par mois`;
       }
       return `${limits.messagesPerDay} créations par jour`;
 
@@ -785,6 +836,84 @@ export function getPlanFeaturesUnified(plan: PlanConfig): FeatureItem[] {
       included: getFeatureIncluded(feature.key, plan),
     };
   });
+}
+
+/**
+ * Comparison table data — data-driven from UNIFIED_FEATURES.
+ * Returns one row per feature with values for each plan.
+ */
+export interface ComparisonRow {
+  label: string;
+  values: Record<PlanType, { text: string; included: boolean }>;
+}
+
+export function getComparisonData(): ComparisonRow[] {
+  const plans = getAllPlans();
+  return UNIFIED_FEATURES.map((feature) => ({
+    label: feature.label,
+    values: Object.fromEntries(
+      plans.map((plan) => {
+        const dynamicLabel = getDynamicFeatureLabel(feature.key, plan);
+        return [
+          plan.id,
+          {
+            text: dynamicLabel || feature.label,
+            included: getFeatureIncluded(feature.key, plan),
+          },
+        ];
+      })
+    ) as Record<PlanType, { text: string; included: boolean }>,
+  }));
+}
+
+/**
+ * Card features for pricing cards — short, benefit-oriented, 5-6 per plan.
+ * Uses progressive "Everything in X, plus:" pattern.
+ */
+export interface CardFeatureSet {
+  inheritFrom?: string; // "Tout dans Free, plus:" / "Tout dans Pro, plus:"
+  features: string[];
+}
+
+export function getPlanCardFeatures(planId: PlanType): CardFeatureSet {
+  switch (planId) {
+    case "free":
+      return {
+        features: [
+          "3 créations par mois",
+          "LinkedIn uniquement",
+          "Génération IA basique",
+          "Publication texte",
+          "Prompts jusqu'à 300 caractères",
+        ],
+      };
+    case "pro":
+      return {
+        inheritFrom: "Tout dans Free, plus :",
+        features: [
+          "60 créations par jour",
+          "Programmation automatique",
+          "Mode Storytelling + Business",
+          "Analyse et amélioration de posts",
+          "LinkedIn + Reddit",
+          "Ton adapté à votre profil",
+        ],
+      };
+    case "max":
+      return {
+        inheritFrom: "Tout dans Pro, plus :",
+        features: [
+          "Créations illimitées, zéro quota",
+          "IA ultra-précise, posts 2x plus riches",
+          "4 réseaux + publication simultanée",
+          "Prompts détaillés (3 000 car.)",
+          "Pièces jointes (images, PDF)",
+          "Traitement prioritaire",
+        ],
+      };
+    default:
+      return { features: [] };
+  }
 }
 
 /**

@@ -83,7 +83,7 @@ export async function getUserSubscriptionData(userId: string): Promise<Subscript
     // Map old plan names to new ones
     let stripePlan: PlanType | null = null;
     if (subscriptionData.plan === "starter") stripePlan = "pro";
-    else if (subscriptionData.plan === "free") stripePlan = null;
+    else if (subscriptionData.plan === "free") stripePlan = "free";
     else if (subscriptionData.plan === "pro" || subscriptionData.plan === "max") {
       stripePlan = subscriptionData.plan as PlanType;
     }

@@ -53,6 +53,11 @@ const PLAN_STYLES: Record<string, { gradient: string; badge: string; glow: strin
     badge: "bg-gray-500/20 text-gray-400 border-gray-500/30",
     glow: "",
   },
+  free: {
+    gradient: "from-gray-500/20 to-gray-600/20",
+    badge: "bg-gray-500/20 text-gray-400 border-gray-500/30",
+    glow: "",
+  },
   pro: {
     gradient: "from-primary/20 to-accent/20",
     badge: "bg-primary/20 text-primary border-primary/30",
@@ -91,7 +96,7 @@ export default function PlanInfoCard({
     );
   }
 
-  const styles = PLAN_STYLES[currentPlan ?? "none"];
+  const styles = PLAN_STYLES[currentPlan ?? "none"] ?? PLAN_STYLES.none;
   const hasNoPlan = !currentPlan;
   const nextPlan = hasNoPlan ? "pro" : isMaxPlan ? null : "max";
   const nextPlanConfig = nextPlan ? getPlanConfig(nextPlan) : null;
@@ -233,7 +238,7 @@ export function PlanBadge({ className = "" }: { className?: string }) {
     );
   }
 
-  const styles = PLAN_STYLES[currentPlan ?? "none"];
+  const styles = PLAN_STYLES[currentPlan ?? "none"] ?? PLAN_STYLES.none;
 
   return (
     <Link href="/subscription" className={`inline-flex items-center gap-1.5 ${className}`}>

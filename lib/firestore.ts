@@ -28,7 +28,7 @@ import { PlanType, DAILY_MESSAGE_LIMITS, getFounderOverridePlan } from "./plans"
 function normalizePlanName(raw: string | null | undefined): SubscriptionPlan | null {
   if (!raw) return null;
   const lower = raw.toLowerCase().trim();
-  if (lower === "free") return null;
+  if (lower === "free") return "free";
   if (lower === "starter") return "pro";
   if (lower === "pro" || lower === "max") return lower as SubscriptionPlan;
   return null;
@@ -51,7 +51,23 @@ export async function createUserProfile(
     role: "",
     linkedinStyle: "",
     onboardingComplete: false,
+    subscription: {
+      plan: "free",
+      status: "active",
+    },
     createdAt: serverTimestamp(),
+  });
+}
+
+/**
+ * Activate Free plan for a user — ensures subscription is set correctly in Firestore.
+ * Idempotent: safe to call multiple times.
+ */
+export async function activateFreePlan(userId: string): Promise<void> {
+  const userRef = doc(db, "users", userId);
+  await updateDoc(userRef, {
+    "subscription.plan": "free",
+    "subscription.status": "active",
   });
 }
 
