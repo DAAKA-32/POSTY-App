@@ -77,7 +77,7 @@ export default function ImmersiveDemoView({
             clearInterval(interval);
             setIsTyping(false);
           }
-        }, 15); // Fast but smooth
+        }, 30); // ~33fps — smooth without excessive state updates
 
         previousResponseRef.current = aiResponse;
         return () => clearInterval(interval);

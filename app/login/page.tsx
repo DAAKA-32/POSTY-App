@@ -25,39 +25,36 @@ const containerVariants = {
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 20, filter: "blur(8px)" },
+  hidden: { opacity: 0, y: 15 },
   visible: {
     opacity: 1,
     y: 0,
-    filter: "blur(0px)",
     transition: {
-      duration: 0.6,
+      duration: 0.45,
       ease: smoothEase,
     },
   },
 };
 
 const logoVariants = {
-  hidden: { opacity: 0, scale: 0.8, filter: "blur(10px)" },
+  hidden: { opacity: 0, scale: 0.9 },
   visible: {
     opacity: 1,
     scale: 1,
-    filter: "blur(0px)",
     transition: {
-      duration: 0.7,
+      duration: 0.5,
       ease: smoothEase,
     },
   },
 };
 
 const slideInRight = {
-  hidden: { opacity: 0, x: 60, filter: "blur(10px)" },
+  hidden: { opacity: 0, x: 40 },
   visible: {
     opacity: 1,
     x: 0,
-    filter: "blur(0px)",
     transition: {
-      duration: 0.7,
+      duration: 0.5,
       ease: smoothEase,
     },
   },
@@ -147,7 +144,7 @@ export default function LoginPage() {
             opacity: [0.08, 0.15, 0.08],
             scale: [1, 1.12, 1],
           }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
           className="absolute top-1/4 -right-1/4 w-[45%] h-[45%] bg-gradient-to-br from-pink-500/10 to-rose-500/8 rounded-full blur-[120px]"
         />
         {/* VIOLET premium - center */}
@@ -157,7 +154,7 @@ export default function LoginPage() {
             opacity: [0.06, 0.12, 0.06],
             scale: [1, 1.08, 1],
           }}
-          transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+          transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 1 }}
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[50%] h-[50%] bg-gradient-to-br from-violet-500/8 to-purple-500/6 rounded-full blur-[100px]"
         />
         {/* VERT success - bottom left */}
@@ -167,7 +164,7 @@ export default function LoginPage() {
             opacity: [0.07, 0.13, 0.07],
             scale: [1, 1.1, 1],
           }}
-          transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 3 }}
+          transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
           className="absolute bottom-0 -left-1/4 w-[40%] h-[40%] bg-gradient-to-br from-emerald-500/10 to-green-500/8 rounded-full blur-[90px]"
         />
         {/* BLEU confiance - bottom right */}
@@ -177,7 +174,7 @@ export default function LoginPage() {
             opacity: [0.08, 0.14, 0.08],
             scale: [1, 1.09, 1],
           }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 4 }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 2 }}
           className="absolute bottom-0 -right-1/4 w-[45%] h-[45%] bg-gradient-to-br from-blue-500/9 to-cyan-500/7 rounded-full blur-[110px]"
         />
         {/* Grid pattern overlay */}
@@ -244,13 +241,13 @@ export default function LoginPage() {
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1, ease: smoothEase }}
+              transition={{ duration: 0.7, ease: smoothEase }}
               className="absolute top-1/4 left-1/4 w-[300px] h-[300px] bg-warm-orange/10 rounded-full blur-[80px]"
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1, delay: 0.2, ease: smoothEase }}
+              transition={{ duration: 0.7, delay: 0.1, ease: smoothEase }}
               className="absolute bottom-1/4 right-1/4 w-[250px] h-[250px] bg-warm-coral/10 rounded-full blur-[60px]"
             />
           </div>
@@ -279,7 +276,7 @@ export default function LoginPage() {
               <motion.div
                 initial={{ opacity: 0, scale: 0.5 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.8, delay: 0.3, ease: smoothEase }}
+                transition={{ duration: 0.5, delay: 0.15, ease: smoothEase }}
                 className="absolute -inset-4 bg-gradient-to-br from-warm-orange/30 to-warm-coral/30 rounded-3xl blur-2xl -z-10"
               />
             </motion.div>
@@ -298,7 +295,7 @@ export default function LoginPage() {
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.5, duration: 0.5, ease: smoothEase }}
+            transition={{ delay: 0.2, duration: 0.4, ease: smoothEase }}
             className="absolute top-6 left-6"
           >
             <Link
@@ -326,7 +323,7 @@ export default function LoginPage() {
           <motion.div
             initial={{ opacity: 0, y: 30, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.2, ease: smoothEase }}
+            transition={{ duration: 0.45, delay: 0.1, ease: smoothEase }}
             className="w-full max-w-md"
           >
             <AuthPanel initialMode={initialMode} onSuccess={() => {}} />
@@ -337,7 +334,7 @@ export default function LoginPage() {
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.6, ease: smoothEase }}
+              transition={{ duration: 0.4, delay: 0.25, ease: smoothEase }}
               className="py-6"
             >
               <div className="flex gap-4 text-xs text-text-muted justify-center">

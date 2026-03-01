@@ -215,35 +215,20 @@ function Navbar() {
     {/* Outer fixed container — always full width for positioning */}
     <div className={`fixed top-0 left-0 right-0 z-50 pointer-events-none transition-colors duration-700 ${isScrolled && !isMenuOpen ? "bg-[#FEF3EE]" : ""}`}>
       {/* Dynamic container — always visible, border/bg on scroll */}
-      <motion.nav
-        initial={false}
-        animate={{
-          paddingLeft: isScrolled && !isMenuOpen ? "16px" : "0px",
-          paddingRight: isScrolled && !isMenuOpen ? "16px" : "0px",
-          paddingTop: isScrolled && !isMenuOpen ? "12px" : "0px",
-        }}
-        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-        className="w-full pointer-events-auto"
+      <nav
+        className={`w-full pointer-events-auto transition-[padding] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+          isScrolled && !isMenuOpen ? "px-4 pt-3" : "px-0 pt-0"
+        }`}
       >
-        <motion.div
-          initial={false}
-          animate={{
-            maxWidth: isScrolled && !isMenuOpen ? "1100px" : "100%",
-            borderRadius: isScrolled && !isMenuOpen ? "20px" : "0px",
-          }}
-          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+        <div
           className={`
-            mx-auto
+            mx-auto transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]
+            ${isScrolled && !isMenuOpen ? "max-w-[1100px] rounded-[20px]" : "max-w-full rounded-none"}
             ${isScrolled || isMenuOpen
               ? "bg-white backdrop-blur-xl shadow-md shadow-gray-900/[0.05] border border-gray-200/50"
               : "bg-transparent border border-transparent"
             }
           `}
-          style={{
-            transitionProperty: "background-color, box-shadow, border-color, backdrop-filter",
-            transitionDuration: "700ms",
-            transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
-          }}
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16 md:h-[68px]">
@@ -324,8 +309,8 @@ function Navbar() {
               </button>
             </div>
           </div>
-        </motion.div>
-      </motion.nav>
+        </div>
+      </nav>
     </div>
 
     {/* Mobile Full-Screen Menu — outside <nav> to avoid backdrop-blur containment */}
@@ -563,7 +548,7 @@ function HeroSection() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.5, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.45, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
               className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/80 backdrop-blur-md border border-gray-200/60 shadow-lg shadow-gray-200/30 mb-6 lg:mb-8"
             >
               <span className="relative flex h-2 w-2">
@@ -595,7 +580,7 @@ function HeroSection() {
                   <motion.span
                     initial={{ scaleX: 0 }}
                     animate={isInView ? { scaleX: 1 } : {}}
-                    transition={{ delay: 0.8, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                    transition={{ delay: 0.5, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                     className="absolute -bottom-1 left-0 right-0 h-[3px] bg-gradient-to-r from-[#F8935D] to-[#F76B54] rounded-full origin-left"
                   />
                 </span>
@@ -609,7 +594,7 @@ function HeroSection() {
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.6, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.5, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
               className="mt-5 lg:mt-6 text-lg lg:text-xl text-gray-600 max-w-xl mx-auto lg:mx-0 leading-relaxed"
             >
               Décrivez votre objectif. Posty génère un post LinkedIn{" "}
@@ -622,7 +607,7 @@ function HeroSection() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.6, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.5, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
               className="mt-8 lg:mt-10 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
             >
               <motion.div
@@ -658,7 +643,7 @@ function HeroSection() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.6, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.5, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
               className="mt-8 lg:mt-10 flex flex-wrap items-center gap-6 justify-center lg:justify-start text-sm text-gray-500"
             >
               <span className="flex items-center gap-2">
@@ -692,7 +677,7 @@ function HeroSection() {
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             animate={isInView ? { opacity: 1, x: 0 } : {}}
-            transition={{ duration: 0.7, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
             style={{ y: prefersReducedMotion ? 0 : deviceY }}
             className="relative order-1 lg:order-2"
           >
@@ -707,7 +692,7 @@ function HeroSection() {
               <motion.div
                 initial={{ opacity: 0, y: 40 }}
                 animate={isInView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.6, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ duration: 0.5, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
                 className="relative z-20 w-[90px] sm:w-[110px] md:w-[140px] lg:w-[160px] xl:w-[180px] flex-shrink-0"
               >
                 {/* Floating animation */}
@@ -734,7 +719,7 @@ function HeroSection() {
               <motion.div
                 initial={{ opacity: 0, y: 40 }}
                 animate={isInView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.6, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ duration: 0.5, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
                 className="relative z-10 w-[220px] sm:w-[280px] md:w-[380px] lg:w-[420px] xl:w-[500px]"
               >
                 {/* Subtle floating animation */}
@@ -762,7 +747,7 @@ function HeroSection() {
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={isInView ? { opacity: 1, scale: 1, y: 0 } : {}}
-              transition={{ duration: 0.5, delay: 0.7, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.45, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
               className="hidden lg:block absolute -left-4 xl:-left-8 top-1/4 z-30"
             >
               <motion.div
@@ -790,7 +775,7 @@ function HeroSection() {
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={isInView ? { opacity: 1, scale: 1, y: 0 } : {}}
-              transition={{ duration: 0.5, delay: 0.9, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.45, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
               className="hidden lg:block absolute -right-2 xl:right-4 bottom-1/4 z-30"
             >
               <motion.div
