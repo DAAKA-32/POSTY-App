@@ -4100,7 +4100,7 @@ function FounderSection() {
               aria-label="Voir le profil LinkedIn d'Emilien Nepveu"
             >
               <div className="w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden ring-4 ring-white shadow-xl shadow-gray-200/50">
-                <Image src="/founder.jpg" alt="Emilien Nepveu" width={64} height={64} className="w-full h-full object-cover" />
+                <Image src="/ceo.png" alt="Emilien Nepveu" width={64} height={64} className="w-full h-full object-cover" />
               </div>
             </Link>
             <Link
