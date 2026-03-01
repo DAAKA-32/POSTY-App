@@ -4099,8 +4099,8 @@ function FounderSection() {
               className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F8935D] focus-visible:ring-offset-2"
               aria-label="Voir le profil LinkedIn d'Emilien Nepveu"
             >
-              <div className="w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden ring-4 ring-white shadow-xl shadow-gray-200/50">
-                <Image src="/ceo.png" alt="Emilien Nepveu" width={64} height={64} className="w-full h-full object-cover" />
+              <div className="w-18 h-18 md:w-20 md:h-20 rounded-full overflow-hidden ring-4 ring-white shadow-xl shadow-gray-200/50">
+                <Image src="/ceo.jpg" alt="Emilien Nepveu" width={80} height={80} className="w-full h-full object-cover" />
               </div>
             </Link>
             <Link
@@ -4110,8 +4110,8 @@ function FounderSection() {
               className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F8935D] focus-visible:ring-offset-2"
               aria-label="Voir le profil de Côme Maubert"
             >
-              <div className="w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden ring-4 ring-white shadow-xl shadow-gray-200/50">
-                <Image src="/cmo.jpg" alt="Côme Maubert" width={64} height={64} className="w-full h-full object-cover" />
+              <div className="w-18 h-18 md:w-20 md:h-20 rounded-full overflow-hidden ring-4 ring-white shadow-xl shadow-gray-200/50">
+                <Image src="/cmo.jpg" alt="Côme Maubert" width={80} height={80} className="w-full h-full object-cover" />
               </div>
             </Link>
           </div>
