@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence, useMotionValue, useTransform, useDragControls, PanInfo } from "framer-motion";
 import { X, Sparkles, ArrowRight, Check } from "lucide-react";
 import { PostTemplate } from "./PostTemplates";
+import { useScrollLock } from "@/hooks/useScrollLock";
 
 interface TemplateFillerModalProps {
   isOpen: boolean;
@@ -128,6 +129,7 @@ export default function TemplateFillerModal({
   const modalRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
+  useScrollLock(isOpen);
 
   // Drag-to-dismiss (mobile only)
   const dragControls = useDragControls();
@@ -169,19 +171,15 @@ export default function TemplateFillerModal({
     }
   }, [isOpen, isMobile]);
 
-  // Lock body scroll when modal is open
+  // Background blur class (visual only, scroll handled by useScrollLock)
   useEffect(() => {
     if (isOpen) {
       document.body.classList.add("template-modal-open");
-      document.body.style.overflow = "hidden";
     } else {
       document.body.classList.remove("template-modal-open");
-      document.body.style.overflow = "";
     }
-
     return () => {
       document.body.classList.remove("template-modal-open");
-      document.body.style.overflow = "";
     };
   }, [isOpen]);
 

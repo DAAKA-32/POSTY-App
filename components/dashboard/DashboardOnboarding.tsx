@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useScrollLock } from "@/hooks/useScrollLock";
 
 interface DashboardOnboardingProps {
   onComplete: () => void;
@@ -46,6 +47,7 @@ const steps = [
 ];
 
 export default function DashboardOnboarding({ onComplete }: DashboardOnboardingProps) {
+  useScrollLock(true);
   const [currentStep, setCurrentStep] = useState(0);
 
   const handleNext = () => {

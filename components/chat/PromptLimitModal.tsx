@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { PlanType, getPlanConfig, getPlanLimits } from "@/lib/plans";
+import { useScrollLock } from "@/hooks/useScrollLock";
 
 interface PromptLimitModalProps {
   isOpen: boolean;
@@ -32,6 +33,7 @@ export default function PromptLimitModal({
   maxLength,
 }: PromptLimitModalProps) {
   const router = useRouter();
+  useScrollLock(isOpen);
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {

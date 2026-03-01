@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useScrollLock } from "@/hooks/useScrollLock";
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ interface UpgradeModalProps {
  */
 export default function UpgradeModal({ isOpen, onClose, trigger = "quota" }: UpgradeModalProps) {
   const { t } = useLanguage();
+  useScrollLock(isOpen);
 
   // Different messaging based on trigger
   const content = {

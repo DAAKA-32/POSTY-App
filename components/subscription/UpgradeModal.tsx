@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuota } from "@/contexts/QuotaContext";
+import { useScrollLock } from "@/hooks/useScrollLock";
 import { getPlanConfig, getPlanCoreFeatures, GUARANTEE_PERIOD_DAYS } from "@/lib/plans";
 import Button from "@/components/ui/Button";
 
@@ -13,6 +14,7 @@ interface UpgradeModalProps {
 
 export default function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
   const router = useRouter();
+  useScrollLock(isOpen);
   const { currentPlan, dailyLimit, messagesUsedToday, resetsAt } = useQuota();
 
   const proPlan = getPlanConfig("pro");

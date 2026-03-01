@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import confetti from "canvas-confetti";
+import { useScrollLock } from "@/hooks/useScrollLock";
 
 interface WelcomeModalProps {
   isOpen: boolean;
@@ -24,6 +25,7 @@ export default function WelcomeModal({
   redirectDelay = REDIRECT_DELAY,
 }: WelcomeModalProps) {
   const router = useRouter();
+  useScrollLock(isOpen);
   const [isMounted, setIsMounted] = useState(false);
   const [progress, setProgress] = useState(0);
 

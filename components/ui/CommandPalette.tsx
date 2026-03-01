@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useScrollLock } from "@/hooks/useScrollLock";
 import { Post } from "@/types";
 import toast from "@/components/ui/Toast";
 
@@ -82,6 +83,7 @@ export default function CommandPalette({ posts = [] }: CommandPaletteProps) {
   const pathname = usePathname();
   const { user, signOut } = useAuth();
   const { t } = useLanguage();
+  useScrollLock(isOpen);
 
   // Build command items
   const commands = useMemo<CommandItem[]>(() => {

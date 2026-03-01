@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import Button from "./Button";
+import { useScrollLock } from "@/hooks/useScrollLock";
 
 interface WelcomePopupProps {
   isOpen: boolean;
@@ -10,6 +11,7 @@ interface WelcomePopupProps {
 }
 
 export default function WelcomePopup({ isOpen, onClose }: WelcomePopupProps) {
+  useScrollLock(isOpen);
   const [isClosing, setIsClosing] = useState(false);
 
   const handleClose = useCallback(() => {

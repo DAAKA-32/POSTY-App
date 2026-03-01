@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { useScrollLock } from "@/hooks/useScrollLock";
 import GoogleButton from "./GoogleButton";
 
 type AuthMode = "login" | "signup";
@@ -312,6 +313,7 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
   const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
   const [forgotPasswordSuccess, setForgotPasswordSuccess] = useState(false);
   const [forgotPasswordError, setForgotPasswordError] = useState(""); // Separate error state for modal
+  useScrollLock(showForgotPassword);
 
   // Focus states
   const [focusedField, setFocusedField] = useState<string | null>(null);

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useScrollLock } from "@/hooks/useScrollLock";
 
 interface SignupPromptModalProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ export default function SignupPromptModal({
 }: SignupPromptModalProps) {
   const { t } = useLanguage();
   const [showModal, setShowModal] = useState(false);
+  useScrollLock(showModal);
 
   // Delay before showing the modal
   useEffect(() => {

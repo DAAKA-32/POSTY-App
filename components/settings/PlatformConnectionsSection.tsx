@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useScrollLock } from "@/hooks/useScrollLock";
+import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useLinkedIn } from "@/contexts/LinkedInContext";
 import { useFacebook } from "@/contexts/FacebookContext";
@@ -42,6 +44,65 @@ const PlatformIcons: Record<Platform, React.FC<{ className?: string }>> = {
     </svg>
   ),
 };
+
+// Platform profile avatar with error fallback
+function PlatformProfileAvatar({
+  src,
+  name,
+  platform,
+  userPhotoURL,
+}: {
+  src?: string;
+  name: string;
+  platform: Platform;
+  userPhotoURL?: string | null;
+}) {
+  const [imgError, setImgError] = useState(false);
+  const colors = platformColors[platform];
+  const Icon = PlatformIcons[platform];
+
+  const handleError = useCallback(() => setImgError(true), []);
+
+  // Try: 1) platform profilePicture, 2) user's auth photoURL, 3) initial fallback
+  const photoUrl = !imgError && src ? src : null;
+  const fallbackUrl = !photoUrl && userPhotoURL ? userPhotoURL : null;
+
+  if (photoUrl) {
+    return (
+      <img
+        src={photoUrl}
+        alt={name}
+        className="w-8 h-8 rounded-full object-cover border-2 border-gray-200 dark:border-dark-border"
+        onError={handleError}
+        referrerPolicy="no-referrer"
+      />
+    );
+  }
+
+  if (fallbackUrl) {
+    return (
+      <img
+        src={fallbackUrl}
+        alt={name}
+        className="w-8 h-8 rounded-full object-cover border-2 border-gray-200 dark:border-dark-border"
+        onError={(e) => {
+          // If even the fallback fails, replace with initial
+          (e.target as HTMLImageElement).style.display = "none";
+          (e.target as HTMLImageElement).nextElementSibling?.classList.remove("hidden");
+        }}
+        referrerPolicy="no-referrer"
+      />
+    );
+  }
+
+  // Final fallback: colored circle with initial letter
+  const initial = name?.charAt(0)?.toUpperCase() || "?";
+  return (
+    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${colors.bg} border-2 border-gray-200 dark:border-dark-border`}>
+      <span className={`text-sm font-semibold ${colors.text}`}>{initial}</span>
+    </div>
+  );
+}
 
 // Animation variants
 const smoothEase = [0.22, 1, 0.36, 1] as const;
@@ -117,6 +178,7 @@ function ConnectionStatus({ connected, tokenValid }: { connected: boolean; token
 
 export default function PlatformConnectionsSection() {
   const { t } = useLanguage();
+  const { user } = useAuth();
   const { currentPlan, subscription } = useSubscription();
   const { connection: linkedInConnection, disconnectLinkedIn, isLoading: linkedInLoading } = useLinkedIn();
   const {
@@ -142,6 +204,7 @@ export default function PlatformConnectionsSection() {
   const [showLinkedInDisconnectModal, setShowLinkedInDisconnectModal] = useState(false);
   const [showFacebookDisconnectConfirm, setShowFacebookDisconnectConfirm] = useState(false);
   const [showThreadsDisconnectConfirm, setShowThreadsDisconnectConfirm] = useState(false);
+  useScrollLock(showFacebookDisconnectConfirm || showThreadsDisconnectConfirm);
 
   // Get all platforms access status
   const platformsStatus = getAllPlatformsAccessStatus(subscription);
@@ -278,17 +341,12 @@ export default function PlatformConnectionsSection() {
               <div className="space-y-3">
                 {/* Connected profile */}
                 <div className="flex items-center gap-3">
-                  {connectionData.profilePicture ? (
-                    <img
-                      src={connectionData.profilePicture}
-                      alt={connectionData.profileName}
-                      className="w-8 h-8 rounded-full object-cover border-2 border-gray-200 dark:border-dark-border"
-                    />
-                  ) : (
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${colors.bg}`}>
-                      <Icon className={`w-4 h-4 ${colors.text}`} />
-                    </div>
-                  )}
+                  <PlatformProfileAvatar
+                    src={connectionData.profilePicture}
+                    name={connectionData.profileName}
+                    platform={platform}
+                    userPhotoURL={user?.photoURL}
+                  />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-gray-900 dark:text-white font-medium truncate">
                       {connectionData.profileName}

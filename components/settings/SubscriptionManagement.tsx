@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useScrollLock } from "@/hooks/useScrollLock";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -91,6 +92,7 @@ export default function SubscriptionManagement() {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showRefundModal, setShowRefundModal] = useState(false);
   const [isRefunding, setIsRefunding] = useState(false);
+  useScrollLock(showCancelModal || showRefundModal);
 
   // Get Stripe customer/subscription IDs from user profile
   const stripeCustomerId = userProfile?.subscription?.stripeCustomerId;
