@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Button from "@/components/ui/Button";
 import { useLinkedIn } from "@/contexts/LinkedInContext";
 
@@ -28,21 +29,28 @@ export default function LinkedInConnectButton({
     await disconnectLinkedIn();
   };
 
+  const [imgError, setImgError] = useState(false);
+
   if (isConnected && connection) {
+    const showPhoto = connection.profilePicture && !imgError;
+    const initial = connection.profileName?.charAt(0)?.toUpperCase() || "L";
+
     return (
       <div className={`flex items-center gap-3 ${className}`}>
         {variant === "default" && (
           <div className="flex items-center gap-3 flex-1 min-w-0">
-            {connection.profilePicture ? (
+            {showPhoto ? (
               <img
-                src={connection.profilePicture}
+                src={connection.profilePicture!}
                 alt={connection.profileName || "LinkedIn profile"}
                 className="w-10 h-10 rounded-full object-cover border-2 border-[#0A66C2]"
                 loading="lazy"
+                referrerPolicy="no-referrer"
+                onError={() => setImgError(true)}
               />
             ) : (
-              <div className="w-10 h-10 rounded-full bg-[#0A66C2]/20 flex items-center justify-center">
-                <LinkedInIcon className="w-5 h-5 text-[#0A66C2]" />
+              <div className="w-10 h-10 rounded-full bg-[#0A66C2]/15 flex items-center justify-center border-2 border-[#0A66C2]/30">
+                <span className="text-base font-semibold text-[#0A66C2]">{initial}</span>
               </div>
             )}
             <div className="flex-1 min-w-0">

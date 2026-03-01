@@ -40,53 +40,50 @@ import UniversalChatInput, { UniversalChatInputRef } from "@/components/chat/Uni
 // Premium animation easings - inspired by Linear, Notion
 const smoothEase = [0.25, 0.1, 0.25, 1] as const;
 
-// Animation variants for app page
+// Animation variants for app page — GPU-friendly (opacity + transform only, no filter:blur)
 const welcomeContainerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.08,
-      delayChildren: 0.15,
+      staggerChildren: 0.06,
+      delayChildren: 0.05,
     },
   },
 };
 
 const welcomeItemVariants = {
-  hidden: { opacity: 0, y: 20, filter: "blur(8px)" },
+  hidden: { opacity: 0, y: 12 },
   visible: {
     opacity: 1,
     y: 0,
-    filter: "blur(0px)",
     transition: {
-      duration: 0.5,
+      duration: 0.35,
       ease: smoothEase,
     },
   },
 };
 
 const inputAreaVariants = {
-  hidden: { opacity: 0, y: 30, filter: "blur(10px)" },
+  hidden: { opacity: 0, y: 16 },
   visible: {
     opacity: 1,
     y: 0,
-    filter: "blur(0px)",
     transition: {
-      duration: 0.6,
+      duration: 0.4,
       ease: smoothEase,
     },
   },
 };
 
 const suggestionButtonVariants = {
-  hidden: { opacity: 0, scale: 0.9, filter: "blur(6px)" },
+  hidden: { opacity: 0, scale: 0.95 },
   visible: (i: number) => ({
     opacity: 1,
     scale: 1,
-    filter: "blur(0px)",
     transition: {
-      duration: 0.4,
-      delay: 0.4 + i * 0.08,
+      duration: 0.3,
+      delay: 0.2 + i * 0.05,
       ease: smoothEase,
     },
   }),
@@ -495,40 +492,14 @@ function AppContent() {
                   className="relative mb-6 sm:mb-8"
                   variants={welcomeItemVariants}
                 >
-                  {/* Multi-layer glow effect behind logo */}
+                  {/* Single subtle glow behind logo — static, GPU-friendly */}
+                  <div className="absolute -inset-6 bg-gradient-to-br from-primary/20 via-accent/15 to-primary/20 rounded-full blur-2xl -z-10 opacity-50" />
+                  {/* Logo container with subtle float */}
                   <motion.div
-                    className="absolute -inset-8 bg-gradient-to-br from-primary/30 via-accent/20 to-primary/30 rounded-full blur-3xl -z-10"
-                    initial={{ opacity: 0, scale: 0.5 }}
-                    animate={prefersReducedMotion ? { opacity: 0.4, scale: 1 } : {
-                      opacity: [0.3, 0.5, 0.3],
-                      scale: [0.9, 1.1, 0.9]
-                    }}
+                    className="relative gpu-layer"
+                    animate={prefersReducedMotion ? {} : { y: [0, -5, 0] }}
                     transition={{
                       duration: 4,
-                      repeat: prefersReducedMotion ? 0 : Infinity,
-                      ease: "easeInOut"
-                    }}
-                  />
-                  <motion.div
-                    className="absolute -inset-4 bg-gradient-to-tr from-accent/25 to-primary/25 rounded-full blur-xl -z-10"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={prefersReducedMotion ? { opacity: 0.3, scale: 1 } : {
-                      opacity: [0.4, 0.6, 0.4],
-                      scale: [1, 1.05, 1],
-                      rotate: [0, 5, 0, -5, 0]
-                    }}
-                    transition={{
-                      duration: 6,
-                      repeat: prefersReducedMotion ? 0 : Infinity,
-                      ease: "easeInOut"
-                    }}
-                  />
-                  {/* Logo container with premium border and float animation */}
-                  <motion.div
-                    className="relative"
-                    animate={prefersReducedMotion ? {} : { y: [0, -8, 0] }}
-                    transition={{
-                      duration: 3.5,
                       repeat: Infinity,
                       ease: "easeInOut"
                     }}
@@ -542,6 +513,7 @@ function AppContent() {
                         width={96}
                         height={96}
                         className="w-full h-full object-contain"
+                        priority
                       />
                     </div>
                   </motion.div>
@@ -602,7 +574,7 @@ function AppContent() {
             {/* Conversation messages */}
             {messages.length > 0 && (
               <div className="space-y-6 mb-8 w-full">
-                <AnimatePresence mode="popLayout">
+                <AnimatePresence mode="sync">
                   {(() => {
                     // Get response mode based on plan
                     // Pro: limited dual (3/week), Max: unlimited dual
@@ -694,11 +666,10 @@ function AppContent() {
                           elements.push(
                             <motion.div
                               key={message.id || `ai-${i}`}
-                              initial={{ opacity: 0, y: 8 }}
+                              initial={{ opacity: 0, y: 6 }}
                               animate={{ opacity: 1, y: 0 }}
                               transition={{
-                                duration: 0.25,
-                                delay: i * 0.05,
+                                duration: 0.2,
                                 ease: smoothEase,
                               }}
                               className="w-full"
@@ -826,12 +797,7 @@ function AppContent() {
               )}
             </AnimatePresence>
 
-            <motion.div
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.4, delay: 0.1, ease: smoothEase }}
-              className="relative"
-            >
+            <div className="relative">
               {/* Premium Voice Recording Indicator */}
               <AnimatePresence mode="wait">
                 {(isRecording || isProcessingVoice) && (
@@ -940,17 +906,12 @@ function AppContent() {
                 maxCharacters={planLimits.maxCharactersPerPrompt}
                 showCharacterCount={true}
               />
-            </motion.div>
+            </div>
 
             {/* Additional helper text - Desktop only (hidden on mobile via CSS) */}
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.4, delay: 0.4, ease: smoothEase }}
-              className="hidden sm:block text-2xs text-gray-500 dark:text-gray-400 text-center mt-0"
-            >
+            <p className="hidden sm:block text-2xs text-gray-500 dark:text-gray-400 text-center mt-0">
               POSTY peut faire des erreurs. Vérifiez les informations importantes.
-            </motion.p>
+            </p>
           </div>
         </motion.div>
       </div>

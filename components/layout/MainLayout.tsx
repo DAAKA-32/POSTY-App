@@ -40,33 +40,32 @@ const sidebarContainerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.06,
-      delayChildren: 0.1,
+      staggerChildren: 0.04,
+      delayChildren: 0.02,
     },
   },
 };
 
 const sidebarItemVariants = {
-  hidden: { opacity: 0, x: -15 },
+  hidden: { opacity: 0, x: -10 },
   visible: {
     opacity: 1,
     x: 0,
     transition: {
-      duration: 0.4,
+      duration: 0.25,
       ease: smoothEase,
     },
   },
 };
 
 const navItemVariants = {
-  hidden: { opacity: 0, x: -10, filter: "blur(4px)" },
+  hidden: { opacity: 0, x: -8 },
   visible: (i: number) => ({
     opacity: 1,
     x: 0,
-    filter: "blur(0px)",
     transition: {
-      duration: 0.35,
-      delay: 0.15 + i * 0.05,
+      duration: 0.25,
+      delay: 0.08 + i * 0.04,
       ease: smoothEase,
     },
   }),

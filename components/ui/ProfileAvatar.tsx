@@ -98,6 +98,7 @@ export default function ProfileAvatar({
             onLoad={handleImageLoad}
             priority={priority}
             loading={priority ? "eager" : "lazy"}
+            referrerPolicy="no-referrer"
           />
           {/* Hover overlay for clickable */}
           {isClickable && (
