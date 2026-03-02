@@ -34,7 +34,7 @@ export default function StyleDistributionChart({ data }: StyleDistributionChartP
     <div className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-4 sm:p-6 hover:border-gray-300 dark:hover:border-dark-border-hover transition-colors duration-200">
       {/* Header */}
       <div className="mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Repartition des styles</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Répartition des styles</h3>
         <p className="text-gray-500 dark:text-text-muted text-sm">Versions choisies</p>
       </div>
 
@@ -84,7 +84,7 @@ export default function StyleDistributionChart({ data }: StyleDistributionChartP
             </svg>
           </div>
           <p className="text-gray-500 dark:text-text-muted text-sm">
-            Aucune version selectionnee pour le moment
+            Aucune version sélectionnée pour le moment
           </p>
         </div>
       )}

@@ -156,7 +156,7 @@ function CheckoutSuccessContent() {
           transition={{ delay: 0.3 }}
           className="text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-4"
         >
-          {isTrialing ? `Votre essai ${planName} a commence !` : `Bienvenue dans ${planName} !`}
+          {isTrialing ? `Votre essai ${planName} a commencé !` : `Bienvenue dans ${planName} !`}
         </motion.h1>
 
         {/* Description */}
@@ -167,8 +167,8 @@ function CheckoutSuccessContent() {
           className="text-lg text-text-muted mb-8"
         >
           {isTrialing
-            ? `Vous avez ${TRIAL_PERIOD_DAYS} jours pour tester toutes les fonctionnalites. Aucun debit pendant l'essai. Annulez a tout moment.`
-            : `Votre abonnement a ete active avec succes. Garantie satisfait ou rembourse ${GUARANTEE_PERIOD_DAYS} jours.`
+            ? `Vous avez ${TRIAL_PERIOD_DAYS} jours pour tester toutes les fonctionnalités. Aucun débit pendant l'essai. Annulez à tout moment.`
+            : `Votre abonnement a été activé avec succès. Garantie satisfait ou remboursé ${GUARANTEE_PERIOD_DAYS} jours.`
           }
         </motion.p>
 
@@ -307,8 +307,8 @@ function CheckoutSuccessContent() {
           className="mt-8 text-sm text-text-muted"
         >
           {isTrialing
-            ? "Un email de confirmation a ete envoye. Vous pouvez annuler a tout moment depuis votre profil."
-            : "Un email de confirmation a ete envoye a votre adresse. Vous pouvez gerer votre abonnement depuis votre profil."
+            ? "Un email de confirmation a été envoyé. Vous pouvez annuler à tout moment depuis votre profil."
+            : "Un email de confirmation a été envoyé à votre adresse. Vous pouvez gérer votre abonnement depuis votre profil."
           }
         </motion.p>
       </motion.div>

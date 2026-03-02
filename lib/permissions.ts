@@ -230,21 +230,21 @@ export function canUsePlatform(
  */
 export function canSchedulePosts(subscription: UserSubscription): PermissionCheckResult {
   if (!subscription.plan) {
-    return { allowed: false, reason: "Votre abonnement n'est pas actif. Merci de verifier votre paiement.", requiredPlan: "pro" };
+    return { allowed: false, reason: "Votre abonnement n'est pas actif. Merci de vérifier votre paiement.", requiredPlan: "pro" };
   }
 
   // Check subscription status
   if (subscription.status !== "active" && subscription.status !== "trialing") {
     return {
       allowed: false,
-      reason: "Votre abonnement n'est pas actif. Merci de verifier votre paiement.",
+      reason: "Votre abonnement n'est pas actif. Merci de vérifier votre paiement.",
     };
   }
 
   if (!planHasFeature(subscription.plan, "canSchedulePosts")) {
     return {
       allowed: false,
-      reason: "Votre abonnement ne permet pas la programmation. Merci de verifier votre paiement.",
+      reason: "Votre abonnement ne permet pas la programmation. Merci de vérifier votre paiement.",
       requiredPlan: getMinimumPlanForFeature("canSchedulePosts"),
     };
   }

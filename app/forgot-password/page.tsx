@@ -128,7 +128,7 @@ export default function ForgotPasswordPage() {
                   Si un compte est associé à l&apos;adresse <span className="text-foreground font-medium">{email}</span>, vous recevrez un lien pour réinitialiser votre mot de passe dans quelques instants.
                 </p>
                 <p className="text-text-muted text-xs text-center italic">
-                  (Pensez a vérifier votre dossier spam ou courrier indésirable si vous ne voyez pas l&apos;email.)
+                  (Pensez à vérifier votre dossier spam ou courrier indésirable si vous ne voyez pas l&apos;email.)
                 </p>
               </div>
 
@@ -142,7 +142,7 @@ export default function ForgotPasswordPage() {
                   </div>
                   <div>
                     <p className="text-sm text-text-secondary">
-                      L&apos;email peut prendre jusqu&apos;à <span className="text-foreground">5 minutes</span> pour arriver. Si vous ne le recevez toujours pas, verifiez que l&apos;adresse email est correcte.
+                      L&apos;email peut prendre jusqu&apos;à <span className="text-foreground">5 minutes</span> pour arriver. Si vous ne le recevez toujours pas, vérifiez que l&apos;adresse email est correcte.
                     </p>
                   </div>
                 </div>
@@ -208,7 +208,7 @@ export default function ForgotPasswordPage() {
                 size="lg"
                 isLoading={isLoading}
               >
-                Envoyer le lien de reinitialisation
+                Envoyer le lien de réinitialisation
               </Button>
             </form>
           )}

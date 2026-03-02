@@ -76,7 +76,7 @@ export const en = {
   language: {
     title: "Language",
     description: "Choose your preferred language",
-    french: "Francais",
+    french: "Français",
     english: "English (US)",
     selectLanguage: "Select language",
     languageChanged: "Language updated",

@@ -61,7 +61,7 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
       setPendingCount(count);
     } catch (error) {
       console.error("Error loading scheduled posts:", error);
-      toast.error("Erreur lors du chargement des posts programmes");
+      toast.error("Erreur lors du chargement des posts programmés");
     } finally {
       setIsLoading(false);
     }
@@ -82,14 +82,14 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
       error?: string;
     }> => {
       if (!user) {
-        return { success: false, error: "Vous devez etre connecte" };
+        return { success: false, error: "Vous devez être connecté" };
       }
 
       // Validate subscription — use canSchedulePosts() which handles plan resolution correctly
       const schedulePermission = canSchedulePosts();
       if (!schedulePermission.allowed) {
         console.log("[SchedulingContext] Access denied - currentPlan:", currentPlan, "reason:", schedulePermission.reason);
-        toast.error(schedulePermission.reason || "Votre abonnement n'est pas actif. Merci de verifier votre paiement.");
+        toast.error(schedulePermission.reason || "Votre abonnement n'est pas actif. Merci de vérifier votre paiement.");
         return {
           success: false,
           error: schedulePermission.reason || "Abonnement inactif",
@@ -101,7 +101,7 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
       if (data.scheduledAt <= now) {
         return {
           success: false,
-          error: "La date de publication doit etre dans le futur",
+          error: "La date de publication doit être dans le futur",
         };
       }
 

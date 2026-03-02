@@ -926,6 +926,62 @@ body.analytics-scroll-enabled {
   -webkit-overflow-scrolling: touch !important;
 }
 
+/* ============== DESKTOP: APP-LAYOUT & MAIN OVERRIDES FOR ALL PAGES ============== */
+/* Critical fix: page-specific scroll classes only override html/body but NOT .app-layout */
+/* (h-screen overflow-hidden) or main (h-screen). Without these overrides, body is set to */
+/* scroll but .app-layout traps content at 100vh, preventing mouse wheel/trackpad/keyboard */
+/* scroll on desktop. Schedule page already has its own desktop rules above. */
+@media (min-width: 1024px) {
+  body.settings-scroll-enabled .app-layout,
+  body.subscription-scroll-enabled .app-layout,
+  body.dashboard-scroll-enabled .app-layout,
+  body.profile-scroll-enabled .app-layout,
+  body.history-scroll-enabled .app-layout,
+  body.onboarding-scroll-enabled .app-layout,
+  body.analytics-scroll-enabled .app-layout,
+  body.about-scroll-enabled .app-layout,
+  body.legal-scroll-enabled .app-layout,
+  body.login-scroll-enabled .app-layout,
+  body.landing-scroll-enabled .app-layout {
+    position: static !important;
+    height: auto !important;
+    min-height: 100vh !important;
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
+  }
+
+  body.settings-scroll-enabled main,
+  body.subscription-scroll-enabled main,
+  body.dashboard-scroll-enabled main,
+  body.profile-scroll-enabled main,
+  body.history-scroll-enabled main,
+  body.onboarding-scroll-enabled main,
+  body.analytics-scroll-enabled main,
+  body.about-scroll-enabled main,
+  body.legal-scroll-enabled main,
+  body.login-scroll-enabled main,
+  body.landing-scroll-enabled main {
+    height: auto !important;
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
+  }
+
+  body.settings-scroll-enabled [class*="overflow-hidden"]:not(.scroll-disabled),
+  body.subscription-scroll-enabled [class*="overflow-hidden"]:not(.scroll-disabled),
+  body.dashboard-scroll-enabled [class*="overflow-hidden"]:not(.scroll-disabled),
+  body.profile-scroll-enabled [class*="overflow-hidden"]:not(.scroll-disabled),
+  body.history-scroll-enabled [class*="overflow-hidden"]:not(.scroll-disabled),
+  body.onboarding-scroll-enabled [class*="overflow-hidden"]:not(.scroll-disabled),
+  body.analytics-scroll-enabled [class*="overflow-hidden"]:not(.scroll-disabled),
+  body.about-scroll-enabled [class*="overflow-hidden"]:not(.scroll-disabled),
+  body.legal-scroll-enabled [class*="overflow-hidden"]:not(.scroll-disabled),
+  body.login-scroll-enabled [class*="overflow-hidden"]:not(.scroll-disabled),
+  body.landing-scroll-enabled [class*="overflow-hidden"]:not(.scroll-disabled) {
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
+  }
+}
+
 /* ============== FORCE SCROLL OVERRIDE (ALL SCREENS) ============== */
 /* These rules apply to ALL screen sizes as a fallback */
 /* The more specific mobile rules are inside @media (max-width: 1023px) above */

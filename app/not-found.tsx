@@ -35,7 +35,7 @@ export default function NotFound() {
       </h2>
       <p className="text-text-secondary text-center max-w-md mb-8">
         {t.errors?.pageNotFoundDescription ||
-          "La page que vous recherchez n'existe pas ou a ete deplacee."}
+          "La page que vous recherchez n'existe pas ou a été déplacée."}
       </p>
 
       {/* Action buttons */}

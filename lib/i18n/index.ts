@@ -23,7 +23,7 @@ export const translations: Record<Language, TranslationKeys> = {
 };
 
 export const languageNames: Record<Language, string> = {
-  fr: "Francais",
+  fr: "Français",
   en: "English (US)",
 };
 
