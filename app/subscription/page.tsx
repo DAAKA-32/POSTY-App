@@ -133,11 +133,12 @@ function SubscriptionContent() {
 
   return (
     <div
-      className="min-h-screen bg-background-warm dark:bg-background"
+      className="bg-background-warm dark:bg-background"
       style={{
+        height: "100dvh",
+        maxHeight: "100dvh",
         overflowY: "auto",
         overflowX: "hidden",
-        minHeight: "100vh",
         WebkitOverflowScrolling: "touch",
         touchAction: "pan-y",
       }}

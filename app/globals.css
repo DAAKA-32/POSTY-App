@@ -626,13 +626,8 @@ body:not(.template-modal-open) aside[role="navigation"] {
   }
 }
 
-/* Landing page scroll fix - ensures scroll works on all public/marketing pages */
-body.landing-scroll-enabled {
-  overflow: visible !important;
-  overflow-y: auto !important;
-  position: static !important;
-  height: auto !important;
-}
+/* Landing page scroll fix — merged into the full block at line ~774.
+   See "LANDING PAGE - Full scroll enabled" below. */
 
 /* LANDING PAGE - No scroll (intentional UX decision) */
 /* Completely blocks all scrolling on the landing page */
@@ -771,12 +766,12 @@ body.legal-scroll-enabled {
 
 /* LANDING PAGE - Full scroll enabled */
 /* Enables all scroll methods: mouse wheel, trackpad, touch, keyboard */
+/* NOTE: No overflow shorthand — explicit x/y avoids shorthand-longhand conflicts */
 html.landing-scroll-enabled,
 html.landing-scroll-enabled body,
 body.landing-scroll-enabled {
-  overflow: visible !important;
-  overflow-y: auto !important;
   overflow-x: hidden !important;
+  overflow-y: auto !important;
   position: static !important;
   height: auto !important;
   min-height: 100vh !important;
@@ -975,8 +970,57 @@ body.analytics-scroll-enabled {
   body.analytics-scroll-enabled [class*="overflow-hidden"]:not(.scroll-disabled),
   body.about-scroll-enabled [class*="overflow-hidden"]:not(.scroll-disabled),
   body.legal-scroll-enabled [class*="overflow-hidden"]:not(.scroll-disabled),
-  body.login-scroll-enabled [class*="overflow-hidden"]:not(.scroll-disabled),
+  body.login-scroll-enabled [class*="overflow-hidden"]:not(.scroll-disabled) {
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
+  }
+
+  /* LANDING PAGE: use overflow:clip instead of overflow:hidden/visible.
+     overflow:clip clips decorative elements visually (like overflow:hidden)
+     BUT does NOT create a scroll container — so mouse-wheel events pass
+     through to the document instead of being silently consumed by sections
+     with overflowing decorative content (glows, particles, gradients). */
   body.landing-scroll-enabled [class*="overflow-hidden"]:not(.scroll-disabled) {
+    overflow: clip !important;
+  }
+}
+
+/* ============== MOBILE: SCROLL INSIDE <MAIN> FOR ALL PAGES ============== */
+/* On mobile, keep the fixed shell (.app-layout) intact but enable scroll inside main. */
+/* This fixes pages like Analytics that use MainLayout but lack app-scroll-container. */
+/* Pages without MainLayout won't have .app-layout/main so selectors won't match. */
+/* Pages using app-scroll-container (History, Chat) already scroll internally — */
+/* adding overflow-y:auto on main is harmless since their content fits main's bounds. */
+@media (max-width: 1023px) {
+  body.settings-scroll-enabled main,
+  body.subscription-scroll-enabled main,
+  body.dashboard-scroll-enabled main,
+  body.profile-scroll-enabled main,
+  body.history-scroll-enabled main,
+  body.onboarding-scroll-enabled main,
+  body.analytics-scroll-enabled main,
+  body.about-scroll-enabled main,
+  body.legal-scroll-enabled main,
+  body.login-scroll-enabled main,
+  body.landing-scroll-enabled main {
+    height: 100% !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    overscroll-behavior-y: none !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  body.settings-scroll-enabled main [class*="overflow-hidden"]:not(.scroll-disabled),
+  body.subscription-scroll-enabled main [class*="overflow-hidden"]:not(.scroll-disabled),
+  body.dashboard-scroll-enabled main [class*="overflow-hidden"]:not(.scroll-disabled),
+  body.profile-scroll-enabled main [class*="overflow-hidden"]:not(.scroll-disabled),
+  body.history-scroll-enabled main [class*="overflow-hidden"]:not(.scroll-disabled),
+  body.onboarding-scroll-enabled main [class*="overflow-hidden"]:not(.scroll-disabled),
+  body.analytics-scroll-enabled main [class*="overflow-hidden"]:not(.scroll-disabled),
+  body.about-scroll-enabled main [class*="overflow-hidden"]:not(.scroll-disabled),
+  body.legal-scroll-enabled main [class*="overflow-hidden"]:not(.scroll-disabled),
+  body.login-scroll-enabled main [class*="overflow-hidden"]:not(.scroll-disabled),
+  body.landing-scroll-enabled main [class*="overflow-hidden"]:not(.scroll-disabled) {
     overflow-x: hidden !important;
     overflow-y: visible !important;
   }
@@ -2227,6 +2271,48 @@ html.light aside *,
 html.light .sidebar-scroll {
   scrollbar-width: thin;
   scrollbar-color: rgba(156, 163, 175, 0.4) transparent;
+}
+
+/* ============== LANDING PAGE - SILVER SCROLLBAR ============== */
+/* Target html/body (desktop scroll fix makes these the scroll containers) */
+html.light.landing-scroll-enabled::-webkit-scrollbar,
+html.light.landing-scroll-enabled body::-webkit-scrollbar,
+html.light .landing-silver-scrollbar::-webkit-scrollbar {
+  width: 8px !important;
+}
+
+html.light.landing-scroll-enabled::-webkit-scrollbar-track,
+html.light.landing-scroll-enabled body::-webkit-scrollbar-track,
+html.light .landing-silver-scrollbar::-webkit-scrollbar-track {
+  background: #FEF3EE !important;
+}
+
+html.light.landing-scroll-enabled::-webkit-scrollbar-thumb,
+html.light.landing-scroll-enabled body::-webkit-scrollbar-thumb,
+html.light .landing-silver-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #C0C0C0 0%, #A8A8B0 40%, #8E8E96 100%) !important;
+  border-radius: 4px !important;
+  border: 2px solid #FEF3EE !important;
+}
+
+html.light.landing-scroll-enabled::-webkit-scrollbar-thumb:hover,
+html.light.landing-scroll-enabled body::-webkit-scrollbar-thumb:hover,
+html.light .landing-silver-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #B0B0B8 0%, #9898A0 40%, #808088 100%) !important;
+}
+
+html.light.landing-scroll-enabled::-webkit-scrollbar-thumb:active,
+html.light.landing-scroll-enabled body::-webkit-scrollbar-thumb:active,
+html.light .landing-silver-scrollbar::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(180deg, #A0A0A8 0%, #888890 40%, #707078 100%) !important;
+}
+
+/* Firefox */
+html.light.landing-scroll-enabled,
+html.light.landing-scroll-enabled body,
+html.light .landing-silver-scrollbar {
+  scrollbar-width: thin !important;
+  scrollbar-color: #A8A8B0 #FEF3EE !important;
 }
 
 /* Light mode popup overlay */

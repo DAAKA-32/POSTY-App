@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useLayoutEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -13,6 +13,14 @@ import PricingTrustBadges from "@/components/pricing/PricingTrustBadges";
 import { useScrollLock } from "@/hooks/useScrollLock";
 import AnimatedMacBook from "@/components/landing/AnimatedMacBook";
 import AuroraBackground from "@/components/landing/AuroraBackground";
+
+// =============================================================================
+// SCROLL CONTAINER — shared across all landing components in this file
+// Uses a bounded div (height: 100dvh, overflow-y: auto) instead of body-level
+// scroll, because competing CSS rules from Tailwind/PWA/providers make
+// body-level mouse-wheel scroll unreliable on desktop.
+// =============================================================================
+const landingScrollContainer: { current: HTMLDivElement | null } = { current: null };
 
 // =============================================================================
 // DESIGN SYSTEM - Soft Orange Palette (consistent with /app and /login)
@@ -145,17 +153,22 @@ function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState<string>("");
 
+  // Scroll detection — uses the bounded landing scroll container
   useEffect(() => {
+    const container = landingScrollContainer.current;
+    if (!container) return;
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
+      setIsScrolled(container.scrollTop > 20);
     };
-    window.addEventListener("scroll", handleScroll, { passive: true });
+    container.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll(); // sync on mount
-    return () => window.removeEventListener("scroll", handleScroll);
+    return () => container.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Active section detection via IntersectionObserver
+  // Active section detection via IntersectionObserver (rooted in scroll container)
   useEffect(() => {
+    const container = landingScrollContainer.current;
+    if (!container) return;
     const sectionIds = NAV_LINKS.map((l) => l.href.replace("#", ""));
     const observers: IntersectionObserver[] = [];
 
@@ -166,7 +179,7 @@ function Navbar() {
         ([entry]) => {
           if (entry.isIntersecting) setActiveSection(`#${id}`);
         },
-        { rootMargin: "-40% 0px -55% 0px" }
+        { root: container, rootMargin: "-40% 0px -55% 0px" }
       );
       observer.observe(el);
       observers.push(observer);
@@ -178,28 +191,29 @@ function Navbar() {
   // Centralized scroll lock when mobile menu is open
   useScrollLock(isMenuOpen);
 
-  // Smooth scroll with proper navbar offset handling
+  // Smooth scroll with proper navbar offset handling — targets the scroll container
   const scrollTo = useCallback((href: string) => {
     setIsMenuOpen(false);
 
     const scrollToSection = () => {
       const targetElement = document.querySelector(href) as HTMLElement;
       if (!targetElement) return;
+      const container = landingScrollContainer.current;
 
       // Calculate navbar height dynamically (accounts for scrolled/non-scrolled state)
       // Desktop: 68px + 12px padding when scrolled = 80px, Mobile: 64px + 12px = 76px
       const isMobile = window.innerWidth < 768;
       const navbarOffset = isMobile ? 76 : 84;
 
-      // Get target position and apply offset
-      const targetPosition = targetElement.getBoundingClientRect().top + window.scrollY;
-      const offsetPosition = targetPosition - navbarOffset;
-
-      // Smooth scroll with native behavior for best performance
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: "smooth"
-      });
+      if (container) {
+        // Scroll within the bounded container
+        const targetPosition = targetElement.getBoundingClientRect().top + container.scrollTop;
+        container.scrollTo({ top: targetPosition - navbarOffset, behavior: "smooth" });
+      } else {
+        // Fallback to window scroll
+        const targetPosition = targetElement.getBoundingClientRect().top + window.scrollY;
+        window.scrollTo({ top: targetPosition - navbarOffset, behavior: "smooth" });
+      }
     };
 
     // Delay slightly for mobile menu close animation
@@ -901,8 +915,17 @@ function DemoSection() {
   }, []);
 
   // Scroll-based title fade — title disappears before content overlaps it
-  const { scrollY } = useScroll();
-  const titleOpacity = useTransform(scrollY, [0, Math.max(titleHeight * 0.7, 150)], [1, 0]);
+  // Uses the bounded landing scroll container instead of window scroll
+  const scrollYValue = useMotionValue(0);
+  useEffect(() => {
+    const container = landingScrollContainer.current;
+    if (!container) return;
+    const onScroll = () => scrollYValue.set(container.scrollTop);
+    container.addEventListener("scroll", onScroll, { passive: true });
+    onScroll(); // sync initial position
+    return () => container.removeEventListener("scroll", onScroll);
+  }, [scrollYValue]);
+  const titleOpacity = useTransform(scrollYValue, [0, Math.max(titleHeight * 0.7, 150)], [1, 0]);
 
   // View mode state
   const [viewMode, setViewMode] = useState<"demo" | "preview">("preview");
@@ -1077,8 +1100,8 @@ function DemoSection() {
         id="demo"
         className="relative z-[2]"
       >
-        {/* Hero title — fixed: stays on screen while content scrolls over it */}
-        <motion.div ref={titleRef} style={{ opacity: titleOpacity }} className="fixed top-0 left-0 right-0 z-[1] pt-24 md:pt-32 pb-10 md:pb-14 px-4 sm:px-6 lg:px-8">
+        {/* Hero title — normal flow, scrolls away naturally (no sticky = no bleed-through) */}
+        <motion.div ref={titleRef} style={{ opacity: titleOpacity }} className="relative z-[1] pt-16 md:pt-20 pb-4 md:pb-6 px-4 sm:px-6 lg:px-8">
           <div className="relative text-center max-w-4xl mx-auto">
             <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] 2xl:text-[4rem] font-bold tracking-tight flex flex-col items-center gap-0 [&>span]:-my-[0.2em]">
               <span className="block">
@@ -1128,20 +1151,17 @@ function DemoSection() {
                 delay: hasAnimated ? 0.25 : 0,
                 ease: cinematicEase,
               }}
-              className="mt-8 md:mt-10 text-gray-500 text-base md:text-lg lg:text-xl max-w-2xl mx-auto leading-relaxed"
+              className="mt-4 md:mt-5 text-gray-500 text-base md:text-lg lg:text-xl max-w-2xl mx-auto leading-relaxed"
             >
               Décrivez votre objectif. Posty génère un post LinkedIn prêt à publier en 30 secondes.
             </motion.p>
           </div>
         </motion.div>
 
-        {/* Spacer: compensates for the fixed title removed from document flow */}
-        <div style={{ height: titleHeight }} />
-
         {/* Content — cinematic reveal: starts high + clipped, descends into place */}
         {/* z-[3] scrolls over the fixed title — transparent so aurora shows through */}
         <motion.div
-          className="relative z-[3] overflow-x-hidden"
+          className="relative z-[3] overflow-x-clip"
           initial={alreadyPlayed ? undefined : { y: -180 }}
           animate={
             heroPhase === "init" || heroPhase === "opening"
@@ -3995,13 +4015,14 @@ function BeforeAfterSection() {
 const FOUNDER_LINKEDIN_URL = "https://www.linkedin.com/in/e-nepveu-58a38127a/";
 const CFO_LINKEDIN_URL = "https://www.instagram.com/come27m/";
 
-function FounderSection() {
+function FounderSection({ scrollContainerRef }: { scrollContainerRef: React.RefObject<HTMLDivElement | null> }) {
   const sectionRef = useRef<HTMLElement>(null);
   const prefersReducedMotion = useReducedMotion();
 
-  // Scroll-based animation: track section progress through viewport
+  // Scroll-based animation: track section progress through scroll container
   const { scrollYProgress } = useScroll({
     target: sectionRef,
+    container: scrollContainerRef as React.RefObject<HTMLElement>,
     offset: ["start end", "center center"], // Start when section enters, complete at center
   });
 
@@ -4575,9 +4596,17 @@ function Footer() {
 export default function LandingPage() {
   const { user, userProfile, loading } = useAuth();
   const router = useRouter();
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Force light mode on landing page - ignore system dark mode preference
-  // Enable full scrolling (mouse wheel, trackpad, touch, keyboard arrows, space, page up/down)
+  // Publish the scroll container ref for all child components in this file.
+  // No deps array: re-syncs every render so the ref is always up-to-date
+  // (critical when the component transitions from loading → content).
+  useLayoutEffect(() => {
+    landingScrollContainer.current = containerRef.current;
+    return () => { landingScrollContainer.current = null; };
+  });
+
+  // Force light mode on landing page
   useEffect(() => {
     const root = document.documentElement;
     root.classList.remove("dark");
@@ -4585,17 +4614,23 @@ export default function LandingPage() {
     root.style.colorScheme = "light";
     root.setAttribute("data-theme", "light");
 
-    // Enable scrolling on landing page using CSS class
-    document.body.classList.add("landing-scroll-enabled");
-    document.documentElement.classList.add("landing-scroll-enabled");
+    // Remove classes that might block scroll on body (from PWA, modals, other pages)
+    const blockingClasses = [
+      "pwa-mobile", "no-scroll", "sidebar-open", "landing-no-scroll",
+      "scroll-locked", "modal-open", "bottomsheet-open", "no-bounce",
+      "page-fixed",
+    ];
+    blockingClasses.forEach((cls) => {
+      document.body.classList.remove(cls);
+      root.classList.remove(cls);
+    });
 
-    // Remove any classes that might block scroll
-    document.body.classList.remove("pwa-mobile", "no-scroll", "sidebar-open", "landing-no-scroll");
-    document.documentElement.classList.remove("landing-no-scroll");
+    document.body.classList.add("landing-scroll-enabled");
+    root.classList.add("landing-scroll-enabled");
 
     return () => {
       document.body.classList.remove("landing-scroll-enabled");
-      document.documentElement.classList.remove("landing-scroll-enabled");
+      root.classList.remove("landing-scroll-enabled");
     };
   }, []);
 
@@ -4614,11 +4649,43 @@ export default function LandingPage() {
   }
 
   return (
-    <>
+    <div
+      ref={containerRef}
+      className="landing-silver-scrollbar"
+      style={{
+        position: "relative",
+        height: "100dvh",
+        maxHeight: "100dvh",
+        overflowY: "auto",
+        overflowX: "hidden",
+        WebkitOverflowScrolling: "touch",
+      }}
+    >
+      <style jsx global>{`
+        /* Silver scrollbar for landing page container */
+        .landing-silver-scrollbar::-webkit-scrollbar {
+          width: 8px !important;
+        }
+        .landing-silver-scrollbar::-webkit-scrollbar-track {
+          background: #FEF3EE !important;
+        }
+        .landing-silver-scrollbar::-webkit-scrollbar-thumb {
+          background: linear-gradient(180deg, #C0C0C0, #A8A8B0, #8E8E96) !important;
+          border-radius: 4px !important;
+          border: 2px solid #FEF3EE !important;
+        }
+        .landing-silver-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: linear-gradient(180deg, #B0B0B8, #9898A0, #808088) !important;
+        }
+        .landing-silver-scrollbar {
+          scrollbar-width: thin !important;
+          scrollbar-color: #A8A8B0 #FEF3EE !important;
+        }
+      `}</style>
       {/* Aurora background — fixed full viewport, stars stay in place on scroll */}
       <AuroraBackground />
       <Navbar />
-      <div className="min-h-screen text-gray-900 relative">
+      <div className="text-gray-900 relative">
         {/* Hero Demo Section — opening with descent animation */}
         <DemoSection />
 
@@ -4627,19 +4694,19 @@ export default function LandingPage() {
           <FeaturesSection />
         </div>
 
-        {/* TargetAudience — transparent so aurora stars show through */}
-        <div className="relative z-[5]">
+        {/* TargetAudience — opaque to prevent hero/demo content bleeding through */}
+        <div className="relative z-[5] bg-[#FEF3EE]">
           <TargetAudienceSection />
         </div>
 
         <div className="relative z-[5] bg-[#FEF3EE]">
           <TestimonialsSection />
-          <FounderSection />
+          <FounderSection scrollContainerRef={containerRef} />
           <PricingSection />
         </div>
 
-        {/* FAQ — transparent so aurora stars show through */}
-        <div className="relative z-[5]">
+        {/* FAQ — opaque to prevent hero/demo content bleeding through */}
+        <div className="relative z-[5] bg-[#FEF3EE]">
           <FaqSection />
         </div>
 
@@ -4648,6 +4715,6 @@ export default function LandingPage() {
           <Footer />
         </div>
       </div>
-    </>
+    </div>
   );
 }

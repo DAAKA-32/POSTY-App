@@ -70,11 +70,12 @@ export default function AboutPage() {
       <AboutPageJsonLd />
 
       <div
-        className="min-h-screen bg-gradient-to-b from-orange-50/50 via-white to-orange-50/30"
+        className="bg-gradient-to-b from-orange-50/50 via-white to-orange-50/30"
         style={{
+          height: "100dvh",
+          maxHeight: "100dvh",
           overflowY: "auto",
           overflowX: "hidden",
-          minHeight: "100vh",
           WebkitOverflowScrolling: "touch",
         }}
       >

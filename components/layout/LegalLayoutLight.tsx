@@ -38,11 +38,12 @@ export default function LegalLayoutLight({ children, title }: LegalLayoutLightPr
 
   return (
     <div
-      className="min-h-screen bg-[#FAFBFC] text-[#1A1D21]"
+      className="bg-[#FAFBFC] text-[#1A1D21]"
       style={{
+        height: "100dvh",
+        maxHeight: "100dvh",
         overflowY: "auto",
         overflowX: "hidden",
-        minHeight: "100vh",
         WebkitOverflowScrolling: "touch",
         touchAction: "pan-y",
       }}
