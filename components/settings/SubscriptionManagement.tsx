@@ -56,6 +56,33 @@ const getDaysRemaining = (endTimestamp: number): number => {
   return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
 };
 
+// Calculate human-readable subscription duration from a start date
+const getSubscriptionDuration = (startTimestamp: number | Date | { toDate: () => Date } | undefined): string | null => {
+  if (!startTimestamp) return null;
+  let start: Date;
+  if (typeof startTimestamp === "number") {
+    start = new Date(startTimestamp * 1000);
+  } else if (startTimestamp instanceof Date) {
+    start = startTimestamp;
+  } else if (typeof (startTimestamp as { toDate?: () => Date }).toDate === "function") {
+    start = (startTimestamp as { toDate: () => Date }).toDate();
+  } else {
+    return null;
+  }
+  const now = new Date();
+  const diffMs = now.getTime() - start.getTime();
+  if (diffMs < 0) return null;
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (days < 1) return "Aujourd'hui";
+  if (days < 30) return `${days} jour${days > 1 ? "s" : ""}`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months} mois`;
+  const years = Math.floor(months / 12);
+  const remainingMonths = months % 12;
+  if (remainingMonths === 0) return `${years} an${years > 1 ? "s" : ""}`;
+  return `${years} an${years > 1 ? "s" : ""} et ${remainingMonths} mois`;
+};
+
 // Premium animation variants
 const smoothEase = [0.22, 1, 0.36, 1] as const;
 
@@ -84,6 +111,9 @@ export default function SubscriptionManagement() {
     guaranteeDaysRemaining,
     requestRefund,
   } = useSubscription();
+
+  // Paid plan = Pro or Max (not free, not null)
+  const isPaidPlan = currentPlan === "pro" || currentPlan === "max";
 
   const [stripeDetails, setStripeDetails] = useState<StripeSubscriptionDetails | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -250,8 +280,8 @@ export default function SubscriptionManagement() {
 
   // Determine subscription status display
   const getStatusDisplay = () => {
-    if (!currentPlan) {
-      return { label: "Aucun abonnement", color: "text-text-secondary", bg: "bg-dark-hover" };
+    if (!isPaidPlan) {
+      return { label: "Plan gratuit", color: "text-text-secondary", bg: "bg-dark-hover" };
     }
 
     if (stripeDetails?.cancelAtPeriodEnd) {
@@ -322,7 +352,7 @@ export default function SubscriptionManagement() {
             <div>
               <p className="text-text-muted text-xs mb-1">Plan actuel</p>
               <p className="text-gray-900 dark:text-white font-semibold text-lg capitalize">
-                {!currentPlan ? "Aucun abonnement" : currentPlan === "pro" ? "Pro" : "Max"}
+                {currentPlan === "pro" ? "Pro" : currentPlan === "max" ? "Max" : "Gratuit"}
               </p>
             </div>
             <div className="text-right">
@@ -339,7 +369,7 @@ export default function SubscriptionManagement() {
           </motion.div>
 
           {/* Billing Info - Only for paid plans */}
-          {!!currentPlan && (
+          {isPaidPlan && (
             <>
               {/* Subscription date — always visible using Firestore fallback */}
               <motion.div
@@ -354,6 +384,12 @@ export default function SubscriptionManagement() {
                       ? formatDate(stripeDetails.startDate)
                       : formatDate(userProfile?.subscription?.subscribedAt)}
                   </p>
+                  {(() => {
+                    const duration = getSubscriptionDuration(stripeDetails?.startDate ?? userProfile?.subscription?.subscribedAt);
+                    return duration ? (
+                      <p className="text-xs text-text-muted mt-1">{duration}</p>
+                    ) : null;
+                  })()}
                 </div>
 
                 {/* Next Renewal / End Date */}
@@ -470,7 +506,7 @@ export default function SubscriptionManagement() {
           )}
 
           {/* Money-back Guarantee Banner */}
-          {!!currentPlan && guaranteeEligible && (
+          {isPaidPlan && guaranteeEligible && (
             <motion.div
               variants={itemVariants}
               className="p-4 bg-accent/5 border border-accent/20 rounded-xl"
@@ -501,7 +537,7 @@ export default function SubscriptionManagement() {
           )}
 
           {/* Free Plan Upgrade CTA */}
-          {!currentPlan && (
+          {!isPaidPlan && (
             <motion.div
               variants={itemVariants}
               className="p-4 bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 border border-primary/20 rounded-xl"
@@ -532,7 +568,7 @@ export default function SubscriptionManagement() {
           )}
 
           {/* Action Buttons - Only for paid plans */}
-          {!!currentPlan && stripeCustomerId && (
+          {isPaidPlan && stripeCustomerId && (
             <motion.div
               variants={itemVariants}
               className="flex flex-col sm:flex-row gap-3 pt-2"
@@ -559,9 +595,9 @@ export default function SubscriptionManagement() {
             variants={itemVariants}
             className="text-xs text-text-muted text-center pt-2"
           >
-            {!currentPlan
-              ? "Aucun abonnement actif. Passez à Pro ou Max à tout moment."
-              : `Garantie satisfait ou remboursé ${GUARANTEE_PERIOD_DAYS} jours. Annulation possible à tout moment.`}
+            {isPaidPlan
+              ? `Garantie satisfait ou remboursé ${GUARANTEE_PERIOD_DAYS} jours. Annulation possible à tout moment.`
+              : "Aucun abonnement actif. Passez à Pro ou Max à tout moment."}
           </motion.p>
         </div>
       </motion.section>

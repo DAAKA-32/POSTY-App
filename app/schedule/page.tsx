@@ -188,7 +188,7 @@ function ScheduleContent() {
       headerTitle="Posts programmes"
     >
       <div className="min-h-full bg-background-warm dark:bg-dark-bg scroll-smooth lg:overflow-y-auto">
-        <div className="w-full min-w-0 mx-auto px-3 py-5 sm:px-4 sm:py-6 md:px-6 md:py-8 lg:px-8 lg:py-10 lg:max-w-4xl xl:max-w-5xl 2xl:max-w-6xl overflow-x-hidden">
+        <div className="w-full min-w-0 mx-auto px-3 py-5 sm:px-4 sm:py-6 md:px-6 md:py-8 lg:px-8 lg:py-10 lg:max-w-4xl xl:max-w-5xl 2xl:max-w-6xl overflow-x-clip">
           {/* Premium Header */}
           <motion.div
             initial={{ opacity: 0, y: -10 }}
@@ -251,7 +251,7 @@ function ScheduleContent() {
             </div>
 
             {/* Status filter - Clean pills */}
-            <div className="flex gap-2 overflow-x-auto scroll-disabled pb-1 md:pb-0 scrollbar-hide -mx-3 px-3 sm:-mx-4 sm:px-4 md:mx-0 md:px-0">
+            <div className="flex flex-wrap gap-2">
               {FILTER_OPTIONS.map((option) => {
                 const isActive = filter === option.value;
                 const getFilterColors = () => {
@@ -271,7 +271,7 @@ function ScheduleContent() {
                   <button
                     key={option.value}
                     onClick={() => setFilter(option.value)}
-                    className={`shrink-0 px-3 py-1.5 sm:px-3.5 sm:py-2 text-xs sm:text-sm font-medium rounded-full whitespace-nowrap transition-colors duration-200 ${getFilterColors()}`}
+                    className={`px-3 py-1.5 sm:px-3.5 sm:py-2 text-xs sm:text-sm font-medium rounded-full whitespace-nowrap transition-colors duration-200 ${getFilterColors()}`}
                   >
                     {option.label}
                     {option.value === "pending" && pendingCount > 0 && (
@@ -369,12 +369,12 @@ function ScheduleContent() {
                     key={group.date}
                   >
                     {/* Date header - Clean professional styling */}
-                    <div className="sticky top-0 z-10 flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 py-2 bg-background-warm/95 dark:bg-dark-bg/95 backdrop-blur-sm -mx-3 px-3 sm:-mx-4 sm:px-4">
-                      <h2 className="text-sm md:text-base font-semibold text-gray-900 dark:text-white">
+                    <div className="sticky top-0 z-10 flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 py-2 bg-background-warm/95 dark:bg-dark-bg/95 backdrop-blur-sm -mx-3 px-3 sm:-mx-4 sm:px-4 min-w-0">
+                      <h2 className="text-sm md:text-base font-semibold text-gray-900 dark:text-white whitespace-nowrap">
                         {group.date}
                       </h2>
-                      <div className="flex-1 h-px bg-gray-200 dark:bg-dark-border" />
-                      <span className="text-xs md:text-sm px-2.5 py-1 rounded-lg font-medium text-gray-500 dark:text-text-muted bg-gray-100 dark:bg-primary/10 border border-gray-200 dark:border-primary/15">
+                      <div className="flex-1 h-px bg-gray-200 dark:bg-dark-border min-w-4" />
+                      <span className="shrink-0 text-xs md:text-sm px-2.5 py-1 rounded-lg font-medium text-gray-500 dark:text-text-muted bg-gray-100 dark:bg-primary/10 border border-gray-200 dark:border-primary/15 whitespace-nowrap">
                         {group.posts.length} post{group.posts.length !== 1 ? "s" : ""}
                       </span>
                     </div>

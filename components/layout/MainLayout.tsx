@@ -1144,7 +1144,7 @@ export default function MainLayout({
                     />
                   </div>
                 </div>
-                <span className="font-bold text-gray-900 dark:text-white text-base sm:text-lg tracking-tight truncate max-w-[140px] sm:max-w-none">
+                <span className="font-bold text-gray-900 dark:text-white text-base sm:text-lg tracking-tight truncate max-w-[200px] sm:max-w-none">
                   {headerTitle || "Posty"}
                 </span>
               </div>
