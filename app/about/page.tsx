@@ -44,15 +44,22 @@ const teamMembers = [
 // MAIN COMPONENT
 // =============================================================================
 export default function AboutPage() {
-  // Enable full scrolling on About page (mouse wheel, trackpad, touch, keyboard)
+  // Force light mode on About page (public page — always light, like landing & login)
+  // Enable full scrolling (mouse wheel, trackpad, touch, keyboard)
   useEffect(() => {
-    document.documentElement.classList.add("about-scroll-enabled");
+    const root = document.documentElement;
+    root.classList.remove("dark");
+    root.classList.add("light");
+    root.style.colorScheme = "light";
+    root.setAttribute("data-theme", "light");
+
+    root.classList.add("about-scroll-enabled");
     document.body.classList.add("about-scroll-enabled");
     // Remove any classes that might block scroll
     document.body.classList.remove("pwa-mobile", "no-scroll", "scroll-locked", "modal-open");
 
     return () => {
-      document.documentElement.classList.remove("about-scroll-enabled");
+      root.classList.remove("about-scroll-enabled");
       document.body.classList.remove("about-scroll-enabled");
     };
   }, []);
@@ -181,7 +188,7 @@ export default function AboutPage() {
             <h2 className="text-2xl font-bold text-gray-900 text-center mb-8">
               L'équipe
             </h2>
-            <div className="grid md:grid-cols-2 gap-6 sm:gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
               {teamMembers.map((member, index) => (
                 <motion.div
                   key={member.name}
@@ -192,14 +199,14 @@ export default function AboutPage() {
                 >
                   <div className="flex flex-col items-center text-center">
                     {/* Photo or Initials Avatar */}
-                    <div className="relative w-28 h-28 sm:w-32 sm:h-32 mb-4 rounded-full overflow-hidden ring-4 ring-warm-orange/20">
+                    <div className="relative w-28 h-28 sm:w-32 sm:h-32 aspect-square mb-4 rounded-full overflow-hidden ring-4 ring-warm-orange/20 flex-shrink-0">
                       {member.photo ? (
                         <Image
                           src={member.photo}
                           alt={member.name}
                           fill
-                          className="object-cover"
-                          sizes="(max-width: 640px) 112px, 128px"
+                          className="object-cover object-center"
+                          sizes="128px"
                         />
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-warm-orange to-warm-coral flex items-center justify-center">

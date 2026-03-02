@@ -147,10 +147,7 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
       } catch (error) {
         console.error("Error scheduling post:", error);
         setIsUploading(false);
-        const errorMessage =
-          error instanceof Error
-            ? error.message
-            : "Erreur lors de la programmation";
+        const errorMessage = "Erreur lors de la programmation. Veuillez réessayer.";
         toast.error(errorMessage);
         return { success: false, error: errorMessage };
       }
@@ -158,50 +155,99 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
     [user, loadScheduledPosts, currentPlan, isTestMode]
   );
 
-  // Cancel a scheduled post
+  // Cancel a scheduled post (pending → cancelled)
   const cancelSchedule = useCallback(
     async (
       scheduledPostId: string
     ): Promise<{ success: boolean; error?: string }> => {
+      // Status validation: only pending posts can be cancelled
+      const post = scheduledPosts.find((p) => p.id === scheduledPostId);
+      if (post && post.status !== "pending") {
+        const msg = "Seuls les posts programmés peuvent être annulés.";
+        toast.error(msg);
+        return { success: false, error: msg };
+      }
+
       try {
         await cancelScheduledPostFirestore(scheduledPostId);
 
         // Optimistic update
         setScheduledPosts((prev) =>
-          prev.map((post) =>
-            post.id === scheduledPostId
-              ? { ...post, status: "cancelled" as ScheduleStatus }
-              : post
+          prev.map((p) =>
+            p.id === scheduledPostId
+              ? { ...p, status: "cancelled" as ScheduleStatus }
+              : p
           )
         );
         setPendingCount((prev) => Math.max(0, prev - 1));
 
-        toast.success("Programmation annulee");
+        toast.success("Programmation annulée");
         return { success: true };
       } catch (error) {
         console.error("Error cancelling scheduled post:", error);
-        const errorMessage =
-          error instanceof Error ? error.message : "Erreur lors de l'annulation";
+        const errorMessage = "Erreur lors de l'annulation. Veuillez réessayer.";
         toast.error(errorMessage);
         return { success: false, error: errorMessage };
       }
     },
-    []
+    [scheduledPosts]
   );
 
-  // Reschedule a post
+  // Delete a scheduled post permanently (failed or cancelled only)
+  const deleteSchedule = useCallback(
+    async (
+      scheduledPostId: string
+    ): Promise<{ success: boolean; error?: string }> => {
+      // Status validation: only failed or cancelled posts can be deleted
+      const post = scheduledPosts.find((p) => p.id === scheduledPostId);
+      if (post && post.status === "published") {
+        const msg = "Un post publié ne peut pas être supprimé.";
+        toast.error(msg);
+        return { success: false, error: msg };
+      }
+
+      try {
+        await deleteScheduledPost(scheduledPostId);
+
+        // Optimistic update: remove from list
+        setScheduledPosts((prev) => prev.filter((p) => p.id !== scheduledPostId));
+        if (post?.status === "pending") {
+          setPendingCount((prev) => Math.max(0, prev - 1));
+        }
+
+        toast.success("Post supprimé");
+        return { success: true };
+      } catch (error) {
+        console.error("Error deleting scheduled post:", error);
+        const errorMessage = "Erreur lors de la suppression. Veuillez réessayer.";
+        toast.error(errorMessage);
+        return { success: false, error: errorMessage };
+      }
+    },
+    [scheduledPosts]
+  );
+
+  // Reschedule a post (pending or failed → pending with new date)
   const reschedulePost = useCallback(
     async (
       scheduledPostId: string,
       newDate: Date
     ): Promise<{ success: boolean; error?: string }> => {
+      // Status validation: published posts cannot be rescheduled
+      const post = scheduledPosts.find((p) => p.id === scheduledPostId);
+      if (post && post.status === "published") {
+        const msg = "Un post publié ne peut pas être reprogrammé.";
+        toast.error(msg);
+        return { success: false, error: msg };
+      }
+
       // Validate date is in the future
       const now = new Date();
       if (newDate <= now) {
-        toast.error("La date doit etre dans le futur");
+        toast.error("La date doit être dans le futur");
         return {
           success: false,
-          error: "La date doit etre dans le futur",
+          error: "La date doit être dans le futur",
         };
       }
 
@@ -211,19 +257,16 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
         // Refresh the list
         await loadScheduledPosts();
 
-        toast.success("Post reprogramme avec succes !");
+        toast.success("Post reprogrammé avec succès !");
         return { success: true };
       } catch (error) {
         console.error("Error rescheduling post:", error);
-        const errorMessage =
-          error instanceof Error
-            ? error.message
-            : "Erreur lors de la reprogrammation";
+        const errorMessage = "Erreur lors de la reprogrammation. Veuillez réessayer.";
         toast.error(errorMessage);
         return { success: false, error: errorMessage };
       }
     },
-    [loadScheduledPosts]
+    [loadScheduledPosts, scheduledPosts]
   );
 
   // Refresh scheduled posts
@@ -272,6 +315,7 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
       pendingCount,
       schedulePost,
       cancelSchedule,
+      deleteSchedule,
       reschedulePost,
       refreshScheduledPosts,
       getPendingPosts,
@@ -285,6 +329,7 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
       pendingCount,
       schedulePost,
       cancelSchedule,
+      deleteSchedule,
       reschedulePost,
       refreshScheduledPosts,
       getPendingPosts,

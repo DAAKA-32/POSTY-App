@@ -2837,7 +2837,6 @@ function TargetAudienceSection() {
             {/* Carousel viewport */}
             <div
               className="overflow-hidden"
-              style={{ perspective: "1200px" }}
               onTouchStart={handleTouchStart}
               onTouchEnd={handleTouchEnd}
             >
@@ -2848,38 +2847,20 @@ function TargetAudienceSection() {
                 transition={
                   !shouldAnimate
                     ? { duration: 0 }
-                    : prefersReducedMotion
-                      ? { duration: 0.3, ease: "easeOut" }
-                      : { type: "spring", stiffness: 260, damping: 28 }
+                    : { duration: 0.5, ease: [0.16, 1, 0.3, 1] }
                 }
               >
-                {extendedIndices.map((profileIdx, trackPos) => {
-                  const offset = trackPos - slideIndex;
-                  return (
-                    <motion.div
+                {extendedIndices.map((profileIdx, trackPos) => (
+                    <div
                       key={`carousel-${trackPos}`}
                       className="flex-shrink-0"
                       style={{
                         width: cardWidth > 0 ? `${cardWidth}px` : "85vw",
-                        transformStyle: "preserve-3d",
                       }}
-                      animate={{
-                        rotateY: prefersReducedMotion ? 0 : offset * -15,
-                        scale: offset === 0 ? 1 : 0.85,
-                        opacity: offset === 0 ? 1 : 0.5,
-                      }}
-                      transition={
-                        !shouldAnimate
-                          ? { duration: 0 }
-                          : prefersReducedMotion
-                            ? { duration: 0.3, ease: "easeOut" }
-                            : { type: "spring", stiffness: 260, damping: 28 }
-                      }
                     >
                       <AudienceCard profile={AUDIENCE_PROFILES[profileIdx]} index={profileIdx} />
-                    </motion.div>
-                  );
-                })}
+                    </div>
+                ))}
               </motion.div>
             </div>
           </div>
@@ -4099,8 +4080,8 @@ function FounderSection() {
               className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F8935D] focus-visible:ring-offset-2"
               aria-label="Voir le profil LinkedIn d'Emilien Nepveu"
             >
-              <div className="w-18 h-18 md:w-20 md:h-20 rounded-full overflow-hidden ring-4 ring-white shadow-xl shadow-gray-200/50">
-                <Image src="/ceo.jpg" alt="Emilien Nepveu" width={80} height={80} className="w-full h-full object-cover" />
+              <div className="relative w-18 h-18 md:w-20 md:h-20 aspect-square rounded-full overflow-hidden ring-4 ring-white shadow-xl shadow-gray-200/50">
+                <Image src="/ceo.jpg" alt="Emilien Nepveu" fill className="object-cover object-center" sizes="80px" />
               </div>
             </Link>
             <Link
@@ -4110,8 +4091,8 @@ function FounderSection() {
               className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F8935D] focus-visible:ring-offset-2"
               aria-label="Voir le profil de Côme Maubert"
             >
-              <div className="w-18 h-18 md:w-20 md:h-20 rounded-full overflow-hidden ring-4 ring-white shadow-xl shadow-gray-200/50">
-                <Image src="/cmo.jpg" alt="Côme Maubert" width={80} height={80} className="w-full h-full object-cover" />
+              <div className="relative w-18 h-18 md:w-20 md:h-20 aspect-square rounded-full overflow-hidden ring-4 ring-white shadow-xl shadow-gray-200/50">
+                <Image src="/cmo.jpg" alt="Côme Maubert" fill className="object-cover object-center" sizes="80px" />
               </div>
             </Link>
           </div>

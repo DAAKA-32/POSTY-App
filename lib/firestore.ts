@@ -2115,13 +2115,13 @@ export async function reschedulePost(
 ): Promise<void> {
   const postRef = doc(db, "scheduledPosts", scheduledPostId);
 
-  // Get the scheduled post to find the userId
   const postSnap = await getDoc(postRef);
   if (!postSnap.exists()) {
-    throw new Error("Post programme non trouve");
+    throw new Error("Post programmé non trouvé");
   }
-
-  // Permission check is handled upstream by SchedulingContext (supports founder overrides, trial status, etc.)
+  if (postSnap.data().status === "published") {
+    throw new Error("Un post publié ne peut pas être reprogrammé.");
+  }
 
   await updateDoc(postRef, {
     scheduledAt: Timestamp.fromDate(newScheduledAt),
@@ -2133,12 +2133,16 @@ export async function reschedulePost(
 }
 
 /**
- * Cancel a scheduled post
+ * Cancel a scheduled post (only pending posts can be cancelled)
  */
 export async function cancelScheduledPost(
   scheduledPostId: string
 ): Promise<void> {
   const postRef = doc(db, "scheduledPosts", scheduledPostId);
+  const postSnap = await getDoc(postRef);
+  if (postSnap.exists() && postSnap.data().status === "published") {
+    throw new Error("Un post publié ne peut pas être annulé.");
+  }
   await updateDoc(postRef, {
     status: "cancelled" as ScheduleStatus,
     updatedAt: serverTimestamp(),
@@ -2146,12 +2150,16 @@ export async function cancelScheduledPost(
 }
 
 /**
- * Delete a scheduled post permanently
+ * Delete a scheduled post permanently (published posts cannot be deleted)
  */
 export async function deleteScheduledPost(
   scheduledPostId: string
 ): Promise<void> {
   const postRef = doc(db, "scheduledPosts", scheduledPostId);
+  const postSnap = await getDoc(postRef);
+  if (postSnap.exists() && postSnap.data().status === "published") {
+    throw new Error("Un post publié ne peut pas être supprimé.");
+  }
   await deleteDoc(postRef);
 }
 

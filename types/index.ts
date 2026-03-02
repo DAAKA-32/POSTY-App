@@ -638,6 +638,7 @@ export interface SchedulingContextType {
   // Actions
   schedulePost: (data: CreateScheduledPostData) => Promise<{ success: boolean; scheduledPostId?: string; error?: string }>;
   cancelSchedule: (scheduledPostId: string) => Promise<{ success: boolean; error?: string }>;
+  deleteSchedule: (scheduledPostId: string) => Promise<{ success: boolean; error?: string }>;
   reschedulePost: (scheduledPostId: string, newDate: Date) => Promise<{ success: boolean; error?: string }>;
   refreshScheduledPosts: () => Promise<void>;
   // Helpers

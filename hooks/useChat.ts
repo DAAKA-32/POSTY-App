@@ -49,7 +49,7 @@ interface UseChatReturn {
   canGenerate: boolean;
   generate: (prompt: string, file?: FileAttachment | null) => Promise<void>;
   reset: () => void;
-  loadConversation: (post: { prompt: string; responseA: string; responseB: string; id: string; messages?: ConversationTurn[] }) => void;
+  loadConversation: (post: { prompt: string; responseA: string; responseB: string; id: string; messages?: ConversationTurn[]; responseMode?: string; selectedStyle?: string }) => void;
   lastPrompt: string;
   postId: string | null;
   /** AI-generated insights about the post (all plans) */
@@ -483,7 +483,7 @@ export function useChat({
 
   // Load an existing conversation from a Post
   const loadConversation = useCallback(
-    (post: { prompt: string; responseA: string; responseB: string; id: string; messages?: ConversationTurn[] }) => {
+    (post: { prompt: string; responseA: string; responseB: string; id: string; messages?: ConversationTurn[]; responseMode?: string; selectedStyle?: string }) => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
@@ -494,6 +494,12 @@ export function useChat({
       // CRITICAL: Set the post ID to enable conversation continuation
       setPostId(post.id);
       setLastPrompt(post.prompt);
+
+      // Determine correct variant for responseA based on saved metadata
+      const responseAVariant: "storytelling" | "business" =
+        post.responseMode === "dual"
+          ? "storytelling" // Dual mode: responseA is always storytelling
+          : (post.selectedStyle as "storytelling" | "business") || "storytelling";
 
       // Create messages from the original post
       const timestamp = new Date();
@@ -509,11 +515,11 @@ export function useChat({
       // Add original AI responses
       if (post.responseA) {
         newMessages.push({
-          id: `ai-${post.id}-storytelling`,
+          id: `ai-${post.id}-${responseAVariant}`,
           type: "ai",
           content: post.responseA,
           timestamp,
-          variant: "storytelling",
+          variant: responseAVariant,
           isStreaming: false,
         });
       }

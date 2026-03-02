@@ -69,7 +69,7 @@ function SubscriptionContent() {
       return;
     }
 
-    // Free plan — activate in Firestore and navigate to /app
+    // Free plan — activate in Firestore and show welcome modal
     // Handled BEFORE currentPlan check so free users are never stuck
     if (plan.id === "free") {
       if (!currentPlan || currentPlan === "free") {
@@ -80,7 +80,8 @@ function SubscriptionContent() {
           console.error("Error activating free plan:", error);
         }
       }
-      router.push("/app");
+      setWelcomePlanName(undefined);
+      setShowWelcomeModal(true);
       return;
     }
 

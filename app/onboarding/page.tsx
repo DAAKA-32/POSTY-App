@@ -17,16 +17,6 @@ import {
   PUBLISHING_FREQUENCIES,
   OnboardingData,
 } from "@/types";
-import {
-  TRIAL_PERIOD_DAYS,
-  getPaidPlans,
-  getPlanCoreFeatures,
-  PLAN_TAGLINES,
-  getCTALabel,
-  isPlanTrialEligible,
-  PlanConfig,
-  PlanType,
-} from "@/lib/plans";
 import toast from "@/components/ui/Toast";
 
 // =============================================================================
@@ -115,12 +105,19 @@ const slideVariants = {
 function ProfileRecapScreen({
   data,
   userName,
-  onContinue,
+  onRedirect,
 }: {
   data: OnboardingData;
   userName: string;
-  onContinue: () => void;
+  onRedirect: () => void;
 }) {
+  // Auto-redirect to subscription page after animations complete
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      onRedirect();
+    }, 2800);
+    return () => clearTimeout(timeout);
+  }, [onRedirect]);
   const initials = userName
     .split(" ")
     .map((w) => w[0])
@@ -249,292 +246,17 @@ function ProfileRecapScreen({
         </div>
       </motion.div>
 
-      {/* CTA */}
-      <motion.button
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.9, duration: 0.4 }}
-        onClick={onContinue}
-        className="w-full mt-6 py-3.5 px-4 bg-primary hover:bg-primary-hover text-white font-semibold rounded-xl shadow-sm transition-colors duration-200 text-sm"
+      {/* Redirect indicator */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.8, duration: 0.4 }}
+        className="mt-6 flex items-center justify-center gap-2 text-sm text-gray-400"
       >
-        Continuer
-      </motion.button>
+        <div className="w-4 h-4 border-2 border-gray-300 border-t-[#F8935D] rounded-full animate-spin" />
+        Redirection...
+      </motion.div>
     </div>
-  );
-}
-
-// =============================================================================
-// UPSELL SCREEN
-// =============================================================================
-function UpsellScreen({ onContinue, onUpgrade }: { onContinue: () => void; onUpgrade: (plan: "pro" | "max") => void }) {
-  const [showReassurance, setShowReassurance] = useState(false);
-  const plans = getPaidPlans();
-
-  // Auto-redirect after reassurance message
-  useEffect(() => {
-    if (!showReassurance) return;
-    const timeout = setTimeout(() => {
-      onContinue();
-    }, 2500);
-    return () => clearTimeout(timeout);
-  }, [showReassurance, onContinue]);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-      className="flex-1 flex flex-col items-center px-4 py-8"
-    >
-      <AnimatePresence mode="wait">
-        {showReassurance ? (
-          <motion.div
-            key="reassurance"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.4, ease: smoothEase }}
-            className="w-full max-w-md text-center my-auto"
-          >
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
-              className="mx-auto w-20 h-20 rounded-full bg-emerald-500 flex items-center justify-center mb-6"
-            >
-              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-              </svg>
-            </motion.div>
-            <motion.h2
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.4, ease: smoothEase }}
-              className="text-2xl font-bold text-gray-900 mb-3"
-            >
-              Profil sauvegardé
-            </motion.h2>
-            <motion.p
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.4, ease: smoothEase }}
-              className="text-gray-500 text-base"
-            >
-              Choisissez votre plan pour commencer à créer des posts.
-            </motion.p>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
-              className="mt-8 flex items-center justify-center gap-2 text-sm text-gray-400"
-            >
-              <div className="w-4 h-4 border-2 border-gray-300 border-t-[#F8935D] rounded-full animate-spin" />
-              Redirection...
-            </motion.div>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="upsell"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.3 }}
-            className="w-full max-w-2xl my-auto"
-          >
-            {/* Title */}
-            <motion.div
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1, ease: smoothEase }}
-              className="text-center mb-8"
-            >
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-600 text-xs font-semibold rounded-full mb-4 border border-emerald-200">
-                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                Profil configuré
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-                Choisissez votre plan
-              </h1>
-              <p className="text-gray-400 text-sm sm:text-base max-w-md mx-auto">
-                Un seul client signé rembourse votre abonnement.
-              </p>
-            </motion.div>
-
-            {/* Plan cards */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.25, ease: smoothEase }}
-              className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 mb-6"
-            >
-              {plans.map((plan, index) => {
-                const isPopular = plan.highlight;
-                const isPremium = plan.premium;
-                const coreFeatures = getPlanCoreFeatures(plan);
-                const planInfo = PLAN_TAGLINES[plan.id];
-                const trialEligible = isPlanTrialEligible(plan.id);
-
-                return (
-                  <motion.div
-                    key={plan.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 + index * 0.12, duration: 0.45, ease: smoothEase }}
-                    className={`
-                      relative rounded-2xl overflow-hidden
-                      ${isPopular ? "ring-2 ring-[#F8935D]/60" : ""}
-                    `}
-                  >
-                    {/* Glow for popular */}
-                    {isPopular && (
-                      <>
-                        <div className="absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-[#F8935D] via-[#F76B54] to-[#F8935D] opacity-40 blur-lg" />
-                        <div className="absolute inset-0 rounded-2xl p-[2px] bg-gradient-to-br from-[#F8935D] via-[#F76B54] to-[#F8935D]">
-                          <div className="absolute inset-[2px] rounded-[14px] bg-white" />
-                        </div>
-                      </>
-                    )}
-
-                    {/* Glow for premium */}
-                    {isPremium && (
-                      <div className="absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 opacity-15 blur-md" />
-                    )}
-
-                    {/* Card content */}
-                    <div className={`
-                      relative p-5 sm:p-6 rounded-2xl flex flex-col h-full
-                      ${isPopular
-                        ? "bg-gradient-to-b from-[#F8935D]/8 via-white to-white"
-                        : isPremium
-                          ? "bg-gradient-to-b from-amber-500/5 via-white to-white border-2 border-amber-500/25"
-                          : "bg-white border border-gray-200"
-                      }
-                    `}>
-                      {/* Badge */}
-                      <div className="h-8 flex items-start justify-center mb-1">
-                        {isPopular && (
-                          <div className="relative">
-                            <div className="absolute inset-0 bg-[#F8935D] rounded-full blur-md opacity-40" />
-                            <div className="relative px-3 py-1 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white text-xs font-semibold rounded-full shadow-md shadow-[#F8935D]/25 flex items-center gap-1.5">
-                              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                              </svg>
-                              Le plus populaire
-                            </div>
-                          </div>
-                        )}
-                        {isPremium && !isPopular && (
-                          <div className="px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-semibold rounded-full shadow-md shadow-amber-500/25 flex items-center gap-1.5">
-                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M5 2a2 2 0 00-2 2v14l3.5-2 3.5 2 3.5-2 3.5 2V4a2 2 0 00-2-2H5zm2.5 3a1.5 1.5 0 100 3 1.5 1.5 0 000-3zm6.207.293a1 1 0 00-1.414 0l-6 6a1 1 0 101.414 1.414l6-6a1 1 0 000-1.414zM12.5 10a1.5 1.5 0 100 3 1.5 1.5 0 000-3z" clipRule="evenodd" />
-                            </svg>
-                            Elite
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Plan name + tagline */}
-                      <div className="text-center mb-3">
-                        <h3 className={`text-xl font-bold mb-0.5 ${
-                          isPremium ? "text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400" : "text-gray-900"
-                        }`}>
-                          {plan.name}
-                        </h3>
-                        <p className="text-xs text-gray-500 line-clamp-1">{planInfo?.tagline}</p>
-                      </div>
-
-                      {/* Price */}
-                      <div className="text-center mb-4">
-                        <div className="flex items-baseline justify-center gap-0.5">
-                          <span className={`text-3xl sm:text-4xl font-bold tabular-nums ${
-                            isPremium ? "text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400" : "text-gray-900"
-                          }`}>
-                            {plan.price.monthly.toFixed(2).replace(".", ",")}
-                          </span>
-                          <span className="text-base text-gray-900 font-medium">€</span>
-                          <span className="text-gray-400 text-sm">/mois</span>
-                        </div>
-                      </div>
-
-                      {/* CTA button */}
-                      <button
-                        onClick={() => onUpgrade(plan.id as "pro" | "max")}
-                        className={`
-                          w-full py-3 px-4 font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 text-sm mb-4
-                          ${isPopular
-                            ? "bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white shadow-[#F8935D]/20 hover:shadow-lg hover:shadow-[#F8935D]/30"
-                            : isPremium
-                              ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-amber-500/20 hover:shadow-lg hover:shadow-amber-500/30"
-                              : "bg-gray-100 text-gray-900 hover:bg-gray-200"
-                          }
-                        `}
-                      >
-                        {getCTALabel(plan.id, false, trialEligible)}
-                      </button>
-
-                      {/* Trial / guarantee badge */}
-                      {trialEligible && (
-                        <p className="text-center text-xs text-gray-400 mb-4">
-                          Sans engagement · Annulation à tout moment
-                        </p>
-                      )}
-                      {!trialEligible && (
-                        <p className="text-center text-xs text-gray-400 mb-4">
-                          Sans engagement · Annulation à tout moment
-                        </p>
-                      )}
-
-                      {/* Features list */}
-                      <div className="pt-4 border-t border-gray-100 flex-1">
-                        <ul className="space-y-2.5">
-                          {coreFeatures.map((feature, idx) => (
-                            <li key={idx} className="flex items-start gap-2.5">
-                              {feature.included ? (
-                                <div className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 bg-green-500/15 text-green-600">
-                                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                  </svg>
-                                </div>
-                              ) : (
-                                <div className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 bg-gray-100 text-gray-300">
-                                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M5 10a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1z" clipRule="evenodd" />
-                                  </svg>
-                                </div>
-                              )}
-                              <span className={`text-sm ${feature.included ? "text-gray-700" : "text-gray-400"}`}>
-                                {feature.text}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </motion.div>
-
-            {/* Later CTA */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.4, delay: 0.7 }}
-              className="text-center"
-            >
-              <button
-                onClick={() => setShowReassurance(true)}
-                className="py-3 px-6 text-gray-400 hover:text-gray-600 font-medium text-sm transition-colors duration-200"
-              >
-                Voir tous les plans
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
   );
 }
 
@@ -549,7 +271,6 @@ export default function OnboardingPage() {
   const [direction, setDirection] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showRecap, setShowRecap] = useState(false);
-  const [showUpsell, setShowUpsell] = useState(false);
 
   // Read ?edit=true from URL on client only (avoids useSearchParams + Suspense hydration issues)
   // Lazy initializer runs synchronously on first render, before any useEffect
@@ -605,8 +326,8 @@ export default function OnboardingPage() {
     // Explicit edit mode from subscription page — NEVER redirect away
     if (isExplicitEdit.current) return;
 
-    // Recap or upsell screen is active — never redirect away
-    if (showRecap || showUpsell) return;
+    // Recap screen is active — never redirect away
+    if (showRecap) return;
 
     if (userProfile?.onboardingComplete) {
       if (hasActiveSubscription) {
@@ -620,7 +341,7 @@ export default function OnboardingPage() {
     if (!shouldShowOnboarding && userProfile) {
       router.push("/app");
     }
-  }, [user, userProfile, loading, subscriptionLoading, router, shouldShowOnboarding, showUpsell, showRecap, hasActiveSubscription]);
+  }, [user, userProfile, loading, subscriptionLoading, router, shouldShowOnboarding, showRecap, hasActiveSubscription]);
 
   // Enable scrolling on Onboarding page
   // Strategy: The page uses a fixed scroll container (position:fixed + overflow-y:auto)
@@ -676,7 +397,7 @@ export default function OnboardingPage() {
         await refreshUserProfile();
         router.replace("/subscription");
       } else {
-        // First-time onboarding — show recap then upsell
+        // First-time onboarding — show recap then auto-redirect to subscription
         // CRITICAL: Set showRecap BEFORE refreshUserProfile/clearOnboardingFlag
         // to prevent the redirect useEffect from navigating to /app
         // during intermediate renders where onboardingComplete=true but showRecap=false
@@ -692,19 +413,8 @@ export default function OnboardingPage() {
     }
   };
 
-  const handleRecapContinue = () => {
-    setShowRecap(false);
-    setShowUpsell(true);
-  };
-
-  const handleUpsellContinue = () => {
-    // New users must choose a paid plan — redirect to subscription page
-    // Use replace to prevent back-navigation bypass
+  const handleRedirectToSubscription = () => {
     router.replace("/subscription");
-  };
-
-  const handleUpsellUpgrade = (plan: "pro" | "max") => {
-    router.replace(`/subscription?plan=${plan}`);
   };
 
   const step = STEPS[currentStep];
@@ -714,7 +424,7 @@ export default function OnboardingPage() {
 
   // Keyboard navigation: Enter key advances to next step (or submits on last step)
   useEffect(() => {
-    if (showRecap || showUpsell) return;
+    if (showRecap) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key !== "Enter") return;
@@ -731,9 +441,25 @@ export default function OnboardingPage() {
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [canProceed, isSubmitting, isLastStep, showUpsell]);
+  }, [canProceed, isSubmitting, isLastStep, showRecap]);
 
   if (loading || subscriptionLoading || !user) {
+    return (
+      <div className="min-h-screen bg-[#FFF8F5] flex items-center justify-center">
+        <div className="w-10 h-10 border-3 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // Render guard: user already completed onboarding with active subscription.
+  // Show loader instead of onboarding form while the useEffect redirect to /app fires.
+  // This prevents any visual flash of the onboarding UI for existing users.
+  if (
+    userProfile?.onboardingComplete &&
+    hasActiveSubscription &&
+    !isExplicitEdit.current &&
+    !showRecap
+  ) {
     return (
       <div className="min-h-screen bg-[#FFF8F5] flex items-center justify-center">
         <div className="w-10 h-10 border-3 border-primary border-t-transparent rounded-full animate-spin" />
@@ -750,7 +476,7 @@ export default function OnboardingPage() {
           <Image src="/logo.png" alt="Posty" width={36} height={36} className="w-9 h-9 rounded-xl" />
           <span className="font-bold text-gray-900 text-lg">Posty</span>
         </Link>
-        {!showRecap && !showUpsell && (
+        {!showRecap && (
           <span className="text-sm text-gray-400 font-medium">
             {currentStep + 1} / {STEPS.length}
           </span>
@@ -758,7 +484,7 @@ export default function OnboardingPage() {
       </header>
 
       {/* Progress bar */}
-      {!showRecap && !showUpsell && (
+      {!showRecap && (
         <div className="px-4 sm:px-8 max-w-2xl mx-auto w-full flex-shrink-0">
           <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
             <motion.div
@@ -773,13 +499,11 @@ export default function OnboardingPage() {
 
       {/* Main content */}
       <main className="flex-1 flex flex-col items-center justify-start">
-        {showUpsell ? (
-          <UpsellScreen onContinue={handleUpsellContinue} onUpgrade={handleUpsellUpgrade} />
-        ) : showRecap ? (
+        {showRecap ? (
           <ProfileRecapScreen
             data={data}
             userName={user.displayName || user.email?.split("@")[0] || "Utilisateur"}
-            onContinue={handleRecapContinue}
+            onRedirect={handleRedirectToSubscription}
           />
         ) : (
           <div className="w-full max-w-lg px-4 sm:px-6 py-8 sm:py-12 my-auto">

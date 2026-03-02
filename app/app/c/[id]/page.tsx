@@ -170,6 +170,9 @@ function ConversationContent() {
             responseB: post.responseB,
             // Include follow-up messages for multi-turn conversations
             messages: post.messages || [],
+            // Style metadata for correct variant assignment
+            responseMode: post.responseMode,
+            selectedStyle: post.selectedStyle,
           });
         } else {
           // Post not found or doesn't belong to user

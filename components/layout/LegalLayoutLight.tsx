@@ -18,7 +18,7 @@ const legalLinks = [
 
 /**
  * LegalLayoutLight - Layout pour les pages legales
- * Mode sombre pour coherence avec l'application POSTY
+ * Mode clair force pour coherence avec les pages publiques
  */
 export default function LegalLayoutLight({ children, title }: LegalLayoutLightProps) {
   const pathname = usePathname();
@@ -38,7 +38,7 @@ export default function LegalLayoutLight({ children, title }: LegalLayoutLightPr
 
   return (
     <div
-      className="min-h-screen bg-background text-white"
+      className="min-h-screen bg-[#FAFBFC] text-[#1A1D21]"
       style={{
         overflowY: "auto",
         overflowX: "hidden",
@@ -48,7 +48,7 @@ export default function LegalLayoutLight({ children, title }: LegalLayoutLightPr
       }}
     >
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-dark-card border-b border-dark-border backdrop-blur-sm">
+      <header className="sticky top-0 z-50 bg-white border-b border-[#E5E7EB] backdrop-blur-sm">
         <div className="max-w-[960px] mx-auto px-6 py-4 flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 no-underline">
@@ -59,13 +59,13 @@ export default function LegalLayoutLight({ children, title }: LegalLayoutLightPr
                 className="w-full h-full object-contain"
               />
             </div>
-            <span className="font-semibold text-lg text-gray-900 dark:text-white">POSTY</span>
+            <span className="font-semibold text-lg text-gray-900">POSTY</span>
           </Link>
 
           {/* Return button */}
           <Link
             href="/"
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm text-primary bg-dark-elevated hover:bg-dark-hover rounded-lg no-underline transition-colors duration-200"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm text-primary bg-[#F8FAFC] hover:bg-[#F3F4F6] rounded-lg no-underline transition-colors duration-200"
           >
             <svg
               width="16"
@@ -87,7 +87,7 @@ export default function LegalLayoutLight({ children, title }: LegalLayoutLightPr
       </header>
 
       {/* Navigation tabs */}
-      <nav className="border-b border-dark-border bg-dark-bg">
+      <nav className="border-b border-[#E5E7EB] bg-[#FAFBFC]">
         <div className="max-w-[960px] mx-auto px-6">
           <div className="flex gap-2 overflow-x-auto py-3 scrollbar-hide">
             {legalLinks.map((link) => (
@@ -98,7 +98,7 @@ export default function LegalLayoutLight({ children, title }: LegalLayoutLightPr
                   px-4 py-2 text-sm whitespace-nowrap rounded-lg no-underline transition-all duration-200
                   ${pathname === link.href
                     ? "font-semibold text-primary bg-primary/10"
-                    : "font-normal text-text-secondary hover:text-white hover:bg-dark-hover"
+                    : "font-normal text-[#6B7280] hover:text-[#1A1D21] hover:bg-[#F3F4F6]"
                   }
                 `}
               >
@@ -113,20 +113,20 @@ export default function LegalLayoutLight({ children, title }: LegalLayoutLightPr
       <main className="max-w-[960px] mx-auto px-6 py-10 pb-20">
         {/* Page title */}
         <div className="mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-white mb-2 leading-tight">
+          <h1 className="text-2xl md:text-3xl font-bold text-[#1A1D21] mb-2 leading-tight">
             {title}
           </h1>
           <div className="w-[60px] h-[3px] bg-primary rounded-full" />
         </div>
 
         {/* Content */}
-        <div className="text-[15px] leading-relaxed text-text-primary">
+        <div className="text-[15px] leading-relaxed text-[#4B5563]">
           {children}
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-dark-border bg-dark-card mt-auto">
+      <footer className="border-t border-[#E5E7EB] bg-white mt-auto">
         <div className="max-w-[960px] mx-auto px-6 py-8">
           <div className="flex flex-col items-center gap-4">
             {/* Logo and copyright */}
@@ -139,7 +139,7 @@ export default function LegalLayoutLight({ children, title }: LegalLayoutLightPr
                   loading="lazy"
                 />
               </div>
-              <span className="text-sm text-text-muted">
+              <span className="text-sm text-[#6B7280]">
                 © {new Date().getFullYear()} POSTY. Tous droits reserves.
               </span>
             </div>
@@ -148,25 +148,25 @@ export default function LegalLayoutLight({ children, title }: LegalLayoutLightPr
             <div className="flex flex-wrap justify-center gap-4 md:gap-6 text-sm">
               <Link
                 href="/legal/privacy"
-                className="text-text-muted hover:text-white no-underline transition-colors duration-200"
+                className="text-[#6B7280] hover:text-[#1A1D21] no-underline transition-colors duration-200"
               >
                 Confidentialité
               </Link>
               <Link
                 href="/legal/terms"
-                className="text-text-muted hover:text-white no-underline transition-colors duration-200"
+                className="text-[#6B7280] hover:text-[#1A1D21] no-underline transition-colors duration-200"
               >
                 CGU
               </Link>
               <Link
                 href="/legal/notices"
-                className="text-text-muted hover:text-white no-underline transition-colors duration-200"
+                className="text-[#6B7280] hover:text-[#1A1D21] no-underline transition-colors duration-200"
               >
                 Mentions légales
               </Link>
               <Link
                 href="/legal/cookies"
-                className="text-text-muted hover:text-white no-underline transition-colors duration-200"
+                className="text-[#6B7280] hover:text-[#1A1D21] no-underline transition-colors duration-200"
               >
                 Cookies
               </Link>
@@ -174,10 +174,10 @@ export default function LegalLayoutLight({ children, title }: LegalLayoutLightPr
 
             {/* Contact + CNIL */}
             <div className="flex flex-col items-center gap-1 mt-2">
-              <p className="text-xs text-text-subtle">
+              <p className="text-xs text-[#9CA3AF]">
                 Contact RGPD : postygroup@gmail.com
               </p>
-              <p className="text-xs text-text-subtle">
+              <p className="text-xs text-[#9CA3AF]">
                 Autorite de controle :{" "}
                 <a
                   href="https://www.cnil.fr"

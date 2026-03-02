@@ -12,6 +12,7 @@ import { RedditIcon, ThreadsIcon, FacebookIcon } from "@/components/publish/Plat
 interface ScheduledPostCardProps {
   post: ScheduledPost;
   onCancel: (postId: string) => Promise<void>;
+  onDelete: (postId: string) => Promise<void>;
   onReschedule: (post: ScheduledPost) => void;
   onEdit: (post: ScheduledPost) => void;
 }
@@ -27,6 +28,17 @@ const PLATFORM_LABELS: Record<string, string> = {
 // Days and months in French
 const DAYS_FR = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
 const MONTHS_FR_SHORT = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
+
+// Map raw failureReason to a user-friendly message (safety net for legacy data in Firestore)
+const DEFAULT_FAILURE_MSG = "Une erreur est survenue lors de la publication. Vous pouvez reprogrammer ce post.";
+function getUserFriendlyError(reason: string): string {
+  // Catch raw API error patterns (e.g. "LinkedIn API error: 422", "Erreur Facebook: 400")
+  if (/api\s*error|status\s*\d{3}|\d{3}\s*error/i.test(reason)) return DEFAULT_FAILURE_MSG;
+  if (/^erreur (facebook|threads)\s*(\(|:)/i.test(reason)) return DEFAULT_FAILURE_MSG;
+  if (/plateforme non support/i.test(reason)) return "Cette plateforme n'est pas encore disponible.";
+  // Already user-friendly — pass through
+  return reason;
+}
 
 // Status config - Clean professional styling
 const STATUS_CONFIG: Record<ScheduleStatus, {
@@ -102,11 +114,14 @@ const PLATFORM_BADGE_CONFIG: Record<string, {
 export default function ScheduledPostCard({
   post,
   onCancel,
+  onDelete,
   onReschedule,
   onEdit,
 }: ScheduledPostCardProps) {
   const [isCancelling, setIsCancelling] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Parse scheduled date
   const scheduledDate =
@@ -125,9 +140,8 @@ export default function ScheduledPostCard({
   // Check if the post is in the past and still pending (should have been published)
   const isPastDue = post.status === "pending" && scheduledDate < new Date();
 
-  // Handle cancel
+  // Handle cancel (pending → cancelled)
   const handleCancel = async () => {
-    // Haptic feedback for destructive action confirmation
     triggerHaptic("error");
     setIsCancelling(true);
     try {
@@ -138,13 +152,25 @@ export default function ScheduledPostCard({
     }
   };
 
+  // Handle delete (permanent removal)
+  const handleDelete = async () => {
+    triggerHaptic("error");
+    setIsDeleting(true);
+    try {
+      await onDelete(post.id);
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
   return (
     <>
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -10 }}
-        transition={{ duration: 0.2 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.15 }}
         className={`
           group relative
           bg-white dark:bg-dark-card min-w-0
@@ -162,8 +188,8 @@ export default function ScheduledPostCard({
         <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-br from-primary/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
         {/* Header: Date & Status */}
-        <div className="relative flex items-start justify-between gap-2 mb-4 min-w-0">
-          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+        <div className="relative flex items-start justify-between gap-1.5 sm:gap-2 mb-3 sm:mb-4 min-w-0">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             {/* Date badge - Clean design */}
             <div className="relative shrink-0">
               <div className={`
@@ -171,14 +197,14 @@ export default function ScheduledPostCard({
                   ? "bg-primary/10 border-primary/20"
                   : "bg-gray-100 dark:bg-primary/10 border-gray-200 dark:border-primary/15"
                 }
-                rounded-xl p-2 sm:p-2.5 text-center min-w-[52px] sm:min-w-[64px] border
+                rounded-lg sm:rounded-xl p-1.5 sm:p-2.5 text-center min-w-[44px] sm:min-w-[64px] border
               `}>
-                <span className={`block text-[10px] font-semibold uppercase tracking-wider ${
+                <span className={`block text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider ${
                   scheduledDate.toDateString() === new Date().toDateString()
                     ? "text-primary"
                     : "text-gray-500 dark:text-text-muted"
                 }`}>{month}</span>
-                <span className={`block text-xl sm:text-2xl font-bold leading-tight ${
+                <span className={`block text-lg sm:text-2xl font-bold leading-tight ${
                   scheduledDate.toDateString() === new Date().toDateString()
                     ? "text-primary"
                     : "text-gray-900 dark:text-white"
@@ -252,11 +278,11 @@ export default function ScheduledPostCard({
 
         {/* Image thumbnails */}
         {post.images && post.images.length > 0 && (
-          <div className="relative flex gap-1.5 mb-3 sm:mb-4 overflow-x-auto">
+          <div className="relative flex gap-1 sm:gap-1.5 mb-3 sm:mb-4 overflow-x-auto scroll-disabled">
             {post.images.slice(0, 4).map((img, idx) => (
               <div
                 key={idx}
-                className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-lg overflow-hidden border border-gray-200 dark:border-dark-border shrink-0"
+                className="relative w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden border border-gray-200 dark:border-dark-border shrink-0"
               >
                 <img
                   src={img.downloadURL}
@@ -278,15 +304,16 @@ export default function ScheduledPostCard({
         {/* Error message if failed - Premium alert style */}
         {post.status === "failed" && post.failureReason && (
           <motion.div
-            initial={{ opacity: 0, y: -5 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.15 }}
             className="mb-4 p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl"
           >
             <div className="flex items-start gap-2">
               <svg className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <p className="text-xs text-red-700 dark:text-red-400">{post.failureReason}</p>
+              <p className="text-xs text-red-700 dark:text-red-400">{getUserFriendlyError(post.failureReason)}</p>
             </div>
           </motion.div>
         )}
@@ -314,18 +341,18 @@ export default function ScheduledPostCard({
 
         {/* Actions - Clean design, responsive for mobile */}
         {post.status === "pending" && (
-          <div className="relative flex gap-1.5 sm:gap-2 pt-4 mt-1 border-t border-gray-200 dark:border-dark-border">
+          <div className="relative flex gap-1 sm:gap-2 pt-3 sm:pt-4 mt-1 border-t border-gray-200 dark:border-dark-border">
             <button
               onClick={() => {
                 triggerHaptic("light");
                 onEdit(post);
               }}
-              className="flex-1 inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium
+              className="flex-1 inline-flex items-center justify-center gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-2 text-[11px] sm:text-sm font-medium
                 text-gray-700 dark:text-text-secondary
                 bg-gray-100 dark:bg-dark-hover
                 hover:bg-gray-200 dark:hover:bg-dark-active
                 border border-gray-200 dark:border-dark-border
-                rounded-xl transition-colors duration-200 min-w-0"
+                rounded-lg sm:rounded-xl transition-colors duration-200 min-w-0"
             >
               <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -337,29 +364,30 @@ export default function ScheduledPostCard({
                 triggerHaptic("medium");
                 onReschedule(post);
               }}
-              className="flex-1 inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium
+              className="flex-1 inline-flex items-center justify-center gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-2 text-[11px] sm:text-sm font-medium
                 text-primary
                 bg-primary/10
                 hover:bg-primary/15
                 border border-primary/20
-                rounded-xl transition-colors duration-200 min-w-0"
+                rounded-lg sm:rounded-xl transition-colors duration-200 min-w-0"
             >
               <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span className="truncate">Reprogrammer</span>
+              <span className="sm:hidden truncate">Reprog.</span>
+              <span className="hidden sm:inline truncate">Reprogrammer</span>
             </button>
             <button
               onClick={() => {
                 triggerHaptic("warning");
                 setShowCancelConfirm(true);
               }}
-              className="p-2 shrink-0 text-gray-400 dark:text-text-muted
+              className="p-1.5 sm:p-2 shrink-0 text-gray-400 dark:text-text-muted
                 hover:text-red-500 dark:hover:text-red-400
                 hover:bg-red-50 dark:hover:bg-red-500/10
                 border border-gray-200 dark:border-dark-border
                 hover:border-red-200 dark:hover:border-red-500/20
-                rounded-xl transition-colors duration-200"
+                rounded-lg sm:rounded-xl transition-colors duration-200"
               title="Annuler la programmation"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -369,22 +397,57 @@ export default function ScheduledPostCard({
           </div>
         )}
 
-        {/* Retry button for failed posts */}
+        {/* Actions for failed posts: Edit + Reschedule + Delete */}
         {post.status === "failed" && (
-          <div className="relative flex gap-2 pt-4 mt-1 border-t border-gray-200 dark:border-dark-border">
+          <div className="relative flex gap-1 sm:gap-2 pt-3 sm:pt-4 mt-1 border-t border-gray-200 dark:border-dark-border">
+            <button
+              onClick={() => {
+                triggerHaptic("light");
+                onEdit(post);
+              }}
+              className="flex-1 inline-flex items-center justify-center gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-2 text-[11px] sm:text-sm font-medium
+                text-gray-700 dark:text-text-secondary
+                bg-gray-100 dark:bg-dark-hover
+                hover:bg-gray-200 dark:hover:bg-dark-active
+                border border-gray-200 dark:border-dark-border
+                rounded-lg sm:rounded-xl transition-colors duration-200 min-w-0"
+            >
+              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              <span className="truncate">Modifier</span>
+            </button>
             <button
               onClick={() => {
                 triggerHaptic("medium");
                 onReschedule(post);
               }}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-medium
+              className="flex-1 inline-flex items-center justify-center gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-2 text-[11px] sm:text-sm font-medium
                 text-white bg-primary hover:bg-primary-hover
-                rounded-xl transition-colors duration-200"
+                rounded-lg sm:rounded-xl transition-colors duration-200 min-w-0"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
-              Reprogrammer
+              <span className="sm:hidden truncate">Reprog.</span>
+              <span className="hidden sm:inline truncate">Reprogrammer</span>
+            </button>
+            <button
+              onClick={() => {
+                triggerHaptic("warning");
+                setShowDeleteConfirm(true);
+              }}
+              className="p-1.5 sm:p-2 shrink-0 text-gray-400 dark:text-text-muted
+                hover:text-red-500 dark:hover:text-red-400
+                hover:bg-red-50 dark:hover:bg-red-500/10
+                border border-gray-200 dark:border-dark-border
+                hover:border-red-200 dark:hover:border-red-500/20
+                rounded-lg sm:rounded-xl transition-colors duration-200"
+              title="Supprimer le post"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
             </button>
           </div>
         )}
@@ -396,8 +459,20 @@ export default function ScheduledPostCard({
         onClose={() => setShowCancelConfirm(false)}
         onConfirm={handleCancel}
         title="Annuler la programmation"
-        message="Etes-vous sur de vouloir annuler ce post programme ? Cette action est irreversible."
+        message="Êtes-vous sûr de vouloir annuler ce post programmé ? Cette action est irréversible."
         confirmText="Annuler le post"
+        cancelText="Retour"
+        variant="danger"
+      />
+
+      {/* Delete confirmation modal */}
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDelete}
+        title="Supprimer le post"
+        message="Êtes-vous sûr de vouloir supprimer définitivement ce post ? Cette action est irréversible."
+        confirmText="Supprimer"
         cancelText="Retour"
         variant="danger"
       />

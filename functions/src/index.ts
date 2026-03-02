@@ -119,8 +119,8 @@ async function postToLinkedIn(
 
   if (!response.ok) {
     const error = await response.text();
-    console.error("LinkedIn post error:", error);
-    return { success: false, error: `LinkedIn API error: ${response.status}` };
+    console.error("LinkedIn post error:", response.status, error);
+    return { success: false, error: "La publication sur LinkedIn n'a pas pu aboutir. Veuillez réessayer." };
   }
 
   const data = await response.json();
@@ -247,8 +247,8 @@ async function postToLinkedInWithImages(
 
   if (!shareRes.ok) {
     const errorData = await shareRes.text();
-    console.error("LinkedIn publish with media failed:", errorData);
-    return { success: false, error: `LinkedIn API error: ${shareRes.status}` };
+    console.error("LinkedIn publish with media failed:", shareRes.status, errorData);
+    return { success: false, error: "La publication sur LinkedIn n'a pas pu aboutir. Veuillez réessayer." };
   }
 
   const shareData = await shareRes.json();
@@ -341,7 +341,7 @@ async function publishToFacebook(userId: string, content: string): Promise<Publi
   if (!publishResponse.ok) {
     const errText = await publishResponse.text();
     console.error("Facebook publish failed:", errText);
-    return { success: false, error: `Erreur Facebook: ${publishResponse.status}` };
+    return { success: false, error: "La publication sur Facebook n'a pas pu aboutir. Veuillez réessayer." };
   }
 
   const publishData = await publishResponse.json();
@@ -396,7 +396,7 @@ async function publishToThreads(userId: string, content: string): Promise<Publis
   if (!containerResponse.ok) {
     const errText = await containerResponse.text();
     console.error("Threads container creation failed:", errText);
-    return { success: false, error: `Erreur Threads (container): ${containerResponse.status}` };
+    return { success: false, error: "La publication sur Threads n'a pas pu aboutir. Veuillez réessayer." };
   }
 
   const containerData = await containerResponse.json();
@@ -415,7 +415,7 @@ async function publishToThreads(userId: string, content: string): Promise<Publis
   if (!publishResponse.ok) {
     const errText = await publishResponse.text();
     console.error("Threads publish failed:", errText);
-    return { success: false, error: `Erreur Threads (publish): ${publishResponse.status}` };
+    return { success: false, error: "La publication sur Threads n'a pas pu aboutir. Veuillez réessayer." };
   }
 
   const publishData = await publishResponse.json();
@@ -476,7 +476,8 @@ async function publishScheduledPost(
     case "reddit":
       return { success: false, error: "Reddit n'est pas encore disponible pour la publication programmée." };
     default:
-      return { success: false, error: `Plateforme non supportée: ${platform}` };
+      console.error(`Unsupported platform: ${platform}`);
+      return { success: false, error: "Cette plateforme n'est pas encore disponible." };
   }
 }
 
@@ -615,15 +616,16 @@ export const executeScheduledPosts = functions
           const nextAttempts = currentAttempts + 1;
           console.error(`[Scheduler] Post ${doc.id} exception on attempt ${nextAttempts}/${MAX_ATTEMPTS}: ${errMsg}`);
 
+          const userFriendlyMsg = "Une erreur est survenue lors de la publication. Veuillez réessayer.";
           if (nextAttempts >= MAX_ATTEMPTS) {
             await postRef.update({
               status: "failed",
-              failureReason: errMsg,
+              failureReason: userFriendlyMsg,
               updatedAt: admin.firestore.FieldValue.serverTimestamp(),
             });
           } else {
             await postRef.update({
-              failureReason: errMsg,
+              failureReason: userFriendlyMsg,
               updatedAt: admin.firestore.FieldValue.serverTimestamp(),
             });
           }

@@ -55,7 +55,7 @@ const StreamingSkeleton = memo(function StreamingSkeleton({
             key={i}
             animate={{ opacity: [0.3, 0.6, 0.3] }}
             transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.15 }}
-            className="h-3.5 rounded-md bg-dark-border/40"
+            className="h-3.5 rounded-md bg-gray-200 dark:bg-dark-border/40"
             style={{ width: `${width}%` }}
           />
         ))}
@@ -194,7 +194,7 @@ export const ModernAIResponsePair = memo(function ModernAIResponsePair({
 
         {/* Two columns — card backgrounds for clear readability */}
         <div className="grid grid-cols-2 gap-5">
-          <div className="min-h-[120px] bg-dark-card border border-dark-border/50 border-t-2 border-t-primary-hover/60 rounded-2xl p-5">
+          <div className="min-h-[120px] bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border/50 border-t-2 border-t-primary-hover/60 rounded-2xl p-5">
             {isWaiting(storytellingResponse) ? (
               <StreamingSkeleton variant="storytelling" />
             ) : (
@@ -211,7 +211,7 @@ export const ModernAIResponsePair = memo(function ModernAIResponsePair({
               />
             )}
           </div>
-          <div className="min-h-[120px] bg-dark-card border border-dark-border/50 border-t-2 border-t-primary/60 rounded-2xl p-5">
+          <div className="min-h-[120px] bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border/50 border-t-2 border-t-primary/60 rounded-2xl p-5">
             {isWaiting(businessResponse) ? (
               <StreamingSkeleton variant="business" />
             ) : (
@@ -257,7 +257,7 @@ export const ModernAIResponsePair = memo(function ModernAIResponsePair({
               }}
               className="w-full"
             >
-              <div className="bg-dark-card border border-dark-border/50 rounded-2xl p-5">
+              <div className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border/50 rounded-2xl p-5">
                 {isWaiting(activeResponse) ? (
                   <StreamingSkeleton variant={activeResponse.variant} />
                 ) : (

@@ -99,9 +99,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Listen to auth state changes
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setUser(firebaseUser);
-
       if (firebaseUser) {
+        // CRITICAL: Set user AND re-enter loading state in the same synchronous
+        // block so React batches them into a single render. This prevents a
+        // window where user is set + loading is false + userProfile is stale/null,
+        // which caused premature redirects (onboarding flash for existing users).
+        setUser(firebaseUser);
+        setLoading(true);
+
         // Fetch user profile from Firestore
         try {
           const profile = await getUserProfile(firebaseUser.uid);
@@ -116,14 +121,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.error("Error fetching user profile:", error);
           setUserProfile(null);
         }
+
+        setLoading(false);
       } else {
+        setUser(null);
         setUserProfile(null);
         // Clear onboarding flags when user logs out
         setShouldShowOnboarding(false);
         setIsNewUser(false);
+        setLoading(false);
       }
-
-      setLoading(false);
     });
 
     return () => unsubscribe();

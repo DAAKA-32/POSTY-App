@@ -214,16 +214,25 @@ export default function RootLayout({
 
                 // Theme initialization
                 try {
-                  var theme = localStorage.getItem('posty-theme');
                   var root = document.documentElement;
-                  if (theme === 'light') {
+                  var path = window.location.pathname;
+                  // Public pages always render in light mode (no dark flash)
+                  var isPublicPage = path === '/' || path.startsWith('/about') || path.startsWith('/login') || path.startsWith('/signup') || path.startsWith('/legal') || path.startsWith('/pricing');
+                  if (isPublicPage) {
                     root.classList.add('light');
                     root.style.colorScheme = 'light';
                     root.setAttribute('data-theme', 'light');
                   } else {
-                    root.classList.add('dark');
-                    root.style.colorScheme = 'dark';
-                    root.setAttribute('data-theme', 'dark');
+                    var theme = localStorage.getItem('posty-theme');
+                    if (theme === 'light') {
+                      root.classList.add('light');
+                      root.style.colorScheme = 'light';
+                      root.setAttribute('data-theme', 'light');
+                    } else {
+                      root.classList.add('dark');
+                      root.style.colorScheme = 'dark';
+                      root.setAttribute('data-theme', 'dark');
+                    }
                   }
                 } catch (e) {
                   document.documentElement.classList.add('dark');

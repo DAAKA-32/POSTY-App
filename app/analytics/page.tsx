@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import MainLayout from "@/components/layout/MainLayout";
-import PullToRefresh from "@/components/ui/PullToRefresh";
 import {
   getLinkedInPosts,
   getLinkedInAnalytics,
@@ -732,21 +731,13 @@ function AnalyticsContent() {
     await loadData();
   };
 
-  const handleRefresh = async () => {
-    await loadData();
-  };
-
   return (
     <MainLayout
       posts={[]}
       showMobileHeader={true}
       headerTitle="Analytics"
     >
-      <PullToRefresh
-        onRefresh={handleRefresh}
-        className="min-h-full bg-background-warm dark:bg-dark-bg scroll-smooth lg:overflow-y-auto"
-        disabled={loading}
-      >
+      <div className="min-h-full bg-background-warm dark:bg-dark-bg scroll-smooth lg:overflow-y-auto">
         <div className="w-full mx-auto px-4 py-6 md:px-6 md:py-8 lg:px-8 lg:py-10 lg:max-w-4xl xl:max-w-5xl 2xl:max-w-6xl overflow-x-hidden">
           {loading ? (
             <motion.div
@@ -900,7 +891,7 @@ function AnalyticsContent() {
           {/* Bottom spacing for mobile navigation */}
           <div className="h-20 md:h-8" />
         </div>
-      </PullToRefresh>
+      </div>
 
       {/* Metrics Modal */}
       <MetricsModal

@@ -544,7 +544,7 @@ body:not(.template-modal-open) aside[role="navigation"] {
     min-height: 100dvh !important;
     overflow-x: hidden !important;
     overflow-y: auto !important;
-    overscroll-behavior: auto !important;
+    overscroll-behavior-y: contain !important;
     -webkit-overflow-scrolling: touch !important;
   }
 
@@ -662,7 +662,7 @@ body.settings-scroll-enabled {
   height: auto !important;
   min-height: 100vh !important;
   width: 100% !important;
-  overscroll-behavior: auto !important;
+  overscroll-behavior-y: contain !important;
   touch-action: auto !important;
   -webkit-overflow-scrolling: touch !important;
 }
@@ -679,7 +679,7 @@ body.subscription-scroll-enabled {
   height: auto !important;
   min-height: 100vh !important;
   width: 100% !important;
-  overscroll-behavior: auto !important;
+  overscroll-behavior-y: contain !important;
   touch-action: auto !important;
   -webkit-overflow-scrolling: touch !important;
 }
@@ -696,7 +696,7 @@ body.dashboard-scroll-enabled {
   height: auto !important;
   min-height: 100vh !important;
   width: 100% !important;
-  overscroll-behavior: auto !important;
+  overscroll-behavior-y: contain !important;
   touch-action: auto !important;
   -webkit-overflow-scrolling: touch !important;
 }
@@ -713,7 +713,7 @@ body.profile-scroll-enabled {
   height: auto !important;
   min-height: 100vh !important;
   width: 100% !important;
-  overscroll-behavior: auto !important;
+  overscroll-behavior-y: contain !important;
   touch-action: auto !important;
   -webkit-overflow-scrolling: touch !important;
 }
@@ -730,7 +730,7 @@ body.login-scroll-enabled {
   height: auto !important;
   min-height: 100vh !important;
   width: 100% !important;
-  overscroll-behavior: auto !important;
+  overscroll-behavior-y: contain !important;
   touch-action: auto !important;
   -webkit-overflow-scrolling: touch !important;
 }
@@ -747,7 +747,7 @@ body.about-scroll-enabled {
   height: auto !important;
   min-height: 100vh !important;
   width: 100% !important;
-  overscroll-behavior: auto !important;
+  overscroll-behavior-y: contain !important;
   touch-action: auto !important;
   -webkit-overflow-scrolling: touch !important;
 }
@@ -764,7 +764,7 @@ body.legal-scroll-enabled {
   height: auto !important;
   min-height: 100vh !important;
   width: 100% !important;
-  overscroll-behavior: auto !important;
+  overscroll-behavior-y: contain !important;
   touch-action: auto !important;
   -webkit-overflow-scrolling: touch !important;
 }
@@ -781,7 +781,7 @@ body.landing-scroll-enabled {
   height: auto !important;
   min-height: 100vh !important;
   width: 100% !important;
-  overscroll-behavior: auto !important;
+  overscroll-behavior-y: contain !important;
   touch-action: auto !important;
   -webkit-overflow-scrolling: touch !important;
 }
@@ -798,9 +798,35 @@ body.schedule-scroll-enabled {
   height: auto !important;
   min-height: 100vh !important;
   width: 100% !important;
-  overscroll-behavior: auto !important;
+  overscroll-behavior-y: contain !important;
   touch-action: auto !important;
   -webkit-overflow-scrolling: touch !important;
+}
+
+/* Reset app-layout fixed positioning for schedule page */
+body.schedule-scroll-enabled .app-layout,
+body.schedule-scroll-enabled.pwa-mobile .app-layout {
+  position: static !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  height: auto !important;
+  min-height: 100vh !important;
+  min-height: 100dvh !important;
+  overflow-x: hidden !important;
+  overflow-y: visible !important;
+}
+
+/* Override child containers that block scroll on schedule page */
+body.schedule-scroll-enabled main {
+  height: auto !important;
+  overflow: visible !important;
+}
+
+body.schedule-scroll-enabled [class*="overflow-hidden"]:not(.scroll-disabled):not(.schedule-calendar-overflow) {
+  overflow: visible !important;
+  overflow-y: visible !important;
 }
 
 /* HISTORY PAGE - Full scroll enabled */
@@ -815,7 +841,7 @@ body.history-scroll-enabled {
   height: auto !important;
   min-height: 100vh !important;
   width: 100% !important;
-  overscroll-behavior: auto !important;
+  overscroll-behavior-y: contain !important;
   touch-action: auto !important;
   -webkit-overflow-scrolling: touch !important;
 }
@@ -850,7 +876,7 @@ body.analytics-scroll-enabled {
   height: auto !important;
   min-height: 100vh !important;
   width: 100% !important;
-  overscroll-behavior: auto !important;
+  overscroll-behavior-y: contain !important;
   touch-action: auto !important;
   -webkit-overflow-scrolling: touch !important;
 }

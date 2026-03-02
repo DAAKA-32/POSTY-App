@@ -11,7 +11,6 @@ import { Post } from "@/types";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import MainLayout from "@/components/layout/MainLayout";
 import Button from "@/components/ui/Button";
-import PullToRefresh from "@/components/ui/PullToRefresh";
 import { MenuIcons } from "@/components/ui/DropdownMenu";
 import ExpandableHistoryCard from "@/components/history/ExpandableHistoryCard";
 import { HistoryPageSkeleton } from "@/components/history/HistoryCardSkeleton";
@@ -360,10 +359,8 @@ function HistoryContent() {
           - Mobile: Full height with native scroll + pull-to-refresh
           - Tablet/Desktop: Optimized spacing and width
         */}
-        <PullToRefresh
-          onRefresh={loadPosts}
+        <div
           className="flex-1 min-h-0 bg-background-warm dark:bg-dark-bg scroll-smooth app-scroll-container"
-          disabled={isLoading}
         >
         {/*
           Content wrapper with responsive max-width and padding
@@ -652,7 +649,7 @@ function HistoryContent() {
           {/* Bottom spacing for mobile navigation */}
           <div className="h-20 md:h-8" />
         </div>
-        </PullToRefresh>
+        </div>
       </div>
 
       {/* Publish to LinkedIn modal */}

@@ -56,6 +56,18 @@ export default function ProtectedRoute({
     return null;
   }
 
+  // Don't render until profile is loaded when onboarding check is required.
+  // Prevents a flash of protected content before the profile fetch completes.
+  if (requireOnboarding && !userProfile) {
+    return (
+      <div className="min-h-screen bg-[#FAFBFC] dark:bg-dark-bg flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      </div>
+    );
+  }
+
   // Don't render if onboarding required but not completed
   if (requireOnboarding && userProfile && !userProfile.onboardingComplete) {
     return null;

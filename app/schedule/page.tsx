@@ -9,7 +9,6 @@ import { ScheduledPost, ScheduleStatus } from "@/types";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import MainLayout from "@/components/layout/MainLayout";
 import Button from "@/components/ui/Button";
-import PullToRefresh from "@/components/ui/PullToRefresh";
 import ScheduledPostCard from "@/components/schedule/ScheduledPostCard";
 import ScheduleModal from "@/components/schedule/ScheduleModal";
 
@@ -35,6 +34,7 @@ function ScheduleContent() {
     scheduledPosts,
     isLoading,
     cancelSchedule,
+    deleteSchedule,
     reschedulePost,
     refreshScheduledPosts,
   } = useScheduling();
@@ -155,6 +155,10 @@ function ScheduleContent() {
     await cancelSchedule(postId);
   };
 
+  const handleDelete = async (postId: string) => {
+    await deleteSchedule(postId);
+  };
+
   const handleReschedule = (post: ScheduledPost) => {
     setSelectedPost(post);
     setRescheduleModalOpen(true);
@@ -183,17 +187,13 @@ function ScheduleContent() {
       showMobileHeader={true}
       headerTitle="Posts programmes"
     >
-      <PullToRefresh
-        onRefresh={refreshScheduledPosts}
-        className="min-h-full bg-background-warm dark:bg-dark-bg scroll-smooth lg:overflow-y-auto"
-        disabled={isLoading}
-      >
-        <div className="w-full min-w-0 mx-auto px-4 py-6 md:px-6 md:py-8 lg:px-8 lg:py-10 lg:max-w-4xl xl:max-w-5xl 2xl:max-w-6xl overflow-x-hidden">
+      <div className="min-h-full bg-background-warm dark:bg-dark-bg scroll-smooth lg:overflow-y-auto">
+        <div className="w-full min-w-0 mx-auto px-3 py-5 sm:px-4 sm:py-6 md:px-6 md:py-8 lg:px-8 lg:py-10 lg:max-w-4xl xl:max-w-5xl 2xl:max-w-6xl overflow-x-hidden">
           {/* Premium Header */}
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-wrap items-center justify-between gap-2 mb-8"
+            className="flex flex-wrap items-center justify-between gap-2 mb-5 sm:mb-8"
           >
             <div className="min-w-0">
               <h1 className="text-xl font-bold text-silver-shimmer dark:text-white md:text-2xl lg:text-3xl truncate">
@@ -218,7 +218,7 @@ function ScheduleContent() {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.05 }}
-            className="flex flex-col md:flex-row md:items-center gap-4 mb-8"
+            className="flex flex-col md:flex-row md:items-center gap-3 sm:gap-4 mb-5 sm:mb-8"
           >
             {/* View mode toggle - Clean design */}
             <div className="flex bg-gray-100 dark:bg-dark-hover rounded-xl p-1 border border-gray-200 dark:border-dark-border">
@@ -251,7 +251,7 @@ function ScheduleContent() {
             </div>
 
             {/* Status filter - Clean pills */}
-            <div className="flex gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+            <div className="flex gap-2 overflow-x-auto scroll-disabled pb-1 md:pb-0 scrollbar-hide -mx-3 px-3 sm:-mx-4 sm:px-4 md:mx-0 md:px-0">
               {FILTER_OPTIONS.map((option) => {
                 const isActive = filter === option.value;
                 const getFilterColors = () => {
@@ -271,7 +271,7 @@ function ScheduleContent() {
                   <button
                     key={option.value}
                     onClick={() => setFilter(option.value)}
-                    className={`shrink-0 px-3.5 py-2 text-sm font-medium rounded-full whitespace-nowrap transition-colors duration-200 ${getFilterColors()}`}
+                    className={`shrink-0 px-3 py-1.5 sm:px-3.5 sm:py-2 text-xs sm:text-sm font-medium rounded-full whitespace-nowrap transition-colors duration-200 ${getFilterColors()}`}
                   >
                     {option.label}
                     {option.value === "pending" && pendingCount > 0 && (
@@ -295,10 +295,14 @@ function ScheduleContent() {
           </motion.div>
 
           {/* Content */}
+          <AnimatePresence mode="wait">
           {isLoading ? (
             <motion.div
+              key="loading"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
               className="flex flex-col items-center justify-center py-16 md:py-20 lg:py-24"
             >
               <div className="relative">
@@ -309,8 +313,11 @@ function ScheduleContent() {
             </motion.div>
           ) : filteredPosts.length === 0 ? (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
+              key={`empty-${filter}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
               className="text-center py-16 md:py-20 lg:py-24"
             >
               {/* Empty state icon - Clean version */}
@@ -349,17 +356,20 @@ function ScheduleContent() {
             </motion.div>
           ) : viewMode === "list" ? (
             /* List View - Premium design */
-            <div className="space-y-8 md:space-y-10">
-              <AnimatePresence>
-                {groupedPosts.map((group, groupIndex) => (
-                  <motion.div
+            <motion.div
+              key={`list-${filter}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="space-y-6 sm:space-y-8 md:space-y-10"
+            >
+                {groupedPosts.map((group) => (
+                  <div
                     key={group.date}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: groupIndex * 0.05 }}
                   >
                     {/* Date header - Clean professional styling */}
-                    <div className="sticky top-0 z-10 flex items-center gap-3 mb-4 py-2 bg-background-warm/95 dark:bg-dark-bg/95 backdrop-blur-sm -mx-4 px-4">
+                    <div className="sticky top-0 z-10 flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 py-2 bg-background-warm/95 dark:bg-dark-bg/95 backdrop-blur-sm -mx-3 px-3 sm:-mx-4 sm:px-4">
                       <h2 className="text-sm md:text-base font-semibold text-gray-900 dark:text-white">
                         {group.date}
                       </h2>
@@ -371,46 +381,47 @@ function ScheduleContent() {
 
                     {/* Posts */}
                     <div className="space-y-4">
-                      <AnimatePresence>
                         {group.posts.map((post) => (
                           <ScheduledPostCard
                             key={post.id}
                             post={post}
                             onCancel={handleCancel}
+                            onDelete={handleDelete}
                             onReschedule={handleReschedule}
                             onEdit={handleEdit}
                           />
                         ))}
-                      </AnimatePresence>
                     </div>
-                  </motion.div>
+                  </div>
                 ))}
-              </AnimatePresence>
-            </div>
+            </motion.div>
           ) : (
             /* Calendar View - Clean professional design */
             <motion.div
+              key="calendar"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-xl sm:rounded-2xl p-1.5 sm:p-4 md:p-6 overflow-hidden"
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-xl sm:rounded-2xl p-1 sm:p-3 md:p-6 overflow-hidden schedule-calendar-overflow"
             >
               {/* Calendar header */}
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-3 sm:mb-4 md:mb-6 px-1">
                 <button
                   onClick={goToPreviousMonth}
-                  className="p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-dark-hover transition-colors text-gray-600 dark:text-text-secondary"
+                  className="p-2 sm:p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-dark-hover transition-colors text-gray-600 dark:text-text-secondary"
                   aria-label="Mois précédent"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                   </svg>
                 </button>
-                <span className="text-lg font-bold text-gray-900 dark:text-white">
+                <span className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
                   {MONTHS_FR[currentMonth.getMonth()]} {currentMonth.getFullYear()}
                 </span>
                 <button
                   onClick={goToNextMonth}
-                  className="p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-dark-hover transition-colors text-gray-600 dark:text-text-secondary"
+                  className="p-2 sm:p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-dark-hover transition-colors text-gray-600 dark:text-text-secondary"
                   aria-label="Mois suivant"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -420,9 +431,9 @@ function ScheduleContent() {
               </div>
 
               {/* Days of week header */}
-              <div className="grid grid-cols-7 gap-0.5 sm:gap-1 mb-2 sm:mb-3">
+              <div className="grid grid-cols-7 gap-px sm:gap-0.5 md:gap-1 mb-1 sm:mb-2 md:mb-3">
                 {DAYS_FR.map((day, index) => (
-                  <div key={day} className={`text-center text-[10px] sm:text-xs font-semibold py-1.5 sm:py-2 uppercase tracking-wider ${
+                  <div key={day} className={`text-center text-[9px] sm:text-[10px] md:text-xs font-semibold py-1 sm:py-1.5 md:py-2 uppercase tracking-wide sm:tracking-wider ${
                     index === 0 || index === 6
                       ? "text-gray-400 dark:text-text-muted"
                       : "text-gray-600 dark:text-text-secondary"
@@ -433,7 +444,7 @@ function ScheduleContent() {
               </div>
 
               {/* Calendar grid */}
-              <div className="grid grid-cols-7 gap-0.5 sm:gap-1 md:gap-1.5">
+              <div className="grid grid-cols-7 gap-px sm:gap-0.5 md:gap-1.5">
                 {calendarDays.map((dayData, index) => {
                   const isToday =
                     dayData.date &&
@@ -444,7 +455,7 @@ function ScheduleContent() {
                     <div
                       key={index}
                       className={`
-                        min-h-[52px] sm:min-h-[72px] md:min-h-[100px] p-1 sm:p-1.5 md:p-2 rounded-lg sm:rounded-xl transition-colors duration-200
+                        min-h-[44px] sm:min-h-[64px] md:min-h-[100px] p-0.5 sm:p-1.5 md:p-2 rounded-md sm:rounded-xl transition-colors duration-200
                         ${!dayData.date ? "invisible" : "cursor-pointer"}
                         ${isToday
                           ? "bg-primary/10 border-2 border-primary/30"
@@ -456,12 +467,12 @@ function ScheduleContent() {
                     >
                       {dayData.date && (
                         <>
-                          <div className="flex items-center justify-between mb-0.5 sm:mb-1">
+                          <div className="flex items-center justify-between mb-0 sm:mb-0.5 md:mb-1">
                             <span
                               className={`
-                                text-[11px] sm:text-sm font-semibold
+                                text-[10px] sm:text-xs md:text-sm font-semibold leading-none
                                 ${isToday
-                                  ? "w-5 h-5 sm:w-7 sm:h-7 flex items-center justify-center bg-primary text-white rounded-md sm:rounded-lg text-[10px] sm:text-sm"
+                                  ? "w-4 h-4 sm:w-6 sm:h-6 md:w-7 md:h-7 flex items-center justify-center bg-primary text-white rounded sm:rounded-md md:rounded-lg text-[9px] sm:text-xs md:text-sm"
                                   : "text-gray-700 dark:text-white"
                                 }
                               `}
@@ -469,17 +480,18 @@ function ScheduleContent() {
                               {dayData.date.getDate()}
                             </span>
                             {hasPosts && !isToday && (
-                              <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-primary" />
+                              <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 md:w-2 md:h-2 rounded-full bg-primary shrink-0" />
                             )}
                           </div>
 
                           {hasPosts && (
-                            <div className="mt-0.5 sm:mt-1.5 space-y-0.5 sm:space-y-1">
-                              {dayData.posts.slice(0, 2).map((post) => (
+                            <div className="mt-0 sm:mt-1 md:mt-1.5 space-y-px sm:space-y-0.5 md:space-y-1 overflow-hidden">
+                              {dayData.posts.slice(0, 2).map((post, postIdx) => (
                                 <div
                                   key={post.id}
                                   className={`
-                                    text-[8px] sm:text-[10px] md:text-xs px-1 sm:px-1.5 py-0.5 sm:py-1 rounded-sm sm:rounded-md truncate font-medium
+                                    text-[7px] sm:text-[9px] md:text-xs px-0.5 sm:px-1 md:px-1.5 py-px sm:py-0.5 md:py-1 rounded-sm sm:rounded-md truncate font-medium leading-tight
+                                    ${postIdx > 0 ? "hidden sm:block" : ""}
                                     ${post.status === "pending"
                                       ? "bg-primary/10 text-primary"
                                       : post.status === "published"
@@ -500,9 +512,16 @@ function ScheduleContent() {
                                   })()}
                                 </div>
                               ))}
+                              {/* Mobile: show +N if more than 1 post */}
+                              {dayData.posts.length > 1 && (
+                                <div className="sm:hidden text-[7px] text-gray-500 dark:text-text-muted px-0.5 font-medium leading-tight">
+                                  +{dayData.posts.length - 1}
+                                </div>
+                              )}
+                              {/* Desktop: show +N if more than 2 posts */}
                               {dayData.posts.length > 2 && (
-                                <div className="text-[8px] sm:text-[10px] md:text-xs text-gray-500 dark:text-text-muted px-1 sm:px-1.5 font-medium">
-                                  +{dayData.posts.length - 2} autre{dayData.posts.length - 2 > 1 ? "s" : ""}
+                                <div className="hidden sm:block text-[9px] md:text-xs text-gray-500 dark:text-text-muted px-1 md:px-1.5 font-medium leading-tight">
+                                  +{dayData.posts.length - 2}
                                 </div>
                               )}
                             </div>
@@ -515,11 +534,12 @@ function ScheduleContent() {
               </div>
             </motion.div>
           )}
+          </AnimatePresence>
 
-          {/* Bottom spacing for mobile navigation */}
-          <div className="h-20 md:h-8" />
+          {/* Bottom spacing for mobile navigation + safe area */}
+          <div className="h-24 sm:h-20 md:h-8" />
         </div>
-      </PullToRefresh>
+      </div>
 
       {/* Reschedule Modal */}
       {selectedPost && (
