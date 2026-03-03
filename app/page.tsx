@@ -4708,8 +4708,8 @@ export default function LandingPage() {
           <PricingSection />
         </div>
 
-        {/* FAQ — opaque to prevent hero/demo content bleeding through */}
-        <div className="relative z-[5] bg-[#FEF3EE]">
+        {/* FAQ — transparent to let aurora star particles show through */}
+        <div className="relative z-[5]">
           <FaqSection />
         </div>
 
