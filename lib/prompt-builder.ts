@@ -21,6 +21,7 @@
 // ============== TYPES ==============
 
 export interface ProfileFields {
+  displayName?: string;
   profileType?: string;
   sector?: string;
   role?: string;
@@ -95,28 +96,71 @@ const PROFILE_TYPE_CONTEXT: Record<string, { fr: string; en: string }> = {
   },
 };
 
+// ============== ROLE → PERSONA VOICE ADAPTATION ==============
+
+/**
+ * Maps common role keywords to persona-specific writing instructions.
+ * Uses keyword matching (not exact match) to handle free-text role input.
+ * Affects HOW the author naturally references their professional identity.
+ */
+const ROLE_VOICE_MAP: Record<string, { fr: string; en: string }> = {
+  ceo: {
+    fr: "Posture: parle en dirigeant qui prend des décisions stratégiques. Références naturelles: vision d'entreprise, choix difficiles, responsabilité d'équipe. Peut dire 'en tant que dirigeant' ou 'quand on pilote une boîte'.",
+    en: "Posture: speaks as a leader making strategic decisions. Natural references: company vision, tough calls, team responsibility. May say 'as a CEO' or 'when you run a company'.",
+  },
+  consultant: {
+    fr: "Posture: parle en expert terrain avec des missions variées. Références naturelles: clients accompagnés, problèmes résolus, méthodologie éprouvée. Peut dire 'chez mes clients' ou 'en mission'.",
+    en: "Posture: speaks as a field expert with varied engagements. Natural references: clients served, problems solved, proven methodology. May say 'with my clients' or 'on assignment'.",
+  },
+  freelance: {
+    fr: "Posture: parle en indépendant qui choisit ses projets. Références naturelles: autonomie, gestion client, choix de liberté, réalité du terrain solo. Peut dire 'en tant qu'indépendant' ou 'quand on travaille seul'.",
+    en: "Posture: speaks as an independent who chooses their projects. Natural references: autonomy, client management, freedom, solo reality. May say 'as a freelancer' or 'when you work solo'.",
+  },
+  manager: {
+    fr: "Posture: parle en leader opérationnel. Références naturelles: gestion d'équipe, performance collective, arbitrages quotidiens. Peut dire 'avec mon équipe' ou 'en tant que manager'.",
+    en: "Posture: speaks as an operational leader. Natural references: team management, collective performance, daily trade-offs. May say 'with my team' or 'as a manager'.",
+  },
+  founder: {
+    fr: "Posture: parle en bâtisseur. Références naturelles: sa vision, les débuts, les pivots, la construction. Peut dire 'quand j'ai lancé' ou 'en créant ma boîte'.",
+    en: "Posture: speaks as a builder. Natural references: their vision, early days, pivots, building. May say 'when I started' or 'building my company'.",
+  },
+};
+
+/**
+ * Matches a free-text role to a ROLE_VOICE_MAP key using keyword detection.
+ */
+function matchRoleKey(role: string): string | null {
+  const lower = role.toLowerCase();
+  if (lower.includes("ceo") || lower.includes("directeur") || lower.includes("dirigeant") || lower.includes("pdg") || lower.includes("chief")) return "ceo";
+  if (lower.includes("consult") || lower.includes("conseil")) return "consultant";
+  if (lower.includes("freelance") || lower.includes("indépendant") || lower.includes("independant")) return "freelance";
+  if (lower.includes("manager") || lower.includes("responsable") || lower.includes("lead") || lower.includes("head of")) return "manager";
+  if (lower.includes("founder") || lower.includes("fondateur") || lower.includes("co-fondateur") || lower.includes("cofondateur")) return "founder";
+  return null;
+}
+
 // ============== OBJECTIVE STRATEGY MAP ==============
 
 const OBJECTIVE_STRATEGIES: Record<string, { fr: string; en: string }> = {
   "Trouver de nouveaux clients": {
-    fr: "Finalité: démontrer des résultats concrets issus du terrain. Le CTA doit inviter naturellement à la prise de contact ou au DM, sans être un pitch direct.",
-    en: "Goal: demonstrate concrete field results. The CTA should naturally invite contact or DM, without being a direct sales pitch.",
+    fr: "Finalité: démontrer des résultats concrets issus du terrain. Mentionner naturellement le travail avec des profils sérieux et les opportunités générées. Le CTA doit inviter naturellement à la prise de contact ou au DM, sans être un pitch direct.",
+    en: "Goal: demonstrate concrete field results. Naturally mention working with serious profiles and generated opportunities. The CTA should naturally invite contact or DM, without being a direct sales pitch.",
   },
   "Augmenter mon chiffre d'affaires": {
     fr: "Finalité: mettre en avant la valeur business et le ROI tangible. Positionner l'expertise comme levier de croissance. Le CTA oriente vers une conversation business.",
     en: "Goal: highlight business value and tangible ROI. Position expertise as a growth lever. The CTA steers toward a business conversation.",
   },
   "Développer ma visibilité et crédibilité": {
-    fr: "Finalité: portée organique maximale. Hook irrésistible, opinion tranchée assumée, question ouverte finale qui incite aux commentaires et partages.",
-    en: "Goal: maximum organic reach. Irresistible hook, bold assumed opinion, open-ended closing question that drives comments and shares.",
+    fr: "Finalité: positionnement expert assumé. Prise de position claire, insights originaux, opinion tranchée. Hook irrésistible, question ouverte finale qui incite aux commentaires et partages. Portée organique maximale.",
+    en: "Goal: bold expert positioning. Clear stance, original insights, sharp opinion. Irresistible hook, open-ended closing question that drives comments and shares. Maximum organic reach.",
   },
   "Générer des leads qualifiés": {
-    fr: "Finalité: post structuré comme un tunnel naturel — problème → insight exclusif → preuve de résultat → CTA vers un échange ou une ressource. Cible les décideurs.",
-    en: "Goal: post structured as a natural funnel — problem → exclusive insight → proof of result → CTA toward an exchange or resource. Target decision-makers.",
+    fr: "Finalité: post structuré comme un tunnel naturel — problème → insight exclusif → preuve de résultat → CTA vers un échange ou une ressource. Mentionner naturellement l'attraction de clients qualifiés et les opportunités ciblées. Cible les décideurs.",
+    en: "Goal: post structured as a natural funnel — problem → exclusive insight → proof of result → CTA toward an exchange or resource. Naturally reference attracting qualified clients and targeted opportunities. Target decision-makers.",
   },
   "Construire une audience engagée": {
-    fr: "Finalité: authenticité et partage d'expérience. Créer un sentiment de communauté. Terminer par une question qui invite au dialogue, au partage de situations similaires.",
-    en: "Goal: authenticity and experience sharing. Create a sense of community. End with a question inviting dialogue and sharing of similar situations.",
+    fr: "Finalité: ton accessible et inspirationnel. Authenticité et partage d'expérience. Vulgariser si nécessaire. Créer un sentiment de communauté. Terminer par une question qui invite au dialogue, au partage de situations similaires.",
+    en: "Goal: accessible and inspirational tone. Authenticity and experience sharing. Simplify when needed. Create a sense of community. End with a question inviting dialogue and sharing of similar situations.",
   },
 };
 
@@ -153,6 +197,11 @@ INTERDICTIONS ABSOLUES:
 - La première ligne doit surprendre sans être forcée
 - 0 à 2 emojis, uniquement si naturels au contexte
 
+VARIATION OBLIGATOIRE:
+- Hook unique à chaque post (question, affirmation, scène, chiffre, paradoxe) — ne JAMAIS réutiliser la même ouverture.
+- Alterne entre les schémas A-E — ne répète JAMAIS le même deux fois de suite.
+- Si deux posts se ressemblent dans le ton, la structure ou le hook → ÉCHEC.
+
 FORMAT: Paragraphes de 1-3 lignes séparés par une ligne vide. 1100-1500 caractères. 3-4 hashtags en fin de post.`,
 
     en: `You are an expert LinkedIn ghostwriter. You create authentic posts that do NOT feel AI-generated.
@@ -180,6 +229,11 @@ HUMAN WRITING:
 - Natural transitions, never mechanical
 - The first line must surprise without being forced
 - 0 to 2 emojis, only if natural to the context
+
+MANDATORY VARIATION:
+- Unique hook for each post (question, statement, scene, number, paradox) — NEVER reuse the same opening.
+- Alternate between patterns A-E — NEVER repeat the same one twice in a row.
+- If two posts resemble each other in tone, structure, or hook → FAILURE.
 
 FORMAT: 1-3 line paragraphs separated by blank lines. 1100-1500 characters. 3-4 hashtags at the end.`,
   },
@@ -212,6 +266,11 @@ QUALITÉ BUSINESS:
 - Position claire: l'auteur a un point de vue, il l'assume
 - Rythme varié: pas de blocs uniformes
 
+VARIATION OBLIGATOIRE:
+- Hook unique à chaque post — ne JAMAIS réutiliser la même ouverture.
+- Alterne entre les schémas A-E — ne répète JAMAIS le même deux fois de suite.
+- Si deux posts se ressemblent dans le ton, la structure ou le hook → ÉCHEC.
+
 FORMAT: Structure aérée et lisible sur mobile. 1000-1400 caractères. 3-4 hashtags en fin de post.`,
 
     en: `You are an expert LinkedIn ghostwriter. You create authentic business content that does NOT feel AI-generated.
@@ -240,6 +299,11 @@ BUSINESS QUALITY:
 - Real data or honestly assumed estimates
 - Clear stance: the author has a viewpoint and owns it
 - Varied rhythm: no uniform blocks
+
+MANDATORY VARIATION:
+- Unique hook for each post — NEVER reuse the same opening.
+- Alternate between patterns A-E — NEVER repeat the same one twice in a row.
+- If two posts resemble each other in tone, structure, or hook → FAILURE.
 
 FORMAT: Airy, mobile-readable structure. 1000-1400 characters. 3-4 hashtags at the end.`,
   },
@@ -284,6 +348,12 @@ SOPHISTICATION RÉDACTIONNELLE:
 - La voix doit être tellement singulière que ce post ne pourrait appartenir qu'à cet auteur précis.
 - La première phrase doit stopperait le scroll sans artificiel — pas de "Je vais vous parler de…" ni de question banale.
 
+VARIATION OBLIGATOIRE:
+- Hook unique à chaque post — ne JAMAIS réutiliser la même ouverture.
+- Alterne entre les schémas A-F — ne répète JAMAIS le même deux fois de suite.
+- Signature toujours différente.
+- Si deux posts se ressemblent dans le ton, la structure ou le hook → ÉCHEC.
+
 FORMAT: Paragraphes de 1-3 lignes séparés par une ligne vide. 1200-1600 caractères. 3-5 hashtags en fin de post.`,
 
     en: `You are a senior LinkedIn ghostwriter. You create authentic posts that do NOT feel AI-generated — and that don't resemble other users' posts either.
@@ -316,6 +386,12 @@ WRITING SOPHISTICATION:
 - Emotion must be implied, never declared. Show, don't tell. Instead of "I was stressed", describe the physical symptom or concrete situation.
 - The voice must be so singular that this post could only belong to this specific author.
 - The first sentence must stop the scroll naturally — no "Let me tell you about…" or banal questions.
+
+MANDATORY VARIATION:
+- Unique hook for each post — NEVER reuse the same opening.
+- Alternate between patterns A-F — NEVER repeat the same one twice in a row.
+- Signature always different.
+- If two posts resemble each other in tone, structure, or hook → FAILURE.
 
 FORMAT: 1-3 line paragraphs separated by blank lines. 1200-1600 characters. 3-5 hashtags at the end.`,
   },
@@ -352,6 +428,12 @@ SOPHISTICATION STRATÉGIQUE:
 - Rythme varié: pas de blocs uniformes, alternance de développements et de phrases courtes d'impact.
 - Chaque post renforce une image cohérente de l'auteur comme référence dans son domaine.
 
+VARIATION OBLIGATOIRE:
+- Hook unique à chaque post — ne JAMAIS réutiliser la même ouverture.
+- Alterne entre les schémas A-F — ne répète JAMAIS le même deux fois de suite.
+- Signature toujours différente.
+- Si deux posts se ressemblent dans le ton, la structure ou le hook → ÉCHEC.
+
 FORMAT: Structure aérée et lisible sur mobile. 1100-1500 caractères. 3-5 hashtags en fin de post.`,
 
     en: `You are a senior LinkedIn ghostwriter. You create authentic business content that does NOT feel AI-generated — and that positions the author as a reference in their field.
@@ -384,6 +466,12 @@ STRATEGIC SOPHISTICATION:
 - Clear, unambiguous position: the author has a specific viewpoint — no "on one hand / on the other hand".
 - Varied rhythm: no uniform blocks, alternation of developments and short impact sentences.
 - Each post reinforces a coherent image of the author as a reference in their field.
+
+MANDATORY VARIATION:
+- Unique hook for each post — NEVER reuse the same opening.
+- Alternate between patterns A-F — NEVER repeat the same one twice in a row.
+- Signature always different.
+- If two posts resemble each other in tone, structure, or hook → FAILURE.
 
 FORMAT: Airy, mobile-readable structure. 1100-1500 characters. 3-5 hashtags at the end.`,
   },
@@ -457,6 +545,24 @@ function buildVoiceProfile(
     blocks.push(PROFILE_TYPE_CONTEXT[profileType][language]);
   }
 
+  // Role → persona voice adaptation
+  const role = profile.role?.trim();
+  if (role) {
+    const roleKey = matchRoleKey(role);
+    if (roleKey && ROLE_VOICE_MAP[roleKey]) {
+      blocks.push(ROLE_VOICE_MAP[roleKey][language]);
+    }
+  }
+
+  // Personalized signature with displayName (Pro+)
+  const displayName = profile.displayName?.trim();
+  if (displayName) {
+    const signatureBlock = isFr
+      ? `SIGNATURE PERSONNALISÉE: Termine le post par une signature avec "${displayName}". Varie le format à chaque post: parfois juste le prénom, parfois "— ${displayName}", parfois "${displayName}, ${role || 'expert'}", parfois une formule naturelle comme "À bientôt". JAMAIS "Cordialement" ni formule robotique. Chaque post = signature différente.`
+      : `PERSONALIZED SIGNATURE: End the post with a sign-off using "${displayName}". Vary the format each time: sometimes just the first name, sometimes "— ${displayName}", sometimes "${displayName}, ${role || 'expert'}", sometimes a natural phrase like "See you around". NEVER "Best regards" or robotic formulas. Each post = different signature.`;
+    blocks.push(signatureBlock);
+  }
+
   // Max-only: signature voice directive
   if (plan === "max" && identitySummary) {
     const signatureDirective = isFr
@@ -510,10 +616,10 @@ function sanitizeInput(input: string): string {
  * - Max: MAX_SYSTEM_PROMPTS + rich voice profile (incl. signature directive) + objective + targeting
  *
  * Token budget (approximate):
- * - Pro base prompt: ~300 tokens | Max base prompt: ~380 tokens
- * - Voice profile: ~50-70 tokens (Pro) | ~70-90 tokens (Max)
+ * - Pro base prompt: ~330 tokens | Max base prompt: ~410 tokens
+ * - Voice profile: ~80-120 tokens (Pro) | ~100-140 tokens (Max)
  * - Strategy + targeting: ~40-60 tokens
- * - Total: ~390-430 tokens (Pro) | ~490-530 tokens (Max)
+ * - Total: ~450-510 tokens (Pro) | ~550-610 tokens (Max)
  */
 export function buildOptimizedPrompt(
   type: PostType,

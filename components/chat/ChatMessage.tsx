@@ -271,9 +271,9 @@ export default ChatMessage;
 export function TypingIndicator() {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8, filter: "blur(4px)" }}
-      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-      exit={{ opacity: 0, y: -4, filter: "blur(4px)" }}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -4 }}
       transition={{ duration: 0.3, ease: smoothEase }}
       className="flex gap-3"
     >
@@ -295,7 +295,7 @@ export function TypingIndicator() {
 
       {/* Typing bubble */}
       <div className="flex flex-col items-start">
-        <span className="text-xs font-bold tracking-wider bg-gradient-to-r from-primary via-accent to-primary bg-[length:200%_auto] animate-shimmer-slow bg-clip-text text-transparent mb-1.5 px-1">
+        <span className="text-xs font-bold tracking-wider text-gray-900 dark:text-gray-100 mb-1.5 px-1">
           POSTY
         </span>
         <motion.div

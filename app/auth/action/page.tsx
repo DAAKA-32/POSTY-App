@@ -126,7 +126,7 @@ function AuthActionContent() {
     return (
       <div
         className={`
-          w-full max-w-sm mx-auto transition-all duration-700 ease-out
+          w-full max-w-sm mx-auto transition-all duration-400 ease-out
           ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}
         `}
       >
@@ -174,7 +174,7 @@ function AuthActionContent() {
     return (
       <div
         className={`
-          w-full max-w-sm mx-auto transition-all duration-700 ease-out
+          w-full max-w-sm mx-auto transition-all duration-400 ease-out
           ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}
         `}
       >
@@ -216,7 +216,7 @@ function AuthActionContent() {
   return (
     <div
       className={`
-        w-full max-w-sm mx-auto transition-all duration-700 ease-out
+        w-full max-w-sm mx-auto transition-all duration-400 ease-out
         ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}
       `}
     >

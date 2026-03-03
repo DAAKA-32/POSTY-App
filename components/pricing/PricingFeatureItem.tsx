@@ -1,7 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
-
 interface PricingFeatureItemProps {
   text: string;
   index: number;
@@ -11,18 +9,12 @@ interface PricingFeatureItemProps {
   variant?: "light" | "dark" | "gold";
 }
 
-export default function PricingFeatureItem({ text, index, included = true, variant = "light" }: PricingFeatureItemProps) {
+export default function PricingFeatureItem({ text, included = true, variant = "light" }: PricingFeatureItemProps) {
   const isGold = variant === "gold";
   const isDarkBg = variant === "dark";
 
   return (
-    <motion.li
-      initial={{ opacity: 0, x: -8 }}
-      whileInView={{ opacity: 1, x: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: 0.3 + index * 0.04 }}
-      className="flex items-start gap-2 sm:gap-2.5 md:gap-3"
-    >
+    <li className="flex items-start gap-2 sm:gap-2.5 md:gap-3">
       {included ? (
         <div className={`
           flex-shrink-0 w-4 h-4 sm:w-[1.125rem] sm:h-[1.125rem] md:w-5 md:h-5
@@ -61,6 +53,6 @@ export default function PricingFeatureItem({ text, index, included = true, varia
       `}>
         {text}
       </span>
-    </motion.li>
+    </li>
   );
 }

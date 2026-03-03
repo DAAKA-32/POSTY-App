@@ -63,10 +63,10 @@ export default function PricingCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30 }}
+      initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-50px" }}
-      transition={{ delay: index * 0.12, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ delay: index * 0.08, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
       className={`relative group ${isPopular ? "md:scale-[1.03] md:z-10" : ""}`}
     >
       {/* Border glow — all cards get a gradient border ring */}

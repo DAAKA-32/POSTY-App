@@ -595,8 +595,8 @@ export default function MainLayout({
             <>
               <Link href="/app" className="flex items-center gap-3 group min-w-0">
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.8, filter: "blur(8px)" }}
-                  animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.5, ease: smoothEase }}
                   className="relative"
                   whileHover={{ scale: 1.05 }}

@@ -177,7 +177,7 @@ function EngagementChart({
           strokeLinecap="round"
           initial={{ pathLength: 0, opacity: 0 }}
           animate={{ pathLength: 1, opacity: 1 }}
-          transition={{ duration: 1, ease: "easeOut" }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
         />
         <motion.path
           d={commentsPath}
@@ -187,7 +187,7 @@ function EngagementChart({
           strokeLinecap="round"
           initial={{ pathLength: 0, opacity: 0 }}
           animate={{ pathLength: 1, opacity: 1 }}
-          transition={{ duration: 1, ease: "easeOut", delay: 0.2 }}
+          transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
         />
         <motion.path
           d={sharesPath}
@@ -197,12 +197,13 @@ function EngagementChart({
           strokeLinecap="round"
           initial={{ pathLength: 0, opacity: 0 }}
           animate={{ pathLength: 1, opacity: 1 }}
-          transition={{ duration: 1, ease: "easeOut", delay: 0.4 }}
+          transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
         />
 
         {/* Data points */}
         {data.map((d, i) => {
           const x = padding.left + (i / Math.max(data.length - 1, 1)) * innerWidth;
+          const cappedDelay = Math.min(i * 0.02, 0.3);
           return (
             <g key={i}>
               <motion.circle
@@ -212,7 +213,7 @@ function EngagementChart({
                 fill="#3B82F6"
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                transition={{ delay: 0.8 + i * 0.05 }}
+                transition={{ delay: 0.4 + cappedDelay }}
               />
               <motion.circle
                 cx={x}
@@ -221,7 +222,7 @@ function EngagementChart({
                 fill="#10B981"
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                transition={{ delay: 0.9 + i * 0.05 }}
+                transition={{ delay: 0.45 + cappedDelay }}
               />
               <motion.circle
                 cx={x}
@@ -230,7 +231,7 @@ function EngagementChart({
                 fill="#8B5CF6"
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                transition={{ delay: 1 + i * 0.05 }}
+                transition={{ delay: 0.5 + cappedDelay }}
               />
             </g>
           );
@@ -315,10 +316,10 @@ function PostCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay, ease: premiumEase }}
-      className="bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-4 sm:p-5 hover:shadow-lg transition-all duration-300"
+      transition={{ duration: 0.3, delay: Math.min(delay, 0.3), ease: premiumEase }}
+      className="bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-4 sm:p-5 hover:shadow-lg transition-shadow duration-200"
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
@@ -822,9 +823,9 @@ function AnalyticsContent() {
 
               {/* Engagement Chart */}
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.4, ease: premiumEase }}
+                transition={{ duration: 0.35, delay: 0.15, ease: premiumEase }}
                 className="bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-4 sm:p-6 mb-8"
               >
                 <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4 sm:mb-6">
@@ -836,9 +837,9 @@ function AnalyticsContent() {
               {/* Activity Overview */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-8">
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.5, ease: premiumEase }}
+                  transition={{ duration: 0.35, delay: 0.2, ease: premiumEase }}
                   className="bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-4 sm:p-6"
                 >
                   <h3 className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 sm:mb-4">Cette semaine</h3>
@@ -846,9 +847,9 @@ function AnalyticsContent() {
                   <p className="text-xs sm:text-sm text-gray-500 mt-1">publications</p>
                 </motion.div>
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.6, ease: premiumEase }}
+                  transition={{ duration: 0.35, delay: 0.25, ease: premiumEase }}
                   className="bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-4 sm:p-6"
                 >
                   <h3 className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 sm:mb-4">Ce mois</h3>
@@ -856,9 +857,9 @@ function AnalyticsContent() {
                   <p className="text-xs sm:text-sm text-gray-500 mt-1">publications</p>
                 </motion.div>
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.7, ease: premiumEase }}
+                  transition={{ duration: 0.35, delay: 0.3, ease: premiumEase }}
                   className="bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-4 sm:p-6"
                 >
                   <h3 className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 sm:mb-4">Taux d'engagement moyen</h3>

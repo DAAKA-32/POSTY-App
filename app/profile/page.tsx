@@ -369,7 +369,7 @@ function ProfileContent() {
                 <motion.p
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ delay: 0.4 }}
+                  transition={{ delay: 0.1, duration: 0.25 }}
                   className="text-center text-xs text-text-muted pt-4"
                 >
                   {t.profile.footer}

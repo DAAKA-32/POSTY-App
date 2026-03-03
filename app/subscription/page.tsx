@@ -256,9 +256,9 @@ function SubscriptionContent() {
 
         {/* FAQ Section - Single Column Layout */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
+          transition={{ delay: 0.15, duration: 0.35 }}
           className="mt-20"
         >
           <div className="text-center mb-10">
@@ -386,9 +386,9 @@ function FAQItem({ question, answer, index = 0, isOpen, onToggle }: FAQItemProps
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1 * index, duration: 0.3 }}
+      transition={{ delay: 0.04 * index, duration: 0.25 }}
       className={`
         bg-white dark:bg-dark-card rounded-xl overflow-hidden
         border transition-all duration-200

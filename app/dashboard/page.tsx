@@ -51,10 +51,10 @@ function DashboardContent() {
     }
   }, [user, loading]);
 
-  // Animate in
+  // Animate in — no setTimeout, trigger immediately when data is ready
   useEffect(() => {
     if (!loadingStats) {
-      setTimeout(() => setIsVisible(true), 100);
+      setIsVisible(true);
     }
   }, [loadingStats]);
 
@@ -158,7 +158,7 @@ function DashboardContent() {
         {/* Welcome section */}
         <div
           className={`
-            mb-10 transition-all duration-700 ease-out
+            mb-10 transition-all duration-400 ease-out
             ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}
           `}
         >
@@ -210,8 +210,8 @@ function DashboardContent() {
         <div
           className={`
             grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-10
-            transition-all duration-700 ease-out delay-100
-            ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}
+            transition-all duration-400 ease-out delay-75
+            ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}
           `}
         >
           <KPICard
@@ -273,8 +273,8 @@ function DashboardContent() {
         <div
           className={`
             grid lg:grid-cols-2 gap-6 mb-10
-            transition-all duration-700 ease-out delay-200
-            ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}
+            transition-all duration-400 ease-out delay-100
+            ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}
           `}
         >
           <ActivityChart
@@ -289,10 +289,10 @@ function DashboardContent() {
         <div
           className={`
             grid lg:grid-cols-2 gap-6 mb-10
-            transition-all duration-700 ease-out
+            transition-all duration-400 ease-out
             ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}
           `}
-          style={{ transitionDelay: "250ms" }}
+          style={{ transitionDelay: "150ms" }}
         >
           <ResponseModeChart data={stats.responseModeDistribution} />
         </div>
@@ -300,7 +300,7 @@ function DashboardContent() {
         {/* Insights section */}
         <div
           className={`
-            transition-all duration-700 ease-out delay-300
+            transition-all duration-400 ease-out delay-150
             ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}
           `}
         >
@@ -315,7 +315,7 @@ function DashboardContent() {
         {stats.recentActivity.length > 0 && (
           <div
             className={`
-              mt-10 transition-all duration-700 ease-out delay-400
+              mt-10 transition-all duration-400 ease-out delay-200
               ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}
             `}
           >

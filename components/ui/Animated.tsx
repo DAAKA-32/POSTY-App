@@ -28,19 +28,19 @@ export function FadeIn({
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setTimeout(() => setIsVisible(true), delay);
+          setIsVisible(true);
           if (once) observer.disconnect();
         } else if (!once) {
           setIsVisible(false);
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1, rootMargin: "0px 0px 80px 0px" }
     );
 
     if (ref.current) observer.observe(ref.current);
 
     return () => observer.disconnect();
-  }, [delay, once]);
+  }, [once]);
 
   const directionStyles = {
     up: "translate-y-6",
@@ -87,17 +87,17 @@ export function Stagger({
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setTimeout(() => setIsVisible(true), initialDelay);
+          setIsVisible(true);
           observer.disconnect();
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1, rootMargin: "0px 0px 80px 0px" }
     );
 
     if (ref.current) observer.observe(ref.current);
 
     return () => observer.disconnect();
-  }, [initialDelay]);
+  }, []);
 
   return (
     <div ref={ref} className={className}>
@@ -142,17 +142,17 @@ export function ScaleIn({
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setTimeout(() => setIsVisible(true), delay);
+          setIsVisible(true);
           observer.disconnect();
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1, rootMargin: "0px 0px 80px 0px" }
     );
 
     if (ref.current) observer.observe(ref.current);
 
     return () => observer.disconnect();
-  }, [delay]);
+  }, []);
 
   return (
     <div
@@ -193,17 +193,17 @@ export function SlideIn({
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setTimeout(() => setIsVisible(true), delay);
+          setIsVisible(true);
           observer.disconnect();
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1, rootMargin: "0px 0px 80px 0px" }
     );
 
     if (ref.current) observer.observe(ref.current);
 
     return () => observer.disconnect();
-  }, [delay]);
+  }, []);
 
   const directionStyles = {
     left: "-translate-x-full",
@@ -347,7 +347,7 @@ export function Reveal({ children, className = "", threshold = 0.1 }: RevealProp
           observer.disconnect();
         }
       },
-      { threshold }
+      { threshold, rootMargin: "0px 0px 80px 0px" }
     );
 
     if (ref.current) observer.observe(ref.current);
@@ -359,10 +359,10 @@ export function Reveal({ children, className = "", threshold = 0.1 }: RevealProp
     <div
       ref={ref}
       className={`
-        transition-all duration-700 ease-out
+        transition-all duration-400 ease-out
         ${isVisible
-          ? "opacity-100 translate-y-0 blur-0"
-          : "opacity-0 translate-y-8 blur-sm"
+          ? "opacity-100 translate-y-0"
+          : "opacity-0 translate-y-6"
         }
         ${className}
       `}

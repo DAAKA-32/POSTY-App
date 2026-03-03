@@ -83,19 +83,16 @@ const smoothEase = [0.22, 1, 0.36, 1] as const;
 
 const slideVariants = {
   enter: (direction: number) => ({
-    x: direction > 0 ? 80 : -80,
+    x: direction > 0 ? 60 : -60,
     opacity: 0,
-    filter: "blur(6px)",
   }),
   center: {
     x: 0,
     opacity: 1,
-    filter: "blur(0px)",
   },
   exit: (direction: number) => ({
-    x: direction < 0 ? 80 : -80,
+    x: direction < 0 ? 60 : -60,
     opacity: 0,
-    filter: "blur(6px)",
   }),
 };
 
@@ -215,7 +212,7 @@ function ProfileRecapScreen({
               key={field.label}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.35 + i * 0.06, duration: 0.35, ease: smoothEase }}
+              transition={{ delay: 0.2 + i * 0.04, duration: 0.3, ease: smoothEase }}
               className="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-gray-50/80 transition-colors"
             >
               <div className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 flex-shrink-0">
@@ -239,7 +236,7 @@ function ProfileRecapScreen({
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: "100%" }}
-              transition={{ delay: 0.8, duration: 0.8, ease: "easeOut" }}
+              transition={{ delay: 0.5, duration: 0.6, ease: "easeOut" }}
               className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full"
             />
           </div>
@@ -250,7 +247,7 @@ function ProfileRecapScreen({
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 1.8, duration: 0.4 }}
+        transition={{ delay: 1.2, duration: 0.3 }}
         className="mt-6 flex items-center justify-center gap-2 text-sm text-gray-400"
       >
         <div className="w-4 h-4 border-2 border-gray-300 border-t-[#F8935D] rounded-full animate-spin" />

@@ -526,6 +526,7 @@ export async function incrementDualModeUsageAdmin(userId: string): Promise<void>
  */
 export async function getUserProfileAdmin(userId: string): Promise<{
   plan: SubscriptionPlan | null;
+  displayName?: string;
   profile?: {
     profileType?: string;
     sector?: string;
@@ -564,6 +565,7 @@ export async function getUserProfileAdmin(userId: string): Promise<{
 
   return {
     plan: effectivePlan,
+    displayName: data?.name || data?.displayName || undefined,
     profile: data?.profile,
     isTestMode: false,
   };

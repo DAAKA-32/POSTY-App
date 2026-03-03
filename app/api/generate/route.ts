@@ -380,6 +380,7 @@ export async function POST(request: NextRequest) {
           if (planHasFeature(plan, "hasPersonalizedResponses")) {
             // Pro+ : base personalization fields
             serverUserProfile = {
+              ...(userProfileData.displayName && { displayName: userProfileData.displayName }),
               ...(profile.profileType && { profileType: profile.profileType }),
               ...(profile.sector && { sector: profile.sector }),
               ...(profile.role && { role: profile.role }),

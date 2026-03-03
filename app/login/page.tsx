@@ -198,8 +198,12 @@ export default function LoginPage() {
           paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 8px)',
         }}
       >
-        {/* Mobile Header - Back */}
-        <motion.div variants={itemVariants} className="flex items-center py-3 shrink-0">
+        {/* Mobile Header - Back (sticky: stays visible on scroll) */}
+        <motion.div
+          variants={itemVariants}
+          className="flex items-center py-3 shrink-0 sticky z-20 -mx-4 px-4 bg-background-warm/90 backdrop-blur-sm"
+          style={{ top: 'max(env(safe-area-inset-top, 0px), 8px)' }}
+        >
           <Link
             href="/"
             className="flex items-center gap-2 text-gray-500 hover:text-warm-orange transition-colors duration-200 text-sm"

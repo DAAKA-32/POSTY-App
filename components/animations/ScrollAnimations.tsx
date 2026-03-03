@@ -87,7 +87,7 @@ export function FadeInSection({
   once = true,
 }: FadeInSectionProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once, margin: "-50px" });
+  const isInView = useInView(ref, { once, margin: "0px 0px 80px 0px" });
   const config = useAnimConfig();
 
   // Use provided values or device-optimized defaults
@@ -209,7 +209,7 @@ export function SlideInSection({
   once = true,
 }: SlideInSectionProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once, margin: "-50px" });
+  const isInView = useInView(ref, { once, margin: "0px 0px 80px 0px" });
   const config = useAnimConfig();
 
   const xOffset = direction === "left" ? -config.distance.large : config.distance.large;
@@ -246,7 +246,7 @@ export function RevealOnScroll({
   className = "",
 }: RevealOnScrollProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "-50px" });
+  const isInView = useInView(ref, { once: true, margin: "0px 0px 80px 0px" });
   const config = useAnimConfig();
   const finalDelay = delay * (config.duration.normal / 0.4);
 
@@ -283,7 +283,7 @@ export function StaggerOnScroll({
   childClassName = "",
 }: StaggerOnScrollProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "-50px" });
+  const isInView = useInView(ref, { once: true, margin: "0px 0px 80px 0px" });
   const config = useAnimConfig();
 
   const finalStaggerDelay = staggerDelay ?? config.delay.stagger;
@@ -334,7 +334,7 @@ export function BlurInSection({
   className = "",
 }: BlurInSectionProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "-50px" });
+  const isInView = useInView(ref, { once: true, margin: "0px 0px 80px 0px" });
   const config = useAnimConfig();
   const finalDelay = delay * (config.duration.normal / 0.4);
 
@@ -372,7 +372,7 @@ export function RotateInSection({
   className = "",
 }: RotateInSectionProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "-50px" });
+  const isInView = useInView(ref, { once: true, margin: "0px 0px 80px 0px" });
   const config = useAnimConfig();
   const finalDelay = delay * (config.duration.normal / 0.4);
 
@@ -437,7 +437,7 @@ export function AnimatedDivider({
   color = "bg-gradient-to-r from-transparent via-primary to-transparent",
 }: AnimatedDividerProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "-50px" });
+  const isInView = useInView(ref, { once: true, margin: "0px 0px 80px 0px" });
   const config = useAnimConfig();
 
   return (
