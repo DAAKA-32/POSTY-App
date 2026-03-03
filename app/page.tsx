@@ -1101,7 +1101,7 @@ function DemoSection() {
         className="relative z-[2]"
       >
         {/* Hero title — sticky: stays on screen while content scrolls over it, fades out via titleOpacity */}
-        <motion.div ref={titleRef} style={{ opacity: titleOpacity }} className="sticky top-0 left-0 right-0 z-[1] pt-16 md:pt-20 pb-4 md:pb-6 px-4 sm:px-6 lg:px-8">
+        <motion.div ref={titleRef} style={{ opacity: titleOpacity }} className="sticky top-0 left-0 right-0 z-[1] pt-12 md:pt-14 pb-2 md:pb-3 px-4 sm:px-6 lg:px-8">
           <div className="relative text-center max-w-4xl mx-auto">
             <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] 2xl:text-[4rem] font-bold tracking-tight flex flex-col items-center gap-0 [&>span]:-my-[0.2em]">
               <span className="block">
@@ -1151,7 +1151,7 @@ function DemoSection() {
                 delay: hasAnimated ? 0.25 : 0,
                 ease: cinematicEase,
               }}
-              className="mt-4 md:mt-5 text-gray-500 text-base md:text-lg lg:text-xl max-w-2xl mx-auto leading-relaxed"
+              className="mt-2 md:mt-3 text-gray-500 text-base md:text-lg lg:text-xl max-w-2xl mx-auto leading-relaxed"
             >
               Décrivez votre objectif. Posty génère un post LinkedIn prêt à publier en 30 secondes.
             </motion.p>
