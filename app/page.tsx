@@ -761,7 +761,7 @@ function HeroSection() {
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={isInView ? { opacity: 1, scale: 1, y: 0 } : {}}
-              transition={{ duration: 0.45, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.4, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
               className="hidden lg:block absolute -left-4 xl:-left-8 top-1/4 z-30"
             >
               <motion.div
@@ -789,7 +789,7 @@ function HeroSection() {
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={isInView ? { opacity: 1, scale: 1, y: 0 } : {}}
-              transition={{ duration: 0.45, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.4, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
               className="hidden lg:block absolute -right-2 xl:right-4 bottom-1/4 z-30"
             >
               <motion.div
@@ -1101,7 +1101,7 @@ function DemoSection() {
         className="relative z-[2]"
       >
         {/* Hero title — sticky: stays on screen while content scrolls over it, fades out via titleOpacity */}
-        <motion.div ref={titleRef} style={{ opacity: titleOpacity }} className="sticky top-0 left-0 right-0 z-[1] pt-12 md:pt-14 pb-2 md:pb-3 px-4 sm:px-6 lg:px-8">
+        <motion.div ref={titleRef} style={{ opacity: titleOpacity }} className="sticky top-0 left-0 right-0 z-[1] pt-24 pb-1 md:pb-2 px-4 sm:px-6 lg:px-8">
           <div className="relative text-center max-w-4xl mx-auto">
             <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] 2xl:text-[4rem] font-bold tracking-tight flex flex-col items-center gap-0 [&>span]:-my-[0.2em]">
               <span className="block">
@@ -1144,16 +1144,19 @@ function DemoSection() {
             </h2>
 
             <motion.p
-              initial={{ opacity: 0, y: 16, filter: "blur(3px)" }}
-              animate={hasAnimated ? { opacity: 1, y: 0, filter: "blur(0px)" } : { opacity: 0, y: 16, filter: "blur(3px)" }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={hasAnimated ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
               transition={{
-                duration: 0.6,
-                delay: hasAnimated ? 0.25 : 0,
+                duration: 0.4,
+                delay: hasAnimated ? 0.15 : 0,
                 ease: cinematicEase,
               }}
-              className="mt-2 md:mt-3 text-gray-500 text-base md:text-lg lg:text-xl max-w-2xl mx-auto leading-relaxed"
+              className="mt-3 md:mt-4 text-gray-500 text-[15px] md:text-lg lg:text-xl max-w-2xl mx-auto leading-relaxed"
             >
-              Décrivez votre objectif. Posty génère un post LinkedIn prêt à publier en 30 secondes.
+              Décrivez votre objectif.{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54] font-medium">Posty</span>{" "}
+              génère un post LinkedIn prêt à publier en{" "}
+              <span className="font-medium text-gray-700">30 secondes</span>.
             </motion.p>
           </div>
         </motion.div>
@@ -1164,7 +1167,7 @@ function DemoSection() {
         {/* Content — cinematic reveal: starts high + clipped, descends into place */}
         {/* z-[3] scrolls over the fixed title — transparent so aurora shows through */}
         <motion.div
-          className="relative z-[3] overflow-x-clip"
+          className="relative z-[3] overflow-x-clip -mt-56 md:-mt-64"
           initial={alreadyPlayed ? undefined : { y: -180 }}
           animate={
             heroPhase === "init" || heroPhase === "opening"
@@ -2009,19 +2012,19 @@ function KeyBenefitsSection() {
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: prefersReducedMotion ? 0 : 0.12,
-        delayChildren: 0.1,
+        staggerChildren: prefersReducedMotion ? 0 : 0.06,
+        delayChildren: 0.02,
       },
     },
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 24 },
+    hidden: { opacity: 0, y: 16 },
     visible: {
       opacity: 1,
       y: 0,
       transition: {
-        duration: 0.6,
+        duration: 0.4,
         ease: [0.22, 1, 0.36, 1] as const,
       },
     },
@@ -2043,10 +2046,10 @@ function KeyBenefitsSection() {
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header - Editorial style */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          viewport={{ once: true, margin: "0px" }}
+          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
           className="max-w-2xl mb-16 md:mb-20"
         >
           <h2 className="text-3xl sm:text-4xl md:text-[2.75rem] font-semibold leading-[1.15] tracking-tight mb-5">
@@ -2066,7 +2069,7 @@ function KeyBenefitsSection() {
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: "-50px" }}
+          viewport={{ once: true, margin: "0px" }}
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5 lg:gap-6"
         >
           {/* Card 1 - Primary Feature (Large) */}
@@ -2300,10 +2303,10 @@ function _LegacyKeyBenefitsSection() {
       <div className="relative z-10 max-w-[1084px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 14 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.8, ease: premiumEase }}
+          transition={{ duration: 0.4, ease: premiumEase }}
           className="text-center max-w-3xl mx-auto mb-10 lg:mb-14"
         >
           {/* Heading */}
@@ -2536,10 +2539,10 @@ function AudienceCard({ profile, index }: { profile: typeof AUDIENCE_PROFILES[nu
   return (
     <motion.div
       ref={cardRef}
-      initial={{ opacity: 0, y: 50, ...((prefersReducedMotion || isMobile) ? {} : { filter: "blur(10px)" }) }}
-      whileInView={{ opacity: 1, y: 0, ...((prefersReducedMotion || isMobile) ? {} : { filter: "blur(0px)" }) }}
-      viewport={{ once: true, margin: "-80px" }}
-      transition={{ delay: index * 0.15, duration: 0.7, ease: smoothEase }}
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "0px" }}
+      transition={{ delay: index * 0.06, duration: 0.4, ease: smoothEase }}
       onMouseMove={enableHover ? handleMouseMove : undefined}
       onMouseLeave={enableHover ? handleMouseLeave : undefined}
       className={`${enableHover ? "group" : ""} relative h-full`}
@@ -2662,7 +2665,6 @@ function TargetAudienceSection() {
   const extendedIndices = [TOTAL - 1, ...Array.from({ length: TOTAL }, (_, i) => i), 0];
   // slideIndex 1..TOTAL = real items, 0 and TOTAL+1 = clones
   const [slideIndex, setSlideIndex] = useState(1);
-  const [shouldAnimate, setShouldAnimate] = useState(true);
 
   // Real active index for dots (0-based)
   const realIndex = slideIndex <= 0 ? TOTAL - 1
@@ -2686,22 +2688,18 @@ function TargetAudienceSection() {
     ? (containerWidth / 2) - (cardWidth / 2) - slideIndex * (cardWidth + carouselGap)
     : 0;
 
-  // Infinite loop: snap from clone back to real item
+  // Infinite loop: snap from clone back to real item (instant — no animation)
   useEffect(() => {
     if (slideIndex === 0 || slideIndex === TOTAL + 1) {
       isSnapping.current = true;
       const snapTarget = slideIndex === 0 ? TOTAL : 1;
-      const timer = setTimeout(() => {
-        setShouldAnimate(false);
+      // Use rAF to let the clone render at its position, then jump instantly
+      requestAnimationFrame(() => {
         setSlideIndex(snapTarget);
         requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            setShouldAnimate(true);
-            isSnapping.current = false;
-          });
+          isSnapping.current = false;
         });
-      }, 400);
-      return () => clearTimeout(timer);
+      });
     }
   }, [slideIndex, TOTAL]);
 
@@ -2790,10 +2788,10 @@ function TargetAudienceSection() {
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 14 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.7, ease: smoothEase }}
+          transition={{ duration: 0.4, ease: smoothEase }}
           className="text-center mb-12 lg:mb-16"
         >
           <motion.div
@@ -2863,15 +2861,12 @@ function TargetAudienceSection() {
               onTouchStart={handleTouchStart}
               onTouchEnd={handleTouchEnd}
             >
-              <motion.div
+              <div
                 className="flex"
-                style={{ gap: `${carouselGap}px` }}
-                animate={{ x: trackX }}
-                transition={
-                  !shouldAnimate
-                    ? { duration: 0 }
-                    : { duration: 0.5, ease: [0.16, 1, 0.3, 1] }
-                }
+                style={{
+                  gap: `${carouselGap}px`,
+                  transform: `translateX(${trackX}px)`,
+                }}
               >
                 {extendedIndices.map((profileIdx, trackPos) => (
                     <div
@@ -2884,25 +2879,10 @@ function TargetAudienceSection() {
                       <AudienceCard profile={AUDIENCE_PROFILES[profileIdx]} index={profileIdx} />
                     </div>
                 ))}
-              </motion.div>
+              </div>
             </div>
           </div>
 
-          {/* Dot indicators */}
-          <div className="flex justify-center items-center gap-2.5 mt-8">
-            {AUDIENCE_PROFILES.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setSlideIndex(i + 1)}
-                className={`rounded-full transition-all duration-300 ${
-                  i === realIndex
-                    ? "h-2.5 w-8 bg-gradient-to-r from-[#F8935D] to-[#F76B54] shadow-sm shadow-[#F8935D]/30"
-                    : "h-2.5 w-2.5 bg-gray-300 hover:bg-gray-400"
-                }`}
-                aria-label={`Voir ${AUDIENCE_PROFILES[i].title}`}
-              />
-            ))}
-          </div>
         </div>
 
         {/* ────────────────────────────────────────────────────────────── */}
@@ -2989,7 +2969,7 @@ function MockupMultiPlatform() {
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            transition={{ delay: 0.3 + i * 0.1, duration: 0.4 }}
+            transition={{ delay: 0.05 + i * 0.04, duration: 0.3 }}
             className="min-h-[72px] p-3 rounded-xl border-2 flex flex-col items-center justify-center gap-1 relative"
             style={{
               backgroundColor: `${p.color}10`,
@@ -3033,7 +3013,7 @@ function MockupMultiPlatform() {
         initial={{ opacity: 0, y: 10 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        transition={{ delay: 0.8, duration: 0.4 }}
+        transition={{ delay: 0.15, duration: 0.35 }}
         className="mt-3 relative z-10 flex items-center justify-center gap-1.5"
       >
         <svg className="w-3.5 h-3.5 text-[#F8935D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -3175,7 +3155,7 @@ function MockupDualGeneration() {
           initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ delay: 0.3, duration: 0.5 }}
+          transition={{ delay: 0.05, duration: 0.35 }}
           className="flex-1 bg-white rounded-xl border border-gray-200 flex flex-col overflow-hidden"
         >
           {/* Gradient header bar like real app */}
@@ -3205,7 +3185,7 @@ function MockupDualGeneration() {
           initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ delay: 0.45, duration: 0.5 }}
+          transition={{ delay: 0.1, duration: 0.4 }}
           className="flex-1 bg-white rounded-xl border border-gray-200 flex flex-col overflow-hidden"
         >
           {/* Gradient header bar like real app */}
@@ -3276,7 +3256,7 @@ function MockupContextProfile() {
             initial={{ opacity: 0, x: -15 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            transition={{ delay: 0.3 + i * 0.1, duration: 0.35 }}
+            transition={{ delay: 0.05 + i * 0.04, duration: 0.3 }}
             className="flex items-center gap-2.5 bg-gray-50 rounded-lg px-3 py-2 border border-gray-200"
           >
             <span className="text-sm flex-shrink-0">{field.icon}</span>
@@ -3302,7 +3282,7 @@ function MockupContextProfile() {
             initial={{ width: 0 }}
             whileInView={{ width: "100%" }}
             viewport={{ once: true }}
-            transition={{ delay: 0.6, duration: 0.8, ease: "easeOut" }}
+            transition={{ delay: 0.15, duration: 0.5, ease: "easeOut" }}
             className="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full"
           />
         </div>
@@ -3444,10 +3424,10 @@ function FeatureCard({ feature, index }: { feature: FeatureConfig; index: number
   return (
     <motion.div
       ref={cardRef}
-      initial={{ opacity: 0, y: 40 }}
+      initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-60px" }}
-      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+      viewport={{ once: true, margin: "0px" }}
+      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
       onMouseMove={isMobile ? undefined : handleMouseMove}
       onMouseLeave={isMobile ? undefined : handleMouseLeave}
       className={isMobile ? "" : "group/card"}
@@ -3587,10 +3567,10 @@ function FeaturesSection() {
     <section id="features" className="py-[clamp(1.5rem,3vw,2.5rem)] px-[clamp(1rem,4vw,3rem)] overflow-hidden">
       <div className="w-full max-w-[min(90vw,67.75rem)] mx-auto">
         <motion.div
-          initial={{ opacity: 0, y: 20, scale: 0.97, ...(isMobile ? {} : { filter: "blur(8px)" }) }}
-          whileInView={{ opacity: 1, y: 0, scale: 1, ...(isMobile ? {} : { filter: "blur(0px)" }) }}
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.7, ease: premiumEase }}
+          transition={{ duration: 0.4, ease: premiumEase }}
           className="text-center mb-[clamp(1.25rem,2vw,1.75rem)]"
         >
           <h2 className="text-[clamp(1.75rem,4vw,3.25rem)] font-bold">
@@ -3609,7 +3589,7 @@ function FeaturesSection() {
               initial={{ scaleY: 0 }}
               whileInView={{ scaleY: 1 }}
               viewport={{ once: true }}
-              transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
               className="w-0.5 h-full bg-gradient-to-b from-transparent via-gray-300 to-transparent origin-top mx-auto"
             />
           </div>
@@ -3666,17 +3646,17 @@ function TestimonialsSection() {
       <div className="max-w-[1084px] mx-auto">
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20, scale: 0.97, ...(isMobile ? {} : { filter: "blur(8px)" }) }}
-          whileInView={{ opacity: 1, y: 0, scale: 1, ...(isMobile ? {} : { filter: "blur(0px)" }) }}
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.7, ease: premiumEase }}
+          transition={{ duration: 0.4, ease: premiumEase }}
           className="text-center mb-8 md:mb-12"
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.4, delay: 0.1 }}
+            transition={{ duration: 0.3, delay: 0.03 }}
             className="inline-flex items-center gap-2 px-4 py-2 mb-6 bg-white border border-gray-200 rounded-full shadow-sm"
           >
             <div className="flex -space-x-2">
@@ -3705,10 +3685,10 @@ function TestimonialsSection() {
           {TESTIMONIALS.map((testimonial, index) => (
             <motion.div
               key={testimonial.name}
-              initial={{ opacity: 0, y: 30, scale: 0.95, ...(isMobile ? {} : { filter: "blur(8px)" }) }}
-              whileInView={{ opacity: 1, y: 0, scale: 1, ...(isMobile ? {} : { filter: "blur(0px)" }) }}
-              viewport={{ once: true, margin: "-40px" }}
-              transition={{ delay: index * 0.12, duration: 0.6, ease: premiumEase }}
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "0px" }}
+              transition={{ delay: index * 0.05, duration: 0.4, ease: premiumEase }}
               className="group relative bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-[#F8935D]/30 transition-all duration-300 shadow-lg shadow-gray-100/60 hover:shadow-xl hover:shadow-[#F8935D]/10"
             >
               <div className="p-6">
@@ -3758,10 +3738,10 @@ function BeforeAfterSection() {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20, ...(isMobile ? {} : { filter: "blur(8px)" }) }}
-          whileInView={{ opacity: 1, y: 0, ...(isMobile ? {} : { filter: "blur(0px)" }) }}
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6, ease: smoothEase }}
+          transition={{ duration: 0.4, ease: smoothEase }}
           className="text-center mb-12 md:mb-16"
         >
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
@@ -3927,7 +3907,7 @@ function BeforeAfterSection() {
                     initial={prefersReducedMotion ? false : { scale: 0 }}
                     whileInView={{ scale: 1 }}
                     viewport={{ once: true }}
-                    transition={{ delay: 0.4, type: "spring", stiffness: 300, damping: 20 }}
+                    transition={{ delay: 0.1, type: "spring", stiffness: 300, damping: 20 }}
                     className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 text-xs font-medium"
                   >
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -4067,10 +4047,10 @@ function FounderSection({ scrollContainerRef }: { scrollContainerRef: React.RefO
 
         {/* Main Quote - Hero Typography */}
         <motion.blockquote
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 14 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.8, ease: smoothEase }}
+          transition={{ duration: 0.4, ease: smoothEase }}
           className="text-center mb-10 md:mb-14"
         >
           <div className="flex justify-center mb-6">
@@ -4244,10 +4224,10 @@ function CtaBanner({
     <section id={id} className="relative py-16 md:py-24 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto text-center">
         <motion.h2
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.5 }}
+          viewport={{ once: true, margin: "0px" }}
+          transition={{ duration: 0.35 }}
           className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4 leading-tight"
         >
           {headline}
@@ -4284,7 +4264,7 @@ function CtaBanner({
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.4 }}
+          transition={{ duration: 0.35, delay: 0.1 }}
           className="mt-5 text-xs text-gray-400"
         >
           Essai gratuit inclus &middot; Sans engagement
@@ -4405,17 +4385,17 @@ function FaqSection() {
       <div className="relative z-[1] max-w-3xl 2xl:max-w-4xl mx-auto">
         {/* Section Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20, scale: 0.97, ...(isMobile ? {} : { filter: "blur(8px)" }) }}
-          whileInView={{ opacity: 1, y: 0, scale: 1, ...(isMobile ? {} : { filter: "blur(0px)" }) }}
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.7, ease: premiumEase }}
+          transition={{ duration: 0.4, ease: premiumEase }}
           className="text-center mb-10 md:mb-16"
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
+            transition={{ delay: 0.03, duration: 0.3 }}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-gray-100 to-gray-50 border border-gray-200 mb-6"
           >
             <span className="flex h-2 w-2">
@@ -4460,10 +4440,10 @@ function Footer() {
   return (
     <footer className="border-t border-[#F0D5C8]/40 py-8 md:py-16 2xl:py-20 px-4 sm:px-6 lg:px-8 2xl:px-12">
       <motion.div
-        initial={{ opacity: 0, y: 24 }}
+        initial={{ opacity: 0, y: 12 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-60px" }}
-        transition={{ duration: 0.6, ease: smoothEase }}
+        viewport={{ once: true, margin: "0px" }}
+        transition={{ duration: 0.4, ease: smoothEase }}
         className="max-w-7xl 2xl:max-w-[1400px] mx-auto"
       >
 
