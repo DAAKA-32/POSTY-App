@@ -1100,8 +1100,8 @@ function DemoSection() {
         id="demo"
         className="relative z-[2]"
       >
-        {/* Hero title — normal flow, scrolls away naturally (no sticky = no bleed-through) */}
-        <motion.div ref={titleRef} style={{ opacity: titleOpacity }} className="relative z-[1] pt-16 md:pt-20 pb-4 md:pb-6 px-4 sm:px-6 lg:px-8">
+        {/* Hero title — sticky: stays on screen while content scrolls over it, fades out via titleOpacity */}
+        <motion.div ref={titleRef} style={{ opacity: titleOpacity }} className="sticky top-0 left-0 right-0 z-[1] pt-16 md:pt-20 pb-4 md:pb-6 px-4 sm:px-6 lg:px-8">
           <div className="relative text-center max-w-4xl mx-auto">
             <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] 2xl:text-[4rem] font-bold tracking-tight flex flex-col items-center gap-0 [&>span]:-my-[0.2em]">
               <span className="block">
@@ -1157,6 +1157,9 @@ function DemoSection() {
             </motion.p>
           </div>
         </motion.div>
+
+        {/* Spacer: compensates for the sticky title */}
+        <div style={{ height: titleHeight }} />
 
         {/* Content — cinematic reveal: starts high + clipped, descends into place */}
         {/* z-[3] scrolls over the fixed title — transparent so aurora shows through */}
@@ -4101,7 +4104,7 @@ function FounderSection({ scrollContainerRef }: { scrollContainerRef: React.RefO
               className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F8935D] focus-visible:ring-offset-2"
               aria-label="Voir le profil LinkedIn d'Emilien Nepveu"
             >
-              <div className="relative w-18 h-18 md:w-20 md:h-20 aspect-square rounded-full overflow-hidden ring-4 ring-white shadow-xl shadow-gray-200/50">
+              <div className="relative w-[4.5rem] h-[4.5rem] md:w-20 md:h-20 aspect-square rounded-full overflow-hidden ring-4 ring-white shadow-xl shadow-gray-200/50">
                 <Image src="/ceo.jpg" alt="Emilien Nepveu" fill className="object-cover object-center" sizes="80px" />
               </div>
             </Link>
@@ -4112,7 +4115,7 @@ function FounderSection({ scrollContainerRef }: { scrollContainerRef: React.RefO
               className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F8935D] focus-visible:ring-offset-2"
               aria-label="Voir le profil de Côme Maubert"
             >
-              <div className="relative w-18 h-18 md:w-20 md:h-20 aspect-square rounded-full overflow-hidden ring-4 ring-white shadow-xl shadow-gray-200/50">
+              <div className="relative w-[4.5rem] h-[4.5rem] md:w-20 md:h-20 aspect-square rounded-full overflow-hidden ring-4 ring-white shadow-xl shadow-gray-200/50">
                 <Image src="/cmo.jpg" alt="Côme Maubert" fill className="object-cover object-center" sizes="80px" />
               </div>
             </Link>
