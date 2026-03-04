@@ -1098,7 +1098,7 @@ function DemoSection() {
       <section
         ref={sectionRef}
         id="demo"
-        className="relative z-[2]"
+        className="relative z-[2] min-h-[100dvh]"
       >
         {/* Hero title — sticky: stays on screen while content scrolls over it, fades out via titleOpacity */}
         <motion.div ref={titleRef} style={{ opacity: titleOpacity }} className="sticky top-0 left-0 right-0 z-[1] pt-24 pb-6 md:pb-2 px-4 sm:px-6 lg:px-8">
@@ -2556,14 +2556,14 @@ const AudienceCard = memo(function AudienceCard({ profile, index, skipEntryAnima
       >
         {/* Ambient hover glow */}
         <div
-          className="absolute -inset-6 rounded-3xl opacity-0 group-hover:opacity-100 transition-all duration-700 blur-3xl pointer-events-none"
+          className="absolute -inset-6 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-3xl pointer-events-none"
           style={{ background: `radial-gradient(400px circle at 50% 30%, rgba(${accent.glowRgb}, 0.15), transparent 70%)` }}
         />
 
         {/* Card shell */}
-        <div className="relative h-full rounded-2xl overflow-hidden shadow-sm group-hover:shadow-xl transition-shadow duration-500">
+        <div className="relative h-full rounded-2xl overflow-hidden shadow-sm group-hover:shadow-xl transition-shadow duration-300">
           {/* Gradient border shimmer */}
-          <div className={`absolute inset-0 rounded-2xl bg-gradient-to-b ${accent.gradient} ${enableHover ? "opacity-[0.12] group-hover:opacity-[0.25]" : "opacity-[0.18]"} transition-opacity duration-500`} />
+          <div className={`absolute inset-0 rounded-2xl bg-gradient-to-b ${accent.gradient} ${enableHover ? "opacity-[0.12] group-hover:opacity-[0.25]" : "opacity-[0.18]"} transition-opacity duration-300`} />
 
           {/* Cursor spotlight */}
           <motion.div
@@ -2574,23 +2574,23 @@ const AudienceCard = memo(function AudienceCard({ profile, index, skipEntryAnima
           {/* Inner card */}
           <div className="relative h-full m-[1px] rounded-[15px] bg-white overflow-hidden">
             {/* Left accent bar + traveling glow */}
-            <div className={`absolute left-0 top-0 bottom-0 w-[3px] bg-gradient-to-b ${accent.accentBar} ${enableHover ? "opacity-40 group-hover:opacity-90" : "opacity-70"} transition-opacity duration-500`}>
+            <div className={`absolute left-0 top-0 bottom-0 w-[3px] bg-gradient-to-b ${accent.accentBar} ${enableHover ? "opacity-40 group-hover:opacity-90" : "opacity-70"} transition-opacity duration-300`}>
               <motion.div
                 className="absolute inset-x-0 h-10 blur-sm"
                 style={{ background: `linear-gradient(to bottom, transparent, rgba(${accent.glowRgb}, 0.6), transparent)` }}
                 animate={(prefersReducedMotion || isMobile) ? {} : { top: ["0%", "85%", "0%"] }}
-                transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: index * 0.8 }}
+                transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: index * 0.4 }}
               />
             </div>
 
             {/* Top accent gradient line */}
-            <div className={`h-[2px] bg-gradient-to-r ${accent.gradient} ${enableHover ? "opacity-40 group-hover:opacity-90" : "opacity-70"} transition-opacity duration-500`} />
+            <div className={`h-[2px] bg-gradient-to-r ${accent.gradient} ${enableHover ? "opacity-40 group-hover:opacity-90" : "opacity-70"} transition-opacity duration-300`} />
 
             <div className="p-6 sm:p-7 lg:p-8 pl-7 sm:pl-8 lg:pl-9">
               {/* Icon + Title row */}
               <div className="flex items-start gap-4 mb-5">
                 <div
-                  className={`w-12 h-12 rounded-xl ${accent.iconBg} ring-1 ${accent.iconRing} flex items-center justify-center ${accent.iconColor} flex-shrink-0 transition-transform duration-300 group-hover:scale-110`}
+                  className={`w-12 h-12 rounded-xl ${accent.iconBg} ring-1 ${accent.iconRing} flex items-center justify-center ${accent.iconColor} flex-shrink-0 transition-transform duration-200 group-hover:scale-110`}
                 >
                   {profile.icon}
                 </div>
@@ -2651,96 +2651,10 @@ const AudienceCard = memo(function AudienceCard({ profile, index, skipEntryAnima
   );
 });
 
-const CAROUSEL_DURATION = 250;
-
 function TargetAudienceSection() {
   const prefersReducedMotion = useReducedMotion();
   const isMobile = useIsMobile();
   const skipInfinite = prefersReducedMotion || isMobile;
-
-  // ── 3D Infinite Carousel (mobile & tablet < 1024px) ──
-  const TOTAL = AUDIENCE_PROFILES.length;
-  const carouselRef = useRef<HTMLDivElement>(null);
-  const [containerWidth, setContainerWidth] = useState(0);
-  const touchRef = useRef({ startX: 0, startY: 0 });
-  const isSnapping = useRef(false);
-  const [noTransition, setNoTransition] = useState(false);
-
-  // Extended track: [clone-last, real-0, real-1, real-2, clone-first]
-  const extendedIndices = [TOTAL - 1, ...Array.from({ length: TOTAL }, (_, i) => i), 0];
-  // slideIndex 1..TOTAL = real items, 0 and TOTAL+1 = clones
-  const [slideIndex, setSlideIndex] = useState(1);
-
-  // Real active index for dots (0-based)
-  const realIndex = slideIndex <= 0 ? TOTAL - 1
-    : slideIndex > TOTAL ? 0
-    : slideIndex - 1;
-
-  // Measure carousel container
-  useEffect(() => {
-    const el = carouselRef.current;
-    if (!el) return;
-    const measure = () => setContainerWidth(el.offsetWidth);
-    measure();
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
-  }, []);
-
-  // Carousel geometry — center the active card
-  const carouselGap = 16;
-  const cardWidth = containerWidth > 0 ? Math.min(containerWidth * 0.85, 420) : 0;
-  const trackX = containerWidth > 0
-    ? (containerWidth / 2) - (cardWidth / 2) - slideIndex * (cardWidth + carouselGap)
-    : 0;
-
-  // Infinite loop: slide to clone, wait for transition, then snap instantly to real
-  useEffect(() => {
-    if (slideIndex === 0 || slideIndex === TOTAL + 1) {
-      const snapTarget = slideIndex === 0 ? TOTAL : 1;
-      isSnapping.current = true;
-      const timer = setTimeout(() => {
-        setNoTransition(true);
-        setSlideIndex(snapTarget);
-      }, CAROUSEL_DURATION);
-      return () => clearTimeout(timer);
-    }
-  }, [slideIndex, TOTAL]);
-
-  // Re-enable transition after instant snap
-  useEffect(() => {
-    if (noTransition) {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          setNoTransition(false);
-          isSnapping.current = false;
-        });
-      });
-    }
-  }, [noTransition]);
-
-  // Navigation — guarded against rapid-fire during snap
-  const goNext = useCallback(() => {
-    if (isSnapping.current) return;
-    setSlideIndex(prev => prev + 1);
-  }, []);
-  const goPrev = useCallback(() => {
-    if (isSnapping.current) return;
-    setSlideIndex(prev => prev - 1);
-  }, []);
-
-  // Touch swipe
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    touchRef.current = { startX: e.touches[0].clientX, startY: e.touches[0].clientY };
-  }, []);
-  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    if (isSnapping.current) return;
-    const dx = e.changedTouches[0].clientX - touchRef.current.startX;
-    const dy = e.changedTouches[0].clientY - touchRef.current.startY;
-    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 30) {
-      if (dx < 0) setSlideIndex(prev => prev + 1);
-      else setSlideIndex(prev => prev - 1);
-    }
-  }, []);
 
   return (
     <section id="audience" className="relative py-12 md:py-16 lg:py-20 overflow-hidden">
@@ -2803,17 +2717,17 @@ function TargetAudienceSection() {
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <motion.div
-          initial={{ opacity: 0, y: 14 }}
+          initial={{ opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "0px 0px 100px 0px" }}
-          transition={{ duration: 0.4, ease: smoothEase }}
+          transition={{ duration: 0.4, ease: premiumEase }}
           className="text-center mb-12 lg:mb-16"
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true, margin: "0px 0px 100px 0px" }}
-            transition={{ delay: 0.1 }}
+            transition={{ delay: 0.03, duration: 0.3 }}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/60 border border-gray-200/60 backdrop-blur-md mb-6 lg:mb-8"
           >
             <span className="relative flex h-2 w-2">
@@ -2838,88 +2752,9 @@ function TargetAudienceSection() {
         </motion.div>
 
         {/* ────────────────────────────────────────────────────────────── */}
-        {/* Mobile & Tablet: 3D Infinite Carousel (< 1024px)             */}
+        {/* Vertical stack on mobile/tablet, 3-column grid on desktop    */}
         {/* ────────────────────────────────────────────────────────────── */}
-        <div className="lg:hidden" ref={carouselRef}>
-          <div className="relative">
-            {/* ← Arrow */}
-            <button
-              onClick={goPrev}
-              className="absolute left-1 sm:left-2 top-1/2 -translate-y-1/2 z-20
-                w-11 h-11 rounded-full bg-white/80 backdrop-blur-sm border border-gray-200/60
-                shadow-sm flex items-center justify-center text-gray-500
-                hover:bg-white hover:text-gray-900 active:scale-90 transition-all duration-150"
-              aria-label="Carte précédente"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-
-            {/* → Arrow */}
-            <button
-              onClick={goNext}
-              className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 z-20
-                w-11 h-11 rounded-full bg-white/80 backdrop-blur-sm border border-gray-200/60
-                shadow-sm flex items-center justify-center text-gray-500
-                hover:bg-white hover:text-gray-900 active:scale-90 transition-all duration-150"
-              aria-label="Carte suivante"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-
-            {/* Carousel viewport */}
-            <div
-              className="overflow-hidden"
-              style={{ touchAction: 'pan-y' }}
-              onTouchStart={handleTouchStart}
-              onTouchEnd={handleTouchEnd}
-            >
-              <div
-                className="flex"
-                style={{
-                  gap: `${carouselGap}px`,
-                  transform: `translate3d(${trackX}px, 0, 0)`,
-                  transition: noTransition ? 'none' : `transform ${CAROUSEL_DURATION}ms cubic-bezier(0.25, 0.1, 0.25, 1)`,
-                  willChange: 'transform',
-                }}
-              >
-                {extendedIndices.map((profileIdx, trackPos) => (
-                    <div
-                      key={`carousel-${trackPos}`}
-                      className="flex-shrink-0"
-                      style={{
-                        width: cardWidth > 0 ? `${cardWidth}px` : "85vw",
-                      }}
-                    >
-                      <AudienceCard profile={AUDIENCE_PROFILES[profileIdx]} index={profileIdx} skipEntryAnimation />
-                    </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Navigation dots */}
-          <div className="flex justify-center gap-2 mt-6">
-            {AUDIENCE_PROFILES.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => { if (!isSnapping.current) setSlideIndex(i + 1); }}
-                className={`h-2 rounded-full transition-all duration-200 ${
-                  realIndex === i ? 'w-6 bg-[#F8935D]' : 'w-2 bg-gray-300'
-                }`}
-                aria-label={`Aller à la carte ${i + 1}`}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* ────────────────────────────────────────────────────────────── */}
-        {/* Desktop: 3-column Grid (>= 1024px)                           */}
-        {/* ────────────────────────────────────────────────────────────── */}
-        <div className="hidden lg:grid grid-cols-3 gap-8">
+        <div className="flex flex-col gap-5 sm:gap-6 lg:grid lg:grid-cols-3 lg:gap-8">
           {AUDIENCE_PROFILES.map((profile, index) => (
             <AudienceCard key={profile.title} profile={profile} index={index} />
           ))}
@@ -3720,12 +3555,12 @@ function TestimonialsSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "0px 0px 100px 0px" }}
               transition={{ delay: index * 0.03, duration: 0.3, ease: premiumEase }}
-              className="group relative bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-[#F8935D]/30 transition-all duration-300 shadow-lg shadow-gray-100/60 hover:shadow-xl hover:shadow-[#F8935D]/10"
+              className="group relative bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-[#F8935D]/30 transition-[border-color,box-shadow] duration-200 shadow-lg shadow-gray-100/60 hover:shadow-xl hover:shadow-[#F8935D]/10"
             >
               <div className="p-6">
                 {/* Author — photo + name/role on same line */}
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-gray-100 group-hover:ring-[#F8935D]/30 transition-all duration-300 flex-shrink-0">
+                  <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-gray-100 group-hover:ring-[#F8935D]/30 transition-[box-shadow] duration-200 flex-shrink-0">
                     <Image src={testimonial.image} alt={testimonial.name} width={40} height={40} className="w-full h-full object-cover" />
                   </div>
                   <div className="flex-1 min-w-0">
