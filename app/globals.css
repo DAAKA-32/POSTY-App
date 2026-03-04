@@ -722,61 +722,7 @@ body.landing-scroll-enabled {
   -webkit-overflow-scrolling: touch !important;
 }
 
-/* SCHEDULE PAGE - Full scroll enabled */
-/* Desktop: document-level scroll (mouse wheel, trackpad, keyboard) */
-/* Mobile: scroll inside <main> to prevent pull-to-refresh white flash on header */
-
-/* ---- Desktop (lg+): document scroll ---- */
-@media (min-width: 1024px) {
-  html.schedule-scroll-enabled {
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
-    position: static !important;
-    height: auto !important;
-    min-height: 100vh !important;
-    width: 100% !important;
-    overscroll-behavior-y: none !important;
-    touch-action: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-  }
-
-  html.schedule-scroll-enabled body,
-  body.schedule-scroll-enabled {
-    overflow: visible !important;
-    position: static !important;
-    height: auto !important;
-    min-height: 100vh !important;
-    width: 100% !important;
-    touch-action: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-  }
-
-  body.schedule-scroll-enabled .app-layout,
-  body.schedule-scroll-enabled.pwa-mobile .app-layout {
-    position: static !important;
-    top: auto !important;
-    left: auto !important;
-    right: auto !important;
-    bottom: auto !important;
-    height: auto !important;
-    min-height: 100vh !important;
-    min-height: 100dvh !important;
-    overflow-x: hidden !important;
-    overflow-y: visible !important;
-  }
-
-  body.schedule-scroll-enabled main {
-    height: auto !important;
-    overflow-x: hidden !important;
-    overflow-y: visible !important;
-  }
-
-  body.schedule-scroll-enabled [class*="overflow-hidden"]:not(.scroll-disabled):not(.schedule-calendar-overflow) {
-    overflow-x: hidden !important;
-    overflow-y: visible !important;
-  }
-}
-
+/* SCHEDULE PAGE - Mobile scroll */
 /* ---- Mobile (<lg): fixed shell, scroll inside <main> ---- */
 /* Prevents iOS rubber-band / pull-to-refresh from shifting the fixed header */
 @media (max-width: 1023px) {
@@ -818,23 +764,6 @@ body.landing-scroll-enabled {
   }
 }
 
-/* HISTORY PAGE - Full scroll enabled */
-/* Enables all scroll methods: mouse wheel, trackpad, touch, keyboard */
-html.history-scroll-enabled,
-html.history-scroll-enabled body,
-body.history-scroll-enabled {
-  overflow: visible !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  position: static !important;
-  height: auto !important;
-  min-height: 100vh !important;
-  width: 100% !important;
-  overscroll-behavior-y: contain !important;
-  touch-action: auto !important;
-  -webkit-overflow-scrolling: touch !important;
-}
-
 /* ONBOARDING PAGE - Full scroll enabled */
 /* Ensures body doesn't block scroll when onboarding is active */
 html.onboarding-scroll-enabled,
@@ -853,82 +782,17 @@ body.onboarding-scroll-enabled {
   -webkit-overflow-scrolling: touch !important;
 }
 
-/* ANALYTICS PAGE - Full scroll enabled */
-/* Enables all scroll methods: mouse wheel, trackpad, touch, keyboard */
-html.analytics-scroll-enabled,
-html.analytics-scroll-enabled body,
-body.analytics-scroll-enabled {
-  overflow: visible !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  position: static !important;
-  height: auto !important;
-  min-height: 100vh !important;
-  width: 100% !important;
-  overscroll-behavior-y: contain !important;
-  touch-action: auto !important;
-  -webkit-overflow-scrolling: touch !important;
-}
+/* ============== DESKTOP SCROLL ============== */
+/* Desktop scroll is handled by AnimatedPageWrapper (flex-1 lg:overflow-y-auto) inside MainLayout.
+   .app-layout stays h-screen overflow-hidden, sidebar stays position:fixed.
+   Pages must use min-h-full (not h-full) so content can overflow AnimatedPageWrapper. */
 
-/* ============== DESKTOP: APP-LAYOUT & MAIN OVERRIDES FOR ALL PAGES ============== */
-/* Critical fix: page-specific scroll classes only override html/body but NOT .app-layout */
-/* (h-screen overflow-hidden) or main (h-screen). Without these overrides, body is set to */
-/* scroll but .app-layout traps content at 100vh, preventing mouse wheel/trackpad/keyboard */
-/* scroll on desktop. Schedule page already has its own desktop rules above. */
+/* LANDING PAGE: use overflow:clip instead of overflow:hidden/visible on desktop.
+   overflow:clip clips decorative elements visually (like overflow:hidden)
+   BUT does NOT create a scroll container — so mouse-wheel events pass
+   through to the document instead of being silently consumed by sections
+   with overflowing decorative content (glows, particles, gradients). */
 @media (min-width: 1024px) {
-  body.settings-scroll-enabled .app-layout,
-  body.subscription-scroll-enabled .app-layout,
-  body.dashboard-scroll-enabled .app-layout,
-  body.profile-scroll-enabled .app-layout,
-  body.history-scroll-enabled .app-layout,
-  body.onboarding-scroll-enabled .app-layout,
-  body.analytics-scroll-enabled .app-layout,
-  body.about-scroll-enabled .app-layout,
-  body.legal-scroll-enabled .app-layout,
-  body.login-scroll-enabled .app-layout,
-  body.landing-scroll-enabled .app-layout {
-    position: static !important;
-    height: auto !important;
-    min-height: 100vh !important;
-    overflow-x: hidden !important;
-    overflow-y: visible !important;
-  }
-
-  body.settings-scroll-enabled main,
-  body.subscription-scroll-enabled main,
-  body.dashboard-scroll-enabled main,
-  body.profile-scroll-enabled main,
-  body.history-scroll-enabled main,
-  body.onboarding-scroll-enabled main,
-  body.analytics-scroll-enabled main,
-  body.about-scroll-enabled main,
-  body.legal-scroll-enabled main,
-  body.login-scroll-enabled main,
-  body.landing-scroll-enabled main {
-    height: auto !important;
-    overflow-x: hidden !important;
-    overflow-y: visible !important;
-  }
-
-  body.settings-scroll-enabled [class*="overflow-hidden"]:not(.scroll-disabled),
-  body.subscription-scroll-enabled [class*="overflow-hidden"]:not(.scroll-disabled),
-  body.dashboard-scroll-enabled [class*="overflow-hidden"]:not(.scroll-disabled),
-  body.profile-scroll-enabled [class*="overflow-hidden"]:not(.scroll-disabled),
-  body.history-scroll-enabled [class*="overflow-hidden"]:not(.scroll-disabled),
-  body.onboarding-scroll-enabled [class*="overflow-hidden"]:not(.scroll-disabled),
-  body.analytics-scroll-enabled [class*="overflow-hidden"]:not(.scroll-disabled),
-  body.about-scroll-enabled [class*="overflow-hidden"]:not(.scroll-disabled),
-  body.legal-scroll-enabled [class*="overflow-hidden"]:not(.scroll-disabled),
-  body.login-scroll-enabled [class*="overflow-hidden"]:not(.scroll-disabled) {
-    overflow-x: hidden !important;
-    overflow-y: visible !important;
-  }
-
-  /* LANDING PAGE: use overflow:clip instead of overflow:hidden/visible.
-     overflow:clip clips decorative elements visually (like overflow:hidden)
-     BUT does NOT create a scroll container — so mouse-wheel events pass
-     through to the document instead of being silently consumed by sections
-     with overflowing decorative content (glows, particles, gradients). */
   body.landing-scroll-enabled [class*="overflow-hidden"]:not(.scroll-disabled) {
     overflow: clip !important;
   }
