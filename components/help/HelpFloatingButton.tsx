@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { usePageHelp } from "@/hooks/usePageHelp";
 import HelpPopover from "./HelpPopover";
@@ -8,9 +8,18 @@ import HelpPopover from "./HelpPopover";
 const smoothEase = [0.25, 0.1, 0.25, 1] as const;
 
 export default function HelpFloatingButton() {
-  const { hasHelp, config, markAsRead } = usePageHelp();
+  const { hasHelp, isRead, config, markAsRead } = usePageHelp();
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const hasAutoOpened = useRef(false);
+
+  // Auto-open on first visit (when help hasn't been read yet)
+  useEffect(() => {
+    if (!hasHelp || isRead || hasAutoOpened.current) return;
+    hasAutoOpened.current = true;
+    const timer = setTimeout(() => setIsPopoverOpen(true), 600);
+    return () => clearTimeout(timer);
+  }, [hasHelp, isRead]);
 
   if (!hasHelp || !config) return null;
 

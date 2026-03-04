@@ -115,6 +115,7 @@ export default function ProfileMenu({ isCollapsed = false, onNavigate }: Profile
   const photoURL = !imageError
     ? linkedInPhoto || userProfile?.photoURL || null
     : null;
+  const isExternalCdn = photoURL?.includes("licdn.com") || photoURL?.includes("linkedin.com");
 
   // Reset image error when photo URL changes
   useEffect(() => {
@@ -222,6 +223,7 @@ export default function ProfileMenu({ isCollapsed = false, onNavigate }: Profile
               alt={userProfile?.displayName || "Avatar"}
               fill
               sizes="40px"
+              unoptimized={!!isExternalCdn}
               className="object-cover object-center"
               onError={() => setImageError(true)}
             />

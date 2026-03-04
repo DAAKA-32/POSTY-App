@@ -5,12 +5,14 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useScheduling } from "@/contexts/SchedulingContext";
+import { useSubscription } from "@/contexts/SubscriptionContext";
 import { ScheduledPost, ScheduleStatus } from "@/types";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import MainLayout from "@/components/layout/MainLayout";
 import Button from "@/components/ui/Button";
 import ScheduledPostCard from "@/components/schedule/ScheduledPostCard";
 import ScheduleModal from "@/components/schedule/ScheduleModal";
+import SchedulePaywallModal from "@/components/schedule/SchedulePaywallModal";
 
 // Filter options with icons
 const FILTER_OPTIONS: { value: ScheduleStatus | "all"; label: string; icon?: string }[] = [
@@ -38,6 +40,8 @@ function ScheduleContent() {
     reschedulePost,
     refreshScheduledPosts,
   } = useScheduling();
+  const { canSchedulePosts } = useSubscription();
+  const canSchedule = canSchedulePosts().allowed;
 
   // Enable full scrolling on Schedule page (mouse wheel, trackpad, touch, keyboard)
   useEffect(() => {
@@ -59,6 +63,9 @@ function ScheduleContent() {
   // Reschedule modal
   const [rescheduleModalOpen, setRescheduleModalOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState<ScheduledPost | null>(null);
+
+  // Paywall modal for Free users
+  const [showPaywall, setShowPaywall] = useState(false);
 
   // Filter posts
   const filteredPosts = useMemo(() => {
@@ -160,11 +167,19 @@ function ScheduleContent() {
   };
 
   const handleReschedule = (post: ScheduledPost) => {
+    if (!canSchedule) {
+      setShowPaywall(true);
+      return;
+    }
     setSelectedPost(post);
     setRescheduleModalOpen(true);
   };
 
   const handleEdit = (post: ScheduledPost) => {
+    if (!canSchedule) {
+      setShowPaywall(true);
+      return;
+    }
     // For now, just reschedule. Full edit could be added later.
     handleReschedule(post);
   };
@@ -557,13 +572,19 @@ function ScheduleContent() {
           }}
         />
       )}
+
+      {/* Paywall Modal for Free users */}
+      <SchedulePaywallModal
+        isOpen={showPaywall}
+        onClose={() => setShowPaywall(false)}
+      />
     </MainLayout>
   );
 }
 
 export default function SchedulePage() {
   return (
-    <ProtectedRoute requireOnboarding minimumPlan="pro">
+    <ProtectedRoute requireOnboarding>
       <ScheduleContent />
     </ProtectedRoute>
   );

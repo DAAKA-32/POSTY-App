@@ -557,7 +557,7 @@ export default function MainLayout({
       <aside
         role="navigation"
         aria-label="Navigation principale"
-        className="hidden lg:flex flex-col h-screen bg-background-warm dark:bg-dark-card border-r border-[#F8935D]/10 dark:border-dark-border fixed left-0 top-0 z-40 overflow-hidden transition-all duration-200 ease-out"
+        className="hidden lg:flex flex-col h-screen bg-background-warm dark:bg-dark-card border-r border-[#F8935D]/10 dark:border-dark-border fixed left-0 top-0 z-40 overflow-hidden scroll-disabled transition-all duration-200 ease-out"
         style={{ width: currentSidebarWidth }}
       >
         {/* Header - Logo when expanded, Toggle when collapsed */}

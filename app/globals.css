@@ -17,10 +17,11 @@
 
 /* Desktop devices (mouse/trackpad) - ALWAYS allow scroll */
 /* pointer: fine = mouse/trackpad, hover: hover = not touch device */
+/* EXCLUDES landing page — it has its own scroll rules via .landing-scroll-enabled */
 @media (pointer: fine) and (hover: hover) {
   /* Force scroll on desktop - these rules MUST override everything */
-  html:not(.scroll-locked),
-  body:not(.scroll-locked):not(.modal-open) {
+  html:not(.scroll-locked):not(.landing-scroll-enabled):not(.settings-scroll-enabled):not(.subscription-scroll-enabled):not(.dashboard-scroll-enabled):not(.profile-scroll-enabled):not(.login-scroll-enabled):not(.about-scroll-enabled):not(.legal-scroll-enabled):not(.schedule-scroll-enabled):not(.onboarding-scroll-enabled):not(.history-scroll-enabled):not(.analytics-scroll-enabled),
+  body:not(.scroll-locked):not(.modal-open):not(.landing-scroll-enabled):not(.settings-scroll-enabled):not(.subscription-scroll-enabled):not(.dashboard-scroll-enabled):not(.profile-scroll-enabled):not(.login-scroll-enabled):not(.about-scroll-enabled):not(.legal-scroll-enabled):not(.schedule-scroll-enabled):not(.onboarding-scroll-enabled):not(.history-scroll-enabled):not(.analytics-scroll-enabled) {
     overflow-y: auto !important;
     overflow-x: hidden !important;
     position: static !important;
@@ -645,99 +646,23 @@ body.landing-no-scroll {
   touch-action: none !important;
 }
 
-/* SETTINGS PAGE - Full scroll enabled */
-/* Enables all scroll methods: mouse wheel, trackpad, touch, keyboard */
+/* ============================================================================
+   PER-PAGE SCROLL RULES — Unified pattern
+   ============================================================================
+   PRINCIPLE: html is the SOLE scroll container. body uses overflow: visible
+   so it doesn't create a competing scroll context that blocks mouse wheel.
+   ============================================================================ */
+
+/* HTML elements: scrollable viewport */
 html.settings-scroll-enabled,
-html.settings-scroll-enabled body,
-body.settings-scroll-enabled {
-  overflow: visible !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  position: static !important;
-  height: auto !important;
-  min-height: 100vh !important;
-  width: 100% !important;
-  overscroll-behavior-y: contain !important;
-  touch-action: auto !important;
-  -webkit-overflow-scrolling: touch !important;
-}
-
-/* SUBSCRIPTION PAGE - Full scroll enabled */
-/* Enables all scroll methods: mouse wheel, trackpad, touch, keyboard */
 html.subscription-scroll-enabled,
-html.subscription-scroll-enabled body,
-body.subscription-scroll-enabled {
-  overflow: visible !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  position: static !important;
-  height: auto !important;
-  min-height: 100vh !important;
-  width: 100% !important;
-  overscroll-behavior-y: contain !important;
-  touch-action: auto !important;
-  -webkit-overflow-scrolling: touch !important;
-}
-
-/* DASHBOARD PAGE - Full scroll enabled */
-/* Enables all scroll methods: mouse wheel, trackpad, touch, keyboard */
 html.dashboard-scroll-enabled,
-html.dashboard-scroll-enabled body,
-body.dashboard-scroll-enabled {
-  overflow: visible !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  position: static !important;
-  height: auto !important;
-  min-height: 100vh !important;
-  width: 100% !important;
-  overscroll-behavior-y: contain !important;
-  touch-action: auto !important;
-  -webkit-overflow-scrolling: touch !important;
-}
-
-/* PROFILE PAGE - Full scroll enabled */
-/* Enables all scroll methods: mouse wheel, trackpad, touch, keyboard */
 html.profile-scroll-enabled,
-html.profile-scroll-enabled body,
-body.profile-scroll-enabled {
-  overflow: visible !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  position: static !important;
-  height: auto !important;
-  min-height: 100vh !important;
-  width: 100% !important;
-  overscroll-behavior-y: contain !important;
-  touch-action: auto !important;
-  -webkit-overflow-scrolling: touch !important;
-}
-
-/* LOGIN PAGE - Full scroll enabled */
-/* Enables all scroll methods: mouse wheel, trackpad, touch, keyboard */
 html.login-scroll-enabled,
-html.login-scroll-enabled body,
-body.login-scroll-enabled {
-  overflow: visible !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  position: static !important;
-  height: auto !important;
-  min-height: 100vh !important;
-  width: 100% !important;
-  overscroll-behavior-y: contain !important;
-  touch-action: auto !important;
-  -webkit-overflow-scrolling: touch !important;
-}
-
-/* ABOUT PAGE - Full scroll enabled */
-/* Enables all scroll methods: mouse wheel, trackpad, touch, keyboard */
 html.about-scroll-enabled,
-html.about-scroll-enabled body,
-body.about-scroll-enabled {
-  overflow: visible !important;
-  overflow-y: auto !important;
+html.legal-scroll-enabled {
   overflow-x: hidden !important;
+  overflow-y: auto !important;
   position: static !important;
   height: auto !important;
   min-height: 100vh !important;
@@ -747,29 +672,34 @@ body.about-scroll-enabled {
   -webkit-overflow-scrolling: touch !important;
 }
 
-/* LEGAL PAGES - Full scroll enabled */
-/* Enables all scroll methods: mouse wheel, trackpad, touch, keyboard */
-html.legal-scroll-enabled,
+/* Body elements: defer to html (no competing scroll container) */
+html.settings-scroll-enabled body,
+body.settings-scroll-enabled,
+html.subscription-scroll-enabled body,
+body.subscription-scroll-enabled,
+html.dashboard-scroll-enabled body,
+body.dashboard-scroll-enabled,
+html.profile-scroll-enabled body,
+body.profile-scroll-enabled,
+html.login-scroll-enabled body,
+body.login-scroll-enabled,
+html.about-scroll-enabled body,
+body.about-scroll-enabled,
 html.legal-scroll-enabled body,
 body.legal-scroll-enabled {
   overflow: visible !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
   position: static !important;
   height: auto !important;
   min-height: 100vh !important;
   width: 100% !important;
-  overscroll-behavior-y: contain !important;
   touch-action: auto !important;
   -webkit-overflow-scrolling: touch !important;
 }
 
 /* LANDING PAGE - Full scroll enabled */
-/* Enables all scroll methods: mouse wheel, trackpad, touch, keyboard */
-/* NOTE: No overflow shorthand — explicit x/y avoids shorthand-longhand conflicts */
-html.landing-scroll-enabled,
-html.landing-scroll-enabled body,
-body.landing-scroll-enabled {
+/* html is the SOLE scroll container — body defers with overflow: visible */
+/* This prevents competing scroll contexts that block mouse wheel */
+html.landing-scroll-enabled {
   overflow-x: hidden !important;
   overflow-y: auto !important;
   position: static !important;
@@ -777,6 +707,17 @@ body.landing-scroll-enabled {
   min-height: 100vh !important;
   width: 100% !important;
   overscroll-behavior-y: contain !important;
+  touch-action: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+html.landing-scroll-enabled body,
+body.landing-scroll-enabled {
+  overflow: visible !important;
+  position: static !important;
+  height: auto !important;
+  min-height: 100vh !important;
+  width: 100% !important;
   touch-action: auto !important;
   -webkit-overflow-scrolling: touch !important;
 }
@@ -787,17 +728,25 @@ body.landing-scroll-enabled {
 
 /* ---- Desktop (lg+): document scroll ---- */
 @media (min-width: 1024px) {
-  html.schedule-scroll-enabled,
-  html.schedule-scroll-enabled body,
-  body.schedule-scroll-enabled {
-    overflow: visible !important;
-    overflow-y: auto !important;
+  html.schedule-scroll-enabled {
     overflow-x: hidden !important;
+    overflow-y: auto !important;
     position: static !important;
     height: auto !important;
     min-height: 100vh !important;
     width: 100% !important;
     overscroll-behavior-y: none !important;
+    touch-action: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  html.schedule-scroll-enabled body,
+  body.schedule-scroll-enabled {
+    overflow: visible !important;
+    position: static !important;
+    height: auto !important;
+    min-height: 100vh !important;
+    width: 100% !important;
     touch-action: auto !important;
     -webkit-overflow-scrolling: touch !important;
   }
@@ -1161,8 +1110,6 @@ body.force-scroll-enabled * {
 /* Uses dvh/svh units with fallbacks for maximum compatibility */
 
 :root {
-  /* Stable anchor point for welcome content - percentage from viewport top */
-  --welcome-anchor-top: 38%;
   /* Safe area compensation */
   --mobile-header-height: 56px;
   /* Input area height estimation */
@@ -1190,12 +1137,16 @@ body.force-scroll-enabled * {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   width: 100%;
   min-height: 100%;
-  /* Desktop: Use padding-top for stable vertical anchor */
-  padding-top: calc(var(--welcome-anchor-top) - 120px);
-  padding-bottom: 20px;
+  /* Desktop: flex centering with optical upward bias.
+     The parent (.content-with-fixed-input) already has padding-bottom ~180px
+     for the input bar, so centering here = centering in visible area.
+     Extra padding-bottom shifts content slightly above math center
+     for a natural "optical center" feel. */
+  padding-top: 0;
+  padding-bottom: 8vh;
   box-sizing: border-box;
 }
 
@@ -2273,46 +2224,40 @@ html.light .sidebar-scroll {
   scrollbar-color: rgba(156, 163, 175, 0.4) transparent;
 }
 
-/* ============== LANDING PAGE - SILVER SCROLLBAR ============== */
-/* Target html/body (desktop scroll fix makes these the scroll containers) */
+/* ============== LANDING PAGE - ORANGE SCROLLBAR ============== */
+/* Native document scroll — html/body are the scroll containers */
 html.light.landing-scroll-enabled::-webkit-scrollbar,
-html.light.landing-scroll-enabled body::-webkit-scrollbar,
-html.light .landing-silver-scrollbar::-webkit-scrollbar {
-  width: 8px !important;
+html.light.landing-scroll-enabled body::-webkit-scrollbar {
+  width: 10px !important;
 }
 
 html.light.landing-scroll-enabled::-webkit-scrollbar-track,
-html.light.landing-scroll-enabled body::-webkit-scrollbar-track,
-html.light .landing-silver-scrollbar::-webkit-scrollbar-track {
+html.light.landing-scroll-enabled body::-webkit-scrollbar-track {
   background: #FEF3EE !important;
 }
 
 html.light.landing-scroll-enabled::-webkit-scrollbar-thumb,
-html.light.landing-scroll-enabled body::-webkit-scrollbar-thumb,
-html.light .landing-silver-scrollbar::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #C0C0C0 0%, #A8A8B0 40%, #8E8E96 100%) !important;
-  border-radius: 4px !important;
+html.light.landing-scroll-enabled body::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #F8935D 0%, #F76B54 100%) !important;
+  border-radius: 5px !important;
   border: 2px solid #FEF3EE !important;
 }
 
 html.light.landing-scroll-enabled::-webkit-scrollbar-thumb:hover,
-html.light.landing-scroll-enabled body::-webkit-scrollbar-thumb:hover,
-html.light .landing-silver-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #B0B0B8 0%, #9898A0 40%, #808088 100%) !important;
+html.light.landing-scroll-enabled body::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #F57C3A 0%, #E55A43 100%) !important;
 }
 
 html.light.landing-scroll-enabled::-webkit-scrollbar-thumb:active,
-html.light.landing-scroll-enabled body::-webkit-scrollbar-thumb:active,
-html.light .landing-silver-scrollbar::-webkit-scrollbar-thumb:active {
-  background: linear-gradient(180deg, #A0A0A8 0%, #888890 40%, #707078 100%) !important;
+html.light.landing-scroll-enabled body::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(180deg, #E56A2E 0%, #D44A35 100%) !important;
 }
 
 /* Firefox */
 html.light.landing-scroll-enabled,
-html.light.landing-scroll-enabled body,
-html.light .landing-silver-scrollbar {
-  scrollbar-width: thin !important;
-  scrollbar-color: #A8A8B0 #FEF3EE !important;
+html.light.landing-scroll-enabled body {
+  scrollbar-width: auto !important;
+  scrollbar-color: #F8935D #FEF3EE !important;
 }
 
 /* Light mode popup overlay */
