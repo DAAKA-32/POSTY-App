@@ -197,7 +197,7 @@ export function useBrowserMode(): BrowserModeInfo {
     // Use visualViewport events when available
     if (window.visualViewport) {
       window.visualViewport.addEventListener("resize", handleViewportResize);
-      window.visualViewport.addEventListener("scroll", handleViewportResize);
+      window.visualViewport.addEventListener("scroll", handleViewportResize, { passive: true });
     }
 
     return () => {

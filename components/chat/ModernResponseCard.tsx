@@ -12,6 +12,20 @@ import { PlanType } from "@/lib/plans";
 import PostInsightsModal from "./PostInsightsModal";
 import { generatePostInsights } from "@/lib/generateInsights";
 
+// Static variant styles (outside component to avoid re-creation)
+const variantStyles = {
+  storytelling: {
+    icon: "📖",
+    label: "Storytelling",
+    color: "text-accent",
+  },
+  business: {
+    icon: "💼",
+    label: "Business",
+    color: "text-primary",
+  },
+};
+
 interface ModernResponseCardProps {
   content: string;
   variant?: "storytelling" | "business";
@@ -207,20 +221,6 @@ export const ModernResponseCard = memo(function ModernResponseCard({
       window.removeEventListener("resize", handleUpdate);
     };
   }, [isMenuOpen, calculatePosition]);
-
-  // Variant styles - subtle, minimal
-  const variantStyles = {
-    storytelling: {
-      icon: "📖",
-      label: "Storytelling",
-      color: "text-accent",
-    },
-    business: {
-      icon: "💼",
-      label: "Business",
-      color: "text-primary",
-    },
-  };
 
   const currentVariant = variantStyles[variant];
 

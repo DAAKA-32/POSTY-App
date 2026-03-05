@@ -47,7 +47,7 @@ export function useKeyboardHeight() {
 
     // Listen to viewport resize events
     window.visualViewport?.addEventListener("resize", handleViewportChange);
-    window.visualViewport?.addEventListener("scroll", handleViewportChange);
+    window.visualViewport?.addEventListener("scroll", handleViewportChange, { passive: true });
 
     // Initial check
     handleViewportChange();

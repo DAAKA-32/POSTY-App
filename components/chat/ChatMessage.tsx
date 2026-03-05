@@ -10,6 +10,18 @@ import toast from "@/components/ui/Toast";
 // Premium animation easing
 const smoothEase = [0.25, 0.1, 0.25, 1] as const;
 
+// Static variant styles (outside component to avoid re-creation)
+const variantStyles = {
+  storytelling: {
+    badge: "bg-accent/20 text-accent",
+    label: "Storytelling",
+  },
+  business: {
+    badge: "bg-primary/20 text-primary",
+    label: "Business",
+  },
+};
+
 // Helper function to format timestamp
 function formatTimeAgo(date: Date): string {
   const now = new Date();
@@ -85,17 +97,6 @@ const ChatMessage = memo(function ChatMessage({
   };
 
   const isUser = type === "user";
-
-  const variantStyles = {
-    storytelling: {
-      badge: "bg-accent/20 text-accent",
-      label: "Storytelling",
-    },
-    business: {
-      badge: "bg-primary/20 text-primary",
-      label: "Business",
-    },
-  };
 
   return (
     <motion.div
