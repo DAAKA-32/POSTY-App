@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLinkedIn } from "@/contexts/LinkedInContext";
 import { useQuota } from "@/contexts/QuotaContext";
@@ -22,6 +23,7 @@ import ModernResponseCard from "@/components/chat/ModernResponseCard";
 import ModernStyleSelector from "@/components/chat/ModernStyleSelector";
 import DualModeToggle from "@/components/chat/DualModeToggle";
 import MaxModeSelector from "@/components/chat/MaxModeSelector";
+import AIModeSwitch, { AIMode } from "@/components/chat/AIModeSwitch";
 import InlineUpgradeBanner from "@/components/chat/InlineUpgradeBanner";
 import { getPlanFeatures } from "@/lib/plan-features";
 import NewResponseIndicator from "@/components/chat/NewResponseIndicator";
@@ -100,7 +102,16 @@ const PLACEHOLDER_EXAMPLES = [
   "Un moment clé de ma carrière...",
 ];
 
+const PLACEHOLDER_GENERAL = [
+  "Pose-moi une question...",
+  "Besoin d'un conseil ?",
+  "Comment améliorer mon profil ?",
+  "Explique-moi le personal branding...",
+  "Quelles tendances LinkedIn en 2026 ?",
+];
+
 function AppContent() {
+  const router = useRouter();
   const { user, userProfile } = useAuth();
   const { connection: linkedInConnection, publishToLinkedIn } = useLinkedIn();
   const { canSendMessage } = useQuota();
@@ -132,6 +143,9 @@ function AppContent() {
 
   // Max mode selector state (Max plan: choose between dual/storytelling/business)
   const [maxMode, setMaxMode] = useState<"dual" | "storytelling" | "business">("dual");
+
+  // AI mode: "linkedin" (Storytelling Business) or "general" (IA Générale)
+  const [aiMode, setAiMode] = useState<AIMode>("linkedin");
 
   // Inline upgrade banner state (replaces mode selector zone for Pro users)
   const [showUpgradeBanner, setShowUpgradeBanner] = useState(false);
@@ -177,12 +191,23 @@ function AppContent() {
     generate,
     reset,
     insights,
+    postId,
   } = useChat({
     userId: user?.uid,
     isGuest: false,
     selectedStyle: effectiveStyle,
     dualMode: effectiveDualMode,
+    aiMode,
   });
+
+  // Navigate to conversation URL after first save — preserves state on refresh
+  const hasRedirectedRef = useRef(false);
+  useEffect(() => {
+    if (postId && !hasRedirectedRef.current && !isStreaming) {
+      hasRedirectedRef.current = true;
+      router.replace(`/app/c/${postId}`);
+    }
+  }, [postId, isStreaming, router]);
 
   // Smart scroll: only auto-scroll when user is near bottom
   const {
@@ -763,18 +788,37 @@ function AppContent() {
           }}
         >
           <div className="max-w-3xl mx-auto px-3 sm:px-4 py-1 lg:py-2">
-            {/* Mode Selector / Upgrade Banner zone */}
+            {/* AI Mode Switch: Storytelling Business <-> IA Générale */}
+            <div className="mb-2">
+              <AIModeSwitch mode={aiMode} onModeChange={setAiMode} />
+            </div>
+
+            {/* Post Mode Selector / Upgrade Banner zone — hidden in general AI mode */}
             <AnimatePresence mode="wait">
-              {isMaxPlan && (
-                <div className="mb-3 flex justify-center">
+              {aiMode === "linkedin" && isMaxPlan && (
+                <motion.div
+                  key="max-selector"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="mb-3 flex justify-center overflow-hidden"
+                >
                   <MaxModeSelector
                     selectedMode={maxMode}
                     onModeChange={setMaxMode}
                   />
-                </div>
+                </motion.div>
               )}
-              {isProPlan && !isMaxPlan && (
-                <div className="mb-3 flex justify-center">
+              {aiMode === "linkedin" && isProPlan && !isMaxPlan && (
+                <motion.div
+                  key="pro-selector"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="mb-3 flex justify-center overflow-hidden"
+                >
                   {showUpgradeBanner ? (
                     <InlineUpgradeBanner
                       reason={upgradeBannerReason}
@@ -793,7 +837,7 @@ function AppContent() {
                       }}
                     />
                   )}
-                </div>
+                </motion.div>
               )}
             </AnimatePresence>
 
@@ -885,7 +929,7 @@ function AppContent() {
                   if (isRecordingRef.current) forceStopRecording();
                   await handleGenerate(message, file);
                 }}
-                placeholder={PLACEHOLDER_EXAMPLES}
+                placeholder={aiMode === "general" ? PLACEHOLDER_GENERAL : PLACEHOLDER_EXAMPLES}
                 disabled={!canSendMessage}
                 isLoading={isLoading || isStreaming}
                 enableVoiceRecording={speechSupported}

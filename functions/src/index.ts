@@ -384,14 +384,15 @@ async function publishToThreads(userId: string, content: string): Promise<Publis
   }
 
   // Step 1: Create media container
-  const containerResponse = await fetch(`${THREADS_API_URL}/me/threads`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${connection.accessToken}`,
-    },
-    body: JSON.stringify({ media_type: "TEXT", text: content }),
+  const containerParams = new URLSearchParams({
+    media_type: "TEXT",
+    text: content,
+    access_token: connection.accessToken,
   });
+  const containerResponse = await fetch(
+    `${THREADS_API_URL}/me/threads?${containerParams.toString()}`,
+    { method: "POST" }
+  );
 
   if (!containerResponse.ok) {
     const errText = await containerResponse.text();
@@ -402,15 +403,18 @@ async function publishToThreads(userId: string, content: string): Promise<Publis
   const containerData = await containerResponse.json();
   const creationId = containerData.id;
 
+  // Wait for container to be ready
+  await new Promise((resolve) => setTimeout(resolve, 2000));
+
   // Step 2: Publish the container
-  const publishResponse = await fetch(`${THREADS_API_URL}/me/threads_publish`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${connection.accessToken}`,
-    },
-    body: JSON.stringify({ creation_id: creationId }),
+  const publishParams = new URLSearchParams({
+    creation_id: creationId,
+    access_token: connection.accessToken,
   });
+  const publishResponse = await fetch(
+    `${THREADS_API_URL}/me/threads_publish?${publishParams.toString()}`,
+    { method: "POST" }
+  );
 
   if (!publishResponse.ok) {
     const errText = await publishResponse.text();

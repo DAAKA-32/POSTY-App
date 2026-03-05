@@ -21,6 +21,7 @@ import ModernAIResponsePair from "@/components/chat/ModernAIResponsePair";
 import ModernResponseCard from "@/components/chat/ModernResponseCard";
 import MaxModeSelector from "@/components/chat/MaxModeSelector";
 import DualModeToggle from "@/components/chat/DualModeToggle";
+import AIModeSwitch, { AIMode } from "@/components/chat/AIModeSwitch";
 import InlineUpgradeBanner from "@/components/chat/InlineUpgradeBanner";
 import NewResponseIndicator from "@/components/chat/NewResponseIndicator";
 import PublishToLinkedInModal from "@/components/linkedin/PublishToLinkedInModal";
@@ -69,6 +70,7 @@ function ConversationContent() {
   const [dualMode, setDualMode] = useState(false);
   const [dualUsedThisWeek, setDualUsedThisWeek] = useState(0);
   const [maxMode, setMaxMode] = useState<"dual" | "storytelling" | "business">("dual");
+  const [aiMode, setAiMode] = useState<AIMode>("linkedin");
   const [showUpgradeBanner, setShowUpgradeBanner] = useState(false);
   const [upgradeBannerReason, setUpgradeBannerReason] = useState<"dual-limit" | "max-feature">("max-feature");
 
@@ -112,6 +114,7 @@ function ConversationContent() {
     conversationId,
     dualMode: effectiveDualMode,
     selectedStyle: effectiveStyle,
+    aiMode,
   });
 
   // Keep generate ref in sync for use in voice auto-send callbacks
@@ -665,18 +668,37 @@ function ConversationContent() {
           `}
         >
           <div className="max-w-3xl mx-auto px-3 sm:px-4 py-1 lg:py-2">
-            {/* Mode Selector / Upgrade Banner zone */}
+            {/* AI Mode Switch: Storytelling Business <-> IA Générale */}
+            <div className="mb-2">
+              <AIModeSwitch mode={aiMode} onModeChange={setAiMode} />
+            </div>
+
+            {/* Post Mode Selector / Upgrade Banner zone — hidden in general AI mode */}
             <AnimatePresence mode="wait">
-              {isMaxPlan && (
-                <div className="mb-3 flex justify-center">
+              {aiMode === "linkedin" && isMaxPlan && (
+                <motion.div
+                  key="max-selector"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="mb-3 flex justify-center overflow-hidden"
+                >
                   <MaxModeSelector
                     selectedMode={maxMode}
                     onModeChange={setMaxMode}
                   />
-                </div>
+                </motion.div>
               )}
-              {isProPlan && !isMaxPlan && (
-                <div className="mb-3 flex justify-center">
+              {aiMode === "linkedin" && isProPlan && !isMaxPlan && (
+                <motion.div
+                  key="pro-selector"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="mb-3 flex justify-center overflow-hidden"
+                >
                   {showUpgradeBanner ? (
                     <InlineUpgradeBanner
                       reason={upgradeBannerReason}
@@ -695,7 +717,7 @@ function ConversationContent() {
                       }}
                     />
                   )}
-                </div>
+                </motion.div>
               )}
             </AnimatePresence>
 

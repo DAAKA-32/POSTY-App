@@ -47,6 +47,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (content.length > 500) {
+      return NextResponse.json(
+        {
+          error: "content_too_long",
+          message: "Le contenu dépasse la limite de 500 caractères pour Threads.",
+        },
+        { status: 400 }
+      );
+    }
+
     // PLAN CHECK: Verify user's plan allows Threads publishing
     let userPlan: PlanType | null = null;
     try {
@@ -109,19 +119,14 @@ export async function POST(request: NextRequest) {
     }
 
     // ÉTAPE 1: Création du media container (TEXT post)
+    const containerParams = new URLSearchParams({
+      media_type: "TEXT",
+      text: content,
+      access_token: connection.accessToken,
+    });
     const containerResponse = await fetch(
-      `${THREADS_CONFIG.apiUrl}/me/threads`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${connection.accessToken}`,
-        },
-        body: JSON.stringify({
-          media_type: "TEXT",
-          text: content,
-        }),
-      }
+      `${THREADS_CONFIG.apiUrl}/me/threads?${containerParams.toString()}`,
+      { method: "POST" }
     );
 
     if (!containerResponse.ok) {
@@ -139,10 +144,17 @@ export async function POST(request: NextRequest) {
       }
 
       console.error("Threads container creation error details:", errorData);
+      let threadsError = "";
+      try {
+        const parsed = JSON.parse(errorData);
+        threadsError = parsed?.error?.message || errorData;
+      } catch {
+        threadsError = errorData;
+      }
       return NextResponse.json(
         {
           error: "container_creation_failed",
-          message: "Échec de la création du post Threads. Veuillez réessayer.",
+          message: `Échec de la création du post Threads: ${threadsError}`,
         },
         { status: containerResponse.status }
       );
@@ -151,29 +163,34 @@ export async function POST(request: NextRequest) {
     const containerData = await containerResponse.json();
     const creationId = containerData.id;
 
+    // Attendre que le container soit prêt
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
     // ÉTAPE 2: Publication du container
+    const publishParams = new URLSearchParams({
+      creation_id: creationId,
+      access_token: connection.accessToken,
+    });
     const publishResponse = await fetch(
-      `${THREADS_CONFIG.apiUrl}/me/threads_publish`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${connection.accessToken}`,
-        },
-        body: JSON.stringify({
-          creation_id: creationId,
-        }),
-      }
+      `${THREADS_CONFIG.apiUrl}/me/threads_publish?${publishParams.toString()}`,
+      { method: "POST" }
     );
 
     if (!publishResponse.ok) {
       const errorData = await publishResponse.text();
       console.error("Threads publish failed:", errorData);
+      let publishError = "";
+      try {
+        const parsed = JSON.parse(errorData);
+        publishError = parsed?.error?.message || errorData;
+      } catch {
+        publishError = errorData;
+      }
 
       return NextResponse.json(
         {
           error: "publish_failed",
-          message: "Échec de la publication sur Threads. Veuillez réessayer.",
+          message: `Échec de la publication sur Threads: ${publishError}`,
         },
         { status: publishResponse.status }
       );
@@ -190,10 +207,16 @@ export async function POST(request: NextRequest) {
       );
       if (threadInfoResponse.ok) {
         const threadInfo = await threadInfoResponse.json();
-        permalink = threadInfo.permalink;
+        if (threadInfo.permalink && !threadInfo.permalink.includes("error=")) {
+          permalink = threadInfo.permalink;
+        }
       }
     } catch {
       // Non-critical, continue without permalink
+    }
+    // Fallback: lien vers le profil Threads
+    if (!permalink) {
+      permalink = `https://www.threads.net/@${connection.username}`;
     }
 
     // Enregistrement dans Firestore
@@ -215,7 +238,7 @@ export async function POST(request: NextRequest) {
       success: true,
       message: "Post publié sur Threads avec succès !",
       threadId,
-      permalink: permalink || `https://www.threads.net/@${connection.username}`,
+      permalink,
     });
   } catch (error) {
     console.error("Threads publish error:", error);

@@ -294,6 +294,10 @@ export async function getUserPosts(
       responseB: data.contentB || data.responseB,
       selectedVersion: data.chosenVersion || data.selectedVersion,
       createdAt: data.createdAt as Timestamp,
+      // Include conversation metadata for proper reload
+      responseMode: data.responseMode,
+      selectedStyle: data.selectedStyle,
+      messages: data.messages || [],
     };
   }) as Post[];
 }
@@ -482,6 +486,10 @@ export async function getUserPostsWithPinned(
       title: data.title || undefined,
       isPinned: data.isPinned || false,
       pinnedAt: data.pinnedAt || undefined,
+      // Include conversation metadata for proper reload
+      responseMode: data.responseMode,
+      selectedStyle: data.selectedStyle,
+      messages: data.messages || [],
     };
   }) as Post[];
 

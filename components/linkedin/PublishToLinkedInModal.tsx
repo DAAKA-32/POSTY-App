@@ -393,10 +393,11 @@ export default function PublishToLinkedInModal({
       // Publish to Threads if selected
       if (selectedPlatforms.includes("threads")) {
         const result = await publishToThreads(editedContent);
+        const validPermalink = result.permalink && !result.permalink.includes("error=") ? result.permalink : undefined;
         results.push({
           platform: "Threads",
           success: result.success,
-          url: result.permalink,
+          url: validPermalink,
           error: result.error,
         });
       }
@@ -457,7 +458,11 @@ export default function PublishToLinkedInModal({
 
   const isConnected = !!linkedInConnection;
   const characterCount = editedContent.length;
-  const isOverLimit = characterCount > 3000;
+  const linkedInLimit = 3000;
+  const threadsLimit = 500;
+  const isOverLinkedInLimit = selectedPlatforms.includes("linkedin") && characterCount > linkedInLimit;
+  const isOverThreadsLimit = selectedPlatforms.includes("threads") && characterCount > threadsLimit;
+  const isOverLimit = isOverLinkedInLimit || isOverThreadsLimit;
   const noPlatformSelected = selectedPlatforms.length === 0;
   const cannotPublish = isOverLimit || !editedContent.trim() || noPlatformSelected;
 
@@ -790,15 +795,27 @@ export default function PublishToLinkedInModal({
                 `}
                 placeholder="Rédigez votre contenu..."
               />
-              <div className="flex justify-between mt-2 text-xs">
+              <div className="flex justify-between items-start mt-2 text-xs">
                 <span className="text-text-muted">
                   {editedContent !== initialContent && (
                     <span className="text-warning">Modifié</span>
                   )}
                 </span>
-                <span className={isOverLimit ? "text-error font-medium" : "text-text-muted"}>
-                  {characterCount} / 3000
-                </span>
+                <div className="flex flex-col items-end gap-0.5">
+                  {selectedPlatforms.includes("linkedin") && (
+                    <span className={isOverLinkedInLimit ? "text-error font-medium" : "text-text-muted"}>
+                      LinkedIn: {characterCount} / {linkedInLimit}
+                    </span>
+                  )}
+                  {selectedPlatforms.includes("threads") && (
+                    <span className={isOverThreadsLimit ? "text-error font-medium" : "text-text-muted"}>
+                      Threads: {characterCount} / {threadsLimit}
+                    </span>
+                  )}
+                  {!selectedPlatforms.includes("linkedin") && !selectedPlatforms.includes("threads") && (
+                    <span className="text-text-muted">{characterCount}</span>
+                  )}
+                </div>
               </div>
             </div>
 

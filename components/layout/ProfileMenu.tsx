@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLinkedIn } from "@/contexts/LinkedInContext";
+import { useThreads } from "@/contexts/ThreadsContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { PlanBadge } from "@/components/subscription/PlanInfoCard";
 import { PlanType, meetsMinimumPlan } from "@/lib/plans";
@@ -104,6 +105,7 @@ const menuItems: {
 export default function ProfileMenu({ isCollapsed = false, onNavigate }: ProfileMenuProps) {
   const { user, userProfile } = useAuth();
   const { profilePicture: linkedInPhoto } = useLinkedIn();
+  const { profilePicture: threadsPhoto } = useThreads();
   const { planConfig, isTestMode, currentPlan } = useSubscription();
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
@@ -111,16 +113,16 @@ export default function ProfileMenu({ isCollapsed = false, onNavigate }: Profile
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  // Priority: LinkedIn photo > Firestore photo > fallback
+  // Priority: LinkedIn photo > Threads photo > Firestore photo > fallback
   const photoURL = !imageError
-    ? linkedInPhoto || userProfile?.photoURL || null
+    ? linkedInPhoto || threadsPhoto || userProfile?.photoURL || null
     : null;
-  const isExternalCdn = photoURL?.includes("licdn.com") || photoURL?.includes("linkedin.com");
+  const isExternalCdn = photoURL?.includes("licdn.com") || photoURL?.includes("linkedin.com") || photoURL?.includes("cdninstagram.com") || photoURL?.includes("fbcdn.net");
 
   // Reset image error when photo URL changes
   useEffect(() => {
     setImageError(false);
-  }, [linkedInPhoto, userProfile?.photoURL]);
+  }, [linkedInPhoto, threadsPhoto, userProfile?.photoURL]);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -211,7 +213,7 @@ export default function ProfileMenu({ isCollapsed = false, onNavigate }: Profile
         aria-haspopup="true"
       >
         <div className={`
-          relative w-10 h-10 rounded-lg overflow-hidden
+          relative w-10 h-10 rounded-full overflow-hidden
           flex items-center justify-center shrink-0 border border-gray-200 dark:border-dark-border
           group-hover:border-primary/30 group-hover:scale-105 transition-all duration-200
           ${isOpen ? "border-primary/30 scale-105" : ""}

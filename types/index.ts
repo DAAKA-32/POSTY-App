@@ -8,7 +8,7 @@ export type SubscriptionPlan = "free" | "pro" | "max";
 // ============== RESPONSE & GENERATION TYPES ==============
 
 // Response modes based on plan
-export type ResponseMode = "business-only" | "single-choice" | "dual";
+export type ResponseMode = "business-only" | "single-choice" | "dual" | "conversational";
 
 // AI-generated insights (all plans)
 export interface PostInsights {

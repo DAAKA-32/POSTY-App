@@ -36,6 +36,8 @@ interface UseChatOptions {
   responseType?: "storytelling" | "business";
   /** Style selection for PRO users (ignored for FREE/MAX) */
   selectedStyle?: "storytelling" | "business";
+  /** AI mode: "linkedin" for post generation, "general" for Q&A/support */
+  aiMode?: "linkedin" | "general";
 }
 
 interface UseChatReturn {
@@ -65,6 +67,7 @@ export function useChat({
   dualMode = false,
   responseType = "business",
   selectedStyle = "business",
+  aiMode = "linkedin",
 }: UseChatOptions): UseChatReturn {
   const [responses, setResponses] = useState<MockResponse[]>([]);
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
@@ -82,6 +85,20 @@ export function useChat({
 
   // Use selectedStyle, fallback to responseType for backwards compatibility
   const effectiveStyle = selectedStyle || responseType;
+
+  // Refs to avoid stale closures in async streaming callbacks
+  const postIdRef = useRef<string | null>(postId);
+  const messagesLengthRef = useRef<number>(0);
+
+  // Keep refs in sync with state
+  postIdRef.current = postId;
+  messagesLengthRef.current = messages.length;
+
+  // Wrapper to update both state and ref atomically
+  const setPostIdWithRef = useCallback((newId: string | null) => {
+    postIdRef.current = newId;
+    setPostId(newId);
+  }, []);
 
   // Abort controller for canceling streams
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -133,8 +150,9 @@ export function useChat({
       setStreamingContent({ storytelling: "", business: "", conversational: "" });
 
       // Determine if this is a follow-up message in existing conversation
-      const currentPostId = postId;
-      const isExistingConversation = currentPostId !== null && messages.length > 0;
+      // Use refs to get current values (avoid stale closure from streaming delay)
+      const currentPostId = postIdRef.current;
+      const isExistingConversation = currentPostId !== null && messagesLengthRef.current > 0;
 
       // Add user message to conversation
       const userMessage: ConversationMessage = {
@@ -174,6 +192,7 @@ export function useChat({
             requestDualMode: dualMode, // Server-side dual mode enforcement
             responseType: effectiveStyle,
             selectedStyle: effectiveStyle,
+            aiMode, // "linkedin" or "general" — forces conversational when "general"
             // Send conversation context for follow-ups
             conversationId: currentPostId,
             conversationHistory,
@@ -431,7 +450,7 @@ export function useChat({
                               selectedStyle: (isConversational || dualMode) ? undefined : effectiveStyle,
                             }
                           );
-                          setPostId(newPostId);
+                          setPostIdWithRef(newPostId);
                         }
                       } catch (saveError) {
                         console.error("Failed to save:", saveError);
@@ -463,7 +482,7 @@ export function useChat({
         abortControllerRef.current = null;
       }
     },
-    [userId, isGuest, canGenerate, incrementGuestCount, dualMode, responseType, effectiveStyle, postId, messages.length]
+    [userId, isGuest, canGenerate, incrementGuestCount, dualMode, responseType, effectiveStyle, aiMode, setPostIdWithRef]
   );
 
   // Reset chat state - starts a NEW conversation
@@ -475,7 +494,7 @@ export function useChat({
     setMessages([]);
     setError(null);
     setLastPrompt("");
-    setPostId(null); // Clear postId to start fresh
+    setPostIdWithRef(null); // Clear postId to start fresh
     setIsStreaming(false);
     setStreamingContent({ storytelling: "", business: "", conversational: "" });
     setInsights(null);
@@ -492,14 +511,17 @@ export function useChat({
       setError(null);
 
       // CRITICAL: Set the post ID to enable conversation continuation
-      setPostId(post.id);
+      setPostIdWithRef(post.id);
       setLastPrompt(post.prompt);
 
-      // Determine correct variant for responseA based on saved metadata
-      const responseAVariant: "storytelling" | "business" =
-        post.responseMode === "dual"
-          ? "storytelling" // Dual mode: responseA is always storytelling
-          : (post.selectedStyle as "storytelling" | "business") || "storytelling";
+      // Determine response mode and correct variant for responseA
+      const isConversational = post.responseMode === "conversational";
+      const responseAVariant: "storytelling" | "business" | undefined =
+        isConversational
+          ? undefined // Conversational responses have no variant
+          : post.responseMode === "dual"
+            ? "storytelling" // Dual mode: responseA is always storytelling
+            : (post.selectedStyle as "storytelling" | "business") || "storytelling";
 
       // Create messages from the original post
       const timestamp = new Date();
@@ -515,7 +537,7 @@ export function useChat({
       // Add original AI responses
       if (post.responseA) {
         newMessages.push({
-          id: `ai-${post.id}-${responseAVariant}`,
+          id: isConversational ? `ai-${post.id}-conversational` : `ai-${post.id}-${responseAVariant}`,
           type: "ai",
           content: post.responseA,
           timestamp,

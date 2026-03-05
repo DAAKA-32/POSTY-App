@@ -74,6 +74,8 @@ export async function POST(request: NextRequest) {
       conversationHistory,
       // File attachment (Max plan only)
       fileAttachment,
+      // AI mode: "linkedin" (post generation) or "general" (conversational Q&A)
+      aiMode = "linkedin",
     } = body;
 
     // Use authenticated uid (fallback to body userId in dev bypass mode)
@@ -488,14 +490,17 @@ export async function POST(request: NextRequest) {
 
           if (openaiService) {
             // ========== INTENT CLASSIFICATION ==========
+            // Force conversational mode when aiMode is "general" (IA Générale)
             // Force PRODUCTION intent when URL content was extracted (user clearly wants a post from a link)
-            const intent = extractedUrlContent
-              ? ("PRODUCTION" as const)
-              : await classifyIntent(
-                  openaiService,
-                  cleanedPrompt,
-                  language as "fr" | "en"
-                );
+            const intent = aiMode === "general"
+              ? ("EXPLORATORY" as const)
+              : extractedUrlContent
+                ? ("PRODUCTION" as const)
+                : await classifyIntent(
+                    openaiService,
+                    cleanedPrompt,
+                    language as "fr" | "en"
+                  );
 
             if (intent === "SOCIAL" || intent === "EXPLORATORY") {
               // Conversational response - no post generation

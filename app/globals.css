@@ -617,8 +617,8 @@ body:not(.template-modal-open) aside[role="navigation"] {
 /* Critical: Ensures mouse wheel scrolling works on desktop browsers */
 /* This fixes the bug where scroll only works via scrollbar, not wheel */
 @media (pointer: fine) {
-  html:not(.pwa-mobile-mode),
-  body:not(.pwa-mobile-mode):not(.no-scroll):not(.sidebar-open) {
+  html:not(.pwa-mobile-mode):not(.landing-scroll-enabled),
+  body:not(.pwa-mobile-mode):not(.no-scroll):not(.sidebar-open):not(.landing-scroll-enabled) {
     overflow-y: auto !important;
     overflow-x: hidden !important;
     position: static !important;
