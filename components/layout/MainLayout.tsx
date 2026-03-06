@@ -691,13 +691,17 @@ export default function MainLayout({
             transition={{ duration: 0.4, delay: 0.1, ease: smoothEase }}
             className="relative group"
           >
-            <Link
-              href="/app"
+            <button
+              onClick={() => {
+                // Force a fresh conversation — even if already on /app
+                // Using a timestamp param forces Next.js to re-render the page
+                router.push(`/app?new=${Date.now()}`);
+              }}
               className={`
                 relative w-full h-11 rounded-xl flex items-center gap-2.5
                 bg-primary hover:bg-primary-hover
                 text-white shadow-md hover:shadow-lg
-                transition-all duration-200 ease-out
+                transition-all duration-200 ease-out cursor-pointer
                 ${isCollapsed ? "justify-center px-0" : "px-3"}
               `}
               title={t.sidebar.newPost}
@@ -717,7 +721,7 @@ export default function MainLayout({
                   {t.sidebar.newPost}
                 </span>
               )}
-            </Link>
+            </button>
           </motion.div>
 
           {/* Nav items with stagger animation and vivid colors */}

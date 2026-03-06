@@ -4,6 +4,7 @@ import { useState, useCallback, useRef } from "react";
 import { savePost, addMessagesToConversation, getConversationHistory } from "@/lib/firestore";
 import { MockResponse, PostInsights, ConversationTurn, FileAttachment } from "@/types";
 import { getAuthHeaders } from "@/lib/api-client";
+import { triggerHaptic } from "@/lib/haptic";
 
 const GUEST_GENERATION_LIMIT = 2;
 const GUEST_STORAGE_KEY = "posty_guest_generations";
@@ -352,6 +353,7 @@ export function useChat({
 
                   case "complete": {
                     setIsStreaming(false);
+                    triggerHaptic();
 
                     if (data.quota) {
                       console.log("Quota updated:", data.quota);

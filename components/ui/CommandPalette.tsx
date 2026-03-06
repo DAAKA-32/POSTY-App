@@ -94,7 +94,7 @@ export default function CommandPalette({ posts = [] }: CommandPaletteProps) {
         label: "Nouveau post",
         description: "Créer un nouveau post LinkedIn",
         icon: <PlusIcon />,
-        action: () => router.push("/app"),
+        action: () => router.push(`/app?new=${Date.now()}`),
         category: "navigation",
         keywords: ["new", "create", "nouveau", "créer"],
       },

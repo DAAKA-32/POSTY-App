@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLinkedIn } from "@/contexts/LinkedInContext";
@@ -12,6 +11,7 @@ import { useChat } from "@/hooks/useChat";
 import { useSmartScroll } from "@/hooks/useSmartScroll";
 import { useBrowserMode } from "@/hooks/useBrowserMode";
 import { getPost, getUserPostsWithPinned, getDualModeUsageThisWeek } from "@/lib/firestore";
+import { getCachedConversation, setCachedConversation } from "@/lib/conversation-cache";
 import { getPlanFeatures } from "@/lib/plan-features";
 import { Post } from "@/types";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
@@ -50,9 +50,10 @@ function ConversationContent() {
   const { currentPlan, planLimits, isMaxPlan, isProPlan } = useSubscription();
   const browserMode = useBrowserMode();
 
-  // Conversation state
-  const [originalPost, setOriginalPost] = useState<Post | null>(null);
-  const [isLoadingPost, setIsLoadingPost] = useState(true);
+  // Conversation state — try cache first for instant display
+  const cachedPost = getCachedConversation(conversationId);
+  const [originalPost, setOriginalPost] = useState<Post | null>(cachedPost);
+  const [isLoadingPost, setIsLoadingPost] = useState(!cachedPost);
   const [posts, setPosts] = useState<Post[]>([]);
 
   // UI State
@@ -136,49 +137,83 @@ function ConversationContent() {
     threshold: 200,
   });
 
+  // Restore toggle state from a post's metadata
+  const restorePostState = useCallback((post: Post) => {
+    if (post.responseMode === "dual") {
+      if (isMaxPlan) {
+        setMaxMode("dual");
+      } else {
+        setDualMode(true);
+      }
+    } else if (post.responseMode === "single-choice" && post.selectedStyle) {
+      if (isMaxPlan) {
+        setMaxMode(post.selectedStyle);
+      } else {
+        setDualMode(false);
+        setSelectedStyle(post.selectedStyle);
+      }
+    } else if (post.selectedStyle) {
+      setSelectedStyle(post.selectedStyle);
+    }
+  }, [isMaxPlan]);
+
+  // Load conversation into chat hook
+  const loadPostIntoChat = useCallback((post: Post) => {
+    loadConversation?.({
+      id: post.id,
+      prompt: post.prompt,
+      responseA: post.responseA,
+      responseB: post.responseB,
+      messages: post.messages || [],
+      responseMode: post.responseMode,
+      selectedStyle: post.selectedStyle,
+    });
+  }, [loadConversation]);
+
+  // Track whether we've already loaded this conversation into the chat
+  const loadedConversationRef = useRef<string | null>(null);
+
   // Load the original conversation/post (including follow-up messages for multi-turn)
   useEffect(() => {
-    const loadOriginalPost = async () => {
-      if (!conversationId || !user) return;
+    if (!conversationId || !user) return;
+    // Prevent re-loading if we already loaded this conversation
+    if (loadedConversationRef.current === conversationId) return;
 
+    const loadOriginalPost = async () => {
+      // Check cache first — instant display, no spinner
+      const cached = getCachedConversation(conversationId);
+      if (cached && cached.userId === user.uid) {
+        loadedConversationRef.current = conversationId;
+        setOriginalPost(cached);
+        setIsLoadingPost(false);
+        restorePostState(cached);
+        loadPostIntoChat(cached);
+
+        // Background refresh: fetch latest from Firestore silently
+        getPost(conversationId).then((freshPost) => {
+          if (freshPost && freshPost.userId === user.uid) {
+            setCachedConversation(freshPost);
+            setOriginalPost(freshPost);
+            // Only reload chat if messages changed (new follow-ups added elsewhere)
+            if ((freshPost.messages?.length ?? 0) !== (cached.messages?.length ?? 0)) {
+              loadPostIntoChat(freshPost);
+            }
+          }
+        }).catch(() => { /* silent background refresh */ });
+        return;
+      }
+
+      // No cache — fetch from Firestore (show spinner only on first load)
       setIsLoadingPost(true);
       try {
         const post = await getPost(conversationId);
         if (post && post.userId === user.uid) {
+          loadedConversationRef.current = conversationId;
+          setCachedConversation(post);
           setOriginalPost(post);
-
-          // Restore toggle state from the post's saved metadata
-          if (post.responseMode === "dual") {
-            if (isMaxPlan) {
-              setMaxMode("dual");
-            } else {
-              setDualMode(true);
-            }
-          } else if (post.responseMode === "single-choice" && post.selectedStyle) {
-            if (isMaxPlan) {
-              setMaxMode(post.selectedStyle);
-            } else {
-              setDualMode(false);
-              setSelectedStyle(post.selectedStyle);
-            }
-          } else if (post.selectedStyle) {
-            setSelectedStyle(post.selectedStyle);
-          }
-
-          // Load the conversation into chat - including follow-up messages
-          loadConversation?.({
-            id: post.id,
-            prompt: post.prompt,
-            responseA: post.responseA,
-            responseB: post.responseB,
-            // Include follow-up messages for multi-turn conversations
-            messages: post.messages || [],
-            // Style metadata for correct variant assignment
-            responseMode: post.responseMode,
-            selectedStyle: post.selectedStyle,
-          });
+          restorePostState(post);
+          loadPostIntoChat(post);
         } else {
-          // Post not found or doesn't belong to user
           toast.error("Conversation introuvable");
           router.push("/app");
         }
@@ -192,18 +227,19 @@ function ConversationContent() {
     };
 
     loadOriginalPost();
-  }, [conversationId, user, router, loadConversation]);
+  }, [conversationId, user, router, restorePostState, loadPostIntoChat]);
 
-  // Fetch user posts for sidebar
+  // Fetch user posts for sidebar — only on mount/user change, NOT on every message
+  const sidebarLoadedRef = useRef(false);
   useEffect(() => {
-    const fetchPosts = async () => {
-      if (user) {
-        const userPosts = await getUserPostsWithPinned(user.uid, 20);
-        setPosts(userPosts);
-      }
-    };
-    fetchPosts();
-  }, [user, messages]);
+    if (!user || sidebarLoadedRef.current) return;
+    sidebarLoadedRef.current = true;
+    getUserPostsWithPinned(user.uid, 20).then((userPosts) => {
+      setPosts(userPosts);
+      // Pre-cache all sidebar conversations for instant navigation
+      userPosts.forEach((p) => setCachedConversation(p));
+    }).catch(() => {});
+  }, [user]);
 
   // Auto-resize textarea
   const resizeTextarea = useCallback(() => {
@@ -668,11 +704,6 @@ function ConversationContent() {
           `}
         >
           <div className="max-w-3xl mx-auto px-3 sm:px-4 py-1 lg:py-2">
-            {/* AI Mode Switch: Storytelling Business <-> IA Générale */}
-            <div className="mb-2">
-              <AIModeSwitch mode={aiMode} onModeChange={setAiMode} />
-            </div>
-
             {/* Post Mode Selector / Upgrade Banner zone — hidden in general AI mode */}
             <AnimatePresence mode="wait">
               {aiMode === "linkedin" && isMaxPlan && (
@@ -682,12 +713,13 @@ function ConversationContent() {
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="mb-3 flex justify-center overflow-hidden"
+                  className="mb-3 flex items-center justify-center gap-2 overflow-hidden"
                 >
                   <MaxModeSelector
                     selectedMode={maxMode}
                     onModeChange={setMaxMode}
                   />
+                  <AIModeSwitch mode={aiMode} onModeChange={setAiMode} />
                 </motion.div>
               )}
               {aiMode === "linkedin" && isProPlan && !isMaxPlan && (
@@ -697,7 +729,7 @@ function ConversationContent() {
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="mb-3 flex justify-center overflow-hidden"
+                  className="mb-3 flex items-center justify-center gap-2 overflow-hidden"
                 >
                   {showUpgradeBanner ? (
                     <InlineUpgradeBanner
@@ -717,6 +749,31 @@ function ConversationContent() {
                       }}
                     />
                   )}
+                  <AIModeSwitch mode={aiMode} onModeChange={setAiMode} />
+                </motion.div>
+              )}
+              {aiMode === "linkedin" && !isMaxPlan && !isProPlan && (
+                <motion.div
+                  key="free-selector"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="mb-3 flex justify-center overflow-hidden"
+                >
+                  <AIModeSwitch mode={aiMode} onModeChange={setAiMode} />
+                </motion.div>
+              )}
+              {aiMode === "general" && (
+                <motion.div
+                  key="general-mode"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="mb-3 flex justify-center overflow-hidden"
+                >
+                  <AIModeSwitch mode={aiMode} onModeChange={setAiMode} />
                 </motion.div>
               )}
             </AnimatePresence>

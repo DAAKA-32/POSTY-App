@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useScheduling } from "@/contexts/SchedulingContext";
@@ -205,6 +205,7 @@ const menuItems: {
 
 export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostUpdate }: SlideMenuProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, userProfile } = useAuth();
   const { t } = useLanguage();
   const { pendingCount: schedulingPendingCount, refreshScheduledPosts } = useScheduling();
@@ -502,14 +503,17 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
         {/* Navigation - overscroll-contain prevents scroll chaining */}
         <nav className="flex-1 p-4 overflow-y-auto no-scrollbar overscroll-contain">
           {/* New post button - Clean, professional design */}
-          <Link
-            href="/app"
-            onClick={onClose}
+          <button
+            onClick={() => {
+              onClose();
+              // Force a fresh conversation — even if already on /app
+              router.push(`/app?new=${Date.now()}`);
+            }}
             className="
               flex items-center justify-center gap-2.5 w-full px-4 py-3 mb-5
               bg-primary hover:bg-primary-hover
               text-white font-semibold rounded-xl
-              transition-all duration-200 ease-out
+              transition-all duration-200 ease-out cursor-pointer
               shadow-md hover:shadow-lg hover:shadow-primary/20
               active:scale-[0.98] active:transition-none
               haptic-feedback group
@@ -524,7 +528,7 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
             <span>{t.sidebar.newPost}</span>
-          </Link>
+          </button>
 
           {/* Search bar */}
           <div className="relative mb-5">

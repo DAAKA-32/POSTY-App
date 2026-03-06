@@ -1,10 +1,11 @@
+/**
+ * Conversation route loading state.
+ * Renders an invisible placeholder instead of a spinner to prevent
+ * "Loading conversation..." from flashing during navigation.
+ * The conversation page handles its own loading via the conversation cache.
+ */
 export default function ConversationLoading() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="flex flex-col items-center gap-4">
-        <div className="w-10 h-10 border-3 border-primary border-t-transparent rounded-full animate-spin" />
-        <p className="text-text-secondary text-sm">Chargement de la conversation...</p>
-      </div>
-    </div>
+    <div className="min-h-screen bg-background" />
   );
 }

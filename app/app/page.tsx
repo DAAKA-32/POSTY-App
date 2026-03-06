@@ -1,8 +1,8 @@
 ﻿"use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLinkedIn } from "@/contexts/LinkedInContext";
 import { useQuota } from "@/contexts/QuotaContext";
@@ -10,7 +10,8 @@ import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useChat } from "@/hooks/useChat";
 import { useSmartScroll } from "@/hooks/useSmartScroll";
 import { useKeyboardHeight } from "@/hooks/useKeyboardHeight";
-import { getUserPostsWithPinned, getDualModeUsageThisWeek } from "@/lib/firestore";
+import { getUserPostsWithPinned, getDualModeUsageThisWeek, getPost } from "@/lib/firestore";
+import { setCachedConversation } from "@/lib/conversation-cache";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import Image from "next/image";
@@ -112,6 +113,7 @@ const PLACEHOLDER_GENERAL = [
 
 function AppContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, userProfile } = useAuth();
   const { connection: linkedInConnection, publishToLinkedIn } = useLinkedIn();
   const { canSendMessage } = useQuota();
@@ -202,10 +204,31 @@ function AppContent() {
 
   // Navigate to conversation URL after first save — preserves state on refresh
   const hasRedirectedRef = useRef(false);
+
+  // Reset chat when "Nouveau post" button is clicked (detected via ?new= param)
+  const newParam = searchParams.get("new");
+  const lastNewParamRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (newParam && newParam !== lastNewParamRef.current) {
+      lastNewParamRef.current = newParam;
+      // Only reset if there are messages (user already started a conversation)
+      if (messages.length > 0) {
+        reset();
+        hasRedirectedRef.current = false;
+      }
+    }
+  }, [newParam, messages.length, reset]);
+
+  // Pre-cache the conversation before navigating so the conversation page loads instantly
   useEffect(() => {
     if (postId && !hasRedirectedRef.current && !isStreaming) {
       hasRedirectedRef.current = true;
-      router.replace(`/app/c/${postId}`);
+      // Pre-cache: fetch and cache the conversation so /app/c/[id] opens instantly
+      getPost(postId).then((post) => {
+        if (post) setCachedConversation(post);
+      }).catch(() => {}).finally(() => {
+        router.replace(`/app/c/${postId}`);
+      });
     }
   }, [postId, isStreaming, router]);
 
@@ -243,15 +266,17 @@ function AppContent() {
   }, [userProfile?.showWelcomeModal]);
 
   // Fetch user posts (with pinned posts first)
+  // Fetch sidebar posts — only on mount/user change, NOT on every message
+  const sidebarLoadedRef = useRef(false);
   useEffect(() => {
-    const fetchPosts = async () => {
-      if (user) {
-        const userPosts = await getUserPostsWithPinned(user.uid, 20);
-        setPosts(userPosts);
-      }
-    };
-    fetchPosts();
-  }, [user, messages]);
+    if (!user || sidebarLoadedRef.current) return;
+    sidebarLoadedRef.current = true;
+    getUserPostsWithPinned(user.uid, 20).then((userPosts) => {
+      setPosts(userPosts);
+      // Pre-cache all sidebar conversations for instant navigation
+      userPosts.forEach((p) => setCachedConversation(p));
+    }).catch(() => {});
+  }, [user]);
 
   // Expand input when keyboard is visible or when focused
   useEffect(() => {
@@ -788,11 +813,6 @@ function AppContent() {
           }}
         >
           <div className="max-w-3xl mx-auto px-3 sm:px-4 py-1 lg:py-2">
-            {/* AI Mode Switch: Storytelling Business <-> IA Générale */}
-            <div className="mb-2">
-              <AIModeSwitch mode={aiMode} onModeChange={setAiMode} />
-            </div>
-
             {/* Post Mode Selector / Upgrade Banner zone — hidden in general AI mode */}
             <AnimatePresence mode="wait">
               {aiMode === "linkedin" && isMaxPlan && (
@@ -802,12 +822,13 @@ function AppContent() {
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="mb-3 flex justify-center overflow-hidden"
+                  className="mb-3 flex items-center justify-center gap-2 overflow-hidden"
                 >
                   <MaxModeSelector
                     selectedMode={maxMode}
                     onModeChange={setMaxMode}
                   />
+                  <AIModeSwitch mode={aiMode} onModeChange={setAiMode} />
                 </motion.div>
               )}
               {aiMode === "linkedin" && isProPlan && !isMaxPlan && (
@@ -817,7 +838,7 @@ function AppContent() {
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="mb-3 flex justify-center overflow-hidden"
+                  className="mb-3 flex items-center justify-center gap-2 overflow-hidden"
                 >
                   {showUpgradeBanner ? (
                     <InlineUpgradeBanner
@@ -837,6 +858,31 @@ function AppContent() {
                       }}
                     />
                   )}
+                  <AIModeSwitch mode={aiMode} onModeChange={setAiMode} />
+                </motion.div>
+              )}
+              {aiMode === "linkedin" && !isMaxPlan && !isProPlan && (
+                <motion.div
+                  key="free-selector"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="mb-3 flex justify-center overflow-hidden"
+                >
+                  <AIModeSwitch mode={aiMode} onModeChange={setAiMode} />
+                </motion.div>
+              )}
+              {aiMode === "general" && (
+                <motion.div
+                  key="general-mode"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="mb-3 flex justify-center overflow-hidden"
+                >
+                  <AIModeSwitch mode={aiMode} onModeChange={setAiMode} />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -1109,7 +1155,9 @@ function AppContent() {
 export default function AppPage() {
   return (
     <ProtectedRoute requireOnboarding requireSubscription>
-      <AppContent />
+      <Suspense fallback={null}>
+        <AppContent />
+      </Suspense>
     </ProtectedRoute>
   );
 }
