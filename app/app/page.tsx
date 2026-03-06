@@ -39,6 +39,8 @@ import { CompactPostTemplates, PostTemplate } from "@/components/chat/PostTempla
 import TemplateFillerModal from "@/components/chat/TemplateFillerModal";
 import { trackPostGeneration, initAnalytics } from "@/lib/analytics";
 import UniversalChatInput, { UniversalChatInputRef } from "@/components/chat/UniversalChatInput";
+import { getPersonalizedGreeting, getPersonalizedSubtitle, getPersonalizedPlaceholders, getPersonalizedTemplateOrder } from "@/lib/personalization";
+import { TEMPLATES } from "@/components/chat/PostTemplates";
 
 // Premium animation easings - inspired by Linear, Notion
 const smoothEase = [0.25, 0.1, 0.25, 1] as const;
@@ -194,6 +196,7 @@ function AppContent() {
     reset,
     insights,
     postId,
+    lastPrompt,
   } = useChat({
     userId: user?.uid,
     isGuest: false,
@@ -223,14 +226,34 @@ function AppContent() {
   useEffect(() => {
     if (postId && !hasRedirectedRef.current && !isStreaming) {
       hasRedirectedRef.current = true;
+
+      // Optimistically add new conversation to sidebar immediately
+      const optimisticPost: Post = {
+        id: postId,
+        userId: user?.uid || "",
+        prompt: lastPrompt,
+        responseA: "",
+        responseB: "",
+        selectedVersion: null,
+        createdAt: { toDate: () => new Date() } as Post["createdAt"],
+        title: lastPrompt.length <= 40
+          ? lastPrompt
+          : lastPrompt.slice(0, 40).replace(/\s+\S*$/, "") + "…",
+      };
+      setPosts((prev) => [optimisticPost, ...prev]);
+
       // Pre-cache: fetch and cache the conversation so /app/c/[id] opens instantly
       getPost(postId).then((post) => {
-        if (post) setCachedConversation(post);
+        if (post) {
+          setCachedConversation(post);
+          // Update optimistic post with real data
+          setPosts((prev) => prev.map((p) => p.id === postId ? post : p));
+        }
       }).catch(() => {}).finally(() => {
         router.replace(`/app/c/${postId}`);
       });
     }
-  }, [postId, isStreaming, router]);
+  }, [postId, isStreaming, router, lastPrompt, user?.uid]);
 
   // Smart scroll: only auto-scroll when user is near bottom
   const {
@@ -333,7 +356,7 @@ function AppContent() {
     if (isFocused || inputValue.length > 0) return; // Don't rotate when focused or has content
 
     const interval = setInterval(() => {
-      setPlaceholderIndex((prev) => (prev + 1) % PLACEHOLDER_EXAMPLES.length);
+      setPlaceholderIndex((prev) => (prev + 1) % getPersonalizedPlaceholders(userProfile?.profile).length);
     }, 3000);
 
     return () => clearInterval(interval);
@@ -576,7 +599,7 @@ function AppContent() {
                 >
                   {userProfile?.displayName ? (
                     <>
-                      <span className="text-text-primary">Bonjour, </span>
+                      <span className="text-text-primary">{getPersonalizedGreeting(userProfile.displayName.split(" ")[0])}</span>
                       <ShimmeringName
                         name={`${userProfile.displayName.split(" ")[0]} !`}
                         showSparkles={true}
@@ -591,9 +614,7 @@ function AppContent() {
                   variants={welcomeItemVariants}
                   className="text-text-secondary text-sm sm:text-base lg:text-lg max-w-md mb-6 sm:mb-8 px-2"
                 >
-                  Décrivez votre idée et je générerai{" "}
-                  <span className="shimmer-text-gradient font-semibold">2 versions optimisées</span>
-                  {" "}de votre post LinkedIn
+                  {getPersonalizedSubtitle(userProfile?.profile)}
                 </motion.p>
 
                 {/* Visual Post Templates */}
@@ -616,6 +637,7 @@ function AppContent() {
                     }}
                     className="justify-center infinite-scroll-stable"
                     disabled={!canSendMessage}
+                    templateOrder={getPersonalizedTemplateOrder(TEMPLATES.map(t => t.id), userProfile?.profile)}
                   />
                 </motion.div>
               </motion.div>
@@ -868,9 +890,11 @@ function AppContent() {
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="mb-3 flex justify-center overflow-hidden"
+                  className="mb-3 overflow-hidden"
                 >
-                  <AIModeSwitch mode={aiMode} onModeChange={setAiMode} />
+                  <div className="flex justify-end mb-1.5">
+                    <AIModeSwitch mode={aiMode} onModeChange={setAiMode} />
+                  </div>
                 </motion.div>
               )}
               {aiMode === "general" && (
@@ -975,7 +999,7 @@ function AppContent() {
                   if (isRecordingRef.current) forceStopRecording();
                   await handleGenerate(message, file);
                 }}
-                placeholder={aiMode === "general" ? PLACEHOLDER_GENERAL : PLACEHOLDER_EXAMPLES}
+                placeholder={aiMode === "general" ? PLACEHOLDER_GENERAL : getPersonalizedPlaceholders(userProfile?.profile)}
                 disabled={!canSendMessage}
                 isLoading={isLoading || isStreaming}
                 enableVoiceRecording={speechSupported}

@@ -21,7 +21,8 @@ export default function HelpFloatingButton() {
     return () => clearTimeout(timer);
   }, [hasHelp, isRead]);
 
-  if (!hasHelp || !config) return null;
+  // Once dismissed ("Compris !"), never show again for this page
+  if (!hasHelp || !config || isRead) return null;
 
   return (
     <>

@@ -299,7 +299,7 @@ export default function ProfileMenu({ isCollapsed = false, onNavigate }: Profile
             return (
               <Link
                 key={item.name}
-                href={item.name === "Paramètres" ? `/settings?from=${encodeURIComponent(pathname)}` : item.href}
+                href={isLocked ? "/subscription" : item.name === "Paramètres" ? `/settings?from=${encodeURIComponent(pathname)}` : item.href}
                 onClick={handleItemClick}
                 className={`
                   flex items-center gap-3 px-3 py-2.5 rounded-lg

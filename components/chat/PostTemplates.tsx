@@ -117,6 +117,8 @@ interface PostTemplatesProps {
   onTemplateSelect?: (template: PostTemplate) => void;
   className?: string;
   disabled?: boolean;
+  /** Custom template order (array of template IDs). When provided, templates are reordered accordingly. */
+  templateOrder?: string[];
 }
 
 /**
@@ -266,7 +268,7 @@ export default function PostTemplates({ onSelect, className = "" }: PostTemplate
  * - GPU-accelerated for performance
  * - Respects prefers-reduced-motion
  */
-export function CompactPostTemplates({ onSelect, onTemplateSelect, className = "", disabled = false }: PostTemplatesProps) {
+export function CompactPostTemplates({ onSelect, onTemplateSelect, className = "", disabled = false, templateOrder }: PostTemplatesProps) {
   // UI state (for re-renders)
   const [isDraggingState, setIsDraggingState] = useState(false);
   const [scrollX, setScrollX] = useState(0);
@@ -291,8 +293,11 @@ export function CompactPostTemplates({ onSelect, onTemplateSelect, className = "
   const clickStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
   const trackWidthRef = useRef<number>(0);
 
-  // Duplicate templates for seamless infinite loop
-  const duplicatedTemplates = [...TEMPLATES, ...TEMPLATES, ...TEMPLATES];
+  // Reorder templates based on personalization, then duplicate for infinite loop
+  const orderedTemplates = templateOrder
+    ? [...templateOrder.map(id => TEMPLATES.find(t => t.id === id)).filter(Boolean) as PostTemplate[], ...TEMPLATES.filter(t => !templateOrder.includes(t.id))]
+    : TEMPLATES;
+  const duplicatedTemplates = [...orderedTemplates, ...orderedTemplates, ...orderedTemplates];
 
   // Get track width for loop calculation (cached in ref)
   const updateTrackWidth = useCallback(() => {

@@ -277,6 +277,11 @@ function StatsCard({
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
+      whileHover={{
+        y: -4,
+        boxShadow: "0 8px 25px -5px rgba(0, 0, 0, 0.08), 0 4px 10px -6px rgba(0, 0, 0, 0.04)",
+        transition: { duration: 0.25, ease: [0.25, 0.1, 0.25, 1] },
+      }}
       transition={{ duration: 0.3, delay }}
       className="bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-4 sm:p-6 transition-colors duration-200"
     >
@@ -839,6 +844,11 @@ function AnalyticsContent() {
                 <motion.div
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
+                  whileHover={{
+                    y: -4,
+                    boxShadow: "0 8px 25px -5px rgba(0, 0, 0, 0.08), 0 4px 10px -6px rgba(0, 0, 0, 0.04)",
+                    transition: { duration: 0.25, ease: [0.25, 0.1, 0.25, 1] },
+                  }}
                   transition={{ duration: 0.35, delay: 0.2, ease: premiumEase }}
                   className="bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-4 sm:p-6"
                 >
@@ -849,6 +859,11 @@ function AnalyticsContent() {
                 <motion.div
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
+                  whileHover={{
+                    y: -4,
+                    boxShadow: "0 8px 25px -5px rgba(0, 0, 0, 0.08), 0 4px 10px -6px rgba(0, 0, 0, 0.04)",
+                    transition: { duration: 0.25, ease: [0.25, 0.1, 0.25, 1] },
+                  }}
                   transition={{ duration: 0.35, delay: 0.25, ease: premiumEase }}
                   className="bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-4 sm:p-6"
                 >
@@ -859,6 +874,11 @@ function AnalyticsContent() {
                 <motion.div
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
+                  whileHover={{
+                    y: -4,
+                    boxShadow: "0 8px 25px -5px rgba(0, 0, 0, 0.08), 0 4px 10px -6px rgba(0, 0, 0, 0.04)",
+                    transition: { duration: 0.25, ease: [0.25, 0.1, 0.25, 1] },
+                  }}
                   transition={{ duration: 0.35, delay: 0.3, ease: premiumEase }}
                   className="bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-4 sm:p-6"
                 >

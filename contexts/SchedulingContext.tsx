@@ -61,7 +61,7 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
       setPendingCount(count);
     } catch (error) {
       console.error("Error loading scheduled posts:", error);
-      toast.error("Erreur lors du chargement des posts programmés");
+      toast.error("Impossible de charger vos posts programmes. Rafraichissez la page.");
     } finally {
       setIsLoading(false);
     }
@@ -147,7 +147,7 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
       } catch (error) {
         console.error("Error scheduling post:", error);
         setIsUploading(false);
-        const errorMessage = "Erreur lors de la programmation. Veuillez réessayer.";
+        const errorMessage = "La programmation n'a pas abouti. Verifiez votre connexion et reessayez.";
         toast.error(errorMessage);
         return { success: false, error: errorMessage };
       }
@@ -163,7 +163,7 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
       // Status validation: only pending posts can be cancelled
       const post = scheduledPosts.find((p) => p.id === scheduledPostId);
       if (post && post.status !== "pending") {
-        const msg = "Seuls les posts programmés peuvent être annulés.";
+        const msg = "Ce post ne peut plus etre annule car il a deja ete traite.";
         toast.error(msg);
         return { success: false, error: msg };
       }
@@ -185,7 +185,7 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
         return { success: true };
       } catch (error) {
         console.error("Error cancelling scheduled post:", error);
-        const errorMessage = "Erreur lors de l'annulation. Veuillez réessayer.";
+        const errorMessage = "L'annulation n'a pas fonctionne. Reessayez.";
         toast.error(errorMessage);
         return { success: false, error: errorMessage };
       }
@@ -201,7 +201,7 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
       // Status validation: only failed or cancelled posts can be deleted
       const post = scheduledPosts.find((p) => p.id === scheduledPostId);
       if (post && post.status === "published") {
-        const msg = "Un post publié ne peut pas être supprimé.";
+        const msg = "Ce post a deja ete publie et ne peut pas etre supprime.";
         toast.error(msg);
         return { success: false, error: msg };
       }
@@ -219,7 +219,7 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
         return { success: true };
       } catch (error) {
         console.error("Error deleting scheduled post:", error);
-        const errorMessage = "Erreur lors de la suppression. Veuillez réessayer.";
+        const errorMessage = "La suppression n'a pas fonctionne. Reessayez.";
         toast.error(errorMessage);
         return { success: false, error: errorMessage };
       }
@@ -236,7 +236,7 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
       // Status validation: published posts cannot be rescheduled
       const post = scheduledPosts.find((p) => p.id === scheduledPostId);
       if (post && post.status === "published") {
-        const msg = "Un post publié ne peut pas être reprogrammé.";
+        const msg = "Ce post a deja ete publie et ne peut pas etre reprogramme.";
         toast.error(msg);
         return { success: false, error: msg };
       }
@@ -244,7 +244,7 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
       // Validate date is in the future
       const now = new Date();
       if (newDate <= now) {
-        toast.error("La date doit être dans le futur");
+        toast.error("Choisissez une date future pour programmer votre post.");
         return {
           success: false,
           error: "La date doit être dans le futur",
@@ -261,7 +261,7 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
         return { success: true };
       } catch (error) {
         console.error("Error rescheduling post:", error);
-        const errorMessage = "Erreur lors de la reprogrammation. Veuillez réessayer.";
+        const errorMessage = "La reprogrammation n'a pas abouti. Reessayez.";
         toast.error(errorMessage);
         return { success: false, error: errorMessage };
       }

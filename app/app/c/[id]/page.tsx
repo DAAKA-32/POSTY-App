@@ -214,12 +214,12 @@ function ConversationContent() {
           restorePostState(post);
           loadPostIntoChat(post);
         } else {
-          toast.error("Conversation introuvable");
+          toast.error("Cette conversation n'est plus disponible.");
           router.push("/app");
         }
       } catch (error) {
         console.error("Error loading conversation:", error);
-        toast.error("Erreur lors du chargement");
+        toast.error("Impossible de charger la conversation. Reessayez.");
         router.push("/app");
       } finally {
         setIsLoadingPost(false);
@@ -229,17 +229,24 @@ function ConversationContent() {
     loadOriginalPost();
   }, [conversationId, user, router, restorePostState, loadPostIntoChat]);
 
-  // Fetch user posts for sidebar — only on mount/user change, NOT on every message
+  // Fetch user posts for sidebar — on mount and after each generation completes
   const sidebarLoadedRef = useRef(false);
+  const prevStreamingRef = useRef(false);
   useEffect(() => {
-    if (!user || sidebarLoadedRef.current) return;
-    sidebarLoadedRef.current = true;
-    getUserPostsWithPinned(user.uid, 20).then((userPosts) => {
-      setPosts(userPosts);
-      // Pre-cache all sidebar conversations for instant navigation
-      userPosts.forEach((p) => setCachedConversation(p));
-    }).catch(() => {});
-  }, [user]);
+    if (!user) return;
+
+    // Refresh sidebar when streaming just finished (new message saved)
+    const streamingJustEnded = prevStreamingRef.current && !isStreaming;
+    prevStreamingRef.current = isStreaming;
+
+    if (!sidebarLoadedRef.current || streamingJustEnded) {
+      sidebarLoadedRef.current = true;
+      getUserPostsWithPinned(user.uid, 20).then((userPosts) => {
+        setPosts(userPosts);
+        userPosts.forEach((p) => setCachedConversation(p));
+      }).catch(() => {});
+    }
+  }, [user, isStreaming]);
 
   // Auto-resize textarea
   const resizeTextarea = useCallback(() => {
@@ -759,9 +766,11 @@ function ConversationContent() {
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="mb-3 flex justify-center overflow-hidden"
+                  className="mb-3 overflow-hidden"
                 >
-                  <AIModeSwitch mode={aiMode} onModeChange={setAiMode} />
+                  <div className="flex justify-end mb-1.5">
+                    <AIModeSwitch mode={aiMode} onModeChange={setAiMode} />
+                  </div>
                 </motion.div>
               )}
               {aiMode === "general" && (

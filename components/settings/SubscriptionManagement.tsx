@@ -184,11 +184,11 @@ export default function SubscriptionManagement() {
         // Refresh details
         await fetchStripeDetails();
       } else {
-        toast.error(data.error || "Erreur lors de l'annulation");
+        toast.error(data.error || "L'annulation n'a pas abouti. Reessayez.");
       }
     } catch (error) {
       console.error("Error canceling subscription:", error);
-      toast.error("Erreur lors de l'annulation de l'abonnement");
+      toast.error("Impossible d'annuler l'abonnement pour le moment. Reessayez.");
     } finally {
       setIsCanceling(false);
     }
@@ -217,11 +217,11 @@ export default function SubscriptionManagement() {
         // Refresh details
         await fetchStripeDetails();
       } else {
-        toast.error(data.error || "Erreur lors de la réactivation");
+        toast.error(data.error || "La reactivation n'a pas abouti. Reessayez.");
       }
     } catch (error) {
       console.error("Error reactivating subscription:", error);
-      toast.error("Erreur lors de la réactivation de l'abonnement");
+      toast.error("Impossible de reactiver l'abonnement pour le moment. Reessayez.");
     } finally {
       setIsReactivating(false);
     }
@@ -237,11 +237,11 @@ export default function SubscriptionManagement() {
         setShowRefundModal(false);
         await fetchStripeDetails();
       } else {
-        toast.error(result.error || "Erreur lors du remboursement");
+        toast.error(result.error || "Le remboursement n'a pas abouti. Contactez le support.");
       }
     } catch (error) {
       console.error("Error requesting refund:", error);
-      toast.error("Erreur lors de la demande de remboursement");
+      toast.error("Impossible de traiter le remboursement. Contactez le support.");
     } finally {
       setIsRefunding(false);
     }
@@ -250,7 +250,7 @@ export default function SubscriptionManagement() {
   // Open Stripe Customer Portal
   const handleManageSubscription = async () => {
     if (!stripeCustomerId) {
-      toast.error("Aucun compte de facturation trouvé");
+      toast.error("Aucun compte de facturation trouve. Contactez le support.");
       return;
     }
 
@@ -268,11 +268,11 @@ export default function SubscriptionManagement() {
       if (data.url) {
         window.location.href = data.url;
       } else {
-        toast.error("Impossible d'ouvrir le portail de facturation");
+        toast.error("Impossible d'ouvrir le portail. Reessayez dans quelques instants.");
       }
     } catch (error) {
       console.error("Error opening portal:", error);
-      toast.error("Erreur lors de l'ouverture du portail");
+      toast.error("Le portail de facturation est temporairement indisponible.");
     } finally {
       setIsLoading(false);
     }

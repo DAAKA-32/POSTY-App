@@ -200,12 +200,18 @@ export async function savePost(
 ): Promise<string> {
   const postsRef = collection(db, "posts");
   const timestamp = serverTimestamp();
+  // Auto-generate title from prompt (first ~40 chars, word-boundary)
+  const autoTitle = prompt.length <= 40
+    ? prompt
+    : prompt.slice(0, 40).replace(/\s+\S*$/, "") + "…";
+
   const postData: Record<string, unknown> = {
     userId,
     prompt,
     contentA,
     contentB,
     chosenVersion: null,
+    title: autoTitle,
     createdAt: timestamp,
     updatedAt: timestamp, // Initialize updatedAt on creation for proper sorting
   };

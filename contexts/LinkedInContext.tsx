@@ -100,15 +100,15 @@ export function LinkedInProvider({ children }: { children: ReactNode }) {
 
     if (linkedInError) {
       const errorMessages: { [key: string]: string } = {
-        missing_code: "Code d'autorisation manquant",
-        missing_user_id: "ID utilisateur manquant",
-        token_exchange_failed: "Échec de la connexion LinkedIn",
-        profile_fetch_failed: "Impossible de récupérer le profil LinkedIn",
-        unexpected_error: "Une erreur inattendue est survenue",
-        service_unavailable: "Service temporairement indisponible",
+        missing_code: "La connexion LinkedIn a ete interrompue. Reessayez.",
+        missing_user_id: "Veuillez vous reconnecter a Posty avant de lier LinkedIn.",
+        token_exchange_failed: "LinkedIn n'a pas pu valider la connexion. Reessayez dans quelques instants.",
+        profile_fetch_failed: "Impossible de recuperer votre profil LinkedIn. Reessayez.",
+        unexpected_error: "Un probleme est survenu. Reessayez ou contactez le support.",
+        service_unavailable: "LinkedIn est temporairement indisponible. Reessayez dans quelques minutes.",
       };
 
-      const errorMessage = errorMessages[linkedInError] || "Échec de la connexion LinkedIn";
+      const errorMessage = errorMessages[linkedInError] || "La connexion LinkedIn n'a pas abouti. Reessayez.";
       toast.error(errorMessage, { duration: 5000 });
 
       // Clean URL and restore previous location if available
@@ -131,7 +131,7 @@ export function LinkedInProvider({ children }: { children: ReactNode }) {
   // Connect LinkedIn (redirect to OAuth)
   const connectLinkedIn = useCallback(() => {
     if (!user) {
-      toast.error("Vous devez être connecté pour lier votre compte LinkedIn");
+      toast.error("Connectez-vous a Posty pour lier votre compte LinkedIn.");
       return;
     }
 
@@ -159,7 +159,7 @@ export function LinkedInProvider({ children }: { children: ReactNode }) {
       toast.success("LinkedIn déconnecté");
     } catch (error) {
       console.error("Error disconnecting LinkedIn:", error);
-      toast.error("Impossible de déconnecter LinkedIn");
+      toast.error("La deconnexion LinkedIn a echoue. Reessayez.");
     }
   }, [user]);
 

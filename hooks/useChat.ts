@@ -5,6 +5,7 @@ import { savePost, addMessagesToConversation, getConversationHistory } from "@/l
 import { MockResponse, PostInsights, ConversationTurn, FileAttachment } from "@/types";
 import { getAuthHeaders } from "@/lib/api-client";
 import { triggerHaptic } from "@/lib/haptic";
+import { getFriendlyMessage } from "@/lib/error-messages";
 
 const GUEST_GENERATION_LIMIT = 2;
 const GUEST_STORAGE_KEY = "posty_guest_generations";
@@ -456,7 +457,7 @@ export function useChat({
                         }
                       } catch (saveError) {
                         console.error("Failed to save:", saveError);
-                        setError("Post généré mais non sauvegardé. Vérifiez votre connexion.");
+                        setError("Post genere mais non sauvegarde. Verifiez votre connexion internet.");
                       }
                     }
                     break;
@@ -477,7 +478,7 @@ export function useChat({
           return;
         }
         console.error("Generation error:", err);
-        setError("Une erreur est survenue. Veuillez réessayer.");
+        setError(getFriendlyMessage(err));
         setIsStreaming(false);
       } finally {
         setIsLoading(false);

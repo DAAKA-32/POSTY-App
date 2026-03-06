@@ -155,7 +155,7 @@ function getNavItems(t: ReturnType<typeof useLanguage>["t"]) {
       name: t.nav.chat,
       href: "/app",
       hasBadge: false,
-      activeClasses: "bg-gradient-to-r from-[#F8935D]/12 to-transparent text-[#F8935D]",
+      activeClasses: "bg-[#F8935D]/8 text-gray-900 dark:text-white",
       hoverClasses: "hover:text-[#F8935D] hover:bg-[#F8935D]/5",
       indicatorColor: "bg-gradient-to-r from-[#F8935D] to-[#F76B54]",
       iconColor: "text-[#F8935D]",
@@ -176,7 +176,7 @@ function getNavItems(t: ReturnType<typeof useLanguage>["t"]) {
       name: t.nav.history,
       href: "/history",
       hasBadge: false,
-      activeClasses: "bg-gradient-to-r from-cyan-500/12 to-transparent text-cyan-600 dark:text-cyan-400",
+      activeClasses: "bg-cyan-500/8 text-gray-900 dark:text-white",
       hoverClasses: "hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-cyan-500/5",
       indicatorColor: "bg-gradient-to-r from-cyan-500 to-cyan-400",
       iconColor: "text-cyan-500",
@@ -197,7 +197,7 @@ function getNavItems(t: ReturnType<typeof useLanguage>["t"]) {
       name: t.nav.schedule,
       href: "/schedule",
       hasBadge: true,
-      activeClasses: "bg-gradient-to-r from-violet-500/12 to-transparent text-violet-600 dark:text-violet-400",
+      activeClasses: "bg-violet-500/8 text-gray-900 dark:text-white",
       hoverClasses: "hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-500/5",
       indicatorColor: "bg-gradient-to-r from-violet-500 to-violet-400",
       iconColor: "text-violet-500",
@@ -218,7 +218,7 @@ function getNavItems(t: ReturnType<typeof useLanguage>["t"]) {
       name: t.nav.analytics,
       href: "/analytics",
       hasBadge: false,
-      activeClasses: "bg-gradient-to-r from-emerald-500/12 to-transparent text-emerald-600 dark:text-emerald-400",
+      activeClasses: "bg-emerald-500/8 text-gray-900 dark:text-white",
       hoverClasses: "hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-500/5",
       indicatorColor: "bg-gradient-to-r from-emerald-500 to-emerald-400",
       iconColor: "text-emerald-500",
@@ -747,12 +747,12 @@ export default function MainLayout({
                   />
                 )}
 
-                {/* Glow effect behind active item */}
+                {/* Subtle glow effect behind active item — contained to icon area only */}
                 {isActive && (
                   <div
-                    className="absolute inset-0 rounded-xl blur-xl pointer-events-none"
+                    className="absolute left-0 top-0 bottom-0 w-12 rounded-xl blur-lg opacity-40 pointer-events-none"
                     style={{
-                      background: `radial-gradient(circle at center left, ${item.glowColor} 0%, transparent 60%)`,
+                      background: `radial-gradient(circle at center, ${item.glowColor} 0%, transparent 70%)`,
                     }}
                   />
                 )}
@@ -779,7 +779,7 @@ export default function MainLayout({
                       ${item.iconColor}
                     `}
                     style={isActive ? {
-                      filter: `drop-shadow(0 0 6px ${item.glowColor})`
+                      filter: `drop-shadow(0 0 4px ${item.glowColor})`
                     } : undefined}
                   >
                     {item.icon(isActive)}
