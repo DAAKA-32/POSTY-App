@@ -872,14 +872,17 @@ export async function getLinkedInPosts(
     postsRef,
     where("userId", "==", userId),
     orderBy("publishedAt", "desc"),
-    limit(limitCount)
+    limit(limitCount + 50) // Over-fetch to compensate for filtered-out deleted posts
   );
 
   const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map((docSnap) => ({
-    id: docSnap.id,
-    ...docSnap.data(),
-  })) as LinkedInPostData[];
+  return querySnapshot.docs
+    .map((docSnap) => ({
+      id: docSnap.id,
+      ...docSnap.data(),
+    }) as LinkedInPostData)
+    .filter((post) => !(post as LinkedInPostData & { deletedFromPlatform?: boolean }).deletedFromPlatform)
+    .slice(0, limitCount);
 }
 
 /**
@@ -932,10 +935,12 @@ export async function getLinkedInAnalytics(
   );
 
   const querySnapshot = await getDocs(q);
-  const posts = querySnapshot.docs.map((docSnap) => ({
-    id: docSnap.id,
-    ...docSnap.data(),
-  })) as LinkedInPostData[];
+  const posts = querySnapshot.docs
+    .map((docSnap) => ({
+      id: docSnap.id,
+      ...docSnap.data(),
+    }) as LinkedInPostData)
+    .filter((post) => !(post as LinkedInPostData & { deletedFromPlatform?: boolean }).deletedFromPlatform);
 
   // Calculate date boundaries
   const now = new Date();
@@ -1006,6 +1011,18 @@ export async function getLinkedInPostById(
     id: postSnap.id,
     ...postSnap.data(),
   } as LinkedInPostData;
+}
+
+/**
+ * Mark a LinkedIn post as deleted from the platform.
+ * The post stays in Firestore for record-keeping but is excluded from analytics.
+ */
+export async function markLinkedInPostDeleted(postId: string): Promise<void> {
+  const postRef = doc(db, "linkedinPosts", postId);
+  await updateDoc(postRef, {
+    deletedFromPlatform: true,
+    deletedFromPlatformAt: serverTimestamp(),
+  });
 }
 
 // ============== QUOTA MANAGEMENT ==============

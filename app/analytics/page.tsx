@@ -2,17 +2,19 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import MainLayout from "@/components/layout/MainLayout";
 import {
   getLinkedInPosts,
   getLinkedInAnalytics,
-  updateLinkedInPostMetrics,
+  markLinkedInPostDeleted,
   LinkedInPostData,
   LinkedInAnalyticsSummary,
 } from "@/lib/firestore";
+import { getAuthHeaders } from "@/lib/api-client";
+import toast from "@/components/ui/Toast";
 
 // =============================================================================
 // ANALYTICS DASHBOARD PAGE - Enhanced with Charts & Filters
@@ -309,15 +311,14 @@ function StatsCard({
 // Post Card with Metrics
 function PostCard({
   post,
-  onEditMetrics,
+  onRemove,
   delay = 0,
 }: {
   post: LinkedInPostData;
-  onEditMetrics: (post: LinkedInPostData) => void;
+  onRemove: (post: LinkedInPostData) => void;
   delay?: number;
 }) {
   const publishedDate = post.publishedAt?.toDate?.() || new Date();
-  const hasMetrics = post.metrics && (post.metrics.likes > 0 || post.metrics.comments > 0 || post.metrics.shares > 0);
 
   return (
     <motion.div
@@ -356,12 +357,17 @@ function PostCard({
             )}
           </div>
         </div>
-        <button
-          onClick={() => onEditMetrics(post)}
-          className="px-3 py-1.5 text-xs font-medium text-[#F8935D] bg-[#F8935D]/10 rounded-lg hover:bg-[#F8935D]/20 transition-colors"
-        >
-          {hasMetrics ? "Modifier" : "Ajouter stats"}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => onRemove(post)}
+            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
+            title="Retirer des stats (supprime sur le reseau)"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* Content preview */}
@@ -370,220 +376,27 @@ function PostCard({
       </p>
 
       {/* Metrics */}
-      {hasMetrics ? (
-        <div className="flex items-center gap-4 pt-4 border-t border-gray-100 dark:border-dark-border">
-          <div className="flex items-center gap-1.5 text-sm">
-            <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
-            </svg>
-            <span className="font-semibold text-gray-900 dark:text-white">{post.metrics?.likes || 0}</span>
-          </div>
-          <div className="flex items-center gap-1.5 text-sm">
-            <svg className="w-4 h-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zM7 8H5v2h2V8zm2 0h2v2H9V8zm6 0h-2v2h2V8z" clipRule="evenodd" />
-            </svg>
-            <span className="font-semibold text-gray-900 dark:text-white">{post.metrics?.comments || 0}</span>
-          </div>
-          <div className="flex items-center gap-1.5 text-sm">
-            <svg className="w-4 h-4 text-violet-500" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" />
-            </svg>
-            <span className="font-semibold text-gray-900 dark:text-white">{post.metrics?.shares || 0}</span>
-          </div>
-          {post.metrics?.source && (
-            <span className="ml-auto text-xs text-gray-400 px-2 py-0.5 bg-[#F8935D]/10 dark:bg-gray-800 rounded-full">
-              {post.metrics.source === 'manual' ? 'Manuel' : post.metrics.source === 'extension' ? 'Extension' : 'API'}
-            </span>
-          )}
+      <div className="flex items-center gap-4 pt-4 border-t border-gray-100 dark:border-dark-border">
+        <div className="flex items-center gap-1.5 text-sm">
+          <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
+          </svg>
+          <span className="font-semibold text-gray-900 dark:text-white">{post.metrics?.likes || 0}</span>
         </div>
-      ) : (
-        <div className="flex items-center justify-center py-4 border-t border-gray-100 dark:border-dark-border">
-          <p className="text-sm text-gray-400">Aucune statistique - Cliquez pour ajouter</p>
+        <div className="flex items-center gap-1.5 text-sm">
+          <svg className="w-4 h-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zM7 8H5v2h2V8zm2 0h2v2H9V8zm6 0h-2v2h2V8z" clipRule="evenodd" />
+          </svg>
+          <span className="font-semibold text-gray-900 dark:text-white">{post.metrics?.comments || 0}</span>
         </div>
-      )}
+        <div className="flex items-center gap-1.5 text-sm">
+          <svg className="w-4 h-4 text-violet-500" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" />
+          </svg>
+          <span className="font-semibold text-gray-900 dark:text-white">{post.metrics?.shares || 0}</span>
+        </div>
+      </div>
     </motion.div>
-  );
-}
-
-// Metrics Edit Modal
-function MetricsModal({
-  post,
-  isOpen,
-  onClose,
-  onSave,
-}: {
-  post: LinkedInPostData | null;
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: (postId: string, metrics: { likes: number; comments: number; shares: number; impressions?: number }) => Promise<void>;
-}) {
-  const [likes, setLikes] = useState(0);
-  const [comments, setComments] = useState(0);
-  const [shares, setShares] = useState(0);
-  const [impressions, setImpressions] = useState<number | "">("");
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    if (post?.metrics) {
-      setLikes(post.metrics.likes || 0);
-      setComments(post.metrics.comments || 0);
-      setShares(post.metrics.shares || 0);
-      setImpressions(post.metrics.impressions || "");
-    } else {
-      setLikes(0);
-      setComments(0);
-      setShares(0);
-      setImpressions("");
-    }
-  }, [post]);
-
-  const handleSave = async () => {
-    if (!post) return;
-    setSaving(true);
-    try {
-      await onSave(post.id, {
-        likes,
-        comments,
-        shares,
-        impressions: impressions === "" ? undefined : impressions,
-      });
-      onClose();
-    } catch (error) {
-      console.error("Error saving metrics:", error);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  if (!isOpen || !post) return null;
-
-  return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      >
-        {/* Backdrop */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
-          className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        />
-
-        {/* Modal */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          transition={{ duration: 0.3, ease: premiumEase }}
-          className="relative w-full max-w-md bg-background-warm dark:bg-dark-card rounded-2xl shadow-2xl overflow-hidden"
-        >
-          {/* Header */}
-          <div className="px-6 py-4 border-b border-gray-100 dark:border-dark-border">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Statistiques du post
-            </h3>
-            <p className="text-sm text-gray-500 mt-1 line-clamp-1">
-              {post.content.substring(0, 60)}...
-            </p>
-          </div>
-
-          {/* Content */}
-          <div className="p-6 space-y-5">
-            {/* Likes */}
-            <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
-                </svg>
-                Likes
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={likes}
-                onChange={(e) => setLikes(Math.max(0, parseInt(e.target.value) || 0))}
-                className="w-full px-4 py-3 rounded-xl border border-[#F8935D]/15 dark:border-dark-border bg-white/70 dark:bg-dark-bg text-gray-900 dark:text-white focus:ring-2 focus:ring-[#F8935D]/30 focus:border-[#F8935D] transition-all"
-              />
-            </div>
-
-            {/* Comments */}
-            <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                <svg className="w-4 h-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zM7 8H5v2h2V8zm2 0h2v2H9V8zm6 0h-2v2h2V8z" clipRule="evenodd" />
-                </svg>
-                Commentaires
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={comments}
-                onChange={(e) => setComments(Math.max(0, parseInt(e.target.value) || 0))}
-                className="w-full px-4 py-3 rounded-xl border border-[#F8935D]/15 dark:border-dark-border bg-white/70 dark:bg-dark-bg text-gray-900 dark:text-white focus:ring-2 focus:ring-[#F8935D]/30 focus:border-[#F8935D] transition-all"
-              />
-            </div>
-
-            {/* Shares */}
-            <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                <svg className="w-4 h-4 text-violet-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" />
-                </svg>
-                Partages
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={shares}
-                onChange={(e) => setShares(Math.max(0, parseInt(e.target.value) || 0))}
-                className="w-full px-4 py-3 rounded-xl border border-[#F8935D]/15 dark:border-dark-border bg-white/70 dark:bg-dark-bg text-gray-900 dark:text-white focus:ring-2 focus:ring-[#F8935D]/30 focus:border-[#F8935D] transition-all"
-              />
-            </div>
-
-            {/* Impressions (optional) */}
-            <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                <svg className="w-4 h-4 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                  <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
-                </svg>
-                Impressions <span className="text-gray-400">(optionnel)</span>
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={impressions}
-                onChange={(e) => setImpressions(e.target.value === "" ? "" : Math.max(0, parseInt(e.target.value) || 0))}
-                placeholder="Nombre de vues"
-                className="w-full px-4 py-3 rounded-xl border border-[#F8935D]/15 dark:border-dark-border bg-white/70 dark:bg-dark-bg text-gray-900 dark:text-white focus:ring-2 focus:ring-[#F8935D]/30 focus:border-[#F8935D] transition-all placeholder:text-gray-400"
-              />
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="px-6 py-4 border-t border-gray-100 dark:border-dark-border flex gap-3">
-            <button
-              onClick={onClose}
-              className="flex-1 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-dark-elevated rounded-xl hover:bg-gray-200 dark:hover:bg-dark-hover transition-colors"
-            >
-              Annuler
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="flex-1 px-4 py-3 text-sm font-medium text-white bg-primary hover:bg-primary-hover rounded-xl transition-colors disabled:opacity-50"
-            >
-              {saving ? "Enregistrement..." : "Enregistrer"}
-            </button>
-          </div>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
   );
 }
 
@@ -625,9 +438,8 @@ function AnalyticsContent() {
   const [posts, setPosts] = useState<LinkedInPostData[]>([]);
   const [analytics, setAnalytics] = useState<LinkedInAnalyticsSummary | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedPost, setSelectedPost] = useState<LinkedInPostData | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>("30d");
+  const [isVerifying, setIsVerifying] = useState(false);
 
   // Enable full scrolling on Analytics page (mouse wheel, trackpad, touch, keyboard)
   useEffect(() => {
@@ -655,6 +467,59 @@ function AnalyticsContent() {
       console.error("Error loading analytics:", error);
     } finally {
       setLoading(false);
+    }
+  }, [user]);
+
+  // Verify all posts still exist on LinkedIn
+  const handleVerifyPosts = useCallback(async () => {
+    if (!user || isVerifying) return;
+    setIsVerifying(true);
+    try {
+      const headers = await getAuthHeaders();
+      const response = await fetch("/api/linkedin/verify-posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({ userId: user.uid }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data.message || "Impossible de verifier les posts.");
+        return;
+      }
+
+      if (data.deleted?.length > 0) {
+        // Remove deleted posts from local state
+        setPosts((prev) => prev.filter((p) => !data.deleted.includes(p.id)));
+        toast.success(`${data.deleted.length} post(s) supprimé(s) des stats.`);
+        // Reload analytics to recalculate
+        const analyticsData = await getLinkedInAnalytics(user.uid);
+        setAnalytics(analyticsData);
+      } else {
+        toast.success(`${data.verified} post(s) vérifiés, tous présents sur LinkedIn.`);
+      }
+    } catch (error) {
+      console.error("Error verifying posts:", error);
+      toast.error("Erreur lors de la vérification.");
+    } finally {
+      setIsVerifying(false);
+    }
+  }, [user, isVerifying]);
+
+  // Manually remove a single post from stats
+  const handleRemovePost = useCallback(async (post: LinkedInPostData) => {
+    try {
+      await markLinkedInPostDeleted(post.id);
+      setPosts((prev) => prev.filter((p) => p.id !== post.id));
+      toast.success("Post retiré des statistiques.");
+      // Recalculate analytics
+      if (user) {
+        const analyticsData = await getLinkedInAnalytics(user.uid);
+        setAnalytics(analyticsData);
+      }
+    } catch (error) {
+      console.error("Error removing post:", error);
+      toast.error("Impossible de retirer ce post.");
     }
   }, [user]);
 
@@ -723,19 +588,6 @@ function AnalyticsContent() {
       })
       .map(([date, metrics]) => ({ date, ...metrics }));
   }, [filteredPosts]);
-
-  const handleEditMetrics = (post: LinkedInPostData) => {
-    setSelectedPost(post);
-    setIsModalOpen(true);
-  };
-
-  const handleSaveMetrics = async (
-    postId: string,
-    metrics: { likes: number; comments: number; shares: number; impressions?: number }
-  ) => {
-    await updateLinkedInPostMetrics(postId, { ...metrics, source: 'manual' });
-    await loadData();
-  };
 
   return (
     <MainLayout
@@ -892,15 +744,33 @@ function AnalyticsContent() {
 
               {/* Posts List */}
               <div className="mb-6">
-                <h2 className="text-lg font-semibold text-silver-solid dark:text-white mb-4">
-                  Vos publications ({filteredPosts.length})
-                </h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold text-silver-solid dark:text-white">
+                    Vos publications ({filteredPosts.length})
+                  </h2>
+                  {filteredPosts.length > 0 && (
+                    <button
+                      onClick={handleVerifyPosts}
+                      disabled={isVerifying}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-dark-elevated rounded-lg hover:bg-gray-200 dark:hover:bg-dark-hover transition-colors disabled:opacity-50"
+                    >
+                      {isVerifying ? (
+                        <div className="w-3.5 h-3.5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      )}
+                      {isVerifying ? "Verification..." : "Verifier les posts"}
+                    </button>
+                  )}
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {filteredPosts.map((post, index) => (
                     <PostCard
                       key={post.id}
                       post={post}
-                      onEditMetrics={handleEditMetrics}
+                      onRemove={handleRemovePost}
                       delay={0.1 * Math.min(index, 5)}
                     />
                   ))}
@@ -914,16 +784,6 @@ function AnalyticsContent() {
         </div>
       </div>
 
-      {/* Metrics Modal */}
-      <MetricsModal
-        post={selectedPost}
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setSelectedPost(null);
-        }}
-        onSave={handleSaveMetrics}
-      />
     </MainLayout>
   );
 }
