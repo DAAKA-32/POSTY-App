@@ -34,6 +34,7 @@ interface LinkedInContextType {
     error?: string;
   }>;
   refreshConnection: () => Promise<void>;
+  refreshProfilePhoto: () => Promise<string | null>;
 }
 
 const LinkedInContext = createContext<LinkedInContextType | undefined>(undefined);
@@ -191,6 +192,34 @@ export function LinkedInProvider({ children }: { children: ReactNode }) {
     [user, connection, isTokenValid]
   );
 
+  // Refresh LinkedIn profile photo by re-fetching from LinkedIn API
+  const refreshProfilePhoto = useCallback(async (): Promise<string | null> => {
+    if (!user || !connection) return null;
+
+    try {
+      const response = await fetch("/api/linkedin/refresh-photo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.uid }),
+      });
+
+      if (!response.ok) return null;
+
+      const data = await response.json();
+      if (data.photoUrl) {
+        // Update local state with fresh photo URL
+        setConnection((prev) =>
+          prev ? { ...prev, profilePicture: data.photoUrl } : prev
+        );
+        return data.photoUrl;
+      }
+      return null;
+    } catch (error) {
+      console.error("Failed to refresh LinkedIn photo:", error);
+      return null;
+    }
+  }, [user, connection]);
+
   // Profile data shortcuts
   // Photo URL is a CDN link (media.licdn.com), works independently of OAuth token validity
   const profilePicture = connection?.profilePicture || null;
@@ -207,6 +236,7 @@ export function LinkedInProvider({ children }: { children: ReactNode }) {
     disconnectLinkedIn,
     publishToLinkedIn,
     refreshConnection: loadConnection,
+    refreshProfilePhoto,
   };
 
   return (

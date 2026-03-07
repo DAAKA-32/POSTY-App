@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
@@ -104,25 +104,59 @@ const menuItems: {
 
 export default function ProfileMenu({ isCollapsed = false, onNavigate }: ProfileMenuProps) {
   const { user, userProfile } = useAuth();
-  const { profilePicture: linkedInPhoto } = useLinkedIn();
+  const { profilePicture: linkedInPhoto, refreshProfilePhoto } = useLinkedIn();
   const { profilePicture: threadsPhoto } = useThreads();
   const { planConfig, isTestMode, currentPlan } = useSubscription();
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [cacheBuster, setCacheBuster] = useState("");
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const refreshAttemptedRef = useRef(false);
 
   // Priority: LinkedIn photo > Threads photo > Firestore photo > fallback
-  const photoURL = !imageError
+  const basePhotoURL = !imageError
     ? linkedInPhoto || threadsPhoto || userProfile?.photoURL || null
     : null;
-  const isExternalCdn = photoURL?.includes("licdn.com") || photoURL?.includes("linkedin.com") || photoURL?.includes("cdninstagram.com") || photoURL?.includes("fbcdn.net");
+  // Add cache-buster to avoid stale browser cache
+  const photoURL = basePhotoURL && cacheBuster
+    ? `${basePhotoURL}${basePhotoURL.includes("?") ? "&" : "?"}v=${cacheBuster}`
+    : basePhotoURL;
+  // All external CDN domains (LinkedIn, Instagram, Facebook) are in next.config remotePatterns
+  // so Next.js can optimize and cache them, preventing expired CDN URL issues
 
-  // Reset image error when photo URL changes
+  // Reset image error and retry state when photo URL changes
   useEffect(() => {
     setImageError(false);
+    setRetryCount(0);
+    refreshAttemptedRef.current = false;
   }, [linkedInPhoto, threadsPhoto, userProfile?.photoURL]);
+
+  // On image error: try refreshing the LinkedIn photo URL, then retry
+  const handleImageError = useCallback(async () => {
+    if (retryCount >= 2) {
+      // Give up after 2 retries
+      setImageError(true);
+      return;
+    }
+
+    // If it's a LinkedIn photo and we haven't tried refreshing yet, refresh the URL
+    if (linkedInPhoto && !refreshAttemptedRef.current) {
+      refreshAttemptedRef.current = true;
+      const newUrl = await refreshProfilePhoto();
+      if (newUrl) {
+        // URL was refreshed, the state update in context will trigger re-render
+        setRetryCount((c) => c + 1);
+        return;
+      }
+    }
+
+    // Retry with cache-buster
+    setCacheBuster(Date.now().toString());
+    setRetryCount((c) => c + 1);
+  }, [retryCount, linkedInPhoto, refreshProfilePhoto]);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -225,9 +259,9 @@ export default function ProfileMenu({ isCollapsed = false, onNavigate }: Profile
               alt={userProfile?.displayName || "Avatar"}
               fill
               sizes="40px"
-              unoptimized={!!isExternalCdn}
               className="object-cover object-center"
-              onError={() => setImageError(true)}
+              referrerPolicy="no-referrer"
+              onError={handleImageError}
             />
           ) : (
             <span className="text-primary font-semibold text-lg">

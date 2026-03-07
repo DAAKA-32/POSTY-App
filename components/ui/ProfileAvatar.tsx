@@ -42,8 +42,7 @@ export default function ProfileAvatar({
     ? linkedInPhoto || userProfile?.photoURL || user?.photoURL || null
     : null;
 
-  // LinkedIn CDN blocks Next.js image proxy (403) — bypass optimization for external CDNs
-  const isExternalCdn = photoURL?.includes("licdn.com") || photoURL?.includes("linkedin.com") || photoURL?.includes("platform-lookaside");
+  // All external CDN domains are in next.config remotePatterns — Next.js can optimize them
 
   // Get initials for fallback
   const displayName = userProfile?.displayName || user?.displayName || user?.email || "U";
@@ -91,7 +90,6 @@ export default function ProfileAvatar({
             alt={displayName}
             fill
             sizes={`${config.px}px`}
-            unoptimized={!!isExternalCdn}
             className={`
               object-cover object-center
               transition-all duration-300
@@ -167,7 +165,6 @@ export function CompactAvatar({
   const [imageError, setImageError] = useState(false);
   const config = sizeConfig[size];
   const initials = (name || "U").charAt(0).toUpperCase();
-  const isExternalCdn = photoURL?.includes("licdn.com") || photoURL?.includes("linkedin.com");
 
   return (
     <div className={`relative ${config.container} rounded-full shrink-0 ${className}`}>
@@ -177,7 +174,6 @@ export function CompactAvatar({
           alt={name || "Avatar"}
           fill
           sizes={`${config.px}px`}
-          unoptimized={!!isExternalCdn}
           className="object-cover object-center rounded-full"
           onError={() => setImageError(true)}
           loading="lazy"

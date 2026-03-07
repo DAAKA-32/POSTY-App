@@ -17,6 +17,14 @@ const nextConfig: NextConfig = {
         hostname: "**.linkedin.com",
       },
       {
+        protocol: "https",
+        hostname: "**.cdninstagram.com",
+      },
+      {
+        protocol: "https",
+        hostname: "**.fbcdn.net",
+      },
+      {
         // Unsplash - Images libres de droits pour temoignages
         protocol: "https",
         hostname: "images.unsplash.com",
