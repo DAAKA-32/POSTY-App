@@ -485,7 +485,7 @@ function HeroSection() {
   return (
     <section
       ref={sectionRef}
-      className="background-landing relative min-h-[100dvh] lg:min-h-screen flex items-center overflow-hidden"
+      className="background-landing relative min-h-[100dvh] lg:min-h-screen flex items-start md:items-center overflow-hidden"
     >
       {/* === AURORA STAR PARTICLES (hero only) === */}
       <AuroraBackground />
@@ -528,8 +528,8 @@ function HeroSection() {
       </div>
 
       {/* === MAIN CONTENT === */}
-      <div className="relative z-10 w-full max-w-[1400px] 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 py-20 md:py-24 lg:py-0">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 xl:gap-20 2xl:gap-28 items-center">
+      <div className="relative z-10 w-full max-w-[1400px] 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 py-20 md:py-16 lg:py-0">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-10 lg:gap-12 xl:gap-20 2xl:gap-28 items-center">
 
           {/* LEFT COLUMN — Text Content */}
           <motion.div
@@ -543,7 +543,7 @@ function HeroSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.45, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
-              className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/80 backdrop-blur-md border border-gray-200/60 shadow-lg shadow-gray-200/30 mb-6 lg:mb-8"
+              className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/80 backdrop-blur-md border border-gray-200/60 shadow-lg shadow-gray-200/30 mb-4 md:mb-5 lg:mb-8"
             >
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75" />
@@ -589,7 +589,7 @@ function HeroSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.5, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-              className="mt-5 lg:mt-6 text-lg lg:text-xl text-gray-600 max-w-xl mx-auto lg:mx-0 leading-relaxed"
+              className="mt-4 md:mt-5 lg:mt-6 text-lg lg:text-xl text-gray-600 max-w-xl mx-auto lg:mx-0 leading-relaxed"
             >
               Décrivez votre objectif. Posty génère un post LinkedIn{" "}
               <span className="font-semibold text-gray-800">prêt à publier</span>,
@@ -602,7 +602,7 @@ function HeroSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.5, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-              className="mt-8 lg:mt-10 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
+              className="mt-6 md:mt-8 lg:mt-10 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
             >
               <motion.div
                 whileHover={{ scale: 1.02 }}
@@ -638,7 +638,7 @@ function HeroSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.5, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
-              className="mt-8 lg:mt-10 flex flex-wrap items-center gap-6 justify-center lg:justify-start text-sm text-gray-500"
+              className="mt-6 md:mt-8 lg:mt-10 flex flex-wrap items-center gap-6 justify-center lg:justify-start text-sm text-gray-500"
             >
               <span className="flex items-center gap-2">
                 <svg className="w-5 h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
@@ -681,13 +681,13 @@ function HeroSection() {
             </div>
 
             {/* Devices container */}
-            <div className="relative flex items-end justify-center lg:justify-end gap-4 md:gap-6 py-8 lg:py-0">
+            <div className="relative flex items-end justify-center lg:justify-end gap-4 md:gap-6 py-6 md:py-4 lg:py-0">
               {/* iPhone — floating left */}
               <motion.div
                 initial={{ opacity: 0, y: 40 }}
                 animate={isInView ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.5, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                className="relative z-20 w-[90px] sm:w-[110px] md:w-[140px] lg:w-[160px] xl:w-[180px] flex-shrink-0"
+                className="relative z-20 w-[90px] sm:w-[110px] md:w-[120px] lg:w-[160px] xl:w-[180px] flex-shrink-0"
               >
                 {/* Floating animation */}
                 <motion.div
@@ -714,7 +714,7 @@ function HeroSection() {
                 initial={{ opacity: 0, y: 40 }}
                 animate={isInView ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.5, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
-                className="relative z-10 w-[220px] sm:w-[280px] md:w-[380px] lg:w-[420px] xl:w-[500px]"
+                className="relative z-10 w-[220px] sm:w-[280px] md:w-[320px] lg:w-[420px] xl:w-[500px]"
               >
                 {/* Subtle floating animation */}
                 <motion.div
@@ -1144,7 +1144,7 @@ function DemoSection() {
         {/* Content — cinematic reveal: starts high + clipped, descends into place */}
         {/* z-[3] scrolls over the fixed title — transparent so aurora shows through */}
         <motion.div
-          className="relative z-[3] overflow-x-clip -mt-40 sm:-mt-48 md:-mt-64"
+          className="relative z-[3] overflow-x-clip -mt-40 sm:-mt-48 md:-mt-52 lg:-mt-64"
           initial={alreadyPlayed ? undefined : { y: -180 }}
           animate={
             heroPhase === "init" || heroPhase === "opening"

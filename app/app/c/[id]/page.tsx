@@ -710,7 +710,7 @@ function ConversationContent() {
             ${browserMode.isMobileBrowser ? 'mobile-browser-mode' : ''}
           `}
         >
-          <div className="max-w-3xl mx-auto px-3 sm:px-4 py-1 lg:py-2">
+          <div className="max-w-3xl mx-auto px-3 sm:px-4 py-2 sm:py-3 lg:py-2">
             {/* Post Mode Selector / Upgrade Banner zone — hidden in general AI mode */}
             <AnimatePresence mode="wait">
               {aiMode === "linkedin" && isMaxPlan && (

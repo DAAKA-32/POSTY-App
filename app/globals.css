@@ -6464,11 +6464,12 @@ html.dark .fixed-input-area {
   );
 }
 
-/* Mobile: quasi-collé au bas de l'écran */
+/* Mobile/Tablet: quasi-collé au bas de l'écran */
 @media (max-width: 1023px) {
   .fixed-input-area {
-    /* Quasi-collé au bas - uniquement safe area */
-    padding-bottom: env(safe-area-inset-bottom);
+    /* Minimum 8px bottom padding so the input is never clipped on tablets
+       where env(safe-area-inset-bottom) resolves to 0 */
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
   }
 
   /* Mobile browser mode - additional padding for browser UI when in browser (not PWA) */
