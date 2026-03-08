@@ -76,14 +76,19 @@ export const metadata: Metadata = {
   creator: "Emilien Nepveu & Côme Maubert",
   publisher: "Posty AI",
 
-  // Icons - Logo PNG
+  // Icons - Favicon multi-size
   icons: {
     icon: [
-      { url: "/logo.png", type: "image/png", sizes: "any" },
+      { url: "/favicon.ico", sizes: "32x32", type: "image/x-icon" },
+      { url: "/favicon-16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-48.png", sizes: "48x48", type: "image/png" },
+      { url: "/favicon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/favicon-512.png", sizes: "512x512", type: "image/png" },
     ],
-    shortcut: "/logo.png",
+    shortcut: "/favicon.ico",
     apple: [
-      { url: "/logo.png", type: "image/png", sizes: "180x180" },
+      { url: "/apple-touch-icon.png", type: "image/png", sizes: "180x180" },
     ],
   },
 
