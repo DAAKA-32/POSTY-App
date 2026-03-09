@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface SearchBarProps {
   value: string;
@@ -13,9 +14,10 @@ interface SearchBarProps {
 export default function SearchBar({
   value,
   onChange,
-  placeholder = "Rechercher dans l'historique...",
+  placeholder,
   className = "",
 }: SearchBarProps) {
+  const { t } = useLanguage();
   const [isFocused, setIsFocused] = useState(false);
 
   return (
@@ -52,7 +54,7 @@ export default function SearchBar({
           onChange={(e) => onChange(e.target.value)}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
-          placeholder={placeholder}
+          placeholder={placeholder || t.ui.searchHistory}
           className="
             flex-1 bg-transparent text-white placeholder:text-text-muted
             outline-none text-sm lg:text-base
@@ -69,7 +71,7 @@ export default function SearchBar({
               transition={{ duration: 0.15 }}
               onClick={() => onChange("")}
               className="min-w-[44px] min-h-[44px] flex items-center justify-center text-text-muted hover:text-white hover:bg-dark-hover rounded-lg transition-colors"
-              aria-label="Effacer"
+              aria-label={t.ui.clear}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 6L18 18M6 18L18 6" />

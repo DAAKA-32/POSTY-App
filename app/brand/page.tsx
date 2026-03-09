@@ -18,6 +18,7 @@ import {
   Copy,
   Check
 } from "lucide-react";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 // Color palette data
 const brandColors = {
@@ -114,6 +115,7 @@ function Section({ title, subtitle, children }: { title: string; subtitle?: stri
 }
 
 export default function BrandPage() {
+  usePageTitle("brand");
   const [copiedColor, setCopiedColor] = useState<string | null>(null);
 
   return (

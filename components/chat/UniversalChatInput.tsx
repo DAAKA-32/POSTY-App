@@ -7,6 +7,7 @@ import { FileAttachment, FILE_ATTACHMENT_LIMITS, AttachmentMimeType } from "@/ty
 import { InlineVoiceWaveform } from "./VoiceWaveform";
 import PromptLimitModal from "./PromptLimitModal";
 import { useQuota } from "@/contexts/QuotaContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 /**
  * UniversalChatInput - Unified, premium chat input component
@@ -136,6 +137,7 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
 
   // Quota modal trigger
   const { openQuotaModal, isFreePlan: isFreePlanQuota } = useQuota();
+  const { t } = useLanguage();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const rotationTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -293,7 +295,7 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
         base64,
       });
     };
-    reader.onerror = () => setFileError("Erreur lors de la lecture du fichier");
+    reader.onerror = () => setFileError(t.ui.fileReadFailed);
     reader.readAsDataURL(file);
 
     // Reset input for re-selecting same file
@@ -653,7 +655,7 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
                       onClick={onCancelAutoSend}
                       className="text-xs text-gray-500 dark:text-gray-400 hover:text-primary transition-colors font-medium px-2 py-0.5 rounded-lg hover:bg-primary/5"
                     >
-                      Annuler
+                      {t.templates.cancel}
                     </button>
                   </div>
                   <div className="h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">

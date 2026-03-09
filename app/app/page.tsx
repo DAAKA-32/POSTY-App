@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useLinkedIn } from "@/contexts/LinkedInContext";
 import { useQuota } from "@/contexts/QuotaContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
@@ -37,10 +38,12 @@ import ShimmeringName from "@/components/ui/ShimmeringName";
 import { useBrowserMode, setBrowserModeCSSVars } from "@/hooks/useBrowserMode";
 import { CompactPostTemplates, PostTemplate } from "@/components/chat/PostTemplates";
 import TemplateFillerModal from "@/components/chat/TemplateFillerModal";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { trackPostGeneration, initAnalytics } from "@/lib/analytics";
 import UniversalChatInput, { UniversalChatInputRef } from "@/components/chat/UniversalChatInput";
 import { getPersonalizedGreeting, getPersonalizedSubtitle, getPersonalizedPlaceholders, getPersonalizedTemplateOrder } from "@/lib/personalization";
 import { TEMPLATES } from "@/components/chat/PostTemplates";
+import { getGiftRecipientInfo } from "@/lib/plans";
 
 // Premium animation easings - inspired by Linear, Notion
 const smoothEase = [0.25, 0.1, 0.25, 1] as const;
@@ -94,32 +97,17 @@ const suggestionButtonVariants = {
   }),
 };
 
-// Dynamic placeholder examples that rotate
-const PLACEHOLDER_EXAMPLES = [
-  "Un post sur le leadership...",
-  "Une astuce productivité...",
-  "Mon parcours professionnel...",
-  "Une leçon apprise récemment...",
-  "Un conseil pour les juniors...",
-  "Une réflexion sur le télétravail...",
-  "Un moment clé de ma carrière...",
-];
-
-const PLACEHOLDER_GENERAL = [
-  "Pose-moi une question...",
-  "Besoin d'un conseil ?",
-  "Comment améliorer mon profil ?",
-  "Explique-moi le personal branding...",
-  "Quelles tendances LinkedIn en 2026 ?",
-];
+// Placeholder arrays moved to translation keys (appPage.placeholderExamples / placeholderGeneral)
 
 function AppContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, userProfile } = useAuth();
   const { connection: linkedInConnection, publishToLinkedIn } = useLinkedIn();
+  const { t, language } = useLanguage();
   const { canSendMessage } = useQuota();
   const { isMaxPlan, isProPlan, currentPlan, planLimits } = useSubscription();
+  usePageTitle("app");
   const [posts, setPosts] = useState<Post[]>([]);
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [publishContent, setPublishContent] = useState("");
@@ -133,6 +121,8 @@ function AppContent() {
   const [isFocused, setIsFocused] = useState(false);
   const [isInputExpanded, setIsInputExpanded] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [showGiftPopup, setShowGiftPopup] = useState(false);
+  const [giftRecipientName, setGiftRecipientName] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const inputContainerRef = useRef<HTMLDivElement>(null);
   const chatInputRef = useRef<UniversalChatInputRef>(null);
@@ -288,6 +278,28 @@ function AppContent() {
     }
   }, [userProfile?.showWelcomeModal]);
 
+  // Gift plan popup — one-time display for gift recipients
+  useEffect(() => {
+    if (!user?.email) return;
+    const giftInfo = getGiftRecipientInfo(user.email);
+    if (!giftInfo) return;
+
+    // Check if already seen (Firestore flag)
+    if (userProfile?.giftPopupSeen === true) return;
+
+    setGiftRecipientName(giftInfo.displayName);
+    const timer = setTimeout(() => setShowGiftPopup(true), 800);
+    return () => clearTimeout(timer);
+  }, [user?.email, userProfile?.giftPopupSeen]);
+
+  // Dismiss gift popup and persist in Firestore
+  const dismissGiftPopup = useCallback(() => {
+    setShowGiftPopup(false);
+    if (user) {
+      updateDoc(doc(db, "users", user.uid), { giftPopupSeen: true }).catch(() => {});
+    }
+  }, [user]);
+
   // Fetch user posts (with pinned posts first)
   // Fetch sidebar posts — only on mount/user change, NOT on every message
   const sidebarLoadedRef = useRef(false);
@@ -356,7 +368,7 @@ function AppContent() {
     if (isFocused || inputValue.length > 0) return; // Don't rotate when focused or has content
 
     const interval = setInterval(() => {
-      setPlaceholderIndex((prev) => (prev + 1) % getPersonalizedPlaceholders(userProfile?.profile).length);
+      setPlaceholderIndex((prev) => (prev + 1) % getPersonalizedPlaceholders(userProfile?.profile, language).length);
     }, 3000);
 
     return () => clearInterval(interval);
@@ -407,7 +419,7 @@ function AppContent() {
           isRecordingRef.current = false;
           setIsRecording(false);
           setIsProcessingVoice(false);
-          toast.error("Microphone non autorisé. Vérifiez les permissions.");
+          toast.error(t.appPage.micNotAllowed);
         } else if (event.error === "no-speech") {
           // Silently handle - expected when user pauses
         } else if (event.error !== "aborted") {
@@ -462,7 +474,7 @@ function AppContent() {
         console.error("Failed to start recording:", error);
         isRecordingRef.current = false;
         setIsRecording(false);
-        toast.error("Impossible de démarrer l'enregistrement");
+        toast.error(t.appPage.recordingError);
       }
     }
   }, [forceStopRecording]);
@@ -506,9 +518,9 @@ function AppContent() {
   const handleCopy = async (content: string) => {
     try {
       await navigator.clipboard.writeText(content);
-      toast.success("Copié !");
+      toast.success(t.appPage.copied);
     } catch {
-      toast.error("Erreur lors de la copie");
+      toast.error(t.appPage.copyError);
     }
   };
 
@@ -599,7 +611,7 @@ function AppContent() {
                 >
                   {userProfile?.displayName ? (
                     <>
-                      <span className="text-text-primary">{getPersonalizedGreeting(userProfile.displayName.split(" ")[0])}</span>
+                      <span className="text-text-primary">{getPersonalizedGreeting(userProfile.displayName.split(" ")[0], language)}</span>
                       <ShimmeringName
                         name={`${userProfile.displayName.split(" ")[0]} !`}
                         showSparkles={true}
@@ -607,14 +619,14 @@ function AppContent() {
                       />
                     </>
                   ) : (
-                    "Bienvenue sur POSTY"
+                    t.appPage.welcomeTitle
                   )}
                 </motion.h1>
                 <motion.p
                   variants={welcomeItemVariants}
                   className="text-text-secondary text-sm sm:text-base lg:text-lg max-w-md mb-6 sm:mb-8 px-2"
                 >
-                  {getPersonalizedSubtitle(userProfile?.profile)}
+                  {getPersonalizedSubtitle(userProfile?.profile, language)}
                 </motion.p>
 
                 {/* Visual Post Templates */}
@@ -999,7 +1011,7 @@ function AppContent() {
                   if (isRecordingRef.current) forceStopRecording();
                   await handleGenerate(message, file);
                 }}
-                placeholder={aiMode === "general" ? PLACEHOLDER_GENERAL : getPersonalizedPlaceholders(userProfile?.profile)}
+                placeholder={aiMode === "general" ? [...t.appPage.placeholderGeneral] : getPersonalizedPlaceholders(userProfile?.profile, language)}
                 disabled={!canSendMessage}
                 isLoading={isLoading || isStreaming}
                 enableVoiceRecording={speechSupported}
@@ -1024,7 +1036,7 @@ function AppContent() {
 
             {/* Additional helper text - Desktop only (hidden on mobile via CSS) */}
             <p className="hidden sm:block text-2xs text-gray-500 dark:text-gray-400 text-center mt-0">
-              POSTY peut faire des erreurs. Vérifiez les informations importantes.
+              {t.appPage.disclaimer}
             </p>
           </div>
         </motion.div>
@@ -1065,6 +1077,82 @@ function AppContent() {
         }}
         template={selectedTemplate}
       />
+
+      {/* Gift Plan Popup - One-time for gift recipients */}
+      <AnimatePresence>
+        {showGiftPopup && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            onClick={dismissGiftPopup}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+              className="relative w-full max-w-md bg-white dark:bg-dark-card rounded-2xl p-8 shadow-2xl border border-gray-200 dark:border-dark-border text-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Close button */}
+              <button
+                onClick={dismissGiftPopup}
+                className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-dark-hover transition-colors text-text-muted hover:text-text-primary"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+
+              {/* Emoji */}
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2, type: "spring", stiffness: 200, damping: 15 }}
+                className="text-5xl mb-5"
+              >
+                🎉
+              </motion.div>
+
+              {/* Title */}
+              <motion.h2
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="text-2xl font-bold text-gray-900 dark:text-white mb-3"
+              >
+                Bonjour {giftRecipientName} !
+              </motion.h2>
+
+              {/* Message */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="text-text-secondary mb-6 space-y-2"
+              >
+                <p>Nous avons activ&eacute; pour vous le plan <span className="font-semibold text-primary">Max</span>.</p>
+                <p>Vous pouvez maintenant profiter de toutes les fonctionnalit&eacute;s premium de l&apos;application.</p>
+                <p className="mt-3">Amusez-vous bien avec l&apos;outil 🚀</p>
+              </motion.div>
+
+              {/* CTA */}
+              <motion.button
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                onClick={dismissGiftPopup}
+                className="w-full py-3 px-6 bg-gradient-to-r from-primary to-accent text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-primary/25 transition-all duration-200"
+              >
+                J&apos;ai compris
+              </motion.button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Welcome Modal - One-time after first payment */}
       <AnimatePresence>
@@ -1112,7 +1200,7 @@ function AppContent() {
                 transition={{ delay: 0.3 }}
                 className="text-2xl font-bold text-silver-shimmer dark:text-white mb-2"
               >
-                {userFirstName ? `Bienvenue, ${userFirstName} !` : "Bienvenue sur Posty !"}
+                {userFirstName ? `${t.appPage.welcomeUser} ${userFirstName} !` : t.appPage.welcomeBack}
               </motion.h2>
 
               {/* Subtitle */}
@@ -1122,7 +1210,7 @@ function AppContent() {
                 transition={{ delay: 0.4 }}
                 className="text-text-secondary mb-6"
               >
-                Merci pour votre confiance. Votre abonnement est actif.
+                {t.appPage.subscriptionActive}
               </motion.p>
 
               {/* Quick tips */}
@@ -1138,7 +1226,7 @@ function AppContent() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
                   </div>
-                  <p className="text-sm text-text-secondary">Décrivez votre idée et Posty génère un post optimisé</p>
+                  <p className="text-sm text-text-secondary">{t.appPage.tipGenerate}</p>
                 </div>
                 <div className="flex items-start gap-3">
                   <div className="w-6 h-6 rounded-full bg-accent/15 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -1146,7 +1234,7 @@ function AppContent() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
                   </div>
-                  <p className="text-sm text-text-secondary">Choisissez un template ou écrivez librement</p>
+                  <p className="text-sm text-text-secondary">{t.appPage.tipTemplate}</p>
                 </div>
                 <div className="flex items-start gap-3">
                   <div className="w-6 h-6 rounded-full bg-green-500/15 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -1154,7 +1242,7 @@ function AppContent() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                     </svg>
                   </div>
-                  <p className="text-sm text-text-secondary">Publiez directement sur LinkedIn ou copiez-collez</p>
+                  <p className="text-sm text-text-secondary">{t.appPage.tipPublish}</p>
                 </div>
               </motion.div>
 
@@ -1166,7 +1254,7 @@ function AppContent() {
                 onClick={dismissWelcomeModal}
                 className="w-full py-3 px-6 bg-gradient-to-r from-primary to-accent text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-primary/25 transition-all duration-200"
               >
-                Commencer
+                {t.appPage.getStarted}
               </motion.button>
             </motion.div>
           </motion.div>

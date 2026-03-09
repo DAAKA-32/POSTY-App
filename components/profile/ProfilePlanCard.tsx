@@ -1,8 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { PlanType } from "@/lib/plans";
-import { getPlanConfig } from "@/lib/plans";
+import { PlanType, getPlanConfig, getLocalizedPlanTaglines } from "@/lib/plans";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ProfilePlanCardProps {
@@ -86,14 +85,14 @@ export default function ProfilePlanCard({
           </div>
 
           <div>
-            <h3 className="font-semibold text-gray-900 dark:text-text-primary text-lg">{plan ? plan.name : "Aucun abonnement"}</h3>
-            <p className="text-sm text-gray-500 dark:text-text-muted">{plan ? plan.description : "Vous n'avez pas d'abonnement actif"}</p>
+            <h3 className="font-semibold text-gray-900 dark:text-text-primary text-lg">{plan ? plan.name : t.ui.noPlan}</h3>
+            <p className="text-sm text-gray-500 dark:text-text-muted">{plan ? getLocalizedPlanTaglines(t)[plan.id as PlanType]?.tagline || plan.description : t.ui.noActivePlan}</p>
           </div>
         </div>
 
         {/* Plan badge */}
         <span className={`px-3 py-1 text-xs font-medium rounded-full ${style.badge}`}>
-          {!currentPlan ? "Aucun abonnement" : plan!.price.monthly.toFixed(2) + " EUR/mois"}
+          {!currentPlan ? t.ui.noPlan : plan!.price.monthly.toFixed(2) + " EUR" + t.pricingCard.perMonth}
         </span>
       </div>
 

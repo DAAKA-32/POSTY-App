@@ -28,8 +28,8 @@ interface StripeSubscriptionDetails {
   productId: string;
 }
 
-// Format date for French locale
-const formatDate = (timestamp: number | Date | { toDate: () => Date } | undefined): string => {
+// Format date for locale
+const formatDate = (timestamp: number | Date | { toDate: () => Date } | undefined, locale: string = "fr-FR"): string => {
   if (!timestamp) return "—";
   let date: Date;
   if (typeof timestamp === "number") {
@@ -41,7 +41,7 @@ const formatDate = (timestamp: number | Date | { toDate: () => Date } | undefine
   } else {
     return "—";
   }
-  return date.toLocaleDateString("fr-FR", {
+  return date.toLocaleDateString(locale, {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -57,7 +57,7 @@ const getDaysRemaining = (endTimestamp: number): number => {
 };
 
 // Calculate human-readable subscription duration from a start date
-const getSubscriptionDuration = (startTimestamp: number | Date | { toDate: () => Date } | undefined): string | null => {
+const getSubscriptionDuration = (startTimestamp: number | Date | { toDate: () => Date } | undefined, t: any): string | null => {
   if (!startTimestamp) return null;
   let start: Date;
   if (typeof startTimestamp === "number") {
@@ -73,14 +73,14 @@ const getSubscriptionDuration = (startTimestamp: number | Date | { toDate: () =>
   const diffMs = now.getTime() - start.getTime();
   if (diffMs < 0) return null;
   const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  if (days < 1) return "Aujourd'hui";
-  if (days < 30) return `${days} jour${days > 1 ? "s" : ""}`;
+  if (days < 1) return t.settings.todayDuration;
+  if (days < 30) return t.settings.durationDays.replace("{n}", String(days)).replace("{s}", days > 1 ? "s" : "");
   const months = Math.floor(days / 30);
-  if (months < 12) return `${months} mois`;
+  if (months < 12) return t.settings.durationMonths.replace("{n}", String(months));
   const years = Math.floor(months / 12);
   const remainingMonths = months % 12;
-  if (remainingMonths === 0) return `${years} an${years > 1 ? "s" : ""}`;
-  return `${years} an${years > 1 ? "s" : ""} et ${remainingMonths} mois`;
+  if (remainingMonths === 0) return t.settings.durationYears.replace("{n}", String(years)).replace("{s}", years > 1 ? "s" : "");
+  return t.settings.durationYearsMonths.replace("{y}", String(years)).replace("{ys}", years > 1 ? "s" : "").replace("{m}", String(remainingMonths));
 };
 
 // Premium animation variants
@@ -101,7 +101,8 @@ const itemVariants = {
 };
 
 export default function SubscriptionManagement() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const dateLocale = language === "en" ? "en-US" : "fr-FR";
   const { userProfile } = useAuth();
   const {
     currentPlan,
@@ -184,11 +185,11 @@ export default function SubscriptionManagement() {
         // Refresh details
         await fetchStripeDetails();
       } else {
-        toast.error(data.error || "L'annulation n'a pas abouti. Reessayez.");
+        toast.error(data.error || t.ui.cantCancelSubscription);
       }
     } catch (error) {
       console.error("Error canceling subscription:", error);
-      toast.error("Impossible d'annuler l'abonnement pour le moment. Reessayez.");
+      toast.error(t.ui.cantCancelSubscription);
     } finally {
       setIsCanceling(false);
     }
@@ -217,11 +218,11 @@ export default function SubscriptionManagement() {
         // Refresh details
         await fetchStripeDetails();
       } else {
-        toast.error(data.error || "La reactivation n'a pas abouti. Reessayez.");
+        toast.error(data.error || t.settings.reactivationFailed);
       }
     } catch (error) {
       console.error("Error reactivating subscription:", error);
-      toast.error("Impossible de reactiver l'abonnement pour le moment. Reessayez.");
+      toast.error(t.settings.cantReactivate);
     } finally {
       setIsReactivating(false);
     }
@@ -233,15 +234,15 @@ export default function SubscriptionManagement() {
     try {
       const result = await requestRefund();
       if (result.success) {
-        toast.success(result.message || "Remboursement effectué avec succès.");
+        toast.success(result.message || t.settings.refundSuccess);
         setShowRefundModal(false);
         await fetchStripeDetails();
       } else {
-        toast.error(result.error || "Le remboursement n'a pas abouti. Contactez le support.");
+        toast.error(result.error || t.settings.refundFailed);
       }
     } catch (error) {
       console.error("Error requesting refund:", error);
-      toast.error("Impossible de traiter le remboursement. Contactez le support.");
+      toast.error(t.settings.cantProcessRefund);
     } finally {
       setIsRefunding(false);
     }
@@ -250,7 +251,7 @@ export default function SubscriptionManagement() {
   // Open Stripe Customer Portal
   const handleManageSubscription = async () => {
     if (!stripeCustomerId) {
-      toast.error("Aucun compte de facturation trouve. Contactez le support.");
+      toast.error(t.ui.noBillingAccount);
       return;
     }
 
@@ -268,11 +269,11 @@ export default function SubscriptionManagement() {
       if (data.url) {
         window.location.href = data.url;
       } else {
-        toast.error("Impossible d'ouvrir le portail. Reessayez dans quelques instants.");
+        toast.error(t.settings.cantOpenPortal);
       }
     } catch (error) {
       console.error("Error opening portal:", error);
-      toast.error("Le portail de facturation est temporairement indisponible.");
+      toast.error(t.settings.billingPortalUnavailable);
     } finally {
       setIsLoading(false);
     }
@@ -281,24 +282,24 @@ export default function SubscriptionManagement() {
   // Determine subscription status display
   const getStatusDisplay = () => {
     if (!isPaidPlan) {
-      return { label: "Plan gratuit", color: "text-text-secondary", bg: "bg-dark-hover" };
+      return { label: t.settings.freePlan, color: "text-text-secondary", bg: "bg-dark-hover" };
     }
 
     if (stripeDetails?.cancelAtPeriodEnd) {
-      return { label: "Annulation programmée", color: "text-warning", bg: "bg-warning/10" };
+      return { label: t.settings.scheduledCancellation, color: "text-warning", bg: "bg-warning/10" };
     }
 
     switch (stripeDetails?.status || subscription.status) {
       case "active":
-        return { label: "Actif", color: "text-accent", bg: "bg-accent/10" };
+        return { label: t.ui.active, color: "text-accent", bg: "bg-accent/10" };
       case "trialing":
-        return { label: "Période d'essai", color: "text-primary", bg: "bg-primary/10" };
+        return { label: t.settings.trialPeriod, color: "text-primary", bg: "bg-primary/10" };
       case "past_due":
-        return { label: "Paiement en retard", color: "text-error", bg: "bg-error/10" };
+        return { label: t.settings.paymentOverdue, color: "text-error", bg: "bg-error/10" };
       case "canceled":
-        return { label: "Annulé", color: "text-error", bg: "bg-error/10" };
+        return { label: t.settings.canceled, color: "text-error", bg: "bg-error/10" };
       default:
-        return { label: "Actif", color: "text-accent", bg: "bg-accent/10" };
+        return { label: t.ui.active, color: "text-accent", bg: "bg-accent/10" };
     }
   };
 
@@ -312,7 +313,7 @@ export default function SubscriptionManagement() {
       <div className="p-6 bg-dark-card rounded-xl border border-dark-border">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
-          <span className="text-text-secondary">Chargement...</span>
+          <span className="text-text-secondary">{t.common.loading}</span>
         </div>
       </div>
     );
@@ -335,8 +336,8 @@ export default function SubscriptionManagement() {
               </svg>
             </div>
             <div>
-              <h2 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white">Abonnement</h2>
-              <p className="text-xs lg:text-sm text-text-muted mt-0.5">Gérez votre plan et facturation</p>
+              <h2 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white">{t.settings.subscriptionTitle}</h2>
+              <p className="text-xs lg:text-sm text-text-muted mt-0.5">{t.settings.subscriptionSubtitle}</p>
             </div>
           </div>
           <SubscriptionBadge plan={currentPlan} size="md" />
@@ -350,13 +351,13 @@ export default function SubscriptionManagement() {
             className="flex items-center justify-between p-4 bg-dark-bg rounded-xl border border-dark-border"
           >
             <div>
-              <p className="text-text-muted text-xs mb-1">Plan actuel</p>
+              <p className="text-text-muted text-xs mb-1">{t.settings.currentPlan}</p>
               <p className="text-gray-900 dark:text-white font-semibold text-lg capitalize">
-                {currentPlan === "pro" ? "Pro" : currentPlan === "max" ? "Max" : "Gratuit"}
+                {currentPlan === "pro" ? "Pro" : currentPlan === "max" ? "Max" : t.settings.freePlanLabel}
               </p>
             </div>
             <div className="text-right">
-              <p className="text-text-muted text-xs mb-1">Statut</p>
+              <p className="text-text-muted text-xs mb-1">{t.settings.statusLabel}</p>
               <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-sm font-medium ${status.bg} ${status.color}`}>
                 {stripeDetails?.cancelAtPeriodEnd && (
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -378,14 +379,14 @@ export default function SubscriptionManagement() {
               >
                 {/* Start Date — Stripe startDate or Firestore subscribedAt */}
                 <div className="p-4 bg-dark-bg rounded-xl border border-dark-border">
-                  <p className="text-text-muted text-xs mb-1">Abonné depuis le</p>
+                  <p className="text-text-muted text-xs mb-1">{t.settings.subscribedSince}</p>
                   <p className="text-gray-900 dark:text-white font-semibold text-sm">
                     {stripeDetails?.startDate
-                      ? formatDate(stripeDetails.startDate)
-                      : formatDate(userProfile?.subscription?.subscribedAt)}
+                      ? formatDate(stripeDetails.startDate, dateLocale)
+                      : formatDate(userProfile?.subscription?.subscribedAt, dateLocale)}
                   </p>
                   {(() => {
-                    const duration = getSubscriptionDuration(stripeDetails?.startDate ?? userProfile?.subscription?.subscribedAt);
+                    const duration = getSubscriptionDuration(stripeDetails?.startDate ?? userProfile?.subscription?.subscribedAt, t);
                     return duration ? (
                       <p className="text-xs text-text-muted mt-1">{duration}</p>
                     ) : null;
@@ -395,16 +396,16 @@ export default function SubscriptionManagement() {
                 {/* Next Renewal / End Date */}
                 <div className="p-4 bg-dark-bg rounded-xl border border-dark-border">
                   <p className="text-text-muted text-xs mb-1">
-                    {stripeDetails?.cancelAtPeriodEnd ? "Fin d'accès" : "Prochain renouvellement"}
+                    {stripeDetails?.cancelAtPeriodEnd ? t.settings.accessEnd : t.settings.nextRenewal}
                   </p>
                   <p className={`font-semibold text-sm ${stripeDetails?.cancelAtPeriodEnd ? "text-warning" : "text-gray-900 dark:text-white"}`}>
                     {stripeDetails?.currentPeriodEnd
-                      ? formatDate(stripeDetails.currentPeriodEnd)
-                      : formatDate(userProfile?.subscription?.expiresAt)}
+                      ? formatDate(stripeDetails.currentPeriodEnd, dateLocale)
+                      : formatDate(userProfile?.subscription?.expiresAt, dateLocale)}
                   </p>
                   {stripeDetails && !stripeDetails.cancelAtPeriodEnd && daysRemaining <= 7 && daysRemaining > 0 && (
                     <p className="text-xs text-text-muted mt-1">
-                      Dans {daysRemaining} jour{daysRemaining > 1 ? "s" : ""}
+                      {t.settings.inDays.replace("{n}", String(daysRemaining)).replace("{s}", daysRemaining > 1 ? "s" : "")}
                     </p>
                   )}
                 </div>
@@ -423,15 +424,15 @@ export default function SubscriptionManagement() {
                       </svg>
                     </div>
                     <div>
-                      <p className="text-text-muted text-xs">Facturation</p>
+                      <p className="text-text-muted text-xs">{t.settings.billingInterval}</p>
                       <p className="text-gray-900 dark:text-white font-medium">
-                        {stripeDetails.interval === "year" ? "Annuelle" : "Mensuelle"}
+                        {stripeDetails.interval === "year" ? t.settings.billingYearly : t.settings.billingMonthly}
                       </p>
                     </div>
                   </div>
                   {stripeDetails.interval === "year" && (
                     <span className="px-2 py-1 bg-accent/10 text-accent text-xs font-medium rounded-lg">
-                      2 mois gratuits
+                      {t.settings.freeMonths}
                     </span>
                   )}
                 </motion.div>
@@ -459,11 +460,11 @@ export default function SubscriptionManagement() {
                         </svg>
                       </div>
                       <div>
-                        <p className="text-gray-900 dark:text-white font-medium text-sm">Continuer l'abonnement</p>
+                        <p className="text-gray-900 dark:text-white font-medium text-sm">{t.settings.continueSubscription}</p>
                         <p className="text-text-muted text-xs mt-0.5">
                           {stripeDetails.cancelAtPeriodEnd
-                            ? <>Votre abonnement s'arrêtera le <span className="text-warning font-medium">{formatDate(stripeDetails.currentPeriodEnd)}</span></>
-                            : <>Prochain renouvellement le <span className="text-accent font-medium">{formatDate(stripeDetails.currentPeriodEnd)}</span></>
+                            ? <>{t.settings.subscriptionEndsOn.split("{date}")[0]}<span className="text-warning font-medium">{formatDate(stripeDetails.currentPeriodEnd, dateLocale)}</span>{t.settings.subscriptionEndsOn.split("{date}")[1]}</>
+                            : <>{t.settings.nextRenewalOn.split("{date}")[0]}<span className="text-accent font-medium">{formatDate(stripeDetails.currentPeriodEnd, dateLocale)}</span>{t.settings.nextRenewalOn.split("{date}")[1]}</>
                           }
                         </p>
                       </div>
@@ -474,7 +475,7 @@ export default function SubscriptionManagement() {
                       type="button"
                       role="switch"
                       aria-checked={!stripeDetails.cancelAtPeriodEnd}
-                      aria-label="Continuer l'abonnement"
+                      aria-label={t.settings.continueSubscription}
                       disabled={isCanceling || isReactivating}
                       onClick={() => {
                         if (stripeDetails.cancelAtPeriodEnd) {
@@ -519,17 +520,16 @@ export default function SubscriptionManagement() {
                 </div>
                 <div className="flex-1">
                   <p className="text-accent font-medium text-sm">
-                    Garantie satisfait ou remboursé
+                    {t.settings.moneyBackGuarantee}
                   </p>
                   <p className="text-text-secondary text-xs mt-1">
-                    Il vous reste <span className="text-white font-medium">{guaranteeDaysRemaining} jour{guaranteeDaysRemaining > 1 ? "s" : ""}</span> pour
-                    demander un remboursement intégral si vous n'êtes pas satisfait.
+                    {t.settings.moneyBackGuaranteeDesc.split("{days}")[0]}<span className="text-white font-medium">{guaranteeDaysRemaining} {language === "en" ? (guaranteeDaysRemaining > 1 ? "days" : "day") : (guaranteeDaysRemaining > 1 ? "jours" : "jour")}</span>{t.settings.moneyBackGuaranteeDesc.split("{days}")[1]}
                   </p>
                   <button
                     onClick={() => setShowRefundModal(true)}
                     className="mt-2 text-xs text-text-muted hover:text-accent transition-colors underline underline-offset-2"
                   >
-                    Demander un remboursement
+                    {t.settings.requestRefund}
                   </button>
                 </div>
               </div>
@@ -549,15 +549,15 @@ export default function SubscriptionManagement() {
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <p className="text-gray-900 dark:text-white font-medium">Passez à Pro ou Max</p>
+                  <p className="text-gray-900 dark:text-white font-medium">{t.ui.upgradeToPro}</p>
                   <p className="text-text-secondary text-sm mt-1">
-                    Débloquez des conversations illimitées, des réponses plus longues et des fonctionnalités avancées.
+                    {t.settings.upgradeProDesc}
                   </p>
                   <Link
                     href="/subscription"
                     className="inline-flex items-center gap-2 mt-3 px-4 py-2 bg-gradient-to-r from-primary to-accent text-white font-medium text-sm rounded-xl hover:opacity-90 transition-opacity"
                   >
-                    Voir les plans
+                    {t.ui.viewPlans}
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
@@ -584,7 +584,7 @@ export default function SubscriptionManagement() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-                Gérer la facturation
+                {t.settings.manageBilling}
               </Button>
 
             </motion.div>
@@ -596,8 +596,8 @@ export default function SubscriptionManagement() {
             className="text-xs text-text-muted text-center pt-2"
           >
             {isPaidPlan
-              ? `Garantie satisfait ou remboursé ${GUARANTEE_PERIOD_DAYS} jours. Annulation possible à tout moment.`
-              : "Aucun abonnement actif. Passez à Pro ou Max à tout moment."}
+              ? t.settings.guaranteeLegalNotice.replace("{days}", String(GUARANTEE_PERIOD_DAYS))
+              : t.ui.noActivePlan}
           </motion.p>
         </div>
       </motion.section>
@@ -630,34 +630,33 @@ export default function SubscriptionManagement() {
               </div>
 
               <h3 className="text-xl font-semibold text-white text-center mb-2">
-                Demander un remboursement
+                {t.settings.refundModalTitle}
               </h3>
 
               <p className="text-text-secondary text-center mb-6">
-                Vous êtes dans la période de garantie ({GUARANTEE_PERIOD_DAYS} jours).
-                Votre dernier paiement sera intégralement remboursé et votre abonnement sera annulé.
+                {t.settings.refundModalDesc.replace("{days}", String(GUARANTEE_PERIOD_DAYS))}
               </p>
 
               <div className="p-4 bg-dark-bg rounded-xl border border-dark-border mb-6">
-                <p className="text-sm font-medium text-white mb-2">Ce qui va se passer :</p>
+                <p className="text-sm font-medium text-white mb-2">{t.settings.refundModalWhatHappens}</p>
                 <ul className="space-y-2">
                   <li className="flex items-center gap-2 text-sm text-text-secondary">
                     <svg className="w-4 h-4 text-accent shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    Remboursement intégral sous 5-10 jours
+                    {t.settings.refundModalFullRefund}
                   </li>
                   <li className="flex items-center gap-2 text-sm text-text-secondary">
                     <svg className="w-4 h-4 text-accent shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    Annulation immédiate de l'abonnement
+                    {t.settings.refundModalImmediateCancel}
                   </li>
                   <li className="flex items-center gap-2 text-sm text-text-secondary">
                     <svg className="w-4 h-4 text-warning shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01" />
                     </svg>
-                    Perte de l'accès premium
+                    {t.settings.refundModalLosePremium}
                   </li>
                 </ul>
               </div>
@@ -668,7 +667,7 @@ export default function SubscriptionManagement() {
                   onClick={() => setShowRefundModal(false)}
                   className="flex-1"
                 >
-                  Annuler
+                  {t.templates.cancel}
                 </Button>
                 <Button
                   variant="danger"
@@ -676,12 +675,12 @@ export default function SubscriptionManagement() {
                   isLoading={isRefunding}
                   className="flex-1"
                 >
-                  Confirmer le remboursement
+                  {t.ui.confirmRefund}
                 </Button>
               </div>
 
               <p className="text-xs text-text-muted text-center mt-4">
-                Le remboursement sera crédité sur votre moyen de paiement original.
+                {t.settings.refundModalPaymentMethod}
               </p>
             </motion.div>
           </motion.div>
@@ -717,40 +716,37 @@ export default function SubscriptionManagement() {
 
               {/* Title */}
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white text-center mb-2">
-                Annuler votre abonnement ?
+                {t.ui.cancelSubscription}
               </h3>
 
               {/* Description */}
               <p className="text-text-secondary text-center mb-6">
-                Votre abonnement <span className="text-gray-900 dark:text-white font-medium capitalize">{currentPlan}</span> restera
-                actif jusqu'au{" "}
-                <span className="text-gray-900 dark:text-white font-medium">
-                  {stripeDetails?.currentPeriodEnd ? formatDate(stripeDetails.currentPeriodEnd) : "—"}
-                </span>.
-                Après cette date, vous perdrez l'accès aux fonctionnalités premium.
+                {t.settings.cancelModalDesc
+                  .replace("{plan}", currentPlan || "")
+                  .replace("{date}", stripeDetails?.currentPeriodEnd ? formatDate(stripeDetails.currentPeriodEnd, dateLocale) : "—")}
               </p>
 
               {/* What you'll lose */}
               <div className="p-4 bg-dark-bg rounded-xl border border-dark-border mb-6">
-                <p className="text-sm font-medium text-gray-900 dark:text-white mb-3">Ce que vous perdrez :</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white mb-3">{t.settings.cancelModalWhatYouLose}</p>
                 <ul className="space-y-2">
                   <li className="flex items-center gap-2 text-sm text-text-secondary">
                     <svg className="w-4 h-4 text-error shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
-                    Conversations illimitées
+                    {t.settings.cancelModalUnlimitedConversations}
                   </li>
                   <li className="flex items-center gap-2 text-sm text-text-secondary">
                     <svg className="w-4 h-4 text-error shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
-                    Réponses détaillées et personnalisées
+                    {t.settings.cancelModalDetailedResponses}
                   </li>
                   <li className="flex items-center gap-2 text-sm text-text-secondary">
                     <svg className="w-4 h-4 text-error shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
-                    Planification de posts
+                    {t.settings.cancelModalPostScheduling}
                   </li>
                 </ul>
               </div>
@@ -762,7 +758,7 @@ export default function SubscriptionManagement() {
                   onClick={() => setShowCancelModal(false)}
                   className="flex-1"
                 >
-                  Garder mon abonnement
+                  {t.settings.keepSubscription}
                 </Button>
                 <Button
                   variant="danger"
@@ -770,13 +766,13 @@ export default function SubscriptionManagement() {
                   isLoading={isCanceling}
                   className="flex-1"
                 >
-                  Confirmer l'annulation
+                  {t.ui.confirmCancellation}
                 </Button>
               </div>
 
               {/* Reassurance */}
               <p className="text-xs text-text-muted text-center mt-4">
-                Vous pouvez réactiver votre abonnement à tout moment avant la fin de la période.
+                {t.settings.cancelModalReassurance}
               </p>
             </motion.div>
           </motion.div>

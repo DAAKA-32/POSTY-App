@@ -2,9 +2,11 @@
 // PERSONALIZATION ENGINE
 // Adapts UI text, placeholders, and template ordering
 // based on the user's onboarding profile data.
+// Supports English and French via language parameter.
 // ============================================================
 
 import { UserProfile } from "@/types";
+import { Language } from "@/lib/i18n";
 
 type ProfileData = UserProfile["profile"];
 
@@ -12,99 +14,194 @@ type ProfileData = UserProfile["profile"];
 // WELCOME SUBTITLE - adapts the description below "Bonjour, {name}!"
 // ---------------------------------------------------------------------------
 
-const SUBTITLE_BY_OBJECTIVE: Record<string, string> = {
-  "Trouver de nouveaux clients": "Creez des posts qui attirent vos futurs clients",
-  "Augmenter mon chiffre d'affaires": "Generez des posts qui convertissent votre audience",
-  "Developper ma visibilite et credibilite": "Renforcez votre image d'expert avec chaque post",
-  "Generer des leads qualifies": "Transformez votre audience LinkedIn en opportunites",
-  "Construire une audience engagee": "Fidelisez votre communaute avec du contenu percutant",
+const SUBTITLE_BY_OBJECTIVE: Record<string, Record<Language, string>> = {
+  "Trouver de nouveaux clients": {
+    fr: "Creez des posts qui attirent vos futurs clients",
+    en: "Create posts that attract your future clients",
+  },
+  "Augmenter mon chiffre d'affaires": {
+    fr: "Generez des posts qui convertissent votre audience",
+    en: "Generate posts that convert your audience",
+  },
+  "Developper ma visibilite et credibilite": {
+    fr: "Renforcez votre image d'expert avec chaque post",
+    en: "Strengthen your expert image with every post",
+  },
+  "Generer des leads qualifies": {
+    fr: "Transformez votre audience LinkedIn en opportunites",
+    en: "Turn your LinkedIn audience into opportunities",
+  },
+  "Construire une audience engagee": {
+    fr: "Fidelisez votre communaute avec du contenu percutant",
+    en: "Build a loyal community with impactful content",
+  },
 };
 
-const DEFAULT_SUBTITLE = "Decrivez votre idee et je genererai 2 versions optimisees de votre post LinkedIn";
+const DEFAULT_SUBTITLE: Record<Language, string> = {
+  fr: "Decrivez votre idee et je genererai 2 versions optimisees de votre post LinkedIn",
+  en: "Describe your idea and I'll generate 2 optimized versions of your LinkedIn post",
+};
 
-export function getPersonalizedSubtitle(profile?: ProfileData): string {
-  if (!profile?.objective) return DEFAULT_SUBTITLE;
+export function getPersonalizedSubtitle(profile?: ProfileData, language: Language = "fr"): string {
+  if (!profile?.objective) return DEFAULT_SUBTITLE[language];
 
   // Try exact match first, then partial match
-  for (const [key, subtitle] of Object.entries(SUBTITLE_BY_OBJECTIVE)) {
+  for (const [key, subtitles] of Object.entries(SUBTITLE_BY_OBJECTIVE)) {
     if (profile.objective.toLowerCase().includes(key.toLowerCase().slice(0, 15))) {
-      return subtitle;
+      return subtitles[language];
     }
   }
 
-  return DEFAULT_SUBTITLE;
+  return DEFAULT_SUBTITLE[language];
 }
 
 // ---------------------------------------------------------------------------
 // PLACEHOLDER EXAMPLES - adapts rotating input placeholders to the sector
 // ---------------------------------------------------------------------------
 
-const PLACEHOLDERS_BY_SECTOR: Record<string, string[]> = {
-  "Tech / IT": [
-    "Un post sur une innovation tech...",
-    "Comment l'IA transforme mon quotidien...",
-    "Une lecon apprise en developpement...",
-    "Les erreurs a eviter en gestion de projet tech...",
-    "Pourquoi j'ai choisi cette stack technique...",
+const PLACEHOLDERS_BY_SECTOR: Record<string, Record<Language, string[]>> = {
+  "Tech / IT": {
+    fr: [
+      "Un post sur une innovation tech...",
+      "Comment l'IA transforme mon quotidien...",
+      "Une lecon apprise en developpement...",
+      "Les erreurs a eviter en gestion de projet tech...",
+      "Pourquoi j'ai choisi cette stack technique...",
+    ],
+    en: [
+      "A post about a tech innovation...",
+      "How AI is transforming my daily work...",
+      "A lesson learned in development...",
+      "Mistakes to avoid in tech project management...",
+      "Why I chose this tech stack...",
+    ],
+  },
+  "Marketing / Communication": {
+    fr: [
+      "Une strategie qui a booste mes resultats...",
+      "Les tendances marketing a suivre...",
+      "Comment j'ai double mon taux d'engagement...",
+      "Mon framework pour creer du contenu viral...",
+      "Une campagne qui a tout change...",
+    ],
+    en: [
+      "A strategy that boosted my results...",
+      "Marketing trends to follow...",
+      "How I doubled my engagement rate...",
+      "My framework for creating viral content...",
+      "A campaign that changed everything...",
+    ],
+  },
+  "Finance / Banque": {
+    fr: [
+      "Ce que j'ai appris sur la gestion financiere...",
+      "Une lecon sur l'investissement...",
+      "Comment expliquer la finance simplement...",
+      "Les erreurs financieres les plus courantes...",
+      "Mon parcours dans la finance...",
+    ],
+    en: [
+      "What I learned about financial management...",
+      "A lesson about investing...",
+      "How to explain finance simply...",
+      "The most common financial mistakes...",
+      "My journey in finance...",
+    ],
+  },
+  "Sante": {
+    fr: [
+      "Un conseil bien-etre pour les professionnels...",
+      "Ce que la sante m'a appris sur le leadership...",
+      "L'importance de l'equilibre vie pro/perso...",
+      "Innovation dans le secteur de la sante...",
+      "Mon parcours dans le secteur medical...",
+    ],
+    en: [
+      "A wellness tip for professionals...",
+      "What healthcare taught me about leadership...",
+      "The importance of work-life balance...",
+      "Innovation in the healthcare sector...",
+      "My journey in the medical field...",
+    ],
+  },
+  "Commerce / Vente": {
+    fr: [
+      "Ma technique de vente la plus efficace...",
+      "Comment j'ai conclu mon plus gros deal...",
+      "Les objections clients et comment y repondre...",
+      "Ce que j'ai appris en prospection...",
+      "Pourquoi l'ecoute est la cle de la vente...",
+    ],
+    en: [
+      "My most effective sales technique...",
+      "How I closed my biggest deal...",
+      "Client objections and how to handle them...",
+      "What I learned from prospecting...",
+      "Why listening is the key to sales...",
+    ],
+  },
+  "Conseil": {
+    fr: [
+      "Un conseil que je donne a tous mes clients...",
+      "Comment je structure une mission de conseil...",
+      "Les defis du consulting et mes solutions...",
+      "Ce que j'ai appris en accompagnant des entreprises...",
+      "La methodologie qui fait la difference...",
+    ],
+    en: [
+      "Advice I give to all my clients...",
+      "How I structure a consulting engagement...",
+      "Consulting challenges and my solutions...",
+      "What I learned from working with companies...",
+      "The methodology that makes the difference...",
+    ],
+  },
+  "RH / Recrutement": {
+    fr: [
+      "Comment attirer les meilleurs talents...",
+      "Les erreurs a eviter en recrutement...",
+      "Ma vision du management bienveillant...",
+      "L'entretien qui a change ma perspective...",
+      "Pourquoi la culture d'entreprise est essentielle...",
+    ],
+    en: [
+      "How to attract top talent...",
+      "Mistakes to avoid in recruiting...",
+      "My vision of compassionate management...",
+      "The interview that changed my perspective...",
+      "Why company culture is essential...",
+    ],
+  },
+};
+
+const DEFAULT_PLACEHOLDERS: Record<Language, string[]> = {
+  fr: [
+    "Un post sur le leadership...",
+    "Une astuce productivite...",
+    "Mon parcours professionnel...",
+    "Une lecon apprise recemment...",
+    "Un conseil pour les juniors...",
+    "Une reflexion sur le teletravail...",
+    "Un moment cle de ma carriere...",
   ],
-  "Marketing / Communication": [
-    "Une strategie qui a booste mes resultats...",
-    "Les tendances marketing a suivre...",
-    "Comment j'ai double mon taux d'engagement...",
-    "Mon framework pour creer du contenu viral...",
-    "Une campagne qui a tout change...",
-  ],
-  "Finance / Banque": [
-    "Ce que j'ai appris sur la gestion financiere...",
-    "Une lecon sur l'investissement...",
-    "Comment expliquer la finance simplement...",
-    "Les erreurs financieres les plus courantes...",
-    "Mon parcours dans la finance...",
-  ],
-  "Sante": [
-    "Un conseil bien-etre pour les professionnels...",
-    "Ce que la sante m'a appris sur le leadership...",
-    "L'importance de l'equilibre vie pro/perso...",
-    "Innovation dans le secteur de la sante...",
-    "Mon parcours dans le secteur medical...",
-  ],
-  "Commerce / Vente": [
-    "Ma technique de vente la plus efficace...",
-    "Comment j'ai conclu mon plus gros deal...",
-    "Les objections clients et comment y repondre...",
-    "Ce que j'ai appris en prospection...",
-    "Pourquoi l'ecoute est la cle de la vente...",
-  ],
-  "Conseil": [
-    "Un conseil que je donne a tous mes clients...",
-    "Comment je structure une mission de conseil...",
-    "Les defis du consulting et mes solutions...",
-    "Ce que j'ai appris en accompagnant des entreprises...",
-    "La methodologie qui fait la difference...",
-  ],
-  "RH / Recrutement": [
-    "Comment attirer les meilleurs talents...",
-    "Les erreurs a eviter en recrutement...",
-    "Ma vision du management bienveillant...",
-    "L'entretien qui a change ma perspective...",
-    "Pourquoi la culture d'entreprise est essentielle...",
+  en: [
+    "A post about leadership...",
+    "A productivity tip...",
+    "My professional journey...",
+    "A lesson learned recently...",
+    "Advice for junior professionals...",
+    "A thought on remote work...",
+    "A key moment in my career...",
   ],
 };
 
-const DEFAULT_PLACEHOLDERS = [
-  "Un post sur le leadership...",
-  "Une astuce productivite...",
-  "Mon parcours professionnel...",
-  "Une lecon apprise recemment...",
-  "Un conseil pour les juniors...",
-  "Une reflexion sur le teletravail...",
-  "Un moment cle de ma carriere...",
-];
+export function getPersonalizedPlaceholders(profile?: ProfileData, language: Language = "fr"): string[] {
+  if (!profile?.sector) return DEFAULT_PLACEHOLDERS[language];
 
-export function getPersonalizedPlaceholders(profile?: ProfileData): string[] {
-  if (!profile?.sector) return DEFAULT_PLACEHOLDERS;
+  const sectorData = PLACEHOLDERS_BY_SECTOR[profile.sector];
+  if (!sectorData) return DEFAULT_PLACEHOLDERS[language];
 
-  return PLACEHOLDERS_BY_SECTOR[profile.sector] || DEFAULT_PLACEHOLDERS;
+  return sectorData[language];
 }
 
 // ---------------------------------------------------------------------------
@@ -167,17 +264,28 @@ export function getPersonalizedTemplateOrder(
 // GREETING - time-aware personalized greeting
 // ---------------------------------------------------------------------------
 
-export function getPersonalizedGreeting(firstName?: string): string {
+export function getPersonalizedGreeting(firstName?: string, language: Language = "fr"): string {
   const hour = new Date().getHours();
 
   let timeGreeting: string;
-  if (hour < 12) {
-    timeGreeting = "Bonjour";
-  } else if (hour < 18) {
-    timeGreeting = "Bon apres-midi";
+  if (language === "en") {
+    if (hour < 12) {
+      timeGreeting = "Good morning";
+    } else if (hour < 18) {
+      timeGreeting = "Good afternoon";
+    } else {
+      timeGreeting = "Good evening";
+    }
   } else {
-    timeGreeting = "Bonsoir";
+    if (hour < 12) {
+      timeGreeting = "Bonjour";
+    } else if (hour < 18) {
+      timeGreeting = "Bon apres-midi";
+    } else {
+      timeGreeting = "Bonsoir";
+    }
   }
 
-  return firstName ? `${timeGreeting}, ` : "Bienvenue sur POSTY";
+  const fallback = language === "en" ? "Welcome to POSTY" : "Bienvenue sur POSTY";
+  return firstName ? `${timeGreeting}, ` : fallback;
 }

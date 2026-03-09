@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ActivityChartProps {
   data: { date: string; count: number }[];
@@ -9,6 +10,7 @@ interface ActivityChartProps {
 }
 
 export default function ActivityChart({ data, title, subtitle }: ActivityChartProps) {
+  const { t, language } = useLanguage();
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [period, setPeriod] = useState<"7" | "30">("30");
 
@@ -17,12 +19,12 @@ export default function ActivityChart({ data, title, subtitle }: ActivityChartPr
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+    return date.toLocaleDateString(language === "en" ? "en-US" : "fr-FR", { day: "numeric", month: "short" });
   };
 
   const getDayName = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString("fr-FR", { weekday: "short" });
+    return date.toLocaleDateString(language === "en" ? "en-US" : "fr-FR", { weekday: "short" });
   };
 
   return (
@@ -44,7 +46,7 @@ export default function ActivityChart({ data, title, subtitle }: ActivityChartPr
                 : "text-gray-600 dark:text-text-muted hover:text-gray-900 dark:hover:text-white"
             }`}
           >
-            7 jours
+            {t.dashboard.days7}
           </button>
           <button
             onClick={() => setPeriod("30")}
@@ -54,7 +56,7 @@ export default function ActivityChart({ data, title, subtitle }: ActivityChartPr
                 : "text-gray-600 dark:text-text-muted hover:text-gray-900 dark:hover:text-white"
             }`}
           >
-            30 jours
+            {t.dashboard.days30}
           </button>
         </div>
       </div>
@@ -140,7 +142,7 @@ export default function ActivityChart({ data, title, subtitle }: ActivityChartPr
             {filteredData.reduce((sum, d) => sum + d.count, 0)}
           </p>
           <p className="text-xs text-gray-500 dark:text-text-muted">
-            posts sur {period === "7" ? "7" : "30"} jours
+            {t.dashboard.postsOverDays.replace("{days}", period === "7" ? "7" : "30")}
           </p>
         </div>
         <div className="text-right">
@@ -150,7 +152,7 @@ export default function ActivityChart({ data, title, subtitle }: ActivityChartPr
               (period === "7" ? 7 : 30)
             ).toFixed(1)}
           </p>
-          <p className="text-xs text-gray-500 dark:text-text-muted">moyenne/jour</p>
+          <p className="text-xs text-gray-500 dark:text-text-muted">{t.dashboard.avgPerDay}</p>
         </div>
       </div>
     </div>

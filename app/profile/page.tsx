@@ -20,12 +20,14 @@ import {
   ProfileEditForm,
 } from "@/components/profile";
 import toast from "@/components/ui/Toast";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 function ProfileContent() {
   const { user, userProfile, refreshUserProfile } = useAuth();
   const { isConnected: linkedInConnected, profilePicture: linkedInPhoto } = useLinkedIn();
   const { t, language } = useLanguage();
   const { currentPlan } = useSubscription();
+  usePageTitle("profile");
   const router = useRouter();
 
   const [isEditing, setIsEditing] = useState(false);

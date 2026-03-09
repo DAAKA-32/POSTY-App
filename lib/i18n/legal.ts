@@ -1,7 +1,7 @@
 /**
  * Legal Pages Translations
  * Privacy Policy, Terms of Service, Legal Notices, Cookie Policy
- * Application uniquement en français
+ * Always displayed in English regardless of user language selection
  *
  * VERSIONING: Each document has a version field for traceability
  * Format: "X.Y" where X = major revision, Y = minor update
@@ -17,403 +17,402 @@ export const LEGAL_VERSIONS = {
 
 export const legalTranslations = {
   // Common
-  lastUpdated: "Dernière mise à jour :",
-  version: "Version :",
+  lastUpdated: "Last updated:",
+  version: "Version:",
   contact: "Contact",
 
   // Privacy Policy
   privacy: {
-    title: "Politique de confidentialité",
-    metaDescription: "Politique de confidentialité Posty : découvrez comment nous protégeons vos données personnelles conformément au RGPD.",
+    title: "Privacy Policy",
+    metaDescription: "Posty Privacy Policy: learn how we protect your personal data in compliance with the GDPR.",
 
     section1: {
       title: "1. Introduction",
-      content1: "Bienvenue sur Posty. Nous accordons une grande importance à la protection de vos données personnelles et au respect de votre vie privée. Cette Politique de confidentialité explique comment nous collectons, utilisons, stockons et protégeons vos informations personnelles conformément au Règlement Général sur la Protection des Données (RGPD) et à la loi Informatique et Libertés.",
-      content2: "En utilisant notre application, vous acceptez les pratiques décrites dans cette politique.",
+      content1: "Welcome to Posty. We take the protection of your personal data and respect for your privacy very seriously. This Privacy Policy explains how we collect, use, store, and protect your personal information in accordance with the General Data Protection Regulation (GDPR) and applicable French data protection laws.",
+      content2: "By using our application, you agree to the practices described in this policy.",
     },
 
     section2: {
-      title: "2. Responsable du traitement",
+      title: "2. Data Controller",
       companyName: "Posty",
-      legalEntity: "Emilien Nepveu, entrepreneur individuel",
-      address: "Adresse : 42170 Chambles, France",
-      email: "Email : postygroup@gmail.com",
-      gdprContact: "Contact RGPD / DPO : postygroup@gmail.com",
+      legalEntity: "Emilien Nepveu, sole proprietor",
+      address: "Address: 42170 Chambles, France",
+      email: "Email: postygroup@gmail.com",
+      gdprContact: "GDPR / DPO Contact: postygroup@gmail.com",
     },
 
     section3: {
-      title: "3. Données collectées",
-      intro: "Nous collectons les catégories de données suivantes :",
+      title: "3. Data Collected",
+      intro: "We collect the following categories of data:",
       identification: {
-        title: "3.1 Données d'identification",
-        items: ["Nom et prénom", "Adresse email", "Photo de profil (si fournie via Google)"],
+        title: "3.1 Identification Data",
+        items: ["First and last name", "Email address", "Profile photo (if provided via Google)"],
       },
       profile: {
-        title: "3.2 Données de profil professionnel",
-        items: ["Secteur d'activité", "Rôle / Métier", "Style LinkedIn préféré", "Objectifs professionnels"],
+        title: "3.2 Professional Profile Data",
+        items: ["Industry", "Role / Job title", "Preferred LinkedIn style", "Professional objectives"],
       },
       usage: {
-        title: "3.3 Données d'utilisation",
-        items: ["Historique des posts générés", "Prompts saisis", "Préférences de contenu"],
+        title: "3.3 Usage Data",
+        items: ["Post generation history", "Prompts entered", "Content preferences"],
       },
       technical: {
-        title: "3.4 Données techniques",
-        items: ["Adresse IP", "Type de navigateur", "Données de connexion"],
+        title: "3.4 Technical Data",
+        items: ["IP address", "Browser type", "Connection data"],
       },
       payment: {
-        title: "3.5 Données de paiement",
-        items: ["Informations de carte bancaire (traitées par Stripe, non stockées par Posty)", "Historique des transactions", "Adresse de facturation (si applicable)"],
+        title: "3.5 Payment Data",
+        items: ["Credit card information (processed by Stripe, not stored by Posty)", "Transaction history", "Billing address (if applicable)"],
       },
     },
 
     section4: {
-      title: "4. Finalités du traitement",
-      intro: "Vos données sont utilisées pour :",
+      title: "4. Purposes of Processing",
+      intro: "Your data is used for:",
       purposes: [
-        { label: "Fournir le service :", desc: "Génération de posts LinkedIn personnalisés" },
-        { label: "Personnalisation :", desc: "Adapter le contenu à votre profil et préférences" },
-        { label: "Amélioration du service :", desc: "Analyser l'utilisation pour améliorer l'expérience" },
-        { label: "Communication :", desc: "Vous informer des mises à jour importantes" },
-        { label: "Sécurité :", desc: "Protéger votre compte et prévenir les fraudes" },
+        { label: "Service delivery:", desc: "Generation of personalized LinkedIn posts" },
+        { label: "Personalization:", desc: "Adapting content to your profile and preferences" },
+        { label: "Service improvement:", desc: "Analyzing usage to improve the experience" },
+        { label: "Communication:", desc: "Informing you of important updates" },
+        { label: "Security:", desc: "Protecting your account and preventing fraud" },
       ],
     },
 
     section5: {
-      title: "5. Base légale du traitement",
-      intro: "Nous traitons vos données sur les bases légales suivantes :",
+      title: "5. Legal Basis for Processing",
+      intro: "We process your data on the following legal bases:",
       bases: [
-        { label: "Consentement :", desc: "Pour la collecte de données de profil et l'envoi de communications marketing" },
-        { label: "Exécution du contrat :", desc: "Pour fournir les services de génération de contenu" },
-        { label: "Intérêt légitime :", desc: "Pour améliorer nos services et assurer la sécurité" },
-        { label: "Obligation légale :", desc: "Pour respecter nos obligations réglementaires" },
+        { label: "Consent:", desc: "For collecting profile data and sending marketing communications" },
+        { label: "Performance of contract:", desc: "For providing content generation services" },
+        { label: "Legitimate interest:", desc: "For improving our services and ensuring security" },
+        { label: "Legal obligation:", desc: "For meeting our regulatory obligations" },
       ],
     },
 
     section6: {
-      title: "6. Partage des données",
-      intro: "Vos données peuvent être partagées avec :",
+      title: "6. Data Sharing",
+      intro: "Your data may be shared with:",
       partners: [
-        { name: "Firebase (Google) :", desc: "Hébergement et authentification" },
-        { name: "OpenAI / Anthropic :", desc: "Génération de contenu IA (données anonymisées)" },
-        { name: "Stripe :", desc: "Traitement sécurisé des paiements et facturation" },
-        { name: "Vercel :", desc: "Hébergement et déploiement de l'application" },
+        { name: "Firebase (Google):", desc: "Hosting and authentication" },
+        { name: "OpenAI / Anthropic:", desc: "AI content generation (anonymized data)" },
+        { name: "Stripe:", desc: "Secure payment processing and billing" },
+        { name: "Vercel:", desc: "Application hosting and deployment" },
       ],
-      noSale: "Nous ne vendons jamais vos données personnelles à des tiers. Tout partage est encadré par des contrats garantissant la protection de vos données.",
+      noSale: "We never sell your personal data to third parties. All sharing is governed by contracts that ensure the protection of your data.",
     },
 
     section7: {
-      title: "7. Durée de conservation",
-      intro: "Nous conservons vos données selon les durées suivantes :",
+      title: "7. Data Retention",
+      intro: "We retain your data for the following periods:",
       periods: [
-        { label: "Données de compte :", duration: "Jusqu'à la suppression de votre compte + 30 jours" },
-        { label: "Historique des posts :", duration: "2 ans après la dernière activité" },
-        { label: "Données techniques :", duration: "12 mois" },
-        { label: "Données de facturation :", duration: "10 ans (obligation légale)" },
+        { label: "Account data:", duration: "Until account deletion + 30 days" },
+        { label: "Post history:", duration: "2 years after last activity" },
+        { label: "Technical data:", duration: "12 months" },
+        { label: "Billing data:", duration: "10 years (legal requirement)" },
       ],
     },
 
     section8: {
-      title: "8. Vos droits RGPD",
-      intro: "Conformément au RGPD, vous disposez des droits suivants :",
+      title: "8. Your GDPR Rights",
+      intro: "Under the GDPR, you have the following rights:",
       rights: [
-        { title: "Droit d'accès", desc: "Obtenir une copie de vos données personnelles" },
-        { title: "Droit de rectification", desc: "Corriger vos données inexactes ou incomplètes" },
-        { title: "Droit à l'effacement", desc: "Demander la suppression de vos données" },
-        { title: "Droit à la portabilité", desc: "Recevoir vos données dans un format structuré" },
-        { title: "Droit d'opposition", desc: "Vous opposer à certains traitements" },
-        { title: "Droit de limitation", desc: "Limiter le traitement de vos données" },
-        { title: "Droit de retirer le consentement", desc: "Retirer votre consentement à tout moment, sans affecter la licéité du traitement effectué avant le retrait" },
+        { title: "Right of access", desc: "Obtain a copy of your personal data" },
+        { title: "Right to rectification", desc: "Correct inaccurate or incomplete data" },
+        { title: "Right to erasure", desc: "Request the deletion of your data" },
+        { title: "Right to data portability", desc: "Receive your data in a structured format" },
+        { title: "Right to object", desc: "Object to certain processing activities" },
+        { title: "Right to restriction", desc: "Restrict the processing of your data" },
+        { title: "Right to withdraw consent", desc: "Withdraw your consent at any time, without affecting the lawfulness of processing carried out before withdrawal" },
       ],
-      exercise: "Pour exercer ces droits ou retirer votre consentement, rendez-vous dans les Paramètres de confidentialité de l'application ou contactez-nous à : postygroup@gmail.com",
+      exercise: "To exercise these rights or withdraw your consent, go to the Privacy Settings in the application or contact us at: postygroup@gmail.com",
     },
 
     section9: {
-      title: "9. Sécurité des données",
-      intro: "Nous mettons en œuvre des mesures de sécurité appropriées pour protéger vos données :",
+      title: "9. Data Security",
+      intro: "We implement appropriate security measures to protect your data:",
       measures: [
-        "Chiffrement des données en transit (HTTPS/TLS)",
-        "Chiffrement des données au repos",
-        "Authentification sécurisée",
-        "Accès restreint aux données personnelles",
-        "Surveillance et détection des intrusions",
+        "Data encryption in transit (HTTPS/TLS)",
+        "Data encryption at rest",
+        "Secure authentication",
+        "Restricted access to personal data",
+        "Intrusion monitoring and detection",
       ],
     },
 
     section10: {
-      title: "10. Cookies et traceurs",
-      content: "Notre application utilise des cookies essentiels pour le fonctionnement du service. Pour les cookies non essentiels (analytics), nous demandons votre consentement explicite. Pour plus de détails, consultez notre Politique de cookies.",
+      title: "10. Cookies and Trackers",
+      content: "Our application uses essential cookies for the operation of the service. For non-essential cookies (analytics), we request your explicit consent. For more details, please refer to our Cookie Policy.",
       cookiesPolicyLink: "/legal/cookies",
     },
 
     section11: {
-      title: "11. Transferts internationaux",
-      content: "Vos données peuvent être transférées vers des serveurs situés en dehors de l'UE (notamment aux USA via Firebase/Google). Ces transferts sont encadrés par des clauses contractuelles types ou des décisions d'adéquation de la Commission européenne.",
+      title: "11. International Transfers",
+      content: "Your data may be transferred to servers located outside the EU (notably in the USA via Firebase/Google). These transfers are governed by Standard Contractual Clauses or adequacy decisions of the European Commission.",
     },
 
     section12: {
-      title: "12. Modifications de cette politique",
-      content: "Nous pouvons mettre à jour cette Politique de confidentialité. En cas de modification substantielle, nous vous en informerons par email ou via l'application. La date de Dernière mise à jour est indiquée en haut de cette page.",
+      title: "12. Changes to This Policy",
+      content: "We may update this Privacy Policy. In the event of a substantial change, we will inform you by email or through the application. The Last updated date is indicated at the top of this page.",
     },
 
     section13: {
-      title: "13. Réclamation",
-      content: "Si vous estimez que vos droits ne sont pas respectés, vous pouvez introduire une réclamation auprès de la CNIL (Commission Nationale de l'Informatique et des Libertés) :",
+      title: "13. Complaints",
+      content: "If you believe your rights are not being respected, you may file a complaint with the CNIL (Commission Nationale de l'Informatique et des Libertés):",
       cnilLink: "www.cnil.fr",
     },
 
     section14: {
-      title: "14. Décisions automatisées et profilage",
-      content1: "Posty utilise l'intelligence artificielle (via OpenAI et Anthropic) pour générer du contenu personnalisé en fonction de vos données de profil (secteur, rôle, style, objectifs). Ce traitement constitue un profilage au sens de l'article 22 du RGPD.",
-      content2: "Cependant, aucune décision ayant un effet juridique ou significatif sur vous n'est prise de manière automatisée. La génération de contenu est un outil d'aide : vous restez maître de la décision finale de publier ou non le contenu proposé.",
-      content3: "Vos données de profil sont anonymisées avant d'être envoyées aux services d'IA. Aucune donnée directement identifiante (nom, email) n'est transmise aux modèles de langage.",
-      rights: "Vous pouvez à tout moment modifier votre profil ou retirer votre consentement au traitement personnalisé depuis les Paramètres de l'application.",
+      title: "14. Automated Decisions and Profiling",
+      content1: "Posty uses artificial intelligence (via OpenAI and Anthropic) to generate personalized content based on your profile data (industry, role, style, objectives). This processing constitutes profiling within the meaning of Article 22 of the GDPR.",
+      content2: "However, no decision with legal or significant effect on you is made in an automated manner. Content generation is an assistive tool: you remain in full control of the final decision to publish or not.",
+      content3: "Your profile data is anonymized before being sent to AI services. No directly identifiable data (name, email) is transmitted to the language models.",
+      rights: "You may modify your profile or withdraw your consent for personalized processing at any time from the application Settings.",
     },
 
     section15: {
-      title: "15. Sous-traitants et accords de traitement (DPA)",
-      intro: "Nous faisons appel aux sous-traitants suivants pour le fonctionnement du service. Chacun est lié par un accord de traitement des données (DPA) conforme au RGPD :",
+      title: "15. Sub-processors and Data Processing Agreements (DPA)",
+      intro: "We use the following sub-processors for the operation of the service. Each is bound by a GDPR-compliant Data Processing Agreement (DPA):",
       subprocessors: [
-        { name: "Google / Firebase", purpose: "Hébergement, base de données, authentification", location: "USA (Clauses Contractuelles Types)", dpa: "https://cloud.google.com/terms/data-processing-addendum" },
-        { name: "OpenAI", purpose: "Génération de contenu IA (données anonymisées)", location: "USA (Clauses Contractuelles Types)", dpa: "https://openai.com/policies/data-processing-addendum" },
-        { name: "Anthropic", purpose: "Génération de contenu IA (données anonymisées)", location: "USA (Clauses Contractuelles Types)", dpa: "https://www.anthropic.com/policies/data-processing-addendum" },
-        { name: "Stripe", purpose: "Traitement des paiements et facturation", location: "USA (Clauses Contractuelles Types)", dpa: "https://stripe.com/fr/legal/dpa" },
-        { name: "Vercel", purpose: "Hébergement et déploiement de l'application", location: "USA (Clauses Contractuelles Types)", dpa: "https://vercel.com/legal/dpa" },
-        { name: "LinkedIn (Microsoft)", purpose: "Connexion OAuth et publication de posts", location: "USA (Clauses Contractuelles Types)", dpa: "https://learn.microsoft.com/en-us/legal/gdpr" },
-        { name: "X Corp. (Twitter)", purpose: "Connexion OAuth et publication de posts", location: "USA (Clauses Contractuelles Types)", dpa: "https://twitter.com/en/privacy" },
-        { name: "Meta Platforms", purpose: "Connexion OAuth et publication sur Facebook/Threads", location: "USA (Clauses Contractuelles Types)", dpa: "https://www.facebook.com/legal/terms/dataprocessing" },
+        { name: "Google / Firebase", purpose: "Hosting, database, authentication", location: "USA (Standard Contractual Clauses)", dpa: "https://cloud.google.com/terms/data-processing-addendum" },
+        { name: "OpenAI", purpose: "AI content generation (anonymized data)", location: "USA (Standard Contractual Clauses)", dpa: "https://openai.com/policies/data-processing-addendum" },
+        { name: "Anthropic", purpose: "AI content generation (anonymized data)", location: "USA (Standard Contractual Clauses)", dpa: "https://www.anthropic.com/policies/data-processing-addendum" },
+        { name: "Stripe", purpose: "Payment processing and billing", location: "USA (Standard Contractual Clauses)", dpa: "https://stripe.com/fr/legal/dpa" },
+        { name: "Vercel", purpose: "Application hosting and deployment", location: "USA (Standard Contractual Clauses)", dpa: "https://vercel.com/legal/dpa" },
+        { name: "LinkedIn (Microsoft)", purpose: "OAuth connection and post publishing", location: "USA (Standard Contractual Clauses)", dpa: "https://learn.microsoft.com/en-us/legal/gdpr" },
+        { name: "X Corp. (Twitter)", purpose: "OAuth connection and post publishing", location: "USA (Standard Contractual Clauses)", dpa: "https://twitter.com/en/privacy" },
+        { name: "Meta Platforms", purpose: "OAuth connection and publishing on Facebook/Threads", location: "USA (Standard Contractual Clauses)", dpa: "https://www.facebook.com/legal/terms/dataprocessing" },
       ],
-      note: "Cette liste est mise à jour régulièrement. Tout ajout de sous-traitant fait l'objet d'une vérification de conformité RGPD préalable.",
+      note: "This list is updated regularly. Any addition of a sub-processor is subject to prior GDPR compliance verification.",
     },
 
     section16: {
-      title: "16. Notification de violations de données",
-      content1: "En cas de violation de données personnelles susceptible d'engendrer un risque pour vos droits et libertés, nous nous engageons à :",
+      title: "16. Data Breach Notification",
+      content1: "In the event of a personal data breach likely to pose a risk to your rights and freedoms, we commit to:",
       obligations: [
-        "Notifier la CNIL dans un délai de 72 heures après en avoir pris connaissance, conformément à l'article 33 du RGPD",
-        "Vous informer dans les meilleurs délais si la violation présente un risque élevé pour vos droits et libertés (article 34 du RGPD)",
-        "Documenter toute violation dans un registre interne des incidents",
-        "Mettre en œuvre les mesures correctives nécessaires pour limiter l'impact de la violation",
+        "Notifying the CNIL within 72 hours of becoming aware of it, in accordance with Article 33 of the GDPR",
+        "Informing you as soon as possible if the breach poses a high risk to your rights and freedoms (Article 34 of the GDPR)",
+        "Documenting any breach in an internal incident register",
+        "Implementing necessary corrective measures to limit the impact of the breach",
       ],
-      contact: "En cas de suspicion de violation de vos données, contactez immédiatement : postygroup@gmail.com",
+      contact: "If you suspect a breach of your data, contact us immediately: postygroup@gmail.com",
     },
 
     section17: {
-      title: "17. Analyse d'impact (DPIA)",
-      content: "Conformément à l'article 35 du RGPD, nous réalisons des analyses d'impact relatives à la protection des données (DPIA) pour les traitements susceptibles d'engendrer un risque élevé pour les droits et libertés des personnes concernées. Le traitement de données par des modèles d'IA pour la personnalisation du contenu fait l'objet d'une DPIA documentée en interne.",
+      title: "17. Data Protection Impact Assessment (DPIA)",
+      content: "In accordance with Article 35 of the GDPR, we conduct Data Protection Impact Assessments (DPIA) for processing activities likely to pose a high risk to the rights and freedoms of data subjects. The processing of data by AI models for content personalization is subject to a documented internal DPIA.",
     },
 
     section18: {
       title: "18. Contact",
-      intro: "Pour toute question concernant cette politique ou vos données personnelles :",
-      emailGeneral: "Email général : postygroup@gmail.com",
-      emailGDPR: "Email RGPD / DPO : postygroup@gmail.com",
+      intro: "For any questions regarding this policy or your personal data:",
+      emailGeneral: "General email: postygroup@gmail.com",
+      emailGDPR: "GDPR / DPO email: postygroup@gmail.com",
     },
   },
 
   // Terms of Service
   terms: {
-    title: "Conditions Générales d'Utilisation",
-    metaDescription: "CGU Posty : consultez les conditions d'utilisation de notre générateur de posts LinkedIn IA.",
+    title: "Terms of Service",
+    metaDescription: "Posty Terms of Service: review the terms and conditions for using our AI LinkedIn post generator.",
 
     section1: {
-      title: "1. Objet",
-      content1: "Les présentes Conditions Générales d'Utilisation (ci-après \"CGU\") ont pour objet de définir les modalités et conditions d'utilisation de l'application Posty (ci-après \"le Service\"), ainsi que les droits et obligations des parties dans ce cadre.",
-      content2: "L'utilisation du Service implique l'acceptation pleine et entière des présentes CGU.",
+      title: "1. Purpose",
+      content1: "These Terms of Service (hereinafter \"Terms\") define the terms and conditions of use of the Posty application (hereinafter \"the Service\"), as well as the rights and obligations of the parties.",
+      content2: "Use of the Service implies full and complete acceptance of these Terms.",
     },
 
     section2: {
-      title: "2. Description du Service",
-      intro: "Posty est une application de génération de contenu pour LinkedIn utilisant l'intelligence artificielle. Le Service permet aux utilisateurs de :",
+      title: "2. Description of the Service",
+      intro: "Posty is an AI-powered content generation application for LinkedIn. The Service allows users to:",
       features: [
-        "Générer des posts LinkedIn personnalisés",
-        "Obtenir plusieurs versions de contenu (storytelling, business)",
-        "Sauvegarder et gérer leur historique de posts",
-        "Personnaliser le style de contenu selon leur profil professionnel",
+        "Generate personalized LinkedIn posts",
+        "Obtain multiple content versions (storytelling, business)",
+        "Save and manage their post history",
+        "Customize content style based on their professional profile",
       ],
     },
 
     section3: {
-      title: "3. Accès au Service",
+      title: "3. Access to the Service",
       registration: {
-        title: "3.1 Inscription",
-        content: "L'accès au Service nécessite la création d'un compte utilisateur. L'utilisateur s'engage à fournir des informations exactes et à jour lors de son inscription.",
+        title: "3.1 Registration",
+        content: "Access to the Service requires the creation of a user account. The user agrees to provide accurate and up-to-date information during registration.",
       },
       age: {
-        title: "3.2 Conditions d'âge",
-        content: "Le Service est destiné aux personnes âgées d'au moins 18 ans ou ayant atteint l'âge de la majorité dans leur pays de résidence.",
+        title: "3.2 Age Requirements",
+        content: "The Service is intended for persons aged at least 18 years or who have reached the age of majority in their country of residence.",
       },
       security: {
-        title: "3.3 Sécurité du compte",
-        content: "L'utilisateur est responsable de la confidentialité de ses identifiants de connexion et de toute activité effectuée depuis son compte.",
+        title: "3.3 Account Security",
+        content: "The user is responsible for the confidentiality of their login credentials and for all activity carried out from their account.",
       },
     },
 
     section4: {
-      title: "4. Obligations de l'utilisateur",
-      intro: "L'utilisateur s'engage à :",
+      title: "4. User Obligations",
+      intro: "The user agrees to:",
       obligations: [
-        "Utiliser le Service conformément aux présentes CGU et à la législation applicable",
-        "Ne pas utiliser le Service à des fins illégales, frauduleuses ou nuisibles",
-        "Ne pas générer de contenu diffamatoire, haineux, discriminatoire ou illégal",
-        "Ne pas tenter de contourner les mesures de sécurité du Service",
-        "Ne pas utiliser de robots, scrapers ou autres outils automatisés non autorisés",
-        "Respecter les droits de propriété intellectuelle de tiers",
-        "Ne pas revendre ou redistribuer le Service sans autorisation",
+        "Use the Service in accordance with these Terms and applicable law",
+        "Not use the Service for illegal, fraudulent, or harmful purposes",
+        "Not generate defamatory, hateful, discriminatory, or illegal content",
+        "Not attempt to circumvent the security measures of the Service",
+        "Not use unauthorized robots, scrapers, or other automated tools",
+        "Respect the intellectual property rights of third parties",
+        "Not resell or redistribute the Service without authorization",
       ],
     },
 
     section5: {
-      title: "5. Propriété intellectuelle",
+      title: "5. Intellectual Property",
       posty: {
-        title: "5.1 Propriété de Posty",
-        content: "L'ensemble des éléments du Service (design, logos, textes, code source, algorithmes) sont la propriété exclusive de Posty et sont protégés par les lois sur la propriété intellectuelle.",
+        title: "5.1 Posty's Property",
+        content: "All elements of the Service (design, logos, text, source code, algorithms) are the exclusive property of Posty and are protected by intellectual property laws.",
       },
       generated: {
-        title: "5.2 Contenu généré",
-        content: "L'utilisateur conserve la propriété des prompts qu'il soumet. Le contenu généré par l'IA peut être utilisé librement par l'utilisateur, sous réserve du respect des droits des tiers et des conditions d'utilisation de LinkedIn.",
+        title: "5.2 Generated Content",
+        content: "The user retains ownership of the prompts they submit. Content generated by the AI may be freely used by the user, subject to respecting the rights of third parties and LinkedIn's terms of use.",
       },
       license: {
-        title: "5.3 Licence d'utilisation",
-        content: "Posty accorde à l'utilisateur une licence limitée, non exclusive et révocable d'utilisation du Service pour un usage personnel et professionnel.",
+        title: "5.3 License",
+        content: "Posty grants the user a limited, non-exclusive, and revocable license to use the Service for personal and professional purposes.",
       },
     },
 
     section6: {
-      title: "6. Tarification et abonnements",
-      intro: "Le Service propose des abonnements payants. Les conditions détaillées sont les suivantes :",
+      title: "6. Pricing and Subscriptions",
+      intro: "The Service offers paid subscriptions. The detailed terms are as follows:",
       plans: {
-        title: "6.1 Plans disponibles",
-        content: "Posty propose deux abonnements payants : un plan Pro et un plan Max. Un plan Gratuit aux fonctionnalités limitées existe pour les utilisateurs historiques mais n'est plus proposé aux nouveaux inscrits. Les tarifs en vigueur sont affichés dans l'application et sur la page de tarification. Posty se réserve le droit de modifier ses tarifs avec un préavis de 30 jours pour les abonnements en cours.",
+        title: "6.1 Available Plans",
+        content: "Posty offers two paid subscriptions: a Pro plan and a Max plan. A free plan with limited features exists for legacy users but is no longer offered to new registrants. Current prices are displayed in the application and on the pricing page. Posty reserves the right to change its prices with 30 days' notice for current subscriptions.",
       },
       trial: {
-        title: "6.2 Période d'essai gratuite",
-        content: "Les plans Pro et Max bénéficient d'une période d'essai gratuite de 7 jours. Durant cette période, l'utilisateur a accès à l'ensemble des fonctionnalités du plan choisi sans aucun frais. Une carte bancaire valide est requise pour démarrer l'essai. Si l'utilisateur ne résilie pas avant la fin de la période d'essai, l'abonnement sera automatiquement activé et le premier paiement sera prélevé. L'utilisateur peut résilier à tout moment pendant la période d'essai sans aucun frais depuis les paramètres de l'application ou en contactant le support.",
+        title: "6.2 Free Trial Period",
+        content: "The Pro and Max plans include a 7-day free trial period. During this period, the user has access to all features of the chosen plan at no cost. A valid credit card is required to start the trial. If the user does not cancel before the end of the trial period, the subscription will be automatically activated and the first payment will be charged. The user may cancel at any time during the trial period at no cost from the application settings or by contacting support.",
       },
       billing: {
-        title: "6.3 Facturation et paiement",
-        content: "Les paiements sont gérés de manière sécurisée par Stripe. Les abonnements sont facturés de manière récurrente (mensuelle ou annuelle selon l'option choisie). Les factures sont disponibles dans l'historique de paiement de l'application. Tous les prix sont indiqués en euros (EUR) TTC.",
+        title: "6.3 Billing and Payment",
+        content: "Payments are securely managed by Stripe. Subscriptions are billed on a recurring basis (monthly or yearly depending on the chosen option). Invoices are available in the application's payment history. All prices are listed in euros (EUR) including tax.",
       },
       guarantee: {
-        title: "6.4 Garantie satisfait ou remboursé",
-        content: "Après la période d'essai gratuite, Posty offre une garantie satisfait ou remboursé de 7 jours à compter du premier paiement. Si l'utilisateur n'est pas satisfait du service, il peut demander un remboursement intégral dans ce délai en contactant le support à postygroup@gmail.com. Au-delà de cette période de 7 jours, aucun remboursement ne sera effectué pour la période en cours, mais l'utilisateur peut résilier son abonnement à tout moment pour éviter les prélèvements futurs.",
+        title: "6.4 Money-Back Guarantee",
+        content: "After the free trial period, Posty offers a 7-day money-back guarantee from the first payment. If the user is not satisfied with the service, they may request a full refund within this period by contacting support at postygroup@gmail.com. After this 7-day period, no refund will be issued for the current period, but the user may cancel their subscription at any time to avoid future charges.",
       },
       cancellation: {
-        title: "6.5 Résiliation d'abonnement",
-        content: "L'utilisateur peut résilier son abonnement à tout moment depuis les paramètres de l'application. La résiliation prend effet à la fin de la période de facturation en cours. L'utilisateur conserve l'accès aux fonctionnalités payantes jusqu'à cette date. Après résiliation, l'accès aux fonctionnalités premium est retiré.",
+        title: "6.5 Subscription Cancellation",
+        content: "The user may cancel their subscription at any time from the application settings. Cancellation takes effect at the end of the current billing period. The user retains access to paid features until that date. After cancellation, access to premium features is revoked.",
       },
       withdrawal: {
-        title: "6.6 Droit de rétractation",
-        content: "Conformément à l'article L.221-28 du Code de la consommation, en souscrivant à un abonnement Posty, l'utilisateur demande expressément l'exécution immédiate du service et reconnaît renoncer à son droit de rétractation de 14 jours pour les contenus numériques fournis dès le début de l'exécution du service.",
+        title: "6.6 Right of Withdrawal",
+        content: "In accordance with Article L.221-28 of the French Consumer Code, by subscribing to Posty, the user expressly requests immediate execution of the service and acknowledges waiving their 14-day right of withdrawal for digital content provided from the start of service execution.",
       },
     },
 
     section7: {
-      title: "7. Limitation de responsabilité",
+      title: "7. Limitation of Liability",
       ai: {
-        title: "7.1 Nature du contenu IA",
-        content: "Le contenu généré par l'intelligence artificielle est fourni \"tel quel\". L'utilisateur reconnaît que ce contenu peut contenir des erreurs ou inexactitudes et s'engage à le vérifier avant publication.",
+        title: "7.1 Nature of AI Content",
+        content: "Content generated by artificial intelligence is provided \"as is\". The user acknowledges that this content may contain errors or inaccuracies and agrees to verify it before publication.",
       },
       availability: {
-        title: "7.2 Disponibilité",
-        content: "Posty s'efforce d'assurer la disponibilité du Service mais ne peut garantir une disponibilité ininterrompue. Des maintenances ou pannes peuvent survenir.",
+        title: "7.2 Availability",
+        content: "Posty strives to ensure the availability of the Service but cannot guarantee uninterrupted availability. Maintenance or outages may occur.",
       },
       userResponsibility: {
-        title: "7.3 Responsabilité de l'utilisateur",
-        content: "L'utilisateur est seul responsable de l'utilisation qu'il fait du contenu généré et de sa publication sur LinkedIn ou tout autre plateforme.",
+        title: "7.3 User Responsibility",
+        content: "The user is solely responsible for the use they make of generated content and its publication on LinkedIn or any other platform.",
       },
     },
 
     section8: {
-      title: "8. Suspension et résiliation",
+      title: "8. Suspension and Termination",
       byUser: {
-        title: "8.1 Par l'utilisateur",
-        content: "L'utilisateur peut supprimer son compte à tout moment depuis les paramètres de l'application. La suppression entraîne l'effacement des données personnelles conformément à notre Politique de confidentialité.",
+        title: "8.1 By the User",
+        content: "The user may delete their account at any time from the application settings. Deletion results in the erasure of personal data in accordance with our Privacy Policy.",
       },
       byPosty: {
-        title: "8.2 Par Posty",
-        content: "Posty se réserve le droit de suspendre ou résilier l'accès d'un utilisateur en cas de violation des présentes CGU, sans préavis ni indemnité.",
+        title: "8.2 By Posty",
+        content: "Posty reserves the right to suspend or terminate a user's access in the event of a violation of these Terms, without prior notice or compensation.",
       },
     },
 
     section9: {
-      title: "9. Protection des données",
-      content: "Le traitement des données personnelles est décrit dans notre Politique de confidentialité, qui fait partie intégrante des présentes CGU.",
-      privacyLink: "Politique de confidentialité",
+      title: "9. Data Protection",
+      content: "The processing of personal data is described in our Privacy Policy, which forms an integral part of these Terms.",
+      privacyLink: "Privacy Policy",
     },
 
     section10: {
-      title: "10. Modifications des CGU",
-      content: "Posty se réserve le droit de modifier les présentes CGU à tout moment. Les utilisateurs seront informés des modifications substantielles par email ou via l'application. La poursuite de l'utilisation du Service après modification vaut acceptation des nouvelles CGU.",
+      title: "10. Changes to the Terms",
+      content: "Posty reserves the right to modify these Terms at any time. Users will be informed of substantial changes by email or through the application. Continued use of the Service after modification constitutes acceptance of the new Terms.",
     },
 
     section11: {
-      title: "11. Droit applicable et litiges",
-      content1: "Les présentes CGU sont régies par le droit français. En cas de litige, les parties s'engagent à rechercher une solution amiable avant toute action judiciaire.",
-      content2: "À défaut d'accord amiable, les tribunaux français seront seuls compétents.",
-      content3: "Conformément à l'article L.616-1 du Code de la consommation, l'utilisateur peut recourir gratuitement au médiateur de la consommation suivant : Medicys — 73 Boulevard de Clichy, 75009 Paris — https://www.medicys.fr — Le consommateur peut également utiliser la plateforme européenne de règlement en ligne des litiges : https://ec.europa.eu/consumers/odr",
+      title: "11. Governing Law and Disputes",
+      content1: "These Terms are governed by French law. In the event of a dispute, the parties agree to seek an amicable solution before taking legal action.",
+      content2: "Failing amicable agreement, French courts shall have sole jurisdiction.",
+      content3: "In accordance with Article L.616-1 of the French Consumer Code, the user may freely use the following consumer mediator: Medicys — 73 Boulevard de Clichy, 75009 Paris — https://www.medicys.fr — The consumer may also use the European Online Dispute Resolution platform: https://ec.europa.eu/consumers/odr",
     },
 
     section12: {
-      title: "12. Dispositions diverses",
+      title: "12. Miscellaneous Provisions",
       entirety: {
-        title: "12.1 Intégralité",
-        content: "Les présentes CGU constituent l'intégralité de l'accord entre l'utilisateur et Posty.",
+        title: "12.1 Entirety",
+        content: "These Terms constitute the entire agreement between the user and Posty.",
       },
       severability: {
-        title: "12.2 Nullité partielle",
-        content: "Si une clause des CGU est déclarée nulle, les autres clauses restent applicables.",
+        title: "12.2 Severability",
+        content: "If any provision of these Terms is declared void, the remaining provisions shall remain enforceable.",
       },
       noWaiver: {
-        title: "12.3 Non-renonciation",
-        content: "Le fait de ne pas exercer un droit prévu aux CGU ne constitue pas une renonciation à ce droit.",
+        title: "12.3 No Waiver",
+        content: "Failure to exercise a right under these Terms does not constitute a waiver of that right.",
       },
     },
 
     section13: {
       title: "13. Contact",
-      intro: "Pour toute question concernant les présentes CGU :",
-      email: "Email : postygroup@gmail.com",
+      intro: "For any questions regarding these Terms:",
+      email: "Email: postygroup@gmail.com",
     },
   },
 
   // Legal Notices
   notices: {
-    title: "Mentions légales",
-    metaDescription: "Mentions légales Posty : informations sur l'éditeur, l'hébergeur et les droits applicables.",
-    intro: "Conformément aux dispositions des articles 6-III et 19 de la Loi n° 2004-575 du 21 juin 2004 pour la Confiance dans l'économie numérique (LCEN).",
+    title: "Legal Notices",
+    metaDescription: "Posty Legal Notices: information about the publisher, hosting provider, and applicable rights.",
+    intro: "In accordance with the provisions of Articles 6-III and 19 of Law No. 2004-575 of June 21, 2004, for Confidence in the Digital Economy (LCEN).",
 
     section1: {
-      title: "1. Éditeur du site",
-      appName: "Nom de l'application :",
-      legalForm: "Forme juridique :",
-      address: "Siège social :",
-      siret: "SIRET :",
-      capital: "Capital social :",
-      vat: "Numéro de TVA :",
-      email: "Email :",
-      phone: "Téléphone :",
-      toComplete: "Micro-entreprise (Entreprise Individuelle)",
+      title: "1. Publisher",
+      appName: "Application name:",
+      legalForm: "Legal form:",
+      address: "Registered office:",
+      siret: "SIRET:",
+      capital: "Share capital:",
+      vat: "VAT number:",
+      email: "Email:",
+      phone: "Phone:",
+      toComplete: "Micro-enterprise (Sole Proprietorship)",
       addressValue: "42170 Chambles, France",
       siretValue: "101 134 633 00011",
-      capitalValue: "Sans objet (Entreprise Individuelle)",
-      vatValue: "Non applicable — Franchise en base de TVA (Art. 293 B du CGI)",
-      // Phone removed: not required for micro-enterprise under LCEN
-      note: "* POSTY est édité par Emilien Nepveu en tant que micro-entrepreneur.",
+      capitalValue: "Not applicable (Sole Proprietorship)",
+      vatValue: "Not applicable — VAT exemption (Art. 293 B of the French Tax Code)",
+      note: "* POSTY is published by Emilien Nepveu as a micro-entrepreneur.",
     },
 
     section2: {
-      title: "2. Directeur de la publication",
-      name: "Nom :",
-      email: "Email :",
+      title: "2. Publication Director",
+      name: "Name:",
+      email: "Email:",
       toComplete: "Emilien Nepveu",
     },
 
     section3: {
-      title: "3. Hébergeurs",
-      name: "Nom :",
-      company: "Société :",
-      address: "Adresse :",
-      website: "Site web :",
+      title: "3. Hosting Providers",
+      name: "Name:",
+      company: "Company:",
+      address: "Address:",
+      website: "Website:",
       firebase: "Google Cloud Platform / Firebase",
       google: "Google LLC",
       googleAddress: "1600 Amphitheatre Parkway, Mountain View, CA 94043, USA",
@@ -423,156 +422,156 @@ export const legalTranslations = {
     },
 
     section4: {
-      title: "4. Délégué à la Protection des Données (DPO)",
-      contact: "Contact DPO :",
-      description: "Pour toute question relative à la protection de vos données personnelles ou pour exercer vos droits RGPD, vous pouvez contacter notre DPO à l'adresse ci-dessus.",
+      title: "4. Data Protection Officer (DPO)",
+      contact: "DPO Contact:",
+      description: "For any question regarding the protection of your personal data or to exercise your GDPR rights, you may contact our DPO at the address above.",
     },
 
     section5: {
-      title: "5. Propriété intellectuelle",
-      content1: "L'ensemble du contenu de ce site (textes, images, logos, icônes, sons, logiciels, etc.) est la propriété exclusive de Posty ou de ses partenaires et est protégé par les lois françaises et internationales relatives à la propriété intellectuelle.",
-      content2: "Toute reproduction, représentation, modification, publication ou adaptation de tout ou partie des éléments du site, quel que soit le moyen ou le procédé utilisé, est interdite sans autorisation écrite préalable de Posty.",
+      title: "5. Intellectual Property",
+      content1: "All content on this site (text, images, logos, icons, sounds, software, etc.) is the exclusive property of Posty or its partners and is protected by French and international intellectual property laws.",
+      content2: "Any reproduction, representation, modification, publication, or adaptation of all or part of the site's elements, by any means or process, is prohibited without the prior written authorization of Posty.",
     },
 
     section6: {
-      title: "6. Crédits",
-      development: "Conception et développement :",
+      title: "6. Credits",
+      development: "Design and development:",
       team: "Posty Team",
-      tech: "Technologies utilisées :",
+      tech: "Technologies used:",
       technologies: [
         "Next.js / React",
         "TypeScript",
         "Tailwind CSS",
         "Firebase (Authentication, Firestore)",
-        "Intelligence Artificielle (OpenAI / Anthropic)",
+        "Artificial Intelligence (OpenAI / Anthropic)",
       ],
     },
 
     section7: {
       title: "7. Cookies",
-      content1: "L'application Posty utilise des cookies pour assurer le bon fonctionnement du service et améliorer l'expérience utilisateur.",
-      content2: "Pour plus d'informations sur l'utilisation des cookies et la gestion de vos préférences, consultez notre Politique de cookies.",
-      cookiesLink: "Politique de cookies",
+      content1: "The Posty application uses cookies to ensure the proper functioning of the service and improve the user experience.",
+      content2: "For more information about the use of cookies and managing your preferences, please refer to our Cookie Policy.",
+      cookiesLink: "Cookie Policy",
     },
 
     section8: {
-      title: "8. Limitation de responsabilité",
-      content1: "Posty s'efforce d'assurer l'exactitude des informations diffusées sur l'application. Cependant, Posty ne peut garantir l'exactitude, la précision ou l'exhaustivité des informations mises à disposition.",
-      content2: "Le contenu généré par l'intelligence artificielle est fourni à titre indicatif. L'utilisateur reste seul responsable de l'utilisation qu'il en fait.",
+      title: "8. Limitation of Liability",
+      content1: "Posty strives to ensure the accuracy of the information published on the application. However, Posty cannot guarantee the accuracy, precision, or completeness of the information provided.",
+      content2: "Content generated by artificial intelligence is provided for informational purposes. The user is solely responsible for the use they make of it.",
     },
 
     section9: {
-      title: "9. Droit applicable",
-      content: "Les présentes Mentions légales sont régies par le droit français. En cas de litige, et à défaut de résolution amiable, les tribunaux français seront seuls compétents.",
+      title: "9. Governing Law",
+      content: "These Legal Notices are governed by French law. In the event of a dispute, and failing amicable resolution, French courts shall have sole jurisdiction.",
     },
 
     section10: {
       title: "10. Contact",
-      intro: "Pour toute question ou demande d'information concernant l'application :",
-      emailGeneral: "Email général :",
-      emailGDPR: "Email RGPD :",
-      emailSupport: "Support technique :",
+      intro: "For any question or request for information regarding the application:",
+      emailGeneral: "General email:",
+      emailGDPR: "GDPR email:",
+      emailSupport: "Technical support:",
     },
   },
 
   // Cookie Policy
   cookies: {
-    title: "Politique de cookies",
-    metaDescription: "Politique de cookies Posty : découvrez quels cookies nous utilisons et comment les gérer.",
+    title: "Cookie Policy",
+    metaDescription: "Posty Cookie Policy: learn what cookies we use and how to manage them.",
 
     section1: {
-      title: "1. Qu'est-ce qu'un cookie ?",
-      content: "Un cookie est un petit fichier texte déposé sur votre appareil (ordinateur, tablette, smartphone) lors de la visite d'un site web ou de l'utilisation d'une application. Les cookies permettent de stocker des informations relatives à votre navigation et sont essentiels au bon fonctionnement de nombreux services en ligne.",
+      title: "1. What Is a Cookie?",
+      content: "A cookie is a small text file stored on your device (computer, tablet, smartphone) when you visit a website or use an application. Cookies store information about your browsing and are essential for the proper functioning of many online services.",
     },
 
     section2: {
-      title: "2. Cookies utilisés par Posty",
-      intro: "Posty utilise différentes catégories de cookies :",
+      title: "2. Cookies Used by Posty",
+      intro: "Posty uses different categories of cookies:",
       essential: {
-        title: "2.1 Cookies strictement nécessaires",
-        description: "Ces cookies sont indispensables au fonctionnement du service. Ils ne peuvent pas être désactivés.",
+        title: "2.1 Strictly Necessary Cookies",
+        description: "These cookies are essential for the operation of the service. They cannot be disabled.",
         items: [
-          { name: "Session Firebase Auth", purpose: "Authentification et maintien de votre session de connexion", duration: "Session", provider: "Firebase (Google)" },
-          { name: "twitter_code_verifier", purpose: "Sécurisation du processus de connexion Twitter (OAuth PKCE)", duration: "10 minutes", provider: "Posty" },
-          { name: "posty_theme", purpose: "Mémorisation de votre préférence de thème (clair/sombre)", duration: "Persistant", provider: "Posty (localStorage)" },
-          { name: "posty_cookie_consent", purpose: "Enregistrement de vos choix de consentement cookies", duration: "12 mois", provider: "Posty (localStorage)" },
+          { name: "Firebase Auth Session", purpose: "Authentication and session management", duration: "Session", provider: "Firebase (Google)" },
+          { name: "twitter_code_verifier", purpose: "Twitter login security (OAuth PKCE)", duration: "10 minutes", provider: "Posty" },
+          { name: "posty_theme", purpose: "Remembering your theme preference (light/dark)", duration: "Persistent", provider: "Posty (localStorage)" },
+          { name: "posty_cookie_consent", purpose: "Recording your cookie consent choices", duration: "12 months", provider: "Posty (localStorage)" },
         ],
       },
       functional: {
-        title: "2.2 Cookies fonctionnels",
-        description: "Ces cookies améliorent votre expérience d'utilisation mais ne sont pas indispensables.",
+        title: "2.2 Functional Cookies",
+        description: "These cookies enhance your user experience but are not essential.",
         items: [
-          { name: "posty_sidebar_collapsed", purpose: "Mémorisation de l'état de la barre latérale", duration: "Persistant", provider: "Posty (localStorage)" },
-          { name: "posty_onboarding_completed", purpose: "Savoir si l'onboarding a été complété", duration: "Persistant", provider: "Posty (localStorage)" },
-          { name: "posty_last_visited_page", purpose: "Mémorisation de la dernière page visitée", duration: "Persistant", provider: "Posty (localStorage)" },
+          { name: "posty_sidebar_collapsed", purpose: "Remembering sidebar state", duration: "Persistent", provider: "Posty (localStorage)" },
+          { name: "posty_onboarding_completed", purpose: "Knowing if onboarding was completed", duration: "Persistent", provider: "Posty (localStorage)" },
+          { name: "posty_last_visited_page", purpose: "Remembering the last visited page", duration: "Persistent", provider: "Posty (localStorage)" },
         ],
       },
       analytics: {
-        title: "2.3 Cookies analytiques (optionnels)",
-        description: "Ces cookies nous aident à comprendre comment vous utilisez l'application afin de l'améliorer. Ils ne sont activés qu'avec votre consentement explicite.",
+        title: "2.3 Analytics Cookies (optional)",
+        description: "These cookies help us understand how you use the application to improve it. They are only activated with your explicit consent.",
         items: [
-          { name: "Analytics internes", purpose: "Mesure d'utilisation anonymisée (nombre de posts, sessions)", duration: "12 mois", provider: "Posty" },
+          { name: "Internal analytics", purpose: "Anonymized usage metrics (number of posts, sessions)", duration: "12 months", provider: "Posty" },
         ],
-        noThirdParty: "Posty n'utilise pas de services d'analytics tiers (pas de Google Analytics, Facebook Pixel, etc.). Toutes les mesures sont effectuées en interne et les données restent sur nos serveurs.",
+        noThirdParty: "Posty does not use third-party analytics services (no Google Analytics, Facebook Pixel, etc.). All measurements are performed internally and data remains on our servers.",
       },
       thirdParty: {
-        title: "2.4 Cookies tiers",
-        description: "Certains services tiers peuvent déposer des cookies lors de leur utilisation :",
+        title: "2.4 Third-Party Cookies",
+        description: "Some third-party services may set cookies during their use:",
         items: [
-          { name: "Stripe", purpose: "Sécurisation des paiements et prévention de la fraude", duration: "Variable", provider: "Stripe Inc." },
-          { name: "LinkedIn OAuth", purpose: "Connexion et publication sur LinkedIn", duration: "Session", provider: "LinkedIn (Microsoft)" },
-          { name: "Twitter/X OAuth", purpose: "Connexion et publication sur Twitter/X", duration: "Session", provider: "X Corp." },
-          { name: "Facebook/Threads OAuth", purpose: "Connexion et publication sur Facebook/Threads", duration: "Session", provider: "Meta Platforms" },
+          { name: "Stripe", purpose: "Payment security and fraud prevention", duration: "Variable", provider: "Stripe Inc." },
+          { name: "LinkedIn OAuth", purpose: "LinkedIn connection and publishing", duration: "Session", provider: "LinkedIn (Microsoft)" },
+          { name: "Twitter/X OAuth", purpose: "Twitter/X connection and publishing", duration: "Session", provider: "X Corp." },
+          { name: "Facebook/Threads OAuth", purpose: "Facebook/Threads connection and publishing", duration: "Session", provider: "Meta Platforms" },
         ],
-        note: "Ces cookies tiers sont soumis aux politiques de confidentialité de leurs fournisseurs respectifs.",
+        note: "These third-party cookies are subject to the privacy policies of their respective providers.",
       },
     },
 
     section3: {
-      title: "3. Gestion de vos préférences",
-      intro: "Vous pouvez gérer vos préférences de cookies de plusieurs façons :",
+      title: "3. Managing Your Preferences",
+      intro: "You can manage your cookie preferences in several ways:",
       methods: [
-        { title: "Via le bandeau cookies", desc: "Lors de votre première visite, un bandeau vous permet d'accepter ou refuser les cookies non essentiels." },
-        { title: "Via les paramètres de l'application", desc: "Dans Paramètres > Préférences de confidentialité, vous pouvez modifier vos choix à tout moment." },
-        { title: "Via votre navigateur", desc: "Vous pouvez configurer votre navigateur pour bloquer ou supprimer les cookies. Attention, cela peut affecter le fonctionnement du service." },
+        { title: "Via the cookie banner", desc: "On your first visit, a banner allows you to accept or decline non-essential cookies." },
+        { title: "Via application settings", desc: "In Settings > Privacy Preferences, you can change your choices at any time." },
+        { title: "Via your browser", desc: "You can configure your browser to block or delete cookies. Please note that this may affect the functioning of the service." },
       ],
     },
 
     section4: {
-      title: "4. Conséquences du refus des cookies",
-      content: "Le refus des cookies strictement nécessaires peut empêcher l'utilisation du service (authentification impossible). Le refus des cookies analytiques n'a aucun impact sur votre utilisation du service.",
+      title: "4. Consequences of Refusing Cookies",
+      content: "Refusing strictly necessary cookies may prevent the use of the service (authentication impossible). Refusing analytics cookies has no impact on your use of the service.",
     },
 
     section5: {
-      title: "5. Durée de conservation",
-      content: "Vos préférences de cookies sont conservées pendant 12 mois. À l'issue de cette période, votre consentement vous sera à nouveau demandé.",
+      title: "5. Retention Period",
+      content: "Your cookie preferences are stored for 12 months. At the end of this period, your consent will be requested again.",
     },
 
     section6: {
-      title: "6. Mises à jour de cette politique",
-      content: "Cette politique de cookies peut être mise à jour pour refléter des changements dans nos pratiques ou pour des raisons réglementaires. La date de dernière mise à jour est indiquée en haut de cette page.",
+      title: "6. Updates to This Policy",
+      content: "This cookie policy may be updated to reflect changes in our practices or for regulatory reasons. The last updated date is indicated at the top of this page.",
     },
 
     section7: {
       title: "7. Contact",
-      intro: "Pour toute question concernant notre utilisation des cookies :",
-      email: "Email : postygroup@gmail.com",
+      intro: "For any questions regarding our use of cookies:",
+      email: "Email: postygroup@gmail.com",
     },
   },
 
   // Cookie Banner
   cookieBanner: {
-    title: "Nous respectons votre vie privée",
-    description: "Posty utilise des cookies essentiels pour le fonctionnement du service. Les cookies analytiques sont optionnels et nous aident à améliorer l'application.",
-    acceptAll: "Tout accepter",
-    rejectOptional: "Refuser les optionnels",
-    customize: "Personnaliser",
-    savePreferences: "Enregistrer mes choix",
-    essentialLabel: "Cookies essentiels",
-    essentialDesc: "Nécessaires au fonctionnement (authentification, sécurité). Ne peuvent pas être désactivés.",
-    analyticsLabel: "Cookies analytiques",
-    analyticsDesc: "Nous aident à comprendre l'utilisation de l'application pour l'améliorer.",
-    learnMore: "En savoir plus",
-    preferencesTitle: "Préférences de cookies",
+    title: "We respect your privacy",
+    description: "Posty uses essential cookies for the operation of the service. Analytics cookies are optional and help us improve the application.",
+    acceptAll: "Accept all",
+    rejectOptional: "Reject optional",
+    customize: "Customize",
+    savePreferences: "Save my preferences",
+    essentialLabel: "Essential cookies",
+    essentialDesc: "Required for operation (authentication, security). Cannot be disabled.",
+    analyticsLabel: "Analytics cookies",
+    analyticsDesc: "Help us understand how the application is used to improve it.",
+    learnMore: "Learn more",
+    preferencesTitle: "Cookie preferences",
   },
 } as const;

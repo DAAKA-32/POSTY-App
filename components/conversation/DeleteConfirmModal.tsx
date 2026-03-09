@@ -6,6 +6,7 @@ import { Post } from "@/types";
 import Modal from "@/components/ui/Modal";
 import BottomSheet from "@/components/ui/BottomSheet";
 import Button from "@/components/ui/Button";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface DeleteConfirmModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ export default function DeleteConfirmModal({
   post,
   onConfirm,
 }: DeleteConfirmModalProps) {
+  const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
 
   // SSR-safe mobile detection
@@ -86,14 +88,13 @@ export default function DeleteConfirmModal({
       {/* Content */}
       <div className="pb-4">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-text-primary mb-2">
-          Supprimer la conversation ?
+          {t.ui.deleteConversation}
         </h2>
         <p className="text-sm text-gray-600 dark:text-text-muted leading-relaxed">
-          Êtes-vous sûr de vouloir supprimer
+          {t.modals.deleteConversationWarning}
           <span className="text-gray-800 dark:text-text-secondary font-medium mx-1">
             &ldquo;{displayTitle.length > 40 ? displayTitle.slice(0, 40) + "..." : displayTitle}&rdquo;
           </span>
-          ? Cette action est irréversible.
         </p>
       </div>
 
@@ -106,7 +107,7 @@ export default function DeleteConfirmModal({
           disabled={isLoading}
           fullWidth
         >
-          Annuler
+          {t.templates.cancel}
         </Button>
         <Button
           type="button"
@@ -118,7 +119,7 @@ export default function DeleteConfirmModal({
           <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
           </svg>
-          Supprimer
+          {t.ui.confirmDeletion}
         </Button>
       </div>
     </div>

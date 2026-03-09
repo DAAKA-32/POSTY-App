@@ -16,6 +16,7 @@ import toast from "@/components/ui/Toast";
 import { useBrowserMode, setBrowserModeCSSVars } from "@/hooks/useBrowserMode";
 import UniversalChatInput from "@/components/chat/UniversalChatInput";
 import { getPlanLimits } from "@/lib/plans";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 const GUEST_LIMIT = 2;
 
@@ -29,6 +30,7 @@ interface Message {
 export default function ChatPage() {
   const { user, loading: authLoading } = useAuth();
   const { t } = useLanguage();
+  usePageTitle("chat");
   const router = useRouter();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");

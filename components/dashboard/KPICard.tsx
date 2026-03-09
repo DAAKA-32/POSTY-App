@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface KPICardProps {
   title: string;
@@ -25,6 +26,7 @@ export default function KPICard({
   color,
   tooltip,
 }: KPICardProps) {
+  const { language } = useLanguage();
   const [showTooltip, setShowTooltip] = useState(false);
 
   // Clean color palette - solid colors, no glow
@@ -125,7 +127,7 @@ export default function KPICard({
 
       {/* Value */}
       <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-1">
-        {value.toLocaleString("fr-FR")}
+        {value.toLocaleString(language === "en" ? "en-US" : "fr-FR")}
       </p>
 
       {/* Title */}

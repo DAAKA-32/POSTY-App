@@ -10,6 +10,7 @@ import {
   withdrawConsent,
   updateConsentPreference,
   deleteAllUserConversations,
+  updateUserProfile,
   UserConsent,
 } from "@/lib/firestore";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
@@ -22,6 +23,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import toast from "@/components/ui/Toast";
 import { SubscriptionManagement, PlatformConnectionsSection } from "@/components/settings";
 import { useSubscription } from "@/contexts/SubscriptionContext";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 // Animation variants for staggered sections
 const containerVariants = {
@@ -49,9 +51,10 @@ const sectionVariants = {
 
 function SettingsContent() {
   const { user, deleteUserAccount, signOut } = useAuth();
-  const { t } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
   const { theme, toggleTheme, isDark } = useTheme();
   useSubscription();
+  usePageTitle("settings");
   const router = useRouter();
   const searchParams = useSearchParams();
   const [consent, setConsent] = useState<UserConsent | null>(null);
@@ -332,6 +335,63 @@ function SettingsContent() {
               />
             </motion.section>
 
+            {/* Language Section */}
+            <motion.section
+              variants={sectionVariants}
+              className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-xl p-4 md:p-5 lg:p-6 transition-colors duration-200"
+            >
+              <div className="flex items-center gap-3 mb-4 lg:mb-5">
+                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-[#F8935D]/10 flex items-center justify-center">
+                  <svg className="w-5 h-5 lg:w-6 lg:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-base lg:text-lg font-semibold text-silver-solid dark:text-white">{t.settings.language}</h2>
+                  <p className="text-xs lg:text-sm text-text-muted mt-0.5">{t.settings.languageSubtitle}</p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                {([
+                  { code: "en" as const, label: t.settings.languageEnglish, flag: "🇺🇸" },
+                  { code: "fr" as const, label: t.settings.languageFrench, flag: "🇫🇷" },
+                ]).map((lang) => (
+                  <button
+                    key={lang.code}
+                    onClick={async () => {
+                      setLanguage(lang.code);
+                      if (user) {
+                        try {
+                          await updateUserProfile(user.uid, { language: lang.code });
+                        } catch (e) {
+                          console.error("Error saving language preference:", e);
+                        }
+                      }
+                      toast.success(t.settings.languageChanged);
+                    }}
+                    className={`
+                      w-full flex items-center gap-3 p-3 lg:p-4 rounded-xl border transition-all duration-200
+                      ${language === lang.code
+                        ? "bg-[#F8935D]/5 dark:bg-primary/10 border-[#F8935D]/30 dark:border-primary/30"
+                        : "bg-white dark:bg-dark-bg border-gray-200 dark:border-dark-border hover:border-gray-300 dark:hover:border-dark-border-hover"
+                      }
+                    `}
+                  >
+                    <span className="text-2xl">{lang.flag}</span>
+                    <span className={`font-medium text-sm lg:text-base ${language === lang.code ? "text-gray-900 dark:text-white" : "text-gray-600 dark:text-gray-400"}`}>
+                      {lang.label}
+                    </span>
+                    {language === lang.code && (
+                      <svg className="w-5 h-5 text-[#F8935D] ml-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </motion.section>
+
             {/* Notifications Section */}
             <motion.section
               variants={sectionVariants}
@@ -362,7 +422,7 @@ function SettingsContent() {
                     <p className="text-xs lg:text-sm text-text-muted mt-0.5">{t.settings.securityAlertsDesc}</p>
                   </div>
                 </div>
-                <span className="px-2.5 py-1 bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-300 text-xs font-medium rounded-lg">Toujours actif</span>
+                <span className="px-2.5 py-1 bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-300 text-xs font-medium rounded-lg">{t.settings.alwaysActive}</span>
               </div>
             </motion.section>
 
@@ -589,7 +649,7 @@ function SettingsContent() {
                   className="flex items-center justify-between p-3 lg:p-4 bg-[#F8935D]/5 dark:bg-dark-bg rounded-xl border border-[#F8935D]/10 dark:border-dark-border hover:border-primary/30 transition-all duration-200 group"
                 >
                   <span className="text-gray-900 dark:text-white text-sm lg:text-base group-hover:text-primary transition-colors">
-                    Politique de cookies
+                    {t.settings.cookiePolicy}
                   </span>
                   <svg className="w-4 h-4 lg:w-5 lg:h-5 text-text-muted group-hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />

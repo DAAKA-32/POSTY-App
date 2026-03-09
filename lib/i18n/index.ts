@@ -27,6 +27,6 @@ export const languageNames: Record<Language, string> = {
   en: "English (US)",
 };
 
-export const defaultLanguage: Language = "fr";
+export const defaultLanguage: Language = "en";
 
 export { fr, en };

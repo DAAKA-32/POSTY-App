@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Post } from "@/types";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useScrollLock } from "@/hooks/useScrollLock";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ChatHistoryModalProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ export default function ChatHistoryModal({
   searchQuery,
 }: ChatHistoryModalProps) {
   const prefersReducedMotion = useReducedMotion();
+  const { t } = useLanguage();
 
   // Handle escape key
   const handleKeyDown = useCallback(
@@ -173,7 +175,7 @@ export default function ChatHistoryModal({
               <div className="flex items-center justify-between p-4 lg:p-5 border-b border-dark-border shrink-0">
                 <div>
                   <h2 className="text-lg lg:text-xl font-semibold text-text-primary">
-                    Historique des chats
+                    {t.ui.history}
                   </h2>
                   <p className="text-sm text-text-muted mt-0.5">
                     {filteredPosts.length} conversation{filteredPosts.length !== 1 ? "s" : ""}
@@ -237,7 +239,7 @@ export default function ChatHistoryModal({
                         delay: prefersReducedMotion ? 0 : 0.2,
                       }}
                     >
-                      {searchQuery ? "Aucun résultat pour cette recherche" : "Aucune conversation"}
+                      {searchQuery ? t.ui.noSearchResults : t.ui.noConversation}
                     </motion.p>
                   </motion.div>
                 ) : (
@@ -377,7 +379,7 @@ export default function ChatHistoryModal({
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  Voir tout l&apos;historique
+                  {t.ui.viewAllHistory}
                 </Link>
               </div>
             </motion.div>

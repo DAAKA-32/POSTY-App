@@ -12,6 +12,7 @@ import {
 import { auth } from "@/lib/firebase";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type ActionMode = "resetPassword" | "verifyEmail" | "recoverEmail" | null;
 type PageState = "loading" | "form" | "success" | "error";
@@ -20,6 +21,7 @@ function AuthActionContent() {
   const searchParams = useSearchParams();
   const mode = searchParams.get("mode") as ActionMode;
   const oobCode = searchParams.get("oobCode") || "";
+  const { t } = useLanguage();
 
   const [pageState, setPageState] = useState<PageState>("loading");
   const [email, setEmail] = useState("");
@@ -99,7 +101,7 @@ function AuthActionContent() {
         );
       } else if (firebaseError.code === "auth/weak-password") {
         setErrorMessage(
-          "Mot de passe trop faible. Utilisez au moins 6 caractères."
+          t.ui.weakPassword
         );
       } else {
         setErrorMessage(
@@ -116,7 +118,7 @@ function AuthActionContent() {
     return (
       <div className="flex flex-col items-center gap-4">
         <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-        <p className="text-text-secondary text-sm">Vérification en cours...</p>
+        <p className="text-text-secondary text-sm">{t.common.loading}</p>
       </div>
     );
   }
@@ -161,7 +163,7 @@ function AuthActionContent() {
             href="/login"
             className="block text-center text-text-secondary hover:text-foreground transition-colors text-sm py-2"
           >
-            Retour à la connexion
+            {t.ui.backToLogin}
           </Link>
         </div>
       </div>
@@ -195,7 +197,7 @@ function AuthActionContent() {
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-foreground mb-3">
-            {isReset ? "Mot de passe modifié" : "Email vérifié"}
+            {isReset ? t.ui.passwordChanged : t.ui.emailVerified}
           </h1>
           <p className="text-text-secondary">
             {isReset
@@ -237,7 +239,7 @@ function AuthActionContent() {
           </svg>
         </div>
         <h1 className="text-2xl font-bold text-foreground mb-3">
-          Nouveau mot de passe
+          {t.ui.newPassword}
         </h1>
         <p className="text-text-secondary">
           Choisissez un nouveau mot de passe pour{" "}
@@ -268,7 +270,7 @@ function AuthActionContent() {
         <Input
           ref={passwordRef}
           type="password"
-          label="Nouveau mot de passe"
+          label={t.ui.newPassword}
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
           required
@@ -279,7 +281,7 @@ function AuthActionContent() {
 
         <Input
           type="password"
-          label="Confirmer le mot de passe"
+          label={t.ui.confirmPasswordLabel}
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           required
@@ -311,17 +313,18 @@ function AuthActionContent() {
             d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
           />
         </svg>
-        <span>Connexion sécurisée SSL</span>
+        <span>{t.ui.sslSecure}</span>
       </div>
     </div>
   );
 }
 
 function LoadingFallback() {
+  const { t } = useLanguage();
   return (
     <div className="flex flex-col items-center gap-4">
       <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-      <p className="text-text-secondary text-sm">Chargement...</p>
+      <p className="text-text-secondary text-sm">{t.common.loading}</p>
     </div>
   );
 }

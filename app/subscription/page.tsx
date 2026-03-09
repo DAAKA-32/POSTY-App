@@ -13,6 +13,7 @@ import BillingToggle from "@/components/ui/BillingToggle";
 import toast from "@/components/ui/Toast";
 import WelcomeModal from "@/components/ui/WelcomeModal";
 import PricingCard from "@/components/pricing/PricingCard";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 // Get all plans (Free + Pro + Max) from lib/plans.ts (single source of truth)
 const PLANS = getAllPlans();
@@ -23,6 +24,7 @@ function SubscriptionContent() {
   const { user, signOut, userProfile } = useAuth();
   const { currentPlan, canStartTrial, refreshSubscription } = useSubscription();
   const { t } = useLanguage();
+  usePageTitle("subscription");
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("yearly");
   const [isLoading, setIsLoading] = useState<PlanType | null>(null);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
@@ -193,18 +195,18 @@ function SubscriptionContent() {
                 <div className="flex-1">
                   <p className="text-sm font-semibold text-primary-dark dark:text-primary-light mb-1">
                     {searchParams.get("reason") === "subscription_required"
-                      ? "Abonnement requis"
+                      ? t.subscriptionPage.subscriptionRequired
                       : searchParams.get("reason") === "trial_expired"
-                      ? "Essai terminé"
-                      : "Mise à niveau nécessaire"
+                      ? t.subscriptionPage.trialExpired
+                      : t.subscriptionPage.upgradeNeeded
                     }
                   </p>
                   <p className="text-xs text-primary-dark dark:text-secondary">
                     {searchParams.get("reason") === "subscription_required"
-                      ? "Un abonnement actif est nécessaire pour accéder à cette fonctionnalité. Commencez votre essai gratuit dès maintenant !"
+                      ? t.subscriptionPage.subscriptionRequiredDesc
                       : searchParams.get("reason") === "trial_expired"
-                      ? "Votre période d'essai est terminée. Choisissez un plan pour continuer à profiter de Posty."
-                      : "Cette fonctionnalité nécessite un abonnement premium."
+                      ? t.subscriptionPage.trialExpiredDesc
+                      : t.subscriptionPage.upgradeNeededDesc
                     }
                   </p>
                 </div>
@@ -218,7 +220,7 @@ function SubscriptionContent() {
             onChange={(isYearly) => setBillingPeriod(isYearly ? "yearly" : "monthly")}
             monthlyLabel={t.pricing.monthly}
             yearlyLabel={t.pricing.yearly}
-            savingsLabel="2 mois offerts"
+            savingsLabel={t.subscriptionPage.monthsFree}
             showSavings={true}
             size="md"
             className="mb-12"
@@ -246,11 +248,11 @@ function SubscriptionContent() {
         {/* Legal notice — EU withdrawal waiver (Directive 2011/83/EU, art. L.221-28) */}
         <div className="max-w-2xl mx-auto mt-8 text-center">
           <p className="text-[10px] sm:text-xs text-text-muted leading-relaxed">
-            En souscrivant, vous acceptez nos{" "}
+            {t.subscriptionPage.legalNotice}{" "}
             <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary transition-colors">
-              Conditions Générales d&apos;Utilisation
+              {t.subscriptionPage.termsLink}
             </a>{" "}
-            et consentez à l&apos;accès immédiat au service. Conformément à l&apos;article L.221-28 du Code de la consommation, vous renoncez à votre droit de rétractation de 14 jours dès le début de l&apos;utilisation du service. Garantie satisfait ou remboursé {GUARANTEE_PERIOD_DAYS} jours.
+            {t.subscriptionPage.legalNotice2} {GUARANTEE_PERIOD_DAYS} {t.subscriptionPage.guaranteeNotice}
           </p>
         </div>
 
@@ -266,7 +268,7 @@ function SubscriptionContent() {
               {t.pricing.faqTitle}
             </h2>
             <p className="text-text-secondary text-sm md:text-base max-w-lg mx-auto">
-              Tout ce que vous devez savoir sur nos offres
+              {t.subscriptionPage.faqSubtitle}
             </p>
           </div>
 
@@ -310,12 +312,12 @@ function SubscriptionContent() {
               <button
                 onClick={() => { window.location.href = "/onboarding?edit=true"; }}
                 className="flex items-center gap-2 text-sm text-text-secondary hover:text-primary transition-colors group"
-                aria-label="Modifier mon profil"
+                aria-label={t.subscriptionPage.editProfile}
               >
                 <svg className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
-                <span>Modifier mon profil</span>
+                <span>{t.subscriptionPage.editProfile}</span>
               </button>
             ) : (
               <div />
@@ -323,9 +325,9 @@ function SubscriptionContent() {
             <button
               onClick={async () => { await signOut(); router.push("/login"); }}
               className="flex items-center gap-2 text-sm text-text-secondary hover:text-primary transition-colors group"
-              aria-label="Retour à la connexion"
+              aria-label={t.subscriptionPage.backToLogin}
             >
-              <span>Retour à la connexion</span>
+              <span>{t.subscriptionPage.backToLogin}</span>
               <svg
                 className="w-4 h-4 group-hover:translate-x-0.5 transition-transform"
                 fill="none"

@@ -1,10 +1,13 @@
 "use client";
 
+import { useLanguage } from "@/contexts/LanguageContext";
+
 interface ResponseModeChartProps {
   data: { mode: string; count: number }[];
 }
 
 export default function ResponseModeChart({ data }: ResponseModeChartProps) {
+  const { t } = useLanguage();
   const total = data.reduce((sum, d) => sum + d.count, 0);
 
   const getPercentage = (count: number) => {
@@ -58,8 +61,8 @@ export default function ResponseModeChart({ data }: ResponseModeChartProps) {
     <div className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-4 sm:p-6 hover:border-gray-300 dark:hover:border-dark-border-hover transition-colors duration-200">
       {/* Header */}
       <div className="mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Mode de réponse</h3>
-        <p className="text-gray-500 dark:text-text-muted text-sm">Fréquence d&apos;utilisation par mode</p>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t.dashboard.responseMode}</h3>
+        <p className="text-gray-500 dark:text-text-muted text-sm">{t.dashboard.responseModeSubtitle}</p>
       </div>
 
       {/* Distribution bars */}
@@ -102,7 +105,7 @@ export default function ResponseModeChart({ data }: ResponseModeChartProps) {
             </svg>
           </div>
           <p className="text-gray-500 dark:text-text-muted text-sm">
-            Aucun post généré pour le moment
+            {t.dashboard.noPostGenerated}
           </p>
         </div>
       )}

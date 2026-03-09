@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Post } from "@/types";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ConversationOptionsMenuProps {
   post: Post;
@@ -26,6 +27,7 @@ export default function ConversationOptionsMenu({
   onRename,
   onDelete,
 }: ConversationOptionsMenuProps) {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState<MenuPosition>({
     top: 0,
@@ -46,7 +48,7 @@ export default function ConversationOptionsMenu({
   const menuItems = useMemo(() => [
     {
       id: "pin",
-      label: post.isPinned ? "Désépingler" : "Épingler",
+      label: post.isPinned ? t.ui.unpin : t.ui.pin,
       icon: post.isPinned ? (
         <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
           <path d="M16 4a1 1 0 0 1 1 1v3.586l1.707 1.707a1 1 0 0 1 .293.707v2a1 1 0 0 1-1 1h-4v6a1 1 0 0 1-2 0v-6H8a1 1 0 0 1-1-1v-2a1 1 0 0 1 .293-.707L9 8.586V5a1 1 0 0 1 1-1h6z"/>
@@ -62,7 +64,7 @@ export default function ConversationOptionsMenu({
     },
     {
       id: "rename",
-      label: "Renommer",
+      label: t.history.rename,
       icon: (
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -78,7 +80,7 @@ export default function ConversationOptionsMenu({
     },
     {
       id: "delete",
-      label: "Supprimer",
+      label: t.ui.deletePost,
       icon: (
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -92,7 +94,7 @@ export default function ConversationOptionsMenu({
       action: () => onDelete(post.id),
       variant: "danger" as const,
     },
-  ], [post.id, post.isPinned, onPin, onRename, onDelete]);
+  ], [post.id, post.isPinned, onPin, onRename, onDelete, t]);
 
   const handleAction = useCallback((action: () => void) => {
     setIsOpen(false);
@@ -322,7 +324,7 @@ export default function ConversationOptionsMenu({
           touch-manipulation
           ${isOpen ? "bg-dark-hover text-text-primary" : ""}
         `}
-        aria-label="Options de la conversation"
+        aria-label={t.ui.openConversation}
         aria-expanded={isOpen}
         aria-haspopup="menu"
       >

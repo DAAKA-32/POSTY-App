@@ -70,17 +70,23 @@ export default function HelpPopover({
     };
   }, [isOpen, calculatePosition]);
 
-  // Close on Escape
+  // Any dismissal (button, click outside, Escape) marks help as read
+  const handleDismiss = useCallback(() => {
+    onMarkRead();
+    onClose();
+  }, [onMarkRead, onClose]);
+
+  // Close on Escape — also marks as read
   useEffect(() => {
     if (!isOpen) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") handleDismiss();
     };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
-  }, [isOpen, onClose]);
+  }, [isOpen, handleDismiss]);
 
-  // Close on click outside
+  // Close on click outside — also marks as read
   useEffect(() => {
     if (!isOpen) return;
     const handler = (e: MouseEvent) => {
@@ -88,7 +94,7 @@ export default function HelpPopover({
         popoverRef.current &&
         !popoverRef.current.contains(e.target as Node)
       ) {
-        onClose();
+        handleDismiss();
       }
     };
     const timer = setTimeout(() => {
@@ -98,12 +104,7 @@ export default function HelpPopover({
       clearTimeout(timer);
       document.removeEventListener("mousedown", handler);
     };
-  }, [isOpen, onClose]);
-
-  const handleGotIt = () => {
-    onMarkRead();
-    onClose();
-  };
+  }, [isOpen, handleDismiss]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const helpPages = (t as any).help?.pages;
@@ -192,7 +193,7 @@ export default function HelpPopover({
 
             {/* Got it button */}
             <button
-              onClick={handleGotIt}
+              onClick={handleDismiss}
               className="w-full py-2 px-4 rounded-lg text-sm font-semibold text-white transition-all duration-200 hover:opacity-90 active:scale-[0.98]"
               style={{ backgroundColor: config.accentColor }}
             >

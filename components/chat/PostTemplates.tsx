@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useRef, useCallback, useEffect } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // Template data structure - exported for type usage
 export interface PostTemplate {
@@ -131,8 +132,13 @@ interface PostTemplatesProps {
  * - Hover and click animations
  */
 export default function PostTemplates({ onSelect, className = "" }: PostTemplatesProps) {
+  const { t } = useLanguage();
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [hoveredTemplate, setHoveredTemplate] = useState<string | null>(null);
+
+  // Get translated name/description for a template
+  const getTemplateName = (id: string) => (t.templates as unknown as Record<string, string>)[id] || id;
+  const getTemplateDesc = (id: string) => (t.templates as unknown as Record<string, string>)[`${id}Desc`] || "";
 
   const handleTemplateClick = (templateId: string) => {
     if (selectedTemplate === templateId) {
@@ -161,10 +167,10 @@ export default function PostTemplates({ onSelect, className = "" }: PostTemplate
         </div>
         <div>
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-            Templates de Posts
+            {t.templates.title}
           </h3>
           <p className="text-xs text-gray-500 dark:text-text-muted">
-            Choisissez un format pour commencer
+            {t.templates.subtitle}
           </p>
         </div>
       </div>
@@ -198,13 +204,13 @@ export default function PostTemplates({ onSelect, className = "" }: PostTemplate
                     : "text-gray-700 dark:text-text-secondary"
                   }
                 `}>
-                  {template.name}
+                  {getTemplateName(template.id)}
                 </span>
               </div>
 
               {/* Description */}
               <p className="text-xs text-gray-500 dark:text-text-muted line-clamp-2">
-                {template.description}
+                {getTemplateDesc(template.id)}
               </p>
 
               {/* Gradient indicator */}
@@ -231,7 +237,7 @@ export default function PostTemplates({ onSelect, className = "" }: PostTemplate
                     shadow-xl backdrop-blur-sm
                   `}>
                     <p className="text-xs font-medium text-gray-700 dark:text-text-secondary mb-2">
-                      Template structuré :
+                      {t.templates.structuredTemplate}
                     </p>
                     <div className="mb-3 p-2.5 bg-white dark:bg-dark-card rounded-lg text-xs text-gray-600 dark:text-text-secondary border border-gray-100 dark:border-dark-border">
                       {template.template}
@@ -242,7 +248,7 @@ export default function PostTemplates({ onSelect, className = "" }: PostTemplate
                       whileTap={{ scale: 0.99 }}
                       className="w-full p-2.5 bg-gradient-to-r from-primary to-accent text-white rounded-lg text-xs font-medium hover:shadow-md transition-all"
                     >
-                      Utiliser ce template
+                      {t.templates.useTemplate}
                     </motion.button>
                   </div>
                 </motion.div>
@@ -269,6 +275,11 @@ export default function PostTemplates({ onSelect, className = "" }: PostTemplate
  * - Respects prefers-reduced-motion
  */
 export function CompactPostTemplates({ onSelect, onTemplateSelect, className = "", disabled = false, templateOrder }: PostTemplatesProps) {
+  const { t } = useLanguage();
+
+  // Get translated name for a template
+  const getTemplateName = (id: string) => (t.templates as unknown as Record<string, string>)[id] || id;
+
   // UI state (for re-renders)
   const [isDraggingState, setIsDraggingState] = useState(false);
   const [scrollX, setScrollX] = useState(0);
@@ -615,7 +626,7 @@ export function CompactPostTemplates({ onSelect, onTemplateSelect, className = "
                     : 'text-gray-700 dark:text-text-secondary'
                   }
                 `}>
-                  {template.name}
+                  {getTemplateName(template.id)}
                 </span>
               </button>
             );

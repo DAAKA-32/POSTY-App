@@ -21,6 +21,7 @@ import RenameConversationModal from "@/components/conversation/RenameConversatio
 import toast from "@/components/ui/Toast";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useListKeyboardNavigation } from "@/hooks/useListKeyboardNavigation";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 // Format date helper - accepts translations for today/yesterday
 interface DateLabels {
@@ -81,6 +82,7 @@ function HistoryContent() {
   const { user } = useAuth();
   const { t, language } = useLanguage();
   const { connection: linkedInConnection, publishToLinkedIn } = useLinkedIn();
+  usePageTitle("history");
 
   // Enable full scrolling on History page (mouse wheel, trackpad, touch, keyboard)
   useEffect(() => {

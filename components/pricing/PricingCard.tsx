@@ -5,13 +5,14 @@ import { motion } from "framer-motion";
 import {
   PlanConfig,
   PlanType,
-  PLAN_TAGLINES,
-  getPlanFeaturesUnified,
-  getCTALabel,
-  getSavingsText,
+  getLocalizedPlanTaglines,
+  getLocalizedPlanFeaturesUnified,
+  getLocalizedCTALabel,
+  getLocalizedSavingsText,
   getYearlyMonthlyEquivalent,
   GUARANTEE_PERIOD_DAYS,
 } from "@/lib/plans";
+import { useLanguage } from "@/contexts/LanguageContext";
 import PricingFeatureItem from "./PricingFeatureItem";
 
 // ============================================================
@@ -42,11 +43,13 @@ export default function PricingCard({
   onSelect,
   ctaHref,
 }: PricingCardProps) {
+  const { t } = useLanguage();
   const isFree = plan.id === "free";
   const isPopular = plan.highlight;
   const isPremium = plan.premium;
-  const allFeatures = getPlanFeaturesUnified(plan);
-  const planInfo = PLAN_TAGLINES[plan.id] || { tagline: plan.description, idealFor: "" };
+  const allFeatures = getLocalizedPlanFeaturesUnified(plan, t);
+  const localizedTaglines = getLocalizedPlanTaglines(t);
+  const planInfo = localizedTaglines[plan.id] || { tagline: plan.description, idealFor: "" };
 
   const displayPrice = isFree
     ? 0
@@ -54,7 +57,7 @@ export default function PricingCard({
       ? plan.price.monthly
       : getYearlyMonthlyEquivalent(plan.id);
 
-  const savingsText = isFree ? null : getSavingsText(plan.id);
+  const savingsText = isFree ? null : getLocalizedSavingsText(plan.id, t);
   const showSavings = billingPeriod === "yearly" && !!savingsText;
 
   // Max card = gold premium variant
@@ -109,8 +112,8 @@ export default function PricingCard({
               <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
               </svg>
-              <span className="hidden sm:inline">Recommandé</span>
-              <span className="sm:hidden">Top</span>
+              <span className="hidden sm:inline">{t.pricingCard.recommended}</span>
+              <span className="sm:hidden">{t.pricingCard.recommendedShort}</span>
             </span>
           )}
           {isGoldCard && !isPopular && (
@@ -118,8 +121,8 @@ export default function PricingCard({
               <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.381z" clipRule="evenodd" />
               </svg>
-              <span className="hidden sm:inline">Le plus performant</span>
-              <span className="sm:hidden">Max</span>
+              <span className="hidden sm:inline">{t.pricingCard.mostPowerful}</span>
+              <span className="sm:hidden">{t.pricingCard.mostPowerfulShort}</span>
             </span>
           )}
           {!isPopular && !isGoldCard && <div className="h-6 sm:h-7" />}
@@ -139,7 +142,7 @@ export default function PricingCard({
               <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
-              <span className="hidden sm:inline">Actuel</span>
+              <span className="hidden sm:inline">{t.pricingCard.current}</span>
             </div>
           )}
         </div>
@@ -168,7 +171,7 @@ export default function PricingCard({
           {isFree ? (
             <div className="flex items-baseline justify-center gap-0.5 sm:gap-1">
               <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight text-gray-900 dark:text-white">
-                Gratuit
+                {t.pricingCard.free}
               </span>
             </div>
           ) : (
@@ -189,7 +192,7 @@ export default function PricingCard({
               }`}>€</span>
               <span className={`text-[10px] sm:text-xs md:text-sm font-medium ${
                 isGoldCard ? "text-gray-500 dark:text-gray-400" : "text-gray-500 dark:text-gray-400"
-              }`}>/mois</span>
+              }`}>{t.pricingCard.perMonth}</span>
             </motion.div>
           )}
 
@@ -241,19 +244,19 @@ export default function PricingCard({
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>
-                    <span className="hidden sm:inline">Redirection...</span>
+                    <span className="hidden sm:inline">{t.pricingCard.redirecting}</span>
                   </>
                 ) : isCurrentPlan ? (
                   <>
                     <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                     </svg>
-                    <span className="hidden sm:inline">Plan actuel</span>
-                    <span className="sm:hidden">Actuel</span>
+                    <span className="hidden sm:inline">{t.pricingCard.currentPlan}</span>
+                    <span className="sm:hidden">{t.pricingCard.current}</span>
                   </>
                 ) : (
                   <>
-                    {getCTALabel(plan.id, billingPeriod === "yearly")}
+                    {getLocalizedCTALabel(plan.id, t)}
                     <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 hidden sm:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                     </svg>
@@ -277,7 +280,7 @@ export default function PricingCard({
                 `}
               >
                 <span className="flex items-center justify-center gap-1.5 sm:gap-2">
-                  {getCTALabel(plan.id, billingPeriod === "yearly")}
+                  {getLocalizedCTALabel(plan.id, t)}
                   <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 hidden sm:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
@@ -294,7 +297,7 @@ export default function PricingCard({
           <p className={`text-[10px] sm:text-xs md:text-sm font-semibold pt-3 sm:pt-4 pb-2 sm:pb-3 ${
             isGoldCard ? "text-amber-700 dark:text-amber-300/80" : "text-gray-900 dark:text-white"
           }`}>
-            Fonctionnalités incluses
+            {t.pricingCard.featuresIncluded}
           </p>
           <ul className="space-y-1.5 sm:space-y-2 md:space-y-2.5">
             {allFeatures.map((feature, idx) => (
@@ -322,11 +325,11 @@ export default function PricingCard({
               <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
             </svg>
             {isFree ? (
-              <span>Aucune carte requise</span>
+              <span>{t.pricingCard.noCardRequired}</span>
             ) : (
               <>
-                <span className="hidden md:inline">Garantie {GUARANTEE_PERIOD_DAYS}j remboursé &middot; Sans engagement</span>
-                <span className="md:hidden">Garantie {GUARANTEE_PERIOD_DAYS}j</span>
+                <span className="hidden md:inline">{GUARANTEE_PERIOD_DAYS}{t.pricingCard.guaranteeDays} &middot; {t.pricingCard.noCommitment}</span>
+                <span className="md:hidden">{GUARANTEE_PERIOD_DAYS}{t.pricingCard.guaranteeDays}</span>
               </>
             )}
           </p>

@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowLeftRight } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export type AIMode = "linkedin" | "general";
 
@@ -15,13 +16,14 @@ export default function AIModeSwitch({
   onModeChange,
   className = "",
 }: AIModeSwitchProps) {
+  const { t } = useLanguage();
   const toggle = () => onModeChange(mode === "linkedin" ? "general" : "linkedin");
 
   return (
     <button
       type="button"
       onClick={toggle}
-      aria-label={mode === "linkedin" ? "Passer en mode IA Support" : "Retour au mode Création"}
+      aria-label={mode === "linkedin" ? t.ui.switchToSupportMode : t.ui.switchToCreationMode}
       className={`
         flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg
         text-text-muted hover:text-primary

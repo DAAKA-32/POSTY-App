@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import AuthPanel from "@/components/auth/AuthPanel";
 import ConnectionLoader from "@/components/shared/ConnectionLoader";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 // Premium animation easings - inspired by Linear, Notion
 const smoothEase = [0.25, 0.1, 0.25, 1] as const;
@@ -63,6 +64,7 @@ const slideInRight = {
 export default function LoginPage() {
   const { user, userProfile, loading, needsOnboarding } = useAuth();
   const { t } = useLanguage();
+  usePageTitle("login");
   const router = useRouter();
   const searchParams = useSearchParams();
   const [redirecting, setRedirecting] = useState(false);
@@ -211,7 +213,7 @@ export default function LoginPage() {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
-            Retour
+            {t.common.back}
           </Link>
         </motion.div>
 
@@ -290,7 +292,7 @@ export default function LoginPage() {
               variants={itemVariants}
               className="text-gray-600 text-center text-sm lg:text-base max-w-xs"
             >
-              Vos posts LinkedIn, prêts en quelques secondes
+              {t.landing.heroSubtitle}
             </motion.p>
 
           </motion.div>
@@ -309,7 +311,7 @@ export default function LoginPage() {
               <svg className="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
-              Retour
+              {t.common.back}
             </Link>
           </motion.div>
         </div>

@@ -3,22 +3,38 @@
 import {
   createContext,
   useContext,
+  useState,
+  useEffect,
+  useCallback,
   ReactNode,
 } from "react";
 import { fr } from "@/lib/i18n/translations/fr";
+import { en } from "@/lib/i18n/translations/en";
+import { useAuth } from "@/contexts/AuthContext";
+import type { Language } from "@/lib/i18n";
 
 type TranslationKeys = typeof fr;
 
+const STORAGE_KEY = "posty-language";
+
+const translationMap: Record<Language, TranslationKeys> = {
+  fr: fr as unknown as TranslationKeys,
+  en: en as unknown as TranslationKeys,
+};
+
 /**
- * LanguageContext simplifié - Français uniquement
+ * LanguageContext — Full i18n support (FR / EN)
  *
- * Ce contexte fournit les traductions françaises à toute l'application.
- * La logique multi-langue a été supprimée car l'application est uniquement en français.
+ * Priority for language detection:
+ * 1. User profile preference (if logged in & has language set)
+ * 2. localStorage preference
+ * 3. Default: "en" for new users, "fr" for existing users without preference
  */
 
 interface LanguageContextType {
-  language: "fr";
+  language: Language;
   t: TranslationKeys;
+  setLanguage: (lang: Language) => void;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(
@@ -30,11 +46,63 @@ interface LanguageProviderProps {
 }
 
 export function LanguageProvider({ children }: LanguageProviderProps) {
+  const { user, userProfile } = useAuth();
+
+  // Initialize language from localStorage or default to "en"
+  const [language, setLanguageState] = useState<Language>(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored === "fr" || stored === "en") return stored;
+    }
+    return "en"; // Default for public pages & new users
+  });
+
+  // Sync language from user profile when user logs in
+  useEffect(() => {
+    if (userProfile) {
+      const profileLang = userProfile.language as Language | undefined;
+      if (profileLang && (profileLang === "fr" || profileLang === "en")) {
+        setLanguageState(profileLang);
+        if (typeof window !== "undefined") {
+          localStorage.setItem(STORAGE_KEY, profileLang);
+        }
+      } else if (user && !profileLang) {
+        // Existing user without language in Firestore profile
+        // Respect localStorage if already set (user may have changed language in Settings)
+        const stored = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
+        if (stored === "fr" || stored === "en") {
+          setLanguageState(stored);
+        } else {
+          // No localStorage either → default to French for existing francophone users
+          setLanguageState("fr");
+          if (typeof window !== "undefined") {
+            localStorage.setItem(STORAGE_KEY, "fr");
+          }
+        }
+      }
+    }
+  }, [user, userProfile]);
+
+  // Update html lang attribute when language changes
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.documentElement.lang = language;
+    }
+  }, [language]);
+
+  const setLanguage = useCallback((lang: Language) => {
+    setLanguageState(lang);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(STORAGE_KEY, lang);
+    }
+  }, []);
+
   return (
     <LanguageContext.Provider
       value={{
-        language: "fr",
-        t: fr,
+        language,
+        t: translationMap[language],
+        setLanguage,
       }}
     >
       {children}

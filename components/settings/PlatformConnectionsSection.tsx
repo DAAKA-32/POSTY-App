@@ -135,18 +135,18 @@ function PlanBadge({ plan, className = "" }: { plan: PlanType; className?: strin
 
   return (
     <span className={`px-2 py-0.5 text-xs font-medium rounded-md border ${colors[plan] || "bg-text-muted/10 text-text-muted border-text-muted/20"} ${className}`}>
-      {labels[plan] || "Gratuit"}
+      {labels[plan] || plan}
     </span>
   );
 }
 
 // Connection status indicator
-function ConnectionStatus({ connected, tokenValid }: { connected: boolean; tokenValid: boolean }) {
+function ConnectionStatus({ connected, tokenValid, t }: { connected: boolean; tokenValid: boolean; t: any }) {
   if (!connected) {
     return (
       <span className="flex items-center gap-1.5 text-xs text-text-muted">
         <span className="w-2 h-2 rounded-full bg-text-muted/40" />
-        Non connecté
+        {t.settings.notConnected}
       </span>
     );
   }
@@ -155,7 +155,7 @@ function ConnectionStatus({ connected, tokenValid }: { connected: boolean; token
     return (
       <span className="flex items-center gap-1.5 text-xs text-warning">
         <span className="w-2 h-2 rounded-full bg-warning animate-pulse" />
-        Session expirée
+        {t.settings.sessionExpired}
       </span>
     );
   }
@@ -171,7 +171,7 @@ function ConnectionStatus({ connected, tokenValid }: { connected: boolean; token
         transition={{ duration: 2, repeat: Infinity }}
         className="w-2 h-2 rounded-full bg-accent"
       />
-      Connecté
+      {t.settings.connected}
     </motion.span>
   );
 }
@@ -294,13 +294,13 @@ export default function PlatformConnectionsSection() {
                 </svg>
               </div>
               <p className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-1.5">
-                Requiert le plan <PlanBadge plan={requiredPlan} className="ml-1" />
+                {t.settings.requiresPlan} <PlanBadge plan={requiredPlan} className="ml-1" />
               </p>
               <Link
                 href="/subscription"
                 className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-primary hover:text-white bg-primary/10 hover:bg-primary border border-primary/20 hover:border-primary rounded-full transition-all duration-200"
               >
-                Voir les plans
+                {t.ui.viewPlans}
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
@@ -317,7 +317,13 @@ export default function PlatformConnectionsSection() {
             </div>
             <div>
               <h3 className="text-sm font-medium text-gray-900 dark:text-white">{info.name}</h3>
-              <p className="text-xs text-text-muted">{info.description}</p>
+              <p className="text-xs text-text-muted">{
+                platform === "linkedin" ? t.settings.platformLinkedinDesc
+                : platform === "reddit" ? t.settings.platformRedditDesc
+                : platform === "threads" ? t.settings.platformThreadsDesc
+                : platform === "facebook" ? t.settings.platformFacebookDesc
+                : info.description
+              }</p>
             </div>
           </div>
           {requiredPlan && (
@@ -335,7 +341,7 @@ export default function PlatformConnectionsSection() {
                   transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                   className={`w-4 h-4 border-2 border-t-transparent rounded-full ${colors.text}`}
                 />
-                <span className="text-xs text-text-muted">Chargement...</span>
+                <span className="text-xs text-text-muted">{t.common.loading}</span>
               </div>
             ) : isConnected && connectionData ? (
               <div className="space-y-3">
@@ -354,7 +360,7 @@ export default function PlatformConnectionsSection() {
                     {"username" in connectionData && (connectionData as any).username && (
                       <p className="text-xs text-text-muted truncate">@{(connectionData as any).username}</p>
                     )}
-                    <ConnectionStatus connected={true} tokenValid={isTokenValid} />
+                    <ConnectionStatus connected={true} tokenValid={isTokenValid} t={t} />
                   </div>
                   <Button
                     variant="ghost"
@@ -379,8 +385,8 @@ export default function PlatformConnectionsSection() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
                     <div>
-                      <p className="text-xs text-warning font-medium">Session expirée</p>
-                      <p className="text-xs text-text-muted mt-0.5">Reconnectez-vous pour publier</p>
+                      <p className="text-xs text-warning font-medium">{t.settings.sessionExpired}</p>
+                      <p className="text-xs text-text-muted mt-0.5">{t.settings.reconnectToPublish}</p>
                     </div>
                   </div>
                 )}
@@ -392,20 +398,20 @@ export default function PlatformConnectionsSection() {
                 {!isTokenValid && platform === "facebook" && (
                   <Button variant="secondary" size="sm" onClick={connectFacebook} className="w-full">
                     <Icon className={`w-4 h-4 mr-2 ${colors.text}`} />
-                    Reconnecter Facebook
+                    {t.settings.reconnectFacebook}
                   </Button>
                 )}
                 {!isTokenValid && platform === "threads" && (
                   <Button variant="secondary" size="sm" onClick={connectThreads} className="w-full">
                     <Icon className={`w-4 h-4 mr-2 ${colors.text}`} />
-                    Reconnecter Threads
+                    {t.settings.reconnectThreads}
                   </Button>
                 )}
               </div>
             ) : (
               /* Not connected - show connect button */
               <div>
-                <ConnectionStatus connected={false} tokenValid={false} />
+                <ConnectionStatus connected={false} tokenValid={false} t={t} />
                 {platform === "linkedin" ? (
                   <LinkedInConnectButton variant="compact" className="w-full mt-3" />
                 ) : platform === "facebook" ? (
@@ -416,7 +422,7 @@ export default function PlatformConnectionsSection() {
                     className="w-full mt-3"
                   >
                     <Icon className={`w-4 h-4 mr-2 ${colors.text}`} />
-                    Connecter Facebook
+                    {t.settings.connectFacebook}
                   </Button>
                 ) : platform === "threads" ? (
                   <Button
@@ -426,7 +432,7 @@ export default function PlatformConnectionsSection() {
                     className="w-full mt-3"
                   >
                     <Icon className={`w-4 h-4 mr-2 ${colors.text}`} />
-                    Connecter Threads
+                    {t.settings.connectThreads}
                   </Button>
                 ) : (
                   <Button
@@ -436,7 +442,7 @@ export default function PlatformConnectionsSection() {
                     className="w-full mt-3 opacity-50"
                   >
                     <Icon className={`w-4 h-4 mr-2 ${colors.text}`} />
-                    Bientôt disponible
+                    {t.settings.comingSoonButton}
                   </Button>
                 )}
               </div>
@@ -464,9 +470,9 @@ export default function PlatformConnectionsSection() {
               </svg>
             </div>
             <div>
-              <h2 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white">Plateformes connectées</h2>
+              <h2 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white">{t.settings.connectedPlatforms}</h2>
               <p className="text-xs lg:text-sm text-text-muted mt-0.5">
-                Gérez vos connexions aux réseaux sociaux
+                {t.settings.manageSocialConnections}
               </p>
             </div>
           </div>
@@ -475,7 +481,7 @@ export default function PlatformConnectionsSection() {
             <svg className="w-3.5 h-3.5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
-            <span className="text-xs text-accent font-medium hidden sm:inline">Sécurisé</span>
+            <span className="text-xs text-accent font-medium hidden sm:inline">{t.settings.securedBadge}</span>
           </div>
         </div>
 
@@ -491,9 +497,9 @@ export default function PlatformConnectionsSection() {
               </svg>
             </div>
             <div>
-              <p className="text-sm text-gray-900 dark:text-white font-medium">Connexions utilisées</p>
+              <p className="text-sm text-gray-900 dark:text-white font-medium">{t.settings.connectionsUsed}</p>
               <p className="text-xs text-text-muted">
-                {currentPlan === "max" ? "Illimitées" : currentPlan === "pro" ? `${connectedCount} sur 2` : `${connectedCount} sur 1`}
+                {currentPlan === "max" ? t.settings.unlimited : currentPlan === "pro" ? `${connectedCount} / 2` : `${connectedCount} / 1`}
               </p>
             </div>
           </div>
@@ -515,16 +521,22 @@ export default function PlatformConnectionsSection() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
             <div>
-              <p className="text-sm text-gray-900 dark:text-white font-medium">Débloquez plus de plateformes</p>
+              <p className="text-sm text-gray-900 dark:text-white font-medium">{t.settings.unlockMorePlatforms}</p>
               <p className="text-xs text-text-muted mt-1">
-                Passez à <span className="text-primary font-medium">Pro</span> ou{" "}
-                <span className="text-accent font-medium">Max</span> pour débloquer toutes les plateformes.
+                {t.settings.unlockMorePlatformsDesc
+                  .split("{pro}")[0]}
+                <span className="text-primary font-medium">Pro</span>
+                {t.settings.unlockMorePlatformsDesc
+                  .split("{pro}")[1]?.split("{max}")[0]}
+                <span className="text-accent font-medium">Max</span>
+                {t.settings.unlockMorePlatformsDesc
+                  .split("{max}")[1]}
               </p>
               <Link
                 href="/subscription"
                 className="inline-flex items-center gap-1 mt-2 text-xs text-primary hover:text-accent transition-colors"
               >
-                Voir les plans
+                {t.ui.viewPlans}
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
@@ -547,7 +559,7 @@ export default function PlatformConnectionsSection() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
           </svg>
           <p className="text-xs lg:text-sm text-text-secondary">
-            Vos identifiants sont chiffrés et ne sont jamais stockés. Nous utilisons OAuth 2.0 pour une connexion sécurisée.
+            {t.settings.credentialsSecurityNotice}
           </p>
         </motion.div>
       </motion.section>
@@ -577,16 +589,16 @@ export default function PlatformConnectionsSection() {
               onClick={(e) => e.stopPropagation()}
               className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-6 max-w-sm w-full shadow-xl"
             >
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Déconnecter Facebook</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{t.settings.disconnectFacebook}</h3>
               <p className="text-sm text-text-muted mb-4">
-                Voulez-vous déconnecter {facebookProfileName || "votre compte Facebook"} ? Vous pourrez vous reconnecter à tout moment.
+                {t.settings.disconnectFacebookConfirm.replace("{name}", facebookProfileName || "Facebook")}
               </p>
               <div className="flex gap-3">
                 <Button variant="ghost" size="sm" onClick={() => setShowFacebookDisconnectConfirm(false)} className="flex-1">
-                  Annuler
+                  {t.common.cancel}
                 </Button>
                 <Button variant="primary" size="sm" onClick={handleFacebookDisconnect} className="flex-1 !bg-error hover:!bg-error/80">
-                  Déconnecter
+                  {t.settings.disconnect}
                 </Button>
               </div>
             </motion.div>
@@ -611,16 +623,16 @@ export default function PlatformConnectionsSection() {
               onClick={(e) => e.stopPropagation()}
               className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-6 max-w-sm w-full shadow-xl"
             >
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Déconnecter Threads</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{t.settings.disconnectThreads}</h3>
               <p className="text-sm text-text-muted mb-4">
-                Voulez-vous déconnecter {threadsUsername ? `@${threadsUsername}` : threadsProfileName || "votre compte Threads"} ? Vous pourrez vous reconnecter à tout moment.
+                {t.settings.disconnectThreadsConfirm.replace("{name}", threadsUsername ? `@${threadsUsername}` : threadsProfileName || "Threads")}
               </p>
               <div className="flex gap-3">
                 <Button variant="ghost" size="sm" onClick={() => setShowThreadsDisconnectConfirm(false)} className="flex-1">
-                  Annuler
+                  {t.common.cancel}
                 </Button>
                 <Button variant="primary" size="sm" onClick={handleThreadsDisconnect} className="flex-1 !bg-error hover:!bg-error/80">
-                  Déconnecter
+                  {t.settings.disconnect}
                 </Button>
               </div>
             </motion.div>

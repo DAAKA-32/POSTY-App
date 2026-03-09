@@ -13,25 +13,22 @@ import Button from "@/components/ui/Button";
 import ScheduledPostCard from "@/components/schedule/ScheduledPostCard";
 import ScheduleModal from "@/components/schedule/ScheduleModal";
 import SchedulePaywallModal from "@/components/schedule/SchedulePaywallModal";
-
-// Filter options with icons
-const FILTER_OPTIONS: { value: ScheduleStatus | "all"; label: string; icon?: string }[] = [
-  { value: "all", label: "Tous" },
-  { value: "pending", label: "Programmés", icon: "⏳" },
-  { value: "published", label: "Publiés", icon: "✓" },
-  { value: "failed", label: "Échec", icon: "!" },
-  { value: "cancelled", label: "Annulés" },
-];
-
-// Days and months in French
-const DAYS_FR = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
-const MONTHS_FR = [
-  "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
-  "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
-];
+import { useLanguage } from "@/contexts/LanguageContext";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 function ScheduleContent() {
   const { user } = useAuth();
+  const { t, language } = useLanguage();
+  usePageTitle("schedule");
+
+  // Filter options with icons (translated)
+  const FILTER_OPTIONS: { value: ScheduleStatus | "all"; label: string; icon?: string }[] = [
+    { value: "all", label: t.schedulePage.filterAll },
+    { value: "pending", label: t.schedulePage.filterScheduled, icon: "⏳" },
+    { value: "published", label: t.schedulePage.filterPublished, icon: "✓" },
+    { value: "failed", label: t.schedulePage.filterFailed, icon: "!" },
+    { value: "cancelled", label: t.schedulePage.filterCancelled },
+  ];
   const {
     scheduledPosts,
     isLoading,
@@ -98,9 +95,9 @@ function ScheduleContent() {
 
     sortedKeys.forEach((key) => {
       const date = new Date(key);
-      const dayName = DAYS_FR[date.getDay()];
+      const dayName = t.schedulePage.daysShort[date.getDay()];
       const day = date.getDate();
-      const month = MONTHS_FR[date.getMonth()];
+      const month = t.schedulePage.monthNames[date.getMonth()];
 
       groups.push({
         date: `${dayName} ${day} ${month}`,
@@ -119,7 +116,7 @@ function ScheduleContent() {
     });
 
     return groups;
-  }, [filteredPosts]);
+  }, [filteredPosts, t]);
 
   // Calendar days
   const calendarDays = useMemo(() => {
@@ -200,7 +197,7 @@ function ScheduleContent() {
     <MainLayout
       posts={[]}
       showMobileHeader={true}
-      headerTitle="Posts programmes"
+      headerTitle={t.schedulePage.headerTitle}
     >
       <div className="min-h-full bg-background-warm dark:bg-dark-bg scroll-smooth lg:overflow-y-auto">
         <div className="w-full min-w-0 mx-auto px-3 py-5 sm:px-4 sm:py-6 md:px-6 md:py-8 lg:px-8 lg:py-10 lg:max-w-4xl xl:max-w-5xl 2xl:max-w-6xl overflow-x-clip">
@@ -212,16 +209,16 @@ function ScheduleContent() {
           >
             <div className="min-w-0">
               <h1 className="text-xl font-bold text-silver-shimmer dark:text-white md:text-2xl lg:text-3xl truncate">
-                Posts programmés
+                {t.schedulePage.title}
               </h1>
               <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-1.5">
                 <p className="text-sm text-gray-600 dark:text-text-muted md:text-base">
-                  <span className="font-medium text-gray-900 dark:text-white">{pendingCount}</span> post{pendingCount !== 1 ? "s" : ""} à venir
+                  <span className="font-medium text-gray-900 dark:text-white">{pendingCount}</span> {pendingCount !== 1 ? t.schedulePage.posts : t.schedulePage.post} {t.schedulePage.upcomingPosts}
                 </p>
                 {failedCount > 0 && (
                   <span className="inline-flex items-center gap-1.5 text-xs sm:text-sm px-2 sm:px-2.5 py-0.5 bg-red-100 dark:bg-red-500/15 text-red-600 dark:text-red-400 rounded-full font-medium">
                     <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
-                    {failedCount} en échec
+                    {failedCount} {t.schedulePage.failedPosts}
                   </span>
                 )}
               </div>
@@ -248,7 +245,7 @@ function ScheduleContent() {
                 <svg className="w-4 h-4 inline mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
                 </svg>
-                Liste
+                {t.schedulePage.list}
               </button>
               <button
                 onClick={() => setViewMode("calendar")}
@@ -261,7 +258,7 @@ function ScheduleContent() {
                 <svg className="w-4 h-4 inline mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                Calendrier
+                {t.schedulePage.calendar}
               </button>
             </div>
 
@@ -324,7 +321,7 @@ function ScheduleContent() {
                 <div className="w-12 h-12 md:w-14 md:h-14 border-3 border-primary/20 rounded-full" />
                 <div className="absolute inset-0 w-12 h-12 md:w-14 md:h-14 border-3 border-primary border-t-transparent rounded-full animate-spin" />
               </div>
-              <p className="mt-4 text-sm text-gray-500 dark:text-text-muted">Chargement...</p>
+              <p className="mt-4 text-sm text-gray-500 dark:text-text-muted">{t.common.loading}</p>
             </motion.div>
           ) : filteredPosts.length === 0 ? (
             <motion.div
@@ -343,13 +340,13 @@ function ScheduleContent() {
               </div>
               <h3 className="text-lg md:text-xl lg:text-2xl font-semibold text-silver-solid dark:text-white mb-2">
                 {filter === "all"
-                  ? "Aucun post programmé"
-                  : `Aucun post ${FILTER_OPTIONS.find((o) => o.value === filter)?.label.toLowerCase()}`}
+                  ? t.ui.noPostsScheduled
+                  : `${t.schedulePage.noFilteredPosts} ${FILTER_OPTIONS.find((o) => o.value === filter)?.label.toLowerCase()}`}
               </h3>
               <p className="text-sm md:text-base text-gray-600 dark:text-text-muted mb-8 max-w-sm mx-auto">
                 {filter === "all"
-                  ? "Créez un post et programmez-le pour le publier automatiquement"
-                  : "Modifiez le filtre pour voir d'autres posts"}
+                  ? t.schedulePage.emptyDescription
+                  : t.schedulePage.changeFilter}
               </p>
               {filter === "all" && (
                 <Link
@@ -365,7 +362,7 @@ function ScheduleContent() {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
                   </svg>
-                  <span>Créer un post</span>
+                  <span>{t.schedulePage.createPost}</span>
                 </Link>
               )}
             </motion.div>
@@ -390,7 +387,7 @@ function ScheduleContent() {
                       </h2>
                       <div className="flex-1 h-px bg-gray-200 dark:bg-dark-border min-w-4" />
                       <span className="shrink-0 text-xs md:text-sm px-2.5 py-1 rounded-lg font-medium text-gray-500 dark:text-text-muted bg-gray-100 dark:bg-primary/10 border border-gray-200 dark:border-primary/15 whitespace-nowrap">
-                        {group.posts.length} post{group.posts.length !== 1 ? "s" : ""}
+                        {group.posts.length} {group.posts.length !== 1 ? t.schedulePage.posts : t.schedulePage.post}
                       </span>
                     </div>
 
@@ -425,19 +422,19 @@ function ScheduleContent() {
                 <button
                   onClick={goToPreviousMonth}
                   className="p-2 sm:p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-dark-hover transition-colors text-gray-600 dark:text-text-secondary"
-                  aria-label="Mois précédent"
+                  aria-label={t.schedulePage.previousMonth}
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                   </svg>
                 </button>
                 <span className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
-                  {MONTHS_FR[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+                  {t.schedulePage.monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
                 </span>
                 <button
                   onClick={goToNextMonth}
                   className="p-2 sm:p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-dark-hover transition-colors text-gray-600 dark:text-text-secondary"
-                  aria-label="Mois suivant"
+                  aria-label={t.schedulePage.nextMonth}
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -447,7 +444,7 @@ function ScheduleContent() {
 
               {/* Days of week header */}
               <div className="grid grid-cols-7 gap-px sm:gap-0.5 md:gap-1 mb-1 sm:mb-2 md:mb-3">
-                {DAYS_FR.map((day, index) => (
+                {t.schedulePage.daysShort.map((day: string, index: number) => (
                   <div key={day} className={`text-center text-[9px] sm:text-[10px] md:text-xs font-semibold py-1 sm:py-1.5 md:py-2 uppercase tracking-wide sm:tracking-wider ${
                     index === 0 || index === 6
                       ? "text-gray-400 dark:text-text-muted"

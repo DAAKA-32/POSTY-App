@@ -42,31 +42,31 @@ const playfair = Playfair_Display({
 const siteConfig = {
   name: "Posty AI",
   url: process.env.NEXT_PUBLIC_BASE_URL || "https://postyapp.ai",
-  defaultLocale: "fr" as const,
-  supportedLocales: ["fr", "en"] as const,
+  defaultLocale: "en" as const,
+  supportedLocales: ["en", "fr"] as const,
 };
 
 export const metadata: Metadata = {
   // Base metadata
   metadataBase: new URL(siteConfig.url),
   title: {
-    default: "Posty AI – Attirez plus de prospects avec l'intelligence artificielle",
+    default: "Posty AI – Turn LinkedIn posts into clients with AI",
     template: "%s | Posty AI",
   },
   description:
-    "Automatisez votre présence LinkedIn et attirez des prospects qualifiés grâce à l'IA. Créez des posts professionnels percutants en quelques secondes. Essai gratuit.",
+    "Create high-performing LinkedIn posts in seconds with AI. Posty generates ready-to-publish content tailored to your audience. Free 7-day trial.",
   keywords: [
     "Posty",
     "Posty AI",
-    "prospects LinkedIn",
-    "automatisation LinkedIn",
-    "IA",
-    "intelligence artificielle",
-    "générer prospects",
-    "contenu professionnel",
+    "LinkedIn post generator",
+    "AI LinkedIn tool",
+    "LinkedIn automation",
+    "AI content creation",
+    "LinkedIn leads",
     "personal branding",
-    "marketing LinkedIn",
-    "engagement LinkedIn",
+    "LinkedIn marketing",
+    "LinkedIn engagement",
+    "B2B content",
   ],
   authors: [
     { name: "POSTY Team" },
@@ -108,19 +108,19 @@ export const metadata: Metadata = {
   // Open Graph
   openGraph: {
     type: "website",
-    locale: "fr_FR",
-    alternateLocale: "en_US",
+    locale: "en_US",
+    alternateLocale: "fr_FR",
     url: siteConfig.url,
     siteName: "Posty AI",
-    title: "Posty AI – Attirez plus de prospects avec l'intelligence artificielle",
+    title: "Posty AI – Turn LinkedIn posts into clients with AI",
     description:
-      "Automatisez votre présence LinkedIn et attirez des prospects qualifiés grâce à l'IA. Posts professionnels percutants en quelques secondes.",
+      "Create high-performing LinkedIn posts in seconds with AI. Posty generates ready-to-publish content tailored to your audience.",
     images: [
       {
         url: `${siteConfig.url}/og-image.jpg`,
         width: 1200,
         height: 630,
-        alt: "Posty AI – Attirez plus de prospects avec l'intelligence artificielle",
+        alt: "Posty AI – Turn LinkedIn posts into clients with AI",
         type: "image/jpeg",
       },
     ],
@@ -129,9 +129,9 @@ export const metadata: Metadata = {
   // Twitter Cards
   twitter: {
     card: "summary_large_image",
-    title: "Posty AI – Attirez plus de prospects avec l'intelligence artificielle",
+    title: "Posty AI – Turn LinkedIn posts into clients with AI",
     description:
-      "Automatisez votre présence LinkedIn et attirez des prospects qualifiés grâce à l'IA. Essai gratuit.",
+      "Create high-performing LinkedIn posts in seconds with AI. Free 7-day trial.",
     images: [`${siteConfig.url}/og-image.jpg`],
     creator: "@posty_app",
   },
@@ -183,7 +183,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className={`${poppins.variable} ${playfair.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${poppins.variable} ${playfair.variable}`} suppressHydrationWarning>
       <head>
         {/* Theme initialization + Web3/MetaMask error suppressor */}
         <script

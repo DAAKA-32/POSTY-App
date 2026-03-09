@@ -18,10 +18,32 @@ export const PRODUCTION_MODE = true;
 const FOUNDER_EMAILS: string[] = ["emilien.nepveu@gmail.com", "maubertcome27@gmail.com"];
 const FOUNDER_OVERRIDE_PLAN: PlanType = "max";
 
+/** Gift emails receive Max plan access (offered by founders) */
+interface GiftRecipient {
+  email: string;
+  displayName: string; // First name for the welcome popup
+}
+
+const GIFT_RECIPIENTS: GiftRecipient[] = [
+  { email: "cerisecottier@gmail.com", displayName: "Cerise" },
+];
+
 /** Check if an email belongs to a founder */
 export function isFounderEmail(email?: string | null): boolean {
   if (!email) return false;
   return FOUNDER_EMAILS.includes(email.toLowerCase());
+}
+
+/** Check if an email belongs to a gift recipient */
+export function isGiftRecipient(email?: string | null): boolean {
+  if (!email) return false;
+  return GIFT_RECIPIENTS.some(r => r.email === email.toLowerCase());
+}
+
+/** Get gift recipient info */
+export function getGiftRecipientInfo(email?: string | null): GiftRecipient | null {
+  if (!email) return null;
+  return GIFT_RECIPIENTS.find(r => r.email === email.toLowerCase()) || null;
 }
 
 /**
@@ -30,6 +52,7 @@ export function isFounderEmail(email?: string | null): boolean {
  */
 export function getFounderOverridePlan(email?: string | null): PlanType | null {
   if (isFounderEmail(email)) return FOUNDER_OVERRIDE_PLAN;
+  if (isGiftRecipient(email)) return "max";
   return null;
 }
 
@@ -584,6 +607,7 @@ export function getYearlyMonthlyEquivalent(plan: PlanType): number {
 
 /**
  * Get savings as "X mois gratuits" text
+ * @deprecated Use getLocalizedSavingsText for i18n support
  */
 export function getSavingsText(plan: PlanType): string | null {
   if (plan === "free") return null;
@@ -592,6 +616,21 @@ export function getSavingsText(plan: PlanType): string | null {
   const monthsSaved = Math.round(savings / config.price.monthly);
   if (monthsSaved >= 1) {
     return `${monthsSaved} mois gratuit${monthsSaved > 1 ? "s" : ""}`;
+  }
+  return null;
+}
+
+/**
+ * Get localized savings text
+ */
+export function getLocalizedSavingsText(plan: PlanType, t: TranslationsParam): string | null {
+  if (plan === "free") return null;
+  const config = getPlanConfig(plan);
+  const savings = getYearlySavings(plan);
+  const monthsSaved = Math.round(savings / config.price.monthly);
+  if (monthsSaved >= 1) {
+    const template = monthsSaved > 1 ? t.plans.monthsFreePlural : t.plans.monthsFree;
+    return template.replace("{n}", String(monthsSaved));
   }
   return null;
 }
@@ -615,6 +654,7 @@ export function getYearlyDiscountPercent(plan: PlanType): number {
 /**
  * Plan-specific taglines for marketing/conversion
  * Used by both Landing page and Subscription page
+ * @deprecated Use getLocalizedPlanTaglines(t) for i18n support
  */
 export const PLAN_TAGLINES: Record<PlanType, { tagline: string; idealFor: string }> = {
   free: {
@@ -630,6 +670,20 @@ export const PLAN_TAGLINES: Record<PlanType, { tagline: string; idealFor: string
     idealFor: "Pour les agences et créateurs ambitieux",
   },
 };
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type TranslationsParam = any;
+
+/**
+ * Get localized plan taglines
+ */
+export function getLocalizedPlanTaglines(t: TranslationsParam): Record<PlanType, { tagline: string; idealFor: string }> {
+  return {
+    free: { tagline: t.plans.free.tagline, idealFor: t.plans.free.idealFor },
+    pro: { tagline: t.plans.pro.tagline, idealFor: t.plans.pro.idealFor },
+    max: { tagline: t.plans.max.tagline, idealFor: t.plans.max.idealFor },
+  };
+}
 
 /**
  * CORE Features - Always visible on cards (5-6 max for clarity)
@@ -674,6 +728,7 @@ export type UnifiedFeatureKey = typeof UNIFIED_FEATURES[number]["key"];
 
 /**
  * Get CTA button label based on plan - action-oriented
+ * @deprecated Use getLocalizedCTALabel for i18n support
  */
 export function getCTALabel(planId: PlanType, isYearly: boolean, trialEligible: boolean = false): string {
   if (planId === "free") return "Commencer gratuitement";
@@ -684,6 +739,20 @@ export function getCTALabel(planId: PlanType, isYearly: boolean, trialEligible: 
   if (planId === "pro") return "Démarrer avec Pro";
   if (planId === "max") return "Tout débloquer";
   return "Choisir ce plan";
+}
+
+/**
+ * Get localized CTA button label
+ */
+export function getLocalizedCTALabel(planId: PlanType, t: TranslationsParam, trialEligible: boolean = false): string {
+  if (planId === "free") return t.plans.ctaFree;
+  if (trialEligible) {
+    const days = PLAN_CONFIGS[planId]?.trialDays || TRIAL_PERIOD_DAYS;
+    if (days > 0) return t.plans.ctaTrial.replace("{n}", String(days));
+  }
+  if (planId === "pro") return t.plans.ctaPro;
+  if (planId === "max") return t.plans.ctaMax;
+  return t.plans.ctaDefault;
 }
 
 /**
@@ -842,6 +911,105 @@ export function getPlanFeaturesUnified(plan: PlanConfig): FeatureItem[] {
     const dynamicLabel = getDynamicFeatureLabel(feature.key, plan);
     return {
       text: dynamicLabel || feature.label,
+      included: getFeatureIncluded(feature.key, plan),
+    };
+  });
+}
+
+/**
+ * Get localized dynamic feature label
+ */
+function getLocalizedDynamicFeatureLabel(key: string, plan: PlanConfig, t: TranslationsParam): string {
+  const limits = plan.limits;
+
+  switch (key) {
+    case "prompts":
+      if (limits.maxCharactersPerPrompt >= 1000) {
+        return t.plans.briefsDetailed.replace("{n}", String(limits.maxCharactersPerPrompt));
+      }
+      return t.plans.briefsUpTo.replace("{n}", String(limits.maxCharactersPerPrompt));
+
+    case "dualMode":
+      if (limits.dualResponsesPerWeek === -1) {
+        return t.plans.storyBusinessUnlimited;
+      } else if (limits.dualResponsesPerWeek > 0) {
+        return t.plans.storyBusinessPerWeek.replace("{n}", String(limits.dualResponsesPerWeek));
+      }
+      return "";
+
+    case "multiplatform": {
+      const platforms = limits.allowedPlatforms;
+      if (platforms.length === 1) {
+        return t.plans.platformOnly.replace("{name}", PLATFORM_INFO[platforms[0]]?.name || platforms[0]);
+      } else if (platforms.length <= 2) {
+        return platforms.map(p => PLATFORM_INFO[p]?.name || p).join(" + ");
+      }
+      return t.plans.networksConnected;
+    }
+
+    case "sharing":
+      if (limits.maxRelations === -1) {
+        return t.plans.unlimitedSharing;
+      } else if (limits.maxRelations > 1) {
+        return t.plans.shareWithContacts.replace("{n}", String(limits.maxRelations));
+      }
+      return "";
+
+    case "quality":
+      if (limits.responseQuality === "ultra") {
+        return t.plans.postsUltraPrecise;
+      } else if (limits.responseQuality === "complete") {
+        return t.plans.postsOptimized;
+      }
+      return "";
+
+    case "creations":
+      if (limits.messagesPerDay === -1 || limits.messagesPerDay >= 500) {
+        return t.plans.unlimitedCreations;
+      }
+      if (limits.quotaResetPeriod === "monthly" && limits.conversationsPerMonth > 0) {
+        return t.plans.creationsPerMonth.replace("{n}", String(limits.conversationsPerMonth));
+      }
+      return t.plans.creationsPerDay.replace("{n}", String(limits.messagesPerDay));
+
+    default:
+      return "";
+  }
+}
+
+/**
+ * Get localized feature label (static or dynamic)
+ */
+function getLocalizedFeatureLabel(key: string, t: TranslationsParam): string {
+  const featureKeyMap: Record<string, string> = {
+    creations: "featureCreations",
+    quality: "featureQuality",
+    scheduling: "featureScheduling",
+    personalized: "featurePersonalized",
+    dualMode: "featureDualMode",
+    multiplatform: "featureMultiplatform",
+    prompts: "featurePrompts",
+    sharing: "featureSharing",
+    conversations: "featureConversations",
+    postAnalysis: "featurePostAnalysis",
+    improveMode: "featureImproveMode",
+    priority: "featurePriority",
+    fileAttachments: "featureFileAttachments",
+    simultaneousPublish: "featureSimultaneousPublish",
+    earlyAccess: "featureEarlyAccess",
+  };
+  const tKey = featureKeyMap[key];
+  return tKey ? t.plans[tKey] : key;
+}
+
+/**
+ * Get localized plan features in unified format
+ */
+export function getLocalizedPlanFeaturesUnified(plan: PlanConfig, t: TranslationsParam): FeatureItem[] {
+  return UNIFIED_FEATURES.map((feature) => {
+    const dynamicLabel = getLocalizedDynamicFeatureLabel(feature.key, plan, t);
+    return {
+      text: dynamicLabel || getLocalizedFeatureLabel(feature.key, t),
       included: getFeatureIncluded(feature.key, plan),
     };
   });

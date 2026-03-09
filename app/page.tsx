@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence, useReducedMotion, useInView, useScroll, useTransform, useMotionValue, useSpring, useMotionTemplate } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { getAllPlans, getPaidPlans, PlanConfig, GUARANTEE_PERIOD_DAYS } from "@/lib/plans";
 import BillingToggle from "@/components/ui/BillingToggle";
 import PricingCard from "@/components/pricing/PricingCard";
@@ -72,49 +73,51 @@ function HamburgerIcon({ isOpen }: { isOpen: boolean }) {
   );
 }
 
-// Mobile nav link data with icons
-const NAV_LINKS = [
-  {
-    label: "Demo",
-    href: "#demo",
-    description: "Voir Posty en action",
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-      </svg>
-    ),
-  },
-  {
-    label: "Fonctionnalités",
-    href: "#features",
-    description: "Ce que Posty fait pour vous",
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-      </svg>
-    ),
-  },
-  {
-    label: "Témoignages",
-    href: "#testimonials",
-    description: "Ce qu'en disent nos clients",
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-      </svg>
-    ),
-  },
-  {
-    label: "Tarifs",
-    href: "#pricing",
-    description: "Plans et tarification",
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z" />
-      </svg>
-    ),
-  },
-];
+// Mobile nav link data with icons — function to support i18n
+function getNavLinks(t: any) {
+  return [
+    {
+      label: t.landing.navDemo,
+      href: "#demo",
+      description: t.landing.navDemoDesc,
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+        </svg>
+      ),
+    },
+    {
+      label: t.landing.navFeatures,
+      href: "#features",
+      description: t.landing.navFeaturesDesc,
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+        </svg>
+      ),
+    },
+    {
+      label: t.landing.navTestimonials,
+      href: "#testimonials",
+      description: t.landing.navTestimonialsDesc,
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+        </svg>
+      ),
+    },
+    {
+      label: t.landing.navPricing,
+      href: "#pricing",
+      description: t.landing.navPricingDesc,
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z" />
+        </svg>
+      ),
+    },
+  ];
+}
 
 // Staggered animation variants for menu items
 const mobileMenuVariants = {
@@ -147,6 +150,8 @@ function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState<string>("");
+  const { t, language, setLanguage } = useLanguage();
+  const NAV_LINKS_DATA = getNavLinks(t);
 
   // Scroll detection — uses native window scroll
   useEffect(() => {
@@ -160,7 +165,7 @@ function Navbar() {
 
   // Active section detection via IntersectionObserver (viewport root)
   useEffect(() => {
-    const sectionIds = NAV_LINKS.map((l) => l.href.replace("#", ""));
+    const sectionIds = NAV_LINKS_DATA.map((l) => l.href.replace("#", ""));
     const observers: IntersectionObserver[] = [];
 
     sectionIds.forEach((id) => {
@@ -239,7 +244,7 @@ function Navbar() {
                 hidden md:flex items-center gap-0.5 p-1 rounded-2xl transition-all duration-400
                 ${isScrolled ? "bg-gray-100/70" : "bg-transparent"}
               `}>
-                {NAV_LINKS.map((link) => {
+                {NAV_LINKS_DATA.map((link) => {
                   const isActive = activeSection === link.href;
                   return (
                     <button
@@ -273,18 +278,27 @@ function Navbar() {
 
               {/* CTA Desktop */}
               <div className="hidden md:flex items-center gap-2">
+                {/* Language Switcher */}
+                <button
+                  onClick={() => setLanguage(language === "fr" ? "en" : "fr")}
+                  className="px-3 py-2 text-[13px] font-medium text-gray-500 hover:text-gray-900 rounded-xl hover:bg-gray-100 transition-all duration-200 flex items-center gap-1.5"
+                  aria-label="Switch language"
+                >
+                  <span className="text-base">{language === "fr" ? "\u{1F1EB}\u{1F1F7}" : "\u{1F1FA}\u{1F1F8}"}</span>
+                  <span>{language === "fr" ? "FR" : "EN"}</span>
+                </button>
                 <Link
                   href="/login"
                   className="px-4 py-2 text-[13px] font-medium text-gray-600 hover:text-gray-900 rounded-xl hover:bg-gray-100 transition-all duration-200"
                 >
-                  Se connecter
+                  {t.landing.navLogin}
                 </Link>
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                   <Link
                     href="/signup"
                     className="inline-flex items-center justify-center gap-2 h-9 px-4 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white text-[13px] font-semibold rounded-xl shadow-md shadow-[#F8935D]/20 hover:shadow-lg hover:shadow-[#F8935D]/25 transition-shadow duration-200"
                   >
-                    Essai gratuit
+                    {t.landing.navSignup}
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                     </svg>
@@ -296,7 +310,7 @@ function Navbar() {
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="md:hidden relative z-[60] flex items-center justify-center w-10 h-10 rounded-xl hover:bg-gray-100 active:bg-gray-200 transition-colors duration-200"
-                aria-label={isMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
+                aria-label={isMenuOpen ? t.landing.navCloseMenu : t.landing.navOpenMenu}
                 aria-expanded={isMenuOpen}
               >
                 <HamburgerIcon isOpen={isMenuOpen} />
@@ -347,7 +361,7 @@ function Navbar() {
               <button
                 onClick={() => setIsMenuOpen(false)}
                 className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-gray-100 active:bg-gray-200 transition-colors"
-                aria-label="Fermer le menu"
+                aria-label={t.landing.navCloseMenu}
               >
                 <HamburgerIcon isOpen={true} />
               </button>
@@ -362,7 +376,7 @@ function Navbar() {
                 exit="exit"
                 className="space-y-2"
               >
-                {NAV_LINKS.map((link) => {
+                {NAV_LINKS_DATA.map((link) => {
                   const isActive = activeSection === link.href;
                   return (
                     <motion.button
@@ -424,7 +438,7 @@ function Navbar() {
                   onClick={() => setIsMenuOpen(false)}
                   className="flex items-center justify-center gap-2 w-full h-12 rounded-xl font-bold text-white text-[15px] bg-gradient-to-r from-[#F8935D] to-[#F76B54] shadow-lg shadow-[#F8935D]/25 active:scale-[0.98] transition-transform duration-150"
                 >
-                  Commencer gratuitement
+                  {t.landing.navStartFree}
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
@@ -439,7 +453,7 @@ function Navbar() {
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
-                  Se connecter
+                  {t.landing.navLogin}
                 </Link>
               </div>
 
@@ -449,10 +463,10 @@ function Navbar() {
                   <svg className="w-3 h-3 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
-                  Essai gratuit 7 jours
+                  {t.landing.navTrial}
                 </span>
                 <span className="w-1 h-1 rounded-full bg-gray-300" />
-                <span>Annulation à tout moment</span>
+                <span>{t.landing.navCancelAnytime}</span>
               </div>
             </motion.div>
           </div>
@@ -473,6 +487,7 @@ function HeroSection() {
   const isInView = useInView(sectionRef, { once: true, amount: 0.1 });
   const prefersReducedMotion = useReducedMotion();
   const isMobile = useIsMobile();
+  const { t } = useLanguage();
 
   // Parallax effect for background elements
   const { scrollYProgress } = useScroll({
@@ -550,7 +565,7 @@ function HeroSection() {
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
               </span>
               <span className="text-sm font-medium text-gray-700">
-                Choisi par des <span className="font-bold text-gray-900">entrepreneurs qui signent des clients sur LinkedIn</span>
+                {t.landing.heroTrustBadge} <span className="font-bold text-gray-900">{t.landing.heroTrustBadgeHighlight}</span>
               </span>
               <div className="flex -space-x-1.5">
                 {[1, 2, 3].map((i) => (
@@ -564,12 +579,12 @@ function HeroSection() {
 
             {/* Main headline */}
             <h1 className="font-display text-[2.5rem] sm:text-5xl lg:text-[3.25rem] xl:text-[3.75rem] 2xl:text-[4.25rem] font-semibold leading-[1.1] tracking-[-0.02em]">
-              <span className="block text-silver-premium">Vos posts LinkedIn</span>
+              <span className="block text-silver-premium">{t.landing.heroTitleLine1}</span>
               <span className="block mt-1 lg:mt-2 text-silver-premium">
-                signent des{" "}
+                {t.landing.heroTitleLine2}{" "}
                 <span className="relative inline-block">
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] via-[#F76B54] to-[#F8935D] bg-[length:200%_100%] animate-[gradient-x_3s_ease_infinite]">
-                    clients
+                    {t.landing.heroTitleHighlight}
                   </span>
                   <motion.span
                     initial={{ scaleX: 0 }}
@@ -580,7 +595,7 @@ function HeroSection() {
                 </span>
               </span>
               <span className="block mt-1 lg:mt-2 text-silver-premium italic">
-                Pas juste des likes.
+                {t.landing.heroTitleLine3}
               </span>
             </h1>
 
@@ -591,10 +606,9 @@ function HeroSection() {
               transition={{ duration: 0.5, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
               className="mt-4 md:mt-5 lg:mt-6 text-lg lg:text-xl text-gray-600 max-w-xl mx-auto lg:mx-0 leading-relaxed"
             >
-              Décrivez votre objectif. Posty génère un post LinkedIn{" "}
-              <span className="font-semibold text-gray-800">prêt à publier</span>,
-              calibré pour{" "}
-              <span className="font-semibold text-gray-800">votre audience et votre marché</span>.
+              {t.landing.heroSubtitleText}{" "}
+              <span className="font-semibold text-gray-800">{t.landing.heroSubtitleBold1}</span>{t.landing.heroSubtitleMid}{" "}
+              <span className="font-semibold text-gray-800">{t.landing.heroSubtitleBold2}</span>.
             </motion.p>
 
             {/* CTA Buttons */}
@@ -614,7 +628,7 @@ function HeroSection() {
                 >
                   {/* Shine effect on hover */}
                   <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-                  <span className="relative">Commencer gratuitement</span>
+                  <span className="relative">{t.landing.heroCTAPrimary}</span>
                   <svg className="relative w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
@@ -629,7 +643,7 @@ function HeroSection() {
                 <svg className="w-5 h-5 text-[#F8935D]" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M8 5v14l11-7z" />
                 </svg>
-                Voir Posty en action
+                {t.landing.heroCTASecondary}
               </motion.a>
             </motion.div>
 
@@ -644,25 +658,25 @@ function HeroSection() {
                 <svg className="w-5 h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                Essai gratuit 7 jours
+                {t.landing.heroTrial}
               </span>
               <span className="flex items-center gap-2 font-medium text-[#F8935D]">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                Satisfait ou remboursé 7j
+                {t.landing.heroGuarantee}
               </span>
               <span className="flex items-center gap-2">
                 <svg className="w-5 h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                Prêt en 2 minutes
+                {t.landing.heroReady}
               </span>
               <span className="flex items-center gap-2">
                 <svg className="w-5 h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                Premier post en 30 sec
+                {t.landing.heroFirstPost}
               </span>
             </motion.div>
           </motion.div>
@@ -698,7 +712,7 @@ function HeroSection() {
                 >
                   <Image
                     src="/iphoneimg.png"
-                    alt="Posty sur iPhone"
+                    alt={t.landing.heroImgPhone}
                     width={220}
                     height={440}
                     className="w-full h-auto drop-shadow-2xl"
@@ -725,7 +739,7 @@ function HeroSection() {
                 >
                   <Image
                     src="/macimg.png"
-                    alt="Posty sur MacBook"
+                    alt={t.landing.heroImgMac}
                     width={600}
                     height={400}
                     className="w-full h-auto drop-shadow-xl"
@@ -758,7 +772,7 @@ function HeroSection() {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500">Engagement moyen</p>
+                    <p className="text-xs text-gray-500">{t.landing.heroStatEngagement}</p>
                     <p className="text-lg font-bold text-gray-900">x3</p>
                   </div>
                 </div>
@@ -786,8 +800,8 @@ function HeroSection() {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500">Nouveau client</p>
-                    <p className="text-sm font-semibold text-gray-900">via LinkedIn</p>
+                    <p className="text-xs text-gray-500">{t.landing.heroStatNewClient}</p>
+                    <p className="text-sm font-semibold text-gray-900">{t.landing.heroStatViaLinkedin}</p>
                   </div>
                 </div>
               </motion.div>
@@ -812,15 +826,17 @@ function HeroSection() {
 // State preserved across navigation (localStorage + React state)
 // =============================================================================
 
-const ALL_DEMO_SUGGESTIONS = [
-  { label: "Signer un client B2B", emoji: "🎯", text: "Je suis consultant et je veux attirer des décideurs B2B qui ont besoin de mon expertise" },
-  { label: "Prouver mon expertise", emoji: "👤", text: "Je veux que mes prospects me voient comme la référence de mon secteur" },
-  { label: "Transformer mes vues en RDV", emoji: "💼", text: "Mes posts LinkedIn ont des vues mais ne génèrent aucun RDV client" },
-  { label: "Lancer mon offre", emoji: "📈", text: "Je lance une nouvelle offre et je veux que mon réseau LinkedIn en parle" },
-  { label: "Partager un cas client", emoji: "🤝", text: "J'ai aidé un client à doubler son CA et je veux le raconter pour attirer des prospects similaires" },
-  { label: "Raconter mon parcours", emoji: "✍️", text: "Je veux partager une leçon business tirée de mon expérience pour engager mon audience" },
-  { label: "Booster ma visibilité", emoji: "🚀", text: "Je publie rarement sur LinkedIn et je veux enfin être visible auprès de mes prospects" },
-];
+function getAllDemoSuggestions(t: any) {
+  return [
+    { label: t.landing.demoPrompt1, emoji: "🎯", text: t.landing.demoPrompt1Desc },
+    { label: t.landing.demoPrompt2, emoji: "👤", text: t.landing.demoPrompt2Desc },
+    { label: t.landing.demoPrompt3, emoji: "💼", text: t.landing.demoPrompt3Desc },
+    { label: t.landing.demoPrompt4, emoji: "📈", text: t.landing.demoPrompt4Desc },
+    { label: t.landing.demoPrompt5, emoji: "🤝", text: t.landing.demoPrompt5Desc },
+    { label: t.landing.demoPrompt6, emoji: "✍️", text: t.landing.demoPrompt6Desc },
+    { label: t.landing.demoPrompt7, emoji: "🚀", text: t.landing.demoPrompt7Desc },
+  ];
+}
 
 // Module-level flag to track if hero animation played (persists across re-renders, resets on page refresh)
 let heroAnimationPlayedGlobal = false;
@@ -832,6 +848,7 @@ function DemoSection() {
   const isInView = useInView(sectionRef, { once: true, amount: 0.15 });
   const prefersReducedMotion = useReducedMotion();
   const [titleHeight, setTitleHeight] = useState(0);
+  const { t } = useLanguage();
 
   // ============================================================================
   // ============================================================================
@@ -846,8 +863,8 @@ function DemoSection() {
   const [hasAnimated, setHasAnimated] = useState(alreadyPlayed);
 
   // Word-by-word reveal state
-  const HERO_WORDS_L1 = ["Vos", "posts", "LinkedIn"];
-  const HERO_WORDS_L2 = ["signent", "vos", "clients"];
+  const HERO_WORDS_L1 = [t.landing.demoTitleWord1, t.landing.demoTitleWord2, t.landing.demoTitleWord3];
+  const HERO_WORDS_L2 = [t.landing.demoTitleWord4, t.landing.demoTitleWord5, t.landing.demoTitleWord6];
   const TOTAL_WORDS = HERO_WORDS_L1.length + HERO_WORDS_L2.length;
   const WORD_DELAY = 110;
 
@@ -920,10 +937,12 @@ function DemoSection() {
   const handleMacBookAnimationComplete = useCallback(() => {}, []);
 
   // Randomly pick 3 suggestions from the 7 on mount
-  const [suggestions] = useState(() => {
-    const shuffled = [...ALL_DEMO_SUGGESTIONS].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, 3);
+  const allSuggestions = getAllDemoSuggestions(t);
+  const [suggestionIndices] = useState(() => {
+    const indices = [0, 1, 2, 3, 4, 5, 6].sort(() => Math.random() - 0.5);
+    return indices.slice(0, 3);
   });
+  const suggestions = suggestionIndices.map(i => allSuggestions[i]);
 
   // Demo state
   const [demoUsed, setDemoUsed] = useState(false);
@@ -999,11 +1018,11 @@ function DemoSection() {
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.message || "Erreur lors de la génération");
+        throw new Error(errData.message || t.landing.demoError);
       }
 
       const reader = res.body?.getReader();
-      if (!reader) throw new Error("Stream non disponible");
+      if (!reader) throw new Error(t.landing.demoStreamError);
 
       const decoder = new TextDecoder();
       let buffer = "";
@@ -1045,7 +1064,7 @@ function DemoSection() {
         localStorage.setItem("demo_response", fullText);
       } catch { /* */ }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Une erreur est survenue");
+      setError(err instanceof Error ? err.message : t.landing.demoGenericError);
     } finally {
       setIsStreaming(false);
     }
@@ -1130,10 +1149,7 @@ function DemoSection() {
               }}
               className="mt-3 md:mt-4 text-gray-500 text-[15px] md:text-lg lg:text-xl max-w-2xl mx-auto leading-relaxed"
             >
-              Décrivez votre objectif.{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54] font-medium">Posty</span>{" "}
-              génère un post LinkedIn prêt à publier en{" "}
-              <span className="font-medium text-gray-700">30 secondes</span>.
+              {t.landing.demoInputDesc}
             </motion.p>
           </div>
         </motion.div>
@@ -1184,7 +1200,7 @@ function DemoSection() {
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
-                  Aperçu produit
+                  {t.landing.demoPreviewLabel}
                 </span>
               </button>
 
@@ -1204,7 +1220,7 @@ function DemoSection() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  Essayer la demo
+                  {t.landing.demoTryDemo}
                 </span>
               </button>
             </div>
@@ -1229,7 +1245,7 @@ function DemoSection() {
                     <p className="text-gray-900 font-semibold text-sm md:text-base">Posty</p>
                     <p className="text-[11px] md:text-xs text-emerald-600 flex items-center gap-1">
                       <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                      Prêt à générer
+                      {t.landing.demoReadyToGenerate}
                     </p>
                   </div>
                 </div>
@@ -1256,9 +1272,9 @@ function DemoSection() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
-                    <p className="text-gray-900 font-semibold text-base mb-1">Votre premier post LinkedIn est prêt</p>
+                    <p className="text-gray-900 font-semibold text-base mb-1">{t.landing.demoPostReady}</p>
                     <p className="text-gray-500 text-sm mb-5 max-w-xs">
-                      Créez votre compte pour le publier et en générer un chaque jour.
+                      {t.landing.demoPostReadyDesc}
                     </p>
                     <div className="flex flex-col sm:flex-row gap-3">
                       {aiResponse && (
@@ -1270,14 +1286,14 @@ function DemoSection() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                           </svg>
-                          Voir mon post
+                          {t.landing.demoViewPost}
                         </button>
                       )}
                       <Link
                         href="/signup"
                         className="inline-flex items-center justify-center gap-2 h-11 px-6 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white text-sm font-semibold rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200"
                       >
-                        Publier mon premier post — 7 jours gratuits
+                        {t.landing.demoPublishFirst}
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                         </svg>
@@ -1314,7 +1330,7 @@ function DemoSection() {
                         className="flex flex-col items-center mb-6 md:mb-8"
                       >
                         <p className="text-gray-500 text-sm md:text-base">
-                          Quel client voulez-vous attirer ?
+                          {t.landing.demoInputPlaceholder}
                         </p>
                         <div className="mt-2.5 h-[2px] w-16 bg-gradient-to-r from-[#F8935D] to-[#F76B54] rounded-full" />
                       </motion.div>
@@ -1348,7 +1364,7 @@ function DemoSection() {
                           type="text"
                           value={inputValue}
                           onChange={(e) => setInputValue(e.target.value)}
-                          placeholder="Ex : Je veux attirer des dirigeants SaaS vers mon offre de consulting..."
+                          placeholder={t.landing.demoInputExample}
                           className="w-full text-sm md:text-[15px] placeholder-gray-400 bg-transparent py-3.5 md:py-4 pl-5 pr-16 rounded-[20px] focus:outline-none"
                           disabled={isStreaming}
                         />
@@ -1431,7 +1447,7 @@ function DemoSection() {
                   <p className="text-gray-900 font-semibold text-sm">Posty</p>
                   <p className="text-[11px] text-emerald-600 flex items-center gap-1">
                     <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                    {isStreaming ? "Écrit..." : "IA disponible"}
+                    {isStreaming ? t.landing.demoWriting : t.landing.demoAIReady}
                   </p>
                 </div>
               </div>
@@ -1506,27 +1522,27 @@ function DemoSection() {
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                               </svg>
-                              Copie !
+                              {t.landing.demoCopied}
                             </>
                           ) : (
                             <>
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                               </svg>
-                              Copier le post
+                              {t.landing.demoCopyPost}
                             </>
                           )}
                         </button>
 
                         <div className="px-5 py-4 bg-gradient-to-r from-[#F8935D]/5 to-[#F76B54]/5 border border-[#F8935D]/15 rounded-xl">
                           <p className="text-gray-600 text-sm mb-3">
-                            Ce post peut vous amener votre prochain prospect demain matin.
+                            {t.landing.demoProspectMessage}
                           </p>
                           <Link
                             href="/signup"
                             className="inline-flex items-center justify-center gap-2 h-11 px-6 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white text-sm font-semibold rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200"
                           >
-                            Publier mon premier post — 7 jours gratuits
+                            {t.landing.demoPublishFirst}
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                             </svg>
@@ -1551,6 +1567,7 @@ function DemoSection() {
 // =============================================================================
 
 // Legacy _LEGACY_BENEFITS_DATA kept for reference but not used
+// Note: This data is not rendered but kept for reference. Translations exist at t.landing.benefit1Title etc.
 const _LEGACY_BENEFITS_DATA = [
   {
     number: "01",
@@ -1982,6 +1999,7 @@ function _LegacyCarouselDot({
 
 function KeyBenefitsSection() {
   const prefersReducedMotion = useReducedMotion();
+  const { t } = useLanguage();
 
   // Premium stagger animation for grid items
   const containerVariants = {
@@ -2030,14 +2048,13 @@ function KeyBenefitsSection() {
           className="max-w-2xl mb-16 md:mb-20"
         >
           <h2 className="text-3xl sm:text-4xl md:text-[2.75rem] font-semibold leading-[1.15] tracking-tight mb-5">
-            <span className="text-silver-shimmer">Ce qui change après</span>{" "}
+            <span className="text-silver-shimmer">{t.landing.resultsTitle1}</span>{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#E8824C]">
-              30 jours avec Posty
+              {t.landing.resultsTitle2}
             </span>
           </h2>
           <p className="text-lg text-gray-600 leading-relaxed">
-            Pas de promesses magiques. Juste ce que nos utilisateurs
-            constatent après quelques semaines de publication régulière.
+            {t.landing.resultsSubtitle}
           </p>
         </motion.div>
 
@@ -2066,22 +2083,21 @@ function KeyBenefitsSection() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
-                    <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Productivité</span>
+                    <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">{t.landing.resultsProductivity}</span>
                   </div>
                 </div>
 
                 <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-3 leading-snug">
-                  5 heures récupérées chaque semaine
+                  {t.landing.resultsProductivityTitle}
                 </h3>
                 <p className="text-gray-600 leading-relaxed mb-6 max-w-xl">
-                  Vos posts sont prêts en quelques clics, dans votre ton, sur vos sujets.
-                  Le dimanche soir redevient le vôtre.
+                  {t.landing.resultsProductivityDesc}
                 </p>
 
                 {/* Metric highlight */}
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl sm:text-4xl font-semibold text-gray-900">5h</span>
-                  <span className="text-gray-500">économisées par semaine en moyenne</span>
+                  <span className="text-gray-500">{t.landing.resultsProductivityStat}</span>
                 </div>
               </div>
             </div>
@@ -2104,16 +2120,15 @@ function KeyBenefitsSection() {
                 </div>
 
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Votre audience grandit naturellement
+                  {t.landing.resultsAudienceTitle}
                 </h3>
                 <p className="text-gray-600 text-sm leading-relaxed mb-5">
-                  Quand vous publiez régulièrement, LinkedIn vous met en avant.
-                  Vos posts touchent plus de monde, sans forcer.
+                  {t.landing.resultsAudienceDesc}
                 </p>
 
                 <div className="flex items-baseline gap-1.5">
                   <span className="text-2xl font-semibold text-gray-900">x3</span>
-                  <span className="text-sm text-gray-500">vues en moyenne</span>
+                  <span className="text-sm text-gray-500">{t.landing.resultsAudienceStat}</span>
                 </div>
               </div>
             </div>
@@ -2135,11 +2150,10 @@ function KeyBenefitsSection() {
                 </div>
 
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Les opportunités viennent à vous
+                  {t.landing.resultsOpportunitiesTitle}
                 </h3>
                 <p className="text-gray-600 text-sm leading-relaxed mb-5">
-                  Clients, partenaires, recruteurs... Ils vous contactent
-                  parce qu'ils voient votre expertise au quotidien.
+                  {t.landing.resultsOpportunitiesDesc}
                 </p>
 
                 <div className="flex items-center gap-2">
@@ -2148,7 +2162,7 @@ function KeyBenefitsSection() {
                     <div className="w-7 h-7 rounded-full bg-gradient-to-br from-gray-300 to-gray-400 border-2 border-white" />
                     <div className="w-7 h-7 rounded-full bg-gradient-to-br from-gray-400 to-gray-500 border-2 border-white" />
                   </div>
-                  <span className="text-sm text-gray-500">nouveaux contacts chaque semaine</span>
+                  <span className="text-sm text-gray-500">{t.landing.resultsOpportunitiesStat}</span>
                 </div>
               </div>
             </div>
@@ -2177,9 +2191,7 @@ function KeyBenefitsSection() {
                 </svg>
 
                 <blockquote className="text-lg sm:text-xl text-white/90 leading-relaxed mb-6 max-w-2xl">
-                  &ldquo;Avant, je passais mes dimanches à préparer mes posts LinkedIn.
-                  Maintenant, c'est fait en 10 minutes le lundi matin. Et mes résultats
-                  n'ont jamais été aussi bons.&rdquo;
+                  &ldquo;{t.landing.resultsTestimonial}&rdquo;
                 </blockquote>
 
                 <div className="flex items-center gap-4">
@@ -2188,7 +2200,7 @@ function KeyBenefitsSection() {
                   </div>
                   <div>
                     <p className="text-white font-medium">Marie Dubois</p>
-                    <p className="text-white/60 text-sm">Consultante en stratégie</p>
+                    <p className="text-white/60 text-sm">{t.landing.resultsTestimonialRole}</p>
                   </div>
                 </div>
               </div>
@@ -2417,61 +2429,63 @@ const audienceAccents = {
   },
 } as const;
 
-const AUDIENCE_PROFILES = [
-  {
-    title: "Entrepreneurs & Fondateurs",
-    subtitle: "CEOs \u00b7 Solopreneurs \u00b7 Fondateurs",
-    painPoint: "Pas le temps de publier. Pas d\u2019angle. LinkedIn reste un potentiel inexploit\u00e9.",
-    solution: "Un post strat\u00e9gique en 30 secondes. Votre LinkedIn g\u00e9n\u00e8re des leads pendant que vous d\u00e9veloppez votre business.",
-    metrics: [
-      { value: "30s", label: "Par post" },
-      { value: "1/jour", label: "Fr\u00e9quence" },
-    ],
-    tag: "Id\u00e9al pour les CEOs et solopreneurs",
-    accent: "cyan" as const,
-    icon: (
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 00-2.58 5.841m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 01-2.448-2.448 14.9 14.9 0 01.06-.312m-2.24 2.39a4.493 4.493 0 00-1.757 4.306 4.493 4.493 0 004.306-1.758M16.5 9a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
-      </svg>
-    ),
-  },
-  {
-    title: "Agences & Directeurs Marketing",
-    subtitle: "CMOs \u00b7 Agences \u00b7 \u00c9quipes marketing",
-    painPoint: "Multi-clients = temps fou et qualit\u00e9 in\u00e9gale. Impossible de scaler manuellement.",
-    solution: "Contenu premium \u00e0 grande \u00e9chelle, ton coh\u00e9rent par client. Scalez votre offre sans recruter.",
-    metrics: [
-      { value: "10+", label: "Clients g\u00e9r\u00e9s" },
-      { value: "100%", label: "Ton coh\u00e9rent" },
-    ],
-    tag: "Id\u00e9al pour les agences et CMOs",
-    accent: "violet" as const,
-    icon: (
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-      </svg>
-    ),
-  },
-  {
-    title: "Freelances & Consultants",
-    subtitle: "Ind\u00e9pendants \u00b7 Experts \u00b7 Consultants B2B",
-    painPoint: "Z\u00e9ro temps pour le marketing. Sans visibilit\u00e9 LinkedIn, le prochain contrat reste incertain.",
-    solution: "Dictez une id\u00e9e entre deux RDV. Posty cr\u00e9e le post qui attire vos prochains clients.",
-    metrics: [
-      { value: "2 min", label: "Entre 2 RDV" },
-      { value: "\u00d73", label: "Visibilit\u00e9" },
-    ],
-    tag: "Id\u00e9al pour les ind\u00e9pendants B2B",
-    accent: "amber" as const,
-    icon: (
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0M12 12.75h.008v.008H12v-.008z" />
-      </svg>
-    ),
-  },
-];
+function getAudienceProfiles(t: any) {
+  return [
+    {
+      title: t.landing.audience1Title,
+      subtitle: t.landing.audience1Roles,
+      painPoint: t.landing.audience1Problem,
+      solution: t.landing.audience1Solution,
+      metrics: [
+        { value: "30s", label: t.landing.audience1Stat1 },
+        { value: "1/jour", label: t.landing.audience1Stat2 },
+      ],
+      tag: t.landing.audience1Ideal,
+      accent: "cyan" as const,
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 00-2.58 5.841m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 01-2.448-2.448 14.9 14.9 0 01.06-.312m-2.24 2.39a4.493 4.493 0 00-1.757 4.306 4.493 4.493 0 004.306-1.758M16.5 9a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+        </svg>
+      ),
+    },
+    {
+      title: t.landing.audience2Title,
+      subtitle: t.landing.audience2Roles,
+      painPoint: t.landing.audience2Problem,
+      solution: t.landing.audience2Solution,
+      metrics: [
+        { value: "10+", label: t.landing.audience2Stat1 },
+        { value: "100%", label: t.landing.audience2Stat2 },
+      ],
+      tag: t.landing.audience2Ideal,
+      accent: "violet" as const,
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+        </svg>
+      ),
+    },
+    {
+      title: t.landing.audience3Title,
+      subtitle: t.landing.audience3Roles,
+      painPoint: t.landing.audience3Problem,
+      solution: t.landing.audience3Solution,
+      metrics: [
+        { value: "2 min", label: t.landing.audience3Stat1 },
+        { value: "\u00d73", label: t.landing.audience3Stat2 },
+      ],
+      tag: t.landing.audience3Ideal,
+      accent: "amber" as const,
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0M12 12.75h.008v.008H12v-.008z" />
+        </svg>
+      ),
+    },
+  ];
+}
 
-const AudienceCard = memo(function AudienceCard({ profile, index, skipEntryAnimation = false }: { profile: typeof AUDIENCE_PROFILES[number]; index: number; skipEntryAnimation?: boolean }) {
+const AudienceCard = memo(function AudienceCard({ profile, index, skipEntryAnimation = false }: { profile: ReturnType<typeof getAudienceProfiles>[number]; index: number; skipEntryAnimation?: boolean }) {
   const accent = audienceAccents[profile.accent];
   const prefersReducedMotion = useReducedMotion();
   const isMobile = useIsMobile();
@@ -2631,7 +2645,9 @@ const AudienceCard = memo(function AudienceCard({ profile, index, skipEntryAnima
 function TargetAudienceSection() {
   const prefersReducedMotion = useReducedMotion();
   const isMobile = useIsMobile();
+  const { t } = useLanguage();
   const skipInfinite = prefersReducedMotion || isMobile;
+  const AUDIENCE_PROFILES = getAudienceProfiles(t);
 
   return (
     <section id="audience" className="relative py-12 md:py-16 lg:py-20 overflow-hidden">
@@ -2711,20 +2727,20 @@ function TargetAudienceSection() {
               <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-[#F8935D] opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-[#F8935D]" />
             </span>
-            <span className="text-sm font-medium text-gray-600">Conçu pour vous</span>
+            <span className="text-sm font-medium text-gray-600">{t.landing.audienceTitle1}</span>
           </motion.div>
 
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 lg:mb-6 tracking-tight">
-            <span className="text-silver-shimmer">À qui s&apos;adresse</span>{" "}
+            <span className="text-silver-shimmer">{t.landing.audienceTitle2}</span>{" "}
             <span className="relative inline-block">
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
-                Posty ?
+                {t.landing.audienceTitle3}
               </span>
               <span className="absolute inset-0 bg-gradient-to-r from-[#F8935D]/20 to-[#F76B54]/20 blur-2xl -z-10" aria-hidden="true" />
             </span>
           </h2>
           <p className="text-gray-600 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
-            Chaque professionnel a un d&eacute;fi LinkedIn. Posty le r&eacute;sout en 30 secondes.
+            {t.landing.audienceSubtitle}
           </p>
         </motion.div>
 
@@ -2778,19 +2794,20 @@ interface FeatureConfig {
 // =============================================================================
 
 function MockupMultiPlatform() {
+  const { t } = useLanguage();
   const platforms = [
     { name: "LinkedIn", icon: (
       <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-    ), color: "#0A66C2", selected: true, status: "Connecté" },
+    ), color: "#0A66C2", selected: true, status: t.landing.featuresConnected || "Connecté" },
     { name: "Reddit", icon: (
       <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor"><path d="M12 0A12 12 0 000 12a12 12 0 0012 12 12 12 0 0012-12A12 12 0 0012 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 01-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 01.042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 014.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 01.14-.197.35.35 0 01.238-.042l2.906.617a1.214 1.214 0 011.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 00-.231.094.33.33 0 000 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 000-.462.342.342 0 00-.461 0c-.545.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 00-.206-.095z"/></svg>
-    ), color: "#FF4500", selected: true, status: "Bientôt disponible", comingSoon: true },
+    ), color: "#FF4500", selected: true, status: t.landing.featuresComingSoon, comingSoon: true },
     { name: "Threads", icon: (
       <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor"><path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.29 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.59 12c.025 3.086.718 5.496 2.057 7.164 1.432 1.783 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.75-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.801-1.063-.689-1.685-1.74-1.752-2.96-.065-1.187.408-2.26 1.33-3.017.88-.724 2.10-1.14 3.531-1.208 1.027-.046 1.98.042 2.857.262-.085-.758-.286-1.373-.6-1.833-.453-.667-1.16-1.014-2.101-1.032h-.06c-.724.012-1.6.246-2.143.787l-1.46-1.39c.867-.913 2.09-1.39 3.553-1.416h.084c1.508.024 2.674.58 3.47 1.65.717.962 1.09 2.273 1.11 3.895l.003.236c.92.339 1.706.839 2.34 1.497.856.886 1.363 2.084 1.463 3.455.118 1.606-.36 3.244-1.39 4.747C18.86 22.812 16.13 23.98 12.186 24zm-1.14-8.376c-.94.042-1.672.284-2.173.72-.465.404-.685.905-.655 1.49.038.734.46 1.281 1.187 1.536.485.17 1.042.237 1.634.2 1.078-.06 1.884-.46 2.395-1.095.434-.54.704-1.28.81-2.216-.86-.2-1.791-.286-2.718-.286-.16 0-.32.003-.48.01z"/></svg>
-    ), color: "#000000", selected: true, status: "Connecté" },
+    ), color: "#000000", selected: true, status: t.landing.featuresConnected || "Connecté" },
     { name: "Facebook", icon: (
       <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-    ), color: "#1877F2", selected: true, status: "Connecté" },
+    ), color: "#1877F2", selected: true, status: t.landing.featuresConnected || "Connecté" },
   ];
 
   return (
@@ -2801,7 +2818,7 @@ function MockupMultiPlatform() {
 
       {/* Header - matches real app */}
       <div className="flex items-center justify-between mb-3 relative z-10">
-        <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wide">Publier sur</span>
+        <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wide">{t.landing.featuresPublishOn}</span>
       </div>
 
       {/* Platform grid - 2 columns like real app */}
@@ -2832,7 +2849,7 @@ function MockupMultiPlatform() {
             {p.comingSoon && (
               <div className="absolute top-1 right-1">
                 <span className="text-[8px] bg-gray-100 px-1 py-0.5 rounded text-gray-400">
-                  Bientôt
+                  {t.landing.featuresSoon}
                 </span>
               </div>
             )}
@@ -2862,14 +2879,15 @@ function MockupMultiPlatform() {
         <svg className="w-3.5 h-3.5 text-[#F8935D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
         </svg>
-        <span className="text-[11px] text-[#F8935D] font-medium">Débloquer plus de plateformes</span>
+        <span className="text-[11px] text-[#F8935D] font-medium">{t.landing.featuresUnlockMore}</span>
       </motion.div>
     </div>
   );
 }
 
 function MockupScheduler() {
-  const days = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
+  const { t } = useLanguage();
+  const days = t.landing.featuresDays.split(",");
   // Posts scheduled on specific days with times
   const postsOnDays: Record<number, { time: string; status: "pending" | "published" }[]> = {
     3: [{ time: "09:00", status: "published" }],
@@ -2894,10 +2912,10 @@ function MockupScheduler() {
       {/* View toggle - like real app */}
       <div className="flex bg-gray-100 rounded-lg p-0.5 mb-2.5 relative z-10">
         <div className="flex-1 px-2 py-1 text-[9px] font-medium rounded-md text-gray-500 text-center">
-          Liste
+          {t.landing.featuresList}
         </div>
         <div className="flex-1 px-2 py-1 text-[9px] font-medium rounded-md bg-white text-gray-900 text-center shadow-sm">
-          Calendrier
+          {t.landing.featuresCalendar}
         </div>
       </div>
 
@@ -2906,7 +2924,7 @@ function MockupScheduler() {
         <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
         </svg>
-        <span className="text-[11px] text-gray-900 font-bold">Février 2025</span>
+        <span className="text-[11px] text-gray-900 font-bold">{t.landing.featuresMonth}</span>
         <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>
@@ -2976,6 +2994,7 @@ function MockupScheduler() {
 }
 
 function MockupDualGeneration() {
+  const { t } = useLanguage();
   return (
     <div className="w-full h-full bg-gradient-to-br from-white via-gray-50 to-white p-4 flex flex-col relative overflow-hidden">
       {/* Decorative */}
@@ -2984,7 +3003,7 @@ function MockupDualGeneration() {
 
       {/* Header - like real app "2 versions disponibles" with dots */}
       <div className="flex items-center justify-center gap-2 mb-3 relative z-10">
-        <span className="text-[10px] text-gray-400">2 versions disponibles</span>
+        <span className="text-[10px] text-gray-400">{t.landing.featuresVersionsAvailable}</span>
         <div className="flex items-center gap-1">
           <span className="w-1.5 h-1.5 rounded-full bg-[#F85751]" />
           <span className="w-1.5 h-1.5 rounded-full bg-[#F8935D]" />
@@ -3007,19 +3026,19 @@ function MockupDualGeneration() {
               <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
               </svg>
-              Storytelling
+              {t.landing.featuresStorytelling}
             </span>
           </div>
           {/* Content preview */}
           <div className="px-2.5 py-2 flex-1">
             <div className="text-[8px] text-gray-600 leading-relaxed line-clamp-4">
-              Il y a 2 ans, j&apos;ai failli tout abandonner. Mon business stagnait, mes posts n&apos;avaient aucun impact...
+              {t.landing.featuresStorytellingPreview}
             </div>
           </div>
           {/* Actions like real app */}
           <div className="px-2 py-1.5 border-t border-gray-100 flex gap-1">
-            <div className="flex-1 py-1 rounded text-center text-[7px] text-gray-500 bg-gray-50 font-medium">Copier</div>
-            <div className="flex-1 py-1 rounded text-center text-[7px] text-white bg-[#0A66C2] font-medium">Publier</div>
+            <div className="flex-1 py-1 rounded text-center text-[7px] text-gray-500 bg-gray-50 font-medium">{t.landing.featuresCopy}</div>
+            <div className="flex-1 py-1 rounded text-center text-[7px] text-white bg-[#0A66C2] font-medium">{t.landing.featuresPublish}</div>
           </div>
         </motion.div>
 
@@ -3037,19 +3056,19 @@ function MockupDualGeneration() {
               <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
-              Business
+              {t.landing.featuresBusiness}
             </span>
           </div>
           {/* Content preview */}
           <div className="px-2.5 py-2 flex-1">
             <div className="text-[8px] text-gray-600 leading-relaxed line-clamp-4">
-              3 stratégies qui ont généré +40% de leads qualifiés en B2B ce trimestre. La méthode complète...
+              {t.landing.featuresBusinessPreview}
             </div>
           </div>
           {/* Actions like real app */}
           <div className="px-2 py-1.5 border-t border-gray-100 flex gap-1">
-            <div className="flex-1 py-1 rounded text-center text-[7px] text-gray-500 bg-gray-50 font-medium">Copier</div>
-            <div className="flex-1 py-1 rounded text-center text-[7px] text-white bg-[#0A66C2] font-medium">Publier</div>
+            <div className="flex-1 py-1 rounded text-center text-[7px] text-gray-500 bg-gray-50 font-medium">{t.landing.featuresCopy}</div>
+            <div className="flex-1 py-1 rounded text-center text-[7px] text-white bg-[#0A66C2] font-medium">{t.landing.featuresPublish}</div>
           </div>
         </motion.div>
       </div>
@@ -3058,11 +3077,12 @@ function MockupDualGeneration() {
 }
 
 function MockupContextProfile() {
+  const { t } = useLanguage();
   const profileFields = [
-    { label: "Secteur", value: "Tech / SaaS B2B", icon: "🏢" },
-    { label: "Audience", value: "Founders, CMOs, VPs", icon: "🎯" },
-    { label: "Ton", value: "Professionnel & direct", icon: "🎤" },
-    { label: "Style", value: "Concis, data-driven", icon: "✍️" },
+    { label: t.landing.featuresSector, value: t.landing.featuresSectorValue, icon: "🏢" },
+    { label: t.landing.featuresAudience, value: t.landing.featuresAudienceValue, icon: "🎯" },
+    { label: t.landing.featuresTone, value: t.landing.featuresToneValue, icon: "🎤" },
+    { label: t.landing.featuresStyle, value: t.landing.featuresStyleValue, icon: "✍️" },
   ];
 
   return (
@@ -3073,10 +3093,10 @@ function MockupContextProfile() {
 
       {/* Header */}
       <div className="flex items-center gap-2 mb-3 relative z-10">
-        <span className="text-[11px] text-gray-500 font-medium">Votre profil Posty</span>
+        <span className="text-[11px] text-gray-500 font-medium">{t.landing.featuresYourProfile}</span>
         <span className="ml-auto text-[10px] text-emerald-500 font-medium flex items-center gap-1">
           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
-          Complété
+          {t.landing.featuresCompleted}
         </span>
       </div>
 
@@ -3086,8 +3106,8 @@ function MockupContextProfile() {
           EN
         </div>
         <div>
-          <div className="text-[12px] text-gray-900 font-semibold">Emilien Nepveu</div>
-          <div className="text-[10px] text-gray-500">Co-Founder &middot; Co-CEO</div>
+          <div className="text-[12px] text-gray-900 font-semibold">{t.landing.featuresProfileName}</div>
+          <div className="text-[10px] text-gray-500">{t.landing.featuresProfileRole}</div>
         </div>
       </div>
 
@@ -3117,7 +3137,7 @@ function MockupContextProfile() {
       {/* Completion bar */}
       <div className="mt-3 relative z-10">
         <div className="flex items-center justify-between mb-1">
-          <span className="text-[9px] text-gray-400">Personnalisation</span>
+          <span className="text-[9px] text-gray-400">{t.landing.featuresPersonalization}</span>
           <span className="text-[9px] text-amber-500 font-semibold">100%</span>
         </div>
         <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
@@ -3134,12 +3154,13 @@ function MockupContextProfile() {
   );
 }
 
-const FEATURES: FeatureConfig[] = [
+function getFeatures(t: any): FeatureConfig[] {
+  return [
   {
-    title: "1 post, 4 plateformes, 4x plus de visibilité",
-    description: "Publiez sur LinkedIn, Threads, Facebook — et bientôt Reddit. Un seul contenu touche 4 audiences. Plus de visibilité, plus de prospects entrants.",
+    title: t.landing.featuresMultiPlatformTitle,
+    description: t.landing.featuresMultiPlatformDesc,
     mockup: <MockupMultiPlatform />,
-    badge: "Multi-plateforme",
+    badge: t.landing.featuresMultiPlatformLabel,
     tierBadge: "Max",
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -3160,10 +3181,10 @@ const FEATURES: FeatureConfig[] = [
     },
   },
   {
-    title: "Publiez au bon moment, chaque jour, sans y penser",
-    description: "Programmez vos posts aux créneaux où votre audience est la plus active. L'algorithme récompense le bon timing — Posty s'en charge pour vous.",
+    title: t.landing.featuresScheduleTitle,
+    description: t.landing.featuresScheduleDesc,
     mockup: <MockupScheduler />,
-    badge: "Arrive très bientôt",
+    badge: t.landing.featuresScheduleLabel,
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -3183,10 +3204,10 @@ const FEATURES: FeatureConfig[] = [
     },
   },
   {
-    title: "De l'idée au post en 30 secondes",
-    description: "Décrivez votre objectif. Posty génère deux versions calibrées : Storytelling pour créer le lien, Business pour déclencher la prise de contact.",
+    title: t.landing.featuresGenerationTitle,
+    description: t.landing.featuresGenerationDesc,
     mockup: <MockupDualGeneration />,
-    badge: "Génération IA",
+    badge: t.landing.featuresGenerationLabel,
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -3206,10 +3227,10 @@ const FEATURES: FeatureConfig[] = [
     },
   },
   {
-    title: "Chaque post sonne comme vous",
-    description: "Dès votre inscription, Posty apprend votre secteur, votre audience cible et votre ton. Résultat : des posts que vos prospects reconnaissent comme experts, pas du contenu IA générique.",
+    title: t.landing.featuresPersonalizationTitle,
+    description: t.landing.featuresPersonalizationDesc,
     mockup: <MockupContextProfile />,
-    badge: "IA Contextuelle",
+    badge: t.landing.featuresPersonalizationLabel,
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
@@ -3228,9 +3249,11 @@ const FEATURES: FeatureConfig[] = [
       titleGradient: "from-amber-600 via-orange-400 to-slate-300",
     },
   },
-];
+  ];
+}
 
 function FeatureCard({ feature, index }: { feature: FeatureConfig; index: number }) {
+  const { t } = useLanguage();
   const isEven = index % 2 === 0;
   const prefersReducedMotion = useReducedMotion();
   const isMobile = useIsMobile();
@@ -3383,7 +3406,7 @@ function FeatureCard({ feature, index }: { feature: FeatureConfig; index: number
               `}
             >
               <span className="relative">
-                Essayer gratuitement
+                {t.landing.featuresTryFree}
                 <span className={`absolute -bottom-0.5 left-0 w-0 h-[2px] ${feature.color.iconBg} transition-all duration-300 group-hover/link:w-full`} />
               </span>
               <svg
@@ -3405,6 +3428,8 @@ function FeatureCard({ feature, index }: { feature: FeatureConfig; index: number
 
 function FeaturesSection() {
   const isMobile = useIsMobile();
+  const { t } = useLanguage();
+  const FEATURES = getFeatures(t);
 
   return (
     <section id="features" className="py-[clamp(1.5rem,3vw,2.5rem)] px-[clamp(1rem,4vw,3rem)] overflow-hidden">
@@ -3417,10 +3442,7 @@ function FeaturesSection() {
           className="text-center mb-[clamp(1.25rem,2vw,1.75rem)]"
         >
           <h2 className="text-[clamp(1.75rem,4vw,3.25rem)] font-bold">
-            <span className="text-silver-premium">Tout ce qu&apos;il vous faut pour</span>{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
-              attirer des clients sur LinkedIn
-            </span>
+            <span className="text-silver-premium">{t.landing.featuresSectionTitle}</span>
           </h2>
         </motion.div>
 
@@ -3458,32 +3480,36 @@ function FeaturesSection() {
 // - Consultant: https://unsplash.com/photos/7YVZYZeITc8 (LinkedIn Sales Solutions)
 // =============================================================================
 
-const TESTIMONIALS = [
-  {
-    name: "Alexandre M.",
-    role: "Fondateur",
-    company: "Agence B2B",
-    image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&h=200&fit=crop&crop=face",
-    quote: "Avant Posty, je publiais une fois par semaine sans savoir quoi dire. Aujourd'hui, je poste chaque jour et LinkedIn est devenu mon premier canal d'acquisition. J'ai signé 3 clients en 2 mois.",
-  },
-  {
-    name: "Sophie L.",
-    role: "Directrice Marketing",
-    company: "SaaS B2B",
-    image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&h=200&fit=crop&crop=face",
-    quote: "Mon équipe gagne 5 heures par semaine sur le contenu. On réinvestit ce temps en stratégie et prospection. Nos posts sont plus réguliers, et l'engagement a triplé en 30 jours.",
-  },
-  {
-    name: "Marc D.",
-    role: "Consultant indépendant",
-    company: "",
-    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face",
-    quote: "Posty me génère un post par jour qui sonne comme moi, sans sacrifier le temps que je consacre à mes missions clients. LinkedIn est enfin rentable pour moi.",
-  },
-];
+function getTestimonials(t: any) {
+  return [
+    {
+      name: "Alexandre M.",
+      role: t.landing.testimonial1Role,
+      company: t.landing.testimonial1Company,
+      image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&h=200&fit=crop&crop=face",
+      quote: t.landing.testimonial1Text,
+    },
+    {
+      name: "Sophie L.",
+      role: t.landing.testimonial2Role,
+      company: t.landing.testimonial2Company,
+      image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&h=200&fit=crop&crop=face",
+      quote: t.landing.testimonial2Text,
+    },
+    {
+      name: "Cerise Cottier",
+      role: t.landing.testimonial3Role,
+      company: "",
+      image: "/Cerise Cottier.jpg",
+      quote: t.landing.testimonial3Text,
+    },
+  ];
+}
 
 function TestimonialsSection() {
   const isMobile = useIsMobile();
+  const { t } = useLanguage();
+  const TESTIMONIALS = getTestimonials(t);
   return (
     <section id="testimonials" className="py-12 md:py-16 2xl:py-20 px-4 sm:px-6 lg:px-8 2xl:px-12 overflow-hidden">
       <div className="max-w-[1084px] mx-auto">
@@ -3503,23 +3529,23 @@ function TestimonialsSection() {
             className="inline-flex items-center gap-2 px-4 py-2 mb-6 bg-white border border-gray-200 rounded-full shadow-sm"
           >
             <div className="flex -space-x-2">
-              {TESTIMONIALS.slice(0, 3).map((t, i) => (
+              {TESTIMONIALS.slice(0, 3).map((testimonialItem, i) => (
                 <div key={i} className="w-6 h-6 rounded-full border-2 border-white overflow-hidden">
-                  <Image src={t.image} alt={`Photo de ${t.name}`} width={24} height={24} className="w-full h-full object-cover" />
+                  <Image src={testimonialItem.image} alt={`${t.landing.testimonialsPhotoAlt} ${testimonialItem.name}`} width={24} height={24} className="w-full h-full object-cover" />
                 </div>
               ))}
             </div>
-            <span className="text-sm text-gray-600 font-medium">Retours d&apos;utilisateurs Posty</span>
+            <span className="text-sm text-gray-600 font-medium">{t.landing.testimonialsLabel}</span>
           </motion.div>
 
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
-            <span className="text-silver-premium">Ils publient. Ils</span>{" "}
+            <span className="text-silver-premium">{t.landing.testimonialsTitle1}</span>{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
-              convertissent.
+              {t.landing.testimonialsTitle2}
             </span>
           </h2>
           <p className="text-gray-500 text-lg max-w-2xl mx-auto">
-            Des professionnels comme vous qui signent des clients grâce à LinkedIn.
+            {t.landing.testimonialsSubtitle}
           </p>
         </motion.div>
 
@@ -3575,6 +3601,7 @@ function TestimonialsSection() {
 function BeforeAfterSection() {
   const prefersReducedMotion = useReducedMotion();
   const isMobile = useIsMobile();
+  const { t } = useLanguage();
 
   return (
     <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
@@ -3588,13 +3615,13 @@ function BeforeAfterSection() {
           className="text-center mb-12 md:mb-16"
         >
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
-            <span className="text-silver-shimmer">Ce qui change</span>{" "}
+            <span className="text-silver-shimmer">{t.landing.beforeAfterTitle1}</span>{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
-              avec Posty
+              {t.landing.beforeAfterTitle2}
             </span>
           </h2>
           <p className="text-gray-500 text-base md:text-lg max-w-xl mx-auto">
-            Le quotidien LinkedIn de nos utilisateurs, avant et après.
+            {t.landing.beforeAfterSubtitle}
           </p>
         </motion.div>
 
@@ -3610,7 +3637,7 @@ function BeforeAfterSection() {
           >
             <div className="flex items-center gap-2 mb-3">
               <span className="px-3 py-1 rounded-full bg-gray-100 text-gray-500 text-xs font-semibold uppercase tracking-wider">
-                Sans Posty
+                {t.landing.beforeAfterWithout}
               </span>
             </div>
 
@@ -3635,7 +3662,7 @@ function BeforeAfterSection() {
                 <div className="flex items-start gap-3 mb-4">
                   <div className="w-10 h-10 rounded-full bg-gray-200 flex-shrink-0" />
                   <div className="flex-1 rounded-xl border border-dashed border-gray-200 p-4 min-h-[88px] relative bg-gray-50/50">
-                    <span className="text-gray-300 text-sm">À quoi pensez-vous ?</span>
+                    <span className="text-gray-300 text-sm">{t.landing.beforeAfterThinking}</span>
                     <div className="absolute bottom-3 right-3 flex items-center gap-1.5 text-gray-300">
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -3666,22 +3693,22 @@ function BeforeAfterSection() {
               <div className="grid grid-cols-3 divide-x divide-gray-100 border-t border-gray-100">
                 <div className="py-3.5 text-center">
                   <p className="text-lg font-bold text-gray-300">0</p>
-                  <p className="text-[10px] text-gray-400 uppercase tracking-wide mt-0.5">Prospect</p>
+                  <p className="text-[10px] text-gray-400 uppercase tracking-wide mt-0.5">{t.landing.beforeAfterBeforeProspect}</p>
                 </div>
                 <div className="py-3.5 text-center">
                   <p className="text-lg font-bold text-gray-300">~2h</p>
-                  <p className="text-[10px] text-gray-400 uppercase tracking-wide mt-0.5">Par post</p>
+                  <p className="text-[10px] text-gray-400 uppercase tracking-wide mt-0.5">{t.landing.beforeAfterBeforePerPost}</p>
                 </div>
                 <div className="py-3.5 text-center">
                   <p className="text-lg font-bold text-gray-300">1×/mois</p>
-                  <p className="text-[10px] text-gray-400 uppercase tracking-wide mt-0.5">Fréquence</p>
+                  <p className="text-[10px] text-gray-400 uppercase tracking-wide mt-0.5">{t.landing.beforeAfterBeforeFrequency}</p>
                 </div>
               </div>
             </div>
 
             {/* Quote */}
             <p className="mt-4 text-sm text-gray-400 italic text-center px-2">
-              &ldquo;Le dimanche soir, je cherche encore quoi poster...&rdquo;
+              &ldquo;{t.landing.beforeAfterStruggle}&rdquo;
             </p>
           </motion.div>
 
@@ -3722,7 +3749,7 @@ function BeforeAfterSection() {
           >
             <div className="flex items-center gap-2 mb-3">
               <span className="px-3 py-1 rounded-full bg-[#F8935D]/10 text-[#F8935D] text-xs font-semibold uppercase tracking-wider">
-                Avec Posty
+                {t.landing.beforeAfterWith}
               </span>
             </div>
 
@@ -3756,24 +3783,24 @@ function BeforeAfterSection() {
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                     </svg>
-                    Généré en 30s
+                    {t.landing.beforeAfterGenerated}
                   </motion.span>
                   <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-[#F8935D]/10 text-[#F8935D] text-[10px] font-medium">
-                    Optimisé pour l&apos;algorithme
+                    {t.landing.beforeAfterOptimized}
                   </span>
                 </div>
 
                 {/* Post preview */}
                 <div className="rounded-xl border border-[#F8935D]/15 bg-gradient-to-br from-[#FEF3EE]/30 to-transparent p-4 min-h-[88px]">
                   <p className="text-gray-700 text-sm leading-relaxed">
-                    &ldquo;Les dirigeants qui réussissent sur LinkedIn partagent une habitude : ils publient chaque jour un contenu qui parle à leur audience...&rdquo;
+                    &ldquo;{t.landing.beforeAfterPostPreview}&rdquo;
                   </p>
                   <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[#F8935D]/10">
                     <span className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white text-xs font-semibold shadow-sm">
-                      Publier maintenant
+                      {t.landing.beforeAfterPublishNow}
                     </span>
                     <span className="text-[11px] text-gray-400">
-                      ou planifier pour demain 8h
+                      {t.landing.beforeAfterSchedule}
                     </span>
                   </div>
                 </div>
@@ -3783,22 +3810,22 @@ function BeforeAfterSection() {
               <div className="grid grid-cols-3 divide-x divide-[#F8935D]/10 border-t border-[#F8935D]/10">
                 <div className="py-3.5 text-center">
                   <p className="text-lg font-bold text-[#F8935D]">12</p>
-                  <p className="text-[10px] text-gray-500 uppercase tracking-wide mt-0.5">Prospects/mois</p>
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wide mt-0.5">{t.landing.beforeAfterProspects}</p>
                 </div>
                 <div className="py-3.5 text-center">
                   <p className="text-lg font-bold text-[#F8935D]">×3</p>
-                  <p className="text-[10px] text-gray-500 uppercase tracking-wide mt-0.5">Engagement</p>
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wide mt-0.5">{t.landing.beforeAfterEngagement}</p>
                 </div>
                 <div className="py-3.5 text-center">
                   <p className="text-lg font-bold text-[#F8935D]">1/jour</p>
-                  <p className="text-[10px] text-gray-500 uppercase tracking-wide mt-0.5">Fréquence</p>
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wide mt-0.5">{t.landing.beforeAfterFrequency}</p>
                 </div>
               </div>
             </div>
 
             {/* Quote */}
             <p className="mt-4 text-sm text-[#F8935D] font-medium text-center px-2">
-              &ldquo;LinkedIn est devenu mon premier canal d&apos;acquisition.&rdquo;
+              &ldquo;{t.landing.beforeAfterTestimonial}&rdquo;
             </p>
           </motion.div>
         </div>
@@ -3812,7 +3839,7 @@ function BeforeAfterSection() {
           className="text-center mt-14 md:mt-20"
         >
           <p className="text-gray-500 text-sm md:text-base mb-5">
-            Rejoignez les professionnels qui signent des clients chaque mois grâce à LinkedIn
+            {t.landing.beforeAfterCTA}
           </p>
           <motion.div
             whileHover={{ scale: 1.03 }}
@@ -3822,7 +3849,7 @@ function BeforeAfterSection() {
               href="/signup"
               className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white font-semibold rounded-xl shadow-lg shadow-[#F8935D]/20 hover:shadow-xl hover:shadow-[#F8935D]/30 transition-all duration-300"
             >
-              Commencer mon essai gratuit
+              {t.landing.beforeAfterCTAButton}
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
@@ -3844,6 +3871,7 @@ const CFO_LINKEDIN_URL = "https://www.instagram.com/come27m/";
 function FounderSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const prefersReducedMotion = useReducedMotion();
+  const { t } = useLanguage();
 
   // Scroll-based animation: track section progress via native window scroll
   const { scrollYProgress } = useScroll({
@@ -3901,11 +3929,16 @@ function FounderSection() {
             </svg>
           </div>
           <p className="text-xl sm:text-2xl md:text-3xl lg:text-[2.5rem] 2xl:text-[2.75rem] font-medium text-gray-900 leading-snug md:leading-tight tracking-tight">
-            LinkedIn est le levier de croissance le plus sous-exploité du B2B. J&apos;ai créé{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
-              Posty
-            </span>
-            {" "}parce que chaque entrepreneur mérite de signer des clients grâce à ses posts — sans y passer des heures.
+            {t.landing.foundersQuote.split("Posty").map((part: string, i: number, arr: string[]) => (
+              <span key={i}>
+                {part}
+                {i < arr.length - 1 && (
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
+                    Posty
+                  </span>
+                )}
+              </span>
+            ))}
           </p>
         </motion.blockquote>
 
@@ -3924,10 +3957,10 @@ function FounderSection() {
               target="_blank"
               rel="noopener noreferrer"
               className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F8935D] focus-visible:ring-offset-2"
-              aria-label="Voir le profil LinkedIn d'Emilien Nepveu"
+              aria-label={t.landing.foundersEmilienAlt}
             >
               <div className="relative w-[4.5rem] h-[4.5rem] md:w-20 md:h-20 aspect-square rounded-full overflow-hidden ring-4 ring-white shadow-xl shadow-gray-200/50">
-                <Image src="/ceo.jpg" alt="Emilien Nepveu" fill className="object-cover object-center" sizes="80px" />
+                <Image src="/ceo.jpg" alt={t.landing.foundersEmilien} fill className="object-cover object-center" sizes="80px" />
               </div>
             </Link>
             <Link
@@ -3935,10 +3968,10 @@ function FounderSection() {
               target="_blank"
               rel="noopener noreferrer"
               className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F8935D] focus-visible:ring-offset-2"
-              aria-label="Voir le profil de Côme Maubert"
+              aria-label={t.landing.foundersComeAlt}
             >
               <div className="relative w-[4.5rem] h-[4.5rem] md:w-20 md:h-20 aspect-square rounded-full overflow-hidden ring-4 ring-white shadow-xl shadow-gray-200/50">
-                <Image src="/cmo.jpg" alt="Côme Maubert" fill className="object-cover object-center" sizes="80px" />
+                <Image src="/cmo.jpg" alt={t.landing.foundersCome} fill className="object-cover object-center" sizes="80px" />
               </div>
             </Link>
           </div>
@@ -3947,7 +3980,7 @@ function FounderSection() {
           <div className="flex items-center justify-center gap-4 mb-4">
             <div className="h-px w-10 sm:w-14 bg-gradient-to-r from-transparent to-[#F8935D]/30" />
             <span className="text-gray-500 text-[11px] md:text-xs font-medium tracking-[0.14em] uppercase select-none">
-              Co-fondateurs & Co-CEO
+              {t.landing.foundersRole}
             </span>
             <div className="h-px w-10 sm:w-14 bg-gradient-to-l from-transparent to-[#F8935D]/30" />
           </div>
@@ -3963,11 +3996,11 @@ function FounderSection() {
                 className="group relative focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F8935D] focus-visible:ring-offset-2 rounded"
               >
                 <span className="text-gray-900 font-semibold text-sm md:text-base relative inline-block">
-                  Emilien Nepveu
+                  {t.landing.foundersEmilien}
                   <span className="absolute left-0 -bottom-0.5 w-full h-[2px] bg-gradient-to-r from-[#F8935D] to-[#F76B54] origin-left scale-x-0 md:group-hover:scale-x-100 transition-transform duration-300 ease-out rounded-full" />
                 </span>
               </Link>
-              <p className="text-gray-400 text-[11px] md:text-xs tracking-wide mt-0.5">CTO</p>
+              <p className="text-gray-400 text-[11px] md:text-xs tracking-wide mt-0.5">{t.landing.foundersEmilienRole}</p>
             </div>
 
             {/* Côme */}
@@ -3979,11 +4012,11 @@ function FounderSection() {
                 className="group relative focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F8935D] focus-visible:ring-offset-2 rounded"
               >
                 <span className="text-gray-900 font-semibold text-sm md:text-base relative inline-block">
-                  Côme Maubert
+                  {t.landing.foundersCome}
                   <span className="absolute left-0 -bottom-0.5 w-full h-[2px] bg-gradient-to-r from-[#F8935D] to-[#F76B54] origin-left scale-x-0 md:group-hover:scale-x-100 transition-transform duration-300 ease-out rounded-full" />
                 </span>
               </Link>
-              <p className="text-gray-400 text-[11px] md:text-xs tracking-wide mt-0.5">CFO</p>
+              <p className="text-gray-400 text-[11px] md:text-xs tracking-wide mt-0.5">{t.landing.foundersComeRole}</p>
             </div>
           </div>
         </motion.div>

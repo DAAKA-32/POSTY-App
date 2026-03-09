@@ -18,6 +18,7 @@ import {
   OnboardingData,
 } from "@/types";
 import toast from "@/components/ui/Toast";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 // =============================================================================
 // STEP CONFIGURATION
@@ -263,6 +264,7 @@ function ProfileRecapScreen({
 export default function OnboardingPage() {
   const { user, userProfile, loading, refreshUserProfile, needsOnboarding, clearOnboardingFlag } = useAuth();
   const { subscription, loading: subscriptionLoading } = useSubscription();
+  usePageTitle("onboarding");
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
   const [direction, setDirection] = useState(0);

@@ -6,6 +6,7 @@ import { motion, AnimatePresence, useMotionValue, useTransform, useDragControls,
 import { X, Sparkles, ArrowRight, Check } from "lucide-react";
 import { PostTemplate } from "./PostTemplates";
 import { useScrollLock } from "@/hooks/useScrollLock";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface TemplateFillerModalProps {
   isOpen: boolean;
@@ -42,49 +43,10 @@ function generateLabel(placeholder: string): string {
 }
 
 /**
- * Generate placeholder hint for input
+ * Generate placeholder hint for input (uses translation keys)
  */
-function generateHint(placeholder: string): string {
-  const hints: Record<string, string> = {
-    "durée": "Ex: 6 mois, 2 ans, 3 semaines...",
-    "domaine": "Ex: ma carrière, mon business, ma vie...",
-    "décrivez le contexte": "Décrivez brièvement la situation de départ...",
-    "décrivez le tournant": "Le moment clé qui a tout changé...",
-    "résultat obtenu": "Ce que vous avez accompli...",
-    "X": "Ex: 3, 5, 7...",
-    "objectif": "Ex: doubler votre productivité, mieux gérer votre temps...",
-    "Astuce 1": "Votre première astuce...",
-    "Astuce 2": "Votre deuxième astuce...",
-    "Astuce 3": "Votre troisième astuce...",
-    "explication courte": "Expliquez brièvement pourquoi...",
-    "précisez": "Détaillez votre conseil principal...",
-    "votre opinion forte": "Votre point de vue audacieux...",
-    "argument 1": "Votre premier argument...",
-    "argument 2": "Votre second argument...",
-    "pratique courante": "Ce que tout le monde fait...",
-    "conséquence": "Ce qui en résulte...",
-    "appel à l'action": "Ce que vous proposez de faire...",
-    "métrique chiffrée": "Ex: +50% de ventes, 10k abonnés...",
-    "situation de départ": "Où vous étiez avant...",
-    "Action 1": "Première action clé...",
-    "Action 2": "Deuxième action clé...",
-    "Action 3": "Troisième action clé...",
-    "insight principal": "Votre apprentissage majeur...",
-    "action/décision": "Ce que vous avez fait ou décidé...",
-    "Leçon 1": "Votre première leçon...",
-    "Leçon 2": "Votre deuxième leçon...",
-    "Leçon 3": "Votre troisième leçon...",
-    "pourquoi c'est important": "L'importance de cette leçon...",
-    "conséquence si ignoré": "Ce qui se passe si on l'ignore...",
-    "bénéfice si appliqué": "Les avantages si on l'applique...",
-    "ce que vous feriez différemment": "Votre nouvelle approche...",
-    "votre question précise": "Votre question à la communauté...",
-    "expliquez pourquoi vous posez cette question": "Le contexte de votre question...",
-    "partagez votre perspective": "Votre point de vue personnel...",
-    "reformulez la question pour encourager la réponse": "Invitation à répondre...",
-  };
-
-  return hints[placeholder] || `Remplissez: ${placeholder}`;
+function generateHint(placeholder: string, hints: Record<string, string>, fillIn: string): string {
+  return hints[placeholder] || `${fillIn} ${placeholder}`;
 }
 
 /** Detect mobile viewport (<640px) */
@@ -121,6 +83,7 @@ export default function TemplateFillerModal({
   onSubmit,
   template,
 }: TemplateFillerModalProps) {
+  const { t } = useLanguage();
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -130,6 +93,11 @@ export default function TemplateFillerModal({
   const scrollRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   useScrollLock(isOpen);
+
+  // Translated template name/description
+  const templateName = template ? ((t.templates as unknown as Record<string, unknown>)[template.id] as string || template.name) : "";
+  const templateDescription = template ? ((t.templates as unknown as Record<string, unknown>)[`${template.id}Desc`] as string || template.description) : "";
+  const hints = (t.templates.hints || {}) as Record<string, string>;
 
   // Drag-to-dismiss (mobile only)
   const dragControls = useDragControls();
@@ -285,10 +253,10 @@ export default function TemplateFillerModal({
           </div>
           <div className="min-w-0">
             <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white truncate">
-              {template.name}
+              {templateName}
             </h2>
             <p className="text-xs sm:text-sm text-gray-600 dark:text-text-secondary truncate">
-              {template.description}
+              {templateDescription}
             </p>
           </div>
         </div>
@@ -311,7 +279,7 @@ export default function TemplateFillerModal({
         />
       </div>
       <p className="mt-1.5 sm:mt-2 text-xs text-gray-500 dark:text-text-muted text-right">
-        {progress}% complété
+        {progress}% {t.templates.percentComplete}
       </p>
     </div>
   );
@@ -345,7 +313,7 @@ export default function TemplateFillerModal({
                     className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400"
                   >
                     <Check className="w-3 h-3" />
-                    <span>Complété</span>
+                    <span>{t.templates.completed}</span>
                   </motion.span>
                 )}
               </AnimatePresence>
@@ -358,7 +326,7 @@ export default function TemplateFillerModal({
                 value={fieldValues[placeholder] || ""}
                 onChange={(e) => handleFieldChange(placeholder, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(e, index)}
-                placeholder={generateHint(placeholder)}
+                placeholder={generateHint(placeholder, hints, t.templates.fillIn)}
                 className={`
                   w-full px-4 py-3 pr-10 rounded-xl
                   bg-gray-50 dark:bg-dark-bg
@@ -409,7 +377,7 @@ export default function TemplateFillerModal({
           <div className="flex items-center gap-2 mb-2">
             <Sparkles className="w-4 h-4 text-primary" />
             <span className="text-xs font-semibold text-gray-700 dark:text-text-secondary">
-              Aperçu en temps réel
+              {t.templates.livePreview}
             </span>
           </div>
           <div className="p-3 bg-white dark:bg-dark-card rounded-lg border border-gray-200 dark:border-dark-border max-h-32 overflow-y-auto">
@@ -431,7 +399,7 @@ export default function TemplateFillerModal({
           onClick={onClose}
           className="px-4 sm:px-5 py-2.5 text-sm font-medium text-gray-600 dark:text-text-secondary hover:text-gray-900 dark:hover:text-white transition-colors"
         >
-          Annuler
+          {t.templates.cancel}
         </button>
 
         <motion.button
@@ -456,11 +424,11 @@ export default function TemplateFillerModal({
                 transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                 className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
               />
-              <span>Génération...</span>
+              <span>{t.templates.generating}</span>
             </>
           ) : (
             <>
-              <span>Utiliser ce template</span>
+              <span>{t.templates.useTemplate}</span>
               <ArrowRight className="w-4 h-4" />
             </>
           )}

@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import DropdownMenu, { MenuIcons } from "@/components/ui/DropdownMenu";
 import { Post } from "@/types";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ConversationCardProps {
   post: Post;
@@ -30,6 +31,7 @@ export default function ConversationCard({
   onPublish,
   onDelete,
 }: ConversationCardProps) {
+  const { t } = useLanguage();
   const [showActions, setShowActions] = useState(false);
 
   // Get content to display
@@ -45,21 +47,21 @@ export default function ConversationCard({
   const menuItems = [
     {
       id: "copy",
-      label: "Copier",
+      label: t.ui.copy,
       icon: MenuIcons.copy,
       variant: "default" as const,
       onClick: () => onCopy?.(content),
     },
     {
       id: "linkedin",
-      label: "Publier sur LinkedIn",
+      label: t.ui.publishOnLinkedIn,
       icon: MenuIcons.linkedin,
       variant: "default" as const,
       onClick: () => onPublish?.(content),
     },
     {
       id: "delete",
-      label: "Supprimer",
+      label: t.common.delete,
       icon: MenuIcons.delete,
       variant: "danger" as const,
       onClick: () => onDelete?.(post),
@@ -126,7 +128,7 @@ export default function ConversationCard({
                   onClick={onExpand}
                   className="text-xs text-text-muted hover:text-primary transition-colors"
                 >
-                  {isExpanded ? "Reduire" : "Voir plus"}
+                  {isExpanded ? t.ui.collapse : t.ui.expand}
                 </button>
               </div>
             )}
@@ -151,12 +153,13 @@ export function ConversationItem({
   onClick,
   onDelete,
 }: ConversationItemProps) {
+  const { t } = useLanguage();
   const [showMenu, setShowMenu] = useState(false);
 
   const menuItems = [
     {
       id: "delete",
-      label: "Supprimer",
+      label: t.common.delete,
       icon: MenuIcons.delete,
       variant: "danger" as const,
       onClick: () => onDelete?.(post),

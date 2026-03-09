@@ -5,9 +5,11 @@ import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 export default function ForgotPasswordPage() {
   const { resetPassword } = useAuth();
+  usePageTitle("forgotPassword");
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");

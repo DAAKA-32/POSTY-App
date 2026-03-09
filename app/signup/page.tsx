@@ -3,11 +3,13 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 // Redirect to main page which now handles authentication
 export default function SignupPage() {
   const { user, isNewUser, loading } = useAuth();
   const router = useRouter();
+  usePageTitle("signup");
 
   useEffect(() => {
     if (!loading) {

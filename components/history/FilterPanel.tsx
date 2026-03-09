@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export type DateFilter = "all" | "today" | "yesterday" | "week" | "month";
 export type TypeFilter = "all" | "storytelling" | "business";
@@ -22,16 +23,17 @@ export default function FilterPanel({
   resultsCount,
   className = "",
 }: FilterPanelProps) {
+  const { t } = useLanguage();
   const dateFilters: { value: DateFilter; label: string }[] = [
-    { value: "all", label: "Tous" },
-    { value: "today", label: "Aujourd'hui" },
-    { value: "yesterday", label: "Hier" },
-    { value: "week", label: "7 derniers jours" },
-    { value: "month", label: "30 derniers jours" },
+    { value: "all", label: t.ui.allFilter },
+    { value: "today", label: t.ui.today },
+    { value: "yesterday", label: t.ui.yesterday },
+    { value: "week", label: t.ui.last7Days },
+    { value: "month", label: t.ui.last30Days },
   ];
 
   const typeFilters: { value: TypeFilter; label: string; icon: string }[] = [
-    { value: "all", label: "Tous les types", icon: "📝" },
+    { value: "all", label: t.ui.allTypes, icon: "📝" },
     { value: "storytelling", label: "Storytelling", icon: "📖" },
     { value: "business", label: "Business", icon: "💼" },
   ];
@@ -47,13 +49,13 @@ export default function FilterPanel({
     <div className={`space-y-4 lg:space-y-5 ${className}`}>
       {/* Header with clear button */}
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-white">Filtres</h3>
+        <h3 className="text-sm font-semibold text-white">{t.ui.filters}</h3>
         {hasActiveFilters && (
           <button
             onClick={handleClearFilters}
             className="text-xs text-primary hover:text-accent transition-colors"
           >
-            Réinitialiser
+            {t.ui.reset}
           </button>
         )}
       </div>
@@ -61,7 +63,7 @@ export default function FilterPanel({
       {/* Date Filter */}
       <div>
         <label className="block text-xs font-medium text-text-muted mb-2 uppercase tracking-wider">
-          Par date
+          {t.ui.byDate}
         </label>
         <div className="space-y-1.5">
           {dateFilters.map((filter) => (
@@ -95,7 +97,7 @@ export default function FilterPanel({
       {/* Type Filter */}
       <div>
         <label className="block text-xs font-medium text-text-muted mb-2 uppercase tracking-wider">
-          Par type
+          {t.ui.byType}
         </label>
         <div className="space-y-1.5">
           {typeFilters.map((filter) => (
@@ -134,7 +136,7 @@ export default function FilterPanel({
           className="pt-4 border-t border-dark-border"
         >
           <p className="text-xs text-text-muted">
-            {resultsCount} résultat{resultsCount !== 1 ? "s" : ""} trouvé{resultsCount !== 1 ? "s" : ""}
+            {t.ui.resultsFound.replace("{n}", String(resultsCount))}
           </p>
         </motion.div>
       )}

@@ -44,16 +44,19 @@ const ctaVariants = {
   },
 };
 
-// Section definitions
-const SECTIONS = {
-  demo: { label: "Demo", desktopLabel: "Demo" },
-  features: { label: "Caractéristiques", desktopLabel: "Caractéristiques" },
-  testimonials: { label: "Témoignages", desktopLabel: "Témoignages" },
-  founders: { label: "Fondateurs", desktopLabel: "Fondateurs" },
-  pricing: { label: "Tarifs", desktopLabel: "Tarifs" },
-} as const;
+// Section IDs
+type SectionId = "demo" | "features" | "testimonials" | "founders" | "pricing";
 
-type SectionId = keyof typeof SECTIONS;
+// Section definitions (translated)
+function getSections(t: ReturnType<typeof import("@/contexts/LanguageContext").useLanguage>["t"]) {
+  return {
+    demo: { label: t.landing.navDemo, desktopLabel: t.landing.navDemo },
+    features: { label: t.landing.navFeatures, desktopLabel: t.landing.navFeatures },
+    testimonials: { label: t.landing.navTestimonials, desktopLabel: t.landing.navTestimonials },
+    founders: { label: t.common.about, desktopLabel: t.common.about },
+    pricing: { label: t.landing.navPricing, desktopLabel: t.landing.navPricing },
+  };
+}
 
 const DESKTOP_SECTIONS: SectionId[] = ["demo", "features", "testimonials", "founders", "pricing"];
 const MOBILE_SECTIONS: SectionId[] = ["demo", "features", "testimonials", "pricing"];
@@ -96,7 +99,8 @@ function SectionIcon({ id, className }: { id: SectionId; className?: string }) {
 }
 
 export default function Navbar({ transparent = false }: NavbarProps) {
-  const { t } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
+  const SECTIONS = getSections(t);
   const [activeSection, setActiveSection] = useState<SectionId>("demo");
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -208,14 +212,24 @@ export default function Navbar({ transparent = false }: NavbarProps) {
               })}
             </nav>
 
-            {/* Right side: CTA + hamburger */}
+            {/* Right side: Language + CTA + hamburger */}
             <div className="flex items-center gap-2.5">
+              {/* Language Switcher */}
+              <button
+                onClick={() => setLanguage(language === "fr" ? "en" : "fr")}
+                className="hidden md:inline-flex items-center justify-center gap-1.5 h-10 px-3 text-sm font-medium text-gray-500 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+                aria-label="Switch language"
+              >
+                <span className="text-base">{language === "fr" ? "🇫🇷" : "🇺🇸"}</span>
+                <span>{language === "fr" ? "FR" : "EN"}</span>
+              </button>
+
               {/* Desktop CTA */}
               <Link
                 href="/login?mode=signup"
                 className="hidden md:inline-flex items-center justify-center h-10 px-5 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white text-sm font-semibold rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200"
               >
-                {t.common.tryNow || "Essayer gratuitement"}
+                {t.common.tryNow}
               </Link>
 
               {/* Desktop Login */}
@@ -223,7 +237,7 @@ export default function Navbar({ transparent = false }: NavbarProps) {
                 href="/login"
                 className="hidden sm:inline-flex lg:inline-flex items-center justify-center h-10 px-4 text-sm font-medium rounded-lg border border-gray-200 text-gray-600 hover:text-gray-900 hover:border-gray-300 hover:bg-gray-50 transition-colors duration-200"
               >
-                {t.common.login || "Se connecter"}
+                {t.common.login}
               </Link>
 
               {/* Mobile hamburger button */}
@@ -238,7 +252,7 @@ export default function Navbar({ transparent = false }: NavbarProps) {
                     : "bg-white border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50"
                   }
                 `}
-                aria-label={mobileMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
+                aria-label={mobileMenuOpen ? t.landing.navCloseMenu : t.landing.navOpenMenu}
                 aria-expanded={mobileMenuOpen}
               >
                 <motion.svg
@@ -398,7 +412,7 @@ export default function Navbar({ transparent = false }: NavbarProps) {
                       active:scale-[0.98] transition-transform duration-150
                     "
                   >
-                    {t.common.tryNow || "Commencer gratuitement"}
+                    {t.common.tryNow}
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                     </svg>
@@ -421,7 +435,7 @@ export default function Navbar({ transparent = false }: NavbarProps) {
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
-                    {t.common.login || "Se connecter"}
+                    {t.common.login}
                   </Link>
                 </div>
 
@@ -431,10 +445,10 @@ export default function Navbar({ transparent = false }: NavbarProps) {
                     <svg className="w-3.5 h-3.5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                     </svg>
-                    Essai gratuit 7 jours
+                    {t.landing.navTrial}
                   </span>
                   <span className="w-1 h-1 rounded-full bg-gray-300" />
-                  <span>Annulation à tout moment</span>
+                  <span>{t.landing.navCancelAnytime}</span>
                 </div>
               </motion.div>
             </div>

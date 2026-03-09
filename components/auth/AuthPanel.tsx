@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -108,7 +109,7 @@ const SocialProof = ({ prefersReducedMotion, usersText, thisWeekText }: { prefer
     {/* Real user avatars — social proof */}
     <div className="flex -space-x-2 sm:-space-x-2.5">
       {[
-        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&crop=face",
+        "/Cerise Cottier.jpg",
         "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face",
         "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop&crop=face",
       ].map((src, i) => (
@@ -855,128 +856,131 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
         </motion.div>
       </AnimatePresence>
 
-      {/* Forgot Password Modal */}
-      <AnimatePresence>
-        {showForgotPassword && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-            onClick={closeForgotPassword}
-          >
+      {/* Forgot Password Modal - Portal to escape framer-motion transform context */}
+      {typeof document !== "undefined" && createPortal(
+        <AnimatePresence>
+          {showForgotPassword && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ duration: 0.2 }}
-              className="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6"
-              onClick={(e) => e.stopPropagation()}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+              onClick={closeForgotPassword}
             >
-              {forgotPasswordSuccess ? (
-                // Success state
-                <div className="text-center">
-                  <div className="w-16 h-16 mx-auto mb-4 bg-emerald-100 rounded-full flex items-center justify-center">
-                    <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    Email envoyé !
-                  </h3>
-                  <p className="text-sm text-gray-600 mb-3">
-                    Vérifiez votre boîte mail pour réinitialiser votre mot de passe.
-                  </p>
-                  <p className="text-xs text-gray-500 italic mb-6">
-                    Pensez à vérifier votre dossier spam ou courrier indésirable si vous ne voyez pas l&apos;email.
-                  </p>
-                  <button
-                    onClick={closeForgotPassword}
-                    className="w-full py-3 bg-gradient-to-r from-warm-orange to-warm-coral text-white font-medium rounded-xl hover:opacity-90 transition-opacity"
-                  >
-                    Retour à la connexion
-                  </button>
-                </div>
-              ) : (
-                // Form state
-                <>
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      Réinitialiser le mot de passe
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                transition={{ duration: 0.2 }}
+                className="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {forgotPasswordSuccess ? (
+                  // Success state
+                  <div className="text-center">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-emerald-100 rounded-full flex items-center justify-center">
+                      <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      {t.auth.emailSent}
                     </h3>
+                    <p className="text-sm text-gray-600 mb-3">
+                      {t.auth.checkInbox}
+                    </p>
+                    <p className="text-xs text-gray-500 italic mb-6">
+                      {t.auth.checkSpam}
+                    </p>
                     <button
                       onClick={closeForgotPassword}
-                      className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
+                      className="w-full py-3 bg-gradient-to-r from-warm-orange to-warm-coral text-white font-medium rounded-xl hover:opacity-90 transition-opacity"
                     >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 6L18 18M6 18L18 6" />
-                      </svg>
+                      {t.auth.backToLogin}
                     </button>
                   </div>
-
-                  <p className="text-sm text-gray-600 mb-6">
-                    Entrez votre adresse email et nous vous enverrons un lien pour réinitialiser votre mot de passe.
-                  </p>
-
-                  {forgotPasswordError && (
-                    <div className="mb-4 p-3 bg-error/10 border border-error/20 rounded-xl flex items-center gap-3">
-                      <div className="w-6 h-6 rounded-full bg-error/20 flex items-center justify-center shrink-0">
-                        <svg className="w-3 h-3 text-error" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                ) : (
+                  // Form state
+                  <>
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        {t.auth.resetPasswordTitle}
+                      </h3>
+                      <button
+                        onClick={closeForgotPassword}
+                        className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 6L18 18M6 18L18 6" />
                         </svg>
-                      </div>
-                      <p className="text-error text-xs">{forgotPasswordError}</p>
+                      </button>
                     </div>
-                  )}
 
-                  <form onSubmit={handleForgotPassword} className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                        Email
-                      </label>
-                      <input
-                        type="email"
-                        value={forgotPasswordEmail}
-                        onChange={(e) => { setForgotPasswordEmail(e.target.value); setForgotPasswordError(""); }}
-                        placeholder="votre@email.com"
-                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-warm-orange focus:ring-2 focus:ring-warm-orange/20 transition-all"
-                        required
-                        autoFocus
-                      />
-                    </div>
+                    <p className="text-sm text-gray-600 mb-6">
+                      {t.auth.resetPasswordDescription}
+                    </p>
+
+                    {forgotPasswordError && (
+                      <div className="mb-4 p-3 bg-error/10 border border-error/20 rounded-xl flex items-center gap-3">
+                        <div className="w-6 h-6 rounded-full bg-error/20 flex items-center justify-center shrink-0">
+                          <svg className="w-3 h-3 text-error" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 6L18 18M6 18L18 6" />
+                          </svg>
+                        </div>
+                        <p className="text-error text-xs">{forgotPasswordError}</p>
+                      </div>
+                    )}
+
+                    <form onSubmit={handleForgotPassword} className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                          {t.common.email}
+                        </label>
+                        <input
+                          type="email"
+                          value={forgotPasswordEmail}
+                          onChange={(e) => { setForgotPasswordEmail(e.target.value); setForgotPasswordError(""); }}
+                          placeholder={t.auth.emailPlaceholder}
+                          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-warm-orange focus:ring-2 focus:ring-warm-orange/20 transition-all"
+                          required
+                          autoFocus
+                        />
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={forgotPasswordLoading || !forgotPasswordEmail.trim()}
+                        className="w-full py-3 bg-gradient-to-r from-warm-orange to-warm-coral text-white font-medium rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      >
+                        {forgotPasswordLoading ? (
+                          <>
+                            <motion.div
+                              className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
+                              animate={{ rotate: 360 }}
+                              transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+                            />
+                            {t.auth.sendingLink}
+                          </>
+                        ) : (
+                          t.auth.sendLink
+                        )}
+                      </button>
+                    </form>
 
                     <button
-                      type="submit"
-                      disabled={forgotPasswordLoading || !forgotPasswordEmail.trim()}
-                      className="w-full py-3 bg-gradient-to-r from-warm-orange to-warm-coral text-white font-medium rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      onClick={closeForgotPassword}
+                      className="w-full mt-4 py-2.5 text-sm text-gray-600 hover:text-gray-800 transition-colors"
                     >
-                      {forgotPasswordLoading ? (
-                        <>
-                          <motion.div
-                            className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
-                            animate={{ rotate: 360 }}
-                            transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
-                          />
-                          Envoi en cours...
-                        </>
-                      ) : (
-                        "Envoyer le lien"
-                      )}
+                      {t.auth.backToLogin}
                     </button>
-                  </form>
-
-                  <button
-                    onClick={closeForgotPassword}
-                    className="w-full mt-4 py-2.5 text-sm text-gray-600 hover:text-gray-800 transition-colors"
-                  >
-                    Retour à la connexion
-                  </button>
-                </>
-              )}
+                  </>
+                )}
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 }

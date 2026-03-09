@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Modal from "./Modal";
 import BottomSheet from "./BottomSheet";
 import Button from "./Button";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface DeleteAccountModalProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ export default function DeleteAccountModal({
   onConfirm,
   isGoogleUser = false,
 }: DeleteAccountModalProps) {
+  const { t } = useLanguage();
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -237,7 +239,7 @@ export default function DeleteAccountModal({
           onClick={handleClose}
           disabled={isDeleting}
         >
-          Annuler
+          {t.templates.cancel}
         </Button>
         <Button
           type="submit"
@@ -246,7 +248,7 @@ export default function DeleteAccountModal({
           isLoading={isDeleting}
           disabled={isDeleting || (!isGoogleUser && !password.trim())}
         >
-          {isDeleting ? "Suppression..." : "Supprimer mon compte"}
+          {isDeleting ? "Suppression..." : t.ui.deleteAccount}
         </Button>
       </div>
     </form>

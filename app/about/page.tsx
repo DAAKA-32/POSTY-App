@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, Linkedin, Target, Sparkles } from "lucide-react";
 import { AboutPageJsonLd } from "@/components/seo/JsonLd";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 // =============================================================================
 // TEAM DATA - Informations réelles uniquement
@@ -44,6 +45,7 @@ const teamMembers = [
 // MAIN COMPONENT
 // =============================================================================
 export default function AboutPage() {
+  usePageTitle("about");
   // Force light mode on About page (public page — always light, like landing & login)
   // Enable full scrolling (mouse wheel, trackpad, touch, keyboard)
   useEffect(() => {

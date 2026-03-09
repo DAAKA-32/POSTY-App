@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLinkedIn } from "@/contexts/LinkedInContext";
 import { useThreads } from "@/contexts/ThreadsContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { PlanBadge } from "@/components/subscription/PlanInfoCard";
 import { PlanType, meetsMinimumPlan } from "@/lib/plans";
 import Image from "next/image";
@@ -17,7 +18,7 @@ interface ProfileMenuProps {
 }
 
 const menuItems: {
-  name: string;
+  id: string;
   href: string;
   iconColor: string;
   hoverBg: string;
@@ -26,7 +27,7 @@ const menuItems: {
   requiredPlan?: PlanType;
 }[] = [
   {
-    name: "Dashboard",
+    id: "dashboard",
     href: "/dashboard",
     iconColor: "text-emerald-500",
     hoverBg: "hover:bg-emerald-500/10",
@@ -44,7 +45,7 @@ const menuItems: {
     ),
   },
   {
-    name: "Profil",
+    id: "profile",
     href: "/profile",
     iconColor: "text-cyan-500",
     hoverBg: "hover:bg-cyan-500/10",
@@ -61,7 +62,7 @@ const menuItems: {
     ),
   },
   {
-    name: "Abonnement",
+    id: "subscription",
     href: "/subscription",
     iconColor: "text-[#F8935D]",
     hoverBg: "hover:bg-[#F8935D]/10",
@@ -78,7 +79,7 @@ const menuItems: {
     ),
   },
   {
-    name: "Paramètres",
+    id: "settings",
     href: "/settings",
     iconColor: "text-violet-500",
     hoverBg: "hover:bg-violet-500/10",
@@ -103,6 +104,7 @@ const menuItems: {
 ];
 
 export default function ProfileMenu({ isCollapsed = false, onNavigate }: ProfileMenuProps) {
+  const { t } = useLanguage();
   const { user, userProfile } = useAuth();
   const { profilePicture: linkedInPhoto, refreshProfilePhoto } = useLinkedIn();
   const { profilePicture: threadsPhoto } = useThreads();
@@ -115,6 +117,13 @@ export default function ProfileMenu({ isCollapsed = false, onNavigate }: Profile
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const refreshAttemptedRef = useRef(false);
+
+  const menuItemNames: Record<string, string> = {
+    dashboard: t.ui.dashboardNav,
+    profile: t.ui.profileNav,
+    subscription: t.ui.subscriptionNav,
+    settings: t.ui.settingsNav,
+  };
 
   // Priority: LinkedIn photo > Threads photo > Firestore photo > fallback
   const basePhotoURL = !imageError
@@ -225,7 +234,7 @@ export default function ProfileMenu({ isCollapsed = false, onNavigate }: Profile
             />
           </svg>
         ) : (
-          "Se connecter"
+          t.ui.signIn
         )}
       </Link>
     );
@@ -274,7 +283,7 @@ export default function ProfileMenu({ isCollapsed = false, onNavigate }: Profile
             <div className="flex-1 min-w-0 text-left">
               <div className="flex items-center gap-1.5">
                 <p className="text-sm font-semibold text-text-primary truncate">
-                  {userProfile?.displayName || "Utilisateur"}
+                  {userProfile?.displayName || t.ui.userProfile}
                 </p>
                 {/* Plan badge */}
                 <PlanBadge />
@@ -320,7 +329,7 @@ export default function ProfileMenu({ isCollapsed = false, onNavigate }: Profile
         {/* User info header */}
         <div className="px-4 py-3 border-b border-gray-100 dark:border-dark-border">
           <p className="text-sm font-semibold text-text-primary truncate">
-            {userProfile?.displayName || "Utilisateur"}
+            {userProfile?.displayName || t.ui.userProfile}
           </p>
           <p className="text-xs text-text-muted truncate">{user.email}</p>
         </div>
@@ -332,8 +341,8 @@ export default function ProfileMenu({ isCollapsed = false, onNavigate }: Profile
 
             return (
               <Link
-                key={item.name}
-                href={isLocked ? "/subscription" : item.name === "Paramètres" ? `/settings?from=${encodeURIComponent(pathname)}` : item.href}
+                key={item.id}
+                href={isLocked ? "/subscription" : item.id === "settings" ? `/settings?from=${encodeURIComponent(pathname)}` : item.href}
                 onClick={handleItemClick}
                 className={`
                   flex items-center gap-3 px-3 py-2.5 rounded-lg
@@ -355,7 +364,7 @@ export default function ProfileMenu({ isCollapsed = false, onNavigate }: Profile
                 >
                   {item.icon}
                 </span>
-                <span className="font-medium transition-colors duration-200 flex-1">{item.name}</span>
+                <span className="font-medium transition-colors duration-200 flex-1">{menuItemNames[item.id]}</span>
                 {/* PRO badge for locked items */}
                 {isLocked && (
                   <span className="px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide bg-gradient-to-r from-primary/15 to-accent/15 text-primary border border-primary/20 rounded">
@@ -384,7 +393,7 @@ export default function ProfileMenu({ isCollapsed = false, onNavigate }: Profile
           shadow-lg
           pointer-events-none
         ">
-          <p className="font-semibold text-gray-900 dark:text-text-primary">{userProfile?.displayName || "Utilisateur"}</p>
+          <p className="font-semibold text-gray-900 dark:text-text-primary">{userProfile?.displayName || t.ui.userProfile}</p>
           <p className="text-xs text-gray-500 dark:text-text-muted">{user.email}</p>
           <div className="absolute -left-1 bottom-3 w-2 h-2 bg-white dark:bg-dark-elevated border-l border-b border-gray-200 dark:border-dark-border rotate-45" />
         </div>

@@ -18,10 +18,14 @@ import InsightsSection from "@/components/dashboard/InsightsSection";
 import DashboardOnboarding from "@/components/dashboard/DashboardOnboarding";
 import { AnimatedLogo } from "@/components/ui/Logo";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 function DashboardContent() {
   const { user, userProfile, loading } = useAuth();
   const router = useRouter();
+  const { t, language } = useLanguage();
+  usePageTitle("dashboard");
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -86,7 +90,7 @@ function DashboardContent() {
           <div className="mx-auto mb-4">
             <AnimatedLogo size="xl" />
           </div>
-          <p className="text-text-muted">Chargement de votre dashboard...</p>
+          <p className="text-text-muted">{t.ui.loadingDashboard}</p>
         </div>
       </div>
     );
@@ -96,7 +100,7 @@ function DashboardContent() {
     return null;
   }
 
-  const firstName = userProfile?.displayName?.split(" ")[0] || "utilisateur";
+  const firstName = userProfile?.displayName?.split(" ")[0] || t.dashboard.user;
 
   return (
     <div
@@ -124,7 +128,7 @@ function DashboardContent() {
             <button
               onClick={() => router.back()}
               className="flex items-center gap-2 text-gray-600 dark:text-text-secondary hover:text-gray-900 dark:hover:text-white transition-colors group z-10"
-              aria-label="Retour"
+              aria-label={t.dashboard.back}
             >
               <svg
                 className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform"
@@ -134,7 +138,7 @@ function DashboardContent() {
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
-              <span className="hidden sm:inline">Retour</span>
+              <span className="hidden sm:inline">{t.dashboard.back}</span>
             </button>
 
             {/* Page title - Centered */}
@@ -147,7 +151,7 @@ function DashboardContent() {
               href="/profile"
               className="px-3 py-2 bg-[#F8935D]/10 dark:bg-dark-hover hover:bg-[#F8935D]/15 dark:hover:bg-dark-active border border-[#F8935D]/15 dark:border-dark-border text-gray-700 dark:text-text-secondary hover:text-gray-900 dark:hover:text-white text-sm font-medium rounded-xl transition-all duration-200"
             >
-              Mon profil
+              {t.dashboard.myProfile}
             </Link>
           </div>
         </div>
@@ -165,10 +169,10 @@ function DashboardContent() {
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
               <h1 className="text-2xl lg:text-3xl font-bold text-silver-shimmer dark:text-white mb-2">
-                Bonjour {firstName} !
+                {t.dashboard.hello} {firstName} !
               </h1>
               <p className="text-text-secondary">
-                Voici un apercu de votre activite et de votre progression sur LinkedIn.
+                {t.dashboard.welcomeSubtitle}
               </p>
             </div>
 
@@ -181,7 +185,7 @@ function DashboardContent() {
                     ? "bg-primary/10 border border-primary/20 hover:border-primary/30"
                     : "bg-gray-100 dark:bg-dark-card border border-gray-200 dark:border-dark-border hover:border-gray-300 dark:hover:border-dark-border-hover"
               }`}>
-                <p className="text-xs text-text-muted mb-1">Plan actuel</p>
+                <p className="text-xs text-text-muted mb-1">{t.dashboard.currentPlan}</p>
                 <p className={`text-sm font-semibold ${
                   userProfile?.subscription?.plan === "max"
                     ? "text-primary-hover"
@@ -193,14 +197,14 @@ function DashboardContent() {
                     ? "Pro"
                     : userProfile?.subscription?.plan === "max"
                       ? "Max"
-                      : "Gratuit"}
+                      : t.dashboard.free}
                 </p>
               </div>
               <Link
                 href="/app"
                 className="px-5 py-3 bg-primary hover:bg-primary-hover text-white text-sm font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
               >
-                Créer un post
+                {t.dashboard.createPost}
               </Link>
             </div>
           </div>
@@ -215,33 +219,33 @@ function DashboardContent() {
           `}
         >
           <KPICard
-            title="Posts générés"
+            title={t.dashboard.postsGenerated}
             value={stats.totalPosts}
-            subtitle="Depuis le début"
+            subtitle={t.dashboard.sinceBeginning}
             icon={
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             }
             color="primary"
-            tooltip="Nombre total de posts que vous avez générés avec Posty"
+            tooltip={t.dashboard.tooltipPostsGenerated}
           />
           <KPICard
-            title="Posts publiés"
+            title={t.dashboard.postsPublished}
             value={stats.publishedPosts}
-            subtitle="Sur LinkedIn"
+            subtitle={t.dashboard.onLinkedIn}
             icon={
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
               </svg>
             }
             color="accent"
-            tooltip="Posts que vous avez publiés directement sur LinkedIn via Posty"
+            tooltip={t.dashboard.tooltipPostsPublished}
           />
           <KPICard
-            title="Cette semaine"
+            title={t.dashboard.thisWeek}
             value={stats.postsLast7Days}
-            subtitle="7 derniers jours"
+            subtitle={t.dashboard.last7Days}
             trend={
               stats.postsLast7Days > 0
                 ? { value: Math.round((stats.postsLast7Days / 7) * 100), isPositive: true }
@@ -253,19 +257,19 @@ function DashboardContent() {
               </svg>
             }
             color="warning"
-            tooltip="Nombre de posts générés ces 7 derniers jours"
+            tooltip={t.dashboard.tooltipThisWeek}
           />
           <KPICard
-            title="Sessions"
+            title={t.dashboard.sessions}
             value={stats.totalSessions}
-            subtitle="Conversations"
+            subtitle={t.dashboard.conversations}
             icon={
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
             }
             color="success"
-            tooltip="Nombre de sessions de génération que vous avez lancées"
+            tooltip={t.dashboard.tooltipSessions}
           />
         </div>
 
@@ -279,8 +283,8 @@ function DashboardContent() {
         >
           <ActivityChart
             data={stats.postsByDay}
-            title="Activité de génération"
-            subtitle="Évolution de vos posts dans le temps"
+            title={t.dashboard.generationActivity}
+            subtitle={t.ui.postEvolution}
           />
           <StyleDistributionChart data={stats.styleDistribution} />
         </div>
@@ -320,7 +324,7 @@ function DashboardContent() {
             `}
           >
             <div className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-4 sm:p-6 hover:border-gray-300 dark:hover:border-dark-border-hover transition-colors duration-200">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Activité récente</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{t.dashboard.recentActivity}</h3>
               <div className="space-y-3">
                 {stats.recentActivity.map((activity, index) => (
                   <div
@@ -337,7 +341,7 @@ function DashboardContent() {
                         {activity.content}...
                       </p>
                       <p className="text-xs text-gray-500 dark:text-text-muted">
-                        {new Date(activity.date).toLocaleDateString("fr-FR", {
+                        {new Date(activity.date).toLocaleDateString(language === "en" ? "en-US" : "fr-FR", {
                           day: "numeric",
                           month: "short",
                           hour: "2-digit",
@@ -349,7 +353,7 @@ function DashboardContent() {
                       href="/history"
                       className="text-xs text-primary hover:text-primary-hover transition-colors duration-200 font-medium px-2.5 py-1 bg-primary/10 hover:bg-primary/15 rounded-lg"
                     >
-                      Voir
+                      {t.dashboard.view}
                     </Link>
                   </div>
                 ))}
@@ -358,7 +362,7 @@ function DashboardContent() {
                 href="/history"
                 className="mt-4 block text-center text-sm text-primary hover:text-primary-hover transition-colors duration-200 font-medium"
               >
-                Voir tout l&apos;historique
+                {t.dashboard.viewAllHistory}
               </Link>
             </div>
           </div>
@@ -370,13 +374,13 @@ function DashboardContent() {
       <footer className="relative z-10 py-8 px-4 sm:px-6 text-center border-t border-[#F8935D]/10 mt-12">
         <div className="flex items-center justify-center gap-6 text-xs text-text-subtle">
           <Link href="/legal/privacy" className="hover:text-[#F8935D] transition-colors duration-200">
-            Confidentialité
+            {t.dashboard.privacy}
           </Link>
           <Link href="/legal/terms" className="hover:text-[#F8935D] transition-colors duration-200">
-            CGU
+            {t.dashboard.terms}
           </Link>
           <Link href="/profile" className="hover:text-[#F8935D] transition-colors duration-200">
-            Mon profil
+            {t.dashboard.myProfile}
           </Link>
         </div>
       </footer>

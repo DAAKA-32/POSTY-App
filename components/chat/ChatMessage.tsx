@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import Button from "@/components/ui/Button";
 import { LinkedInIcon } from "@/components/linkedin/LinkedInConnectButton";
 import { useHapticFeedback } from "@/hooks/useHapticFeedback";
+import { useLanguage } from "@/contexts/LanguageContext";
 import toast from "@/components/ui/Toast";
 
 // Premium animation easing
@@ -23,31 +24,31 @@ const variantStyles = {
 };
 
 // Helper function to format timestamp
-function formatTimeAgo(date: Date): string {
+function formatTimeAgo(date: Date, ui: { justNow: string; minutesAgo: string; hoursAgo: string; daysAgo: string; timeLocale: string }): string {
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
   if (diffInSeconds < 60) {
-    return "À l'instant";
+    return ui.justNow;
   }
 
   const diffInMinutes = Math.floor(diffInSeconds / 60);
   if (diffInMinutes < 60) {
-    return `Il y a ${diffInMinutes} min`;
+    return ui.minutesAgo.replace("{n}", String(diffInMinutes));
   }
 
   const diffInHours = Math.floor(diffInMinutes / 60);
   if (diffInHours < 24) {
-    return `Il y a ${diffInHours}h`;
+    return ui.hoursAgo.replace("{n}", String(diffInHours));
   }
 
   const diffInDays = Math.floor(diffInHours / 24);
   if (diffInDays < 7) {
-    return `Il y a ${diffInDays}j`;
+    return ui.daysAgo.replace("{n}", String(diffInDays));
   }
 
   // For older dates, show the actual date
-  return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+  return date.toLocaleDateString(ui.timeLocale, { day: 'numeric', month: 'short' });
 }
 
 export interface ChatMessageProps {
@@ -81,18 +82,19 @@ const ChatMessage = memo(function ChatMessage({
 }: ChatMessageProps) {
   const [copied, setCopied] = useState(false);
   const { trigger: triggerHaptic } = useHapticFeedback();
+  const { t } = useLanguage();
 
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(content);
       setCopied(true);
       triggerHaptic("success");
-      toast.success("Copié !");
+      toast.success(t.ui.copied);
       setTimeout(() => setCopied(false), 2000);
       onCopy?.();
     } catch {
       triggerHaptic("error");
-      toast.error("Erreur lors de la copie");
+      toast.error(t.ui.copyMessage);
     }
   };
 
@@ -140,7 +142,7 @@ const ChatMessage = memo(function ChatMessage({
             )}
             {timestamp && (
               <span className="text-2xs text-text-muted/60">
-                {formatTimeAgo(timestamp)}
+                {formatTimeAgo(timestamp, t.ui)}
               </span>
             )}
           </div>
@@ -173,7 +175,7 @@ const ChatMessage = memo(function ChatMessage({
                 transition-all duration-300
                 shadow-md z-10
               `}
-              title="Copier"
+              title={t.ui.copy}
             >
               {copied ? (
                 <motion.svg
@@ -238,14 +240,14 @@ const ChatMessage = memo(function ChatMessage({
                   <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  Copié !
+                  {t.ui.copied}
                 </>
               ) : (
                 <>
                   <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                   </svg>
-                  Copier
+                  {t.ui.copy}
                 </>
               )}
             </Button>
@@ -256,7 +258,7 @@ const ChatMessage = memo(function ChatMessage({
                 className="text-xs px-3 py-1.5 h-auto bg-[#0A66C2] hover:bg-[#004182] border-none"
               >
                 <LinkedInIcon className="w-3.5 h-3.5 mr-1" />
-                Publier
+                {t.ui.publish}
               </Button>
             )}
           </motion.div>

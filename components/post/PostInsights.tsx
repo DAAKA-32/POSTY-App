@@ -38,7 +38,7 @@ function ScoreIndicator({ score, label, color }: { score: number; label: string;
 export function PostInsights({ insights, className = "" }: PostInsightsProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "details" | "coaching">("overview");
-  const { language } = useLanguage();
+  const { language, t: globalT } = useLanguage();
 
   const labels = {
     fr: {
@@ -49,11 +49,11 @@ export function PostInsights({ insights, className = "" }: PostInsightsProps) {
       engagement: "Engagement attendu",
       takeaway: "Action prioritaire",
       strengths: "Points forts",
-      improvements: "À améliorer",
+      improvements: globalT.ui.toImprove,
       coaching: "Conseil personnalisé",
       hook: "Analyse de l'accroche",
       cta: "Analyse du CTA",
-      expand: "Voir l'analyse complète",
+      expand: globalT.ui.viewFullAnalysis,
       collapse: "Masquer",
       overview: "Aperçu",
       details: "Détails",
@@ -69,11 +69,11 @@ export function PostInsights({ insights, className = "" }: PostInsightsProps) {
       engagement: "Expected engagement",
       takeaway: "Priority action",
       strengths: "Strengths",
-      improvements: "To improve",
+      improvements: globalT.ui.toImprove,
       coaching: "Personalized advice",
       hook: "Hook analysis",
       cta: "CTA analysis",
-      expand: "View full analysis",
+      expand: globalT.ui.viewFullAnalysis,
       collapse: "Hide",
       overview: "Overview",
       details: "Details",

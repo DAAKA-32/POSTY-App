@@ -91,8 +91,8 @@ export default function CommandPalette({ posts = [] }: CommandPaletteProps) {
       // Navigation
       {
         id: "new-post",
-        label: "Nouveau post",
-        description: "Créer un nouveau post LinkedIn",
+        label: t.ui.newPost,
+        description: t.ui.newPostDesc,
         icon: <PlusIcon />,
         action: () => router.push(`/app?new=${Date.now()}`),
         category: "navigation",
@@ -100,8 +100,8 @@ export default function CommandPalette({ posts = [] }: CommandPaletteProps) {
       },
       {
         id: "home",
-        label: "Accueil",
-        description: "Retour à l'accueil",
+        label: t.ui.home,
+        description: t.ui.homeDesc,
         icon: <HomeIcon />,
         action: () => router.push("/app"),
         category: "navigation",
@@ -109,8 +109,8 @@ export default function CommandPalette({ posts = [] }: CommandPaletteProps) {
       },
       {
         id: "history",
-        label: "Historique",
-        description: "Voir toutes les conversations",
+        label: t.ui.history,
+        description: t.ui.historyDesc,
         icon: <HistoryIcon />,
         action: () => router.push("/history"),
         category: "navigation",
@@ -118,8 +118,8 @@ export default function CommandPalette({ posts = [] }: CommandPaletteProps) {
       },
       {
         id: "profile",
-        label: "Profil",
-        description: "Voir et modifier votre profil",
+        label: t.ui.profileNav,
+        description: t.ui.profileDesc,
         icon: <UserIcon />,
         action: () => router.push("/profile"),
         category: "navigation",
@@ -127,8 +127,8 @@ export default function CommandPalette({ posts = [] }: CommandPaletteProps) {
       },
       {
         id: "settings",
-        label: "Paramètres",
-        description: "Configurer l'application",
+        label: t.ui.settingsNav,
+        description: t.ui.settingsDesc,
         icon: <SettingsIcon />,
         action: () => router.push(`/settings?from=${encodeURIComponent(pathname)}`),
         category: "navigation",
@@ -140,8 +140,8 @@ export default function CommandPalette({ posts = [] }: CommandPaletteProps) {
     if (user) {
       items.push({
         id: "logout",
-        label: "Déconnexion",
-        description: "Se déconnecter de POSTY",
+        label: t.ui.logoutNav,
+        description: t.ui.logoutDesc,
         icon: <LogoutIcon />,
         action: async () => {
           await signOut();
@@ -158,7 +158,7 @@ export default function CommandPalette({ posts = [] }: CommandPaletteProps) {
       items.push({
         id: `post-${post.id}`,
         label: post.title || post.prompt.slice(0, 40) + (post.prompt.length > 40 ? "..." : ""),
-        description: "Ouvrir la conversation",
+        description: t.ui.openConversation,
         icon: <ChatIcon />,
         action: () => router.push(`/app/c/${post.id}`),
         category: "conversation",
@@ -303,7 +303,7 @@ export default function CommandPalette({ posts = [] }: CommandPaletteProps) {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="Rechercher une action..."
+                  placeholder={t.ui.searchActions}
                   className="flex-1 bg-transparent text-white placeholder-text-muted outline-none text-sm"
                 />
                 <kbd className="hidden sm:inline-flex items-center gap-1 px-2 py-1 text-xs text-text-muted bg-dark-bg border border-dark-border rounded">

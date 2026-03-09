@@ -18,6 +18,7 @@ import { LinkedInIcon } from "@/components/linkedin/LinkedInConnectButton";
 import { useRouter } from "next/navigation";
 import { useHapticFeedback } from "@/hooks/useHapticFeedback";
 import toast from "@/components/ui/Toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // Minimum scheduling buffer in minutes (prevent scheduling too close to now)
 const MIN_SCHEDULE_BUFFER_MINUTES = 5;
@@ -64,6 +65,7 @@ export default function ScheduleModal({
   const { isConnected: threadsConnected } = useThreads();
   const router = useRouter();
   const { trigger: triggerHaptic } = useHapticFeedback();
+  const { t } = useLanguage();
 
   // Check if user can schedule posts
   const schedulePermission = canSchedulePosts();
@@ -605,7 +607,7 @@ export default function ScheduleModal({
         {[
           { key: "date", label: "Date", icon: "📅" },
           { key: "time", label: "Heure", icon: "🕐" },
-          { key: "confirm", label: "Confirmer", icon: "✓" },
+          { key: "confirm", label: t.ui.confirmTime, icon: "✓" },
         ].map((s, i) => {
           const steps = ["date", "time", "confirm"];
           const currentIndex = steps.indexOf(step);
@@ -867,7 +869,7 @@ export default function ScheduleModal({
                   onClick={handleConfirmTime}
                   className="w-full mt-4"
                 >
-                  Confirmer {selectedTime.hour.toString().padStart(2, "0")}:{selectedTime.minute.toString().padStart(2, "0")}
+                  {t.ui.confirmTime} {selectedTime.hour.toString().padStart(2, "0")}:{selectedTime.minute.toString().padStart(2, "0")}
                 </Button>
               </div>
             ) : (
@@ -921,7 +923,7 @@ export default function ScheduleModal({
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
-              Modifier la date
+              {t.ui.changeDate}
             </button>
           </motion.div>
         )}
@@ -946,7 +948,7 @@ export default function ScheduleModal({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </motion.div>
-              <h3 className="text-lg font-semibold text-white">Confirmer la programmation</h3>
+              <h3 className="text-lg font-semibold text-white">{t.ui.confirmScheduling}</h3>
               <p className="text-primary font-semibold text-lg mt-2">{formattedDateTime}</p>
               <p className="text-xs text-text-muted mt-1">{timezone}</p>
             </div>
@@ -1212,7 +1214,7 @@ export default function ScheduleModal({
     <BottomSheet
       isOpen={isOpen}
       onClose={onClose}
-      title="Programmer ce post"
+      title={t.ui.schedulePost}
       height="auto"
       swipeToDismiss={step === "date"}
     >
@@ -1222,7 +1224,7 @@ export default function ScheduleModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Programmer ce post"
+      title={t.ui.schedulePost}
       size="md"
       description="Sélectionnez une date et une heure pour publier automatiquement"
     >

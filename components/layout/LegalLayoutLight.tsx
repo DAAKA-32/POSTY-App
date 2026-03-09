@@ -3,6 +3,7 @@
 import { ReactNode, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface LegalLayoutLightProps {
   children: ReactNode;
@@ -22,6 +23,7 @@ const legalLinks = [
  */
 export default function LegalLayoutLight({ children, title }: LegalLayoutLightProps) {
   const pathname = usePathname();
+  const { t } = useLanguage();
 
   // Enable full scrolling on Legal pages (mouse wheel, trackpad, touch, keyboard)
   useEffect(() => {
@@ -141,7 +143,7 @@ export default function LegalLayoutLight({ children, title }: LegalLayoutLightPr
                 />
               </div>
               <span className="text-sm text-[#6B7280]">
-                © {new Date().getFullYear()} POSTY. Tous droits reserves.
+                © {new Date().getFullYear()} POSTY. {t.ui.allRightsReserved}.
               </span>
             </div>
 

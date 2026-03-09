@@ -15,6 +15,8 @@ import {
 } from "@/lib/firestore";
 import { getAuthHeaders } from "@/lib/api-client";
 import toast from "@/components/ui/Toast";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 // =============================================================================
 // ANALYTICS DASHBOARD PAGE - Enhanced with Charts & Filters
@@ -33,10 +35,11 @@ function PeriodFilterComponent({
   selected: PeriodFilter;
   onChange: (period: PeriodFilter) => void;
 }) {
+  const { t } = useLanguage();
   const options: { value: PeriodFilter; label: string }[] = [
-    { value: "7d", label: "7 jours" },
-    { value: "30d", label: "30 jours" },
-    { value: "all", label: "Tout" },
+    { value: "7d", label: t.analytics.periodFilter.days7 },
+    { value: "30d", label: t.analytics.periodFilter.days30 },
+    { value: "all", label: t.analytics.periodFilter.all },
   ];
 
   return (
@@ -116,10 +119,12 @@ function EngagementChart({
     return data.filter((_, i) => i % step === 0 || i === data.length - 1).map((d) => d.date);
   }, [data]);
 
+  const { t } = useLanguage();
+
   if (data.length === 0) {
     return (
       <div className="flex items-center justify-center h-[200px] text-gray-400">
-        Aucune donnée pour cette période
+        {t.analytics.noDataForPeriod}
       </div>
     );
   }
@@ -244,15 +249,15 @@ function EngagementChart({
       <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 mt-4">
         <div className="flex items-center gap-1.5">
           <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-          <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Likes</span>
+          <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{t.analytics.legendLikes}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-          <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Commentaires</span>
+          <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{t.analytics.legendComments}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-2.5 h-2.5 rounded-full bg-violet-500" />
-          <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Partages</span>
+          <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{t.analytics.legendShares}</span>
         </div>
       </div>
     </div>
@@ -319,6 +324,7 @@ function PostCard({
   delay?: number;
 }) {
   const publishedDate = post.publishedAt?.toDate?.() || new Date();
+  const { t } = useLanguage();
 
   return (
     <motion.div
@@ -337,7 +343,7 @@ function PostCard({
           </div>
           <div>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              {publishedDate.toLocaleDateString("fr-FR", {
+              {publishedDate.toLocaleDateString(t.ui.timeLocale, {
                 day: "numeric",
                 month: "short",
                 year: "numeric",
@@ -352,7 +358,7 @@ function PostCard({
                 rel="noopener noreferrer"
                 className="text-xs text-[#0077B5] hover:underline"
               >
-                Voir sur LinkedIn
+                {t.analytics.viewOnLinkedIn}
               </a>
             )}
           </div>
@@ -361,7 +367,7 @@ function PostCard({
           <button
             onClick={() => onRemove(post)}
             className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
-            title="Retirer des stats (supprime sur le reseau)"
+            title={t.ui.removeStatsNote}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -402,6 +408,7 @@ function PostCard({
 
 // Empty State Component
 function EmptyState() {
+  const { t } = useLanguage();
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -414,10 +421,10 @@ function EmptyState() {
         </svg>
       </div>
       <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-        Aucune publication
+        {t.ui.noPostsGenerated}
       </h3>
       <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto mb-6">
-        Publiez votre premier post LinkedIn via Posty pour commencer à suivre vos performances.
+        {t.analytics.emptyStateDescription}
       </p>
       <Link
         href="/app"
@@ -426,7 +433,7 @@ function EmptyState() {
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
         </svg>
-        Créer un post
+        {t.analytics.createPost}
       </Link>
     </motion.div>
   );
@@ -435,6 +442,8 @@ function EmptyState() {
 // Main Analytics Content
 function AnalyticsContent() {
   const { user } = useAuth();
+  const { t } = useLanguage();
+  usePageTitle("analytics");
   const [posts, setPosts] = useState<LinkedInPostData[]>([]);
   const [analytics, setAnalytics] = useState<LinkedInAnalyticsSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -484,23 +493,23 @@ function AnalyticsContent() {
       const data = await response.json();
 
       if (!response.ok) {
-        toast.error(data.message || "Impossible de verifier les posts.");
+        toast.error(data.message || t.analytics.verifyError);
         return;
       }
 
       if (data.deleted?.length > 0) {
         // Remove deleted posts from local state
         setPosts((prev) => prev.filter((p) => !data.deleted.includes(p.id)));
-        toast.success(`${data.deleted.length} post(s) supprimé(s) des stats.`);
+        toast.success(`${data.deleted.length} ${t.analytics.postsDeleted}`);
         // Reload analytics to recalculate
         const analyticsData = await getLinkedInAnalytics(user.uid);
         setAnalytics(analyticsData);
       } else {
-        toast.success(`${data.verified} post(s) vérifiés, tous présents sur LinkedIn.`);
+        toast.success(`${data.verified} ${t.analytics.postsVerified}`);
       }
     } catch (error) {
       console.error("Error verifying posts:", error);
-      toast.error("Erreur lors de la vérification.");
+      toast.error(t.analytics.verifyFailed);
     } finally {
       setIsVerifying(false);
     }
@@ -511,7 +520,7 @@ function AnalyticsContent() {
     try {
       await markLinkedInPostDeleted(post.id);
       setPosts((prev) => prev.filter((p) => p.id !== post.id));
-      toast.success("Post retiré des statistiques.");
+      toast.success(t.analytics.postRemoved);
       // Recalculate analytics
       if (user) {
         const analyticsData = await getLinkedInAnalytics(user.uid);
@@ -519,7 +528,7 @@ function AnalyticsContent() {
       }
     } catch (error) {
       console.error("Error removing post:", error);
-      toast.error("Impossible de retirer ce post.");
+      toast.error(t.analytics.postRemoveError);
     }
   }, [user]);
 
@@ -567,7 +576,7 @@ function AnalyticsContent() {
 
     filteredPosts.forEach((post) => {
       const date = post.publishedAt?.toDate?.() || new Date();
-      const dateKey = date.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" });
+      const dateKey = date.toLocaleDateString(t.ui.timeLocale, { day: "2-digit", month: "2-digit" });
 
       if (!dataByDate[dateKey]) {
         dataByDate[dateKey] = { likes: 0, comments: 0, shares: 0 };
@@ -607,7 +616,7 @@ function AnalyticsContent() {
                 <div className="w-12 h-12 md:w-14 md:h-14 border-3 border-primary/20 rounded-full" />
                 <div className="absolute inset-0 w-12 h-12 md:w-14 md:h-14 border-3 border-primary border-t-transparent rounded-full animate-spin" />
               </div>
-              <p className="mt-4 text-sm text-gray-500 dark:text-text-muted">Chargement...</p>
+              <p className="mt-4 text-sm text-gray-500 dark:text-text-muted">{t.common.loading}</p>
             </motion.div>
           ) : posts.length === 0 ? (
             <EmptyState />
@@ -624,7 +633,7 @@ function AnalyticsContent() {
                     Analytics
                   </h1>
                   <p className="text-sm text-gray-600 dark:text-text-muted md:text-base mt-1.5">
-                    {filteredPosts.length} publication{filteredPosts.length > 1 ? 's' : ''} sur cette période
+                    {filteredPosts.length} {t.analytics.publicationsOnPeriod}
                   </p>
                 </div>
                 <PeriodFilterComponent selected={periodFilter} onChange={setPeriodFilter} />
@@ -633,7 +642,7 @@ function AnalyticsContent() {
               {/* Stats Cards */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 <StatsCard
-                  title="Publications"
+                  title={t.analytics.publications}
                   value={filteredAnalytics.totalPosts}
                   icon={
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -644,7 +653,7 @@ function AnalyticsContent() {
                   delay={0}
                 />
                 <StatsCard
-                  title="Total Likes"
+                  title={t.analytics.totalLikes}
                   value={filteredAnalytics.totalLikes}
                   icon={
                     <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
@@ -655,7 +664,7 @@ function AnalyticsContent() {
                   delay={0.1}
                 />
                 <StatsCard
-                  title="Commentaires"
+                  title={t.analytics.comments}
                   value={filteredAnalytics.totalComments}
                   icon={
                     <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
@@ -666,7 +675,7 @@ function AnalyticsContent() {
                   delay={0.2}
                 />
                 <StatsCard
-                  title="Partages"
+                  title={t.analytics.shares}
                   value={filteredAnalytics.totalShares}
                   icon={
                     <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
@@ -686,7 +695,7 @@ function AnalyticsContent() {
                 className="bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-4 sm:p-6 mb-8"
               >
                 <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4 sm:mb-6">
-                  Evolution de l'engagement
+                  {t.analytics.engagementEvolution}
                 </h3>
                 <EngagementChart data={chartData} period={periodFilter} />
               </motion.div>
@@ -704,9 +713,9 @@ function AnalyticsContent() {
                   transition={{ duration: 0.35, delay: 0.2, ease: premiumEase }}
                   className="bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-4 sm:p-6"
                 >
-                  <h3 className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 sm:mb-4">Cette semaine</h3>
+                  <h3 className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 sm:mb-4">{t.analytics.thisWeek}</h3>
                   <p className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">{analytics?.postsThisWeek || 0}</p>
-                  <p className="text-xs sm:text-sm text-gray-500 mt-1">publications</p>
+                  <p className="text-xs sm:text-sm text-gray-500 mt-1">{t.analytics.publicationsLabel}</p>
                 </motion.div>
                 <motion.div
                   initial={{ opacity: 0, y: 12 }}
@@ -719,9 +728,9 @@ function AnalyticsContent() {
                   transition={{ duration: 0.35, delay: 0.25, ease: premiumEase }}
                   className="bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-4 sm:p-6"
                 >
-                  <h3 className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 sm:mb-4">Ce mois</h3>
+                  <h3 className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 sm:mb-4">{t.analytics.thisMonth}</h3>
                   <p className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">{analytics?.postsThisMonth || 0}</p>
-                  <p className="text-xs sm:text-sm text-gray-500 mt-1">publications</p>
+                  <p className="text-xs sm:text-sm text-gray-500 mt-1">{t.analytics.publicationsLabel}</p>
                 </motion.div>
                 <motion.div
                   initial={{ opacity: 0, y: 12 }}
@@ -734,11 +743,11 @@ function AnalyticsContent() {
                   transition={{ duration: 0.35, delay: 0.3, ease: premiumEase }}
                   className="bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-4 sm:p-6"
                 >
-                  <h3 className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 sm:mb-4">Taux d'engagement moyen</h3>
+                  <h3 className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 sm:mb-4">{t.analytics.avgEngagementRate}</h3>
                   <p className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
                     {filteredAnalytics.avgEngagementRate ? `${filteredAnalytics.avgEngagementRate.toFixed(1)}%` : "\u2014"}
                   </p>
-                  <p className="text-xs sm:text-sm text-gray-500 mt-1">sur les posts avec impressions</p>
+                  <p className="text-xs sm:text-sm text-gray-500 mt-1">{t.analytics.onPostsWithImpressions}</p>
                 </motion.div>
               </div>
 
@@ -746,7 +755,7 @@ function AnalyticsContent() {
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-semibold text-silver-solid dark:text-white">
-                    Vos publications ({filteredPosts.length})
+                    {t.analytics.yourPublications} ({filteredPosts.length})
                   </h2>
                   {filteredPosts.length > 0 && (
                     <button
@@ -761,7 +770,7 @@ function AnalyticsContent() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                       )}
-                      {isVerifying ? "Verification..." : "Verifier les posts"}
+                      {isVerifying ? t.analytics.verifying : t.analytics.verifyPosts}
                     </button>
                   )}
                 </div>

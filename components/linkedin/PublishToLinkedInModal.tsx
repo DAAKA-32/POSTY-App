@@ -18,6 +18,7 @@ import { triggerHaptic } from "@/hooks/useHapticFeedback";
 import { useFacebook } from "@/contexts/FacebookContext";
 import { useThreads } from "@/contexts/ThreadsContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { postToLinkedInWithMedia, postToLinkedInWithVideo } from "@/lib/linkedin";
 
 // Image upload constraints (match backend)
@@ -112,6 +113,7 @@ export default function PublishToLinkedInModal({
   onPublish,
 }: PublishToLinkedInModalProps) {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const { quota, canPublish, recordPublish, isMaxPlan: quotaIsMax, currentPlan: quotaPlan } = useQuota();
   const { isMaxPlan: subIsMax, currentPlan: subPlan } = useSubscription();
   // Use either context to detect Max — SubscriptionContext is more reliable (normalizes plan names)
@@ -338,7 +340,7 @@ export default function PublishToLinkedInModal({
     // Safety check: prevent publish without platform
     if (selectedPlatforms.length === 0) {
       triggerHaptic("error");
-      setError("Aucune plateforme sélectionnée");
+      setError(t.ui.noPlatformSelected);
       setStep("error");
       return;
     }
@@ -513,7 +515,7 @@ export default function PublishToLinkedInModal({
               onClick={handleClose}
               className="min-h-[48px] text-text-muted hover:text-gray-900 dark:hover:text-white"
             >
-              Annuler
+              {t.templates.cancel}
             </Button>
           </div>
         </div>
@@ -793,7 +795,7 @@ export default function PublishToLinkedInModal({
                   transition-all duration-200 min-h-[160px] max-h-[300px]
                   ${isOverLimit ? "border-error" : "border-gray-200 dark:border-dark-border"}
                 `}
-                placeholder="Rédigez votre contenu..."
+                placeholder={t.ui.writeContentPlaceholder}
               />
               <div className="flex justify-between items-start mt-2 text-xs">
                 <span className="text-text-muted">
@@ -826,7 +828,7 @@ export default function PublishToLinkedInModal({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
                 <p className="text-sm text-error">
-                  Aucune plateforme sélectionnée. Veuillez sélectionner au moins un réseau pour publier.
+                  {t.ui.noPlatformSelectedFull}
                 </p>
               </div>
             )}
@@ -840,7 +842,7 @@ export default function PublishToLinkedInModal({
                   onClick={handleClose}
                   className="min-h-[52px]"
                 >
-                  Annuler
+                  {t.templates.cancel}
                 </Button>
                 <Button
                   fullWidth
@@ -871,7 +873,7 @@ export default function PublishToLinkedInModal({
               </svg>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Confirmer la publication</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{t.ui.confirmPublish}</h3>
               <p className="text-text-secondary text-sm">
                 Votre contenu sera publié sur{" "}
                 <span className="font-medium text-gray-900 dark:text-white">
@@ -1068,7 +1070,7 @@ export default function PublishToLinkedInModal({
         <BottomSheet
           isOpen={isOpen}
           onClose={handleClose}
-          title={step === "success" ? "" : step === "error" ? "Erreur" : "Publier votre contenu"}
+          title={step === "success" ? "" : step === "error" ? "Erreur" : t.ui.publishContent}
           swipeToDismiss={step !== "publishing"}
         >
           {renderContent()}
@@ -1077,7 +1079,7 @@ export default function PublishToLinkedInModal({
         <Modal
           isOpen={isOpen}
           onClose={handleClose}
-          title={step === "success" ? "" : step === "error" ? "Erreur" : "Publier votre contenu"}
+          title={step === "success" ? "" : step === "error" ? "Erreur" : t.ui.publishContent}
           size="md"
         >
           {renderContent()}

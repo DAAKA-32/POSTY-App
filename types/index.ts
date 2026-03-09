@@ -115,6 +115,7 @@ export interface UserProfile {
   displayName: string;
   photoURL: string | null;
   bio?: string;
+  language?: "fr" | "en";
   onboardingComplete: boolean;
   // Personal branding settings
   branding?: PersonalBranding;
@@ -162,6 +163,8 @@ export interface UserProfile {
   };
   // Welcome modal flag (set by webhook after first payment, cleared on dismiss)
   showWelcomeModal?: boolean;
+  // Gift plan popup flag (set to true after gift recipient sees the popup)
+  giftPopupSeen?: boolean;
   createdAt: Timestamp;
 }
 

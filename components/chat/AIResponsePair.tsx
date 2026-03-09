@@ -6,36 +6,38 @@ import Button from "@/components/ui/Button";
 import { LinkedInIcon } from "@/components/linkedin/LinkedInConnectButton";
 import { useHapticFeedback } from "@/hooks/useHapticFeedback";
 import { useSubscription } from "@/contexts/SubscriptionContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import toast from "@/components/ui/Toast";
 
 // Premium animation easing
 const smoothEase = [0.25, 0.1, 0.25, 1] as const;
 
 // Helper function to format timestamp
-function formatTimeAgo(date: Date): string {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function formatTimeAgo(date: Date, t: any): string {
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
   if (diffInSeconds < 60) {
-    return "À l'instant";
+    return t.ui.justNow;
   }
 
   const diffInMinutes = Math.floor(diffInSeconds / 60);
   if (diffInMinutes < 60) {
-    return `Il y a ${diffInMinutes} min`;
+    return t.ui.minutesAgo.replace("{n}", String(diffInMinutes));
   }
 
   const diffInHours = Math.floor(diffInMinutes / 60);
   if (diffInHours < 24) {
-    return `Il y a ${diffInHours}h`;
+    return t.ui.hoursAgo.replace("{n}", String(diffInHours));
   }
 
   const diffInDays = Math.floor(diffInHours / 24);
   if (diffInDays < 7) {
-    return `Il y a ${diffInDays}j`;
+    return t.ui.daysAgo.replace("{n}", String(diffInDays));
   }
 
-  return date.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+  return date.toLocaleDateString(t.ui.timeLocale, { day: "numeric", month: "short" });
 }
 
 interface ResponseData {
@@ -94,6 +96,7 @@ const ResponseSkeleton = memo(function ResponseSkeleton({
   variant: "storytelling" | "business";
   isMobile?: boolean;
 }) {
+  const { t } = useLanguage();
   const styles = variantStyles[variant];
 
   return (
@@ -137,7 +140,7 @@ const ResponseSkeleton = memo(function ResponseSkeleton({
             transition={{ duration: 1.2, repeat: Infinity }}
             className={`inline-block w-1.5 h-1.5 rounded-full ${styles.dotColor}`}
           />
-          En attente...
+          {t.ui.waiting}
         </div>
       </div>
     </div>
@@ -165,6 +168,7 @@ const ResponseCard = memo(function ResponseCard({
   const [copied, setCopied] = useState(false);
   const { trigger: triggerHaptic } = useHapticFeedback();
   const { canSchedulePosts } = useSubscription();
+  const { t } = useLanguage();
   const styles = variantStyles[response.variant];
 
   // Check if scheduling is available for the user's plan
@@ -175,12 +179,12 @@ const ResponseCard = memo(function ResponseCard({
       await navigator.clipboard.writeText(response.content);
       setCopied(true);
       triggerHaptic("success");
-      toast.success("Copié !");
+      toast.success(t.ui.copied);
       setTimeout(() => setCopied(false), 2000);
       onCopy?.(response.content);
     } catch {
       triggerHaptic("error");
-      toast.error("Erreur lors de la copie");
+      toast.error(t.ui.copyFailed);
     }
   };
 
@@ -192,7 +196,7 @@ const ResponseCard = memo(function ResponseCard({
   const handleSelect = () => {
     triggerHaptic("medium");
     onSelectVersion?.(response.variant, response.content);
-    toast.success(`Version ${styles.label} sélectionnée`);
+    toast.success(`${styles.label} ✓`);
   };
 
   const handleSchedule = () => {
@@ -225,7 +229,7 @@ const ResponseCard = memo(function ResponseCard({
           </span>
           {response.timestamp && (
             <span className="text-xs text-text-muted">
-              {formatTimeAgo(response.timestamp)}
+              {formatTimeAgo(response.timestamp, t)}
             </span>
           )}
         </div>
@@ -260,14 +264,14 @@ const ResponseCard = memo(function ResponseCard({
                   <svg className="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  Copié !
+                  {t.ui.copied}
                 </>
               ) : (
                 <>
                   <svg className="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                   </svg>
-                  Copier
+                  {t.ui.copy}
                 </>
               )}
             </Button>
@@ -278,7 +282,7 @@ const ResponseCard = memo(function ResponseCard({
                 className="flex-1 text-xs px-3 py-2 h-auto bg-[#0A66C2] hover:bg-[#004182] border-none justify-center"
               >
                 <LinkedInIcon className="w-3.5 h-3.5 mr-1.5" />
-                Publier
+                {t.ui.publish}
               </Button>
             )}
             {onSchedule && (
@@ -287,12 +291,12 @@ const ResponseCard = memo(function ResponseCard({
                 size="sm"
                 onClick={handleSchedule}
                 className={`flex-1 text-xs px-3 py-2 h-auto justify-center relative ${!canSchedule ? "pr-10" : ""}`}
-                title={canSchedule ? "Programmer ce post" : "Programmer ce post (Pro)"}
+                title={canSchedule ? t.ui.schedulePost : `${t.ui.schedulePost} (Pro)`}
               >
                 <svg className="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                Programmer
+                {t.ui.schedule}
                 {!canSchedule && (
                   <span className="absolute right-1 top-1/2 -translate-y-1/2 px-1 py-0.5 text-[9px] font-bold bg-gradient-to-r from-primary to-accent text-white rounded">
                     PRO
@@ -312,7 +316,7 @@ const ResponseCard = memo(function ResponseCard({
               <svg className="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
-              Choisir cette version
+              {t.ui.selectVersion}
             </Button>
           )}
         </div>
@@ -335,6 +339,7 @@ const AIResponsePair = memo(function AIResponsePair({
   const [activeIndex, setActiveIndex] = useState(0);
   const [direction, setDirection] = useState(0);
   const { trigger: triggerHaptic } = useHapticFeedback();
+  const { t } = useLanguage();
   const containerRef = useRef<HTMLDivElement>(null);
   const controls = useAnimation();
 
@@ -446,7 +451,7 @@ const AIResponsePair = memo(function AIResponsePair({
       <div className="hidden md:block">
         {/* Desktop pagination indicator */}
         <div className="flex items-center justify-center gap-3 mb-3">
-          <span className="text-xs text-primary font-medium">2 versions disponibles</span>
+          <span className="text-xs text-primary font-medium">{t.ui.twoVersionsAvailable}</span>
           <div className="flex items-center gap-1.5">
             <span className={`w-2 h-2 rounded-full ${variantStyles.storytelling.dotColor}`} />
             <span className={`w-2 h-2 rounded-full ${variantStyles.business.dotColor}`} />
@@ -488,7 +493,7 @@ const AIResponsePair = memo(function AIResponsePair({
         ref={containerRef}
         className="md:hidden relative"
         role="region"
-        aria-label="Versions de réponse IA"
+        aria-label={t.ui.responseVersions}
         tabIndex={0}
       >
         {/* Premium animated arrow hint - attracts attention subtly */}
@@ -585,7 +590,7 @@ const AIResponsePair = memo(function AIResponsePair({
                   : "hover:bg-dark-hover active:scale-90"
                 }
               `}
-              aria-label="Version précédente"
+              aria-label={t.ui.previousVersion}
             >
               <svg className="w-5 h-5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -613,7 +618,7 @@ const AIResponsePair = memo(function AIResponsePair({
                           : "w-2 h-2 bg-dark-border hover:bg-dark-hover"
                         }
                       `}
-                      aria-label={`Voir version ${style.label}`}
+                      aria-label={`${style.label}`}
                       aria-current={idx === activeIndex ? "true" : "false"}
                     />
                   );
@@ -629,7 +634,7 @@ const AIResponsePair = memo(function AIResponsePair({
                   {currentStyles.label}
                 </span>
                 <span className="text-xs text-text-muted bg-dark-card/50 px-1.5 py-0.5 rounded-md">
-                  {activeIndex + 1} sur {responses.length}
+                  {activeIndex + 1} / {responses.length}
                 </span>
               </div>
             </div>
@@ -646,7 +651,7 @@ const AIResponsePair = memo(function AIResponsePair({
                   : "hover:bg-dark-hover active:scale-90"
                 }
               `}
-              aria-label="Version suivante"
+              aria-label={t.ui.nextVersion}
             >
               <svg className="w-5 h-5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

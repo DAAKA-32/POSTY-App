@@ -146,6 +146,9 @@ export async function updateUserProfile(
   if (data.branding !== undefined) {
     updateData.branding = data.branding;
   }
+  if (data.language !== undefined) {
+    updateData.language = data.language;
+  }
 
   await updateDoc(userRef, updateData);
 }

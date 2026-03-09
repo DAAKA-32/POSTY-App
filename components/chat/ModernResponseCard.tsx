@@ -8,6 +8,7 @@ import { useHapticFeedback } from "@/hooks/useHapticFeedback";
 import { useVisibilityObserver } from "@/hooks/useVisibilityObserver";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { PlanType } from "@/lib/plans";
 import PostInsightsModal from "./PostInsightsModal";
 import { generatePostInsights } from "@/lib/generateInsights";
@@ -69,6 +70,7 @@ export const ModernResponseCard = memo(function ModernResponseCard({
   const { trigger: triggerHaptic } = useHapticFeedback();
   const { canSchedulePosts } = useSubscription();
   const { userProfile } = useAuth();
+  const { t } = useLanguage();
   const canSchedule = canSchedulePosts().allowed;
 
   // Mobile detection for scroll-based visibility
@@ -317,13 +319,13 @@ export const ModernResponseCard = memo(function ModernResponseCard({
                       : "text-text-muted cursor-not-allowed opacity-60"
                     }
                   `}
-                  title={canSchedule ? "Programmer ce post" : "Abonnement actif requis"}
+                  title={canSchedule ? t.ui.schedule : undefined}
                   role="menuitem"
                 >
                   <svg className={`w-4 h-4 shrink-0 transition-transform ${canSchedule ? "group-hover/schedule:scale-110" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span className="flex-1">Programmer</span>
+                  <span className="flex-1">{t.ui.schedule}</span>
                   {!canSchedule && (
                     <span className="px-1.5 py-0.5 text-[9px] font-bold bg-gradient-to-r from-primary to-accent text-white rounded">
                       PRO
@@ -344,7 +346,7 @@ export const ModernResponseCard = memo(function ModernResponseCard({
                   transition-all duration-150 min-h-[44px]
                   active:scale-[0.98]
                 "
-                title="Voir les statistiques"
+                title={t.ui.viewStats}
                 role="menuitem"
               >
                 <svg className="w-4 h-4 shrink-0 group-hover/insights:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -419,8 +421,8 @@ export const ModernResponseCard = memo(function ModernResponseCard({
               hover:border-primary/30
               transition-all duration-200
             "
-            aria-label="Copier le message"
-            title="Copier"
+            aria-label={t.ui.copyMessage}
+            title={t.ui.copy}
           >
             <AnimatePresence mode="wait" initial={false}>
               {copied ? (
@@ -482,7 +484,7 @@ export const ModernResponseCard = memo(function ModernResponseCard({
                 }}
               />
               <LinkedInIcon className="w-3.5 h-3.5 relative z-10" />
-              <span className="relative z-10">Publier sur LinkedIn</span>
+              <span className="relative z-10">{t.ui.publishOnLinkedIn}</span>
             </motion.button>
           )}
 
@@ -503,10 +505,10 @@ export const ModernResponseCard = memo(function ModernResponseCard({
               transition-all duration-200
               ${isMenuOpen ? "from-primary/20 to-primary-hover/20 shadow-[0_0_12px_rgba(248,147,93,0.3)]" : ""}
             `}
-            aria-label="Plus d'actions"
+            aria-label={t.ui.moreActions}
             aria-expanded={isMenuOpen}
             aria-haspopup="menu"
-            title="Plus d'options"
+            title={t.ui.moreActions}
           >
             {/* Shimmer effect - brand primary */}
             <span
