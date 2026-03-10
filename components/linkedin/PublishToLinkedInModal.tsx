@@ -30,9 +30,9 @@ const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/web
 const MAX_VIDEO_SIZE = 200 * 1024 * 1024; // 200 MB
 const ACCEPTED_VIDEO_TYPES = ["video/mp4", "video/quicktime", "video/webm"];
 
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} Ko`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
+function formatFileSize(bytes: number, lang: string): string {
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} ${lang === 'fr' ? 'Ko' : 'KB'}`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} ${lang === 'fr' ? 'Mo' : 'MB'}`;
 }
 
 function formatDuration(seconds: number): string {
@@ -55,38 +55,6 @@ interface VisibilityOption {
   icon: React.ReactNode;
   description: string;
 }
-
-const VISIBILITY_OPTIONS: VisibilityOption[] = [
-  {
-    id: "PUBLIC",
-    label: "Public",
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
-    description: "Visible par tous sur LinkedIn",
-  },
-  {
-    id: "CONNECTIONS",
-    label: "Connexions",
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-      </svg>
-    ),
-    description: "Visible uniquement par vos relations",
-  },
-];
-
-// Publishing step messages
-const PUBLISHING_MESSAGES = [
-  { progress: 0, message: "Connexion aux plateformes..." },
-  { progress: 30, message: "Préparation du contenu..." },
-  { progress: 60, message: "Publication en cours..." },
-  { progress: 90, message: "Finalisation..." },
-  { progress: 100, message: "C'est en ligne!" },
-];
 
 // Platform brand colors and labels for success links
 const PLATFORM_LINK_CONFIG: Record<string, { color: string; label: string }> = {
@@ -113,7 +81,7 @@ export default function PublishToLinkedInModal({
   onPublish,
 }: PublishToLinkedInModalProps) {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { quota, canPublish, recordPublish, isMaxPlan: quotaIsMax, currentPlan: quotaPlan } = useQuota();
   const { isMaxPlan: subIsMax, currentPlan: subPlan } = useSubscription();
   // Use either context to detect Max — SubscriptionContext is more reliable (normalizes plan names)
@@ -127,7 +95,7 @@ export default function PublishToLinkedInModal({
   const [publishedLinks, setPublishedLinks] = useState<{ platform: string; url: string }[]>([]);
   const [error, setError] = useState<string | undefined>();
   const [progress, setProgress] = useState(0);
-  const [publishMessage, setPublishMessage] = useState(PUBLISHING_MESSAGES[0].message);
+  const [publishMessage, setPublishMessage] = useState("");
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   // Initialize mobile state with SSR-safe check
   const [isMobile, setIsMobile] = useState(() => {
@@ -172,6 +140,39 @@ export default function PublishToLinkedInModal({
     }
   };
 
+  // Localized publishing messages
+  const publishingMessages = [
+    { progress: 0, message: t.publish.connectingPlatforms },
+    { progress: 30, message: t.publish.preparingContent },
+    { progress: 60, message: t.publish.publishingInProgress },
+    { progress: 90, message: t.publish.finalizing },
+    { progress: 100, message: t.publish.itsLive },
+  ];
+
+  // Localized visibility options
+  const visibilityOptions: VisibilityOption[] = [
+    {
+      id: "PUBLIC",
+      label: t.publish.publicLabel,
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+      description: t.publish.publicDesc,
+    },
+    {
+      id: "CONNECTIONS",
+      label: t.publish.connectionsLabel,
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      ),
+      description: t.publish.connectionsDesc,
+    },
+  ];
+
   // Detect mobile - check on mount and when modal opens
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -196,7 +197,7 @@ export default function PublishToLinkedInModal({
       setPublishedLinks([]);
       setError(undefined);
       setProgress(0);
-      setPublishMessage(PUBLISHING_MESSAGES[0].message);
+      setPublishMessage(publishingMessages[0].message);
       // Reset images
       imagePreviews.forEach((url) => URL.revokeObjectURL(url));
       setImages([]);
@@ -230,13 +231,14 @@ export default function PublishToLinkedInModal({
 
   // Update message based on progress
   useEffect(() => {
-    const currentMessage = [...PUBLISHING_MESSAGES]
+    const currentMessage = [...publishingMessages]
       .reverse()
       .find((m) => progress >= m.progress);
     if (currentMessage) {
       setPublishMessage(currentMessage.message);
     }
-  }, [progress]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [progress, t]);
 
   // ── Image handlers ────────────────────────────────────────────────
   const handleAddImages = (files: FileList | null) => {
@@ -248,15 +250,15 @@ export default function PublishToLinkedInModal({
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
-        errors.push(`${file.name} : format non supporté`);
+        errors.push(`${file.name} : ${t.publish.unsupportedImageFormat}`);
         continue;
       }
       if (file.size > MAX_IMAGE_SIZE) {
-        errors.push(`${file.name} : trop lourde (max 10 Mo)`);
+        errors.push(`${file.name} : ${t.publish.imageTooLarge}`);
         continue;
       }
       if (images.length + newFiles.length >= MAX_IMAGES) {
-        errors.push(`Maximum ${MAX_IMAGES} images`);
+        errors.push(t.publish.maxImages.replace("{count}", String(MAX_IMAGES)));
         break;
       }
       newFiles.push(file);
@@ -286,11 +288,11 @@ export default function PublishToLinkedInModal({
     if (!files || files.length === 0) return;
     const file = files[0];
     if (!ACCEPTED_VIDEO_TYPES.includes(file.type)) {
-      toast.error("Format non supporté. Utilisez MP4, MOV ou WebM.");
+      toast.error(t.publish.unsupportedFormat);
       return;
     }
     if (file.size > MAX_VIDEO_SIZE) {
-      toast.error("Vidéo trop lourde (max 200 Mo)");
+      toast.error(t.publish.videoTooLarge);
       return;
     }
     const url = URL.createObjectURL(file);
@@ -426,22 +428,22 @@ export default function PublishToLinkedInModal({
         setStep("success");
 
         const platformNames = successResults.map((r) => r.platform).join(", ");
-        toast.success(`Post publié sur ${platformNames}`);
+        toast.success(t.publish.postPublishedOn.replace("{platforms}", platformNames));
 
         if (failedResults.length > 0) {
           const failedNames = failedResults.map((r) => r.platform).join(", ");
-          toast.error(`Échec sur ${failedNames}: ${failedResults[0].error}`);
+          toast.error(t.publish.failedOn.replace("{platforms}", failedNames).replace("{error}", failedResults[0].error || ""));
         }
       } else {
         // All failed
         triggerHaptic("error");
-        setError(failedResults.map((r) => `${r.platform}: ${r.error}`).join("\n") || "Une erreur est survenue");
+        setError(failedResults.map((r) => `${r.platform}: ${r.error}`).join("\n") || t.publish.genericError);
         setStep("error");
       }
     } catch (err) {
       // Error haptic feedback
       triggerHaptic("error");
-      setError(err instanceof Error ? err.message : "Une erreur est survenue");
+      setError(err instanceof Error ? err.message : t.publish.genericError);
       setStep("error");
     } finally {
       // Always cleanup the interval, regardless of success or error
@@ -483,10 +485,10 @@ export default function PublishToLinkedInModal({
                   <LinkedInIcon className="w-10 h-10 text-white" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                  Connectez LinkedIn
+                  {t.publish.connectLinkedIn}
                 </h3>
                 <p className="text-text-secondary text-sm max-w-xs">
-                  Publiez vos posts directement sur LinkedIn en un clic, sans quitter Posty.
+                  {t.publish.connectLinkedInDesc}
                 </p>
               </div>
             </div>
@@ -495,9 +497,9 @@ export default function PublishToLinkedInModal({
           {/* Benefits list */}
           <div className="space-y-3 mb-6">
             {[
-              { icon: "⚡", text: "Publication en un clic" },
-              { icon: "🔒", text: "Connexion sécurisée OAuth 2.0" },
-              { icon: "📊", text: "Suivi de vos publications" },
+              { icon: "⚡", text: t.publish.oneClickPublish },
+              { icon: "🔒", text: t.publish.secureConnection },
+              { icon: "📊", text: t.publish.trackPublications },
             ].map((benefit, i) => (
               <div key={i} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-dark-elevated/50 rounded-xl border border-gray-200 dark:border-dark-border/50">
                 <span className="text-lg">{benefit.icon}</span>
@@ -543,7 +545,7 @@ export default function PublishToLinkedInModal({
               )}
               <div className="flex-1 min-w-0">
                 <p className="text-gray-900 dark:text-white font-medium truncate">{linkedInConnection?.profileName}</p>
-                <p className="text-xs text-text-muted">Sera publié sur votre profil</p>
+                <p className="text-xs text-text-muted">{t.publish.willBePublishedOnProfile}</p>
               </div>
             </div>
 
@@ -569,11 +571,12 @@ export default function PublishToLinkedInModal({
                   <span className="text-sm text-text-secondary">
                     {canPublish ? (
                       <>
-                        <span className="text-gray-900 dark:text-white font-medium">{quota.remaining}</span> publication
-                        {quota.remaining > 1 ? "s" : ""} restante{quota.remaining > 1 ? "s" : ""} aujourd&apos;hui
+                        <span className="text-gray-900 dark:text-white font-medium">{quota.remaining}</span>{" "}
+                        {quota.remaining > 1 ? t.publish.remainingPublicationsPlural : t.publish.remainingPublications}{" "}
+                        {quota.remaining > 1 ? t.publish.remainingTodayPlural : t.publish.remainingToday}
                       </>
                     ) : (
-                      <span className="text-error">Limite quotidienne atteinte</span>
+                      <span className="text-error">{t.publish.dailyLimitReached}</span>
                     )}
                   </span>
                 </div>
@@ -582,7 +585,7 @@ export default function PublishToLinkedInModal({
                     onClick={() => setShowUpgradeModal(true)}
                     className="text-xs text-accent hover:text-accent/80 font-medium min-h-[44px] px-2 flex items-center"
                   >
-                    Passer Max
+                    {t.publish.upgradeToMax}
                   </button>
                 )}
               </div>
@@ -593,14 +596,14 @@ export default function PublishToLinkedInModal({
               <div className={`transition-opacity duration-200 ${selectedPlatforms.includes("linkedin") ? "opacity-100" : "opacity-40 pointer-events-none"}`}>
                 <div className="flex items-center gap-2 mb-2">
                   <p className="text-xs text-text-muted font-medium uppercase tracking-wide">
-                    Visibilité
+                    {t.publish.visibilityLabel}
                   </p>
                   <span className="text-[10px] text-text-muted/70 font-normal normal-case tracking-normal">
                     LinkedIn
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                  {VISIBILITY_OPTIONS.map((option) => (
+                  {visibilityOptions.map((option) => (
                     <button
                       key={option.id}
                       onClick={() => {
@@ -632,7 +635,7 @@ export default function PublishToLinkedInModal({
                 </div>
                 {!selectedPlatforms.includes("linkedin") && (
                   <p className="text-[11px] text-text-muted mt-1.5">
-                    Activez LinkedIn pour gérer la visibilité.
+                    {t.publish.enableLinkedInVisibility}
                   </p>
                 )}
               </div>
@@ -642,13 +645,13 @@ export default function PublishToLinkedInModal({
             <div>
               <div className="flex items-center justify-between mb-2">
                 <p className="text-xs text-text-muted font-medium uppercase tracking-wide">
-                  Images / Vidéos
+                  {t.publish.imagesVideos}
                 </p>
                 {images.length > 0 && (
                   <span className="text-xs text-text-muted">{images.length}/{MAX_IMAGES}</span>
                 )}
                 {video && (
-                  <span className="text-xs text-text-muted">1 vidéo</span>
+                  <span className="text-xs text-text-muted">{t.publish.videoCount}</span>
                 )}
               </div>
 
@@ -659,23 +662,23 @@ export default function PublishToLinkedInModal({
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     className="flex-1 h-11 rounded-lg border-2 border-dashed border-gray-300 dark:border-dark-border hover:border-primary/50 flex items-center justify-center gap-2 text-text-muted hover:text-primary transition-colors duration-200 text-sm"
-                    aria-label="Ajouter des images"
+                    aria-label={t.publish.addImages}
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    Images
+                    {t.publish.images}
                   </button>
                   <button
                     type="button"
                     onClick={() => videoInputRef.current?.click()}
                     className="flex-1 h-11 rounded-lg border-2 border-dashed border-gray-300 dark:border-dark-border hover:border-primary/50 flex items-center justify-center gap-2 text-text-muted hover:text-primary transition-colors duration-200 text-sm"
-                    aria-label="Ajouter une vidéo"
+                    aria-label={t.publish.addVideo}
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                     </svg>
-                    Vidéo
+                    {t.publish.video}
                   </button>
                 </div>
               )}
@@ -694,7 +697,7 @@ export default function PublishToLinkedInModal({
                         onClick={() => handleRemoveImage(idx)}
                         className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150 active:opacity-100"
                         style={{ opacity: isMobile ? 1 : undefined }}
-                        aria-label={`Supprimer image ${idx + 1}`}
+                        aria-label={`${t.publish.removeImage} ${idx + 1}`}
                       >
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
@@ -707,7 +710,7 @@ export default function PublishToLinkedInModal({
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
                       className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg border-2 border-dashed border-gray-300 dark:border-dark-border hover:border-primary/50 flex flex-col items-center justify-center gap-1 text-text-muted hover:text-primary transition-colors duration-200"
-                      aria-label="Ajouter une image"
+                      aria-label={t.publish.addImage}
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -733,7 +736,7 @@ export default function PublishToLinkedInModal({
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                       </svg>
                       <span className="text-xs text-white font-medium truncate max-w-[110px]">{video.name}</span>
-                      <span className="text-xs text-text-muted shrink-0">{formatFileSize(video.size)}</span>
+                      <span className="text-xs text-text-muted shrink-0">{formatFileSize(video.size, language)}</span>
                       {videoDuration !== null && (
                         <span className="text-xs text-text-muted shrink-0">{formatDuration(videoDuration)}</span>
                       )}
@@ -745,7 +748,7 @@ export default function PublishToLinkedInModal({
                       type="button"
                       onClick={handleRemoveVideo}
                       className="w-6 h-6 rounded-full bg-black/60 text-white flex items-center justify-center ml-2 shrink-0 hover:bg-black/80 transition-colors"
-                      aria-label="Supprimer la vidéo"
+                      aria-label={t.publish.removeVideo}
                     >
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
@@ -777,13 +780,13 @@ export default function PublishToLinkedInModal({
             <div>
               <div className="flex items-center justify-between mb-2">
                 <p className="text-xs text-text-muted font-medium uppercase tracking-wide">
-                  Contenu du post
+                  {t.publish.postContent}
                 </p>
                 <button
                   onClick={() => setEditedContent(initialContent)}
                   className="text-xs text-accent hover:text-accent/80 transition-colors min-h-[44px] px-2 flex items-center"
                 >
-                  Réinitialiser
+                  {t.publish.reset}
                 </button>
               </div>
               <textarea
@@ -800,7 +803,7 @@ export default function PublishToLinkedInModal({
               <div className="flex justify-between items-start mt-2 text-xs">
                 <span className="text-text-muted">
                   {editedContent !== initialContent && (
-                    <span className="text-warning">Modifié</span>
+                    <span className="text-warning">{t.publish.modified}</span>
                   )}
                 </span>
                 <div className="flex flex-col items-end gap-0.5">
@@ -857,7 +860,7 @@ export default function PublishToLinkedInModal({
                   <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                   </svg>
-                  Publier
+                  {t.publish.publish}
                 </Button>
               </div>
             </div>
@@ -875,13 +878,13 @@ export default function PublishToLinkedInModal({
             <div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{t.ui.confirmPublish}</h3>
               <p className="text-text-secondary text-sm">
-                Votre contenu sera publié sur{" "}
+                {t.publish.confirmPublishDesc}{" "}
                 <span className="font-medium text-gray-900 dark:text-white">
                   {selectedPlatforms.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(", ")}
                 </span>
                 {selectedPlatforms.includes("linkedin") && (
                   <span>
-                    {" "}({visibility === "PUBLIC" ? "public" : "connexions uniquement"})
+                    {" "}({visibility === "PUBLIC" ? "public" : t.publish.connectionsOnly})
                   </span>
                 )}
                 .
@@ -896,14 +899,14 @@ export default function PublishToLinkedInModal({
                   onClick={() => setStep("preview")}
                   className="min-h-[52px]"
                 >
-                  Retour
+                  {t.publish.back}
                 </Button>
                 <Button
                   fullWidth
                   onClick={handlePublish}
                   className="bg-primary hover:bg-primary-hover border-none min-h-[52px]"
                 >
-                  Oui, publier
+                  {t.publish.yesPublish}
                 </Button>
               </div>
             </div>
@@ -958,7 +961,7 @@ export default function PublishToLinkedInModal({
                 <p className="text-gray-900 dark:text-white font-semibold text-lg mb-2">
                   {progress === 100 ? (
                     <span className="flex items-center justify-center gap-2">
-                      C'est en ligne! <span className="text-xl">\uD83D\uDE80</span>
+                      {t.publish.itsLive} <span className="text-xl">\uD83D\uDE80</span>
                     </span>
                   ) : (
                     publishMessage
@@ -1002,9 +1005,9 @@ export default function PublishToLinkedInModal({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
               </motion.svg>
             </motion.div>
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Post publié !</h3>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{t.publish.postPublished}</h3>
             <p className="text-text-secondary text-sm mb-6">
-              Votre post a été publié avec succès{publishedLinks.length > 1 ? " sur les plateformes sélectionnées" : ""}.
+              {t.publish.publishedSuccessfully}{publishedLinks.length > 1 ? t.publish.publishedOnSelectedPlatforms : ""}.
             </p>
             {publishedLinks.length > 0 && (
               <div className="flex flex-col gap-2 mb-6">
@@ -1017,9 +1020,9 @@ export default function PublishToLinkedInModal({
                       target="_blank"
                       rel="noopener noreferrer"
                       className={`inline-flex items-center justify-center gap-2 ${config.color} transition-colors min-h-[44px] px-4 text-sm font-medium`}
-                      aria-label={`Voir le post sur ${config.label}`}
+                      aria-label={`${t.publish.viewPostOn} ${config.label}`}
                     >
-                      Voir le post sur {config.label}
+                      {t.publish.viewPostOn} {config.label}
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                       </svg>
@@ -1029,7 +1032,7 @@ export default function PublishToLinkedInModal({
               </div>
             )}
             <Button fullWidth onClick={handleClose} className="min-h-[52px]">
-              Fermer
+              {t.common.close}
             </Button>
           </div>
         )}
@@ -1043,17 +1046,17 @@ export default function PublishToLinkedInModal({
               </svg>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Échec de la publication</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{t.publish.publishFailed}</h3>
               <p className="text-error text-sm">{error}</p>
             </div>
             {/* Actions — sticky footer */}
             <div className="sticky bottom-0 -mx-5 px-5 pt-3 pb-1 bg-white dark:bg-dark-card border-t border-gray-100 dark:border-dark-border/50 mt-4">
               <div className="flex gap-3">
                 <Button variant="secondary" fullWidth onClick={handleClose} className="min-h-[52px]">
-                  Fermer
+                  {t.common.close}
                 </Button>
                 <Button fullWidth onClick={handleRetry} className="min-h-[52px]">
-                  Réessayer
+                  {t.publish.retry}
                 </Button>
               </div>
             </div>
@@ -1070,7 +1073,7 @@ export default function PublishToLinkedInModal({
         <BottomSheet
           isOpen={isOpen}
           onClose={handleClose}
-          title={step === "success" ? "" : step === "error" ? "Erreur" : t.ui.publishContent}
+          title={step === "success" ? "" : step === "error" ? t.publish.error : t.ui.publishContent}
           swipeToDismiss={step !== "publishing"}
         >
           {renderContent()}
@@ -1079,7 +1082,7 @@ export default function PublishToLinkedInModal({
         <Modal
           isOpen={isOpen}
           onClose={handleClose}
-          title={step === "success" ? "" : step === "error" ? "Erreur" : t.ui.publishContent}
+          title={step === "success" ? "" : step === "error" ? t.publish.error : t.ui.publishContent}
           size="md"
         >
           {renderContent()}

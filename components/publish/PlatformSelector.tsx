@@ -7,6 +7,7 @@ import { PLATFORM_INFO, PlanType } from "@/lib/plans";
 import { canUsePlatform, canPublishSimultaneously } from "@/lib/permissions";
 import Link from "next/link";
 import { triggerHaptic } from "@/hooks/useHapticFeedback";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // Platform icons
 const RedditIcon = ({ className }: { className?: string }) => (
@@ -103,6 +104,7 @@ export default function PlatformSelector({
   onToggle,
   showAllPlatforms = true,
 }: PlatformSelectorProps) {
+  const { t } = useLanguage();
   const { subscription, currentPlan } = useSubscription();
 
   // Check if user can publish to multiple platforms simultaneously
@@ -117,11 +119,11 @@ export default function PlatformSelector({
     <div>
       <div className="flex items-center justify-between mb-3">
         <p className="text-xs text-text-muted font-medium uppercase tracking-wide">
-          Publier sur
+          {t.publish.publishOnLabel}
         </p>
         {selectedPlatforms.length > 1 && !canMultiPublish.allowed && (
           <span className="text-[10px] text-warning">
-            Publication simultanée: <PlanBadge plan="max" />
+            {t.publish.simultaneousPublish} <PlanBadge plan="max" />
           </span>
         )}
       </div>
@@ -204,7 +206,7 @@ export default function PlatformSelector({
               {hasAccess && !isLocked && platform.id === "reddit" && !isSelected && (
                 <div className="absolute top-1 right-1">
                   <span className="text-[8px] bg-dark-hover px-1 py-0.5 rounded text-text-muted">
-                    Bientôt
+                    {t.publish.comingSoon}
                   </span>
                 </div>
               )}
@@ -225,10 +227,10 @@ export default function PlatformSelector({
                   }`}
                 >
                   {platform.id === "reddit"
-                    ? "Bientôt disponible"
+                    ? t.publish.comingSoonFull
                     : isConnected
-                    ? "Connecté"
-                    : "Non connecté"}
+                    ? t.publish.connected
+                    : t.publish.notConnected}
                 </span>
               )}
             </button>
@@ -245,7 +247,7 @@ export default function PlatformSelector({
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
-          Débloquer plus de plateformes
+          {t.publish.unlockMorePlatforms}
         </Link>
       )}
     </div>

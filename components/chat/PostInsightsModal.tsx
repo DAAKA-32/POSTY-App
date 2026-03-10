@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { PostInsights } from "@/types";
 import { useScrollLock } from "@/hooks/useScrollLock";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface PostInsightsModalProps {
   isOpen: boolean;
@@ -29,6 +30,7 @@ export default function PostInsightsModal({
 }: PostInsightsModalProps) {
   // Centralized scroll lock
   useScrollLock(isOpen);
+  const { t } = useLanguage();
 
   // Close on ESC key
   useEffect(() => {
@@ -54,7 +56,7 @@ export default function PostInsightsModal({
     {
       id: "effective",
       icon: "✨",
-      title: "Pourquoi ça fonctionne",
+      title: t.insights.whyEffective,
       content: insights.whyEffective,
       iconBg: "bg-primary/10 border border-primary/20",
       textColor: "text-primary",
@@ -62,7 +64,7 @@ export default function PostInsightsModal({
     {
       id: "timing",
       icon: "⏰",
-      title: "Meilleur moment",
+      title: t.insights.bestTime,
       content: insights.bestTimeToPost,
       iconBg: "bg-primary/10 border border-primary/20",
       textColor: "text-primary",
@@ -70,7 +72,7 @@ export default function PostInsightsModal({
     {
       id: "engagement",
       icon: "📈",
-      title: "Engagement attendu",
+      title: t.insights.expectedEngagement,
       content: insights.expectedEngagement,
       iconBg: "bg-primary/10 border border-primary/20",
       textColor: "text-primary",
@@ -78,7 +80,7 @@ export default function PostInsightsModal({
     {
       id: "takeaway",
       icon: "🎯",
-      title: "Point clé",
+      title: t.insights.keyTakeaway,
       content: insights.keyTakeaway,
       iconBg: "bg-primary/10 border border-primary/20",
       textColor: "text-primary",
@@ -130,10 +132,10 @@ export default function PostInsightsModal({
                         id="insights-title"
                         className="text-lg font-bold text-gray-900 dark:text-white"
                       >
-                        Insights IA
+                        {t.insights.title}
                       </h2>
                       <p className="text-xs text-text-muted">
-                        Analyse de votre post par l'intelligence artificielle
+                        {t.insights.subtitle}
                       </p>
                     </div>
                   </div>
@@ -149,7 +151,7 @@ export default function PostInsightsModal({
                       dark:bg-dark-elevated dark:hover:bg-dark-hover
                       transition-colors duration-200
                     "
-                    aria-label="Fermer"
+                    aria-label={t.common.close}
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -204,7 +206,7 @@ export default function PostInsightsModal({
                     </div>
                     <div className="flex-1">
                       <p className="text-xs text-gray-600 dark:text-text-muted leading-relaxed">
-                        <span className="font-semibold text-primary">Astuce :</span> Ces insights sont générés par IA pour vous aider à comprendre les points forts de votre post et optimiser votre stratégie de contenu.
+                        <span className="font-semibold text-primary">{t.insights.tip}</span> {t.insights.tipDescription}
                       </p>
                     </div>
                   </div>

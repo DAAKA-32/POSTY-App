@@ -351,7 +351,7 @@ export function PostInsights({ insights, className = "" }: PostInsightsProps) {
                       {/* Pro tip box */}
                       <div className="rounded-lg bg-gray-50 dark:bg-dark-hover p-4 border border-gray-200 dark:border-dark-border">
                         <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                          <span className="font-semibold text-gray-700 dark:text-gray-300">Pro tip:</span> Répondez aux premiers commentaires dans les 30 minutes suivant la publication. L'algorithme LinkedIn favorise les posts qui génèrent des conversations rapidement.
+                          <span className="font-semibold text-gray-700 dark:text-gray-300">{globalT.insights.proTip}</span> {globalT.insights.proTipDescription}
                         </p>
                       </div>
                     </motion.div>
