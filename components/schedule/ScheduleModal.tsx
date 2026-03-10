@@ -42,13 +42,10 @@ const getUserTimezone = (): string => {
   return Intl.DateTimeFormat().resolvedOptions().timeZone;
 };
 
-// Days of week in French
-const DAYS_FR = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
-const DAYS_FULL_FR = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
-const MONTHS_FR = [
-  "Janvier", "Fevrier", "Mars", "Avril", "Mai", "Juin",
-  "Juillet", "Aout", "Septembre", "Octobre", "Novembre", "Decembre"
-];
+// i18n day/month helpers — built from translation keys at render time
+const getDaysShort = (t: any) => [t.scheduler.daysSun, t.scheduler.daysMon, t.scheduler.daysTue, t.scheduler.daysWed, t.scheduler.daysThu, t.scheduler.daysFri, t.scheduler.daysSat];
+const getDaysFull = (t: any) => [t.scheduler.daysSundayFull, t.scheduler.daysMondayFull, t.scheduler.daysTuesdayFull, t.scheduler.daysWednesdayFull, t.scheduler.daysThursdayFull, t.scheduler.daysFridayFull, t.scheduler.daysSaturdayFull];
+const getMonths = (t: any) => [t.scheduler.monthJanuary, t.scheduler.monthFebruary, t.scheduler.monthMarch, t.scheduler.monthApril, t.scheduler.monthMay, t.scheduler.monthJune, t.scheduler.monthJuly, t.scheduler.monthAugust, t.scheduler.monthSeptember, t.scheduler.monthOctober, t.scheduler.monthNovember, t.scheduler.monthDecember];
 
 export default function ScheduleModal({
   isOpen,
@@ -396,15 +393,15 @@ export default function ScheduleModal({
 
     for (const file of Array.from(files)) {
       if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
-        errors.push(`${file.name}: format non supporté`);
+        errors.push(`${file.name}: ${t.scheduler.unsupportedFormat}`);
         continue;
       }
       if (file.size > MAX_IMAGE_SIZE) {
-        errors.push(`${file.name}: trop lourd (max 10 Mo)`);
+        errors.push(`${file.name}: ${t.scheduler.fileTooLarge}`);
         continue;
       }
       if (images.length + newFiles.length >= MAX_IMAGES) {
-        errors.push(`Maximum ${MAX_IMAGES} images`);
+        errors.push(t.scheduler.maxImages.replace("{n}", String(MAX_IMAGES)));
         break;
       }
       newFiles.push(file);
@@ -446,20 +443,20 @@ export default function ScheduleModal({
     const date = new Date(selectedDate);
     date.setHours(selectedTime.hour, selectedTime.minute, 0, 0);
 
-    const dayName = DAYS_FULL_FR[date.getDay()];
+    const dayName = getDaysFull(t)[date.getDay()];
     const day = date.getDate();
-    const month = MONTHS_FR[date.getMonth()];
+    const month = getMonths(t)[date.getMonth()];
     const time = `${selectedTime.hour.toString().padStart(2, "0")}:${selectedTime.minute.toString().padStart(2, "0")}`;
 
-    return `${dayName} ${day} ${month} a ${time}`;
-  }, [selectedDate, selectedTime]);
+    return `${dayName} ${day} ${month} — ${time}`;
+  }, [selectedDate, selectedTime, t]);
 
   const formattedDateShort = useMemo(() => {
-    const dayName = DAYS_FR[selectedDate.getDay()];
+    const dayName = getDaysShort(t)[selectedDate.getDay()];
     const day = selectedDate.getDate();
-    const month = MONTHS_FR[selectedDate.getMonth()];
+    const month = getMonths(t)[selectedDate.getMonth()];
     return `${dayName} ${day} ${month}`;
-  }, [selectedDate]);
+  }, [selectedDate, t]);
 
   // Handle submit with final validation
   const handleSubmit = async () => {
@@ -480,7 +477,7 @@ export default function ScheduleModal({
           const firstAvailable = getFirstAvailableTimeForToday();
           setSelectedTime(firstAvailable);
           setStep("time");
-          toast.error("L'heure sélectionnée est passée. Veuillez choisir un autre créneau.");
+          toast.error(t.scheduler.timePassedToast);
         } else {
           // Today no longer has valid slots, switch to tomorrow
           const tomorrow = new Date();
@@ -489,7 +486,7 @@ export default function ScheduleModal({
           setSelectedDate(tomorrow);
           setSelectedTime({ hour: 9, minute: 0 });
           setStep("date");
-          toast.error("Plus de créneaux disponibles aujourd'hui. Sélectionnez demain.");
+          toast.error(t.scheduler.noSlotsToday);
         }
       }
       return;
@@ -542,12 +539,11 @@ export default function ScheduleModal({
       </div>
 
       <h3 className="text-xl font-semibold text-white text-center mb-3">
-        Passez à la vitesse supérieure
+        {t.scheduler.upgradeTitle}
       </h3>
 
       <p className="text-text-secondary text-center text-sm mb-6 max-w-sm mx-auto">
-        La programmation de posts est une fonctionnalité premium qui vous permet de
-        planifier vos publications à l'avance.
+        {t.scheduler.upgradeDescription}
       </p>
 
       {/* Benefits list */}
@@ -559,8 +555,8 @@ export default function ScheduleModal({
             </svg>
           </div>
           <div>
-            <p className="text-sm font-medium text-white">Gain de temps</p>
-            <p className="text-xs text-text-muted">Préparez vos posts à l'avance</p>
+            <p className="text-sm font-medium text-white">{t.scheduler.timeSaving}</p>
+            <p className="text-xs text-text-muted">{t.scheduler.prepareInAdvance}</p>
           </div>
         </div>
 
@@ -571,8 +567,8 @@ export default function ScheduleModal({
             </svg>
           </div>
           <div>
-            <p className="text-sm font-medium text-white">Meilleur engagement</p>
-            <p className="text-xs text-text-muted">Publiez aux heures optimales</p>
+            <p className="text-sm font-medium text-white">{t.scheduler.bestEngagement}</p>
+            <p className="text-xs text-text-muted">{t.scheduler.publishOptimalTimesDesc}</p>
           </div>
         </div>
       </div>
@@ -580,7 +576,7 @@ export default function ScheduleModal({
       {/* CTA Buttons */}
       <div className="flex gap-3">
         <Button variant="ghost" onClick={onClose} className="flex-1">
-          Plus tard
+          {t.scheduler.later}
         </Button>
         <Button
           onClick={handleUpgrade}
@@ -589,12 +585,12 @@ export default function ScheduleModal({
           <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
-          Passer a Pro
+          {t.scheduler.goToPro}
         </Button>
       </div>
 
       <p className="text-xs text-text-muted text-center mt-4">
-        Plan actuel: <span className="text-text-secondary font-medium capitalize">{currentPlan}</span>
+        {t.scheduler.currentPlan} <span className="text-text-secondary font-medium capitalize">{currentPlan}</span>
       </p>
     </div>
   );
@@ -605,8 +601,8 @@ export default function ScheduleModal({
       {/* Premium Progress indicator */}
       <div className="flex items-center justify-center gap-2 pb-4">
         {[
-          { key: "date", label: "Date", icon: "📅" },
-          { key: "time", label: "Heure", icon: "🕐" },
+          { key: "date", label: t.scheduler.dateStep, icon: "📅" },
+          { key: "time", label: t.scheduler.timeStep, icon: "🕐" },
           { key: "confirm", label: t.ui.confirmTime, icon: "✓" },
         ].map((s, i) => {
           const steps = ["date", "time", "confirm"];
@@ -659,17 +655,17 @@ export default function ScheduleModal({
             transition={{ duration: 0.2 }}
           >
             <div className="text-center mb-4">
-              <h3 className="text-lg font-semibold text-white">Choisir la date</h3>
-              <p className="text-sm text-text-muted">Quand publier votre post ?</p>
+              <h3 className="text-lg font-semibold text-white">{t.scheduler.chooseDate}</h3>
+              <p className="text-sm text-text-muted">{t.scheduler.whenPublish}</p>
             </div>
 
             {/* Quick date shortcuts - More prominent on mobile */}
             <div className="grid grid-cols-4 gap-2 mb-4">
               {[
-                { label: "Auj.", days: 0, emoji: "📍", requiresValidSlots: true },
-                { label: "Demain", days: 1, emoji: "🌅", requiresValidSlots: false },
-                { label: "Dans 3j", days: 3, emoji: "📆", requiresValidSlots: false },
-                { label: "1 sem.", days: 7, emoji: "🗓️", requiresValidSlots: false },
+                { label: t.scheduler.todayShort, days: 0, emoji: "📍", requiresValidSlots: true },
+                { label: t.scheduler.tomorrow, days: 1, emoji: "🌅", requiresValidSlots: false },
+                { label: t.scheduler.in3Days, days: 3, emoji: "📆", requiresValidSlots: false },
+                { label: t.scheduler.oneWeek, days: 7, emoji: "🗓️", requiresValidSlots: false },
               ].map(({ label, days, emoji, requiresValidSlots }) => {
                 const date = new Date();
                 date.setDate(date.getDate() + days);
@@ -682,7 +678,7 @@ export default function ScheduleModal({
                     key={days}
                     onClick={() => !isUnavailable && handleDateSelect(date)}
                     disabled={isUnavailable}
-                    title={isUnavailable ? "Plus de créneaux disponibles aujourd'hui" : undefined}
+                    title={isUnavailable ? t.scheduler.noSlotsAvailableToday : undefined}
                     className={`
                       p-3 rounded-xl text-center transition-all duration-200
                       ${isUnavailable
@@ -707,7 +703,7 @@ export default function ScheduleModal({
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                 </svg>
                 <p className="text-xs text-blue-400">
-                  Il est trop tard pour programmer aujourd'hui. Sélectionnez demain ou une date ultérieure.
+                  {t.scheduler.tooLateToday}
                 </p>
               </div>
             )}
@@ -721,7 +717,7 @@ export default function ScheduleModal({
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   className="p-2.5 rounded-xl bg-dark-card hover:bg-dark-hover border border-dark-border/50 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center shadow-sm"
-                  aria-label="Mois precedent"
+                  aria-label={t.scheduler.monthsPrevious}
                 >
                   <svg className="w-5 h-5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -729,7 +725,7 @@ export default function ScheduleModal({
                 </motion.button>
                 <div className="text-center">
                   <span className="text-white font-bold text-lg">
-                    {MONTHS_FR[currentMonth.getMonth()]}
+                    {getMonths(t)[currentMonth.getMonth()]}
                   </span>
                   <span className="text-text-muted font-medium ml-2">
                     {currentMonth.getFullYear()}
@@ -740,7 +736,7 @@ export default function ScheduleModal({
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   className="p-2.5 rounded-xl bg-dark-card hover:bg-dark-hover border border-dark-border/50 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center shadow-sm"
-                  aria-label="Mois suivant"
+                  aria-label={t.scheduler.monthsNext}
                 >
                   <svg className="w-5 h-5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -750,7 +746,7 @@ export default function ScheduleModal({
 
               {/* Days of week header - Premium styling */}
               <div className="grid grid-cols-7 gap-1 mb-3 pb-2 border-b border-dark-border/50">
-                {DAYS_FR.map((day) => (
+                {getDaysShort(t).map((day: string) => (
                   <div key={day} className="text-center text-xs text-text-muted font-semibold py-1.5 uppercase tracking-wider">
                     {day}
                   </div>
@@ -806,9 +802,9 @@ export default function ScheduleModal({
                 >
                   <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                   <p className="text-sm text-text-muted">
-                    Sélectionné:{" "}
+                    {t.scheduler.selected}{" "}
                     <span className="text-white font-semibold">
-                      {DAYS_FULL_FR[selectedDate.getDay()]} {selectedDate.getDate()} {MONTHS_FR[selectedDate.getMonth()]}
+                      {getDaysFull(t)[selectedDate.getDay()]} {selectedDate.getDate()} {getMonths(t)[selectedDate.getMonth()]}
                     </span>
                   </p>
                 </motion.div>
@@ -827,7 +823,7 @@ export default function ScheduleModal({
             transition={{ duration: 0.2 }}
           >
             <div className="text-center mb-4">
-              <h3 className="text-lg font-semibold text-white">Choisir l'heure</h3>
+              <h3 className="text-lg font-semibold text-white">{t.scheduler.chooseTime}</h3>
               <p className="text-sm text-primary font-medium">{formattedDateShort}</p>
             </div>
 
@@ -838,7 +834,7 @@ export default function ScheduleModal({
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
                 </svg>
                 <p className="text-xs text-amber-400">
-                  Les créneaux passés sont désactivés. L'heure actuelle est {currentTime.getHours().toString().padStart(2, "0")}:{currentTime.getMinutes().toString().padStart(2, "0")}.
+                  {t.scheduler.pastSlotsDisabled} {currentTime.getHours().toString().padStart(2, "0")}:{currentTime.getMinutes().toString().padStart(2, "0")}.
                 </p>
               </div>
             )}
@@ -858,7 +854,7 @@ export default function ScheduleModal({
             {isMobile ? (
               <div className="mb-4">
                 <p className="text-xs text-text-muted mb-3 uppercase tracking-wide px-1">
-                  Ou selectionnez manuellement
+                  {t.scheduler.selectManually}
                 </p>
                 <IOSTimePicker
                   value={selectedTime}
@@ -876,9 +872,9 @@ export default function ScheduleModal({
               /* Desktop: Grid of time slots */
               <div>
                 <p className="text-xs text-text-muted mb-2 uppercase tracking-wide">
-                  Tous les horaires
+                  {t.scheduler.allTimes}
                   {isSelectedDateToday && (
-                    <span className="text-amber-400 ml-2">(créneaux passés grisés)</span>
+                    <span className="text-amber-400 ml-2">{t.scheduler.pastSlotsGreyed}</span>
                   )}
                 </p>
                 <div className="max-h-40 overflow-y-auto overscroll-contain rounded-lg border border-dark-border">
@@ -895,7 +891,7 @@ export default function ScheduleModal({
                           key={i}
                           onClick={() => !isDisabled && handleTimeSelect(hour, minute)}
                           disabled={isDisabled}
-                          title={isDisabled ? "Créneau passé" : undefined}
+                          title={isDisabled ? t.scheduler.pastSlot : undefined}
                           className={`
                             px-3 py-2 text-sm rounded-lg transition-all duration-200
                             ${isDisabled
@@ -957,7 +953,7 @@ export default function ScheduleModal({
             {availablePlatforms.length > 1 && (
               <div className="mb-4">
                 <p className="text-xs text-text-muted mb-2 uppercase tracking-wide">
-                  Plateforme de publication
+                  {t.scheduler.publishPlatform}
                 </p>
                 <div className="grid grid-cols-2 gap-2">
                   {availablePlatforms.map((p) => {
@@ -992,10 +988,10 @@ export default function ScheduleModal({
                         <div className="flex flex-col items-start">
                           <span className="text-sm font-medium">{p.name}</span>
                           {p.isComingSoon && (
-                            <span className="text-[9px] text-text-muted">Bientôt disponible</span>
+                            <span className="text-[9px] text-text-muted">{t.scheduler.comingSoon}</span>
                           )}
                           {!p.isConnected && !p.isComingSoon && (
-                            <span className="text-[9px] text-text-muted">Non connecté</span>
+                            <span className="text-[9px] text-text-muted">{t.scheduler.notConnected}</span>
                           )}
                         </div>
                         {isSelected && p.selectable && (
@@ -1048,7 +1044,7 @@ export default function ScheduleModal({
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
-                  {images.length} photo{images.length > 1 ? "s" : ""} jointe{images.length > 1 ? "s" : ""}
+                  {t.scheduler.photosAttached.replace("{n}", String(images.length))}
                 </div>
               )}
             </div>
@@ -1056,7 +1052,7 @@ export default function ScheduleModal({
             {/* Type selection - LinkedIn only */}
             {platform === "linkedin" && (
               <div className="mb-5">
-                <p className="text-xs text-text-muted mb-2 uppercase tracking-wide">Type de publication</p>
+                <p className="text-xs text-text-muted mb-2 uppercase tracking-wide">{t.scheduler.publicationType}</p>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setPostType("feed")}
@@ -1110,7 +1106,7 @@ export default function ScheduleModal({
                         onClick={() => handleRemoveImage(idx)}
                         className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150 active:opacity-100"
                         style={{ opacity: isMobile ? 1 : undefined }}
-                        aria-label={`Supprimer image ${idx + 1}`}
+                        aria-label={`${t.scheduler.deleteImageAria} ${idx + 1}`}
                       >
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
@@ -1124,7 +1120,7 @@ export default function ScheduleModal({
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
                       className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg border-2 border-dashed border-dark-border hover:border-primary/50 flex flex-col items-center justify-center gap-1 text-text-muted hover:text-primary transition-colors duration-200"
-                      aria-label="Ajouter une photo"
+                      aria-label={t.scheduler.addPhoto}
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -1155,7 +1151,7 @@ export default function ScheduleModal({
                 onClick={() => setStep("time")}
                 className="flex-1"
               >
-                Modifier
+                {t.scheduler.editBtn}
               </Button>
               <Button
                 onClick={handleSubmit}
@@ -1175,7 +1171,7 @@ export default function ScheduleModal({
                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    Programmer
+                    {t.scheduler.scheduleBtn}
                   </>
                 )}
               </Button>
@@ -1192,7 +1188,7 @@ export default function ScheduleModal({
       <BottomSheet
         isOpen={isOpen}
         onClose={onClose}
-        title="Programmation de posts"
+        title={t.scheduler.schedulingTitle}
       >
         {renderUpgradeContent()}
       </BottomSheet>
@@ -1200,9 +1196,9 @@ export default function ScheduleModal({
       <Modal
         isOpen={isOpen}
         onClose={onClose}
-        title="Programmation de posts"
+        title={t.scheduler.schedulingTitle}
         size="md"
-        description="Abonnement actif requis"
+        description={t.scheduler.activeSubRequired}
       >
         {renderUpgradeContent()}
       </Modal>
@@ -1226,7 +1222,7 @@ export default function ScheduleModal({
       onClose={onClose}
       title={t.ui.schedulePost}
       size="md"
-      description="Sélectionnez une date et une heure pour publier automatiquement"
+      description={t.scheduler.scheduleDescription}
     >
       {renderSchedulingContent()}
     </Modal>

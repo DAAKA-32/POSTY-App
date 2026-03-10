@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback, memo } from "react";
 import { motion, useAnimation, PanInfo } from "framer-motion";
 import { useHapticFeedback } from "@/hooks/useHapticFeedback";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface IOSTimePickerProps {
   value: { hour: number; minute: number };
@@ -116,21 +117,20 @@ const Wheel = memo(function Wheel({
     [offset, snapToNearest]
   );
 
-  // Calculate opacity for each item based on distance from center
+  // Calculate style for each item based on distance from center (iOS-style)
   const getItemStyle = (index: number) => {
     const centerOffset = PICKER_HEIGHT / 2 - ITEM_HEIGHT / 2;
     const itemPosition = index * ITEM_HEIGHT + offset + centerOffset;
     const distanceFromCenter = Math.abs(itemPosition - centerOffset);
     const maxDistance = PICKER_HEIGHT / 2;
 
-    const opacity = Math.max(0.2, 1 - distanceFromCenter / maxDistance);
-    const scale = Math.max(0.85, 1 - distanceFromCenter / (maxDistance * 2));
-    const blur = Math.min(2, distanceFromCenter / maxDistance * 2);
+    // Gentle opacity fade — selected item fully opaque, neighbors still readable
+    const opacity = Math.max(0.35, 1 - (distanceFromCenter / maxDistance) * 0.65);
+    const scale = Math.max(0.88, 1 - distanceFromCenter / (maxDistance * 2.5));
 
     return {
       opacity,
       transform: `scale(${scale})`,
-      filter: blur > 0.5 ? `blur(${blur}px)` : "none",
     };
   };
 
@@ -148,23 +148,23 @@ const Wheel = memo(function Wheel({
           height: ITEM_HEIGHT,
         }}
       >
-        <div className={`h-full mx-1 rounded-2xl backdrop-blur-sm ${
+        <div className={`h-full mx-1 rounded-2xl ${
           isDark
-            ? "bg-primary/15 border border-primary/30 shadow-lg shadow-primary/10"
-            : "bg-primary/10 border border-primary/25 shadow-md shadow-primary/10"
+            ? "bg-primary/20 border-2 border-primary/40 shadow-lg shadow-primary/15"
+            : "bg-primary/15 border-2 border-primary/30 shadow-md shadow-primary/10"
         }`} />
       </div>
 
-      {/* Premium gradient overlays for fade effect */}
-      <div className={`absolute inset-x-0 top-0 h-20 pointer-events-none z-20 ${
+      {/* Subtle gradient overlays — light fade, never blocking text */}
+      <div className={`absolute inset-x-0 top-0 h-16 pointer-events-none z-20 ${
         isDark
-          ? "bg-gradient-to-b from-dark-card via-dark-card/95 to-transparent"
-          : "bg-gradient-to-b from-white via-white/95 to-transparent"
+          ? "bg-gradient-to-b from-dark-card/70 to-transparent"
+          : "bg-gradient-to-b from-white/70 to-transparent"
       }`} />
-      <div className={`absolute inset-x-0 bottom-0 h-20 pointer-events-none z-20 ${
+      <div className={`absolute inset-x-0 bottom-0 h-16 pointer-events-none z-20 ${
         isDark
-          ? "bg-gradient-to-t from-dark-card via-dark-card/95 to-transparent"
-          : "bg-gradient-to-t from-white via-white/95 to-transparent"
+          ? "bg-gradient-to-t from-dark-card/70 to-transparent"
+          : "bg-gradient-to-t from-white/70 to-transparent"
       }`} />
 
       {/* Scrollable content */}
@@ -215,6 +215,7 @@ export default function IOSTimePicker({
 }: IOSTimePickerProps) {
   const minutes = generateMinutes(minuteStep);
   const { trigger: triggerHaptic } = useHapticFeedback();
+  const { t } = useLanguage();
 
   // Determine if dark mode based on variant
   const isDark = variant === "dark" || (variant === "auto" && typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches);
@@ -250,7 +251,7 @@ export default function IOSTimePicker({
         <p className={`text-sm text-center font-semibold ${
           isDark ? "text-text-muted" : "text-gray-500"
         }`}>
-          Sélectionnez l'heure
+          {t.scheduler.selectTime}
         </p>
       </div>
 
@@ -302,7 +303,7 @@ export default function IOSTimePicker({
           <div className={`w-2 h-2 rounded-full ${isDark ? "bg-primary" : "bg-primary"} animate-pulse`} />
           <p className="text-center">
             <span className={`text-sm ${isDark ? "text-text-muted" : "text-gray-500"}`}>
-              Heure sélectionnée:{" "}
+              {t.scheduler.selectedTime}{" "}
             </span>
             <span className={`font-bold text-xl tabular-nums ${
               isDark ? "text-white" : "text-gray-900"
@@ -335,6 +336,7 @@ export function SmartTimeSuggestions({
   variant = "dark",
 }: SmartTimeSuggestionsProps) {
   const { trigger: triggerHaptic } = useHapticFeedback();
+  const { t } = useLanguage();
   const isDark = variant === "dark";
 
   const suggestions = [
@@ -342,27 +344,27 @@ export function SmartTimeSuggestions({
       hour: 8,
       minute: 0,
       label: "8h00",
-      reason: "Début de journée",
+      reason: t.scheduler.morningStart,
       emoji: "🌅",
-      engagement: "Bon",
+      engagement: t.scheduler.engagementGood,
       engagementScore: 60,
     },
     {
       hour: 9,
       minute: 30,
       label: "9h30",
-      reason: "Pause café",
+      reason: t.scheduler.coffeeBreak,
       emoji: "☕",
-      engagement: "Très bon",
+      engagement: t.scheduler.engagementVeryGood,
       engagementScore: 80,
     },
     {
       hour: 12,
       minute: 0,
       label: "12h00",
-      reason: "Pause déjeuner",
+      reason: t.scheduler.lunchBreak,
       emoji: "🍽️",
-      engagement: "Excellent",
+      engagement: t.scheduler.engagementExcellent,
       engagementScore: 100,
       recommended: true,
     },
@@ -370,18 +372,18 @@ export function SmartTimeSuggestions({
       hour: 17,
       minute: 30,
       label: "17h30",
-      reason: "Fin de journée",
+      reason: t.scheduler.endOfDay,
       emoji: "🌇",
-      engagement: "Très bon",
+      engagement: t.scheduler.engagementVeryGood,
       engagementScore: 85,
     },
     {
       hour: 19,
       minute: 0,
       label: "19h00",
-      reason: "Soirée",
+      reason: t.scheduler.evening,
       emoji: "🌙",
-      engagement: "Bon",
+      engagement: t.scheduler.engagementGood,
       engagementScore: 65,
     },
   ];
@@ -411,10 +413,10 @@ export function SmartTimeSuggestions({
         </div>
         <div>
           <p className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
-            Horaires recommandés
+            {t.scheduler.recommendedTimes}
           </p>
           <p className={`text-xs ${isDark ? "text-text-muted" : "text-gray-500"}`}>
-            Meilleurs moments pour LinkedIn
+            {t.scheduler.bestMomentsLinkedIn}
           </p>
         </div>
       </div>
@@ -433,7 +435,7 @@ export function SmartTimeSuggestions({
             <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
           </svg>
           <p className={`text-xs ${isDark ? "text-amber-400" : "text-amber-700"}`}>
-            Tous les créneaux recommandés sont passés. Sélectionnez une heure manuellement.
+            {t.scheduler.allSlotsPassedManual}
           </p>
         </motion.div>
       )}
@@ -456,7 +458,7 @@ export function SmartTimeSuggestions({
               transition={{ delay: index * 0.05 }}
               onClick={() => handleSelect(suggestion.hour, suggestion.minute, isDisabled)}
               disabled={isDisabled}
-              title={isDisabled ? "Créneau passé" : undefined}
+              title={isDisabled ? t.scheduler.pastSlot : undefined}
               whileTap={!isDisabled ? { scale: 0.97 } : {}}
               className={`
                 relative p-3.5 rounded-xl border transition-all duration-200
@@ -516,7 +518,7 @@ export function SmartTimeSuggestions({
                   <p className={`text-xs truncate ${
                     isDark ? "text-text-muted" : "text-gray-500"
                   }`}>
-                    {isDisabled ? "Passé" : suggestion.reason}
+                    {isDisabled ? t.scheduler.pastSlotShort : suggestion.reason}
                   </p>
                 </div>
               </div>

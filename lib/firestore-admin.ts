@@ -261,6 +261,122 @@ export async function checkUserQuotaAdmin(userId: string, authEmail?: string): P
   };
 }
 
+// ============== WEEKLY PUBLISH QUOTA (Free plan) ==============
+
+export interface WeeklyPublishQuotaResult {
+  canPublish: boolean;
+  plan: SubscriptionPlan | null;
+  weeklyPublishLimit: number;
+  weeklyPublishUsed: number;
+  remaining: number;
+  reason?: string;
+}
+
+/**
+ * Get the start of the current week (Monday 00:00 UTC) — server-side
+ */
+function getWeekStartUTC(): Date {
+  const now = new Date();
+  const day = now.getUTCDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + diff, 0, 0, 0, 0));
+}
+
+/**
+ * Check if a Free plan user can publish this week (server-side).
+ * Pro/Max users always return canPublish: true.
+ */
+export async function checkWeeklyPublishQuotaAdmin(userId: string, authEmail?: string): Promise<WeeklyPublishQuotaResult> {
+  if (!adminDb) {
+    throw new Error("Firebase Admin not initialized");
+  }
+
+  // First get the user's plan
+  const quotaCheck = await checkUserQuotaAdmin(userId, authEmail);
+  const plan = quotaCheck.plan;
+
+  // No plan
+  if (!plan) {
+    return {
+      canPublish: false,
+      plan: null,
+      weeklyPublishLimit: 0,
+      weeklyPublishUsed: 0,
+      remaining: 0,
+      reason: "Aucun abonnement actif",
+    };
+  }
+
+  const weeklyLimit = PLAN_CONFIGS[plan].limits.weeklyPublishLimit;
+
+  // Unlimited (-1) for Pro/Max
+  if (weeklyLimit === -1) {
+    return {
+      canPublish: true,
+      plan,
+      weeklyPublishLimit: -1,
+      weeklyPublishUsed: 0,
+      remaining: -1,
+    };
+  }
+
+  // Free plan: check weekly publish count
+  const userRef = adminDb.collection("users").doc(userId);
+  const userSnap = await userRef.get();
+  const data = userSnap.data();
+
+  const weekStart = getWeekStartUTC();
+  let weeklyPublishUsed = 0;
+
+  if (data) {
+    const lastWeekStart = data.quota?.publishWeekStart?.toDate?.();
+    if (lastWeekStart && lastWeekStart.getTime() >= weekStart.getTime()) {
+      weeklyPublishUsed = data.quota?.weeklyPublishCount || 0;
+    }
+  }
+
+  const remaining = Math.max(0, weeklyLimit - weeklyPublishUsed);
+  const canPublish = weeklyPublishUsed < weeklyLimit;
+
+  return {
+    canPublish,
+    plan,
+    weeklyPublishLimit: weeklyLimit,
+    weeklyPublishUsed,
+    remaining,
+    reason: canPublish ? undefined : `Limite hebdomadaire atteinte (${weeklyLimit} publications/semaine)`,
+  };
+}
+
+/**
+ * Increment the weekly publish count for a user (server-side).
+ * Called after a successful publish in API routes.
+ */
+export async function incrementWeeklyPublishCountAdmin(userId: string): Promise<void> {
+  if (!adminDb) {
+    throw new Error("Firebase Admin not initialized");
+  }
+
+  const userRef = adminDb.collection("users").doc(userId);
+  const userSnap = await userRef.get();
+  const data = userSnap.data();
+
+  const weekStart = getWeekStartUTC();
+  let newCount = 1;
+
+  if (data) {
+    const lastWeekStart = data.quota?.publishWeekStart?.toDate?.();
+    if (lastWeekStart && lastWeekStart.getTime() >= weekStart.getTime()) {
+      newCount = (data.quota?.weeklyPublishCount || 0) + 1;
+    }
+  }
+
+  await userRef.update({
+    "quota.weeklyPublishCount": newCount,
+    "quota.publishWeekStart": Timestamp.fromDate(weekStart),
+  });
+}
+
 // ============== HOURLY QUOTA (ROLLING WINDOW) ==============
 
 export interface HourlyQuotaCheckResult {
@@ -452,16 +568,7 @@ export async function incrementUserQuotaAdmin(userId: string): Promise<void> {
 
 // ============== DUAL MODE WEEKLY QUOTA ==============
 
-/**
- * Get the start of the current week (Monday 00:00 UTC)
- */
-function getWeekStartUTC(): Date {
-  const now = new Date();
-  const day = now.getUTCDay();
-  const diff = day === 0 ? -6 : 1 - day; // Monday = 1
-  const weekStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + diff));
-  return weekStart;
-}
+// Note: getWeekStartUTC() is already defined above — reused for dual mode quota
 
 /**
  * Check how many dual-mode generations the user has used this week

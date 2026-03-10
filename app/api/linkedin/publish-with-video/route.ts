@@ -7,7 +7,7 @@ import {
 } from "@/lib/firestore-admin";
 import { adminDb, isAdminInitialized } from "@/lib/firebase-admin";
 import { Timestamp } from "firebase-admin/firestore";
-import { isPlatformAllowed, PlanType } from "@/lib/plans";
+import { isPlatformAllowed, PlanType, appendFreeSignature } from "@/lib/plans";
 import { verifyAuth } from "@/lib/auth";
 
 /**
@@ -199,13 +199,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // ── Append Free plan signature ────────────────────────────────────
+    const finalContent = appendFreeSignature(content, userPlan);
+
     // ── Create post with video ─────────────────────────────────────────
     const shareBody = {
       author: personUrn,
       lifecycleState: "PUBLISHED",
       specificContent: {
         "com.linkedin.ugc.ShareContent": {
-          shareCommentary: { text: content },
+          shareCommentary: { text: finalContent },
           shareMediaCategory: "VIDEO",
           media: [
             {

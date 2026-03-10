@@ -3,6 +3,7 @@
 import { Post } from "@/types";
 import ChatMessage from "@/components/chat/ChatMessage";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface HistoryDetailPanelProps {
   post: Post | null;
@@ -19,13 +20,16 @@ export default function HistoryDetailPanel({
   userName = "Vous",
   userInitial = "U",
 }: HistoryDetailPanelProps) {
+  const { language } = useLanguage();
+  const locale = language === "en" ? "en-US" : "fr-FR";
+
   const formatDate = (timestamp: { toDate?: () => Date } | Date | null) => {
     if (!timestamp) return "";
     const date =
       typeof (timestamp as { toDate?: () => Date }).toDate === "function"
         ? (timestamp as { toDate: () => Date }).toDate()
         : new Date(timestamp as Date);
-    return new Intl.DateTimeFormat("fr-FR", {
+    return new Intl.DateTimeFormat(locale, {
       day: "numeric",
       month: "long",
       year: "numeric",

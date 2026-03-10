@@ -20,6 +20,7 @@ import { useThreads } from "@/contexts/ThreadsContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { postToLinkedInWithMedia, postToLinkedInWithVideo } from "@/lib/linkedin";
+import { shouldShowFreeSignature, FREE_PLAN_SIGNATURE } from "@/lib/plans";
 
 // Image upload constraints (match backend)
 const MAX_IMAGES = 9;
@@ -82,7 +83,12 @@ export default function PublishToLinkedInModal({
 }: PublishToLinkedInModalProps) {
   const { user } = useAuth();
   const { t, language } = useLanguage();
-  const { quota, canPublish, recordPublish, isMaxPlan: quotaIsMax, currentPlan: quotaPlan } = useQuota();
+  const {
+    quota, canPublish, recordPublish,
+    isMaxPlan: quotaIsMax, currentPlan: quotaPlan,
+    hasWeeklyPublishLimit, weeklyPublishUsed, weeklyPublishLimit: wpLimit,
+    weeklyPublishRemaining, canPublishThisWeek,
+  } = useQuota();
   const { isMaxPlan: subIsMax, currentPlan: subPlan } = useSubscription();
   // Use either context to detect Max — SubscriptionContext is more reliable (normalizes plan names)
   const isMaxPlan = subIsMax || quotaIsMax;
@@ -468,7 +474,8 @@ export default function PublishToLinkedInModal({
   const isOverThreadsLimit = selectedPlatforms.includes("threads") && characterCount > threadsLimit;
   const isOverLimit = isOverLinkedInLimit || isOverThreadsLimit;
   const noPlatformSelected = selectedPlatforms.length === 0;
-  const cannotPublish = isOverLimit || !editedContent.trim() || noPlatformSelected;
+  const weeklyLimitReached = hasWeeklyPublishLimit && !canPublishThisWeek;
+  const cannotPublish = isOverLimit || !editedContent.trim() || noPlatformSelected || weeklyLimitReached;
 
   // Content to render inside modal/bottom sheet
   const renderContent = () => {
@@ -824,6 +831,60 @@ export default function PublishToLinkedInModal({
               </div>
             </div>
 
+            {/* Free plan signature notice */}
+            {shouldShowFreeSignature(currentPlan) && (
+              <div className="flex items-start gap-2.5 p-3 bg-primary/5 border border-primary/15 rounded-lg">
+                <svg className="w-4 h-4 text-primary shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <p className="text-xs text-gray-700 dark:text-gray-300">
+                    {t.publish.freeSignatureNotice}
+                  </p>
+                  <p className="text-[11px] text-text-muted mt-1 italic">
+                    {FREE_PLAN_SIGNATURE.trim()}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Weekly publish quota indicator (Free plan) */}
+            {hasWeeklyPublishLimit && (
+              <div className={`flex items-start gap-2.5 p-3 rounded-lg border ${
+                weeklyLimitReached
+                  ? "bg-error/10 border-error/30"
+                  : "bg-gray-50 dark:bg-dark-bg border-gray-200 dark:border-dark-border/50"
+              }`}>
+                <svg className={`w-4 h-4 shrink-0 mt-0.5 ${weeklyLimitReached ? "text-error" : "text-text-muted"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <div className="flex-1">
+                  {weeklyLimitReached ? (
+                    <>
+                      <p className="text-sm font-medium text-error">
+                        {t.publish.weeklyLimitReached}
+                      </p>
+                      <p className="text-xs text-text-muted mt-1">
+                        {t.publish.weeklyLimitReachedDesc}
+                      </p>
+                      <button
+                        onClick={() => setShowUpgradeModal(true)}
+                        className="text-xs text-primary font-medium mt-2 hover:underline"
+                      >
+                        {t.publish.upgradeForUnlimited}
+                      </button>
+                    </>
+                  ) : (
+                    <p className="text-xs text-text-muted">
+                      {t.publish.weeklyPublishCount
+                        .replace("{used}", String(weeklyPublishUsed))
+                        .replace("{limit}", String(wpLimit))}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* No platform selected warning */}
             {noPlatformSelected && (
               <div className="flex items-start gap-3 p-3 bg-error/10 border border-error/30 rounded-lg">
@@ -836,8 +897,8 @@ export default function PublishToLinkedInModal({
               </div>
             )}
 
-            {/* Actions — sticky so buttons stay visible even when content is tall */}
-            <div className="sticky bottom-0 -mx-5 px-5 pt-3 pb-1 bg-white dark:bg-dark-card border-t border-gray-100 dark:border-dark-border/50 mt-2">
+            {/* Actions — sticky footer with fully opaque background */}
+            <div className="sticky bottom-0 -mx-5 -mb-6 px-5 pt-3 pb-4 bg-white dark:bg-dark-card border-t border-gray-200 dark:border-dark-border mt-2 z-10 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] dark:shadow-[0_-4px_12px_rgba(0,0,0,0.2)]">
               <div className="flex gap-3">
                 <Button
                   variant="secondary"

@@ -217,33 +217,46 @@ function AppContent() {
     if (postId && !hasRedirectedRef.current && !isStreaming) {
       hasRedirectedRef.current = true;
 
-      // Optimistically add new conversation to sidebar immediately
-      const optimisticPost: Post = {
+      // Extract response content from messages we already have in memory
+      const aiMessages = messages.filter((m) => m.type === "ai");
+      const storytellingMsg = aiMessages.find((m) => m.variant === "storytelling");
+      const businessMsg = aiMessages.find((m) => m.variant === "business");
+      // Fallback: if no variant, use the first AI message as responseA
+      const fallbackContent = aiMessages[0]?.content || "";
+
+      // Build a complete Post from local data — no Firestore round-trip needed
+      const cachedPost: Post = {
         id: postId,
         userId: user?.uid || "",
         prompt: lastPrompt,
-        responseA: "",
-        responseB: "",
+        responseA: storytellingMsg?.content || fallbackContent,
+        responseB: businessMsg?.content || "",
         selectedVersion: null,
         createdAt: { toDate: () => new Date() } as Post["createdAt"],
         title: lastPrompt.length <= 40
           ? lastPrompt
           : lastPrompt.slice(0, 40).replace(/\s+\S*$/, "") + "…",
+        responseMode: effectiveDualMode ? "dual" : "single-choice",
+        selectedStyle: effectiveDualMode ? undefined : effectiveStyle,
+        insights: insights || undefined,
       };
-      setPosts((prev) => [optimisticPost, ...prev]);
 
-      // Pre-cache: fetch and cache the conversation so /app/c/[id] opens instantly
-      getPost(postId).then((post) => {
-        if (post) {
-          setCachedConversation(post);
-          // Update optimistic post with real data
-          setPosts((prev) => prev.map((p) => p.id === postId ? post : p));
+      // Cache before navigating — conversation page will find it instantly
+      setCachedConversation(cachedPost);
+      setPosts((prev) => [cachedPost, ...prev]);
+
+      // Navigate immediately — no flash since cache is already populated
+      router.replace(`/app/c/${postId}`);
+
+      // Background refresh: update cache with full Firestore data silently
+      getPost(postId).then((freshPost) => {
+        if (freshPost) {
+          setCachedConversation(freshPost);
+          setPosts((prev) => prev.map((p) => p.id === postId ? freshPost : p));
         }
-      }).catch(() => {}).finally(() => {
-        router.replace(`/app/c/${postId}`);
-      });
+      }).catch(() => {});
     }
-  }, [postId, isStreaming, router, lastPrompt, user?.uid]);
+  }, [postId, isStreaming, router, lastPrompt, user?.uid, messages, effectiveDualMode, effectiveStyle, insights]);
 
   // Smart scroll: only auto-scroll when user is near bottom
   const {

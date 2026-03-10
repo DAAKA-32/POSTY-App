@@ -125,7 +125,7 @@ export const PLATFORM_INFO: Record<Platform, PlatformInfo> = {
     icon: "reddit",
     color: "#FF4500",
     description: "Bientôt disponible",
-    minPlan: "pro",
+    minPlan: "free",
   },
   threads: {
     id: "threads",
@@ -194,6 +194,9 @@ export interface PlanLimits {
   hasDualResponseMode: boolean; // Storytelling + Business dual responses
   dualResponsesPerWeek: number; // -1 = unlimited, 0 = disabled
 
+  // Weekly Publish Quota (Free plan enforcement)
+  weeklyPublishLimit: number; // -1 = unlimited, max posts published per week
+
   // URL Analysis
   hasUrlAnalysis: boolean; // Analyze URL content for post generation (Pro+)
 
@@ -257,8 +260,9 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
       hasEarlyAccess: false,
       hasDualResponseMode: false,
       dualResponsesPerWeek: 0,
+      weeklyPublishLimit: 3, // Free: max 3 publications per week
       hasUrlAnalysis: false,
-      allowedPlatforms: ["linkedin"],
+      allowedPlatforms: ["linkedin", "reddit"],
       maxPlatformConnections: 1,
       canPublishSimultaneously: false,
       quotaResetPeriod: "monthly",
@@ -294,6 +298,7 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
       hasEarlyAccess: false,
       hasDualResponseMode: true, // Limited dual mode (3/week)
       dualResponsesPerWeek: 3, // 3 dual generations per week
+      weeklyPublishLimit: -1, // Pro: unlimited publications
       // URL Analysis
       hasUrlAnalysis: true,
       // Multi-Platform: LinkedIn + Reddit
@@ -334,6 +339,7 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
       hasEarlyAccess: true,
       hasDualResponseMode: true, // Storytelling + Business simultanés
       dualResponsesPerWeek: -1, // Unlimited
+      weeklyPublishLimit: -1, // Max: unlimited publications
       // URL Analysis
       hasUrlAnalysis: true,
       // Multi-Platform: All 4 platforms + simultaneous publishing
@@ -1406,6 +1412,47 @@ export function formatTrialStatusMessage(
   }
 
   return `${daysRemaining} jours restants sur votre essai ${planName}.`;
+}
+
+// ============================================
+// FREE PLAN SIGNATURE (Lead Growth Operator)
+// ============================================
+
+/** Weekly publish limit for Free plan users */
+export const FREE_WEEKLY_PUBLISH_LIMIT = PLAN_CONFIGS.free.limits.weeklyPublishLimit; // 3
+
+/** Check if a plan has a weekly publish limit */
+export function hasWeeklyPublishLimit(plan: PlanType | null): boolean {
+  if (!plan) return true;
+  return getPlanLimits(plan).weeklyPublishLimit !== -1;
+}
+
+/** Get the weekly publish limit for a plan (-1 = unlimited) */
+export function getWeeklyPublishLimit(plan: PlanType | null): number {
+  if (!plan) return 0;
+  return getPlanLimits(plan).weeklyPublishLimit;
+}
+
+/** Signature appended to all posts published by Free plan users */
+export const FREE_PLAN_SIGNATURE = "\n\n—\nCréé avec Posty";
+
+/**
+ * Append the Posty signature to content if user is on the Free plan.
+ * Applied server-side in publish routes to prevent tampering.
+ */
+export function appendFreeSignature(content: string, plan: PlanType | null): string {
+  if (plan === "free") {
+    return content + FREE_PLAN_SIGNATURE;
+  }
+  return content;
+}
+
+/**
+ * Check if the Free plan signature should be shown for a given plan.
+ * Used client-side for preview purposes.
+ */
+export function shouldShowFreeSignature(plan: PlanType | null): boolean {
+  return plan === "free";
 }
 
 // ============================================

@@ -9,7 +9,7 @@ import {
   useCallback,
 } from "react";
 import { useAuth } from "./AuthContext";
-import { getUserQuota, incrementMessageCount, QuotaInfo } from "@/lib/firestore";
+import { getUserQuota, incrementMessageCount, incrementWeeklyPublishCount, QuotaInfo } from "@/lib/firestore";
 import { SubscriptionPlan } from "@/types";
 import { getPlanConfig } from "@/lib/plans";
 
@@ -18,6 +18,9 @@ const MONTH_NAMES = [
   "janvier", "février", "mars", "avril", "mai", "juin",
   "juillet", "août", "septembre", "octobre", "novembre", "décembre",
 ];
+
+// Day names for weekly reset label
+const DAY_NAMES = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
 
 /**
  * Compute a human-readable reset label based on plan type.
@@ -61,6 +64,13 @@ interface QuotaContextType {
   messagesUsedThisMonth: number;
   monthlyLimit: number;
   monthlyRemaining: number;
+  // Weekly publish quota (Free plan)
+  hasWeeklyPublishLimit: boolean;
+  weeklyPublishUsed: number;
+  weeklyPublishLimit: number;
+  weeklyPublishRemaining: number;
+  canPublishThisWeek: boolean;
+  weeklyPublishResetsAt: Date | null;
   // Reset label
   quotaResetLabel: string;   // "Demain à minuit" / "Le 1er mars"
   // Quota exceeded modal
@@ -70,9 +80,9 @@ interface QuotaContextType {
   // Actions
   refreshQuota: () => Promise<void>;
   recordMessage: () => Promise<void>;
+  recordPublish: () => Promise<void>;
   // Legacy compatibility
   canPublish: boolean;
-  recordPublish: () => Promise<void>;
 }
 
 const defaultQuota: QuotaInfo = {
@@ -86,6 +96,12 @@ const defaultQuota: QuotaInfo = {
   usedThisMonth: 0,
   monthlyRemaining: 0,
   hasMonthlyLimit: false,
+  weeklyPublishLimit: 0,
+  weeklyPublishUsed: 0,
+  weeklyPublishRemaining: 0,
+  hasWeeklyPublishLimit: false,
+  weeklyPublishResetsAt: new Date(),
+  canPublishThisWeek: false,
   weeklyLimit: 0,
   usedThisWeek: 0,
   canPublish: false,
@@ -139,6 +155,19 @@ export function QuotaProvider({ children }: { children: ReactNode }) {
     }
   }, [user, loadQuota]);
 
+  // Record a publish (increments weekly publish count + message count)
+  const recordPublish = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      await incrementWeeklyPublishCount(user.uid);
+      await incrementMessageCount(user.uid);
+      await loadQuota();
+    } catch (error) {
+      console.error("Error recording publish:", error);
+    }
+  }, [user, loadQuota]);
+
   // Modal callbacks
   const openQuotaModal = useCallback(() => setShowQuotaModal(true), []);
   const closeQuotaModal = useCallback(() => setShowQuotaModal(false), []);
@@ -163,6 +192,14 @@ export function QuotaProvider({ children }: { children: ReactNode }) {
   const messagesUsedThisMonth = quota?.usedThisMonth ?? 0;
   const monthlyLimit = quota?.monthlyLimit ?? 0;
   const monthlyRemaining = quota?.monthlyRemaining ?? 0;
+
+  // Weekly publish usage (Free)
+  const hasWeeklyPublishLimit = quota?.hasWeeklyPublishLimit ?? false;
+  const weeklyPublishUsed = quota?.weeklyPublishUsed ?? 0;
+  const weeklyPublishLimit = quota?.weeklyPublishLimit ?? 0;
+  const weeklyPublishRemaining = quota?.weeklyPublishRemaining ?? 0;
+  const canPublishThisWeek = quota?.canPublishThisWeek ?? true;
+  const weeklyPublishResetsAt = quota?.weeklyPublishResetsAt ?? null;
 
   // Usage percent — adapts to plan type
   const usagePercent = hasMonthlyLimit
@@ -196,6 +233,13 @@ export function QuotaProvider({ children }: { children: ReactNode }) {
     messagesUsedThisMonth,
     monthlyLimit,
     monthlyRemaining,
+    // Weekly publish quota
+    hasWeeklyPublishLimit,
+    weeklyPublishUsed,
+    weeklyPublishLimit,
+    weeklyPublishRemaining,
+    canPublishThisWeek,
+    weeklyPublishResetsAt,
     // Reset label
     quotaResetLabel,
     // Modal
@@ -205,9 +249,9 @@ export function QuotaProvider({ children }: { children: ReactNode }) {
     // Actions
     refreshQuota: loadQuota,
     recordMessage,
+    recordPublish,
     // Legacy
     canPublish: quota?.canSendMessage ?? true,
-    recordPublish: recordMessage,
   };
 
   return (

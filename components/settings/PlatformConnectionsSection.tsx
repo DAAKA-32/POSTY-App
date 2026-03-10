@@ -274,27 +274,27 @@ export default function PlatformConnectionsSection() {
         key={platform}
         variants={itemVariants}
         className={`
-          relative overflow-hidden p-4 rounded-xl border transition-all duration-200
+          relative overflow-hidden p-4 rounded-xl border transition-all duration-200 min-h-[120px]
           ${hasAccess
             ? "bg-gray-50 dark:bg-dark-bg border-gray-200 dark:border-dark-border hover:border-primary/20"
             : "bg-gray-50 dark:bg-dark-bg border-gray-200 dark:border-dark-border"
           }
         `}
       >
-        {/* Locked overlay for inaccessible platforms */}
+        {/* Locked overlay — platform icon stays visible underneath */}
         {!hasAccess && (
           <div className="absolute inset-0 z-10 rounded-xl overflow-hidden">
-            {/* Semi-transparent backdrop */}
-            <div className="absolute inset-0 bg-white/70 dark:bg-dark-bg/75 backdrop-blur-[2px]" />
-            {/* Centered content */}
+            {/* Semi-transparent backdrop — lighter to keep icon visible */}
+            <div className="absolute inset-0 bg-white/60 dark:bg-dark-bg/65 backdrop-blur-[1px]" />
+            {/* Centered lock + upgrade content */}
             <div className="relative h-full flex flex-col items-center justify-center px-4 py-3">
-              <div className="w-9 h-9 mb-2 rounded-full bg-gray-100 dark:bg-dark-hover border border-gray-200 dark:border-dark-border flex items-center justify-center shadow-sm">
+              <div className="w-8 h-8 mb-2 rounded-full bg-gray-100/90 dark:bg-dark-hover/90 border border-gray-200 dark:border-dark-border flex items-center justify-center shadow-sm">
                 <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
               </div>
-              <p className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-1.5">
-                {t.settings.requiresPlan} <PlanBadge plan={requiredPlan} className="ml-1" />
+              <p className="text-[11px] font-medium text-gray-600 dark:text-gray-300 mb-1.5 text-center leading-tight max-w-[180px]">
+                {t.settings.upgradeToUnlockPlatform} <PlanBadge plan={requiredPlan} className="ml-0.5" />
               </p>
               <Link
                 href="/subscription"

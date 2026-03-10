@@ -9,7 +9,6 @@ import { useLinkedIn } from "@/contexts/LinkedInContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { updateUserProfile, getUserPosts, getUserSessions } from "@/lib/firestore";
-import { SubscriptionPlan } from "@/types";
 import { PlanType, DAILY_MESSAGE_LIMITS } from "@/lib/plans";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import {
@@ -78,8 +77,7 @@ function ProfileContent() {
         ? userProfile.createdAt.toDate()
         : new Date(userProfile.createdAt as unknown as string);
 
-    // French only
-    return new Intl.DateTimeFormat("fr-FR", {
+    return new Intl.DateTimeFormat(t.ui.timeLocale, {
       month: "short",
       year: "numeric",
     }).format(date);
@@ -98,11 +96,10 @@ function ProfileContent() {
   // Current plan info — use SubscriptionContext as single source of truth
   // This handles test mode, Stripe, and legacy plan mapping correctly
   const subscriptionPlan: PlanType | null = currentPlan;
-  const profileEditPlan: PlanType | null = currentPlan;
   const dailyLimit = currentPlan ? DAILY_MESSAGE_LIMITS[currentPlan] : 0;
   const dailyMessagesUsed = userProfile?.quota?.dailyMessageCount || 0;
 
-  // Handle save profile
+  // Handle save profile — all fields editable by all plans
   const handleSaveProfile = async (formData: {
     displayName: string;
     bio: string;
@@ -117,55 +114,17 @@ function ProfileContent() {
 
     setIsSaving(true);
     try {
-      const isMax = profileEditPlan === "max";
-      const isPro = profileEditPlan === "pro";
-
-      // Build profile object based on plan permissions:
-      // - Max: all fields from form
-      // - Pro: role, targetAudience, communicationTone from form + keep existing sector, linkedinStyle, objective
-      // - Free: keep all existing profile data unchanged
-      let profileData: {
-        sector: string;
-        role: string;
-        objective: string;
-        linkedinStyle?: string;
-        targetAudience?: string;
-        communicationTone?: string;
-      };
-      if (isMax) {
-        profileData = {
+      await updateUserProfile(user.uid, {
+        displayName: formData.displayName,
+        bio: formData.bio,
+        profile: {
           sector: formData.sector,
           role: formData.role,
           linkedinStyle: formData.linkedinStyle,
           objective: formData.objective,
           targetAudience: formData.targetAudience,
           communicationTone: formData.communicationTone,
-        };
-      } else if (isPro) {
-        profileData = {
-          // Pro-editable fields: from form
-          role: formData.role,
-          targetAudience: formData.targetAudience,
-          communicationTone: formData.communicationTone,
-          // Max-only fields: keep existing values
-          sector: userProfile?.profile?.sector || "",
-          linkedinStyle: userProfile?.profile?.linkedinStyle || "",
-          objective: userProfile?.profile?.objective || "",
-        };
-      } else {
-        // Free: keep all existing profile data
-        profileData = {
-          sector: userProfile?.profile?.sector || "",
-          role: userProfile?.profile?.role || "",
-          linkedinStyle: userProfile?.profile?.linkedinStyle || "",
-          objective: userProfile?.profile?.objective || "",
-        };
-      }
-
-      await updateUserProfile(user.uid, {
-        displayName: formData.displayName,
-        bio: formData.bio,
-        profile: profileData,
+        },
       });
       await refreshUserProfile();
       setIsEditing(false);
@@ -238,7 +197,6 @@ function ProfileContent() {
                 onSave={handleSaveProfile}
                 onCancel={() => setIsEditing(false)}
                 isSaving={isSaving}
-                currentPlan={profileEditPlan}
               />
             ) : (
               <motion.div

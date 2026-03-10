@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Post } from "@/types";
 import { motion } from "framer-motion";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface HistoryListItemProps {
   post: Post;
@@ -17,6 +18,9 @@ export default function HistoryListItem({
   onDelete,
   index = 0,
 }: HistoryListItemProps) {
+  const { language } = useLanguage();
+  const locale = language === "en" ? "en-US" : "fr-FR";
+
   const formatTime = (timestamp: { toDate?: () => Date } | Date | null): string => {
     if (!timestamp) return "";
     const date =
@@ -24,7 +28,7 @@ export default function HistoryListItem({
         ? (timestamp as { toDate: () => Date }).toDate()
         : new Date(timestamp as Date);
 
-    return new Intl.DateTimeFormat("fr-FR", {
+    return new Intl.DateTimeFormat(locale, {
       hour: "2-digit",
       minute: "2-digit",
     }).format(date);

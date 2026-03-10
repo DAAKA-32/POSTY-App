@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { Layers, MessageSquare, Briefcase } from "lucide-react";
 import toast from "@/components/ui/Toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type MaxMode = "dual" | "storytelling" | "business";
 
@@ -12,52 +13,40 @@ interface MaxModeSelectorProps {
   className?: string;
 }
 
-const MODES = [
-  {
-    id: "dual" as const,
-    label: "Double Réponse",
-    icon: Layers,
-    toast: "Mode Double Réponse activé",
-  },
-  {
-    id: "storytelling" as const,
-    label: "Storytelling",
-    icon: MessageSquare,
-    toast: "Mode Storytelling activé",
-  },
-  {
-    id: "business" as const,
-    label: "Business",
-    icon: Briefcase,
-    toast: "Mode Business activé",
-  },
-];
+const MODE_ICONS = {
+  dual: Layers,
+  storytelling: MessageSquare,
+  business: Briefcase,
+} as const;
+
+const MODE_ORDER: MaxMode[] = ["dual", "storytelling", "business"];
 
 export default function MaxModeSelector({
   selectedMode,
   onModeChange,
   className = "",
 }: MaxModeSelectorProps) {
+  const { t } = useLanguage();
+
   const handleSelect = (mode: MaxMode) => {
     if (mode === selectedMode) return;
     onModeChange(mode);
-    const modeConfig = MODES.find((m) => m.id === mode);
-    if (modeConfig) toast.info(modeConfig.toast);
+    toast.info(t.chat.modeActivated[mode]);
   };
 
   return (
     <div
       className={`inline-flex items-center gap-0.5 p-1 rounded-xl bg-gray-100 dark:bg-dark-elevated border border-border-primary ${className}`}
     >
-      {MODES.map((mode) => {
-        const Icon = mode.icon;
-        const isActive = selectedMode === mode.id;
+      {MODE_ORDER.map((modeId) => {
+        const Icon = MODE_ICONS[modeId];
+        const isActive = selectedMode === modeId;
 
         return (
           <button
-            key={mode.id}
+            key={modeId}
             type="button"
-            onClick={() => handleSelect(mode.id)}
+            onClick={() => handleSelect(modeId)}
             className={`
               relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg
               text-xs font-medium transition-colors duration-200 cursor-pointer
@@ -73,7 +62,7 @@ export default function MaxModeSelector({
             )}
             <span className="relative z-10 flex items-center gap-1.5">
               <Icon className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">{mode.label}</span>
+              <span className="hidden sm:inline">{t.chat.modeLabel[modeId]}</span>
             </span>
           </button>
         );

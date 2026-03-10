@@ -35,7 +35,7 @@ export default function AIModeSwitch({
     >
       <ArrowLeftRight className="w-3.5 h-3.5" />
       <span className="text-[11px] font-medium">
-        {mode === "linkedin" ? "Support" : "Création"}
+        {mode === "linkedin" ? t.ui.supportLabel : t.ui.creationLabel}
       </span>
     </button>
   );

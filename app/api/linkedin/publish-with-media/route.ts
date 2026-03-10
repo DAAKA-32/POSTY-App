@@ -7,7 +7,7 @@ import {
 } from "@/lib/firestore-admin";
 import { adminDb, isAdminInitialized } from "@/lib/firebase-admin";
 import { Timestamp } from "firebase-admin/firestore";
-import { isPlatformAllowed, PlanType } from "@/lib/plans";
+import { isPlatformAllowed, PlanType, appendFreeSignature } from "@/lib/plans";
 import { verifyAuth } from "@/lib/auth";
 
 /**
@@ -216,13 +216,16 @@ export async function POST(request: NextRequest) {
       mediaAssets.push(asset);
     }
 
+    // ── Append Free plan signature ────────────────────────────────────
+    const finalContent = appendFreeSignature(content, userPlan);
+
     // ── Create post with images ────────────────────────────────────────
     const shareBody = {
       author: personUrn,
       lifecycleState: "PUBLISHED",
       specificContent: {
         "com.linkedin.ugc.ShareContent": {
-          shareCommentary: { text: content },
+          shareCommentary: { text: finalContent },
           shareMediaCategory: "IMAGE",
           media: mediaAssets.map((asset) => ({
             status: "READY",

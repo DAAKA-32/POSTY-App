@@ -1044,6 +1044,13 @@ export interface QuotaInfo {
   usedThisMonth: number;      // usage.conversationsThisMonth
   monthlyRemaining: number;   // monthlyLimit - usedThisMonth
   hasMonthlyLimit: boolean;   // true when plan uses monthly enforcement
+  // Weekly publish quota (Free plan)
+  weeklyPublishLimit: number;     // 3 for free, -1 for paid
+  weeklyPublishUsed: number;      // publications this week
+  weeklyPublishRemaining: number; // weeklyPublishLimit - weeklyPublishUsed
+  hasWeeklyPublishLimit: boolean; // true when plan uses weekly publish enforcement
+  weeklyPublishResetsAt: Date;    // start of next week (Monday 00:00 UTC)
+  canPublishThisWeek: boolean;    // shorthand: used < limit
   // Legacy fields for backwards compatibility
   weeklyLimit?: number;
   usedThisWeek?: number;
@@ -1112,6 +1119,7 @@ export async function getUserQuota(userId: string, authEmail?: string | null): P
   // The server-side check is the real authority — this prevents false "quota exceeded" UI.
   if (!userSnap.exists()) {
     const monthlyLimit = PLAN_CONFIGS.free.limits.conversationsPerMonth;
+    const wpLimit = PLAN_CONFIGS.free.limits.weeklyPublishLimit;
     return {
       plan: "free",
       dailyLimit: monthlyLimit,
@@ -1123,6 +1131,12 @@ export async function getUserQuota(userId: string, authEmail?: string | null): P
       usedThisMonth: 0,
       monthlyRemaining: monthlyLimit,
       hasMonthlyLimit: true,
+      weeklyPublishLimit: wpLimit,
+      weeklyPublishUsed: 0,
+      weeklyPublishRemaining: wpLimit,
+      hasWeeklyPublishLimit: true,
+      weeklyPublishResetsAt: getNextWeekStartUTC(),
+      canPublishThisWeek: true,
       weeklyLimit: monthlyLimit,
       usedThisWeek: 0,
       canPublish: true,
@@ -1150,6 +1164,7 @@ export async function getUserQuota(userId: string, authEmail?: string | null): P
     if (isRecentlyCreated) {
       // Likely a new user whose subscription field hasn't been set yet
       const monthlyLimit = PLAN_CONFIGS.free.limits.conversationsPerMonth;
+      const wpLimit = PLAN_CONFIGS.free.limits.weeklyPublishLimit;
       return {
         plan: "free",
         dailyLimit: monthlyLimit,
@@ -1161,6 +1176,12 @@ export async function getUserQuota(userId: string, authEmail?: string | null): P
         usedThisMonth: 0,
         monthlyRemaining: monthlyLimit,
         hasMonthlyLimit: true,
+        weeklyPublishLimit: wpLimit,
+        weeklyPublishUsed: 0,
+        weeklyPublishRemaining: wpLimit,
+        hasWeeklyPublishLimit: true,
+        weeklyPublishResetsAt: getNextWeekStartUTC(),
+        canPublishThisWeek: true,
         weeklyLimit: monthlyLimit,
         usedThisWeek: 0,
         canPublish: true,
@@ -1178,6 +1199,12 @@ export async function getUserQuota(userId: string, authEmail?: string | null): P
       usedThisMonth: 0,
       monthlyRemaining: 0,
       hasMonthlyLimit: false,
+      weeklyPublishLimit: 0,
+      weeklyPublishUsed: 0,
+      weeklyPublishRemaining: 0,
+      hasWeeklyPublishLimit: false,
+      weeklyPublishResetsAt: getNextWeekStartUTC(),
+      canPublishThisWeek: false,
       weeklyLimit: 0,
       usedThisWeek: 0,
       canPublish: false,
@@ -1199,6 +1226,16 @@ export async function getUserQuota(userId: string, authEmail?: string | null): P
     const monthlyRemaining = Math.max(0, monthlyLimit - usedThisMonth);
     const canSendMessage = usedThisMonth < monthlyLimit;
 
+    // Weekly publish quota
+    const wpLimit = PLAN_CONFIGS.free.limits.weeklyPublishLimit; // 3
+    const weekStart = getWeekStartUTC();
+    const lastPublishWeekStart = data?.quota?.publishWeekStart?.toDate?.();
+    let weeklyPublishUsed = 0;
+    if (lastPublishWeekStart && lastPublishWeekStart.getTime() >= weekStart.getTime()) {
+      weeklyPublishUsed = data?.quota?.weeklyPublishCount || 0;
+    }
+    const weeklyPublishRemaining = Math.max(0, wpLimit - weeklyPublishUsed);
+
     return {
       plan: effectivePlan,
       dailyLimit: monthlyLimit, // Backwards compat: treat as "daily" limit for UI
@@ -1211,6 +1248,13 @@ export async function getUserQuota(userId: string, authEmail?: string | null): P
       usedThisMonth,
       monthlyRemaining,
       hasMonthlyLimit: true,
+      // Weekly publish quota
+      weeklyPublishLimit: wpLimit,
+      weeklyPublishUsed,
+      weeklyPublishRemaining,
+      hasWeeklyPublishLimit: true,
+      weeklyPublishResetsAt: getNextWeekStartUTC(),
+      canPublishThisWeek: weeklyPublishUsed < wpLimit,
       // Legacy
       weeklyLimit: monthlyLimit,
       usedThisWeek: usedThisMonth,
@@ -1245,6 +1289,13 @@ export async function getUserQuota(userId: string, authEmail?: string | null): P
     usedThisMonth: 0,
     monthlyRemaining: -1,
     hasMonthlyLimit: false,
+    // Weekly publish quota (unlimited for Pro/Max)
+    weeklyPublishLimit: -1,
+    weeklyPublishUsed: 0,
+    weeklyPublishRemaining: -1,
+    hasWeeklyPublishLimit: false,
+    weeklyPublishResetsAt: getNextWeekStartUTC(),
+    canPublishThisWeek: true,
     // Legacy compatibility
     weeklyLimit: dailyLimit,
     usedThisWeek: usedToday,
@@ -1329,6 +1380,110 @@ export async function getDualModeUsageThisWeek(userId: string): Promise<number> 
   }
 
   return data?.quota?.dualModeCountThisWeek || 0;
+}
+
+// ============== WEEKLY PUBLISH QUOTA (Free plan) ==============
+
+/**
+ * Get the start of the current week (Monday 00:00 UTC)
+ */
+function getWeekStartUTC(): Date {
+  const now = new Date();
+  const day = now.getUTCDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + diff, 0, 0, 0, 0));
+}
+
+/**
+ * Get the start of next week (Monday 00:00 UTC) for reset display
+ */
+function getNextWeekStartUTC(): Date {
+  const weekStart = getWeekStartUTC();
+  weekStart.setUTCDate(weekStart.getUTCDate() + 7);
+  return weekStart;
+}
+
+/**
+ * Get the number of posts published this week by a Free plan user (client-side)
+ */
+export async function getWeeklyPublishCount(userId: string): Promise<number> {
+  const userRef = doc(db, "users", userId);
+  const userSnap = await getDoc(userRef);
+
+  if (!userSnap.exists()) return 0;
+
+  const data = userSnap.data();
+  const weekStart = getWeekStartUTC();
+
+  const lastWeekStart = data?.quota?.publishWeekStart?.toDate?.();
+
+  // If no week start recorded, or it's from a previous week, count is 0
+  if (!lastWeekStart || lastWeekStart.getTime() < weekStart.getTime()) {
+    return 0;
+  }
+
+  return data?.quota?.weeklyPublishCount || 0;
+}
+
+/**
+ * Increment the weekly publish count for a user (client-side)
+ * Called after a successful publish.
+ */
+export async function incrementWeeklyPublishCount(userId: string): Promise<void> {
+  const userRef = doc(db, "users", userId);
+  const userSnap = await getDoc(userRef);
+
+  if (!userSnap.exists()) return;
+
+  const data = userSnap.data();
+  const weekStart = getWeekStartUTC();
+  const lastWeekStart = data?.quota?.publishWeekStart?.toDate?.();
+
+  let newCount = 1;
+
+  // If same week, increment; otherwise start fresh
+  if (lastWeekStart && lastWeekStart.getTime() >= weekStart.getTime()) {
+    newCount = (data?.quota?.weeklyPublishCount || 0) + 1;
+  }
+
+  await updateDoc(userRef, {
+    "quota.weeklyPublishCount": newCount,
+    "quota.publishWeekStart": Timestamp.fromDate(weekStart),
+  });
+}
+
+/**
+ * Check if a Free user can publish (weekly quota not exceeded)
+ */
+export async function canUserPublishThisWeek(userId: string, authEmail?: string | null): Promise<{
+  canPublish: boolean;
+  used: number;
+  limit: number;
+  resetsAt: Date;
+}> {
+  const quota = await getUserQuota(userId, authEmail);
+  const plan = quota.plan;
+
+  // Pro/Max: always allowed
+  if (plan && plan !== "free") {
+    return { canPublish: true, used: 0, limit: -1, resetsAt: new Date() };
+  }
+
+  const { getWeeklyPublishLimit } = await import("./plans");
+  const limit = getWeeklyPublishLimit(plan);
+
+  // Unlimited
+  if (limit === -1) {
+    return { canPublish: true, used: 0, limit: -1, resetsAt: new Date() };
+  }
+
+  const used = await getWeeklyPublishCount(userId);
+  return {
+    canPublish: used < limit,
+    used,
+    limit,
+    resetsAt: getNextWeekStartUTC(),
+  };
 }
 
 /**

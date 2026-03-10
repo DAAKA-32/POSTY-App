@@ -55,7 +55,7 @@ const PLATFORMS: PlatformOption[] = [
     color: "text-[#FF4500]",
     bgColor: "bg-[#FF4500]/20",
     borderColor: "border-[#FF4500]",
-    minPlan: "pro",
+    minPlan: "free",
   },
   {
     id: "threads",
@@ -162,7 +162,7 @@ export default function PlatformSelector({
                 flex flex-col items-center justify-center gap-1 relative
                 ${
                   isLocked
-                    ? "bg-dark-bg/30 border-dark-border/30 opacity-60 cursor-not-allowed"
+                    ? "bg-dark-bg/30 border-dark-border/30 cursor-not-allowed"
                     : !isConnected
                     ? "bg-dark-bg/50 border-dark-border/50 opacity-50 cursor-not-allowed"
                     : wouldExceedMultiPublish && !isSelected
@@ -173,15 +173,13 @@ export default function PlatformSelector({
                 }
               `}
             >
-              {/* Locked overlay */}
+              {/* Locked overlay — icon stays visible underneath */}
               {isLocked && (
-                <div className="absolute inset-0 rounded-xl flex items-center justify-center bg-dark-bg/40 z-10">
-                  <div className="flex flex-col items-center gap-1">
-                    <svg className="w-4 h-4 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
-                    <PlanBadge plan={platform.minPlan} />
-                  </div>
+                <div className="absolute inset-0 rounded-xl flex flex-col items-center justify-center bg-dark-bg/60 backdrop-blur-[1px] z-10">
+                  <svg className="w-3.5 h-3.5 text-text-muted mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                  <PlanBadge plan={platform.minPlan} />
                 </div>
               )}
 
@@ -211,8 +209,8 @@ export default function PlatformSelector({
                 </div>
               )}
 
-              {/* Icon */}
-              <div className={isSelected && !isLocked ? platform.color : "text-text-muted"}>
+              {/* Icon — always colored so it's visible behind locked overlay */}
+              <div className={isSelected && !isLocked ? platform.color : isLocked ? `${platform.color} opacity-40` : "text-text-muted"}>
                 {platform.icon}
               </div>
 
@@ -242,12 +240,12 @@ export default function PlatformSelector({
       {visiblePlatforms.some((p) => !canUsePlatform(subscription, p.id).allowed) && (
         <Link
           href="/subscription"
-          className="mt-3 flex items-center justify-center gap-1.5 text-xs text-primary hover:text-accent transition-colors"
+          className="mt-3 flex items-center justify-center gap-1.5 text-xs text-primary hover:text-accent transition-colors bg-primary/5 border border-primary/10 rounded-lg py-2 px-3"
         >
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
-          {t.publish.unlockMorePlatforms}
+          <span className="truncate">{t.publish.upgradeToUnlock}</span>
         </Link>
       )}
     </div>

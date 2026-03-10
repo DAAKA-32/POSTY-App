@@ -21,6 +21,8 @@ import DeleteConversationsModal from "@/components/ui/DeleteConversationsModal";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import toast from "@/components/ui/Toast";
+import { fr } from "@/lib/i18n/translations/fr";
+import { en } from "@/lib/i18n/translations/en";
 import { SubscriptionManagement, PlatformConnectionsSection } from "@/components/settings";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -368,7 +370,8 @@ function SettingsContent() {
                           console.error("Error saving language preference:", e);
                         }
                       }
-                      toast.success(t.settings.languageChanged);
+                      const newT = lang.code === "fr" ? fr : en;
+                      toast.success(newT.settings.languageChanged);
                     }}
                     className={`
                       w-full flex items-center gap-3 p-3 lg:p-4 rounded-xl border transition-all duration-200

@@ -115,8 +115,8 @@ function HistoryContent() {
   // Rename modal state
   const [postToRename, setPostToRename] = useState<Post | null>(null);
 
-  // Locale for date formatting (French only)
-  const locale = "fr-FR";
+  // Locale for date formatting based on active language
+  const locale = language === "en" ? "en-US" : "fr-FR";
   const dateLabels = { today: t.history.today, yesterday: t.history.yesterday };
 
   // Fetch posts function - extracted for reuse (with pinned posts first)

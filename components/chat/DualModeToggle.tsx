@@ -207,7 +207,7 @@ export default function DualModeToggle({
         >
           <Crown className="w-4 h-4 text-primary flex-shrink-0" />
           <p className="text-xs text-primary/90 flex-1">
-            Limite atteinte ({dualLimit}/sem.). Passez au Max pour un accès illimité.
+            {t.chat.dualMode.limitReached.replace("{limit}", String(dualLimit))}
           </p>
           <span className="flex-shrink-0 px-2.5 py-1 rounded-md text-xs font-semibold bg-gradient-to-r from-primary to-primary-hover text-white">
             {t.chat.dualMode.upgradeButton}

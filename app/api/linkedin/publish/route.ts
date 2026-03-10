@@ -4,10 +4,11 @@ import {
   updateLinkedInLastUsedAdmin,
   saveLinkedInPostAdmin,
   checkUserQuotaAdmin,
+  checkWeeklyPublishQuotaAdmin,
 } from "@/lib/firestore-admin";
 import { adminDb, isAdminInitialized } from "@/lib/firebase-admin";
 import { Timestamp } from "firebase-admin/firestore";
-import { isPlatformAllowed, PlanType } from "@/lib/plans";
+import { isPlatformAllowed, PlanType, appendFreeSignature } from "@/lib/plans";
 import { verifyAuth } from "@/lib/auth";
 
 /**
@@ -122,6 +123,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 🛡️ WEEKLY PUBLISH QUOTA CHECK (Free plan: 3/week)
+    try {
+      const weeklyQuota = await checkWeeklyPublishQuotaAdmin(userId, auth.email);
+      if (!weeklyQuota.canPublish) {
+        return NextResponse.json(
+          {
+            error: "weekly_publish_limit_reached",
+            message: weeklyQuota.reason || "Limite hebdomadaire de publications atteinte.",
+            weeklyPublishUsed: weeklyQuota.weeklyPublishUsed,
+            weeklyPublishLimit: weeklyQuota.weeklyPublishLimit,
+            requiredPlan: "pro",
+          },
+          { status: 429 }
+        );
+      }
+    } catch (quotaError) {
+      console.error("Weekly publish quota check error:", quotaError);
+      // In production, fail-closed if we can't verify the quota
+      if (process.env.NODE_ENV === "production" && userPlan === "free") {
+        return NextResponse.json(
+          {
+            error: "service_unavailable",
+            message: "Service temporairement indisponible. Veuillez réessayer.",
+          },
+          { status: 503 }
+        );
+      }
+    }
+
     // 🔍 ÉTAPE 2: Récupération de la connexion LinkedIn
     const connection = await getLinkedInConnectionAdmin(userId);
 
@@ -148,6 +178,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 🏷️ ÉTAPE 4a: Append Free plan signature (Lead Growth Operator)
+    const finalContent = appendFreeSignature(content, userPlan);
+
     // 📝 ÉTAPE 4: Publication sur LinkedIn via Share API
     // Documentation: https://learn.microsoft.com/en-us/linkedin/consumer/integrations/self-serve/share-on-linkedin
     // Visibility options: PUBLIC (visible by everyone) or CONNECTIONS (only connections)
@@ -166,7 +199,7 @@ export async function POST(request: NextRequest) {
           specificContent: {
             "com.linkedin.ugc.ShareContent": {
               shareCommentary: {
-                text: content,
+                text: finalContent,
               },
               shareMediaCategory: "NONE",
             },

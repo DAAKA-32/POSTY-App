@@ -2494,10 +2494,10 @@ const AudienceCard = memo(function AudienceCard({ profile, index, skipEntryAnima
   // 3D perspective tilt — desktop only
   const mouseX = useMotionValue(0.5);
   const mouseY = useMotionValue(0.5);
-  const rawRotateX = useTransform(mouseY, [0, 1], [5, -5]);
-  const rawRotateY = useTransform(mouseX, [0, 1], [-5, 5]);
-  const rotateX = useSpring(rawRotateX, { stiffness: 150, damping: 20 });
-  const rotateY = useSpring(rawRotateY, { stiffness: 150, damping: 20 });
+  const rawRotateX = useTransform(mouseY, [0, 1], [4, -4]);
+  const rawRotateY = useTransform(mouseX, [0, 1], [-4, 4]);
+  const rotateX = useSpring(rawRotateX, { stiffness: 120, damping: 28, restDelta: 0.001 });
+  const rotateY = useSpring(rawRotateY, { stiffness: 120, damping: 28, restDelta: 0.001 });
 
   // Cursor-tracking spotlight
   const spotlightX = useMotionValue(50);
@@ -2511,8 +2511,8 @@ const AudienceCard = memo(function AudienceCard({ profile, index, skipEntryAnima
     const card = cardRef.current;
     if (!card) return;
     const rect = card.getBoundingClientRect();
-    const nx = (e.clientX - rect.left) / rect.width;
-    const ny = (e.clientY - rect.top) / rect.height;
+    const nx = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const ny = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
     mouseX.set(nx);
     mouseY.set(ny);
     spotlightX.set(nx * 100);
@@ -3262,17 +3262,17 @@ function FeatureCard({ feature, index }: { feature: FeatureConfig; index: number
   // 3D perspective tilt — desktop only, driven by cursor position
   const mouseX = useMotionValue(0.5);
   const mouseY = useMotionValue(0.5);
-  const rawRotateX = useTransform(mouseY, [0, 1], [4, -4]);
-  const rawRotateY = useTransform(mouseX, [0, 1], [-4, 4]);
-  const rotateX = useSpring(rawRotateX, { stiffness: 120, damping: 20 });
-  const rotateY = useSpring(rawRotateY, { stiffness: 120, damping: 20 });
+  const rawRotateX = useTransform(mouseY, [0, 1], [3, -3]);
+  const rawRotateY = useTransform(mouseX, [0, 1], [-3, 3]);
+  const rotateX = useSpring(rawRotateX, { stiffness: 100, damping: 26, restDelta: 0.001 });
+  const rotateY = useSpring(rawRotateY, { stiffness: 100, damping: 26, restDelta: 0.001 });
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     const card = cardRef.current;
     if (!card || prefersReducedMotion || isMobile) return;
     const rect = card.getBoundingClientRect();
-    const nx = (e.clientX - rect.left) / rect.width;
-    const ny = (e.clientY - rect.top) / rect.height;
+    const nx = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const ny = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
     mouseX.set(nx);
     mouseY.set(ny);
   }, [mouseX, mouseY, prefersReducedMotion, isMobile]);

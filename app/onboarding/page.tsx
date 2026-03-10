@@ -78,6 +78,42 @@ const STEPS = [
 type StepId = typeof STEPS[number]["id"];
 
 // =============================================================================
+// ONBOARDING PROGRESS PERSISTENCE
+// =============================================================================
+const ONBOARDING_PROGRESS_KEY = "posty_onboarding_progress";
+
+interface OnboardingProgress {
+  currentStep: number;
+  data: OnboardingData;
+}
+
+function saveOnboardingProgress(step: number, data: OnboardingData): void {
+  try {
+    localStorage.setItem(ONBOARDING_PROGRESS_KEY, JSON.stringify({ currentStep: step, data }));
+  } catch { /* localStorage full or unavailable — ignore */ }
+}
+
+function loadOnboardingProgress(): OnboardingProgress | null {
+  try {
+    const raw = localStorage.getItem(ONBOARDING_PROGRESS_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as OnboardingProgress;
+    if (typeof parsed.currentStep !== "number" || !parsed.data) return null;
+    // Clamp step to valid range
+    parsed.currentStep = Math.max(0, Math.min(parsed.currentStep, STEPS.length - 1));
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function clearOnboardingProgress(): void {
+  try {
+    localStorage.removeItem(ONBOARDING_PROGRESS_KEY);
+  } catch { /* ignore */ }
+}
+
+// =============================================================================
 // ANIMATION VARIANTS
 // =============================================================================
 const smoothEase = [0.22, 1, 0.36, 1] as const;
@@ -262,11 +298,14 @@ function ProfileRecapScreen({
 // MAIN ONBOARDING PAGE
 // =============================================================================
 export default function OnboardingPage() {
-  const { user, userProfile, loading, refreshUserProfile, needsOnboarding, clearOnboardingFlag } = useAuth();
+  const { user, userProfile, loading, refreshUserProfile, clearOnboardingFlag } = useAuth();
   const { subscription, loading: subscriptionLoading } = useSubscription();
   usePageTitle("onboarding");
   const router = useRouter();
-  const [currentStep, setCurrentStep] = useState(0);
+  // Restore saved progress from localStorage (if any)
+  const savedProgress = useRef(loadOnboardingProgress());
+
+  const [currentStep, setCurrentStep] = useState(savedProgress.current?.currentStep ?? 0);
   const [direction, setDirection] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showRecap, setShowRecap] = useState(false);
@@ -279,23 +318,31 @@ export default function OnboardingPage() {
       : false
   );
 
-  const [data, setData] = useState<OnboardingData>({
-    profileType: "",
-    sector: "",
-    role: "",
-    objective: "",
-    targetAudience: "",
-    communicationTone: "",
-    publishingFrequency: "",
-  });
+  const [data, setData] = useState<OnboardingData>(
+    savedProgress.current?.data ?? {
+      profileType: "",
+      sector: "",
+      role: "",
+      objective: "",
+      targetAudience: "",
+      communicationTone: "",
+      publishingFrequency: "",
+    }
+  );
 
-  const shouldShowOnboarding = needsOnboarding();
   const hasActiveSubscription =
     subscription.status === "active" || subscription.status === "trialing";
 
   // Edit mode: user already completed onboarding but hasn't paid yet
   // Also true when explicitly navigated with ?edit=true from subscription page
   const isEditMode = (userProfile?.onboardingComplete === true && !hasActiveSubscription) || isExplicitEdit.current;
+
+  // Persist progress to localStorage on every step/data change
+  useEffect(() => {
+    if (!showRecap && !isEditMode) {
+      saveOnboardingProgress(currentStep, data);
+    }
+  }, [currentStep, data, showRecap, isEditMode]);
 
   // Pre-fill onboarding data when returning to edit (unpaid user)
   useEffect(() => {
@@ -337,10 +384,10 @@ export default function OnboardingPage() {
       return;
     }
 
-    if (!shouldShowOnboarding && userProfile) {
-      router.push("/app");
-    }
-  }, [user, userProfile, loading, subscriptionLoading, router, shouldShowOnboarding, showRecap, hasActiveSubscription]);
+    // Onboarding NOT complete → always stay on this page.
+    // Never redirect to /app here — that would create a redirect loop
+    // with ProtectedRoute which sends incomplete users back to /onboarding.
+  }, [user, userProfile, loading, subscriptionLoading, router, showRecap, hasActiveSubscription]);
 
   // Enable scrolling on Onboarding page
   // Strategy: The page uses a fixed scroll container (position:fixed + overflow-y:auto)
@@ -390,6 +437,7 @@ export default function OnboardingPage() {
     setIsSubmitting(true);
     try {
       await completeOnboarding(user.uid, data);
+      clearOnboardingProgress();
 
       if (isEditMode) {
         // Returning user editing their profile — go straight to subscription

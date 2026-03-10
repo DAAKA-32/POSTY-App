@@ -8,7 +8,7 @@ import {
 } from "@/lib/firestore-admin";
 import { adminDb, isAdminInitialized } from "@/lib/firebase-admin";
 import { Timestamp } from "firebase-admin/firestore";
-import { isPlatformAllowed, PlanType } from "@/lib/plans";
+import { isPlatformAllowed, PlanType, appendFreeSignature } from "@/lib/plans";
 import { FACEBOOK_CONFIG } from "@/lib/meta";
 
 /**
@@ -121,6 +121,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Append Free plan signature
+    const finalContent = appendFreeSignature(content, userPlan);
+
     // Publication sur la page Facebook via Graph API
     const publishResponse = await fetch(
       `${FACEBOOK_CONFIG.apiUrl}/${selectedPage.id}/feed`,
@@ -128,7 +131,7 @@ export async function POST(request: NextRequest) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: content,
+          message: finalContent,
           access_token: selectedPage.accessToken,
         }),
       }

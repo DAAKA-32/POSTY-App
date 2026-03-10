@@ -8,7 +8,7 @@ import {
 } from "@/lib/firestore-admin";
 import { adminDb, isAdminInitialized } from "@/lib/firebase-admin";
 import { Timestamp } from "firebase-admin/firestore";
-import { isPlatformAllowed, PlanType } from "@/lib/plans";
+import { isPlatformAllowed, PlanType, appendFreeSignature } from "@/lib/plans";
 import { THREADS_CONFIG } from "@/lib/meta";
 
 /**
@@ -118,10 +118,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Append Free plan signature
+    const finalContent = appendFreeSignature(content, userPlan);
+
     // ÉTAPE 1: Création du media container (TEXT post)
     const containerParams = new URLSearchParams({
       media_type: "TEXT",
-      text: content,
+      text: finalContent,
       access_token: connection.accessToken,
     });
     const containerResponse = await fetch(
