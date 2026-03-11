@@ -897,34 +897,36 @@ export default function PublishToLinkedInModal({
               </div>
             )}
 
-            {/* Actions — sticky footer with fully opaque background */}
-            <div className="sticky bottom-0 -mx-5 -mb-6 px-5 pt-3 pb-4 bg-white dark:bg-dark-card border-t border-gray-200 dark:border-dark-border mt-2 z-10 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] dark:shadow-[0_-4px_12px_rgba(0,0,0,0.2)]">
-              <div className="flex gap-3">
-                <Button
-                  variant="secondary"
-                  fullWidth
-                  onClick={handleClose}
-                  className="min-h-[52px]"
-                >
-                  {t.templates.cancel}
-                </Button>
-                <Button
-                  fullWidth
-                  onClick={handleConfirm}
-                  disabled={cannotPublish}
-                  className={`min-h-[52px] ${
-                    cannotPublish
-                      ? "bg-gray-100 dark:bg-dark-hover border-gray-200 dark:border-dark-border cursor-not-allowed opacity-50"
-                      : "bg-primary hover:bg-primary-hover border-none"
-                  }`}
-                >
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                  </svg>
-                  {t.publish.publish}
-                </Button>
+            {/* Actions — desktop only (mobile uses BottomSheet footer) */}
+            {!isMobile && (
+              <div className="sticky bottom-0 -mx-5 -mb-6 px-5 pt-3 pb-4 bg-white dark:bg-dark-card border-t border-gray-200 dark:border-dark-border mt-2 z-10 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] dark:shadow-[0_-4px_12px_rgba(0,0,0,0.2)]">
+                <div className="flex gap-3">
+                  <Button
+                    variant="secondary"
+                    fullWidth
+                    onClick={handleClose}
+                    className="min-h-[52px]"
+                  >
+                    {t.templates.cancel}
+                  </Button>
+                  <Button
+                    fullWidth
+                    onClick={handleConfirm}
+                    disabled={cannotPublish}
+                    className={`min-h-[52px] ${
+                      cannotPublish
+                        ? "bg-gray-100 dark:bg-dark-hover border-gray-200 dark:border-dark-border cursor-not-allowed opacity-50"
+                        : "bg-primary hover:bg-primary-hover border-none"
+                    }`}
+                  >
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                    {t.publish.publish}
+                  </Button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         )}
 
@@ -951,26 +953,28 @@ export default function PublishToLinkedInModal({
                 .
               </p>
             </div>
-            {/* Actions — sticky footer */}
-            <div className="sticky bottom-0 -mx-5 px-5 pt-3 pb-1 bg-white dark:bg-dark-card border-t border-gray-100 dark:border-dark-border/50 mt-4">
-              <div className="flex gap-3">
-                <Button
-                  variant="secondary"
-                  fullWidth
-                  onClick={() => setStep("preview")}
-                  className="min-h-[52px]"
-                >
-                  {t.publish.back}
-                </Button>
-                <Button
-                  fullWidth
-                  onClick={handlePublish}
-                  className="bg-primary hover:bg-primary-hover border-none min-h-[52px]"
-                >
-                  {t.publish.yesPublish}
-                </Button>
+            {/* Actions — desktop only (mobile uses BottomSheet footer) */}
+            {!isMobile && (
+              <div className="sticky bottom-0 -mx-5 px-5 pt-3 pb-1 bg-white dark:bg-dark-card border-t border-gray-100 dark:border-dark-border/50 mt-4">
+                <div className="flex gap-3">
+                  <Button
+                    variant="secondary"
+                    fullWidth
+                    onClick={() => setStep("preview")}
+                    className="min-h-[52px]"
+                  >
+                    {t.publish.back}
+                  </Button>
+                  <Button
+                    fullWidth
+                    onClick={handlePublish}
+                    className="bg-primary hover:bg-primary-hover border-none min-h-[52px]"
+                  >
+                    {t.publish.yesPublish}
+                  </Button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         )}
 
@@ -1110,21 +1114,95 @@ export default function PublishToLinkedInModal({
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{t.publish.publishFailed}</h3>
               <p className="text-error text-sm">{error}</p>
             </div>
-            {/* Actions — sticky footer */}
-            <div className="sticky bottom-0 -mx-5 px-5 pt-3 pb-1 bg-white dark:bg-dark-card border-t border-gray-100 dark:border-dark-border/50 mt-4">
-              <div className="flex gap-3">
-                <Button variant="secondary" fullWidth onClick={handleClose} className="min-h-[52px]">
-                  {t.common.close}
-                </Button>
-                <Button fullWidth onClick={handleRetry} className="min-h-[52px]">
-                  {t.publish.retry}
-                </Button>
+            {/* Actions — desktop only (mobile uses BottomSheet footer) */}
+            {!isMobile && (
+              <div className="sticky bottom-0 -mx-5 px-5 pt-3 pb-1 bg-white dark:bg-dark-card border-t border-gray-100 dark:border-dark-border/50 mt-4">
+                <div className="flex gap-3">
+                  <Button variant="secondary" fullWidth onClick={handleClose} className="min-h-[52px]">
+                    {t.common.close}
+                  </Button>
+                  <Button fullWidth onClick={handleRetry} className="min-h-[52px]">
+                    {t.publish.retry}
+                  </Button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         )}
       </>
     );
+  };
+
+  // Mobile footer — fixed at bottom of BottomSheet, outside scroll
+  const renderMobileFooter = () => {
+    if (!isConnected) return undefined;
+
+    if (step === "preview") {
+      return (
+        <div className="flex gap-3">
+          <Button
+            variant="secondary"
+            fullWidth
+            onClick={handleClose}
+            className="min-h-[52px]"
+          >
+            {t.templates.cancel}
+          </Button>
+          <Button
+            fullWidth
+            onClick={handleConfirm}
+            disabled={cannotPublish}
+            className={`min-h-[52px] ${
+              cannotPublish
+                ? "bg-gray-100 dark:bg-dark-hover border-gray-200 dark:border-dark-border cursor-not-allowed opacity-50"
+                : "bg-primary hover:bg-primary-hover border-none"
+            }`}
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+            </svg>
+            {t.publish.publish}
+          </Button>
+        </div>
+      );
+    }
+
+    if (step === "confirm") {
+      return (
+        <div className="flex gap-3">
+          <Button
+            variant="secondary"
+            fullWidth
+            onClick={() => setStep("preview")}
+            className="min-h-[52px]"
+          >
+            {t.publish.back}
+          </Button>
+          <Button
+            fullWidth
+            onClick={handlePublish}
+            className="bg-primary hover:bg-primary-hover border-none min-h-[52px]"
+          >
+            {t.publish.yesPublish}
+          </Button>
+        </div>
+      );
+    }
+
+    if (step === "error") {
+      return (
+        <div className="flex gap-3">
+          <Button variant="secondary" fullWidth onClick={handleClose} className="min-h-[52px]">
+            {t.common.close}
+          </Button>
+          <Button fullWidth onClick={handleRetry} className="min-h-[52px]">
+            {t.publish.retry}
+          </Button>
+        </div>
+      );
+    }
+
+    return undefined;
   };
 
   // Render mobile (BottomSheet) or desktop (Modal)
@@ -1136,6 +1214,7 @@ export default function PublishToLinkedInModal({
           onClose={handleClose}
           title={step === "success" ? "" : step === "error" ? t.publish.error : t.ui.publishContent}
           swipeToDismiss={step !== "publishing"}
+          footer={renderMobileFooter()}
         >
           {renderContent()}
         </BottomSheet>

@@ -261,7 +261,7 @@ node scripts/convert-to-webp.js
 
 **Documentation SEO**: `/docs/`
 **Contact technique**: posty.contact@gmail.com
-**Founder**: Emilien Nepveu ([LinkedIn](https://www.linkedin.com/in/e-nepveu-58a38127a/))
+**Founder**: Emilien Nepveu ([LinkedIn](https://www.linkedin.com/in/emilien-nepveu-58a38127a/))
 
 ---
 

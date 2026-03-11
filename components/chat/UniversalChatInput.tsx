@@ -78,13 +78,7 @@ interface UniversalChatInputProps {
   showCharacterCount?: boolean;
 }
 
-// Rotating placeholder examples for premium feel
-const DEFAULT_PLACEHOLDERS = [
-  "Décrivez votre post LinkedIn...",
-  "Partagez une idée ou une leçon...",
-  "Racontez une histoire...",
-  "Quelle est votre expertise ?",
-];
+// Default placeholder (static, translated via i18n in the component)
 
 // Expose focus and value setter methods via ref
 export interface UniversalChatInputRef {
@@ -129,7 +123,7 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
 }, ref) => {
   const [message, setMessage] = useState("");
   const [isFocused, setIsFocused] = useState(false);
-  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  // placeholderIndex removed — placeholder is now static
   const [hasAnimated, setHasAnimated] = useState(false);
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [attachedFile, setAttachedFile] = useState<FileAttachment | null>(null);
@@ -140,7 +134,7 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
   const { t } = useLanguage();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const rotationTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // rotationTimerRef removed — placeholder is now static
 
   // Character limit calculations
   const currentLength = message.length;
@@ -196,43 +190,21 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
     },
   }), [effectiveMinHeight, maxHeight]);
 
-  // Determine placeholders (single string or rotating array)
-  const placeholders = Array.isArray(placeholder)
+  // Determine placeholder: use prop if provided (single string), otherwise use i18n fixed placeholder
+  const staticPlaceholder = typeof placeholder === "string"
     ? placeholder
-    : placeholder
-    ? [placeholder]
-    : DEFAULT_PLACEHOLDERS;
+    : t.appPage.placeholderFixed;
 
   // Determine placeholder based on state
   const currentPlaceholder = isRecording
-    ? "🎤 Parlez maintenant..."
+    ? (t.appPage.speakNow || "🎤 Parlez maintenant...")
     : isVoiceProcessing
-    ? "Traitement de votre message..."
+    ? (t.appPage.processingMessage || "Traitement de votre message...")
     : quotaLimitReached
-    ? (isFreePlanQuota ? "Quota mensuel atteint" : "Quota quotidien atteint")
+    ? (isFreePlanQuota ? (t.appPage.monthlyQuotaReached || "Quota mensuel atteint") : (t.appPage.dailyQuotaReached || "Quota quotidien atteint"))
     : trialLimitReached
-    ? "Limite d'essai atteinte"
-    : placeholders[placeholderIndex % placeholders.length];
-
-  // Rotate placeholder every 3 seconds when not focused
-  useEffect(() => {
-    if (!isFocused && placeholders.length > 1) {
-      rotationTimerRef.current = setInterval(() => {
-        setPlaceholderIndex((prev) => (prev + 1) % placeholders.length);
-      }, 3000);
-    } else {
-      if (rotationTimerRef.current) {
-        clearInterval(rotationTimerRef.current);
-        rotationTimerRef.current = null;
-      }
-    }
-
-    return () => {
-      if (rotationTimerRef.current) {
-        clearInterval(rotationTimerRef.current);
-      }
-    };
-  }, [isFocused, placeholders.length]);
+    ? (t.appPage.trialLimitReached || "Limite d'essai atteinte")
+    : staticPlaceholder;
 
   // Auto-resize textarea with RAF for smooth updates - intelligent shrinking
   useEffect(() => {

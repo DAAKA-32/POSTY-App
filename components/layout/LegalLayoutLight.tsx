@@ -153,25 +153,25 @@ export default function LegalLayoutLight({ children, title }: LegalLayoutLightPr
                 href="/legal/privacy"
                 className="text-[#6B7280] hover:text-[#1A1D21] no-underline transition-colors duration-200"
               >
-                Confidentialité
+                {t.footer.privacy}
               </Link>
               <Link
                 href="/legal/terms"
                 className="text-[#6B7280] hover:text-[#1A1D21] no-underline transition-colors duration-200"
               >
-                CGU
+                {t.footer.terms}
               </Link>
               <Link
                 href="/legal/notices"
                 className="text-[#6B7280] hover:text-[#1A1D21] no-underline transition-colors duration-200"
               >
-                Mentions légales
+                {t.footer.legalNotices}
               </Link>
               <Link
                 href="/legal/cookies"
                 className="text-[#6B7280] hover:text-[#1A1D21] no-underline transition-colors duration-200"
               >
-                Cookies
+                {t.footer.cookies}
               </Link>
             </div>
 

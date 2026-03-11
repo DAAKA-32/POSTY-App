@@ -3865,8 +3865,8 @@ function BeforeAfterSection() {
 // FOUNDER MESSAGE SECTION - Supabase-Inspired Editorial Design (Light)
 // With Progressive Scroll-Based Zoom Effect
 // =============================================================================
-const FOUNDER_LINKEDIN_URL = "https://www.linkedin.com/in/e-nepveu-58a38127a/";
-const CFO_LINKEDIN_URL = "https://www.instagram.com/come27m/";
+const FOUNDER_LINKEDIN_URL = "https://www.linkedin.com/in/emilien-nepveu-58a38127a/";
+const CFO_LINKEDIN_URL = "https://www.linkedin.com/in/c%C3%B4me-maubert-delamoriniere-a884693b3/";
 
 function FounderSection() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -4031,6 +4031,7 @@ function FounderSection() {
 const PLANS = getAllPlans();
 
 function PricingSection() {
+  const { t } = useLanguage();
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("yearly");
 
   return (
@@ -4044,19 +4045,19 @@ function PricingSection() {
           className="text-center mb-10 sm:mb-12 md:mb-14"
         >
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4 leading-tight">
-            <span className="text-gray-900">Le prix d&apos;un café par jour.</span>{" "}
+            <span className="text-gray-900">{t.landing.pricingHeadline1}</span>{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
-              Le retour d&apos;un commercial à plein temps.
+              {t.landing.pricingHeadline2}
             </span>
           </h2>
           <p className="text-gray-500 text-sm sm:text-base md:text-lg max-w-2xl mx-auto mb-8 sm:mb-10">
-            Un seul client signé via LinkedIn rembourse votre année entière. Quel plan correspond à vos ambitions ?
+            {t.landing.pricingDescription}
           </p>
 
           <BillingToggle
             isYearly={billingPeriod === "yearly"}
             onChange={(isYearly) => setBillingPeriod(isYearly ? "yearly" : "monthly")}
-            savingsLabel="2 mois offerts"
+            savingsLabel={t.landing.pricingSavingsLabel}
             showSavings={true}
           />
         </motion.div>
@@ -4095,6 +4096,7 @@ function CtaBanner({
   ctaLabel: string;
   id?: string;
 }) {
+  const { t } = useLanguage();
   return (
     <section id={id} className="relative py-16 md:py-24 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto text-center">
@@ -4142,7 +4144,7 @@ function CtaBanner({
           transition={{ duration: 0.35, delay: 0.1 }}
           className="mt-5 text-xs text-gray-400"
         >
-          Essai gratuit inclus &middot; Sans engagement
+          {t.landing.pricingTrialIncluded}
         </motion.p>
       </div>
     </section>
@@ -4152,40 +4154,18 @@ function CtaBanner({
 // =============================================================================
 // FAQ SECTION - Accordion-Style Questions & Answers
 // =============================================================================
-const FAQ_ITEMS = [
-  {
-    question: "Comment ça marche, concrètement ?",
-    answer: "Décrivez votre objectif (trouver des clients, renforcer votre crédibilité, etc.) et Posty génère instantanément deux versions de post optimisées pour LinkedIn. Vous pouvez aussi dicter vos idées à la voix. C'est prêt en 30 secondes.",
-  },
-  {
-    question: "Est-ce vraiment de l\u2019IA ou juste des templates ?",
-    answer: "Posty génère du contenu 100% original à chaque fois. Pas de templates pré-écrits. L\u2019IA analyse votre secteur, votre audience et votre ton pour créer des posts uniques qui sonnent comme vous \u2014 pas comme un robot.",
-  },
-  {
-    question: "Les posts auront-ils l\u2019air d\u2019être écrits par moi ?",
-    answer: "Absolument. Posty s\u2019adapte à votre voix, votre style et votre positionnement. Plus vous l\u2019utilisez, plus il comprend votre ton. Vos lecteurs ne feront pas la différence avec un post que vous auriez écrit vous-même.",
-  },
-  {
-    question: "Quels résultats vais-je obtenir ?",
-    answer: "En publiant régulièrement avec Posty, nos utilisateurs constatent un engagement triplé en 30 jours. Les premiers clients signés via LinkedIn arrivent entre 60 et 90 jours. À ce stade, un seul contrat rembourse généralement une année entière d\u2019abonnement.",
-  },
-  {
-    question: "Puis-je annuler à tout moment ?",
-    answer: "Oui, sans aucun engagement. Vous pouvez annuler votre abonnement en un clic depuis vos paramètres. Pas de frais cachés, pas de période d\u2019engagement minimum.",
-  },
-  {
-    question: "Dois-je déjà être actif sur LinkedIn ?",
-    answer: "Pas nécessairement. Posty est idéal aussi bien pour ceux qui débutent sur LinkedIn que pour les profils déjà établis. Si vous partez de zéro, Posty vous aide à construire votre présence rapidement avec une stratégie de contenu cohérente.",
-  },
-  {
-    question: "Mes données sont-elles sécurisées ?",
-    answer: "Vos données sont chiffrées et hébergées en Europe, conformément au RGPD. Nous ne partageons jamais vos informations avec des tiers. Votre contenu généré vous appartient intégralement.",
-  },
-  {
-    question: "Qu\u2019est-ce qui différencie Posty de ChatGPT ?",
-    answer: "ChatGPT écrit du texte. Posty écrit des posts LinkedIn qui génèrent des prospects. Chaque post est optimisé pour l\u2019algorithme, structuré pour déclencher des prises de contact, et calibré sur votre positionnement exact. C\u2019est la différence entre un outil générique et un expert dédié à votre acquisition LinkedIn.",
-  },
-];
+function getFaqItems(t: ReturnType<typeof useLanguage>["t"]) {
+  return [
+    { question: t.landing.faqQ1, answer: t.landing.faqA1 },
+    { question: t.landing.faqQ2, answer: t.landing.faqA2 },
+    { question: t.landing.faqQ3, answer: t.landing.faqA3 },
+    { question: t.landing.faqQ4, answer: t.landing.faqA4 },
+    { question: t.landing.faqQ5, answer: t.landing.faqA5 },
+    { question: t.landing.faqQ6, answer: t.landing.faqA6 },
+    { question: t.landing.faqQ7, answer: t.landing.faqA7 },
+    { question: t.landing.faqQ8, answer: t.landing.faqA8 },
+  ];
+}
 
 function FaqItem({
   item,
@@ -4193,7 +4173,7 @@ function FaqItem({
   isOpen,
   onToggle,
 }: {
-  item: (typeof FAQ_ITEMS)[0];
+  item: { question: string; answer: string };
   index: number;
   isOpen: boolean;
   onToggle: () => void;
@@ -4252,8 +4232,10 @@ function FaqItem({
 }
 
 function FaqSection() {
+  const { t } = useLanguage();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const isMobile = useIsMobile();
+  const faqItems = getFaqItems(t);
 
   return (
     <section id="faq" className="relative py-16 md:py-24 2xl:py-28 px-4 sm:px-6 lg:px-8 2xl:px-12 overflow-hidden">
@@ -4277,23 +4259,23 @@ function FaqSection() {
               <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-[#F8935D] opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-[#F8935D]"></span>
             </span>
-            <span className="text-sm font-medium text-gray-700">Questions fréquentes</span>
+            <span className="text-sm font-medium text-gray-700">{t.landing.faqBadge}</span>
           </motion.div>
 
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-5">
-            Tout ce que vous devez savoir{" "}
+            {t.landing.faqTitle1}{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
-              avant de commencer
+              {t.landing.faqTitle2}
             </span>
           </h2>
           <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-            Si la réponse à votre question n&apos;est pas ici, écrivez-nous : on répond en moins de 24h.
+            {t.landing.faqSubtitle}
           </p>
         </motion.div>
 
         {/* Accordion */}
         <div className="bg-white rounded-2xl border border-gray-200 shadow-lg shadow-gray-100/60 px-8">
-          {FAQ_ITEMS.map((item, index) => (
+          {faqItems.map((item, index) => (
             <FaqItem
               key={index}
               item={item}
@@ -4312,6 +4294,8 @@ function FaqSection() {
 // FOOTER
 // =============================================================================
 function Footer() {
+  const { t } = useLanguage();
+  const year = new Date().getFullYear();
   return (
     <footer className="border-t border-[#F0D5C8]/40 py-8 md:py-16 2xl:py-20 px-4 sm:px-6 lg:px-8 2xl:px-12">
       <motion.div
@@ -4334,10 +4318,10 @@ function Footer() {
                 <span className="text-sm font-bold text-gray-900">Posty</span>
               </Link>
               <p className="text-[10px] text-gray-500 leading-tight max-w-[200px]">
-                Vos posts LinkedIn, calibrés pour signer des clients.
+                {t.footer.tagline}
               </p>
               <p className="text-[10px] text-[#F8935D] font-medium mt-1">
-                Chaque post peut vous amener un client
+                {t.footer.taglineAccent}
               </p>
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
@@ -4354,33 +4338,33 @@ function Footer() {
           <div className="grid grid-cols-3 gap-x-3 gap-y-1 mb-4 text-[11px]">
             {/* Navigation */}
             <div>
-              <p className="text-gray-800 font-semibold mb-1.5 text-[10px] uppercase tracking-wide">Navigation</p>
-              <button onClick={() => document.querySelector("#features")?.scrollIntoView({ behavior: "smooth" })} className="block text-left text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">Caractéristiques</button>
-              <button onClick={() => document.querySelector("#testimonials")?.scrollIntoView({ behavior: "smooth" })} className="block text-left text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">Témoignages</button>
-              <button onClick={() => document.querySelector("#pricing")?.scrollIntoView({ behavior: "smooth" })} className="block text-left text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">Tarifs</button>
-              <button onClick={() => document.querySelector("#faq")?.scrollIntoView({ behavior: "smooth" })} className="block text-left text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">FAQ</button>
+              <p className="text-gray-800 font-semibold mb-1.5 text-[10px] uppercase tracking-wide">{t.footer.navigation}</p>
+              <button onClick={() => document.querySelector("#features")?.scrollIntoView({ behavior: "smooth" })} className="block text-left text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">{t.footer.features}</button>
+              <button onClick={() => document.querySelector("#testimonials")?.scrollIntoView({ behavior: "smooth" })} className="block text-left text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">{t.footer.testimonials}</button>
+              <button onClick={() => document.querySelector("#pricing")?.scrollIntoView({ behavior: "smooth" })} className="block text-left text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">{t.footer.pricing}</button>
+              <button onClick={() => document.querySelector("#faq")?.scrollIntoView({ behavior: "smooth" })} className="block text-left text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">{t.footer.faq}</button>
             </div>
             {/* Legal */}
             <div>
-              <p className="text-gray-800 font-semibold mb-1.5 text-[10px] uppercase tracking-wide">Légal</p>
-              <Link href="/legal/privacy" className="block text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">Confidentialité</Link>
-              <Link href="/legal/terms" className="block text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">CGU</Link>
-              <Link href="/legal/notices" className="block text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">Mentions légales</Link>
-              <Link href="/legal/cookies" className="block text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">Cookies</Link>
+              <p className="text-gray-800 font-semibold mb-1.5 text-[10px] uppercase tracking-wide">{t.footer.legal}</p>
+              <Link href="/legal/privacy" className="block text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">{t.footer.privacy}</Link>
+              <Link href="/legal/terms" className="block text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">{t.footer.terms}</Link>
+              <Link href="/legal/notices" className="block text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">{t.footer.legalNotices}</Link>
+              <Link href="/legal/cookies" className="block text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">{t.footer.cookies}</Link>
             </div>
             {/* Account */}
             <div>
-              <p className="text-gray-800 font-semibold mb-1.5 text-[10px] uppercase tracking-wide">Compte</p>
-              <Link href="/login" className="block text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">Connexion</Link>
-              <Link href="/signup" className="block text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">Inscription</Link>
-              <Link href="/about" className="block text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">À propos</Link>
+              <p className="text-gray-800 font-semibold mb-1.5 text-[10px] uppercase tracking-wide">{t.footer.account}</p>
+              <Link href="/login" className="block text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">{t.footer.login}</Link>
+              <Link href="/signup" className="block text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">{t.footer.signup}</Link>
+              <Link href="/about" className="block text-gray-500 hover:text-[#F8935D] transition-colors py-0.5 min-h-[28px]">{t.footer.about}</Link>
             </div>
           </div>
 
           {/* Copyright */}
           <div className="pt-3 border-t border-[#F0D5C8]/60 flex items-center justify-between">
-            <p className="text-gray-400 text-[10px]">© {new Date().getFullYear()} Posty. Tous droits réservés.</p>
-            <p className="text-gray-400 text-[10px]">Conçu en France 🇫🇷</p>
+            <p className="text-gray-400 text-[10px]">{t.footer.copyright.replace("{year}", String(year))}</p>
+            <p className="text-gray-400 text-[10px]">{t.footer.madeInShort}</p>
           </div>
         </div>
 
@@ -4396,10 +4380,10 @@ function Footer() {
                 <span className="text-xl font-bold text-gray-900">Posty</span>
               </Link>
               <p className="text-gray-500 max-w-sm">
-                Posty génère vos posts LinkedIn, calibrés pour votre audience et optimisés pour l&apos;algorithme. Publiez chaque jour, attirez des prospects qualifiés, signez des clients.
+                {t.footer.description}
               </p>
               <p className="text-[#F8935D] font-medium text-sm mt-3">
-                Chaque post est une opportunité.
+                {t.footer.descriptionAccent}
               </p>
               <div className="flex items-center gap-3 mt-4">
                 <a href="https://www.linkedin.com/company/posty" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-lg bg-gray-100 hover:bg-[#F8935D]/10 flex items-center justify-center text-gray-400 hover:text-[#F8935D] transition-all duration-200" aria-label="LinkedIn">
@@ -4413,33 +4397,33 @@ function Footer() {
 
             {/* Navigation */}
             <div>
-              <h4 className="text-gray-900 font-semibold mb-4">Navigation</h4>
+              <h4 className="text-gray-900 font-semibold mb-4">{t.footer.navigation}</h4>
               <ul className="space-y-3">
-                <li><button onClick={() => document.querySelector("#features")?.scrollIntoView({ behavior: "smooth" })} className="text-gray-500 hover:text-[#F8935D] transition-colors">Caractéristiques</button></li>
-                <li><button onClick={() => document.querySelector("#testimonials")?.scrollIntoView({ behavior: "smooth" })} className="text-gray-500 hover:text-[#F8935D] transition-colors">Témoignages</button></li>
-                <li><button onClick={() => document.querySelector("#pricing")?.scrollIntoView({ behavior: "smooth" })} className="text-gray-500 hover:text-[#F8935D] transition-colors">Tarifs</button></li>
-                <li><button onClick={() => document.querySelector("#faq")?.scrollIntoView({ behavior: "smooth" })} className="text-gray-500 hover:text-[#F8935D] transition-colors">FAQ</button></li>
-                <li><Link href="/about" className="text-gray-500 hover:text-[#F8935D] transition-colors">À propos</Link></li>
+                <li><button onClick={() => document.querySelector("#features")?.scrollIntoView({ behavior: "smooth" })} className="text-gray-500 hover:text-[#F8935D] transition-colors">{t.footer.features}</button></li>
+                <li><button onClick={() => document.querySelector("#testimonials")?.scrollIntoView({ behavior: "smooth" })} className="text-gray-500 hover:text-[#F8935D] transition-colors">{t.footer.testimonials}</button></li>
+                <li><button onClick={() => document.querySelector("#pricing")?.scrollIntoView({ behavior: "smooth" })} className="text-gray-500 hover:text-[#F8935D] transition-colors">{t.footer.pricing}</button></li>
+                <li><button onClick={() => document.querySelector("#faq")?.scrollIntoView({ behavior: "smooth" })} className="text-gray-500 hover:text-[#F8935D] transition-colors">{t.footer.faq}</button></li>
+                <li><Link href="/about" className="text-gray-500 hover:text-[#F8935D] transition-colors">{t.footer.about}</Link></li>
               </ul>
             </div>
 
             {/* Legal */}
             <div>
-              <h4 className="text-gray-900 font-semibold mb-4">Légal</h4>
+              <h4 className="text-gray-900 font-semibold mb-4">{t.footer.legal}</h4>
               <ul className="space-y-3">
-                <li><Link href="/legal/privacy" className="text-gray-500 hover:text-[#F8935D] transition-colors">Politique de confidentialité</Link></li>
-                <li><Link href="/legal/terms" className="text-gray-500 hover:text-[#F8935D] transition-colors">Conditions d&apos;utilisation</Link></li>
-                <li><Link href="/legal/notices" className="text-gray-500 hover:text-[#F8935D] transition-colors">Mentions légales</Link></li>
-                <li><Link href="/legal/cookies" className="text-gray-500 hover:text-[#F8935D] transition-colors">Politique de cookies</Link></li>
-                <li><a href="https://www.cnil.fr" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-[#F8935D] transition-colors">CNIL</a></li>
+                <li><Link href="/legal/privacy" className="text-gray-500 hover:text-[#F8935D] transition-colors">{t.footer.privacyPolicy}</Link></li>
+                <li><Link href="/legal/terms" className="text-gray-500 hover:text-[#F8935D] transition-colors">{t.footer.termsOfUse}</Link></li>
+                <li><Link href="/legal/notices" className="text-gray-500 hover:text-[#F8935D] transition-colors">{t.footer.legalNotices}</Link></li>
+                <li><Link href="/legal/cookies" className="text-gray-500 hover:text-[#F8935D] transition-colors">{t.footer.cookiePolicy}</Link></li>
+                <li><a href="https://www.cnil.fr" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-[#F8935D] transition-colors">{t.footer.cnil}</a></li>
               </ul>
             </div>
           </div>
 
           {/* Bottom */}
           <div className="pt-8 border-t border-[#F0D5C8]/60 flex flex-row items-center justify-between gap-4">
-            <p className="text-gray-500 text-sm">© {new Date().getFullYear()} Posty. Tous droits réservés.</p>
-            <p className="text-gray-500 text-sm">Conçu et hébergé en France</p>
+            <p className="text-gray-500 text-sm">{t.footer.copyright.replace("{year}", String(year))}</p>
+            <p className="text-gray-500 text-sm">{t.footer.madeIn}</p>
           </div>
         </div>
 

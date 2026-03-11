@@ -140,8 +140,8 @@ export default function FeaturesSection() {
           />
         </svg>
       ),
-      title: "Publication directe",
-      description: "Publiez sur LinkedIn en un clic",
+      title: t.landing.featuresDirectPublish,
+      description: t.landing.featuresDirectPublishDesc,
       color: "primary",
       animation: "float" as const,
     },
@@ -162,8 +162,8 @@ export default function FeaturesSection() {
           />
         </svg>
       ),
-      title: "Personnalisation",
-      description: "Ajustez le ton et le style",
+      title: t.landing.featuresCustomization,
+      description: t.landing.featuresCustomizationDesc,
       color: "accent",
       animation: "bounce" as const,
     },
@@ -184,8 +184,8 @@ export default function FeaturesSection() {
           />
         </svg>
       ),
-      title: "Historique",
-      description: "Retrouvez tous vos posts",
+      title: t.landing.featuresHistory,
+      description: t.landing.featuresHistoryDesc,
       color: "warning",
       animation: "pulse" as const,
     },
@@ -273,7 +273,7 @@ export default function FeaturesSection() {
                     {t.landing.versionA || "Version Storytelling"}
                   </h3>
                   <p className="text-sm text-accent font-medium">
-                    Émotionnel & Engageant
+                    {t.landing.featuresEmotionalEngaging}
                   </p>
                 </div>
               </div>
@@ -305,7 +305,7 @@ export default function FeaturesSection() {
                     {t.landing.versionB || "Version Business"}
                   </h3>
                   <p className="text-sm text-primary font-medium">
-                    Professionnel & Concret
+                    {t.landing.featuresProfessionalConcrete}
                   </p>
                 </div>
               </div>

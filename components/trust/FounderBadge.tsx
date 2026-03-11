@@ -19,14 +19,14 @@ const foundersData = [
   {
     name: "Emilien Nepveu",
     role: "Co-Founder & Co-CEO",
-    linkedIn: "https://www.linkedin.com/in/e-nepveu-58a38127a/",
+    linkedIn: "https://www.linkedin.com/in/emilien-nepveu-58a38127a/",
     initials: "EN",
     tagline: "CTO — Passionné par l'IA et le personal branding",
   },
   {
     name: "Côme Maubert",
     role: "Co-Founder & Co-CEO",
-    linkedIn: null as string | null,
+    linkedIn: "https://www.linkedin.com/in/c%C3%B4me-maubert-delamoriniere-a884693b3/" as string | null,
     initials: "CM",
     tagline: "CFO — Financement et stratégie commerciale",
   },

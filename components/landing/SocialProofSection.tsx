@@ -67,7 +67,7 @@ export default function SocialProofSection() {
   const stats = [
     {
       value: "15K+",
-      label: "Utilisateurs actifs",
+      label: t.landing.socialProofStatUsers,
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -77,7 +77,7 @@ export default function SocialProofSection() {
     },
     {
       value: "500K+",
-      label: "Posts générés",
+      label: t.landing.socialProofStatPosts,
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -87,7 +87,7 @@ export default function SocialProofSection() {
     },
     {
       value: "4.9/5",
-      label: "Note moyenne",
+      label: t.landing.socialProofStatRating,
       icon: (
         <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
           <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
@@ -97,7 +97,7 @@ export default function SocialProofSection() {
     },
     {
       value: "+300%",
-      label: "Engagement moyen",
+      label: t.landing.socialProofStatEngagement,
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
@@ -109,29 +109,29 @@ export default function SocialProofSection() {
 
   const testimonials = [
     {
-      name: "Sophie Martin",
-      role: "Consultante Marketing",
-      company: "Digital Growth",
+      name: t.landing.socialProofTestimonial1Name,
+      role: t.landing.socialProofTestimonial1Role,
+      company: t.landing.socialProofTestimonial1Company,
       avatar: "SM",
-      content: "POSTY a transformé ma présence LinkedIn. Je génère maintenant 2 posts par jour en moins de 5 minutes. Mon engagement a explosé !",
+      content: t.landing.socialProofTestimonial1Content,
       rating: 5,
       gradient: "from-primary to-primary-dark",
     },
     {
-      name: "Thomas Durand",
-      role: "CEO",
-      company: "TechStart SAS",
+      name: t.landing.socialProofTestimonial2Name,
+      role: t.landing.socialProofTestimonial2Role,
+      company: t.landing.socialProofTestimonial2Company,
       avatar: "TD",
-      content: "L'IA de POSTY comprend parfaitement mon secteur. Les deux versions proposées sont toujours pertinentes et professionnelles.",
+      content: t.landing.socialProofTestimonial2Content,
       rating: 5,
       gradient: "from-accent to-warm-coral",
     },
     {
-      name: "Marie Lefebvre",
-      role: "Coach Business",
-      company: "Success Path",
+      name: t.landing.socialProofTestimonial3Name,
+      role: t.landing.socialProofTestimonial3Role,
+      company: t.landing.socialProofTestimonial3Company,
       avatar: "ML",
-      content: "Mes clients adorent mes posts depuis que j'utilise POSTY. La version storytelling crée vraiment une connexion authentique.",
+      content: t.landing.socialProofTestimonial3Content,
       rating: 5,
       gradient: "from-warning to-orange-600",
     },
@@ -163,18 +163,18 @@ export default function SocialProofSection() {
             custom={0.1}
             className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4"
           >
-            Ils ont{" "}
+            {t.landing.socialProofTitle1}{" "}
             <span className="text-gradient bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              transformé
+              {t.landing.socialProofTitle2}
             </span>{" "}
-            leur LinkedIn
+            {t.landing.socialProofTitle3}
           </motion.h2>
           <motion.p
             variants={fadeInUp}
             custom={0.2}
             className="text-lg md:text-xl text-text-secondary max-w-2xl mx-auto"
           >
-            Rejoignez des milliers de professionnels qui utilisent POSTY chaque jour
+            {t.landing.socialProofSubtitle}
           </motion.p>
         </motion.div>
 
@@ -257,7 +257,7 @@ export default function SocialProofSection() {
                 </div>
 
                 {/* Rating */}
-                <div className="flex items-center gap-1 mb-4" role="img" aria-label={`Note: ${testimonial.rating} étoiles sur 5`}>
+                <div className="flex items-center gap-1 mb-4" role="img" aria-label={`${testimonial.rating} ${t.landing.socialProofRatingLabel}`}>
                   {Array.from({ length: testimonial.rating }).map((_, i) => (
                     <svg key={i} className="w-5 h-5 text-warning" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
@@ -311,7 +311,7 @@ export default function SocialProofSection() {
               <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
             </svg>
             <span className="text-sm text-text-secondary">
-              <span className="text-white font-semibold">Conformité RGPD</span> • Données sécurisées • Support 24/7
+              <span className="text-white font-semibold">{t.landing.socialProofGdpr}</span> • {t.landing.socialProofSecureData} • {t.landing.socialProofSupport}
             </span>
           </div>
         </motion.div>

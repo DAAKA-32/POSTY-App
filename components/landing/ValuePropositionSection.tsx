@@ -58,9 +58,9 @@ export default function ValuePropositionSection() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
         </svg>
       ),
-      title: "Gagnez du temps",
-      description: "Créez en 30 secondes ce qui vous prenait 5 minutes",
-      metric: "10x plus rapide",
+      title: t.landing.valuePropCard1Title,
+      description: t.landing.valuePropCard1Desc,
+      metric: t.landing.valuePropCard1Metric,
       gradient: "from-primary to-warm-sunset",
       glowColor: "rgba(232, 147, 77, 0.3)",
     },
@@ -70,9 +70,9 @@ export default function ValuePropositionSection() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       ),
-      title: "Contenu optimisé",
-      description: "2 versions pour maximiser votre impact",
-      metric: "Storytelling + Business",
+      title: t.landing.valuePropCard2Title,
+      description: t.landing.valuePropCard2Desc,
+      metric: t.landing.valuePropCard2Metric,
       gradient: "from-accent to-warm-coral",
       glowColor: "rgba(248, 87, 81, 0.3)",
     },
@@ -82,9 +82,9 @@ export default function ValuePropositionSection() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
         </svg>
       ),
-      title: "Engagement maximisé",
-      description: "Posts conçus pour générer des interactions",
-      metric: "+300% de portée",
+      title: t.landing.valuePropCard3Title,
+      description: t.landing.valuePropCard3Desc,
+      metric: t.landing.valuePropCard3Metric,
       gradient: "from-warning to-orange-600",
       glowColor: "rgba(248, 163, 93, 0.3)",
     },
@@ -116,18 +116,18 @@ export default function ValuePropositionSection() {
             custom={0.1}
             className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4"
           >
-            Pourquoi choisir{" "}
+            {t.landing.valuePropTitle1}{" "}
             <span className="text-gradient bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              POSTY
+              {t.landing.valuePropTitle2}
             </span>{" "}
-            ?
+            {t.landing.valuePropTitle3}
           </motion.h2>
           <motion.p
             variants={fadeInUp}
             custom={0.2}
             className="text-lg md:text-xl text-text-secondary max-w-2xl mx-auto"
           >
-            Transformez votre présence LinkedIn avec notre IA
+            {t.landing.valuePropSubtitle}
           </motion.p>
         </motion.div>
 
@@ -221,14 +221,14 @@ export default function ValuePropositionSection() {
           className="text-center mt-12 md:mt-16"
         >
           <p className="text-text-muted mb-6">
-            Rejoignez des milliers de professionnels qui utilisent POSTY
+            {t.landing.valuePropJoinCTA}
           </p>
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
             className="px-8 py-4 bg-gradient-to-r from-primary to-accent text-white font-semibold rounded-xl shadow-glow transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background hover:shadow-xl hover:brightness-110"
-            aria-label="Commencer gratuitement"
+            aria-label={t.landing.valuePropStartFree}
           >
-            Commencer gratuitement
+            {t.landing.valuePropStartFree}
           </button>
         </motion.div>
       </div>

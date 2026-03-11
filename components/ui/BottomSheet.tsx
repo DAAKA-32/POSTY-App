@@ -12,6 +12,8 @@ interface BottomSheetProps {
   onClose: () => void;
   title?: string;
   children: ReactNode;
+  /** Fixed footer rendered outside the scrollable area — always visible at bottom */
+  footer?: ReactNode;
   showCloseButton?: boolean;
   /** Height: "auto" | "full" | "half" | number (percentage) */
   height?: "auto" | "full" | "half" | number;
@@ -57,6 +59,7 @@ export default function BottomSheet({
   onClose,
   title,
   children,
+  footer,
   showCloseButton = true,
   height = "auto",
   swipeToDismiss = true,
@@ -360,16 +363,30 @@ export default function BottomSheet({
               style={{
                 padding: '20px',
                 // Extra bottom clearance = 20px standard + safe area (home indicator)
-                paddingBottom: 'max(20px, calc(16px + env(safe-area-inset-bottom, 0px)))',
-                // 85dvh - drag handle (~22px) - header (~58px) = ~85dvh - 80px
-                // Slightly reduced to ensure no overflow at the sheet boundary
-                maxHeight: 'calc(min(85dvh, 85vh) - 80px)',
+                paddingBottom: footer ? '20px' : 'max(20px, calc(16px + env(safe-area-inset-bottom, 0px)))',
+                // 85dvh - drag handle (~22px) - header (~58px) - footer (~80px if present)
+                maxHeight: footer
+                  ? 'calc(min(85dvh, 85vh) - 160px)'
+                  : 'calc(min(85dvh, 85vh) - 80px)',
                 WebkitOverflowScrolling: 'touch',
                 scrollbarWidth: 'none',
               }}
             >
               {children}
             </div>
+
+            {/* Fixed footer — always visible at bottom, outside scroll */}
+            {footer && (
+              <div
+                className="border-t border-gray-200 dark:border-dark-border bg-white dark:bg-dark-card"
+                style={{
+                  padding: '12px 20px',
+                  paddingBottom: 'max(12px, calc(8px + env(safe-area-inset-bottom, 0px)))',
+                }}
+              >
+                {footer}
+              </div>
+            )}
           </motion.div>
         </div>
       )}

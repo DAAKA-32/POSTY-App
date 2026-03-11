@@ -41,7 +41,7 @@ import TemplateFillerModal from "@/components/chat/TemplateFillerModal";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { trackPostGeneration, initAnalytics } from "@/lib/analytics";
 import UniversalChatInput, { UniversalChatInputRef } from "@/components/chat/UniversalChatInput";
-import { getPersonalizedGreeting, getPersonalizedSubtitle, getPersonalizedPlaceholders, getPersonalizedTemplateOrder } from "@/lib/personalization";
+import { getPersonalizedGreeting, getPersonalizedSubtitle, getPersonalizedTemplateOrder } from "@/lib/personalization";
 import { TEMPLATES } from "@/components/chat/PostTemplates";
 import { getGiftRecipientInfo } from "@/lib/plans";
 
@@ -117,7 +117,6 @@ function AppContent() {
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<PostTemplate | null>(null);
   const [inputValue, setInputValue] = useState("");
-  const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [isFocused, setIsFocused] = useState(false);
   const [isInputExpanded, setIsInputExpanded] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
@@ -376,16 +375,6 @@ function AppContent() {
     resizeTextarea();
   }, [inputValue, resizeTextarea]);
 
-  // Rotating placeholder effect
-  useEffect(() => {
-    if (isFocused || inputValue.length > 0) return; // Don't rotate when focused or has content
-
-    const interval = setInterval(() => {
-      setPlaceholderIndex((prev) => (prev + 1) % getPersonalizedPlaceholders(userProfile?.profile, language).length);
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [isFocused, inputValue.length]);
 
   // Force stop recording helper - cleans up all state
   // IMPORTANT: Set ref to false BEFORE abort() so the onend handler doesn't auto-restart
@@ -1024,7 +1013,7 @@ function AppContent() {
                   if (isRecordingRef.current) forceStopRecording();
                   await handleGenerate(message, file);
                 }}
-                placeholder={aiMode === "general" ? [...t.appPage.placeholderGeneral] : getPersonalizedPlaceholders(userProfile?.profile, language)}
+                placeholder={aiMode === "general" ? t.appPage.placeholderGeneralFixed : t.appPage.placeholderFixed}
                 disabled={!canSendMessage}
                 isLoading={isLoading || isStreaming}
                 enableVoiceRecording={speechSupported}

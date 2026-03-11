@@ -67,11 +67,11 @@ export default function HowItWorksSection() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
         </svg>
       ),
-      title: "Décrivez votre idée",
-      description: "Entrez simplement le sujet de votre post. Quelques mots suffisent pour lancer l'IA.",
+      title: t.landing.howItWorksStep1Title,
+      description: t.landing.howItWorksStep1Desc,
       color: "from-primary to-primary-dark",
       glowColor: "rgba(232, 147, 77, 0.3)",
-      example: "Ex: 'Les bénéfices de l'IA en entreprise'",
+      example: t.landing.howItWorksStep1Example,
     },
     {
       number: 2,
@@ -80,11 +80,11 @@ export default function HowItWorksSection() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
         </svg>
       ),
-      title: "L'IA génère 2 versions",
-      description: "GPT-4 crée deux posts optimisés : un storytelling captivant et un format business percutant.",
+      title: t.landing.howItWorksStep2Title,
+      description: t.landing.howItWorksStep2Desc,
       color: "from-accent to-warm-coral",
       glowColor: "rgba(248, 87, 81, 0.3)",
-      example: "Version A: Émotion • Version B: Impact",
+      example: t.landing.howItWorksStep2Example,
     },
     {
       number: 3,
@@ -93,11 +93,11 @@ export default function HowItWorksSection() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       ),
-      title: "Publiez en un clic",
-      description: "Choisissez votre version préférée, ajustez si besoin, et publiez directement sur LinkedIn.",
+      title: t.landing.howItWorksStep3Title,
+      description: t.landing.howItWorksStep3Desc,
       color: "from-warning to-orange-600",
       glowColor: "rgba(248, 163, 93, 0.3)",
-      example: "Post publié en 30 secondes chrono",
+      example: t.landing.howItWorksStep3Example,
     },
   ];
 
@@ -127,18 +127,18 @@ export default function HowItWorksSection() {
             custom={0.1}
             className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4"
           >
-            Comment ça{" "}
+            {t.landing.howItWorksTitle1}{" "}
             <span className="text-gradient bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              fonctionne
+              {t.landing.howItWorksTitle2}
             </span>{" "}
-            ?
+            {t.landing.howItWorksTitle3}
           </motion.h2>
           <motion.p
             variants={fadeInUp}
             custom={0.2}
             className="text-lg md:text-xl text-text-secondary max-w-2xl mx-auto"
           >
-            De l'idée à la publication en 3 étapes simples
+            {t.landing.howItWorksSubtitle}
           </motion.p>
         </motion.div>
 
@@ -149,7 +149,7 @@ export default function HowItWorksSection() {
           variants={staggerContainer}
           className="relative space-y-8 md:space-y-12 list-none"
           role="list"
-          aria-label="Étapes pour utiliser POSTY"
+          aria-label={t.landing.howItWorksSubtitle}
         >
           {/* Vertical connecting line (desktop only) */}
           <div className="hidden md:block absolute left-[60px] top-[80px] bottom-[80px] w-0.5 overflow-hidden">
@@ -197,7 +197,7 @@ export default function HowItWorksSection() {
                     `}
                   >
                     <span className="text-white/80 text-sm font-semibold mb-1">
-                      Étape {step.number}
+                      {t.landing.howItWorksStepLabel} {step.number}
                     </span>
                     <div className="text-white">
                       {step.icon}
@@ -244,14 +244,14 @@ export default function HowItWorksSection() {
           className="text-center mt-12 md:mt-16"
         >
           <p className="text-text-muted mb-6 text-lg">
-            Prêt à transformer votre présence LinkedIn ?
+            {t.landing.howItWorksReadyCTA}
           </p>
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
             className="px-8 py-4 bg-gradient-to-r from-primary to-accent text-white font-semibold rounded-xl shadow-glow transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background desktop-hover-scale"
-            aria-label="Essayer gratuitement"
+            aria-label={t.landing.howItWorksTryFree}
           >
-            Essayer gratuitement
+            {t.landing.howItWorksTryFree}
           </button>
         </motion.div>
       </div>

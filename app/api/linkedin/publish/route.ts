@@ -5,6 +5,7 @@ import {
   saveLinkedInPostAdmin,
   checkUserQuotaAdmin,
   checkWeeklyPublishQuotaAdmin,
+  incrementWeeklyPublishCountAdmin,
 } from "@/lib/firestore-admin";
 import { adminDb, isAdminInitialized } from "@/lib/firebase-admin";
 import { Timestamp } from "firebase-admin/firestore";
@@ -253,6 +254,9 @@ export async function POST(request: NextRequest) {
 
       // Mise à jour de la date de dernière utilisation
       await updateLinkedInLastUsedAdmin(userId);
+
+      // 📊 Increment weekly publish count server-side (ensures accurate quota tracking)
+      await incrementWeeklyPublishCountAdmin(userId);
     } catch (firestoreError) {
       console.error("Failed to save LinkedIn post to Firestore:", firestoreError);
       // On ne fait pas échouer la requête car le post a été publié sur LinkedIn

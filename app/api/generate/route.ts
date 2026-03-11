@@ -25,6 +25,7 @@ import { getPlanFeatures } from "@/lib/plan-features";
 import { planHasFeature, PlanType, getPlanLimits, getMaxTokensForPlan } from "@/lib/plans";
 import { SubscriptionPlan, PostInsights } from "@/types";
 import { detectUrl, removeUrlFromPrompt, extractUrlContent, ExtractedUrlContent } from "@/lib/url-extract";
+import { detectPromptLanguage } from "@/lib/detect-language";
 
 // Streaming configuration for mock responses
 const MOCK_CHUNK_SIZE = 3;
@@ -63,7 +64,7 @@ export async function POST(request: NextRequest) {
     const {
       userId: bodyUserId,
       prompt,
-      language = "fr",
+      language: clientLanguage = "fr",
       userApiKey,
       model = "gpt-4",
       userProfile,
@@ -89,6 +90,12 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // ========== PROMPT LANGUAGE DETECTION ==========
+    // Detect the language of the user's actual prompt and use it for AI generation.
+    // This ensures the AI responds in the same language as the user's message.
+    // Falls back to English if the language is ambiguous or undetectable.
+    const language = detectPromptLanguage(prompt);
+
     if (!userId || typeof userId !== "string") {
       return new Response(JSON.stringify({ error: "userId is required" }), {
         status: 400,
@@ -98,6 +105,7 @@ export async function POST(request: NextRequest) {
 
     // ========== QUOTA CHECK (SERVER-SIDE — HOURLY ROLLING WINDOW) ==========
     // This prevents users from bypassing quota by directly calling the API
+    // Note: Error messages use clientLanguage (UI language), not detected prompt language
     let quotaCheck = null;
     let userPlan: PlanType | null = null;
     if (isAdminInitialized()) {
@@ -110,7 +118,7 @@ export async function POST(request: NextRequest) {
           return new Response(
             JSON.stringify({
               error: "quota_exceeded",
-              message: language === "fr"
+              message: clientLanguage === "fr"
                 ? `Vous avez utilisé vos ${quotaCheck.hourlyLimit} messages cette heure. Réessayez dans ${resetMinutes} min.`
                 : `You've used your ${quotaCheck.hourlyLimit} messages this hour. Try again in ${resetMinutes} min.`,
               hourlyLimit: quotaCheck.hourlyLimit,
@@ -133,7 +141,7 @@ export async function POST(request: NextRequest) {
           return new Response(
             JSON.stringify({
               error: "daily_quota_exceeded",
-              message: language === "fr"
+              message: clientLanguage === "fr"
                 ? isMaxPlan
                   ? "Limite temporaire atteinte. Veuillez réessayer dans quelques instants."
                   : "Quota quotidien atteint. Revenez demain ou passez au plan Max pour une création illimitée."
@@ -155,7 +163,7 @@ export async function POST(request: NextRequest) {
           return new Response(
             JSON.stringify({
               error: "service_unavailable",
-              message: language === "fr"
+              message: clientLanguage === "fr"
                 ? "Service temporairement indisponible. Veuillez réessayer."
                 : "Service temporarily unavailable. Please try again.",
             }),
@@ -168,7 +176,7 @@ export async function POST(request: NextRequest) {
       return new Response(
         JSON.stringify({
           error: "service_unavailable",
-          message: language === "fr"
+          message: clientLanguage === "fr"
             ? "Service temporairement indisponible. Veuillez réessayer."
             : "Service temporarily unavailable. Please try again.",
         }),
@@ -182,7 +190,7 @@ export async function POST(request: NextRequest) {
       return new Response(
         JSON.stringify({
           error: "no_active_plan",
-          message: language === "fr"
+          message: clientLanguage === "fr"
             ? "Vous devez souscrire à un abonnement pour utiliser cette fonctionnalité."
             : "You need an active subscription to use this feature.",
         }),
@@ -197,7 +205,7 @@ export async function POST(request: NextRequest) {
         return new Response(
           JSON.stringify({
             error: "plan_required",
-            message: language === "fr"
+            message: clientLanguage === "fr"
               ? "Le mode double réponse nécessite le plan Pro ou Max."
               : "Dual response mode requires the Pro or Max plan.",
             requiredPlan: "pro",
@@ -210,7 +218,7 @@ export async function POST(request: NextRequest) {
         return new Response(
           JSON.stringify({
             error: "plan_required",
-            message: language === "fr"
+            message: clientLanguage === "fr"
               ? "Les fichiers joints nécessitent le plan Max."
               : "File attachments require the Max plan.",
             requiredPlan: "max",
@@ -226,7 +234,7 @@ export async function POST(request: NextRequest) {
       return new Response(
         JSON.stringify({
           error: "prompt_too_long",
-          message: language === "fr"
+          message: clientLanguage === "fr"
             ? `Votre message dépasse la limite de ${planLimits.maxCharactersPerPrompt} caractères pour votre plan.`
             : `Your message exceeds the ${planLimits.maxCharactersPerPrompt} character limit for your plan.`,
           limit: planLimits.maxCharactersPerPrompt,
@@ -252,7 +260,7 @@ export async function POST(request: NextRequest) {
         return new Response(
           JSON.stringify({
             error: "plan_required",
-            message: language === "fr"
+            message: clientLanguage === "fr"
               ? "Les fichiers joints sont réservés au plan Max."
               : "File attachments require the Max plan.",
             requiredPlan: "max",
@@ -333,7 +341,7 @@ export async function POST(request: NextRequest) {
         return new Response(
           JSON.stringify({
             error: "plan_required",
-            message: language === "fr"
+            message: clientLanguage === "fr"
               ? "L'analyse de contenu d'URL est réservée aux plans Pro et Max."
               : "URL content analysis requires a Pro or Max plan.",
             requiredPlan: "pro",
@@ -651,6 +659,12 @@ async function generateWithOpenAI(
 
     // Build optimized system prompt with synthesized profile (plan-tier aware)
     let systemPrompt = buildOptimizedPrompt(type, language, userProfile, plan);
+
+    // Enforce response language based on prompt detection
+    const langEnforcement = language === "fr"
+      ? "\n\nLANGUE: Réponds STRICTEMENT en français. Tout le contenu généré doit être en français."
+      : "\n\nLANGUAGE: Respond STRICTLY in English. All generated content must be in English.";
+    systemPrompt += langEnforcement;
 
     if (isFollowUp) {
       // Add context for follow-up conversations
@@ -973,9 +987,12 @@ async function generateConversational(
 
   sendEvent("start", { type: "conversational", title });
 
-  // Build messages
+  // Build messages with language enforcement
+  const langEnforcement = language === "fr"
+    ? "\n\nLANGUE: Réponds STRICTEMENT en français."
+    : "\n\nLANGUAGE: Respond STRICTLY in English.";
   const messages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
-    { role: "system", content: CONVERSATIONAL_PROMPT[language] },
+    { role: "system", content: CONVERSATIONAL_PROMPT[language] + langEnforcement },
   ];
 
   // Add conversation history if available

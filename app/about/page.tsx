@@ -7,45 +7,50 @@ import Image from "next/image";
 import { ArrowLeft, Linkedin, Target, Sparkles } from "lucide-react";
 import { AboutPageJsonLd } from "@/components/seo/JsonLd";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // =============================================================================
-// TEAM DATA - Informations réelles uniquement
+// TEAM DATA - Uses i18n for bios and expertise
 // =============================================================================
-const teamMembers = [
-  {
-    name: "Emilien Nepveu",
-    role: "Co-Founder & Co-CEO",
-    operationalRole: "CTO",
-    photo: "/ceo.jpg",
-    linkedIn: "https://www.linkedin.com/in/e-nepveu-58a38127a/",
-    bio: "Responsable de toute la partie technique de Posty. J'ai conçu et développé l'ensemble de l'application : interface utilisateur (UI), expérience utilisateur (UX), et intégration des appels API avec l'intelligence artificielle.",
-    expertise: ["Développement Full-Stack", "UX/UI Design", "Intelligence Artificielle", "Architecture SaaS"],
-  },
-  {
-    name: "Côme Maubert",
-    role: "Co-Founder & Co-CEO",
-    operationalRole: "CFO",
-    photo: "/cmo.jpg",
-    linkedIn: null,
-    bio: "En charge du financement et de la stratégie publicitaire de Posty. Je pilote les campagnes d'acquisition et le développement commercial pour accélérer la croissance de l'entreprise.",
-    expertise: ["Financement", "Publicité & Acquisition", "Stratégie Commerciale"],
-  },
-  {
-    name: "Jean Bouchand",
-    role: "Designer Marketing",
-    operationalRole: null,
-    photo: "/mark.jpg",
-    linkedIn: null,
-    bio: "Responsable de l'identité visuelle et de la stratégie de marque de Posty. Je conçois les supports marketing et m'assure que chaque point de contact reflète notre vision d'un SaaS premium et accessible.",
-    expertise: ["Design Graphique", "Branding", "Marketing Visuel", "UI/UX Design"],
-  },
-];
+function getTeamMembers(t: ReturnType<typeof useLanguage>["t"]) {
+  return [
+    {
+      name: "Emilien Nepveu",
+      role: "Co-Founder & Co-CEO",
+      operationalRole: "CTO",
+      photo: "/ceo.jpg",
+      linkedIn: "https://www.linkedin.com/in/emilien-nepveu-58a38127a/",
+      bio: t.about.emilienBio,
+      expertise: [t.about.emilienExpertise1, t.about.emilienExpertise2, t.about.emilienExpertise3, t.about.emilienExpertise4],
+    },
+    {
+      name: "Côme Maubert",
+      role: "Co-Founder & Co-CEO",
+      operationalRole: "CFO",
+      photo: "/cmo.jpg",
+      linkedIn: "https://www.linkedin.com/in/c%C3%B4me-maubert-delamoriniere-a884693b3/",
+      bio: t.about.comeBio,
+      expertise: [t.about.comeExpertise1, t.about.comeExpertise2, t.about.comeExpertise3],
+    },
+    {
+      name: "Jean Bouchand",
+      role: "Designer Marketing",
+      operationalRole: null as string | null,
+      photo: "/mark.jpg",
+      linkedIn: null as string | null,
+      bio: t.about.jeanBio,
+      expertise: [t.about.jeanExpertise1, t.about.jeanExpertise2, t.about.jeanExpertise3, t.about.jeanExpertise4],
+    },
+  ];
+}
 
 // =============================================================================
 // MAIN COMPONENT
 // =============================================================================
 export default function AboutPage() {
   usePageTitle("about");
+  const { t } = useLanguage();
+  const teamMembers = getTeamMembers(t);
   // Force light mode on About page (public page — always light, like landing & login)
   // Enable full scrolling (mouse wheel, trackpad, touch, keyboard)
   useEffect(() => {
@@ -89,7 +94,7 @@ export default function AboutPage() {
               className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span className="text-sm font-medium">Retour</span>
+              <span className="text-sm font-medium">{t.about.backButton}</span>
             </Link>
             <Link href="/" className="flex items-center gap-2">
               <Image src="/logo.png" alt="Posty" width={32} height={32} className="rounded-lg overflow-hidden" />
@@ -107,10 +112,10 @@ export default function AboutPage() {
             className="text-center mb-16"
           >
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
-              À propos de Posty
+              {t.about.pageTitle}
             </h1>
             <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto">
-              L'outil SaaS qui automatise votre présence LinkedIn grâce à l'IA
+              {t.about.pageSubtitle}
             </p>
           </motion.section>
 
@@ -127,13 +132,11 @@ export default function AboutPage() {
                   <Target className="w-6 h-6 text-white" />
                 </div>
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
-                  Notre mission
+                  {t.about.missionFullTitle}
                 </h2>
               </div>
               <p className="text-gray-700 text-lg leading-relaxed">
-                Posty aide les entrepreneurs et professionnels à créer du contenu LinkedIn de qualité,
-                rapidement et sans effort. Notre IA génère des posts authentiques qui reflètent votre
-                expertise, pour que vous puissiez vous concentrer sur votre activité principale.
+                {t.about.missionText1}
               </p>
             </div>
           </motion.section>
@@ -146,7 +149,7 @@ export default function AboutPage() {
             className="mb-16"
           >
             <h2 className="text-2xl font-bold text-gray-900 mb-6">
-              Ce que fait Posty
+              {t.about.whatPostyDoes}
             </h2>
             <div className="bg-white rounded-2xl p-6 sm:p-8 border border-gray-200 shadow-sm">
               <ul className="space-y-4 text-gray-700">
@@ -155,8 +158,8 @@ export default function AboutPage() {
                     <span className="w-2 h-2 rounded-full bg-warm-orange"></span>
                   </span>
                   <span>
-                    <strong className="text-gray-900">Génération de posts LinkedIn</strong> —
-                    Décrivez votre idée, l'IA crée deux versions : Storytelling et Business.
+                    <strong className="text-gray-900">{t.about.feature1Title}</strong> —
+                    {t.about.feature1Desc}
                   </span>
                 </li>
                 <li className="flex items-start gap-3">
@@ -164,8 +167,8 @@ export default function AboutPage() {
                     <span className="w-2 h-2 rounded-full bg-warm-orange"></span>
                   </span>
                   <span>
-                    <strong className="text-gray-900">Publication directe</strong> —
-                    Connectez votre compte LinkedIn et publiez en un clic.
+                    <strong className="text-gray-900">{t.about.feature2Title}</strong> —
+                    {t.about.feature2Desc}
                   </span>
                 </li>
                 <li className="flex items-start gap-3">
@@ -173,8 +176,8 @@ export default function AboutPage() {
                     <span className="w-2 h-2 rounded-full bg-warm-orange"></span>
                   </span>
                   <span>
-                    <strong className="text-gray-900">Personnalisation</strong> —
-                    L'IA s'adapte à votre secteur, votre ton et votre style de communication.
+                    <strong className="text-gray-900">{t.about.feature3Title}</strong> —
+                    {t.about.feature3Desc}
                   </span>
                 </li>
               </ul>
@@ -189,7 +192,7 @@ export default function AboutPage() {
             className="mb-16"
           >
             <h2 className="text-2xl font-bold text-gray-900 text-center mb-8">
-              L'équipe
+              {t.about.teamSectionTitle}
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
               {teamMembers.map((member, index) => (
@@ -258,10 +261,10 @@ export default function AboutPage() {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-2 px-4 py-2 bg-[#0A66C2] hover:bg-[#004182] text-white rounded-lg transition-colors text-sm font-medium"
-                        aria-label={`Voir le profil LinkedIn de ${member.name}`}
+                        aria-label={`${t.about.viewLinkedIn} - ${member.name}`}
                       >
                         <Linkedin className="w-4 h-4" />
-                        Voir le profil LinkedIn
+                        {t.about.viewLinkedIn}
                       </a>
                     )}
                   </div>
@@ -284,12 +287,10 @@ export default function AboutPage() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-amber-900 mb-2">
-                    À propos de l'IA
+                    {t.about.aiTransparencyTitle}
                   </h3>
                   <p className="text-amber-800 text-sm leading-relaxed">
-                    Posty utilise l'intelligence artificielle pour vous assister dans la création de contenu.
-                    Les posts générés sont des suggestions que vous pouvez personnaliser.
-                    L'IA est un outil d'aide, pas un remplacement de votre expertise.
+                    {t.about.aiTransparencyText1}
                   </p>
                 </div>
               </div>
@@ -304,10 +305,10 @@ export default function AboutPage() {
             className="text-center"
           >
             <h2 className="text-xl font-bold text-gray-900 mb-4">
-              Une question ?
+              {t.about.contactTitle}
             </h2>
             <p className="text-gray-600 mb-4">
-              Contactez-nous via LinkedIn ou par email à{" "}
+              {t.about.contactText}{" "}
               <a
                 href="mailto:postygroup@gmail.com"
                 className="text-warm-orange hover:underline"
@@ -325,7 +326,7 @@ export default function AboutPage() {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm"
-                    aria-label={`Contacter ${member.name} sur LinkedIn`}
+                    aria-label={`${t.about.viewLinkedIn} - ${member.name}`}
                   >
                     <Linkedin className="w-4 h-4 text-[#0A66C2]" />
                     {member.name.split(" ")[0]}
@@ -341,7 +342,7 @@ export default function AboutPage() {
             <div className="flex items-center gap-2">
               <Image src="/logo.png" alt="Posty" width={24} height={24} className="rounded-md overflow-hidden" />
               <span className="text-sm text-gray-600">
-                © {new Date().getFullYear()} Posty. Tous droits réservés.
+                {t.footer.copyright.replace("{year}", String(new Date().getFullYear()))}
               </span>
             </div>
             <div className="flex items-center gap-6">
@@ -349,19 +350,19 @@ export default function AboutPage() {
                 href="/legal/privacy"
                 className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
               >
-                Confidentialité
+                {t.footer.privacy}
               </Link>
               <Link
                 href="/legal/terms"
                 className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
               >
-                CGU
+                {t.footer.terms}
               </Link>
               <Link
                 href="/legal/notices"
                 className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
               >
-                Mentions légales
+                {t.footer.legalNotices}
               </Link>
             </div>
           </div>

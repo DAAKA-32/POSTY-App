@@ -19,8 +19,8 @@ export const metadata: Metadata = {
     "générateur posts LinkedIn",
   ],
   authors: [
-    { name: "Emilien Nepveu", url: "https://www.linkedin.com/in/e-nepveu-58a38127a/" },
-    { name: "Côme Maubert" },
+    { name: "Emilien Nepveu", url: "https://www.linkedin.com/in/emilien-nepveu-58a38127a/" },
+    { name: "Côme Maubert", url: "https://www.linkedin.com/in/c%C3%B4me-maubert-delamoriniere-a884693b3/" },
   ],
   creator: "Posty",
 

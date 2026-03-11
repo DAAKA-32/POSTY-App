@@ -2,17 +2,11 @@
 
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface DemoPreviewProps {
   onSubmit: (message: string) => void;
 }
-
-const DEMO_SUGGESTIONS = [
-  "Post sur le leadership",
-  "Annonce de promotion",
-  "Lecon apprise en startup",
-  "Conseil carriere tech",
-];
 
 /**
  * DemoPreview - Visual mockup preview of the chat interface
@@ -21,6 +15,8 @@ const DEMO_SUGGESTIONS = [
  * with real input that triggers full-screen demo on submit.
  */
 export default function DemoPreview({ onSubmit }: DemoPreviewProps) {
+  const { t } = useLanguage();
+  const suggestions = [t.landing.demoSuggestion1, t.landing.demoSuggestion2, t.landing.demoSuggestion3, t.landing.demoSuggestion4];
   const [inputValue, setInputValue] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -67,13 +63,13 @@ export default function DemoPreview({ onSubmit }: DemoPreviewProps) {
               transition={{ duration: 2, repeat: Infinity }}
               className="w-2 h-2 bg-accent rounded-full"
             />
-            <span className="text-sm text-accent font-medium">Essayez maintenant</span>
+            <span className="text-sm text-accent font-medium">{t.landing.demoTryNowBadge}</span>
           </motion.span>
           <h2 className="text-2xl md:text-4xl font-bold mb-3">
-            <span className="text-silver-shimmer">Testez Posty en</span> <span className="text-gradient">direct</span>
+            <span className="text-silver-shimmer">{t.landing.demoTestLive}</span> <span className="text-gradient">{t.landing.demoTestLiveHighlight}</span>
           </h2>
           <p className="text-text-secondary max-w-md mx-auto">
-            Entrez votre idée et découvrez la magie de l'IA
+            {t.landing.demoInputIdea}
           </p>
         </motion.div>
 
@@ -107,7 +103,7 @@ export default function DemoPreview({ onSubmit }: DemoPreviewProps) {
               </div>
               <div>
                 <p className="text-white font-semibold">Posty</p>
-                <p className="text-xs text-accent">IA disponible</p>
+                <p className="text-xs text-accent">{t.landing.demoAIAvailable}</p>
               </div>
               <motion.div
                 animate={{ opacity: [0.5, 1, 0.5] }}
@@ -115,7 +111,7 @@ export default function DemoPreview({ onSubmit }: DemoPreviewProps) {
                 className="ml-auto flex items-center gap-1.5"
               >
                 <span className="w-2 h-2 bg-accent rounded-full" />
-                <span className="text-xs text-text-muted">En ligne</span>
+                <span className="text-xs text-text-muted">{t.landing.demoOnline}</span>
               </motion.div>
             </div>
 
@@ -130,7 +126,7 @@ export default function DemoPreview({ onSubmit }: DemoPreviewProps) {
                 className="flex justify-end"
               >
                 <div className="max-w-[70%] px-4 py-2.5 bg-primary/20 border border-primary/30 rounded-xl rounded-br-sm">
-                  <p className="text-white/70 text-sm">Ecris un post sur le leadership...</p>
+                  <p className="text-white/70 text-sm">{t.landing.demoMockMessage}</p>
                 </div>
               </motion.div>
 
@@ -147,12 +143,12 @@ export default function DemoPreview({ onSubmit }: DemoPreviewProps) {
                 </div>
                 <div className="flex-1 space-y-2">
                   <div className="px-4 py-2.5 bg-dark-elevated/80 border border-dark-border/50 rounded-xl rounded-tl-sm max-w-[85%]">
-                    <p className="text-xs text-accent font-medium mb-1">Storytelling</p>
-                    <p className="text-white/60 text-sm">Il y a 3 ans, j'ai commis ma plus grande erreur de manager...</p>
+                    <p className="text-xs text-accent font-medium mb-1">{t.landing.demoStorytellingLabel}</p>
+                    <p className="text-white/60 text-sm">{t.landing.demoStorytellingMock}</p>
                   </div>
                   <div className="px-4 py-2.5 bg-dark-elevated/80 border border-dark-border/50 rounded-xl rounded-tl-sm max-w-[85%]">
-                    <p className="text-xs text-primary font-medium mb-1">Business</p>
-                    <p className="text-white/60 text-sm">Les meilleurs leaders ne donnent pas d'ordres...</p>
+                    <p className="text-xs text-primary font-medium mb-1">{t.landing.demoBusinessLabel}</p>
+                    <p className="text-white/60 text-sm">{t.landing.demoBusinessMock}</p>
                   </div>
                 </div>
               </motion.div>
@@ -165,7 +161,7 @@ export default function DemoPreview({ onSubmit }: DemoPreviewProps) {
             <div className="relative px-5 pb-5 pt-3 bg-dark-bg/50 border-t border-dark-border/30">
               {/* Suggestion chips */}
               <div className="flex flex-wrap gap-2 mb-4">
-                {DEMO_SUGGESTIONS.map((suggestion, idx) => (
+                {suggestions.map((suggestion, idx) => (
                   <motion.button
                     key={suggestion}
                     initial={{ opacity: 0, y: 10 }}
@@ -189,7 +185,7 @@ export default function DemoPreview({ onSubmit }: DemoPreviewProps) {
                   type="text"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
-                  placeholder="Décrivez votre idée de post..."
+                  placeholder={t.landing.demoPlaceholder}
                   className="flex-1 px-4 py-3 bg-dark-bg border border-dark-border rounded-xl text-white placeholder-text-muted focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all duration-200"
                 />
                 <motion.button
@@ -199,7 +195,7 @@ export default function DemoPreview({ onSubmit }: DemoPreviewProps) {
                   disabled={!inputValue.trim()}
                   className="px-6 py-3 bg-gradient-to-r from-primary to-accent text-white font-semibold rounded-xl shadow-glow disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                 >
-                  <span className="hidden sm:inline">Générer</span>
+                  <span className="hidden sm:inline">{t.landing.demoGenerate}</span>
                   <svg className="w-5 h-5 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
@@ -217,7 +213,7 @@ export default function DemoPreview({ onSubmit }: DemoPreviewProps) {
           transition={{ delay: 0.25 }}
           className="text-center mt-6 text-xs text-text-muted"
         >
-          Gratuit et sans inscription pour tester
+          {t.landing.demoTrustText}
         </motion.p>
       </div>
     </section>

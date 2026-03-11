@@ -606,13 +606,14 @@ export function EnhancedOrganizationJsonLd() {
         "@id": `${seoConfig.siteUrl}/#founder-emilien`,
         name: "Emilien Nepveu",
         jobTitle: "Co-Founder & Co-CEO, CTO",
-        sameAs: ["https://www.linkedin.com/in/e-nepveu-58a38127a/"],
+        sameAs: ["https://www.linkedin.com/in/emilien-nepveu-58a38127a/"],
       },
       {
         "@type": "Person",
         "@id": `${seoConfig.siteUrl}/#founder-come`,
         name: "Côme Maubert",
         jobTitle: "Co-Founder & Co-CEO, CFO",
+        sameAs: ["https://www.linkedin.com/in/c%C3%B4me-maubert-delamoriniere-a884693b3/"],
       },
     ],
     sameAs: [
@@ -661,7 +662,7 @@ export function AboutPageJsonLd() {
       jobTitle: "Co-Founder & Co-CEO, CTO",
       description: "Co-fondateur de Posty AI, responsable de la partie technique, UX/UI et intégration IA.",
       url: `${seoConfig.siteUrl}/about`,
-      sameAs: ["https://www.linkedin.com/in/e-nepveu-58a38127a/"],
+      sameAs: ["https://www.linkedin.com/in/emilien-nepveu-58a38127a/"],
       worksFor: {
         "@type": "Organization",
         "@id": `${seoConfig.siteUrl}/#organization`,

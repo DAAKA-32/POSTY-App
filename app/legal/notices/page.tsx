@@ -58,12 +58,12 @@ export default function LegalNoticesPage() {
           <p>
             <strong className="text-[#1A1D21]">LinkedIn :</strong>{" "}
             <a
-              href="https://www.linkedin.com/in/e-nepveu-58a38127a/"
+              href="https://www.linkedin.com/in/emilien-nepveu-58a38127a/"
               target="_blank"
               rel="noopener noreferrer"
               className="text-primary hover:underline"
             >
-              linkedin.com/in/e-nepveu-58a38127a
+              linkedin.com/in/emilien-nepveu-58a38127a
             </a>
           </p>
         </div>
