@@ -1,40 +1,25 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef, type ReactNode } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo, type ReactNode } from "react";
 import { useReducedMotion } from "framer-motion";
 import Image from "next/image";
-import { MOCKUP_SCREENS } from "./MockupScreens";
+import { getMockupScreens } from "./MockupScreens";
+import { useLanguage } from "@/contexts/LanguageContext";
 
-const SLIDE_COUNT = MOCKUP_SCREENS.length;
+const SLIDE_COUNT = 5;
 const CAROUSEL_INTERVAL = 5000;
 const SWIPE_THRESHOLD = 40;
 
-/** Screen descriptions for the navigation tabs below the carousel */
-const SCREEN_DESCRIPTIONS: Record<string, { icon: ReactNode; desc: string }> = {
-  "chat-welcome": {
-    icon: <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>,
-    desc: "Décrivez votre idée",
-  },
-  "conversation": {
-    icon: <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
-    desc: "2 versions générées",
-  },
-  "history": {
-    icon: <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
-    desc: "Tous vos posts",
-  },
-  "schedule": {
-    icon: <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
-    desc: "Programmez à l'avance",
-  },
-  "analytics": {
-    icon: <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>,
-    desc: "Suivez vos résultats",
-  },
+/** Icons for the navigation tabs below the carousel */
+const SCREEN_ICONS: Record<string, ReactNode> = {
+  "chat-welcome": <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>,
+  "conversation": <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
+  "history": <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
+  "schedule": <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
+  "analytics": <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>,
 };
 
-// Clone first slide at end for seamless forward loop
-const LOOP_SLIDES = [...MOCKUP_SCREENS, MOCKUP_SCREENS[0]];
+// LOOP_SLIDES is now computed inside the component with useMemo
 
 interface AnimatedMacBookProps {
   isVisible: boolean;
@@ -47,8 +32,13 @@ export default function AnimatedMacBook({
   isVisible,
   onAnimationComplete,
 }: AnimatedMacBookProps) {
+  const { t } = useLanguage();
   const prefersReducedMotion = useReducedMotion();
   const [isMobile, setIsMobile] = useState(false);
+
+  const MOCKUP_SCREENS = useMemo(() => getMockupScreens(t.landing), [t]);
+  const LOOP_SLIDES = useMemo(() => [...MOCKUP_SCREENS, MOCKUP_SCREENS[0]], [MOCKUP_SCREENS]);
+
 
   // Carousel state
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -347,7 +337,7 @@ export default function AnimatedMacBook({
       <div className="mt-6 sm:mt-8 hidden sm:flex justify-center">
         <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto px-2 pb-1 max-w-full scrollbar-hide">
           {MOCKUP_SCREENS.map((screen, i) => {
-            const meta = SCREEN_DESCRIPTIONS[screen.id];
+            const icon = SCREEN_ICONS[screen.id];
             const isActive = i === realIndex;
             return (
               <button
@@ -363,7 +353,7 @@ export default function AnimatedMacBook({
                 aria-label={screen.label}
               >
                 <span className={isActive ? "text-[#F8935D]" : "text-gray-400"}>
-                  {meta?.icon}
+                  {icon}
                 </span>
                 <span>{screen.label}</span>
               </button>

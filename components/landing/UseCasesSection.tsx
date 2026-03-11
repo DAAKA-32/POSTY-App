@@ -53,9 +53,9 @@ export default function UseCasesSection() {
 
   const useCases = [
     {
-      title: "Entrepreneurs",
-      subtitle: "Développez votre marque personnelle",
-      description: "Partagez votre expertise et attirez de nouveaux clients grâce à des posts percutants qui renforcent votre crédibilité.",
+      title: t.landing.useCaseEntrepreneursTitle,
+      subtitle: t.landing.useCaseEntrepreneursSubtitle,
+      description: t.landing.useCaseEntrepreneursDesc,
       icon: (
         <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -64,16 +64,16 @@ export default function UseCasesSection() {
       gradient: "from-primary via-primary-dark to-warning",
       glowColor: "rgba(232, 147, 77, 0.4)",
       benefits: [
-        "Visibilité accrue auprès de votre cible",
-        "Crédibilité renforcée dans votre domaine",
-        "Génération de leads qualifiés",
+        t.landing.useCaseEntrepreneursBenefit1,
+        t.landing.useCaseEntrepreneursBenefit2,
+        t.landing.useCaseEntrepreneursBenefit3,
       ],
       emoji: "🚀",
     },
     {
-      title: "Consultants",
-      subtitle: "Démontrez votre valeur ajoutée",
-      description: "Créez du contenu éducatif qui positionne votre expertise et génère des opportunités de consulting.",
+      title: t.landing.useCaseConsultantsTitle,
+      subtitle: t.landing.useCaseConsultantsSubtitle,
+      description: t.landing.useCaseConsultantsDesc,
       icon: (
         <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
@@ -82,16 +82,16 @@ export default function UseCasesSection() {
       gradient: "from-accent via-warm-coral to-rose-600",
       glowColor: "rgba(248, 87, 81, 0.4)",
       benefits: [
-        "Partage de connaissances valorisé",
-        "Positionnement d'expert reconnu",
-        "Nouvelles missions régulières",
+        t.landing.useCaseConsultantsBenefit1,
+        t.landing.useCaseConsultantsBenefit2,
+        t.landing.useCaseConsultantsBenefit3,
       ],
       emoji: "💡",
     },
     {
-      title: "Recruteurs",
-      subtitle: "Attirez les meilleurs talents",
-      description: "Communiquez votre culture d'entreprise et vos offres d'emploi avec authenticité pour séduire les candidats.",
+      title: t.landing.useCaseRecruitersTitle,
+      subtitle: t.landing.useCaseRecruitersSubtitle,
+      description: t.landing.useCaseRecruitersDesc,
       icon: (
         <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -100,16 +100,16 @@ export default function UseCasesSection() {
       gradient: "from-warning via-orange-600 to-orange-700",
       glowColor: "rgba(248, 163, 93, 0.4)",
       benefits: [
-        "Marque employeur renforcée",
-        "Candidatures qualifiées en hausse",
-        "Réduction du temps de recrutement",
+        t.landing.useCaseRecruitersBenefit1,
+        t.landing.useCaseRecruitersBenefit2,
+        t.landing.useCaseRecruitersBenefit3,
       ],
       emoji: "🎯",
     },
     {
-      title: "Coachs",
-      subtitle: "Inspirez votre communauté",
-      description: "Partagez vos insights et motivez votre audience avec des messages authentiques qui créent de l'engagement.",
+      title: t.landing.useCaseCoachesTitle,
+      subtitle: t.landing.useCaseCoachesSubtitle,
+      description: t.landing.useCaseCoachesDesc,
       icon: (
         <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -118,9 +118,9 @@ export default function UseCasesSection() {
       gradient: "from-accent via-accent-hover to-primary",
       glowColor: "rgba(248, 87, 81, 0.4)",
       benefits: [
-        "Connexion émotionnelle profonde",
-        "Communauté engagée et fidèle",
-        "Conversion en programmes payants",
+        t.landing.useCaseCoachesBenefit1,
+        t.landing.useCaseCoachesBenefit2,
+        t.landing.useCaseCoachesBenefit3,
       ],
       emoji: "✨",
     },
@@ -152,9 +152,9 @@ export default function UseCasesSection() {
             custom={0.1}
             className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4"
           >
-            POSTY pour{" "}
+            {t.landing.useCasesMainTitle}{" "}
             <span className="text-gradient bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              tous les profils
+              {t.landing.useCasesMainTitleHighlight}
             </span>
           </motion.h2>
           <motion.p
@@ -162,7 +162,7 @@ export default function UseCasesSection() {
             custom={0.2}
             className="text-lg md:text-xl text-text-secondary max-w-2xl mx-auto"
           >
-            Quel que soit votre métier, POSTY s'adapte à vos objectifs
+            {t.landing.useCasesSubtitle}
           </motion.p>
         </motion.div>
 
@@ -239,7 +239,7 @@ export default function UseCasesSection() {
                   {/* Benefits list */}
                   <div className="space-y-3">
                     <h4 className="text-sm font-semibold text-white uppercase tracking-wide">
-                      Bénéfices clés
+                      {t.landing.useCasesBenefitsLabel}
                     </h4>
                     <ul className="space-y-2">
                       {useCase.benefits.map((benefit, i) => (
@@ -286,14 +286,14 @@ export default function UseCasesSection() {
           className="text-center mt-12 md:mt-16"
         >
           <p className="text-text-muted mb-6 text-lg">
-            Et vous, quel est votre objectif sur LinkedIn ?
+            {t.landing.useCasesCTA}
           </p>
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
             className="px-8 py-4 bg-gradient-to-r from-primary to-accent text-white font-semibold rounded-xl shadow-glow transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background desktop-hover-scale"
-            aria-label="Découvrir POSTY gratuitement"
+            aria-label={t.landing.useCasesButton}
           >
-            Découvrir POSTY gratuitement
+            {t.landing.useCasesButton}
           </button>
         </motion.div>
       </div>

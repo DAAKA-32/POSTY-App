@@ -13,6 +13,19 @@ export interface MockupScreen {
   label: string;
 }
 
+/** Build translated MockupScreen array from translation object */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function getMockupScreens(landing: any): MockupScreen[] {
+  return [
+    { id: "chat-welcome", src: "/app.png", alt: landing.mockupChatAlt, label: landing.mockupChatLabel },
+    { id: "conversation", src: "/chat.png", alt: landing.mockupConversationAlt, label: landing.mockupConversationLabel },
+    { id: "history", src: "/history.png", alt: landing.mockupHistoryAlt, label: landing.mockupHistoryLabel },
+    { id: "schedule", src: "/schedule.png", alt: landing.mockupScheduleAlt, label: landing.mockupScheduleLabel },
+    { id: "analytics", src: "/dashboard.png", alt: landing.mockupAnalyticsAlt, label: landing.mockupAnalyticsLabel },
+  ];
+}
+
+/** @deprecated Use getMockupScreens(t.landing) instead for i18n support */
 export const MOCKUP_SCREENS: MockupScreen[] = [
   { id: "chat-welcome", src: "/app.png", alt: "Vue principale de l'application Posty", label: "Chat" },
   { id: "conversation", src: "/chat.png", alt: "Conversation avec l'IA Posty", label: "Conversation" },

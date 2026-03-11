@@ -6,6 +6,7 @@ import {
   useState,
   useEffect,
   useCallback,
+  useMemo,
   ReactNode,
 } from "react";
 import { fr } from "@/lib/i18n/translations/fr";
@@ -97,14 +98,20 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     }
   }, []);
 
+  // Memoize context value so consumers only re-render when language actually changes.
+  // Without this, every LanguageProvider re-render (e.g., from parent auth state changes)
+  // creates a new value object, which can cause React to skip descendant updates in edge cases.
+  const contextValue = useMemo<LanguageContextType>(
+    () => ({
+      language,
+      t: translationMap[language],
+      setLanguage,
+    }),
+    [language, setLanguage]
+  );
+
   return (
-    <LanguageContext.Provider
-      value={{
-        language,
-        t: translationMap[language],
-        setLanguage,
-      }}
-    >
+    <LanguageContext.Provider value={contextValue}>
       {children}
     </LanguageContext.Provider>
   );

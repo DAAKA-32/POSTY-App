@@ -4057,6 +4057,8 @@ function PricingSection() {
           <BillingToggle
             isYearly={billingPeriod === "yearly"}
             onChange={(isYearly) => setBillingPeriod(isYearly ? "yearly" : "monthly")}
+            monthlyLabel={t.settings.billingMonthly}
+            yearlyLabel={t.settings.billingYearly}
             savingsLabel={t.landing.pricingSavingsLabel}
             showSavings={true}
           />
@@ -4437,6 +4439,7 @@ function Footer() {
 // =============================================================================
 export default function LandingPage() {
   const { user, userProfile, loading } = useAuth();
+  const { language: currentLang } = useLanguage();
   const router = useRouter();
 
   // Force light mode on landing page
@@ -4486,7 +4489,7 @@ export default function LandingPage() {
       {/* Aurora background — fixed full viewport, stars stay in place on scroll */}
       <AuroraBackground />
       <Navbar />
-      <div className="text-gray-900 relative">
+      <div key={currentLang} className="text-gray-900 relative">
         {/* Hero Demo Section — opening with descent animation */}
         <DemoSection />
 

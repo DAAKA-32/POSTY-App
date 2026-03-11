@@ -151,7 +151,7 @@ export default function BillingToggle({
             checked={isYearly}
             onChange={(e) => handleChange(e.target.checked)}
             className="sr-only peer"
-            aria-label={isYearly ? "Facturation annuelle sélectionnée" : "Facturation mensuelle sélectionnée"}
+            aria-label={isYearly ? `${yearlyLabel} selected` : `${monthlyLabel} selected`}
           />
 
           {/* Slider track - orange when yearly, gray when monthly */}
