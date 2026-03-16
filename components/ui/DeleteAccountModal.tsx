@@ -262,7 +262,7 @@ export default function DeleteAccountModal({
       <BottomSheet
         isOpen={isOpen}
         onClose={step === "success" ? () => {} : handleClose}
-        title={step === "success" ? "" : "Supprimer votre compte"}
+        title={step === "success" ? "" : t.modals.deleteAccountTitle}
         swipeToDismiss={!isDeleting && step !== "success"}
       >
         {content}
@@ -274,7 +274,7 @@ export default function DeleteAccountModal({
     <Modal
       isOpen={isOpen}
       onClose={step === "success" ? () => {} : handleClose}
-      title={step === "success" ? "" : "Supprimer votre compte"}
+      title={step === "success" ? "" : t.modals.deleteAccountTitle}
       size="md"
     >
       {content}

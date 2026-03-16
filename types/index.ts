@@ -115,7 +115,7 @@ export interface UserProfile {
   displayName: string;
   photoURL: string | null;
   bio?: string;
-  language?: "fr" | "en";
+  language?: "fr" | "en" | "es" | "de" | "it" | "pt" | "nl" | "zh" | "ja" | "ko";
   onboardingComplete: boolean;
   // Personal branding settings
   branding?: PersonalBranding;

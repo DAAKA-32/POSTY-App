@@ -1,12 +1,23 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback, memo } from "react";
+import { useEffect, useState, useRef, useCallback, memo, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence, useReducedMotion, useInView, useScroll, useTransform, useMotionValue, useSpring, useMotionTemplate } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { languageNames } from "@/lib/i18n";
+import type { Language } from "@/lib/i18n";
+
+const LANG_FLAGS: Record<Language, string> = {
+  en: "🇺🇸", fr: "🇫🇷", es: "🇪🇸", de: "🇩🇪", it: "🇮🇹",
+  pt: "🇵🇹", nl: "🇳🇱", zh: "🇨🇳", ja: "🇯🇵", ko: "🇰🇷",
+};
+const LANG_SHORT: Record<Language, string> = {
+  en: "EN", fr: "FR", es: "ES", de: "DE", it: "IT",
+  pt: "PT", nl: "NL", zh: "中文", ja: "日本", ko: "한국",
+};
 import { getAllPlans, getPaidPlans, PlanConfig, GUARANTEE_PERIOD_DAYS } from "@/lib/plans";
 import BillingToggle from "@/components/ui/BillingToggle";
 import PricingCard from "@/components/pricing/PricingCard";
@@ -150,8 +161,19 @@ function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState<string>("");
+  const [langOpen, setLangOpen] = useState(false);
+  const langRef = useRef<HTMLDivElement>(null);
   const { t, language, setLanguage } = useLanguage();
   const NAV_LINKS_DATA = getNavLinks(t);
+
+  // Close language dropdown on outside click
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (langRef.current && !langRef.current.contains(e.target as Node)) setLangOpen(false);
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
 
   // Scroll detection — uses native window scroll
   useEffect(() => {
@@ -278,15 +300,32 @@ function Navbar() {
 
               {/* CTA Desktop */}
               <div className="hidden md:flex items-center gap-2">
-                {/* Language Switcher */}
-                <button
-                  onClick={() => setLanguage(language === "fr" ? "en" : "fr")}
-                  className="px-3 py-2 text-[13px] font-medium text-gray-500 hover:text-gray-900 rounded-xl hover:bg-gray-100 transition-all duration-200 flex items-center gap-1.5"
-                  aria-label="Switch language"
-                >
-                  <span className="text-base">{language === "fr" ? "\u{1F1EB}\u{1F1F7}" : "\u{1F1FA}\u{1F1F8}"}</span>
-                  <span>{language === "fr" ? "FR" : "EN"}</span>
-                </button>
+                {/* Language Switcher Dropdown */}
+                <div ref={langRef} className="relative">
+                  <button
+                    onClick={() => setLangOpen(!langOpen)}
+                    className="px-3 py-2 text-[13px] font-medium text-gray-500 hover:text-gray-900 rounded-xl hover:bg-gray-100 transition-all duration-200 flex items-center gap-1.5"
+                    aria-label="Switch language"
+                  >
+                    <span className="text-base">{LANG_FLAGS[language]}</span>
+                    <span>{LANG_SHORT[language]}</span>
+                    <svg className={`w-3 h-3 transition-transform ${langOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                  </button>
+                  {langOpen && (
+                    <div className="absolute right-0 top-full mt-1 w-44 bg-white rounded-xl shadow-lg border border-gray-200 py-1 z-50 max-h-80 overflow-y-auto">
+                      {(Object.keys(languageNames) as Language[]).map((code) => (
+                        <button
+                          key={code}
+                          onClick={() => { setLanguage(code); setLangOpen(false); }}
+                          className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors ${language === code ? "bg-[#F8935D]/10 text-[#F8935D] font-medium" : "text-gray-700 hover:bg-gray-50"}`}
+                        >
+                          <span>{LANG_FLAGS[code]}</span>
+                          <span>{languageNames[code]}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 <Link
                   href="/login"
                   className="px-4 py-2 text-[13px] font-medium text-gray-600 hover:text-gray-900 rounded-xl hover:bg-gray-100 transition-all duration-200"
@@ -4330,9 +4369,6 @@ function Footer() {
               <a href="https://www.linkedin.com/company/posty" target="_blank" rel="noopener noreferrer" className="w-7 h-7 rounded-md bg-gray-100 hover:bg-[#F8935D]/10 flex items-center justify-center text-gray-400 hover:text-[#F8935D] transition-colors" aria-label="LinkedIn">
                 <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" /></svg>
               </a>
-              <a href="https://x.com/posty" target="_blank" rel="noopener noreferrer" className="w-7 h-7 rounded-md bg-gray-100 hover:bg-[#F8935D]/10 flex items-center justify-center text-gray-400 hover:text-[#F8935D] transition-colors" aria-label="X (Twitter)">
-                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
-              </a>
             </div>
           </div>
 
@@ -4390,9 +4426,6 @@ function Footer() {
               <div className="flex items-center gap-3 mt-4">
                 <a href="https://www.linkedin.com/company/posty" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-lg bg-gray-100 hover:bg-[#F8935D]/10 flex items-center justify-center text-gray-400 hover:text-[#F8935D] transition-all duration-200" aria-label="LinkedIn">
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" /></svg>
-                </a>
-                <a href="https://x.com/posty" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-lg bg-gray-100 hover:bg-[#F8935D]/10 flex items-center justify-center text-gray-400 hover:text-[#F8935D] transition-all duration-200" aria-label="X (Twitter)">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
                 </a>
               </div>
             </div>

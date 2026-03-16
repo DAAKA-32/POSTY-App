@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Modal from "@/components/ui/Modal";
 import BottomSheet from "@/components/ui/BottomSheet";
@@ -10,9 +10,10 @@ import LinkedInConnectButton, { LinkedInIcon } from "./LinkedInConnectButton";
 import { LinkedInConnectionData } from "@/lib/firestore";
 import { useQuota } from "@/contexts/QuotaContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
+import { useScheduling } from "@/contexts/SchedulingContext";
 import toast from "@/components/ui/Toast";
 import PlatformSelector from "@/components/publish/PlatformSelector";
-import { Platform } from "@/types";
+import { Platform, SchedulePlatform } from "@/types";
 import { usePlatformSelection } from "@/hooks/usePlatformSelection";
 import { triggerHaptic } from "@/hooks/useHapticFeedback";
 import { useFacebook } from "@/contexts/FacebookContext";
@@ -21,6 +22,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { postToLinkedInWithMedia, postToLinkedInWithVideo } from "@/lib/linkedin";
 import { shouldShowFreeSignature, FREE_PLAN_SIGNATURE } from "@/lib/plans";
+import IOSTimePicker, { SmartTimeSuggestions, formatTimeLocale } from "@/components/ui/IOSTimePicker";
+import { useRouter } from "next/navigation";
 
 // Image upload constraints (match backend)
 const MAX_IMAGES = 9;
@@ -47,6 +50,18 @@ function getVideoFormatLabel(type: string): string {
   return map[type] || "Vidéo";
 }
 
+// Scheduling constants
+const MIN_SCHEDULE_BUFFER_MINUTES = 5;
+
+// Scheduling helpers
+const getUserTimezone = (): string => Intl.DateTimeFormat().resolvedOptions().timeZone;
+const getDaysShort = (t: any) => [t.scheduler.daysSun, t.scheduler.daysMon, t.scheduler.daysTue, t.scheduler.daysWed, t.scheduler.daysThu, t.scheduler.daysFri, t.scheduler.daysSat];
+const getDaysFull = (t: any) => [t.scheduler.daysSundayFull, t.scheduler.daysMondayFull, t.scheduler.daysTuesdayFull, t.scheduler.daysWednesdayFull, t.scheduler.daysThursdayFull, t.scheduler.daysFridayFull, t.scheduler.daysSaturdayFull];
+const getMonths = (t: any) => [t.scheduler.monthJanuary, t.scheduler.monthFebruary, t.scheduler.monthMarch, t.scheduler.monthApril, t.scheduler.monthMay, t.scheduler.monthJune, t.scheduler.monthJuly, t.scheduler.monthAugust, t.scheduler.monthSeptember, t.scheduler.monthOctober, t.scheduler.monthNovember, t.scheduler.monthDecember];
+
+// Publish mode
+type PublishMode = "now" | "schedule";
+
 // Visibility options for LinkedIn posts
 type PostVisibility = "PUBLIC" | "CONNECTIONS";
 
@@ -72,6 +87,11 @@ interface PublishToLinkedInModalProps {
   content: string;
   linkedInConnection: LinkedInConnectionData | null;
   onPublish: (editedContent: string, visibility: PostVisibility) => Promise<{ success: boolean; postUrl?: string; error?: string }>;
+  // Scheduling props
+  postId?: string;
+  title?: string;
+  initialMode?: PublishMode;
+  onScheduleSuccess?: (scheduledPostId: string) => void;
 }
 
 export default function PublishToLinkedInModal({
@@ -80,6 +100,10 @@ export default function PublishToLinkedInModal({
   content: initialContent,
   linkedInConnection,
   onPublish,
+  postId,
+  title,
+  initialMode = "now",
+  onScheduleSuccess,
 }: PublishToLinkedInModalProps) {
   const { user } = useAuth();
   const { t, language } = useLanguage();
@@ -89,12 +113,14 @@ export default function PublishToLinkedInModal({
     hasWeeklyPublishLimit, weeklyPublishUsed, weeklyPublishLimit: wpLimit,
     weeklyPublishRemaining, canPublishThisWeek,
   } = useQuota();
-  const { isMaxPlan: subIsMax, currentPlan: subPlan } = useSubscription();
+  const { isMaxPlan: subIsMax, currentPlan: subPlan, canSchedulePosts } = useSubscription();
   // Use either context to detect Max — SubscriptionContext is more reliable (normalizes plan names)
   const isMaxPlan = subIsMax || quotaIsMax;
   const currentPlan = subPlan || quotaPlan;
   const { isConnected: facebookConnected, publishToFacebook } = useFacebook();
   const { isConnected: threadsConnected, publishToThreads } = useThreads();
+  const { schedulePost, isUploading } = useScheduling();
+  const router = useRouter();
   const [step, setStep] = useState<PublishStep>("preview");
   const [editedContent, setEditedContent] = useState(initialContent);
   const [visibility, setVisibility] = useState<PostVisibility>("PUBLIC");
@@ -122,6 +148,116 @@ export default function PublishToLinkedInModal({
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [videoDuration, setVideoDuration] = useState<number | null>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
+
+  // Scheduling state
+  const [publishMode, setPublishMode] = useState<PublishMode>(initialMode);
+  const [showSchedulePicker, setShowSchedulePicker] = useState(false);
+  const [scheduledDate, setScheduledDate] = useState<Date>(() => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(9, 0, 0, 0);
+    return tomorrow;
+  });
+  const [scheduledTime, setScheduledTime] = useState({ hour: 9, minute: 0 });
+  const [scheduleConfirmed, setScheduleConfirmed] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [scheduleStep, setScheduleStep] = useState<"date" | "time">("date");
+  const [isScheduleSubmitting, setIsScheduleSubmitting] = useState(false);
+  const timezone = useMemo(() => getUserTimezone(), []);
+
+  // Real-time clock for schedule validation
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const currentTimeRef = useRef(new Date());
+
+  useEffect(() => {
+    if (!isOpen || publishMode !== "schedule") return;
+    const now = new Date();
+    setCurrentTime(now);
+    currentTimeRef.current = now;
+    const interval = setInterval(() => {
+      const newTime = new Date();
+      setCurrentTime(newTime);
+      currentTimeRef.current = newTime;
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [isOpen, publishMode]);
+
+  // Check if user can schedule
+  const schedulePermission = canSchedulePosts();
+  const canSchedule = schedulePermission.allowed;
+
+  // Calendar days
+  const calendarDays = useMemo(() => {
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDay = firstDay.getDay();
+    const days: (Date | null)[] = [];
+    for (let i = 0; i < startDay; i++) days.push(null);
+    for (let day = 1; day <= lastDay.getDate(); day++) days.push(new Date(year, month, day));
+    return days;
+  }, [currentMonth]);
+
+  const isDateDisabled = useCallback((date: Date | null) => {
+    if (!date) return true;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (date < today) return true;
+    const checkDate = new Date(date);
+    checkDate.setHours(0, 0, 0, 0);
+    if (checkDate.getTime() === today.getTime()) {
+      const now = currentTimeRef.current;
+      const currentTotalMinutes = now.getHours() * 60 + now.getMinutes() + MIN_SCHEDULE_BUFFER_MINUTES;
+      return currentTotalMinutes >= 23 * 60 + 30;
+    }
+    return false;
+  }, []);
+
+  const isDateToday = useCallback((date: Date | null) => {
+    if (!date) return false;
+    const today = new Date();
+    return date.getDate() === today.getDate() && date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear();
+  }, []);
+
+  const isDateSelected = useCallback((date: Date | null) => {
+    if (!date) return false;
+    return date.getDate() === scheduledDate.getDate() && date.getMonth() === scheduledDate.getMonth() && date.getFullYear() === scheduledDate.getFullYear();
+  }, [scheduledDate]);
+
+  const isTimeDisabled = useCallback((hour: number, minute: number) => {
+    if (!isDateToday(scheduledDate)) return false;
+    const now = currentTimeRef.current;
+    const currentTotalMinutes = now.getHours() * 60 + now.getMinutes() + MIN_SCHEDULE_BUFFER_MINUTES;
+    return hour * 60 + minute <= currentTotalMinutes;
+  }, [scheduledDate, isDateToday]);
+
+  const getFirstAvailableTimeForToday = useCallback(() => {
+    const now = currentTimeRef.current;
+    let nextHour = now.getHours();
+    let nextMinute = now.getMinutes() < 30 ? 30 : 0;
+    if (now.getMinutes() >= 30) nextHour++;
+    nextMinute += MIN_SCHEDULE_BUFFER_MINUTES;
+    if (nextMinute >= 60) { nextHour++; nextMinute -= 60; }
+    nextMinute = nextMinute < 30 ? 30 : 0;
+    if (nextMinute === 0 && now.getMinutes() >= 30) nextHour++;
+    return { hour: Math.min(nextHour, 23), minute: nextMinute };
+  }, []);
+
+  const todayHasValidTimeSlots = useCallback(() => {
+    const now = currentTimeRef.current;
+    return now.getHours() * 60 + now.getMinutes() + MIN_SCHEDULE_BUFFER_MINUTES < 23 * 60 + 30;
+  }, []);
+
+  const formattedScheduleDateTime = useMemo(() => {
+    const date = new Date(scheduledDate);
+    date.setHours(scheduledTime.hour, scheduledTime.minute, 0, 0);
+    const dayName = getDaysFull(t)[date.getDay()];
+    const day = date.getDate();
+    const month = getMonths(t)[date.getMonth()];
+    const time = formatTimeLocale(scheduledTime.hour, scheduledTime.minute, t.ui.timeLocale);
+    return `${dayName} ${day} ${month} — ${time}`;
+  }, [scheduledDate, scheduledTime, t]);
 
   // Connected platforms
   const connectedPlatforms: Platform[] = [
@@ -213,9 +349,20 @@ export default function PublishToLinkedInModal({
       setVideo(null);
       setVideoPreview(null);
       setVideoDuration(null);
+      // Reset scheduling state
+      setPublishMode(initialMode);
+      setShowSchedulePicker(false);
+      setScheduleConfirmed(false);
+      setScheduleStep("date");
+      setCurrentMonth(new Date());
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(9, 0, 0, 0);
+      setScheduledDate(tomorrow);
+      setScheduledTime({ hour: 9, minute: 0 });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, initialContent]);
+  }, [isOpen, initialContent, initialMode]);
 
   // Cleanup object URLs on unmount
   useEffect(() => {
@@ -333,11 +480,27 @@ export default function PublishToLinkedInModal({
       triggerHaptic("error");
       return;
     }
-    // Max plan = unlimited, never block. Pro = check daily quota.
-    if (!isMaxPlan && !canPublish) {
-      triggerHaptic("warning");
-      setShowUpgradeModal(true);
-      return;
+
+    if (publishMode === "schedule") {
+      // Validate schedule is confirmed
+      if (!scheduleConfirmed) {
+        triggerHaptic("error");
+        toast.error(t.publish.scheduleRequired);
+        return;
+      }
+      // Validate scheduling permission
+      if (!canSchedule) {
+        triggerHaptic("warning");
+        setShowUpgradeModal(true);
+        return;
+      }
+    } else {
+      // Max plan = unlimited, never block. Pro = check daily quota.
+      if (!isMaxPlan && !canPublish) {
+        triggerHaptic("warning");
+        setShowUpgradeModal(true);
+        return;
+      }
     }
     // Haptic feedback for proceeding to confirmation
     triggerHaptic("medium");
@@ -466,6 +629,77 @@ export default function PublishToLinkedInModal({
     setProgress(0);
   };
 
+  // Handle schedule submission
+  const handleScheduleSubmit = async () => {
+    if (!scheduleConfirmed) return;
+
+    const scheduledAt = new Date(scheduledDate);
+    scheduledAt.setHours(scheduledTime.hour, scheduledTime.minute, 0, 0);
+
+    // Final validation: ensure time is still valid
+    const now = new Date();
+    const minimumTime = new Date(now.getTime() + MIN_SCHEDULE_BUFFER_MINUTES * 60 * 1000);
+    if (scheduledAt <= minimumTime) {
+      triggerHaptic("error");
+      toast.error(t.scheduler.timePassedToast);
+      setScheduleConfirmed(false);
+      setShowSchedulePicker(true);
+      return;
+    }
+
+    setIsScheduleSubmitting(true);
+    triggerHaptic("impact");
+    setStep("publishing");
+    setProgress(0);
+
+    // Progress animation for scheduling
+    progressIntervalRef.current = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 90) return prev;
+        return Math.min(prev + 8, 90);
+      });
+    }, 150);
+
+    try {
+      // Map first selected platform to schedule platform
+      const schedulePlatform = (selectedPlatforms[0] || "linkedin") as SchedulePlatform;
+
+      const result = await schedulePost({
+        content: editedContent,
+        postId,
+        title,
+        scheduledAt,
+        timezone,
+        platform: schedulePlatform,
+        postType: "feed",
+        imageFiles: images.length > 0 ? images : undefined,
+      });
+
+      if (result.success && result.scheduledPostId) {
+        setProgress(100);
+        await new Promise((resolve) => setTimeout(resolve, 600));
+        triggerHaptic("success");
+        setStep("success");
+        toast.success(t.publish.postScheduled);
+        onScheduleSuccess?.(result.scheduledPostId);
+      } else {
+        triggerHaptic("error");
+        setError(t.publish.genericError);
+        setStep("error");
+      }
+    } catch (err) {
+      triggerHaptic("error");
+      setError(err instanceof Error ? err.message : t.publish.genericError);
+      setStep("error");
+    } finally {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
+      setIsScheduleSubmitting(false);
+    }
+  };
+
   const isConnected = !!linkedInConnection;
   const characterCount = editedContent.length;
   const linkedInLimit = 3000;
@@ -474,8 +708,9 @@ export default function PublishToLinkedInModal({
   const isOverThreadsLimit = selectedPlatforms.includes("threads") && characterCount > threadsLimit;
   const isOverLimit = isOverLinkedInLimit || isOverThreadsLimit;
   const noPlatformSelected = selectedPlatforms.length === 0;
-  const weeklyLimitReached = hasWeeklyPublishLimit && !canPublishThisWeek;
-  const cannotPublish = isOverLimit || !editedContent.trim() || noPlatformSelected || weeklyLimitReached;
+  const weeklyLimitReached = publishMode === "now" && hasWeeklyPublishLimit && !canPublishThisWeek;
+  const scheduleNotReady = publishMode === "schedule" && !scheduleConfirmed;
+  const cannotPublishOrSchedule = isOverLimit || !editedContent.trim() || noPlatformSelected || weeklyLimitReached || scheduleNotReady;
 
   // Content to render inside modal/bottom sheet
   const renderContent = () => {
@@ -831,6 +1066,350 @@ export default function PublishToLinkedInModal({
               </div>
             </div>
 
+            {/* ── Publishing Options ─────────────────────────────── */}
+            <div>
+              <p className="text-xs text-text-muted font-medium uppercase tracking-wide mb-2">
+                {t.publish.publishingOptions}
+              </p>
+              <div className="space-y-2">
+                {/* Publish Now */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPublishMode("now");
+                    setShowSchedulePicker(false);
+                    triggerHaptic("selection");
+                  }}
+                  className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all duration-200 text-left ${
+                    publishMode === "now"
+                      ? "border-primary bg-primary/10"
+                      : "border-gray-200 dark:border-dark-border bg-gray-50 dark:bg-dark-bg hover:border-gray-300 dark:hover:border-dark-hover"
+                  }`}
+                >
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                    publishMode === "now" ? "border-primary" : "border-gray-300 dark:border-dark-border"
+                  }`}>
+                    {publishMode === "now" && (
+                      <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className={`text-sm font-medium block ${
+                      publishMode === "now" ? "text-gray-900 dark:text-white" : "text-text-secondary"
+                    }`}>
+                      {t.publish.publishNow}
+                    </span>
+                    <span className="text-xs text-text-muted">{t.publish.publishNowDesc}</span>
+                  </div>
+                  <svg className={`w-5 h-5 shrink-0 ${publishMode === "now" ? "text-primary" : "text-text-muted"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                  </svg>
+                </button>
+
+                {/* Schedule Post */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPublishMode("schedule");
+                    if (!scheduleConfirmed) setShowSchedulePicker(true);
+                    triggerHaptic("selection");
+                  }}
+                  className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all duration-200 text-left ${
+                    publishMode === "schedule"
+                      ? "border-primary bg-primary/10"
+                      : "border-gray-200 dark:border-dark-border bg-gray-50 dark:bg-dark-bg hover:border-gray-300 dark:hover:border-dark-hover"
+                  }`}
+                >
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                    publishMode === "schedule" ? "border-primary" : "border-gray-300 dark:border-dark-border"
+                  }`}>
+                    {publishMode === "schedule" && (
+                      <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className={`text-sm font-medium block ${
+                      publishMode === "schedule" ? "text-gray-900 dark:text-white" : "text-text-secondary"
+                    }`}>
+                      {t.publish.schedulePost}
+                    </span>
+                    <span className="text-xs text-text-muted">{t.publish.schedulePostDesc}</span>
+                  </div>
+                  <svg className={`w-5 h-5 shrink-0 ${publishMode === "schedule" ? "text-primary" : "text-text-muted"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Schedule confirmed badge */}
+              {publishMode === "schedule" && scheduleConfirmed && !showSchedulePicker && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-3 flex items-center justify-between p-3 bg-accent/10 border border-accent/30 rounded-xl"
+                >
+                  <div className="flex items-center gap-2">
+                    <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                      <p className="text-xs text-text-muted">{t.publish.scheduledFor}</p>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">{formattedScheduleDateTime}</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowSchedulePicker(true);
+                      setScheduleStep("date");
+                    }}
+                    className="text-xs text-primary font-medium hover:underline min-h-[44px] px-2 flex items-center"
+                  >
+                    {t.publish.changeSchedule}
+                  </button>
+                </motion.div>
+              )}
+
+              {/* Pro required notice for scheduling */}
+              {publishMode === "schedule" && !canSchedule && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-3 flex items-center gap-3 p-3 bg-warning/10 border border-warning/30 rounded-xl"
+                >
+                  <svg className="w-5 h-5 text-warning shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{t.publish.proRequiredForSchedule}</p>
+                    <button
+                      onClick={() => { onClose(); router.push("/pricing"); }}
+                      className="text-xs text-primary font-medium mt-1 hover:underline"
+                    >
+                      {t.publish.upgradeToSchedule}
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* ── Inline Schedule Picker ─────────────────────────── */}
+              <AnimatePresence>
+                {publishMode === "schedule" && showSchedulePicker && canSchedule && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="mt-4 bg-gray-50 dark:bg-dark-elevated rounded-2xl p-4 border border-gray-200 dark:border-dark-border">
+                      <AnimatePresence mode="wait">
+                        {scheduleStep === "date" && (
+                          <motion.div
+                            key="schedule-date"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                          >
+                            <div className="text-center mb-3">
+                              <h4 className="text-sm font-semibold text-gray-900 dark:text-white">{t.scheduler.chooseDate}</h4>
+                            </div>
+
+                            {/* Quick date shortcuts */}
+                            <div className="grid grid-cols-4 gap-1.5 mb-3">
+                              {[
+                                { label: t.scheduler.todayShort, days: 0, requiresValid: true },
+                                { label: t.scheduler.tomorrow, days: 1, requiresValid: false },
+                                { label: t.scheduler.in3Days, days: 3, requiresValid: false },
+                                { label: t.scheduler.oneWeek, days: 7, requiresValid: false },
+                              ].map(({ label, days, requiresValid }) => {
+                                const date = new Date();
+                                date.setDate(date.getDate() + days);
+                                date.setHours(0, 0, 0, 0);
+                                const selected = isDateSelected(date);
+                                const unavailable = requiresValid && !todayHasValidTimeSlots();
+                                return (
+                                  <button
+                                    key={days}
+                                    onClick={() => {
+                                      if (!unavailable && !isDateDisabled(date)) {
+                                        triggerHaptic("light");
+                                        setScheduledDate(date);
+                                        if (isDateToday(date)) {
+                                          setScheduledTime(getFirstAvailableTimeForToday());
+                                        } else {
+                                          setScheduledTime({ hour: 9, minute: 0 });
+                                        }
+                                        setScheduleStep("time");
+                                      }
+                                    }}
+                                    disabled={unavailable}
+                                    className={`p-2 rounded-lg text-center text-xs font-medium transition-all ${
+                                      unavailable ? "opacity-40 cursor-not-allowed" :
+                                      selected ? "bg-primary text-white" :
+                                      "bg-white dark:bg-dark-card hover:bg-gray-100 dark:hover:bg-dark-hover text-text-secondary border border-gray-200 dark:border-dark-border"
+                                    }`}
+                                  >
+                                    {label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+
+                            {/* Compact Calendar */}
+                            <div className="bg-white dark:bg-dark-card rounded-xl p-3 border border-gray-200 dark:border-dark-border">
+                              <div className="flex items-center justify-between mb-2">
+                                <button
+                                  onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}
+                                  className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-hover min-w-[36px] min-h-[36px] flex items-center justify-center"
+                                >
+                                  <svg className="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                  </svg>
+                                </button>
+                                <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                                  {getMonths(t)[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+                                </span>
+                                <button
+                                  onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}
+                                  className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-hover min-w-[36px] min-h-[36px] flex items-center justify-center"
+                                >
+                                  <svg className="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                  </svg>
+                                </button>
+                              </div>
+                              <div className="grid grid-cols-7 gap-0.5 mb-1">
+                                {getDaysShort(t).map((day: string) => (
+                                  <div key={day} className="text-center text-[10px] text-text-muted font-medium py-1 uppercase">
+                                    {day}
+                                  </div>
+                                ))}
+                              </div>
+                              <div className="grid grid-cols-7 gap-0.5">
+                                {calendarDays.map((date, index) => {
+                                  const selected = isDateSelected(date);
+                                  const today = isDateToday(date);
+                                  const disabled = isDateDisabled(date);
+                                  return (
+                                    <button
+                                      key={index}
+                                      onClick={() => {
+                                        if (date && !disabled) {
+                                          triggerHaptic("light");
+                                          setScheduledDate(date);
+                                          if (isDateToday(date)) {
+                                            setScheduledTime(getFirstAvailableTimeForToday());
+                                          } else {
+                                            setScheduledTime({ hour: 9, minute: 0 });
+                                          }
+                                          setScheduleStep("time");
+                                        }
+                                      }}
+                                      disabled={disabled}
+                                      className={`
+                                        aspect-square flex items-center justify-center text-xs rounded-lg transition-all min-h-[32px] font-medium
+                                        ${!date ? "invisible" : ""}
+                                        ${disabled ? "text-text-muted/25 cursor-not-allowed" : "cursor-pointer"}
+                                        ${selected ? "bg-primary text-white font-bold shadow-sm" : ""}
+                                        ${today && !selected ? "ring-1.5 ring-primary text-primary font-bold bg-primary/10" : ""}
+                                        ${!selected && !today && !disabled ? "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-hover" : ""}
+                                      `}
+                                    >
+                                      {date?.getDate()}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+
+                        {scheduleStep === "time" && (
+                          <motion.div
+                            key="schedule-time"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                          >
+                            <div className="text-center mb-3">
+                              <h4 className="text-sm font-semibold text-gray-900 dark:text-white">{t.scheduler.chooseTime}</h4>
+                              <p className="text-xs text-primary font-medium mt-0.5">
+                                {getDaysShort(t)[scheduledDate.getDay()]} {scheduledDate.getDate()} {getMonths(t)[scheduledDate.getMonth()]}
+                              </p>
+                            </div>
+
+                            {/* Smart time suggestions */}
+                            <div className="mb-3">
+                              <SmartTimeSuggestions
+                                onSelect={(hour, minute) => {
+                                  if (!isTimeDisabled(hour, minute)) {
+                                    triggerHaptic("medium");
+                                    setScheduledTime({ hour, minute });
+                                    setScheduleConfirmed(true);
+                                    setShowSchedulePicker(false);
+                                  }
+                                }}
+                                selectedHour={scheduledTime.hour}
+                                selectedMinute={scheduledTime.minute}
+                                selectedDate={scheduledDate}
+                                isTimeDisabled={isTimeDisabled}
+                              />
+                            </div>
+
+                            {/* Time grid */}
+                            <div className="max-h-32 overflow-y-auto rounded-lg border border-gray-200 dark:border-dark-border">
+                              <div className="grid grid-cols-4 gap-0.5 p-1.5">
+                                {Array.from({ length: 48 }, (_, i) => {
+                                  const hour = Math.floor(i / 2);
+                                  const minute = (i % 2) * 30;
+                                  const label = formatTimeLocale(hour, minute, t.ui.timeLocale);
+                                  const isSelected = scheduledTime.hour === hour && scheduledTime.minute === minute;
+                                  const disabled = isTimeDisabled(hour, minute);
+                                  return (
+                                    <button
+                                      key={i}
+                                      onClick={() => {
+                                        if (!disabled) {
+                                          triggerHaptic("medium");
+                                          setScheduledTime({ hour, minute });
+                                          setScheduleConfirmed(true);
+                                          setShowSchedulePicker(false);
+                                        }
+                                      }}
+                                      disabled={disabled}
+                                      className={`px-2 py-1.5 text-xs rounded-md transition-all ${
+                                        disabled ? "text-text-muted/30 cursor-not-allowed line-through" :
+                                        isSelected ? "bg-primary text-white font-medium" :
+                                        "hover:bg-gray-100 dark:hover:bg-dark-hover text-text-secondary hover:text-gray-900 dark:hover:text-white"
+                                      }`}
+                                    >
+                                      {label}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+
+                            {/* Back to date */}
+                            <button
+                              onClick={() => setScheduleStep("date")}
+                              className="mt-3 text-xs text-text-muted hover:text-gray-900 dark:hover:text-white flex items-center gap-1 min-h-[36px]"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                              </svg>
+                              {t.ui.changeDate}
+                            </button>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
             {/* Free plan signature notice */}
             {shouldShowFreeSignature(currentPlan) && (
               <div className="flex items-start gap-2.5 p-3 bg-primary/5 border border-primary/15 rounded-lg">
@@ -912,17 +1491,23 @@ export default function PublishToLinkedInModal({
                   <Button
                     fullWidth
                     onClick={handleConfirm}
-                    disabled={cannotPublish}
+                    disabled={cannotPublishOrSchedule}
                     className={`min-h-[52px] ${
-                      cannotPublish
+                      cannotPublishOrSchedule
                         ? "bg-gray-100 dark:bg-dark-hover border-gray-200 dark:border-dark-border cursor-not-allowed opacity-50"
                         : "bg-primary hover:bg-primary-hover border-none"
                     }`}
                   >
-                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                    </svg>
-                    {t.publish.publish}
+                    {publishMode === "schedule" ? (
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    ) : (
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                      </svg>
+                    )}
+                    {publishMode === "schedule" ? t.scheduler.scheduleBtn : t.publish.publish}
                   </Button>
                 </div>
               </div>
@@ -933,25 +1518,45 @@ export default function PublishToLinkedInModal({
         {/* Confirm Step */}
         {step === "confirm" && (
           <div className="space-y-5 text-center">
-            <div className="w-16 h-16 mx-auto rounded-full bg-warning/20 flex items-center justify-center">
-              <svg className="w-8 h-8 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
+            <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center ${
+              publishMode === "schedule" ? "bg-primary/20" : "bg-warning/20"
+            }`}>
+              {publishMode === "schedule" ? (
+                <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              ) : (
+                <svg className="w-8 h-8 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              )}
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{t.ui.confirmPublish}</h3>
-              <p className="text-text-secondary text-sm">
-                {t.publish.confirmPublishDesc}{" "}
-                <span className="font-medium text-gray-900 dark:text-white">
-                  {selectedPlatforms.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(", ")}
-                </span>
-                {selectedPlatforms.includes("linkedin") && (
-                  <span>
-                    {" "}({visibility === "PUBLIC" ? "public" : t.publish.connectionsOnly})
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                {publishMode === "schedule" ? t.ui.confirmScheduling : t.ui.confirmPublish}
+              </h3>
+              {publishMode === "schedule" ? (
+                <>
+                  <p className="text-text-secondary text-sm">
+                    {t.publish.confirmScheduleDesc}
+                  </p>
+                  <p className="text-primary font-semibold text-base mt-2">{formattedScheduleDateTime}</p>
+                  <p className="text-xs text-text-muted mt-1">{timezone}</p>
+                </>
+              ) : (
+                <p className="text-text-secondary text-sm">
+                  {t.publish.confirmPublishDesc}{" "}
+                  <span className="font-medium text-gray-900 dark:text-white">
+                    {selectedPlatforms.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(", ")}
                   </span>
-                )}
-                .
-              </p>
+                  {selectedPlatforms.includes("linkedin") && (
+                    <span>
+                      {" "}({visibility === "PUBLIC" ? "public" : t.publish.connectionsOnly})
+                    </span>
+                  )}
+                  .
+                </p>
+              )}
             </div>
             {/* Actions — desktop only (mobile uses BottomSheet footer) */}
             {!isMobile && (
@@ -967,10 +1572,11 @@ export default function PublishToLinkedInModal({
                   </Button>
                   <Button
                     fullWidth
-                    onClick={handlePublish}
+                    onClick={publishMode === "schedule" ? handleScheduleSubmit : handlePublish}
+                    isLoading={isScheduleSubmitting || isUploading}
                     className="bg-primary hover:bg-primary-hover border-none min-h-[52px]"
                   >
-                    {t.publish.yesPublish}
+                    {publishMode === "schedule" ? t.publish.yesSchedule : t.publish.yesPublish}
                   </Button>
                 </div>
               </div>
@@ -1026,10 +1632,10 @@ export default function PublishToLinkedInModal({
                 <p className="text-gray-900 dark:text-white font-semibold text-lg mb-2">
                   {progress === 100 ? (
                     <span className="flex items-center justify-center gap-2">
-                      {t.publish.itsLive} <span className="text-xl">\uD83D\uDE80</span>
+                      {publishMode === "schedule" ? t.publish.postScheduled : t.publish.itsLive} <span className="text-xl">{publishMode === "schedule" ? "\u2705" : "\uD83D\uDE80"}</span>
                     </span>
                   ) : (
-                    publishMessage
+                    publishMode === "schedule" ? t.publish.schedulingPost : publishMessage
                   )}
                 </p>
               </motion.div>
@@ -1070,11 +1676,21 @@ export default function PublishToLinkedInModal({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
               </motion.svg>
             </motion.div>
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{t.publish.postPublished}</h3>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+              {publishMode === "schedule" ? t.publish.postScheduled : t.publish.postPublished}
+            </h3>
             <p className="text-text-secondary text-sm mb-6">
-              {t.publish.publishedSuccessfully}{publishedLinks.length > 1 ? t.publish.publishedOnSelectedPlatforms : ""}.
+              {publishMode === "schedule" ? (
+                <>
+                  {t.publish.scheduledSuccessfully}
+                  <br />
+                  <span className="text-primary font-medium">{formattedScheduleDateTime}</span>
+                </>
+              ) : (
+                <>{t.publish.publishedSuccessfully}{publishedLinks.length > 1 ? t.publish.publishedOnSelectedPlatforms : ""}.</>
+              )}
             </p>
-            {publishedLinks.length > 0 && (
+            {publishMode === "now" && publishedLinks.length > 0 && (
               <div className="flex flex-col gap-2 mb-6">
                 {publishedLinks.map((link) => {
                   const config = PLATFORM_LINK_CONFIG[link.platform] || { color: "text-primary hover:text-primary/80", label: link.platform };
@@ -1095,6 +1711,17 @@ export default function PublishToLinkedInModal({
                   );
                 })}
               </div>
+            )}
+            {publishMode === "schedule" && (
+              <button
+                onClick={() => { handleClose(); router.push("/schedule"); }}
+                className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors min-h-[44px] px-4 text-sm font-medium mb-4"
+              >
+                {t.publish.viewSchedule}
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
             )}
             <Button fullWidth onClick={handleClose} className="min-h-[52px]">
               {t.common.close}
@@ -1151,17 +1778,23 @@ export default function PublishToLinkedInModal({
           <Button
             fullWidth
             onClick={handleConfirm}
-            disabled={cannotPublish}
+            disabled={cannotPublishOrSchedule}
             className={`min-h-[52px] ${
-              cannotPublish
+              cannotPublishOrSchedule
                 ? "bg-gray-100 dark:bg-dark-hover border-gray-200 dark:border-dark-border cursor-not-allowed opacity-50"
                 : "bg-primary hover:bg-primary-hover border-none"
             }`}
           >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-            </svg>
-            {t.publish.publish}
+            {publishMode === "schedule" ? (
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
+            )}
+            {publishMode === "schedule" ? t.scheduler.scheduleBtn : t.publish.publish}
           </Button>
         </div>
       );
@@ -1180,10 +1813,11 @@ export default function PublishToLinkedInModal({
           </Button>
           <Button
             fullWidth
-            onClick={handlePublish}
+            onClick={publishMode === "schedule" ? handleScheduleSubmit : handlePublish}
+            isLoading={isScheduleSubmitting || isUploading}
             className="bg-primary hover:bg-primary-hover border-none min-h-[52px]"
           >
-            {t.publish.yesPublish}
+            {publishMode === "schedule" ? t.publish.yesSchedule : t.publish.yesPublish}
           </Button>
         </div>
       );

@@ -9,12 +9,14 @@ import { UserProfile } from "@/types";
 import { Language } from "@/lib/i18n";
 
 type ProfileData = UserProfile["profile"];
+type LocalizedText = Partial<Record<Language, string>>;
+type LocalizedTextArray = Partial<Record<Language, string[]>>;
 
 // ---------------------------------------------------------------------------
 // WELCOME SUBTITLE - adapts the description below "Bonjour, {name}!"
 // ---------------------------------------------------------------------------
 
-const SUBTITLE_BY_OBJECTIVE: Record<string, Record<Language, string>> = {
+const SUBTITLE_BY_OBJECTIVE: Record<string, LocalizedText> = {
   "Trouver de nouveaux clients": {
     fr: "Creez des posts qui attirent vos futurs clients",
     en: "Create posts that attract your future clients",
@@ -37,29 +39,29 @@ const SUBTITLE_BY_OBJECTIVE: Record<string, Record<Language, string>> = {
   },
 };
 
-const DEFAULT_SUBTITLE: Record<Language, string> = {
+const DEFAULT_SUBTITLE: LocalizedText = {
   fr: "Decrivez votre idee et je genererai 2 versions optimisees de votre post LinkedIn",
   en: "Describe your idea and I'll generate 2 optimized versions of your LinkedIn post",
 };
 
 export function getPersonalizedSubtitle(profile?: ProfileData, language: Language = "fr"): string {
-  if (!profile?.objective) return DEFAULT_SUBTITLE[language];
+  if (!profile?.objective) return (DEFAULT_SUBTITLE[language] || DEFAULT_SUBTITLE.en!);
 
   // Try exact match first, then partial match
   for (const [key, subtitles] of Object.entries(SUBTITLE_BY_OBJECTIVE)) {
     if (profile.objective.toLowerCase().includes(key.toLowerCase().slice(0, 15))) {
-      return subtitles[language];
+      return subtitles[language] || subtitles.en!;
     }
   }
 
-  return DEFAULT_SUBTITLE[language];
+  return (DEFAULT_SUBTITLE[language] || DEFAULT_SUBTITLE.en!);
 }
 
 // ---------------------------------------------------------------------------
 // PLACEHOLDER EXAMPLES - adapts rotating input placeholders to the sector
 // ---------------------------------------------------------------------------
 
-const PLACEHOLDERS_BY_SECTOR: Record<string, Record<Language, string[]>> = {
+const PLACEHOLDERS_BY_SECTOR: Record<string, LocalizedTextArray> = {
   "Tech / IT": {
     fr: [
       "Un post sur une innovation tech...",
@@ -174,7 +176,7 @@ const PLACEHOLDERS_BY_SECTOR: Record<string, Record<Language, string[]>> = {
   },
 };
 
-const DEFAULT_PLACEHOLDERS: Record<Language, string[]> = {
+const DEFAULT_PLACEHOLDERS: LocalizedTextArray = {
   fr: [
     "Un post sur le leadership...",
     "Une astuce productivite...",
@@ -196,12 +198,12 @@ const DEFAULT_PLACEHOLDERS: Record<Language, string[]> = {
 };
 
 export function getPersonalizedPlaceholders(profile?: ProfileData, language: Language = "fr"): string[] {
-  if (!profile?.sector) return DEFAULT_PLACEHOLDERS[language];
+  if (!profile?.sector) return (DEFAULT_PLACEHOLDERS[language] || DEFAULT_PLACEHOLDERS.en!);
 
   const sectorData = PLACEHOLDERS_BY_SECTOR[profile.sector];
-  if (!sectorData) return DEFAULT_PLACEHOLDERS[language];
+  if (!sectorData) return (DEFAULT_PLACEHOLDERS[language] || DEFAULT_PLACEHOLDERS.en!);
 
-  return sectorData[language];
+  return sectorData[language] || sectorData.en!;
 }
 
 // ---------------------------------------------------------------------------

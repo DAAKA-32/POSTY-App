@@ -183,7 +183,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${poppins.variable} ${playfair.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${poppins.variable} ${playfair.variable}`} data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
         {/* Theme initialization + Web3/MetaMask error suppressor */}
         <script

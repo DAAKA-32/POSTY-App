@@ -4,22 +4,24 @@ import { useState } from "react";
 import { MockResponse } from "@/types";
 import Button from "@/components/ui/Button";
 import toast from "@/components/ui/Toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ResponseCardsProps {
   responses: MockResponse[];
 }
 
 export default function ResponseCards({ responses }: ResponseCardsProps) {
+  const { t } = useLanguage();
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
   const handleCopy = async (content: string, index: number) => {
     try {
       await navigator.clipboard.writeText(content);
       setCopiedIndex(index);
-      toast.success("Copie !");
+      toast.success(t.ui.copied);
       setTimeout(() => setCopiedIndex(null), 2000);
     } catch {
-      toast.error("Erreur");
+      toast.error(t.publish.error);
     }
   };
 
@@ -41,7 +43,7 @@ export default function ResponseCards({ responses }: ResponseCardsProps) {
                 }
               `}
             >
-              {response.type === "storytelling" ? "Storytelling" : "Business"}
+              {response.type === "storytelling" ? t.chat.storytelling : t.chat.business}
             </span>
             <Button
               variant="ghost"

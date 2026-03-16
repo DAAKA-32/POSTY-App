@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Modal from "@/components/ui/Modal";
 import BottomSheet from "@/components/ui/BottomSheet";
 import Button from "@/components/ui/Button";
-import IOSTimePicker, { SmartTimeSuggestions } from "@/components/ui/IOSTimePicker";
+import IOSTimePicker, { SmartTimeSuggestions, formatTimeLocale } from "@/components/ui/IOSTimePicker";
 import { useScheduling } from "@/contexts/SchedulingContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useLinkedIn } from "@/contexts/LinkedInContext";
@@ -446,7 +446,7 @@ export default function ScheduleModal({
     const dayName = getDaysFull(t)[date.getDay()];
     const day = date.getDate();
     const month = getMonths(t)[date.getMonth()];
-    const time = `${selectedTime.hour.toString().padStart(2, "0")}:${selectedTime.minute.toString().padStart(2, "0")}`;
+    const time = formatTimeLocale(selectedTime.hour, selectedTime.minute, t.ui.timeLocale);
 
     return `${dayName} ${day} ${month} — ${time}`;
   }, [selectedDate, selectedTime, t]);
@@ -834,7 +834,7 @@ export default function ScheduleModal({
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
                 </svg>
                 <p className="text-xs text-amber-400">
-                  {t.scheduler.pastSlotsDisabled} {currentTime.getHours().toString().padStart(2, "0")}:{currentTime.getMinutes().toString().padStart(2, "0")}.
+                  {t.scheduler.pastSlotsDisabled} {formatTimeLocale(currentTime.getHours(), currentTime.getMinutes(), t.ui.timeLocale)}.
                 </p>
               </div>
             )}
@@ -865,7 +865,7 @@ export default function ScheduleModal({
                   onClick={handleConfirmTime}
                   className="w-full mt-4"
                 >
-                  {t.ui.confirmTime} {selectedTime.hour.toString().padStart(2, "0")}:{selectedTime.minute.toString().padStart(2, "0")}
+                  {t.ui.confirmTime} {formatTimeLocale(selectedTime.hour, selectedTime.minute, t.ui.timeLocale)}
                 </Button>
               </div>
             ) : (
@@ -882,7 +882,7 @@ export default function ScheduleModal({
                     {Array.from({ length: 48 }, (_, i) => {
                       const hour = Math.floor(i / 2);
                       const minute = (i % 2) * 30;
-                      const label = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
+                      const label = formatTimeLocale(hour, minute, t.ui.timeLocale);
                       const isSelected = selectedTime.hour === hour && selectedTime.minute === minute;
                       const isDisabled = isTimeDisabled(hour, minute);
 

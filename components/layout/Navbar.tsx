@@ -1,10 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useScrollLock } from "@/hooks/useScrollLock";
+import { languageNames } from "@/lib/i18n";
+import type { Language } from "@/lib/i18n";
+
+const languageFlags: Record<Language, string> = {
+  en: "🇺🇸", fr: "🇫🇷", es: "🇪🇸", de: "🇩🇪", it: "🇮🇹",
+  pt: "🇵🇹", nl: "🇳🇱", zh: "🇨🇳", ja: "🇯🇵", ko: "🇰🇷",
+};
+
+const languageCodes: Record<Language, string> = {
+  en: "EN", fr: "FR", es: "ES", de: "DE", it: "IT",
+  pt: "PT", nl: "NL", zh: "中文", ja: "日本", ko: "한국",
+};
 
 interface NavbarProps {
   transparent?: boolean;
@@ -104,6 +116,17 @@ export default function Navbar({ transparent = false }: NavbarProps) {
   const [activeSection, setActiveSection] = useState<SectionId>("demo");
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+  const langDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close language dropdown on outside click
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (langDropdownRef.current && !langDropdownRef.current.contains(e.target as Node)) setLangDropdownOpen(false);
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
 
   // Centralized scroll lock when menu is open
   useScrollLock(mobileMenuOpen);
@@ -214,15 +237,32 @@ export default function Navbar({ transparent = false }: NavbarProps) {
 
             {/* Right side: Language + CTA + hamburger */}
             <div className="flex items-center gap-2.5">
-              {/* Language Switcher */}
-              <button
-                onClick={() => setLanguage(language === "fr" ? "en" : "fr")}
-                className="hidden md:inline-flex items-center justify-center gap-1.5 h-10 px-3 text-sm font-medium text-gray-500 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors duration-200"
-                aria-label="Switch language"
-              >
-                <span className="text-base">{language === "fr" ? "🇫🇷" : "🇺🇸"}</span>
-                <span>{language === "fr" ? "FR" : "EN"}</span>
-              </button>
+              {/* Language Switcher Dropdown */}
+              <div ref={langDropdownRef} className="relative hidden md:block">
+                <button
+                  onClick={() => setLangDropdownOpen(!langDropdownOpen)}
+                  className="inline-flex items-center justify-center gap-1.5 h-10 px-3 text-sm font-medium text-gray-500 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+                  aria-label="Switch language"
+                >
+                  <span className="text-base">{languageFlags[language]}</span>
+                  <span>{languageCodes[language]}</span>
+                  <svg className={`w-3 h-3 transition-transform ${langDropdownOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                </button>
+                {langDropdownOpen && (
+                  <div className="absolute right-0 top-full mt-1 w-44 bg-white rounded-xl shadow-lg border border-gray-200 py-1 z-50 max-h-80 overflow-y-auto">
+                    {(Object.keys(languageNames) as Language[]).map((code) => (
+                      <button
+                        key={code}
+                        onClick={() => { setLanguage(code); setLangDropdownOpen(false); }}
+                        className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors ${language === code ? "bg-[#F8935D]/10 text-[#F8935D] font-medium" : "text-gray-700 hover:bg-gray-50"}`}
+                      >
+                        <span>{languageFlags[code]}</span>
+                        <span>{languageNames[code]}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               {/* Desktop CTA */}
               <Link

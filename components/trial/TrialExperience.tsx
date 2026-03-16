@@ -110,9 +110,9 @@ export default function TrialExperience({
   const handleCopy = async (content: string) => {
     try {
       await navigator.clipboard.writeText(content);
-      toast.success("Copie !");
+      toast.success(t.ui.copied);
     } catch {
-      toast.error("Erreur lors de la copie");
+      toast.error(t.chat.copyError);
     }
   };
 

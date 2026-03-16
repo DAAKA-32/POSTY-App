@@ -9,6 +9,7 @@ import { triggerHaptic } from "@/hooks/useHapticFeedback";
 import { LinkedInIcon } from "@/components/linkedin/LinkedInConnectButton";
 import { RedditIcon, ThreadsIcon, FacebookIcon } from "@/components/publish/PlatformSelector";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { formatTimeLocale } from "@/components/ui/IOSTimePicker";
 
 interface ScheduledPostCardProps {
   post: ScheduledPost;
@@ -26,9 +27,16 @@ const PLATFORM_LABELS: Record<string, string> = {
   reddit: "Reddit",
 };
 
-// Days and months in French
-const DAYS_FR = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
-const MONTHS_FR_SHORT = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
+// i18n day/month helpers — built from translation keys at render time
+const getDaysFull = (t: any) => [t.scheduler.daysSundayFull, t.scheduler.daysMondayFull, t.scheduler.daysTuesdayFull, t.scheduler.daysWednesdayFull, t.scheduler.daysThursdayFull, t.scheduler.daysFridayFull, t.scheduler.daysSaturdayFull];
+const getMonthsShort = (t: any) => {
+  // Use Intl for short month names based on locale
+  const locale = t.ui.timeLocale;
+  return Array.from({ length: 12 }, (_, i) => {
+    const date = new Date(2024, i, 1);
+    return new Intl.DateTimeFormat(locale, { month: "short" }).format(date);
+  });
+};
 
 // Map raw failureReason to a user-friendly message (safety net for legacy data in Firestore)
 const DEFAULT_FAILURE_MSG = "Une erreur est survenue lors de la publication. Vous pouvez reprogrammer ce post.";
@@ -132,10 +140,10 @@ export default function ScheduledPostCard({
       ? (post.scheduledAt as { toDate: () => Date }).toDate()
       : new Date(post.scheduledAt as unknown as string);
 
-  const dayName = DAYS_FR[scheduledDate.getDay()];
+  const dayName = getDaysFull(t)[scheduledDate.getDay()];
   const day = scheduledDate.getDate();
-  const month = MONTHS_FR_SHORT[scheduledDate.getMonth()];
-  const time = `${scheduledDate.getHours().toString().padStart(2, "0")}:${scheduledDate.getMinutes().toString().padStart(2, "0")}`;
+  const month = getMonthsShort(t)[scheduledDate.getMonth()];
+  const time = formatTimeLocale(scheduledDate.getHours(), scheduledDate.getMinutes(), t.ui.timeLocale);
 
   const statusConfig = STATUS_CONFIG[post.status];
 
@@ -168,11 +176,7 @@ export default function ScheduledPostCard({
 
   return (
     <>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.15 }}
+      <div
         className={`
           group relative
           bg-white dark:bg-dark-card min-w-0
@@ -228,7 +232,7 @@ export default function ScheduledPostCard({
                     animate={{ scale: 1 }}
                     className="inline-flex items-center gap-1 text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 rounded-full font-medium"
                   >
-                    <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" />
+                    <span className="w-1.5 h-1.5 bg-amber-500 rounded-full" />
                     En retard
                   </motion.span>
                 )}
@@ -453,7 +457,7 @@ export default function ScheduledPostCard({
             </button>
           </div>
         )}
-      </motion.div>
+      </div>
 
       {/* Cancel confirmation modal */}
       <ConfirmModal

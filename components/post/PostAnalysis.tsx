@@ -74,7 +74,7 @@ export function PostAnalysis({ analysis, className = "" }: PostAnalysisProps) {
     },
   };
 
-  const t = labels[language] || labels.fr;
+  const t = labels[language as keyof typeof labels] || labels.en;
 
   const toggleSection = (section: string) => {
     setExpandedSection(expandedSection === section ? null : section);

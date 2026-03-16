@@ -18,7 +18,7 @@ export default function HistoryListItem({
   onDelete,
   index = 0,
 }: HistoryListItemProps) {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const locale = language === "en" ? "en-US" : "fr-FR";
 
   const formatTime = (timestamp: { toDate?: () => Date } | Date | null): string => {
@@ -129,7 +129,7 @@ export default function HistoryListItem({
               absolute top-2 right-2 p-1.5 text-text-muted hover:text-error hover:bg-error/10
               rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200
             "
-            title="Supprimer"
+            title={t.ui.deletePost}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path

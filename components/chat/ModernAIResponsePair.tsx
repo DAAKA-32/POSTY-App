@@ -5,6 +5,7 @@ import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { useHapticFeedback } from "@/hooks/useHapticFeedback";
 import ModernResponseCard from "./ModernResponseCard";
 import { SubscriptionPlan } from "@/types";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ResponseData {
   content: string;
@@ -32,8 +33,9 @@ const StreamingSkeleton = memo(function StreamingSkeleton({
 }: {
   variant: "storytelling" | "business";
 }) {
+  const { t } = useLanguage();
   const icons: Record<string, string> = { storytelling: "📖", business: "💼" };
-  const labels: Record<string, string> = { storytelling: "Storytelling", business: "Business" };
+  const labels: Record<string, string> = { storytelling: t.chat.storytelling, business: t.chat.business };
 
   return (
     <motion.div
@@ -68,7 +70,7 @@ const StreamingSkeleton = memo(function StreamingSkeleton({
           transition={{ duration: 1.2, repeat: Infinity }}
           className="inline-block w-1.5 h-1.5 rounded-full bg-primary"
         />
-        En attente...
+        {t.ui.waiting}
       </div>
     </motion.div>
   );
@@ -151,14 +153,16 @@ export const ModernAIResponsePair = memo(function ModernAIResponsePair({
     }),
   };
 
+  const { t } = useLanguage();
+
   const variantIcons = {
     storytelling: "📖",
     business: "💼",
   };
 
   const variantLabels = {
-    storytelling: "Storytelling",
-    business: "Business",
+    storytelling: t.chat.storytelling,
+    business: t.chat.business,
   };
 
   // Check if a response is waiting (placeholder with no content yet)
@@ -188,7 +192,7 @@ export const ModernAIResponsePair = memo(function ModernAIResponsePair({
             />
           </div>
           <span className="text-primary font-semibold">
-            2 versions disponibles
+            {t.ui.twoVersionsAvailable}
           </span>
         </motion.div>
 
@@ -294,7 +298,7 @@ export const ModernAIResponsePair = memo(function ModernAIResponsePair({
                 : "bg-gradient-to-br from-primary/10 to-secondary/10 hover:from-primary/20 hover:to-secondary/20 border border-primary/20"
               }
             `}
-            aria-label="Version précédente"
+            aria-label={t.ui.previousVersion}
           >
             <svg className={`w-4 h-4 ${activeIndex === 0 ? "text-text-muted" : "text-primary"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -320,7 +324,7 @@ export const ModernAIResponsePair = memo(function ModernAIResponsePair({
                     : "w-1.5 h-1.5 rounded-full bg-gray-300 dark:bg-gray-600"
                   }
                 `}
-                aria-label={`Voir version ${variantLabels[r.variant]}`}
+                aria-label={`${t.ui.viewVersion} ${variantLabels[r.variant]}`}
               />
             ))}
           </div>
@@ -344,7 +348,7 @@ export const ModernAIResponsePair = memo(function ModernAIResponsePair({
                 : "bg-gradient-to-br from-primary/10 to-primary-hover/10 hover:from-primary/20 hover:to-primary-hover/20 border border-primary/20"
               }
             `}
-            aria-label="Version suivante"
+            aria-label={t.ui.nextVersion}
           >
             <svg className={`w-4 h-4 ${activeIndex === responses.length - 1 ? "text-text-muted" : "text-primary"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

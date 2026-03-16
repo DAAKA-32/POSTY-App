@@ -21,8 +21,8 @@ import DeleteConversationsModal from "@/components/ui/DeleteConversationsModal";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import toast from "@/components/ui/Toast";
-import { fr } from "@/lib/i18n/translations/fr";
-import { en } from "@/lib/i18n/translations/en";
+import { translations, languageNames } from "@/lib/i18n";
+import type { Language } from "@/lib/i18n";
 import { SubscriptionManagement, PlatformConnectionsSection } from "@/components/settings";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -354,10 +354,18 @@ function SettingsContent() {
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {([
-                  { code: "en" as const, label: t.settings.languageEnglish, flag: "🇺🇸" },
-                  { code: "fr" as const, label: t.settings.languageFrench, flag: "🇫🇷" },
+                  { code: "en" as Language, flag: "🇺🇸" },
+                  { code: "fr" as Language, flag: "🇫🇷" },
+                  { code: "es" as Language, flag: "🇪🇸" },
+                  { code: "de" as Language, flag: "🇩🇪" },
+                  { code: "it" as Language, flag: "🇮🇹" },
+                  { code: "pt" as Language, flag: "🇵🇹" },
+                  { code: "nl" as Language, flag: "🇳🇱" },
+                  { code: "zh" as Language, flag: "🇨🇳" },
+                  { code: "ja" as Language, flag: "🇯🇵" },
+                  { code: "ko" as Language, flag: "🇰🇷" },
                 ]).map((lang) => (
                   <button
                     key={lang.code}
@@ -370,8 +378,8 @@ function SettingsContent() {
                           console.error("Error saving language preference:", e);
                         }
                       }
-                      const newT = lang.code === "fr" ? fr : en;
-                      toast.success(newT.settings.languageChanged);
+                      const newT = translations[lang.code];
+                      toast.success(newT.settings.languageChanged as string);
                     }}
                     className={`
                       w-full flex items-center gap-3 p-3 lg:p-4 rounded-xl border transition-all duration-200
@@ -381,9 +389,9 @@ function SettingsContent() {
                       }
                     `}
                   >
-                    <span className="text-2xl">{lang.flag}</span>
+                    <span className="text-xl">{lang.flag}</span>
                     <span className={`font-medium text-sm lg:text-base ${language === lang.code ? "text-gray-900 dark:text-white" : "text-gray-600 dark:text-gray-400"}`}>
-                      {lang.label}
+                      {languageNames[lang.code]}
                     </span>
                     {language === lang.code && (
                       <svg className="w-5 h-5 text-[#F8935D] ml-auto" fill="currentColor" viewBox="0 0 20 20">

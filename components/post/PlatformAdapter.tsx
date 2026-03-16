@@ -34,37 +34,11 @@ export function PlatformAdapter({
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const { language } = useLanguage();
+  const { language, t: globalT } = useLanguage();
   const { user } = useAuth();
 
-  const labels = {
-    fr: {
-      title: "Adapter pour d'autres plateformes",
-      adapt: "Adapter",
-      adapting: "Adaptation...",
-      copy: "Copier",
-      copied: "Copie!",
-      characters: "caracteres",
-      hashtags: "Hashtags suggeres",
-      tips: "Conseils",
-      tryAnother: "Essayer une autre",
-      error: "Erreur lors de l'adaptation",
-    },
-    en: {
-      title: "Adapt for other platforms",
-      adapt: "Adapt",
-      adapting: "Adapting...",
-      copy: "Copy",
-      copied: "Copied!",
-      characters: "characters",
-      hashtags: "Suggested hashtags",
-      tips: "Tips",
-      tryAnother: "Try another",
-      error: "Error during adaptation",
-    },
-  };
-
-  const t = labels[language] || labels.fr;
+  // Use global translations — works for all 10 languages
+  const t = globalT.platformAdapter;
 
   const handleAdapt = async (platform: AdaptationPlatform) => {
     if (!user?.uid) return;

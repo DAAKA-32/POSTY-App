@@ -187,6 +187,12 @@ export const fr = {
     responseVersions: "Versions de réponse IA",
     previousVersion: "Version précédente",
     nextVersion: "Version suivante",
+    viewVersion: "Voir version",
+    // Response mode selector
+    bothStyles: "Les deux styles",
+    businessOnly: "Business uniquement",
+    upgradeForChoice: "Passez au Pro pour choisir",
+    selectStyle: "Style de réponse",
 
     // Modals & Confirmations
     deleteConversation: "Supprimer la conversation ?",
@@ -293,6 +299,7 @@ export const fr = {
     allSlotsPassedManual: "Tous les créneaux recommandés sont passés. Sélectionnez une heure manuellement.",
     selectTime: "Sélectionnez l'heure",
     selectedTime: "Heure sélectionnée :",
+    postWillBePublishedAt: "Votre post sera publié à",
     pastSlotShort: "Passé",
     bestEngagement: "Meilleur engagement",
     // Raisons des suggestions
@@ -585,7 +592,7 @@ export const fr = {
     beforeAfterCTAButton: "Commencer mon essai gratuit",
 
     // Founders section
-    foundersQuote: "LinkedIn est le levier de croissance le plus sous-exploité du B2B. J'ai créé Posty parce que chaque entrepreneur mérite de signer des clients grâce à ses posts — sans y passer des heures.",
+    foundersQuote: "LinkedIn est le levier de croissance le plus sous-exploité du B2B. Nous avons créé Posty parce que chaque entrepreneur mérite de signer des clients grâce à ses posts — sans y passer des heures.",
     foundersEmilienAlt: "Voir le profil LinkedIn d'Emilien Nepveu",
     foundersComeAlt: "Voir le profil de Côme Maubert",
     foundersRole: "Co-fondateurs & Co-CEO",
@@ -2472,6 +2479,26 @@ export const fr = {
     publishedPubliclyAndSent: "Votre contenu sera",
     publishedPublicly: "publié publiquement",
     andSentTo: "et envoyé à {count} connexions",
+    // Unified publish modal — publishing options
+    publishingOptions: "Options de publication",
+    publishNow: "Publier maintenant",
+    publishNowDesc: "Votre post sera publié immédiatement",
+    schedulePost: "Programmer le post",
+    schedulePostDesc: "Choisissez une date et une heure pour publier plus tard",
+    scheduledFor: "Programmé pour",
+    scheduledForDate: "{date} à {time}",
+    changeSchedule: "Modifier",
+    scheduleRequired: "Veuillez sélectionner une date et une heure",
+    confirmScheduleDesc: "Votre post sera programmé pour publication le",
+    yesSchedule: "Oui, programmer",
+    postScheduled: "Post programmé !",
+    scheduledSuccessfully: "Votre post a été programmé avec succès",
+    scheduledAt: "Publication le",
+    viewSchedule: "Voir la programmation",
+    schedulingPost: "Programmation du post...",
+    savingSchedule: "Enregistrement dans votre agenda...",
+    proRequiredForSchedule: "La programmation nécessite un plan Pro ou Max",
+    upgradeToSchedule: "Passez au Pro pour programmer",
   },
   footer: {
     tagline: "Vos posts LinkedIn, calibrés pour signer des clients.",
@@ -2511,6 +2538,31 @@ export const fr = {
     tipDescription: "Ces insights sont générés par IA pour vous aider à comprendre les points forts de votre post et optimiser votre stratégie de contenu.",
     proTip: "Pro tip:",
     proTipDescription: "Répondez aux premiers commentaires dans les 30 minutes suivant la publication. L'algorithme LinkedIn favorise les posts qui génèrent des conversations rapidement.",
+    // PostInsights component
+    strengths: "Points forts",
+    personalizedAdvice: "Conseil personnalisé",
+    hookAnalysis: "Analyse de l'accroche",
+    ctaAnalysis: "Analyse du CTA",
+    collapse: "Masquer",
+    overview: "Aperçu",
+    details: "Détails",
+    coachingTab: "Coaching",
+    engagementScore: "Engagement",
+    readabilityScore: "Lisibilité",
+    priorityAction: "Action prioritaire",
+  },
+  // PlatformAdapter component
+  platformAdapter: {
+    title: "Adapter pour d'autres plateformes",
+    adapt: "Adapter",
+    adapting: "Adaptation...",
+    copy: "Copier",
+    copied: "Copié !",
+    characters: "caractères",
+    hashtags: "Hashtags suggérés",
+    tips: "Conseils",
+    tryAnother: "Essayer une autre",
+    error: "Erreur lors de l'adaptation",
   },
 } as const;
 

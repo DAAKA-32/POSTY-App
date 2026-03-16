@@ -30,7 +30,6 @@ import InlineUpgradeBanner from "@/components/chat/InlineUpgradeBanner";
 import { getPlanFeatures } from "@/lib/plan-features";
 import NewResponseIndicator from "@/components/chat/NewResponseIndicator";
 import PublishToLinkedInModal from "@/components/linkedin/PublishToLinkedInModal";
-import ScheduleModal from "@/components/schedule/ScheduleModal";
 import { AnimatedScaleFade } from "@/components/animations/AnimatedPageWrapper";
 import toast from "@/components/ui/Toast";
 import VoiceWaveform, { ListeningIndicator } from "@/components/chat/VoiceWaveform";
@@ -111,8 +110,7 @@ function AppContent() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [publishContent, setPublishContent] = useState("");
-  const [showScheduleModal, setShowScheduleModal] = useState(false);
-  const [scheduleContent, setScheduleContent] = useState("");
+  const [publishModalMode, setPublishModalMode] = useState<"now" | "schedule">("now");
   // Template filler modal state
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<PostTemplate | null>(null);
@@ -528,6 +526,7 @@ function AppContent() {
 
   const handlePublishToLinkedIn = (content: string) => {
     setPublishContent(content);
+    setPublishModalMode("now");
     setShowPublishModal(true);
   };
 
@@ -536,8 +535,9 @@ function AppContent() {
   };
 
   const handleSchedulePost = (content: string) => {
-    setScheduleContent(content);
-    setShowScheduleModal(true);
+    setPublishContent(content);
+    setPublishModalMode("schedule");
+    setShowPublishModal(true);
   };
 
   const userFirstName = userProfile?.displayName?.split(" ")[0] || "";
@@ -1044,20 +1044,14 @@ function AppContent() {
         </motion.div>
       </div>
 
-      {/* Publish to LinkedIn modal */}
+      {/* Unified publish / schedule modal */}
       <PublishToLinkedInModal
         isOpen={showPublishModal}
         onClose={() => setShowPublishModal(false)}
         content={publishContent}
         linkedInConnection={linkedInConnection}
         onPublish={handleConfirmPublish}
-      />
-
-      {/* Schedule post modal */}
-      <ScheduleModal
-        isOpen={showScheduleModal}
-        onClose={() => setShowScheduleModal(false)}
-        content={scheduleContent}
+        initialMode={publishModalMode}
       />
 
       {/* Template filler modal - guided fill-in-the-blanks */}

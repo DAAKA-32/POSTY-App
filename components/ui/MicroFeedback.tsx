@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // Animated success checkmark
 export function SuccessCheck({ show, size = "md" }: { show: boolean; size?: "sm" | "md" | "lg" }) {
@@ -37,6 +38,7 @@ export function CopyButton({
   className?: string;
   size?: "sm" | "md";
 }) {
+  const { t } = useLanguage();
   const [copied, setCopied] = useState(false);
 
   const handleCopy = useCallback(async () => {
@@ -69,7 +71,7 @@ export function CopyButton({
         touch-feedback
         ${className}
       `}
-      title={copied ? "Copie !" : "Copier"}
+      title={copied ? t.ui.copied : t.ui.copy}
     >
       {copied ? (
         <svg className={`${iconSize} text-accent`} fill="none" stroke="currentColor" viewBox="0 0 24 24">

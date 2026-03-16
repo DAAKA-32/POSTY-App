@@ -12,6 +12,16 @@ interface IOSTimePickerProps {
   variant?: "light" | "dark" | "auto";
 }
 
+// Format time according to user's locale (e.g. "14h25" for fr-FR, "2:25 PM" for en-US)
+export function formatTimeLocale(hour: number, minute: number, locale: string): string {
+  const date = new Date();
+  date.setHours(hour, minute, 0, 0);
+  return new Intl.DateTimeFormat(locale, {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
+}
+
 // Generate hours array (00-23)
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 
@@ -303,12 +313,12 @@ export default function IOSTimePicker({
           <div className={`w-2 h-2 rounded-full ${isDark ? "bg-primary" : "bg-primary"} animate-pulse`} />
           <p className="text-center">
             <span className={`text-sm ${isDark ? "text-text-muted" : "text-gray-500"}`}>
-              {t.scheduler.selectedTime}{" "}
+              {t.scheduler.postWillBePublishedAt}{" "}
             </span>
             <span className={`font-bold text-xl tabular-nums ${
               isDark ? "text-white" : "text-gray-900"
             }`}>
-              {formatHour(value.hour)}:{formatMinute(nearestMinute)}
+              {formatTimeLocale(value.hour, nearestMinute, t.ui.timeLocale)}
             </span>
           </p>
         </div>
@@ -338,12 +348,13 @@ export function SmartTimeSuggestions({
   const { trigger: triggerHaptic } = useHapticFeedback();
   const { t } = useLanguage();
   const isDark = variant === "dark";
+  const locale = t.ui.timeLocale;
 
   const suggestions = [
     {
       hour: 8,
       minute: 0,
-      label: "8h00",
+      label: formatTimeLocale(8, 0, locale),
       reason: t.scheduler.morningStart,
       emoji: "🌅",
       engagement: t.scheduler.engagementGood,
@@ -352,7 +363,7 @@ export function SmartTimeSuggestions({
     {
       hour: 9,
       minute: 30,
-      label: "9h30",
+      label: formatTimeLocale(9, 30, locale),
       reason: t.scheduler.coffeeBreak,
       emoji: "☕",
       engagement: t.scheduler.engagementVeryGood,
@@ -361,7 +372,7 @@ export function SmartTimeSuggestions({
     {
       hour: 12,
       minute: 0,
-      label: "12h00",
+      label: formatTimeLocale(12, 0, locale),
       reason: t.scheduler.lunchBreak,
       emoji: "🍽️",
       engagement: t.scheduler.engagementExcellent,
@@ -371,7 +382,7 @@ export function SmartTimeSuggestions({
     {
       hour: 17,
       minute: 30,
-      label: "17h30",
+      label: formatTimeLocale(17, 30, locale),
       reason: t.scheduler.endOfDay,
       emoji: "🌇",
       engagement: t.scheduler.engagementVeryGood,
@@ -380,7 +391,7 @@ export function SmartTimeSuggestions({
     {
       hour: 19,
       minute: 0,
-      label: "19h00",
+      label: formatTimeLocale(19, 0, locale),
       reason: t.scheduler.evening,
       emoji: "🌙",
       engagement: t.scheduler.engagementGood,

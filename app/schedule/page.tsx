@@ -15,6 +15,7 @@ import ScheduleModal from "@/components/schedule/ScheduleModal";
 import SchedulePaywallModal from "@/components/schedule/SchedulePaywallModal";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { formatTimeLocale } from "@/components/ui/IOSTimePicker";
 
 function ScheduleContent() {
   const { user } = useAuth();
@@ -217,7 +218,7 @@ function ScheduleContent() {
                 </p>
                 {failedCount > 0 && (
                   <span className="inline-flex items-center gap-1.5 text-xs sm:text-sm px-2 sm:px-2.5 py-0.5 bg-red-100 dark:bg-red-500/15 text-red-600 dark:text-red-400 rounded-full font-medium">
-                    <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
+                    <span className="w-1.5 h-1.5 bg-red-500 rounded-full" />
                     {failedCount} {t.schedulePage.failedPosts}
                   </span>
                 )}
@@ -393,16 +394,26 @@ function ScheduleContent() {
 
                     {/* Posts */}
                     <div className="space-y-4">
+                      <AnimatePresence initial={false}>
                         {group.posts.map((post) => (
-                          <ScheduledPostCard
+                          <motion.div
                             key={post.id}
-                            post={post}
-                            onCancel={handleCancel}
-                            onDelete={handleDelete}
-                            onReschedule={handleReschedule}
-                            onEdit={handleEdit}
-                          />
+                            layout
+                            initial={{ opacity: 1 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0, height: 0, marginBottom: 0, overflow: "hidden" }}
+                            transition={{ duration: 0.25, ease: "easeOut" }}
+                          >
+                            <ScheduledPostCard
+                              post={post}
+                              onCancel={handleCancel}
+                              onDelete={handleDelete}
+                              onReschedule={handleReschedule}
+                              onEdit={handleEdit}
+                            />
+                          </motion.div>
                         ))}
+                      </AnimatePresence>
                     </div>
                   </div>
                 ))}
@@ -520,7 +531,7 @@ function ScheduleContent() {
                                       typeof (post.scheduledAt as { toDate?: () => Date }).toDate === "function"
                                         ? (post.scheduledAt as { toDate: () => Date }).toDate()
                                         : new Date(post.scheduledAt as unknown as string);
-                                    return `${time.getHours().toString().padStart(2, "0")}:${time.getMinutes().toString().padStart(2, "0")}`;
+                                    return formatTimeLocale(time.getHours(), time.getMinutes(), t.ui.timeLocale);
                                   })()}
                                 </div>
                               ))}

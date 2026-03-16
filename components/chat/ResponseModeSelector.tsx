@@ -27,30 +27,9 @@ export function ResponseModeSelector({
   disabled = false,
   className = "",
 }: ResponseModeSelectorProps) {
-  const { language } = useLanguage();
+  const { t } = useLanguage();
   const planFeatures = getPlanFeatures(plan);
   const responseMode = planFeatures.responseMode;
-
-  const labels = {
-    fr: {
-      storytelling: "Storytelling",
-      business: "Business",
-      bothStyles: "Les deux styles",
-      businessOnly: "Business uniquement",
-      upgradeForChoice: "Passez au Pro pour choisir",
-      selectStyle: "Style de réponse",
-    },
-    en: {
-      storytelling: "Storytelling",
-      business: "Business",
-      bothStyles: "Both styles",
-      businessOnly: "Business only",
-      upgradeForChoice: "Upgrade to Pro to choose",
-      selectStyle: "Response style",
-    },
-  };
-
-  const t = labels[language] || labels.fr;
 
   // No plan / unsubscribed: Show locked indicator
   if (responseMode === "business-only") {
@@ -59,8 +38,8 @@ export function ResponseModeSelector({
         className={`flex items-center gap-2 rounded-lg bg-gray-100 px-3 py-2 text-sm text-gray-500 dark:bg-gray-800 dark:text-gray-400 ${className}`}
       >
         <span className="text-xs">🔒</span>
-        <span>{t.businessOnly}</span>
-        <span className="ml-1 text-xs opacity-70">• {t.upgradeForChoice}</span>
+        <span>{t.ui.businessOnly}</span>
+        <span className="ml-1 text-xs opacity-70">• {t.ui.upgradeForChoice}</span>
       </div>
     );
   }
@@ -73,7 +52,7 @@ export function ResponseModeSelector({
       >
         <span className="text-xs">✨</span>
         <span className="font-medium text-purple-700 dark:text-purple-300">
-          {t.bothStyles}
+          {t.ui.bothStyles}
         </span>
         <span className="rounded bg-purple-200 px-1.5 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-800 dark:text-purple-300">
           MAX
@@ -86,7 +65,7 @@ export function ResponseModeSelector({
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <span className="text-xs text-gray-500 dark:text-gray-400">
-        {t.selectStyle}:
+        {t.ui.selectStyle}:
       </span>
       <div className="flex rounded-lg bg-gray-100 p-1 dark:bg-gray-800">
         <button
@@ -101,7 +80,7 @@ export function ResponseModeSelector({
           aria-pressed={selectedStyle === "storytelling"}
         >
           <span className="mr-1">📖</span>
-          {t.storytelling}
+          {t.chat.storytelling}
         </button>
         <button
           type="button"
@@ -115,7 +94,7 @@ export function ResponseModeSelector({
           aria-pressed={selectedStyle === "business"}
         >
           <span className="mr-1">💼</span>
-          {t.business}
+          {t.chat.business}
         </button>
       </div>
     </div>

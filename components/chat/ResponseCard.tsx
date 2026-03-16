@@ -10,6 +10,7 @@ import { useSubscription } from "@/contexts/SubscriptionContext";
 import toast from "@/components/ui/Toast";
 import LinkedInPreview from "./LinkedInPreview";
 import { CompactRefineSlider } from "./RefineSlider";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ResponseCardProps {
   title?: string;
@@ -44,6 +45,7 @@ const ResponseCard = memo(function ResponseCard({
   authorTitle = "Votre titre professionnel",
   authorAvatar,
 }: ResponseCardProps) {
+  const { t } = useLanguage();
   const [copied, setCopied] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [showRefine, setShowRefine] = useState(false);
@@ -59,12 +61,12 @@ const ResponseCard = memo(function ResponseCard({
       await navigator.clipboard.writeText(content);
       setCopied(true);
       triggerHaptic("success");
-      toast.success("Copié !");
+      toast.success(t.ui.copied);
       setTimeout(() => setCopied(false), 2000);
       onCopy?.();
     } catch {
       triggerHaptic("error");
-      toast.error("Erreur lors de la copie");
+      toast.error(t.chat.copyError);
     }
   };
 
@@ -137,7 +139,7 @@ const ResponseCard = memo(function ResponseCard({
                   ${typeStyles[type].badge}
                 `}
               >
-                {type === "storytelling" ? "Storytelling" : "Business"}
+                {type === "storytelling" ? t.chat.storytelling : t.chat.business}
               </span>
               {title && <h3 className="font-medium text-text-primary mt-1">{title}</h3>}
             </div>

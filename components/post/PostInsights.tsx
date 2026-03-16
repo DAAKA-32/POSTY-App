@@ -38,52 +38,29 @@ function ScoreIndicator({ score, label, color }: { score: number; label: string;
 export function PostInsights({ insights, className = "" }: PostInsightsProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "details" | "coaching">("overview");
-  const { language, t: globalT } = useLanguage();
+  const { t: globalT } = useLanguage();
 
-  const labels = {
-    fr: {
-      title: "Insight",
-      subtitle: "Analyse de votre post",
-      whyEffective: "Pourquoi ca fonctionne",
-      bestTime: "Meilleur moment",
-      engagement: "Engagement attendu",
-      takeaway: "Action prioritaire",
-      strengths: "Points forts",
-      improvements: globalT.ui.toImprove,
-      coaching: "Conseil personnalisé",
-      hook: "Analyse de l'accroche",
-      cta: "Analyse du CTA",
-      expand: globalT.ui.viewFullAnalysis,
-      collapse: "Masquer",
-      overview: "Aperçu",
-      details: "Détails",
-      coachingTab: "Coaching",
-      engagementScore: "Engagement",
-      readabilityScore: "Lisibilite",
-    },
-    en: {
-      title: "Insight",
-      subtitle: "Post analysis",
-      whyEffective: "Why it works",
-      bestTime: "Best time",
-      engagement: "Expected engagement",
-      takeaway: "Priority action",
-      strengths: "Strengths",
-      improvements: globalT.ui.toImprove,
-      coaching: "Personalized advice",
-      hook: "Hook analysis",
-      cta: "CTA analysis",
-      expand: globalT.ui.viewFullAnalysis,
-      collapse: "Hide",
-      overview: "Overview",
-      details: "Details",
-      coachingTab: "Coaching",
-      engagementScore: "Engagement",
-      readabilityScore: "Readability",
-    },
+  // Use global translations — works for all 10 languages
+  const t = {
+    title: globalT.insights.title,
+    subtitle: globalT.insights.subtitle,
+    whyEffective: globalT.insights.whyEffective,
+    bestTime: globalT.insights.bestTime,
+    engagement: globalT.insights.expectedEngagement,
+    takeaway: globalT.insights.priorityAction,
+    strengths: globalT.insights.strengths,
+    improvements: globalT.ui.toImprove,
+    coaching: globalT.insights.personalizedAdvice,
+    hook: globalT.insights.hookAnalysis,
+    cta: globalT.insights.ctaAnalysis,
+    expand: globalT.ui.viewFullAnalysis,
+    collapse: globalT.insights.collapse,
+    overview: globalT.insights.overview,
+    details: globalT.insights.details,
+    coachingTab: globalT.insights.coachingTab,
+    engagementScore: globalT.insights.engagementScore,
+    readabilityScore: globalT.insights.readabilityScore,
   };
-
-  const t = labels[language] || labels.fr;
 
   // Determine score colors
   const getScoreColor = (score: number): "green" | "yellow" | "orange" => {
