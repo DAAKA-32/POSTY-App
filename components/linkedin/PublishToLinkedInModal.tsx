@@ -23,6 +23,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { postToLinkedInWithMedia, postToLinkedInWithVideo } from "@/lib/linkedin";
 import { shouldShowFreeSignature, FREE_PLAN_SIGNATURE } from "@/lib/plans";
 import IOSTimePicker, { SmartTimeSuggestions, formatTimeLocale } from "@/components/ui/IOSTimePicker";
+import FullScreenTextEditor from "@/components/publish/FullScreenTextEditor";
 import { useRouter } from "next/navigation";
 
 // Image upload constraints (match backend)
@@ -137,6 +138,7 @@ export default function PublishToLinkedInModal({
     return false;
   });
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showFullScreenEditor, setShowFullScreenEditor] = useState(false);
 
   // Image state
   const [images, setImages] = useState<File[]>([]);
@@ -937,8 +939,9 @@ export default function PublishToLinkedInModal({
                       <button
                         type="button"
                         onClick={() => handleRemoveImage(idx)}
-                        className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150 active:opacity-100"
-                        style={{ opacity: isMobile ? 1 : undefined }}
+                        className={`absolute top-0.5 right-0.5 w-6 h-6 rounded-full bg-black/60 text-white flex items-center justify-center transition-opacity duration-150 ${
+                          isMobile ? "opacity-100" : "opacity-0 group-hover:opacity-100 active:opacity-100"
+                        }`}
                         aria-label={`${t.publish.removeImage} ${idx + 1}`}
                       >
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -972,24 +975,24 @@ export default function PublishToLinkedInModal({
                     muted
                     playsInline
                   />
-                  <div className="flex items-center justify-between px-3 py-2 bg-dark-elevated/90 border-t border-dark-border/50">
+                  <div className="flex items-center justify-between px-3 py-2 bg-gray-100 dark:bg-dark-elevated/90 border-t border-gray-200 dark:border-dark-border/50">
                     <div className="flex items-center gap-2 min-w-0">
                       <svg className="w-4 h-4 text-accent shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                       </svg>
-                      <span className="text-xs text-white font-medium truncate max-w-[110px]">{video.name}</span>
-                      <span className="text-xs text-text-muted shrink-0">{formatFileSize(video.size, language)}</span>
+                      <span className="text-xs text-gray-900 dark:text-white font-medium truncate max-w-[110px]">{video.name}</span>
+                      <span className="text-xs text-gray-500 dark:text-text-muted shrink-0">{formatFileSize(video.size, language)}</span>
                       {videoDuration !== null && (
-                        <span className="text-xs text-text-muted shrink-0">{formatDuration(videoDuration)}</span>
+                        <span className="text-xs text-gray-500 dark:text-text-muted shrink-0">{formatDuration(videoDuration)}</span>
                       )}
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-dark-hover text-text-muted shrink-0">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-200 dark:bg-dark-hover text-gray-500 dark:text-text-muted shrink-0">
                         {getVideoFormatLabel(video.type)}
                       </span>
                     </div>
                     <button
                       type="button"
                       onClick={handleRemoveVideo}
-                      className="w-6 h-6 rounded-full bg-black/60 text-white flex items-center justify-center ml-2 shrink-0 hover:bg-black/80 transition-colors"
+                      className="w-7 h-7 rounded-full bg-red-500/80 hover:bg-red-500 text-white flex items-center justify-center ml-2 shrink-0 transition-colors"
                       aria-label={t.publish.removeVideo}
                     >
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1031,17 +1034,39 @@ export default function PublishToLinkedInModal({
                   {t.publish.reset}
                 </button>
               </div>
-              <textarea
-                value={editedContent}
-                onChange={(e) => setEditedContent(e.target.value)}
-                className={`
-                  w-full p-4 bg-gray-50 dark:bg-dark-bg border rounded-lg text-gray-900 dark:text-white text-sm
-                  resize-none focus:outline-none focus:ring-2 focus:ring-primary/50
-                  transition-all duration-200 min-h-[160px] max-h-[300px]
-                  ${isOverLimit ? "border-error" : "border-gray-200 dark:border-dark-border"}
-                `}
-                placeholder={t.ui.writeContentPlaceholder}
-              />
+              {/* Mobile: tap to open fullscreen editor */}
+              {isMobile ? (
+                <div
+                  onClick={() => setShowFullScreenEditor(true)}
+                  className={`
+                    w-full p-4 bg-gray-50 dark:bg-dark-bg border rounded-lg text-gray-900 dark:text-white text-sm
+                    min-h-[120px] max-h-[200px] overflow-hidden cursor-text
+                    ${isOverLimit ? "border-error" : "border-gray-200 dark:border-dark-border"}
+                  `}
+                >
+                  <p className="whitespace-pre-wrap line-clamp-6 leading-relaxed">
+                    {editedContent || <span className="text-gray-400">{t.ui.writeContentPlaceholder}</span>}
+                  </p>
+                  <div className="mt-2 flex items-center gap-1.5 text-primary/60">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                    <span className="text-xs font-medium">{t.publish.tapToEdit || "Tap to edit"}</span>
+                  </div>
+                </div>
+              ) : (
+                <textarea
+                  value={editedContent}
+                  onChange={(e) => setEditedContent(e.target.value)}
+                  className={`
+                    w-full p-4 bg-gray-50 dark:bg-dark-bg border rounded-lg text-gray-900 dark:text-white text-sm
+                    resize-none focus:outline-none focus:ring-2 focus:ring-primary/50
+                    transition-all duration-200 min-h-[160px] max-h-[300px]
+                    ${isOverLimit ? "border-error" : "border-gray-200 dark:border-dark-border"}
+                  `}
+                  placeholder={t.ui.writeContentPlaceholder}
+                />
+              )}
               <div className="flex justify-between items-start mt-2 text-xs">
                 <span className="text-text-muted">
                   {editedContent !== initialContent && (
@@ -1870,6 +1895,20 @@ export default function PublishToLinkedInModal({
         remaining={quota?.remaining}
         resetsAt={quota?.resetsAt}
         currentPlan={currentPlan}
+      />
+
+      {/* Fullscreen Text Editor (mobile) */}
+      <FullScreenTextEditor
+        isOpen={showFullScreenEditor}
+        onClose={() => setShowFullScreenEditor(false)}
+        content={editedContent}
+        onChange={setEditedContent}
+        placeholder={t.ui.writeContentPlaceholder}
+        title={t.publish.postContent}
+        platformLimits={[
+          ...(selectedPlatforms.includes("linkedin") ? [{ name: "LinkedIn", limit: linkedInLimit }] : []),
+          ...(selectedPlatforms.includes("threads") ? [{ name: "Threads", limit: threadsLimit }] : []),
+        ]}
       />
     </>
   );

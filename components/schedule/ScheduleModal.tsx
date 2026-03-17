@@ -511,7 +511,14 @@ export default function ScheduleModal({
         triggerHaptic("success");
         onSuccess?.(result.scheduledPostId);
         onClose();
+      } else if (!result.success) {
+        // Error already shown via toast in SchedulingContext
+        triggerHaptic("error");
       }
+    } catch (error) {
+      console.error("Error in schedule submit:", error);
+      triggerHaptic("error");
+      toast.error(t.scheduler.schedulingError || "An error occurred. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -1150,6 +1157,7 @@ export default function ScheduleModal({
                 variant="ghost"
                 onClick={() => setStep("time")}
                 className="flex-1"
+                disabled={isSubmitting || isUploading}
               >
                 {t.scheduler.editBtn}
               </Button>
