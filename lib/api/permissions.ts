@@ -6,13 +6,13 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getAdminDb, isAdminInitialized } from "./firebase-admin";
+import { getAdminDb, isAdminInitialized } from "@/lib/db/firebase-admin";
 import {
   PlanType,
   PlanSource,
   getPlanLimits,
   Platform,
-} from "./plans";
+} from "@/lib/config/plans";
 import {
   UserSubscription,
   UserUsage,
@@ -29,7 +29,7 @@ import {
   shouldResetMonthlyQuota,
   getWeekStartDate,
   getMonthStartDate,
-} from "./permissions";
+} from "@/lib/config/permissions";
 
 // ============================================
 // TYPES

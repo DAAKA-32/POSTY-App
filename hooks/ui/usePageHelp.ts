@@ -2,8 +2,8 @@
 
 import { useCallback, useMemo } from "react";
 import { usePathname } from "next/navigation";
-import { useLocalStorage, STORAGE_KEYS } from "./useLocalStorage";
-import { getPageHelpConfig, PageHelpConfig } from "@/lib/help-content";
+import { useLocalStorage, STORAGE_KEYS } from "@/hooks/data/useLocalStorage";
+import { getPageHelpConfig, PageHelpConfig } from "@/lib/ui/help-content";
 
 interface UsePageHelpReturn {
   hasHelp: boolean;

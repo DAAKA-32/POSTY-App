@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useScrollLock } from "@/hooks/useScrollLock";
+import { useScrollLock } from "@/hooks/ui/useScrollLock";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useLinkedIn } from "@/contexts/LinkedInContext";
@@ -12,9 +12,9 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import Button from "@/components/ui/Button";
 import LinkedInConnectButton, { LinkedInIcon } from "@/components/linkedin/LinkedInConnectButton";
 import LinkedInDisconnectModal from "@/components/linkedin/LinkedInDisconnectModal";
-import { isTokenExpired } from "@/lib/linkedin";
-import { PLATFORM_INFO, Platform, PlanType } from "@/lib/plans";
-import { canUsePlatform, canConnectPlatform, getAllPlatformsAccessStatus } from "@/lib/permissions";
+import { isTokenExpired } from "@/lib/platforms/linkedin";
+import { PLATFORM_INFO, Platform, PlanType } from "@/lib/config/plans";
+import { canUsePlatform, canConnectPlatform, getAllPlatformsAccessStatus } from "@/lib/config/permissions";
 import Link from "next/link";
 
 // Platform icon colors for Tailwind classes

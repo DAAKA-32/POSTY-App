@@ -179,8 +179,11 @@ export const en = {
     waiting: "Waiting...",
     generating: "Generating...",
     disconnecting: "Disconnecting...",
+    connecting: "Connecting...",
     active: "Active",
     redirecting: "Redirecting...",
+    connectionExpiringSoon: "Connection {name} expiring soon. Reconnect in settings.",
+    connectionsExpiringSoon: "Connections {names} expiring soon. Reconnect in settings.",
 
     // AI & Responses
     twoVersionsAvailable: "2 versions available",
@@ -271,6 +274,48 @@ export const en = {
     postEvolution: "Your post performance over time",
     loadingDashboard: "Loading your dashboard...",
     removeStatsNote: "Remove from stats (deletes from network)",
+
+    // LinkedIn Preview
+    linkedInPreview: "LinkedIn Preview",
+    linkedInPostPreview: "LinkedIn post preview",
+    linkedInMessagePreview: "Private message preview",
+    yourProfessionalTitle: "Your professional title",
+    you: "You",
+    postWillAppearHere: "Your post will appear here...",
+    previewLabel: "Preview",
+    comments: "comments",
+    linkedInLike: "Like",
+    linkedInComment: "Comment",
+    linkedInRepost: "Repost",
+    linkedInShare: "Share",
+    linkedInSend: "Send",
+    postExceedsLimit: "Your post exceeds the LinkedIn limit of {max} characters",
+    firstDegreeConnection: "1st degree connection",
+    firstName: "First Name",
+    lastName: "Last Name",
+    messagePreviewInfo: "This is a preview. Each message will be sent individually to your connections.",
+
+    // Response indicators
+    newResponsesAvailable: "{count} new responses",
+    responseReady: "Response ready",
+    scrollDown: "Scroll down",
+
+    // Inline upgrade banner
+    dualLimitReached: "Limit reached. Upgrade to Max for unlimited dual mode access.",
+    maxFeatureOnly: "This feature is reserved for the Max plan.",
+    upgradeToMax: "Upgrade to Max",
+    maxShort: "Max",
+
+    // Content editor
+    editYourMessage: "Edit your message",
+    lineBreaksTip: "Add line breaks and emojis for more engagement",
+    hashtagsWarning: "LinkedIn recommends max 5 hashtags",
+    messageExceedsLimit: "Your message exceeds the LinkedIn limit of {max} characters",
+
+    // Refine
+    adjustTone: "Adjust tone",
+    applyRefine: "Apply",
+    refining: "Refining...",
   },
 
   // Language selector
@@ -949,6 +994,21 @@ export const en = {
     sendLink: "Send link",
     sendingLink: "Sending...",
     backToLogin: "Back to login",
+
+    // Forgot password page (full page)
+    forgotPasswordTitle: "Forgot your password?",
+    forgotPasswordSubtitle: "No worries, it happens to everyone",
+    forgotPasswordInstructions: "Enter the email address associated with your account and we'll send you a link to reset your password.",
+    forgotPasswordEmailLabel: "Email address",
+    forgotPasswordSendResetLink: "Send reset link",
+    forgotPasswordEmailSentTitle: "Email sent successfully",
+    forgotPasswordEmailSentDesc: "If an account is associated with {email}, you'll receive a link to reset your password shortly.",
+    forgotPasswordCheckSpam: "Check your spam or junk folder if you don't see the email.",
+    forgotPasswordEmailDelay: "The email may take up to {minutes} minutes to arrive. If you still don't receive it, verify that the email address is correct.",
+    forgotPasswordReturnToLogin: "Return to login",
+    forgotPasswordTryAnother: "Try a different address",
+    forgotPasswordRemember: "Remember your password?",
+    forgotPasswordSignIn: "Sign in",
   },
 
   // Sidebar & Navigation
@@ -1144,6 +1204,7 @@ export const en = {
     disconnect: "Disconnect",
     reconnectMessage: "Reconnect to continue publishing to LinkedIn.",
     connectLinkedIn: "Connect LinkedIn",
+    connectTwitter: "Connect X (Twitter)",
 
     // Google (coming soon)
     google: "Google",
@@ -1256,6 +1317,42 @@ export const en = {
     legalNoticesLink: "Legal notices",
     legalNotices: "Legal notices",
     cookiePolicy: "Cookie policy",
+
+    // Personal branding
+    personalBranding: "Personal Branding",
+    customizeVisualIdentity: "Customize your visual identity",
+    profilePhoto: "Profile photo",
+    uploadCustomPhoto: "Upload a custom photo",
+    upgradeToUploadPhoto: "Upgrade to Pro to upload a custom photo",
+    removeCustomPhotoLabel: "Remove custom photo",
+    coverImage: "Cover image",
+    clickToAddImage: "Click to add an image",
+    proRequired: "Pro required",
+    accentColor: "Accent color",
+    customColor: "Custom:",
+    gradientStyle: "Gradient style",
+    professionalTagline: "Professional tagline",
+    taglinePlaceholder: "e.g.: LinkedIn Expert | Personal branding coach",
+    characters: "characters",
+    socialLinks: "Social links",
+    profileVisibility: "Profile visibility",
+    savedExclamation: "Saved!",
+    unlockFullBranding: "Unlock the full Personal Branding",
+    upgradeForBranding: "Upgrade to Pro to customize your avatar, colors, gradient, social links and more.",
+
+    // OpenAI settings
+    openaiTitle: "OpenAI Configuration",
+    openaiDescription: "Add your OpenAI API key to enable AI-powered post generation.",
+    openaiApiKeyLabel: "OpenAI API Key",
+    openaiApiKeyPlaceholder: "sk-...",
+    openaiApiKeyHint: "Your key is stored locally and never shared.",
+    openaiModelLabel: "Model",
+    openaiValidating: "Validating...",
+    openaiValid: "Valid key",
+    openaiInvalid: "Invalid key",
+    openaiClearKey: "Delete key",
+    openaiGlobalConfigured: "A global key is configured on the server.",
+    openaiGetKey: "Get your key at",
 
     // Contact
     dataQuestions: "Questions about your data:",
@@ -1492,6 +1589,40 @@ export const en = {
 
     // Success
     profileComplete: "Profile complete!",
+
+    // Extended step titles (for dynamic onboarding)
+    profileTypeTitle: "What's your profile?",
+    profileTypeSubtitle: "So Posty speaks your language",
+    sectorStepTitle: "What industry are you in?",
+    sectorStepSubtitle: "So every post reaches your audience",
+    roleStepTitle: "What's your role?",
+    roleStepSubtitle: "To calibrate the tone and credibility of your posts",
+    objectiveStepTitle: "What's your #1 objective?",
+    objectiveStepSubtitle: "Every post will be optimized for this goal",
+    targetAudienceStepTitle: "Who do you want to reach?",
+    targetAudienceStepSubtitle: "For posts that speak to your future clients",
+    communicationToneStepTitle: "What tone fits you best?",
+    communicationToneStepSubtitle: "Your words, amplified by AI",
+    publishingFrequencyStepTitle: "How often do you want to publish?",
+    publishingFrequencyStepSubtitle: "Posty adapts to your pace",
+    rolePlaceholderHint: "E.g.: CEO, Developer, Marketing Manager...",
+    saving: "Saving...",
+    errorOccurred: "An error occurred",
+    defaultUser: "User",
+
+    // Profile recap screen
+    recapTitle: "Your profile is ready",
+    recapSubtitle: "AI will personalize every post based on your choices",
+    recapComplete: "Complete",
+    recapCustomization: "Personalization",
+    recapRedirecting: "Redirecting...",
+    recapFieldProfile: "Profile",
+    recapFieldSector: "Industry",
+    recapFieldRole: "Role",
+    recapFieldObjective: "Objective",
+    recapFieldAudience: "Audience",
+    recapFieldTone: "Tone",
+    recapFieldFrequency: "Frequency",
   },
 
   // Consent modal
@@ -1535,6 +1666,12 @@ export const en = {
     linkedinDisconnectWarning: "You won't be able to publish directly to LinkedIn from Posty.",
     linkedinDisconnectConfirm: "Are you sure you want to disconnect",
     linkedinDisconnected: "LinkedIn disconnected",
+    reconnectAnytime: "You can reconnect at any time.",
+
+    // Twitter disconnect
+    twitterDisconnectTitle: "Disconnect X (Twitter)",
+    twitterDisconnectWarning: "You won't be able to publish directly to X from Posty.",
+    twitterDisconnectConfirm: "Are you sure you want to disconnect",
 
     // Delete conversation
     deleteConversationTitle: "Delete conversation",
@@ -1542,7 +1679,34 @@ export const en = {
 
     // Rename conversation
     renameConversationTitle: "Rename conversation",
-    renameConversationPlaceholder: "New name...",
+    renameConversationDesc: "Give this conversation a title",
+    renameConversationLabel: "Conversation title",
+    renameConversationPlaceholder: "Enter a title...",
+
+    // Delete account details
+    accountDeletedTitle: "Account deleted",
+    allDataDeleted: "Your account and all your data have been deleted.",
+    redirectingEllipsis: "Redirecting...",
+    irreversibleAction: "This action is irreversible",
+    allDataWillBeDeleted: "All your data will be permanently deleted:",
+    personalInfo: "Profile and personal information",
+    generatedPostsHistory: "Generated posts history",
+    sessionsConversations: "Sessions and conversations",
+    preferencesConsents: "Preferences and consents",
+    confirmPasswordToContinue: "Confirm your password to continue",
+    googleLoginRequired: "Google login required",
+    googleReauthDesc: "You will need to confirm your identity via Google",
+    enterPasswordError: "Please enter your password",
+    deletingEllipsis: "Deleting...",
+
+    // Legal update notification
+    legalDocsUpdated: "Legal documents updated",
+    legalDocsModified: "The following documents have been modified:",
+    privacyPolicyDoc: "Privacy policy",
+    termsOfUseDoc: "Terms of use",
+    legalNoticesDoc: "Legal notices",
+    cookiePolicyDoc: "Cookie policy",
+    understood: "I understand",
   },
 
   // Errors
@@ -1564,6 +1728,13 @@ export const en = {
     serverErrorDescription: "An unexpected error occurred. Please try again later.",
     networkError: "Connection error",
     networkErrorDescription: "Unable to connect to the server. Please check your internet connection.",
+    // Error page (app/error.tsx)
+    errorPageTitle: "Oops, something went wrong",
+    errorPageDataSafe: "Don't worry, your data is safe.",
+    errorPageTryRefresh: "Try refreshing the page. If the problem persists, our team is here to help.",
+    errorPageRefresh: "Refresh page",
+    errorPageNeedHelp: "Need help?",
+    errorPageContactSupport: "Contact support",
   },
 
   // Empty states
@@ -2503,6 +2674,34 @@ export const en = {
     proRequiredForSchedule: "Scheduling requires a Pro or Max plan",
     upgradeToSchedule: "Upgrade to unlock scheduling",
   },
+  // Checkout success page
+  checkoutSuccess: {
+    trialStarted: "Your {plan} trial has started!",
+    welcomePlan: "Welcome to {plan}!",
+    trialDescription: "You have {days} days to test all features. No charge during the trial. Cancel anytime.",
+    subscriptionDescription: "Your subscription has been activated successfully. {days}-day money-back guarantee.",
+    quickStartTitle: "Create your first post in 3 steps",
+    step1Title: "Describe your goal",
+    step1Desc: "E.g.: \"Generate leads for my web development agency\"",
+    step2Title: "Posty analyzes your profile",
+    step2Desc: "AI calibrates the message for your audience and market",
+    step3Title: "Publish or schedule",
+    step3Desc: "Copy-paste to LinkedIn or schedule for later",
+    benefitsTitle: "Your new benefits",
+    unlimitedAI: "Unlimited AI messages",
+    unlimitedHistory: "Unlimited history",
+    premiumTemplates: "Premium templates",
+    prioritySupport: "Priority support",
+    continueBtn: "Continue",
+    startCreating: "Start creating",
+    viewProfile: "View my profile",
+    autoRedirect: "Auto-redirect in {seconds}s...",
+    stayOnPage: "Stay on this page",
+    confirmationEmailTrial: "A confirmation email has been sent. You can cancel anytime from your profile.",
+    confirmationEmailSubscription: "A confirmation email has been sent to your address. You can manage your subscription from your profile.",
+    headerTitle: "Confirmation",
+    planFree: "Free",
+  },
   footer: {
     tagline: "Your LinkedIn posts, crafted to win clients.",
     taglineAccent: "Every post can bring you a client",
@@ -2566,5 +2765,31 @@ export const en = {
     tips: "Tips",
     tryAnother: "Try another",
     error: "Error during adaptation",
+  },
+
+  // Accessibility
+  accessibility: {
+    skipToContent: "Skip to main content",
+    skipToNavigation: "Skip to navigation",
+    skipToInput: "Skip to input area",
+    quickAccessLinks: "Quick access links",
+  },
+
+  // Cookie banner
+  cookieBanner: {
+    privacy: "Privacy",
+    description: "We use essential cookies and, with your consent, optional cookies to improve your experience.",
+    learnMore: "Learn more",
+    accept: "Accept",
+    refuse: "Refuse",
+    customizeCookies: "Customize cookies",
+    preferences: "Preferences",
+    essential: "Essential",
+    essentialDesc: "Authentication and security. Always active.",
+    functional: "Functional",
+    functionalDesc: "Interface preferences and personalization.",
+    analytics: "Analytics",
+    analyticsDesc: "Anonymous usage statistics. No third parties.",
+    cookiePolicy: "Cookie policy",
   },
 } as const;

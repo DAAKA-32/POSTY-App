@@ -5,10 +5,11 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import MainLayout from "@/components/layout/MainLayout";
 import Button from "@/components/ui/Button";
 import confetti from "canvas-confetti";
-import { TRIAL_PERIOD_DAYS, GUARANTEE_PERIOD_DAYS } from "@/lib/plans";
+import { TRIAL_PERIOD_DAYS, GUARANTEE_PERIOD_DAYS } from "@/lib/config/plans";
 
 function CheckoutSuccessContent() {
   const searchParams = useSearchParams();
@@ -17,6 +18,7 @@ function CheckoutSuccessContent() {
   const redirectAfterSuccess = searchParams.get("redirect");
   const isTrialing = userProfile?.subscription?.status === "trialing";
 
+  const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(true);
   const [redirectCountdown, setRedirectCountdown] = useState<number | null>(null);
   const router = useRouter();
@@ -114,7 +116,7 @@ function CheckoutSuccessContent() {
   }, [redirectCountdown, router, redirectAfterSuccess]);
 
   const planName = userProfile?.subscription?.plan === "max" ? "Max" :
-                   userProfile?.subscription?.plan === "pro" ? "Pro" : "Gratuit";
+                   userProfile?.subscription?.plan === "pro" ? "Pro" : t.checkoutSuccess.planFree;
 
   return (
     <div className="max-w-xl mx-auto px-4 py-12 lg:py-20">
@@ -156,7 +158,7 @@ function CheckoutSuccessContent() {
           transition={{ delay: 0.3 }}
           className="text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-4"
         >
-          {isTrialing ? `Votre essai ${planName} a commencé !` : `Bienvenue dans ${planName} !`}
+          {isTrialing ? t.checkoutSuccess.trialStarted.replace("{plan}", planName) : t.checkoutSuccess.welcomePlan.replace("{plan}", planName)}
         </motion.h1>
 
         {/* Description */}
@@ -167,8 +169,8 @@ function CheckoutSuccessContent() {
           className="text-lg text-text-muted mb-8"
         >
           {isTrialing
-            ? `Vous avez ${TRIAL_PERIOD_DAYS} jours pour tester toutes les fonctionnalités. Aucun débit pendant l'essai. Annulez à tout moment.`
-            : `Votre abonnement a été activé avec succès. Garantie satisfait ou remboursé ${GUARANTEE_PERIOD_DAYS} jours.`
+            ? t.checkoutSuccess.trialDescription.replace("{days}", String(TRIAL_PERIOD_DAYS))
+            : t.checkoutSuccess.subscriptionDescription.replace("{days}", String(GUARANTEE_PERIOD_DAYS))
           }
         </motion.p>
 
@@ -183,7 +185,7 @@ function CheckoutSuccessContent() {
             <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
-            Créez votre premier post en 3 étapes
+            {t.checkoutSuccess.quickStartTitle}
           </h3>
           <div className="space-y-3">
             <div className="flex gap-3">
@@ -191,8 +193,8 @@ function CheckoutSuccessContent() {
                 1
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">Décrivez votre objectif</p>
-                <p className="text-xs text-text-muted mt-0.5">Ex: "Générer des leads pour mon agence de développement web"</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{t.checkoutSuccess.step1Title}</p>
+                <p className="text-xs text-text-muted mt-0.5">{t.checkoutSuccess.step1Desc}</p>
               </div>
             </div>
             <div className="flex gap-3">
@@ -200,8 +202,8 @@ function CheckoutSuccessContent() {
                 2
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">Posty analyse votre profil</p>
-                <p className="text-xs text-text-muted mt-0.5">L'IA calibre le message pour votre audience et votre marché</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{t.checkoutSuccess.step2Title}</p>
+                <p className="text-xs text-text-muted mt-0.5">{t.checkoutSuccess.step2Desc}</p>
               </div>
             </div>
             <div className="flex gap-3">
@@ -209,8 +211,8 @@ function CheckoutSuccessContent() {
                 3
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">Publiez ou programmez</p>
-                <p className="text-xs text-text-muted mt-0.5">Copiez-collez sur LinkedIn ou planifiez pour plus tard</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{t.checkoutSuccess.step3Title}</p>
+                <p className="text-xs text-text-muted mt-0.5">{t.checkoutSuccess.step3Desc}</p>
               </div>
             </div>
           </div>
@@ -227,32 +229,32 @@ function CheckoutSuccessContent() {
             <svg className="w-5 h-5 text-primary" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zM12 2a1 1 0 01.967.744L14.146 7.2 17.5 9.134a1 1 0 010 1.732l-3.354 1.935-1.18 4.455a1 1 0 01-1.933 0L9.854 12.8 6.5 10.866a1 1 0 010-1.732l3.354-1.935 1.18-4.455A1 1 0 0112 2z" clipRule="evenodd" />
             </svg>
-            Vos nouveaux avantages
+            {t.checkoutSuccess.benefitsTitle}
           </h3>
           <ul className="space-y-3">
             <li className="flex items-center gap-3 text-sm text-text-secondary">
               <svg className="w-4 h-4 text-accent flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
-              Messages IA illimités
+              {t.checkoutSuccess.unlimitedAI}
             </li>
             <li className="flex items-center gap-3 text-sm text-text-secondary">
               <svg className="w-4 h-4 text-accent flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
-              Historique illimité
+              {t.checkoutSuccess.unlimitedHistory}
             </li>
             <li className="flex items-center gap-3 text-sm text-text-secondary">
               <svg className="w-4 h-4 text-accent flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
-              Templates premium
+              {t.checkoutSuccess.premiumTemplates}
             </li>
             <li className="flex items-center gap-3 text-sm text-text-secondary">
               <svg className="w-4 h-4 text-accent flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
-              Support prioritaire
+              {t.checkoutSuccess.prioritySupport}
             </li>
           </ul>
         </motion.div>
@@ -269,12 +271,12 @@ function CheckoutSuccessContent() {
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
-              {redirectAfterSuccess ? "Continuer" : "Commencer à créer"}
+              {redirectAfterSuccess ? t.checkoutSuccess.continueBtn : t.checkoutSuccess.startCreating}
             </Button>
           </Link>
           <Link href="/profile">
             <Button variant="secondary" className="w-full sm:w-auto">
-              Voir mon profil
+              {t.checkoutSuccess.viewProfile}
             </Button>
           </Link>
         </motion.div>
@@ -288,13 +290,13 @@ function CheckoutSuccessContent() {
           >
             <div className="flex items-center gap-2 text-sm text-text-muted">
               <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-              Redirection automatique dans {redirectCountdown}s...
+              {t.checkoutSuccess.autoRedirect.replace("{seconds}", String(redirectCountdown))}
             </div>
             <button
               onClick={() => setRedirectCountdown(null)}
               className="text-xs text-text-muted hover:text-gray-900 dark:hover:text-white transition-colors underline"
             >
-              Rester sur cette page
+              {t.checkoutSuccess.stayOnPage}
             </button>
           </motion.div>
         )}
@@ -307,8 +309,8 @@ function CheckoutSuccessContent() {
           className="mt-8 text-sm text-text-muted"
         >
           {isTrialing
-            ? "Un email de confirmation a été envoyé. Vous pouvez annuler à tout moment depuis votre profil."
-            : "Un email de confirmation a été envoyé à votre adresse. Vous pouvez gérer votre abonnement depuis votre profil."
+            ? t.checkoutSuccess.confirmationEmailTrial
+            : t.checkoutSuccess.confirmationEmailSubscription
           }
         </motion.p>
       </motion.div>
@@ -325,8 +327,9 @@ function LoadingFallback() {
 }
 
 export default function CheckoutSuccessPage() {
+  const { t } = useLanguage();
   return (
-    <MainLayout showMobileHeader={true} headerTitle="Confirmation">
+    <MainLayout showMobileHeader={true} headerTitle={t.checkoutSuccess.headerTitle}>
       <div className="h-full overflow-y-auto">
         <Suspense fallback={<LoadingFallback />}>
           <CheckoutSuccessContent />

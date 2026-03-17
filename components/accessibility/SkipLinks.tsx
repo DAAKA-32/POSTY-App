@@ -1,17 +1,12 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState, useEffect } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface SkipLink {
   id: string;
   label: string;
 }
-
-const defaultLinks: SkipLink[] = [
-  { id: "main-content", label: "Aller au contenu principal" },
-  { id: "navigation", label: "Aller à la navigation" },
-  { id: "chat-input", label: "Aller à la zone de saisie" },
-];
 
 interface SkipLinksProps {
   links?: SkipLink[];
@@ -20,8 +15,26 @@ interface SkipLinksProps {
 /**
  * Skip links for keyboard navigation
  * Allows users to skip to main content areas quickly
+ *
+ * Renders only after mount to avoid hydration mismatch —
+ * language is resolved client-side (localStorage / browser locale).
  */
-export default function SkipLinks({ links = defaultLinks }: SkipLinksProps) {
+export default function SkipLinks({ links }: SkipLinksProps) {
+  const { t } = useLanguage();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const defaultLinks: SkipLink[] = [
+    { id: "main-content", label: t.accessibility.skipToContent },
+    { id: "navigation", label: t.accessibility.skipToNavigation },
+    { id: "chat-input", label: t.accessibility.skipToInput },
+  ];
+
+  const resolvedLinks = links ?? defaultLinks;
+
   const handleClick = useCallback((e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
     e.preventDefault();
     const element = document.getElementById(id);
@@ -31,12 +44,15 @@ export default function SkipLinks({ links = defaultLinks }: SkipLinksProps) {
     }
   }, []);
 
+  // Defer render to avoid hydration mismatch from client-side language detection
+  if (!mounted) return null;
+
   return (
     <nav
-      aria-label="Liens d'accès rapide"
+      aria-label={t.accessibility.quickAccessLinks}
       className="skip-links-container"
     >
-      {links.map((link) => (
+      {resolvedLinks.map((link) => (
         <a
           key={link.id}
           href={`#${link.id}`}

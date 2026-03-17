@@ -1,6 +1,6 @@
 "use client";
 
-import { DashboardStats } from "@/lib/firestore";
+import { DashboardStats } from "@/lib/db/firestore";
 import { UserProfile } from "@/types";
 import { useLanguage } from "@/contexts/LanguageContext";
 

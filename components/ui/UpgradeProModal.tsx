@@ -5,7 +5,7 @@ import Modal from "./Modal";
 import BottomSheet from "./BottomSheet";
 import Button from "./Button";
 import { useEffect, useState } from "react";
-import { getPlanConfig, getPlanCoreFeatures } from "@/lib/plans";
+import { getPlanConfig, getPlanCoreFeatures } from "@/lib/config/plans";
 import { SubscriptionPlan } from "@/types";
 
 interface UpgradeProModalProps {

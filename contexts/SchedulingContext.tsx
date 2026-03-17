@@ -26,8 +26,8 @@ import {
   deleteScheduledPost,
   getPendingScheduledPostsCount,
   getUpcomingScheduledPosts,
-} from "@/lib/firestore";
-import { uploadScheduledPostImages, deleteScheduledPostImages } from "@/lib/storage";
+} from "@/lib/db/firestore";
+import { uploadScheduledPostImages, deleteScheduledPostImages } from "@/lib/storage/storage";
 import toast from "@/components/ui/Toast";
 
 const SchedulingContext = createContext<SchedulingContextType | undefined>(

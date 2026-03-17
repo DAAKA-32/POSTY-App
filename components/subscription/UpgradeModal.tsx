@@ -3,8 +3,8 @@
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuota } from "@/contexts/QuotaContext";
-import { useScrollLock } from "@/hooks/useScrollLock";
-import { getPlanConfig, getPlanCoreFeatures, GUARANTEE_PERIOD_DAYS } from "@/lib/plans";
+import { useScrollLock } from "@/hooks/ui/useScrollLock";
+import { getPlanConfig, getPlanCoreFeatures, GUARANTEE_PERIOD_DAYS } from "@/lib/config/plans";
 import Button from "@/components/ui/Button";
 
 interface UpgradeModalProps {

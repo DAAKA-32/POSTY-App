@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useScrollLock } from "@/hooks/useScrollLock";
+import { useScrollLock } from "@/hooks/ui/useScrollLock";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -10,8 +10,8 @@ import Button from "@/components/ui/Button";
 import { SubscriptionBadge } from "@/components/stripe";
 import toast from "@/components/ui/Toast";
 import Link from "next/link";
-import { GUARANTEE_PERIOD_DAYS } from "@/lib/plans";
-import { getAuthHeaders } from "@/lib/api-client";
+import { GUARANTEE_PERIOD_DAYS } from "@/lib/config/plans";
+import { getAuthHeaders } from "@/lib/api/client";
 
 // Types for Stripe subscription details
 interface StripeSubscriptionDetails {

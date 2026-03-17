@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useHapticFeedback } from "./useHapticFeedback";
+import { useHapticFeedback } from "@/hooks/ui/useHapticFeedback";
 
 interface UseKeyboardNavigationOptions {
   itemCount: number;

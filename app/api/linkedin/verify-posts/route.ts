@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth } from "@/lib/auth";
-import { adminDb, isAdminInitialized } from "@/lib/firebase-admin";
-import { getLinkedInConnectionAdmin } from "@/lib/firestore-admin";
+import { adminDb, isAdminInitialized } from "@/lib/db/firebase-admin";
+import { getLinkedInConnectionAdmin } from "@/lib/db/firestore-admin";
 import { FieldValue } from "firebase-admin/firestore";
 
 /**

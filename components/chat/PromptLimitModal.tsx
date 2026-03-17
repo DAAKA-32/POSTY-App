@@ -4,8 +4,8 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { PlanType, getPlanConfig, getPlanLimits } from "@/lib/plans";
-import { useScrollLock } from "@/hooks/useScrollLock";
+import { PlanType, getPlanConfig, getPlanLimits } from "@/lib/config/plans";
+import { useScrollLock } from "@/hooks/ui/useScrollLock";
 
 interface PromptLimitModalProps {
   isOpen: boolean;

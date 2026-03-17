@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useChat } from "@/hooks/useChat";
+import { useChat } from "@/hooks/chat/useChat";
 import { useLanguage } from "@/contexts/LanguageContext";
 import AIResponsePair from "@/components/chat/AIResponsePair";
 import { TypingIndicator } from "@/components/chat/ChatMessage";

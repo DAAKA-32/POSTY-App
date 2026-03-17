@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { useReducedMotion } from "@/hooks/ui/useReducedMotion";
 
 interface FullScreenLoaderProps {
   isLoading: boolean;

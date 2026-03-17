@@ -5,6 +5,7 @@ import { Post } from "@/types";
 import Modal from "@/components/ui/Modal";
 import BottomSheet from "@/components/ui/BottomSheet";
 import Button from "@/components/ui/Button";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface RenameConversationModalProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ export default function RenameConversationModal({
   post,
   onRename,
 }: RenameConversationModalProps) {
+  const { t } = useLanguage();
   const [title, setTitle] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -94,14 +96,14 @@ export default function RenameConversationModal({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
           </div>
-          <p className="text-sm text-gray-600 dark:text-text-muted">Donnez un titre à cette conversation</p>
+          <p className="text-sm text-gray-600 dark:text-text-muted">{t.modals.renameConversationDesc}</p>
         </div>
       )}
 
       {/* Input */}
       <div>
         <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-text-secondary mb-2">
-          Titre de la conversation
+          {t.modals.renameConversationLabel}
         </label>
         <input
           ref={inputRef}
@@ -109,7 +111,7 @@ export default function RenameConversationModal({
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Entrez un titre..."
+          placeholder={t.modals.renameConversationPlaceholder}
           maxLength={100}
           className="
             w-full px-4 py-3
@@ -135,7 +137,7 @@ export default function RenameConversationModal({
           disabled={isLoading}
           fullWidth
         >
-          Annuler
+          {t.common.cancel}
         </Button>
         <Button
           type="submit"
@@ -143,7 +145,7 @@ export default function RenameConversationModal({
           disabled={!title.trim()}
           fullWidth
         >
-          Enregistrer
+          {t.common.save}
         </Button>
       </div>
     </form>
@@ -155,7 +157,7 @@ export default function RenameConversationModal({
       <BottomSheet
         isOpen={isOpen}
         onClose={handleClose}
-        title="Renommer"
+        title={t.modals.renameConversationTitle}
         swipeToDismiss={!isLoading}
       >
         {content}
@@ -167,7 +169,7 @@ export default function RenameConversationModal({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Renommer la conversation"
+      title={t.modals.renameConversationTitle}
       size="sm"
     >
       {content}

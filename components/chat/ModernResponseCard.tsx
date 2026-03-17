@@ -4,14 +4,14 @@ import { useState, memo, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { LinkedInIcon } from "@/components/linkedin/LinkedInConnectButton";
-import { useHapticFeedback } from "@/hooks/useHapticFeedback";
-import { useVisibilityObserver } from "@/hooks/useVisibilityObserver";
+import { useHapticFeedback } from "@/hooks/ui/useHapticFeedback";
+import { useVisibilityObserver } from "@/hooks/ui/useVisibilityObserver";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { PlanType } from "@/lib/plans";
+import { PlanType } from "@/lib/config/plans";
 import PostInsightsModal from "./PostInsightsModal";
-import { generatePostInsights } from "@/lib/generateInsights";
+import { generatePostInsights } from "@/lib/services/generateInsights";
 
 // Static variant styles (outside component to avoid re-creation)
 const variantStyles = {

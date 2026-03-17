@@ -178,9 +178,12 @@ export const nl = {
     // Status
     waiting: "Waiting...",
     generating: "Generating...",
-    disconnecting: "Disconnecting...",
-    active: "Active",
-    redirecting: "Redirecting...",
+    disconnecting: "Verbinding verbreken...",
+    connecting: "Verbinden...",
+    active: "Actief",
+    redirecting: "Doorsturen...",
+    connectionExpiringSoon: "Verbinding {name} verloopt binnenkort. Maak opnieuw verbinding in instellingen.",
+    connectionsExpiringSoon: "Verbindingen {names} verlopen binnenkort. Maak opnieuw verbinding in instellingen.",
 
     // AI & Responses
     twoVersionsAvailable: "2 versions available",
@@ -270,6 +273,48 @@ export const nl = {
     postEvolution: "Your post performance over time",
     loadingDashboard: "Loading your dashboard...",
     removeStatsNote: "Remove from stats (deletes from network)",
+
+    // LinkedIn Preview
+    linkedInPreview: "LinkedIn-voorbeeld",
+    linkedInPostPreview: "LinkedIn-berichtvoorbeeld",
+    linkedInMessagePreview: "Privéberichtvoorbeeld",
+    yourProfessionalTitle: "Uw professionele titel",
+    you: "Jij",
+    postWillAppearHere: "Je bericht verschijnt hier...",
+    previewLabel: "Voorbeeld",
+    comments: "reacties",
+    linkedInLike: "Vind ik leuk",
+    linkedInComment: "Reageren",
+    linkedInRepost: "Opnieuw plaatsen",
+    linkedInShare: "Delen",
+    linkedInSend: "Verzenden",
+    postExceedsLimit: "Je bericht overschrijdt de LinkedIn-limiet van {max} tekens",
+    firstDegreeConnection: "1e graads connectie",
+    firstName: "Voornaam",
+    lastName: "Achternaam",
+    messagePreviewInfo: "Dit is een voorbeeld. Elk bericht wordt afzonderlijk naar je connecties verzonden.",
+
+    // Response indicators
+    newResponsesAvailable: "{count} nieuwe reacties",
+    responseReady: "Reactie gereed",
+    scrollDown: "Naar beneden scrollen",
+
+    // Inline upgrade banner
+    dualLimitReached: "Limiet bereikt. Upgrade naar Max voor onbeperkte dubbele modus.",
+    maxFeatureOnly: "Deze functie is voorbehouden aan het Max-abonnement.",
+    upgradeToMax: "Upgraden naar Max",
+    maxShort: "Max",
+
+    // Content editor
+    editYourMessage: "Bewerk je bericht",
+    lineBreaksTip: "Voeg regelafbrekingen en emoji's toe voor meer betrokkenheid",
+    hashtagsWarning: "LinkedIn raadt maximaal 5 hashtags aan",
+    messageExceedsLimit: "Je bericht overschrijdt de LinkedIn-limiet van {max} tekens",
+
+    // Refine
+    adjustTone: "Toon aanpassen",
+    applyRefine: "Toepassen",
+    refining: "Verfijnen...",
   },
 
   // Language selector
@@ -948,6 +993,21 @@ export const nl = {
     sendLink: "Send link",
     sendingLink: "Sending...",
     backToLogin: "Back to login",
+
+    // Forgot password page (full page)
+    forgotPasswordTitle: "Wachtwoord vergeten?",
+    forgotPasswordSubtitle: "Geen zorgen, dat overkomt iedereen",
+    forgotPasswordInstructions: "Voer het e-mailadres in dat bij je account hoort en we sturen je een link om je wachtwoord te resetten.",
+    forgotPasswordEmailLabel: "E-mailadres",
+    forgotPasswordSendResetLink: "Resetlink verzenden",
+    forgotPasswordEmailSentTitle: "E-mail succesvol verzonden",
+    forgotPasswordEmailSentDesc: "Als er een account is gekoppeld aan {email}, ontvang je binnenkort een link om je wachtwoord te resetten.",
+    forgotPasswordCheckSpam: "Controleer je spam- of ongewenste e-mailmap als je de e-mail niet ziet.",
+    forgotPasswordEmailDelay: "Het kan tot {minutes} minuten duren voordat de e-mail aankomt. Als je het bericht nog steeds niet ontvangt, controleer dan of het e-mailadres correct is.",
+    forgotPasswordReturnToLogin: "Terug naar inloggen",
+    forgotPasswordTryAnother: "Probeer een ander adres",
+    forgotPasswordRemember: "Wachtwoord onthouden?",
+    forgotPasswordSignIn: "Inloggen",
   },
 
   // Sidebar & Navigation
@@ -1143,6 +1203,7 @@ export const nl = {
     disconnect: "Ontkoppelen",
     reconnectMessage: "Maak opnieuw verbinding om te blijven publiceren op LinkedIn.",
     connectLinkedIn: "LinkedIn koppelen",
+    connectTwitter: "X (Twitter) koppelen",
 
     // Google (coming soon)
     google: "Google",
@@ -1255,6 +1316,42 @@ export const nl = {
     legalNoticesLink: "Juridische vermeldingen",
     legalNotices: "Juridische vermeldingen",
     cookiePolicy: "Cookiebeleid",
+
+    // Personal branding
+    personalBranding: "Personal Branding",
+    customizeVisualIdentity: "Pas je visuele identiteit aan",
+    profilePhoto: "Profielfoto",
+    uploadCustomPhoto: "Upload een aangepaste foto",
+    upgradeToUploadPhoto: "Upgrade naar Pro om een aangepaste foto te uploaden",
+    removeCustomPhotoLabel: "Aangepaste foto verwijderen",
+    coverImage: "Omslagafbeelding",
+    clickToAddImage: "Klik om een afbeelding toe te voegen",
+    proRequired: "Pro vereist",
+    accentColor: "Accentkleur",
+    customColor: "Aangepast:",
+    gradientStyle: "Gradiëntstijl",
+    professionalTagline: "Professionele tagline",
+    taglinePlaceholder: "bijv.: LinkedIn Expert | Personal branding coach",
+    characters: "tekens",
+    socialLinks: "Sociale links",
+    profileVisibility: "Profielzichtbaarheid",
+    savedExclamation: "Opgeslagen!",
+    unlockFullBranding: "Ontgrendel de volledige Personal Branding",
+    upgradeForBranding: "Upgrade naar Pro om je avatar, kleuren, gradiënt, sociale links en meer aan te passen.",
+
+    // OpenAI settings
+    openaiTitle: "OpenAI-configuratie",
+    openaiDescription: "Voeg je OpenAI API-sleutel toe om AI-gestuurde berichtgeneratie mogelijk te maken.",
+    openaiApiKeyLabel: "OpenAI API-sleutel",
+    openaiApiKeyPlaceholder: "sk-...",
+    openaiApiKeyHint: "Je sleutel wordt lokaal opgeslagen en nooit gedeeld.",
+    openaiModelLabel: "Model",
+    openaiValidating: "Valideren...",
+    openaiValid: "Geldige sleutel",
+    openaiInvalid: "Ongeldige sleutel",
+    openaiClearKey: "Sleutel verwijderen",
+    openaiGlobalConfigured: "Er is een globale sleutel geconfigureerd op de server.",
+    openaiGetKey: "Haal je sleutel op bij",
 
     // Contact
     dataQuestions: "Vragen over je gegevens:",
@@ -1491,6 +1588,40 @@ export const nl = {
 
     // Success
     profileComplete: "Profiel voltooid!",
+
+    // Extended step titles (for dynamic onboarding)
+    profileTypeTitle: "Wat is je profiel?",
+    profileTypeSubtitle: "Zodat Posty jouw taal spreekt",
+    sectorStepTitle: "In welke sector werk je?",
+    sectorStepSubtitle: "Zodat elk bericht je doelgroep bereikt",
+    roleStepTitle: "Wat is je functie?",
+    roleStepSubtitle: "Om de toon en geloofwaardigheid van je berichten af te stemmen",
+    objectiveStepTitle: "Wat is je #1 doel?",
+    objectiveStepSubtitle: "Elk bericht wordt geoptimaliseerd voor dit doel",
+    targetAudienceStepTitle: "Wie wil je bereiken?",
+    targetAudienceStepSubtitle: "Voor berichten die je toekomstige klanten aanspreken",
+    communicationToneStepTitle: "Welke toon past het beste bij je?",
+    communicationToneStepSubtitle: "Jouw woorden, versterkt door AI",
+    publishingFrequencyStepTitle: "Hoe vaak wil je publiceren?",
+    publishingFrequencyStepSubtitle: "Posty past zich aan jouw tempo aan",
+    rolePlaceholderHint: "Bijv.: CEO, Developer, Marketing Manager...",
+    saving: "Opslaan...",
+    errorOccurred: "Er is een fout opgetreden",
+    defaultUser: "Gebruiker",
+
+    // Profile recap screen
+    recapTitle: "Je profiel is klaar",
+    recapSubtitle: "AI personaliseert elk bericht op basis van je keuzes",
+    recapComplete: "Voltooid",
+    recapCustomization: "Personalisatie",
+    recapRedirecting: "Doorsturen...",
+    recapFieldProfile: "Profiel",
+    recapFieldSector: "Sector",
+    recapFieldRole: "Functie",
+    recapFieldObjective: "Doel",
+    recapFieldAudience: "Doelgroep",
+    recapFieldTone: "Toon",
+    recapFieldFrequency: "Frequentie",
   },
 
   // Consent modal
@@ -1534,6 +1665,12 @@ export const nl = {
     linkedinDisconnectWarning: "Je kunt niet meer direct vanuit Posty op LinkedIn publiceren.",
     linkedinDisconnectConfirm: "Weet je zeker dat je wilt ontkoppelen",
     linkedinDisconnected: "LinkedIn ontkoppeld",
+    reconnectAnytime: "Je kunt op elk moment opnieuw verbinden.",
+
+    // Twitter disconnect
+    twitterDisconnectTitle: "X (Twitter) ontkoppelen",
+    twitterDisconnectWarning: "Je kunt niet meer direct vanuit Posty op X publiceren.",
+    twitterDisconnectConfirm: "Weet je zeker dat je wilt ontkoppelen",
 
     // Delete conversation
     deleteConversationTitle: "Gesprek verwijderen",
@@ -1541,7 +1678,34 @@ export const nl = {
 
     // Rename conversation
     renameConversationTitle: "Gesprek hernoemen",
+    renameConversationDesc: "Geef dit gesprek een titel",
+    renameConversationLabel: "Gesprekstitel",
     renameConversationPlaceholder: "Nieuwe naam...",
+
+    // Delete account details
+    accountDeletedTitle: "Account verwijderd",
+    allDataDeleted: "Je account en al je gegevens zijn verwijderd.",
+    redirectingEllipsis: "Doorsturen...",
+    irreversibleAction: "Deze actie is onomkeerbaar",
+    allDataWillBeDeleted: "Al je gegevens worden permanent verwijderd:",
+    personalInfo: "Profiel en persoonlijke gegevens",
+    generatedPostsHistory: "Geschiedenis van gegenereerde berichten",
+    sessionsConversations: "Sessies en gesprekken",
+    preferencesConsents: "Voorkeuren en toestemmingen",
+    confirmPasswordToContinue: "Bevestig je wachtwoord om door te gaan",
+    googleLoginRequired: "Google-inlog vereist",
+    googleReauthDesc: "Je moet je identiteit bevestigen via Google",
+    enterPasswordError: "Voer je wachtwoord in",
+    deletingEllipsis: "Verwijderen...",
+
+    // Legal update notification
+    legalDocsUpdated: "Juridische documenten bijgewerkt",
+    legalDocsModified: "De volgende documenten zijn gewijzigd:",
+    privacyPolicyDoc: "Privacybeleid",
+    termsOfUseDoc: "Gebruiksvoorwaarden",
+    legalNoticesDoc: "Juridische vermeldingen",
+    cookiePolicyDoc: "Cookiebeleid",
+    understood: "Begrepen",
   },
 
   // Errors
@@ -1563,6 +1727,13 @@ export const nl = {
     serverErrorDescription: "Er is een onverwachte fout opgetreden. Probeer het later opnieuw.",
     networkError: "Verbindingsfout",
     networkErrorDescription: "Kan geen verbinding maken met de server. Controleer je internetverbinding.",
+    // Error page (app/error.tsx)
+    errorPageTitle: "Oeps, er is iets misgegaan",
+    errorPageDataSafe: "Geen zorgen, je gegevens zijn veilig.",
+    errorPageTryRefresh: "Probeer de pagina te vernieuwen. Als het probleem aanhoudt, staat ons team klaar om te helpen.",
+    errorPageRefresh: "Pagina vernieuwen",
+    errorPageNeedHelp: "Hulp nodig?",
+    errorPageContactSupport: "Klantenservice contacteren",
   },
 
   // Empty states
@@ -2502,6 +2673,34 @@ export const nl = {
     proRequiredForSchedule: "Scheduling requires a Pro or Max plan",
     upgradeToSchedule: "Upgrade to unlock scheduling",
   },
+  // Checkout success page
+  checkoutSuccess: {
+    trialStarted: "Je {plan}-proefperiode is gestart!",
+    welcomePlan: "Welkom bij {plan}!",
+    trialDescription: "Je hebt {days} dagen om alle functies te testen. Geen kosten tijdens de proefperiode. Op elk moment opzegbaar.",
+    subscriptionDescription: "Je abonnement is succesvol geactiveerd. {days} dagen niet-goed-geld-terug-garantie.",
+    quickStartTitle: "Maak je eerste bericht in 3 stappen",
+    step1Title: "Beschrijf je doel",
+    step1Desc: "Bijv.: \"Leads genereren voor mijn webontwikkelingsbureau\"",
+    step2Title: "Posty analyseert je profiel",
+    step2Desc: "AI stemt het bericht af op je doelgroep en markt",
+    step3Title: "Publiceer of plan in",
+    step3Desc: "Kopieer en plak naar LinkedIn of plan het later in",
+    benefitsTitle: "Je nieuwe voordelen",
+    unlimitedAI: "Onbeperkte AI-berichten",
+    unlimitedHistory: "Onbeperkte geschiedenis",
+    premiumTemplates: "Premium sjablonen",
+    prioritySupport: "Prioritaire ondersteuning",
+    continueBtn: "Doorgaan",
+    startCreating: "Begin met maken",
+    viewProfile: "Mijn profiel bekijken",
+    autoRedirect: "Automatisch doorsturen in {seconds}s...",
+    stayOnPage: "Op deze pagina blijven",
+    confirmationEmailTrial: "Er is een bevestigingsmail verzonden. Je kunt op elk moment opzeggen vanuit je profiel.",
+    confirmationEmailSubscription: "Er is een bevestigingsmail naar je adres verzonden. Je kunt je abonnement beheren vanuit je profiel.",
+    headerTitle: "Bevestiging",
+    planFree: "Gratis",
+  },
   footer: {
     tagline: "Your LinkedIn posts, crafted to win clients.",
     taglineAccent: "Every post can bring you a client",
@@ -2563,5 +2762,31 @@ export const nl = {
     tips: "Tips",
     tryAnother: "Probeer een andere",
     error: "Fout bij aanpassing",
+  },
+
+  // Accessibility
+  accessibility: {
+    skipToContent: "Naar hoofdinhoud",
+    skipToNavigation: "Naar navigatie",
+    skipToInput: "Naar invoerveld",
+    quickAccessLinks: "Snelkoppelingen",
+  },
+
+  // Cookie banner
+  cookieBanner: {
+    privacy: "Privacy",
+    description: "We gebruiken essentiële cookies en, met jouw toestemming, optionele cookies om je ervaring te verbeteren.",
+    learnMore: "Meer informatie",
+    accept: "Accepteren",
+    refuse: "Weigeren",
+    customizeCookies: "Cookies aanpassen",
+    preferences: "Voorkeuren",
+    essential: "Essentieel",
+    essentialDesc: "Authenticatie en beveiliging. Altijd actief.",
+    functional: "Functioneel",
+    functionalDesc: "Interfacevoorkeuren en personalisatie.",
+    analytics: "Analyses",
+    analyticsDesc: "Anonieme gebruiksstatistieken. Geen derden.",
+    cookiePolicy: "Cookiebeleid",
   },
 } as const;

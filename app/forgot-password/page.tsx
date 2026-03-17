@@ -3,12 +3,14 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
-import { usePageTitle } from "@/hooks/usePageTitle";
+import { usePageTitle } from "@/hooks/ui/usePageTitle";
 
 export default function ForgotPasswordPage() {
   const { resetPassword } = useAuth();
+  const { t } = useLanguage();
   usePageTitle("forgotPassword");
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -35,7 +37,7 @@ export default function ForgotPasswordPage() {
       await resetPassword(email);
       setEmailSent(true);
     } catch {
-      // Ne pas reveler si l'email existe ou non (securite)
+      // Don't reveal if the email exists or not (security)
       setEmailSent(true);
     } finally {
       setIsLoading(false);
@@ -56,7 +58,7 @@ export default function ForgotPasswordPage() {
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
-          <span>Retour</span>
+          <span>{t.common.back}</span>
         </Link>
       </header>
 
@@ -91,7 +93,7 @@ export default function ForgotPasswordPage() {
                 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}
               `}
             >
-              Mot de passe oublié ?
+              {t.auth.forgotPasswordTitle}
             </h1>
             <p
               className={`
@@ -100,7 +102,7 @@ export default function ForgotPasswordPage() {
                 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}
               `}
             >
-              Pas de panique, ça arrive à tout le monde
+              {t.auth.forgotPasswordSubtitle}
             </p>
           </div>
 
@@ -124,13 +126,13 @@ export default function ForgotPasswordPage() {
               {/* Success message */}
               <div className="bg-accent/10 border border-accent/30 rounded-2xl p-6 mb-6">
                 <h2 className="text-lg font-semibold text-foreground mb-3 text-center">
-                  Email envoyé avec succès
+                  {t.auth.forgotPasswordEmailSentTitle}
                 </h2>
                 <p className="text-text-secondary text-sm text-center mb-4">
-                  Si un compte est associé à l&apos;adresse <span className="text-foreground font-medium">{email}</span>, vous recevrez un lien pour réinitialiser votre mot de passe dans quelques instants.
+                  {t.auth.forgotPasswordEmailSentDesc.replace("{email}", email)}
                 </p>
                 <p className="text-text-muted text-xs text-center italic">
-                  (Pensez à vérifier votre dossier spam ou courrier indésirable si vous ne voyez pas l&apos;email.)
+                  ({t.auth.forgotPasswordCheckSpam})
                 </p>
               </div>
 
@@ -144,7 +146,7 @@ export default function ForgotPasswordPage() {
                   </div>
                   <div>
                     <p className="text-sm text-text-secondary">
-                      L&apos;email peut prendre jusqu&apos;à <span className="text-foreground">5 minutes</span> pour arriver. Si vous ne le recevez toujours pas, vérifiez que l&apos;adresse email est correcte.
+                      {t.auth.forgotPasswordEmailDelay.replace("{minutes}", "5")}
                     </p>
                   </div>
                 </div>
@@ -154,7 +156,7 @@ export default function ForgotPasswordPage() {
               <div className="space-y-3">
                 <Link href="/login" className="block">
                   <Button fullWidth size="lg">
-                    Retourner à la connexion
+                    {t.auth.forgotPasswordReturnToLogin}
                   </Button>
                 </Link>
                 <button
@@ -164,7 +166,7 @@ export default function ForgotPasswordPage() {
                   }}
                   className="w-full py-3 text-text-secondary hover:text-foreground transition-colors text-sm"
                 >
-                  Essayer avec une autre adresse
+                  {t.auth.forgotPasswordTryAnother}
                 </button>
               </div>
             </div>
@@ -190,18 +192,18 @@ export default function ForgotPasswordPage() {
 
               {/* Instructions */}
               <p className="text-text-secondary text-sm">
-                Entrez l&apos;adresse email associée à votre compte et nous vous enverrons un lien pour réinitialiser votre mot de passe.
+                {t.auth.forgotPasswordInstructions}
               </p>
 
               <Input
                 ref={emailRef}
                 type="email"
-                label="Adresse email"
+                label={t.auth.forgotPasswordEmailLabel}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
-                aria-label="Adresse email"
+                aria-label={t.auth.forgotPasswordEmailLabel}
               />
 
               <Button
@@ -210,7 +212,7 @@ export default function ForgotPasswordPage() {
                 size="lg"
                 isLoading={isLoading}
               >
-                Envoyer le lien de réinitialisation
+                {t.auth.forgotPasswordSendResetLink}
               </Button>
             </form>
           )}
@@ -224,12 +226,12 @@ export default function ForgotPasswordPage() {
                 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}
               `}
             >
-              Vous vous souvenez de votre mot de passe ?{" "}
+              {t.auth.forgotPasswordRemember}{" "}
               <Link
                 href="/login"
                 className="text-primary hover:text-primary-hover font-medium transition-colors duration-200"
               >
-                Se connecter
+                {t.auth.forgotPasswordSignIn}
               </Link>
             </p>
           )}
@@ -245,7 +247,7 @@ export default function ForgotPasswordPage() {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
-            <span>Connexion sécurisée SSL</span>
+            <span>{t.ui.sslSecure}</span>
           </div>
         </div>
       </main>

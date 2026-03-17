@@ -2,7 +2,7 @@
 
 import { ReactNode, useRef, useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useHapticFeedback } from "@/hooks/useHapticFeedback";
+import { useHapticFeedback } from "@/hooks/ui/useHapticFeedback";
 
 interface PullToRefreshProps {
   children: ReactNode;

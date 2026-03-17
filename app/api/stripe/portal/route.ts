@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getStripeServer, getAppUrl } from "@/lib/stripe";
+import { getStripeServer, getAppUrl } from "@/lib/config/stripe";
 import { verifyAuth } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {

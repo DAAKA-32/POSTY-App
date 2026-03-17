@@ -10,7 +10,7 @@ import {
   deleteObject,
   listAll,
 } from "firebase/storage";
-import app from "./firebase";
+import app from "@/lib/db/firebase";
 import { ScheduledPostImage } from "@/types";
 
 // Initialize Firebase Storage

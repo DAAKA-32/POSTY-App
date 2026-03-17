@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Platform } from "@/types";
-import { useLocalStorage, STORAGE_KEYS } from "./useLocalStorage";
+import { useLocalStorage, STORAGE_KEYS } from "@/hooks/data/useLocalStorage";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import { canUsePlatform } from "@/lib/permissions";
+import { canUsePlatform } from "@/lib/config/permissions";
 
 // Storage key for platform selection
 const PLATFORM_SELECTION_KEY = "posty_last_platform_selection";

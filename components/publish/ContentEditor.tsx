@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ContentEditorProps {
   initialContent: string;
@@ -18,6 +19,7 @@ export default function ContentEditor({
   minHeight = 150,
   maxHeight = 400,
 }: ContentEditorProps) {
+  const { t } = useLanguage();
   const [content, setContent] = useState(initialContent);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -56,7 +58,7 @@ export default function ContentEditor({
           <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
           </svg>
-          Éditez votre message
+          {t.ui.editYourMessage}
         </label>
         <div className="flex items-center gap-2 text-xs">
           {hashtagCount > 0 && (
@@ -78,7 +80,7 @@ export default function ContentEditor({
           ref={textareaRef}
           value={content}
           onChange={handleChange}
-          placeholder="Écrivez votre contenu LinkedIn..."
+          placeholder={t.ui.writeContentPlaceholder}
           className={`
             w-full px-4 py-3 bg-dark-bg border rounded-xl
             text-white placeholder-text-muted resize-none
@@ -107,14 +109,14 @@ export default function ContentEditor({
               <svg className="w-3 h-3 text-accent" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
               </svg>
-              <span>Ajoutez des line breaks et emojis pour plus d'engagement</span>
+              <span>{t.ui.lineBreaksTip}</span>
             </div>
             {tooManyHashtags && (
               <div className="flex items-center gap-1.5 text-warning">
                 <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                 </svg>
-                <span>LinkedIn recommande max 5 hashtags</span>
+                <span>{t.ui.hashtagsWarning}</span>
               </div>
             )}
           </div>
@@ -144,7 +146,7 @@ export default function ContentEditor({
           <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
           </svg>
-          <span>Votre message dépasse la limite LinkedIn de {maxLength} caractères</span>
+          <span>{t.ui.messageExceedsLimit.replace("{max}", String(maxLength))}</span>
         </motion.div>
       )}
     </div>

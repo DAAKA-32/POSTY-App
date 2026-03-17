@@ -3,9 +3,10 @@
 import { ReactNode, useEffect, useRef, useState, useId, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence, PanInfo, useAnimation, useMotionValue, useTransform } from "framer-motion";
-import { useFocusTrap } from "@/hooks/useFocusTrap";
-import { useHapticFeedback } from "@/hooks/useHapticFeedback";
-import { useScrollLock } from "@/hooks/useScrollLock";
+import { useFocusTrap } from "@/hooks/input/useFocusTrap";
+import { useHapticFeedback } from "@/hooks/ui/useHapticFeedback";
+import { useScrollLock } from "@/hooks/ui/useScrollLock";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface BottomSheetProps {
   isOpen: boolean;
@@ -65,6 +66,7 @@ export default function BottomSheet({
   swipeToDismiss = true,
   description,
 }: BottomSheetProps) {
+  const { t } = useLanguage();
   const controls = useAnimation();
   const sheetRef = useRef<HTMLDivElement>(null);
   const [sheetHeight, setSheetHeight] = useState(0);
@@ -277,7 +279,7 @@ export default function BottomSheet({
               ...getHeightStyle(),
               scale: isDragging ? sheetScale : 1,
               // dvh updates dynamically when virtual keyboard opens/closes
-              maxHeight: 'min(85dvh, 85vh)',
+              maxHeight: 'min(90dvh, 90vh)',
               // Safe area handled via content padding — sheet itself needs no bottom padding
             }}
             initial={{ y: "100%" }}
@@ -320,11 +322,11 @@ export default function BottomSheet({
 
             {/* Header */}
             {(title || showCloseButton) && (
-              <div className="flex items-center justify-between px-5 py-3 border-b border-dark-border">
+              <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200 dark:border-dark-border">
                 {title && (
                   <h2
                     id={titleId}
-                    className="text-lg font-semibold text-text-primary"
+                    className="text-lg font-semibold text-gray-900 dark:text-white"
                   >
                     {title}
                   </h2>
@@ -333,7 +335,7 @@ export default function BottomSheet({
                   <button
                     onClick={onClose}
                     className="min-w-[44px] min-h-[44px] flex items-center justify-center text-text-secondary hover:text-text-primary transition-all duration-200 rounded-xl hover:bg-dark-hover haptic-feedback active:scale-95"
-                    aria-label="Fermer la fenetre"
+                    aria-label={t.ui.closeWindow}
                   >
                     <svg
                       className="w-5 h-5"
@@ -364,10 +366,10 @@ export default function BottomSheet({
                 padding: '20px',
                 // Extra bottom clearance = 20px standard + safe area (home indicator)
                 paddingBottom: footer ? '20px' : 'max(20px, calc(16px + env(safe-area-inset-bottom, 0px)))',
-                // 85dvh - drag handle (~22px) - header (~58px) - footer (~80px if present)
+                // 90dvh - drag handle (~22px) - header (~58px) - footer (~80px if present)
                 maxHeight: footer
-                  ? 'calc(min(85dvh, 85vh) - 160px)'
-                  : 'calc(min(85dvh, 85vh) - 80px)',
+                  ? 'calc(min(90dvh, 90vh) - 160px)'
+                  : 'calc(min(90dvh, 90vh) - 80px)',
                 WebkitOverflowScrolling: 'touch',
                 scrollbarWidth: 'none',
               }}

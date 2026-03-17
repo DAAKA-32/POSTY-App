@@ -3,8 +3,8 @@
 import { createContext, useContext, useEffect, useState, useRef, ReactNode, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { saveScrollPosition, restoreScrollPosition } from "@/hooks/useScrollRestoration";
-import { triggerHaptic } from "@/hooks/useHapticFeedback";
+import { saveScrollPosition, restoreScrollPosition } from "@/hooks/scroll/useScrollRestoration";
+import { triggerHaptic } from "@/hooks/ui/useHapticFeedback";
 
 /**
  * SwipeBackProvider - Navigation gestuelle "glisser pour revenir en arrière"

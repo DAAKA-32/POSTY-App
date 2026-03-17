@@ -7,7 +7,7 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import { completeOnboarding } from "@/lib/firestore";
+import { completeOnboarding } from "@/lib/db/firestore";
 import {
   PROFILE_TYPES,
   SECTORS,
@@ -18,64 +18,73 @@ import {
   OnboardingData,
 } from "@/types";
 import toast from "@/components/ui/Toast";
-import { usePageTitle } from "@/hooks/usePageTitle";
+import { usePageTitle } from "@/hooks/ui/usePageTitle";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // =============================================================================
-// STEP CONFIGURATION
+// STEP CONFIGURATION (translation keys mapped to step IDs)
 // =============================================================================
-const STEPS = [
+type StepConfig = {
+  id: "profileType" | "sector" | "role" | "objective" | "targetAudience" | "communicationTone" | "publishingFrequency";
+  titleKey: string;
+  subtitleKey: string;
+  options: readonly string[];
+  type: "select" | "input";
+};
+
+const STEP_CONFIGS: StepConfig[] = [
   {
-    id: "profileType" as const,
-    title: "Quel est votre profil ?",
-    subtitle: "Pour que Posty parle comme vous",
+    id: "profileType",
+    titleKey: "profileTypeTitle",
+    subtitleKey: "profileTypeSubtitle",
     options: PROFILE_TYPES,
-    type: "select" as const,
+    type: "select",
   },
   {
-    id: "sector" as const,
-    title: "Dans quel secteur exercez-vous ?",
-    subtitle: "Pour que chaque post touche votre cible",
+    id: "sector",
+    titleKey: "sectorStepTitle",
+    subtitleKey: "sectorStepSubtitle",
     options: SECTORS,
-    type: "select" as const,
+    type: "select",
   },
   {
-    id: "role" as const,
-    title: "Quel est votre rôle ?",
-    subtitle: "Pour calibrer le ton et la crédibilité de vos posts",
+    id: "role",
+    titleKey: "roleStepTitle",
+    subtitleKey: "roleStepSubtitle",
     options: [] as readonly string[],
-    type: "input" as const,
+    type: "input",
   },
   {
-    id: "objective" as const,
-    title: "Quel est votre objectif numéro 1 ?",
-    subtitle: "Chaque post sera optimisé pour cet objectif",
+    id: "objective",
+    titleKey: "objectiveStepTitle",
+    subtitleKey: "objectiveStepSubtitle",
     options: OBJECTIVES,
-    type: "select" as const,
+    type: "select",
   },
   {
-    id: "targetAudience" as const,
-    title: "Qui souhaitez-vous atteindre ?",
-    subtitle: "Pour des posts qui parlent à vos futurs clients",
+    id: "targetAudience",
+    titleKey: "targetAudienceStepTitle",
+    subtitleKey: "targetAudienceStepSubtitle",
     options: TARGET_AUDIENCES,
-    type: "select" as const,
+    type: "select",
   },
   {
-    id: "communicationTone" as const,
-    title: "Quel ton vous correspond le mieux ?",
-    subtitle: "Vos mots, amplifiés par l'IA",
+    id: "communicationTone",
+    titleKey: "communicationToneStepTitle",
+    subtitleKey: "communicationToneStepSubtitle",
     options: COMMUNICATION_TONES,
-    type: "select" as const,
+    type: "select",
   },
   {
-    id: "publishingFrequency" as const,
-    title: "À quelle fréquence souhaitez-vous publier ?",
-    subtitle: "Posty s'adapte à votre rythme",
+    id: "publishingFrequency",
+    titleKey: "publishingFrequencyStepTitle",
+    subtitleKey: "publishingFrequencyStepSubtitle",
     options: PUBLISHING_FREQUENCIES,
-    type: "select" as const,
+    type: "select",
   },
 ];
 
-type StepId = typeof STEPS[number]["id"];
+type StepId = StepConfig["id"];
 
 // =============================================================================
 // ONBOARDING PROGRESS PERSISTENCE
@@ -100,7 +109,7 @@ function loadOnboardingProgress(): OnboardingProgress | null {
     const parsed = JSON.parse(raw) as OnboardingProgress;
     if (typeof parsed.currentStep !== "number" || !parsed.data) return null;
     // Clamp step to valid range
-    parsed.currentStep = Math.max(0, Math.min(parsed.currentStep, STEPS.length - 1));
+    parsed.currentStep = Math.max(0, Math.min(parsed.currentStep, STEP_CONFIGS.length - 1));
     return parsed;
   } catch {
     return null;
@@ -145,6 +154,7 @@ function ProfileRecapScreen({
   userName: string;
   onRedirect: () => void;
 }) {
+  const { t } = useLanguage();
   // Auto-redirect to subscription page after animations complete
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -160,13 +170,13 @@ function ProfileRecapScreen({
     .slice(0, 2) || "?";
 
   const fields = [
-    { label: "Profil", value: data.profileType, icon: "briefcase" },
-    { label: "Secteur", value: data.sector, icon: "building" },
-    { label: "Rôle", value: data.role, icon: "user" },
-    { label: "Objectif", value: data.objective, icon: "target" },
-    { label: "Audience", value: data.targetAudience, icon: "users" },
-    { label: "Ton", value: data.communicationTone, icon: "mic" },
-    { label: "Fréquence", value: data.publishingFrequency, icon: "calendar" },
+    { label: t.onboarding.recapFieldProfile, value: data.profileType, icon: "briefcase" },
+    { label: t.onboarding.recapFieldSector, value: data.sector, icon: "building" },
+    { label: t.onboarding.recapFieldRole, value: data.role, icon: "user" },
+    { label: t.onboarding.recapFieldObjective, value: data.objective, icon: "target" },
+    { label: t.onboarding.recapFieldAudience, value: data.targetAudience, icon: "users" },
+    { label: t.onboarding.recapFieldTone, value: data.communicationTone, icon: "mic" },
+    { label: t.onboarding.recapFieldFrequency, value: data.publishingFrequency, icon: "calendar" },
   ];
 
   const iconMap: Record<string, React.ReactNode> = {
@@ -213,10 +223,10 @@ function ProfileRecapScreen({
           </svg>
         </motion.div>
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">
-          Votre profil est prêt
+          {t.onboarding.recapTitle}
         </h1>
         <p className="text-gray-400 text-sm">
-          L&apos;IA va personnaliser chaque post selon vos choix
+          {t.onboarding.recapSubtitle}
         </p>
       </motion.div>
 
@@ -238,7 +248,7 @@ function ProfileRecapScreen({
           </div>
           <span className="text-[11px] text-emerald-500 font-medium flex items-center gap-1 flex-shrink-0">
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
-            Complet
+            {t.onboarding.recapComplete}
           </span>
         </div>
 
@@ -266,7 +276,7 @@ function ProfileRecapScreen({
         {/* Completion bar */}
         <div className="mt-4 pt-4 border-t border-gray-100">
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[11px] text-gray-400 font-medium">Personnalisation</span>
+            <span className="text-[11px] text-gray-400 font-medium">{t.onboarding.recapCustomization}</span>
             <span className="text-[11px] text-emerald-500 font-semibold">100%</span>
           </div>
           <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
@@ -288,7 +298,7 @@ function ProfileRecapScreen({
         className="mt-6 flex items-center justify-center gap-2 text-sm text-gray-400"
       >
         <div className="w-4 h-4 border-2 border-gray-300 border-t-[#F8935D] rounded-full animate-spin" />
-        Redirection...
+        {t.onboarding.recapRedirecting}
       </motion.div>
     </div>
   );
@@ -300,6 +310,7 @@ function ProfileRecapScreen({
 export default function OnboardingPage() {
   const { user, userProfile, loading, refreshUserProfile, clearOnboardingFlag } = useAuth();
   const { subscription, loading: subscriptionLoading } = useSubscription();
+  const { t } = useLanguage();
   usePageTitle("onboarding");
   const router = useRouter();
   // Restore saved progress from localStorage (if any)
@@ -418,7 +429,7 @@ export default function OnboardingPage() {
   };
 
   const handleNext = () => {
-    if (currentStep < STEPS.length - 1) {
+    if (currentStep < STEP_CONFIGS.length - 1) {
       setDirection(1);
       setCurrentStep((prev) => prev + 1);
     }
@@ -454,7 +465,7 @@ export default function OnboardingPage() {
       }
     } catch (error) {
       console.error("Onboarding error:", error);
-      toast.error("Une erreur est survenue");
+      toast.error(t.onboarding.errorOccurred);
       setShowRecap(false);
       setIsSubmitting(false);
     }
@@ -464,9 +475,9 @@ export default function OnboardingPage() {
     router.replace("/subscription");
   };
 
-  const step = STEPS[currentStep];
-  const isLastStep = currentStep === STEPS.length - 1;
-  const currentValue = data[step.id as keyof OnboardingData];
+  const stepConfig = STEP_CONFIGS[currentStep];
+  const isLastStep = currentStep === STEP_CONFIGS.length - 1;
+  const currentValue = data[stepConfig.id as keyof OnboardingData];
   const canProceed = currentValue.trim().length > 0;
 
   // Keyboard navigation: Enter key advances to next step (or submits on last step)
@@ -525,7 +536,7 @@ export default function OnboardingPage() {
         </Link>
         {!showRecap && (
           <span className="text-sm text-gray-400 font-medium">
-            {currentStep + 1} / {STEPS.length}
+            {currentStep + 1} / {STEP_CONFIGS.length}
           </span>
         )}
       </header>
@@ -537,7 +548,7 @@ export default function OnboardingPage() {
             <motion.div
               className="h-full bg-primary rounded-full"
               initial={{ width: 0 }}
-              animate={{ width: `${((currentStep + 1) / STEPS.length) * 100}%` }}
+              animate={{ width: `${((currentStep + 1) / STEP_CONFIGS.length) * 100}%` }}
               transition={{ duration: 0.4, ease: smoothEase }}
             />
           </div>
@@ -549,7 +560,7 @@ export default function OnboardingPage() {
         {showRecap ? (
           <ProfileRecapScreen
             data={data}
-            userName={user.displayName || user.email?.split("@")[0] || "Utilisateur"}
+            userName={user.displayName || user.email?.split("@")[0] || t.onboarding.defaultUser}
             onRedirect={handleRedirectToSubscription}
           />
         ) : (
@@ -567,26 +578,26 @@ export default function OnboardingPage() {
                 {/* Question */}
                 <div className="text-center mb-8 sm:mb-10">
                   <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-                    {step.title}
+                    {(t.onboarding as Record<string, string>)[stepConfig.titleKey]}
                   </h1>
-                  <p className="text-gray-400 text-sm sm:text-base">{step.subtitle}</p>
+                  <p className="text-gray-400 text-sm sm:text-base">{(t.onboarding as Record<string, string>)[stepConfig.subtitleKey]}</p>
                 </div>
 
                 {/* Input or Selection */}
-                {step.type === "input" ? (
+                {stepConfig.type === "input" ? (
                   <div className="mb-8">
                     <input
                       type="text"
                       value={currentValue}
-                      onChange={(e) => handleSelect(step.id, e.target.value)}
-                      placeholder="Ex : CEO, Developpeur, Marketing Manager..."
+                      onChange={(e) => handleSelect(stepConfig.id, e.target.value)}
+                      placeholder={t.onboarding.rolePlaceholderHint}
                       className="w-full px-5 py-4 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#F8935D]/30 focus:border-[#F8935D]/50 transition-all duration-200 text-[15px] shadow-sm"
                       autoFocus
                     />
                   </div>
                 ) : (
                   <div className="grid gap-2.5 mb-8">
-                    {step.options.map((option, i) => {
+                    {stepConfig.options.map((option, i) => {
                       const isSelected = currentValue === option;
                       return (
                         <motion.button
@@ -594,7 +605,7 @@ export default function OnboardingPage() {
                           initial={{ opacity: 0, y: 8 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.25, delay: i * 0.04, ease: smoothEase }}
-                          onClick={() => handleSelect(step.id, option)}
+                          onClick={() => handleSelect(stepConfig.id, option)}
                           className={`
                             p-4 text-left rounded-xl border transition-colors duration-200
                             ${isSelected
@@ -632,7 +643,7 @@ export default function OnboardingPage() {
                       onClick={handleBack}
                       className="flex-1 py-3.5 px-4 bg-white border border-gray-200 text-gray-600 font-medium rounded-xl hover:bg-gray-50 transition-colors duration-200 text-sm"
                     >
-                      Retour
+                      {t.onboarding.back}
                     </button>
                   )}
                   {isLastStep ? (
@@ -650,10 +661,10 @@ export default function OnboardingPage() {
                       {isSubmitting ? (
                         <div className="flex items-center justify-center gap-2">
                           <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                          <span>Enregistrement...</span>
+                          <span>{t.onboarding.saving}</span>
                         </div>
                       ) : (
-                        "Terminer"
+                        t.onboarding.finish
                       )}
                     </button>
                   ) : (
@@ -668,7 +679,7 @@ export default function OnboardingPage() {
                         }
                       `}
                     >
-                      Suivant
+                      {t.onboarding.next}
                     </button>
                   )}
                 </div>

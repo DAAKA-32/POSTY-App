@@ -279,13 +279,13 @@ export default function RootLayout({
       <body className={`antialiased ${poppins.className}`}>
         {/* Portrait-only enforcement: blocks landscape on mobile phones */}
         <LandscapeBlocker />
-        <SkipLinks />
         <ThemeProvider>
         <KeyboardNavigationProvider>
         <AppProvider>
           <AuthProvider>
             <SubscriptionProvider>
               <LanguageProvider>
+                <SkipLinks />
                 <QuotaProvider>
                   <LinkedInProvider>
                     <FacebookProvider>
@@ -298,12 +298,12 @@ export default function RootLayout({
                     </FacebookProvider>
                   </LinkedInProvider>
                 </QuotaProvider>
+                <CookieBanner />
+                <LegalUpdateNotification />
               </LanguageProvider>
             </SubscriptionProvider>
             <PremiumToaster />
           </AuthProvider>
-          <CookieBanner />
-          <LegalUpdateNotification />
         </AppProvider>
         </KeyboardNavigationProvider>
         </ThemeProvider>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { useHapticFeedback } from "./useHapticFeedback";
+import { useHapticFeedback } from "@/hooks/ui/useHapticFeedback";
 
 interface UsePullToRefreshOptions {
   onRefresh: () => Promise<void>;

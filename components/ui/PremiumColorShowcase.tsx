@@ -10,7 +10,7 @@ import {
   engagementColors,
   componentPresets,
   getColorScheme,
-} from "@/lib/design-system-colors";
+} from "@/lib/ui/design-system-colors";
 
 /**
  * PremiumColorShowcase - Demonstration component showing the new color system
@@ -257,7 +257,7 @@ export default function PremiumColorShowcase() {
           <p>
             <strong className="text-white">1. Import du système:</strong>{" "}
             <code className="px-1.5 py-0.5 bg-dark-card rounded text-xs">
-              import &#123; storytellingColors, getColorScheme &#125; from "@/lib/design-system-colors"
+              import &#123; storytellingColors, getColorScheme &#125; from "@/lib/ui/design-system-colors"
             </code>
           </p>
           <p>

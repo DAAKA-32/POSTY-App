@@ -12,13 +12,13 @@ import { useAuth } from "./AuthContext";
 import {
   getFacebookConnection,
   deleteFacebookConnection,
-} from "@/lib/firestore";
+} from "@/lib/db/firestore";
 import { FacebookConnectionData } from "@/types";
 import {
   isMetaTokenExpired,
   getFacebookAuthUrl,
   postToFacebook as postToFacebookApi,
-} from "@/lib/meta";
+} from "@/lib/platforms/meta";
 import toast from "@/components/ui/Toast";
 
 interface FacebookContextType {

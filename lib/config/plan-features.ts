@@ -7,7 +7,7 @@
  */
 
 import { SubscriptionPlan, ResponseMode } from "@/types";
-import { PLAN_CONFIGS, PlanType } from "./plans";
+import { PLAN_CONFIGS, PlanType } from "@/lib/config/plans";
 
 // Plan feature configuration
 export interface PlanFeatures {

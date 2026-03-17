@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { saveFacebookConnectionAdmin } from "@/lib/firestore-admin";
-import { isAdminInitialized } from "@/lib/firebase-admin";
+import { saveFacebookConnectionAdmin } from "@/lib/db/firestore-admin";
+import { isAdminInitialized } from "@/lib/db/firebase-admin";
 import {
   META_CONFIG,
   FACEBOOK_CONFIG,
   FacebookTokenResponse,
   FacebookProfile,
   FacebookPagesResponse,
-} from "@/lib/meta";
+} from "@/lib/platforms/meta";
 
 /**
  * Route de callback OAuth 2.0 Facebook

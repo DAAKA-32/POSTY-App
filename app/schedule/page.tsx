@@ -14,7 +14,7 @@ import ScheduledPostCard from "@/components/schedule/ScheduledPostCard";
 import ScheduleModal from "@/components/schedule/ScheduleModal";
 import SchedulePaywallModal from "@/components/schedule/SchedulePaywallModal";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { usePageTitle } from "@/hooks/usePageTitle";
+import { usePageTitle } from "@/hooks/ui/usePageTitle";
 import { formatTimeLocale } from "@/components/ui/IOSTimePicker";
 
 function ScheduleContent() {

@@ -1,7 +1,7 @@
 "use client";
 
 import { ReactNode } from "react";
-import { useAppInitialization } from "@/hooks/useAppInitialization";
+import { useAppInitialization } from "@/hooks/app/useAppInitialization";
 import SplashScreen from "@/components/ui/SplashScreen";
 import { SidebarProvider } from "@/contexts/SidebarContext";
 import { NavigationStateProvider } from "@/contexts/NavigationStateContext";

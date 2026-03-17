@@ -9,10 +9,10 @@ import {
   checkHourlyQuotaAdmin,
   checkUserQuotaAdmin,
   incrementUserQuotaAdmin,
-} from "@/lib/firestore-admin";
-import { isAdminInitialized } from "@/lib/firebase-admin";
-import { canImprovePost } from "@/lib/plan-features";
-import { getPlanLimits, getMaxTokensForPlan, PlanType } from "@/lib/plans";
+} from "@/lib/db/firestore-admin";
+import { isAdminInitialized } from "@/lib/db/firebase-admin";
+import { canImprovePost } from "@/lib/config/plan-features";
+import { getPlanLimits, getMaxTokensForPlan, PlanType } from "@/lib/config/plans";
 import { SubscriptionPlan, PostInsights } from "@/types";
 import { verifyAuth } from "@/lib/auth";
 

@@ -8,8 +8,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLinkedIn } from "@/contexts/LinkedInContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import { updateUserProfile, getUserPosts, getUserSessions } from "@/lib/firestore";
-import { PlanType, DAILY_MESSAGE_LIMITS } from "@/lib/plans";
+import { updateUserProfile, getUserPosts, getUserSessions } from "@/lib/db/firestore";
+import { PlanType, DAILY_MESSAGE_LIMITS } from "@/lib/config/plans";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import {
   ProfileHeader,
@@ -19,7 +19,7 @@ import {
   ProfileEditForm,
 } from "@/components/profile";
 import toast from "@/components/ui/Toast";
-import { usePageTitle } from "@/hooks/usePageTitle";
+import { usePageTitle } from "@/hooks/ui/usePageTitle";
 
 function ProfileContent() {
   const { user, userProfile, refreshUserProfile } = useAuth();

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuth } from "firebase-admin/auth";
-import { isAdminInitialized } from "./firebase-admin";
+import { isAdminInitialized } from "@/lib/db/firebase-admin";
 
 interface AuthSuccess {
   uid: string;

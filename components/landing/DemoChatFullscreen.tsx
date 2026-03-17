@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { useScrollLock } from "@/hooks/useScrollLock";
+import { useScrollLock } from "@/hooks/ui/useScrollLock";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface DemoChatFullscreenProps {
   isOpen: boolean;
@@ -26,6 +27,7 @@ export default function DemoChatFullscreen({
   onClose,
   userMessage,
 }: DemoChatFullscreenProps) {
+  const { t } = useLanguage();
   const containerRef = useRef<HTMLDivElement>(null);
   const [displayedResponse, setDisplayedResponse] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -232,7 +234,7 @@ export default function DemoChatFullscreen({
                   />
                 </svg>
                 <span className="text-text-secondary text-sm font-medium hidden sm:inline group-hover:text-white transition-colors">
-                  Retour
+                  {t.common.back}
                 </span>
               </motion.button>
 
@@ -402,7 +404,7 @@ export default function DemoChatFullscreen({
                               href="/login?mode=signup"
                               className="group inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-primary to-accent text-white font-semibold rounded-xl shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300"
                             >
-                              <span>Commencer gratuitement</span>
+                              <span>{t.landing.heroCTAPrimary}</span>
                               <svg
                                 className="w-4 h-4 group-hover:translate-x-1 transition-transform"
                                 fill="none"

@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import { TRIAL_PERIOD_DAYS, GUARANTEE_PERIOD_DAYS } from "@/lib/plans";
+import { TRIAL_PERIOD_DAYS, GUARANTEE_PERIOD_DAYS } from "@/lib/config/plans";
 
 /**
  * TrialBanner - Shows contextual banners for trial/guarantee status

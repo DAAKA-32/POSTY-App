@@ -13,8 +13,8 @@ import {
   getLinkedInConnection,
   deleteLinkedInConnection,
   LinkedInConnectionData,
-} from "@/lib/firestore";
-import { isTokenExpired, postToLinkedIn as postToLinkedInApi, getLinkedInAuthUrl } from "@/lib/linkedin";
+} from "@/lib/db/firestore";
+import { isTokenExpired, postToLinkedIn as postToLinkedInApi, getLinkedInAuthUrl } from "@/lib/platforms/linkedin";
 import toast from "@/components/ui/Toast";
 
 interface LinkedInContextType {

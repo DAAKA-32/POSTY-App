@@ -2,7 +2,7 @@
 
 import { motion, Variants } from "framer-motion";
 import { ReactNode } from "react";
-import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { useReducedMotion } from "@/hooks/ui/useReducedMotion";
 
 interface AnimatedPageWrapperProps {
   children: ReactNode;

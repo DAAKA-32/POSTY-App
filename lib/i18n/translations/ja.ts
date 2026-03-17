@@ -178,9 +178,12 @@ export const ja = {
     // Status
     waiting: "Waiting...",
     generating: "Generating...",
-    disconnecting: "Disconnecting...",
-    active: "Active",
-    redirecting: "Redirecting...",
+    disconnecting: "切断中...",
+    connecting: "接続中...",
+    active: "アクティブ",
+    redirecting: "リダイレクト中...",
+    connectionExpiringSoon: "接続 {name} がまもなく期限切れです。設定から再接続してください。",
+    connectionsExpiringSoon: "接続 {names} がまもなく期限切れです。設定から再接続してください。",
 
     // AI & Responses
     twoVersionsAvailable: "2 versions available",
@@ -270,6 +273,48 @@ export const ja = {
     postEvolution: "Your post performance over time",
     loadingDashboard: "Loading your dashboard...",
     removeStatsNote: "Remove from stats (deletes from network)",
+
+    // LinkedIn Preview
+    linkedInPreview: "LinkedIn プレビュー",
+    linkedInPostPreview: "LinkedIn 投稿プレビュー",
+    linkedInMessagePreview: "プライベートメッセージプレビュー",
+    yourProfessionalTitle: "あなたの職業タイトル",
+    you: "あなた",
+    postWillAppearHere: "投稿がここに表示されます...",
+    previewLabel: "プレビュー",
+    comments: "コメント",
+    linkedInLike: "いいね",
+    linkedInComment: "コメント",
+    linkedInRepost: "リポスト",
+    linkedInShare: "共有",
+    linkedInSend: "送信",
+    postExceedsLimit: "投稿が LinkedIn の {max} 文字制限を超えています",
+    firstDegreeConnection: "1次つながり",
+    firstName: "名",
+    lastName: "姓",
+    messagePreviewInfo: "これはプレビューです。各メッセージはコネクションに個別に送信されます。",
+
+    // Response indicators
+    newResponsesAvailable: "{count} 件の新しい返信",
+    responseReady: "返信準備完了",
+    scrollDown: "下にスクロール",
+
+    // Inline upgrade banner
+    dualLimitReached: "制限に達しました。Max にアップグレードして無制限のデュアルモードをご利用ください。",
+    maxFeatureOnly: "この機能は Max プランのみご利用いただけます。",
+    upgradeToMax: "Max にアップグレード",
+    maxShort: "Max",
+
+    // Content editor
+    editYourMessage: "メッセージを編集",
+    lineBreaksTip: "改行や絵文字を追加してエンゲージメントを高めましょう",
+    hashtagsWarning: "LinkedIn ではハッシュタグは最大5つが推奨されています",
+    messageExceedsLimit: "メッセージが LinkedIn の {max} 文字制限を超えています",
+
+    // Refine
+    adjustTone: "トーンを調整",
+    applyRefine: "適用",
+    refining: "調整中...",
   },
 
   // Language selector
@@ -948,6 +993,21 @@ export const ja = {
     sendLink: "Send link",
     sendingLink: "Sending...",
     backToLogin: "Back to login",
+
+    // Forgot password page (full page)
+    forgotPasswordTitle: "パスワードをお忘れですか？",
+    forgotPasswordSubtitle: "ご安心ください、誰にでもあることです",
+    forgotPasswordInstructions: "アカウントに登録されているメールアドレスを入力してください。パスワードをリセットするリンクをお送りします。",
+    forgotPasswordEmailLabel: "メールアドレス",
+    forgotPasswordSendResetLink: "リセットリンクを送信",
+    forgotPasswordEmailSentTitle: "メールが送信されました",
+    forgotPasswordEmailSentDesc: "{email} に関連するアカウントがある場合、パスワードリセットのリンクが間もなく届きます。",
+    forgotPasswordCheckSpam: "メールが見つからない場合は、迷惑メールフォルダをご確認ください。",
+    forgotPasswordEmailDelay: "メールの到着には最大 {minutes} 分かかる場合があります。届かない場合は、メールアドレスが正しいかご確認ください。",
+    forgotPasswordReturnToLogin: "ログインに戻る",
+    forgotPasswordTryAnother: "別のアドレスを試す",
+    forgotPasswordRemember: "パスワードを思い出しましたか？",
+    forgotPasswordSignIn: "ログイン",
   },
 
   // Sidebar & Navigation
@@ -1143,6 +1203,7 @@ export const ja = {
     disconnect: "接続解除",
     reconnectMessage: "LinkedInへの投稿を続けるには再接続してください。",
     connectLinkedIn: "LinkedInを接続",
+    connectTwitter: "X (Twitter) を接続",
 
     // Google (coming soon)
     google: "Google",
@@ -1255,6 +1316,42 @@ export const ja = {
     legalNoticesLink: "法的通知",
     legalNotices: "法的通知",
     cookiePolicy: "Cookieポリシー",
+
+    // Personal branding
+    personalBranding: "パーソナルブランディング",
+    customizeVisualIdentity: "ビジュアルアイデンティティをカスタマイズ",
+    profilePhoto: "プロフィール写真",
+    uploadCustomPhoto: "カスタム写真をアップロード",
+    upgradeToUploadPhoto: "Proにアップグレードしてカスタム写真をアップロード",
+    removeCustomPhotoLabel: "カスタム写真を削除",
+    coverImage: "カバー画像",
+    clickToAddImage: "クリックして画像を追加",
+    proRequired: "Pro版が必要です",
+    accentColor: "アクセントカラー",
+    customColor: "カスタム：",
+    gradientStyle: "グラデーションスタイル",
+    professionalTagline: "プロフェッショナルタグライン",
+    taglinePlaceholder: "例：LinkedIn専門家 | パーソナルブランディングコーチ",
+    characters: "文字",
+    socialLinks: "ソーシャルリンク",
+    profileVisibility: "プロフィールの公開設定",
+    savedExclamation: "保存しました！",
+    unlockFullBranding: "フルパーソナルブランディングを解除",
+    upgradeForBranding: "Proにアップグレードして、アバター、カラー、グラデーション、ソーシャルリンクなどをカスタマイズ。",
+
+    // OpenAI settings
+    openaiTitle: "OpenAI設定",
+    openaiDescription: "OpenAI APIキーを追加して、AI駆動の投稿生成を有効にします。",
+    openaiApiKeyLabel: "OpenAI APIキー",
+    openaiApiKeyPlaceholder: "sk-...",
+    openaiApiKeyHint: "キーはローカルに保存され、共有されることはありません。",
+    openaiModelLabel: "モデル",
+    openaiValidating: "検証中...",
+    openaiValid: "有効なキー",
+    openaiInvalid: "無効なキー",
+    openaiClearKey: "キーを削除",
+    openaiGlobalConfigured: "サーバーにグローバルキーが設定されています。",
+    openaiGetKey: "キーの取得先",
 
     // Contact
     dataQuestions: "データに関するお問い合わせ：",
@@ -1491,6 +1588,40 @@ export const ja = {
 
     // Success
     profileComplete: "プロフィール設定が完了しました！",
+
+    // Extended step titles (for dynamic onboarding)
+    profileTypeTitle: "あなたのプロフィールは？",
+    profileTypeSubtitle: "Postyがあなたの言葉で話せるように",
+    sectorStepTitle: "どの業界ですか？",
+    sectorStepSubtitle: "すべての投稿がターゲットに届くように",
+    roleStepTitle: "あなたの役職は？",
+    roleStepSubtitle: "投稿のトーンと信頼性を調整するために",
+    objectiveStepTitle: "第一の目標は何ですか？",
+    objectiveStepSubtitle: "すべての投稿がこの目標に最適化されます",
+    targetAudienceStepTitle: "誰にリーチしたいですか？",
+    targetAudienceStepSubtitle: "将来のクライアントに響く投稿のために",
+    communicationToneStepTitle: "どのトーンが合っていますか？",
+    communicationToneStepSubtitle: "あなたの言葉をAIが強化します",
+    publishingFrequencyStepTitle: "どのくらいの頻度で投稿しますか？",
+    publishingFrequencyStepSubtitle: "Postyがあなたのペースに合わせます",
+    rolePlaceholderHint: "例：CEO、開発者、マーケティングマネージャー...",
+    saving: "保存中...",
+    errorOccurred: "エラーが発生しました",
+    defaultUser: "ユーザー",
+
+    // Profile recap screen
+    recapTitle: "プロフィールの準備ができました",
+    recapSubtitle: "AIがあなたの選択に基づいて投稿をパーソナライズします",
+    recapComplete: "完了",
+    recapCustomization: "パーソナライズ",
+    recapRedirecting: "リダイレクト中...",
+    recapFieldProfile: "プロフィール",
+    recapFieldSector: "業界",
+    recapFieldRole: "役職",
+    recapFieldObjective: "目標",
+    recapFieldAudience: "ターゲット",
+    recapFieldTone: "トーン",
+    recapFieldFrequency: "頻度",
   },
 
   // Consent modal
@@ -1534,6 +1665,12 @@ export const ja = {
     linkedinDisconnectWarning: "PostyからLinkedInへの直接投稿ができなくなります。",
     linkedinDisconnectConfirm: "接続を解除してもよろしいですか",
     linkedinDisconnected: "LinkedInの接続が解除されました",
+    reconnectAnytime: "いつでも再接続できます。",
+
+    // Twitter disconnect
+    twitterDisconnectTitle: "X (Twitter) の接続解除",
+    twitterDisconnectWarning: "PostyからXへの直接投稿ができなくなります。",
+    twitterDisconnectConfirm: "接続を解除してもよろしいですか",
 
     // Delete conversation
     deleteConversationTitle: "会話を削除",
@@ -1541,7 +1678,34 @@ export const ja = {
 
     // Rename conversation
     renameConversationTitle: "会話の名前を変更",
+    renameConversationDesc: "この会話にタイトルを付けてください",
+    renameConversationLabel: "会話のタイトル",
     renameConversationPlaceholder: "新しい名前...",
+
+    // Delete account details
+    accountDeletedTitle: "アカウント削除済み",
+    allDataDeleted: "アカウントとすべてのデータが削除されました。",
+    redirectingEllipsis: "リダイレクト中...",
+    irreversibleAction: "この操作は取り消せません",
+    allDataWillBeDeleted: "すべてのデータが完全に削除されます：",
+    personalInfo: "プロフィールと個人情報",
+    generatedPostsHistory: "生成した投稿の履歴",
+    sessionsConversations: "セッションと会話",
+    preferencesConsents: "設定と同意",
+    confirmPasswordToContinue: "続行するにはパスワードを確認してください",
+    googleLoginRequired: "Googleログインが必要です",
+    googleReauthDesc: "Googleで本人確認を行う必要があります",
+    enterPasswordError: "パスワードを入力してください",
+    deletingEllipsis: "削除中...",
+
+    // Legal update notification
+    legalDocsUpdated: "法的文書が更新されました",
+    legalDocsModified: "以下の文書が変更されました：",
+    privacyPolicyDoc: "プライバシーポリシー",
+    termsOfUseDoc: "利用規約",
+    legalNoticesDoc: "法的通知",
+    cookiePolicyDoc: "Cookieポリシー",
+    understood: "了解しました",
   },
 
   // Errors
@@ -1563,6 +1727,13 @@ export const ja = {
     serverErrorDescription: "予期しないエラーが発生しました。しばらくしてから再度お試しください。",
     networkError: "接続エラー",
     networkErrorDescription: "サーバーに接続できません。インターネット接続をご確認ください。",
+    // Error page (app/error.tsx)
+    errorPageTitle: "申し訳ございません、エラーが発生しました",
+    errorPageDataSafe: "ご安心ください、データは安全です。",
+    errorPageTryRefresh: "ページの更新をお試しください。問題が解決しない場合は、サポートチームがお手伝いいたします。",
+    errorPageRefresh: "ページを更新",
+    errorPageNeedHelp: "お困りですか？",
+    errorPageContactSupport: "サポートに問い合わせる",
   },
 
   // Empty states
@@ -2502,6 +2673,34 @@ export const ja = {
     proRequiredForSchedule: "Scheduling requires a Pro or Max plan",
     upgradeToSchedule: "Upgrade to unlock scheduling",
   },
+  // Checkout success page
+  checkoutSuccess: {
+    trialStarted: "{plan} の無料トライアルが開始されました！",
+    welcomePlan: "{plan} へようこそ！",
+    trialDescription: "{days} 日間すべての機能をお試しいただけます。トライアル期間中は無料です。いつでもキャンセルできます。",
+    subscriptionDescription: "サブスクリプションが正常に有効化されました。{days} 日間返金保証付き。",
+    quickStartTitle: "3ステップで最初の投稿を作成",
+    step1Title: "目標を説明する",
+    step1Desc: "例：「Web開発会社のリード獲得」",
+    step2Title: "Postyがプロフィールを分析",
+    step2Desc: "AIがターゲットと市場に合わせてメッセージを調整",
+    step3Title: "投稿またはスケジュール",
+    step3Desc: "LinkedInにコピー＆ペースト、または後で投稿予約",
+    benefitsTitle: "新しい特典",
+    unlimitedAI: "無制限のAIメッセージ",
+    unlimitedHistory: "無制限の履歴",
+    premiumTemplates: "プレミアムテンプレート",
+    prioritySupport: "優先サポート",
+    continueBtn: "続ける",
+    startCreating: "作成を開始",
+    viewProfile: "プロフィールを見る",
+    autoRedirect: "{seconds} 秒後に自動リダイレクト...",
+    stayOnPage: "このページに留まる",
+    confirmationEmailTrial: "確認メールが送信されました。プロフィールからいつでもキャンセルできます。",
+    confirmationEmailSubscription: "確認メールがアドレスに送信されました。プロフィールからサブスクリプションを管理できます。",
+    headerTitle: "確認",
+    planFree: "無料",
+  },
   footer: {
     tagline: "Your LinkedIn posts, crafted to win clients.",
     taglineAccent: "Every post can bring you a client",
@@ -2563,5 +2762,31 @@ export const ja = {
     tips: "ヒント",
     tryAnother: "別のを試す",
     error: "変換中にエラーが発生しました",
+  },
+
+  // Accessibility
+  accessibility: {
+    skipToContent: "メインコンテンツにスキップ",
+    skipToNavigation: "ナビゲーションにスキップ",
+    skipToInput: "入力エリアにスキップ",
+    quickAccessLinks: "クイックアクセスリンク",
+  },
+
+  // Cookie banner
+  cookieBanner: {
+    privacy: "プライバシー",
+    description: "必須Cookieと、お客様の同意を得た上で、体験向上のためのオプションCookieを使用しています。",
+    learnMore: "詳しく見る",
+    accept: "同意する",
+    refuse: "拒否する",
+    customizeCookies: "Cookieをカスタマイズ",
+    preferences: "設定",
+    essential: "必須",
+    essentialDesc: "認証とセキュリティ。常に有効。",
+    functional: "機能",
+    functionalDesc: "インターフェースの設定とパーソナライズ。",
+    analytics: "分析",
+    analyticsDesc: "匿名の利用統計。サードパーティなし。",
+    cookiePolicy: "Cookieポリシー",
   },
 } as const;

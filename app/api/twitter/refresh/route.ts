@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   getTwitterConnectionAdmin,
   updateTwitterTokensAdmin,
-} from "@/lib/firestore-admin";
-import { isAdminInitialized } from "@/lib/firebase-admin";
-import { TWITTER_CONFIG, TwitterTokenResponse } from "@/lib/twitter";
+} from "@/lib/db/firestore-admin";
+import { isAdminInitialized } from "@/lib/db/firebase-admin";
+import { TWITTER_CONFIG, TwitterTokenResponse } from "@/lib/platforms/twitter";
 import { verifyAuth } from "@/lib/auth";
 
 /**

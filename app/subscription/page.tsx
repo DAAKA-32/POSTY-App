@@ -4,16 +4,16 @@ import { Suspense, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { getAuthHeaders } from "@/lib/api-client";
+import { getAuthHeaders } from "@/lib/api/client";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { getAllPlans, PlanConfig, PlanType, GUARANTEE_PERIOD_DAYS } from "@/lib/plans";
+import { getAllPlans, PlanConfig, PlanType, GUARANTEE_PERIOD_DAYS } from "@/lib/config/plans";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import { activateFreePlan } from "@/lib/firestore";
+import { activateFreePlan } from "@/lib/db/firestore";
 import BillingToggle from "@/components/ui/BillingToggle";
 import toast from "@/components/ui/Toast";
 import WelcomeModal from "@/components/ui/WelcomeModal";
 import PricingCard from "@/components/pricing/PricingCard";
-import { usePageTitle } from "@/hooks/usePageTitle";
+import { usePageTitle } from "@/hooks/ui/usePageTitle";
 
 // Get all plans (Free + Pro + Max) from lib/plans.ts (single source of truth)
 const PLANS = getAllPlans();

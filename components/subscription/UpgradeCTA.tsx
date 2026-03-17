@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import { getPlanConfig } from "@/lib/plans";
-import { useUpgradeCTA } from "@/hooks/useUpgradeCTA";
+import { getPlanConfig } from "@/lib/config/plans";
+import { useUpgradeCTA } from "@/hooks/ui/useUpgradeCTA";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface UpgradeCTAProps {
   className?: string;
@@ -20,6 +21,7 @@ export default function UpgradeCTA({
   messageCount = 0,
   sessionDuration = 0,
 }: UpgradeCTAProps) {
+  const { t } = useLanguage();
   const {
     currentPlan,
     isProPlan,
@@ -110,7 +112,7 @@ export default function UpgradeCTA({
                   dismiss();
                 }}
                 className="absolute top-1/2 -translate-y-1/2 right-2 z-10 w-8 h-8 flex items-center justify-center rounded-full text-text-muted hover:text-white bg-dark-elevated/60 hover:bg-dark-hover/80 backdrop-blur-sm transition-all duration-200"
-                aria-label="Fermer"
+                aria-label={t.common.close}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -190,7 +192,7 @@ export default function UpgradeCTA({
                 dismiss();
               }}
               className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-full text-text-muted hover:text-white bg-dark-card/60 hover:bg-dark-hover/80 backdrop-blur-sm transition-all duration-200 z-10"
-              aria-label="Fermer"
+              aria-label={t.common.close}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

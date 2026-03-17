@@ -7,21 +7,21 @@ import BottomSheet from "@/components/ui/BottomSheet";
 import Button from "@/components/ui/Button";
 import UpgradeProModal from "@/components/ui/UpgradeProModal";
 import LinkedInConnectButton, { LinkedInIcon } from "./LinkedInConnectButton";
-import { LinkedInConnectionData } from "@/lib/firestore";
+import { LinkedInConnectionData } from "@/lib/db/firestore";
 import { useQuota } from "@/contexts/QuotaContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useScheduling } from "@/contexts/SchedulingContext";
 import toast from "@/components/ui/Toast";
 import PlatformSelector from "@/components/publish/PlatformSelector";
 import { Platform, SchedulePlatform } from "@/types";
-import { usePlatformSelection } from "@/hooks/usePlatformSelection";
-import { triggerHaptic } from "@/hooks/useHapticFeedback";
+import { usePlatformSelection } from "@/hooks/gesture/usePlatformSelection";
+import { triggerHaptic } from "@/hooks/ui/useHapticFeedback";
 import { useFacebook } from "@/contexts/FacebookContext";
 import { useThreads } from "@/contexts/ThreadsContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { postToLinkedInWithMedia, postToLinkedInWithVideo } from "@/lib/linkedin";
-import { shouldShowFreeSignature, FREE_PLAN_SIGNATURE } from "@/lib/plans";
+import { postToLinkedInWithMedia, postToLinkedInWithVideo } from "@/lib/platforms/linkedin";
+import { shouldShowFreeSignature, FREE_PLAN_SIGNATURE } from "@/lib/config/plans";
 import IOSTimePicker, { SmartTimeSuggestions, formatTimeLocale } from "@/components/ui/IOSTimePicker";
 import FullScreenTextEditor from "@/components/publish/FullScreenTextEditor";
 import { useRouter } from "next/navigation";
@@ -772,7 +772,7 @@ export default function PublishToLinkedInModal({
       <>
         {/* Preview Step */}
         {step === "preview" && (
-          <div className="space-y-5">
+          <div className="space-y-4">
             {/* LinkedIn Profile */}
             <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-dark-bg rounded-lg">
               {linkedInConnection?.profilePicture ? (
@@ -901,7 +901,7 @@ export default function PublishToLinkedInModal({
 
               {/* No media selected — two add buttons */}
               {images.length === 0 && !video && (
-                <div className="flex gap-2">
+                <div className="flex gap-3">
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
@@ -933,7 +933,7 @@ export default function PublishToLinkedInModal({
                   {imagePreviews.map((preview, idx) => (
                     <div
                       key={idx}
-                      className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden border border-gray-200 dark:border-dark-border group"
+                      className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 dark:border-dark-border group"
                     >
                       <img src={preview} alt={`Image ${idx + 1}`} className="w-full h-full object-cover" />
                       <button
@@ -954,7 +954,7 @@ export default function PublishToLinkedInModal({
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg border-2 border-dashed border-gray-300 dark:border-dark-border hover:border-primary/50 flex flex-col items-center justify-center gap-1 text-text-muted hover:text-primary transition-colors duration-200"
+                      className="w-20 h-20 rounded-lg border-2 border-dashed border-gray-300 dark:border-dark-border hover:border-primary/50 flex flex-col items-center justify-center gap-1 text-text-muted hover:text-primary transition-colors duration-200"
                       aria-label={t.publish.addImage}
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -975,12 +975,12 @@ export default function PublishToLinkedInModal({
                     muted
                     playsInline
                   />
-                  <div className="flex items-center justify-between px-3 py-2 bg-gray-100 dark:bg-dark-elevated/90 border-t border-gray-200 dark:border-dark-border/50">
-                    <div className="flex items-center gap-2 min-w-0">
+                  <div className="flex items-center justify-between px-3 py-2.5 bg-gray-100 dark:bg-dark-elevated/90 border-t border-gray-200 dark:border-dark-border/50">
+                    <div className="flex items-center gap-2.5 min-w-0">
                       <svg className="w-4 h-4 text-accent shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                       </svg>
-                      <span className="text-xs text-gray-900 dark:text-white font-medium truncate max-w-[110px]">{video.name}</span>
+                      <span className="text-sm text-gray-900 dark:text-white font-medium truncate max-w-[140px]">{video.name}</span>
                       <span className="text-xs text-gray-500 dark:text-text-muted shrink-0">{formatFileSize(video.size, language)}</span>
                       {videoDuration !== null && (
                         <span className="text-xs text-gray-500 dark:text-text-muted shrink-0">{formatDuration(videoDuration)}</span>
@@ -1036,24 +1036,27 @@ export default function PublishToLinkedInModal({
               </div>
               {/* Mobile: tap to open fullscreen editor */}
               {isMobile ? (
-                <div
+                <button
+                  type="button"
                   onClick={() => setShowFullScreenEditor(true)}
                   className={`
                     w-full p-4 bg-gray-50 dark:bg-dark-bg border rounded-lg text-gray-900 dark:text-white text-sm
-                    min-h-[120px] max-h-[200px] overflow-hidden cursor-text
+                    min-h-[120px] max-h-[200px] overflow-hidden cursor-text text-left
+                    active:bg-gray-100 dark:active:bg-dark-elevated transition-colors duration-150
                     ${isOverLimit ? "border-error" : "border-gray-200 dark:border-dark-border"}
                   `}
+                  aria-label={t.publish.tapToEdit || "Tap to edit"}
                 >
                   <p className="whitespace-pre-wrap line-clamp-6 leading-relaxed">
                     {editedContent || <span className="text-gray-400">{t.ui.writeContentPlaceholder}</span>}
                   </p>
-                  <div className="mt-2 flex items-center gap-1.5 text-primary/60">
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="mt-3 flex items-center justify-center gap-2 text-primary py-1.5 bg-primary/5 rounded-lg">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                     </svg>
-                    <span className="text-xs font-medium">{t.publish.tapToEdit || "Tap to edit"}</span>
+                    <span className="text-sm font-medium">{t.publish.tapToEdit || "Tap to edit"}</span>
                   </div>
-                </div>
+                </button>
               ) : (
                 <textarea
                   value={editedContent}
@@ -1241,7 +1244,7 @@ export default function PublishToLinkedInModal({
                             </div>
 
                             {/* Quick date shortcuts */}
-                            <div className="grid grid-cols-4 gap-1.5 mb-3">
+                            <div className="grid grid-cols-4 gap-2 mb-3">
                               {[
                                 { label: t.scheduler.todayShort, days: 0, requiresValid: true },
                                 { label: t.scheduler.tomorrow, days: 1, requiresValid: false },
@@ -1269,7 +1272,7 @@ export default function PublishToLinkedInModal({
                                       }
                                     }}
                                     disabled={unavailable}
-                                    className={`p-2 rounded-lg text-center text-xs font-medium transition-all ${
+                                    className={`p-2.5 rounded-lg text-center text-xs font-medium transition-all min-h-[40px] ${
                                       unavailable ? "opacity-40 cursor-not-allowed" :
                                       selected ? "bg-primary text-white" :
                                       "bg-white dark:bg-dark-card hover:bg-gray-100 dark:hover:bg-dark-hover text-text-secondary border border-gray-200 dark:border-dark-border"
@@ -1333,7 +1336,7 @@ export default function PublishToLinkedInModal({
                                       }}
                                       disabled={disabled}
                                       className={`
-                                        aspect-square flex items-center justify-center text-xs rounded-lg transition-all min-h-[32px] font-medium
+                                        aspect-square flex items-center justify-center text-xs rounded-lg transition-all min-h-[40px] font-medium
                                         ${!date ? "invisible" : ""}
                                         ${disabled ? "text-text-muted/25 cursor-not-allowed" : "cursor-pointer"}
                                         ${selected ? "bg-primary text-white font-bold shadow-sm" : ""}
@@ -1383,8 +1386,8 @@ export default function PublishToLinkedInModal({
                             </div>
 
                             {/* Time grid */}
-                            <div className="max-h-32 overflow-y-auto rounded-lg border border-gray-200 dark:border-dark-border">
-                              <div className="grid grid-cols-4 gap-0.5 p-1.5">
+                            <div className="max-h-44 overflow-y-auto rounded-lg border border-gray-200 dark:border-dark-border overscroll-contain">
+                              <div className="grid grid-cols-4 gap-1 p-2">
                                 {Array.from({ length: 48 }, (_, i) => {
                                   const hour = Math.floor(i / 2);
                                   const minute = (i % 2) * 30;
@@ -1403,7 +1406,7 @@ export default function PublishToLinkedInModal({
                                         }
                                       }}
                                       disabled={disabled}
-                                      className={`px-2 py-1.5 text-xs rounded-md transition-all ${
+                                      className={`px-2 py-2 text-xs rounded-md transition-all min-h-[36px] ${
                                         disabled ? "text-text-muted/30 cursor-not-allowed line-through" :
                                         isSelected ? "bg-primary text-white font-medium" :
                                         "hover:bg-gray-100 dark:hover:bg-dark-hover text-text-secondary hover:text-gray-900 dark:hover:text-white"
@@ -1419,7 +1422,7 @@ export default function PublishToLinkedInModal({
                             {/* Back to date */}
                             <button
                               onClick={() => setScheduleStep("date")}
-                              className="mt-3 text-xs text-text-muted hover:text-gray-900 dark:hover:text-white flex items-center gap-1 min-h-[36px]"
+                              className="mt-3 text-sm text-text-muted hover:text-gray-900 dark:hover:text-white flex items-center gap-1.5 min-h-[44px]"
                             >
                               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />

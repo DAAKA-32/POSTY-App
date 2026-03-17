@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import { LinkedInIcon } from "@/components/linkedin/LinkedInConnectButton";
-import { useHapticFeedback } from "@/hooks/useHapticFeedback";
+import { useHapticFeedback } from "@/hooks/ui/useHapticFeedback";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import toast from "@/components/ui/Toast";
 import LinkedInPreview from "./LinkedInPreview";
@@ -41,11 +41,13 @@ const ResponseCard = memo(function ResponseCard({
   showLinkedInButton = false,
   showScheduleButton = false,
   onRefine,
-  authorName = "Vous",
-  authorTitle = "Votre titre professionnel",
+  authorName,
+  authorTitle,
   authorAvatar,
 }: ResponseCardProps) {
   const { t } = useLanguage();
+  const resolvedAuthorName = authorName || t.ui.you;
+  const resolvedAuthorTitle = authorTitle || t.ui.yourProfessionalTitle;
   const [copied, setCopied] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [showRefine, setShowRefine] = useState(false);
@@ -74,7 +76,7 @@ const ResponseCard = memo(function ResponseCard({
     if (onRefine) {
       onRefine(toneValue, content);
       setShowRefine(false);
-      toast.success("Raffinement en cours...");
+      toast.success(t.ui.refining);
     }
   };
 
@@ -162,7 +164,7 @@ const ResponseCard = memo(function ResponseCard({
                   : "text-text-muted hover:text-[#0A66C2] hover:bg-[#0A66C2]/10"
                 }
               `}
-              title="Aperçu LinkedIn"
+              title={t.ui.linkedInPreview}
             >
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
@@ -185,7 +187,7 @@ const ResponseCard = memo(function ResponseCard({
                     : "text-text-muted hover:text-violet-500 hover:bg-violet-500/10"
                   }
                 `}
-                title="Ajuster le ton"
+                title={t.ui.adjustTone}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
@@ -209,8 +211,8 @@ const ResponseCard = memo(function ResponseCard({
             <div className="p-4">
               <LinkedInPreview
                 content={content}
-                authorName={authorName}
-                authorTitle={authorTitle}
+                authorName={resolvedAuthorName}
+                authorTitle={resolvedAuthorTitle}
                 authorAvatar={authorAvatar}
               />
             </div>
@@ -231,14 +233,14 @@ const ResponseCard = memo(function ResponseCard({
             <div className="p-4 bg-gray-50/50 dark:bg-dark-elevated/50">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm font-medium text-text-secondary">
-                  Ajuster le ton
+                  {t.ui.adjustTone}
                 </span>
                 <Button
                   size="sm"
                   onClick={handleRefine}
                   className="bg-violet-500 hover:bg-violet-600 text-white text-xs px-3 py-1.5"
                 >
-                  Appliquer
+                  {t.ui.applyRefine}
                 </Button>
               </div>
               <CompactRefineSlider
@@ -280,7 +282,7 @@ const ResponseCard = memo(function ResponseCard({
                   d="M5 13l4 4L19 7"
                 />
               </svg>
-              Copié !
+              {t.ui.copied}
             </>
           ) : (
             <>
@@ -297,7 +299,7 @@ const ResponseCard = memo(function ResponseCard({
                   d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
                 />
               </svg>
-              Copier
+              {t.ui.copy}
             </>
           )}
         </Button>
@@ -308,7 +310,7 @@ const ResponseCard = memo(function ResponseCard({
             className="flex-1 bg-[#0A66C2] hover:bg-[#004182] border-none"
           >
             <LinkedInIcon className="w-4 h-4 mr-1" />
-            Publier
+            {t.ui.publish}
           </Button>
         )}
         {showScheduleButton && onSchedule && (
@@ -317,7 +319,7 @@ const ResponseCard = memo(function ResponseCard({
             size="sm"
             onClick={onSchedule}
             className={`flex-1 relative ${!canSchedule ? "pr-12" : ""}`}
-            title={canSchedule ? "Programmer ce post" : "Programmer ce post (Pro)"}
+            title={t.ui.schedule}
           >
             <svg
               className="w-4 h-4 mr-1"
@@ -332,7 +334,7 @@ const ResponseCard = memo(function ResponseCard({
                 d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
-            Programmer
+            {t.ui.schedule}
             {!canSchedule && (
               <span className="absolute right-1.5 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-[10px] font-bold bg-gradient-to-r from-primary to-accent text-white rounded-md">
                 PRO
@@ -347,7 +349,7 @@ const ResponseCard = memo(function ResponseCard({
             onClick={onSelect}
             className="flex-1"
           >
-            {isSelected ? "Sélectionné" : "Choisir"}
+            {isSelected ? t.scheduler.selected : t.ui.selectVersion}
           </Button>
         )}
       </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { GUARANTEE_PERIOD_DAYS } from "@/lib/plans";
+import { GUARANTEE_PERIOD_DAYS } from "@/lib/config/plans";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface PricingTrustBadgesProps {

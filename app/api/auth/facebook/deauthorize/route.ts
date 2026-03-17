@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { META_CONFIG } from "@/lib/meta";
-import { adminDb, isAdminInitialized } from "@/lib/firebase-admin";
+import { META_CONFIG } from "@/lib/platforms/meta";
+import { adminDb, isAdminInitialized } from "@/lib/db/firebase-admin";
 import crypto from "crypto";
 
 /**

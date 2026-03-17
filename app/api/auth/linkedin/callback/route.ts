@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { saveLinkedInConnectionAdmin } from "@/lib/firestore-admin";
-import { isAdminInitialized, adminDb } from "@/lib/firebase-admin";
-import { LINKEDIN_CONFIG } from "@/lib/linkedin";
+import { saveLinkedInConnectionAdmin } from "@/lib/db/firestore-admin";
+import { isAdminInitialized, adminDb } from "@/lib/db/firebase-admin";
+import { LINKEDIN_CONFIG } from "@/lib/platforms/linkedin";
 
 /**
  * Route de callback OAuth 2.0 LinkedIn

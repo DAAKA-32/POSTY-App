@@ -9,7 +9,7 @@ import { useThreads } from "@/contexts/ThreadsContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { PlanBadge } from "@/components/subscription/PlanInfoCard";
-import { PlanType, meetsMinimumPlan } from "@/lib/plans";
+import { PlanType, meetsMinimumPlan } from "@/lib/config/plans";
 import Image from "next/image";
 
 interface ProfileMenuProps {

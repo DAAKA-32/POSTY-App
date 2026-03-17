@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import Stripe from "stripe";
-import { getStripeServer, STRIPE_WEBHOOK_EVENTS } from "@/lib/stripe";
+import { getStripeServer, STRIPE_WEBHOOK_EVENTS } from "@/lib/config/stripe";
 import { SubscriptionPlan } from "@/types";
 
 // Import Firebase Admin for server-side operations

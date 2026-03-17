@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Toast as HotToast, toast as hotToast, Toaster, useToasterStore } from "react-hot-toast";
-import { triggerHaptic } from "@/hooks/useHapticFeedback";
+import { triggerHaptic } from "@/hooks/ui/useHapticFeedback";
 
 // ============================================================
 // POSTY PREMIUM TOAST SYSTEM

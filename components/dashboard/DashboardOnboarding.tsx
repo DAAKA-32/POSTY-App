@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useScrollLock } from "@/hooks/useScrollLock";
+import { useScrollLock } from "@/hooks/ui/useScrollLock";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface DashboardOnboardingProps {
   onComplete: () => void;
@@ -47,6 +48,7 @@ const steps = [
 ];
 
 export default function DashboardOnboarding({ onComplete }: DashboardOnboardingProps) {
+  const { t } = useLanguage();
   useScrollLock(true);
   const [currentStep, setCurrentStep] = useState(0);
 
@@ -131,7 +133,7 @@ export default function DashboardOnboarding({ onComplete }: DashboardOnboardingP
               onClick={handleNext}
               className="flex-1 py-3 bg-primary hover:bg-primary-hover text-white font-medium rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
             >
-              {currentStep === steps.length - 1 ? "Commencer" : "Suivant"}
+              {currentStep === steps.length - 1 ? t.common.getStarted : t.common.next}
             </button>
           </div>
         </div>

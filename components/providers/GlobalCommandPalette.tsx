@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { getUserPosts } from "@/lib/firestore";
+import { getUserPosts } from "@/lib/db/firestore";
 import { Post } from "@/types";
 import CommandPalette from "@/components/ui/CommandPalette";
 

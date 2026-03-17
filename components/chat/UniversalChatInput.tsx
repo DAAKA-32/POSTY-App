@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { PlanType } from "@/lib/plans";
+import { PlanType } from "@/lib/config/plans";
 import { FileAttachment, FILE_ATTACHMENT_LIMITS, AttachmentMimeType } from "@/types";
 import { InlineVoiceWaveform } from "./VoiceWaveform";
 import PromptLimitModal from "./PromptLimitModal";

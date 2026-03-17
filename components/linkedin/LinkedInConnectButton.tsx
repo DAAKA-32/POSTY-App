@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Button from "@/components/ui/Button";
 import { useLinkedIn } from "@/contexts/LinkedInContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface LinkedInConnectButtonProps {
   variant?: "default" | "compact";
@@ -13,6 +14,7 @@ export default function LinkedInConnectButton({
   variant = "default",
   className = "",
 }: LinkedInConnectButtonProps) {
+  const { t } = useLanguage();
   const {
     isConnected,
     isLoading: contextLoading,
@@ -57,7 +59,7 @@ export default function LinkedInConnectButton({
               <p className="text-white font-medium truncate">{connection.profileName}</p>
               <p className="text-xs text-accent flex items-center gap-1">
                 <span className="w-1.5 h-1.5 bg-accent rounded-full" />
-                Connecté
+                {t.settings.connected}
               </p>
             </div>
           </div>
@@ -68,7 +70,7 @@ export default function LinkedInConnectButton({
           onClick={handleDisconnect}
           className="shrink-0"
         >
-          Déconnecter
+          {t.settings.disconnect}
         </Button>
       </div>
     );
@@ -89,7 +91,7 @@ export default function LinkedInConnectButton({
       `}
     >
       <LinkedInIcon className="w-5 h-5 mr-2.5" />
-      {contextLoading ? "Connexion en cours..." : "Connecter LinkedIn"}
+      {contextLoading ? t.ui.connecting : t.settings.connectLinkedIn}
     </Button>
   );
 }

@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, Linkedin, Target, Sparkles } from "lucide-react";
 import { AboutPageJsonLd } from "@/components/seo/JsonLd";
-import { usePageTitle } from "@/hooks/usePageTitle";
+import { usePageTitle } from "@/hooks/ui/usePageTitle";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 // =============================================================================
@@ -18,7 +18,7 @@ function getTeamMembers(t: ReturnType<typeof useLanguage>["t"]) {
       name: "Emilien Nepveu",
       role: "Co-Founder & Co-CEO",
       operationalRole: "CTO",
-      photo: "/ceo.jpg",
+      photo: "/images/team/ceo.jpg",
       linkedIn: "https://www.linkedin.com/in/emilien-nepveu-58a38127a/",
       bio: t.about.emilienBio,
       expertise: [t.about.emilienExpertise1, t.about.emilienExpertise2, t.about.emilienExpertise3, t.about.emilienExpertise4],
@@ -27,7 +27,7 @@ function getTeamMembers(t: ReturnType<typeof useLanguage>["t"]) {
       name: "Côme Maubert",
       role: "Co-Founder & Co-CEO",
       operationalRole: "CFO",
-      photo: "/cmo.jpg",
+      photo: "/images/team/cmo.jpg",
       linkedIn: "https://www.linkedin.com/in/c%C3%B4me-maubert-delamoriniere-a884693b3/",
       bio: t.about.comeBio,
       expertise: [t.about.comeExpertise1, t.about.comeExpertise2, t.about.comeExpertise3],
@@ -36,7 +36,7 @@ function getTeamMembers(t: ReturnType<typeof useLanguage>["t"]) {
       name: "Jean Bouchand",
       role: "Designer Marketing",
       operationalRole: null as string | null,
-      photo: "/mark.jpg",
+      photo: "/images/team/mark.jpg",
       linkedIn: null as string | null,
       bio: t.about.jeanBio,
       expertise: [t.about.jeanExpertise1, t.about.jeanExpertise2, t.about.jeanExpertise3, t.about.jeanExpertise4],

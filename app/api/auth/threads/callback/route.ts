@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { saveThreadsConnectionAdmin } from "@/lib/firestore-admin";
-import { isAdminInitialized } from "@/lib/firebase-admin";
+import { saveThreadsConnectionAdmin } from "@/lib/db/firestore-admin";
+import { isAdminInitialized } from "@/lib/db/firebase-admin";
 import {
   THREADS_CREDENTIALS,
   THREADS_CONFIG,
   ThreadsTokenResponse,
   ThreadsLongLivedTokenResponse,
   ThreadsProfile,
-} from "@/lib/meta";
+} from "@/lib/platforms/meta";
 
 // Standardized redirect: OAuth callbacks go to settings page (where connections are managed)
 const OAUTH_REDIRECT_BASE = "/settings";

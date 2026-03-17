@@ -23,8 +23,8 @@ import {
   reauthenticateWithPopup,
   sendPasswordResetEmail,
 } from "firebase/auth";
-import { auth, googleProvider } from "@/lib/firebase";
-import { createUserProfile, getUserProfile, deleteAllUserData, saveUserConsent } from "@/lib/firestore";
+import { auth, googleProvider } from "@/lib/db/firebase";
+import { createUserProfile, getUserProfile, deleteAllUserData, saveUserConsent } from "@/lib/db/firestore";
 import { AuthContextType, UserProfile } from "@/types";
 import toast from "@/components/ui/Toast";
 

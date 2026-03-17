@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { ScheduledPost, ScheduleStatus } from "@/types";
 import Button from "@/components/ui/Button";
 import { ConfirmModal } from "@/components/ui/Modal";
-import { triggerHaptic } from "@/hooks/useHapticFeedback";
+import { triggerHaptic } from "@/hooks/ui/useHapticFeedback";
 import { LinkedInIcon } from "@/components/linkedin/LinkedInConnectButton";
 import { RedditIcon, ThreadsIcon, FacebookIcon } from "@/components/publish/PlatformSelector";
 import { useLanguage } from "@/contexts/LanguageContext";

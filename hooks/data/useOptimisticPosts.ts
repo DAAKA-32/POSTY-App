@@ -2,9 +2,9 @@
 
 import { useState, useCallback } from "react";
 import { Post } from "@/types";
-import { pinPost, deletePost, renamePost } from "@/lib/firestore";
+import { pinPost, deletePost, renamePost } from "@/lib/db/firestore";
 import toast from "@/components/ui/Toast";
-import { triggerHaptic } from "./useHapticFeedback";
+import { triggerHaptic } from "@/hooks/ui/useHapticFeedback";
 
 interface UseOptimisticPostsOptions {
   onSuccess?: () => void;
@@ -168,7 +168,7 @@ export function useOptimisticPosts(
 
       try {
         // Import batchPinPosts dynamically to avoid circular dependency
-        const { batchPinPosts } = await import("@/lib/firestore");
+        const { batchPinPosts } = await import("@/lib/db/firestore");
         await batchPinPosts(postIds, isPinned);
         toast.success(
           isPinned

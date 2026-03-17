@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { useReducedMotion } from "@/hooks/ui/useReducedMotion";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ConnectionLoaderProps {
   message?: string;
@@ -14,10 +15,12 @@ interface ConnectionLoaderProps {
  * Shows clean logo with progress bar
  */
 export default function ConnectionLoader({
-  message = "Connexion en cours...",
+  message,
   compact = false,
 }: ConnectionLoaderProps) {
+  const { t } = useLanguage();
   const prefersReducedMotion = useReducedMotion();
+  const resolvedMessage = message ?? t.ui.connecting;
   const [progress, setProgress] = useState(0);
 
   // Simulate progress
@@ -48,7 +51,7 @@ export default function ConnectionLoader({
             ease: "linear",
           }}
         />
-        <span className="text-text-secondary text-sm">{message}</span>
+        <span className="text-text-secondary text-sm">{resolvedMessage}</span>
       </div>
     );
   }
@@ -150,7 +153,7 @@ export default function ConnectionLoader({
             transition={{ delay: 0.3 }}
             className="text-text-muted text-sm text-center mt-4 font-medium"
           >
-            {message}
+            {resolvedMessage}
           </motion.p>
         </motion.div>
       </motion.div>

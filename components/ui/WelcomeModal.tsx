@@ -5,7 +5,8 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import confetti from "canvas-confetti";
-import { useScrollLock } from "@/hooks/useScrollLock";
+import { useScrollLock } from "@/hooks/ui/useScrollLock";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface WelcomeModalProps {
   isOpen: boolean;
@@ -24,6 +25,7 @@ export default function WelcomeModal({
   redirectTo = "/app",
   redirectDelay = REDIRECT_DELAY,
 }: WelcomeModalProps) {
+  const { t } = useLanguage();
   const router = useRouter();
   useScrollLock(isOpen);
   const [isMounted, setIsMounted] = useState(false);
@@ -167,7 +169,7 @@ export default function WelcomeModal({
                 onClick={handleGoNow}
                 className="inline-flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-primary to-accent text-white font-semibold rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-shadow text-sm sm:text-base"
               >
-                Commencer
+                {t.common.getStarted}
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>

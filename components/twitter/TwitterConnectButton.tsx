@@ -2,6 +2,7 @@
 
 import Button from "@/components/ui/Button";
 import { useTwitter } from "@/contexts/TwitterContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface TwitterConnectButtonProps {
   variant?: "default" | "compact";
@@ -12,6 +13,7 @@ export default function TwitterConnectButton({
   variant = "default",
   className = "",
 }: TwitterConnectButtonProps) {
+  const { t } = useLanguage();
   const {
     isConnected,
     isLoading: contextLoading,
@@ -51,7 +53,7 @@ export default function TwitterConnectButton({
             </div>
             <span className="text-xs text-accent flex items-center gap-1">
               <span className="w-1.5 h-1.5 bg-accent rounded-full" />
-              Connecte
+              {t.settings.connected}
             </span>
           </div>
         )}
@@ -61,7 +63,7 @@ export default function TwitterConnectButton({
           onClick={handleDisconnect}
           className="shrink-0"
         >
-          Déconnecter
+          {t.settings.disconnect}
         </Button>
       </div>
     );
@@ -74,7 +76,7 @@ export default function TwitterConnectButton({
       className={`bg-black hover:bg-neutral-800 border border-white/10 ${className}`}
     >
       <TwitterIcon className="w-5 h-5 mr-2" />
-      {contextLoading ? "Connexion..." : "Connecter X (Twitter)"}
+      {contextLoading ? t.ui.connecting : t.settings.connectTwitter}
     </Button>
   );
 }

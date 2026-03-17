@@ -3,10 +3,10 @@
 import { Platform } from "@/types";
 import { LinkedInIcon } from "@/components/linkedin/LinkedInConnectButton";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import { PLATFORM_INFO, PlanType } from "@/lib/plans";
-import { canUsePlatform, canPublishSimultaneously } from "@/lib/permissions";
+import { PLATFORM_INFO, PlanType } from "@/lib/config/plans";
+import { canUsePlatform, canPublishSimultaneously } from "@/lib/config/permissions";
 import Link from "next/link";
-import { triggerHaptic } from "@/hooks/useHapticFeedback";
+import { triggerHaptic } from "@/hooks/ui/useHapticFeedback";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 // Platform icons

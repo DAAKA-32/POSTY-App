@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getStripeServer } from "@/lib/stripe";
+import { getStripeServer } from "@/lib/config/stripe";
 import Stripe from "stripe";
 import { verifyAuth } from "@/lib/auth";
 

@@ -1,4 +1,4 @@
-import { getAuthHeaders } from "@/lib/api-client";
+import { getAuthHeaders } from "@/lib/api/client";
 
 // LinkedIn OAuth 2.0 Configuration and API utilities
 

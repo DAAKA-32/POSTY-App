@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import { getPlanConfig, PlanType } from "@/lib/plans";
+import { getPlanConfig, PlanType } from "@/lib/config/plans";
 
 interface PlanInfoCardProps {
   className?: string;

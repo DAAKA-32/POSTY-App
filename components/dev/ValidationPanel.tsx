@@ -20,7 +20,7 @@ import {
   runAllValidations,
   ValidationResults,
   getCurrentBreakpoint,
-} from "@/lib/validation";
+} from "@/lib/utils/validation";
 
 interface CheckItemProps {
   label: string;

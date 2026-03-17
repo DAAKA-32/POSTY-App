@@ -21,7 +21,7 @@ import {
   checkGuaranteeEligibility,
   formatTrialStatusMessage,
   getFounderOverridePlan,
-} from "@/lib/plans";
+} from "@/lib/config/plans";
 import {
   UserSubscription,
   UserUsage,
@@ -41,10 +41,10 @@ import {
   getWeekStartDate,
   getMonthStartDate,
   Platform,
-} from "@/lib/permissions";
+} from "@/lib/config/permissions";
 import { doc, getDoc, updateDoc, Timestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { getAuthHeaders } from "@/lib/api-client";
+import { db } from "@/lib/db/firebase";
+import { getAuthHeaders } from "@/lib/api/client";
 
 // ============================================
 // TYPES

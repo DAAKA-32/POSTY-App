@@ -1,6 +1,6 @@
 "use client";
 
-import { promptSuggestions } from "@/lib/mock-responses";
+import { promptSuggestions } from "@/lib/services/mock-responses";
 
 interface PromptSuggestionsProps {
   onSelect: (prompt: string) => void;

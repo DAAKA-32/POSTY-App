@@ -1,4 +1,4 @@
-import { getAuthHeaders } from "@/lib/api-client";
+import { getAuthHeaders } from "@/lib/api/client";
 
 // Meta (Facebook & Threads) OAuth 2.0 Configuration and API utilities
 // Facebook and Threads use separate OAuth flows but share the same Meta App credentials

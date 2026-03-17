@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { saveTwitterConnectionAdmin } from "@/lib/firestore-admin";
-import { isAdminInitialized } from "@/lib/firebase-admin";
-import { TWITTER_CONFIG, TwitterTokenResponse, TwitterUserResponse } from "@/lib/twitter";
+import { saveTwitterConnectionAdmin } from "@/lib/db/firestore-admin";
+import { isAdminInitialized } from "@/lib/db/firebase-admin";
+import { TWITTER_CONFIG, TwitterTokenResponse, TwitterUserResponse } from "@/lib/platforms/twitter";
 
 /**
  * Route de callback OAuth 2.0 Twitter avec PKCE

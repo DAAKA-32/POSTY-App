@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth } from "@/lib/auth";
-import { getStripeServer } from "@/lib/stripe";
-import { GUARANTEE_PERIOD_DAYS } from "@/lib/plans";
-import { adminDb, isAdminInitialized } from "@/lib/firebase-admin";
+import { getStripeServer } from "@/lib/config/stripe";
+import { GUARANTEE_PERIOD_DAYS } from "@/lib/config/plans";
+import { adminDb, isAdminInitialized } from "@/lib/db/firebase-admin";
 import { Timestamp } from "firebase-admin/firestore";
 
 export async function POST(request: NextRequest) {

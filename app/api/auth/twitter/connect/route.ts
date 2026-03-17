@@ -3,7 +3,7 @@ import {
   TWITTER_CONFIG,
   generateCodeVerifier,
   generateCodeChallenge,
-} from "@/lib/twitter";
+} from "@/lib/platforms/twitter";
 
 /**
  * Route d'initialisation OAuth 2.0 Twitter avec PKCE

@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import { PlanType, meetsMinimumPlan } from "@/lib/plans";
+import { PlanType, meetsMinimumPlan } from "@/lib/config/plans";
 
 interface SubscriptionGuardProps {
   children: React.ReactNode;

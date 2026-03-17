@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback, memo } from "react";
 import { motion, useAnimation, PanInfo } from "framer-motion";
-import { useHapticFeedback } from "@/hooks/useHapticFeedback";
+import { useHapticFeedback } from "@/hooks/ui/useHapticFeedback";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface IOSTimePickerProps {

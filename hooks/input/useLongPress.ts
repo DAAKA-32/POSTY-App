@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useCallback, useState } from "react";
-import { triggerHaptic } from "./useHapticFeedback";
+import { triggerHaptic } from "@/hooks/ui/useHapticFeedback";
 
 interface UseLongPressOptions {
   /** Callback when long press is triggered */

@@ -12,11 +12,11 @@ import { useLinkedIn } from "@/contexts/LinkedInContext";
 import { useFacebook } from "@/contexts/FacebookContext";
 import { useThreads } from "@/contexts/ThreadsContext";
 import { SchedulePlatform, LinkedInPostType } from "@/types";
-import { canUsePlatform } from "@/lib/permissions";
+import { canUsePlatform } from "@/lib/config/permissions";
 import { PLATFORMS } from "@/components/publish/PlatformSelector";
 import { LinkedInIcon } from "@/components/linkedin/LinkedInConnectButton";
 import { useRouter } from "next/navigation";
-import { useHapticFeedback } from "@/hooks/useHapticFeedback";
+import { useHapticFeedback } from "@/hooks/ui/useHapticFeedback";
 import toast from "@/components/ui/Toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 

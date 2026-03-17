@@ -9,7 +9,7 @@ import {
   confirmPasswordReset,
   applyActionCode,
 } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { auth } from "@/lib/db/firebase";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import { useLanguage } from "@/contexts/LanguageContext";

@@ -12,7 +12,7 @@ import { useAuth } from "./AuthContext";
 import {
   getTwitterConnection,
   deleteTwitterConnection,
-} from "@/lib/firestore";
+} from "@/lib/db/firestore";
 import { TwitterConnectionData } from "@/types";
 import {
   isTokenExpired,
@@ -21,7 +21,7 @@ import {
   refreshTwitterToken,
   validateTweetLength,
   TWITTER_CHAR_LIMIT,
-} from "@/lib/twitter";
+} from "@/lib/platforms/twitter";
 import toast from "@/components/ui/Toast";
 
 interface TwitterContextType {

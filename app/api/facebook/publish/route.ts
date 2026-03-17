@@ -5,11 +5,11 @@ import {
   updateFacebookLastUsedAdmin,
   saveFacebookPostAdmin,
   checkUserQuotaAdmin,
-} from "@/lib/firestore-admin";
-import { adminDb, isAdminInitialized } from "@/lib/firebase-admin";
+} from "@/lib/db/firestore-admin";
+import { adminDb, isAdminInitialized } from "@/lib/db/firebase-admin";
 import { Timestamp } from "firebase-admin/firestore";
-import { isPlatformAllowed, PlanType, appendFreeSignature } from "@/lib/plans";
-import { FACEBOOK_CONFIG } from "@/lib/meta";
+import { isPlatformAllowed, PlanType, appendFreeSignature } from "@/lib/config/plans";
+import { FACEBOOK_CONFIG } from "@/lib/platforms/meta";
 
 /**
  * Route de publication sur Facebook

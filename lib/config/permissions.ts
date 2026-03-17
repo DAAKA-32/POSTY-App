@@ -19,10 +19,10 @@ import {
   getMaxPlatformConnections,
   canConnectMorePlatforms,
   PLATFORM_INFO,
-} from "./plans";
+} from "@/lib/config/plans";
 
 // Re-export types from plans for convenience
-export type { Platform } from "./plans";
+export type { Platform } from "@/lib/config/plans";
 
 // ============================================
 // TYPES

@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface LinkedInPreviewProps {
   content: string;
@@ -10,6 +11,7 @@ interface LinkedInPreviewProps {
 
 export default function LinkedInPreview({ content, mode }: LinkedInPreviewProps) {
   const { userProfile } = useAuth();
+  const { t } = useLanguage();
 
   // Format content: preserve line breaks, limit preview length
   const formatContent = (text: string, maxLength: number = 200) => {
@@ -20,28 +22,28 @@ export default function LinkedInPreview({ content, mode }: LinkedInPreviewProps)
   if (mode === "both") {
     return (
       <div className="grid md:grid-cols-2 gap-4">
-        <LinkedInPostPreview content={content} userProfile={userProfile} />
-        <LinkedInMessagePreview content={content} />
+        <LinkedInPostPreview content={content} userProfile={userProfile} t={t} />
+        <LinkedInMessagePreview content={content} t={t} />
       </div>
     );
   }
 
   if (mode === "post") {
-    return <LinkedInPostPreview content={content} userProfile={userProfile} />;
+    return <LinkedInPostPreview content={content} userProfile={userProfile} t={t} />;
   }
 
-  return <LinkedInMessagePreview content={content} />;
+  return <LinkedInMessagePreview content={content} t={t} />;
 }
 
 // Post LinkedIn Preview
-function LinkedInPostPreview({ content, userProfile }: { content: string; userProfile: any }) {
+function LinkedInPostPreview({ content, userProfile, t }: { content: string; userProfile: any; t: any }) {
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2 text-xs text-text-muted">
         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
           <path d="M19 3a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h14m-.5 15.5v-5.3a3.26 3.26 0 00-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 011.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 001.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 00-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z" />
         </svg>
-        <span>Aperçu du post LinkedIn</span>
+        <span>{t.ui.linkedInPostPreview}</span>
       </div>
 
       <motion.div
@@ -70,13 +72,13 @@ function LinkedInPostPreview({ content, userProfile }: { content: string; userPr
             {/* User info */}
             <div className="flex-1 min-w-0">
               <h4 className="font-semibold text-gray-900 text-sm">
-                {userProfile?.displayName || "Votre nom"}
+                {userProfile?.displayName || t.ui.yourName}
               </h4>
               <p className="text-xs text-gray-600 truncate">
-                {userProfile?.headline || "Votre titre professionnel"}
+                {userProfile?.headline || t.ui.yourProfessionalTitle}
               </p>
               <div className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">
-                <span>À l'instant</span>
+                <span>{t.ui.justNow}</span>
                 <span>•</span>
                 <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 16 16">
                   <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 13A6 6 0 118 2a6 6 0 010 12z" />
@@ -118,7 +120,7 @@ function LinkedInPostPreview({ content, userProfile }: { content: string; userPr
               </div>
               <span>0</span>
             </div>
-            <span>0 commentaire</span>
+            <span>0 {t.ui.comments}</span>
           </div>
         </div>
 
@@ -126,10 +128,10 @@ function LinkedInPostPreview({ content, userProfile }: { content: string; userPr
         <div className="px-4 py-2 border-t border-gray-200">
           <div className="flex items-center justify-around">
             {[
-              { icon: "👍", label: "J'aime" },
-              { icon: "💬", label: "Commenter" },
-              { icon: "↻", label: "Partager" },
-              { icon: "📤", label: "Envoyer" },
+              { icon: "👍", label: t.ui.linkedInLike },
+              { icon: "💬", label: t.ui.linkedInComment },
+              { icon: "↻", label: t.ui.linkedInShare },
+              { icon: "📤", label: t.ui.linkedInSend },
             ].map((action, i) => (
               <button
                 key={i}
@@ -147,14 +149,14 @@ function LinkedInPostPreview({ content, userProfile }: { content: string; userPr
 }
 
 // Message LinkedIn Preview
-function LinkedInMessagePreview({ content }: { content: string }) {
+function LinkedInMessagePreview({ content, t }: { content: string; t: any }) {
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2 text-xs text-text-muted">
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
         </svg>
-        <span>Aperçu du message privé</span>
+        <span>{t.ui.linkedInMessagePreview}</span>
       </div>
 
       <motion.div
@@ -171,8 +173,8 @@ function LinkedInMessagePreview({ content }: { content: string }) {
               </svg>
             </div>
             <div>
-              <h4 className="font-semibold text-gray-900 text-sm">Prénom Nom</h4>
-              <p className="text-xs text-gray-600">Connexion 1er degré</p>
+              <h4 className="font-semibold text-gray-900 text-sm">{t.ui.firstName} {t.ui.lastName}</h4>
+              <p className="text-xs text-gray-600">{t.ui.firstDegreeConnection}</p>
             </div>
           </div>
         </div>
@@ -189,7 +191,7 @@ function LinkedInMessagePreview({ content }: { content: string }) {
                 ))}
               </div>
               <div className="flex items-center gap-1 mt-1 px-1">
-                <span className="text-xs text-gray-500">À l'instant</span>
+                <span className="text-xs text-gray-500">{t.ui.justNow}</span>
               </div>
             </div>
           </div>
@@ -200,7 +202,7 @@ function LinkedInMessagePreview({ content }: { content: string }) {
               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
             </svg>
             <p className="text-xs text-text-primary leading-relaxed">
-              Ceci est un aperçu. Chaque message sera envoyé individuellement à vos connexions.
+              {t.ui.messagePreviewInfo}
             </p>
           </div>
         </div>

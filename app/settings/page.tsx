@@ -12,7 +12,7 @@ import {
   deleteAllUserConversations,
   updateUserProfile,
   UserConsent,
-} from "@/lib/firestore";
+} from "@/lib/db/firestore";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import Button from "@/components/ui/Button";
 import { ToggleField } from "@/components/ui/Toggle";
@@ -25,7 +25,7 @@ import { translations, languageNames } from "@/lib/i18n";
 import type { Language } from "@/lib/i18n";
 import { SubscriptionManagement, PlatformConnectionsSection } from "@/components/settings";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import { usePageTitle } from "@/hooks/usePageTitle";
+import { usePageTitle } from "@/hooks/ui/usePageTitle";
 
 // Animation variants for staggered sections
 const containerVariants = {

@@ -178,9 +178,12 @@ export const ko = {
     // Status
     waiting: "Waiting...",
     generating: "Generating...",
-    disconnecting: "Disconnecting...",
-    active: "Active",
-    redirecting: "Redirecting...",
+    disconnecting: "연결 해제 중...",
+    connecting: "연결 중...",
+    active: "활성",
+    redirecting: "리디렉션 중...",
+    connectionExpiringSoon: "연결 {name}이(가) 곧 만료돼요. 설정에서 다시 연결해 주세요.",
+    connectionsExpiringSoon: "연결 {names}이(가) 곧 만료돼요. 설정에서 다시 연결해 주세요.",
 
     // AI & Responses
     twoVersionsAvailable: "2 versions available",
@@ -270,6 +273,48 @@ export const ko = {
     postEvolution: "Your post performance over time",
     loadingDashboard: "Loading your dashboard...",
     removeStatsNote: "Remove from stats (deletes from network)",
+
+    // LinkedIn Preview
+    linkedInPreview: "LinkedIn 미리보기",
+    linkedInPostPreview: "LinkedIn 게시물 미리보기",
+    linkedInMessagePreview: "비공개 메시지 미리보기",
+    yourProfessionalTitle: "직업 타이틀",
+    you: "나",
+    postWillAppearHere: "게시물이 여기에 표시됩니다...",
+    previewLabel: "미리보기",
+    comments: "댓글",
+    linkedInLike: "좋아요",
+    linkedInComment: "댓글",
+    linkedInRepost: "리포스트",
+    linkedInShare: "공유",
+    linkedInSend: "보내기",
+    postExceedsLimit: "게시물이 LinkedIn {max}자 제한을 초과했습니다",
+    firstDegreeConnection: "1촌",
+    firstName: "이름",
+    lastName: "성",
+    messagePreviewInfo: "이것은 미리보기입니다. 각 메시지는 연결된 사람에게 개별적으로 전송됩니다.",
+
+    // Response indicators
+    newResponsesAvailable: "{count}개의 새 응답",
+    responseReady: "응답 준비됨",
+    scrollDown: "아래로 스크롤",
+
+    // Inline upgrade banner
+    dualLimitReached: "한도에 도달했습니다. Max로 업그레이드하여 무제한 듀얼 모드를 이용하세요.",
+    maxFeatureOnly: "이 기능은 Max 플랜에서만 사용할 수 있습니다.",
+    upgradeToMax: "Max로 업그레이드",
+    maxShort: "Max",
+
+    // Content editor
+    editYourMessage: "메시지 수정",
+    lineBreaksTip: "줄바꿈과 이모지를 추가하여 참여도를 높이세요",
+    hashtagsWarning: "LinkedIn은 해시태그를 최대 5개까지 권장합니다",
+    messageExceedsLimit: "메시지가 LinkedIn {max}자 제한을 초과했습니다",
+
+    // Refine
+    adjustTone: "톤 조정",
+    applyRefine: "적용",
+    refining: "다듬는 중...",
   },
 
   // Language selector
@@ -948,6 +993,21 @@ export const ko = {
     sendLink: "Send link",
     sendingLink: "Sending...",
     backToLogin: "Back to login",
+
+    // Forgot password page (full page)
+    forgotPasswordTitle: "비밀번호를 잊으셨나요?",
+    forgotPasswordSubtitle: "걱정 마세요, 누구나 있는 일이에요",
+    forgotPasswordInstructions: "계정에 등록된 이메일 주소를 입력하시면 비밀번호 재설정 링크를 보내드릴게요.",
+    forgotPasswordEmailLabel: "이메일 주소",
+    forgotPasswordSendResetLink: "재설정 링크 보내기",
+    forgotPasswordEmailSentTitle: "이메일이 성공적으로 전송되었어요",
+    forgotPasswordEmailSentDesc: "{email}에 연결된 계정이 있으면 곧 비밀번호 재설정 링크를 받으실 거예요.",
+    forgotPasswordCheckSpam: "이메일이 보이지 않으면 스팸 또는 정크 폴더를 확인해 주세요.",
+    forgotPasswordEmailDelay: "이메일 도착에 최대 {minutes}분이 걸릴 수 있어요. 여전히 받지 못했다면 이메일 주소가 올바른지 확인해 주세요.",
+    forgotPasswordReturnToLogin: "로그인으로 돌아가기",
+    forgotPasswordTryAnother: "다른 주소로 시도",
+    forgotPasswordRemember: "비밀번호가 기억나세요?",
+    forgotPasswordSignIn: "로그인",
   },
 
   // Sidebar & Navigation
@@ -1143,6 +1203,7 @@ export const ko = {
     disconnect: "연결 해제",
     reconnectMessage: "LinkedIn에 계속 게시하려면 다시 연결해 주세요.",
     connectLinkedIn: "LinkedIn 연결",
+    connectTwitter: "X (Twitter) 연결",
 
     // Google (coming soon)
     google: "Google",
@@ -1255,6 +1316,42 @@ export const ko = {
     legalNoticesLink: "법적 고지",
     legalNotices: "법적 고지",
     cookiePolicy: "쿠키 정책",
+
+    // Personal branding
+    personalBranding: "퍼스널 브랜딩",
+    customizeVisualIdentity: "비주얼 아이덴티티를 맞춤 설정하세요",
+    profilePhoto: "프로필 사진",
+    uploadCustomPhoto: "맞춤 사진 업로드",
+    upgradeToUploadPhoto: "Pro로 업그레이드하여 맞춤 사진을 업로드하세요",
+    removeCustomPhotoLabel: "맞춤 사진 제거",
+    coverImage: "커버 이미지",
+    clickToAddImage: "클릭하여 이미지 추가",
+    proRequired: "Pro 필요",
+    accentColor: "강조 색상",
+    customColor: "맞춤:",
+    gradientStyle: "그라데이션 스타일",
+    professionalTagline: "전문 태그라인",
+    taglinePlaceholder: "예: LinkedIn 전문가 | 퍼스널 브랜딩 코치",
+    characters: "자",
+    socialLinks: "소셜 링크",
+    profileVisibility: "프로필 공개 설정",
+    savedExclamation: "저장됨!",
+    unlockFullBranding: "퍼스널 브랜딩 전체 기능 해제",
+    upgradeForBranding: "Pro로 업그레이드하여 아바타, 색상, 그라데이션, 소셜 링크 등을 맞춤 설정하세요.",
+
+    // OpenAI settings
+    openaiTitle: "OpenAI 설정",
+    openaiDescription: "OpenAI API 키를 추가하여 AI 기반 게시물 생성을 활성화하세요.",
+    openaiApiKeyLabel: "OpenAI API 키",
+    openaiApiKeyPlaceholder: "sk-...",
+    openaiApiKeyHint: "키는 로컬에 저장되며 절대 공유되지 않아요.",
+    openaiModelLabel: "모델",
+    openaiValidating: "검증 중...",
+    openaiValid: "유효한 키",
+    openaiInvalid: "유효하지 않은 키",
+    openaiClearKey: "키 삭제",
+    openaiGlobalConfigured: "서버에 글로벌 키가 설정되어 있어요.",
+    openaiGetKey: "여기에서 키를 받으세요",
 
     // Contact
     dataQuestions: "데이터 관련 문의:",
@@ -1491,6 +1588,40 @@ export const ko = {
 
     // Success
     profileComplete: "프로필 설정이 완료되었어요!",
+
+    // Extended step titles (for dynamic onboarding)
+    profileTypeTitle: "어떤 프로필이세요?",
+    profileTypeSubtitle: "Posty가 당신의 언어로 소통할 수 있도록",
+    sectorStepTitle: "어떤 업계에서 일하세요?",
+    sectorStepSubtitle: "모든 게시물이 타겟에 도달할 수 있도록",
+    roleStepTitle: "직책이 무엇인가요?",
+    roleStepSubtitle: "게시물의 톤과 신뢰도를 조정하기 위해",
+    objectiveStepTitle: "가장 중요한 목표는 무엇인가요?",
+    objectiveStepSubtitle: "모든 게시물이 이 목표에 최적화돼요",
+    targetAudienceStepTitle: "누구에게 도달하고 싶으세요?",
+    targetAudienceStepSubtitle: "미래 고객에게 와닿는 게시물을 위해",
+    communicationToneStepTitle: "어떤 톤이 가장 잘 맞으세요?",
+    communicationToneStepSubtitle: "당신의 말, AI로 강화",
+    publishingFrequencyStepTitle: "얼마나 자주 게시하고 싶으세요?",
+    publishingFrequencyStepSubtitle: "Posty가 당신의 속도에 맞춰요",
+    rolePlaceholderHint: "예: CEO, 개발자, 마케팅 매니저...",
+    saving: "저장 중...",
+    errorOccurred: "오류가 발생했어요",
+    defaultUser: "사용자",
+
+    // Profile recap screen
+    recapTitle: "프로필이 준비되었어요",
+    recapSubtitle: "AI가 당신의 선택을 기반으로 모든 게시물을 맞춤화해요",
+    recapComplete: "완료",
+    recapCustomization: "개인화",
+    recapRedirecting: "리디렉션 중...",
+    recapFieldProfile: "프로필",
+    recapFieldSector: "업계",
+    recapFieldRole: "직책",
+    recapFieldObjective: "목표",
+    recapFieldAudience: "타겟",
+    recapFieldTone: "톤",
+    recapFieldFrequency: "빈도",
   },
 
   // Consent modal
@@ -1534,6 +1665,12 @@ export const ko = {
     linkedinDisconnectWarning: "Posty에서 LinkedIn에 직접 게시할 수 없게 돼요.",
     linkedinDisconnectConfirm: "정말 연결을 해제하시겠어요?",
     linkedinDisconnected: "LinkedIn 연결이 해제되었어요",
+    reconnectAnytime: "언제든지 다시 연결할 수 있어요.",
+
+    // Twitter disconnect
+    twitterDisconnectTitle: "X (Twitter) 연결 해제",
+    twitterDisconnectWarning: "Posty에서 X에 직접 게시할 수 없게 돼요.",
+    twitterDisconnectConfirm: "정말 연결을 해제하시겠어요?",
 
     // Delete conversation
     deleteConversationTitle: "대화 삭제",
@@ -1541,7 +1678,34 @@ export const ko = {
 
     // Rename conversation
     renameConversationTitle: "대화 이름 변경",
+    renameConversationDesc: "이 대화에 제목을 지어주세요",
+    renameConversationLabel: "대화 제목",
     renameConversationPlaceholder: "새 이름...",
+
+    // Delete account details
+    accountDeletedTitle: "계정 삭제됨",
+    allDataDeleted: "계정과 모든 데이터가 삭제되었어요.",
+    redirectingEllipsis: "리디렉션 중...",
+    irreversibleAction: "이 작업은 되돌릴 수 없어요",
+    allDataWillBeDeleted: "모든 데이터가 영구적으로 삭제돼요:",
+    personalInfo: "프로필 및 개인정보",
+    generatedPostsHistory: "생성된 게시물 기록",
+    sessionsConversations: "세션 및 대화",
+    preferencesConsents: "환경설정 및 동의",
+    confirmPasswordToContinue: "계속하려면 비밀번호를 확인해 주세요",
+    googleLoginRequired: "Google 로그인 필요",
+    googleReauthDesc: "Google을 통해 본인 확인이 필요해요",
+    enterPasswordError: "비밀번호를 입력해 주세요",
+    deletingEllipsis: "삭제 중...",
+
+    // Legal update notification
+    legalDocsUpdated: "법률 문서가 업데이트되었어요",
+    legalDocsModified: "다음 문서가 수정되었어요:",
+    privacyPolicyDoc: "개인정보처리방침",
+    termsOfUseDoc: "이용약관",
+    legalNoticesDoc: "법적 고지",
+    cookiePolicyDoc: "쿠키 정책",
+    understood: "확인했어요",
   },
 
   // Errors
@@ -1563,6 +1727,13 @@ export const ko = {
     serverErrorDescription: "예기치 않은 오류가 발생했어요. 나중에 다시 시도해 주세요.",
     networkError: "연결 오류",
     networkErrorDescription: "서버에 연결할 수 없어요. 인터넷 연결을 확인해 주세요.",
+    // Error page (app/error.tsx)
+    errorPageTitle: "이런, 문제가 발생했어요",
+    errorPageDataSafe: "걱정하지 마세요, 데이터는 안전해요.",
+    errorPageTryRefresh: "페이지를 새로고침해 보세요. 문제가 계속되면 지원팀이 도와드릴게요.",
+    errorPageRefresh: "페이지 새로고침",
+    errorPageNeedHelp: "도움이 필요하세요?",
+    errorPageContactSupport: "지원팀에 문의",
   },
 
   // Empty states
@@ -2502,6 +2673,34 @@ export const ko = {
     proRequiredForSchedule: "Scheduling requires a Pro or Max plan",
     upgradeToSchedule: "Upgrade to unlock scheduling",
   },
+  // Checkout success page
+  checkoutSuccess: {
+    trialStarted: "{plan} 무료 체험이 시작되었어요!",
+    welcomePlan: "{plan}에 오신 걸 환영해요!",
+    trialDescription: "{days}일 동안 모든 기능을 체험할 수 있어요. 체험 기간에는 요금이 부과되지 않아요. 언제든 취소 가능해요.",
+    subscriptionDescription: "구독이 성공적으로 활성화되었어요. {days}일 환불 보장.",
+    quickStartTitle: "3단계로 첫 게시물 만들기",
+    step1Title: "목표를 설명하세요",
+    step1Desc: "예: \"웹 개발 에이전시의 리드 확보\"",
+    step2Title: "Posty가 프로필을 분석해요",
+    step2Desc: "AI가 타겟과 시장에 맞게 메시지를 조정해요",
+    step3Title: "게시 또는 예약",
+    step3Desc: "LinkedIn에 복사 붙여넣기하거나 나중에 예약하세요",
+    benefitsTitle: "새로운 혜택",
+    unlimitedAI: "무제한 AI 메시지",
+    unlimitedHistory: "무제한 기록",
+    premiumTemplates: "프리미엄 템플릿",
+    prioritySupport: "우선 지원",
+    continueBtn: "계속",
+    startCreating: "만들기 시작",
+    viewProfile: "내 프로필 보기",
+    autoRedirect: "{seconds}초 후 자동 리디렉션...",
+    stayOnPage: "이 페이지에 머물기",
+    confirmationEmailTrial: "확인 이메일이 전송되었어요. 프로필에서 언제든 취소할 수 있어요.",
+    confirmationEmailSubscription: "확인 이메일이 주소로 전송되었어요. 프로필에서 구독을 관리할 수 있어요.",
+    headerTitle: "확인",
+    planFree: "무료",
+  },
   footer: {
     tagline: "Your LinkedIn posts, crafted to win clients.",
     taglineAccent: "Every post can bring you a client",
@@ -2563,5 +2762,31 @@ export const ko = {
     tips: "팁",
     tryAnother: "다른 것 시도",
     error: "변환 중 오류 발생",
+  },
+
+  // Accessibility
+  accessibility: {
+    skipToContent: "본문으로 건너뛰기",
+    skipToNavigation: "내비게이션으로 건너뛰기",
+    skipToInput: "입력 영역으로 건너뛰기",
+    quickAccessLinks: "빠른 링크",
+  },
+
+  // Cookie banner
+  cookieBanner: {
+    privacy: "개인정보",
+    description: "필수 쿠키와 동의하에 선택적 쿠키를 사용하여 경험을 개선해요.",
+    learnMore: "자세히 알아보기",
+    accept: "동의",
+    refuse: "거부",
+    customizeCookies: "쿠키 맞춤 설정",
+    preferences: "환경설정",
+    essential: "필수",
+    essentialDesc: "인증 및 보안. 항상 활성.",
+    functional: "기능",
+    functionalDesc: "인터페이스 환경설정 및 개인화.",
+    analytics: "분석",
+    analyticsDesc: "익명 사용 통계. 제3자 없음.",
+    cookiePolicy: "쿠키 정책",
   },
 } as const;

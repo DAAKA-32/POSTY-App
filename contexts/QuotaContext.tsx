@@ -9,9 +9,9 @@ import {
   useCallback,
 } from "react";
 import { useAuth } from "./AuthContext";
-import { getUserQuota, incrementMessageCount, incrementWeeklyPublishCount, QuotaInfo } from "@/lib/firestore";
+import { getUserQuota, incrementMessageCount, incrementWeeklyPublishCount, QuotaInfo } from "@/lib/db/firestore";
 import { SubscriptionPlan } from "@/types";
-import { getPlanConfig } from "@/lib/plans";
+import { getPlanConfig } from "@/lib/config/plans";
 
 // Month names for reset label
 const MONTH_NAMES = [

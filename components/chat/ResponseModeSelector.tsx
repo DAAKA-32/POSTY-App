@@ -1,8 +1,8 @@
 "use client";
 
 import { ResponseMode } from "@/types";
-import { PlanType } from "@/lib/plans";
-import { getPlanFeatures } from "@/lib/plan-features";
+import { PlanType } from "@/lib/config/plans";
+import { getPlanFeatures } from "@/lib/config/plan-features";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ResponseModeSelectorProps {

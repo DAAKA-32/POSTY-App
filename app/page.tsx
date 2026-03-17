@@ -18,11 +18,11 @@ const LANG_SHORT: Record<Language, string> = {
   en: "EN", fr: "FR", es: "ES", de: "DE", it: "IT",
   pt: "PT", nl: "NL", zh: "中文", ja: "日本", ko: "한국",
 };
-import { getAllPlans, getPaidPlans, PlanConfig, GUARANTEE_PERIOD_DAYS } from "@/lib/plans";
+import { getAllPlans, getPaidPlans, PlanConfig, GUARANTEE_PERIOD_DAYS } from "@/lib/config/plans";
 import BillingToggle from "@/components/ui/BillingToggle";
 import PricingCard from "@/components/pricing/PricingCard";
 import PricingTrustBadges from "@/components/pricing/PricingTrustBadges";
-import { useScrollLock } from "@/hooks/useScrollLock";
+import { useScrollLock } from "@/hooks/ui/useScrollLock";
 import AnimatedMacBook from "@/components/landing/AnimatedMacBook";
 import AuroraBackground from "@/components/landing/AuroraBackground";
 
@@ -750,7 +750,7 @@ function HeroSection() {
                   transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                 >
                   <Image
-                    src="/iphoneimg.png"
+                    src="/images/landing/iphone.png"
                     alt={t.landing.heroImgPhone}
                     width={220}
                     height={440}
@@ -777,7 +777,7 @@ function HeroSection() {
                   transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
                 >
                   <Image
-                    src="/macimg.png"
+                    src="/images/landing/mac.png"
                     alt={t.landing.heroImgMac}
                     width={600}
                     height={400}
@@ -3999,7 +3999,7 @@ function FounderSection() {
               aria-label={t.landing.foundersEmilienAlt}
             >
               <div className="relative w-[4.5rem] h-[4.5rem] md:w-20 md:h-20 aspect-square rounded-full overflow-hidden ring-4 ring-white shadow-xl shadow-gray-200/50">
-                <Image src="/ceo.jpg" alt={t.landing.foundersEmilien} fill className="object-cover object-center" sizes="80px" />
+                <Image src="/images/team/ceo.jpg" alt={t.landing.foundersEmilien} fill className="object-cover object-center" sizes="80px" />
               </div>
             </Link>
             <Link
@@ -4010,7 +4010,7 @@ function FounderSection() {
               aria-label={t.landing.foundersComeAlt}
             >
               <div className="relative w-[4.5rem] h-[4.5rem] md:w-20 md:h-20 aspect-square rounded-full overflow-hidden ring-4 ring-white shadow-xl shadow-gray-200/50">
-                <Image src="/cmo.jpg" alt={t.landing.foundersCome} fill className="object-cover object-center" sizes="80px" />
+                <Image src="/images/team/cmo.jpg" alt={t.landing.foundersCome} fill className="object-cover object-center" sizes="80px" />
               </div>
             </Link>
           </div>

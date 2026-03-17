@@ -4,7 +4,7 @@ import { useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { PostInsights } from "@/types";
-import { useScrollLock } from "@/hooks/useScrollLock";
+import { useScrollLock } from "@/hooks/ui/useScrollLock";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface PostInsightsModalProps {

@@ -3,10 +3,10 @@ import {
   getTwitterConnectionAdmin,
   updateTwitterLastUsedAdmin,
   saveTwitterPostAdmin,
-} from "@/lib/firestore-admin";
-import { adminDb, isAdminInitialized } from "@/lib/firebase-admin";
+} from "@/lib/db/firestore-admin";
+import { adminDb, isAdminInitialized } from "@/lib/db/firebase-admin";
 import { Timestamp } from "firebase-admin/firestore";
-import { TWITTER_CONFIG, TWITTER_CHAR_LIMIT, getTweetUrl } from "@/lib/twitter";
+import { TWITTER_CONFIG, TWITTER_CHAR_LIMIT, getTweetUrl } from "@/lib/platforms/twitter";
 import { verifyAuth } from "@/lib/auth";
 
 /**
@@ -246,7 +246,7 @@ async function refreshAccessToken(
     const tokenData = await response.json();
 
     // Update tokens in Firestore
-    const { updateTwitterTokensAdmin } = await import("@/lib/firestore-admin");
+    const { updateTwitterTokensAdmin } = await import("@/lib/db/firestore-admin");
     const expiresAt = new Date(Date.now() + tokenData.expires_in * 1000);
 
     await updateTwitterTokensAdmin(

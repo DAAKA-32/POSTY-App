@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { Crown, X, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface InlineUpgradeBannerProps {
   onClose: () => void;
@@ -19,10 +20,11 @@ export default function InlineUpgradeBanner({
   reason = "max-feature",
   className = "",
 }: InlineUpgradeBannerProps) {
+  const { t } = useLanguage();
   const message =
     reason === "dual-limit"
-      ? "Limite atteinte. Passez au Max pour un accès illimité au double mode."
-      : "Cette fonctionnalité est réservée au plan Max.";
+      ? t.ui.dualLimitReached
+      : t.ui.maxFeatureOnly;
 
   return (
     <motion.div
@@ -51,8 +53,8 @@ export default function InlineUpgradeBanner({
           bg-gradient-to-r from-primary to-primary-hover text-white
           hover:from-primary-hover hover:to-primary-dark transition-all duration-200"
       >
-        <span className="hidden sm:inline">Passer au Max</span>
-        <span className="sm:hidden">Max</span>
+        <span className="hidden sm:inline">{t.ui.upgradeToMax}</span>
+        <span className="sm:hidden">{t.ui.maxShort}</span>
         <ArrowRight className="w-3.5 h-3.5" />
       </Link>
 
@@ -61,7 +63,7 @@ export default function InlineUpgradeBanner({
         onClick={onClose}
         className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full
           text-text-muted hover:text-white hover:bg-white/10 transition-colors duration-150"
-        aria-label="Fermer"
+        aria-label={t.common.close}
       >
         <X className="w-3.5 h-3.5" />
       </button>

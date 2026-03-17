@@ -179,8 +179,11 @@ export const es = {
     waiting: "Waiting...",
     generating: "Generating...",
     disconnecting: "Disconnecting...",
+    connecting: "Conectando...",
     active: "Active",
     redirecting: "Redirecting...",
+    connectionExpiringSoon: "La conexión {name} expira pronto. Reconecta en ajustes.",
+    connectionsExpiringSoon: "Las conexiones {names} expiran pronto. Reconecta en ajustes.",
 
     // AI & Responses
     twoVersionsAvailable: "2 versions available",
@@ -270,6 +273,48 @@ export const es = {
     postEvolution: "Your post performance over time",
     loadingDashboard: "Loading your dashboard...",
     removeStatsNote: "Remove from stats (deletes from network)",
+
+    // LinkedIn Preview
+    linkedInPreview: "Vista previa de LinkedIn",
+    linkedInPostPreview: "Vista previa del post de LinkedIn",
+    linkedInMessagePreview: "Vista previa de mensaje privado",
+    yourProfessionalTitle: "Tu título profesional",
+    you: "Tú",
+    postWillAppearHere: "Tu publicación aparecerá aquí...",
+    previewLabel: "Vista previa",
+    comments: "comentarios",
+    linkedInLike: "Me gusta",
+    linkedInComment: "Comentar",
+    linkedInRepost: "Republicar",
+    linkedInShare: "Compartir",
+    linkedInSend: "Enviar",
+    postExceedsLimit: "Tu publicación supera el límite de LinkedIn de {max} caracteres",
+    firstDegreeConnection: "Contacto de 1er grado",
+    firstName: "Nombre",
+    lastName: "Apellido",
+    messagePreviewInfo: "Esta es una vista previa. Cada mensaje se enviará individualmente a tus contactos.",
+
+    // Response indicators
+    newResponsesAvailable: "{count} nuevas respuestas",
+    responseReady: "Respuesta lista",
+    scrollDown: "Desplazar hacia abajo",
+
+    // Inline upgrade banner
+    dualLimitReached: "Límite alcanzado. Pasa a Max para acceso ilimitado al modo dual.",
+    maxFeatureOnly: "Esta función está reservada para el plan Max.",
+    upgradeToMax: "Pasar a Max",
+    maxShort: "Max",
+
+    // Content editor
+    editYourMessage: "Edita tu mensaje",
+    lineBreaksTip: "Añade saltos de línea y emojis para más interacción",
+    hashtagsWarning: "LinkedIn recomienda máximo 5 hashtags",
+    messageExceedsLimit: "Tu mensaje supera el límite de LinkedIn de {max} caracteres",
+
+    // Refine
+    adjustTone: "Ajustar tono",
+    applyRefine: "Aplicar",
+    refining: "Refinando...",
   },
 
   // Language selector
@@ -948,6 +993,21 @@ export const es = {
     sendLink: "Send link",
     sendingLink: "Sending...",
     backToLogin: "Back to login",
+
+    // Forgot password page (full page)
+    forgotPasswordTitle: "¿Olvidaste tu contraseña?",
+    forgotPasswordSubtitle: "No te preocupes, le pasa a todo el mundo",
+    forgotPasswordInstructions: "Introduce el correo electrónico asociado a tu cuenta y te enviaremos un enlace para restablecer tu contraseña.",
+    forgotPasswordEmailLabel: "Dirección de correo electrónico",
+    forgotPasswordSendResetLink: "Enviar enlace de restablecimiento",
+    forgotPasswordEmailSentTitle: "Correo enviado correctamente",
+    forgotPasswordEmailSentDesc: "Si hay una cuenta asociada a {email}, recibirás un enlace para restablecer tu contraseña en breve.",
+    forgotPasswordCheckSpam: "Revisa tu carpeta de spam o correo no deseado si no ves el correo.",
+    forgotPasswordEmailDelay: "El correo puede tardar hasta {minutes} minutos en llegar. Si no lo recibes, verifica que la dirección de correo sea correcta.",
+    forgotPasswordReturnToLogin: "Volver al inicio de sesión",
+    forgotPasswordTryAnother: "Probar con otra dirección",
+    forgotPasswordRemember: "¿Recuerdas tu contraseña?",
+    forgotPasswordSignIn: "Iniciar sesión",
   },
 
   // Sidebar & Navigation
@@ -1143,6 +1203,7 @@ export const es = {
     disconnect: "Desconectar",
     reconnectMessage: "Reconéctate para seguir publicando en LinkedIn.",
     connectLinkedIn: "Conectar LinkedIn",
+    connectTwitter: "Conectar X (Twitter)",
 
     // Google (coming soon)
     google: "Google",
@@ -1255,6 +1316,42 @@ export const es = {
     legalNoticesLink: "Avisos legales",
     legalNotices: "Avisos legales",
     cookiePolicy: "Política de cookies",
+
+    // Personal branding
+    personalBranding: "Marca personal",
+    customizeVisualIdentity: "Personaliza tu identidad visual",
+    profilePhoto: "Foto de perfil",
+    uploadCustomPhoto: "Subir una foto personalizada",
+    upgradeToUploadPhoto: "Pasa a Pro para subir una foto personalizada",
+    removeCustomPhotoLabel: "Eliminar foto personalizada",
+    coverImage: "Imagen de portada",
+    clickToAddImage: "Haz clic para añadir una imagen",
+    proRequired: "Pro requerido",
+    accentColor: "Color de acento",
+    customColor: "Personalizado:",
+    gradientStyle: "Estilo de degradado",
+    professionalTagline: "Eslogan profesional",
+    taglinePlaceholder: "ej.: Experto LinkedIn | Coach de marca personal",
+    characters: "caracteres",
+    socialLinks: "Enlaces sociales",
+    profileVisibility: "Visibilidad del perfil",
+    savedExclamation: "¡Guardado!",
+    unlockFullBranding: "Desbloquea la marca personal completa",
+    upgradeForBranding: "Pasa a Pro para personalizar tu avatar, colores, degradado, enlaces sociales y más.",
+
+    // OpenAI settings
+    openaiTitle: "Configuración de OpenAI",
+    openaiDescription: "Añade tu clave API de OpenAI para habilitar la generación de publicaciones con IA.",
+    openaiApiKeyLabel: "Clave API de OpenAI",
+    openaiApiKeyPlaceholder: "sk-...",
+    openaiApiKeyHint: "Tu clave se almacena localmente y nunca se comparte.",
+    openaiModelLabel: "Modelo",
+    openaiValidating: "Validando...",
+    openaiValid: "Clave válida",
+    openaiInvalid: "Clave no válida",
+    openaiClearKey: "Eliminar clave",
+    openaiGlobalConfigured: "Una clave global está configurada en el servidor.",
+    openaiGetKey: "Obtén tu clave en",
 
     // Contact
     dataQuestions: "Preguntas sobre tus datos:",
@@ -1491,6 +1588,40 @@ export const es = {
 
     // Success
     profileComplete: "¡Perfil completado!",
+
+    // Extended step titles (for dynamic onboarding)
+    profileTypeTitle: "¿Cuál es tu perfil?",
+    profileTypeSubtitle: "Para que Posty hable tu idioma",
+    sectorStepTitle: "¿En qué sector trabajas?",
+    sectorStepSubtitle: "Para que cada publicación llegue a tu audiencia",
+    roleStepTitle: "¿Cuál es tu cargo?",
+    roleStepSubtitle: "Para calibrar el tono y la credibilidad de tus publicaciones",
+    objectiveStepTitle: "¿Cuál es tu objetivo principal?",
+    objectiveStepSubtitle: "Cada publicación se optimizará para este objetivo",
+    targetAudienceStepTitle: "¿A quién quieres llegar?",
+    targetAudienceStepSubtitle: "Para publicaciones que hablen a tus futuros clientes",
+    communicationToneStepTitle: "¿Qué tono te va mejor?",
+    communicationToneStepSubtitle: "Tus palabras, amplificadas por la IA",
+    publishingFrequencyStepTitle: "¿Con qué frecuencia quieres publicar?",
+    publishingFrequencyStepSubtitle: "Posty se adapta a tu ritmo",
+    rolePlaceholderHint: "Ej.: CEO, Desarrollador, Director de Marketing...",
+    saving: "Guardando...",
+    errorOccurred: "Ocurrió un error",
+    defaultUser: "Usuario",
+
+    // Profile recap screen
+    recapTitle: "Tu perfil está listo",
+    recapSubtitle: "La IA personalizará cada publicación según tus elecciones",
+    recapComplete: "Completado",
+    recapCustomization: "Personalización",
+    recapRedirecting: "Redirigiendo...",
+    recapFieldProfile: "Perfil",
+    recapFieldSector: "Sector",
+    recapFieldRole: "Cargo",
+    recapFieldObjective: "Objetivo",
+    recapFieldAudience: "Audiencia",
+    recapFieldTone: "Tono",
+    recapFieldFrequency: "Frecuencia",
   },
 
   // Consent modal
@@ -1534,6 +1665,12 @@ export const es = {
     linkedinDisconnectWarning: "No podrás publicar directamente en LinkedIn desde Posty.",
     linkedinDisconnectConfirm: "¿Estás seguro de que quieres desconectar",
     linkedinDisconnected: "LinkedIn desconectado",
+    reconnectAnytime: "Puedes reconectar en cualquier momento.",
+
+    // Twitter disconnect
+    twitterDisconnectTitle: "Desconectar X (Twitter)",
+    twitterDisconnectWarning: "No podrás publicar directamente en X desde Posty.",
+    twitterDisconnectConfirm: "¿Estás seguro de que quieres desconectar",
 
     // Delete conversation
     deleteConversationTitle: "Eliminar conversación",
@@ -1541,7 +1678,34 @@ export const es = {
 
     // Rename conversation
     renameConversationTitle: "Renombrar conversación",
-    renameConversationPlaceholder: "Nuevo nombre...",
+    renameConversationDesc: "Dale un título a esta conversación",
+    renameConversationLabel: "Título de la conversación",
+    renameConversationPlaceholder: "Introduce un título...",
+
+    // Delete account details
+    accountDeletedTitle: "Cuenta eliminada",
+    allDataDeleted: "Tu cuenta y todos tus datos han sido eliminados.",
+    redirectingEllipsis: "Redirigiendo...",
+    irreversibleAction: "Esta acción es irreversible",
+    allDataWillBeDeleted: "Todos tus datos serán eliminados permanentemente:",
+    personalInfo: "Perfil e información personal",
+    generatedPostsHistory: "Historial de publicaciones generadas",
+    sessionsConversations: "Sesiones y conversaciones",
+    preferencesConsents: "Preferencias y consentimientos",
+    confirmPasswordToContinue: "Confirma tu contraseña para continuar",
+    googleLoginRequired: "Inicio de sesión con Google requerido",
+    googleReauthDesc: "Deberás confirmar tu identidad a través de Google",
+    enterPasswordError: "Por favor, introduce tu contraseña",
+    deletingEllipsis: "Eliminando...",
+
+    // Legal update notification
+    legalDocsUpdated: "Documentos legales actualizados",
+    legalDocsModified: "Los siguientes documentos han sido modificados:",
+    privacyPolicyDoc: "Política de privacidad",
+    termsOfUseDoc: "Términos de uso",
+    legalNoticesDoc: "Avisos legales",
+    cookiePolicyDoc: "Política de cookies",
+    understood: "Entendido",
   },
 
   // Errors
@@ -1563,6 +1727,13 @@ export const es = {
     serverErrorDescription: "Ocurrió un error inesperado. Por favor, inténtalo más tarde.",
     networkError: "Error de conexión",
     networkErrorDescription: "No se pudo conectar con el servidor. Verifica tu conexión a internet.",
+    // Error page (app/error.tsx)
+    errorPageTitle: "Vaya, algo salió mal",
+    errorPageDataSafe: "No te preocupes, tus datos están seguros.",
+    errorPageTryRefresh: "Intenta actualizar la página. Si el problema persiste, nuestro equipo está aquí para ayudarte.",
+    errorPageRefresh: "Actualizar página",
+    errorPageNeedHelp: "¿Necesitas ayuda?",
+    errorPageContactSupport: "Contactar soporte",
   },
 
   // Empty states
@@ -2502,6 +2673,34 @@ export const es = {
     proRequiredForSchedule: "Scheduling requires a Pro or Max plan",
     upgradeToSchedule: "Upgrade to unlock scheduling",
   },
+  // Checkout success page
+  checkoutSuccess: {
+    trialStarted: "¡Tu prueba {plan} ha comenzado!",
+    welcomePlan: "¡Bienvenido a {plan}!",
+    trialDescription: "Tienes {days} días para probar todas las funciones. Sin cargos durante la prueba. Cancela en cualquier momento.",
+    subscriptionDescription: "Tu suscripción ha sido activada correctamente. Garantía de devolución de {days} días.",
+    quickStartTitle: "Crea tu primera publicación en 3 pasos",
+    step1Title: "Describe tu objetivo",
+    step1Desc: "Ej.: \"Generar leads para mi agencia de desarrollo web\"",
+    step2Title: "Posty analiza tu perfil",
+    step2Desc: "La IA calibra el mensaje para tu audiencia y mercado",
+    step3Title: "Publica o programa",
+    step3Desc: "Copia y pega en LinkedIn o programa para más tarde",
+    benefitsTitle: "Tus nuevos beneficios",
+    unlimitedAI: "Mensajes de IA ilimitados",
+    unlimitedHistory: "Historial ilimitado",
+    premiumTemplates: "Plantillas premium",
+    prioritySupport: "Soporte prioritario",
+    continueBtn: "Continuar",
+    startCreating: "Empezar a crear",
+    viewProfile: "Ver mi perfil",
+    autoRedirect: "Redirección automática en {seconds}s...",
+    stayOnPage: "Quedarse en esta página",
+    confirmationEmailTrial: "Se ha enviado un correo de confirmación. Puedes cancelar en cualquier momento desde tu perfil.",
+    confirmationEmailSubscription: "Se ha enviado un correo de confirmación a tu dirección. Puedes gestionar tu suscripción desde tu perfil.",
+    headerTitle: "Confirmación",
+    planFree: "Gratis",
+  },
   footer: {
     tagline: "Your LinkedIn posts, crafted to win clients.",
     taglineAccent: "Every post can bring you a client",
@@ -2563,5 +2762,31 @@ export const es = {
     tips: "Consejos",
     tryAnother: "Probar otra",
     error: "Error durante la adaptación",
+  },
+
+  // Accessibility
+  accessibility: {
+    skipToContent: "Ir al contenido principal",
+    skipToNavigation: "Ir a la navegación",
+    skipToInput: "Ir al área de entrada",
+    quickAccessLinks: "Enlaces de acceso rápido",
+  },
+
+  // Cookie banner
+  cookieBanner: {
+    privacy: "Privacidad",
+    description: "Usamos cookies esenciales y, con tu consentimiento, cookies opcionales para mejorar tu experiencia.",
+    learnMore: "Más información",
+    accept: "Aceptar",
+    refuse: "Rechazar",
+    customizeCookies: "Personalizar cookies",
+    preferences: "Preferencias",
+    essential: "Esenciales",
+    essentialDesc: "Autenticación y seguridad. Siempre activas.",
+    functional: "Funcionales",
+    functionalDesc: "Preferencias de interfaz y personalización.",
+    analytics: "Estadísticas",
+    analyticsDesc: "Estadísticas de uso anónimas. Sin terceros.",
+    cookiePolicy: "Política de cookies",
   },
 } as const;

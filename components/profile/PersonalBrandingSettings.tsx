@@ -3,8 +3,8 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
-import { updateUserProfile } from "@/lib/firestore";
-import { uploadProfileImage } from "@/lib/storage";
+import { updateUserProfile } from "@/lib/db/firestore";
+import { uploadProfileImage } from "@/lib/storage/storage";
 import {
   PersonalBranding,
   ACCENT_COLOR_PRESETS,
@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface PersonalBrandingSettingsProps {
   isPro?: boolean;
@@ -41,6 +42,7 @@ export default function PersonalBrandingSettings({
   isPro = false,
   onSave,
 }: PersonalBrandingSettingsProps) {
+  const { t } = useLanguage();
   const { userProfile, refreshUserProfile } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [activeSection, setActiveSection] = useState<string | null>(null);
@@ -132,7 +134,7 @@ export default function PersonalBrandingSettings({
   };
 
   const showSaveMessage = () => {
-    setSaveMessage("Enregistre !");
+    setSaveMessage(t.settings.savedExclamation);
     setTimeout(() => setSaveMessage(null), 2000);
   };
 
@@ -159,7 +161,7 @@ export default function PersonalBrandingSettings({
             Personal Branding
           </h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Personnalisez votre identite visuelle
+            {t.settings.customizeVisualIdentity}
           </p>
         </div>
         {!isPro && (
@@ -224,12 +226,12 @@ export default function PersonalBrandingSettings({
 
           <div className="flex-1">
             <h4 className="font-medium text-gray-900 dark:text-white mb-1">
-              Photo de profil
+              {t.settings.profilePhoto}
             </h4>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
               {isPro
-                ? "Uploadez une photo personnalisée"
-                : "Passez à Pro pour uploader une photo personnalisée"}
+                ? t.settings.uploadCustomPhoto
+                : t.settings.upgradeToUploadPhoto}
             </p>
             {branding.customAvatarURL && (
               <button
@@ -239,7 +241,7 @@ export default function PersonalBrandingSettings({
                 }}
                 className="text-xs text-red-500 hover:text-red-600"
               >
-                Supprimer la photo personnalisée
+                {t.settings.removeCustomPhotoLabel}
               </button>
             )}
           </div>
@@ -250,7 +252,7 @@ export default function PersonalBrandingSettings({
       <Card className="p-5">
         <h4 className="font-medium text-gray-900 dark:text-white mb-3 flex items-center gap-2">
           <ImageIcon className="w-4 h-4 text-gray-400" />
-          Image de couverture
+          {t.settings.coverImage}
         </h4>
 
         <div
@@ -274,7 +276,7 @@ export default function PersonalBrandingSettings({
               <div className="text-center">
                 <ImageIcon className="w-8 h-8 text-gray-400 dark:text-gray-500 mx-auto mb-2 group-hover:text-[#F8935D] transition-colors" />
                 <span className="text-sm text-gray-500 dark:text-gray-400">
-                  {isPro ? "Cliquez pour ajouter une image" : "Pro requis"}
+                  {isPro ? t.settings.clickToAddImage : t.settings.proRequired}
                 </span>
               </div>
             </div>
@@ -306,7 +308,7 @@ export default function PersonalBrandingSettings({
       <Card className="p-5">
         <h4 className="font-medium text-gray-900 dark:text-white mb-3 flex items-center gap-2">
           <Palette className="w-4 h-4 text-gray-400" />
-          Couleur d'accent
+          {t.settings.accentColor}
         </h4>
 
         <div className="grid grid-cols-5 gap-3">
@@ -337,7 +339,7 @@ export default function PersonalBrandingSettings({
         {isPro && (
           <div className="mt-4 flex items-center gap-3">
             <label className="text-sm text-gray-500 dark:text-gray-400">
-              Personnalise :
+              {t.settings.customColor}
             </label>
             <input
               type="color"
@@ -355,7 +357,7 @@ export default function PersonalBrandingSettings({
       {/* Gradient Preset Section */}
       <Card className="p-5">
         <h4 className="font-medium text-gray-900 dark:text-white mb-3">
-          Style de gradient
+          {t.settings.gradientStyle}
         </h4>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -394,7 +396,7 @@ export default function PersonalBrandingSettings({
       {/* Tagline Section */}
       <Card className="p-5">
         <h4 className="font-medium text-gray-900 dark:text-white mb-3">
-          Tagline professionnelle
+          {t.settings.professionalTagline}
         </h4>
         <input
           type="text"
@@ -403,13 +405,13 @@ export default function PersonalBrandingSettings({
             setBranding((prev) => ({ ...prev, tagline: e.target.value }))
           }
           onBlur={() => saveField("tagline", branding.tagline)}
-          placeholder="Ex: Expert LinkedIn | Coach en personal branding"
+          placeholder={t.settings.taglinePlaceholder}
           maxLength={80}
           className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-card text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F8935D]/50 focus:border-[#F8935D]"
           disabled={!isPro}
         />
         <p className="text-xs text-gray-400 mt-2">
-          {(branding.tagline?.length || 0)}/80 caracteres
+          {(branding.tagline?.length || 0)}/80 {t.settings.characters}
         </p>
       </Card>
 
@@ -417,7 +419,7 @@ export default function PersonalBrandingSettings({
       <Card className="p-5">
         <h4 className="font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
           <Link2 className="w-4 h-4 text-gray-400" />
-          Liens sociaux
+          {t.settings.socialLinks}
         </h4>
 
         <div className="space-y-3">
@@ -461,15 +463,15 @@ export default function PersonalBrandingSettings({
       <Card className="p-5">
         <h4 className="font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
           <Eye className="w-4 h-4 text-gray-400" />
-          Visibilité du profil
+          {t.settings.profileVisibility}
         </h4>
 
         <div className="space-y-3">
           {[
-            { key: "showStats", label: "Afficher les statistiques", default: true },
-            { key: "showSocialLinks", label: "Afficher les liens sociaux", default: true },
-            { key: "showBio", label: "Afficher la bio", default: true },
-            { key: "showSector", label: "Afficher le secteur", default: true },
+            { key: "showStats", label: t.ui.showStats, default: true },
+            { key: "showSocialLinks", label: t.ui.showSocialLinks, default: true },
+            { key: "showBio", label: t.ui.showBio, default: true },
+            { key: "showSector", label: t.ui.showSector, default: true },
           ].map((option) => (
             <label
               key={option.key}
@@ -538,7 +540,7 @@ export default function PersonalBrandingSettings({
           disabled={isLoading || !isPro}
           isLoading={isLoading}
         >
-          {isPro ? "Enregistrer tout" : "Passer a Pro"}
+          {isPro ? t.ui.saveAll : t.ui.upgradeToPro}
         </Button>
       </div>
 
@@ -549,11 +551,10 @@ export default function PersonalBrandingSettings({
             <Crown className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-sm font-medium text-primary-dark dark:text-primary">
-                Débloquez le Personal Branding complet
+                {t.settings.unlockFullBranding}
               </p>
               <p className="text-xs text-primary/80 dark:text-primary/80 mt-1">
-                Passez à Pro pour personnaliser votre avatar, couleurs, gradient,
-                liens sociaux et plus encore.
+                {t.settings.upgradeForBranding}
               </p>
             </div>
           </div>

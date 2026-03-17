@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { useReducedMotion } from "@/hooks/ui/useReducedMotion";
 import Loader from "./Loader";
 
 interface InlineLoaderProps {

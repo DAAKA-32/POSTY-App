@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
-import { savePost, addMessagesToConversation, getConversationHistory } from "@/lib/firestore";
+import { savePost, addMessagesToConversation, getConversationHistory } from "@/lib/db/firestore";
 import { MockResponse, PostInsights, ConversationTurn, FileAttachment } from "@/types";
-import { getAuthHeaders } from "@/lib/api-client";
-import { triggerHaptic } from "@/lib/haptic";
-import { getFriendlyMessage } from "@/lib/error-messages";
+import { getAuthHeaders } from "@/lib/api/client";
+import { triggerHaptic } from "@/lib/ui/haptic";
+import { getFriendlyMessage } from "@/lib/utils/error-messages";
 
 const GUEST_GENERATION_LIMIT = 2;
 const GUEST_STORAGE_KEY = "posty_guest_generations";

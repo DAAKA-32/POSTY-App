@@ -6,13 +6,13 @@
  */
 
 import { MockResponse } from "@/types";
-import { getMockResponses } from "./mock-responses";
+import { getMockResponses } from "@/lib/services/mock-responses";
 import {
   createOpenAIService,
   isOpenAIConfigured,
   getAvailableModels as getModels,
   SYSTEM_PROMPTS,
-} from "./openai";
+} from "@/lib/openai";
 
 // Re-export for backwards compatibility
 export { isOpenAIConfigured, SYSTEM_PROMPTS };

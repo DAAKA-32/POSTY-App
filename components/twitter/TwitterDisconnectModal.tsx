@@ -4,6 +4,7 @@ import { useState } from "react";
 import Modal from "@/components/ui/Modal";
 import Button from "@/components/ui/Button";
 import { TwitterIcon } from "./TwitterConnectButton";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface TwitterDisconnectModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ export default function TwitterDisconnectModal({
   profileName,
   username,
 }: TwitterDisconnectModalProps) {
+  const { t } = useLanguage();
   const [isDisconnecting, setIsDisconnecting] = useState(false);
 
   const handleConfirm = async () => {
@@ -44,7 +46,7 @@ export default function TwitterDisconnectModal({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Déconnecter X (Twitter)"
+      title={t.modals.twitterDisconnectTitle}
       size="sm"
     >
       <div className="space-y-5">
@@ -56,15 +58,15 @@ export default function TwitterDisconnectModal({
           <div>
             <p className="text-white font-medium text-sm">
               {profileName
-                ? `Déconnecter ${profileName} ?`
-                : "Déconnecter votre compte X ?"}
+                ? `${t.modals.twitterDisconnectConfirm} ${profileName} ?`
+                : `${t.modals.twitterDisconnectConfirm} ?`}
             </p>
             {username && (
               <p className="text-text-secondary text-xs">@{username}</p>
             )}
             <p className="text-text-secondary text-xs mt-2">
-              Vous ne pourrez plus publier directement sur X depuis POSTY.
-              Vous pourrez vous reconnecter à tout moment.
+              {t.modals.twitterDisconnectWarning}{" "}
+              {t.modals.reconnectAnytime}
             </p>
           </div>
         </div>
@@ -77,7 +79,7 @@ export default function TwitterDisconnectModal({
             onClick={handleClose}
             disabled={isDisconnecting}
           >
-            Non
+            {t.common.no}
           </Button>
           <Button
             variant="primary"
@@ -86,7 +88,7 @@ export default function TwitterDisconnectModal({
             isLoading={isDisconnecting}
             className="bg-black hover:bg-neutral-800 border border-white/10"
           >
-            {isDisconnecting ? "Deconnexion..." : "Oui"}
+            {isDisconnecting ? t.ui.disconnecting : t.common.yes}
           </Button>
         </div>
       </div>

@@ -4,10 +4,10 @@ import {
   updateLinkedInLastUsedAdmin,
   saveLinkedInPostAdmin,
   checkUserQuotaAdmin,
-} from "@/lib/firestore-admin";
-import { adminDb, isAdminInitialized } from "@/lib/firebase-admin";
+} from "@/lib/db/firestore-admin";
+import { adminDb, isAdminInitialized } from "@/lib/db/firebase-admin";
 import { Timestamp } from "firebase-admin/firestore";
-import { isPlatformAllowed, PlanType, appendFreeSignature } from "@/lib/plans";
+import { isPlatformAllowed, PlanType, appendFreeSignature } from "@/lib/config/plans";
 import { verifyAuth } from "@/lib/auth";
 
 /**

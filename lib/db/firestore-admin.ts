@@ -3,7 +3,7 @@
  * These functions bypass security rules and should only be used in API routes
  */
 
-import { adminDb } from "./firebase-admin";
+import { adminDb } from "@/lib/db/firebase-admin";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 
 // LinkedIn Connection Data type (matching the client-side type)
@@ -87,7 +87,7 @@ export async function saveLinkedInPostAdmin(
 // ============== QUOTA MANAGEMENT (SERVER-SIDE) ==============
 
 import { SubscriptionPlan } from "@/types";
-import { DAILY_MESSAGE_LIMITS, HOURLY_MESSAGE_LIMITS, HOURLY_WINDOW_MS, getFounderOverridePlan, PlanType, PLAN_CONFIGS } from "@/lib/plans";
+import { DAILY_MESSAGE_LIMITS, HOURLY_MESSAGE_LIMITS, HOURLY_WINDOW_MS, getFounderOverridePlan, PlanType, PLAN_CONFIGS } from "@/lib/config/plans";
 
 /**
  * Normalize plan name from Firestore to a valid PlanType.

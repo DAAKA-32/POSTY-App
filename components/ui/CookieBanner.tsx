@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { STORAGE_KEYS } from "@/hooks/useLocalStorage";
+import { STORAGE_KEYS } from "@/hooks/data/useLocalStorage";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export interface CookieConsent {
   essential: boolean; // Always true
@@ -92,6 +93,7 @@ function storeConsent(consent: CookieConsent) {
  * Customize panel: toggle functional + analytics cookies
  */
 export default function CookieBanner() {
+  const { t } = useLanguage();
   const [phase, setPhase] = useState<"hidden" | "entering" | "visible" | "exiting">("hidden");
   const [showPreferences, setShowPreferences] = useState(false);
   const [functional, setFunctional] = useState(false);
@@ -174,15 +176,15 @@ export default function CookieBanner() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[14px] font-semibold text-gray-900 dark:text-white leading-tight">
-                    Confidentialité
+                    {t.cookieBanner.privacy}
                   </p>
                   <p className="text-[13px] leading-relaxed text-gray-500 dark:text-gray-400 mt-1">
-                    Nous utilisons des cookies essentiels et, avec votre accord, des cookies optionnels pour améliorer votre expérience.{" "}
+                    {t.cookieBanner.description}{" "}
                     <Link
                       href="/legal/cookies"
                       className="text-gray-700 dark:text-gray-300 underline underline-offset-2 decoration-gray-300 dark:decoration-gray-600 hover:decoration-gray-500 dark:hover:decoration-gray-400 transition-colors duration-200"
                     >
-                      En savoir plus
+                      {t.cookieBanner.learnMore}
                     </Link>
                   </p>
                 </div>
@@ -194,18 +196,18 @@ export default function CookieBanner() {
                   onClick={handleAcceptAll}
                   className="flex-1 px-4 py-2 bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100 text-white dark:text-gray-900 text-[13px] font-semibold rounded-lg active:scale-[0.97] transition-all duration-150"
                 >
-                  Accepter
+                  {t.cookieBanner.accept}
                 </button>
                 <button
                   onClick={handleRefuseOptional}
                   className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-[13px] font-semibold rounded-lg active:scale-[0.97] transition-all duration-150"
                 >
-                  Refuser
+                  {t.cookieBanner.refuse}
                 </button>
                 <button
                   onClick={() => setShowPreferences(true)}
                   className="px-3 py-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-150"
-                  aria-label="Personnaliser les cookies"
+                  aria-label={t.cookieBanner.customizeCookies}
                 >
                   <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -219,12 +221,12 @@ export default function CookieBanner() {
             <div className="flex flex-col gap-4">
               <div className="flex items-center justify-between">
                 <p className="text-[14px] font-semibold text-gray-900 dark:text-white">
-                  Préférences
+                  {t.cookieBanner.preferences}
                 </p>
                 <button
                   onClick={() => setShowPreferences(false)}
                   className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1"
-                  aria-label="Fermer les préférences"
+                  aria-label={t.ui.closePreferences}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -236,8 +238,8 @@ export default function CookieBanner() {
                 {/* Essential - always on */}
                 <div className="flex items-center justify-between py-2.5 px-3 bg-gray-50 dark:bg-gray-800/40 rounded-lg">
                   <div className="flex-1 mr-3">
-                    <p className="text-[13px] font-medium text-gray-900 dark:text-white">Essentiels</p>
-                    <p className="text-[11px] text-gray-500 dark:text-gray-500 mt-0.5 leading-relaxed">Authentification et sécurité. Toujours actifs.</p>
+                    <p className="text-[13px] font-medium text-gray-900 dark:text-white">{t.cookieBanner.essential}</p>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-500 mt-0.5 leading-relaxed">{t.cookieBanner.essentialDesc}</p>
                   </div>
                   <div className="relative w-9 h-[22px] bg-gray-900 dark:bg-white rounded-full cursor-not-allowed opacity-50 flex-shrink-0">
                     <div className="absolute right-0.5 top-0.5 w-[18px] h-[18px] bg-white dark:bg-gray-900 rounded-full" />
@@ -247,8 +249,8 @@ export default function CookieBanner() {
                 {/* Functional */}
                 <div className="flex items-center justify-between py-2.5 px-3 bg-gray-50 dark:bg-gray-800/40 rounded-lg">
                   <div className="flex-1 mr-3">
-                    <p className="text-[13px] font-medium text-gray-900 dark:text-white">Fonctionnels</p>
-                    <p className="text-[11px] text-gray-500 dark:text-gray-500 mt-0.5 leading-relaxed">Préférences d&apos;interface et personnalisation.</p>
+                    <p className="text-[13px] font-medium text-gray-900 dark:text-white">{t.cookieBanner.functional}</p>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-500 mt-0.5 leading-relaxed">{t.cookieBanner.functionalDesc}</p>
                   </div>
                   <button
                     onClick={() => setFunctional(!functional)}
@@ -267,8 +269,8 @@ export default function CookieBanner() {
                 {/* Analytics */}
                 <div className="flex items-center justify-between py-2.5 px-3 bg-gray-50 dark:bg-gray-800/40 rounded-lg">
                   <div className="flex-1 mr-3">
-                    <p className="text-[13px] font-medium text-gray-900 dark:text-white">Analytiques</p>
-                    <p className="text-[11px] text-gray-500 dark:text-gray-500 mt-0.5 leading-relaxed">Statistiques d&apos;usage anonymes. Aucun tiers.</p>
+                    <p className="text-[13px] font-medium text-gray-900 dark:text-white">{t.cookieBanner.analytics}</p>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-500 mt-0.5 leading-relaxed">{t.cookieBanner.analyticsDesc}</p>
                   </div>
                   <button
                     onClick={() => setAnalytics(!analytics)}
@@ -291,13 +293,13 @@ export default function CookieBanner() {
                   onClick={handleSavePreferences}
                   className="flex-1 px-4 py-2 bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100 text-white dark:text-gray-900 text-[13px] font-semibold rounded-lg active:scale-[0.97] transition-all duration-150"
                 >
-                  Enregistrer
+                  {t.common.save}
                 </button>
                 <Link
                   href="/legal/cookies"
                   className="text-[11px] text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 underline underline-offset-2 transition-colors ml-1"
                 >
-                  Politique cookies
+                  {t.cookieBanner.cookiePolicy}
                 </Link>
               </div>
             </div>

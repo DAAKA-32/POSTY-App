@@ -9,7 +9,7 @@ import {
   DashboardStats,
   hasDashboardBeenVisited,
   markDashboardVisited,
-} from "@/lib/firestore";
+} from "@/lib/db/firestore";
 import KPICard from "@/components/dashboard/KPICard";
 import ActivityChart from "@/components/dashboard/ActivityChart";
 import StyleDistributionChart from "@/components/dashboard/StyleDistributionChart";
@@ -19,7 +19,7 @@ import DashboardOnboarding from "@/components/dashboard/DashboardOnboarding";
 import { AnimatedLogo } from "@/components/ui/Logo";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { usePageTitle } from "@/hooks/usePageTitle";
+import { usePageTitle } from "@/hooks/ui/usePageTitle";
 
 function DashboardContent() {
   const { user, userProfile, loading } = useAuth();

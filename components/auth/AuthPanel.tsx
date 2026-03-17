@@ -5,8 +5,8 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useReducedMotion } from "@/hooks/useReducedMotion";
-import { useScrollLock } from "@/hooks/useScrollLock";
+import { useReducedMotion } from "@/hooks/ui/useReducedMotion";
+import { useScrollLock } from "@/hooks/ui/useScrollLock";
 import GoogleButton from "./GoogleButton";
 
 type AuthMode = "login" | "signup";

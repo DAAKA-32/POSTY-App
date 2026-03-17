@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function Error({
   reset,
@@ -9,6 +10,8 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const { t } = useLanguage();
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4">
       {/* Illustration */}
@@ -26,13 +29,13 @@ export default function Error({
       </div>
 
       <h1 className="text-2xl sm:text-3xl font-bold text-text-primary mb-3">
-        Oups, quelque chose a coince
+        {t.errors.errorPageTitle}
       </h1>
       <p className="text-text-secondary text-center max-w-md mb-2">
-        Pas de panique, vos donnees sont en securite.
+        {t.errors.errorPageDataSafe}
       </p>
       <p className="text-text-muted text-sm text-center max-w-md mb-8">
-        Essayez de rafraichir la page. Si le probleme persiste, notre equipe est la pour vous aider.
+        {t.errors.errorPageTryRefresh}
       </p>
 
       <div className="flex flex-col sm:flex-row gap-3 w-full max-w-xs">
@@ -40,23 +43,23 @@ export default function Error({
           onClick={reset}
           className="flex-1 px-6 py-3 bg-primary hover:bg-primary-hover text-white font-medium rounded-xl transition-colors shadow-btn-primary text-sm"
         >
-          Rafraichir la page
+          {t.errors.errorPageRefresh}
         </button>
         <Link
           href="/app"
           className="flex-1 px-6 py-3 bg-card hover:bg-dark-elevated text-text-primary font-medium rounded-xl border border-border transition-colors text-sm text-center"
         >
-          Retour a l&apos;accueil
+          {t.errors.backToHome}
         </Link>
       </div>
 
       <p className="mt-6 text-text-subtle text-xs">
-        Besoin d&apos;aide ?{" "}
+        {t.errors.errorPageNeedHelp}{" "}
         <a
           href="mailto:support@posty.fr"
           className="text-primary hover:text-primary-hover underline underline-offset-2"
         >
-          Contactez le support
+          {t.errors.errorPageContactSupport}
         </a>
       </p>
     </div>

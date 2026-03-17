@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { LEGAL_VERSIONS } from "@/lib/i18n/legal";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const STORAGE_KEY = "posty_legal_versions_seen";
 
@@ -34,6 +35,7 @@ function markVersionsSeen(versions: SeenVersions) {
  * have previously seen older versions.
  */
 export default function LegalUpdateNotification() {
+  const { t } = useLanguage();
   const [updatedDocs, setUpdatedDocs] = useState<{ name: string; href: string }[]>([]);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -56,23 +58,23 @@ export default function LegalUpdateNotification() {
     const docs: { name: string; href: string }[] = [];
 
     if (seen.privacy && seen.privacy !== LEGAL_VERSIONS.privacy.version) {
-      docs.push({ name: "Politique de confidentialite", href: "/legal/privacy" });
+      docs.push({ name: t.modals.privacyPolicyDoc, href: "/legal/privacy" });
     }
     if (seen.terms && seen.terms !== LEGAL_VERSIONS.terms.version) {
-      docs.push({ name: "Conditions d'utilisation", href: "/legal/terms" });
+      docs.push({ name: t.modals.termsOfUseDoc, href: "/legal/terms" });
     }
     if (seen.notices && seen.notices !== LEGAL_VERSIONS.notices.version) {
-      docs.push({ name: "Mentions legales", href: "/legal/notices" });
+      docs.push({ name: t.modals.legalNoticesDoc, href: "/legal/notices" });
     }
     if (seen.cookies && seen.cookies !== LEGAL_VERSIONS.cookies.version) {
-      docs.push({ name: "Politique de cookies", href: "/legal/cookies" });
+      docs.push({ name: t.modals.cookiePolicyDoc, href: "/legal/cookies" });
     }
 
     if (docs.length > 0) {
       setUpdatedDocs(docs);
       setIsVisible(true);
     }
-  }, []);
+  }, [t]);
 
   const handleDismiss = () => {
     markVersionsSeen({
@@ -97,10 +99,10 @@ export default function LegalUpdateNotification() {
           </div>
           <div className="flex-1">
             <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">
-              Documents legaux mis a jour
+              {t.modals.legalDocsUpdated}
             </p>
             <p className="text-xs text-gray-500 dark:text-text-muted mb-2">
-              Les documents suivants ont ete modifies :
+              {t.modals.legalDocsModified}
             </p>
             <ul className="space-y-1 mb-3">
               {updatedDocs.map((doc) => (
@@ -119,13 +121,13 @@ export default function LegalUpdateNotification() {
               onClick={handleDismiss}
               className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-text-secondary transition-colors"
             >
-              J&apos;ai compris
+              {t.modals.understood}
             </button>
           </div>
           <button
             onClick={handleDismiss}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors shrink-0"
-            aria-label="Fermer"
+            aria-label={t.common.close}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

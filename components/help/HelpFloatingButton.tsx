@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { usePageHelp } from "@/hooks/usePageHelp";
+import { usePageHelp } from "@/hooks/ui/usePageHelp";
 import HelpPopover from "./HelpPopover";
 
 const smoothEase = [0.25, 0.1, 0.25, 1] as const;

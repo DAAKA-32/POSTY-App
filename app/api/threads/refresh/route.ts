@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getThreadsConnectionAdmin, saveThreadsConnectionAdmin } from "@/lib/firestore-admin";
-import { isAdminInitialized } from "@/lib/firebase-admin";
-import { THREADS_CONFIG } from "@/lib/meta";
+import { getThreadsConnectionAdmin, saveThreadsConnectionAdmin } from "@/lib/db/firestore-admin";
+import { isAdminInitialized } from "@/lib/db/firebase-admin";
+import { THREADS_CONFIG } from "@/lib/platforms/meta";
 
 /**
  * POST /api/threads/refresh

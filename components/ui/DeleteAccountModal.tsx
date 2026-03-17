@@ -73,7 +73,7 @@ export default function DeleteAccountModal({
     e.preventDefault();
 
     if (!isGoogleUser && !password.trim()) {
-      setError("Veuillez entrer votre mot de passe");
+      setError(t.modals.enterPasswordError);
       triggerShake();
       return;
     }
@@ -85,7 +85,7 @@ export default function DeleteAccountModal({
       await onConfirm(password);
       setStep("success");
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Une erreur est survenue";
+      const errorMessage = err instanceof Error ? err.message : t.auth.genericError;
       setError(errorMessage);
       triggerShake();
       setIsDeleting(false);
@@ -110,13 +110,13 @@ export default function DeleteAccountModal({
         <div className="success-check w-10 h-5 border-l-4 border-b-4 border-accent" />
       </div>
       <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-        Compte supprimé
+        {t.modals.accountDeletedTitle}
       </h3>
       <p className="text-gray-600 dark:text-text-secondary text-sm">
-        Votre compte et toutes vos données ont été supprimées.
+        {t.modals.allDataDeleted}
       </p>
       <p className="text-gray-500 dark:text-text-muted text-xs mt-4">
-        Redirection en cours...
+        {t.modals.redirectingEllipsis}
       </p>
     </div>
   );
@@ -134,16 +134,16 @@ export default function DeleteAccountModal({
           </div>
           <div>
             <p className="text-error font-medium text-sm">
-              Cette action est irréversible
+              {t.modals.irreversibleAction}
             </p>
             <p className="text-error/80 text-xs mt-1">
-              Toutes vos données seront définitivement supprimées :
+              {t.modals.allDataWillBeDeleted}
             </p>
             <ul className="list-disc list-inside text-error/70 text-xs mt-2 space-y-0.5">
-              <li>Profil et informations personnelles</li>
-              <li>Historique de posts générés</li>
-              <li>Sessions et conversations</li>
-              <li>Préférences et consentements</li>
+              <li>{t.modals.personalInfo}</li>
+              <li>{t.modals.generatedPostsHistory}</li>
+              <li>{t.modals.sessionsConversations}</li>
+              <li>{t.modals.preferencesConsents}</li>
             </ul>
           </div>
         </div>
@@ -153,7 +153,7 @@ export default function DeleteAccountModal({
       {!isGoogleUser && (
         <div>
           <label className="block text-sm text-gray-600 dark:text-text-secondary mb-2">
-            Confirmez votre mot de passe pour continuer
+            {t.modals.confirmPasswordToContinue}
           </label>
           <div className="relative">
             <input
@@ -173,7 +173,7 @@ export default function DeleteAccountModal({
                 }
                 ${hasShake ? "error-shake" : ""}
               `}
-              placeholder="Votre mot de passe"
+              placeholder={t.auth.passwordPlaceholder}
               disabled={isDeleting}
               autoComplete="current-password"
             />
@@ -220,10 +220,10 @@ export default function DeleteAccountModal({
             </svg>
             <div>
               <p className="text-gray-900 dark:text-white text-sm font-medium">
-                Connexion Google requise
+                {t.modals.googleLoginRequired}
               </p>
               <p className="text-gray-500 dark:text-text-muted text-xs mt-0.5">
-                Vous devrez confirmer votre identité via Google
+                {t.modals.googleReauthDesc}
               </p>
             </div>
           </div>
@@ -248,7 +248,7 @@ export default function DeleteAccountModal({
           isLoading={isDeleting}
           disabled={isDeleting || (!isGoogleUser && !password.trim())}
         >
-          {isDeleting ? "Suppression..." : t.ui.deleteAccount}
+          {isDeleting ? t.modals.deletingEllipsis : t.ui.deleteAccount}
         </Button>
       </div>
     </form>

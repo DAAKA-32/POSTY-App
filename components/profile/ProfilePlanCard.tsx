@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { PlanType, getPlanConfig, getLocalizedPlanTaglines } from "@/lib/plans";
+import { PlanType, getPlanConfig, getLocalizedPlanTaglines } from "@/lib/config/plans";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ProfilePlanCardProps {

@@ -11,9 +11,9 @@ import {
   checkHourlyQuotaAdmin,
   checkUserQuotaAdmin,
   incrementUserQuotaAdmin,
-} from "@/lib/firestore-admin";
-import { isAdminInitialized } from "@/lib/firebase-admin";
-import { getPlanLimits, getMaxTokensForPlan, PlanType } from "@/lib/plans";
+} from "@/lib/db/firestore-admin";
+import { isAdminInitialized } from "@/lib/db/firebase-admin";
+import { getPlanLimits, getMaxTokensForPlan, PlanType } from "@/lib/config/plans";
 import { verifyAuth } from "@/lib/auth";
 
 /**

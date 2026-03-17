@@ -2,7 +2,8 @@
 
 import { memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useHapticFeedback } from "@/hooks/useHapticFeedback";
+import { useHapticFeedback } from "@/hooks/ui/useHapticFeedback";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface NewResponseIndicatorProps {
   isVisible: boolean;
@@ -34,6 +35,7 @@ const NewResponseIndicator = memo(function NewResponseIndicator({
   mode = "new-content",
 }: NewResponseIndicatorProps) {
   const { trigger: triggerHaptic } = useHapticFeedback();
+  const { t } = useLanguage();
 
   const handleClick = () => {
     triggerHaptic("light");
@@ -69,7 +71,7 @@ const NewResponseIndicator = memo(function NewResponseIndicator({
                 cursor-pointer
                 haptic-feedback
               "
-              aria-label={`${newCount} nouvelle${newCount > 1 ? "s" : ""} réponse${newCount > 1 ? "s" : ""} disponible${newCount > 1 ? "s" : ""}`}
+              aria-label={newCount > 1 ? t.ui.newResponsesAvailable.replace("{count}", String(newCount)) : t.ui.responseReady}
             >
               {/* Down arrow icon */}
               <motion.svg
@@ -90,8 +92,8 @@ const NewResponseIndicator = memo(function NewResponseIndicator({
 
               <span>
                 {newCount > 1
-                  ? `${newCount} nouvelles réponses`
-                  : "Réponse prête"}
+                  ? t.ui.newResponsesAvailable.replace("{count}", String(newCount))
+                  : t.ui.responseReady}
               </span>
 
               {/* Subtle pulse effect */}
@@ -130,7 +132,7 @@ const NewResponseIndicator = memo(function NewResponseIndicator({
                 cursor-pointer
                 haptic-feedback
               "
-              aria-label="Défiler vers le bas"
+              aria-label={t.ui.scrollDown}
             >
               <motion.svg
                 animate={{ y: [0, 2, 0] }}

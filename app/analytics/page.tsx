@@ -12,11 +12,11 @@ import {
   markLinkedInPostDeleted,
   LinkedInPostData,
   LinkedInAnalyticsSummary,
-} from "@/lib/firestore";
-import { getAuthHeaders } from "@/lib/api-client";
+} from "@/lib/db/firestore";
+import { getAuthHeaders } from "@/lib/api/client";
 import toast from "@/components/ui/Toast";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { usePageTitle } from "@/hooks/usePageTitle";
+import { usePageTitle } from "@/hooks/ui/usePageTitle";
 
 // =============================================================================
 // ANALYTICS DASHBOARD PAGE - Enhanced with Charts & Filters

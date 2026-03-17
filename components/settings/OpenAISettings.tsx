@@ -1,48 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useOpenAIConfig } from "@/hooks/useOpenAI";
+import { useOpenAIConfig } from "@/hooks/chat/useOpenAI";
 import { Key, Eye, EyeOff, Check, X, Loader2, Trash2 } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
-interface OpenAISettingsProps {
-  language?: "fr" | "en";
-}
-
-const translations = {
-  fr: {
-    title: "Configuration OpenAI",
-    description:
-      "Ajoutez votre clé API OpenAI pour activer la génération de posts avec IA.",
-    apiKeyLabel: "Clé API OpenAI",
-    apiKeyPlaceholder: "sk-...",
-    apiKeyHint: "Votre clé est stockée localement et n'est jamais partagée.",
-    modelLabel: "Modèle",
-    validating: "Validation...",
-    valid: "Clé valide",
-    invalid: "Clé invalide",
-    save: "Enregistrer",
-    clear: "Supprimer la clé",
-    globalConfigured: "Une clé globale est configurée sur le serveur.",
-    getKey: "Obtenez votre clé sur",
-  },
-  en: {
-    title: "OpenAI Configuration",
-    description: "Add your OpenAI API key to enable AI-powered post generation.",
-    apiKeyLabel: "OpenAI API Key",
-    apiKeyPlaceholder: "sk-...",
-    apiKeyHint: "Your key is stored locally and never shared.",
-    modelLabel: "Model",
-    validating: "Validating...",
-    valid: "Valid key",
-    invalid: "Invalid key",
-    save: "Save",
-    clear: "Delete key",
-    globalConfigured: "A global key is configured on the server.",
-    getKey: "Get your key at",
-  },
-};
-
-export default function OpenAISettings({ language = "fr" }: OpenAISettingsProps) {
+export default function OpenAISettings() {
   const {
     apiKey,
     setApiKey,
@@ -54,9 +17,9 @@ export default function OpenAISettings({ language = "fr" }: OpenAISettingsProps)
     status,
   } = useOpenAIConfig();
 
+  const { t } = useLanguage();
   const [inputValue, setInputValue] = useState(apiKey);
   const [showKey, setShowKey] = useState(false);
-  const t = translations[language];
 
   const handleSave = () => {
     setApiKey(inputValue);
@@ -80,8 +43,8 @@ export default function OpenAISettings({ language = "fr" }: OpenAISettingsProps)
           <Key className="w-5 h-5 text-green-400" />
         </div>
         <div>
-          <h3 className="text-lg font-semibold text-white">{t.title}</h3>
-          <p className="text-sm text-text-secondary">{t.description}</p>
+          <h3 className="text-lg font-semibold text-white">{t.settings.openaiTitle}</h3>
+          <p className="text-sm text-text-secondary">{t.settings.openaiDescription}</p>
         </div>
       </div>
 
@@ -89,7 +52,7 @@ export default function OpenAISettings({ language = "fr" }: OpenAISettingsProps)
         <div className="mb-4 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
           <p className="text-sm text-green-400 flex items-center gap-2">
             <Check className="w-4 h-4" />
-            {t.globalConfigured}
+            {t.settings.openaiGlobalConfigured}
           </p>
         </div>
       )}
@@ -98,14 +61,14 @@ export default function OpenAISettings({ language = "fr" }: OpenAISettingsProps)
         {/* API Key Input */}
         <div>
           <label className="block text-sm font-medium text-text-secondary mb-2">
-            {t.apiKeyLabel}
+            {t.settings.openaiApiKeyLabel}
           </label>
           <div className="relative">
             <input
               type={showKey ? "text" : "password"}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              placeholder={t.apiKeyPlaceholder}
+              placeholder={t.settings.openaiApiKeyPlaceholder}
               className="w-full px-4 py-3 bg-dark-hover border border-dark-border rounded-lg text-white placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary pr-24"
             />
             <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
@@ -132,31 +95,31 @@ export default function OpenAISettings({ language = "fr" }: OpenAISettingsProps)
             </div>
           </div>
           <p className="mt-2 text-xs text-text-muted">
-            {t.apiKeyHint}{" "}
+            {t.settings.openaiApiKeyHint}{" "}
             <a
               href="https://platform.openai.com/api-keys"
               target="_blank"
               rel="noopener noreferrer"
               className="text-primary hover:underline"
             >
-              {t.getKey} platform.openai.com
+              {t.settings.openaiGetKey} platform.openai.com
             </a>
           </p>
           {isValidating && (
-            <p className="mt-1 text-xs text-primary">{t.validating}</p>
+            <p className="mt-1 text-xs text-primary">{t.settings.openaiValidating}</p>
           )}
           {!isValidating && isValid === true && (
-            <p className="mt-1 text-xs text-green-400">{t.valid}</p>
+            <p className="mt-1 text-xs text-green-400">{t.settings.openaiValid}</p>
           )}
           {!isValidating && isValid === false && (
-            <p className="mt-1 text-xs text-red-400">{t.invalid}</p>
+            <p className="mt-1 text-xs text-red-400">{t.settings.openaiInvalid}</p>
           )}
         </div>
 
         {/* Model Selection */}
         <div>
           <label className="block text-sm font-medium text-text-secondary mb-2">
-            {t.modelLabel}
+            {t.settings.openaiModelLabel}
           </label>
           <select
             value={model}
@@ -178,7 +141,7 @@ export default function OpenAISettings({ language = "fr" }: OpenAISettingsProps)
             disabled={!inputValue || isValidating || inputValue === apiKey}
             className="flex-1 px-4 py-2.5 bg-primary hover:bg-primary-hover disabled:bg-dark-hover disabled:text-text-muted text-white font-medium rounded-lg transition-colors"
           >
-            {t.save}
+            {t.common.save}
           </button>
           {apiKey && (
             <button
@@ -186,7 +149,7 @@ export default function OpenAISettings({ language = "fr" }: OpenAISettingsProps)
               className="px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-medium rounded-lg transition-colors flex items-center gap-2"
             >
               <Trash2 className="w-4 h-4" />
-              {t.clear}
+              {t.settings.openaiClearKey}
             </button>
           )}
         </div>

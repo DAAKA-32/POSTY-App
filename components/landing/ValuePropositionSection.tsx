@@ -3,7 +3,7 @@
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useCanHover } from "@/hooks/useCanHover";
+import { useCanHover } from "@/hooks/ui/useCanHover";
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 30 },

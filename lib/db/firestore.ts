@@ -17,9 +17,9 @@ import {
   writeBatch,
   DocumentReference,
 } from "firebase/firestore";
-import { db } from "./firebase";
+import { db } from "@/lib/db/firebase";
 import { UserProfile, Post, Session, ChatMessage } from "@/types";
-import { PlanType, DAILY_MESSAGE_LIMITS, PLAN_CONFIGS, getFounderOverridePlan } from "./plans";
+import { PlanType, DAILY_MESSAGE_LIMITS, PLAN_CONFIGS, getFounderOverridePlan } from "@/lib/config/plans";
 
 /**
  * Normalize plan name from Firestore to a valid SubscriptionPlan.
@@ -1469,7 +1469,7 @@ export async function canUserPublishThisWeek(userId: string, authEmail?: string 
     return { canPublish: true, used: 0, limit: -1, resetsAt: new Date() };
   }
 
-  const { getWeeklyPublishLimit } = await import("./plans");
+  const { getWeeklyPublishLimit } = await import("@/lib/config/plans");
   const limit = getWeeklyPublishLimit(plan);
 
   // Unlimited

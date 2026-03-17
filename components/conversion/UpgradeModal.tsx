@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useScrollLock } from "@/hooks/useScrollLock";
+import { useScrollLock } from "@/hooks/ui/useScrollLock";
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -119,7 +119,7 @@ export default function UpgradeModal({ isOpen, onClose, trigger = "quota" }: Upg
                 <button
                   onClick={onClose}
                   className="absolute top-3 right-3 w-9 h-9 flex items-center justify-center rounded-full text-text-muted hover:text-white bg-dark-card/40 hover:bg-dark-hover/80 backdrop-blur-sm transition-all duration-200"
-                  aria-label="Fermer"
+                  aria-label={t.common.close}
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 6L18 18M6 18L18 6" />

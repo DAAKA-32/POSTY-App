@@ -2,7 +2,7 @@
 
 import { useState, memo, useCallback } from "react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
-import { useHapticFeedback } from "@/hooks/useHapticFeedback";
+import { useHapticFeedback } from "@/hooks/ui/useHapticFeedback";
 import ModernResponseCard from "./ModernResponseCard";
 import { SubscriptionPlan } from "@/types";
 import { useLanguage } from "@/contexts/LanguageContext";

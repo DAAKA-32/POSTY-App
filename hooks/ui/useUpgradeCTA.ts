@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { PlanType } from "@/lib/plans";
+import { PlanType } from "@/lib/config/plans";
 
 interface UpgradeCTAState {
   shouldShow: boolean;

@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { useScrollLock } from "@/hooks/useScrollLock";
+import { useScrollLock } from "@/hooks/ui/useScrollLock";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ImmersiveDemoViewProps {
   isOpen: boolean;
@@ -34,6 +35,7 @@ export default function ImmersiveDemoView({
   error,
   isDarkMode = true,
 }: ImmersiveDemoViewProps) {
+  const { t } = useLanguage();
   const containerRef = useRef<HTMLDivElement>(null);
   const [displayedResponse, setDisplayedResponse] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -196,7 +198,7 @@ export default function ImmersiveDemoView({
                   />
                 </svg>
                 <span className={`${theme.textSecondary} text-sm font-medium hidden sm:inline`}>
-                  Retour
+                  {t.common.back}
                 </span>
               </motion.button>
 
@@ -375,7 +377,7 @@ export default function ImmersiveDemoView({
                               href="/login?mode=signup"
                               className="group inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-semibold rounded-xl shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-orange-500/40 transition-all duration-300"
                             >
-                              <span>Commencer gratuitement</span>
+                              <span>{t.landing.heroCTAPrimary}</span>
                               <svg
                                 className="w-4 h-4 group-hover:translate-x-1 transition-transform"
                                 fill="none"

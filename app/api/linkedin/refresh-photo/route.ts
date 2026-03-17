@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminDb, isAdminInitialized } from "@/lib/firebase-admin";
+import { adminDb, isAdminInitialized } from "@/lib/db/firebase-admin";
 
 /**
  * Refreshes the LinkedIn profile photo URL by re-fetching from LinkedIn API.

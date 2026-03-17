@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth } from "@/lib/auth";
-import { getStripeServer, getPriceId, getAppUrl, BillingInterval } from "@/lib/stripe";
+import { getStripeServer, getPriceId, getAppUrl, BillingInterval } from "@/lib/config/stripe";
 import { SubscriptionPlan } from "@/types";
-import { adminDb, isAdminInitialized } from "@/lib/firebase-admin";
-import { PLAN_CONFIGS, TRIAL_PERIOD_DAYS, checkTrialEligibility, isPlanTrialEligible } from "@/lib/plans";
+import { adminDb, isAdminInitialized } from "@/lib/db/firebase-admin";
+import { PLAN_CONFIGS, TRIAL_PERIOD_DAYS, checkTrialEligibility, isPlanTrialEligible } from "@/lib/config/plans";
 
 export async function POST(request: NextRequest) {
   try {

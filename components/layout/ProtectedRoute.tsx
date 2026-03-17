@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import SubscriptionGuard from "./SubscriptionGuard";
-import { PlanType } from "@/lib/plans";
+import { PlanType } from "@/lib/config/plans";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;

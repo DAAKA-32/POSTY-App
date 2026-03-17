@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { PageHelpConfig } from "@/lib/help-content";
+import { PageHelpConfig } from "@/lib/ui/help-content";
 
 const smoothEase = [0.25, 0.1, 0.25, 1] as const;
 

@@ -4,7 +4,7 @@ import { useState, memo, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence, PanInfo, useAnimation } from "framer-motion";
 import Button from "@/components/ui/Button";
 import { LinkedInIcon } from "@/components/linkedin/LinkedInConnectButton";
-import { useHapticFeedback } from "@/hooks/useHapticFeedback";
+import { useHapticFeedback } from "@/hooks/ui/useHapticFeedback";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import toast from "@/components/ui/Toast";

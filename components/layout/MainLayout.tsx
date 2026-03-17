@@ -19,17 +19,17 @@ import ConversationOptionsMenu from "@/components/conversation/ConversationOptio
 import RenameConversationModal from "@/components/conversation/RenameConversationModal";
 import DeleteConfirmModal from "@/components/conversation/DeleteConfirmModal";
 import { Post } from "@/types";
-import { getUserPostsWithPinned, pinPost, renamePost, deletePost } from "@/lib/firestore";
+import { getUserPostsWithPinned, pinPost, renamePost, deletePost } from "@/lib/db/firestore";
 import { AnimatedSlideIn, AnimatedPageWrapper } from "@/components/animations/AnimatedPageWrapper";
 import toast from "@/components/ui/Toast";
 import TrialBanner from "@/components/subscription/TrialBanner";
 import UsageBanner from "@/components/ui/UsageBanner";
 import QuotaExceededModal from "@/components/ui/QuotaExceededModal";
-import { usePageHelp } from "@/hooks/usePageHelp";
+import { usePageHelp } from "@/hooks/ui/usePageHelp";
 import HelpNotificationDot from "@/components/help/HelpNotificationDot";
 import HelpPopover from "@/components/help/HelpPopover";
 import HelpFloatingButton from "@/components/help/HelpFloatingButton";
-import { PAGE_HELP_CONFIG } from "@/lib/help-content";
+import { PAGE_HELP_CONFIG } from "@/lib/ui/help-content";
 
 // Premium animation easings - consistent across app
 const smoothEase = [0.25, 0.1, 0.25, 1] as const;
@@ -317,7 +317,9 @@ export default function MainLayout({
     if (expiring.length > 0) {
       tokenWarningShown.current = true;
       toast.warning(
-        `Connexion${expiring.length > 1 ? "s" : ""} ${expiring.join(", ")} expire${expiring.length > 1 ? "nt" : ""} bientôt. Reconnectez-vous dans les paramètres.`
+        expiring.length > 1
+          ? t.ui.connectionsExpiringSoon.replace("{names}", expiring.join(", "))
+          : t.ui.connectionExpiringSoon.replace("{name}", expiring.join(", "))
       );
     }
   }, [linkedInConnection, facebookConnection, threadsConnection]);

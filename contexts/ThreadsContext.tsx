@@ -13,14 +13,14 @@ import { useAuth } from "./AuthContext";
 import {
   getThreadsConnection,
   deleteThreadsConnection,
-} from "@/lib/firestore";
+} from "@/lib/db/firestore";
 import { ThreadsConnectionData } from "@/types";
 import {
   isMetaTokenExpired,
   getThreadsAuthUrl,
   postToThreads as postToThreadsApi,
-} from "@/lib/meta";
-import { getAuthHeaders } from "@/lib/api-client";
+} from "@/lib/platforms/meta";
+import { getAuthHeaders } from "@/lib/api/client";
 import toast from "@/components/ui/Toast";
 
 // Refresh when token has less than 7 days remaining

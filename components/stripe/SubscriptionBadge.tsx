@@ -1,7 +1,7 @@
 "use client";
 
 import { SubscriptionPlan } from "@/types";
-import { getPlanConfig } from "@/lib/plans";
+import { getPlanConfig } from "@/lib/config/plans";
 
 interface SubscriptionBadgeProps {
   plan: SubscriptionPlan | null;

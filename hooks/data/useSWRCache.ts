@@ -2,7 +2,7 @@
 
 import useSWR, { SWRConfiguration, mutate, useSWRConfig } from "swr";
 import { Post, UserProfile } from "@/types";
-import { getUserPosts, getUserPostsWithPinned } from "@/lib/firestore";
+import { getUserPosts, getUserPostsWithPinned } from "@/lib/db/firestore";
 
 // Default SWR configuration with sensible caching defaults
 const defaultConfig: SWRConfiguration = {

@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence, useMotionValue, useTransform, useDragControls, PanInfo } from "framer-motion";
 import { X, Sparkles, ArrowRight, Check } from "lucide-react";
 import { PostTemplate } from "./PostTemplates";
-import { useScrollLock } from "@/hooks/useScrollLock";
+import { useScrollLock } from "@/hooks/ui/useScrollLock";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface TemplateFillerModalProps {

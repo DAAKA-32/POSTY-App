@@ -7,20 +7,20 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useScheduling } from "@/contexts/SchedulingContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import { PlanType, meetsMinimumPlan } from "@/lib/plans";
+import { PlanType, meetsMinimumPlan } from "@/lib/config/plans";
 import { Post } from "@/types";
-import { pinPost, renamePost, deletePost } from "@/lib/firestore";
+import { pinPost, renamePost, deletePost } from "@/lib/db/firestore";
 import toast from "@/components/ui/Toast";
 import ConversationOptionsMenu from "@/components/conversation/ConversationOptionsMenu";
 import RenameConversationModal from "@/components/conversation/RenameConversationModal";
 import DeleteConfirmModal from "@/components/conversation/DeleteConfirmModal";
 import ProfileMenu from "@/components/layout/ProfileMenu";
-import { useScrollLock } from "@/hooks/useScrollLock";
+import { useScrollLock } from "@/hooks/ui/useScrollLock";
 import { AnimatePresence } from "framer-motion";
-import { usePageHelp } from "@/hooks/usePageHelp";
+import { usePageHelp } from "@/hooks/ui/usePageHelp";
 import HelpNotificationDot from "@/components/help/HelpNotificationDot";
 import HelpPopover from "@/components/help/HelpPopover";
-import { PAGE_HELP_CONFIG } from "@/lib/help-content";
+import { PAGE_HELP_CONFIG } from "@/lib/ui/help-content";
 
 interface SlideMenuProps {
   isOpen: boolean;

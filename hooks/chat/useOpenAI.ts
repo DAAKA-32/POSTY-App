@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { getAuthHeaders } from "@/lib/api-client";
+import { getAuthHeaders } from "@/lib/api/client";
 
 // ============== TYPES ==============
 

@@ -5,9 +5,9 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Post } from "@/types";
 import DropdownMenu from "@/components/ui/DropdownMenu";
-import { useHapticFeedback } from "@/hooks/useHapticFeedback";
-import { useSmartCentering } from "@/hooks/useSmartCentering";
-import { useCanHover } from "@/hooks/useCanHover";
+import { useHapticFeedback } from "@/hooks/ui/useHapticFeedback";
+import { useSmartCentering } from "@/hooks/scroll/useSmartCentering";
+import { useCanHover } from "@/hooks/ui/useCanHover";
 
 interface ExpandableHistoryCardProps {
   post: Post;

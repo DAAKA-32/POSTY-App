@@ -11,7 +11,7 @@ import {
   getLocalizedSavingsText,
   getYearlyMonthlyEquivalent,
   GUARANTEE_PERIOD_DAYS,
-} from "@/lib/plans";
+} from "@/lib/config/plans";
 import { useLanguage } from "@/contexts/LanguageContext";
 import PricingFeatureItem from "./PricingFeatureItem";
 

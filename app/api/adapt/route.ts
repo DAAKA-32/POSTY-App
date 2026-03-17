@@ -4,9 +4,9 @@ import {
   isOpenAIConfigured,
   PLATFORM_PROMPTS,
 } from "@/lib/openai";
-import { checkUserQuotaAdmin } from "@/lib/firestore-admin";
-import { isAdminInitialized } from "@/lib/firebase-admin";
-import { canAdaptToMultiPlatform } from "@/lib/plan-features";
+import { checkUserQuotaAdmin } from "@/lib/db/firestore-admin";
+import { isAdminInitialized } from "@/lib/db/firebase-admin";
+import { canAdaptToMultiPlatform } from "@/lib/config/plan-features";
 import { SubscriptionPlan, AdaptationPlatform, PlatformAdaptation } from "@/types";
 import { verifyAuth } from "@/lib/auth";
 

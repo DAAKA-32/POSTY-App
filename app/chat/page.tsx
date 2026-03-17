@@ -5,18 +5,18 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useChat } from "@/hooks/useChat";
-import { useSmartScroll } from "@/hooks/useSmartScroll";
+import { useChat } from "@/hooks/chat/useChat";
+import { useSmartScroll } from "@/hooks/scroll/useSmartScroll";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import ChatBubble from "@/components/chat/ChatBubble";
 import AIResponsePair from "@/components/chat/AIResponsePair";
 import NewResponseIndicator from "@/components/chat/NewResponseIndicator";
 import toast from "@/components/ui/Toast";
-import { useBrowserMode, setBrowserModeCSSVars } from "@/hooks/useBrowserMode";
+import { useBrowserMode, setBrowserModeCSSVars } from "@/hooks/ui/useBrowserMode";
 import UniversalChatInput from "@/components/chat/UniversalChatInput";
-import { getPlanLimits } from "@/lib/plans";
-import { usePageTitle } from "@/hooks/usePageTitle";
+import { getPlanLimits } from "@/lib/config/plans";
+import { usePageTitle } from "@/hooks/ui/usePageTitle";
 
 const GUEST_LIMIT = 2;
 

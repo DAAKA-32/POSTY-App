@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { verifyAuth } from "@/lib/auth";
-import { getMockResponses } from "@/lib/mock-responses";
+import { getMockResponses } from "@/lib/services/mock-responses";
 import {
   createOpenAIService,
   createUserOpenAIService,
@@ -11,7 +11,7 @@ import {
   CONVERSATIONAL_PROMPT,
   INTENT_CLASSIFICATION_PROMPT,
 } from "@/lib/openai";
-import { buildOptimizedPrompt, getGenerationTemperature, synthesizeProfile, estimateTokens, ProfileFields, PlanTier } from "@/lib/prompt-builder";
+import { buildOptimizedPrompt, getGenerationTemperature, synthesizeProfile, estimateTokens, ProfileFields, PlanTier } from "@/lib/services/prompt-builder";
 import {
   checkHourlyQuotaAdmin,
   checkUserQuotaAdmin,
@@ -19,13 +19,13 @@ import {
   getUserProfileAdmin,
   getDualModeUsageThisWeek,
   incrementDualModeUsageAdmin,
-} from "@/lib/firestore-admin";
-import { isAdminInitialized } from "@/lib/firebase-admin";
-import { getPlanFeatures } from "@/lib/plan-features";
-import { planHasFeature, PlanType, getPlanLimits, getMaxTokensForPlan } from "@/lib/plans";
+} from "@/lib/db/firestore-admin";
+import { isAdminInitialized } from "@/lib/db/firebase-admin";
+import { getPlanFeatures } from "@/lib/config/plan-features";
+import { planHasFeature, PlanType, getPlanLimits, getMaxTokensForPlan } from "@/lib/config/plans";
 import { SubscriptionPlan, PostInsights } from "@/types";
-import { detectUrl, removeUrlFromPrompt, extractUrlContent, ExtractedUrlContent } from "@/lib/url-extract";
-import { detectPromptLanguage } from "@/lib/detect-language";
+import { detectUrl, removeUrlFromPrompt, extractUrlContent, ExtractedUrlContent } from "@/lib/utils/url-extract";
+import { detectPromptLanguage } from "@/lib/utils/detect-language";
 
 // Streaming configuration for mock responses
 const MOCK_CHUNK_SIZE = 3;

@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import AuthPanel from "@/components/auth/AuthPanel";
 import ConnectionLoader from "@/components/shared/ConnectionLoader";
-import { usePageTitle } from "@/hooks/usePageTitle";
+import { usePageTitle } from "@/hooks/ui/usePageTitle";
 
 // Premium animation easings - inspired by Linear, Notion
 const smoothEase = [0.25, 0.1, 0.25, 1] as const;

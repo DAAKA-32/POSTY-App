@@ -3,9 +3,10 @@
 import { ReactNode, useEffect, useRef, useId, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { useFocusTrap } from "@/hooks/useFocusTrap";
-import { useScrollLock } from "@/hooks/useScrollLock";
+import { useFocusTrap } from "@/hooks/input/useFocusTrap";
+import { useScrollLock } from "@/hooks/ui/useScrollLock";
 import Button from "./Button";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ModalProps {
   isOpen: boolean;
@@ -63,6 +64,7 @@ export default function Modal({
   scrollable = true,
   description,
 }: ModalProps) {
+  const { t } = useLanguage();
   const scrollPosRef = useRef(0);
   const titleId = useId();
   const descriptionId = useId();
@@ -189,7 +191,7 @@ export default function Modal({
                       ml-auto
                       focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-light-card dark:focus-visible:ring-offset-dark-card
                     "
-                    aria-label="Fermer la fenetre"
+                    aria-label={t.ui.closeWindow}
                   >
                     <svg
                       className="w-5 h-5"
@@ -248,12 +250,16 @@ export function ConfirmModal({
   onConfirm,
   title,
   message,
-  confirmText = "Confirmer",
-  cancelText = "Annuler",
+  confirmText,
+  cancelText,
   variant = "primary",
   isLoading = false,
-  loadingText = "En cours...",
+  loadingText,
 }: ConfirmModalProps) {
+  const { t } = useLanguage();
+  const resolvedCancelText = cancelText ?? t.common.cancel;
+  const resolvedConfirmText = confirmText ?? t.common.confirm;
+  const resolvedLoadingText = loadingText ?? t.common.loading;
   return (
     <Modal
       isOpen={isOpen}
@@ -265,7 +271,7 @@ export function ConfirmModal({
       <p className="text-text-secondary mb-6">{message}</p>
       <div className="flex gap-3 justify-end">
         <Button variant="ghost" onClick={onClose} disabled={isLoading}>
-          {cancelText}
+          {resolvedCancelText}
         </Button>
         <Button
           variant={variant === "danger" ? "danger" : "primary"}
@@ -273,9 +279,9 @@ export function ConfirmModal({
             onConfirm();
           }}
           isLoading={isLoading}
-          loadingText={loadingText}
+          loadingText={resolvedLoadingText}
         >
-          {confirmText}
+          {resolvedConfirmText}
         </Button>
       </div>
     </Modal>

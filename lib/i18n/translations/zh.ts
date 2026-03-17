@@ -178,9 +178,12 @@ export const zh = {
     // Status
     waiting: "Waiting...",
     generating: "Generating...",
-    disconnecting: "Disconnecting...",
-    active: "Active",
-    redirecting: "Redirecting...",
+    disconnecting: "断开连接中...",
+    connecting: "连接中...",
+    active: "活跃",
+    redirecting: "正在跳转...",
+    connectionExpiringSoon: "连接 {name} 即将过期。请在设置中重新连接。",
+    connectionsExpiringSoon: "连接 {names} 即将过期。请在设置中重新连接。",
 
     // AI & Responses
     twoVersionsAvailable: "2 versions available",
@@ -270,6 +273,48 @@ export const zh = {
     postEvolution: "Your post performance over time",
     loadingDashboard: "Loading your dashboard...",
     removeStatsNote: "Remove from stats (deletes from network)",
+
+    // LinkedIn Preview
+    linkedInPreview: "LinkedIn 预览",
+    linkedInPostPreview: "LinkedIn 帖子预览",
+    linkedInMessagePreview: "私信预览",
+    yourProfessionalTitle: "您的职业头衔",
+    you: "你",
+    postWillAppearHere: "您的帖子将显示在这里...",
+    previewLabel: "预览",
+    comments: "评论",
+    linkedInLike: "赞",
+    linkedInComment: "评论",
+    linkedInRepost: "转发",
+    linkedInShare: "分享",
+    linkedInSend: "发送",
+    postExceedsLimit: "您的帖子超过了 LinkedIn {max} 字符的限制",
+    firstDegreeConnection: "一度人脉",
+    firstName: "名",
+    lastName: "姓",
+    messagePreviewInfo: "这是预览。每条消息将单独发送给您的联系人。",
+
+    // Response indicators
+    newResponsesAvailable: "{count} 条新回复",
+    responseReady: "回复已就绪",
+    scrollDown: "向下滚动",
+
+    // Inline upgrade banner
+    dualLimitReached: "已达上限。升级到 Max 享受无限双模式访问。",
+    maxFeatureOnly: "此功能仅限 Max 方案使用。",
+    upgradeToMax: "升级到 Max",
+    maxShort: "Max",
+
+    // Content editor
+    editYourMessage: "编辑您的消息",
+    lineBreaksTip: "添加换行符和表情符号以提高互动率",
+    hashtagsWarning: "LinkedIn 建议最多使用 5 个标签",
+    messageExceedsLimit: "您的消息超过了 LinkedIn {max} 字符的限制",
+
+    // Refine
+    adjustTone: "调整语气",
+    applyRefine: "应用",
+    refining: "优化中...",
   },
 
   // Language selector
@@ -948,6 +993,21 @@ export const zh = {
     sendLink: "Send link",
     sendingLink: "Sending...",
     backToLogin: "Back to login",
+
+    // Forgot password page (full page)
+    forgotPasswordTitle: "忘记密码了？",
+    forgotPasswordSubtitle: "别担心，每个人都会遇到",
+    forgotPasswordInstructions: "输入与您账户关联的电子邮箱地址，我们将向您发送重置密码的链接。",
+    forgotPasswordEmailLabel: "电子邮箱地址",
+    forgotPasswordSendResetLink: "发送重置链接",
+    forgotPasswordEmailSentTitle: "邮件已成功发送",
+    forgotPasswordEmailSentDesc: "如果 {email} 关联了账户，您将很快收到重置密码的链接。",
+    forgotPasswordCheckSpam: "如果没有看到邮件，请检查垃圾邮件文件夹。",
+    forgotPasswordEmailDelay: "邮件可能需要最多 {minutes} 分钟才能到达。如果仍未收到，请确认邮箱地址是否正确。",
+    forgotPasswordReturnToLogin: "返回登录",
+    forgotPasswordTryAnother: "尝试其他地址",
+    forgotPasswordRemember: "想起密码了？",
+    forgotPasswordSignIn: "登录",
   },
 
   // Sidebar & Navigation
@@ -1143,6 +1203,7 @@ export const zh = {
     disconnect: "断开连接",
     reconnectMessage: "请重新连接以继续发布到 LinkedIn。",
     connectLinkedIn: "连接 LinkedIn",
+    connectTwitter: "连接 X (Twitter)",
 
     // Google (coming soon)
     google: "Google",
@@ -1255,6 +1316,42 @@ export const zh = {
     legalNoticesLink: "法律声明",
     legalNotices: "法律声明",
     cookiePolicy: "Cookie 政策",
+
+    // Personal branding
+    personalBranding: "个人品牌",
+    customizeVisualIdentity: "自定义您的视觉形象",
+    profilePhoto: "头像",
+    uploadCustomPhoto: "上传自定义照片",
+    upgradeToUploadPhoto: "升级到 Pro 以上传自定义照片",
+    removeCustomPhotoLabel: "移除自定义照片",
+    coverImage: "封面图片",
+    clickToAddImage: "点击添加图片",
+    proRequired: "需要 Pro 版",
+    accentColor: "强调色",
+    customColor: "自定义：",
+    gradientStyle: "渐变样式",
+    professionalTagline: "职业标语",
+    taglinePlaceholder: "例如：LinkedIn 专家 | 个人品牌教练",
+    characters: "字符",
+    socialLinks: "社交链接",
+    profileVisibility: "资料可见性",
+    savedExclamation: "已保存！",
+    unlockFullBranding: "解锁完整个人品牌功能",
+    upgradeForBranding: "升级到 Pro 以自定义头像、颜色、渐变、社交链接等。",
+
+    // OpenAI settings
+    openaiTitle: "OpenAI 配置",
+    openaiDescription: "添加您的 OpenAI API 密钥以启用 AI 驱动的帖子生成。",
+    openaiApiKeyLabel: "OpenAI API 密钥",
+    openaiApiKeyPlaceholder: "sk-...",
+    openaiApiKeyHint: "您的密钥存储在本地，绝不会被共享。",
+    openaiModelLabel: "模型",
+    openaiValidating: "验证中...",
+    openaiValid: "有效密钥",
+    openaiInvalid: "无效密钥",
+    openaiClearKey: "删除密钥",
+    openaiGlobalConfigured: "服务器上已配置全局密钥。",
+    openaiGetKey: "在此获取您的密钥",
 
     // Contact
     dataQuestions: "关于您的数据有疑问：",
@@ -1491,6 +1588,40 @@ export const zh = {
 
     // Success
     profileComplete: "资料已完善！",
+
+    // Extended step titles (for dynamic onboarding)
+    profileTypeTitle: "您的职业身份是什么？",
+    profileTypeSubtitle: "让 Posty 说您的语言",
+    sectorStepTitle: "您所在的行业是什么？",
+    sectorStepSubtitle: "让每篇帖子都能触达您的受众",
+    roleStepTitle: "您的职位是什么？",
+    roleStepSubtitle: "校准帖子的语气和专业度",
+    objectiveStepTitle: "您的首要目标是什么？",
+    objectiveStepSubtitle: "每篇帖子都将针对此目标优化",
+    targetAudienceStepTitle: "您想触达谁？",
+    targetAudienceStepSubtitle: "让帖子对您的潜在客户产生共鸣",
+    communicationToneStepTitle: "哪种语气最适合您？",
+    communicationToneStepSubtitle: "您的表达，由 AI 增强",
+    publishingFrequencyStepTitle: "您希望多久发布一次？",
+    publishingFrequencyStepSubtitle: "Posty 根据您的节奏调整",
+    rolePlaceholderHint: "例如：CEO、开发者、市场总监...",
+    saving: "保存中...",
+    errorOccurred: "发生错误",
+    defaultUser: "用户",
+
+    // Profile recap screen
+    recapTitle: "您的资料已就绪",
+    recapSubtitle: "AI 将根据您的选择个性化每篇帖子",
+    recapComplete: "完成",
+    recapCustomization: "个性化",
+    recapRedirecting: "正在跳转...",
+    recapFieldProfile: "身份",
+    recapFieldSector: "行业",
+    recapFieldRole: "职位",
+    recapFieldObjective: "目标",
+    recapFieldAudience: "受众",
+    recapFieldTone: "语气",
+    recapFieldFrequency: "频率",
   },
 
   // Consent modal
@@ -1534,6 +1665,12 @@ export const zh = {
     linkedinDisconnectWarning: "您将无法再通过 Posty 直接发布到 LinkedIn。",
     linkedinDisconnectConfirm: "确定要断开连接吗",
     linkedinDisconnected: "LinkedIn 已断开连接",
+    reconnectAnytime: "您可以随时重新连接。",
+
+    // Twitter disconnect
+    twitterDisconnectTitle: "断开 X (Twitter) 连接",
+    twitterDisconnectWarning: "您将无法再通过 Posty 直接发布到 X。",
+    twitterDisconnectConfirm: "确定要断开连接吗",
 
     // Delete conversation
     deleteConversationTitle: "删除对话",
@@ -1541,7 +1678,34 @@ export const zh = {
 
     // Rename conversation
     renameConversationTitle: "重命名对话",
+    renameConversationDesc: "为此对话添加标题",
+    renameConversationLabel: "对话标题",
     renameConversationPlaceholder: "新名称...",
+
+    // Delete account details
+    accountDeletedTitle: "账户已删除",
+    allDataDeleted: "您的账户和所有数据已被删除。",
+    redirectingEllipsis: "正在跳转...",
+    irreversibleAction: "此操作不可逆",
+    allDataWillBeDeleted: "您的所有数据将被永久删除：",
+    personalInfo: "个人资料和信息",
+    generatedPostsHistory: "生成的帖子历史",
+    sessionsConversations: "会话和对话",
+    preferencesConsents: "偏好和同意设置",
+    confirmPasswordToContinue: "确认密码以继续",
+    googleLoginRequired: "需要 Google 登录",
+    googleReauthDesc: "您需要通过 Google 确认身份",
+    enterPasswordError: "请输入密码",
+    deletingEllipsis: "删除中...",
+
+    // Legal update notification
+    legalDocsUpdated: "法律文件已更新",
+    legalDocsModified: "以下文件已修改：",
+    privacyPolicyDoc: "隐私政策",
+    termsOfUseDoc: "使用条款",
+    legalNoticesDoc: "法律声明",
+    cookiePolicyDoc: "Cookie 政策",
+    understood: "我知道了",
   },
 
   // Errors
@@ -1563,6 +1727,13 @@ export const zh = {
     serverErrorDescription: "发生意外错误，请稍后重试。",
     networkError: "连接错误",
     networkErrorDescription: "无法连接到服务器，请检查您的网络连接。",
+    // Error page (app/error.tsx)
+    errorPageTitle: "糟糕，出了点问题",
+    errorPageDataSafe: "别担心，您的数据是安全的。",
+    errorPageTryRefresh: "请尝试刷新页面。如果问题持续存在，我们的团队随时为您提供帮助。",
+    errorPageRefresh: "刷新页面",
+    errorPageNeedHelp: "需要帮助？",
+    errorPageContactSupport: "联系客服",
   },
 
   // Empty states
@@ -2502,6 +2673,34 @@ export const zh = {
     proRequiredForSchedule: "Scheduling requires a Pro or Max plan",
     upgradeToSchedule: "Upgrade to unlock scheduling",
   },
+  // Checkout success page
+  checkoutSuccess: {
+    trialStarted: "您的 {plan} 试用已开始！",
+    welcomePlan: "欢迎使用 {plan}！",
+    trialDescription: "您有 {days} 天时间体验所有功能。试用期间不收费，随时可取消。",
+    subscriptionDescription: "您的订阅已成功激活。{days} 天无理由退款保障。",
+    quickStartTitle: "3 步创建您的第一篇帖子",
+    step1Title: "描述您的目标",
+    step1Desc: "例如：\"为我的网站开发公司获取潜在客户\"",
+    step2Title: "Posty 分析您的资料",
+    step2Desc: "AI 根据您的受众和市场校准内容",
+    step3Title: "发布或定时发送",
+    step3Desc: "复制粘贴到 LinkedIn 或安排稍后发布",
+    benefitsTitle: "您的新权益",
+    unlimitedAI: "无限 AI 消息",
+    unlimitedHistory: "无限历史记录",
+    premiumTemplates: "高级模板",
+    prioritySupport: "优先支持",
+    continueBtn: "继续",
+    startCreating: "开始创作",
+    viewProfile: "查看我的资料",
+    autoRedirect: "{seconds} 秒后自动跳转...",
+    stayOnPage: "留在此页面",
+    confirmationEmailTrial: "确认邮件已发送。您可以随时在个人资料中取消。",
+    confirmationEmailSubscription: "确认邮件已发送到您的邮箱。您可以在个人资料中管理订阅。",
+    headerTitle: "确认",
+    planFree: "免费",
+  },
   footer: {
     tagline: "Your LinkedIn posts, crafted to win clients.",
     taglineAccent: "Every post can bring you a client",
@@ -2563,5 +2762,31 @@ export const zh = {
     tips: "提示",
     tryAnother: "换一个",
     error: "适配出错",
+  },
+
+  // Accessibility
+  accessibility: {
+    skipToContent: "跳转到主要内容",
+    skipToNavigation: "跳转到导航",
+    skipToInput: "跳转到输入区域",
+    quickAccessLinks: "快捷链接",
+  },
+
+  // Cookie banner
+  cookieBanner: {
+    privacy: "隐私",
+    description: "我们使用必要的 Cookie，并在您同意的情况下使用可选 Cookie 来提升您的体验。",
+    learnMore: "了解更多",
+    accept: "接受",
+    refuse: "拒绝",
+    customizeCookies: "自定义 Cookie",
+    preferences: "偏好设置",
+    essential: "必要",
+    essentialDesc: "身份验证和安全。始终启用。",
+    functional: "功能性",
+    functionalDesc: "界面偏好和个性化。",
+    analytics: "分析",
+    analyticsDesc: "匿名使用统计。无第三方。",
+    cookiePolicy: "Cookie 政策",
   },
 } as const;

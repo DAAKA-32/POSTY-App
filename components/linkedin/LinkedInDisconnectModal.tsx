@@ -5,6 +5,7 @@ import Modal from "@/components/ui/Modal";
 import BottomSheet from "@/components/ui/BottomSheet";
 import Button from "@/components/ui/Button";
 import { LinkedInIcon } from "./LinkedInConnectButton";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface LinkedInDisconnectModalProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ export default function LinkedInDisconnectModal({
   onConfirm,
   profileName,
 }: LinkedInDisconnectModalProps) {
+  const { t } = useLanguage();
   const [isDisconnecting, setIsDisconnecting] = useState(false);
 
   // SSR-safe mobile detection
@@ -70,11 +72,11 @@ export default function LinkedInDisconnectModal({
         </div>
         <div>
           <p className="text-gray-900 dark:text-white font-medium text-sm">
-            {profileName ? `Déconnecter ${profileName} ?` : "Déconnecter votre compte LinkedIn ?"}
+            {profileName ? `${t.modals.linkedinDisconnectConfirm} ${profileName} ?` : `${t.modals.linkedinDisconnectConfirm} ?`}
           </p>
           <p className="text-gray-600 dark:text-text-secondary text-xs mt-1">
-            Vous ne pourrez plus publier directement sur LinkedIn depuis POSTY.
-            Vous pourrez vous reconnecter à tout moment.
+            {t.modals.linkedinDisconnectWarning}{" "}
+            {t.modals.reconnectAnytime}
           </p>
         </div>
       </div>
@@ -87,7 +89,7 @@ export default function LinkedInDisconnectModal({
           onClick={handleClose}
           disabled={isDisconnecting}
         >
-          Non
+          {t.common.no}
         </Button>
         <Button
           variant="primary"
@@ -96,7 +98,7 @@ export default function LinkedInDisconnectModal({
           isLoading={isDisconnecting}
           className="bg-[#0A66C2] hover:bg-[#004182]"
         >
-          {isDisconnecting ? "Déconnexion..." : "Oui"}
+          {isDisconnecting ? t.ui.disconnecting : t.common.yes}
         </Button>
       </div>
     </div>
@@ -108,7 +110,7 @@ export default function LinkedInDisconnectModal({
       <BottomSheet
         isOpen={isOpen}
         onClose={handleClose}
-        title="Déconnecter LinkedIn"
+        title={t.modals.linkedinDisconnectTitle}
         swipeToDismiss={!isDisconnecting}
       >
         {content}
@@ -120,7 +122,7 @@ export default function LinkedInDisconnectModal({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Déconnecter LinkedIn"
+      title={t.modals.linkedinDisconnectTitle}
       size="sm"
     >
       {content}

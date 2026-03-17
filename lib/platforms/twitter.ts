@@ -1,4 +1,4 @@
-import { getAuthHeaders } from "@/lib/api-client";
+import { getAuthHeaders } from "@/lib/api/client";
 
 // Twitter (X) OAuth 2.0 Configuration and API utilities
 // Uses PKCE (Proof Key for Code Exchange) for enhanced security

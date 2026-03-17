@@ -6,7 +6,7 @@ import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useLinkedIn } from "@/contexts/LinkedInContext";
-import { getUserPostsWithPinned, deletePost, pinPost, renamePost } from "@/lib/firestore";
+import { getUserPostsWithPinned, deletePost, pinPost, renamePost } from "@/lib/db/firestore";
 import { Post } from "@/types";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import MainLayout from "@/components/layout/MainLayout";
@@ -19,9 +19,9 @@ import PublishToLinkedInModal from "@/components/linkedin/PublishToLinkedInModal
 import DeleteConfirmModal from "@/components/conversation/DeleteConfirmModal";
 import RenameConversationModal from "@/components/conversation/RenameConversationModal";
 import toast from "@/components/ui/Toast";
-import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-import { useListKeyboardNavigation } from "@/hooks/useListKeyboardNavigation";
-import { usePageTitle } from "@/hooks/usePageTitle";
+import { useDebouncedValue } from "@/hooks/input/useDebouncedValue";
+import { useListKeyboardNavigation } from "@/hooks/input/useListKeyboardNavigation";
+import { usePageTitle } from "@/hooks/ui/usePageTitle";
 
 // Format date helper - accepts translations for today/yesterday
 interface DateLabels {
