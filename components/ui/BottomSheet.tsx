@@ -118,9 +118,14 @@ export default function BottomSheet({
 
     // Prevent touch move on background (iOS scroll lock)
     const preventTouchMove = (e: TouchEvent) => {
-      // Allow scrolling inside bottom sheet content
       const target = e.target as HTMLElement;
-      if (target.closest('[data-bottomsheet-content]')) {
+      // Allow scrolling inside bottom sheet content, textareas, and full-screen editors
+      if (
+        target.closest('[data-bottomsheet-content]') ||
+        target.closest('textarea') ||
+        target.closest('[data-scrollable]') ||
+        target.tagName === 'TEXTAREA'
+      ) {
         return;
       }
       e.preventDefault();

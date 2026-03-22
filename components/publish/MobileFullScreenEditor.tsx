@@ -95,6 +95,24 @@ export default function MobileFullScreenEditor({
     }, 50);
   }, [onClose]);
 
+  // Prevent BottomSheet's touchmove blocker from killing scroll in this editor
+  useEffect(() => {
+    if (!isOpen) return;
+    const wrapper = editorWrapperRef.current;
+    if (!wrapper) return;
+
+    const allowTouchMove = (e: TouchEvent) => {
+      // Stop propagation so the BottomSheet's document-level preventTouchMove
+      // never sees touch events originating from inside this editor
+      e.stopPropagation();
+    };
+
+    wrapper.addEventListener("touchmove", allowTouchMove, { passive: true });
+    return () => {
+      wrapper.removeEventListener("touchmove", allowTouchMove);
+    };
+  }, [isOpen]);
+
   // Handle back button / gesture on mobile
   useEffect(() => {
     if (!isOpen) return;
