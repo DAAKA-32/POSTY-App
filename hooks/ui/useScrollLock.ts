@@ -29,12 +29,10 @@ export function lockScroll(): void {
     // Save current scroll position
     scrollPosition = window.scrollY;
 
-    // Add lock class to html (CSS handles the rest)
+    // Add lock class to html (CSS handles the rest — overflow:hidden only,
+    // NO position:fixed which breaks internal scroll on iOS)
     document.documentElement.classList.add("scroll-locked");
     document.body.classList.add("scroll-locked");
-
-    // Set top to maintain visual position
-    document.body.style.top = `-${scrollPosition}px`;
   }
 
   lockCount++;
@@ -54,9 +52,6 @@ export function unlockScroll(): void {
     document.documentElement.classList.remove("scroll-locked");
     document.body.classList.remove("scroll-locked");
 
-    // Reset top style
-    document.body.style.top = "";
-
     // Restore scroll position
     window.scrollTo(0, scrollPosition);
   }
@@ -71,7 +66,6 @@ export function forceUnlockScroll(): void {
   lockCount = 0;
   document.documentElement.classList.remove("scroll-locked");
   document.body.classList.remove("scroll-locked");
-  document.body.style.top = "";
 }
 
 /**

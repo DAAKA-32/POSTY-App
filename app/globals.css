@@ -32,15 +32,26 @@
 }
 
 /* Scroll lock - ONLY applied when explicitly needed (modals, sheets) */
+/* Using overflow:hidden WITHOUT position:fixed so that child elements
+   (textareas, scrollable containers inside modals/sheets) can still scroll.
+   position:fixed on body breaks internal scroll on iOS Safari. */
 html.scroll-locked,
 html.scroll-locked body,
 body.scroll-locked {
   overflow: hidden !important;
-  position: fixed !important;
   width: 100% !important;
   height: 100% !important;
-  top: 0 !important;
-  left: 0 !important;
+  touch-action: none;
+}
+
+/* Allow scrolling INSIDE modals, bottom sheets, and editors even when body is locked */
+.scroll-locked [data-bottomsheet-content],
+.scroll-locked [data-modal-content],
+.scroll-locked textarea,
+.scroll-locked [data-scrollable] {
+  touch-action: pan-y !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior: contain !important;
 }
 
 /* Ensure scroll-locked state preserves theme background (prevents flash on iOS) */
