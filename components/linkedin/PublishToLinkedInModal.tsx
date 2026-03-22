@@ -1040,17 +1040,17 @@ export default function PublishToLinkedInModal({
                   type="button"
                   onClick={() => setShowFullScreenEditor(true)}
                   className={`
-                    w-full p-4 bg-gray-50 dark:bg-dark-bg border rounded-lg text-gray-900 dark:text-white text-sm
-                    min-h-[120px] max-h-[200px] overflow-hidden cursor-text text-left
-                    active:bg-gray-100 dark:active:bg-dark-elevated transition-colors duration-150
-                    ${isOverLimit ? "border-error" : "border-gray-200 dark:border-dark-border"}
+                    w-full p-4 bg-gray-50 dark:bg-dark-bg border rounded-xl text-gray-900 dark:text-white text-sm
+                    min-h-[100px] max-h-[180px] overflow-hidden cursor-text text-left
+                    active:scale-[0.99] transition-all duration-150
+                    ${isOverLimit ? "border-error ring-1 ring-error/20" : "border-gray-200 dark:border-dark-border"}
                   `}
                   aria-label={t.publish.tapToEdit || "Tap to edit"}
                 >
-                  <p className="whitespace-pre-wrap line-clamp-6 leading-relaxed">
+                  <p className="whitespace-pre-wrap line-clamp-5 leading-relaxed text-[15px]">
                     {editedContent || <span className="text-gray-400">{t.ui.writeContentPlaceholder}</span>}
                   </p>
-                  <div className="mt-3 flex items-center justify-center gap-2 text-primary py-1.5 bg-primary/5 rounded-lg">
+                  <div className="mt-2 flex items-center justify-center gap-2 text-primary py-2 bg-primary/5 rounded-lg border border-primary/10">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                     </svg>

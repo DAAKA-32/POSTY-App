@@ -365,7 +365,7 @@ export default function BottomSheet({
               style={{
                 padding: '20px',
                 // Extra bottom clearance = 20px standard + safe area (home indicator)
-                paddingBottom: footer ? '20px' : 'max(20px, calc(16px + env(safe-area-inset-bottom, 0px)))',
+                paddingBottom: footer ? '20px' : 'max(24px, calc(16px + env(safe-area-inset-bottom, 0px)))',
                 // 90dvh - drag handle (~22px) - header (~58px) - footer (~80px if present)
                 maxHeight: footer
                   ? 'calc(min(90dvh, 90vh) - 160px)'
@@ -380,10 +380,10 @@ export default function BottomSheet({
             {/* Fixed footer — always visible at bottom, outside scroll */}
             {footer && (
               <div
-                className="border-t border-gray-200 dark:border-dark-border bg-white dark:bg-dark-card"
+                className="border-t border-gray-200 dark:border-dark-border bg-white dark:bg-dark-card shadow-[0_-2px_8px_rgba(0,0,0,0.05)] dark:shadow-[0_-2px_8px_rgba(0,0,0,0.15)]"
                 style={{
-                  padding: '12px 20px',
-                  paddingBottom: 'max(12px, calc(8px + env(safe-area-inset-bottom, 0px)))',
+                  padding: '14px 20px',
+                  paddingBottom: 'max(16px, calc(12px + env(safe-area-inset-bottom, 0px)))',
                 }}
               >
                 {footer}
@@ -486,6 +486,7 @@ export function BottomSheetDivider() {
  */
 export function BottomSheetCancel({ onClose }: { onClose: () => void }) {
   const { trigger: triggerHaptic } = useHapticFeedback();
+  const { t } = useLanguage();
 
   const handleClick = () => {
     triggerHaptic("light");
@@ -503,8 +504,11 @@ export function BottomSheetCancel({ onClose }: { onClose: () => void }) {
         touch-feedback active:scale-[0.98]
         min-h-[52px]
       "
+      style={{
+        paddingBottom: 'max(16px, calc(12px + env(safe-area-inset-bottom, 0px)))',
+      }}
     >
-      Annuler
+      {t.common.cancel}
     </button>
   );
 }
