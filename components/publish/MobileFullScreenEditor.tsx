@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { useScrollLock } from "@/hooks/ui/useScrollLock";
 import { useKeyboardHeight } from "@/hooks/input/useKeyboardHeight";
 
 interface PlatformLimit {
@@ -42,8 +41,9 @@ export default function MobileFullScreenEditor({
   const editorWrapperRef = useRef<HTMLDivElement>(null);
   const { keyboardHeight, isKeyboardVisible } = useKeyboardHeight();
 
-  // Use centralized scroll lock
-  useScrollLock(isOpen);
+  // No useScrollLock needed: this editor is a full-screen portal (fixed inset-0)
+  // that already covers the entire viewport. Locking body scroll would prevent
+  // the textarea from scrolling on mobile (body becomes position:fixed + overflow:hidden).
 
   useEffect(() => {
     setIsMounted(true);
@@ -175,7 +175,7 @@ export default function MobileFullScreenEditor({
       </header>
 
       {/* ── Editor area ────────────────────────────────────── */}
-      <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+      <div className="flex-1 min-h-0 flex flex-col">
         <textarea
           ref={textareaRef}
           value={localContent}
