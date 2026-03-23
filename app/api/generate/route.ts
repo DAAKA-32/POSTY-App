@@ -667,10 +667,30 @@ async function generateWithOpenAI(
     systemPrompt += langEnforcement;
 
     if (isFollowUp) {
-      // Add context for follow-up conversations
+      // Add context for follow-up conversations with strict preservation instructions
       const followUpContext = language === "fr"
-        ? `\n\nIMPORTANT: Tu continues une conversation existante. L'utilisateur affine ou précise sa demande. Adapte ta réponse en tenant compte du contexte précédent. Ne repars pas de zéro - construis sur ce qui a déjà été dit. Réponds de manière naturelle comme dans une vraie discussion.`
-        : `\n\nIMPORTANT: You are continuing an existing conversation. The user is refining or clarifying their request. Adapt your response considering the previous context. Don't start from scratch - build on what was already discussed. Respond naturally as in a real discussion.`;
+        ? `\n\nIMPORTANT — MODIFICATION DE POST EXISTANT:
+Tu continues une conversation existante. L'utilisateur demande une modification ou un ajustement du post précédent.
+
+RÈGLES STRICTES:
+1. REPRENDS le post précédent tel quel comme base
+2. Applique UNIQUEMENT les modifications demandées par l'utilisateur
+3. CONSERVE intégralement: le style, le ton, la structure, le format, les emojis, les sauts de ligne, le rythme du post original
+4. NE RÉÉCRIS PAS le post entier — fais une édition chirurgicale
+5. Si l'utilisateur demande de changer un nom, un mot, une info → change SEULEMENT cet élément
+6. Le résultat doit être identique au post précédent SAUF pour les modifications explicitement demandées
+7. Réponds UNIQUEMENT avec le post modifié, sans explication ni commentaire`
+        : `\n\nIMPORTANT — EXISTING POST MODIFICATION:
+You are continuing an existing conversation. The user is requesting a modification or adjustment to the previous post.
+
+STRICT RULES:
+1. USE the previous post as-is as your base
+2. Apply ONLY the changes requested by the user
+3. PRESERVE entirely: the style, tone, structure, format, emojis, line breaks, rhythm of the original post
+4. DO NOT rewrite the entire post — make surgical edits only
+5. If the user asks to change a name, word, or info → change ONLY that element
+6. The result must be identical to the previous post EXCEPT for the explicitly requested modifications
+7. Respond ONLY with the modified post, no explanation or commentary`;
       systemPrompt += followUpContext;
     }
 
