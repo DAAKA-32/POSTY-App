@@ -109,7 +109,7 @@ const SocialProof = ({ prefersReducedMotion, usersText, thisWeekText }: { prefer
     {/* Real user avatars — social proof */}
     <div className="flex -space-x-2 sm:-space-x-2.5">
       {[
-        "/Cerise Cottier.jpg",
+        "/images/team/cerise-cottier.jpg",
         "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face",
         "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop&crop=face",
       ].map((src, i) => (

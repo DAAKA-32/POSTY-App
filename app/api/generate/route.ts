@@ -500,15 +500,22 @@ export async function POST(request: NextRequest) {
             // ========== INTENT CLASSIFICATION ==========
             // Force conversational mode when aiMode is "general" (IA Générale)
             // Force PRODUCTION intent when URL content was extracted (user clearly wants a post from a link)
-            const intent = aiMode === "general"
-              ? ("EXPLORATORY" as const)
-              : extractedUrlContent
-                ? ("PRODUCTION" as const)
-                : await classifyIntent(
-                    openaiService,
-                    cleanedPrompt,
-                    language as "fr" | "en"
-                  );
+            // In LinkedIn mode: only classify as SOCIAL for pure greetings, everything else is PRODUCTION
+            let intent: IntentType;
+            if (aiMode === "general") {
+              intent = "EXPLORATORY";
+            } else if (extractedUrlContent) {
+              intent = "PRODUCTION";
+            } else {
+              const classified = await classifyIntent(
+                openaiService,
+                cleanedPrompt,
+                language as "fr" | "en"
+              );
+              // In LinkedIn mode, only SOCIAL stays social — EXPLORATORY becomes PRODUCTION
+              // because users in LinkedIn mode expect post generation, not conversation
+              intent = classified === "SOCIAL" ? "SOCIAL" : "PRODUCTION";
+            }
 
             if (intent === "SOCIAL" || intent === "EXPLORATORY") {
               // Conversational response - no post generation
@@ -923,11 +930,6 @@ function detectIntentFast(prompt: string): IntentType | null {
     }
   }
 
-  // Very short messages without production keywords = likely social
-  if (trimmed.length < 15 && !trimmed.includes("post") && !trimmed.includes("écris") && !trimmed.includes("génère") && !trimmed.includes("crée")) {
-    return "SOCIAL";
-  }
-
   // Production patterns (explicit content requests)
   const productionPatterns = [
     /\b(fais|fait|crée|créé|écris|écrit|génère|génère|rédige|compose)\s*(moi|me|nous)?\s*(un|une|des|le|la)?\s*(post|article|texte|contenu|publication)/i,
@@ -940,6 +942,34 @@ function detectIntentFast(prompt: string): IntentType | null {
     if (pattern.test(trimmed)) {
       return "PRODUCTION";
     }
+  }
+
+  // Template/structured content detection — these are PRODUCTION intent
+  // Templates contain bracket placeholders like [durée], [objectif], etc.
+  if (/\[.+?\]/.test(trimmed)) {
+    return "PRODUCTION";
+  }
+
+  // Content that looks like a draft/idea for a post (declarative sentences with a topic)
+  // Multi-line content or content with bullet points/lists = post draft
+  if (trimmed.includes("\n") || /^[•\-\d]/.test(trimmed)) {
+    return "PRODUCTION";
+  }
+
+  // Content with typical post structure markers (colons, numbered items)
+  if (/\d+[\.\)]\s/.test(trimmed) || /:\s*\n/.test(prompt.trim())) {
+    return "PRODUCTION";
+  }
+
+  // Longer messages (>40 chars) that aren't questions are likely post ideas/content
+  if (trimmed.length > 40 && !trimmed.endsWith("?") && !/^(comment|how|what|pourquoi|why|est-ce|is |are |do |does |can )/i.test(trimmed)) {
+    return "PRODUCTION";
+  }
+
+  // Very short messages without production keywords = likely social
+  // Only apply to genuinely short messages (< 15 chars) that matched no other pattern
+  if (trimmed.length < 15) {
+    return "SOCIAL";
   }
 
   // Cannot determine fast - need AI classification

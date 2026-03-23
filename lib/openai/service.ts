@@ -291,14 +291,28 @@ export const INTENT_CLASSIFICATION_PROMPT = {
 
 SOCIAL = Salutations, bavardage, messages courts informels (ex: "Coucou", "Salut", "Ça va ?", "Hello", "Hey", "Yo")
 EXPLORATOIRE = Questions, demandes d'aide, d'information ou de conseil (ex: "Comment ça marche ?", "C'est quoi un bon hook ?", "Tu peux m'aider ?")
-PRODUCTION = Demande explicite de création de contenu LinkedIn (ex: "Fais-moi un post sur...", "Écris un post LinkedIn", "Génère du contenu", "Crée-moi un texte sur...")
+PRODUCTION = Tout contenu qui ressemble à une idée de post, un brouillon, un template, un sujet à développer, ou une demande de création. Inclut:
+  - Demandes explicites (ex: "Fais-moi un post sur...", "Écris un post LinkedIn")
+  - Templates avec placeholders (ex: "Il y a [durée], j'ai pris une décision...")
+  - Brouillons ou idées de post (ex: "Le leadership en 2025", "L'IA va transformer le marketing")
+  - Contenu structuré (listes, points, paragraphes)
+  - Tout sujet ou thème déclaratif qui peut devenir un post LinkedIn
+
+RÈGLE: En cas de doute entre EXPLORATOIRE et PRODUCTION, choisis PRODUCTION.
 
 Réponds UNIQUEMENT avec: SOCIAL, EXPLORATOIRE, ou PRODUCTION`,
   en: `Classify the intent of this message into ONE category:
 
 SOCIAL = Greetings, small talk, short informal messages (e.g., "Hey", "Hi", "How are you?", "Hello", "What's up")
 EXPLORATORY = Questions, requests for help, information or advice (e.g., "How does this work?", "What makes a good hook?", "Can you help me?")
-PRODUCTION = Explicit request for LinkedIn content creation (e.g., "Write me a post about...", "Create a LinkedIn post", "Generate content", "Make me a text about...")
+PRODUCTION = Any content that looks like a post idea, draft, template, topic to develop, or creation request. Includes:
+  - Explicit requests (e.g., "Write me a post about...", "Create a LinkedIn post")
+  - Templates with placeholders (e.g., "X months ago, I made a decision that changed...")
+  - Drafts or post ideas (e.g., "Leadership in 2025", "AI will transform marketing")
+  - Structured content (lists, bullet points, paragraphs)
+  - Any declarative topic or theme that can become a LinkedIn post
+
+RULE: When in doubt between EXPLORATORY and PRODUCTION, choose PRODUCTION.
 
 Respond ONLY with: SOCIAL, EXPLORATORY, or PRODUCTION`,
 };

@@ -3539,7 +3539,7 @@ function getTestimonials(t: any) {
       name: "Cerise Cottier",
       role: t.landing.testimonial3Role,
       company: "",
-      image: "/Cerise Cottier.jpg",
+      image: "/images/team/cerise-cottier.jpg",
       quote: t.landing.testimonial3Text,
     },
   ];
