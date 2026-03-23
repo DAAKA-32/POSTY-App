@@ -2627,6 +2627,7 @@ export const ja = {
     remainingTodayPlural: "本日残り",
     dailyLimitReached: "1日の上限に達しました",
     upgradeToMax: "Maxにアップグレード",
+    mediaMaxOnly: "画像と動画は Max プランでのみご利用いただけます。",
     freeSignatureNotice: "投稿に「Created with Posty」の署名が追加されます。Proにアップグレードして削除できます。",
     // Weekly publish quota (Free plan)
     weeklyLimitReached: "週間公開上限に達しました",

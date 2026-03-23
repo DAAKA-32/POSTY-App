@@ -2627,6 +2627,7 @@ export const nl = {
     remainingTodayPlural: "resterend vandaag",
     dailyLimitReached: "Dagelijkse limiet bereikt",
     upgradeToMax: "Upgraden naar Max",
+    mediaMaxOnly: "Afbeeldingen en video's zijn alleen beschikbaar in het Max-plan.",
     freeSignatureNotice: "Een kleine \"Gemaakt met Posty\"-vermelding wordt aan je bericht toegevoegd. Upgrade naar Pro om deze te verwijderen.",
     // Weekly publish quota (Free plan)
     weeklyLimitReached: "Wekelijkse publicatielimiet bereikt",

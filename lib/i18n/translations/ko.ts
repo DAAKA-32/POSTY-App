@@ -2627,6 +2627,7 @@ export const ko = {
     remainingTodayPlural: "오늘 남음",
     dailyLimitReached: "일일 한도 도달",
     upgradeToMax: "Max로 업그레이드",
+    mediaMaxOnly: "이미지와 동영상은 Max 플랜에서만 사용할 수 있어요.",
     freeSignatureNotice: "게시물에 \"Created with Posty\" 서명이 추가돼요. Pro로 업그레이드하여 제거하세요.",
     // Weekly publish quota (Free plan)
     weeklyLimitReached: "주간 게시 한도 도달",

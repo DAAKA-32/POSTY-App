@@ -914,16 +914,40 @@ export default function PublishToLinkedInModal({
                 <p className="text-xs text-text-muted font-medium uppercase tracking-wide">
                   {t.publish.imagesVideos}
                 </p>
-                {images.length > 0 && (
+                {isMaxPlan && images.length > 0 && (
                   <span className="text-xs text-text-muted">{images.length}/{MAX_IMAGES}</span>
                 )}
-                {video && (
+                {isMaxPlan && video && (
                   <span className="text-xs text-text-muted">{t.publish.videoCount}</span>
+                )}
+                {!isMaxPlan && (
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-primary bg-primary/10 px-2 py-0.5 rounded-full">Max</span>
                 )}
               </div>
 
-              {/* No media selected — two add buttons */}
-              {images.length === 0 && !video && (
+              {/* Non-Max plan — media restricted banner */}
+              {!isMaxPlan && (
+                <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-dark-elevated rounded-xl border border-gray-200 dark:border-dark-border">
+                  <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                    <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{t.publish.mediaMaxOnly}</p>
+                    <button
+                      type="button"
+                      onClick={() => { onClose(); router.push("/pricing"); }}
+                      className="text-xs text-primary font-medium mt-0.5 hover:underline"
+                    >
+                      {t.publish.upgradeToMax}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* No media selected — two add buttons (Max plan only) */}
+              {isMaxPlan && images.length === 0 && !video && (
                 <div className="flex gap-3">
                   <button
                     type="button"
@@ -950,8 +974,8 @@ export default function PublishToLinkedInModal({
                 </div>
               )}
 
-              {/* Image preview grid */}
-              {images.length > 0 && (
+              {/* Image preview grid (Max plan only) */}
+              {isMaxPlan && images.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {imagePreviews.map((preview, idx) => (
                     <div
@@ -988,8 +1012,8 @@ export default function PublishToLinkedInModal({
                 </div>
               )}
 
-              {/* Video preview */}
-              {video && videoPreview && (
+              {/* Video preview (Max plan only) */}
+              {isMaxPlan && video && videoPreview && (
                 <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-dark-border">
                   <video
                     src={videoPreview}
@@ -1026,22 +1050,26 @@ export default function PublishToLinkedInModal({
                 </div>
               )}
 
-              {/* Hidden file inputs */}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/gif,image/webp"
-                multiple
-                className="hidden"
-                onChange={(e) => { handleAddImages(e.target.files); e.target.value = ""; }}
-              />
-              <input
-                ref={videoInputRef}
-                type="file"
-                accept="video/mp4,video/quicktime,video/webm"
-                className="hidden"
-                onChange={(e) => { handleAddVideo(e.target.files); e.target.value = ""; }}
-              />
+              {/* Hidden file inputs (Max plan only) */}
+              {isMaxPlan && (
+                <>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/gif,image/webp"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => { handleAddImages(e.target.files); e.target.value = ""; }}
+                  />
+                  <input
+                    ref={videoInputRef}
+                    type="file"
+                    accept="video/mp4,video/quicktime,video/webm"
+                    className="hidden"
+                    onChange={(e) => { handleAddVideo(e.target.files); e.target.value = ""; }}
+                  />
+                </>
+              )}
             </div>
 
             {/* Editable Content */}

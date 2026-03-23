@@ -2627,6 +2627,7 @@ export const zh = {
     remainingTodayPlural: "今日剩余",
     dailyLimitReached: "今日额度已用完",
     upgradeToMax: "升级到 Max",
+    mediaMaxOnly: "图片和视频仅在 Max 计划中可用。",
     freeSignatureNotice: "帖子末尾将添加 \"Created with Posty\" 小签名。升级到 Pro 可移除。",
     // Weekly publish quota (Free plan)
     weeklyLimitReached: "本周发布额度已用完",

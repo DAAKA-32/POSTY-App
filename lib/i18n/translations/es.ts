@@ -2627,6 +2627,7 @@ export const es = {
     remainingTodayPlural: "restantes hoy",
     dailyLimitReached: "Límite diario alcanzado",
     upgradeToMax: "Pasar a Max",
+    mediaMaxOnly: "Las imágenes y videos solo están disponibles en el plan Max.",
     freeSignatureNotice: "Se agregará una pequeña firma \"Creado con Posty\" a tu publicación. Pasa a Pro para eliminarla.",
     // Weekly publish quota (Free plan)
     weeklyLimitReached: "Límite semanal de publicaciones alcanzado",

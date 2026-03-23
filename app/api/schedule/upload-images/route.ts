@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth } from "@/lib/auth";
 import { isAdminInitialized, getAdminStorageBucket } from "@/lib/db/firebase-admin";
+import { checkUserQuotaAdmin } from "@/lib/db/firestore-admin";
 
 const ALLOWED_MIME_TYPES = new Set([
   "image/jpeg",
@@ -53,6 +54,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "missing_fields", message: "Missing required fields: userId, scheduledPostId." },
         { status: 400 }
+      );
+    }
+
+    // Server-side plan check: only Max plan can upload media for scheduled posts
+    try {
+      const quota = await checkUserQuotaAdmin(userId);
+      if (quota.plan !== "max") {
+        return NextResponse.json(
+          { error: "plan_restricted", message: "Media uploads for scheduled posts require the Max plan." },
+          { status: 403 }
+        );
+      }
+    } catch {
+      // If quota check fails, deny by default for safety
+      return NextResponse.json(
+        { error: "plan_check_failed", message: "Could not verify your plan. Please try again." },
+        { status: 500 }
       );
     }
 
