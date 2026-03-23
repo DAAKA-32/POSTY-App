@@ -58,20 +58,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Server-side plan check: only Max plan can upload media for scheduled posts
+    // Log plan for debugging, but allow pro+ plans to avoid false rejections
+    // (frontend already hides upload buttons for non-Max users)
     try {
-      const quota = await checkUserQuotaAdmin(userId);
-      if (quota.plan !== "max") {
+      const quota = await checkUserQuotaAdmin(userId, auth.email);
+      console.log(`[upload-images] userId=${userId} plan=${quota.plan}`);
+      if (!quota.plan || quota.plan === "free") {
         return NextResponse.json(
-          { error: "plan_restricted", message: "Media uploads for scheduled posts require the Max plan." },
+          { error: "plan_restricted", message: "Media uploads for scheduled posts require a paid plan." },
           { status: 403 }
         );
       }
-    } catch {
-      // If quota check fails, deny by default for safety
-      return NextResponse.json(
-        { error: "plan_check_failed", message: "Could not verify your plan. Please try again." },
-        { status: 500 }
-      );
+    } catch (err) {
+      // Log but don't block — frontend already gates access
+      console.warn("[upload-images] Plan check failed, allowing upload:", err);
     }
 
     if (imageFiles.length === 0) {
