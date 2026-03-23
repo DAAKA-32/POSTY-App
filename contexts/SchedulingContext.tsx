@@ -27,7 +27,8 @@ import {
   getPendingScheduledPostsCount,
   getUpcomingScheduledPosts,
 } from "@/lib/db/firestore";
-import { uploadScheduledPostImages, deleteScheduledPostImages } from "@/lib/storage/storage";
+import { deleteScheduledPostImages } from "@/lib/storage/storage";
+import { getAuthHeaders } from "@/lib/api/client";
 import toast from "@/components/ui/Toast";
 
 const SchedulingContext = createContext<SchedulingContextType | undefined>(
@@ -115,12 +116,27 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
           setIsUploading(true);
 
           try {
-            // Upload images to Firebase Storage
-            const uploadedImages = await uploadScheduledPostImages(
-              scheduledPostId,
-              user.uid,
-              data.imageFiles!
-            );
+            // Upload images via server-side API route (bypasses CORS)
+            const formData = new FormData();
+            formData.append("scheduledPostId", scheduledPostId);
+            formData.append("userId", user.uid);
+            for (const file of data.imageFiles!) {
+              formData.append("images", file);
+            }
+
+            const authHeaders = await getAuthHeaders();
+            const uploadResponse = await fetch("/api/schedule/upload-images", {
+              method: "POST",
+              headers: authHeaders,
+              body: formData,
+            });
+
+            if (!uploadResponse.ok) {
+              const errorData = await uploadResponse.json().catch(() => ({}));
+              throw new Error(errorData.message || `Upload failed (${uploadResponse.status})`);
+            }
+
+            const { images: uploadedImages } = await uploadResponse.json();
 
             // Create Firestore doc with image metadata
             await createScheduledPost(user.uid, data, uploadedImages, scheduledPostId);

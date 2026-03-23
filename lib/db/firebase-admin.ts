@@ -1,5 +1,6 @@
 import { initializeApp, getApps, cert, App, ServiceAccount } from "firebase-admin/app";
 import { getFirestore, Firestore } from "firebase-admin/firestore";
+import { getStorage as getAdminStorage } from "firebase-admin/storage";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -153,4 +154,15 @@ export const adminApp = firebaseAdmin?.app;
 // Helper function to check if admin is initialized
 export function isAdminInitialized(): boolean {
   return state.initialized && !!state.db;
+}
+
+// Firebase Admin Storage (for server-side uploads — no CORS)
+export function getAdminStorageBucket() {
+  if (!state.initialized || !state.app) {
+    initializeFirebaseAdmin();
+  }
+  if (!state.app) return undefined;
+  // Pass bucket name explicitly — required for .firebasestorage.app domains
+  const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
+  return getAdminStorage(state.app).bucket(bucketName);
 }
