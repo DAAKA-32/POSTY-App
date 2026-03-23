@@ -2620,6 +2620,7 @@ export const ko = {
     postPublishedOn: "{platforms}에 게시물이 게시되었어요",
     failedOn: "{platforms}에서 실패: {error}",
     genericError: "오류가 발생했어요",
+    timeoutError: "요청 시간이 초과되었어요. 연결을 확인하고 다시 시도해 주세요.",
     remainingPublications: "건 게시",
     remainingPublicationsPlural: "건 게시",
     remainingToday: "오늘 남음",

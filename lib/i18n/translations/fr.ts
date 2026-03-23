@@ -2621,6 +2621,7 @@ export const fr = {
     postPublishedOn: "Post publié sur {platforms}",
     failedOn: "Échec sur {platforms}: {error}",
     genericError: "Une erreur est survenue",
+    timeoutError: "La requête a expiré. Vérifiez votre connexion et réessayez.",
     remainingPublications: "publication",
     remainingPublicationsPlural: "publications",
     remainingToday: "restante aujourd'hui",

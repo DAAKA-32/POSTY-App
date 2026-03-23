@@ -2620,6 +2620,7 @@ export const ja = {
     postPublishedOn: "{platforms}に投稿を公開しました",
     failedOn: "{platforms}で失敗：{error}",
     genericError: "エラーが発生しました",
+    timeoutError: "リクエストがタイムアウトしました。接続を確認して再度お試しください。",
     remainingPublications: "件の公開",
     remainingPublicationsPlural: "件の公開",
     remainingToday: "本日残り",

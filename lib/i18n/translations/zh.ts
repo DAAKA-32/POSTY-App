@@ -2620,6 +2620,7 @@ export const zh = {
     postPublishedOn: "帖子已发布到 {platforms}",
     failedOn: "在 {platforms} 上失败：{error}",
     genericError: "出现错误",
+    timeoutError: "请求超时。请检查网络连接后重试。",
     remainingPublications: "次发布",
     remainingPublicationsPlural: "次发布",
     remainingToday: "今日剩余",

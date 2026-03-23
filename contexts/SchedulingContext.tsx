@@ -138,10 +138,11 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
           scheduledPostId = await createScheduledPost(user.uid, data);
         }
 
-        // Refresh the list
-        await loadScheduledPosts();
-
-        toast.success("Post programmé avec succès !");
+        // Refresh the list in background — don't block the success response
+        // This prevents mobile/PWA hangs when Firestore re-fetch is slow
+        loadScheduledPosts().catch((err) =>
+          console.warn("[SchedulingContext] Background refresh failed:", err)
+        );
 
         return { success: true, scheduledPostId };
       } catch (error) {

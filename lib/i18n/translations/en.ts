@@ -2621,6 +2621,7 @@ export const en = {
     postPublishedOn: "Post published on {platforms}",
     failedOn: "Failed on {platforms}: {error}",
     genericError: "An error occurred",
+    timeoutError: "The request timed out. Please check your connection and try again.",
     remainingPublications: "publication",
     remainingPublicationsPlural: "publications",
     remainingToday: "remaining today",

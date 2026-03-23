@@ -2620,6 +2620,7 @@ export const es = {
     postPublishedOn: "Publicación publicada en {platforms}",
     failedOn: "Falló en {platforms}: {error}",
     genericError: "Ocurrió un error",
+    timeoutError: "La solicitud ha expirado. Verifica tu conexión e inténtalo de nuevo.",
     remainingPublications: "publicación",
     remainingPublicationsPlural: "publicaciones",
     remainingToday: "restante hoy",

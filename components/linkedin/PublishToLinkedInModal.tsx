@@ -610,12 +610,14 @@ export default function PublishToLinkedInModal({
         triggerHaptic("error");
         setError(failedResults.map((r) => `${r.platform}: ${r.error}`).join("\n") || t.publish.genericError);
         setStep("error");
+        setProgress(0);
       }
     } catch (err) {
       // Error haptic feedback
       triggerHaptic("error");
       setError(err instanceof Error ? err.message : t.publish.genericError);
       setStep("error");
+      setProgress(0);
     } finally {
       // Always cleanup the interval, regardless of success or error
       if (progressIntervalRef.current) {
@@ -666,18 +668,32 @@ export default function PublishToLinkedInModal({
       // Map first selected platform to schedule platform
       const schedulePlatform = (selectedPlatforms[0] || "linkedin") as SchedulePlatform;
 
-      const result = await schedulePost({
-        content: editedContent,
-        postId,
-        title,
-        scheduledAt,
-        timezone,
-        platform: schedulePlatform,
-        postType: "feed",
-        imageFiles: images.length > 0 ? images : undefined,
-      });
+      // Race the schedule call against a timeout to prevent infinite hang on mobile/PWA
+      const SCHEDULE_TIMEOUT_MS = 30_000;
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("TIMEOUT")), SCHEDULE_TIMEOUT_MS)
+      );
+
+      const result = await Promise.race([
+        schedulePost({
+          content: editedContent,
+          postId,
+          title,
+          scheduledAt,
+          timezone,
+          platform: schedulePlatform,
+          postType: "feed",
+          imageFiles: images.length > 0 ? images : undefined,
+        }),
+        timeoutPromise,
+      ]);
 
       if (result.success && result.scheduledPostId) {
+        // Clear interval before setting 100% so UI is clean
+        if (progressIntervalRef.current) {
+          clearInterval(progressIntervalRef.current);
+          progressIntervalRef.current = null;
+        }
         setProgress(100);
         await new Promise((resolve) => setTimeout(resolve, 600));
         triggerHaptic("success");
@@ -686,13 +702,20 @@ export default function PublishToLinkedInModal({
         onScheduleSuccess?.(result.scheduledPostId);
       } else {
         triggerHaptic("error");
-        setError(t.publish.genericError);
+        setError(result.error || t.publish.genericError);
         setStep("error");
+        setProgress(0);
       }
     } catch (err) {
       triggerHaptic("error");
-      setError(err instanceof Error ? err.message : t.publish.genericError);
+      const isTimeout = err instanceof Error && err.message === "TIMEOUT";
+      setError(
+        isTimeout
+          ? (t.publish.timeoutError || "The request timed out. Please check your connection and try again.")
+          : (err instanceof Error ? err.message : t.publish.genericError)
+      );
       setStep("error");
+      setProgress(0);
     } finally {
       if (progressIntervalRef.current) {
         clearInterval(progressIntervalRef.current);

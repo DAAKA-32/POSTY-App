@@ -2620,6 +2620,7 @@ export const nl = {
     postPublishedOn: "Bericht gepubliceerd op {platforms}",
     failedOn: "Mislukt op {platforms}: {error}",
     genericError: "Er is een fout opgetreden",
+    timeoutError: "Het verzoek is verlopen. Controleer je verbinding en probeer het opnieuw.",
     remainingPublications: "publicatie",
     remainingPublicationsPlural: "publicaties",
     remainingToday: "resterend vandaag",

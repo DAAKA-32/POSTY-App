@@ -2620,6 +2620,7 @@ export const de = {
     postPublishedOn: "Beitrag veröffentlicht auf {platforms}",
     failedOn: "Fehlgeschlagen auf {platforms}: {error}",
     genericError: "Ein Fehler ist aufgetreten",
+    timeoutError: "Die Anfrage ist abgelaufen. Überprüfe deine Verbindung und versuche es erneut.",
     remainingPublications: "Veröffentlichung",
     remainingPublicationsPlural: "Veröffentlichungen",
     remainingToday: "heute verbleibend",
