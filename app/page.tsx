@@ -3597,33 +3597,27 @@ function ValueBlock() {
                 y: -4,
                 transition: { duration: 0.25, ease: premiumEase },
               }}
-              className="group relative bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/60 p-[clamp(1.25rem,2vw,1.75rem)] overflow-hidden cursor-default"
+              className="group relative bg-white rounded-2xl border border-gray-200/60 p-[clamp(1.25rem,2vw,1.75rem)] overflow-hidden cursor-default"
             >
-              {/* Animated gradient border glow on hover */}
+              {/* Subtle hover glow — opacity only (GPU-friendly) */}
               <div
-                className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
                 style={{
-                  background: `linear-gradient(135deg, ${item.accentColor}08, ${item.accentColor}15, transparent)`,
+                  background: `linear-gradient(135deg, ${item.accentColor}08, ${item.accentColor}12, transparent)`,
                 }}
-              />
-              {/* Animated corner accent */}
-              <motion.div
-                className="absolute -top-8 -right-8 w-24 h-24 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-500 blur-2xl pointer-events-none"
-                style={{ background: item.accentColor }}
               />
 
               <div className="relative z-10">
                 {/* Icon with animated background */}
-                <motion.div
-                  whileHover={{ rotate: [0, -8, 8, 0], transition: { duration: 0.5 } }}
-                  className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-all duration-300"
+                <div
+                  className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-transform duration-200 group-hover:scale-110"
                   style={{
                     background: `linear-gradient(135deg, ${item.accentColor}12, ${item.accentColor}06)`,
                     color: item.accentColor,
                   }}
                 >
                   {item.icon}
-                </motion.div>
+                </div>
 
                 {/* Title with accent underline on hover */}
                 <h3 className="text-[clamp(1rem,1.5vw,1.15rem)] font-bold text-gray-900 mb-1.5 relative inline-block">
@@ -3653,23 +3647,15 @@ function ValueBlock() {
           transition={{ duration: 0.4, delay: 0.4, ease: premiumEase }}
           className="text-center mt-[clamp(1.5rem,3vw,2.5rem)]"
         >
-          <motion.a
+          <a
             href="/login"
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.98 }}
-            className="relative inline-flex items-center gap-2 px-7 py-3 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden"
+            className="inline-flex items-center gap-2 px-7 py-3 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
           >
-            {/* Shimmer effect */}
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12"
-              animate={{ x: ["-200%", "200%"] }}
-              transition={{ duration: 3, repeat: Infinity, repeatDelay: 2, ease: "easeInOut" }}
-            />
-            <span className="relative">{t.landing.valueBlockCTA}</span>
-            <svg className="w-4 h-4 relative" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            {t.landing.valueBlockCTA}
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
             </svg>
-          </motion.a>
+          </a>
         </motion.div>
       </div>
     </section>

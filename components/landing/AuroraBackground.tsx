@@ -186,7 +186,18 @@ export default function AuroraBackground() {
 
       let time = 0;
 
+      // Throttle to ~30fps instead of 60fps — halves GPU work with no visual difference for slow particles
+      let lastDrawTime = 0;
+      const FRAME_INTERVAL = 33; // ~30fps
+
       const draw = () => {
+        const now = performance.now();
+        if (now - lastDrawTime < FRAME_INTERVAL) {
+          frameRef.current = requestAnimationFrame(draw);
+          return;
+        }
+        lastDrawTime = now;
+
         const { w, h } = sizeRef.current;
         const dpr = Math.min(window.devicePixelRatio || 1, 2);
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);

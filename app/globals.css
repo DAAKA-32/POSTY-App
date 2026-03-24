@@ -3113,7 +3113,8 @@ html.dark .loader-track {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    animation: silver-drift 16s ease-in-out infinite;
+    animation: silver-drift 12s ease-in-out 1;
+    will-change: background-position;
   }
 
   /* Silver Shimmer — section titles, slightly lighter base */
@@ -3132,8 +3133,9 @@ html.dark .loader-track {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    animation: silver-drift 18s ease-in-out infinite;
-    animation-delay: -6s;
+    animation: silver-drift 14s ease-in-out 1;
+    animation-delay: -4s;
+    will-change: background-position;
   }
 
   /* Silver Vertical — Auth pages */
