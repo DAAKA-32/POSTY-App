@@ -3521,6 +3521,8 @@ function ValueBlock() {
     {
       title: t.landing.valueBlockItem1Title,
       desc: t.landing.valueBlockItem1Desc,
+      emoji: "~",
+      accentColor: "#F8935D",
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
@@ -3530,6 +3532,8 @@ function ValueBlock() {
     {
       title: t.landing.valueBlockItem2Title,
       desc: t.landing.valueBlockItem2Desc,
+      emoji: "~",
+      accentColor: "#F76B54",
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
@@ -3539,6 +3543,8 @@ function ValueBlock() {
     {
       title: t.landing.valueBlockItem3Title,
       desc: t.landing.valueBlockItem3Desc,
+      emoji: "~",
+      accentColor: "#E85D50",
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -3548,6 +3554,8 @@ function ValueBlock() {
     {
       title: t.landing.valueBlockItem4Title,
       desc: t.landing.valueBlockItem4Desc,
+      emoji: "~",
+      accentColor: "#D94E45",
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
@@ -3557,66 +3565,111 @@ function ValueBlock() {
   ];
 
   return (
-    <section className="py-14 md:py-20 px-[clamp(1rem,4vw,3rem)]">
-      <div className="max-w-5xl mx-auto">
-        {/* Title */}
-        <motion.h2
+    <section className="py-[clamp(2rem,4vw,3.5rem)] px-[clamp(1rem,4vw,3rem)] overflow-hidden">
+      <div className="max-w-[min(90vw,67.75rem)] mx-auto">
+        {/* Silver title — same style as Features heading */}
+        <motion.div
           initial={{ opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "0px 0px 80px 0px" }}
           transition={{ duration: 0.4, ease: premiumEase }}
-          className="text-[clamp(1.5rem,3.5vw,2.5rem)] font-bold text-center mb-10 md:mb-14"
+          className="text-center mb-[clamp(1.5rem,3vw,2.5rem)]"
         >
-          <span className="text-gray-900">{t.landing.valueBlockTitle?.split(" ").slice(0, -1).join(" ")} </span>
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
-            Posty
-          </span>
-        </motion.h2>
+          <h2 className="text-[clamp(1.75rem,4vw,3.25rem)] font-bold">
+            <span className="text-silver-premium">{t.landing.valueBlockTitle}</span>
+          </h2>
+        </motion.div>
 
-        {/* Cards grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5">
+        {/* Animated cards grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-[clamp(0.75rem,1.5vw,1.25rem)]">
           {items.map((item, i) => (
             <motion.div
               key={i}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, y: 20, scale: 0.97 }}
+              whileInView={{ opacity: 1, y: 0, scale: 1 }}
               viewport={{ once: true, margin: "0px 0px 60px 0px" }}
-              transition={{ duration: 0.4, delay: i * 0.08, ease: premiumEase }}
-              className="group relative bg-white rounded-2xl border border-gray-200/70 p-6 md:p-7 hover:border-[#F8935D]/30 hover:shadow-lg transition-all duration-300"
+              transition={{
+                duration: 0.5,
+                delay: i * 0.1,
+                ease: premiumEase,
+              }}
+              whileHover={{
+                y: -4,
+                transition: { duration: 0.25, ease: premiumEase },
+              }}
+              className="group relative bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/60 p-[clamp(1.25rem,2vw,1.75rem)] overflow-hidden cursor-default"
             >
-              {/* Icon */}
-              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#F8935D]/10 to-[#F76B54]/5 flex items-center justify-center mb-4 text-[#F8935D] group-hover:from-[#F8935D]/15 group-hover:to-[#F76B54]/10 transition-colors">
-                {item.icon}
-              </div>
+              {/* Animated gradient border glow on hover */}
+              <div
+                className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                style={{
+                  background: `linear-gradient(135deg, ${item.accentColor}08, ${item.accentColor}15, transparent)`,
+                }}
+              />
+              {/* Animated corner accent */}
+              <motion.div
+                className="absolute -top-8 -right-8 w-24 h-24 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-500 blur-2xl pointer-events-none"
+                style={{ background: item.accentColor }}
+              />
 
-              {/* Content */}
-              <h3 className="text-lg font-bold text-gray-900 mb-1.5">
-                {item.title}
-              </h3>
-              <p className="text-[14.5px] text-gray-500 leading-relaxed">
-                {item.desc}
-              </p>
+              <div className="relative z-10">
+                {/* Icon with animated background */}
+                <motion.div
+                  whileHover={{ rotate: [0, -8, 8, 0], transition: { duration: 0.5 } }}
+                  className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-all duration-300"
+                  style={{
+                    background: `linear-gradient(135deg, ${item.accentColor}12, ${item.accentColor}06)`,
+                    color: item.accentColor,
+                  }}
+                >
+                  {item.icon}
+                </motion.div>
+
+                {/* Title with accent underline on hover */}
+                <h3 className="text-[clamp(1rem,1.5vw,1.15rem)] font-bold text-gray-900 mb-1.5 relative inline-block">
+                  {item.title}
+                  <motion.span
+                    className="absolute -bottom-0.5 left-0 h-[2px] rounded-full"
+                    style={{ background: `linear-gradient(90deg, ${item.accentColor}, transparent)` }}
+                    initial={{ width: 0 }}
+                    whileInView={{ width: "60%" }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6, delay: 0.3 + i * 0.1, ease: premiumEase }}
+                  />
+                </h3>
+                <p className="text-[clamp(0.8rem,1.2vw,0.9rem)] text-gray-500 leading-relaxed mt-2">
+                  {item.desc}
+                </p>
+              </div>
             </motion.div>
           ))}
         </div>
 
-        {/* CTA */}
+        {/* CTA with pulse animation */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.4, delay: 0.3, ease: premiumEase }}
-          className="text-center mt-10"
+          transition={{ duration: 0.4, delay: 0.4, ease: premiumEase }}
+          className="text-center mt-[clamp(1.5rem,3vw,2.5rem)]"
         >
-          <a
+          <motion.a
             href="/login"
-            className="inline-flex items-center gap-2 px-7 py-3 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white font-semibold rounded-xl shadow-md hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.98 }}
+            className="relative inline-flex items-center gap-2 px-7 py-3 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden"
           >
-            {t.landing.valueBlockCTA}
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            {/* Shimmer effect */}
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12"
+              animate={{ x: ["-200%", "200%"] }}
+              transition={{ duration: 3, repeat: Infinity, repeatDelay: 2, ease: "easeInOut" }}
+            />
+            <span className="relative">{t.landing.valueBlockCTA}</span>
+            <svg className="w-4 h-4 relative" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
             </svg>
-          </a>
+          </motion.a>
         </motion.div>
       </div>
     </section>
