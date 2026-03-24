@@ -755,12 +755,16 @@ export const ja = {
     howItWorksTryFree: "無料で試す",
 
     // Value block after features
-    valueBlockQuote: "見込み客を探して手動でメッセージを送る日々に終止符を。",
-    valueBlockDesc: "PostyはLinkedInの営業開拓を自動化し、最適化された投稿を生成し、顧客獲得戦略を簡素化します。より多くの認知度、機会、収益を——より少ない労力で。",
-    valueBlockTag1: "LinkedIn自動化",
-    valueBlockTag2: "最適化された投稿",
-    valueBlockTag3: "時間の節約",
-    valueBlockTag4: "より多くの機会",
+    valueBlockTitle: "フリーランサーがPostyを選ぶ理由",
+    valueBlockItem1Title: "営業の自動化",
+    valueBlockItem1Desc: "見込み客探しに何時間も費やす必要はありません。Postyが理想の顧客を引きつけるコンテンツを生成します。",
+    valueBlockItem2Title: "成果を出す投稿",
+    valueBlockItem2Desc: "AIが可視性とエンゲージメントを最大化する最適なLinkedIn投稿を作成。",
+    valueBlockItem3Title: "10倍速い",
+    valueBlockItem3Desc: "何時間もかかっていたことが数秒で。本業に使える時間が増えます。",
+    valueBlockItem4Title: "より多くの機会",
+    valueBlockItem4Desc: "一貫した戦略的なLinkedInプレゼンスで、質の高いリードを獲得。",
+    valueBlockCTA: "無料で始める",
 
     // DemoPreview section
     demoSuggestion1: "リーダーシップについて投稿",

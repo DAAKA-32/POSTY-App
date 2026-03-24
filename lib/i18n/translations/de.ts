@@ -755,12 +755,16 @@ export const de = {
     howItWorksTryFree: "Kostenlos testen",
 
     // Value block after features
-    valueBlockQuote: "Hören Sie auf, Ihre Tage mit der Suche nach Interessenten und dem manuellen Versenden von Nachrichten zu verbringen.",
-    valueBlockDesc: "Posty automatisiert Ihre LinkedIn-Akquise, erstellt optimierte Beiträge und vereinfacht Ihre Gewinnungsstrategie. Mehr Sichtbarkeit, mehr Chancen, mehr Umsatz — mit weniger Aufwand.",
-    valueBlockTag1: "LinkedIn-Automatisierung",
-    valueBlockTag2: "Optimierte Beiträge",
-    valueBlockTag3: "Zeitersparnis",
-    valueBlockTag4: "Mehr Chancen",
+    valueBlockTitle: "Warum Freelancer Posty wählen",
+    valueBlockItem1Title: "Automatisierte Akquise",
+    valueBlockItem1Desc: "Schluss mit stundenlanger Interessentensuche. Posty erstellt Inhalte, die Ihre idealen Kunden anziehen.",
+    valueBlockItem2Title: "Posts die überzeugen",
+    valueBlockItem2Desc: "KI erstellt LinkedIn-Beiträge, optimiert für maximale Sichtbarkeit und Engagement.",
+    valueBlockItem3Title: "10x schneller",
+    valueBlockItem3Desc: "Was früher Stunden dauerte, geht jetzt in Sekunden. Mehr Zeit für Ihre eigentliche Arbeit.",
+    valueBlockItem4Title: "Mehr Chancen",
+    valueBlockItem4Desc: "Eine konstante, strategische LinkedIn-Präsenz, die qualifizierte Kontakte generiert.",
+    valueBlockCTA: "Kostenlos starten",
 
     // DemoPreview section
     demoSuggestion1: "Beitrag über Leadership",

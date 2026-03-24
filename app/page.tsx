@@ -3511,49 +3511,114 @@ function FeaturesSection() {
 }
 
 // =============================================================================
-// VALUE BLOCK — Discreet value proposition after Features
+// VALUE BLOCK — Premium value proposition after Features
 // =============================================================================
 
 function ValueBlock() {
   const { t } = useLanguage();
-  const tags = [
-    t.landing.valueBlockTag1,
-    t.landing.valueBlockTag2,
-    t.landing.valueBlockTag3,
-    t.landing.valueBlockTag4,
+
+  const items = [
+    {
+      title: t.landing.valueBlockItem1Title,
+      desc: t.landing.valueBlockItem1Desc,
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+        </svg>
+      ),
+    },
+    {
+      title: t.landing.valueBlockItem2Title,
+      desc: t.landing.valueBlockItem2Desc,
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
+        </svg>
+      ),
+    },
+    {
+      title: t.landing.valueBlockItem3Title,
+      desc: t.landing.valueBlockItem3Desc,
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+    },
+    {
+      title: t.landing.valueBlockItem4Title,
+      desc: t.landing.valueBlockItem4Desc,
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+        </svg>
+      ),
+    },
   ];
 
   return (
-    <section className="py-10 md:py-14 px-[clamp(1rem,4vw,3rem)]">
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "0px 0px 80px 0px" }}
-        transition={{ duration: 0.5, ease: premiumEase }}
-        className="max-w-3xl mx-auto"
-      >
-        {/* Quote block */}
-        <div className="relative pl-6 border-l-[3px] border-[#F8935D]/50">
-          <p className="text-[clamp(1.1rem,2.5vw,1.35rem)] font-semibold text-gray-800 leading-snug mb-3">
-            {t.landing.valueBlockQuote}
-          </p>
-          <p className="text-[15px] md:text-base text-gray-500 leading-relaxed">
-            {t.landing.valueBlockDesc}
-          </p>
-        </div>
+    <section className="py-14 md:py-20 px-[clamp(1rem,4vw,3rem)]">
+      <div className="max-w-5xl mx-auto">
+        {/* Title */}
+        <motion.h2
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "0px 0px 80px 0px" }}
+          transition={{ duration: 0.4, ease: premiumEase }}
+          className="text-[clamp(1.5rem,3.5vw,2.5rem)] font-bold text-center mb-10 md:mb-14"
+        >
+          <span className="text-gray-900">{t.landing.valueBlockTitle?.split(" ").slice(0, -1).join(" ")} </span>
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
+            Posty
+          </span>
+        </motion.h2>
 
-        {/* Tags */}
-        <div className="flex flex-wrap gap-2 mt-5 pl-6">
-          {tags.map((tag) => (
-            <span
-              key={tag}
-              className="px-3 py-1 text-xs font-medium text-[#F76B54] bg-[#F8935D]/8 border border-[#F8935D]/15 rounded-full"
+        {/* Cards grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5">
+          {items.map((item, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "0px 0px 60px 0px" }}
+              transition={{ duration: 0.4, delay: i * 0.08, ease: premiumEase }}
+              className="group relative bg-white rounded-2xl border border-gray-200/70 p-6 md:p-7 hover:border-[#F8935D]/30 hover:shadow-lg transition-all duration-300"
             >
-              {tag}
-            </span>
+              {/* Icon */}
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#F8935D]/10 to-[#F76B54]/5 flex items-center justify-center mb-4 text-[#F8935D] group-hover:from-[#F8935D]/15 group-hover:to-[#F76B54]/10 transition-colors">
+                {item.icon}
+              </div>
+
+              {/* Content */}
+              <h3 className="text-lg font-bold text-gray-900 mb-1.5">
+                {item.title}
+              </h3>
+              <p className="text-[14.5px] text-gray-500 leading-relaxed">
+                {item.desc}
+              </p>
+            </motion.div>
           ))}
         </div>
-      </motion.div>
+
+        {/* CTA */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.4, delay: 0.3, ease: premiumEase }}
+          className="text-center mt-10"
+        >
+          <a
+            href="/login"
+            className="inline-flex items-center gap-2 px-7 py-3 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white font-semibold rounded-xl shadow-md hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
+          >
+            {t.landing.valueBlockCTA}
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+            </svg>
+          </a>
+        </motion.div>
+      </div>
     </section>
   );
 }

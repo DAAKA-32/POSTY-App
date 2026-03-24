@@ -755,12 +755,16 @@ export const ko = {
     howItWorksTryFree: "무료 체험",
 
     // Value block after features
-    valueBlockQuote: "하루 종일 잠재 고객을 찾고 수동으로 메시지를 보내는 것을 그만하세요.",
-    valueBlockDesc: "Posty는 LinkedIn 영업 개발을 자동화하고, 최적화된 게시물을 생성하며, 고객 확보 전략을 간소화합니다. 더 많은 가시성, 기회, 수익을 — 더 적은 노력으로.",
-    valueBlockTag1: "LinkedIn 자동화",
-    valueBlockTag2: "최적화된 게시물",
-    valueBlockTag3: "시간 절약",
-    valueBlockTag4: "더 많은 기회",
+    valueBlockTitle: "프리랜서가 Posty를 선택하는 이유",
+    valueBlockItem1Title: "자동화된 영업 개발",
+    valueBlockItem1Desc: "잠재 고객을 찾는 데 몇 시간을 쓸 필요가 없습니다. Posty가 이상적인 고객을 끌어오는 콘텐츠를 생성합니다.",
+    valueBlockItem2Title: "전환되는 게시물",
+    valueBlockItem2Desc: "AI가 가시성과 참여율을 극대화하는 최적화된 LinkedIn 게시물을 만듭니다.",
+    valueBlockItem3Title: "10배 빠르게",
+    valueBlockItem3Desc: "몇 시간 걸리던 일이 몇 초면 됩니다. 본업에 더 많은 시간을.",
+    valueBlockItem4Title: "더 많은 기회",
+    valueBlockItem4Desc: "일관되고 전략적인 LinkedIn 존재감으로 양질의 리드를 확보하세요.",
+    valueBlockCTA: "무료로 시작",
 
     // DemoPreview section
     demoSuggestion1: "리더십에 대한 게시물",

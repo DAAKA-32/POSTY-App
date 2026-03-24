@@ -755,12 +755,16 @@ export const nl = {
     howItWorksTryFree: "Gratis proberen",
 
     // Value block after features
-    valueBlockQuote: "Stop met hele dagen prospects zoeken en handmatig berichten versturen.",
-    valueBlockDesc: "Posty automatiseert je LinkedIn-prospectie, genereert geoptimaliseerde berichten en vereenvoudigt je acquisitiestrategie. Meer zichtbaarheid, meer kansen, meer omzet — met minder moeite.",
-    valueBlockTag1: "LinkedIn-automatisering",
-    valueBlockTag2: "Geoptimaliseerde posts",
-    valueBlockTag3: "Tijdsbesparing",
-    valueBlockTag4: "Meer kansen",
+    valueBlockTitle: "Waarom freelancers Posty kiezen",
+    valueBlockItem1Title: "Geautomatiseerde prospectie",
+    valueBlockItem1Desc: "Geen uren meer besteden aan het zoeken naar leads. Posty genereert content die je ideale klanten aantrekt.",
+    valueBlockItem2Title: "Posts die converteren",
+    valueBlockItem2Desc: "AI maakt LinkedIn-berichten geoptimaliseerd voor maximale zichtbaarheid en engagement.",
+    valueBlockItem3Title: "10x sneller",
+    valueBlockItem3Desc: "Wat uren duurde, duurt nu seconden. Meer tijd voor je echte werk.",
+    valueBlockItem4Title: "Meer kansen",
+    valueBlockItem4Desc: "Een constante, strategische LinkedIn-aanwezigheid die gekwalificeerde leads genereert.",
+    valueBlockCTA: "Gratis beginnen",
 
     // DemoPreview section
     demoSuggestion1: "Bericht over leiderschap",

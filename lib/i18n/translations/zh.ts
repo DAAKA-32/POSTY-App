@@ -755,12 +755,16 @@ export const zh = {
     howItWorksTryFree: "免费试用",
 
     // Value block after features
-    valueBlockQuote: "不再花整天时间寻找潜在客户和手动发送消息。",
-    valueBlockDesc: "Posty自动化您的LinkedIn开发，生成优化帖子，简化您的获客策略。更多曝光，更多机会，更多收入——更少的付出。",
-    valueBlockTag1: "LinkedIn自动化",
-    valueBlockTag2: "优化帖子",
-    valueBlockTag3: "节省时间",
-    valueBlockTag4: "更多机会",
+    valueBlockTitle: "自由职业者为什么选择 Posty",
+    valueBlockItem1Title: "自动化获客",
+    valueBlockItem1Desc: "不再花数小时寻找潜在客户。Posty 生成吸引理想客户的内容。",
+    valueBlockItem2Title: "能转化的帖子",
+    valueBlockItem2Desc: "AI 创建优化的 LinkedIn 帖子，最大化您的曝光和互动。",
+    valueBlockItem3Title: "快10倍",
+    valueBlockItem3Desc: "以前需要数小时的工作，现在只需几秒。更多时间做正事。",
+    valueBlockItem4Title: "更多机会",
+    valueBlockItem4Desc: "持续、有策略的 LinkedIn 存在，带来高质量的商业机会。",
+    valueBlockCTA: "免费开始",
 
     // DemoPreview section
     demoSuggestion1: "关于领导力的帖子",

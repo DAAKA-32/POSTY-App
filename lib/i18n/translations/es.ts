@@ -755,12 +755,16 @@ export const es = {
     howItWorksTryFree: "Probar gratis",
 
     // Value block after features
-    valueBlockQuote: "Deja de pasar tus días buscando prospectos y enviando mensajes manualmente.",
-    valueBlockDesc: "Posty automatiza tu prospección en LinkedIn, genera publicaciones optimizadas y simplifica tu estrategia de adquisición. Más visibilidad, más oportunidades, más ingresos — con menos esfuerzo.",
-    valueBlockTag1: "Automatización LinkedIn",
-    valueBlockTag2: "Posts optimizados",
-    valueBlockTag3: "Ahorro de tiempo",
-    valueBlockTag4: "Más oportunidades",
+    valueBlockTitle: "Por qué los freelancers eligen Posty",
+    valueBlockItem1Title: "Prospección automatizada",
+    valueBlockItem1Desc: "Deja de pasar horas buscando prospectos. Posty genera contenido que atrae a tus clientes ideales.",
+    valueBlockItem2Title: "Posts que convierten",
+    valueBlockItem2Desc: "La IA crea posts de LinkedIn optimizados para maximizar tu visibilidad y engagement.",
+    valueBlockItem3Title: "10x más rápido",
+    valueBlockItem3Desc: "Lo que antes tomaba horas ahora toma segundos. Más tiempo para tu verdadero trabajo.",
+    valueBlockItem4Title: "Más oportunidades",
+    valueBlockItem4Desc: "Una presencia constante y estratégica en LinkedIn que genera contactos cualificados.",
+    valueBlockCTA: "Empezar gratis",
 
     // DemoPreview section
     demoSuggestion1: "Post sobre liderazgo",
