@@ -737,7 +737,7 @@ export const nl = {
     howItWorksTitle1: "Hoe",
     howItWorksTitle2: "werkt het",
     howItWorksTitle3: "?",
-    howItWorksSubtitle: "Van idee naar publicatie in 3 eenvoudige stappen",
+    howItWorksSubtitle: "Van idee tot publicatie in 4 eenvoudige stappen",
     howItWorksStepLabel: "Stap",
     howItWorksStep1Title: "Beschrijf je idee",
     howItWorksStep1Desc: "Voer simpelweg het onderwerp van je bericht in. Een paar woorden zijn voldoende om de AI te starten.",
@@ -748,8 +748,19 @@ export const nl = {
     howItWorksStep3Title: "Publiceer met één klik",
     howItWorksStep3Desc: "Kies je favoriete versie, pas aan indien nodig en publiceer direct op LinkedIn.",
     howItWorksStep3Example: "Bericht gepubliceerd in 30 seconden",
+    howItWorksStep4Title: "Plan in of publiceer direct",
+    howItWorksStep4Desc: "Plan je berichten voor het perfecte moment of publiceer direct. Volg de prestaties en optimaliseer je LinkedIn-strategie.",
+    howItWorksStep4Example: "Gepland voor dinsdag 9 uur — piek engagement",
     howItWorksReadyCTA: "Klaar om je LinkedIn-aanwezigheid te transformeren?",
     howItWorksTryFree: "Gratis proberen",
+
+    // Value block after features
+    valueBlockQuote: "Stop met hele dagen prospects zoeken en handmatig berichten versturen.",
+    valueBlockDesc: "Posty automatiseert je LinkedIn-prospectie, genereert geoptimaliseerde berichten en vereenvoudigt je acquisitiestrategie. Meer zichtbaarheid, meer kansen, meer omzet — met minder moeite.",
+    valueBlockTag1: "LinkedIn-automatisering",
+    valueBlockTag2: "Geoptimaliseerde posts",
+    valueBlockTag3: "Tijdsbesparing",
+    valueBlockTag4: "Meer kansen",
 
     // DemoPreview section
     demoSuggestion1: "Bericht over leiderschap",

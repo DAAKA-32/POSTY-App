@@ -739,7 +739,7 @@ export const fr = {
     howItWorksTitle1: "Comment ça",
     howItWorksTitle2: "fonctionne",
     howItWorksTitle3: "?",
-    howItWorksSubtitle: "De l'idée à la publication en 3 étapes simples",
+    howItWorksSubtitle: "De l'idée à la publication en 4 étapes simples",
     howItWorksStepLabel: "Étape",
     howItWorksStep1Title: "Décrivez votre idée",
     howItWorksStep1Desc: "Entrez simplement le sujet de votre post. Quelques mots suffisent pour lancer l'IA.",
@@ -750,8 +750,19 @@ export const fr = {
     howItWorksStep3Title: "Publiez en un clic",
     howItWorksStep3Desc: "Choisissez votre version préférée, ajustez si besoin, et publiez directement sur LinkedIn.",
     howItWorksStep3Example: "Post publié en 30 secondes chrono",
+    howItWorksStep4Title: "Programmez ou publiez instantanément",
+    howItWorksStep4Desc: "Planifiez vos posts au moment idéal ou publiez immédiatement. Suivez les performances et optimisez votre stratégie LinkedIn.",
+    howItWorksStep4Example: "Programmé pour mardi 9h — pic d'engagement",
     howItWorksReadyCTA: "Prêt à transformer votre présence LinkedIn ?",
     howItWorksTryFree: "Essayer gratuitement",
+
+    // Value block after features
+    valueBlockQuote: "Arrêtez de passer vos journées à chercher des prospects et envoyer des messages manuellement.",
+    valueBlockDesc: "Posty automatise votre prospection LinkedIn, génère des posts optimisés et simplifie votre stratégie d'acquisition. Plus de visibilité, plus d'opportunités, plus de revenus — avec moins d'effort.",
+    valueBlockTag1: "Automatisation LinkedIn",
+    valueBlockTag2: "Posts optimisés",
+    valueBlockTag3: "Gain de temps",
+    valueBlockTag4: "Plus d'opportunités",
 
     // DemoPreview section
     demoSuggestion1: "Post sur le leadership",

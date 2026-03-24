@@ -737,7 +737,7 @@ export const ja = {
     howItWorksTitle1: "使い方",
     howItWorksTitle2: "は",
     howItWorksTitle3: "？",
-    howItWorksSubtitle: "アイデアから公開まで3つの簡単なステップ",
+    howItWorksSubtitle: "アイデアから投稿まで4つの簡単なステップ",
     howItWorksStepLabel: "ステップ",
     howItWorksStep1Title: "アイデアを説明",
     howItWorksStep1Desc: "投稿のテーマを入力するだけ。数語でAIが起動します。",
@@ -748,8 +748,19 @@ export const ja = {
     howItWorksStep3Title: "ワンクリックで公開",
     howItWorksStep3Desc: "好みのバージョンを選び、必要に応じて調整し、LinkedInに直接公開。",
     howItWorksStep3Example: "30秒で投稿完了",
+    howItWorksStep4Title: "スケジュールまたは即時公開",
+    howItWorksStep4Desc: "最適なタイミングで投稿をスケジュールするか、すぐに公開。パフォーマンスを追跡し、LinkedIn戦略を最適化しましょう。",
+    howItWorksStep4Example: "火曜日午前9時にスケジュール — エンゲージメントのピーク",
     howItWorksReadyCTA: "LinkedInでの存在感を変える準備はできましたか？",
     howItWorksTryFree: "無料で試す",
+
+    // Value block after features
+    valueBlockQuote: "見込み客を探して手動でメッセージを送る日々に終止符を。",
+    valueBlockDesc: "PostyはLinkedInの営業開拓を自動化し、最適化された投稿を生成し、顧客獲得戦略を簡素化します。より多くの認知度、機会、収益を——より少ない労力で。",
+    valueBlockTag1: "LinkedIn自動化",
+    valueBlockTag2: "最適化された投稿",
+    valueBlockTag3: "時間の節約",
+    valueBlockTag4: "より多くの機会",
 
     // DemoPreview section
     demoSuggestion1: "リーダーシップについて投稿",

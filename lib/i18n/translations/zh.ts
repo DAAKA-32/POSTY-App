@@ -737,7 +737,7 @@ export const zh = {
     howItWorksTitle1: "如何",
     howItWorksTitle2: "使用",
     howItWorksTitle3: "？",
-    howItWorksSubtitle: "从想法到发布，仅需 3 个简单步骤",
+    howItWorksSubtitle: "从想法到发布只需4个简单步骤",
     howItWorksStepLabel: "步骤",
     howItWorksStep1Title: "描述你的想法",
     howItWorksStep1Desc: "输入帖子主题即可。几个关键词就足够启动 AI。",
@@ -748,8 +748,19 @@ export const zh = {
     howItWorksStep3Title: "一键发布",
     howItWorksStep3Desc: "选择你喜欢的版本，按需调整，直接发布到 LinkedIn。",
     howItWorksStep3Example: "30 秒搞定帖子发布",
+    howItWorksStep4Title: "定时发布或即时发布",
+    howItWorksStep4Desc: "为您的帖子规划最佳发布时间，或立即发布。跟踪表现并优化您的LinkedIn策略。",
+    howItWorksStep4Example: "定时周二上午9点 — 互动高峰期",
     howItWorksReadyCTA: "准备好提升您的 LinkedIn 影响力了吗？",
     howItWorksTryFree: "免费试用",
+
+    // Value block after features
+    valueBlockQuote: "不再花整天时间寻找潜在客户和手动发送消息。",
+    valueBlockDesc: "Posty自动化您的LinkedIn开发，生成优化帖子，简化您的获客策略。更多曝光，更多机会，更多收入——更少的付出。",
+    valueBlockTag1: "LinkedIn自动化",
+    valueBlockTag2: "优化帖子",
+    valueBlockTag3: "节省时间",
+    valueBlockTag4: "更多机会",
 
     // DemoPreview section
     demoSuggestion1: "关于领导力的帖子",

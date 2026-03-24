@@ -737,7 +737,7 @@ export const ko = {
     howItWorksTitle1: "어떻게",
     howItWorksTitle2: "작동",
     howItWorksTitle3: "하나요?",
-    howItWorksSubtitle: "아이디어에서 게시까지 3단계",
+    howItWorksSubtitle: "아이디어에서 게시까지 4단계로 간단하게",
     howItWorksStepLabel: "단계",
     howItWorksStep1Title: "아이디어를 설명하세요",
     howItWorksStep1Desc: "게시물 주제를 입력하세요. 몇 단어면 AI가 시작돼요.",
@@ -748,8 +748,19 @@ export const ko = {
     howItWorksStep3Title: "클릭 한 번으로 게시",
     howItWorksStep3Desc: "원하는 버전을 선택하고, 필요하면 수정한 후, LinkedIn에 바로 게시하세요.",
     howItWorksStep3Example: "30초 만에 게시물 게시 완료",
+    howItWorksStep4Title: "예약하거나 즉시 게시",
+    howItWorksStep4Desc: "완벽한 시간에 게시물을 예약하거나 즉시 게시하세요. 성과를 추적하고 LinkedIn 전략을 최적화하세요.",
+    howItWorksStep4Example: "화요일 오전 9시 예약 — 참여율 피크",
     howItWorksReadyCTA: "LinkedIn 존재감을 바꿀 준비가 되셨나요?",
     howItWorksTryFree: "무료 체험",
+
+    // Value block after features
+    valueBlockQuote: "하루 종일 잠재 고객을 찾고 수동으로 메시지를 보내는 것을 그만하세요.",
+    valueBlockDesc: "Posty는 LinkedIn 영업 개발을 자동화하고, 최적화된 게시물을 생성하며, 고객 확보 전략을 간소화합니다. 더 많은 가시성, 기회, 수익을 — 더 적은 노력으로.",
+    valueBlockTag1: "LinkedIn 자동화",
+    valueBlockTag2: "최적화된 게시물",
+    valueBlockTag3: "시간 절약",
+    valueBlockTag4: "더 많은 기회",
 
     // DemoPreview section
     demoSuggestion1: "리더십에 대한 게시물",

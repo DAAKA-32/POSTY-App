@@ -737,7 +737,7 @@ export const de = {
     howItWorksTitle1: "Wie es",
     howItWorksTitle2: "funktioniert",
     howItWorksTitle3: "?",
-    howItWorksSubtitle: "Von der Idee zur Veröffentlichung in 3 einfachen Schritten",
+    howItWorksSubtitle: "Von der Idee zur Veröffentlichung in 4 einfachen Schritten",
     howItWorksStepLabel: "Schritt",
     howItWorksStep1Title: "Beschreiben Sie Ihre Idee",
     howItWorksStep1Desc: "Geben Sie einfach das Thema Ihres Beitrags ein. Ein paar Worte genügen, um die KI zu starten.",
@@ -748,8 +748,19 @@ export const de = {
     howItWorksStep3Title: "Mit einem Klick veröffentlichen",
     howItWorksStep3Desc: "Wählen Sie Ihre bevorzugte Version, passen Sie bei Bedarf an und veröffentlichen Sie direkt auf LinkedIn.",
     howItWorksStep3Example: "Beitrag in 30 Sekunden veröffentlicht",
+    howItWorksStep4Title: "Planen oder sofort veröffentlichen",
+    howItWorksStep4Desc: "Planen Sie Ihre Beiträge für den perfekten Zeitpunkt oder veröffentlichen Sie sofort. Verfolgen Sie die Leistung und optimieren Sie Ihre LinkedIn-Strategie.",
+    howItWorksStep4Example: "Geplant für Dienstag 9 Uhr — maximales Engagement",
     howItWorksReadyCTA: "Bereit, Ihre LinkedIn-Präsenz zu transformieren?",
     howItWorksTryFree: "Kostenlos testen",
+
+    // Value block after features
+    valueBlockQuote: "Hören Sie auf, Ihre Tage mit der Suche nach Interessenten und dem manuellen Versenden von Nachrichten zu verbringen.",
+    valueBlockDesc: "Posty automatisiert Ihre LinkedIn-Akquise, erstellt optimierte Beiträge und vereinfacht Ihre Gewinnungsstrategie. Mehr Sichtbarkeit, mehr Chancen, mehr Umsatz — mit weniger Aufwand.",
+    valueBlockTag1: "LinkedIn-Automatisierung",
+    valueBlockTag2: "Optimierte Beiträge",
+    valueBlockTag3: "Zeitersparnis",
+    valueBlockTag4: "Mehr Chancen",
 
     // DemoPreview section
     demoSuggestion1: "Beitrag über Leadership",

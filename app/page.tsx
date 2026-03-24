@@ -3511,6 +3511,54 @@ function FeaturesSection() {
 }
 
 // =============================================================================
+// VALUE BLOCK — Discreet value proposition after Features
+// =============================================================================
+
+function ValueBlock() {
+  const { t } = useLanguage();
+  const tags = [
+    t.landing.valueBlockTag1,
+    t.landing.valueBlockTag2,
+    t.landing.valueBlockTag3,
+    t.landing.valueBlockTag4,
+  ];
+
+  return (
+    <section className="py-10 md:py-14 px-[clamp(1rem,4vw,3rem)]">
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "0px 0px 80px 0px" }}
+        transition={{ duration: 0.5, ease: premiumEase }}
+        className="max-w-3xl mx-auto"
+      >
+        {/* Quote block */}
+        <div className="relative pl-6 border-l-[3px] border-[#F8935D]/50">
+          <p className="text-[clamp(1.1rem,2.5vw,1.35rem)] font-semibold text-gray-800 leading-snug mb-3">
+            {t.landing.valueBlockQuote}
+          </p>
+          <p className="text-[15px] md:text-base text-gray-500 leading-relaxed">
+            {t.landing.valueBlockDesc}
+          </p>
+        </div>
+
+        {/* Tags */}
+        <div className="flex flex-wrap gap-2 mt-5 pl-6">
+          {tags.map((tag) => (
+            <span
+              key={tag}
+              className="px-3 py-1 text-xs font-medium text-[#F76B54] bg-[#F8935D]/8 border border-[#F8935D]/15 rounded-full"
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+      </motion.div>
+    </section>
+  );
+}
+
+// =============================================================================
 // TESTIMONIALS SECTION - Premium Design with Free Stock Photos
 // =============================================================================
 // Images libres de droits recommandees (Unsplash):
@@ -4529,6 +4577,7 @@ export default function LandingPage() {
         {/* Opaque sections — z-[5] + bg to cover the fixed hero title */}
         <div className="relative z-[5] bg-[#FEF3EE]">
           <FeaturesSection />
+          <ValueBlock />
         </div>
 
         {/* TargetAudience — opaque to prevent hero/demo content bleeding through */}
