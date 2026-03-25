@@ -110,6 +110,7 @@ export async function getUserProfile(
         sessionsCount: 0,
         lastActive: null,
       },
+      helpReadPages: data.helpReadPages || [],
       createdAt: data.createdAt,
     } as UserProfile;
   }
@@ -148,6 +149,9 @@ export async function updateUserProfile(
   }
   if (data.language !== undefined) {
     updateData.language = data.language;
+  }
+  if (data.helpReadPages !== undefined) {
+    updateData.helpReadPages = data.helpReadPages;
   }
 
   await updateDoc(userRef, updateData);

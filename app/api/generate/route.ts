@@ -9,9 +9,11 @@ import {
   OpenAIModel,
   INSIGHTS_PROMPT,
   CONVERSATIONAL_PROMPT,
+  ASSISTANT_PROMPT,
   INTENT_CLASSIFICATION_PROMPT,
+  FILLER_PATTERNS,
 } from "@/lib/openai";
-import { buildOptimizedPrompt, getGenerationTemperature, synthesizeProfile, estimateTokens, ProfileFields, PlanTier } from "@/lib/services/prompt-builder";
+import { buildOptimizedPrompt, getGenerationTemperature, synthesizeProfile, estimateTokens, ProfileFields, PlanTier, buildAssistantPrompt, cleanFillerFromResponse } from "@/lib/services/prompt-builder";
 import {
   checkHourlyQuotaAdmin,
   checkUserQuotaAdmin,
@@ -388,7 +390,9 @@ export async function POST(request: NextRequest) {
           const plan = userProfileData.plan as PlanType;
 
           if (planHasFeature(plan, "hasPersonalizedResponses")) {
-            // Pro+ : base personalization fields
+            // Pro+ : all onboarding fields for personalization
+            // communicationTone & targetAudience are essential for quality —
+            // they define HOW the author writes and WHO they write for.
             serverUserProfile = {
               ...(userProfileData.displayName && { displayName: userProfileData.displayName }),
               ...(profile.profileType && { profileType: profile.profileType }),
@@ -396,17 +400,10 @@ export async function POST(request: NextRequest) {
               ...(profile.role && { role: profile.role }),
               ...(profile.objective && { objective: profile.objective }),
               ...(profile.linkedinStyle && { linkedinStyle: profile.linkedinStyle }),
+              ...(profile.targetAudience && { targetAudience: profile.targetAudience }),
+              ...(profile.communicationTone && { communicationTone: profile.communicationTone }),
+              ...(profile.publishingFrequency && { publishingFrequency: profile.publishingFrequency }),
             };
-
-            if (planHasFeature(plan, "hasAudienceTargeting")) {
-              // Max : enhanced personalization fields
-              serverUserProfile = {
-                ...serverUserProfile,
-                ...(profile.targetAudience && { targetAudience: profile.targetAudience }),
-                ...(profile.communicationTone && { communicationTone: profile.communicationTone }),
-                ...(profile.publishingFrequency && { publishingFrequency: profile.publishingFrequency }),
-              };
-            }
           }
           // No personalization if plan doesn't support it
         }
@@ -498,33 +495,49 @@ export async function POST(request: NextRequest) {
 
           if (openaiService) {
             // ========== INTENT CLASSIFICATION ==========
-            // Force conversational mode when aiMode is "general" (IA Générale)
             // Force PRODUCTION intent when URL content was extracted (user clearly wants a post from a link)
-            // In LinkedIn mode: only classify as SOCIAL for pure greetings, everything else is PRODUCTION
+            // In general mode: SOCIAL stays social, everything else → ASSISTANCE
+            // In LinkedIn mode: SOCIAL → social, ASSISTANCE → assistance, PRODUCTION → post generation
             let intent: IntentType;
-            if (aiMode === "general") {
-              intent = "EXPLORATORY";
-            } else if (extractedUrlContent) {
+            if (extractedUrlContent) {
               intent = "PRODUCTION";
-            } else {
+            } else if (aiMode === "general") {
+              // General mode: classify, but route PRODUCTION → ASSISTANCE (user chose general mode)
               const classified = await classifyIntent(
                 openaiService,
                 cleanedPrompt,
                 language as "fr" | "en"
               );
-              // In LinkedIn mode, only SOCIAL stays social — EXPLORATORY becomes PRODUCTION
-              // because users in LinkedIn mode expect post generation, not conversation
-              intent = classified === "SOCIAL" ? "SOCIAL" : "PRODUCTION";
+              intent = classified === "SOCIAL" ? "SOCIAL" : "ASSISTANCE";
+            } else {
+              // LinkedIn mode: full classification with all 3 intents
+              const classified = await classifyIntent(
+                openaiService,
+                cleanedPrompt,
+                language as "fr" | "en"
+              );
+              intent = classified;
             }
 
-            if (intent === "SOCIAL" || intent === "EXPLORATORY") {
-              // Conversational response - no post generation
+            if (intent === "SOCIAL") {
+              // Social response — short, warm greeting
               isConversational = true;
               generatedContent = await generateConversational(
                 openaiService,
                 cleanedPrompt,
                 language as "fr" | "en",
                 sendEvent,
+                conversationHistory as Array<{ role: "user" | "assistant"; content: string }> | undefined
+              );
+            } else if (intent === "ASSISTANCE") {
+              // Assistance response — ideas, advice, analysis WITH profile
+              isConversational = true;
+              generatedContent = await generateAssistance(
+                openaiService,
+                cleanedPrompt,
+                language as "fr" | "en",
+                sendEvent,
+                serverUserProfile,
                 conversationHistory as Array<{ role: "user" | "assistant"; content: string }> | undefined
               );
             } else {
@@ -908,7 +921,7 @@ async function generateInsights(
 
 // ============== INTENT CLASSIFICATION ==============
 
-type IntentType = "SOCIAL" | "EXPLORATORY" | "PRODUCTION";
+type IntentType = "SOCIAL" | "EXPLORATORY" | "ASSISTANCE" | "PRODUCTION";
 
 /**
  * Fast pattern-based intent detection for common cases
@@ -930,7 +943,33 @@ function detectIntentFast(prompt: string): IntentType | null {
     }
   }
 
-  // Production patterns (explicit content requests)
+  // Assistance patterns (ideas, advice, analysis, templates, strategy)
+  const assistancePatterns = [
+    // Ideas requests
+    /\b(donne|propose|suggère|trouve|génère|donne-moi|propose-moi)\s*(moi|nous)?\s*(des|quelques|les)?\s*(idées?|sujets?|thèmes?|topics?|angles?)/i,
+    /\b(give|suggest|propose|find|brainstorm)\s*(me|us)?\s*(some|a few)?\s*(ideas?|topics?|themes?|angles?|subjects?)/i,
+    /\b(idées?\s+(de|pour)\s+(posts?|contenu|publications?))/i,
+    /\b(ideas?\s+(for|about)\s+(posts?|content|publications?))/i,
+    // Advice/strategy requests
+    /\b(conseils?|astuces?|tips?|stratégie|strategy)\s*(pour|for|sur|on|about|de|linkedin)/i,
+    /\b(comment\s+(améliorer|optimiser|augmenter|booster|développer))/i,
+    /\b(how\s+to\s+(improve|optimize|increase|boost|grow|get\s+more))/i,
+    // Analysis requests
+    /\b(analyse|analyze|critique|évalue|review|feedback)\s*(ce|cet?|mon|ma|this|my)?\s*(post|texte|contenu|profil|content|text|profile)?/i,
+    // Template requests
+    /\b(template|modèle|structure|framework|format)\s*(de|pour|for|of)?\s*(post|contenu|content)?/i,
+    // Help with specific LinkedIn topics
+    /\b(aide|help)\s*(moi|me)?\s*(à|to|avec|with)?\s*(rédiger|écrire|trouver|write|find|craft)/i,
+    /\b(qu'?est[- ]ce qu[ei]|what\s+(is|are|makes))\s*(un bon|a good|the best)\s*(hook|accroche|post|cta)/i,
+  ];
+
+  for (const pattern of assistancePatterns) {
+    if (pattern.test(trimmed)) {
+      return "ASSISTANCE";
+    }
+  }
+
+  // Production patterns (explicit content requests — "write me a post")
   const productionPatterns = [
     /\b(fais|fait|crée|créé|écris|écrit|génère|génère|rédige|compose)\s*(moi|me|nous)?\s*(un|une|des|le|la)?\s*(post|article|texte|contenu|publication)/i,
     /\b(write|create|generate|make)\s*(me|us)?\s*(a|an|the)?\s*(post|article|content|text)/i,
@@ -964,6 +1003,11 @@ function detectIntentFast(prompt: string): IntentType | null {
   // Longer messages (>40 chars) that aren't questions are likely post ideas/content
   if (trimmed.length > 40 && !trimmed.endsWith("?") && !/^(comment|how|what|pourquoi|why|est-ce|is |are |do |does |can )/i.test(trimmed)) {
     return "PRODUCTION";
+  }
+
+  // Questions about LinkedIn/content → ASSISTANCE (not social)
+  if (trimmed.endsWith("?") && trimmed.length > 20) {
+    return "ASSISTANCE";
   }
 
   // Very short messages without production keywords = likely social
@@ -1005,15 +1049,13 @@ async function classifyIntent(
 
     const result = response.choices[0]?.message?.content?.trim().toUpperCase();
 
-    if (result === "SOCIAL" || result === "EXPLORATOIRE" || result === "EXPLORATORY") {
-      return result === "EXPLORATOIRE" ? "EXPLORATORY" : result as IntentType;
-    }
-    if (result === "PRODUCTION") {
-      return "PRODUCTION";
-    }
+    if (result === "SOCIAL") return "SOCIAL";
+    if (result === "ASSISTANCE") return "ASSISTANCE";
+    if (result === "EXPLORATOIRE" || result === "EXPLORATORY") return "ASSISTANCE";
+    if (result === "PRODUCTION") return "PRODUCTION";
 
-    // Default to production if unclear (maintain backwards compatibility)
-    return "PRODUCTION";
+    // Default to ASSISTANCE if unclear (better to help than generate unwanted post)
+    return "ASSISTANCE";
   } catch (error) {
     console.error("Intent classification failed:", error);
     // Default to production on error
@@ -1063,6 +1105,72 @@ async function generateConversational(
     messages,
     temperature: 0.7,
     max_tokens: 300, // Keep responses short for conversation
+    stream: true,
+  });
+
+  let fullContent = "";
+  for await (const chunk of stream) {
+    const content = chunk.choices[0]?.delta?.content || "";
+    if (content) {
+      fullContent += content;
+      sendEvent("chunk", { content, type: "conversational" });
+    }
+  }
+
+  sendEvent("done", { type: "conversational" });
+
+  return fullContent;
+}
+
+/**
+ * Generate assistance response (for ideas, advice, analysis intents)
+ * Uses GPT-4 with user profile injection for high-quality, personalized responses.
+ * Response is cleaned of filler phrases before streaming completes.
+ */
+async function generateAssistance(
+  service: NonNullable<ReturnType<typeof createOpenAIService>>,
+  prompt: string,
+  language: "fr" | "en",
+  sendEvent: (event: string, data: object) => void,
+  userProfile?: ProfileFields,
+  conversationHistory?: Array<{ role: "user" | "assistant"; content: string }>
+): Promise<string> {
+  const title = "POSTY";
+
+  sendEvent("start", { type: "conversational", title });
+
+  // Build assistant prompt with profile injection
+  const basePrompt = ASSISTANT_PROMPT[language];
+  const systemPrompt = buildAssistantPrompt(basePrompt, userProfile, language);
+
+  // Language enforcement
+  const langEnforcement = language === "fr"
+    ? "\n\nLANGUE: Réponds STRICTEMENT en français."
+    : "\n\nLANGUAGE: Respond STRICTLY in English.";
+
+  const messages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
+    { role: "system", content: systemPrompt + langEnforcement },
+  ];
+
+  // Add conversation history if available
+  if (conversationHistory && conversationHistory.length > 0) {
+    const recentHistory = conversationHistory.slice(-6);
+    for (const msg of recentHistory) {
+      messages.push({
+        role: msg.role === "user" ? "user" : "assistant",
+        content: msg.content,
+      });
+    }
+  }
+
+  messages.push({ role: "user", content: prompt });
+
+  // Use GPT-4 for high-quality assistance (not 3.5-turbo)
+  const stream = await service["client"].chat.completions.create({
+    model: service["model"] || "gpt-4",
+    messages,
+    temperature: 0.7,
+    max_tokens: 1500, // Enough for structured ideas/advice
     stream: true,
   });
 

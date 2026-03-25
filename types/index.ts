@@ -161,6 +161,8 @@ export interface UserProfile {
     weeklyPublishCount?: number;
     weekStartDate?: Timestamp;
   };
+  // Help tooltips: pages the user has dismissed (synced across devices)
+  helpReadPages?: string[];
   // Welcome modal flag (set by webhook after first payment, cleared on dismiss)
   showWelcomeModal?: boolean;
   // Gift plan popup flag (set to true after gift recipient sees the popup)

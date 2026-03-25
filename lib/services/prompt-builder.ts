@@ -525,6 +525,51 @@ FORMAT: Airy, mobile-readable structure. 1100-1500 characters. 3-5 hashtags at t
   },
 };
 
+// ============== SECTOR → VOCABULARY & EXAMPLES CONTEXT ==============
+
+/**
+ * Maps the user's sector to concrete vocabulary guidance and example domains.
+ * Ensures the LLM uses industry-appropriate language without falling into jargon.
+ */
+const SECTOR_CONTEXT: Record<string, { fr: string; en: string }> = {
+  "Tech / IT": {
+    fr: "Vocabulaire sectoriel: utilise des références tech crédibles (stack, produit, métrique, scaling, release). Exemples tirés du quotidien tech: déploiements, sprints, bugs, décisions d'architecture, choix d'outils. Évite le jargon startup vide.",
+    en: "Sector vocabulary: use credible tech references (stack, product, metrics, scaling, release). Examples from daily tech life: deployments, sprints, bugs, architecture decisions, tool choices. Avoid empty startup jargon.",
+  },
+  "Marketing / Communication": {
+    fr: "Vocabulaire sectoriel: campagnes, conversion, acquisition, branding, contenu, ROI. Exemples concrets: résultats de campagnes, tests A/B, stratégies de contenu, insights audience. Montre la logique derrière les choix créatifs.",
+    en: "Sector vocabulary: campaigns, conversion, acquisition, branding, content, ROI. Concrete examples: campaign results, A/B tests, content strategies, audience insights. Show the logic behind creative choices.",
+  },
+  "Finance / Banque": {
+    fr: "Vocabulaire sectoriel: précis et technique sans être abscons. Références: marchés, régulation, gestion de risque, compliance, analyse. Crédibilité par les chiffres et l'analyse factuelle.",
+    en: "Sector vocabulary: precise and technical without being arcane. References: markets, regulation, risk management, compliance, analysis. Credibility through numbers and factual analysis.",
+  },
+  "Santé": {
+    fr: "Vocabulaire sectoriel: patient-centré, evidence-based. Références: cas pratiques (anonymisés), parcours de soin, innovation médicale, organisation hospitalière. Clarté et rigueur avant tout.",
+    en: "Sector vocabulary: patient-centered, evidence-based. References: practical cases (anonymized), care pathways, medical innovation, hospital organization. Clarity and rigor above all.",
+  },
+  "Éducation": {
+    fr: "Vocabulaire sectoriel: pédagogie, apprentissage, transmission, formation. Références: situations en classe ou en formation, méthodes pédagogiques, retours d'élèves/apprenants. Ton passionné mais ancré.",
+    en: "Sector vocabulary: pedagogy, learning, teaching, training. References: classroom or training situations, teaching methods, student/learner feedback. Passionate but grounded tone.",
+  },
+  "Commerce / Vente": {
+    fr: "Vocabulaire sectoriel: pipeline, closing, prospection, négociation, relation client. Références: deals concrets, objections rencontrées, techniques de vente terrain. Pragmatisme et résultats.",
+    en: "Sector vocabulary: pipeline, closing, prospecting, negotiation, client relationships. References: concrete deals, objections faced, field sales techniques. Pragmatism and results.",
+  },
+  "Industrie": {
+    fr: "Vocabulaire sectoriel: production, supply chain, qualité, optimisation, terrain. Références: usine, processus, amélioration continue, gestion d'équipe opérationnelle. Concret et opérationnel.",
+    en: "Sector vocabulary: production, supply chain, quality, optimization, field. References: factory, processes, continuous improvement, operational team management. Concrete and operational.",
+  },
+  "Conseil": {
+    fr: "Vocabulaire sectoriel: mission, diagnostic, recommandation, implémentation, accompagnement. Références: situations client variées, patterns récurrents, frameworks appliqués. Expertise prouvée par l'expérience terrain.",
+    en: "Sector vocabulary: engagement, diagnosis, recommendation, implementation, advisory. References: varied client situations, recurring patterns, applied frameworks. Expertise proven through field experience.",
+  },
+  "RH / Recrutement": {
+    fr: "Vocabulaire sectoriel: talent, culture d'entreprise, engagement, marque employeur, onboarding. Références: entretiens, dynamiques d'équipe, cas de management, évolutions de carrière. L'humain au centre.",
+    en: "Sector vocabulary: talent, company culture, engagement, employer brand, onboarding. References: interviews, team dynamics, management cases, career development. People at the center.",
+  },
+};
+
 // ============== PROFILE SYNTHESIS ==============
 
 export function synthesizeProfile(
@@ -593,12 +638,25 @@ function buildVoiceProfile(
     blocks.push(PROFILE_TYPE_CONTEXT[profileType][language]);
   }
 
+  // Sector → industry-specific vocabulary and examples
+  const sector = profile.sector?.trim();
+  if (sector && SECTOR_CONTEXT[sector]) {
+    blocks.push(SECTOR_CONTEXT[sector][language]);
+  }
+
   // Role → persona voice adaptation
   const role = profile.role?.trim();
   if (role) {
     const roleKey = matchRoleKey(role);
     if (roleKey && ROLE_VOICE_MAP[roleKey]) {
       blocks.push(ROLE_VOICE_MAP[roleKey][language]);
+    } else {
+      // Free-text role that doesn't match known patterns — inject it directly
+      // so the LLM still uses the role as identity context
+      const roleContext = isFr
+        ? `Posture: parle en tant que ${role}. Les références, exemples et le vocabulaire doivent être naturels pour quelqu'un qui exerce ce métier au quotidien.`
+        : `Posture: speak as a ${role}. References, examples, and vocabulary should feel natural for someone in this role daily.`;
+      blocks.push(roleContext);
     }
   }
 
@@ -634,6 +692,96 @@ function getObjectiveStrategy(
   if (!objective?.trim()) return null;
   const strategy = OBJECTIVE_STRATEGIES[objective.trim()];
   return strategy ? strategy[language] : null;
+}
+
+// ============== VARIATION SEED ==============
+
+/**
+ * Generates a randomized directive that forces structural diversity
+ * across consecutive generations. Selects a random structure approach
+ * and a random hook style, preventing the LLM from defaulting to
+ * its preferred patterns.
+ */
+const HOOK_STYLES_FR = [
+  "Question directe au lecteur",
+  "Affirmation provocante ou contre-intuitive",
+  "Micro-anecdote en une phrase",
+  "Constat chiffré ou factuel",
+  "Citation d'une conversation réelle",
+  "Observation du quotidien",
+  "Phrase courte et percutante",
+  "Interpellation 'Et si…' ou 'Imaginez…'",
+];
+
+const HOOK_STYLES_EN = [
+  "Direct question to the reader",
+  "Provocative or counter-intuitive statement",
+  "One-sentence micro-anecdote",
+  "Data-driven or factual observation",
+  "Quote from a real conversation",
+  "Everyday observation",
+  "Short punchy sentence",
+  "'What if…' or 'Imagine…' opener",
+];
+
+const CLOSING_STYLES_FR = [
+  "Question ouverte qui invite au débat",
+  "Appel à l'action subtil (DM, commentaire, partage)",
+  "Réflexion personnelle en une phrase",
+  "Reformulation percutante du message clé",
+  "Invitation à partager une expérience similaire",
+  "Phrase courte de conclusion qui fait réfléchir",
+];
+
+const CLOSING_STYLES_EN = [
+  "Open-ended question inviting debate",
+  "Subtle call to action (DM, comment, share)",
+  "Personal reflection in one sentence",
+  "Punchy rephrasing of the key message",
+  "Invitation to share a similar experience",
+  "Short thought-provoking closing sentence",
+];
+
+function buildVariationSeed(
+  type: PostType,
+  language: Language
+): string {
+  const isFr = language === "fr";
+
+  // Random structure approach (A-E for Pro, A-F for Max)
+  const approaches = ["A", "B", "C", "D", "E", "F"];
+  const selectedApproach = approaches[Math.floor(Math.random() * approaches.length)];
+  const avoidApproach = approaches.filter(a => a !== selectedApproach)[
+    Math.floor(Math.random() * (approaches.length - 1))
+  ];
+
+  // Random hook style
+  const hookStyles = isFr ? HOOK_STYLES_FR : HOOK_STYLES_EN;
+  const selectedHook = hookStyles[Math.floor(Math.random() * hookStyles.length)];
+
+  // Random closing style
+  const closingStyles = isFr ? CLOSING_STYLES_FR : CLOSING_STYLES_EN;
+  const selectedClosing = closingStyles[Math.floor(Math.random() * closingStyles.length)];
+
+  // Random paragraph rhythm hint
+  const rhythms = isFr
+    ? ["court-long-court", "long-court-long-court", "court-court-long", "long-court-court-long"]
+    : ["short-long-short", "long-short-long-short", "short-short-long", "long-short-short-long"];
+  const selectedRhythm = rhythms[Math.floor(Math.random() * rhythms.length)];
+
+  if (isFr) {
+    return `\n\nDIRECTIVE DE VARIATION (cette génération):
+- Structure: utilise l'approche ${selectedApproach}. Évite ${avoidApproach}.
+- Hook: commence par un style "${selectedHook}"
+- Clôture: termine avec "${selectedClosing}"
+- Rythme des paragraphes: ${selectedRhythm}`;
+  } else {
+    return `\n\nVARIATION DIRECTIVE (this generation):
+- Structure: use approach ${selectedApproach}. Avoid ${avoidApproach}.
+- Hook: open with "${selectedHook}" style
+- Closing: end with "${selectedClosing}"
+- Paragraph rhythm: ${selectedRhythm}`;
+  }
 }
 
 // ============== SANITIZATION ==============
@@ -683,10 +831,12 @@ export function buildOptimizedPrompt(
   if (!profile) return prompt;
 
   // Build voice profile block (tone + context + identity + optional signature)
+  // Note: voiceProfile is system-generated from validated profile fields,
+  // not raw user input — sanitizeInput() must NOT be applied here as it
+  // truncates at 600 chars and destroys personalization.
   const voiceProfile = buildVoiceProfile(profile, language, plan ?? null);
   if (voiceProfile) {
-    const sanitized = sanitizeInput(voiceProfile);
-    prompt += sanitized;
+    prompt += voiceProfile;
   }
 
   // Inject objective-specific strategy
@@ -696,7 +846,7 @@ export function buildOptimizedPrompt(
     prompt += `${header}: ${strategy}`;
   }
 
-  // Inject audience targeting (Max only, as Pro doesn't have this profile field)
+  // Inject audience targeting (now available for all Pro+ users)
   if (profile.targetAudience?.trim()) {
     const audienceInstruction =
       language === "fr"
@@ -704,6 +854,10 @@ export function buildOptimizedPrompt(
         : `\nTARGETING: Adapt vocabulary, examples, and references to resonate with ${profile.targetAudience.trim()}. The reader must immediately see themselves in it.`;
     prompt += audienceInstruction;
   }
+
+  // Inject variation seed — randomized structure/hook/closing directives
+  // to prevent repetitive outputs across consecutive generations
+  prompt += buildVariationSeed(type, language);
 
   return prompt;
 }
@@ -735,4 +889,73 @@ export function getGenerationTemperature(
  */
 export function estimateTokens(text: string): number {
   return Math.ceil(text.length / 4);
+}
+
+// ============== ASSISTANT PROMPT BUILDER ==============
+
+/**
+ * Builds the assistant system prompt with injected user profile context.
+ * Used for ASSISTANCE intent (ideas, advice, analysis — not full post generation).
+ */
+export function buildAssistantPrompt(
+  basePrompt: string,
+  profile?: ProfileFields | null,
+  language: "fr" | "en" = "fr"
+): string {
+  if (!profile) {
+    // No profile — remove placeholder and add generic note
+    const noProfileNote = language === "fr"
+      ? "Aucun profil utilisateur disponible. Réponds de façon générique mais utile."
+      : "No user profile available. Respond generically but usefully.";
+    return basePrompt.replace("{{PROFILE_CONTEXT}}", noProfileNote);
+  }
+
+  // Build rich profile context block
+  const parts: string[] = [];
+  const isFr = language === "fr";
+
+  if (profile.displayName) {
+    parts.push(isFr ? `Nom: ${profile.displayName}` : `Name: ${profile.displayName}`);
+  }
+  if (profile.role) {
+    parts.push(isFr ? `Rôle: ${profile.role}` : `Role: ${profile.role}`);
+  }
+  if (profile.sector) {
+    parts.push(isFr ? `Secteur: ${profile.sector}` : `Sector: ${profile.sector}`);
+  }
+  if (profile.profileType) {
+    parts.push(isFr ? `Profil: ${profile.profileType}` : `Profile: ${profile.profileType}`);
+  }
+  if (profile.targetAudience) {
+    parts.push(isFr ? `Audience cible: ${profile.targetAudience}` : `Target audience: ${profile.targetAudience}`);
+  }
+  if (profile.communicationTone) {
+    parts.push(isFr ? `Ton: ${profile.communicationTone}` : `Tone: ${profile.communicationTone}`);
+  }
+  if (profile.objective) {
+    parts.push(isFr ? `Objectif: ${profile.objective}` : `Goal: ${profile.objective}`);
+  }
+  if (profile.linkedinStyle) {
+    parts.push(isFr ? `Style LinkedIn: ${profile.linkedinStyle}` : `LinkedIn style: ${profile.linkedinStyle}`);
+  }
+
+  const profileBlock = parts.length > 0
+    ? parts.join("\n")
+    : (isFr ? "Profil minimal — adapte quand même au mieux." : "Minimal profile — adapt as best you can.");
+
+  return basePrompt.replace("{{PROFILE_CONTEXT}}", profileBlock);
+}
+
+/**
+ * Cleans filler phrases from AI responses.
+ * Applied to conversational/assistant responses before sending to client.
+ */
+export function cleanFillerFromResponse(text: string, patterns: RegExp[]): string {
+  let cleaned = text;
+  for (const pattern of patterns) {
+    // Reset lastIndex for global regexes
+    pattern.lastIndex = 0;
+    cleaned = cleaned.replace(pattern, "");
+  }
+  return cleaned.trim();
 }
