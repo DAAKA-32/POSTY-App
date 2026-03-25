@@ -19,6 +19,201 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { usePageTitle } from "@/hooks/ui/usePageTitle";
 
 // =============================================================================
+// AI INSIGHTS PANEL - Coaching intelligence from post history
+// =============================================================================
+
+interface AIInsights {
+  summary: string;
+  strengths: string[];
+  improvements: string[];
+  nextSteps: string[];
+  bestPerformingPattern: string;
+  contentScore: number;
+}
+
+function AIInsightsPanel({ posts }: { posts: LinkedInPostData[] }) {
+  const { t, language } = useLanguage();
+  const { user, userProfile } = useAuth();
+  const [insights, setInsights] = useState<AIInsights | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+  const [hasGenerated, setHasGenerated] = useState(false);
+
+  const generateInsights = useCallback(async () => {
+    if (!user || posts.length === 0) return;
+    setLoading(true);
+    setError(false);
+
+    try {
+      const headers = await getAuthHeaders();
+      const postData = posts.slice(0, 10).map((p) => ({
+        content: p.content,
+        likes: p.metrics?.likes || 0,
+        comments: p.metrics?.comments || 0,
+        shares: p.metrics?.shares || 0,
+      }));
+
+      const response = await fetch("/api/analytics/ai-insights", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({
+          userId: user.uid,
+          posts: postData,
+          language,
+          userProfile: userProfile?.profile || {},
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed");
+      const data = await response.json();
+      setInsights(data.insights);
+      setHasGenerated(true);
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [user, posts, language, userProfile]);
+
+  if (posts.length < 2) return null;
+
+  const isFr = language === "fr";
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, delay: 0.15 }}
+      className="mb-8 bg-white/80 dark:bg-dark-card rounded-2xl border border-violet-200/40 dark:border-violet-500/20 overflow-hidden"
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-dark-border">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+              {isFr ? "Coach IA" : "AI Coach"}
+            </h3>
+            <p className="text-xs text-gray-500 dark:text-text-muted">
+              {isFr ? "Analyse de vos contenus" : "Content analysis"}
+            </p>
+          </div>
+        </div>
+        {!loading && (
+          <button
+            onClick={generateInsights}
+            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-white bg-gradient-to-r from-violet-500 to-purple-600 rounded-lg hover:opacity-90 transition-opacity"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            {hasGenerated
+              ? (isFr ? "Actualiser" : "Refresh")
+              : (isFr ? "Analyser mes posts" : "Analyze my posts")}
+          </button>
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="px-5 py-4">
+        {loading && (
+          <div className="flex items-center gap-3 py-6 justify-center">
+            <div className="w-5 h-5 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+            <span className="text-sm text-gray-500">{isFr ? "Analyse en cours..." : "Analyzing..."}</span>
+          </div>
+        )}
+
+        {error && (
+          <p className="text-sm text-red-500 py-4 text-center">
+            {isFr ? "Erreur lors de l'analyse. Réessayez." : "Analysis failed. Try again."}
+          </p>
+        )}
+
+        {!loading && !insights && !error && (
+          <p className="text-sm text-gray-400 dark:text-text-muted py-4 text-center">
+            {isFr
+              ? "Cliquez sur \"Analyser mes posts\" pour obtenir des recommandations personnalisées."
+              : "Click \"Analyze my posts\" to get personalized recommendations."}
+          </p>
+        )}
+
+        {insights && !loading && (
+          <div className="space-y-5">
+            {/* Score + Summary */}
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-500/10 dark:to-purple-500/10 flex flex-col items-center justify-center border border-violet-200/50 dark:border-violet-500/20">
+                <span className="text-lg font-bold text-violet-600 dark:text-violet-400">{insights.contentScore}</span>
+                <span className="text-[10px] text-violet-400">/10</span>
+              </div>
+              <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed pt-1">{insights.summary}</p>
+            </div>
+
+            {/* Strengths */}
+            <div>
+              <h4 className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 mb-2 uppercase tracking-wide">
+                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                {isFr ? "Points forts" : "Strengths"}
+              </h4>
+              <ul className="space-y-1.5">
+                {insights.strengths.map((s, i) => (
+                  <li key={i} className="text-sm text-gray-600 dark:text-gray-400 pl-4 relative before:absolute before:left-0 before:top-2 before:w-1.5 before:h-1.5 before:rounded-full before:bg-emerald-400">{s}</li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Improvements */}
+            <div>
+              <h4 className="flex items-center gap-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400 mb-2 uppercase tracking-wide">
+                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                {isFr ? "Axes d'amélioration" : "Areas to improve"}
+              </h4>
+              <ul className="space-y-1.5">
+                {insights.improvements.map((s, i) => (
+                  <li key={i} className="text-sm text-gray-600 dark:text-gray-400 pl-4 relative before:absolute before:left-0 before:top-2 before:w-1.5 before:h-1.5 before:rounded-full before:bg-amber-400">{s}</li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Next Steps */}
+            <div>
+              <h4 className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 mb-2 uppercase tracking-wide">
+                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clipRule="evenodd" />
+                </svg>
+                {isFr ? "Prochaines actions" : "Next steps"}
+              </h4>
+              <ul className="space-y-1.5">
+                {insights.nextSteps.map((s, i) => (
+                  <li key={i} className="text-sm text-gray-600 dark:text-gray-400 pl-4 relative before:absolute before:left-0 before:top-2 before:w-1.5 before:h-1.5 before:rounded-full before:bg-blue-400">{s}</li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Best performing pattern */}
+            {insights.bestPerformingPattern && (
+              <div className="mt-3 p-3 bg-violet-50/50 dark:bg-violet-500/5 rounded-xl border border-violet-200/30 dark:border-violet-500/15">
+                <p className="text-xs font-medium text-violet-600 dark:text-violet-400 mb-1">
+                  {isFr ? "Ce qui fonctionne le mieux" : "What works best"}
+                </p>
+                <p className="text-sm text-gray-700 dark:text-gray-300">{insights.bestPerformingPattern}</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+// =============================================================================
 // ANALYTICS DASHBOARD PAGE - Enhanced with Charts & Filters
 // =============================================================================
 
@@ -750,6 +945,9 @@ function AnalyticsContent() {
                   <p className="text-xs sm:text-sm text-gray-500 mt-1">{t.analytics.onPostsWithImpressions}</p>
                 </motion.div>
               </div>
+
+              {/* AI Coach Insights */}
+              <AIInsightsPanel posts={filteredPosts} />
 
               {/* Posts List */}
               <div className="mb-6">
