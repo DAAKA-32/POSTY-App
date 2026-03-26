@@ -423,10 +423,10 @@ export const fr = {
     navPricing: "Tarifs",
     navPricingDesc: "Plans et tarification",
     navLogin: "Se connecter",
-    navSignup: "Essai gratuit",
+    navSignup: "Commencer",
     navStartFree: "Commencer gratuitement",
-    navTrial: "Essai gratuit 7 jours",
-    navCancelAnytime: "Annulation à tout moment",
+    navTrial: "Plan Free disponible",
+    navCancelAnytime: "Sans engagement",
     navCloseMenu: "Fermer le menu",
     navOpenMenu: "Ouvrir le menu",
 
@@ -443,8 +443,8 @@ export const fr = {
     heroSubtitleBold2: "votre audience et votre marché",
     heroCTAPrimary: "Commencer gratuitement",
     heroCTASecondary: "Voir Posty en action",
-    heroTrial: "Essai gratuit 7 jours",
-    heroGuarantee: "Satisfait ou remboursé 7j",
+    heroTrial: "Plan Free sans limite de temps",
+    heroGuarantee: "Sans engagement",
     heroReady: "Prêt en 2 minutes",
     heroFirstPost: "Premier post en 30 sec",
     heroImgPhone: "Posty sur iPhone",
@@ -484,7 +484,7 @@ export const fr = {
     demoPostReady: "Votre premier post LinkedIn est prêt",
     demoPostReadyDesc: "Créez votre compte pour le publier et en générer un chaque jour.",
     demoViewPost: "Voir mon post",
-    demoPublishFirst: "Publier mon premier post — 7 jours gratuits",
+    demoPublishFirst: "Publier mon premier post — C'est gratuit",
     demoInputPlaceholder: "Quel client voulez-vous attirer ?",
     demoInputExample: "Ex : Je veux attirer des dirigeants SaaS vers mon offre de consulting...",
     demoWriting: "Écrit...",
@@ -636,7 +636,7 @@ export const fr = {
     beforeAfterFrequency: "Fréquence",
     beforeAfterTestimonial: "LinkedIn est devenu mon premier canal d'acquisition.",
     beforeAfterCTA: "Rejoignez les professionnels qui signent des clients chaque mois grâce à LinkedIn",
-    beforeAfterCTAButton: "Commencer mon essai gratuit",
+    beforeAfterCTAButton: "Commencer gratuitement",
 
     // Founders section
     foundersQuote: "LinkedIn est le levier de croissance le plus sous-exploité du B2B. Nous avons créé Posty parce que chaque entrepreneur mérite de signer des clients grâce à ses posts — sans y passer des heures.",
@@ -677,11 +677,11 @@ export const fr = {
     testimonialName: "Marie L.",
     testimonialRole: "Marketing Manager",
     startFree: "Essayer gratuitement",
-    startFreeDesc: "Essayez Posty gratuitement pendant 7 jours. Sans engagement.",
-    startFreeDescFull: "Commencez votre essai gratuit de 7 jours. Annulez à tout moment.",
+    startFreeDesc: "Essayez Posty gratuitement. Sans engagement.",
+    startFreeDescFull: "Commencez gratuitement avec le plan Free. Sans engagement.",
     viewPlans: "Voir les offres",
-    noCardRequired: "Essai gratuit 7 jours",
-    noCardRequiredFull: "Essai gratuit 7 jours, annulation à tout moment",
+    noCardRequired: "Plan Free disponible",
+    noCardRequiredFull: "Plan Free disponible, sans engagement",
     privateData: "Données sécurisées",
     online: "Prêt à générer",
     postAboutLeadership: "Je veux un post sur le leadership",
@@ -704,14 +704,14 @@ export const fr = {
     howItWorksStep3: "Choisissez et publiez",
     inSeconds: "Posts créés en quelques secondes",
     storytellingBusiness: "Storytelling & Business",
-    freePercent: "Essai gratuit 7 jours",
+    freePercent: "Plan Free disponible",
 
     // Pricing section header
     pricingHeadline1: "Le prix d'un café par jour.",
     pricingHeadline2: "Le retour d'un commercial à plein temps.",
     pricingDescription: "Un seul client signé via LinkedIn rembourse votre année entière. Quel plan correspond à vos ambitions ?",
     pricingSavingsLabel: "2 mois offerts",
-    pricingTrialIncluded: "Essai gratuit inclus · Sans engagement",
+    pricingTrialIncluded: "Plan Free inclus · Sans engagement",
 
     // FAQ section
     faqBadge: "Questions fréquentes",
@@ -845,7 +845,7 @@ export const fr = {
     pricingBadgeSecure: "Paiement sécurisé",
     pricingBadgeNoCommitment: "Sans engagement",
     pricingBadgeSupport: "Support réactif",
-    pricingBadgeGuarantee: "Satisfait ou remboursé {days}j",
+    pricingBadgeGuarantee: "Sans engagement",
 
     // Use cases section
     useCasesMainTitle: "POSTY pour",
@@ -1817,8 +1817,8 @@ export const fr = {
     subtitle: "Tout ce que vous devez savoir sur Posty",
 
     // Question 1 - Free/pricing
-    q1: "Posty propose-t-il un essai gratuit ?",
-    a1: "Oui, Posty propose un essai gratuit de 7 jours pour le plan Pro (3 jours pour Max). Une carte bancaire est requise pour activer l'essai. Vous pouvez annuler à tout moment pendant la période d'essai sans être débité. Après l'essai, vous bénéficiez d'une garantie satisfait ou remboursé de 7 jours.",
+    q1: "Posty est-il gratuit ?",
+    a1: "Oui, Posty propose un plan Free qui vous permet de tester l'outil sans limite de temps. Pour accéder à toutes les fonctionnalités, vous pouvez passer au plan Pro ou Max à tout moment. Sans engagement.",
 
     // Question 2 - Core feature differentiation
     q2: "Quelle est la différence entre les versions Storytelling et Business ?",
@@ -1862,7 +1862,7 @@ export const fr = {
     homeTitle: "Posty - Générateur de Posts LinkedIn IA | Créez du Contenu Impactant",
     homeDescription: "Générez des posts LinkedIn percutants en quelques secondes avec l'IA. Posty crée 2 versions (Storytelling & Business) pour chaque idée. Essayez gratuitement.",
     pricingTitle: "Tarifs Posty - Plans Pro et Max | Générateur LinkedIn IA",
-    pricingDescription: "Découvrez nos offres Posty : Pro et Max. Générez des posts LinkedIn professionnels avec l'IA. Essai gratuit 7 jours, sans engagement.",
+    pricingDescription: "Découvrez nos offres Posty : Free, Pro et Max. Générez des posts LinkedIn professionnels avec l'IA. Plan gratuit disponible, sans engagement.",
   },
 
   // E-E-A-T: Trust Signals
@@ -2038,7 +2038,7 @@ export const fr = {
     feature7: "Personnalisation avancée du style",
 
     // Plan details
-    freeTrialDetails: "Essayez Posty gratuitement pendant 7 jours avec toutes les fonctionnalités Pro.",
+    freeTrialDetails: "Essayez Posty gratuitement avec le plan Free. Passez à Pro à tout moment.",
     proDetails: "Pour les créateurs réguliers qui veulent développer leur présence LinkedIn.",
     maxDetails: "Pour les professionnels exigeants qui publient intensivement.",
 
@@ -2086,7 +2086,7 @@ export const fr = {
 
     // Value Reminders (Soft, not aggressive)
     proAdvantage: "Avantage Pro",
-    trialReminder: "Commencez votre essai gratuit de 7 jours",
+    trialReminder: "Passez à Pro pour débloquer toutes les fonctionnalités",
     proUserBenefit: "Générations illimitées actives",
 
     // Soft Scarcity (Honest, not manipulative)
@@ -2363,7 +2363,7 @@ export const fr = {
     subscriptionRequired: "Abonnement requis",
     trialExpired: "Essai terminé",
     upgradeNeeded: "Mise à niveau nécessaire",
-    subscriptionRequiredDesc: "Un abonnement actif est nécessaire pour accéder à cette fonctionnalité. Commencez votre essai gratuit dès maintenant !",
+    subscriptionRequiredDesc: "Un abonnement actif est nécessaire pour accéder à cette fonctionnalité. Passez au plan Pro ou Max dès maintenant !",
     trialExpiredDesc: "Votre période d'essai est terminée. Choisissez un plan pour continuer à profiter de Posty.",
     upgradeNeededDesc: "Cette fonctionnalité nécessite un abonnement premium.",
     monthsFree: "2 mois offerts",

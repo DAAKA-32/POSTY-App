@@ -129,13 +129,13 @@ export function getLocalizedMetadata(
       fr: {
         title: "Tarifs POSTY - Plans Pro et Max | Générateur LinkedIn IA",
         description:
-          "Découvrez nos offres POSTY : Pro et Max. Générez des posts LinkedIn professionnels avec l'IA. Essai gratuit 7 jours, sans engagement.",
+          "Découvrez nos offres POSTY : Free, Pro et Max. Générez des posts LinkedIn professionnels avec l'IA. Plan gratuit disponible, sans engagement.",
         keywords: ["tarifs POSTY", "prix générateur LinkedIn", "abonnement LinkedIn IA"],
       },
       en: {
         title: "POSTY Pricing - Pro & Max Plans | AI LinkedIn Generator",
         description:
-          "Explore POSTY plans: Pro and Max. Create professional LinkedIn posts with AI. Free 7-day trial, no commitment required.",
+          "Explore POSTY plans: Free, Pro and Max. Create professional LinkedIn posts with AI. Free plan available, no commitment.",
         keywords: ["POSTY pricing", "LinkedIn generator price", "LinkedIn AI subscription"],
       },
     },
@@ -156,13 +156,13 @@ export function getLocalizedMetadata(
         title: "Inscription Gratuite | POSTY",
         description:
           "Créez votre compte POSTY gratuitement et commencez à générer des posts LinkedIn impactants avec l'IA.",
-        keywords: ["inscription POSTY", "créer compte", "essai gratuit"],
+        keywords: ["inscription POSTY", "créer compte", "LinkedIn IA gratuit"],
       },
       en: {
         title: "Free Sign Up | POSTY",
         description:
           "Create your free POSTY account and start generating impactful LinkedIn posts with AI.",
-        keywords: ["POSTY signup", "create account", "free trial"],
+        keywords: ["POSTY signup", "create account", "free LinkedIn AI"],
       },
     },
   };

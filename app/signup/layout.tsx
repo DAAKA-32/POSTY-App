@@ -6,7 +6,7 @@ const baseUrl =
 export const metadata: Metadata = {
   title: "Inscription Gratuite",
   description:
-    "Créez votre compte Posty gratuitement. Automatisez votre LinkedIn et générez des prospects qualifiés avec l'IA. Essai gratuit 7 jours.",
+    "Créez votre compte Posty gratuitement. Automatisez votre LinkedIn et générez des prospects qualifiés avec l'IA. Plan gratuit disponible.",
   robots: {
     index: true,
     follow: true,

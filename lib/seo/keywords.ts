@@ -212,13 +212,13 @@ export const metaTemplates = {
     fr: {
       title: "POSTY - Générateur de Posts LinkedIn IA | {keyword}",
       description:
-        "{keyword} en quelques secondes. POSTY crée 2 versions uniques (Storytelling & Business) pour chaque idée. Essai gratuit 7 jours.",
+        "{keyword} en quelques secondes. POSTY crée 2 versions uniques (Storytelling & Business) pour chaque idée. Plan gratuit disponible.",
       keywords: ["Créez des posts LinkedIn percutants", "Générez du contenu LinkedIn professionnel"],
     },
     en: {
       title: "POSTY - AI LinkedIn Post Generator | {keyword}",
       description:
-        "{keyword} in seconds. POSTY creates 2 unique versions (Storytelling & Business) for every idea. Free 7-day trial.",
+        "{keyword} in seconds. POSTY creates 2 unique versions (Storytelling & Business) for every idea. Start free today.",
       keywords: ["Create high-performing LinkedIn posts", "Generate professional LinkedIn content"],
     },
   },

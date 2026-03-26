@@ -54,7 +54,7 @@ export const metadata: Metadata = {
     template: "%s | Posty AI",
   },
   description:
-    "Create high-performing LinkedIn posts in seconds with AI. Posty generates ready-to-publish content tailored to your audience. Free 7-day trial.",
+    "Create high-performing LinkedIn posts in seconds with AI. Posty generates ready-to-publish content tailored to your audience. Start free today.",
   keywords: [
     "Posty",
     "Posty AI",
@@ -131,7 +131,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Posty AI – Turn LinkedIn posts into clients with AI",
     description:
-      "Create high-performing LinkedIn posts in seconds with AI. Free 7-day trial.",
+      "Create high-performing LinkedIn posts in seconds with AI. Start free today.",
     images: [`${siteConfig.url}/og-image.jpg`],
     creator: "@posty_app",
   },

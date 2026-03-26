@@ -118,7 +118,7 @@ export const localizedPageSeo = {
     fr: {
       title: "Posty AI – Attirez plus de prospects avec l'intelligence artificielle",
       description:
-        "Automatisez votre présence LinkedIn et attirez des prospects qualifiés grâce à l'IA. Créez des posts professionnels percutants en quelques secondes. Essai gratuit.",
+        "Automatisez votre présence LinkedIn et attirez des prospects qualifiés grâce à l'IA. Créez des posts professionnels percutants en quelques secondes. Plan gratuit disponible.",
       keywords: [
         "Posty",
         "Posty AI",
@@ -133,7 +133,7 @@ export const localizedPageSeo = {
     en: {
       title: "Posty AI – Generate More LinkedIn Leads with Artificial Intelligence",
       description:
-        "Automate your LinkedIn presence and attract qualified prospects with AI. Create professional posts in seconds. Free trial included.",
+        "Automate your LinkedIn presence and attract qualified prospects with AI. Create professional posts in seconds. Free plan available.",
       keywords: [
         "Posty",
         "Posty AI",
@@ -150,7 +150,7 @@ export const localizedPageSeo = {
     fr: {
       title: "Tarifs Posty - Plans Pro et Max | Automatisation LinkedIn IA",
       description:
-        "Découvrez les offres Posty : Pro et Max. Automatisez LinkedIn et générez des prospects qualifiés avec l'IA. Essai gratuit 7 jours.",
+        "Découvrez les offres Posty : Free, Pro et Max. Automatisez LinkedIn et générez des prospects qualifiés avec l'IA. Plan gratuit disponible.",
       keywords: [
         "tarifs Posty",
         "prix automatisation LinkedIn",
@@ -162,12 +162,12 @@ export const localizedPageSeo = {
     en: {
       title: "Posty Pricing - Pro & Max Plans | LinkedIn AI Automation",
       description:
-        "Explore Posty plans: Pro and Max. Automate LinkedIn and generate qualified leads with AI. 7-day free trial included.",
+        "Explore Posty plans: Free, Pro and Max. Automate LinkedIn and generate qualified leads with AI. Free plan available.",
       keywords: [
         "Posty pricing",
         "LinkedIn automation price",
         "LinkedIn AI subscription",
-        "Posty trial",
+        "Posty free plan",
         "Posty Pro plan",
       ],
     },
@@ -190,14 +190,14 @@ export const localizedPageSeo = {
     fr: {
       title: "Inscription Gratuite | Posty - Automatisation LinkedIn IA",
       description:
-        "Créez votre compte Posty et automatisez votre LinkedIn. Générez des prospects qualifiés avec l'IA. Essai gratuit 7 jours.",
-      keywords: ["inscription Posty", "créer compte Posty", "essai gratuit LinkedIn IA"],
+        "Créez votre compte Posty et automatisez votre LinkedIn. Générez des prospects qualifiés avec l'IA. Plan gratuit disponible.",
+      keywords: ["inscription Posty", "créer compte Posty", "LinkedIn IA gratuit"],
     },
     en: {
       title: "Free Sign Up | Posty - LinkedIn AI Automation",
       description:
         "Create your free Posty account and start automating LinkedIn. Generate qualified leads with AI.",
-      keywords: ["Posty signup", "create Posty account", "free trial LinkedIn AI"],
+      keywords: ["Posty signup", "create Posty account", "free LinkedIn AI"],
     },
   },
 };
@@ -275,7 +275,7 @@ export const pageSeo = {
   home: {
     title: "Posty AI – Attirez plus de prospects avec l'intelligence artificielle",
     description:
-      "Automatisez votre présence LinkedIn et attirez des prospects qualifiés grâce à l'IA. Créez des posts professionnels percutants en quelques secondes. Essai gratuit.",
+      "Automatisez votre présence LinkedIn et attirez des prospects qualifiés grâce à l'IA. Créez des posts professionnels percutants en quelques secondes. Plan gratuit disponible.",
     keywords: [
       "Posty",
       "Posty AI",
@@ -286,9 +286,9 @@ export const pageSeo = {
     ],
   },
   pricing: {
-    title: "Tarifs Posty - Plans Pro et Max | Automatisation LinkedIn IA",
+    title: "Tarifs Posty - Plans Free, Pro et Max | Automatisation LinkedIn IA",
     description:
-      "Découvrez les offres Posty : Pro et Max. Automatisez LinkedIn et générez des prospects qualifiés avec l'IA. Essai gratuit 7 jours.",
+      "Découvrez les offres Posty : Free, Pro et Max. Automatisez LinkedIn et générez des prospects qualifiés avec l'IA. Plan gratuit disponible.",
     keywords: [
       "tarifs Posty",
       "prix automatisation LinkedIn",

@@ -786,7 +786,7 @@ export const postyFaqData = {
     {
       question: "Posty est-il gratuit ?",
       answer:
-        "Posty propose un essai gratuit de 7 jours pour le plan Pro. Ensuite, choisissez entre le plan Pro (12,90€/mois) et le plan Max (19,90€/mois). Garantie satisfait ou remboursé 7 jours.",
+        "Posty propose un plan Free sans limite de temps. Pour accéder à toutes les fonctionnalités, choisissez entre le plan Pro (12,90€/mois) et le plan Max (19,90€/mois). Sans engagement.",
     },
     {
       question: "Puis-je modifier les posts générés ?",
@@ -811,9 +811,9 @@ export const postyFaqData = {
         "Posty uses artificial intelligence to generate professional LinkedIn posts. Simply enter your idea or topic, and AI instantly creates 2 versions: an emotional Storytelling version and a factual Business version.",
     },
     {
-      question: "Does Posty offer a free trial?",
+      question: "Is Posty free?",
       answer:
-        "Yes, Posty offers a 7-day free trial with full access to Pro features. A credit card is required to start the trial. You can cancel anytime during the trial period without being charged.",
+        "Yes, Posty offers a Free plan with no time limit. To unlock all features, upgrade to Pro or Max at any time. No commitment required.",
     },
     {
       question: "Can I edit the generated posts?",

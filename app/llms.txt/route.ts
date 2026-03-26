@@ -22,7 +22,7 @@ POSTY helps professionals, entrepreneurs, and content creators build their perso
 - **AI-Powered**: Uses advanced language models for natural, engaging content
 - **LinkedIn Optimized**: Posts are structured for maximum algorithm visibility
 - **Bilingual**: Supports French and English (US)
-- **Free Trial**: 7-day free trial with full Pro features
+- **Free Plan**: Free plan available with no time limit
 
 ### Target Audience
 - Marketing professionals
@@ -36,8 +36,9 @@ POSTY helps professionals, entrepreneurs, and content creators build their perso
 
 | Plan | Price | Features |
 |------|-------|----------|
-| Pro | 9.99€/month | Unlimited posts, priority support, 7-day free trial |
-| Max | 19.99€/month | Unlimited posts, advanced features, API access, 7-day free trial |
+| Free | 0€/month | Limited posts, basic features |
+| Pro | 9.99€/month | Unlimited posts, priority support |
+| Max | 19.99€/month | Unlimited posts, advanced features, API access |
 
 ## Important Pages
 

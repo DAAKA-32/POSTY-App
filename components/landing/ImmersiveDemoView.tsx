@@ -388,7 +388,7 @@ export default function ImmersiveDemoView({
                               </svg>
                             </Link>
                             <p className={`${theme.textMuted} text-xs mt-3`}>
-                              Essai gratuit 7 jours • Annulation à tout moment
+                              Plan Free disponible • Sans engagement
                             </p>
                           </div>
                         </div>

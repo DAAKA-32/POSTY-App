@@ -7,7 +7,7 @@ const baseUrl =
 export const metadata: Metadata = {
   title: "Tarifs - Plans Pro et Max",
   description:
-    "Découvrez les offres Posty : Pro à 12,90€/mois ou Max à 19,90€/mois. Automatisez LinkedIn et générez des prospects avec l'IA. Essai gratuit 7 jours.",
+    "Découvrez les offres Posty : Pro à 12,90€/mois ou Max à 19,90€/mois. Automatisez LinkedIn et générez des prospects avec l'IA. Plan gratuit disponible.",
   robots: {
     index: true,
     follow: true,

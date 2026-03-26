@@ -424,8 +424,8 @@ export const en = {
     navLogin: "Log in",
     navSignup: "Start free",
     navStartFree: "Start for free",
-    navTrial: "Free 7-day trial",
-    navCancelAnytime: "Cancel anytime",
+    navTrial: "Free plan available",
+    navCancelAnytime: "No commitment",
     navCloseMenu: "Close menu",
     navOpenMenu: "Open menu",
 
@@ -442,8 +442,8 @@ export const en = {
     heroSubtitleBold2: "your audience and your market",
     heroCTAPrimary: "Start for free",
     heroCTASecondary: "See Posty in action",
-    heroTrial: "Free 7-day trial",
-    heroGuarantee: "7-day money-back guarantee",
+    heroTrial: "Free plan, no time limit",
+    heroGuarantee: "No commitment",
     heroReady: "Ready in 2 minutes",
     heroFirstPost: "First post in 30 sec",
     heroImgPhone: "Posty on iPhone",
@@ -483,7 +483,7 @@ export const en = {
     demoPostReady: "Your first LinkedIn post is ready",
     demoPostReadyDesc: "Create your account to publish it and generate one every day.",
     demoViewPost: "View my post",
-    demoPublishFirst: "Publish my first post — 7 days free",
+    demoPublishFirst: "Publish my first post — It's free",
     demoInputPlaceholder: "What client do you want to attract?",
     demoInputExample: "E.g.: I want to attract SaaS executives to my consulting offer...",
     demoWriting: "Writing...",
@@ -635,7 +635,7 @@ export const en = {
     beforeAfterFrequency: "Frequency",
     beforeAfterTestimonial: "LinkedIn has become my #1 acquisition channel.",
     beforeAfterCTA: "Join the professionals who close clients every month thanks to LinkedIn",
-    beforeAfterCTAButton: "Start my free trial",
+    beforeAfterCTAButton: "Start for free",
 
     // Founders section
     foundersQuote: "LinkedIn is the most underused growth lever in B2B. We built Posty because every entrepreneur deserves to close clients from their posts — without spending hours on it.",
@@ -676,11 +676,11 @@ export const en = {
     testimonialName: "Marie L.",
     testimonialRole: "Marketing Manager",
     startFree: "Try for free",
-    startFreeDesc: "Try Posty free for 7 days. No strings attached.",
-    startFreeDescFull: "Start your free 7-day trial. Cancel anytime.",
+    startFreeDesc: "Try Posty for free. No strings attached.",
+    startFreeDescFull: "Start with the Free plan. No commitment.",
     viewPlans: "See pricing",
-    noCardRequired: "Free 7-day trial",
-    noCardRequiredFull: "Free 7-day trial, cancel anytime",
+    noCardRequired: "Free plan available",
+    noCardRequiredFull: "Free plan available, no commitment",
     privateData: "Data secured",
     online: "Ready to generate",
     postAboutLeadership: "I want a post about leadership",
@@ -703,14 +703,14 @@ export const en = {
     howItWorksStep3: "Pick and publish",
     inSeconds: "Posts created in seconds",
     storytellingBusiness: "Storytelling & Business",
-    freePercent: "Free 7-day trial",
+    freePercent: "Free plan available",
 
     // Pricing section header
     pricingHeadline1: "The price of a coffee per day.",
     pricingHeadline2: "The return of a full-time sales rep.",
     pricingDescription: "A single client signed via LinkedIn pays for your entire year. Which plan matches your ambitions?",
     pricingSavingsLabel: "2 months free",
-    pricingTrialIncluded: "Free trial included · No commitment",
+    pricingTrialIncluded: "Free plan included · No commitment",
 
     // FAQ section
     faqBadge: "Frequently asked questions",
@@ -844,7 +844,7 @@ export const en = {
     pricingBadgeSecure: "Secure payment",
     pricingBadgeNoCommitment: "No commitment",
     pricingBadgeSupport: "Responsive support",
-    pricingBadgeGuarantee: "Satisfaction guaranteed {days}d",
+    pricingBadgeGuarantee: "No commitment",
 
     // Use cases section
     useCasesMainTitle: "POSTY for",
@@ -1816,9 +1816,9 @@ export const en = {
     title: "Frequently asked questions",
     subtitle: "Everything you need to know about Posty",
 
-    // Question 1 - Free trial/pricing
-    q1: "Does Posty offer a free trial?",
-    a1: "Yes, Posty offers a free 7-day trial with full access to Pro features. A credit card is required to start the trial. You can cancel anytime during the trial period without being charged.",
+    // Question 1 - Free/pricing
+    q1: "Is Posty free?",
+    a1: "Yes, Posty offers a Free plan that lets you test the tool with no time limit. To unlock all features, you can upgrade to Pro or Max at any time. No commitment.",
 
     // Question 2 - Core feature differentiation
     q2: "What's the difference between Storytelling and Business versions?",
@@ -1862,7 +1862,7 @@ export const en = {
     homeTitle: "Posty - AI LinkedIn Post Generator | Create Engaging Content",
     homeDescription: "Generate high-performing LinkedIn posts in seconds with AI. Posty creates 2 versions (Storytelling & Business) for every idea. Try free today.",
     pricingTitle: "Posty Pricing - Pro & Max Plans | AI LinkedIn Generator",
-    pricingDescription: "Explore Posty plans: Pro and Max. Create professional LinkedIn posts with AI. Free 7-day trial, no commitment required.",
+    pricingDescription: "Explore Posty plans: Free, Pro and Max. Create professional LinkedIn posts with AI. Free plan available, no commitment.",
   },
 
   // E-E-A-T: Trust Signals
@@ -2038,7 +2038,7 @@ export const en = {
     feature7: "Advanced style customization",
 
     // Plan details
-    freeTrialDetails: "Try Posty free for 7 days with full Pro features.",
+    freeTrialDetails: "Try Posty for free with the Free plan. Upgrade anytime.",
     proDetails: "For regular creators who want to grow their LinkedIn presence.",
     maxDetails: "For demanding professionals who publish intensively.",
 
@@ -2086,7 +2086,7 @@ export const en = {
 
     // Value Reminders (Soft, not aggressive)
     proAdvantage: "Pro advantage",
-    trialReminder: "Start your free 7-day trial",
+    trialReminder: "Upgrade to Pro to unlock all features",
     proUserBenefit: "Unlimited generations active",
 
     // Soft Scarcity (Honest, not manipulative)
@@ -2363,7 +2363,7 @@ export const en = {
     subscriptionRequired: "Subscription required",
     trialExpired: "Trial ended",
     upgradeNeeded: "Upgrade needed",
-    subscriptionRequiredDesc: "An active subscription is required to access this feature. Start your free trial now!",
+    subscriptionRequiredDesc: "An active subscription is required to access this feature. Upgrade to Pro or Max now!",
     trialExpiredDesc: "Your trial period has ended. Choose a plan to continue using Posty.",
     upgradeNeededDesc: "This feature requires a premium subscription.",
     monthsFree: "2 months free",

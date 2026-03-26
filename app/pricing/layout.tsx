@@ -6,7 +6,7 @@ const baseUrl =
 export const metadata: Metadata = {
   title: "Tarifs - Plans et Abonnements",
   description:
-    "Découvrez les offres Posty : Pro et Max. Automatisez LinkedIn et générez des prospects qualifiés avec l'IA. Essai gratuit 7 jours.",
+    "Découvrez les offres Posty : Free, Pro et Max. Automatisez LinkedIn et générez des prospects qualifiés avec l'IA. Plan gratuit disponible.",
   robots: {
     index: false,
     follow: false,
