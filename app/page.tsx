@@ -468,6 +468,28 @@ function Navbar() {
               transition={{ delay: 0.35, duration: 0.3 }}
               className="px-4 sm:px-6 pb-4"
             >
+              {/* Language Switcher - Mobile */}
+              <div className="mb-4">
+                <div className="flex flex-wrap justify-center gap-1.5">
+                  {(Object.keys(languageNames) as Language[]).map((code) => (
+                    <button
+                      key={code}
+                      onClick={() => { setLanguage(code); }}
+                      className={`
+                        flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-150
+                        ${language === code
+                          ? "bg-[#F8935D]/10 text-[#F8935D] border border-[#F8935D]/25"
+                          : "text-gray-500 bg-white/60 border border-gray-200/60 active:bg-gray-100"
+                        }
+                      `}
+                    >
+                      <span className="text-sm">{LANG_FLAGS[code]}</span>
+                      <span>{LANG_SHORT[code]}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent mb-4" />
 
               <div className="space-y-2.5">
