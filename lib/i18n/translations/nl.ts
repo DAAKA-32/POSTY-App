@@ -2455,7 +2455,7 @@ export const nl = {
       "Leg personal branding uit...",
       "LinkedIn-trends in 2026?",
     ],
-    placeholderFixed: "Voer je tekst in voor je bericht",
+    placeholderFixed: "Beschrijf je idee...",
     placeholderGeneralFixed: "Stel hier je vraag...",
     speakNow: "🎤 Spreek nu...",
     processingMessage: "Je bericht wordt verwerkt...",

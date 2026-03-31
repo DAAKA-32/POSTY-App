@@ -209,6 +209,12 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
   // Auto-resize textarea with RAF for smooth updates - intelligent shrinking
   useEffect(() => {
     if (textareaRef.current) {
+      // When empty, always use minHeight — prevents placeholder text from inflating the textarea
+      if (!message) {
+        textareaRef.current.style.height = `${effectiveMinHeight}px`;
+        return;
+      }
+
       // Use requestAnimationFrame to prevent layout thrashing
       requestAnimationFrame(() => {
         if (textareaRef.current) {
@@ -440,7 +446,7 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
               hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-500
               ${enableFileAttachment ? "pl-14" : "pl-5"}
               ${enableVoiceRecording ? "text-base py-4 pr-28" : "text-base py-4 pr-16"}
-              ${isMobile ? "[&::placeholder]:whitespace-nowrap [&::placeholder]:overflow-hidden [&::placeholder]:text-[clamp(11px,3.5vw,16px)]" : ""}
+              ${isMobile ? "[&::placeholder]:whitespace-nowrap [&::placeholder]:overflow-hidden [&::placeholder]:text-ellipsis" : ""}
             `}
             style={{
               minHeight: `${effectiveMinHeight}px`,
@@ -511,6 +517,33 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
                 className="hidden"
                 aria-hidden="true"
               />
+            </div>
+          )}
+
+          {/* Character counter — inside input box, always visible on mobile */}
+          {showCharacterCount && (
+            <div
+              className={`
+                absolute bottom-1 text-[11px] font-medium pointer-events-none
+                transition-colors duration-200
+                ${enableFileAttachment ? "left-14" : "left-4"}
+                ${isOverLimit
+                  ? "text-red-500"
+                  : isNearLimit
+                  ? "text-amber-500"
+                  : "text-gray-300 dark:text-gray-600"
+                }
+              `}
+            >
+              <span className={isOverLimit ? "font-bold" : ""}>
+                {currentLength.toLocaleString("fr-FR")}
+              </span>
+              <span>/{maxCharacters.toLocaleString("fr-FR")}</span>
+              {isOverLimit && (
+                <span className="ml-1 text-red-500 font-bold">
+                  (+{(currentLength - maxCharacters).toLocaleString("fr-FR")})
+                </span>
+              )}
             </div>
           )}
 
@@ -729,10 +762,9 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
         )}
       </AnimatePresence>
 
-      {/* Helper text + character counter below input */}
-      <div className="relative flex items-center justify-center mt-2 px-1">
-        {/* Centered instruction or limit message */}
-        {showHelperText && (
+      {/* Helper text below input */}
+      {showHelperText && (
+        <div className="flex items-center justify-center mt-2 px-1">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -763,39 +795,8 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
               </span>
             )}
           </motion.div>
-        )}
-
-        {/* Character counter - absolute right so it doesn't push the centered text */}
-        {showCharacterCount && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className={`
-              absolute right-1 text-xs font-medium
-              transition-colors duration-200
-              ${isOverLimit
-                ? "text-red-500"
-                : isNearLimit
-                ? "text-amber-500"
-                : "text-gray-400 dark:text-gray-500"
-              }
-            `}
-          >
-            <span className={isOverLimit ? "font-bold" : ""}>
-              {currentLength.toLocaleString("fr-FR")}
-            </span>
-            <span className="text-gray-400 dark:text-gray-500">
-              /{maxCharacters.toLocaleString("fr-FR")}
-            </span>
-            {isOverLimit && (
-              <span className="ml-1.5 text-red-500">
-                (+{(currentLength - maxCharacters).toLocaleString("fr-FR")})
-              </span>
-            )}
-          </motion.div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Prompt Limit Modal */}
       <PromptLimitModal

@@ -13,7 +13,6 @@ import { useLinkedIn } from "@/contexts/LinkedInContext";
 import { useFacebook } from "@/contexts/FacebookContext";
 import { useThreads } from "@/contexts/ThreadsContext";
 import SlideMenu from "./SlideMenu";
-import BottomNavbar from "./BottomNavbar";
 import ChatHistoryModal from "./ChatHistoryModal";
 import ProfileMenu from "./ProfileMenu";
 import ConversationOptionsMenu from "@/components/conversation/ConversationOptionsMenu";
@@ -272,8 +271,6 @@ export default function MainLayout({
   // Pages where we should NOT load conversations (subscription page)
   const isSubscriptionPage = pathname === "/subscription" || pathname === "/pricing";
 
-  // Chat pages where BottomNavbar is hidden (has fixed input area instead)
-  const isChatPage = pathname === "/app" || pathname.startsWith("/app/c/") || pathname === "/chat";
 
   // Proactive token expiration notification (once per session)
   useEffect(() => {
@@ -1139,7 +1136,7 @@ export default function MainLayout({
         <UsageBanner className="px-3 sm:px-4 pt-2" />
 
         {/* Page Content - No scroll on mobile (children handle scroll), scroll on desktop */}
-        <AnimatedPageWrapper delay={0.2} className={`flex-1 overflow-hidden lg:overflow-y-auto lg:overflow-x-hidden lg:overscroll-contain ${isChatPage ? '' : 'bottom-nav-spacer'}`}>
+        <AnimatedPageWrapper delay={0.2} className="flex-1 overflow-hidden lg:overflow-y-auto lg:overflow-x-hidden lg:overscroll-contain">
           {children}
         </AnimatedPageWrapper>
 
@@ -1172,9 +1169,6 @@ export default function MainLayout({
         post={postToDelete}
         onConfirm={handleDeleteConfirm}
       />
-
-      {/* Mobile bottom navigation bar */}
-      <BottomNavbar />
     </div>
   );
 }

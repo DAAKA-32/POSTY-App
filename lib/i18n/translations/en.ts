@@ -2456,7 +2456,7 @@ export const en = {
       "Explain personal branding...",
       "LinkedIn trends in 2026?",
     ],
-    placeholderFixed: "Enter your text for your post",
+    placeholderFixed: "Describe your idea...",
     placeholderGeneralFixed: "Ask your question here...",
     speakNow: "🎤 Speak now...",
     processingMessage: "Processing your message...",

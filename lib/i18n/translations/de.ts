@@ -2455,7 +2455,7 @@ export const de = {
       "Personal Branding erklären...",
       "LinkedIn-Trends 2026?",
     ],
-    placeholderFixed: "Geben Sie Ihren Text für Ihren Beitrag ein",
+    placeholderFixed: "Ihre Idee beschreiben...",
     placeholderGeneralFixed: "Stellen Sie hier Ihre Frage...",
     speakNow: "Jetzt sprechen...",
     processingMessage: "Ihre Nachricht wird verarbeitet...",

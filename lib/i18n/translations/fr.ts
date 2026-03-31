@@ -2456,7 +2456,7 @@ export const fr = {
       "Explique-moi le personal branding...",
       "Quelles tendances LinkedIn en 2026 ?",
     ],
-    placeholderFixed: "Saisissez votre texte pour votre post",
+    placeholderFixed: "Décrivez votre idée...",
     placeholderGeneralFixed: "Posez votre question ici...",
     speakNow: "🎤 Parlez maintenant...",
     processingMessage: "Traitement de votre message...",

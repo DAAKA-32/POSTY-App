@@ -6971,14 +6971,3 @@ vercel-live-feedback {
   position: absolute !important;
   z-index: -1 !important;
 }
-
-/* =============================================================================
-   BOTTOM NAVBAR SPACER
-   Pages that show the mobile bottom navbar need extra bottom padding
-   so content isn't hidden behind the fixed navbar (h-16 = 64px + safe area).
-   ============================================================================= */
-@media (max-width: 1023px) {
-  .bottom-nav-spacer {
-    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
-  }
-}

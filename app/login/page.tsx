@@ -81,13 +81,22 @@ export default function LoginPage() {
   // Read ?mode=signup from URL to open signup form directly
   const initialMode = searchParams.get("mode") === "signup" ? "signup" : "login";
 
-  // Force light mode on login page
+  // Force light mode + enable scroll on login page
   useEffect(() => {
     const root = document.documentElement;
     root.classList.remove("dark");
     root.classList.add("light");
     root.style.colorScheme = "light";
     root.setAttribute("data-theme", "light");
+
+    root.classList.add("login-scroll-enabled");
+    document.body.classList.add("login-scroll-enabled");
+    document.body.classList.remove("no-scroll", "scroll-locked", "modal-open");
+
+    return () => {
+      root.classList.remove("login-scroll-enabled");
+      document.body.classList.remove("login-scroll-enabled");
+    };
   }, []);
 
   // Redirect authenticated users based on onboarding status
