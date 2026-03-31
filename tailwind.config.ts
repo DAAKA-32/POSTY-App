@@ -355,6 +355,7 @@ export default {
         "spotlight": "spotlight 2s ease-in-out infinite",
         "marquee": "marquee 30s linear infinite",
         "marquee-reverse": "marquee 30s linear infinite reverse",
+        "marquee-value": "marqueeValue 25s linear infinite",
         "reveal-up": "revealUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards",
         "reveal-left": "revealLeft 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards",
         "blur-in": "blurIn 0.5s ease-out forwards",
@@ -562,6 +563,10 @@ export default {
         marquee: {
           "0%": { transform: "translateX(0%)" },
           "100%": { transform: "translateX(-100%)" },
+        },
+        marqueeValue: {
+          "0%": { transform: "translate3d(0, 0, 0)" },
+          "100%": { transform: "translate3d(-50%, 0, 0)" },
         },
         revealUp: {
           "0%": { opacity: "0", transform: "translateY(30px)" },

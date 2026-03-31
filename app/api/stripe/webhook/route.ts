@@ -337,9 +337,9 @@ export async function POST(request: NextRequest) {
         const userId = subscription.metadata?.userId;
 
         if (userId) {
-          console.log("Trial ending soon (3 days remaining)");
-          // TODO: Send trial ending email notification here
-          // For now, Stripe's built-in trial ending email handles this
+          console.log("Trial ending soon (3 days remaining) for user:", userId);
+          // NOTE: Stripe's built-in "trial will end" email handles this notification.
+          // Custom email implementation intentionally deferred — not needed while Stripe emails are enabled.
         }
         break;
       }

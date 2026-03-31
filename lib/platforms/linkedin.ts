@@ -1,4 +1,5 @@
 import { getAuthHeaders } from "@/lib/api/client";
+import { TOKEN_EXPIRY_BUFFER_MS } from "@/lib/config/platform-constants";
 
 // LinkedIn OAuth 2.0 Configuration and API utilities
 
@@ -253,8 +254,7 @@ export async function postToLinkedInWithVideo(
 // Check if token is expired or about to expire (within 5 minutes)
 export function isTokenExpired(expiresAt: Date): boolean {
   const now = new Date();
-  const fiveMinutesFromNow = new Date(now.getTime() + 5 * 60 * 1000);
-  return expiresAt <= fiveMinutesFromNow;
+  return expiresAt <= new Date(now.getTime() + TOKEN_EXPIRY_BUFFER_MS);
 }
 
 // Generate a random state for OAuth security

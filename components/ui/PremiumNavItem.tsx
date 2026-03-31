@@ -91,30 +91,7 @@ export function CompactNavItem({
   icon,
   label,
   isActive = false,
-  chip,
-  chipCount,
-}: Omit<PremiumNavItemProps, "className" | "onClick">) {
-  const renderChip = () => {
-    switch (chip) {
-      case "pro":
-        return (
-          <span className="absolute -top-1 -right-1 w-2 h-2 bg-gradient-to-r from-primary to-accent rounded-full" />
-        );
-      case "new":
-        return (
-          <span className="absolute -top-1 -right-1 w-2 h-2 bg-accent rounded-full animate-pulse" />
-        );
-      case "count":
-        return chipCount !== undefined && chipCount > 0 ? (
-          <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-            {chipCount > 9 ? "9+" : chipCount}
-          </span>
-        ) : null;
-      default:
-        return null;
-    }
-  };
-
+}: Omit<PremiumNavItemProps, "className" | "onClick" | "chip" | "chipCount">) {
   return (
     <Link
       href={href}
@@ -126,7 +103,6 @@ export function CompactNavItem({
     >
       <span className="relative w-6 h-6">
         {icon}
-        {renderChip()}
       </span>
       <span className="text-[10px] font-medium">{label}</span>
     </Link>

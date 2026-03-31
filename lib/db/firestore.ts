@@ -18,7 +18,7 @@ import {
   DocumentReference,
 } from "firebase/firestore";
 import { db } from "@/lib/db/firebase";
-import { UserProfile, Post, Session, ChatMessage } from "@/types";
+import { UserProfile, Post, Session, ChatMessage, SubscriptionPlan, TwitterConnectionData, TwitterPostData, FacebookConnectionData, ThreadsConnectionData } from "@/types";
 import { PlanType, DAILY_MESSAGE_LIMITS, PLAN_CONFIGS, getFounderOverridePlan } from "@/lib/config/plans";
 
 /**
@@ -1034,8 +1034,6 @@ export async function markLinkedInPostDeleted(postId: string): Promise<void> {
 
 // ============== QUOTA MANAGEMENT ==============
 
-import { SubscriptionPlan } from "@/types";
-
 export interface QuotaInfo {
   plan: SubscriptionPlan | null;
   dailyLimit: number;
@@ -1792,8 +1790,6 @@ export async function searchPosts(
 // Collection: twitterConnections
 // Document ID: userId
 
-import { TwitterConnectionData, TwitterPostData } from "@/types";
-
 export async function saveTwitterConnection(
   userId: string,
   data: {
@@ -1909,8 +1905,6 @@ export async function getTwitterPosts(
 // ============== FACEBOOK CONNECTION MANAGEMENT ==============
 // Collection: facebookConnections
 // Document ID: userId
-
-import { FacebookConnectionData, ThreadsConnectionData } from "@/types";
 
 export async function getFacebookConnection(
   userId: string

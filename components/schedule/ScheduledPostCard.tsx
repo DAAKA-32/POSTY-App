@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { ScheduledPost, ScheduleStatus } from "@/types";
+import { toDate } from "@/lib/utils/timestamp";
 import Button from "@/components/ui/Button";
 import { ConfirmModal } from "@/components/ui/Modal";
 import { triggerHaptic } from "@/hooks/ui/useHapticFeedback";
@@ -134,11 +135,7 @@ export default function ScheduledPostCard({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Parse scheduled date
-  const scheduledDate =
-    post.scheduledAt &&
-    typeof (post.scheduledAt as { toDate?: () => Date }).toDate === "function"
-      ? (post.scheduledAt as { toDate: () => Date }).toDate()
-      : new Date(post.scheduledAt as unknown as string);
+  const scheduledDate = toDate(post.scheduledAt);
 
   const dayName = getDaysFull(t)[scheduledDate.getDay()];
   const day = scheduledDate.getDate();

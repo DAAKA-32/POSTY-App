@@ -11,18 +11,17 @@ import { ko } from "./translations/ko";
 
 export type Language = "fr" | "en" | "es" | "de" | "it" | "pt" | "nl" | "zh" | "ja" | "ko";
 
-// Create a flexible type based on the French structure
-// This allows different string values while maintaining the same keys
-type TranslationStructure = typeof fr;
+// Exact type of the French translation file (canonical structure)
+export type Translations = typeof fr;
 
-export type TranslationKeys = {
-  [K in keyof TranslationStructure]: TranslationStructure[K] extends object
-    ? { [K2 in keyof TranslationStructure[K]]: TranslationStructure[K][K2] extends object
-        ? { [K3 in keyof TranslationStructure[K][K2]]: string }
-        : string
-      }
+// Recursive utility type: preserves key structure, widens all leaf values to string
+type DeepStringify<T> = T extends (infer U)[]
+  ? DeepStringify<U>[]
+  : T extends object
+    ? { [K in keyof T]: DeepStringify<T[K]> }
     : string;
-};
+
+export type TranslationKeys = DeepStringify<typeof fr>;
 
 // Cast to any to avoid strict literal type checking between languages
 export const translations: Record<Language, TranslationKeys> = {

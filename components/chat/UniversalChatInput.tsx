@@ -440,7 +440,7 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
               hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-500
               ${enableFileAttachment ? "pl-14" : "pl-5"}
               ${enableVoiceRecording ? "text-base py-4 pr-28" : "text-base py-4 pr-16"}
-              ${isMobile ? "[&::placeholder]:whitespace-nowrap [&::placeholder]:overflow-hidden [&::placeholder]:text-ellipsis [&::placeholder]:block" : ""}
+              ${isMobile ? "[&::placeholder]:whitespace-nowrap [&::placeholder]:overflow-hidden [&::placeholder]:text-[clamp(11px,3.5vw,16px)]" : ""}
             `}
             style={{
               minHeight: `${effectiveMinHeight}px`,

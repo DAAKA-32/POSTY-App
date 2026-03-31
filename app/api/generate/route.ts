@@ -23,6 +23,7 @@ import {
   incrementDualModeUsageAdmin,
 } from "@/lib/db/firestore-admin";
 import { isAdminInitialized } from "@/lib/db/firebase-admin";
+import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import { getPlanFeatures } from "@/lib/config/plan-features";
 import { planHasFeature, PlanType, getPlanLimits, getMaxTokensForPlan } from "@/lib/config/plans";
 import { SubscriptionPlan, PostInsights } from "@/types";
@@ -734,8 +735,8 @@ STRICT RULES:
       systemPrompt += urlContext;
     }
 
-    // Build messages array (use any[] to support multimodal content parts)
-    const messages: any[] = [
+    // Build messages array
+    const messages: ChatCompletionMessageParam[] = [
       { role: "system", content: systemPrompt },
     ];
 
@@ -792,7 +793,7 @@ STRICT RULES:
     }
 
     // Log estimated token count for monitoring
-    const totalPromptText = messages.map((m: any) => typeof m.content === "string" ? m.content : "").join("");
+    const totalPromptText = messages.map((m) => typeof m.content === "string" ? m.content : "").join("");
     if (process.env.NODE_ENV !== "production") {
       console.log(`[POSTY] Prompt tokens (est.): ~${estimateTokens(totalPromptText)} | Type: ${type} | Profile: ${userProfile ? "yes" : "no"}`);
     }

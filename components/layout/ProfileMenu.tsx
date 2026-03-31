@@ -270,6 +270,7 @@ export default function ProfileMenu({ isCollapsed = false, onNavigate }: Profile
               sizes="40px"
               className="object-cover object-center"
               referrerPolicy="no-referrer"
+              unoptimized
               onError={handleImageError}
             />
           ) : (

@@ -5,6 +5,8 @@
 
 import { adminDb } from "@/lib/db/firebase-admin";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
+import { SubscriptionPlan } from "@/types";
+import { DAILY_MESSAGE_LIMITS, HOURLY_MESSAGE_LIMITS, HOURLY_WINDOW_MS, getFounderOverridePlan, PlanType, PLAN_CONFIGS } from "@/lib/config/plans";
 
 // LinkedIn Connection Data type (matching the client-side type)
 export interface LinkedInConnectionData {
@@ -85,9 +87,6 @@ export async function saveLinkedInPostAdmin(
 }
 
 // ============== QUOTA MANAGEMENT (SERVER-SIDE) ==============
-
-import { SubscriptionPlan } from "@/types";
-import { DAILY_MESSAGE_LIMITS, HOURLY_MESSAGE_LIMITS, HOURLY_WINDOW_MS, getFounderOverridePlan, PlanType, PLAN_CONFIGS } from "@/lib/config/plans";
 
 /**
  * Normalize plan name from Firestore to a valid PlanType.

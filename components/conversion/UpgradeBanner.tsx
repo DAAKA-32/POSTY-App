@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
+import type { Translations } from "@/lib/i18n";
 
 interface UpgradeBannerProps {
   variant?: "subtle" | "standard" | "prominent";
@@ -192,7 +193,7 @@ export function QuotaIndicator({
  * SuccessToast - Branded success message
  * Subtle celebration
  */
-export function getSuccessMessage(type: "generated" | "copied" | "published" | "saved", t: any) {
+export function getSuccessMessage(type: "generated" | "copied" | "published" | "saved", t: Translations) {
   const messages = {
     generated: {
       title: t.conversion?.postGenerated || "Post généré",

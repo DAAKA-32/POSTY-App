@@ -754,6 +754,26 @@ export const zh = {
     howItWorksReadyCTA: "准备好提升您的 LinkedIn 影响力了吗？",
     howItWorksTryFree: "免费试用",
 
+    // AI Experience section
+    aiExpTitle: "您的领英副驾驶，",
+    aiExpTitleAccent: "全天候可用",
+    aiExpSubtitle: "描述您的想法。Posty 生成优化帖子、建议策略并指导您——就像有一位领英专家在您身边。",
+    aiExpFeature1Title: "对话式界面",
+    aiExpFeature1Desc: "只需输入您的想法。AI 理解您的意图，创建适合您目标的内容。",
+    aiExpFeature2Title: "智能指导",
+    aiExpFeature2Desc: "获取个性化反馈：什么有效、如何改进以及如何提升互动率。",
+    aiExpFeature3Title: "随时可用",
+    aiExpFeature3Desc: "无需等待自由职业者或机构。您的 AI 助手在灵感来临时随时准备就绪。",
+    aiExpChatPlaceholder: "描述您的帖子创意...",
+    aiExpChatExample: "写一篇关于 AI 改变2025年招聘的帖子",
+    aiExpChatResponse: "Here are 2 angles for your audience. Version B uses a data hook that gets 3x more reach with decision-makers.",
+    aiExpNotifViews: "+312 profile views",
+    aiExpNotifViewsSub: "From your last post",
+    aiExpNotifDm: "Your post caught my eye. Can we discuss?",
+    aiExpNotifSuccess: "Meeting scheduled",
+    aiExpNotifSuccessDetail: "Marc D. — Tomorrow 14:00",
+    aiExpContextualLabel: "This person signed a client from this post",
+
     // Value block after features
     valueBlockTitle: "自由职业者为什么选择 Posty",
     valueBlockItem1Title: "自动化获客",

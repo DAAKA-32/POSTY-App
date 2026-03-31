@@ -1,5 +1,6 @@
 "use client";
 
+import { toDate } from "@/lib/utils/timestamp";
 import {
   createContext,
   useContext,
@@ -311,13 +312,7 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
       endOfDay.setHours(23, 59, 59, 999);
 
       return scheduledPosts.filter((post) => {
-        const scheduledDate =
-          post.scheduledAt &&
-          typeof (post.scheduledAt as { toDate?: () => Date }).toDate ===
-            "function"
-            ? (post.scheduledAt as { toDate: () => Date }).toDate()
-            : new Date(post.scheduledAt as unknown as string);
-
+        const scheduledDate = toDate(post.scheduledAt);
         return scheduledDate >= startOfDay && scheduledDate <= endOfDay;
       });
     },

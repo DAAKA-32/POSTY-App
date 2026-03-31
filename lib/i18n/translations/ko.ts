@@ -754,6 +754,26 @@ export const ko = {
     howItWorksReadyCTA: "LinkedIn 존재감을 바꿀 준비가 되셨나요?",
     howItWorksTryFree: "무료 체험",
 
+    // AI Experience section
+    aiExpTitle: "당신의 LinkedIn 코파일럿,",
+    aiExpTitleAccent: "24시간 이용 가능",
+    aiExpSubtitle: "아이디어를 설명하세요. Posty가 최적화된 게시물을 생성하고, 전략을 제안하며, 코칭해 줍니다 — LinkedIn 전문가가 곁에 있는 것처럼.",
+    aiExpFeature1Title: "대화형 인터페이스",
+    aiExpFeature1Desc: "아이디어를 입력하기만 하면 됩니다. AI가 의도를 이해하고 목표에 맞는 콘텐츠를 생성합니다.",
+    aiExpFeature2Title: "지능형 코칭",
+    aiExpFeature2Desc: "맞춤형 피드백: 무엇이 효과적인지, 무엇을 개선할지, 참여도를 높이는 방법.",
+    aiExpFeature3Title: "항상 이용 가능",
+    aiExpFeature3Desc: "프리랜서나 에이전시를 기다릴 필요 없습니다. 영감이 올 때 AI 어시스턴트가 준비되어 있습니다.",
+    aiExpChatPlaceholder: "게시물 아이디어를 입력하세요...",
+    aiExpChatExample: "2025년 채용을 변화시키는 AI에 대한 게시물 작성",
+    aiExpChatResponse: "Here are 2 angles for your audience. Version B uses a data hook that gets 3x more reach with decision-makers.",
+    aiExpNotifViews: "+312 profile views",
+    aiExpNotifViewsSub: "From your last post",
+    aiExpNotifDm: "Your post caught my eye. Can we discuss?",
+    aiExpNotifSuccess: "Meeting scheduled",
+    aiExpNotifSuccessDetail: "Marc D. — Tomorrow 14:00",
+    aiExpContextualLabel: "This person signed a client from this post",
+
     // Value block after features
     valueBlockTitle: "프리랜서가 Posty를 선택하는 이유",
     valueBlockItem1Title: "자동화된 영업 개발",

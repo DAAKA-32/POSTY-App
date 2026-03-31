@@ -1,6 +1,7 @@
 "use client";
 
 import { Post } from "@/types";
+import { toDate } from "@/lib/utils/timestamp";
 import ChatMessage from "@/components/chat/ChatMessage";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -25,10 +26,7 @@ export default function HistoryDetailPanel({
 
   const formatDate = (timestamp: { toDate?: () => Date } | Date | null) => {
     if (!timestamp) return "";
-    const date =
-      typeof (timestamp as { toDate?: () => Date }).toDate === "function"
-        ? (timestamp as { toDate: () => Date }).toDate()
-        : new Date(timestamp as Date);
+    const date = toDate(timestamp);
     return new Intl.DateTimeFormat(locale, {
       day: "numeric",
       month: "long",

@@ -754,6 +754,26 @@ export const nl = {
     howItWorksReadyCTA: "Klaar om je LinkedIn-aanwezigheid te transformeren?",
     howItWorksTryFree: "Gratis proberen",
 
+    // AI Experience section
+    aiExpTitle: "Je LinkedIn-copiloot,",
+    aiExpTitleAccent: "24/7 beschikbaar",
+    aiExpSubtitle: "Beschrijf je idee. Posty genereert geoptimaliseerde posts, stelt strategieën voor en coacht je — alsof je een LinkedIn-expert naast je hebt.",
+    aiExpFeature1Title: "Conversatie-interface",
+    aiExpFeature1Desc: "Typ gewoon je idee. De AI begrijpt je intentie en maakt content aangepast aan je doelen.",
+    aiExpFeature2Title: "Intelligente coaching",
+    aiExpFeature2Desc: "Ontvang gepersonaliseerde feedback: wat werkt, wat te verbeteren en hoe je engagement verhoogt.",
+    aiExpFeature3Title: "Altijd beschikbaar",
+    aiExpFeature3Desc: "Geen wachten op freelancers of bureaus. Je AI-assistent is klaar wanneer de inspiratie komt.",
+    aiExpChatPlaceholder: "Beschrijf je post-idee...",
+    aiExpChatExample: "Schrijf een post over AI die recruitment transformeert in 2025",
+    aiExpChatResponse: "Here are 2 angles for your audience. Version B uses a data hook that gets 3x more reach with decision-makers.",
+    aiExpNotifViews: "+312 profile views",
+    aiExpNotifViewsSub: "From your last post",
+    aiExpNotifDm: "Your post caught my eye. Can we discuss?",
+    aiExpNotifSuccess: "Meeting scheduled",
+    aiExpNotifSuccessDetail: "Marc D. — Tomorrow 14:00",
+    aiExpContextualLabel: "This person signed a client from this post",
+
     // Value block after features
     valueBlockTitle: "Waarom freelancers Posty kiezen",
     valueBlockItem1Title: "Geautomatiseerde prospectie",

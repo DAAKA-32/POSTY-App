@@ -12,13 +12,13 @@ const db = admin.firestore();
 const LINKEDIN_CONFIG = {
   clientId: functions.config().linkedin?.client_id || "",
   clientSecret: functions.config().linkedin?.client_secret || "",
-  tokenUrl: "https://www.linkedin.com/oauth/v2/accessToken",
-  apiBaseUrl: "https://api.linkedin.com/v2",
+  tokenUrl: functions.config().linkedin?.token_url || "https://www.linkedin.com/oauth/v2/accessToken",
+  apiBaseUrl: functions.config().linkedin?.api_base_url || "https://api.linkedin.com/v2",
 };
 
-const FACEBOOK_API_URL = "https://graph.facebook.com/v21.0";
+const FACEBOOK_API_URL = functions.config().facebook?.api_url || "https://graph.facebook.com/v21.0";
 
-const THREADS_API_URL = "https://graph.threads.net/v1.0";
+const THREADS_API_URL = functions.config().threads?.api_url || "https://graph.threads.net/v1.0";
 
 const MAX_ATTEMPTS = 3;
 

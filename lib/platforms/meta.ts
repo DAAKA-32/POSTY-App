@@ -1,4 +1,5 @@
 import { getAuthHeaders } from "@/lib/api/client";
+import { TOKEN_EXPIRY_BUFFER_MS } from "@/lib/config/platform-constants";
 
 // Meta (Facebook & Threads) OAuth 2.0 Configuration and API utilities
 // Facebook and Threads use separate OAuth flows but share the same Meta App credentials
@@ -90,8 +91,7 @@ function generateRandomState(): string {
  */
 export function isMetaTokenExpired(expiresAt: Date): boolean {
   const now = new Date();
-  const fiveMinutesFromNow = new Date(now.getTime() + 5 * 60 * 1000);
-  return expiresAt <= fiveMinutesFromNow;
+  return expiresAt <= new Date(now.getTime() + TOKEN_EXPIRY_BUFFER_MS);
 }
 
 // ============== FACEBOOK TYPES ==============

@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useScheduling } from "@/contexts/SchedulingContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { ScheduledPost, ScheduleStatus } from "@/types";
+import { toDate } from "@/lib/utils/timestamp";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import MainLayout from "@/components/layout/MainLayout";
 import Button from "@/components/ui/Button";
@@ -77,11 +78,7 @@ function ScheduleContent() {
     const dateMap = new Map<string, ScheduledPost[]>();
 
     filteredPosts.forEach((post) => {
-      const scheduledDate =
-        post.scheduledAt &&
-        typeof (post.scheduledAt as { toDate?: () => Date }).toDate === "function"
-          ? (post.scheduledAt as { toDate: () => Date }).toDate()
-          : new Date(post.scheduledAt as unknown as string);
+      const scheduledDate = toDate(post.scheduledAt);
 
       const dateKey = scheduledDate.toISOString().split("T")[0];
 
@@ -103,15 +100,7 @@ function ScheduleContent() {
       groups.push({
         date: `${dayName} ${day} ${month}`,
         posts: dateMap.get(key)!.sort((a, b) => {
-          const aDate =
-            typeof (a.scheduledAt as { toDate?: () => Date }).toDate === "function"
-              ? (a.scheduledAt as { toDate: () => Date }).toDate()
-              : new Date(a.scheduledAt as unknown as string);
-          const bDate =
-            typeof (b.scheduledAt as { toDate?: () => Date }).toDate === "function"
-              ? (b.scheduledAt as { toDate: () => Date }).toDate()
-              : new Date(b.scheduledAt as unknown as string);
-          return aDate.getTime() - bDate.getTime();
+          return toDate(a.scheduledAt).getTime() - toDate(b.scheduledAt).getTime();
         }),
       });
     });
@@ -141,12 +130,7 @@ function ScheduleContent() {
       const dateKey = date.toISOString().split("T")[0];
 
       const postsForDay = scheduledPosts.filter((post) => {
-        const scheduledDate =
-          post.scheduledAt &&
-          typeof (post.scheduledAt as { toDate?: () => Date }).toDate === "function"
-            ? (post.scheduledAt as { toDate: () => Date }).toDate()
-            : new Date(post.scheduledAt as unknown as string);
-        return scheduledDate.toISOString().split("T")[0] === dateKey;
+        return toDate(post.scheduledAt).toISOString().split("T")[0] === dateKey;
       });
 
       days.push({ date, posts: postsForDay });
@@ -527,10 +511,7 @@ function ScheduleContent() {
                                   title={post.content}
                                 >
                                   {(() => {
-                                    const time =
-                                      typeof (post.scheduledAt as { toDate?: () => Date }).toDate === "function"
-                                        ? (post.scheduledAt as { toDate: () => Date }).toDate()
-                                        : new Date(post.scheduledAt as unknown as string);
+                                    const time = toDate(post.scheduledAt);
                                     return formatTimeLocale(time.getHours(), time.getMinutes(), t.ui.timeLocale);
                                   })()}
                                 </div>

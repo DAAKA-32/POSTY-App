@@ -192,8 +192,8 @@ function AppContent() {
     aiMode,
   });
 
-  // Navigate to conversation URL after first save — preserves state on refresh
-  const hasRedirectedRef = useRef(false);
+  // Track the last postId we redirected to — prevents duplicate redirects
+  const lastRedirectedPostIdRef = useRef<string | null>(null);
 
   // Reset chat when "Nouveau post" button is clicked (detected via ?new= param)
   const newParam = searchParams.get("new");
@@ -201,18 +201,17 @@ function AppContent() {
   useEffect(() => {
     if (newParam && newParam !== lastNewParamRef.current) {
       lastNewParamRef.current = newParam;
-      // Only reset if there are messages (user already started a conversation)
-      if (messages.length > 0) {
-        reset();
-        hasRedirectedRef.current = false;
-      }
+      // Reset state for the new conversation
+      reset();
+      // Allow redirect after next generation
+      lastRedirectedPostIdRef.current = null;
     }
-  }, [newParam, messages.length, reset]);
+  }, [newParam, reset]);
 
   // Pre-cache the conversation before navigating so the conversation page loads instantly
   useEffect(() => {
-    if (postId && !hasRedirectedRef.current && !isStreaming) {
-      hasRedirectedRef.current = true;
+    if (postId && postId !== lastRedirectedPostIdRef.current && !isStreaming) {
+      lastRedirectedPostIdRef.current = postId;
 
       // Extract response content from messages we already have in memory
       const aiMessages = messages.filter((m) => m.type === "ai");

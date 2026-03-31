@@ -280,7 +280,7 @@ export default function MobileGestureProvider({ children }: MobileGestureProvide
         touch-action: pan-y !important;
         overscroll-behavior-x: none !important;
       }
-      body.sidebar-open *:not(input):not(textarea):not(select):not([contenteditable="true"]) {
+      body.sidebar-open *:not(input):not(textarea):not(select):not([contenteditable="true"]):not(a):not(button):not([role="button"]) {
         touch-action: pan-y !important;
       }
       /* Always allow full touch interactions on form elements */

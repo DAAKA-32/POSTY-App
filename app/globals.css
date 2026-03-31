@@ -41,7 +41,8 @@ body.scroll-locked {
   overflow: hidden !important;
   width: 100% !important;
   height: 100% !important;
-  touch-action: none;
+  /* manipulation (not none) — allows taps/clicks on nav links while blocking zoom/scroll */
+  touch-action: manipulation;
 }
 
 /* Allow scrolling INSIDE modals, bottom sheets, and editors even when body is locked */
@@ -2716,6 +2717,42 @@ a:focus-visible,
   }
 }
 
+@keyframes fadeSlideLeft {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes fadeSlideRight {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes copilotTypingDot {
+  0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+  40% { opacity: 1; transform: scale(1.2); }
+}
+
+@keyframes copilotPulseRing {
+  0% { transform: scale(1); opacity: 0.4; }
+  50% { transform: scale(1.15); opacity: 0.15; }
+  100% { transform: scale(1); opacity: 0.4; }
+}
+
+@keyframes copilotCardFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; max-height: 40px; margin-bottom: 0; }
+  to { opacity: 0; max-height: 0; margin-bottom: -14px; }
+}
+
 @keyframes typing {
   0%, 60%, 100% {
     transform: translateY(0);
@@ -4156,7 +4193,8 @@ html.bottomsheet-open body {
   overflow: hidden;
   position: relative;
   height: 100%;
-  touch-action: none;
+  /* manipulation (not none) — allows taps on buttons/links inside modals */
+  touch-action: manipulation;
 }
 
 /* iOS Modal Container - ensures proper stacking and positioning */
@@ -6932,4 +6970,15 @@ vercel-live-feedback {
   overflow: hidden !important;
   position: absolute !important;
   z-index: -1 !important;
+}
+
+/* =============================================================================
+   BOTTOM NAVBAR SPACER
+   Pages that show the mobile bottom navbar need extra bottom padding
+   so content isn't hidden behind the fixed navbar (h-16 = 64px + safe area).
+   ============================================================================= */
+@media (max-width: 1023px) {
+  .bottom-nav-spacer {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
 }

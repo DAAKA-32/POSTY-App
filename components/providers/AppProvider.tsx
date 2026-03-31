@@ -1,14 +1,32 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { useAppInitialization } from "@/hooks/app/useAppInitialization";
 import SplashScreen from "@/components/ui/SplashScreen";
 import { SidebarProvider } from "@/contexts/SidebarContext";
 import { NavigationStateProvider } from "@/contexts/NavigationStateContext";
 import MobileGestureProvider, { SwipeIndicator } from "./MobileGestureProvider";
+import { forceUnlockScroll } from "@/hooks/ui/useScrollLock";
 
 interface AppProviderProps {
   children: ReactNode;
+}
+
+/**
+ * RouteChangeScrollCleanup - Force-releases stale scroll locks on navigation.
+ * If a modal/sheet locked scroll and the user navigates away before it unlocks,
+ * the lock persists and blocks all interaction. This component fixes that.
+ */
+function RouteChangeScrollCleanup() {
+  const pathname = usePathname();
+
+  useEffect(() => {
+    // On every route change, ensure scroll is not stuck in locked state
+    forceUnlockScroll();
+  }, [pathname]);
+
+  return null;
 }
 
 /**
@@ -28,6 +46,7 @@ export default function AppProvider({ children }: AppProviderProps) {
     <>
       {/* No splash screen for landing/auth pages - instant display */}
       {!isLandingPage && <SplashScreen isLoading={isLoading} />}
+      <RouteChangeScrollCleanup />
       <NavigationStateProvider>
         <SidebarProvider>
           <MobileGestureProvider>

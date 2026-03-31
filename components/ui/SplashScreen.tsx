@@ -60,7 +60,7 @@ export default function SplashScreen({ isLoading, onComplete }: SplashScreenProp
           }}
           className={`fixed inset-0 z-[9999] flex items-center justify-center ${
             isDark ? "bg-[#0B0E11]" : "bg-gradient-to-br from-orange-50 via-white to-amber-50"
-          }`}
+          } ${!isLoading ? "pointer-events-none" : ""}`}
         >
           <div className="flex flex-col items-center gap-6">
             {/* Logo */}

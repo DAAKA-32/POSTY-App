@@ -20,25 +20,23 @@ import { zh } from "@/lib/i18n/translations/zh";
 import { ja } from "@/lib/i18n/translations/ja";
 import { ko } from "@/lib/i18n/translations/ko";
 import { useAuth } from "@/contexts/AuthContext";
-import type { Language } from "@/lib/i18n";
-
-type TranslationKeys = typeof fr;
+import type { Language, Translations } from "@/lib/i18n";
 
 const STORAGE_KEY = "posty-language";
 
 const SUPPORTED_LANGUAGES: Language[] = ["en", "fr", "es", "de", "it", "pt", "nl", "zh", "ja", "ko"];
 
-const translationMap: Record<Language, TranslationKeys> = {
-  fr: fr as unknown as TranslationKeys,
-  en: en as unknown as TranslationKeys,
-  es: es as unknown as TranslationKeys,
-  de: de as unknown as TranslationKeys,
-  it: it as unknown as TranslationKeys,
-  pt: pt as unknown as TranslationKeys,
-  nl: nl as unknown as TranslationKeys,
-  zh: zh as unknown as TranslationKeys,
-  ja: ja as unknown as TranslationKeys,
-  ko: ko as unknown as TranslationKeys,
+const translationMap: Record<Language, Translations> = {
+  fr: fr as unknown as Translations,
+  en: en as unknown as Translations,
+  es: es as unknown as Translations,
+  de: de as unknown as Translations,
+  it: it as unknown as Translations,
+  pt: pt as unknown as Translations,
+  nl: nl as unknown as Translations,
+  zh: zh as unknown as Translations,
+  ja: ja as unknown as Translations,
+  ko: ko as unknown as Translations,
 };
 
 function isValidLanguage(lang: string | null): lang is Language {
@@ -56,7 +54,7 @@ function isValidLanguage(lang: string | null): lang is Language {
 
 interface LanguageContextType {
   language: Language;
-  t: TranslationKeys;
+  t: Translations;
   setLanguage: (lang: Language) => void;
 }
 

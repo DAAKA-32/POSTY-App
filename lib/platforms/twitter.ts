@@ -1,4 +1,5 @@
 import { getAuthHeaders } from "@/lib/api/client";
+import { TOKEN_EXPIRY_BUFFER_MS, TWITTER_REFRESH_THRESHOLD_MS } from "@/lib/config/platform-constants";
 
 // Twitter (X) OAuth 2.0 Configuration and API utilities
 // Uses PKCE (Proof Key for Code Exchange) for enhanced security
@@ -261,8 +262,7 @@ export function validateTweetLength(content: string): {
  */
 export function isTokenExpired(expiresAt: Date): boolean {
   const now = new Date();
-  const fiveMinutesFromNow = new Date(now.getTime() + 5 * 60 * 1000);
-  return expiresAt <= fiveMinutesFromNow;
+  return expiresAt <= new Date(now.getTime() + TOKEN_EXPIRY_BUFFER_MS);
 }
 
 /**
@@ -271,8 +271,7 @@ export function isTokenExpired(expiresAt: Date): boolean {
  */
 export function tokenNeedsRefresh(expiresAt: Date): boolean {
   const now = new Date();
-  const thirtyMinutesFromNow = new Date(now.getTime() + 30 * 60 * 1000);
-  return expiresAt <= thirtyMinutesFromNow;
+  return expiresAt <= new Date(now.getTime() + TWITTER_REFRESH_THRESHOLD_MS);
 }
 
 /**

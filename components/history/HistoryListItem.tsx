@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Post } from "@/types";
+import { toDate } from "@/lib/utils/timestamp";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -23,10 +24,7 @@ export default function HistoryListItem({
 
   const formatTime = (timestamp: { toDate?: () => Date } | Date | null): string => {
     if (!timestamp) return "";
-    const date =
-      typeof (timestamp as { toDate?: () => Date }).toDate === "function"
-        ? (timestamp as { toDate: () => Date }).toDate()
-        : new Date(timestamp as Date);
+    const date = toDate(timestamp);
 
     return new Intl.DateTimeFormat(locale, {
       hour: "2-digit",

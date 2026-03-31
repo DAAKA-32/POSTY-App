@@ -8,7 +8,8 @@ import { motion, AnimatePresence, useReducedMotion, useInView, useScroll, useTra
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { languageNames } from "@/lib/i18n";
-import type { Language } from "@/lib/i18n";
+import type { Language, Translations } from "@/lib/i18n";
+import { getAllPlans, getPaidPlans, PlanConfig, GUARANTEE_PERIOD_DAYS } from "@/lib/config/plans";
 
 const LANG_FLAGS: Record<Language, string> = {
   en: "🇺🇸", fr: "🇫🇷", es: "🇪🇸", de: "🇩🇪", it: "🇮🇹",
@@ -18,13 +19,13 @@ const LANG_SHORT: Record<Language, string> = {
   en: "EN", fr: "FR", es: "ES", de: "DE", it: "IT",
   pt: "PT", nl: "NL", zh: "中文", ja: "日本", ko: "한국",
 };
-import { getAllPlans, getPaidPlans, PlanConfig, GUARANTEE_PERIOD_DAYS } from "@/lib/config/plans";
 import BillingToggle from "@/components/ui/BillingToggle";
 import PricingCard from "@/components/pricing/PricingCard";
 import PricingTrustBadges from "@/components/pricing/PricingTrustBadges";
 import { useScrollLock } from "@/hooks/ui/useScrollLock";
 import AnimatedMacBook from "@/components/landing/AnimatedMacBook";
 import AuroraBackground from "@/components/landing/AuroraBackground";
+import { CopilotSection } from "@/components/landing/MockupScreens";
 
 // =============================================================================
 // SCROLL CONTAINER — shared across all landing components in this file
@@ -85,7 +86,7 @@ function HamburgerIcon({ isOpen }: { isOpen: boolean }) {
 }
 
 // Mobile nav link data with icons — function to support i18n
-function getNavLinks(t: any) {
+function getNavLinks(t: Translations) {
   return [
     {
       label: t.landing.navDemo,
@@ -887,7 +888,7 @@ function HeroSection() {
 // State preserved across navigation (localStorage + React state)
 // =============================================================================
 
-function getAllDemoSuggestions(t: any) {
+function getAllDemoSuggestions(t: Translations) {
   return [
     { label: t.landing.demoPrompt1, emoji: "🎯", text: t.landing.demoPrompt1Desc },
     { label: t.landing.demoPrompt2, emoji: "👤", text: t.landing.demoPrompt2Desc },
@@ -2490,7 +2491,7 @@ const audienceAccents = {
   },
 } as const;
 
-function getAudienceProfiles(t: any) {
+function getAudienceProfiles(t: Translations) {
   return [
     {
       title: t.landing.audience1Title,
@@ -2546,272 +2547,304 @@ function getAudienceProfiles(t: any) {
   ];
 }
 
-const AudienceCard = memo(function AudienceCard({ profile, index, skipEntryAnimation = false }: { profile: ReturnType<typeof getAudienceProfiles>[number]; index: number; skipEntryAnimation?: boolean }) {
+const AudienceCard = memo(function AudienceCard({ profile, index }: { profile: ReturnType<typeof getAudienceProfiles>[number]; index: number; skipEntryAnimation?: boolean }) {
   const accent = audienceAccents[profile.accent];
-  const prefersReducedMotion = useReducedMotion();
-  const isMobile = useIsMobile();
-  const cardRef = useRef<HTMLDivElement>(null);
-
-  // 3D perspective tilt — desktop only
-  const mouseX = useMotionValue(0.5);
-  const mouseY = useMotionValue(0.5);
-  const rawRotateX = useTransform(mouseY, [0, 1], [4, -4]);
-  const rawRotateY = useTransform(mouseX, [0, 1], [-4, 4]);
-  const rotateX = useSpring(rawRotateX, { stiffness: 120, damping: 28, restDelta: 0.001 });
-  const rotateY = useSpring(rawRotateY, { stiffness: 120, damping: 28, restDelta: 0.001 });
-
-  // Cursor-tracking spotlight
-  const spotlightX = useMotionValue(50);
-  const spotlightY = useMotionValue(50);
-  const spotlightBg = useMotionTemplate`radial-gradient(350px circle at ${spotlightX}% ${spotlightY}%, rgba(${accent.glowRgb}, 0.08), transparent 60%)`;
-
-  const enableHover = !isMobile && !prefersReducedMotion;
-
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!enableHover) return;
-    const card = cardRef.current;
-    if (!card) return;
-    const rect = card.getBoundingClientRect();
-    const nx = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    const ny = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
-    mouseX.set(nx);
-    mouseY.set(ny);
-    spotlightX.set(nx * 100);
-    spotlightY.set(ny * 100);
-  }, [mouseX, mouseY, spotlightX, spotlightY, enableHover]);
-
-  const handleMouseLeave = useCallback(() => {
-    if (!enableHover) return;
-    mouseX.set(0.5);
-    mouseY.set(0.5);
-    spotlightX.set(50);
-    spotlightY.set(50);
-  }, [mouseX, mouseY, spotlightX, spotlightY, enableHover]);
 
   return (
     <motion.div
-      ref={cardRef}
-      {...(skipEntryAnimation ? {} : {
-        initial: { opacity: 0, y: 20 },
-        whileInView: { opacity: 1, y: 0 },
-        viewport: { once: true, margin: "0px 0px 100px 0px" },
-        transition: { delay: index * 0.03, duration: 0.35, ease: smoothEase },
-      })}
-      onMouseMove={enableHover ? handleMouseMove : undefined}
-      onMouseLeave={enableHover ? handleMouseLeave : undefined}
-      className={`${enableHover ? "group" : ""} relative h-full`}
-      style={enableHover ? { perspective: 1000 } : undefined}
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "0px 0px 80px 0px" }}
+      transition={{ delay: index * 0.08, duration: 0.4, ease: premiumEase }}
+      className="group relative h-full"
     >
-      <motion.div
-        style={enableHover ? { rotateX, rotateY, transformStyle: "preserve-3d" } : undefined}
-        className="relative h-full"
-      >
-        {/* Ambient hover glow */}
-        <div
-          className="absolute -inset-6 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-3xl pointer-events-none"
-          style={{ background: `radial-gradient(400px circle at 50% 30%, rgba(${accent.glowRgb}, 0.15), transparent 70%)` }}
-        />
+      <div className="relative h-full rounded-2xl bg-white border border-gray-200/70 hover:border-gray-300/80 hover:shadow-lg transition-all duration-200 overflow-hidden">
+        {/* Top accent line */}
+        <div className={`h-[2px] bg-gradient-to-r ${accent.gradient} opacity-60`} />
 
-        {/* Card shell */}
-        <div className="relative h-full rounded-2xl overflow-hidden shadow-sm group-hover:shadow-xl transition-shadow duration-300">
-          {/* Gradient border shimmer */}
-          <div className={`absolute inset-0 rounded-2xl bg-gradient-to-b ${accent.gradient} ${enableHover ? "opacity-[0.12] group-hover:opacity-[0.25]" : "opacity-[0.18]"} transition-opacity duration-300`} />
-
-          {/* Cursor spotlight */}
-          <motion.div
-            className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-            style={{ background: spotlightBg }}
-          />
-
-          {/* Inner card */}
-          <div className="relative h-full m-[1px] rounded-[15px] bg-white overflow-hidden">
-            {/* Left accent bar + traveling glow */}
-            <div className={`absolute left-0 top-0 bottom-0 w-[3px] bg-gradient-to-b ${accent.accentBar} ${enableHover ? "opacity-40 group-hover:opacity-90" : "opacity-70"} transition-opacity duration-300`}>
-              <motion.div
-                className="absolute inset-x-0 h-10 blur-sm"
-                style={{ background: `linear-gradient(to bottom, transparent, rgba(${accent.glowRgb}, 0.6), transparent)` }}
-                animate={(prefersReducedMotion || isMobile) ? {} : { top: ["0%", "85%", "0%"] }}
-                transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: index * 0.4 }}
-              />
+        <div className="p-6 sm:p-7">
+          {/* Icon + Title */}
+          <div className="flex items-center gap-3.5 mb-4">
+            <div
+              className={`w-11 h-11 rounded-xl ${accent.iconBg} ring-1 ${accent.iconRing} flex items-center justify-center ${accent.iconColor} flex-shrink-0`}
+            >
+              {profile.icon}
             </div>
-
-            {/* Top accent gradient line */}
-            <div className={`h-[2px] bg-gradient-to-r ${accent.gradient} ${enableHover ? "opacity-40 group-hover:opacity-90" : "opacity-70"} transition-opacity duration-300`} />
-
-            <div className="p-6 sm:p-7 lg:p-8 pl-7 sm:pl-8 lg:pl-9">
-              {/* Icon + Title row */}
-              <div className="flex items-start gap-4 mb-5">
-                <div
-                  className={`w-12 h-12 rounded-xl ${accent.iconBg} ring-1 ${accent.iconRing} flex items-center justify-center ${accent.iconColor} flex-shrink-0 transition-transform duration-200 group-hover:scale-110`}
-                >
-                  {profile.icon}
-                </div>
-                <div className="min-w-0">
-                  <h3 className="text-lg sm:text-xl font-bold text-gray-900 tracking-tight leading-tight">
-                    {profile.title}
-                  </h3>
-                  <p className="text-xs text-gray-500 font-medium mt-1">{profile.subtitle}</p>
-                </div>
-              </div>
-
-              {/* Pain point — muted quote */}
-              <p className="text-sm text-gray-400 italic leading-relaxed mb-5">
-                &ldquo;{profile.painPoint}&rdquo;
-              </p>
-
-              {/* Separator */}
-              <div className="h-px bg-gray-100 mb-5" />
-
-              {/* Solution — prominent */}
-              <p className="text-[15px] text-gray-700 leading-relaxed mb-6">
-                {profile.solution}
-              </p>
-
-              {/* Metrics */}
-              <div className="flex gap-3 mb-6">
-                {profile.metrics.map((m) => (
-                  <div
-                    key={m.label}
-                    className={`flex-1 rounded-xl ${accent.iconBg} p-3 text-center`}
-                  >
-                    <p className={`text-lg font-bold ${accent.iconColor}`}>{m.value}</p>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-wide mt-0.5">
-                      {m.label}
-                    </p>
-                  </div>
-                ))}
-              </div>
-
-              {/* Tag */}
-              <div
-                className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-medium ${accent.tag}`}
-              >
-                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                {profile.tag}
-              </div>
+            <div className="min-w-0">
+              <h3 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight leading-snug">
+                {profile.title}
+              </h3>
             </div>
           </div>
+
+          {/* Solution — the core message */}
+          <p className="text-sm text-gray-600 leading-relaxed mb-4">
+            {profile.solution}
+          </p>
+
+          {/* Tag */}
+          <div
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium ${accent.tag}`}
+          >
+            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                clipRule="evenodd"
+              />
+            </svg>
+            {profile.tag}
+          </div>
         </div>
-      </motion.div>
+      </div>
     </motion.div>
   );
 });
 
 function TargetAudienceSection() {
-  const prefersReducedMotion = useReducedMotion();
-  const isMobile = useIsMobile();
   const { t } = useLanguage();
-  const skipInfinite = prefersReducedMotion || isMobile;
   const AUDIENCE_PROFILES = getAudienceProfiles(t);
 
   return (
-    <section id="audience" className="relative py-12 md:py-16 lg:py-20 overflow-hidden">
-      {/* Smooth edge transitions */}
-      <div className="absolute top-0 left-0 right-0 h-16 md:h-32 bg-gradient-to-b from-[#FEF3EE] to-transparent z-[1] pointer-events-none" />
-      <div className="absolute bottom-0 left-0 right-0 h-16 md:h-32 bg-gradient-to-t from-[#FEF3EE] to-transparent z-[1] pointer-events-none" />
-
-      {/* Aurora background */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <motion.div
-          initial={{ opacity: 0.25 }}
-          animate={skipInfinite ? {} : { opacity: [0.25, 0.45, 0.25], scale: [1, 1.12, 1] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute -top-1/3 -left-1/4 w-[65%] h-[65%] bg-cyan-200/30 rounded-full blur-[150px]"
-        />
-        <motion.div
-          initial={{ opacity: 0.2 }}
-          animate={skipInfinite ? {} : { opacity: [0.2, 0.38, 0.2], scale: [1, 1.15, 1] }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-          className="absolute top-1/4 -right-1/3 w-[55%] h-[55%] bg-violet-200/25 rounded-full blur-[150px]"
-        />
-        <motion.div
-          initial={{ opacity: 0.18 }}
-          animate={skipInfinite ? {} : { opacity: [0.18, 0.32, 0.18], scale: [1, 1.1, 1] }}
-          transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 4 }}
-          className="absolute -bottom-1/4 left-1/4 w-[50%] h-[50%] bg-amber-200/25 rounded-full blur-[130px]"
-        />
-        <motion.div
-          initial={{ opacity: 0.1 }}
-          animate={skipInfinite ? {} : { opacity: [0.1, 0.2, 0.1] }}
-          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[70%] h-[40%] bg-gradient-to-r from-cyan-200/15 via-violet-200/10 to-amber-200/15 rounded-full blur-[180px]"
-        />
-
-        {!skipInfinite && [
-          { top: "18%", left: "10%", d: 7, del: 0, s: 2 },
-          { top: "32%", left: "82%", d: 9, del: 1.5, s: 3 },
-          { top: "55%", left: "22%", d: 6, del: 2.5, s: 2 },
-          { top: "72%", left: "68%", d: 8, del: 1, s: 2 },
-          { top: "45%", left: "6%", d: 7.5, del: 3, s: 3 },
-        ].map((p, i) => (
-          <motion.div
-            key={i}
-            className="absolute rounded-full"
-            style={{ top: p.top, left: p.left, width: p.s, height: p.s, background: "radial-gradient(circle, rgba(200,200,210,0.5) 0%, rgba(200,200,210,0) 70%)" }}
-            animate={{ y: [0, -15, 0], opacity: [0.1, 0.35, 0.1] }}
-            transition={{ duration: p.d, repeat: Infinity, ease: "easeInOut", delay: p.del }}
-          />
-        ))}
-
-        <div
-          className="absolute inset-0 opacity-[0.025]"
-          style={{
-            backgroundImage: "linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px)",
-            backgroundSize: "60px 60px",
-          }}
-        />
-      </div>
-
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header */}
+    <section id="audience" className="py-12 md:py-16 lg:py-20 overflow-hidden">
+      {/* Section Header — clean and minimal */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "0px 0px 100px 0px" }}
+          viewport={{ once: true, margin: "0px 0px 80px 0px" }}
           transition={{ duration: 0.4, ease: premiumEase }}
-          className="text-center mb-12 lg:mb-16"
+          className="text-center mb-10 lg:mb-14"
         >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true, margin: "0px 0px 100px 0px" }}
-            transition={{ delay: 0.03, duration: 0.3 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/60 border border-gray-200/60 backdrop-blur-md mb-6 lg:mb-8"
-          >
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-[#F8935D] opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#F8935D]" />
-            </span>
-            <span className="text-sm font-medium text-gray-600">{t.landing.audienceTitle1}</span>
-          </motion.div>
-
-          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 lg:mb-6 tracking-tight">
-            <span className="text-silver-shimmer">{t.landing.audienceTitle2}</span>{" "}
-            <span className="relative inline-block">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
-                {t.landing.audienceTitle3}
-              </span>
-              <span className="absolute inset-0 bg-gradient-to-r from-[#F8935D]/20 to-[#F76B54]/20 blur-2xl -z-10" aria-hidden="true" />
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 tracking-tight">
+            <span className="text-gray-900">{t.landing.audienceTitle2}</span>{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
+              {t.landing.audienceTitle3}
             </span>
           </h2>
-          <p className="text-gray-600 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
+          <p className="text-gray-500 text-sm sm:text-base max-w-lg mx-auto">
             {t.landing.audienceSubtitle}
           </p>
         </motion.div>
+      </div>
 
-        {/* ────────────────────────────────────────────────────────────── */}
-        {/* Vertical stack on mobile/tablet, 3-column grid on desktop    */}
-        {/* ────────────────────────────────────────────────────────────── */}
-        <div className="flex flex-col gap-5 sm:gap-6 lg:grid lg:grid-cols-3 lg:gap-8">
-          {AUDIENCE_PROFILES.map((profile, index) => (
-            <AudienceCard key={profile.title} profile={profile} index={index} />
-          ))}
+      {/* Infinite scroll marquee — 1084px centered */}
+      <div className="relative max-w-[1084px] mx-auto">
+        {/* Fade edges */}
+        <div className="absolute left-0 top-0 bottom-0 w-12 sm:w-24 bg-gradient-to-r from-[#FEF3EE] to-transparent z-10 pointer-events-none" />
+        <div className="absolute right-0 top-0 bottom-0 w-12 sm:w-24 bg-gradient-to-l from-[#FEF3EE] to-transparent z-10 pointer-events-none" />
+
+        <div className="overflow-hidden">
+        <div
+          className="flex items-stretch animate-marquee-value gap-5 w-max hover:[animation-play-state:paused]"
+          style={{ willChange: "transform", backfaceVisibility: "hidden" }}
+        >
+          {[...AUDIENCE_PROFILES, ...AUDIENCE_PROFILES, ...AUDIENCE_PROFILES, ...AUDIENCE_PROFILES].map((profile, i) => {
+            const accent = audienceAccents[profile.accent];
+            return (
+              <div
+                key={i}
+                className="group relative flex-shrink-0 w-[340px]"
+                style={{ transform: "translateZ(0)", backfaceVisibility: "hidden" }}
+              >
+                <div className="relative h-full rounded-2xl bg-white border border-gray-200/70 overflow-hidden flex flex-col">
+                  {/* Top accent line */}
+                  <div className={`h-[2px] bg-gradient-to-r ${accent.gradient} opacity-60 flex-shrink-0`} />
+
+                  <div className="p-6 sm:p-7 flex flex-col flex-1">
+                    {/* Icon + Title */}
+                    <div className="flex items-center gap-3.5 mb-4">
+                      <div
+                        className={`w-11 h-11 rounded-xl ${accent.iconBg} ring-1 ${accent.iconRing} flex items-center justify-center ${accent.iconColor} flex-shrink-0`}
+                      >
+                        {profile.icon}
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight leading-snug">
+                          {profile.title}
+                        </h3>
+                                </div>
+                    </div>
+
+                    {/* Solution — the core message */}
+                    <p className="text-sm text-gray-600 leading-relaxed mb-4 flex-1">
+                      {profile.solution}
+                    </p>
+
+                    {/* Tag — always at the bottom */}
+                    <div
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium ${accent.tag} self-start`}
+                    >
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path
+                          fillRule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      {profile.tag}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// =============================================================================
+// AI EXPERIENCE SECTION — Explains the conversational AI copilot experience
+// =============================================================================
+
+function CopilotSectionWrapper() {
+  const { t } = useLanguage();
+  return <CopilotSection landing={t.landing} />;
+}
+
+function AIExperienceSection() {
+  const { t } = useLanguage();
+
+  const features = [
+    {
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
+        </svg>
+      ),
+      title: t.landing.aiExpFeature1Title,
+      desc: t.landing.aiExpFeature1Desc,
+    },
+    {
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" />
+        </svg>
+      ),
+      title: t.landing.aiExpFeature2Title,
+      desc: t.landing.aiExpFeature2Desc,
+    },
+    {
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+      title: t.landing.aiExpFeature3Title,
+      desc: t.landing.aiExpFeature3Desc,
+    },
+  ];
+
+  return (
+    <section className="py-12 md:py-16 lg:py-20 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+
+          {/* Left — Text content */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "0px 0px 80px 0px" }}
+            transition={{ duration: 0.4, ease: premiumEase }}
+          >
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-4">
+              <span className="text-gray-900">{t.landing.aiExpTitle}</span>
+              <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
+                {t.landing.aiExpTitleAccent}
+              </span>
+            </h2>
+            <p className="text-gray-500 text-sm sm:text-base leading-relaxed mb-8 max-w-md">
+              {t.landing.aiExpSubtitle}
+            </p>
+
+            {/* Features list */}
+            <div className="space-y-5">
+              {features.map((f, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: -12 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.1 + i * 0.08, duration: 0.35, ease: premiumEase }}
+                  className="flex gap-3.5"
+                >
+                  <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-[#FEF3EE] text-[#F8935D] flex items-center justify-center">
+                    {f.icon}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900 mb-0.5">{f.title}</p>
+                    <p className="text-xs text-gray-500 leading-relaxed">{f.desc}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Right — Mock chat interface */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "0px 0px 60px 0px" }}
+            transition={{ delay: 0.15, duration: 0.45, ease: premiumEase }}
+            className="relative"
+          >
+            <div className="bg-white rounded-2xl border border-gray-200/80 shadow-xl shadow-gray-200/40 overflow-hidden">
+              {/* Chat header */}
+              <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-gray-100 bg-gray-50/50">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#F8935D] to-[#F76B54] flex items-center justify-center">
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">Posty AI</p>
+                  <div className="flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    <span className="text-[10px] text-gray-400">Online</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Chat messages */}
+              <div className="px-5 py-5 space-y-4">
+                {/* User message */}
+                <div className="flex justify-end">
+                  <div className="max-w-[80%] bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white text-sm px-4 py-2.5 rounded-2xl rounded-tr-md">
+                    {t.landing.aiExpChatExample}
+                  </div>
+                </div>
+
+                {/* AI response */}
+                <div className="flex justify-start">
+                  <div className="max-w-[85%] bg-gray-50 border border-gray-100 text-gray-700 text-sm px-4 py-3 rounded-2xl rounded-tl-md">
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <svg className="w-3.5 h-3.5 text-[#F8935D]" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                      <span className="text-xs font-medium text-[#F8935D]">Posty AI</span>
+                    </div>
+                    <p className="leading-relaxed">{t.landing.aiExpChatResponse}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Input bar */}
+              <div className="px-4 pb-4">
+                <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5">
+                  <span className="text-sm text-gray-400 flex-1">{t.landing.aiExpChatPlaceholder}</span>
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-[#F8935D] to-[#F76B54] flex items-center justify-center flex-shrink-0">
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
         </div>
       </div>
     </section>
@@ -3215,7 +3248,7 @@ function MockupContextProfile() {
   );
 }
 
-function getFeatures(t: any): FeatureConfig[] {
+function getFeatures(t: Translations): FeatureConfig[] {
   return [
   {
     title: t.landing.featuresMultiPlatformTitle,
@@ -3543,10 +3576,14 @@ function ValueBlock() {
     {
       title: t.landing.valueBlockItem1Title,
       desc: t.landing.valueBlockItem1Desc,
-      emoji: "~",
+      // Orange — brand primary
+      gradientBg: "from-[#FFF7F2] via-[#FFEDE3] to-[#FFE0D0]",
+      borderColor: "border-[#F8935D]/30 hover:border-[#F8935D]/60",
+      iconGradient: "from-[#F8935D] to-[#F76B54]",
       accentColor: "#F8935D",
+      glowShadow: "hover:shadow-[0_8px_30px_rgba(248,147,93,0.25)]",
       icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+        <svg className="w-6 h-6" fill="none" stroke="white" strokeWidth={2} viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
         </svg>
       ),
@@ -3554,10 +3591,14 @@ function ValueBlock() {
     {
       title: t.landing.valueBlockItem2Title,
       desc: t.landing.valueBlockItem2Desc,
-      emoji: "~",
-      accentColor: "#F76B54",
+      // Rose / Coral — accent
+      gradientBg: "from-[#FFF2F5] via-[#FFE4EB] to-[#FFD5DF]",
+      borderColor: "border-[#F13452]/20 hover:border-[#F13452]/50",
+      iconGradient: "from-[#F13452] to-[#D91E3D]",
+      accentColor: "#F13452",
+      glowShadow: "hover:shadow-[0_8px_30px_rgba(241,52,82,0.2)]",
       icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+        <svg className="w-6 h-6" fill="none" stroke="white" strokeWidth={2} viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
         </svg>
       ),
@@ -3565,10 +3606,14 @@ function ValueBlock() {
     {
       title: t.landing.valueBlockItem3Title,
       desc: t.landing.valueBlockItem3Desc,
-      emoji: "~",
-      accentColor: "#E85D50",
+      // Violet — premium/speed
+      gradientBg: "from-[#F5F0FF] via-[#EDE5FF] to-[#E0D4FF]",
+      borderColor: "border-violet-300/40 hover:border-violet-400/70",
+      iconGradient: "from-violet-500 to-purple-600",
+      accentColor: "#7C3AED",
+      glowShadow: "hover:shadow-[0_8px_30px_rgba(124,58,237,0.2)]",
       icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+        <svg className="w-6 h-6" fill="none" stroke="white" strokeWidth={2} viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       ),
@@ -3576,10 +3621,14 @@ function ValueBlock() {
     {
       title: t.landing.valueBlockItem4Title,
       desc: t.landing.valueBlockItem4Desc,
-      emoji: "~",
-      accentColor: "#D94E45",
+      // Emerald — growth/opportunities
+      gradientBg: "from-[#EEFFF7] via-[#DCFCE7] to-[#CCFBDA]",
+      borderColor: "border-emerald-300/40 hover:border-emerald-400/70",
+      iconGradient: "from-emerald-500 to-green-600",
+      accentColor: "#059669",
+      glowShadow: "hover:shadow-[0_8px_30px_rgba(5,150,105,0.2)]",
       icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+        <svg className="w-6 h-6" fill="none" stroke="white" strokeWidth={2} viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
         </svg>
       ),
@@ -3616,44 +3665,32 @@ function ValueBlock() {
                 ease: premiumEase,
               }}
               whileHover={{
-                y: -4,
+                y: -6,
                 transition: { duration: 0.25, ease: premiumEase },
               }}
-              className="group relative bg-white rounded-2xl border border-gray-200/60 p-[clamp(1.25rem,2vw,1.75rem)] overflow-hidden cursor-default"
+              className={`group relative bg-gradient-to-br ${item.gradientBg} rounded-2xl border ${item.borderColor} p-[clamp(1.25rem,2vw,1.75rem)] overflow-hidden cursor-default transition-all duration-300 ${item.glowShadow}`}
             >
-              {/* Subtle hover glow — opacity only (GPU-friendly) */}
-              <div
-                className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-                style={{
-                  background: `linear-gradient(135deg, ${item.accentColor}08, ${item.accentColor}12, transparent)`,
-                }}
-              />
-
               <div className="relative z-10">
-                {/* Icon with animated background */}
+                {/* Vivid gradient icon */}
                 <div
-                  className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-transform duration-200 group-hover:scale-110"
-                  style={{
-                    background: `linear-gradient(135deg, ${item.accentColor}12, ${item.accentColor}06)`,
-                    color: item.accentColor,
-                  }}
+                  className={`w-12 h-12 rounded-xl bg-gradient-to-br ${item.iconGradient} flex items-center justify-center mb-4 shadow-lg transition-transform duration-200 group-hover:scale-110`}
                 >
                   {item.icon}
                 </div>
 
-                {/* Title with accent underline on hover */}
+                {/* Title with accent underline */}
                 <h3 className="text-[clamp(1rem,1.5vw,1.15rem)] font-bold text-gray-900 mb-1.5 relative inline-block">
                   {item.title}
                   <motion.span
                     className="absolute -bottom-0.5 left-0 h-[2px] rounded-full"
                     style={{ background: `linear-gradient(90deg, ${item.accentColor}, transparent)` }}
                     initial={{ width: 0 }}
-                    whileInView={{ width: "60%" }}
+                    whileInView={{ width: "70%" }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.6, delay: 0.3 + i * 0.1, ease: premiumEase }}
                   />
                 </h3>
-                <p className="text-[clamp(0.8rem,1.2vw,0.9rem)] text-gray-500 leading-relaxed mt-2">
+                <p className="text-[clamp(0.8rem,1.2vw,0.9rem)] text-gray-600 leading-relaxed mt-2">
                   {item.desc}
                 </p>
               </div>
@@ -3693,7 +3730,7 @@ function ValueBlock() {
 // - Consultant: https://unsplash.com/photos/7YVZYZeITc8 (LinkedIn Sales Solutions)
 // =============================================================================
 
-function getTestimonials(t: any) {
+function getTestimonials(t: Translations) {
   return [
     {
       name: "Alexandre M.",
@@ -4699,6 +4736,11 @@ export default function LandingPage() {
       <div key={currentLang} className="text-gray-900 relative">
         {/* Hero Demo Section — opening with descent animation */}
         <DemoSection />
+
+        {/* AI Copilot section — below the hero carousel */}
+        <div className="relative z-[5] bg-[#FEF3EE]">
+          <CopilotSectionWrapper />
+        </div>
 
         {/* Opaque sections — z-[5] + bg to cover the fixed hero title */}
         <div className="relative z-[5] bg-[#FEF3EE]">

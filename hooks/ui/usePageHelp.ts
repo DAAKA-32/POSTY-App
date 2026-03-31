@@ -29,21 +29,25 @@ export function usePageHelp(): UsePageHelpReturn {
   // Hydrated state: merge of Firestore + local cache
   const [readPages, setReadPages] = useState<string[]>(localReadPages);
 
+  // Stable primitive key — avoids infinite loop from array reference changes
+  const firestorePagesJson = JSON.stringify(userProfile?.helpReadPages ?? []);
+
   // On mount / profile change: hydrate from Firestore (source of truth)
   useEffect(() => {
-    const firestorePages = userProfile?.helpReadPages ?? [];
+    const firestorePages: string[] = JSON.parse(firestorePagesJson);
+    if (firestorePages.length === 0) return;
+
     setReadPages((prev) => {
       const merged = Array.from(new Set([...prev, ...firestorePages]));
       return merged.length === prev.length ? prev : merged;
     });
     // Also sync localStorage cache with Firestore data
-    if (firestorePages.length > 0) {
-      setLocalReadPages((prev: string[]) => {
-        const merged = Array.from(new Set([...prev, ...firestorePages]));
-        return merged.length === prev.length ? prev : merged;
-      });
-    }
-  }, [userProfile?.helpReadPages, setLocalReadPages]);
+    setLocalReadPages((prev: string[]) => {
+      const merged = Array.from(new Set([...prev, ...firestorePages]));
+      return merged.length === prev.length ? prev : merged;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [firestorePagesJson]);
 
   const config = useMemo(() => getPageHelpConfig(pathname), [pathname]);
   const hasHelp = config !== null;

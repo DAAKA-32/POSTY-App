@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Post } from "@/types";
+import { toDate } from "@/lib/utils/timestamp";
 
 interface HistoryStatsBannerProps {
   posts: Post[];
@@ -27,11 +28,7 @@ export default function HistoryStatsBanner({
 
     posts.forEach((post) => {
       // Count this week's posts
-      const postDate = post.createdAt
-        ? typeof (post.createdAt as { toDate?: () => Date }).toDate === "function"
-          ? (post.createdAt as { toDate: () => Date }).toDate()
-          : new Date(post.createdAt as unknown as string)
-        : new Date();
+      const postDate = toDate(post.createdAt);
 
       if (postDate >= oneWeekAgo) {
         thisWeekCount++;

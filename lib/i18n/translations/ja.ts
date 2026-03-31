@@ -754,6 +754,26 @@ export const ja = {
     howItWorksReadyCTA: "LinkedInでの存在感を変える準備はできましたか？",
     howItWorksTryFree: "無料で試す",
 
+    // AI Experience section
+    aiExpTitle: "あなたのLinkedInコパイロット、",
+    aiExpTitleAccent: "24時間利用可能",
+    aiExpSubtitle: "アイデアを説明するだけ。Postyが最適化された投稿を生成し、戦略を提案し、コーチング — LinkedInの専門家がそばにいるように。",
+    aiExpFeature1Title: "対話型インターフェース",
+    aiExpFeature1Desc: "アイデアを入力するだけ。AIがあなたの意図を理解し、目標に合わせたコンテンツを作成します。",
+    aiExpFeature2Title: "インテリジェントコーチング",
+    aiExpFeature2Desc: "パーソナライズされたフィードバック：何が効果的か、何を改善すべきか、エンゲージメントの高め方。",
+    aiExpFeature3Title: "いつでも利用可能",
+    aiExpFeature3Desc: "フリーランサーや代理店を待つ必要なし。インスピレーションが来た時にAIアシスタントが準備完了。",
+    aiExpChatPlaceholder: "投稿のアイデアを入力...",
+    aiExpChatExample: "2025年の採用を変えるAIについて投稿を書いて",
+    aiExpChatResponse: "Here are 2 angles for your audience. Version B uses a data hook that gets 3x more reach with decision-makers.",
+    aiExpNotifViews: "+312 profile views",
+    aiExpNotifViewsSub: "From your last post",
+    aiExpNotifDm: "Your post caught my eye. Can we discuss?",
+    aiExpNotifSuccess: "Meeting scheduled",
+    aiExpNotifSuccessDetail: "Marc D. — Tomorrow 14:00",
+    aiExpContextualLabel: "This person signed a client from this post",
+
     // Value block after features
     valueBlockTitle: "フリーランサーがPostyを選ぶ理由",
     valueBlockItem1Title: "営業の自動化",

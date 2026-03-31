@@ -13,6 +13,7 @@ import { useLinkedIn } from "@/contexts/LinkedInContext";
 import { useFacebook } from "@/contexts/FacebookContext";
 import { useThreads } from "@/contexts/ThreadsContext";
 import SlideMenu from "./SlideMenu";
+import BottomNavbar from "./BottomNavbar";
 import ChatHistoryModal from "./ChatHistoryModal";
 import ProfileMenu from "./ProfileMenu";
 import ConversationOptionsMenu from "@/components/conversation/ConversationOptionsMenu";
@@ -20,16 +21,13 @@ import RenameConversationModal from "@/components/conversation/RenameConversatio
 import DeleteConfirmModal from "@/components/conversation/DeleteConfirmModal";
 import { Post } from "@/types";
 import { getUserPostsWithPinned, pinPost, renamePost, deletePost } from "@/lib/db/firestore";
+import { invalidateCachedConversation } from "@/lib/storage/conversation-cache";
 import { AnimatedSlideIn, AnimatedPageWrapper } from "@/components/animations/AnimatedPageWrapper";
 import toast from "@/components/ui/Toast";
 import TrialBanner from "@/components/subscription/TrialBanner";
 import UsageBanner from "@/components/ui/UsageBanner";
 import QuotaExceededModal from "@/components/ui/QuotaExceededModal";
-import { usePageHelp } from "@/hooks/ui/usePageHelp";
-import HelpNotificationDot from "@/components/help/HelpNotificationDot";
-import HelpPopover from "@/components/help/HelpPopover";
 import HelpFloatingButton from "@/components/help/HelpFloatingButton";
-import { PAGE_HELP_CONFIG } from "@/lib/ui/help-content";
 
 // Premium animation easings - consistent across app
 const smoothEase = [0.25, 0.1, 0.25, 1] as const;
@@ -154,12 +152,10 @@ function getNavItems(t: ReturnType<typeof useLanguage>["t"]) {
     {
       name: t.nav.chat,
       href: "/app",
-      hasBadge: false,
       activeClasses: "bg-[#F8935D]/8 text-gray-900 dark:text-white",
       hoverClasses: "hover:text-[#F8935D] hover:bg-[#F8935D]/5",
       indicatorColor: "bg-gradient-to-r from-[#F8935D] to-[#F76B54]",
       iconColor: "text-[#F8935D]",
-      badgeClasses: "bg-[#F8935D] text-white",
       glowColor: "rgba(248, 147, 93, 0.35)",
       icon: (isActive: boolean) => (
         <svg className="w-5 h-5" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
@@ -175,12 +171,10 @@ function getNavItems(t: ReturnType<typeof useLanguage>["t"]) {
     {
       name: t.nav.history,
       href: "/history",
-      hasBadge: false,
       activeClasses: "bg-cyan-500/8 text-gray-900 dark:text-white",
       hoverClasses: "hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-cyan-500/5",
       indicatorColor: "bg-gradient-to-r from-cyan-500 to-cyan-400",
       iconColor: "text-cyan-500",
-      badgeClasses: "bg-cyan-500 text-white",
       glowColor: "rgba(6, 182, 212, 0.35)",
       icon: (isActive: boolean) => (
         <svg className="w-5 h-5" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
@@ -196,12 +190,10 @@ function getNavItems(t: ReturnType<typeof useLanguage>["t"]) {
     {
       name: t.nav.schedule,
       href: "/schedule",
-      hasBadge: true,
       activeClasses: "bg-violet-500/8 text-gray-900 dark:text-white",
       hoverClasses: "hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-500/5",
       indicatorColor: "bg-gradient-to-r from-violet-500 to-violet-400",
       iconColor: "text-violet-500",
-      badgeClasses: "bg-violet-500 text-white",
       glowColor: "rgba(139, 92, 246, 0.35)",
       icon: (isActive: boolean) => (
         <svg className="w-5 h-5" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
@@ -217,12 +209,10 @@ function getNavItems(t: ReturnType<typeof useLanguage>["t"]) {
     {
       name: t.nav.analytics,
       href: "/analytics",
-      hasBadge: false,
       activeClasses: "bg-emerald-500/8 text-gray-900 dark:text-white",
       hoverClasses: "hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-500/5",
       indicatorColor: "bg-gradient-to-r from-emerald-500 to-emerald-400",
       iconColor: "text-emerald-500",
-      badgeClasses: "bg-emerald-500 text-white",
       glowColor: "rgba(16, 185, 129, 0.35)",
       icon: (isActive: boolean) => (
         <svg className="w-5 h-5" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
@@ -270,25 +260,20 @@ export default function MainLayout({
   const { user, userProfile } = useAuth();
   const { t } = useLanguage();
   const prefersReducedMotion = useReducedMotion();
-  const { pendingCount: schedulingPendingCount, refreshScheduledPosts } = useScheduling();
+  const { refreshScheduledPosts } = useScheduling();
   const { connection: linkedInConnection } = useLinkedIn();
   const { connection: facebookConnection } = useFacebook();
   const { connection: threadsConnection } = useThreads();
   const tokenWarningShown = useRef(false);
-
-  // Help notification system
-  const { isPathRead, markPathAsRead } = usePageHelp();
-  const [activeHelpPath, setActiveHelpPath] = useState<string | null>(null);
-  const navItemRefs = useRef<Record<string, HTMLSpanElement | null>>({});
-  const activeHelpAnchorRef = useRef<HTMLSpanElement | null>(null);
-  // Keep the anchor ref in sync with the active help path
-  activeHelpAnchorRef.current = activeHelpPath ? navItemRefs.current[activeHelpPath] ?? null : null;
 
   // Get nav items with translations
   const navItems = getNavItems(t);
 
   // Pages where we should NOT load conversations (subscription page)
   const isSubscriptionPage = pathname === "/subscription" || pathname === "/pricing";
+
+  // Chat pages where BottomNavbar is hidden (has fixed input area instead)
+  const isChatPage = pathname === "/app" || pathname.startsWith("/app/c/") || pathname === "/chat";
 
   // Proactive token expiration notification (once per session)
   useEffect(() => {
@@ -406,8 +391,12 @@ export default function MainLayout({
 
   // Handle delete confirm
   const handleDeleteConfirm = async (postId: string) => {
+    // Check if user is currently viewing the conversation being deleted
+    const isViewingDeleted = pathname === `/app/c/${postId}`;
+
     // Optimistic update
     setLocalPosts((prev) => prev.filter((p) => p.id !== postId));
+    invalidateCachedConversation(postId);
 
     try {
       await deletePost(postId);
@@ -420,17 +409,34 @@ export default function MainLayout({
       // Revert - re-fetch posts
       onPostUpdate?.();
       toast.error(t.toasts.errorDelete);
+      return; // Don't redirect on failure
+    }
+
+    // Close modal explicitly to clean up any backdrop/overlay
+    setPostToDelete(null);
+    closeSidebar();
+
+    // Redirect to new post state if user was viewing the deleted conversation
+    if (isViewingDeleted) {
+      router.push(`/app?new=${Date.now()}`);
     }
   };
 
   // Prefetch critical routes for faster navigation
   useEffect(() => {
     // Prefetch routes that user is likely to navigate to
-    const routesToPrefetch = ["/app", "/history", "/profile", "/pricing", "/settings"];
+    const routesToPrefetch = ["/app", "/history", "/profile", "/pricing", "/settings", "/schedule", "/analytics"];
     routesToPrefetch.forEach((route) => {
       router.prefetch(route);
     });
   }, [router]);
+
+  // Clean up stuck blocking CSS classes on route changes to prevent navigation freeze
+  useEffect(() => {
+    // Remove classes that may have been left behind by modals/overlays
+    document.body.classList.remove("template-modal-open");
+    document.documentElement.classList.remove("bottomsheet-open", "modal-open", "scroll-locked");
+  }, [pathname]);
 
   // Add pwa-mobile class to body on mobile devices for proper scroll handling
   // IMPORTANT: Ne pas ajouter pwa-mobile si force-scroll-enabled est présent
@@ -729,7 +735,6 @@ export default function MainLayout({
           {/* Nav items with stagger animation and vivid colors */}
           {navItems.map((item, index) => {
             const isActive = pathname === item.href || (item.href === "/app" && pathname === "/chat");
-            const showBadge = (item as { hasBadge?: boolean }).hasBadge && schedulingPendingCount > 0;
             return (
               <motion.div
                 key={item.name}
@@ -774,7 +779,6 @@ export default function MainLayout({
                 >
                   {/* Colored icon — full saturation when active, muted when inactive */}
                   <span
-                    ref={(el) => { navItemRefs.current[item.href] = el; }}
                     className={`
                       relative shrink-0 transition-all duration-200
                       ${isActive ? "scale-110" : "opacity-70 group-hover:opacity-100 group-hover:scale-110"}
@@ -785,32 +789,9 @@ export default function MainLayout({
                     } : undefined}
                   >
                     {item.icon(isActive)}
-                    {/* Badge on icon when collapsed */}
-                    {isCollapsed && showBadge && (
-                      <span className={`absolute -top-1.5 -right-1.5 w-[18px] h-[18px] min-w-[18px] min-h-[18px] text-2xs font-bold rounded-full flex items-center justify-center ${item.badgeClasses}`}>
-                        {schedulingPendingCount}
-                      </span>
-                    )}
-                    {/* Help notification dot */}
-                    <AnimatePresence>
-                      {PAGE_HELP_CONFIG[item.href] && !isPathRead(item.href) && (
-                        <HelpNotificationDot
-                          accentColor={PAGE_HELP_CONFIG[item.href].accentColor}
-                          onClick={(e) => setActiveHelpPath(item.href)}
-                        />
-                      )}
-                    </AnimatePresence>
                   </span>
                   {!isCollapsed && (
-                    <>
-                      <span className={`whitespace-nowrap flex-1 ${isActive ? "font-semibold" : "font-medium"}`}>{item.name}</span>
-                      {/* Badge after name when expanded */}
-                      {showBadge && (
-                        <span className={`w-6 h-6 min-w-[24px] min-h-[24px] shrink-0 text-xs font-semibold rounded-full flex items-center justify-center ${item.badgeClasses}`}>
-                          {schedulingPendingCount}
-                        </span>
-                      )}
-                    </>
+                    <span className={`whitespace-nowrap flex-1 ${isActive ? "font-semibold" : "font-medium"}`}>{item.name}</span>
                   )}
 
                   {/* Arrow indicator for active state */}
@@ -829,24 +810,12 @@ export default function MainLayout({
                   {isCollapsed && (
                     <span className="absolute left-full ml-2 px-2 py-1 bg-background-warm dark:bg-dark-elevated border border-[#F8935D]/15 dark:border-dark-border rounded-lg text-sm text-text-primary whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50 shadow-lg pointer-events-none">
                       {item.name}
-                      {showBadge && ` (${schedulingPendingCount})`}
                     </span>
                   )}
                 </Link>
               </motion.div>
             );
           })}
-
-          {/* Help Popover for sidebar nav items */}
-          {activeHelpPath && PAGE_HELP_CONFIG[activeHelpPath] && (
-            <HelpPopover
-              isOpen={true}
-              onClose={() => setActiveHelpPath(null)}
-              onMarkRead={() => markPathAsRead(activeHelpPath)}
-              config={PAGE_HELP_CONFIG[activeHelpPath]}
-              anchorRef={activeHelpAnchorRef}
-            />
-          )}
 
           {/* Conversations - Only show when expanded */}
           {!isCollapsed && localPosts.length > 0 && (
@@ -1079,15 +1048,9 @@ export default function MainLayout({
               className="w-full h-11 rounded-xl flex items-center justify-center text-primary hover:text-primary-hover hover:bg-[#F8935D]/5 transition-colors group relative mt-4 pt-4 border-t border-[#F8935D]/10 dark:border-dark-border"
               title={t.sidebar.conversations}
             >
-              <div className="relative">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-                {/* Badge count - simple solid */}
-                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 min-w-[20px] min-h-[20px] bg-primary text-white text-2xs font-semibold rounded-full flex items-center justify-center">
-                  {localPosts.length > 9 ? "9+" : localPosts.length}
-                </span>
-              </div>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
               {/* Tooltip */}
               <span className="absolute left-full ml-2 px-2 py-1 bg-background-warm dark:bg-dark-elevated border border-[#F8935D]/15 dark:border-dark-border rounded-lg text-sm whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50 shadow-lg pointer-events-none">
                 {t.sidebar.conversations} ({localPosts.length})
@@ -1176,7 +1139,7 @@ export default function MainLayout({
         <UsageBanner className="px-3 sm:px-4 pt-2" />
 
         {/* Page Content - No scroll on mobile (children handle scroll), scroll on desktop */}
-        <AnimatedPageWrapper delay={0.2} className="flex-1 overflow-hidden lg:overflow-y-auto lg:overflow-x-hidden lg:overscroll-contain">
+        <AnimatedPageWrapper delay={0.2} className={`flex-1 overflow-hidden lg:overflow-y-auto lg:overflow-x-hidden lg:overscroll-contain ${isChatPage ? '' : 'bottom-nav-spacer'}`}>
           {children}
         </AnimatedPageWrapper>
 
@@ -1210,6 +1173,8 @@ export default function MainLayout({
         onConfirm={handleDeleteConfirm}
       />
 
+      {/* Mobile bottom navigation bar */}
+      <BottomNavbar />
     </div>
   );
 }

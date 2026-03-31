@@ -16,11 +16,6 @@ import RenameConversationModal from "@/components/conversation/RenameConversatio
 import DeleteConfirmModal from "@/components/conversation/DeleteConfirmModal";
 import ProfileMenu from "@/components/layout/ProfileMenu";
 import { useScrollLock } from "@/hooks/ui/useScrollLock";
-import { AnimatePresence } from "framer-motion";
-import { usePageHelp } from "@/hooks/ui/usePageHelp";
-import HelpNotificationDot from "@/components/help/HelpNotificationDot";
-import HelpPopover from "@/components/help/HelpPopover";
-import { PAGE_HELP_CONFIG } from "@/lib/ui/help-content";
 
 interface SlideMenuProps {
   isOpen: boolean;
@@ -106,12 +101,10 @@ function groupPostsByDate(posts: Post[], labels: SidebarTranslations) {
 const menuItems: {
   nameKey: "chat" | "history" | "schedule" | "analytics";
   href: string;
-  hasBadge: boolean;
   activeClasses: string;
   hoverClasses: string;
   indicatorColor: string;
   iconColor: string;
-  badgeClasses: string;
   glowColor: string;
   icon: (isActive: boolean) => React.ReactNode;
   requiredPlan?: PlanType;
@@ -119,12 +112,10 @@ const menuItems: {
   {
     nameKey: "chat" as const,
     href: "/app",
-    hasBadge: false,
     activeClasses: "bg-[#F8935D]/8 text-gray-900 dark:text-white",
     hoverClasses: "hover:text-[#F8935D] hover:bg-[#F8935D]/5",
     indicatorColor: "bg-gradient-to-b from-[#F8935D] to-[#F76B54]",
     iconColor: "text-[#F8935D]",
-    badgeClasses: "bg-[#F8935D] text-white",
     glowColor: "rgba(248, 147, 93, 0.4)",
     icon: (isActive: boolean) => (
       <svg className="w-5 h-5" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
@@ -140,12 +131,10 @@ const menuItems: {
   {
     nameKey: "history" as const,
     href: "/history",
-    hasBadge: false,
     activeClasses: "bg-cyan-500/8 text-gray-900 dark:text-white",
     hoverClasses: "hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-cyan-500/5",
     indicatorColor: "bg-gradient-to-b from-cyan-500 to-cyan-400",
     iconColor: "text-cyan-500",
-    badgeClasses: "bg-cyan-500 text-white",
     glowColor: "rgba(6, 182, 212, 0.4)",
     icon: (isActive: boolean) => (
       <svg className="w-5 h-5" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
@@ -161,13 +150,11 @@ const menuItems: {
   {
     nameKey: "schedule" as const,
     href: "/schedule",
-    hasBadge: true,
     requiredPlan: "pro",
     activeClasses: "bg-violet-500/8 text-gray-900 dark:text-white",
     hoverClasses: "hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-500/5",
     indicatorColor: "bg-gradient-to-b from-violet-500 to-violet-400",
     iconColor: "text-violet-500",
-    badgeClasses: "bg-violet-500 text-white",
     glowColor: "rgba(139, 92, 246, 0.4)",
     icon: (isActive: boolean) => (
       <svg className="w-5 h-5" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
@@ -183,12 +170,10 @@ const menuItems: {
   {
     nameKey: "analytics" as const,
     href: "/analytics",
-    hasBadge: false,
     activeClasses: "bg-emerald-500/8 text-gray-900 dark:text-white",
     hoverClasses: "hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-500/5",
     indicatorColor: "bg-gradient-to-b from-emerald-500 to-emerald-400",
     iconColor: "text-emerald-500",
-    badgeClasses: "bg-emerald-500 text-white",
     glowColor: "rgba(16, 185, 129, 0.4)",
     icon: (isActive: boolean) => (
       <svg className="w-5 h-5" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
@@ -208,7 +193,7 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
   const router = useRouter();
   const { user, userProfile } = useAuth();
   const { t } = useLanguage();
-  const { pendingCount: schedulingPendingCount, refreshScheduledPosts } = useScheduling();
+  const { refreshScheduledPosts } = useScheduling();
   const { currentPlan } = useSubscription();
   const [searchQuery, setSearchQuery] = useState("");
   const [showChatList, setShowChatList] = useState(true);
@@ -218,10 +203,6 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
   const [postToDelete, setPostToDelete] = useState<Post | null>(null);
   const [postToRename, setPostToRename] = useState<Post | null>(null);
 
-  // Help notification system
-  const { isPathRead, markPathAsRead } = usePageHelp();
-  const [activeHelpPath, setActiveHelpPath] = useState<string | null>(null);
-  const mobileHelpAnchorRef = useRef<HTMLSpanElement | null>(null);
 
   // Sync local posts with prop
   useEffect(() => {
@@ -303,22 +284,24 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
       if (touchStartX.current === null || touchStartY.current === null) return;
       if (e.touches.length !== 1) return;
 
-      // Don't block touch interactions on form elements (input, textarea, select)
+      // Don't block touch interactions on interactive elements
       const target = e.target as HTMLElement;
-      const isFormElement = target.tagName === "INPUT" ||
+      const isInteractive = target.tagName === "INPUT" ||
                            target.tagName === "TEXTAREA" ||
                            target.tagName === "SELECT" ||
-                           target.closest("input, textarea, select") !== null;
-      if (isFormElement) return;
+                           target.tagName === "A" ||
+                           target.tagName === "BUTTON" ||
+                           target.closest("a, button, input, textarea, select, [role='button']") !== null;
+      if (isInteractive) return;
 
       const touch = e.touches[0];
       const deltaX = touch.clientX - touchStartX.current;
       const deltaY = Math.abs(touch.clientY - touchStartY.current);
       const absDeltaX = Math.abs(deltaX);
 
-      // Block ALL horizontal movements when sidebar is open (except form elements)
-      // This prevents: browser back gesture, pull-to-refresh, theme changes, page reload
-      if (absDeltaX > deltaY && absDeltaX > 5) {
+      // Block horizontal swipe gestures on the overlay area only
+      // Threshold raised to 15px to avoid catching normal taps with slight finger drift
+      if (absDeltaX > deltaY && absDeltaX > 15) {
         e.preventDefault();
         e.stopPropagation();
         isSwipeBlocked.current = true;
@@ -326,10 +309,14 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
     };
 
     const handleTouchEnd = (e: TouchEvent) => {
-      // If we blocked a swipe, also prevent the touchend from triggering any navigation
+      // Only block touchend for actual swipe gestures (not taps on links/buttons)
       if (isSwipeBlocked.current) {
-        e.preventDefault();
-        e.stopPropagation();
+        const target = e.target as HTMLElement;
+        const isInteractive = target.closest("a, button, [role='button']") !== null;
+        if (!isInteractive) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
       }
       touchStartX.current = null;
       touchStartY.current = null;
@@ -343,9 +330,9 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
     document.addEventListener("touchend", handleTouchEnd, { passive: false, capture: true });
     document.addEventListener("touchcancel", handleTouchEnd, { passive: true, capture: true });
 
-    // Add touch-action CSS to body to further prevent gestures
-    document.body.style.touchAction = "pan-y";
-    document.documentElement.style.touchAction = "pan-y";
+    // Allow taps (manipulation) and vertical scroll (pan-y) but prevent horizontal gestures
+    document.body.style.touchAction = "manipulation";
+    document.documentElement.style.touchAction = "manipulation";
     // Prevent overscroll which can trigger page reload
     document.body.style.overscrollBehavior = "none";
     document.documentElement.style.overscrollBehavior = "none";
@@ -421,6 +408,8 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
 
   // Handle delete confirm
   const handleDeleteConfirm = async (postId: string) => {
+    const isViewingDeleted = pathname === `/app/c/${postId}`;
+
     // Optimistic update
     setLocalPosts((prev) => prev.filter((p) => p.id !== postId));
 
@@ -435,6 +424,16 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
       // Revert - re-fetch posts
       onPostUpdate?.();
       toast.error(t.toasts.errorDelete);
+      return;
+    }
+
+    // Close modal and menu
+    setPostToDelete(null);
+    onClose();
+
+    // Redirect if user was viewing the deleted conversation
+    if (isViewingDeleted) {
+      router.push(`/app?new=${Date.now()}`);
     }
   };
 
@@ -452,7 +451,7 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
         onClick={onClose}
         aria-hidden="true"
         style={{
-          touchAction: isOpen ? "none" : "auto",
+          touchAction: isOpen ? "manipulation" : "auto",
           contain: "strict",
           willChange: "opacity",
         }}
@@ -577,7 +576,6 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
               const isActive = pathname === item.href || (item.href === "/app" && pathname === "/chat");
               const itemName = t.nav[item.nameKey];
               const isLocked = item.requiredPlan && !meetsMinimumPlan(currentPlan as PlanType, item.requiredPlan);
-              const showBadge = item.hasBadge && schedulingPendingCount > 0 && !isLocked;
 
               // Icon color — per-feature color (dimmed if locked)
               const iconColorClass = isLocked ? "text-gray-400 dark:text-gray-500" : item.iconColor;
@@ -621,7 +619,6 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
                   >
                     {/* Vivid colored icon matching Features section palette */}
                     <span
-                      ref={(el) => { if (activeHelpPath === item.href) mobileHelpAnchorRef.current = el; }}
                       className={`
                         relative transition-all duration-200
                         ${isActive ? "scale-110" : "group-hover:scale-110"}
@@ -632,24 +629,9 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
                       } : undefined}
                     >
                       {item.icon(isActive)}
-                      {/* Help notification dot */}
-                      <AnimatePresence>
-                        {PAGE_HELP_CONFIG[item.href] && !isPathRead(item.href) && (
-                          <HelpNotificationDot
-                            accentColor={PAGE_HELP_CONFIG[item.href].accentColor}
-                            onClick={(e) => setActiveHelpPath(item.href)}
-                          />
-                        )}
-                      </AnimatePresence>
                     </span>
 
                     <span className={`flex-1 ${isActive ? "font-bold" : "font-semibold"}`}>{itemName}</span>
-
-                    {showBadge && (
-                      <span className={`w-6 h-6 min-w-[24px] min-h-[24px] shrink-0 text-xs font-semibold rounded-full flex items-center justify-center ${item.badgeClasses}`}>
-                        {schedulingPendingCount}
-                      </span>
-                    )}
 
                     {/* PRO badge for locked items */}
                     {isLocked && (
@@ -674,18 +656,6 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
               );
             })}
           </div>
-
-          {/* Help Popover for mobile nav items */}
-          {activeHelpPath && PAGE_HELP_CONFIG[activeHelpPath] && (
-            <HelpPopover
-              isOpen={true}
-              onClose={() => setActiveHelpPath(null)}
-              onMarkRead={() => markPathAsRead(activeHelpPath)}
-              config={PAGE_HELP_CONFIG[activeHelpPath]}
-              anchorRef={mobileHelpAnchorRef}
-              mobileMode
-            />
-          )}
 
           {/* Chat list section */}
           <div className="mt-4">

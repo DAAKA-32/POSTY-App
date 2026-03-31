@@ -18,7 +18,6 @@ export default function HelpNotificationDot({
       exit={{ scale: 0, opacity: 0 }}
       transition={{ type: "spring", damping: 20, stiffness: 300 }}
       onClick={(e) => {
-        e.preventDefault();
         e.stopPropagation();
         onClick(e);
       }}

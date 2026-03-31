@@ -8,6 +8,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useLinkedIn } from "@/contexts/LinkedInContext";
 import { getUserPostsWithPinned, deletePost, pinPost, renamePost } from "@/lib/db/firestore";
 import { Post } from "@/types";
+import { toDate } from "@/lib/utils/timestamp";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import MainLayout from "@/components/layout/MainLayout";
 import Button from "@/components/ui/Button";
@@ -35,10 +36,7 @@ function formatDate(
   locale: string = "fr-FR"
 ): string {
   if (!timestamp) return "";
-  const date =
-    typeof (timestamp as { toDate?: () => Date }).toDate === "function"
-      ? (timestamp as { toDate: () => Date }).toDate()
-      : new Date(timestamp as unknown as string);
+  const date = toDate(timestamp);
 
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -67,10 +65,7 @@ function formatDate(
 // Format time helper
 function formatTime(timestamp: { toDate?: () => Date } | Date | null, locale: string = "fr-FR"): string {
   if (!timestamp) return "";
-  const date =
-    typeof (timestamp as { toDate?: () => Date }).toDate === "function"
-      ? (timestamp as { toDate: () => Date }).toDate()
-      : new Date(timestamp as unknown as string);
+  const date = toDate(timestamp);
 
   return new Intl.DateTimeFormat(locale, {
     hour: "2-digit",
@@ -177,14 +172,8 @@ function HistoryContent() {
     if (pinnedPosts.length > 0) {
       // Sort pinned posts by pinnedAt (most recent first)
       pinnedPosts.sort((a, b) => {
-        const aPinnedAt = a.pinnedAt as { toDate?: () => Date } | Date | undefined;
-        const bPinnedAt = b.pinnedAt as { toDate?: () => Date } | Date | undefined;
-        const aDate = aPinnedAt && typeof aPinnedAt === 'object' && 'toDate' in aPinnedAt
-          ? aPinnedAt.toDate?.() || new Date(0)
-          : new Date(aPinnedAt as unknown as string || 0);
-        const bDate = bPinnedAt && typeof bPinnedAt === 'object' && 'toDate' in bPinnedAt
-          ? bPinnedAt.toDate?.() || new Date(0)
-          : new Date(bPinnedAt as unknown as string || 0);
+        const aDate = toDate(a.pinnedAt);
+        const bDate = toDate(b.pinnedAt);
         return bDate.getTime() - aDate.getTime();
       });
       result.push({ date: t.history.pinned, posts: pinnedPosts, isPinnedGroup: true });

@@ -209,15 +209,19 @@ export default function AnimatedMacBook({
               >
                 {LOOP_SLIDES.map((screen, i) => (
                   <div key={`${screen.id}-${i}`} className="relative w-full h-full flex-shrink-0">
-                    <Image
-                      src={screen.src}
-                      alt={screen.alt}
-                      fill
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 1084px"
-                      className="object-contain"
-                      priority={i <= 1}
-                      loading={i <= 1 ? "eager" : "lazy"}
-                    />
+                    {screen.component ? (
+                      screen.component
+                    ) : (
+                      <Image
+                        src={screen.src}
+                        alt={screen.alt}
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 1084px"
+                        className="object-contain"
+                        priority={i <= 1}
+                        loading={i <= 1 ? "eager" : "lazy"}
+                      />
+                    )}
                   </div>
                 ))}
               </div>

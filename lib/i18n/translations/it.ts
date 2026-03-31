@@ -754,6 +754,26 @@ export const it = {
     howItWorksReadyCTA: "Pronto a trasformare la tua presenza su LinkedIn?",
     howItWorksTryFree: "Prova gratis",
 
+    // AI Experience section
+    aiExpTitle: "Il tuo copilota LinkedIn,",
+    aiExpTitleAccent: "disponibile 24/7",
+    aiExpSubtitle: "Descrivi la tua idea. Posty genera post ottimizzati, suggerisce strategie e ti guida — come avere un esperto LinkedIn al tuo fianco.",
+    aiExpFeature1Title: "Interfaccia conversazionale",
+    aiExpFeature1Desc: "Scrivi semplicemente la tua idea. L'IA capisce la tua intenzione e crea contenuti adatti ai tuoi obiettivi.",
+    aiExpFeature2Title: "Coaching intelligente",
+    aiExpFeature2Desc: "Ricevi feedback personalizzati: cosa funziona, cosa migliorare e come aumentare l'engagement.",
+    aiExpFeature3Title: "Sempre disponibile",
+    aiExpFeature3Desc: "Senza aspettare freelance o agenzie. Il tuo assistente IA è pronto quando arriva l'ispirazione.",
+    aiExpChatPlaceholder: "Descrivi la tua idea di post...",
+    aiExpChatExample: "Scrivi un post sull'IA che trasforma il recruiting nel 2025",
+    aiExpChatResponse: "Here are 2 angles for your audience. Version B uses a data hook that gets 3x more reach with decision-makers.",
+    aiExpNotifViews: "+312 profile views",
+    aiExpNotifViewsSub: "From your last post",
+    aiExpNotifDm: "Your post caught my eye. Can we discuss?",
+    aiExpNotifSuccess: "Meeting scheduled",
+    aiExpNotifSuccessDetail: "Marc D. — Tomorrow 14:00",
+    aiExpContextualLabel: "This person signed a client from this post",
+
     // Value block after features
     valueBlockTitle: "Perché i freelancer scelgono Posty",
     valueBlockItem1Title: "Prospezione automatizzata",

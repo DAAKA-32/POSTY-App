@@ -13,11 +13,14 @@ export interface PostTemplate {
   color: string;
   bgColor: string;
   borderColor: string;
+  hoverRing: string;
   template: string;
   examples: string[];
 }
 
-// Post template categories with visual styles
+// Sidebar nav colors — used as design tokens for template visual identity
+// Chat: #F8935D (orange), History: cyan-500, Schedule: violet-500, Analytics: emerald-500
+// Post template categories with visual styles matching sidebar navigation
 // Exported for use in TemplateFillerModal
 export const TEMPLATES: PostTemplate[] = [
   {
@@ -25,9 +28,10 @@ export const TEMPLATES: PostTemplate[] = [
     name: "Storytelling",
     description: "Racontez une histoire captivante",
     icon: "📖",
-    color: "from-primary-hover to-primary-dark",
-    bgColor: "bg-[#F8935D]/5 dark:bg-primary/10",
-    borderColor: "border-[#F8935D]/20 dark:border-primary/30",
+    color: "from-[#F8935D] to-[#F76B54]",
+    bgColor: "bg-[#F8935D]/5 dark:bg-[#F8935D]/10",
+    borderColor: "border-[#F8935D]/20 dark:border-[#F8935D]/30",
+    hoverRing: "ring-[#F8935D]/30",
     template: "Il y a [durée], j'ai pris une décision qui a changé [domaine]. Voici ce qui s'est passé : [décrivez le contexte]. Le moment clé ? [décrivez le tournant]. Aujourd'hui, [résultat obtenu].",
     examples: [
       "Il y a 6 mois, j'ai pris une décision qui a changé ma carrière...",
@@ -40,9 +44,10 @@ export const TEMPLATES: PostTemplate[] = [
     name: "Conseils Pratiques",
     description: "Partagez vos meilleures astuces",
     icon: "💡",
-    color: "from-primary to-primary-hover",
-    bgColor: "bg-[#F8935D]/5 dark:bg-primary/10",
-    borderColor: "border-[#F8935D]/20 dark:border-primary/30",
+    color: "from-cyan-500 to-cyan-400",
+    bgColor: "bg-cyan-50 dark:bg-cyan-500/10",
+    borderColor: "border-cyan-200 dark:border-cyan-500/30",
+    hoverRing: "ring-cyan-500/30",
     template: "[X] astuces pour [objectif] :\n\n1. [Astuce 1] : [explication courte]\n2. [Astuce 2] : [explication courte]\n3. [Astuce 3] : [explication courte]\n\nCelle qui a le plus d'impact ? [précisez].",
     examples: [
       "5 astuces pour doubler votre productivité...",
@@ -55,9 +60,10 @@ export const TEMPLATES: PostTemplate[] = [
     name: "Opinion Forte",
     description: "Prenez position sur un sujet",
     icon: "🎯",
-    color: "from-red-500 to-pink-500",
-    bgColor: "bg-red-50 dark:bg-red-500/10",
-    borderColor: "border-red-200 dark:border-red-500/30",
+    color: "from-violet-500 to-violet-400",
+    bgColor: "bg-violet-50 dark:bg-violet-500/10",
+    borderColor: "border-violet-200 dark:border-violet-500/30",
+    hoverRing: "ring-violet-500/30",
     template: "Opinion impopulaire : [votre opinion forte].\n\nPourquoi ? Parce que [argument 1]. Et aussi parce que [argument 2].\n\nLe problème avec [pratique courante], c'est que [conséquence]. Il est temps de [appel à l'action].",
     examples: [
       "Opinion impopulaire : [votre opinion]...",
@@ -70,9 +76,10 @@ export const TEMPLATES: PostTemplate[] = [
     name: "Victoire & Résultats",
     description: "Célébrez vos succès",
     icon: "🏆",
-    color: "from-emerald-500 to-teal-500",
+    color: "from-emerald-500 to-emerald-400",
     bgColor: "bg-emerald-50 dark:bg-emerald-500/10",
     borderColor: "border-emerald-200 dark:border-emerald-500/30",
+    hoverRing: "ring-emerald-500/30",
     template: "Résultat : [métrique chiffrée] en [durée].\n\nLe contexte ? [situation de départ].\n\nCe qui a fonctionné :\n• [Action 1]\n• [Action 2]\n• [Action 3]\n\nLa leçon clé ? [insight principal].",
     examples: [
       "Résultat : +X% de [métrique] en X mois...",
@@ -85,9 +92,10 @@ export const TEMPLATES: PostTemplate[] = [
     name: "Leçon Apprise",
     description: "Partagez vos apprentissages",
     icon: "🎓",
-    color: "from-secondary to-primary",
-    bgColor: "bg-[#F89E85]/5 dark:bg-secondary/10",
-    borderColor: "border-[#F89E85]/20 dark:border-secondary/30",
+    color: "from-[#F8935D] to-[#F76B54]",
+    bgColor: "bg-[#F8935D]/5 dark:bg-[#F8935D]/10",
+    borderColor: "border-[#F8935D]/20 dark:border-[#F8935D]/30",
+    hoverRing: "ring-[#F8935D]/30",
     template: "Ce que j'aurais aimé savoir avant de [action/décision] :\n\n1. [Leçon 1] — [pourquoi c'est important]\n2. [Leçon 2] — [conséquence si ignoré]\n3. [Leçon 3] — [bénéfice si appliqué]\n\nSi je devais recommencer ? [ce que vous feriez différemment].",
     examples: [
       "Ce que j'aurais aimé savoir avant de [action]...",
@@ -100,9 +108,10 @@ export const TEMPLATES: PostTemplate[] = [
     name: "Engagement",
     description: "Générez des interactions",
     icon: "❓",
-    color: "from-primary-dark to-accent",
-    bgColor: "bg-[#E8834D]/5 dark:bg-primary-dark/10",
-    borderColor: "border-[#E8834D]/20 dark:border-primary-dark/30",
+    color: "from-cyan-500 to-cyan-400",
+    bgColor: "bg-cyan-50 dark:bg-cyan-500/10",
+    borderColor: "border-cyan-200 dark:border-cyan-500/30",
+    hoverRing: "ring-cyan-500/30",
     template: "Question à la communauté : [votre question précise] ?\n\nContexte : [expliquez pourquoi vous posez cette question].\n\nMon point de vue ? [partagez votre perspective].\n\nEt vous, [reformulez la question pour encourager la réponse] ?",
     examples: [
       "Question à la communauté : [votre question]...",
@@ -334,9 +343,13 @@ export function CompactPostTemplates({ onSelect, onTemplateSelect, className = "
   }, [normalizePosition]);
 
   // Auto-scroll animation - uses REFS to avoid stale closure issues
+  // DOM updates happen directly via ref; React state syncs at lower frequency
+  const stateUpdateCounterRef = useRef(0);
+  const animateFnRef = useRef<((ts: number) => void) | null>(null);
+
   const animate = useCallback((timestamp: number) => {
-    // Always schedule next frame first
-    animationRef.current = requestAnimationFrame(animate);
+    // Schedule next frame via stable ref
+    animationRef.current = requestAnimationFrame((ts) => animateFnRef.current?.(ts));
 
     // Read from refs (always current values) - pause only on drag or explicit pause
     if (isPausedRef.current || isDraggingRef.current) {
@@ -352,26 +365,32 @@ export function CompactPostTemplates({ onSelect, onTemplateSelect, className = "
     const deltaTime = (timestamp - lastTimeRef.current) / 1000;
     lastTimeRef.current = timestamp;
 
-    // Cap deltaTime for tab switches, but use smaller cap for ultra-smooth animation
     const cappedDelta = Math.min(deltaTime, 0.02);
-
-    // Premium smooth scroll: 60px per second for fluid motion
     const movement = 60 * cappedDelta;
     const newX = normalizePosition(scrollXRef.current + movement);
     scrollXRef.current = newX;
-    setScrollX(newX);
+
+    // Apply transform directly to DOM (no React re-render needed)
+    if (trackRef.current) {
+      trackRef.current.style.transform = `translate3d(-${newX}px, 0, 0)`;
+    }
   }, [normalizePosition]);
 
-  // Start animation on mount (only once)
+  // Keep ref always pointing to latest animate
+  animateFnRef.current = animate;
+
+  // Start animation on mount (only once) — no deps to prevent re-firing
   useEffect(() => {
-    // Update track width on mount and resize
     updateTrackWidth();
     window.addEventListener("resize", updateTrackWidth);
 
-    // Check for reduced motion preference
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (!prefersReducedMotion) {
-      animationRef.current = requestAnimationFrame(animate);
+      // Wrap in a stable function that delegates to the ref
+      const tick = (ts: number) => {
+        animateFnRef.current?.(ts);
+      };
+      animationRef.current = requestAnimationFrame(tick);
     }
 
     return () => {
@@ -380,14 +399,8 @@ export function CompactPostTemplates({ onSelect, onTemplateSelect, className = "
       if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
       if (momentumRef.current) cancelAnimationFrame(momentumRef.current);
     };
-  }, [animate, updateTrackWidth]);
-
-  // Apply scroll position with GPU acceleration
-  useEffect(() => {
-    if (trackRef.current) {
-      trackRef.current.style.transform = `translate3d(-${scrollX}px, 0, 0)`;
-    }
-  }, [scrollX]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Interaction handlers - use REFS for animation state
   const handleInteractionStart = useCallback((clientX: number, clientY: number) => {
@@ -610,7 +623,7 @@ export function CompactPostTemplates({ onSelect, onTemplateSelect, className = "
                   ${disabled
                     ? 'cursor-not-allowed opacity-90'
                     : isHovered
-                      ? 'scale-105 shadow-lg ring-2 ring-primary/30'
+                      ? `scale-105 shadow-lg ring-2 ${template.hoverRing}`
                       : 'scale-100'
                   }
                   ${!disabled && 'hover:shadow-md'}

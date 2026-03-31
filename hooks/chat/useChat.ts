@@ -91,6 +91,8 @@ export function useChat({
   // Refs to avoid stale closures in async streaming callbacks
   const postIdRef = useRef<string | null>(postId);
   const messagesLengthRef = useRef<number>(0);
+  // Generation counter — incremented on reset() to discard stale async saves
+  const generationRef = useRef(0);
 
   // Keep refs in sync with state
   postIdRef.current = postId;
@@ -144,6 +146,9 @@ export function useChat({
         abortControllerRef.current.abort();
       }
       abortControllerRef.current = new AbortController();
+
+      // Capture generation ID to discard results if reset() is called mid-save
+      const currentGeneration = generationRef.current;
 
       setIsLoading(true);
       setIsStreaming(false);
@@ -453,7 +458,11 @@ export function useChat({
                               selectedStyle: (isConversational || dualMode) ? undefined : effectiveStyle,
                             }
                           );
-                          setPostIdWithRef(newPostId);
+                          // Only set postId if this generation is still current
+                          // (user may have clicked "New Post" during the save)
+                          if (generationRef.current === currentGeneration) {
+                            setPostIdWithRef(newPostId);
+                          }
                         }
                       } catch (saveError) {
                         console.error("Failed to save:", saveError);
@@ -490,6 +499,8 @@ export function useChat({
 
   // Reset chat state - starts a NEW conversation
   const reset = useCallback(() => {
+    // Increment generation to discard any in-flight async saves
+    generationRef.current++;
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
