@@ -32,15 +32,20 @@ function SubscriptionContent() {
   const [welcomePlanName, setWelcomePlanName] = useState<string | undefined>();
 
 
-  // Enable full scrolling on Subscription page (mouse wheel, trackpad, touch, keyboard)
+  // Force light mode + enable scrolling on Subscription page
   useEffect(() => {
-    document.documentElement.classList.add("subscription-scroll-enabled");
+    const root = document.documentElement;
+    root.classList.remove("dark");
+    root.classList.add("light");
+    root.style.colorScheme = "light";
+    root.setAttribute("data-theme", "light");
+
+    root.classList.add("subscription-scroll-enabled");
     document.body.classList.add("subscription-scroll-enabled");
-    // Remove any classes that might block scroll
     document.body.classList.remove("pwa-mobile", "no-scroll", "scroll-locked", "modal-open");
 
     return () => {
-      document.documentElement.classList.remove("subscription-scroll-enabled");
+      root.classList.remove("subscription-scroll-enabled");
       document.body.classList.remove("subscription-scroll-enabled");
     };
   }, []);

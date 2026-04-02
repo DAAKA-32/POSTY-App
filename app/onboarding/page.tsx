@@ -348,6 +348,15 @@ export default function OnboardingPage() {
   // Also true when explicitly navigated with ?edit=true from subscription page
   const isEditMode = (userProfile?.onboardingComplete === true && !hasActiveSubscription) || isExplicitEdit.current;
 
+  // Force light mode on onboarding
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.remove("dark");
+    root.classList.add("light");
+    root.style.colorScheme = "light";
+    root.setAttribute("data-theme", "light");
+  }, []);
+
   // Persist progress to localStorage on every step/data change
   useEffect(() => {
     if (!showRecap && !isEditMode) {
@@ -412,7 +421,7 @@ export default function OnboardingPage() {
     body.classList.add("onboarding-scroll-enabled");
 
     // Remove ALL classes that could block scroll (from other pages, modals, PWA shell)
-    const blocking = ["pwa-mobile", "no-scroll", "scroll-locked", "modal-open", "bottomsheet-open", "no-bounce", "page-fixed"];
+    const blocking = ["pwa-mobile", "no-scroll", "scroll-locked", "modal-open", "bottomsheet-open", "no-bounce", "page-fixed", "template-modal-open"];
     blocking.forEach(cls => {
       html.classList.remove(cls);
       body.classList.remove(cls);
@@ -581,6 +590,10 @@ export default function OnboardingPage() {
                     {(t.onboarding as Record<string, string>)[stepConfig.titleKey]}
                   </h1>
                   <p className="text-gray-400 text-sm sm:text-base">{(t.onboarding as Record<string, string>)[stepConfig.subtitleKey]}</p>
+                  <p className="mt-3 text-xs text-gray-400/80 flex items-center justify-center gap-1">
+                    <span>✦</span>
+                    <span>{(t.onboarding as Record<string, string>).aiInfoNote}</span>
+                  </p>
                 </div>
 
                 {/* Input or Selection */}

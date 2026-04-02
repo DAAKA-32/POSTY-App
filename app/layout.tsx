@@ -222,7 +222,7 @@ export default function RootLayout({
                   var root = document.documentElement;
                   var path = window.location.pathname;
                   // Public pages always render in light mode (no dark flash)
-                  var isPublicPage = path === '/' || path.startsWith('/about') || path.startsWith('/login') || path.startsWith('/signup') || path.startsWith('/legal') || path.startsWith('/pricing');
+                  var isPublicPage = path === '/' || path.startsWith('/about') || path.startsWith('/login') || path.startsWith('/signup') || path.startsWith('/legal') || path.startsWith('/pricing') || path.startsWith('/onboarding') || path.startsWith('/subscription');
                   if (isPublicPage) {
                     root.classList.add('light');
                     root.style.colorScheme = 'light';
