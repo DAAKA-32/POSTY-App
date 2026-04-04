@@ -25,6 +25,7 @@ import PricingTrustBadges from "@/components/pricing/PricingTrustBadges";
 import { useScrollLock } from "@/hooks/ui/useScrollLock";
 import AnimatedMacBook from "@/components/landing/AnimatedMacBook";
 import AuroraBackground from "@/components/landing/AuroraBackground";
+import HowItWorksSection from "@/components/landing/HowItWorksSection";
 import { CopilotSection } from "@/components/landing/MockupScreens";
 
 // =============================================================================
@@ -235,7 +236,7 @@ function Navbar() {
   return (
     <>
     {/* Outer fixed container — always full width for positioning */}
-    <div className={`fixed top-0 left-0 right-0 z-50 pointer-events-none transition-colors duration-700 ${isScrolled && !isMenuOpen ? "bg-[#FEF3EE]" : ""}`}>
+    <div className={`fixed top-0 left-0 right-0 z-50 pointer-events-none transition-all duration-700 ${isScrolled && !isMenuOpen ? "bg-[#FEF3EE]/80 backdrop-blur-md" : ""}`}>
       {/* Dynamic container — always visible, border/bg on scroll */}
       <nav
         className={`w-full pointer-events-auto transition-[padding] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
@@ -1222,7 +1223,7 @@ function DemoSection() {
         {/* Content — cinematic reveal: starts high + clipped, descends into place */}
         {/* z-[3] scrolls over the fixed title — transparent so aurora shows through */}
         <motion.div
-          className="relative z-[3] overflow-x-clip -mt-40 sm:-mt-48 md:-mt-52 lg:-mt-64"
+          className="relative z-[3] overflow-x-clip -mt-40 sm:-mt-48 md:-mt-56 lg:-mt-64"
           initial={alreadyPlayed ? undefined : { y: -180 }}
           animate={
             heroPhase === "init" || heroPhase === "opening"
@@ -3278,7 +3279,7 @@ function getFeatures(t: Translations): FeatureConfig[] {
     title: t.landing.featuresScheduleTitle,
     description: t.landing.featuresScheduleDesc,
     mockup: <MockupScheduler />,
-    badge: t.landing.featuresScheduleLabel,
+    badge: "",
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -3442,16 +3443,18 @@ function FeatureCard({ feature, index }: { feature: FeatureConfig; index: number
 
           {/* Badges — floating above everything */}
           <div className={`absolute top-2 z-20 flex items-center gap-2 ${isEven ? "left-0" : "right-0"}`}>
-            <span
-              className={`
-                inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full
-                ${feature.color.badge} ${feature.color.badgeText}
-                text-xs font-semibold shadow-lg
-              `}
-            >
-              <span className={`w-2 h-2 rounded-full ${feature.color.iconBg} animate-pulse`} />
-              {feature.badge}
-            </span>
+            {feature.badge && (
+              <span
+                className={`
+                  inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full
+                  ${feature.color.badge} ${feature.color.badgeText}
+                  text-xs font-semibold shadow-lg
+                `}
+              >
+                <span className={`w-2 h-2 rounded-full ${feature.color.iconBg} animate-pulse`} />
+                {feature.badge}
+              </span>
+            )}
             {feature.tierBadge && (
               <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[10px] font-bold uppercase tracking-wider shadow-lg shadow-amber-500/30 ring-1 ring-white/20">
                 <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -3539,6 +3542,9 @@ function FeaturesSection() {
             <span className="text-silver-premium">{t.landing.featuresSectionTitle}</span>
           </h2>
         </motion.div>
+
+        {/* How it works — first feature card, right after title */}
+        <HowItWorksSection />
 
         {/* Features Grid with Connectors */}
         <div className="relative space-y-[clamp(1.25rem,2vw,1.75rem)]">

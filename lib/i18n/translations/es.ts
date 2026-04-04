@@ -1336,6 +1336,22 @@ export const es = {
     deleteAccount: "Eliminar cuenta",
     deleteAccountDesc: "Eliminar permanentemente tu cuenta y todos tus datos",
 
+    // AI Memory
+    aiMemory: "Memoria contextual",
+    aiMemoryDesc: "La IA retiene información clave de tus conversaciones para personalizar futuros posts",
+    aiMemoryEnabled: "Memoria activada",
+    aiMemoryDisabled: "Memoria desactivada",
+    aiMemoryItems: "Información retenida",
+    aiMemoryEmpty: "No hay información retenida aún. La memoria se llena automáticamente con tus conversaciones.",
+    aiMemoryClearAll: "Borrar toda la memoria",
+    aiMemoryClearConfirm: "¿Estás seguro de querer borrar toda la memoria? Esta acción es irreversible.",
+    aiMemoryCleared: "Memoria borrada",
+    aiMemoryItemDeleted: "Información eliminada",
+    aiMemoryCategoryTopic: "Tema",
+    aiMemoryCategoryEvent: "Evento",
+    aiMemoryCategoryPreference: "Preferencia",
+    aiMemoryCategoryFact: "Info",
+
     // Delete conversations
     deleteConversations: "Eliminar todas mis conversaciones",
     deleteConversationsDesc: "Elimina tu historial de conversaciones con la IA sin eliminar tu cuenta",
@@ -1643,6 +1659,7 @@ export const es = {
     saving: "Guardando...",
     errorOccurred: "Ocurrió un error",
     defaultUser: "Usuario",
+    aiInfoNote: "Esta información es utilizada por la IA para personalizar tus publicaciones (planes Pro y Max).",
 
     // Profile recap screen
     recapTitle: "Tu perfil está listo",

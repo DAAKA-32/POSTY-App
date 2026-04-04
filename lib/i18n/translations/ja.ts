@@ -1336,6 +1336,22 @@ export const ja = {
     deleteAccount: "アカウントを削除",
     deleteAccountDesc: "アカウントとすべてのデータを完全に削除します",
 
+    // AI Memory
+    aiMemory: "コンテキストメモリ",
+    aiMemoryDesc: "AIが会話の重要な情報を記憶し、今後の投稿をパーソナライズします",
+    aiMemoryEnabled: "メモリ有効",
+    aiMemoryDisabled: "メモリ無効",
+    aiMemoryItems: "記憶された情報",
+    aiMemoryEmpty: "まだ情報が記憶されていません。会話を通じて自動的に蓄積されます。",
+    aiMemoryClearAll: "すべてのメモリを消去",
+    aiMemoryClearConfirm: "すべてのメモリを消去してもよろしいですか？この操作は元に戻せません。",
+    aiMemoryCleared: "メモリが消去されました",
+    aiMemoryItemDeleted: "情報が削除されました",
+    aiMemoryCategoryTopic: "トピック",
+    aiMemoryCategoryEvent: "イベント",
+    aiMemoryCategoryPreference: "好み",
+    aiMemoryCategoryFact: "情報",
+
     // Delete conversations
     deleteConversations: "すべての会話を削除",
     deleteConversationsDesc: "アカウントを削除せずにAI会話履歴を削除します",
@@ -1643,6 +1659,7 @@ export const ja = {
     saving: "保存中...",
     errorOccurred: "エラーが発生しました",
     defaultUser: "ユーザー",
+    aiInfoNote: "この情報はAIが投稿をパーソナライズするために使用します（Pro・Maxプラン）。",
 
     // Profile recap screen
     recapTitle: "プロフィールの準備ができました",

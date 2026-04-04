@@ -1336,6 +1336,22 @@ export const ko = {
     deleteAccount: "계정 삭제",
     deleteAccountDesc: "계정과 모든 데이터를 영구적으로 삭제해요",
 
+    // AI Memory
+    aiMemory: "맥락 기억",
+    aiMemoryDesc: "AI가 대화의 핵심 정보를 기억하여 향후 게시물을 개인화합니다",
+    aiMemoryEnabled: "기억 활성화",
+    aiMemoryDisabled: "기억 비활성화",
+    aiMemoryItems: "기억된 정보",
+    aiMemoryEmpty: "아직 기억된 정보가 없습니다. 대화를 통해 자동으로 채워집니다.",
+    aiMemoryClearAll: "모든 기억 삭제",
+    aiMemoryClearConfirm: "모든 기억을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+    aiMemoryCleared: "기억이 삭제되었습니다",
+    aiMemoryItemDeleted: "정보가 삭제되었습니다",
+    aiMemoryCategoryTopic: "주제",
+    aiMemoryCategoryEvent: "이벤트",
+    aiMemoryCategoryPreference: "선호",
+    aiMemoryCategoryFact: "정보",
+
     // Delete conversations
     deleteConversations: "모든 대화 삭제",
     deleteConversationsDesc: "계정을 삭제하지 않고 AI 대화 기록을 삭제해요",
@@ -1643,6 +1659,7 @@ export const ko = {
     saving: "저장 중...",
     errorOccurred: "오류가 발생했어요",
     defaultUser: "사용자",
+    aiInfoNote: "이 정보는 AI가 게시물을 맞춤화하는 데 사용됩니다 (Pro 및 Max 플랜).",
 
     // Profile recap screen
     recapTitle: "프로필이 준비되었어요",

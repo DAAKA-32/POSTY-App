@@ -32,7 +32,7 @@ import NewResponseIndicator from "@/components/chat/NewResponseIndicator";
 import PublishToLinkedInModal from "@/components/linkedin/PublishToLinkedInModal";
 import { AnimatedScaleFade } from "@/components/animations/AnimatedPageWrapper";
 import toast from "@/components/ui/Toast";
-import VoiceWaveform, { ListeningIndicator } from "@/components/chat/VoiceWaveform";
+
 import ShimmeringName from "@/components/ui/ShimmeringName";
 import { useBrowserMode, setBrowserModeCSSVars } from "@/hooks/ui/useBrowserMode";
 import { CompactPostTemplates, PostTemplate } from "@/components/chat/PostTemplates";
@@ -925,85 +925,7 @@ function AppContent() {
             </AnimatePresence>
 
             <div className="relative">
-              {/* Premium Voice Recording Indicator */}
-              <AnimatePresence mode="wait">
-                {(isRecording || isProcessingVoice) && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                    transition={{ duration: 0.25, ease: smoothEase }}
-                    className="absolute -top-12 left-1/2 -translate-x-1/2 flex items-center justify-center z-10"
-                  >
-                    {isProcessingVoice ? (
-                      <motion.div
-                        key="processing"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="flex items-center gap-2 px-4 py-2 bg-dark-card/95 backdrop-blur-sm border border-primary/30 rounded-2xl shadow-lg shadow-primary/10"
-                      >
-                        <div className="flex items-center gap-1">
-                          {[0, 1, 2].map((i) => (
-                            <motion.div
-                              key={i}
-                              className="w-2 h-2 rounded-full bg-primary"
-                              animate={{
-                                y: [0, -6, 0],
-                                opacity: [0.4, 1, 0.4],
-                              }}
-                              transition={{
-                                duration: 0.6,
-                                repeat: Infinity,
-                                delay: i * 0.12,
-                                ease: "easeInOut",
-                              }}
-                            />
-                          ))}
-                        </div>
-                      </motion.div>
-                    ) : (
-                      <motion.div
-                        key="recording"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="flex items-center gap-3 px-4 py-2.5 bg-dark-card/95 backdrop-blur-sm border border-primary/40 rounded-2xl shadow-lg shadow-primary/20"
-                      >
-                        <div className="relative flex items-center justify-center w-6 h-6">
-                          <motion.div
-                            className="absolute inset-0 rounded-full bg-primary/20"
-                            animate={{
-                              scale: [1, 1.5, 1],
-                              opacity: [0.6, 0, 0.6],
-                            }}
-                            transition={{
-                              duration: 1.5,
-                              repeat: Infinity,
-                              ease: "easeInOut",
-                            }}
-                          />
-                          <motion.div
-                            className="absolute inset-1 rounded-full bg-primary/30"
-                            animate={{
-                              scale: [1, 1.3, 1],
-                              opacity: [0.8, 0.2, 0.8],
-                            }}
-                            transition={{
-                              duration: 1.2,
-                              repeat: Infinity,
-                              ease: "easeInOut",
-                              delay: 0.2,
-                            }}
-                          />
-                          <div className="w-3 h-3 rounded-full bg-primary shadow-lg shadow-primary/50" />
-                        </div>
-                        <VoiceWaveform isRecording={isRecording} barCount={7} />
-                      </motion.div>
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {/* Voice feedback is handled by UniversalChatInput's built-in status bar */}
 
               {/* UniversalChatInput - Unified premium input component */}
               <UniversalChatInput

@@ -53,6 +53,26 @@ function SubscriptionContent() {
   // Determine if user was redirected from a guard (for back button behavior)
   const isRedirectedFromGuard = searchParams.get("reason") === "subscription_required" || searchParams.get("reason") === "trial_expired";
 
+  // Detect if we returned from Stripe (checkout success/cancel or external referrer)
+  const isReturnedFromStripe = (() => {
+    if (searchParams.get("success") !== null || searchParams.get("canceled") !== null) return true;
+    if (typeof document !== "undefined" && document.referrer && !document.referrer.startsWith(window.location.origin)) return true;
+    return false;
+  })();
+
+  const handleBack = () => {
+    if (isRedirectedFromGuard) {
+      router.push("/");
+    } else if (isReturnedFromStripe) {
+      // Never router.back() after Stripe — it would navigate to Stripe and loop
+      const savedRoute = sessionStorage.getItem("posty-pre-stripe-route");
+      sessionStorage.removeItem("posty-pre-stripe-route");
+      router.push(savedRoute || "/app");
+    } else {
+      router.back();
+    }
+  };
+
   // Show toast if redirected from canceled checkout
   useEffect(() => {
     if (searchParams.get("canceled")) {
@@ -126,6 +146,8 @@ function SubscriptionContent() {
 
       // Redirect to Stripe Checkout
       if (data.url) {
+        // Save last internal route so back button won't loop to Stripe
+        sessionStorage.setItem("posty-pre-stripe-route", redirectAfterSuccess || "/app");
         window.location.href = data.url;
       } else {
         throw new Error("No checkout URL returned");
@@ -156,7 +178,7 @@ function SubscriptionContent() {
           <div className="relative flex items-center h-16">
             {currentPlan && (
               <button
-                onClick={() => isRedirectedFromGuard ? router.push("/") : router.back()}
+                onClick={handleBack}
                 className="flex items-center gap-2 text-gray-600 dark:text-text-secondary hover:text-gray-900 dark:hover:text-white transition-colors group z-10"
               >
                 <svg className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">

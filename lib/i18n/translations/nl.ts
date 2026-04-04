@@ -1336,6 +1336,22 @@ export const nl = {
     deleteAccount: "Account verwijderen",
     deleteAccountDesc: "Verwijder je account en alle gegevens permanent",
 
+    // AI Memory
+    aiMemory: "Contextueel geheugen",
+    aiMemoryDesc: "AI onthoudt belangrijke informatie uit je gesprekken om toekomstige posts te personaliseren",
+    aiMemoryEnabled: "Geheugen ingeschakeld",
+    aiMemoryDisabled: "Geheugen uitgeschakeld",
+    aiMemoryItems: "Onthouden informatie",
+    aiMemoryEmpty: "Nog geen informatie onthouden. Het geheugen vult zich automatisch via je gesprekken.",
+    aiMemoryClearAll: "Geheugen wissen",
+    aiMemoryClearConfirm: "Weet je zeker dat je het geheugen wilt wissen? Dit kan niet ongedaan worden gemaakt.",
+    aiMemoryCleared: "Geheugen gewist",
+    aiMemoryItemDeleted: "Informatie verwijderd",
+    aiMemoryCategoryTopic: "Onderwerp",
+    aiMemoryCategoryEvent: "Evenement",
+    aiMemoryCategoryPreference: "Voorkeur",
+    aiMemoryCategoryFact: "Info",
+
     // Delete conversations
     deleteConversations: "Al mijn gesprekken verwijderen",
     deleteConversationsDesc: "Verwijder je AI-gespreksgeschiedenis zonder je account te verwijderen",
@@ -1643,6 +1659,7 @@ export const nl = {
     saving: "Opslaan...",
     errorOccurred: "Er is een fout opgetreden",
     defaultUser: "Gebruiker",
+    aiInfoNote: "Deze informatie wordt door de AI gebruikt om je berichten te personaliseren (Pro- & Max-abonnement).",
 
     // Profile recap screen
     recapTitle: "Je profiel is klaar",

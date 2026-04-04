@@ -1336,6 +1336,22 @@ export const de = {
     deleteAccount: "Konto löschen",
     deleteAccountDesc: "Ihr Konto und alle Daten dauerhaft löschen",
 
+    // AI Memory
+    aiMemory: "Kontextuelles Gedächtnis",
+    aiMemoryDesc: "Die KI merkt sich wichtige Informationen aus Ihren Gesprächen, um zukünftige Posts zu personalisieren",
+    aiMemoryEnabled: "Gedächtnis aktiviert",
+    aiMemoryDisabled: "Gedächtnis deaktiviert",
+    aiMemoryItems: "Gespeicherte Informationen",
+    aiMemoryEmpty: "Noch keine Informationen gespeichert. Das Gedächtnis füllt sich automatisch durch Ihre Gespräche.",
+    aiMemoryClearAll: "Gesamtes Gedächtnis löschen",
+    aiMemoryClearConfirm: "Sind Sie sicher, dass Sie das gesamte Gedächtnis löschen möchten? Dies kann nicht rückgängig gemacht werden.",
+    aiMemoryCleared: "Gedächtnis gelöscht",
+    aiMemoryItemDeleted: "Information entfernt",
+    aiMemoryCategoryTopic: "Thema",
+    aiMemoryCategoryEvent: "Ereignis",
+    aiMemoryCategoryPreference: "Präferenz",
+    aiMemoryCategoryFact: "Info",
+
     // Delete conversations
     deleteConversations: "Alle meine Unterhaltungen löschen",
     deleteConversationsDesc: "Löschen Sie Ihren KI-Unterhaltungsverlauf, ohne Ihr Konto zu löschen",
@@ -1643,6 +1659,7 @@ export const de = {
     saving: "Wird gespeichert...",
     errorOccurred: "Ein Fehler ist aufgetreten",
     defaultUser: "Benutzer",
+    aiInfoNote: "Diese Informationen werden von der KI genutzt, um Ihre Beiträge zu personalisieren (Pro- & Max-Pläne).",
 
     // Profile recap screen
     recapTitle: "Ihr Profil ist bereit",

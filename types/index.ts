@@ -161,6 +161,8 @@ export interface UserProfile {
     weeklyPublishCount?: number;
     weekStartDate?: Timestamp;
   };
+  // AI contextual memory (Pro+)
+  memory?: UserMemorySettings;
   // Help tooltips: pages the user has dismissed (synced across devices)
   helpReadPages?: string[];
   // Welcome modal flag (set by webhook after first payment, cleared on dismiss)
@@ -276,6 +278,39 @@ export const FILE_ATTACHMENT_LIMITS = {
     "application/pdf",
   ] as AttachmentMimeType[],
 } as const;
+
+// ============== AI MEMORY TYPES ==============
+
+/** Category of a memory item — determines how it's used in prompts */
+export type MemoryCategory = "topic" | "event" | "preference" | "fact";
+
+/** A single extracted piece of contextual memory */
+export interface MemoryItem {
+  id: string;
+  /** Human-readable fact (e.g. "Has an art exhibition in Lyon in March 2025") */
+  content: string;
+  /** Classification for filtering and relevance */
+  category: MemoryCategory;
+  /** Keywords for fast relevance matching against new prompts */
+  keywords: string[];
+  /** When this memory was extracted */
+  createdAt: Timestamp;
+  /** Post/conversation that produced this memory */
+  sourcePostId?: string;
+}
+
+/** User-level memory settings stored on the user document */
+export interface UserMemorySettings {
+  /** Whether contextual memory is active (default: true for Pro+) */
+  enabled: boolean;
+  /** Extracted memory items (capped at 30) */
+  items: MemoryItem[];
+  /** Last time memory was updated */
+  lastUpdated?: Timestamp;
+}
+
+/** Max memory items stored per user (keeps token usage bounded) */
+export const MEMORY_MAX_ITEMS = 30;
 
 // ============== ONBOARDING TYPES ==============
 

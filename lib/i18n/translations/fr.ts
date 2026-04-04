@@ -766,6 +766,14 @@ export const fr = {
     aiExpFeature2Desc: "Recevez des retours personnalisés sur vos posts : ce qui fonctionne, quoi améliorer et comment booster l'engagement.",
     aiExpFeature3Title: "Toujours disponible",
     aiExpFeature3Desc: "Pas besoin d'attendre un freelance ou une agence. Votre assistant IA est prêt quand l'inspiration arrive.",
+    aiExpWithout: "Manuellement",
+    aiExpWith: "Avec Posty",
+    aiExpRow1Before: "2h pour rédiger un post",
+    aiExpRow1After: "Prêt en 30 secondes",
+    aiExpRow2Before: "Aucune idée de quoi poster",
+    aiExpRow2After: "L'IA suggère des angles viraux",
+    aiExpRow3Before: "0 engagement, 0 prospects",
+    aiExpRow3After: "Des posts qui attirent des clients",
     aiExpChatPlaceholder: "Décrivez votre idée de post...",
     aiExpChatExample: "Écris un post sur l'IA qui transforme le recrutement en 2025",
     aiExpChatResponse: "Voici 2 versions optimisées pour votre audience :",
@@ -787,6 +795,26 @@ export const fr = {
     valueBlockItem4Title: "Plus d'opportunités",
     valueBlockItem4Desc: "Une présence LinkedIn régulière et stratégique qui génère des contacts qualifiés.",
     valueBlockCTA: "Commencer gratuitement",
+
+    // HowItWorks section — pedagogical input→output showcase
+    hiwBadge: "Comment ça marche",
+    hiwTitle: "Une idée.",
+    hiwTitleAccent: "Un post. C'est fait.",
+    hiwSubtitle: "Tapez une simple idée — l'IA de Posty la transforme en post LinkedIn prêt à publier.",
+    hiwYourIdea: "Votre idée",
+    hiwGeneratedPost: "Post généré",
+    hiwUserInput: "Je veux partager 3 leçons apprises en manageant une équipe remote pour la première fois",
+    hiwPostHook: "J'ai failli perdre toute mon équipe en 3 mois.",
+    hiwPostBody: "Quand je suis devenu manager remote, je pensais que le plus dur serait les outils. Je me trompais.\n\nLeçon 1 : La confiance n'est pas optionnelle — c'est votre fondation.\nLeçon 2 : Communiquez plus. Puis communiquez encore.\nLeçon 3 : Les résultats comptent plus que les heures.\n\nAujourd'hui mon équipe est 40% plus productive et plus épanouie que jamais.",
+    hiwPostCta: "Quelle est la plus grande leçon que VOUS avez apprise en management remote ?",
+    hiwPostAuthor: "Emilien N.",
+    hiwPostRole: "Fondateur @ Posty AI",
+    hiwGeneratedIn: "Généré en 12s",
+    hiwAiIntro: "Voici votre post, optimisé pour l\u2019engagement :",
+    hiwInputPlaceholder: "Décrivez votre prochaine idée...",
+    hiwPill1: "Optimisé pour LinkedIn",
+    hiwPill2: "Programmable pour plus tard",
+    hiwPill3: "Insights IA inclus",
 
     // DemoPreview section
     demoSuggestion1: "Post sur le leadership",
@@ -1338,6 +1366,22 @@ export const fr = {
     deleteAccount: "Supprimer mon compte",
     deleteAccountDesc: "Supprime définitivement votre compte et toutes vos données",
 
+    // AI Memory
+    aiMemory: "Mémoire contextuelle",
+    aiMemoryDesc: "L'IA retient des informations clés de vos conversations pour personnaliser les futurs posts",
+    aiMemoryEnabled: "Mémoire activée",
+    aiMemoryDisabled: "Mémoire désactivée",
+    aiMemoryItems: "Informations retenues",
+    aiMemoryEmpty: "Aucune information retenue pour le moment. La mémoire se remplit automatiquement au fil de vos conversations.",
+    aiMemoryClearAll: "Effacer toute la mémoire",
+    aiMemoryClearConfirm: "Êtes-vous sûr de vouloir effacer toute la mémoire ? Cette action est irréversible.",
+    aiMemoryCleared: "Mémoire effacée",
+    aiMemoryItemDeleted: "Information supprimée",
+    aiMemoryCategoryTopic: "Sujet",
+    aiMemoryCategoryEvent: "Événement",
+    aiMemoryCategoryPreference: "Préférence",
+    aiMemoryCategoryFact: "Info",
+
     // Delete conversations
     deleteConversations: "Supprimer toutes mes conversations",
     deleteConversationsDesc: "Supprime l'historique de vos conversations IA sans supprimer votre compte",
@@ -1645,6 +1689,7 @@ export const fr = {
     saving: "Enregistrement...",
     errorOccurred: "Une erreur est survenue",
     defaultUser: "Utilisateur",
+    aiInfoNote: "Ces informations sont utilisées par l'IA pour personnaliser vos posts (plans Pro & Max).",
 
     // Profile recap screen
     recapTitle: "Votre profil est prêt",

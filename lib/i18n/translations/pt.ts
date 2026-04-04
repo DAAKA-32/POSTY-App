@@ -1336,6 +1336,22 @@ export const pt = {
     deleteAccount: "Excluir conta",
     deleteAccountDesc: "Excluir permanentemente sua conta e todos os dados",
 
+    // AI Memory
+    aiMemory: "Memória contextual",
+    aiMemoryDesc: "A IA retém informações chave das suas conversas para personalizar posts futuros",
+    aiMemoryEnabled: "Memória ativada",
+    aiMemoryDisabled: "Memória desativada",
+    aiMemoryItems: "Informações retidas",
+    aiMemoryEmpty: "Nenhuma informação retida ainda. A memória é preenchida automaticamente durante as conversas.",
+    aiMemoryClearAll: "Limpar toda a memória",
+    aiMemoryClearConfirm: "Tem certeza de que deseja limpar toda a memória? Esta ação é irreversível.",
+    aiMemoryCleared: "Memória limpa",
+    aiMemoryItemDeleted: "Informação removida",
+    aiMemoryCategoryTopic: "Tópico",
+    aiMemoryCategoryEvent: "Evento",
+    aiMemoryCategoryPreference: "Preferência",
+    aiMemoryCategoryFact: "Info",
+
     // Delete conversations
     deleteConversations: "Excluir todas as minhas conversas",
     deleteConversationsDesc: "Exclua seu histórico de conversas com a IA sem excluir sua conta",
@@ -1643,6 +1659,7 @@ export const pt = {
     saving: "Salvando...",
     errorOccurred: "Ocorreu um erro",
     defaultUser: "Usuário",
+    aiInfoNote: "Estas informações são usadas pela IA para personalizar seus posts (planos Pro e Max).",
 
     // Profile recap screen
     recapTitle: "Seu perfil está pronto",

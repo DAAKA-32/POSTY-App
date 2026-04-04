@@ -21,7 +21,10 @@ import {
   getUserProfileAdmin,
   getDualModeUsageThisWeek,
   incrementDualModeUsageAdmin,
+  getUserMemoryAdmin,
+  saveUserMemoryAdmin,
 } from "@/lib/db/firestore-admin";
+import { buildMemoryContext, buildExtractionMessages, parseExtractionResponse, mergeMemoryItems } from "@/lib/services/memory";
 import { isAdminInitialized } from "@/lib/db/firebase-admin";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import { getPlanFeatures } from "@/lib/config/plan-features";
@@ -414,6 +417,21 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // ========== LOAD CONTEXTUAL MEMORY (Pro+) ==========
+    let memoryContext: string | null = null;
+    let memoryItems: import("@/types").MemoryItem[] = [];
+    if (isAdminInitialized() && serverUserProfile) {
+      try {
+        const memoryData = await getUserMemoryAdmin(userId);
+        if (memoryData?.enabled && memoryData.items.length > 0) {
+          memoryItems = memoryData.items;
+          memoryContext = buildMemoryContext(memoryData.items, prompt, language);
+        }
+      } catch (memError) {
+        console.error("Memory loading error:", memError);
+      }
+    }
+
     // ========== PLAN-BASED FEATURE ENFORCEMENT ==========
     // PRO: single-choice by default, limited dual mode (3/week) when requested
     // MAX: dual (generates both storytelling & business, unlimited)
@@ -554,7 +572,8 @@ export async function POST(request: NextRequest) {
                 (userPlan as PlanTier) ?? null,
                 conversationHistory as Array<{ role: "user" | "assistant"; content: string }> | undefined,
                 processedFileContent,
-                extractedUrlContent
+                extractedUrlContent,
+                memoryContext
               );
             }
           } else {
@@ -580,6 +599,36 @@ export async function POST(request: NextRequest) {
               console.error("Insights generation error:", insightsError);
               // Continue without insights - not critical
             }
+          }
+
+          // ========== EXTRACT MEMORY (async, non-blocking) ==========
+          // Extract key facts from this conversation for future personalization
+          if (generatedContent && !isConversational && isAdminInitialized()) {
+            // Fire-and-forget: don't block the response stream
+            (async () => {
+              try {
+                const memData = await getUserMemoryAdmin(userId);
+                if (!memData?.enabled) return;
+
+                // Use gpt-3.5-turbo for extraction (cheap & fast)
+                const memService = createOpenAIService({ model: "gpt-3.5-turbo" as OpenAIModel, temperature: 0.3, maxTokens: 300 });
+                if (!memService) return;
+
+                const extractionMsgs = buildExtractionMessages(prompt, generatedContent, language);
+                const extractionResponse = await memService.chat({
+                  systemPrompt: extractionMsgs[0].content,
+                  messages: [{ role: "user", content: extractionMsgs[1].content }],
+                });
+
+                const extracted = parseExtractionResponse(extractionResponse);
+                if (extracted.length > 0) {
+                  const updatedItems = mergeMemoryItems(memData.items, extracted);
+                  await saveUserMemoryAdmin(userId, updatedItems);
+                }
+              } catch (memExtractError) {
+                console.error("Memory extraction error (non-blocking):", memExtractError);
+              }
+            })();
           }
 
           // ========== INCREMENT QUOTA (SERVER-SIDE) ==========
@@ -656,7 +705,8 @@ async function generateWithOpenAI(
   plan: PlanTier,
   conversationHistory?: Array<{ role: "user" | "assistant"; content: string }>,
   fileContent?: { type: "image"; mimeType: string; base64: string } | { type: "pdf"; extractedText: string } | null,
-  urlContent?: ExtractedUrlContent | null
+  urlContent?: ExtractedUrlContent | null,
+  memoryContext?: string | null
 ): Promise<string> {
   let firstPostContent = "";
 
@@ -686,6 +736,11 @@ async function generateWithOpenAI(
       ? "\n\nLANGUE: Réponds STRICTEMENT en français. Tout le contenu généré doit être en français."
       : "\n\nLANGUAGE: Respond STRICTLY in English. All generated content must be in English.";
     systemPrompt += langEnforcement;
+
+    // Inject contextual memory (retained facts from previous conversations)
+    if (memoryContext) {
+      systemPrompt += memoryContext;
+    }
 
     if (isFollowUp) {
       // Add context for follow-up conversations with strict preservation instructions

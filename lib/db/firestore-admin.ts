@@ -1087,3 +1087,37 @@ export async function saveThreadsPostAdmin(
   return docRef.id;
 }
 
+// ============== AI CONTEXTUAL MEMORY (Server-side) ==============
+
+/**
+ * Get user's memory settings and items (server-side).
+ */
+export async function getUserMemoryAdmin(
+  userId: string
+): Promise<{ enabled: boolean; items: import("@/types").MemoryItem[] } | null> {
+  if (!adminDb) return null;
+  const userRef = adminDb.collection("users").doc(userId);
+  const userSnap = await userRef.get();
+  if (!userSnap.exists) return null;
+  const data = userSnap.data();
+  return {
+    enabled: data?.memory?.enabled ?? true,
+    items: data?.memory?.items ?? [],
+  };
+}
+
+/**
+ * Save updated memory items to user document (server-side).
+ */
+export async function saveUserMemoryAdmin(
+  userId: string,
+  items: import("@/types").MemoryItem[]
+): Promise<void> {
+  if (!adminDb) return;
+  const userRef = adminDb.collection("users").doc(userId);
+  await userRef.update({
+    "memory.items": items,
+    "memory.lastUpdated": FieldValue.serverTimestamp(),
+  });
+}
+

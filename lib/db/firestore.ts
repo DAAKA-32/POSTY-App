@@ -2463,3 +2463,62 @@ export async function updateScheduledPostContent(
   await updateDoc(postRef, updateData);
 }
 
+// ============== AI CONTEXTUAL MEMORY ==============
+
+/**
+ * Get user's memory settings and items.
+ */
+export async function getUserMemory(
+  userId: string
+): Promise<{ enabled: boolean; items: import("@/types").MemoryItem[] }> {
+  const userRef = doc(db, "users", userId);
+  const userSnap = await getDoc(userRef);
+  if (!userSnap.exists()) return { enabled: true, items: [] };
+  const data = userSnap.data();
+  return {
+    enabled: data.memory?.enabled ?? true,
+    items: data.memory?.items ?? [],
+  };
+}
+
+/**
+ * Toggle memory on/off for a user.
+ */
+export async function setMemoryEnabled(
+  userId: string,
+  enabled: boolean
+): Promise<void> {
+  const userRef = doc(db, "users", userId);
+  await updateDoc(userRef, { "memory.enabled": enabled });
+}
+
+/**
+ * Delete a single memory item by ID.
+ */
+export async function deleteMemoryItem(
+  userId: string,
+  memoryId: string
+): Promise<void> {
+  const userRef = doc(db, "users", userId);
+  const userSnap = await getDoc(userRef);
+  if (!userSnap.exists()) return;
+  const data = userSnap.data();
+  const items: import("@/types").MemoryItem[] = data.memory?.items ?? [];
+  const filtered = items.filter((item) => item.id !== memoryId);
+  await updateDoc(userRef, {
+    "memory.items": filtered,
+    "memory.lastUpdated": serverTimestamp(),
+  });
+}
+
+/**
+ * Clear all memory items for a user (keeps enabled setting).
+ */
+export async function clearAllMemory(userId: string): Promise<void> {
+  const userRef = doc(db, "users", userId);
+  await updateDoc(userRef, {
+    "memory.items": [],
+    "memory.lastUpdated": serverTimestamp(),
+  });
+}
+

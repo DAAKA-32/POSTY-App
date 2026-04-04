@@ -765,6 +765,14 @@ export const en = {
     aiExpFeature2Desc: "Get personalized feedback on your posts: what works, what to improve, and how to boost engagement.",
     aiExpFeature3Title: "Always available",
     aiExpFeature3Desc: "No waiting for a freelancer or agency. Your AI assistant is ready whenever inspiration strikes.",
+    aiExpWithout: "Manually",
+    aiExpWith: "With Posty",
+    aiExpRow1Before: "2h to write a post",
+    aiExpRow1After: "Ready in 30 seconds",
+    aiExpRow2Before: "No idea what to post",
+    aiExpRow2After: "AI suggests viral angles",
+    aiExpRow3Before: "0 engagement, 0 leads",
+    aiExpRow3After: "Posts that attract clients",
     aiExpChatPlaceholder: "Describe your post idea...",
     aiExpChatExample: "Write a post about AI transforming recruitment in 2025",
     aiExpChatResponse: "Here are 2 versions optimized for your audience:",
@@ -786,6 +794,26 @@ export const en = {
     valueBlockItem4Title: "More opportunities",
     valueBlockItem4Desc: "A consistent, strategic LinkedIn presence that generates qualified leads.",
     valueBlockCTA: "Start for free",
+
+    // HowItWorks section — pedagogical input→output showcase
+    hiwBadge: "How it works",
+    hiwTitle: "One idea.",
+    hiwTitleAccent: "One post. Done.",
+    hiwSubtitle: "Type a simple idea — Posty's AI turns it into a LinkedIn post ready to publish.",
+    hiwYourIdea: "Your idea",
+    hiwGeneratedPost: "Generated post",
+    hiwUserInput: "I want to share 3 lessons I learned managing a remote team for the first time",
+    hiwPostHook: "I almost lost my entire team in 3 months.",
+    hiwPostBody: "When I became a remote manager, I thought the hardest part would be the tools. I was wrong.\n\nLesson 1: Trust isn't optional — it's your foundation.\nLesson 2: Over-communicate. Then communicate more.\nLesson 3: Results matter more than hours logged.\n\nToday my team is 40% more productive and happier than ever.",
+    hiwPostCta: "What's the biggest lesson YOU learned managing remotely?",
+    hiwPostAuthor: "Emilien N.",
+    hiwPostRole: "Founder @ Posty AI",
+    hiwGeneratedIn: "Generated in 12s",
+    hiwAiIntro: "Here\u2019s your post, optimized for engagement:",
+    hiwInputPlaceholder: "Describe your next idea...",
+    hiwPill1: "Optimized for LinkedIn",
+    hiwPill2: "Schedule for later",
+    hiwPill3: "AI insights included",
 
     // DemoPreview section
     demoSuggestion1: "Post about leadership",
@@ -1337,6 +1365,22 @@ export const en = {
     deleteAccount: "Delete account",
     deleteAccountDesc: "Permanently delete your account and all data",
 
+    // AI Memory
+    aiMemory: "Contextual memory",
+    aiMemoryDesc: "AI retains key information from your conversations to personalize future posts",
+    aiMemoryEnabled: "Memory enabled",
+    aiMemoryDisabled: "Memory disabled",
+    aiMemoryItems: "Retained information",
+    aiMemoryEmpty: "No information retained yet. Memory fills automatically as you chat.",
+    aiMemoryClearAll: "Clear all memory",
+    aiMemoryClearConfirm: "Are you sure you want to clear all memory? This cannot be undone.",
+    aiMemoryCleared: "Memory cleared",
+    aiMemoryItemDeleted: "Information removed",
+    aiMemoryCategoryTopic: "Topic",
+    aiMemoryCategoryEvent: "Event",
+    aiMemoryCategoryPreference: "Preference",
+    aiMemoryCategoryFact: "Fact",
+
     // Delete conversations
     deleteConversations: "Delete all my conversations",
     deleteConversationsDesc: "Delete your AI conversation history without deleting your account",
@@ -1644,6 +1688,7 @@ export const en = {
     saving: "Saving...",
     errorOccurred: "An error occurred",
     defaultUser: "User",
+    aiInfoNote: "This info is used by the AI to personalize your posts (Pro & Max plans).",
 
     // Profile recap screen
     recapTitle: "Your profile is ready",

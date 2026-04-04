@@ -1336,6 +1336,22 @@ export const zh = {
     deleteAccount: "删除账户",
     deleteAccountDesc: "永久删除您的账户和所有数据",
 
+    // AI Memory
+    aiMemory: "上下文记忆",
+    aiMemoryDesc: "AI会记住对话中的关键信息，以个性化未来的帖子",
+    aiMemoryEnabled: "记忆已启用",
+    aiMemoryDisabled: "记忆已禁用",
+    aiMemoryItems: "已记住的信息",
+    aiMemoryEmpty: "目前没有记住任何信息。记忆会随着对话自动填充。",
+    aiMemoryClearAll: "清除所有记忆",
+    aiMemoryClearConfirm: "确定要清除所有记忆吗？此操作无法撤销。",
+    aiMemoryCleared: "记忆已清除",
+    aiMemoryItemDeleted: "信息已删除",
+    aiMemoryCategoryTopic: "主题",
+    aiMemoryCategoryEvent: "事件",
+    aiMemoryCategoryPreference: "偏好",
+    aiMemoryCategoryFact: "信息",
+
     // Delete conversations
     deleteConversations: "删除所有对话",
     deleteConversationsDesc: "删除您的 AI 对话记录，但不删除账户",
@@ -1643,6 +1659,7 @@ export const zh = {
     saving: "保存中...",
     errorOccurred: "发生错误",
     defaultUser: "用户",
+    aiInfoNote: "此信息由 AI 用于个性化您的帖子（Pro 和 Max 计划）。",
 
     // Profile recap screen
     recapTitle: "您的资料已就绪",

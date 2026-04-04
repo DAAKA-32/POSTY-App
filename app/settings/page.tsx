@@ -12,7 +12,12 @@ import {
   deleteAllUserConversations,
   updateUserProfile,
   UserConsent,
+  getUserMemory,
+  setMemoryEnabled,
+  deleteMemoryItem,
+  clearAllMemory,
 } from "@/lib/db/firestore";
+import type { MemoryItem } from "@/types";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import Button from "@/components/ui/Button";
 import { ToggleField } from "@/components/ui/Toggle";
@@ -64,6 +69,9 @@ function SettingsContent() {
   const [isExporting, setIsExporting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showDeleteConversationsModal, setShowDeleteConversationsModal] = useState(false);
+  const [memoryEnabled, setMemoryEnabledState] = useState(true);
+  const [memoryItems, setMemoryItems] = useState<MemoryItem[]>([]);
+  const [memoryExpanded, setMemoryExpanded] = useState(false);
 
   // Enable full scrolling on Settings page (mouse wheel, trackpad, touch, keyboard)
   useEffect(() => {
@@ -102,16 +110,21 @@ function SettingsContent() {
     (provider) => provider.providerId === "google.com"
   ) ?? false;
 
-  // Load consent data
+  // Load consent data + memory
   useEffect(() => {
-    const loadConsent = async () => {
+    const loadData = async () => {
       if (user) {
-        const userConsent = await getUserConsent(user.uid);
+        const [userConsent, memData] = await Promise.all([
+          getUserConsent(user.uid),
+          getUserMemory(user.uid),
+        ]);
         setConsent(userConsent);
+        setMemoryEnabledState(memData.enabled);
+        setMemoryItems(memData.items);
         setIsLoading(false);
       }
     };
-    loadConsent();
+    loadData();
   }, [user]);
 
   const handleExportData = async () => {
@@ -201,6 +214,47 @@ function SettingsContent() {
       console.error("Error updating marketing consent:", error);
       // Revert on error
       setConsent((prev) => prev ? { ...prev, marketing: !checked } : null);
+      toast.error(t.toasts.errorUpdate);
+    }
+  };
+
+  // Memory handlers
+  const handleToggleMemory = async (checked: boolean) => {
+    if (!user) return;
+    setMemoryEnabledState(checked);
+    try {
+      await setMemoryEnabled(user.uid, checked);
+      toast.success(checked ? t.settings.aiMemoryEnabled : t.settings.aiMemoryDisabled);
+    } catch {
+      setMemoryEnabledState(!checked);
+      toast.error(t.toasts.errorUpdate);
+    }
+  };
+
+  const handleDeleteMemoryItem = async (memoryId: string) => {
+    if (!user) return;
+    setMemoryItems((prev) => prev.filter((item) => item.id !== memoryId));
+    try {
+      await deleteMemoryItem(user.uid, memoryId);
+      toast.success(t.settings.aiMemoryItemDeleted);
+    } catch {
+      // Reload on error
+      const memData = await getUserMemory(user.uid);
+      setMemoryItems(memData.items);
+      toast.error(t.toasts.errorUpdate);
+    }
+  };
+
+  const handleClearAllMemory = async () => {
+    if (!user) return;
+    if (!confirm(t.settings.aiMemoryClearConfirm)) return;
+    setMemoryItems([]);
+    try {
+      await clearAllMemory(user.uid);
+      toast.success(t.settings.aiMemoryCleared);
+    } catch {
+      const memData = await getUserMemory(user.uid);
+      setMemoryItems(memData.items);
       toast.error(t.toasts.errorUpdate);
     }
   };
@@ -434,6 +488,84 @@ function SettingsContent() {
                   </div>
                 </div>
                 <span className="px-2.5 py-1 bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-300 text-xs font-medium rounded-lg">{t.settings.alwaysActive}</span>
+              </div>
+            </motion.section>
+
+            {/* AI Contextual Memory */}
+            <motion.section
+              variants={sectionVariants}
+              className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-xl p-4 md:p-5 lg:p-6 transition-colors duration-200"
+            >
+              <div className="flex items-center gap-3 mb-4 lg:mb-5">
+                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-[#F8935D]/10 flex items-center justify-center">
+                  <svg className="w-5 h-5 lg:w-6 lg:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-base lg:text-lg font-semibold text-silver-solid dark:text-white">{t.settings.aiMemory}</h2>
+                  <p className="text-xs text-text-muted mt-0.5">{t.settings.aiMemoryDesc}</p>
+                </div>
+              </div>
+
+              <div className="space-y-3 lg:space-y-4">
+                <ToggleField
+                  label={t.settings.aiMemory}
+                  description={t.settings.aiMemoryDesc}
+                  checked={memoryEnabled}
+                  onChange={handleToggleMemory}
+                />
+
+                {memoryEnabled && (
+                  <div className="mt-3">
+                    <button
+                      onClick={() => setMemoryExpanded(!memoryExpanded)}
+                      className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary transition-colors"
+                    >
+                      <svg className={`w-4 h-4 transition-transform ${memoryExpanded ? "rotate-90" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                      {t.settings.aiMemoryItems} ({memoryItems.length})
+                    </button>
+
+                    {memoryExpanded && (
+                      <div className="mt-3 space-y-2">
+                        {memoryItems.length === 0 ? (
+                          <p className="text-xs text-text-muted italic py-2">{t.settings.aiMemoryEmpty}</p>
+                        ) : (
+                          <>
+                            {memoryItems.map((item) => (
+                              <div
+                                key={item.id}
+                                className="flex items-start gap-2 p-2.5 bg-gray-50 dark:bg-dark-bg rounded-lg border border-gray-100 dark:border-dark-border group"
+                              >
+                                <span className="flex-shrink-0 px-1.5 py-0.5 text-[10px] font-medium rounded bg-primary/10 text-primary uppercase tracking-wide">
+                                  {t.settings[`aiMemoryCategory${item.category.charAt(0).toUpperCase() + item.category.slice(1)}` as keyof typeof t.settings] || item.category}
+                                </span>
+                                <p className="flex-1 text-xs text-gray-700 dark:text-gray-300 leading-relaxed">{item.content}</p>
+                                <button
+                                  onClick={() => handleDeleteMemoryItem(item.id)}
+                                  className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-50 dark:hover:bg-red-500/10 rounded"
+                                  title="Delete"
+                                >
+                                  <svg className="w-3.5 h-3.5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+                              </div>
+                            ))}
+                            <button
+                              onClick={handleClearAllMemory}
+                              className="mt-2 text-xs text-text-muted hover:text-error transition-colors"
+                            >
+                              {t.settings.aiMemoryClearAll}
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </motion.section>
 

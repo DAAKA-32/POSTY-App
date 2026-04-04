@@ -29,6 +29,19 @@ export function usePageHelp(): UsePageHelpReturn {
   // Hydrated state: merge of Firestore + local cache
   const [readPages, setReadPages] = useState<string[]>(localReadPages);
 
+  // Sync readPages from localStorage when the stored value becomes available.
+  // useLocalStorage initializes with [] then reads the real value in useEffect,
+  // so readPages must track that delayed update.
+  const localReadPagesJson = JSON.stringify(localReadPages);
+  useEffect(() => {
+    const local: string[] = JSON.parse(localReadPagesJson);
+    if (local.length === 0) return;
+    setReadPages((prev) => {
+      const merged = Array.from(new Set([...prev, ...local]));
+      return merged.length === prev.length ? prev : merged;
+    });
+  }, [localReadPagesJson]);
+
   // Stable primitive key — avoids infinite loop from array reference changes
   const firestorePagesJson = JSON.stringify(userProfile?.helpReadPages ?? []);
 

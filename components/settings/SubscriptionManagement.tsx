@@ -267,6 +267,8 @@ export default function SubscriptionManagement() {
       const data = await response.json();
 
       if (data.url) {
+        // Save current route so back navigation won't loop to Stripe portal
+        sessionStorage.setItem("posty-pre-stripe-route", window.location.pathname);
         window.location.href = data.url;
       } else {
         toast.error(t.settings.cantOpenPortal);

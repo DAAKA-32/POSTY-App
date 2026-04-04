@@ -164,6 +164,40 @@ const OBJECTIVE_STRATEGIES: Record<string, { fr: string; en: string }> = {
   },
 };
 
+// ============== LINKEDIN ALGORITHM OPTIMIZATION LAYER ==============
+
+/**
+ * Algorithm-aware instructions injected into every generation prompt.
+ * Based on LinkedIn's content distribution signals:
+ * - Dwell time (how long readers spend on the post)
+ * - "See more" click rate (expanding the post)
+ * - Comment velocity (comments in the first hour)
+ * - Engagement hierarchy (comments >> reactions > shares)
+ * - Mobile-first reading patterns
+ * - Native content preference (no external links)
+ */
+const LINKEDIN_ALGORITHM_RULES: Record<Language, string> = {
+  fr: `OPTIMISATION ALGORITHME LINKEDIN:
+- LES 3 PREMIÈRES LIGNES sont critiques. Elles apparaissent avant le bouton "...voir plus". Elles DOIVENT créer une tension, une curiosité ou un désaccord qui force le clic. C'est le signal #1 de distribution.
+- TEMPS DE LECTURE (dwell time): chaque paragraphe doit donner envie de lire le suivant. Utilise des micro-suspenses, des questions implicites, des révélations progressives. Le lecteur ne doit jamais avoir "la réponse" trop tôt.
+- COMMENTAIRES > RÉACTIONS > PARTAGES: LinkedIn distribue massivement les posts qui génèrent des commentaires (surtout longs). Conçois la fin du post pour déclencher des réponses personnelles, pas juste des "likes".
+- ESPACEMENT MOBILE: sur mobile, les blocs denses sont ignorés. Paragraphes de 1-2 lignes max avec ligne vide entre chaque. L'espace blanc ralentit le scroll et augmente le dwell time.
+- QUESTION FINALE SPÉCIFIQUE: ne pose pas "Qu'en pensez-vous ?" (trop vague, personne ne répond). Pose une question précise qui force le lecteur à réfléchir à SA propre expérience.
+- AUCUN LIEN EXTERNE dans le post (LinkedIn pénalise les liens sortants). Toute la valeur doit être dans le texte.
+- HASHTAGS STRATÉGIQUES: mélange 1-2 hashtags à fort volume (#Leadership, #Marketing) et 1-2 hashtags de niche pour cibler une communauté précise.
+- DÉBUT DE PHRASE APRÈS SAUT DE LIGNE: après chaque ligne vide, la première phrase du paragraphe suivant doit relancer l'attention (nouveau fait, question, twist). Jamais de transition molle.`,
+
+  en: `LINKEDIN ALGORITHM OPTIMIZATION:
+- THE FIRST 3 LINES are critical. They appear before the "...see more" button. They MUST create tension, curiosity, or disagreement that forces the click. This is the #1 distribution signal.
+- DWELL TIME: each paragraph must make the reader want to read the next one. Use micro-suspense, implicit questions, progressive reveals. The reader should never get "the answer" too early.
+- COMMENTS > REACTIONS > SHARES: LinkedIn massively distributes posts that generate comments (especially long ones). Design the post ending to trigger personal responses, not just "likes".
+- MOBILE SPACING: on mobile, dense blocks are skipped. 1-2 line paragraphs max with a blank line between each. White space slows scrolling and increases dwell time.
+- SPECIFIC FINAL QUESTION: don't ask "What do you think?" (too vague, nobody answers). Ask a precise question that forces the reader to reflect on THEIR own experience.
+- NO EXTERNAL LINKS in the post (LinkedIn penalizes outbound links). All value must be in the text itself.
+- STRATEGIC HASHTAGS: mix 1-2 high-volume hashtags (#Leadership, #Marketing) and 1-2 niche hashtags to target a specific community.
+- FIRST SENTENCE AFTER LINE BREAK: after each blank line, the first sentence of the next paragraph must re-hook attention (new fact, question, twist). Never a soft transition.`,
+};
+
 // ============== PRO SYSTEM PROMPTS ==============
 // Plan Pro: Performance professionnelle optimisée.
 // Posts très qualitatifs, structurés, pertinents et crédibles.
@@ -755,6 +789,10 @@ const HOOK_STYLES_FR = [
   "Observation du quotidien",
   "Phrase courte et percutante",
   "Interpellation 'Et si…' ou 'Imaginez…'",
+  "Aveu ou confession professionnelle (vulnérabilité = engagement)",
+  "Chiffre précis et inattendu qui crée un gap de curiosité (ex: '47 clients en 6 mois, et pourtant…')",
+  "Rupture de contexte — commence dans un lieu ou moment inattendu avant de connecter au sujet pro",
+  "Phrase qu'on t'a dite et qui t'a marqué — entre guillemets, directe",
 ];
 
 const HOOK_STYLES_EN = [
@@ -766,6 +804,10 @@ const HOOK_STYLES_EN = [
   "Everyday observation",
   "Short punchy sentence",
   "'What if…' or 'Imagine…' opener",
+  "Professional confession or admission (vulnerability = engagement)",
+  "Precise unexpected number that creates a curiosity gap (e.g., '47 clients in 6 months, and yet…')",
+  "Context break — start in an unexpected place or moment before connecting to the professional topic",
+  "Something someone said to you that stuck — in quotes, direct",
 ];
 
 const CLOSING_STYLES_FR = [
@@ -775,6 +817,9 @@ const CLOSING_STYLES_FR = [
   "Reformulation percutante du message clé",
   "Invitation à partager une expérience similaire",
   "Phrase courte de conclusion qui fait réfléchir",
+  "Choix binaire qui force une réponse ('Équipe A ou équipe B ?', 'Plutôt X ou Y ?')",
+  "Question précise sur l'expérience du lecteur ('Quel a été votre dernier moment de X ?', 'Combien de fois avez-vous vécu Y ?')",
+  "Position tranchée + invitation à contredire ('Je suis convaincu que… Prouvez-moi le contraire.')",
 ];
 
 const CLOSING_STYLES_EN = [
@@ -784,6 +829,9 @@ const CLOSING_STYLES_EN = [
   "Punchy rephrasing of the key message",
   "Invitation to share a similar experience",
   "Short thought-provoking closing sentence",
+  "Binary choice that forces a response ('Team A or team B?', 'Would you rather X or Y?')",
+  "Specific question about the reader's experience ('What was your last moment of X?', 'How many times have you experienced Y?')",
+  "Strong stance + invitation to disagree ('I'm convinced that… Prove me wrong.')",
 ];
 
 function buildVariationSeed(
@@ -902,6 +950,10 @@ export function buildOptimizedPrompt(
   // Inject variation seed — randomized structure/hook/closing directives
   // to prevent repetitive outputs across consecutive generations
   prompt += buildVariationSeed(type, language);
+
+  // Inject LinkedIn algorithm optimization rules
+  // These are universal engagement mechanics that apply to all plan tiers
+  prompt += `\n\n${LINKEDIN_ALGORITHM_RULES[language]}`;
 
   return prompt;
 }
