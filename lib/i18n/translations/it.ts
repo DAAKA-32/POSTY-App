@@ -757,6 +757,11 @@ export const it = {
     howItWorksStep4Example: "Programmato per martedì ore 9 — picco di engagement",
     howItWorksReadyCTA: "Pronto a trasformare la tua presenza su LinkedIn?",
     howItWorksTryFree: "Prova gratis",
+    hiwMockupOnline: "Online",
+    hiwMockupLike: "Mi piace",
+    hiwMockupComment: "Commenta",
+    hiwMockupRepost: "Condividi",
+    hiwMockupEngagement: "38 commenti · 12 condivisioni",
 
     // AI Experience section
     aiExpTitle: "Il tuo copilota LinkedIn,",
@@ -1678,6 +1683,60 @@ export const it = {
     recapFieldAudience: "Pubblico",
     recapFieldTone: "Tono",
     recapFieldFrequency: "Frequenza",
+
+    // Onboarding options (translated)
+    otherOption: "Altro",
+    otherPlaceholder: "Specifica...",
+    multiSelectHint: "Scelte multiple possibili",
+    profileTypeOptions: {
+      freelance: "Freelance / Indipendente",
+      agency: "Agenzia",
+      entrepreneur: "Imprenditore / Fondatore",
+      employee: "Dipendente aziendale",
+    },
+    sectorOptions: {
+      tech: "Tech / IT",
+      marketing: "Marketing / Comunicazione",
+      finance: "Finanza / Banca",
+      health: "Sanità",
+      education: "Istruzione",
+      sales: "Commercio / Vendite",
+      industry: "Industria",
+      consulting: "Consulenza",
+      hr: "HR / Recruiting",
+    },
+    objectiveOptions: {
+      clients: "Trovare nuovi clienti",
+      revenue: "Aumentare il fatturato",
+      visibility: "Sviluppare visibilità e credibilità",
+      leads: "Generare lead qualificati",
+      audience: "Costruire un pubblico coinvolto",
+    },
+    targetAudienceOptions: {
+      entrepreneurs: "Imprenditori / Fondatori",
+      executives: "Dirigenti / C-Level",
+      managers: "Manager / Team Leader",
+      freelancers: "Freelancer / Indipendenti",
+      developers: "Sviluppatori / Tech",
+      marketers: "Marketer / Growth",
+      hr: "HR / Recruiter",
+      students: "Studenti / Neolaureati",
+      general: "Pubblico generale",
+    },
+    communicationToneOptions: {
+      professional: "Professionale e formale",
+      conversational: "Accessibile e conversazionale",
+      inspiring: "Ispirante e motivante",
+      direct: "Diretto e incisivo",
+      educational: "Educativo e didattico",
+      authentic: "Autentico e personale",
+    },
+    publishingFrequencyOptions: {
+      weekly12: "1-2 volte a settimana",
+      weekly34: "3-4 volte a settimana",
+      daily: "Ogni giorno",
+      never: "Non pubblico ancora",
+    },
   },
 
   // Consent modal
@@ -2441,6 +2500,7 @@ export const it = {
     faqSubtitle: "Tutto quello che devi sapere sui nostri piani",
     editProfile: "Modifica il mio profilo",
     backToLogin: "Torna al login",
+    backToOnboarding: "Modifica il mio onboarding",
   },
 
   // Schedule Page

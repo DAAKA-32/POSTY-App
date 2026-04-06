@@ -819,6 +819,11 @@ export const fr = {
     hiwPill1: "Optimisé pour LinkedIn",
     hiwPill2: "Programmable pour plus tard",
     hiwPill3: "Insights IA inclus",
+    hiwMockupOnline: "En ligne",
+    hiwMockupLike: "J'aime",
+    hiwMockupComment: "Commenter",
+    hiwMockupRepost: "Republier",
+    hiwMockupEngagement: "38 commentaires · 12 republications",
 
     // DemoPreview section
     demoSuggestion1: "Post sur le leadership",
@@ -1710,6 +1715,58 @@ export const fr = {
     recapFieldAudience: "Audience",
     recapFieldTone: "Ton",
     recapFieldFrequency: "Fréquence",
+
+    // Onboarding options (translated)
+    otherOption: "Autre",
+    profileTypeOptions: {
+      freelance: "Indépendant / Freelance",
+      agency: "Agence",
+      entrepreneur: "Entrepreneur / Founder",
+      employee: "Salarié en entreprise",
+    },
+    sectorOptions: {
+      tech: "Tech / IT",
+      marketing: "Marketing / Communication",
+      finance: "Finance / Banque",
+      health: "Santé",
+      education: "Éducation",
+      sales: "Commerce / Vente",
+      industry: "Industrie",
+      consulting: "Conseil",
+      hr: "RH / Recrutement",
+    },
+    objectiveOptions: {
+      clients: "Trouver de nouveaux clients",
+      revenue: "Augmenter mon chiffre d'affaires",
+      visibility: "Développer ma visibilité et crédibilité",
+      leads: "Générer des leads qualifiés",
+      audience: "Construire une audience engagée",
+    },
+    targetAudienceOptions: {
+      entrepreneurs: "Entrepreneurs / Fondateurs",
+      executives: "Dirigeants / C-Level",
+      managers: "Managers / Team Leaders",
+      freelancers: "Freelances / Indépendants",
+      developers: "Développeurs / Tech",
+      marketers: "Marketeurs / Growth",
+      hr: "RH / Recruteurs",
+      students: "Étudiants / Jeunes diplômés",
+      general: "Grand public",
+    },
+    communicationToneOptions: {
+      professional: "Professionnel et formel",
+      conversational: "Accessible et conversationnel",
+      inspiring: "Inspirant et motivant",
+      direct: "Direct et percutant",
+      educational: "Éducatif et pédagogue",
+      authentic: "Authentique et personnel",
+    },
+    publishingFrequencyOptions: {
+      weekly12: "1 à 2 fois par semaine",
+      weekly34: "3 à 4 fois par semaine",
+      daily: "Tous les jours",
+      never: "Je ne publie pas encore",
+    },
   },
 
   // Consent modal
@@ -2472,6 +2529,7 @@ export const fr = {
     faqSubtitle: "Tout ce que vous devez savoir sur nos offres",
     editProfile: "Modifier mon profil",
     backToLogin: "Retour à la connexion",
+    backToOnboarding: "Modifier mon onboarding",
   },
 
   // Schedule Page

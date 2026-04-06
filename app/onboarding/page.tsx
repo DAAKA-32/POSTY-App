@@ -9,12 +9,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { completeOnboarding } from "@/lib/db/firestore";
 import {
-  PROFILE_TYPES,
-  SECTORS,
-  OBJECTIVES,
-  TARGET_AUDIENCES,
-  COMMUNICATION_TONES,
-  PUBLISHING_FREQUENCIES,
   OnboardingData,
   normalizeMultiSelect,
 } from "@/types";
@@ -25,11 +19,14 @@ import { useLanguage } from "@/contexts/LanguageContext";
 // =============================================================================
 // STEP CONFIGURATION (translation keys mapped to step IDs)
 // =============================================================================
+type StepId = "profileType" | "sector" | "role" | "objective" | "targetAudience" | "communicationTone" | "publishingFrequency";
+
 type StepConfig = {
-  id: "profileType" | "sector" | "role" | "objective" | "targetAudience" | "communicationTone" | "publishingFrequency";
+  id: StepId;
   titleKey: string;
   subtitleKey: string;
-  options: readonly string[];
+  optionsKey: string;
+  hasOther: boolean;
   type: "select" | "multi-select" | "input";
 };
 
@@ -38,54 +35,74 @@ const STEP_CONFIGS: StepConfig[] = [
     id: "profileType",
     titleKey: "profileTypeTitle",
     subtitleKey: "profileTypeSubtitle",
-    options: PROFILE_TYPES,
+    optionsKey: "profileTypeOptions",
+    hasOther: false,
     type: "select",
   },
   {
     id: "sector",
     titleKey: "sectorStepTitle",
     subtitleKey: "sectorStepSubtitle",
-    options: SECTORS,
+    optionsKey: "sectorOptions",
+    hasOther: true,
     type: "multi-select",
   },
   {
     id: "role",
     titleKey: "roleStepTitle",
     subtitleKey: "roleStepSubtitle",
-    options: [] as readonly string[],
+    optionsKey: "",
+    hasOther: false,
     type: "input",
   },
   {
     id: "objective",
     titleKey: "objectiveStepTitle",
     subtitleKey: "objectiveStepSubtitle",
-    options: OBJECTIVES,
+    optionsKey: "objectiveOptions",
+    hasOther: true,
     type: "multi-select",
   },
   {
     id: "targetAudience",
     titleKey: "targetAudienceStepTitle",
     subtitleKey: "targetAudienceStepSubtitle",
-    options: TARGET_AUDIENCES,
+    optionsKey: "targetAudienceOptions",
+    hasOther: true,
     type: "multi-select",
   },
   {
     id: "communicationTone",
     titleKey: "communicationToneStepTitle",
     subtitleKey: "communicationToneStepSubtitle",
-    options: COMMUNICATION_TONES,
+    optionsKey: "communicationToneOptions",
+    hasOther: true,
     type: "multi-select",
   },
   {
     id: "publishingFrequency",
     titleKey: "publishingFrequencyStepTitle",
     subtitleKey: "publishingFrequencyStepSubtitle",
-    options: PUBLISHING_FREQUENCIES,
+    optionsKey: "publishingFrequencyOptions",
+    hasOther: false,
     type: "select",
   },
 ];
 
-type StepId = StepConfig["id"];
+/** Build translated options array for a step from the onboarding translation keys */
+function getStepOptions(
+  stepConfig: StepConfig,
+  onboarding: Record<string, unknown>,
+): string[] {
+  if (!stepConfig.optionsKey) return [];
+  const optionsObj = onboarding[stepConfig.optionsKey] as Record<string, string> | undefined;
+  if (!optionsObj) return [];
+  const opts = Object.values(optionsObj);
+  if (stepConfig.hasOther) {
+    opts.push((onboarding as Record<string, string>).otherOption || "Other");
+  }
+  return opts;
+}
 
 // =============================================================================
 // ONBOARDING PROGRESS PERSISTENCE
@@ -441,17 +458,19 @@ export default function OnboardingPage() {
     setData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const otherLabel = (t.onboarding as unknown as Record<string, string>).otherOption || "Other";
+
   const handleMultiToggle = (field: StepId, option: string) => {
     setData((prev) => {
       const current = (prev[field] as string[]) || [];
-      if (option === "Autre") {
-        // Toggle "Autre" — clear otherText when unchecking
-        const hasAutre = current.includes("Autre");
-        if (hasAutre) {
+      if (option === otherLabel) {
+        // Toggle "Other" — clear otherText when unchecking
+        const hasOther = current.includes(otherLabel);
+        if (hasOther) {
           setOtherTexts((ot) => ({ ...ot, [field]: "" }));
-          return { ...prev, [field]: current.filter((v) => v !== "Autre") };
+          return { ...prev, [field]: current.filter((v) => v !== otherLabel) };
         }
-        return { ...prev, [field]: [...current, "Autre"] };
+        return { ...prev, [field]: [...current, otherLabel] };
       }
       const exists = current.includes(option);
       return {
@@ -484,13 +503,13 @@ export default function OnboardingPage() {
 
     setIsSubmitting(true);
     try {
-      // Merge "Autre" custom text into multi-select arrays before saving
+      // Merge "Other" custom text into multi-select arrays before saving
       const finalData = { ...data };
       for (const [field, text] of Object.entries(otherTexts)) {
         if (text.trim() && Array.isArray(finalData[field as keyof OnboardingData])) {
           const arr = finalData[field as keyof OnboardingData] as string[];
-          // Replace "Autre" with the actual custom text
-          (finalData as Record<string, unknown>)[field] = arr.map((v) => v === "Autre" ? text.trim() : v);
+          // Replace "Other" label with the actual custom text
+          (finalData as Record<string, unknown>)[field] = arr.map((v) => v === otherLabel ? text.trim() : v);
         }
       }
       await completeOnboarding(user.uid, finalData);
@@ -522,10 +541,11 @@ export default function OnboardingPage() {
   };
 
   const stepConfig = STEP_CONFIGS[currentStep];
+  const stepOptions = getStepOptions(stepConfig, t.onboarding as unknown as Record<string, unknown>);
   const isLastStep = currentStep === STEP_CONFIGS.length - 1;
   const currentValue = data[stepConfig.id as keyof OnboardingData];
   const canProceed = stepConfig.type === "multi-select"
-    ? (currentValue as string[]).length > 0 && (!(currentValue as string[]).includes("Autre") || (otherTexts[stepConfig.id]?.trim().length ?? 0) > 0)
+    ? (currentValue as string[]).length > 0 && (!(currentValue as string[]).includes(otherLabel) || (otherTexts[stepConfig.id]?.trim().length ?? 0) > 0)
     : (currentValue as string).trim().length > 0;
 
   // Keyboard navigation: Enter key advances to next step (or submits on last step)
@@ -626,17 +646,17 @@ export default function OnboardingPage() {
                 {/* Question */}
                 <div className="text-center mb-8 sm:mb-10">
                   <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-                    {(t.onboarding as Record<string, string>)[stepConfig.titleKey]}
+                    {(t.onboarding as unknown as Record<string, string>)[stepConfig.titleKey]}
                   </h1>
                   <p className="text-gray-400 text-sm sm:text-base">
-                    {(t.onboarding as Record<string, string>)[stepConfig.subtitleKey]}
+                    {(t.onboarding as unknown as Record<string, string>)[stepConfig.subtitleKey]}
                     {stepConfig.type === "multi-select" && (
-                      <span className="block text-xs text-primary/70 mt-1 font-medium">{(t.onboarding as Record<string, string>).multiSelectHint}</span>
+                      <span className="block text-xs text-primary/70 mt-1 font-medium">{(t.onboarding as unknown as Record<string, string>).multiSelectHint}</span>
                     )}
                   </p>
                   <p className="mt-3 text-xs text-gray-400/80 flex items-center justify-center gap-1">
                     <span>✦</span>
-                    <span>{(t.onboarding as Record<string, string>).aiInfoNote}</span>
+                    <span>{(t.onboarding as unknown as Record<string, string>).aiInfoNote}</span>
                   </p>
                 </div>
 
@@ -654,7 +674,7 @@ export default function OnboardingPage() {
                   </div>
                 ) : stepConfig.type === "multi-select" ? (
                   <div className="grid gap-2.5 mb-8">
-                    {stepConfig.options.map((option, i) => {
+                    {stepOptions.map((option, i) => {
                       const selectedArr = (currentValue as string[]) || [];
                       const isSelected = selectedArr.includes(option);
                       return (
@@ -690,8 +710,8 @@ export default function OnboardingPage() {
                               </div>
                             </div>
                           </motion.button>
-                          {/* "Autre" text input — appears when "Autre" is checked */}
-                          {option === "Autre" && isSelected && (
+                          {/* "Other" text input — appears when "Other" is checked */}
+                          {option === otherLabel && isSelected && (
                             <motion.div
                               initial={{ opacity: 0, height: 0 }}
                               animate={{ opacity: 1, height: "auto" }}
@@ -702,7 +722,7 @@ export default function OnboardingPage() {
                                 type="text"
                                 value={otherTexts[stepConfig.id] || ""}
                                 onChange={(e) => handleOtherText(stepConfig.id, e.target.value)}
-                                placeholder={(t.onboarding as Record<string, string>).otherPlaceholder || "Précisez..."}
+                                placeholder={(t.onboarding as unknown as Record<string, string>).otherPlaceholder || "..."}
                                 className="w-full px-4 py-3 bg-white border border-primary/30 rounded-xl text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#F8935D]/30 focus:border-[#F8935D]/50 transition-all duration-200 text-sm"
                                 autoFocus
                               />
@@ -714,7 +734,7 @@ export default function OnboardingPage() {
                   </div>
                 ) : (
                   <div className="grid gap-2.5 mb-8">
-                    {stepConfig.options.map((option, i) => {
+                    {stepOptions.map((option, i) => {
                       const isSelected = (currentValue as string) === option;
                       return (
                         <motion.button

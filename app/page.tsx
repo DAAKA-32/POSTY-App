@@ -237,6 +237,13 @@ function Navbar() {
     <>
     {/* Outer fixed container — always full width for positioning */}
     <div className="fixed top-0 left-0 right-0 z-50 pointer-events-none">
+      {/* Mask: hides content scrolling above the navbar */}
+      <div
+        className={`absolute top-0 left-0 right-0 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+          isScrolled && !isMenuOpen ? "h-3 backdrop-blur-xl" : "h-0"
+        }`}
+        aria-hidden="true"
+      />
       {/* Dynamic container — always visible, border/bg on scroll */}
       <nav
         className={`w-full pointer-events-auto transition-[padding] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
@@ -2805,7 +2812,7 @@ function AIExperienceSection() {
                   <p className="text-sm font-semibold text-gray-900">Posty AI</p>
                   <div className="flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    <span className="text-[10px] text-gray-400">Online</span>
+                    <span className="text-[10px] text-gray-400">{t.landing.demoOnline}</span>
                   </div>
                 </div>
               </div>

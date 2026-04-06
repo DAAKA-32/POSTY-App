@@ -55,8 +55,8 @@ export async function createUserProfile(
     linkedinStyle: "",
     onboardingComplete: false,
     subscription: {
-      plan: "free",
-      status: "active",
+      plan: null,
+      status: "inactive",
     },
     // Initialize quota tracking to prevent race condition false positives
     quota: {

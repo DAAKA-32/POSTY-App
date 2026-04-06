@@ -757,6 +757,11 @@ export const ja = {
     howItWorksStep4Example: "火曜日午前9時にスケジュール — エンゲージメントのピーク",
     howItWorksReadyCTA: "LinkedInでの存在感を変える準備はできましたか？",
     howItWorksTryFree: "無料で試す",
+    hiwMockupOnline: "オンライン",
+    hiwMockupLike: "いいね",
+    hiwMockupComment: "コメント",
+    hiwMockupRepost: "リポスト",
+    hiwMockupEngagement: "38件のコメント · 12件のリポスト",
 
     // AI Experience section
     aiExpTitle: "あなたのLinkedInコパイロット、",
@@ -1678,6 +1683,60 @@ export const ja = {
     recapFieldAudience: "ターゲット",
     recapFieldTone: "トーン",
     recapFieldFrequency: "頻度",
+
+    // Onboarding options (translated)
+    otherOption: "その他",
+    otherPlaceholder: "詳細を入力...",
+    multiSelectHint: "複数選択可能",
+    profileTypeOptions: {
+      freelance: "フリーランス / 個人事業主",
+      agency: "エージェンシー",
+      entrepreneur: "起業家 / 創業者",
+      employee: "会社員",
+    },
+    sectorOptions: {
+      tech: "テック / IT",
+      marketing: "マーケティング / コミュニケーション",
+      finance: "金融 / 銀行",
+      health: "医療・ヘルスケア",
+      education: "教育",
+      sales: "商業 / 営業",
+      industry: "製造業",
+      consulting: "コンサルティング",
+      hr: "人事 / 採用",
+    },
+    objectiveOptions: {
+      clients: "新規顧客を見つける",
+      revenue: "収益を増やす",
+      visibility: "知名度と信頼性を高める",
+      leads: "質の高いリードを獲得する",
+      audience: "エンゲージメントの高いオーディエンスを構築する",
+    },
+    targetAudienceOptions: {
+      entrepreneurs: "起業家 / 創業者",
+      executives: "経営者 / C-Level",
+      managers: "マネージャー / チームリーダー",
+      freelancers: "フリーランス / 個人事業主",
+      developers: "エンジニア / テック",
+      marketers: "マーケター / グロース",
+      hr: "人事 / リクルーター",
+      students: "学生 / 新卒",
+      general: "一般",
+    },
+    communicationToneOptions: {
+      professional: "プロフェッショナルでフォーマル",
+      conversational: "親しみやすく会話的",
+      inspiring: "インスピレーションを与える",
+      direct: "ストレートでインパクトのある",
+      educational: "教育的で分かりやすい",
+      authentic: "自然体でパーソナル",
+    },
+    publishingFrequencyOptions: {
+      weekly12: "週1〜2回",
+      weekly34: "週3〜4回",
+      daily: "毎日",
+      never: "まだ投稿していない",
+    },
   },
 
   // Consent modal
@@ -2441,6 +2500,7 @@ export const ja = {
     faqSubtitle: "プランについて知っておくべきこと",
     editProfile: "プロフィールを編集",
     backToLogin: "ログインに戻る",
+    backToOnboarding: "オンボーディングを編集",
   },
 
   // Schedule Page

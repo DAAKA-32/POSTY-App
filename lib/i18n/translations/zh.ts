@@ -757,6 +757,11 @@ export const zh = {
     howItWorksStep4Example: "定时周二上午9点 — 互动高峰期",
     howItWorksReadyCTA: "准备好提升您的 LinkedIn 影响力了吗？",
     howItWorksTryFree: "免费试用",
+    hiwMockupOnline: "在线",
+    hiwMockupLike: "赞",
+    hiwMockupComment: "评论",
+    hiwMockupRepost: "转发",
+    hiwMockupEngagement: "38条评论 · 12次转发",
 
     // AI Experience section
     aiExpTitle: "您的领英副驾驶，",
@@ -1678,6 +1683,60 @@ export const zh = {
     recapFieldAudience: "受众",
     recapFieldTone: "语气",
     recapFieldFrequency: "频率",
+
+    // Onboarding options (translated)
+    otherOption: "其他",
+    otherPlaceholder: "请说明...",
+    multiSelectHint: "可多选",
+    profileTypeOptions: {
+      freelance: "自由职业者 / Freelance",
+      agency: "代理机构",
+      entrepreneur: "创业者 / 创始人",
+      employee: "企业员工",
+    },
+    sectorOptions: {
+      tech: "科技 / IT",
+      marketing: "市场营销 / 传播",
+      finance: "金融 / 银行",
+      health: "医疗健康",
+      education: "教育",
+      sales: "商业 / 销售",
+      industry: "工业",
+      consulting: "咨询",
+      hr: "人力资源 / 招聘",
+    },
+    objectiveOptions: {
+      clients: "寻找新客户",
+      revenue: "增加收入",
+      visibility: "提升知名度和公信力",
+      leads: "获取优质潜在客户",
+      audience: "建立活跃的受众群",
+    },
+    targetAudienceOptions: {
+      entrepreneurs: "创业者 / 创始人",
+      executives: "高管 / C-Level",
+      managers: "经理 / 团队负责人",
+      freelancers: "自由职业者",
+      developers: "开发者 / 技术人员",
+      marketers: "营销人员 / 增长",
+      hr: "人力资源 / 招聘人员",
+      students: "学生 / 应届毕业生",
+      general: "大众",
+    },
+    communicationToneOptions: {
+      professional: "专业且正式",
+      conversational: "亲切且对话式",
+      inspiring: "鼓舞人心且激励",
+      direct: "直接且有力",
+      educational: "教育性且启发",
+      authentic: "真实且个人化",
+    },
+    publishingFrequencyOptions: {
+      weekly12: "每周1-2次",
+      weekly34: "每周3-4次",
+      daily: "每天",
+      never: "我还没有发布过",
+    },
   },
 
   // Consent modal
@@ -2441,6 +2500,7 @@ export const zh = {
     faqSubtitle: "关于我们方案您需要了解的一切",
     editProfile: "编辑我的资料",
     backToLogin: "返回登录",
+    backToOnboarding: "编辑我的引导设置",
   },
 
   // Schedule Page

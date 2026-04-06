@@ -757,6 +757,11 @@ export const nl = {
     howItWorksStep4Example: "Gepland voor dinsdag 9 uur — piek engagement",
     howItWorksReadyCTA: "Klaar om je LinkedIn-aanwezigheid te transformeren?",
     howItWorksTryFree: "Gratis proberen",
+    hiwMockupOnline: "Online",
+    hiwMockupLike: "Vind ik leuk",
+    hiwMockupComment: "Reageren",
+    hiwMockupRepost: "Delen",
+    hiwMockupEngagement: "38 reacties · 12 reposts",
 
     // AI Experience section
     aiExpTitle: "Je LinkedIn-copiloot,",
@@ -1678,6 +1683,60 @@ export const nl = {
     recapFieldAudience: "Doelgroep",
     recapFieldTone: "Toon",
     recapFieldFrequency: "Frequentie",
+
+    // Onboarding options (translated)
+    otherOption: "Anders",
+    otherPlaceholder: "Specificeer...",
+    multiSelectHint: "Meerdere keuzes mogelijk",
+    profileTypeOptions: {
+      freelance: "Freelancer / Zelfstandige",
+      agency: "Bureau",
+      entrepreneur: "Ondernemer / Oprichter",
+      employee: "Werknemer",
+    },
+    sectorOptions: {
+      tech: "Tech / IT",
+      marketing: "Marketing / Communicatie",
+      finance: "Financiën / Bankwezen",
+      health: "Gezondheidszorg",
+      education: "Onderwijs",
+      sales: "Handel / Verkoop",
+      industry: "Industrie",
+      consulting: "Advies",
+      hr: "HR / Werving",
+    },
+    objectiveOptions: {
+      clients: "Nieuwe klanten vinden",
+      revenue: "Mijn omzet verhogen",
+      visibility: "Zichtbaarheid en geloofwaardigheid opbouwen",
+      leads: "Gekwalificeerde leads genereren",
+      audience: "Een betrokken publiek opbouwen",
+    },
+    targetAudienceOptions: {
+      entrepreneurs: "Ondernemers / Oprichters",
+      executives: "Directie / C-Level",
+      managers: "Managers / Teamleiders",
+      freelancers: "Freelancers / Zelfstandigen",
+      developers: "Ontwikkelaars / Tech",
+      marketers: "Marketeers / Growth",
+      hr: "HR / Recruiters",
+      students: "Studenten / Pas afgestudeerden",
+      general: "Breed publiek",
+    },
+    communicationToneOptions: {
+      professional: "Professioneel en formeel",
+      conversational: "Toegankelijk en conversationeel",
+      inspiring: "Inspirerend en motiverend",
+      direct: "Direct en krachtig",
+      educational: "Educatief en leerzaam",
+      authentic: "Authentiek en persoonlijk",
+    },
+    publishingFrequencyOptions: {
+      weekly12: "1 tot 2 keer per week",
+      weekly34: "3 tot 4 keer per week",
+      daily: "Elke dag",
+      never: "Ik publiceer nog niet",
+    },
   },
 
   // Consent modal
@@ -2441,6 +2500,7 @@ export const nl = {
     faqSubtitle: "Alles wat je moet weten over onze abonnementen",
     editProfile: "Mijn profiel bewerken",
     backToLogin: "Terug naar inloggen",
+    backToOnboarding: "Onboarding bewerken",
   },
 
   // Schedule Page

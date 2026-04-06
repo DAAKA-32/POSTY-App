@@ -97,7 +97,7 @@ export function getPersonalizedSubtitle(profile?: ProfileData, language: Languag
 
   // Try exact match first, then partial match
   for (const [key, subtitles] of Object.entries(SUBTITLE_BY_OBJECTIVE)) {
-    const objStr = Array.isArray(profile.objective) ? profile.objective.join(", ") : profile.objective;
+    const objStr = Array.isArray(profile.objective) ? profile.objective.join(", ") : String(profile.objective || "");
     if (objStr.toLowerCase().includes(key.toLowerCase().slice(0, 15))) {
       return subtitles[language] || subtitles.en!;
     }
@@ -756,7 +756,7 @@ export function getPersonalizedTemplateOrder(
   if (profile.objective) {
     const objPriority = Object.entries(TEMPLATE_PRIORITY_BY_OBJECTIVE)
       .find(([key]) => {
-        const objStr = Array.isArray(profile.objective) ? profile.objective.join(", ") : (profile.objective || "");
+        const objStr = Array.isArray(profile.objective) ? profile.objective.join(", ") : String(profile.objective || "");
         return objStr.toLowerCase().includes(key.toLowerCase().slice(0, 15));
       });
     if (objPriority) {

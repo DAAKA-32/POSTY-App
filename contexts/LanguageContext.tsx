@@ -69,14 +69,18 @@ interface LanguageProviderProps {
 export function LanguageProvider({ children }: LanguageProviderProps) {
   const { user, userProfile } = useAuth();
 
-  // Initialize language from localStorage or default to "en"
-  const [language, setLanguageState] = useState<Language>(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (isValidLanguage(stored)) return stored;
+  // Always start with "en" to match server render and avoid hydration mismatch.
+  // localStorage sync happens in the useEffect below.
+  const [language, setLanguageState] = useState<Language>("en");
+
+  // Sync language from localStorage on first client render
+  useEffect(() => {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (isValidLanguage(stored) && stored !== language) {
+      setLanguageState(stored);
     }
-    return "en"; // Default for public pages & new users
-  });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Sync language from user profile when user logs in
   useEffect(() => {

@@ -148,6 +148,13 @@ export default function LandingNavbar() {
   return (
     <>
       <div className="fixed top-0 left-0 right-0 z-50 pointer-events-none">
+        {/* Mask: hides content scrolling above the navbar */}
+        <div
+          className={`absolute top-0 left-0 right-0 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+            isScrolled && !isMenuOpen ? "h-3 backdrop-blur-xl" : "h-0"
+          }`}
+          aria-hidden="true"
+        />
         <nav
           className={`w-full pointer-events-auto transition-[padding] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
             isScrolled && !isMenuOpen ? "px-4 pt-3" : "px-0 pt-0"

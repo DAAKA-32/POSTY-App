@@ -499,38 +499,10 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
           </button>
         </div>
 
-        {/* Navigation - overscroll-contain prevents scroll chaining */}
-        <nav className="flex-1 p-4 overflow-y-auto no-scrollbar overscroll-contain">
-          {/* New post button - Clean, professional design */}
-          <button
-            onClick={() => {
-              onClose();
-              // Force a fresh conversation — even if already on /app
-              router.push(`/app?new=${Date.now()}`);
-            }}
-            className="
-              flex items-center justify-center gap-2.5 w-full px-4 py-3 mb-5
-              bg-primary hover:bg-primary-hover
-              text-white font-semibold rounded-xl
-              transition-all duration-200 ease-out cursor-pointer
-              shadow-md hover:shadow-lg hover:shadow-primary/20
-              active:scale-[0.98] active:transition-none
-              haptic-feedback group
-            "
-          >
-            <svg
-              className="w-5 h-5 transition-transform duration-200 group-hover:rotate-90"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            <span>{t.sidebar.newPost}</span>
-          </button>
-
+        {/* Fixed section: search + new post */}
+        <div className="shrink-0 px-4 pt-4 pb-2">
           {/* Search bar */}
-          <div className="relative mb-5">
+          <div className="relative mb-3">
             <svg
               className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted"
               fill="none"
@@ -570,6 +542,36 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
             )}
           </div>
 
+          {/* New post button */}
+          <button
+            onClick={() => {
+              onClose();
+              router.push(`/app?new=${Date.now()}`);
+            }}
+            className="
+              flex items-center justify-center gap-2.5 w-full px-4 py-3
+              bg-primary hover:bg-primary-hover
+              text-white font-semibold rounded-xl
+              transition-all duration-200 ease-out cursor-pointer
+              shadow-md hover:shadow-lg hover:shadow-primary/20
+              active:scale-[0.98] active:transition-none
+              haptic-feedback group
+            "
+          >
+            <svg
+              className="w-5 h-5 transition-transform duration-200 group-hover:rotate-90"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            <span>{t.sidebar.newPost}</span>
+          </button>
+        </div>
+
+        {/* Scrollable navigation - overscroll-contain prevents scroll chaining */}
+        <nav className="flex-1 p-4 pt-2 overflow-y-auto no-scrollbar overscroll-contain">
           {/* Nav items - Harmonized with landing page Features section colors */}
           <div className="space-y-1">
             {menuItems.map((item) => {

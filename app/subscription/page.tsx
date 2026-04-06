@@ -22,7 +22,7 @@ function SubscriptionContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, signOut, userProfile } = useAuth();
-  const { currentPlan, canStartTrial, refreshSubscription } = useSubscription();
+  const { currentPlan, canStartTrial, refreshSubscription, subscription, loading: subscriptionLoading } = useSubscription();
   const { t } = useLanguage();
   usePageTitle("subscription");
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("yearly");
@@ -31,6 +31,11 @@ function SubscriptionContent() {
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [welcomePlanName, setWelcomePlanName] = useState<string | undefined>();
 
+
+  // Detect first-time user: no active/trialing subscription (free plan with inactive status counts as first-time)
+  // Wait for subscription data to load before deciding — prevents flash of wrong UI
+  const hasActiveSubscription = subscription.status === "active" || subscription.status === "trialing";
+  const isFirstTimeUser = !subscriptionLoading && !hasActiveSubscription;
 
   // Force light mode + enable scrolling on Subscription page
   useEffect(() => {
@@ -49,6 +54,22 @@ function SubscriptionContent() {
       document.body.classList.remove("subscription-scroll-enabled");
     };
   }, []);
+
+  // Block browser back button for first-time users (no plan selected)
+  useEffect(() => {
+    if (!isFirstTimeUser) return;
+
+    // Push a dummy state so pressing back stays on this page
+    window.history.pushState(null, "", window.location.href);
+
+    const handlePopState = () => {
+      // Re-push state to trap the user on this page
+      window.history.pushState(null, "", window.location.href);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [isFirstTimeUser]);
 
   // Determine if user was redirected from a guard (for back button behavior)
   const isRedirectedFromGuard = searchParams.get("reason") === "subscription_required" || searchParams.get("reason") === "trial_expired";
@@ -176,7 +197,7 @@ function SubscriptionContent() {
       <div className="sticky top-0 z-40 bg-background-warm/80 dark:bg-dark-bg/80 backdrop-blur-xl border-b border-[#F8935D]/10 dark:border-dark-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="relative flex items-center h-16">
-            {currentPlan && (
+            {!subscriptionLoading && !isFirstTimeUser && (
               <button
                 onClick={handleBack}
                 className="flex items-center gap-2 text-gray-600 dark:text-text-secondary hover:text-gray-900 dark:hover:text-white transition-colors group z-10"
@@ -332,19 +353,19 @@ function SubscriptionContent() {
           </div>
         </motion.div>
 
-        {/* Bottom actions — only for users without an active plan */}
-        {!currentPlan && (
+        {/* Bottom actions — only for first-time users without an active subscription */}
+        {isFirstTimeUser && (
           <div className="max-w-2xl mx-auto mt-10 flex items-center justify-between px-2">
             {userProfile?.onboardingComplete ? (
               <button
                 onClick={() => { window.location.href = "/onboarding?edit=true"; }}
                 className="flex items-center gap-2 text-sm text-text-secondary hover:text-primary transition-colors group"
-                aria-label={t.subscriptionPage.editProfile}
+                aria-label={t.subscriptionPage.backToOnboarding}
               >
                 <svg className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
-                <span>{t.subscriptionPage.editProfile}</span>
+                <span>{t.subscriptionPage.backToOnboarding}</span>
               </button>
             ) : (
               <div />

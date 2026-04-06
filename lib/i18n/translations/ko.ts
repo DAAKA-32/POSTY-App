@@ -757,6 +757,11 @@ export const ko = {
     howItWorksStep4Example: "화요일 오전 9시 예약 — 참여율 피크",
     howItWorksReadyCTA: "LinkedIn 존재감을 바꿀 준비가 되셨나요?",
     howItWorksTryFree: "무료 체험",
+    hiwMockupOnline: "온라인",
+    hiwMockupLike: "좋아요",
+    hiwMockupComment: "댓글",
+    hiwMockupRepost: "리포스트",
+    hiwMockupEngagement: "댓글 38개 · 리포스트 12개",
 
     // AI Experience section
     aiExpTitle: "당신의 LinkedIn 코파일럿,",
@@ -1678,6 +1683,60 @@ export const ko = {
     recapFieldAudience: "타겟",
     recapFieldTone: "톤",
     recapFieldFrequency: "빈도",
+
+    // Onboarding options (translated)
+    otherOption: "기타",
+    otherPlaceholder: "구체적으로 입력...",
+    multiSelectHint: "복수 선택 가능",
+    profileTypeOptions: {
+      freelance: "프리랜서 / 자영업자",
+      agency: "에이전시",
+      entrepreneur: "기업가 / 창업자",
+      employee: "회사원",
+    },
+    sectorOptions: {
+      tech: "테크 / IT",
+      marketing: "마케팅 / 커뮤니케이션",
+      finance: "금융 / 은행",
+      health: "헬스케어",
+      education: "교육",
+      sales: "커머스 / 영업",
+      industry: "제조업",
+      consulting: "컨설팅",
+      hr: "HR / 채용",
+    },
+    objectiveOptions: {
+      clients: "새로운 고객 확보",
+      revenue: "매출 증가",
+      visibility: "인지도 및 신뢰도 향상",
+      leads: "우수한 리드 확보",
+      audience: "충성도 높은 오디언스 구축",
+    },
+    targetAudienceOptions: {
+      entrepreneurs: "기업가 / 창업자",
+      executives: "임원 / C-Level",
+      managers: "매니저 / 팀 리더",
+      freelancers: "프리랜서 / 자영업자",
+      developers: "개발자 / 테크",
+      marketers: "마케터 / 그로스",
+      hr: "HR / 리크루터",
+      students: "학생 / 신입",
+      general: "일반 대중",
+    },
+    communicationToneOptions: {
+      professional: "전문적이고 공식적",
+      conversational: "친근하고 대화체",
+      inspiring: "영감을 주고 동기부여",
+      direct: "직접적이고 임팩트 있는",
+      educational: "교육적이고 체계적",
+      authentic: "진정성 있고 개인적",
+    },
+    publishingFrequencyOptions: {
+      weekly12: "주 1~2회",
+      weekly34: "주 3~4회",
+      daily: "매일",
+      never: "아직 게시하지 않음",
+    },
   },
 
   // Consent modal
@@ -2441,6 +2500,7 @@ export const ko = {
     faqSubtitle: "플랜에 대해 알아야 할 모든 것",
     editProfile: "내 프로필 편집",
     backToLogin: "로그인으로 돌아가기",
+    backToOnboarding: "온보딩 수정",
   },
 
   // Schedule Page

@@ -204,54 +204,56 @@ export default function LoginPage() {
         />
       </div>
 
-      {/* Mobile Layout - Scrollable with proper safe areas for PWA */}
-      <motion.div
-        initial="hidden"
-        animate="visible"
-        variants={containerVariants}
-        className="md:hidden relative z-10 min-h-[100dvh] flex flex-col px-4"
+      {/* Mobile Layout - Independent scroll container for PWA compatibility */}
+      <div
+        className="md:hidden fixed inset-0 z-10 overflow-y-auto overflow-x-hidden overscroll-contain"
         style={{
           paddingTop: 'max(env(safe-area-inset-top, 0px), 8px)',
           paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 8px)',
         }}
+        data-allow-scroll
       >
-        {/* Mobile Header - Back (sticky: stays visible on scroll) */}
         <motion.div
-          variants={itemVariants}
-          className="flex items-center py-3 shrink-0 sticky z-20 -mx-4 px-4 bg-background-warm/90 backdrop-blur-sm"
-          style={{ top: 'max(env(safe-area-inset-top, 0px), 8px)' }}
+          initial="hidden"
+          animate="visible"
+          variants={containerVariants}
+          className="min-h-full flex flex-col px-4"
         >
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-gray-500 hover:text-warm-orange transition-colors duration-200 text-sm"
+          {/* Mobile Header - Back */}
+          <motion.div
+            variants={itemVariants}
+            className="flex items-center py-3 shrink-0"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            {t.common.back}
-          </Link>
-        </motion.div>
+            <Link
+              href="/"
+              className="flex items-center gap-2 text-gray-500 hover:text-warm-orange transition-colors duration-200 text-sm"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              {t.common.back}
+            </Link>
+          </motion.div>
 
-        {/* Main content - Flexible area that can grow */}
-        <motion.div
-          variants={itemVariants}
-          className="flex-1 flex flex-col py-4"
-        >
-          <div className="my-auto">
+          {/* Main content - grows but scrolls when needed */}
+          <motion.div
+            variants={itemVariants}
+            className="flex-1 flex flex-col justify-center py-4"
+          >
             <AuthPanel initialMode={initialMode} onSuccess={() => {}} />
-          </div>
-        </motion.div>
+          </motion.div>
 
-        {/* Footer links - Always visible at bottom */}
-        <motion.div
-          variants={itemVariants}
-          className="py-4 flex flex-wrap justify-center gap-4 text-xs text-text-muted shrink-0"
-        >
-          <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="hover:text-warm-orange transition-colors">{t.common.privacy}</a>
-          <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="hover:text-warm-orange transition-colors">{t.common.terms}</a>
-          <a href="/legal/notices" target="_blank" rel="noopener noreferrer" className="hover:text-warm-orange transition-colors">{t.common.legalNotices}</a>
+          {/* Footer links */}
+          <motion.div
+            variants={itemVariants}
+            className="py-4 flex flex-wrap justify-center gap-4 text-xs text-text-muted shrink-0"
+          >
+            <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="hover:text-warm-orange transition-colors">{t.common.privacy}</a>
+            <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="hover:text-warm-orange transition-colors">{t.common.terms}</a>
+            <a href="/legal/notices" target="_blank" rel="noopener noreferrer" className="hover:text-warm-orange transition-colors">{t.common.legalNotices}</a>
+          </motion.div>
         </motion.div>
-      </motion.div>
+      </div>
 
       {/* Desktop Layout */}
       <div className="hidden md:block min-h-[100dvh] relative z-10">
@@ -332,31 +334,28 @@ export default function LoginPage() {
         </div>
 
         {/* Right: Auth Panel — fixed independent scroll container */}
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={slideInRight}
-          className="fixed top-0 right-0 w-1/2 h-[100dvh] flex flex-col items-center p-6 lg:p-10 xl:p-14 bg-background-warm overflow-y-auto overflow-x-hidden overscroll-contain"
-        >
-          {/* Spacer for centering */}
-          <div className="flex-1" />
-
+        <div className="fixed top-0 right-0 w-1/2 h-[100dvh] overflow-y-auto overflow-x-hidden overscroll-contain bg-background-warm" data-allow-scroll>
           <motion.div
-            initial={{ opacity: 0, y: 30, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.45, delay: 0.1, ease: smoothEase }}
-            className="w-full max-w-md"
+            initial="hidden"
+            animate="visible"
+            variants={slideInRight}
+            className="min-h-full flex flex-col items-center justify-center p-6 lg:p-10 xl:p-14"
           >
-            <AuthPanel initialMode={initialMode} onSuccess={() => {}} />
-          </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 30, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.45, delay: 0.1, ease: smoothEase }}
+              className="w-full max-w-md"
+            >
+              <AuthPanel initialMode={initialMode} onSuccess={() => {}} />
+            </motion.div>
 
-          {/* Spacer + Footer links */}
-          <div className="flex-1 flex flex-col justify-end">
+            {/* Footer links */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.25, ease: smoothEase }}
-              className="py-6"
+              className="py-6 mt-auto shrink-0"
             >
               <div className="flex gap-4 text-xs text-text-muted justify-center">
                 <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="hover:text-warm-orange transition-colors duration-200">{t.common.privacy}</a>
@@ -364,8 +363,8 @@ export default function LoginPage() {
                 <a href="/legal/notices" target="_blank" rel="noopener noreferrer" className="hover:text-warm-orange transition-colors duration-200">{t.common.legalNotices}</a>
               </div>
             </motion.div>
-          </div>
-        </motion.div>
+          </motion.div>
+        </div>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
@@ -343,63 +343,8 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
     return () => clearTimeout(timer);
   }, [mode]);
 
-  // Block scroll when input is focused on mobile/tablet
-  // This prevents accidental scrolling while typing
-  const touchStartY = useRef<number | null>(null);
-
-  const preventScrollOnFocus = useCallback((e: TouchEvent) => {
-    // Only block when an input field is focused
-    if (!focusedField) return;
-
-    // Allow scrolling inside scrollable containers
-    const target = e.target as HTMLElement;
-    if (target.closest('.overflow-y-auto, .overflow-auto, [data-allow-scroll]')) {
-      return;
-    }
-
-    // Prevent scroll
-    e.preventDefault();
-  }, [focusedField]);
-
-  const handleTouchStartForScroll = useCallback((e: TouchEvent) => {
-    if (e.touches.length === 1) {
-      touchStartY.current = e.touches[0].clientY;
-    }
-  }, []);
-
-  useEffect(() => {
-    // Only add listeners when a field is focused AND on mobile/touch devices
-    // Desktop with mouse/trackpad should NOT have scroll blocked during input focus
-    const isDesktopWithMouse = window.matchMedia("(pointer: fine) and (hover: hover)").matches;
-
-    if (!focusedField || isDesktopWithMouse) {
-      // Cleanup styles when no field is focused or on desktop
-      document.body.style.position = "";
-      document.body.style.width = "";
-      document.body.style.touchAction = "";
-      // Note: Don't manipulate body.style.overflow - let CSS handle it
-      return;
-    }
-
-    // Mobile/touch only: Block scroll when input is focused (prevents iOS keyboard issues)
-    document.body.style.position = "fixed";
-    document.body.style.width = "100%";
-    document.body.style.touchAction = "none";
-
-    // Add touch listeners to prevent scroll gestures
-    document.addEventListener("touchstart", handleTouchStartForScroll, { passive: true });
-    document.addEventListener("touchmove", preventScrollOnFocus, { passive: false });
-
-    return () => {
-      document.removeEventListener("touchstart", handleTouchStartForScroll);
-      document.removeEventListener("touchmove", preventScrollOnFocus);
-      // Restore on cleanup
-      document.body.style.position = "";
-      document.body.style.width = "";
-      document.body.style.touchAction = "";
-      touchStartY.current = null;
-    };
-  }, [focusedField, preventScrollOnFocus, handleTouchStartForScroll]);
+  // Note: No scroll-blocking on mobile input focus — the login page uses
+  // its own fixed scroll containers that handle scroll independently of body.
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -646,8 +646,8 @@ export default function MainLayout({
           )}
         </motion.div>
 
-        {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden p-2 space-y-1">
+        {/* Fixed navigation section (search, new post, nav items) */}
+        <div className="shrink-0 p-2 space-y-1">
           {/* Search - Only show when expanded */}
           {!isCollapsed && (
             <div className="relative mb-2">
@@ -814,13 +814,32 @@ export default function MainLayout({
             );
           })}
 
-          {/* Conversations - Only show when expanded */}
+          {/* Conversations icon - Only show when collapsed and has posts */}
+          {isCollapsed && localPosts.length > 0 && (
+            <button
+              onClick={() => setShowHistoryModal(true)}
+              className="w-full h-11 rounded-xl flex items-center justify-center text-primary hover:text-primary-hover hover:bg-[#F8935D]/5 transition-colors group relative mt-4 pt-4 border-t border-[#F8935D]/10 dark:border-dark-border"
+              title={t.sidebar.conversations}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+              {/* Tooltip */}
+              <span className="absolute left-full ml-2 px-2 py-1 bg-background-warm dark:bg-dark-elevated border border-[#F8935D]/15 dark:border-dark-border rounded-lg text-sm whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50 shadow-lg pointer-events-none">
+                {t.sidebar.conversations} ({localPosts.length})
+              </span>
+            </button>
+          )}
+        </div>
+
+        {/* Scrollable conversations list (header + items scroll together) */}
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden px-2">
           {!isCollapsed && localPosts.length > 0 && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.4, delay: 0.3, ease: smoothEase }}
-              className="mt-4 pt-4 border-t border-[#F8935D]/10 dark:border-dark-border"
+              className="pt-4 border-t border-[#F8935D]/10 dark:border-dark-border"
             >
               <button
                 onClick={() => setShowChatList(!showChatList)}
@@ -859,14 +878,8 @@ export default function MainLayout({
                 </div>
               </button>
 
-              <AnimatePresence>
-                {showChatList && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.3, ease: smoothEase }}
-                    className="mt-2 space-y-0.5 overflow-hidden"
+              {showChatList && (
+                <div className="mt-2 space-y-0.5"
                   >
                     {groupedPosts.map((group, groupIndex) => {
                       // Determine group visual properties
@@ -1032,27 +1045,9 @@ export default function MainLayout({
                         {t.sidebar.viewAll} ({localPosts.length})
                       </motion.button>
                     )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                </div>
+              )}
             </motion.div>
-          )}
-
-          {/* Conversations icon - Only show when collapsed and has posts */}
-          {isCollapsed && localPosts.length > 0 && (
-            <button
-              onClick={() => setShowHistoryModal(true)}
-              className="w-full h-11 rounded-xl flex items-center justify-center text-primary hover:text-primary-hover hover:bg-[#F8935D]/5 transition-colors group relative mt-4 pt-4 border-t border-[#F8935D]/10 dark:border-dark-border"
-              title={t.sidebar.conversations}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-              </svg>
-              {/* Tooltip */}
-              <span className="absolute left-full ml-2 px-2 py-1 bg-background-warm dark:bg-dark-elevated border border-[#F8935D]/15 dark:border-dark-border rounded-lg text-sm whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50 shadow-lg pointer-events-none">
-                {t.sidebar.conversations} ({localPosts.length})
-              </span>
-            </button>
           )}
         </nav>
 
