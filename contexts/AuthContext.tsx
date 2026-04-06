@@ -219,6 +219,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Real error — throw with appropriate message
+      console.error("Google sign-in error:", firebaseError.code, firebaseError.message);
       let message: string;
       switch (firebaseError.code) {
         case "auth/network-request-failed":
