@@ -31,6 +31,7 @@ import {
 import { deleteScheduledPostImages } from "@/lib/storage/storage";
 import { getAuthHeaders } from "@/lib/api/client";
 import toast from "@/components/ui/Toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const SchedulingContext = createContext<SchedulingContextType | undefined>(
   undefined
@@ -38,6 +39,7 @@ const SchedulingContext = createContext<SchedulingContextType | undefined>(
 
 export function SchedulingProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const { canSchedulePosts, currentPlan, isTestMode } = useSubscription();
   const [scheduledPosts, setScheduledPosts] = useState<ScheduledPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -63,7 +65,7 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
       setPendingCount(count);
     } catch (error) {
       console.error("Error loading scheduled posts:", error);
-      toast.error("Impossible de charger vos posts programmes. Rafraichissez la page.");
+      toast.error(t.toasts.scheduleLoadError);
     } finally {
       setIsLoading(false);
     }
@@ -199,7 +201,7 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
         );
         setPendingCount((prev) => Math.max(0, prev - 1));
 
-        toast.success("Programmation annulée");
+        toast.success(t.scheduler.scheduleCancelled);
         return { success: true };
       } catch (error) {
         console.error("Error cancelling scheduled post:", error);
@@ -233,7 +235,7 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
           setPendingCount((prev) => Math.max(0, prev - 1));
         }
 
-        toast.success("Post supprimé");
+        toast.success(t.scheduler.postDeleted);
         return { success: true };
       } catch (error) {
         console.error("Error deleting scheduled post:", error);
@@ -262,7 +264,7 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
       // Validate date is in the future
       const now = new Date();
       if (newDate <= now) {
-        toast.error("Choisissez une date future pour programmer votre post.");
+        toast.error(t.scheduler.chooseFutureDate);
         return {
           success: false,
           error: "La date doit être dans le futur",
@@ -275,7 +277,7 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
         // Refresh the list
         await loadScheduledPosts();
 
-        toast.success("Post reprogrammé avec succès !");
+        toast.success(t.scheduler.postRescheduled);
         return { success: true };
       } catch (error) {
         console.error("Error rescheduling post:", error);

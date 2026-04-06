@@ -121,11 +121,11 @@ export interface UserProfile {
   branding?: PersonalBranding;
   profile?: {
     profileType?: string;
-    sector: string;
+    sector: string | string[];
     role: string;
-    objective: string;
-    targetAudience?: string;
-    communicationTone?: string;
+    objective: string | string[];
+    targetAudience?: string | string[];
+    communicationTone?: string | string[];
     publishingFrequency?: string;
     // Legacy field — kept for backward compatibility with existing users
     linkedinStyle?: string;
@@ -316,12 +316,25 @@ export const MEMORY_MAX_ITEMS = 30;
 
 export interface OnboardingData {
   profileType: string;
-  sector: string;
+  sector: string[];
   role: string;
-  objective: string;
-  targetAudience: string;
-  communicationTone: string;
+  objective: string[];
+  targetAudience: string[];
+  communicationTone: string[];
   publishingFrequency: string;
+}
+
+/** Normalize a value that may be a legacy string or a new array */
+export function normalizeMultiSelect(value: string | string[] | undefined): string[] {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+  return value ? [value] : [];
+}
+
+/** Convert multi-select array to a comma-separated string (for prompt building) */
+export function multiSelectToString(value: string | string[] | undefined): string {
+  const arr = normalizeMultiSelect(value);
+  return arr.join(", ");
 }
 
 export const PROFILE_TYPES = [
@@ -358,6 +371,7 @@ export const OBJECTIVES = [
   "Développer ma visibilité et crédibilité",
   "Générer des leads qualifiés",
   "Construire une audience engagée",
+  "Autre",
 ] as const;
 
 export const PUBLISHING_FREQUENCIES = [
@@ -378,6 +392,7 @@ export const TARGET_AUDIENCES = [
   "RH / Recruteurs",
   "Étudiants / Jeunes diplômés",
   "Grand public",
+  "Autre",
 ] as const;
 
 export const COMMUNICATION_TONES = [
@@ -387,6 +402,7 @@ export const COMMUNICATION_TONES = [
   "Direct et percutant",
   "Éducatif et pédagogue",
   "Authentique et personnel",
+  "Autre",
 ] as const;
 
 // ============== AUTH CONTEXT TYPES ==============

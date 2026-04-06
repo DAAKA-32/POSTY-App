@@ -95,10 +95,11 @@ export default function Toggle({
             absolute inset-0 cursor-pointer
             rounded-full
             transition-colors duration-200 ease-out
-            bg-dark-border
-            peer-checked:bg-primary
+            ${checked
+              ? `bg-primary ${!disabled ? "hover:bg-primary-hover" : ""}`
+              : `bg-dark-border ${!disabled ? "hover:bg-dark-hover" : ""}`
+            }
             peer-focus-visible:ring-2 peer-focus-visible:ring-primary/50 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-dark-bg
-            ${!disabled ? "hover:bg-dark-hover peer-checked:hover:bg-primary-hover" : ""}
           `}
         />
 
@@ -240,10 +241,11 @@ export function ToggleField({
             absolute inset-0 cursor-pointer
             rounded-full
             transition-colors duration-200 ease-out
-            bg-gray-300 dark:bg-dark-border
-            peer-checked:bg-primary
+            ${props.checked
+              ? `bg-primary ${!props.disabled ? "hover:bg-primary-hover" : ""}`
+              : `bg-gray-300 dark:bg-dark-border ${!props.disabled ? "hover:bg-gray-400 dark:hover:bg-dark-hover" : ""}`
+            }
             peer-focus-visible:ring-2 peer-focus-visible:ring-primary/50 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-white dark:peer-focus-visible:ring-offset-dark-bg
-            ${!props.disabled ? "hover:bg-gray-400 dark:hover:bg-dark-hover peer-checked:hover:bg-primary-hover" : ""}
           `}
         />
 

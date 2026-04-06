@@ -31,7 +31,8 @@ export default function InsightsSection({ stats, userProfile }: InsightsSectionP
   const { t } = useLanguage();
   const d = t.dashboard;
 
-  const userObjective = userProfile?.profile?.objective;
+  const rawObjective = userProfile?.profile?.objective;
+  const userObjective = Array.isArray(rawObjective) ? rawObjective[0] : rawObjective;
   const userSector = userProfile?.profile?.sector;
 
   const generateInsights = (): Insight[] => {

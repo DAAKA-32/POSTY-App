@@ -16,6 +16,7 @@ import {
   COMMUNICATION_TONES,
   PUBLISHING_FREQUENCIES,
   OnboardingData,
+  normalizeMultiSelect,
 } from "@/types";
 import toast from "@/components/ui/Toast";
 import { usePageTitle } from "@/hooks/ui/usePageTitle";
@@ -29,7 +30,7 @@ type StepConfig = {
   titleKey: string;
   subtitleKey: string;
   options: readonly string[];
-  type: "select" | "input";
+  type: "select" | "multi-select" | "input";
 };
 
 const STEP_CONFIGS: StepConfig[] = [
@@ -45,7 +46,7 @@ const STEP_CONFIGS: StepConfig[] = [
     titleKey: "sectorStepTitle",
     subtitleKey: "sectorStepSubtitle",
     options: SECTORS,
-    type: "select",
+    type: "multi-select",
   },
   {
     id: "role",
@@ -59,21 +60,21 @@ const STEP_CONFIGS: StepConfig[] = [
     titleKey: "objectiveStepTitle",
     subtitleKey: "objectiveStepSubtitle",
     options: OBJECTIVES,
-    type: "select",
+    type: "multi-select",
   },
   {
     id: "targetAudience",
     titleKey: "targetAudienceStepTitle",
     subtitleKey: "targetAudienceStepSubtitle",
     options: TARGET_AUDIENCES,
-    type: "select",
+    type: "multi-select",
   },
   {
     id: "communicationTone",
     titleKey: "communicationToneStepTitle",
     subtitleKey: "communicationToneStepSubtitle",
     options: COMMUNICATION_TONES,
-    type: "select",
+    type: "multi-select",
   },
   {
     id: "publishingFrequency",
@@ -329,14 +330,17 @@ export default function OnboardingPage() {
       : false
   );
 
+  // "Other" text fields for multi-select steps
+  const [otherTexts, setOtherTexts] = useState<Record<string, string>>({});
+
   const [data, setData] = useState<OnboardingData>(
     savedProgress.current?.data ?? {
       profileType: "",
-      sector: "",
+      sector: [],
       role: "",
-      objective: "",
-      targetAudience: "",
-      communicationTone: "",
+      objective: [],
+      targetAudience: [],
+      communicationTone: [],
       publishingFrequency: "",
     }
   );
@@ -364,17 +368,17 @@ export default function OnboardingPage() {
     }
   }, [currentStep, data, showRecap, isEditMode]);
 
-  // Pre-fill onboarding data when returning to edit (unpaid user)
+  // Pre-fill onboarding data when returning to edit (handles legacy string → array migration)
   useEffect(() => {
     if (isEditMode && userProfile?.profile) {
       const profile = userProfile.profile;
       setData({
         profileType: profile.profileType || "",
-        sector: profile.sector || "",
+        sector: normalizeMultiSelect(profile.sector),
         role: profile.role || "",
-        objective: profile.objective || "",
-        targetAudience: profile.targetAudience || "",
-        communicationTone: profile.communicationTone || "",
+        objective: normalizeMultiSelect(profile.objective),
+        targetAudience: normalizeMultiSelect(profile.targetAudience),
+        communicationTone: normalizeMultiSelect(profile.communicationTone),
         publishingFrequency: profile.publishingFrequency || "",
       });
     }
@@ -437,6 +441,30 @@ export default function OnboardingPage() {
     setData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const handleMultiToggle = (field: StepId, option: string) => {
+    setData((prev) => {
+      const current = (prev[field] as string[]) || [];
+      if (option === "Autre") {
+        // Toggle "Autre" — clear otherText when unchecking
+        const hasAutre = current.includes("Autre");
+        if (hasAutre) {
+          setOtherTexts((ot) => ({ ...ot, [field]: "" }));
+          return { ...prev, [field]: current.filter((v) => v !== "Autre") };
+        }
+        return { ...prev, [field]: [...current, "Autre"] };
+      }
+      const exists = current.includes(option);
+      return {
+        ...prev,
+        [field]: exists ? current.filter((v) => v !== option) : [...current, option],
+      };
+    });
+  };
+
+  const handleOtherText = (field: StepId, text: string) => {
+    setOtherTexts((prev) => ({ ...prev, [field]: text }));
+  };
+
   const handleNext = () => {
     if (currentStep < STEP_CONFIGS.length - 1) {
       setDirection(1);
@@ -456,7 +484,16 @@ export default function OnboardingPage() {
 
     setIsSubmitting(true);
     try {
-      await completeOnboarding(user.uid, data);
+      // Merge "Autre" custom text into multi-select arrays before saving
+      const finalData = { ...data };
+      for (const [field, text] of Object.entries(otherTexts)) {
+        if (text.trim() && Array.isArray(finalData[field as keyof OnboardingData])) {
+          const arr = finalData[field as keyof OnboardingData] as string[];
+          // Replace "Autre" with the actual custom text
+          (finalData as Record<string, unknown>)[field] = arr.map((v) => v === "Autre" ? text.trim() : v);
+        }
+      }
+      await completeOnboarding(user.uid, finalData);
       clearOnboardingProgress();
 
       if (isEditMode) {
@@ -487,7 +524,9 @@ export default function OnboardingPage() {
   const stepConfig = STEP_CONFIGS[currentStep];
   const isLastStep = currentStep === STEP_CONFIGS.length - 1;
   const currentValue = data[stepConfig.id as keyof OnboardingData];
-  const canProceed = currentValue.trim().length > 0;
+  const canProceed = stepConfig.type === "multi-select"
+    ? (currentValue as string[]).length > 0 && (!(currentValue as string[]).includes("Autre") || (otherTexts[stepConfig.id]?.trim().length ?? 0) > 0)
+    : (currentValue as string).trim().length > 0;
 
   // Keyboard navigation: Enter key advances to next step (or submits on last step)
   useEffect(() => {
@@ -589,29 +628,94 @@ export default function OnboardingPage() {
                   <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
                     {(t.onboarding as Record<string, string>)[stepConfig.titleKey]}
                   </h1>
-                  <p className="text-gray-400 text-sm sm:text-base">{(t.onboarding as Record<string, string>)[stepConfig.subtitleKey]}</p>
+                  <p className="text-gray-400 text-sm sm:text-base">
+                    {(t.onboarding as Record<string, string>)[stepConfig.subtitleKey]}
+                    {stepConfig.type === "multi-select" && (
+                      <span className="block text-xs text-primary/70 mt-1 font-medium">{(t.onboarding as Record<string, string>).multiSelectHint}</span>
+                    )}
+                  </p>
                   <p className="mt-3 text-xs text-gray-400/80 flex items-center justify-center gap-1">
                     <span>✦</span>
                     <span>{(t.onboarding as Record<string, string>).aiInfoNote}</span>
                   </p>
                 </div>
 
-                {/* Input or Selection */}
+                {/* Input / Single-Select / Multi-Select */}
                 {stepConfig.type === "input" ? (
                   <div className="mb-8">
                     <input
                       type="text"
-                      value={currentValue}
+                      value={currentValue as string}
                       onChange={(e) => handleSelect(stepConfig.id, e.target.value)}
                       placeholder={t.onboarding.rolePlaceholderHint}
                       className="w-full px-5 py-4 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#F8935D]/30 focus:border-[#F8935D]/50 transition-all duration-200 text-[15px] shadow-sm"
                       autoFocus
                     />
                   </div>
+                ) : stepConfig.type === "multi-select" ? (
+                  <div className="grid gap-2.5 mb-8">
+                    {stepConfig.options.map((option, i) => {
+                      const selectedArr = (currentValue as string[]) || [];
+                      const isSelected = selectedArr.includes(option);
+                      return (
+                        <div key={option}>
+                          <motion.button
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.25, delay: i * 0.04, ease: smoothEase }}
+                            onClick={() => handleMultiToggle(stepConfig.id, option)}
+                            className={`
+                              w-full p-4 text-left rounded-xl border transition-colors duration-200
+                              ${isSelected
+                                ? "bg-primary/5 border-primary text-gray-900 shadow-sm"
+                                : "bg-white border-gray-200 text-gray-600 hover:border-primary/40"
+                              }
+                            `}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-[15px] font-medium">{option}</span>
+                              <div className={`w-5 h-5 rounded flex items-center justify-center border-2 transition-colors duration-200 ${
+                                isSelected ? "bg-primary border-primary" : "border-gray-300 bg-white"
+                              }`}>
+                                {isSelected && (
+                                  <motion.svg
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                                    className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                  >
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                  </motion.svg>
+                                )}
+                              </div>
+                            </div>
+                          </motion.button>
+                          {/* "Autre" text input — appears when "Autre" is checked */}
+                          {option === "Autre" && isSelected && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: "auto" }}
+                              exit={{ opacity: 0, height: 0 }}
+                              className="mt-2"
+                            >
+                              <input
+                                type="text"
+                                value={otherTexts[stepConfig.id] || ""}
+                                onChange={(e) => handleOtherText(stepConfig.id, e.target.value)}
+                                placeholder={(t.onboarding as Record<string, string>).otherPlaceholder || "Précisez..."}
+                                className="w-full px-4 py-3 bg-white border border-primary/30 rounded-xl text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#F8935D]/30 focus:border-[#F8935D]/50 transition-all duration-200 text-sm"
+                                autoFocus
+                              />
+                            </motion.div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 ) : (
                   <div className="grid gap-2.5 mb-8">
                     {stepConfig.options.map((option, i) => {
-                      const isSelected = currentValue === option;
+                      const isSelected = (currentValue as string) === option;
                       return (
                         <motion.button
                           key={option}

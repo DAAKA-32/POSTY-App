@@ -236,7 +236,7 @@ function Navbar() {
   return (
     <>
     {/* Outer fixed container — always full width for positioning */}
-    <div className={`fixed top-0 left-0 right-0 z-50 pointer-events-none transition-all duration-700 ${isScrolled && !isMenuOpen ? "bg-[#FEF3EE]/80 backdrop-blur-md" : ""}`}>
+    <div className="fixed top-0 left-0 right-0 z-50 pointer-events-none">
       {/* Dynamic container — always visible, border/bg on scroll */}
       <nav
         className={`w-full pointer-events-auto transition-[padding] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
@@ -248,7 +248,7 @@ function Navbar() {
             mx-auto transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]
             ${isScrolled && !isMenuOpen ? "max-w-[1100px] rounded-[20px]" : "max-w-full rounded-none"}
             ${isScrolled || isMenuOpen
-              ? "bg-white backdrop-blur-xl shadow-md shadow-gray-900/[0.05] border border-gray-200/50"
+              ? "bg-white/85 backdrop-blur-xl shadow-md shadow-gray-900/[0.05] border border-gray-200/50"
               : "bg-transparent border border-transparent"
             }
           `}
@@ -2814,7 +2814,7 @@ function AIExperienceSection() {
               <div className="px-5 py-5 space-y-4">
                 {/* User message */}
                 <div className="flex justify-end">
-                  <div className="max-w-[80%] bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white text-sm px-4 py-2.5 rounded-2xl rounded-tr-md">
+                  <div className="max-w-[80%] bg-gradient-to-r from-[#F8935D] to-[#F76B54] !text-white text-sm px-4 py-2.5 rounded-2xl rounded-tr-md">
                     {t.landing.aiExpChatExample}
                   </div>
                 </div>
@@ -4291,7 +4291,7 @@ function PricingSection() {
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("yearly");
 
   return (
-    <section id="pricing" className="py-16 md:py-24 2xl:py-28 px-4 sm:px-6 lg:px-8 2xl:px-12 overflow-hidden">
+    <section id="pricing" className="py-16 md:py-24 2xl:py-28 px-4 sm:px-6 lg:px-8 2xl:px-12 overflow-x-clip">
       <div className="max-w-5xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -4321,7 +4321,7 @@ function PricingSection() {
         </motion.div>
 
         {/* Cards grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5 md:gap-6 lg:gap-8 max-w-5xl mx-auto items-start">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5 md:gap-6 lg:gap-8 max-w-5xl mx-auto items-start overflow-visible p-1">
           {PLANS.map((plan, index) => (
             <PricingCard
               key={plan.id}

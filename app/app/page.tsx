@@ -245,12 +245,15 @@ function AppContent() {
       router.replace(`/app/c/${postId}`);
 
       // Background refresh: update cache with full Firestore data silently
-      getPost(postId).then((freshPost) => {
-        if (freshPost) {
-          setCachedConversation(freshPost);
-          setPosts((prev) => prev.map((p) => p.id === postId ? freshPost : p));
-        }
-      }).catch(() => {});
+      // Delay to let the Firestore save from useChat complete first
+      setTimeout(() => {
+        getPost(postId).then((freshPost) => {
+          if (freshPost) {
+            setCachedConversation(freshPost);
+            setPosts((prev) => prev.map((p) => p.id === postId ? freshPost : p));
+          }
+        }).catch(() => {});
+      }, 2000);
     }
   }, [postId, isStreaming, router, lastPrompt, user?.uid, messages, effectiveDualMode, effectiveStyle, insights]);
 

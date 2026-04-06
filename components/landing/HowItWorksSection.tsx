@@ -47,7 +47,7 @@ function MockupChat({ l }: { l: Record<string, string> }) {
         {/* User message */}
         <div className="flex justify-end">
           <div className="flex items-end gap-1.5 max-w-[85%]">
-            <div className="bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white text-[10px] leading-[1.5] px-3 py-2 rounded-2xl rounded-tr-[4px] shadow-md shadow-[#F8935D]/20">
+            <div className="bg-gradient-to-r from-[#F8935D] to-[#F76B54] !text-white text-[10px] leading-[1.5] px-3 py-2 rounded-2xl rounded-tr-[4px] shadow-md shadow-[#F8935D]/20">
               {l.hiwUserInput}
             </div>
             <div className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-sm">

@@ -97,7 +97,8 @@ export function getPersonalizedSubtitle(profile?: ProfileData, language: Languag
 
   // Try exact match first, then partial match
   for (const [key, subtitles] of Object.entries(SUBTITLE_BY_OBJECTIVE)) {
-    if (profile.objective.toLowerCase().includes(key.toLowerCase().slice(0, 15))) {
+    const objStr = Array.isArray(profile.objective) ? profile.objective.join(", ") : profile.objective;
+    if (objStr.toLowerCase().includes(key.toLowerCase().slice(0, 15))) {
       return subtitles[language] || subtitles.en!;
     }
   }
@@ -712,7 +713,8 @@ const DEFAULT_PLACEHOLDERS: LocalizedTextArray = {
 export function getPersonalizedPlaceholders(profile?: ProfileData, language: Language = "fr"): string[] {
   if (!profile?.sector) return (DEFAULT_PLACEHOLDERS[language] || DEFAULT_PLACEHOLDERS.en!);
 
-  const sectorData = PLACEHOLDERS_BY_SECTOR[profile.sector];
+  const sectorKey = Array.isArray(profile.sector) ? profile.sector[0] : profile.sector;
+  const sectorData = PLACEHOLDERS_BY_SECTOR[sectorKey];
   if (!sectorData) return (DEFAULT_PLACEHOLDERS[language] || DEFAULT_PLACEHOLDERS.en!);
 
   return sectorData[language] || sectorData.en!;
@@ -753,7 +755,10 @@ export function getPersonalizedTemplateOrder(
 
   if (profile.objective) {
     const objPriority = Object.entries(TEMPLATE_PRIORITY_BY_OBJECTIVE)
-      .find(([key]) => profile.objective?.toLowerCase().includes(key.toLowerCase().slice(0, 15)));
+      .find(([key]) => {
+        const objStr = Array.isArray(profile.objective) ? profile.objective.join(", ") : (profile.objective || "");
+        return objStr.toLowerCase().includes(key.toLowerCase().slice(0, 15));
+      });
     if (objPriority) {
       objPriority[1].forEach(id => prioritySet.add(id));
     }

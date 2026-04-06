@@ -15,8 +15,14 @@ export function useAppInitialization() {
   const [minLoadTimeElapsed, setMinLoadTimeElapsed] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
-  // Landing/auth pages get instant display - no splash
-  const isLandingPage = pathname === "/" || pathname === "/login" || pathname === "/login" || pathname === "/signup";
+  // Landing/auth/public pages get instant display - no splash
+  // SEO pages are public marketing pages and should never show a splash screen
+  const isLandingPage = pathname === "/" || pathname === "/login" || pathname === "/signup" ||
+    pathname === "/about" || pathname.startsWith("/legal") ||
+    // SEO programmatic pages (inside (seo) route group)
+    pathname === "/ai-linkedin-post-generator" || pathname === "/write-linkedin-post" ||
+    pathname === "/linkedin-post-ideas" || pathname === "/generate-linkedin-content" ||
+    pathname === "/linkedin-post-examples";
 
   useEffect(() => {
     setIsMounted(true);

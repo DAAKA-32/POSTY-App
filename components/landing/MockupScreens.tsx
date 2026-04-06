@@ -249,7 +249,7 @@ export function CopilotSection({ landing }: { landing: any }) {
                       {/* Phase 0 — User message */}
                       <div className={`flex justify-end transition-all duration-500 ease-out ${on(0) ? "opacity-100 translate-x-0" : "opacity-0 translate-x-5"}`}>
                         <div className="flex items-end gap-1.5">
-                          <div className="max-w-[75%] bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white text-[10px] sm:text-xs px-3 py-2 rounded-2xl rounded-tr-sm shadow-md shadow-[#F8935D]/15">
+                          <div className="max-w-[75%] bg-gradient-to-r from-[#F8935D] to-[#F76B54] !text-white text-[10px] sm:text-xs px-3 py-2 rounded-2xl rounded-tr-sm shadow-md shadow-[#F8935D]/15">
                             {landing.aiExpChatExample}
                           </div>
                           <div className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center flex-shrink-0">

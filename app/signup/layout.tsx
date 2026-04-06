@@ -4,19 +4,26 @@ const baseUrl =
   process.env.NEXT_PUBLIC_BASE_URL || "https://postyapp.ai";
 
 export const metadata: Metadata = {
-  title: "Inscription Gratuite",
+  title: "Sign Up Free | Posty AI",
   description:
-    "Créez votre compte Posty gratuitement. Automatisez votre LinkedIn et générez des prospects qualifiés avec l'IA. Plan gratuit disponible.",
+    "Create your free Posty account. Generate high-converting LinkedIn posts with AI and turn your content into clients. Free plan available.",
   robots: {
     index: true,
     follow: true,
   },
   openGraph: {
-    title: "Inscription Gratuite - Posty",
+    title: "Sign Up Free — Posty AI LinkedIn Post Generator",
     description:
-      "Créez votre compte Posty gratuitement. Générez des prospects LinkedIn qualifiés avec l'IA.",
+      "Create your free Posty account. Generate LinkedIn posts with AI that attract qualified leads.",
     url: `${baseUrl}/signup`,
     type: "website",
+    siteName: "Posty AI",
+  },
+  twitter: {
+    card: "summary",
+    title: "Sign Up Free — Posty AI",
+    description:
+      "Create your free Posty account and start generating AI-powered LinkedIn posts.",
   },
   alternates: {
     canonical: `${baseUrl}/signup`,

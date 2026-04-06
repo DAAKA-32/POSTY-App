@@ -78,6 +78,45 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ];
 
+  // SEO landing pages — high-value programmatic content
+  const seoRoutes: MetadataRoute.Sitemap = [
+    {
+      url: `${baseUrl}/ai-linkedin-post-generator`,
+      lastModified: currentDate,
+      changeFrequency: "weekly",
+      priority: 0.9,
+      alternates: { languages: generateAlternates("/ai-linkedin-post-generator") },
+    },
+    {
+      url: `${baseUrl}/write-linkedin-post`,
+      lastModified: currentDate,
+      changeFrequency: "weekly",
+      priority: 0.9,
+      alternates: { languages: generateAlternates("/write-linkedin-post") },
+    },
+    {
+      url: `${baseUrl}/linkedin-post-ideas`,
+      lastModified: currentDate,
+      changeFrequency: "weekly",
+      priority: 0.8,
+      alternates: { languages: generateAlternates("/linkedin-post-ideas") },
+    },
+    {
+      url: `${baseUrl}/generate-linkedin-content`,
+      lastModified: currentDate,
+      changeFrequency: "weekly",
+      priority: 0.8,
+      alternates: { languages: generateAlternates("/generate-linkedin-content") },
+    },
+    {
+      url: `${baseUrl}/linkedin-post-examples`,
+      lastModified: currentDate,
+      changeFrequency: "weekly",
+      priority: 0.8,
+      alternates: { languages: generateAlternates("/linkedin-post-examples") },
+    },
+  ];
+
   // Legal pages with multilingual support
   const legalRoutes: MetadataRoute.Sitemap = [
     {
@@ -126,5 +165,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     });
   });
 
-  return [...publicRoutes, ...legalRoutes, ...languageSpecificRoutes];
+  return [...publicRoutes, ...seoRoutes, ...legalRoutes, ...languageSpecificRoutes];
 }

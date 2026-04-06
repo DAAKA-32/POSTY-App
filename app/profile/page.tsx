@@ -137,16 +137,18 @@ function ProfileContent() {
     }
   };
 
-  // Initial form data
+  // Initial form data — normalize arrays to comma-separated strings for the edit form
+  const flat = (v: string | string[] | undefined): string =>
+    Array.isArray(v) ? v.join(", ") : v || "";
   const initialFormData = {
     displayName: userProfile?.displayName || "",
     bio: userProfile?.bio || "",
-    sector: userProfile?.profile?.sector || "",
+    sector: flat(userProfile?.profile?.sector),
     role: userProfile?.profile?.role || "",
     linkedinStyle: userProfile?.profile?.linkedinStyle || "",
-    objective: userProfile?.profile?.objective || "",
-    targetAudience: userProfile?.profile?.targetAudience || "",
-    communicationTone: userProfile?.profile?.communicationTone || "",
+    objective: flat(userProfile?.profile?.objective),
+    targetAudience: flat(userProfile?.profile?.targetAudience),
+    communicationTone: flat(userProfile?.profile?.communicationTone),
   };
 
   return (
@@ -210,7 +212,7 @@ function ProfileContent() {
                 <ProfileHeader
                   displayName={userProfile?.displayName || ""}
                   role={userProfile?.profile?.role}
-                  sector={userProfile?.profile?.sector}
+                  sector={flat(userProfile?.profile?.sector)}
                   bio={userProfile?.bio}
                   linkedInConnected={linkedInConnected}
                   onEdit={() => setIsEditing(true)}

@@ -16,7 +16,7 @@ import { getPlanFeatures } from "@/lib/config/plan-features";
 import { Post } from "@/types";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import MainLayout from "@/components/layout/MainLayout";
-import ChatMessage, { TypingIndicator } from "@/components/chat/ChatMessage";
+import ChatMessage, { TypingIndicator, GenerationLoader } from "@/components/chat/ChatMessage";
 import ModernAIResponsePair from "@/components/chat/ModernAIResponsePair";
 import ModernResponseCard from "@/components/chat/ModernResponseCard";
 import MaxModeSelector from "@/components/chat/MaxModeSelector";
@@ -29,6 +29,7 @@ import ScheduleModal from "@/components/schedule/ScheduleModal";
 import { AnimatedScaleFade } from "@/components/animations/AnimatedPageWrapper";
 import toast from "@/components/ui/Toast";
 import UniversalChatInput, { UniversalChatInputRef } from "@/components/chat/UniversalChatInput";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // Dynamic placeholder examples that rotate
 const PLACEHOLDER_EXAMPLES = [
@@ -43,6 +44,7 @@ function ConversationContent() {
   const params = useParams();
   const router = useRouter();
   const conversationId = params.id as string;
+  const { t } = useLanguage();
 
   const { user, userProfile } = useAuth();
   const { connection: linkedInConnection, publishToLinkedIn } = useLinkedIn();
@@ -105,6 +107,8 @@ function ConversationContent() {
     messages,
     isLoading,
     isStreaming,
+    generationPhase,
+    generationPhaseMessage,
     error,
     generate,
     reset,
@@ -173,6 +177,18 @@ function ConversationContent() {
   // Track whether we've already loaded this conversation into the chat
   const loadedConversationRef = useRef<string | null>(null);
 
+  // Suppress background refresh right after streaming ends (Firestore save may still be in flight)
+  const skipBgRefreshRef = useRef(false);
+  const prevStreamingForBgRef = useRef(false);
+  useEffect(() => {
+    if (prevStreamingForBgRef.current && !isStreaming) {
+      skipBgRefreshRef.current = true;
+      const timer = setTimeout(() => { skipBgRefreshRef.current = false; }, 3000);
+      return () => clearTimeout(timer);
+    }
+    prevStreamingForBgRef.current = isStreaming;
+  }, [isStreaming]);
+
   // Load the original conversation/post (including follow-up messages for multi-turn)
   useEffect(() => {
     if (!conversationId || !user) return;
@@ -190,16 +206,19 @@ function ConversationContent() {
         loadPostIntoChat(cached);
 
         // Background refresh: fetch latest from Firestore silently
-        getPost(conversationId).then((freshPost) => {
-          if (freshPost && freshPost.userId === user.uid) {
-            setCachedConversation(freshPost);
-            setOriginalPost(freshPost);
-            // Only reload chat if messages changed (new follow-ups added elsewhere)
-            if ((freshPost.messages?.length ?? 0) !== (cached.messages?.length ?? 0)) {
-              loadPostIntoChat(freshPost);
+        // Skip if streaming just ended — the Firestore save may not have landed yet
+        if (!skipBgRefreshRef.current) {
+          getPost(conversationId).then((freshPost) => {
+            if (freshPost && freshPost.userId === user.uid) {
+              setCachedConversation(freshPost);
+              setOriginalPost(freshPost);
+              // Only reload chat if messages changed (new follow-ups added elsewhere)
+              if ((freshPost.messages?.length ?? 0) !== (cached.messages?.length ?? 0)) {
+                loadPostIntoChat(freshPost);
+              }
             }
-          }
-        }).catch(() => { /* silent background refresh */ });
+          }).catch(() => { /* silent background refresh */ });
+        }
         return;
       }
 
@@ -214,12 +233,12 @@ function ConversationContent() {
           restorePostState(post);
           loadPostIntoChat(post);
         } else {
-          toast.error("Cette conversation n'est plus disponible.");
+          toast.error(t.toasts.conversationUnavailable);
           router.push("/app");
         }
       } catch (error) {
         console.error("Error loading conversation:", error);
-        toast.error("Impossible de charger la conversation. Reessayez.");
+        toast.error(t.toasts.conversationLoadError);
         router.push("/app");
       } finally {
         setIsLoadingPost(false);
@@ -314,7 +333,7 @@ function ConversationContent() {
         if (event.error === "not-allowed") {
           isRecordingRef.current = false;
           setIsRecording(false);
-          toast.error("Microphone non autorisé. Vérifiez les permissions.");
+          toast.error(t.appPage.micNotAllowed);
         } else if (event.error === "no-speech") {
           // Silently handle — expected during pauses
         } else if (event.error !== "aborted") {
@@ -426,7 +445,7 @@ function ConversationContent() {
         console.error("Failed to start recording:", error);
         isRecordingRef.current = false;
         setIsRecording(false);
-        toast.error("Impossible de démarrer l'enregistrement");
+        toast.error(t.appPage.recordingError);
       }
     }
   }, [cancelAutoSend, startAutoSendCountdown]);
@@ -466,9 +485,9 @@ function ConversationContent() {
   const handleCopy = useCallback(async (content: string) => {
     try {
       await navigator.clipboard.writeText(content);
-      toast.success("Copié !");
+      toast.success(t.toasts.copied);
     } catch {
-      toast.error("Erreur lors de la copie");
+      toast.error(t.toasts.copyError);
     }
   }, []);
 
@@ -662,9 +681,13 @@ function ConversationContent() {
                   })()}
                 </AnimatePresence>
 
-                {/* Typing indicator */}
+                {/* Generation phase loader / Typing indicator */}
                 <AnimatePresence>
-                  {isLoading && !isStreaming && <TypingIndicator />}
+                  {isLoading && !isStreaming && (
+                    generationPhaseMessage
+                      ? <GenerationLoader phase={generationPhase} message={generationPhaseMessage} />
+                      : <TypingIndicator />
+                  )}
                 </AnimatePresence>
               </div>
             )}

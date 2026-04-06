@@ -2,21 +2,20 @@ import type { Metadata } from "next";
 import { seoConfig, i18nSeoConfig } from "@/lib/seo/config";
 
 export const metadata: Metadata = {
-  title: "À propos | Posty - SaaS LinkedIn & Automatisation IA",
+  title: "About Posty | AI LinkedIn Content Platform",
   description:
-    "Découvrez Posty, l'outil SaaS qui automatise votre présence LinkedIn et génère des prospects qualifiés grâce à l'IA. Rencontrez Emilien Nepveu (Co-CEO & CTO) et Côme Maubert (Co-CEO & CFO).",
+    "Meet the team behind Posty — the AI-powered LinkedIn content platform that helps professionals turn posts into clients. Founded by Emilien Nepveu (Co-CEO & CTO) and Côme Maubert (Co-CEO & CFO).",
   keywords: [
     "Posty",
-    "à propos",
-    "SaaS LinkedIn",
-    "automatisation LinkedIn",
-    "coaching entrepreneurs",
-    "IA LinkedIn",
+    "about",
+    "LinkedIn SaaS",
+    "LinkedIn automation",
+    "AI LinkedIn",
     "personal branding",
     "Emilien Nepveu",
     "Côme Maubert",
-    "équipe Posty",
-    "générateur posts LinkedIn",
+    "Posty team",
+    "LinkedIn post generator",
   ],
   authors: [
     { name: "Emilien Nepveu", url: "https://www.linkedin.com/in/emilien-nepveu-58a38127a/" },
@@ -26,19 +25,19 @@ export const metadata: Metadata = {
 
   openGraph: {
     type: "website",
-    locale: "fr_FR",
-    alternateLocale: "en_US",
+    locale: "en_US",
+    alternateLocale: "fr_FR",
     url: `${seoConfig.siteUrl}/about`,
-    siteName: "Posty",
-    title: "À propos de Posty - Notre Équipe & Notre Mission",
+    siteName: "Posty AI",
+    title: "About Posty — Our Team & Mission",
     description:
-      "Posty : automatisez votre présence LinkedIn et générez des prospects qualifiés. Rencontrez Emilien Nepveu (Co-CEO & CTO) et Côme Maubert (Co-CEO & CFO).",
+      "Posty helps professionals automate LinkedIn and generate qualified leads with AI. Meet our founding team.",
     images: [
       {
         url: `${seoConfig.siteUrl}/og-image.png`,
         width: 1200,
         height: 630,
-        alt: "Posty - À propos de l'équipe",
+        alt: "About Posty AI - Our Team",
         type: "image/png",
       },
     ],
@@ -46,9 +45,9 @@ export const metadata: Metadata = {
 
   twitter: {
     card: "summary_large_image",
-    title: "À propos de Posty - Notre Équipe & Notre Mission",
+    title: "About Posty — Our Team & Mission",
     description:
-      "Posty : automatisez votre présence LinkedIn et générez des prospects qualifiés. Rencontrez notre équipe.",
+      "Posty helps professionals automate LinkedIn and generate qualified leads with AI. Meet our founding team.",
     images: [`${seoConfig.siteUrl}/og-image.png`],
     creator: "@posty_app",
   },

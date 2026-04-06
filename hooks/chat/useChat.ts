@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
-import { savePost, addMessagesToConversation, getConversationHistory } from "@/lib/db/firestore";
-import { MockResponse, PostInsights, ConversationTurn, FileAttachment } from "@/types";
+import { savePost, addMessagesToConversation, getConversationHistory, renamePost } from "@/lib/db/firestore";
+import { MockResponse, PostInsights, ConversationTurn, FileAttachment, Post } from "@/types";
 import { getAuthHeaders } from "@/lib/api/client";
 import { triggerHaptic } from "@/lib/ui/haptic";
 import { getFriendlyMessage } from "@/lib/utils/error-messages";
+import { setCachedConversation, updateCachedConversation, getCachedConversation } from "@/lib/storage/conversation-cache";
 
 const GUEST_GENERATION_LIMIT = 2;
 const GUEST_STORAGE_KEY = "posty_guest_generations";
@@ -42,11 +43,18 @@ interface UseChatOptions {
   aiMode?: "linkedin" | "general";
 }
 
+/** Generation phase reported by the server via SSE "phase" events */
+export type GenerationPhase = "idle" | "analyzing" | "searching" | "preparing" | "writing" | "complete";
+
 interface UseChatReturn {
   responses: MockResponse[];
   messages: ConversationMessage[];
   isLoading: boolean;
   isStreaming: boolean;
+  /** Current generation phase (searching, preparing, writing…) */
+  generationPhase: GenerationPhase;
+  /** Human-readable message for the current phase */
+  generationPhaseMessage: string;
   streamingContent: StreamingContent;
   error: string | null;
   generationCount: number;
@@ -81,6 +89,8 @@ export function useChat({
     conversational: "",
   });
   const [error, setError] = useState<string | null>(null);
+  const [generationPhase, setGenerationPhase] = useState<GenerationPhase>("idle");
+  const [generationPhaseMessage, setGenerationPhaseMessage] = useState("");
   const [lastPrompt, setLastPrompt] = useState("");
   const [postId, setPostId] = useState<string | null>(initialConversationId || null);
   const [insights, setInsights] = useState<PostInsights | null>(null);
@@ -106,6 +116,7 @@ export function useChat({
 
   // Abort controller for canceling streams
   const abortControllerRef = useRef<AbortController | null>(null);
+  const smartTitleRef = useRef<string | null>(null);
 
   // Get guest generation count from localStorage
   const getGuestCount = useCallback((): number => {
@@ -146,6 +157,7 @@ export function useChat({
         abortControllerRef.current.abort();
       }
       abortControllerRef.current = new AbortController();
+      smartTitleRef.current = null;
 
       // Capture generation ID to discard results if reset() is called mid-save
       const currentGeneration = generationRef.current;
@@ -153,6 +165,8 @@ export function useChat({
       setIsLoading(true);
       setIsStreaming(false);
       setError(null);
+      setGenerationPhase("analyzing");
+      setGenerationPhaseMessage("");
       setLastPrompt(prompt);
       setStreamingContent({ storytelling: "", business: "", conversational: "" });
 
@@ -286,6 +300,14 @@ export function useChat({
                 }
 
                 switch (eventType) {
+                  case "phase": {
+                    const phase = data.phase as GenerationPhase;
+                    const message = data.message as string;
+                    setGenerationPhase(phase);
+                    setGenerationPhaseMessage(message || "");
+                    break;
+                  }
+
                   case "start": {
                     const variantType = data.type as string;
                     const newMessage: ConversationMessage = {
@@ -357,8 +379,17 @@ export function useChat({
                     break;
                   }
 
+                  case "title": {
+                    // Smart title from GPT — update post when saved
+                    if (data.title) {
+                      smartTitleRef.current = data.title as string;
+                    }
+                    break;
+                  }
+
                   case "complete": {
                     setIsStreaming(false);
+                    setGenerationPhase("complete");
                     triggerHaptic();
 
                     if (data.quota) {
@@ -445,7 +476,13 @@ export function useChat({
                           }
 
                           await addMessagesToConversation(currentPostId, newMessages);
-                          // Keep the same postId - no new conversation created
+                          // Update cache so background refreshes find fresh data
+                          const existing = getCachedConversation(currentPostId);
+                          if (existing) {
+                            updateCachedConversation(currentPostId, {
+                              messages: [...(existing.messages || []), ...newMessages],
+                            });
+                          }
                         } else {
                           // NEW CONVERSATION: Create new post
                           const newPostId = await savePost(
@@ -458,10 +495,28 @@ export function useChat({
                               selectedStyle: (isConversational || dualMode) ? undefined : effectiveStyle,
                             }
                           );
+                          // Update with smart title if available (GPT-generated topic)
+                          if (smartTitleRef.current) {
+                            renamePost(newPostId, smartTitleRef.current).catch(() => {});
+                            smartTitleRef.current = null;
+                          }
                           // Only set postId if this generation is still current
                           // (user may have clicked "New Post" during the save)
                           if (generationRef.current === currentGeneration) {
                             setPostIdWithRef(newPostId);
+                            // Update cache so background refreshes find fresh data
+                            setCachedConversation({
+                              id: newPostId,
+                              userId: userId!,
+                              prompt,
+                              responseA: primaryContent,
+                              responseB: (!isConversational && dualMode) ? accumulatedContent.business : "",
+                              selectedVersion: null,
+                              createdAt: { toDate: () => new Date() } as Post["createdAt"],
+                              responseMode: isConversational ? "conversational" : (dualMode ? "dual" : "single-choice"),
+                              selectedStyle: (isConversational || dualMode) ? undefined : effectiveStyle,
+                              title: smartTitleRef.current || prompt.slice(0, 40),
+                            } as Post);
                           }
                         }
                       } catch (saveError) {
@@ -507,6 +562,8 @@ export function useChat({
     setResponses([]);
     setMessages([]);
     setError(null);
+    setGenerationPhase("idle");
+    setGenerationPhaseMessage("");
     setLastPrompt("");
     setPostIdWithRef(null); // Clear postId to start fresh
     setIsStreaming(false);
@@ -620,6 +677,8 @@ export function useChat({
     messages,
     isLoading,
     isStreaming,
+    generationPhase,
+    generationPhaseMessage,
     streamingContent,
     error,
     generationCount,

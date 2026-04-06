@@ -513,6 +513,14 @@ export async function POST(request: NextRequest) {
           let isConversational = false;
 
           if (openaiService) {
+            // ========== PHASE: SEARCHING ==========
+            // Signal the client that we're analyzing the request
+            if (extractedUrlContent) {
+              sendEvent("phase", { phase: "searching", message: language === "fr" ? "Recherche sur Internet…" : "Searching the web…" });
+            } else {
+              sendEvent("phase", { phase: "analyzing", message: language === "fr" ? "Analyse de la demande…" : "Analyzing request…" });
+            }
+
             // ========== INTENT CLASSIFICATION ==========
             // Force PRODUCTION intent when URL content was extracted (user clearly wants a post from a link)
             // In general mode: SOCIAL stays social, everything else → ASSISTANCE
@@ -560,6 +568,9 @@ export async function POST(request: NextRequest) {
                 conversationHistory as Array<{ role: "user" | "assistant"; content: string }> | undefined
               );
             } else {
+              // ========== PHASE: PREPARING → WRITING ==========
+              sendEvent("phase", { phase: "preparing", message: language === "fr" ? "Préparation du post…" : "Preparing your post…" });
+
               // Production intent - generate LinkedIn post
               generatedContent = await generateWithOpenAI(
                 openaiService,
@@ -598,6 +609,28 @@ export async function POST(request: NextRequest) {
             } catch (insightsError) {
               console.error("Insights generation error:", insightsError);
               // Continue without insights - not critical
+            }
+          }
+
+          // ========== GENERATE SMART TITLE ==========
+          // Extract a short 2-4 word topic from the prompt for the sidebar
+          if (generatedContent && !isConversational) {
+            try {
+              const titleService = createOpenAIService({ model: "gpt-3.5-turbo" as OpenAIModel, temperature: 0.3, maxTokens: 30 });
+              if (titleService) {
+                const titleResponse = await titleService.chat({
+                  systemPrompt: language === "fr"
+                    ? "Extrais le sujet principal en 2 à 4 mots maximum. Pas de verbe, pas de phrase. Juste le thème. Exemples: 'Sauce curry', 'Management remote', 'IA recrutement'. Réponds UNIQUEMENT avec le titre court."
+                    : "Extract the main topic in 2 to 4 words maximum. No verb, no sentence. Just the theme. Examples: 'Curry sauce', 'Remote management', 'AI recruitment'. Respond ONLY with the short title.",
+                  messages: [{ role: "user", content: prompt.slice(0, 200) }],
+                });
+                const smartTitle = titleResponse.trim().replace(/^["']|["']$/g, "").slice(0, 50);
+                if (smartTitle && smartTitle.length > 0) {
+                  sendEvent("title", { title: smartTitle });
+                }
+              }
+            } catch (titleError) {
+              console.error("Title generation error (non-blocking):", titleError);
             }
           }
 
@@ -726,6 +759,7 @@ async function generateWithOpenAI(
           ? "Version Business"
           : "Business Version";
 
+    sendEvent("phase", { phase: "writing", message: language === "fr" ? "Écriture en cours…" : "Writing your post…" });
     sendEvent("start", { type, title });
 
     // Build optimized system prompt with synthesized profile (plan-tier aware)

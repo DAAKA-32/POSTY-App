@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef } from "react";
 import toast from "@/components/ui/Toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface DeleteWithUndoOptions<T> {
   /** Duration in ms before permanent deletion (default: 5000) */
@@ -26,9 +27,12 @@ export function useDeleteWithUndo<T extends { id: string }>({
   undoDuration = 5000,
   onDelete,
   onUndo,
-  toastMessage = "Element supprime",
-  undoText = "Annuler",
+  toastMessage,
+  undoText,
 }: DeleteWithUndoOptions<T>) {
+  const { t } = useLanguage();
+  const resolvedToastMessage = toastMessage ?? t.toasts.postDeleted;
+  const resolvedUndoText = undoText ?? t.history?.undo ?? "Undo";
   const [pendingDeletes, setPendingDeletes] = useState<Map<string, DeleteState<T>>>(new Map());
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
 
@@ -43,10 +47,10 @@ export function useDeleteWithUndo<T extends { id: string }>({
       setDeletedIds((prev) => new Set(prev).add(itemId));
 
       // Create toast with undo action
-      const toastId = toast.info(toastMessage, {
+      const toastId = toast.info(resolvedToastMessage, {
         duration: undoDuration,
         action: {
-          label: undoText,
+          label: resolvedUndoText,
           onClick: () => {
             // Cancel deletion
             const pending = pendingRef.current.get(itemId);
@@ -80,7 +84,7 @@ export function useDeleteWithUndo<T extends { id: string }>({
             next.delete(itemId);
             return next;
           });
-          toast.error("Erreur lors de la suppression");
+          toast.error(t.toasts.deleteError);
         } finally {
           // Clean up pending state
           pendingRef.current.delete(itemId);
@@ -97,7 +101,7 @@ export function useDeleteWithUndo<T extends { id: string }>({
       pendingRef.current.set(itemId, deleteState);
       setPendingDeletes(new Map(pendingRef.current));
     },
-    [onDelete, onUndo, toastMessage, undoText, undoDuration]
+    [onDelete, onUndo, resolvedToastMessage, resolvedUndoText, undoDuration, t]
   );
 
   const cancelDelete = useCallback((itemId: string) => {

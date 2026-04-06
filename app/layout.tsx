@@ -1,5 +1,5 @@
 ﻿import type { Metadata, Viewport } from "next";
-import { Poppins, Playfair_Display } from "next/font/google";
+import { Poppins, Playfair_Display, Inter } from "next/font/google";
 import { PremiumToaster } from "@/components/ui/Toast";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
@@ -17,7 +17,7 @@ import SkipLinks from "@/components/accessibility/SkipLinks";
 import CookieBanner from "@/components/ui/CookieBanner";
 import LegalUpdateNotification from "@/components/ui/LegalUpdateNotification";
 import LandscapeBlocker from "@/components/ui/LandscapeBlocker";
-import { HomepageJsonLd } from "@/components/seo/JsonLd";
+import { HomepageJsonLd, HowToJsonLd, FaqJsonLd, postyHowToData, postyFaqData } from "@/components/seo/JsonLd";
 import HreflangTags from "@/components/seo/HreflangTags";
 import "./globals.css";
 
@@ -26,6 +26,13 @@ const poppins = Poppins({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
   style: ["normal", "italic"],
+  display: "swap",
+  preload: true,
+});
+
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
   display: "swap",
   preload: true,
 });
@@ -183,7 +190,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${poppins.variable} ${playfair.variable}`} data-scroll-behavior="smooth" suppressHydrationWarning>
+    <html lang="en" className={`${poppins.variable} ${inter.variable} ${playfair.variable}`} data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
         {/* Theme initialization + Web3/MetaMask error suppressor */}
         <script
@@ -222,27 +229,27 @@ export default function RootLayout({
                   var root = document.documentElement;
                   var path = window.location.pathname;
                   // Public pages always render in light mode (no dark flash)
-                  var isPublicPage = path === '/' || path.startsWith('/about') || path.startsWith('/login') || path.startsWith('/signup') || path.startsWith('/legal') || path.startsWith('/pricing') || path.startsWith('/onboarding') || path.startsWith('/subscription');
+                  var isPublicPage = path === '/' || path.startsWith('/about') || path.startsWith('/login') || path.startsWith('/signup') || path.startsWith('/legal') || path.startsWith('/pricing') || path.startsWith('/onboarding') || path.startsWith('/subscription') || path.startsWith('/ai-linkedin') || path.startsWith('/write-linkedin') || path.startsWith('/linkedin-post') || path.startsWith('/generate-linkedin');
                   if (isPublicPage) {
                     root.classList.add('light');
                     root.style.colorScheme = 'light';
                     root.setAttribute('data-theme', 'light');
                   } else {
                     var theme = localStorage.getItem('posty-theme');
-                    if (theme === 'light') {
-                      root.classList.add('light');
-                      root.style.colorScheme = 'light';
-                      root.setAttribute('data-theme', 'light');
-                    } else {
+                    if (theme === 'dark') {
                       root.classList.add('dark');
                       root.style.colorScheme = 'dark';
                       root.setAttribute('data-theme', 'dark');
+                    } else {
+                      root.classList.add('light');
+                      root.style.colorScheme = 'light';
+                      root.setAttribute('data-theme', 'light');
                     }
                   }
                 } catch (e) {
-                  document.documentElement.classList.add('dark');
-                  document.documentElement.style.colorScheme = 'dark';
-                  document.documentElement.setAttribute('data-theme', 'dark');
+                  document.documentElement.classList.add('light');
+                  document.documentElement.style.colorScheme = 'light';
+                  document.documentElement.setAttribute('data-theme', 'light');
                 }
               })();
             `,
@@ -275,6 +282,8 @@ export default function RootLayout({
 
         {/* JSON-LD Structured Data */}
         <HomepageJsonLd />
+        <HowToJsonLd {...postyHowToData.en} />
+        <FaqJsonLd questions={postyFaqData.en} />
       </head>
       <body className={`antialiased ${poppins.className}`}>
         {/* Portrait-only enforcement: blocks landscape on mobile phones */}

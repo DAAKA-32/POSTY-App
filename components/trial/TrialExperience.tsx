@@ -88,7 +88,7 @@ export default function TrialExperience({
   const handleSubmit = async () => {
     if (!inputValue.trim() || isLoading || isStreaming) return;
     if (!canGenerate) {
-      toast.error("Limite atteinte. Connectez-vous pour continuer !");
+      toast.error(t.toasts.trialLimitReached);
       return;
     }
     const prompt = inputValue.trim();

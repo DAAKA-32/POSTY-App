@@ -20,6 +20,7 @@ import {
   postToFacebook as postToFacebookApi,
 } from "@/lib/platforms/meta";
 import toast from "@/components/ui/Toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface FacebookContextType {
   connection: FacebookConnectionData | null;
@@ -47,6 +48,7 @@ const FacebookContext = createContext<FacebookContextType | undefined>(undefined
 
 export function FacebookProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [connection, setConnection] = useState<FacebookConnectionData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -83,7 +85,7 @@ export function FacebookProvider({ children }: { children: ReactNode }) {
     const facebookError = params.get("facebook_error");
 
     if (facebookSuccess === "true") {
-      toast.success("Compte Facebook connecté avec succès", { duration: 4000 });
+      toast.success(t.toasts.facebookConnectedSuccess, { duration: 4000 });
       loadConnection();
       window.history.replaceState({}, "", window.location.pathname);
       return;
@@ -114,7 +116,7 @@ export function FacebookProvider({ children }: { children: ReactNode }) {
   // Connect Facebook (redirect to OAuth)
   const connectFacebook = useCallback(() => {
     if (!user) {
-      toast.error("Vous devez être connecté pour lier votre compte Facebook");
+      toast.error(t.toasts.mustBeLoggedIn);
       return;
     }
 
@@ -128,10 +130,10 @@ export function FacebookProvider({ children }: { children: ReactNode }) {
     try {
       await deleteFacebookConnection(user.uid);
       setConnection(null);
-      toast.success("Facebook déconnecté");
+      toast.success(t.toasts.facebookDisconnected);
     } catch (error) {
       console.error("Error disconnecting Facebook:", error);
-      toast.error("Impossible de déconnecter Facebook");
+      toast.error(t.toasts.disconnectFailed);
     }
   }, [user]);
 

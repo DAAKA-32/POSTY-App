@@ -23,6 +23,7 @@ import {
   TWITTER_CHAR_LIMIT,
 } from "@/lib/platforms/twitter";
 import toast from "@/components/ui/Toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface TwitterContextType {
   connection: TwitterConnectionData | null;
@@ -56,6 +57,7 @@ const TwitterContext = createContext<TwitterContextType | undefined>(undefined);
 
 export function TwitterProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [connection, setConnection] = useState<TwitterConnectionData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -103,7 +105,7 @@ export function TwitterProvider({ children }: { children: ReactNode }) {
     const twitterError = params.get("twitter_error");
 
     if (twitterSuccess === "true") {
-      toast.success("Compte X (Twitter) connecté avec succès", { duration: 4000 });
+      toast.success(t.toasts.twitterConnectedSuccess, { duration: 4000 });
       loadConnection();
       window.history.replaceState({}, "", window.location.pathname);
       return;
@@ -135,7 +137,7 @@ export function TwitterProvider({ children }: { children: ReactNode }) {
   // Connect Twitter (redirect to OAuth via API route)
   const connectTwitter = useCallback(() => {
     if (!user) {
-      toast.error("Vous devez être connecté pour lier votre compte X");
+      toast.error(t.toasts.mustBeLoggedIn);
       return;
     }
 
@@ -150,10 +152,10 @@ export function TwitterProvider({ children }: { children: ReactNode }) {
     try {
       await deleteTwitterConnection(user.uid);
       setConnection(null);
-      toast.success("X (Twitter) déconnecté");
+      toast.success(t.toasts.twitterDisconnected);
     } catch (error) {
       console.error("Error disconnecting Twitter:", error);
-      toast.error("Impossible de déconnecter X (Twitter)");
+      toast.error(t.toasts.disconnectFailed);
     }
   }, [user]);
 

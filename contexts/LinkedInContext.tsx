@@ -16,6 +16,7 @@ import {
 } from "@/lib/db/firestore";
 import { isTokenExpired, postToLinkedIn as postToLinkedInApi, getLinkedInAuthUrl } from "@/lib/platforms/linkedin";
 import toast from "@/components/ui/Toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface LinkedInContextType {
   connection: LinkedInConnectionData | null;
@@ -41,6 +42,7 @@ const LinkedInContext = createContext<LinkedInContextType | undefined>(undefined
 
 export function LinkedInProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [connection, setConnection] = useState<LinkedInConnectionData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -78,7 +80,7 @@ export function LinkedInProvider({ children }: { children: ReactNode }) {
 
     if (linkedInSuccess === "true") {
       // Enhanced success notification with professional message
-      toast.success("Compte LinkedIn connecté avec succès", {
+      toast.success(t.toasts.linkedinConnectedSuccess, {
         duration: 4000,
       });
 
@@ -132,7 +134,7 @@ export function LinkedInProvider({ children }: { children: ReactNode }) {
   // Connect LinkedIn (redirect to OAuth)
   const connectLinkedIn = useCallback(() => {
     if (!user) {
-      toast.error("Connectez-vous a Posty pour lier votre compte LinkedIn.");
+      toast.error(t.toasts.mustBeLoggedIn);
       return;
     }
 
@@ -143,7 +145,7 @@ export function LinkedInProvider({ children }: { children: ReactNode }) {
     }
 
     // Show connecting notification
-    toast.info("Redirection vers LinkedIn...", { duration: 2000 });
+    toast.info(t.toasts.redirectingToLinkedin, { duration: 2000 });
 
     // Redirect to LinkedIn authorization page
     const authUrl = getLinkedInAuthUrl(user.uid);
@@ -157,10 +159,10 @@ export function LinkedInProvider({ children }: { children: ReactNode }) {
     try {
       await deleteLinkedInConnection(user.uid);
       setConnection(null);
-      toast.success("LinkedIn déconnecté");
+      toast.success(t.toasts.linkedinDisconnected);
     } catch (error) {
       console.error("Error disconnecting LinkedIn:", error);
-      toast.error("La deconnexion LinkedIn a echoue. Reessayez.");
+      toast.error(t.toasts.disconnectFailed);
     }
   }, [user]);
 

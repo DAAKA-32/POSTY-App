@@ -198,9 +198,11 @@ export const ModernAIResponsePair = memo(function ModernAIResponsePair({
 
         {/* Two columns — card backgrounds for clear readability */}
         <div className="grid grid-cols-2 gap-5">
-          <div className="min-h-[120px] bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border/50 border-t-2 border-t-primary-hover/60 rounded-2xl p-5">
+          <div className="min-h-[120px]">
             {isWaiting(storytellingResponse) ? (
-              <StreamingSkeleton variant="storytelling" />
+              <div className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border/50 rounded-2xl p-5">
+                <StreamingSkeleton variant="storytelling" />
+              </div>
             ) : (
               <ModernResponseCard
                 content={storytellingResponse.content}
@@ -215,9 +217,11 @@ export const ModernAIResponsePair = memo(function ModernAIResponsePair({
               />
             )}
           </div>
-          <div className="min-h-[120px] bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border/50 border-t-2 border-t-primary/60 rounded-2xl p-5">
+          <div className="min-h-[120px]">
             {isWaiting(businessResponse) ? (
-              <StreamingSkeleton variant="business" />
+              <div className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border/50 rounded-2xl p-5">
+                <StreamingSkeleton variant="business" />
+              </div>
             ) : (
               <ModernResponseCard
                 content={businessResponse.content}
@@ -261,9 +265,11 @@ export const ModernAIResponsePair = memo(function ModernAIResponsePair({
               }}
               className="w-full"
             >
-              <div className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border/50 rounded-2xl p-5">
+              <div>
                 {isWaiting(activeResponse) ? (
-                  <StreamingSkeleton variant={activeResponse.variant} />
+                  <div className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border/50 rounded-2xl p-5">
+                    <StreamingSkeleton variant={activeResponse.variant} />
+                  </div>
                 ) : (
                   <ModernResponseCard
                     content={activeResponse.content}

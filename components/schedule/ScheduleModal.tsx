@@ -633,7 +633,7 @@ export default function ScheduleModal({
                     ? "bg-gradient-to-r from-primary to-accent text-white shadow-lg shadow-primary/30 font-semibold"
                     : isPast
                       ? "bg-primary/20 text-primary border border-primary/30"
-                      : "bg-dark-elevated/50 text-text-muted border border-dark-border/50"
+                      : "bg-gray-100/50 dark:bg-dark-elevated/50 text-text-muted border border-gray-200/50 dark:border-dark-border/50"
                   }
                 `}
               >
@@ -643,7 +643,7 @@ export default function ScheduleModal({
               {/* Connector line */}
               {i < 2 && (
                 <div className={`w-8 h-0.5 mx-1 rounded-full transition-colors duration-300 ${
-                  currentIndex > i ? "bg-primary" : "bg-dark-border"
+                  currentIndex > i ? "bg-primary" : "bg-gray-200 dark:bg-dark-border"
                 }`} />
               )}
             </div>
@@ -662,7 +662,7 @@ export default function ScheduleModal({
             transition={{ duration: 0.2 }}
           >
             <div className="text-center mb-4">
-              <h3 className="text-lg font-semibold text-white">{t.scheduler.chooseDate}</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t.scheduler.chooseDate}</h3>
               <p className="text-sm text-text-muted">{t.scheduler.whenPublish}</p>
             </div>
 
@@ -689,10 +689,10 @@ export default function ScheduleModal({
                     className={`
                       p-3 rounded-xl text-center transition-all duration-200
                       ${isUnavailable
-                        ? "opacity-40 cursor-not-allowed bg-dark-elevated/50 border-dark-border"
+                        ? "opacity-40 cursor-not-allowed bg-gray-100/50 dark:bg-dark-elevated/50 border-gray-200 dark:border-dark-border"
                         : isSelected
                           ? "bg-primary text-white shadow-lg shadow-primary/20"
-                          : "bg-dark-elevated hover:bg-dark-hover text-text-secondary hover:text-white border border-dark-border"
+                          : "bg-gray-50 dark:bg-dark-elevated hover:bg-gray-100 dark:hover:bg-dark-hover text-text-secondary hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-dark-border"
                       }
                     `}
                   >
@@ -716,14 +716,14 @@ export default function ScheduleModal({
             )}
 
             {/* Premium Calendar */}
-            <div className="bg-dark-elevated rounded-2xl p-4 border border-dark-border/80 shadow-xl">
+            <div className="bg-white dark:bg-dark-elevated rounded-2xl p-4 border border-gray-200/80 dark:border-dark-border/80 shadow-xl dark:shadow-xl">
               {/* Calendar header - Premium design */}
               <div className="flex items-center justify-between mb-4">
                 <motion.button
                   onClick={goToPreviousMonth}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="p-2.5 rounded-xl bg-dark-card hover:bg-dark-hover border border-dark-border/50 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center shadow-sm"
+                  className="p-2.5 rounded-xl bg-gray-50 dark:bg-dark-card hover:bg-gray-100 dark:hover:bg-dark-hover border border-gray-200/50 dark:border-dark-border/50 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center shadow-sm"
                   aria-label={t.scheduler.monthsPrevious}
                 >
                   <svg className="w-5 h-5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -731,7 +731,7 @@ export default function ScheduleModal({
                   </svg>
                 </motion.button>
                 <div className="text-center">
-                  <span className="text-white font-bold text-lg">
+                  <span className="text-gray-900 dark:text-white font-bold text-lg">
                     {getMonths(t)[currentMonth.getMonth()]}
                   </span>
                   <span className="text-text-muted font-medium ml-2">
@@ -742,7 +742,7 @@ export default function ScheduleModal({
                   onClick={goToNextMonth}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="p-2.5 rounded-xl bg-dark-card hover:bg-dark-hover border border-dark-border/50 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center shadow-sm"
+                  className="p-2.5 rounded-xl bg-gray-50 dark:bg-dark-card hover:bg-gray-100 dark:hover:bg-dark-hover border border-gray-200/50 dark:border-dark-border/50 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center shadow-sm"
                   aria-label={t.scheduler.monthsNext}
                 >
                   <svg className="w-5 h-5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -752,7 +752,7 @@ export default function ScheduleModal({
               </div>
 
               {/* Days of week header - Premium styling */}
-              <div className="grid grid-cols-7 gap-1 mb-3 pb-2 border-b border-dark-border/50">
+              <div className="grid grid-cols-7 gap-1 mb-3 pb-2 border-b border-gray-200/50 dark:border-dark-border/50">
                 {getDaysShort(t).map((day: string) => (
                   <div key={day} className="text-center text-xs text-text-muted font-semibold py-1.5 uppercase tracking-wider">
                     {day}
@@ -789,7 +789,7 @@ export default function ScheduleModal({
                         ${today && !selected
                           ? "ring-2 ring-primary text-primary font-bold bg-primary/10"
                           : !selected && !disabled
-                            ? "text-white hover:bg-primary/20 hover:text-white"
+                            ? "text-gray-900 dark:text-white hover:bg-primary/20 hover:text-gray-900 dark:hover:text-white"
                             : ""
                         }
                       `}
@@ -805,12 +805,12 @@ export default function ScheduleModal({
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-4 pt-4 border-t border-dark-border/50 flex items-center justify-center gap-2"
+                  className="mt-4 pt-4 border-t border-gray-200/50 dark:border-dark-border/50 flex items-center justify-center gap-2"
                 >
                   <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                   <p className="text-sm text-text-muted">
                     {t.scheduler.selected}{" "}
-                    <span className="text-white font-semibold">
+                    <span className="text-gray-900 dark:text-white font-semibold">
                       {getDaysFull(t)[selectedDate.getDay()]} {selectedDate.getDate()} {getMonths(t)[selectedDate.getMonth()]}
                     </span>
                   </p>
@@ -830,7 +830,7 @@ export default function ScheduleModal({
             transition={{ duration: 0.2 }}
           >
             <div className="text-center mb-4">
-              <h3 className="text-lg font-semibold text-white">{t.scheduler.chooseTime}</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t.scheduler.chooseTime}</h3>
               <p className="text-sm text-primary font-medium">{formattedDateShort}</p>
             </div>
 
@@ -884,7 +884,7 @@ export default function ScheduleModal({
                     <span className="text-amber-400 ml-2">{t.scheduler.pastSlotsGreyed}</span>
                   )}
                 </p>
-                <div className="max-h-40 overflow-y-auto overscroll-contain rounded-lg border border-dark-border">
+                <div className="max-h-40 overflow-y-auto overscroll-contain rounded-lg border border-gray-200 dark:border-dark-border">
                   <div className="grid grid-cols-4 gap-1 p-2">
                     {Array.from({ length: 48 }, (_, i) => {
                       const hour = Math.floor(i / 2);
@@ -905,7 +905,7 @@ export default function ScheduleModal({
                               ? "text-text-muted/30 cursor-not-allowed line-through"
                               : isSelected
                                 ? "bg-primary text-white font-medium"
-                                : "hover:bg-dark-hover text-text-secondary hover:text-white"
+                                : "hover:bg-gray-100 dark:hover:bg-dark-hover text-text-secondary hover:text-gray-900 dark:hover:text-white"
                             }
                           `}
                         >
@@ -921,7 +921,7 @@ export default function ScheduleModal({
             {/* Back button */}
             <button
               onClick={() => setStep("date")}
-              className="mt-4 text-sm text-text-muted hover:text-white flex items-center gap-1 min-h-[44px]"
+              className="mt-4 text-sm text-text-muted hover:text-gray-900 dark:hover:text-white flex items-center gap-1 min-h-[44px]"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -951,7 +951,7 @@ export default function ScheduleModal({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </motion.div>
-              <h3 className="text-lg font-semibold text-white">{t.ui.confirmScheduling}</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t.ui.confirmScheduling}</h3>
               <p className="text-primary font-semibold text-lg mt-2">{formattedDateTime}</p>
               <p className="text-xs text-text-muted mt-1">{timezone}</p>
             </div>
@@ -982,10 +982,10 @@ export default function ScheduleModal({
                           relative p-3 rounded-xl border-2 transition-all duration-200
                           flex items-center gap-2.5
                           ${!p.selectable
-                            ? "bg-dark-bg/30 border-dark-border/30 opacity-50 cursor-not-allowed"
+                            ? "bg-gray-100/30 dark:bg-dark-bg/30 border-gray-200/30 dark:border-dark-border/30 opacity-50 cursor-not-allowed"
                             : isSelected
                               ? `${p.bgColor} ${p.borderColor} ${p.color}`
-                              : "bg-dark-elevated border-dark-border text-text-secondary hover:border-dark-hover hover:text-white"
+                              : "bg-gray-50 dark:bg-dark-elevated border-gray-200 dark:border-dark-border text-text-secondary hover:border-gray-300 dark:hover:border-dark-hover hover:text-gray-900 dark:hover:text-white"
                           }
                         `}
                       >
@@ -1016,7 +1016,7 @@ export default function ScheduleModal({
             )}
 
             {/* Post preview */}
-            <div className="bg-dark-elevated rounded-xl p-4 mb-4 border border-dark-border">
+            <div className="bg-gray-50 dark:bg-dark-elevated rounded-xl p-4 mb-4 border border-gray-200 dark:border-dark-border">
               <div className="flex items-center gap-2 mb-3">
                 {(() => {
                   const selectedP = PLATFORMS.find((p) => p.id === platform) || PLATFORMS[0];
@@ -1034,12 +1034,12 @@ export default function ScheduleModal({
                       >
                         <div className="w-4 h-4">{selectedP.icon}</div>
                       </div>
-                      <span className="text-sm text-white font-medium">{selectedP.name}</span>
+                      <span className="text-sm text-gray-900 dark:text-white font-medium">{selectedP.name}</span>
                     </>
                   );
                 })()}
                 {platform === "linkedin" && postType && (
-                  <span className="text-xs px-2 py-0.5 bg-dark-card rounded-full text-text-muted border border-dark-border">
+                  <span className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-dark-card rounded-full text-text-muted border border-gray-200 dark:border-dark-border">
                     {postType === "feed" ? "Post" : "Article"}
                   </span>
                 )}
@@ -1066,7 +1066,7 @@ export default function ScheduleModal({
                     className={`flex-1 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                       postType === "feed"
                         ? "bg-primary text-white shadow-lg shadow-primary/20"
-                        : "bg-dark-elevated text-text-secondary hover:text-white border border-dark-border"
+                        : "bg-gray-50 dark:bg-dark-elevated text-text-secondary hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-dark-border"
                     }`}
                   >
                     Post
@@ -1076,7 +1076,7 @@ export default function ScheduleModal({
                     className={`flex-1 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                       postType === "article"
                         ? "bg-primary text-white shadow-lg shadow-primary/20"
-                        : "bg-dark-elevated text-text-secondary hover:text-white border border-dark-border"
+                        : "bg-gray-50 dark:bg-dark-elevated text-text-secondary hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-dark-border"
                     }`}
                   >
                     Article
@@ -1101,7 +1101,7 @@ export default function ScheduleModal({
                   {imagePreviews.map((preview, idx) => (
                     <div
                       key={idx}
-                      className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden border border-dark-border group"
+                      className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden border border-gray-200 dark:border-dark-border group"
                     >
                       <img
                         src={preview}
@@ -1126,7 +1126,7 @@ export default function ScheduleModal({
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg border-2 border-dashed border-dark-border hover:border-primary/50 flex flex-col items-center justify-center gap-1 text-text-muted hover:text-primary transition-colors duration-200"
+                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg border-2 border-dashed border-gray-200 dark:border-dark-border hover:border-primary/50 flex flex-col items-center justify-center gap-1 text-text-muted hover:text-primary transition-colors duration-200"
                       aria-label={t.scheduler.addPhoto}
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

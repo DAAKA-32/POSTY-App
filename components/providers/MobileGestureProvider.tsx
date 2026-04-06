@@ -255,8 +255,8 @@ export default function MobileGestureProvider({ children }: MobileGestureProvide
     style.textContent = `
       /* MOBILE ONLY: Gesture blocking styles */
       /* These styles only apply when NOT on landing/onboarding/subscription or force-scroll pages */
-      html:not(.landing-scroll-enabled):not(.force-scroll-enabled):not(.onboarding-scroll-enabled):not(.subscription-scroll-enabled),
-      body:not(.landing-scroll-enabled):not(.force-scroll-enabled):not(.onboarding-scroll-enabled):not(.subscription-scroll-enabled) {
+      html:not(.landing-scroll-enabled):not(.force-scroll-enabled):not(.onboarding-scroll-enabled):not(.subscription-scroll-enabled):not(.seo-scroll-enabled),
+      body:not(.landing-scroll-enabled):not(.force-scroll-enabled):not(.onboarding-scroll-enabled):not(.subscription-scroll-enabled):not(.seo-scroll-enabled) {
         overscroll-behavior: none;
         overscroll-behavior-x: none;
         overscroll-behavior-y: none;
@@ -264,7 +264,7 @@ export default function MobileGestureProvider({ children }: MobileGestureProvide
         touch-action: pan-y pinch-zoom;
       }
       /* Prevent pull-to-refresh on the whole page (mobile app only) */
-      body:not(.landing-scroll-enabled):not(.force-scroll-enabled):not(.onboarding-scroll-enabled):not(.subscription-scroll-enabled) {
+      body:not(.landing-scroll-enabled):not(.force-scroll-enabled):not(.onboarding-scroll-enabled):not(.subscription-scroll-enabled):not(.seo-scroll-enabled) {
         overflow-y: auto;
         overflow-x: hidden;
       }

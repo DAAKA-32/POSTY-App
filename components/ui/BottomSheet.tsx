@@ -339,7 +339,7 @@ export default function BottomSheet({
                 {showCloseButton && (
                   <button
                     onClick={onClose}
-                    className="min-w-[44px] min-h-[44px] flex items-center justify-center text-text-secondary hover:text-text-primary transition-all duration-200 rounded-xl hover:bg-dark-hover haptic-feedback active:scale-95"
+                    className="min-w-[44px] min-h-[44px] flex items-center justify-center text-text-secondary hover:text-text-primary transition-all duration-200 rounded-xl hover:bg-gray-100 dark:hover:bg-dark-hover haptic-feedback active:scale-95"
                     aria-label={t.ui.closeWindow}
                   >
                     <svg
@@ -432,7 +432,7 @@ export function BottomSheetAction({
   };
 
   const variantStyles = {
-    default: "text-text-primary hover:bg-dark-hover active:bg-dark-active",
+    default: "text-text-primary hover:bg-gray-100 dark:hover:bg-dark-hover active:bg-gray-200 dark:active:bg-dark-active",
     danger: "text-error hover:bg-error/10 active:bg-error/20",
     primary: "text-primary hover:bg-primary/10 active:bg-primary/20",
   };
@@ -483,7 +483,7 @@ export function BottomSheetAction({
  * Divider for bottom sheet sections
  */
 export function BottomSheetDivider() {
-  return <div className="h-px bg-dark-border my-2 mx-4" />;
+  return <div className="h-px bg-gray-200 dark:bg-dark-border my-2 mx-4" />;
 }
 
 /**
@@ -503,7 +503,7 @@ export function BottomSheetCancel({ onClose }: { onClose: () => void }) {
       onClick={handleClick}
       className="
         w-full py-4 mt-2
-        bg-dark-elevated hover:bg-dark-hover active:bg-dark-active
+        bg-gray-50 dark:bg-dark-elevated hover:bg-gray-100 dark:hover:bg-dark-hover active:bg-gray-200 dark:active:bg-dark-active
         rounded-xl font-semibold text-primary
         transition-all duration-200
         touch-feedback active:scale-[0.98]

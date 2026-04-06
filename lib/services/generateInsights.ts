@@ -383,13 +383,15 @@ export function generatePostInsights(
 ): PostInsights {
   const metrics = analyzeContent(content);
 
-  // Extract user context for personalization
+  // Extract user context for personalization (normalize arrays to strings)
+  const flat = (v: string | string[] | undefined): string | undefined =>
+    Array.isArray(v) ? v.join(", ") : v;
   const userContext: UserContext = {
-    sector: userProfile?.profile?.sector,
+    sector: flat(userProfile?.profile?.sector),
     role: userProfile?.profile?.role,
-    objective: userProfile?.profile?.objective,
-    targetAudience: userProfile?.profile?.targetAudience,
-    communicationTone: userProfile?.profile?.communicationTone,
+    objective: flat(userProfile?.profile?.objective),
+    targetAudience: flat(userProfile?.profile?.targetAudience),
+    communicationTone: flat(userProfile?.profile?.communicationTone),
   };
 
   // Generate strengths
@@ -398,56 +400,55 @@ export function generatePostInsights(
   // Generate improvements
   const improvements = generateImprovements(metrics, variant);
 
-  // Generate why it's effective (coaching style)
+  // Generate why it's effective — concise (1 sentence)
   let whyEffective = "";
   if (strengths.length >= 3) {
-    whyEffective = `Votre post coche les cases essentielles : ${strengths[0].toLowerCase()}, ${strengths[1].toLowerCase()}. C'est exactement ce que l'algorithme LinkedIn récompense.`;
+    whyEffective = `Points forts : ${strengths[0].toLowerCase()} et ${strengths[1].toLowerCase()}.`;
   } else if (strengths.length >= 1) {
-    whyEffective = `Point fort : ${strengths[0]}. ${improvements.length > 0 ? "Avec quelques ajustements, ce post peut vraiment performer." : ""}`;
+    whyEffective = `Point fort : ${strengths[0].toLowerCase()}.`;
   } else {
-    whyEffective = "Votre message est clair et direct. Avec quelques optimisations structurelles, vous pouvez significativement augmenter son impact.";
+    whyEffective = "Message clair et direct, quelques ajustements possibles.";
   }
 
-  // Generate best time to post (more specific)
+  // Generate best time to post — concise
   let bestTimeToPost = "";
   if (variant === "storytelling") {
     if (userContext.targetAudience?.includes("Dirigeants")) {
-      bestTimeToPost = "📅 Mardi ou mercredi 7h-8h : les dirigeants consultent LinkedIn tôt avant leurs réunions. Votre story sera dans leur fil matinal.";
+      bestTimeToPost = "Mardi-Mercredi, 7h-8h.";
     } else if (userContext.targetAudience?.includes("Entrepreneurs")) {
-      bestTimeToPost = "📅 Mardi/Mercredi 8h-9h ou Dimanche 20h : les entrepreneurs sont actifs tôt en semaine et le dimanche soir pour préparer leur semaine.";
+      bestTimeToPost = "Mardi-Mercredi 8h-9h ou Dimanche 20h.";
     } else {
-      bestTimeToPost = "📅 Mardi-Jeudi 8h-10h : période de forte réceptivité aux contenus inspirants. Évitez le lundi (emails) et vendredi après-midi (déconnexion).";
+      bestTimeToPost = "Mardi-Jeudi, 8h-10h.";
     }
   } else {
     if (userContext.sector?.includes("Tech")) {
-      bestTimeToPost = "📅 Mardi-Jeudi 10h-11h ou 14h-15h : après les stand-ups matinaux, la communauté tech est active sur LinkedIn.";
+      bestTimeToPost = "Mardi-Jeudi, 10h-11h.";
     } else if (userContext.sector?.includes("Finance")) {
-      bestTimeToPost = "📅 Mardi-Mercredi 7h-8h ou 18h-19h : les professionnels de la finance consultent LinkedIn avant/après le marché.";
+      bestTimeToPost = "Mardi-Mercredi, 7h-8h ou 18h-19h.";
     } else {
-      bestTimeToPost = "📅 Mardi-Jeudi 7h-9h ou 17h-18h : pics d'activité professionnelle sur LinkedIn. Le mardi matin est statistiquement le meilleur moment.";
+      bestTimeToPost = "Mardi-Jeudi, 7h-9h.";
     }
   }
 
-  // Generate expected engagement (more nuanced)
+  // Generate expected engagement — concise
   let expectedEngagement = "";
   if (metrics.engagementScore >= 80) {
-    expectedEngagement = `🔥 Score d'engagement : ${metrics.engagementScore}/100 — Ce post a tous les ingrédients d'un contenu viral. Attendez-vous à un reach 3-5x supérieur à la moyenne.`;
+    expectedEngagement = `${metrics.engagementScore}/100 — Fort potentiel viral.`;
   } else if (metrics.engagementScore >= 60) {
-    expectedEngagement = `👍 Score d'engagement : ${metrics.engagementScore}/100 — Bon potentiel d'engagement. Répondez rapidement aux premiers commentaires pour booster l'algorithme.`;
+    expectedEngagement = `${metrics.engagementScore}/100 — Bon potentiel d'engagement.`;
   } else if (metrics.engagementScore >= 40) {
-    expectedEngagement = `💬 Score d'engagement : ${metrics.engagementScore}/100 — Engagement modéré attendu. Les optimisations suggérées peuvent augmenter ce score de 20-30 points.`;
+    expectedEngagement = `${metrics.engagementScore}/100 — Engagement modéré, optimisable.`;
   } else {
-    expectedEngagement = `📊 Score d'engagement : ${metrics.engagementScore}/100 — Potentiel d'amélioration significatif. Appliquez les conseils ci-dessous pour transformer ce post.`;
+    expectedEngagement = `${metrics.engagementScore}/100 — Marge d'amélioration significative.`;
   }
 
-  // Generate key takeaway (action-oriented)
+  // Generate key takeaway — concise (1 sentence)
   let keyTakeaway = "";
   if (improvements.length === 0) {
-    keyTakeaway = "🎯 Ce post est prêt à être publié ! Dernière étape : choisissez le bon timing et préparez 2-3 réponses pour les premiers commentaires.";
-  } else if (improvements.length === 1) {
-    keyTakeaway = `🎯 Une seule optimisation à faire : ${improvements[0].replace(/^[💡💬❓✂️📝🎨⚠️📊#️⃣📏]\s*/, '').split('.')[0]}.`;
+    keyTakeaway = "Prêt à publier.";
   } else {
-    keyTakeaway = `🎯 Priorité : ${improvements[0].replace(/^[💡💬❓✂️📝🎨⚠️📊#️⃣📏]\s*/, '').split('.')[0]}. C'est l'optimisation qui aura le plus d'impact.`;
+    const cleanImprovement = improvements[0].replace(/^[💡💬❓✂️📝🎨⚠️📊#️⃣📏]\s*/, '').split('.')[0];
+    keyTakeaway = `${cleanImprovement}.`;
   }
 
   // Generate coaching tip

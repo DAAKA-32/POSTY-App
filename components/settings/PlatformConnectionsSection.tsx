@@ -499,14 +499,14 @@ export default function PlatformConnectionsSection() {
             <div>
               <p className="text-sm text-gray-900 dark:text-white font-medium">{t.settings.connectionsUsed}</p>
               <p className="text-xs text-text-muted">
-                {currentPlan === "max" ? t.settings.unlimited : currentPlan === "pro" ? `${connectedCount} / 2` : `${connectedCount} / 1`}
+                {currentPlan === "max" ? `${connectedCount} / 4` : currentPlan === "pro" ? `${connectedCount} / 2` : `${connectedCount} / 1`}
               </p>
             </div>
           </div>
           <div className="text-right">
             <p className="text-sm font-medium text-primary">{connectedCount}</p>
             <p className="text-xs text-text-muted">
-              / {currentPlan === "max" ? "∞" : currentPlan === "pro" ? "2" : "1"}
+              / {currentPlan === "max" ? "4" : currentPlan === "pro" ? "2" : "1"}
             </p>
           </div>
         </motion.div>

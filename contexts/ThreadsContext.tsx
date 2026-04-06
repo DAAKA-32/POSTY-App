@@ -22,6 +22,7 @@ import {
 } from "@/lib/platforms/meta";
 import { getAuthHeaders } from "@/lib/api/client";
 import toast from "@/components/ui/Toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // Refresh when token has less than 7 days remaining
 const REFRESH_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000;
@@ -50,6 +51,7 @@ const ThreadsContext = createContext<ThreadsContextType | undefined>(undefined);
 
 export function ThreadsProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [connection, setConnection] = useState<ThreadsConnectionData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const refreshAttempted = useRef(false);
@@ -87,7 +89,7 @@ export function ThreadsProvider({ children }: { children: ReactNode }) {
     const threadsError = params.get("threads_error");
 
     if (threadsSuccess === "true") {
-      toast.success("Compte Threads connecté avec succès", { duration: 4000 });
+      toast.success(t.toasts.threadsConnectedSuccess, { duration: 4000 });
       loadConnection();
       window.history.replaceState({}, "", window.location.pathname);
       return;
@@ -154,7 +156,7 @@ export function ThreadsProvider({ children }: { children: ReactNode }) {
   // Connect Threads (redirect to OAuth)
   const connectThreads = useCallback(() => {
     if (!user) {
-      toast.error("Vous devez être connecté pour lier votre compte Threads");
+      toast.error(t.toasts.mustBeLoggedIn);
       return;
     }
 
@@ -168,10 +170,10 @@ export function ThreadsProvider({ children }: { children: ReactNode }) {
     try {
       await deleteThreadsConnection(user.uid);
       setConnection(null);
-      toast.success("Threads déconnecté");
+      toast.success(t.toasts.threadsDisconnected);
     } catch (error) {
       console.error("Error disconnecting Threads:", error);
-      toast.error("Impossible de déconnecter Threads");
+      toast.error(t.toasts.disconnectFailed);
     }
   }, [user]);
 

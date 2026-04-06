@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, memo, useRef, useEffect, useCallback } from "react";
+import { useState, memo, useRef, useEffect, useCallback, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 import { LinkedInIcon } from "@/components/linkedin/LinkedInConnectButton";
 import { useHapticFeedback } from "@/hooks/ui/useHapticFeedback";
 import { useVisibilityObserver } from "@/hooks/ui/useVisibilityObserver";
@@ -26,6 +27,20 @@ const variantStyles = {
     color: "text-primary",
   },
 };
+
+/** Format post content — highlight hashtags and mentions in LinkedIn blue */
+function formatPostContent(text: string): ReactNode[] {
+  return text.split(/(#[\w\u00C0-\u024F]+|@[\w\u00C0-\u024F]+)/g).map((part, i) => {
+    if (part.startsWith("#") || part.startsWith("@")) {
+      return (
+        <span key={i} className="text-[#0A66C2] font-medium">
+          {part}
+        </span>
+      );
+    }
+    return part;
+  });
+}
 
 interface ModernResponseCardProps {
   content: string;
@@ -237,10 +252,21 @@ export const ModernResponseCard = memo(function ModernResponseCard({
     onSchedule?.(content);
   };
 
+  // Lazy insights — only generated on click
+  const [insights, setInsights] = useState<ReturnType<typeof generatePostInsights> | null>(null);
+  const [insightsLoading, setInsightsLoading] = useState(false);
+
   const handleInsights = () => {
     triggerHaptic("light");
     setIsMenuOpen(false);
+    setInsightsLoading(true);
     setIsInsightsOpen(true);
+    // Defer computation to next frame so the modal + loader render first
+    requestAnimationFrame(() => {
+      const result = generatePostInsights(content, variant, userProfile);
+      setInsights(result);
+      setInsightsLoading(false);
+    });
   };
 
   const toggleMenu = () => {
@@ -252,9 +278,6 @@ export const ModernResponseCard = memo(function ModernResponseCard({
     }
     triggerHaptic("light");
   };
-
-  // Generate insights for this post (with user profile for personalization)
-  const insights = generatePostInsights(content, variant, userProfile);
 
   // Render menu in portal with intelligent positioning
   const renderMenu = () => {
@@ -376,36 +399,82 @@ export const ModernResponseCard = memo(function ModernResponseCard({
         </motion.div>
       )}
 
-      {/* Response content - direct on background, no border/block */}
-      <div className="mb-4">
-        <div className="whitespace-pre-wrap break-words overflow-wrap-anywhere text-[15px] leading-relaxed text-text-primary">
-          {content}
-          {isStreaming && (
-            <motion.span
-              animate={{ opacity: [1, 0] }}
-              transition={{ duration: 0.5, repeat: Infinity, repeatType: "reverse" }}
-              className="inline-block w-0.5 h-4 bg-current ml-0.5 align-middle"
-            />
-          )}
+      {/* LinkedIn Preview Card */}
+      <div className="mb-4 bg-white dark:bg-dark-card rounded-xl border border-gray-200 dark:border-dark-border/50 shadow-sm overflow-hidden">
+        {/* Card header */}
+        <div className="px-4 py-2 border-b border-gray-100 dark:border-dark-border/30 flex items-center gap-2">
+          <svg className="w-4 h-4 text-[#0A66C2]" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+          </svg>
+          <span className="text-xs font-medium text-gray-500 dark:text-text-muted">{t.ui.linkedInPreview}</span>
         </div>
-      </div>
 
-      {/* Action buttons - visible on last message, hover (desktop) / scroll (mobile) for others */}
-      {!isStreaming && content && (
-        <div
-          className={`
-            flex items-center gap-2 mb-6
-            transition-all duration-200 ease-out
-            ${isLastMessage
-              ? "opacity-100 translate-y-0"
-              : isMobile
-                ? (actionsVisible
-                  ? "opacity-100 translate-y-0"
-                  : "opacity-0 translate-y-1.5 pointer-events-none")
-                : "opacity-0 translate-y-1.5 pointer-events-none group-hover/card:opacity-100 group-hover/card:translate-y-0 group-hover/card:pointer-events-auto"
-            }
-          `}
-        >
+        {/* Author info */}
+        <div className="px-4 pt-3 pb-1">
+          <div className="flex items-start gap-2.5 mb-3">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 dark:from-dark-elevated dark:to-dark-hover flex items-center justify-center flex-shrink-0 overflow-hidden">
+              {userProfile?.photoURL ? (
+                <Image src={userProfile.photoURL} alt="" width={40} height={40} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-sm font-semibold text-gray-500 dark:text-text-muted">
+                  {(userProfile?.displayName || "U").charAt(0).toUpperCase()}
+                </span>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-gray-900 dark:text-text-primary text-sm leading-tight">
+                {userProfile?.displayName || t.ui.you}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-text-muted truncate">
+                {userProfile?.profile?.role || t.ui.yourProfessionalTitle}
+              </p>
+              <p className="text-[11px] text-gray-400 dark:text-text-muted/60 mt-0.5">
+                {t.ui.justNow} · <svg className="w-3 h-3 inline-block -mt-px" fill="currentColor" viewBox="0 0 16 16"><path d="M8 0a8 8 0 100 16A8 8 0 008 0zm3.668 2.628L8.464 5.836a.5.5 0 01-.464.164H4a.5.5 0 000 1h4a.5.5 0 00.464-.336l3.204-3.204a6.966 6.966 0 010 9.08L8.464 9.336A.5.5 0 008 9.5H4a.5.5 0 000 1h4a.5.5 0 00.354-.146l3.314-3.314a6.966 6.966 0 010-4.412z" /><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" strokeWidth="1.5" /><path d="M8 4v4l2.5 2.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Post content */}
+        <div className="px-4 pb-3">
+          <div className="whitespace-pre-wrap break-words overflow-wrap-anywhere text-[14px] leading-relaxed text-gray-900 dark:text-text-primary">
+            {formatPostContent(content)}
+            {isStreaming && (
+              <motion.span
+                animate={{ opacity: [1, 0] }}
+                transition={{ duration: 0.5, repeat: Infinity, repeatType: "reverse" }}
+                className="inline-block w-0.5 h-4 bg-current ml-0.5 align-middle"
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Engagement footer + Action buttons */}
+        <div className="px-4 py-2 border-t border-gray-100 dark:border-dark-border/30">
+          <div className="flex items-center justify-between text-xs text-gray-500 dark:text-text-muted">
+            <div className="flex items-center gap-1">
+              <div className="flex -space-x-1">
+                <span className="w-[18px] h-[18px] rounded-full bg-blue-500 flex items-center justify-center text-[9px]">👍</span>
+                <span className="w-[18px] h-[18px] rounded-full bg-red-500 flex items-center justify-center text-[9px]">❤️</span>
+                <span className="w-[18px] h-[18px] rounded-full bg-yellow-500 flex items-center justify-center text-[9px]">💡</span>
+              </div>
+              <span className="ml-1 text-gray-400 dark:text-text-muted/70">{t.ui.previewLabel}</span>
+            </div>
+
+            {/* Action buttons — inside the card, bottom right */}
+            {!isStreaming && content && (
+              <div
+                className={`
+                  flex items-center gap-1.5
+                  transition-all duration-200 ease-out
+                  ${isLastMessage
+                    ? "opacity-100"
+                    : isMobile
+                      ? (actionsVisible ? "opacity-100" : "opacity-0 pointer-events-none")
+                      : "opacity-0 pointer-events-none group-hover/card:opacity-100 group-hover/card:pointer-events-auto"
+                  }
+                `}
+              >
           {/* Copy button */}
           <motion.button
             onClick={handleCopy}
@@ -414,7 +483,7 @@ export const ModernResponseCard = memo(function ModernResponseCard({
             className="
               group/copy relative overflow-hidden
               inline-flex items-center justify-center
-              w-8 h-8 rounded-lg
+              w-7 h-7 rounded-md
               bg-gray-100 dark:bg-dark-elevated
               hover:bg-gray-200 dark:hover:bg-dark-hover
               border border-gray-200 dark:border-dark-border
@@ -432,7 +501,7 @@ export const ModernResponseCard = memo(function ModernResponseCard({
                   animate={{ scale: 1 }}
                   exit={{ scale: 0 }}
                   transition={{ duration: 0.15 }}
-                  className="w-4 h-4 text-green-500"
+                  className="w-3.5 h-3.5 text-green-500"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -446,7 +515,7 @@ export const ModernResponseCard = memo(function ModernResponseCard({
                   animate={{ scale: 1 }}
                   exit={{ scale: 0 }}
                   transition={{ duration: 0.15 }}
-                  className="w-4 h-4 text-text-muted group-hover/copy:text-primary transition-colors"
+                  className="w-3.5 h-3.5 text-text-muted group-hover/copy:text-primary transition-colors"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -457,38 +526,28 @@ export const ModernResponseCard = memo(function ModernResponseCard({
             </AnimatePresence>
           </motion.button>
 
-          {/* Publish to LinkedIn - Primary action with ORANGE DOMINANT glow */}
+          {/* Publish to LinkedIn */}
           {onPublishToLinkedIn && (
             <motion.button
               onClick={handlePublish}
-              whileHover={{ scale: 1.02, y: -1 }}
+              whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className="
                 group/btn relative overflow-hidden
-                inline-flex items-center gap-1.5 px-3 py-1.5
-                text-xs font-medium rounded-lg
+                inline-flex items-center gap-1 px-2.5 py-1
+                text-[11px] font-medium rounded-md
                 bg-[#0A66C2]/10 text-[#0A66C2]
                 hover:bg-[#0A66C2]/20
                 transition-all duration-200
                 border border-[#0A66C2]/20
-                hover:shadow-[0_4px_16px_rgba(248,147,93,0.2)]
               "
             >
-              {/* Shimmer effect on hover - ORANGE DOMINANT */}
-              <span
-                className="absolute inset-0 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300 pointer-events-none"
-                style={{
-                  background: "linear-gradient(90deg, transparent 0%, rgba(248,147,93,0.15) 50%, transparent 100%)",
-                  backgroundSize: "200% 100%",
-                  animation: "shimmer 2s infinite linear",
-                }}
-              />
-              <LinkedInIcon className="w-3.5 h-3.5 relative z-10" />
-              <span className="relative z-10">{t.ui.publishOnLinkedIn}</span>
+              <LinkedInIcon className="w-3 h-3 relative z-10" />
+              <span className="relative z-10 hidden sm:inline">{t.ui.publish}</span>
             </motion.button>
           )}
 
-          {/* More actions button - "+ " icon with AUTOSCROLL gradient */}
+          {/* More actions button */}
           <motion.button
             ref={triggerRef}
             onClick={toggleMenu}
@@ -497,11 +556,10 @@ export const ModernResponseCard = memo(function ModernResponseCard({
             className={`
               group/more relative overflow-hidden
               inline-flex items-center justify-center
-              w-8 h-8 rounded-lg
+              w-7 h-7 rounded-md
               bg-gradient-to-br from-primary/10 to-primary-hover/10
               hover:from-primary/20 hover:to-primary-hover/20
               border border-primary/20
-              active:scale-95
               transition-all duration-200
               ${isMenuOpen ? "from-primary/20 to-primary-hover/20 shadow-[0_0_12px_rgba(248,147,93,0.3)]" : ""}
             `}
@@ -510,17 +568,8 @@ export const ModernResponseCard = memo(function ModernResponseCard({
             aria-haspopup="menu"
             title={t.ui.moreActions}
           >
-            {/* Shimmer effect - brand primary */}
-            <span
-              className="absolute inset-0 opacity-0 group-hover/more:opacity-100 transition-opacity duration-300 pointer-events-none"
-              style={{
-                background: "linear-gradient(135deg, transparent 0%, rgba(248,147,93,0.2) 50%, transparent 100%)",
-                backgroundSize: "200% 200%",
-                animation: "shimmer 2s infinite linear",
-              }}
-            />
             <svg
-              className={`w-4 h-4 text-primary transition-transform duration-200 relative z-10 ${isMenuOpen ? "rotate-45" : ""}`}
+              className={`w-3.5 h-3.5 text-primary transition-transform duration-200 ${isMenuOpen ? "rotate-45" : ""}`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -529,16 +578,19 @@ export const ModernResponseCard = memo(function ModernResponseCard({
             </svg>
           </motion.button>
 
-          {/* Portal-rendered menu with intelligent positioning */}
           {renderMenu()}
+              </div>
+            )}
+          </div>
         </div>
-      )}
+      </div>
 
-      {/* Insights Modal */}
+      {/* Insights Modal — lazy loaded */}
       <PostInsightsModal
         isOpen={isInsightsOpen}
         onClose={() => setIsInsightsOpen(false)}
         insights={insights}
+        isLoading={insightsLoading}
       />
     </div>
   );

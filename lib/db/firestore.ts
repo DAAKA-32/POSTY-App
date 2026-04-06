@@ -130,17 +130,19 @@ export async function updateUserProfile(
   if (data.photoURL !== undefined) updateData.photoURL = data.photoURL;
   if (data.profile) {
     // Only write defined values to prevent Firestore from deleting fields
+    // Top-level flat fields — flatten arrays for backward compatibility
+    const toFlat = (v: string | string[]): string => Array.isArray(v) ? v.join(", ") : v;
     if (data.profile.profileType !== undefined) updateData.profileType = data.profile.profileType;
-    if (data.profile.sector !== undefined) updateData.sector = data.profile.sector;
+    if (data.profile.sector !== undefined) updateData.sector = toFlat(data.profile.sector);
     if (data.profile.role !== undefined) updateData.role = data.profile.role;
-    if (data.profile.objective !== undefined) updateData.objective = data.profile.objective;
-    if (data.profile.targetAudience !== undefined) updateData.targetAudience = data.profile.targetAudience;
-    if (data.profile.communicationTone !== undefined) updateData.communicationTone = data.profile.communicationTone;
+    if (data.profile.objective !== undefined) updateData.objective = toFlat(data.profile.objective);
+    if (data.profile.targetAudience !== undefined) updateData.targetAudience = toFlat(data.profile.targetAudience);
+    if (data.profile.communicationTone !== undefined) updateData.communicationTone = toFlat(data.profile.communicationTone);
     if (data.profile.publishingFrequency !== undefined) updateData.publishingFrequency = data.profile.publishingFrequency;
     // Build clean nested profile object (no undefined values)
-    const cleanProfile: Record<string, string> = {};
+    const cleanProfile: Record<string, string | string[]> = {};
     for (const [key, val] of Object.entries(data.profile)) {
-      if (val !== undefined) cleanProfile[key] = val;
+      if (val !== undefined) cleanProfile[key] = val as string | string[];
     }
     updateData.profile = cleanProfile;
   }
@@ -163,6 +165,10 @@ export async function completeOnboarding(
 ): Promise<void> {
   const userRef = doc(db, "users", userId);
 
+  // Helper: join arrays for backward-compatible flat fields
+  const flat = (v: string | string[] | undefined): string =>
+    Array.isArray(v) ? v.join(", ") : v || "";
+
   // Use setDoc with merge to handle cases where user document doesn't exist yet
   // This can happen if user signed up with Google and profile wasn't created
   await setDoc(
@@ -170,11 +176,11 @@ export async function completeOnboarding(
     {
       uid: userId,
       profileType: profileData?.profileType || "",
-      sector: profileData?.sector || "",
+      sector: flat(profileData?.sector),
       role: profileData?.role || "",
-      objective: profileData?.objective || "",
-      targetAudience: profileData?.targetAudience || "",
-      communicationTone: profileData?.communicationTone || "",
+      objective: flat(profileData?.objective),
+      targetAudience: flat(profileData?.targetAudience),
+      communicationTone: flat(profileData?.communicationTone),
       publishingFrequency: profileData?.publishingFrequency || "",
       profile: profileData,
       onboardingComplete: true,

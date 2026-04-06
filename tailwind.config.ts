@@ -214,12 +214,12 @@ export default {
       },
 
       fontFamily: {
-        sans: ["var(--font-poppins)", "Poppins", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
+        sans: ["var(--font-sans)", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
         display: ["var(--font-display)", "Playfair Display", "Georgia", "serif"],
         mono: ["var(--font-mono)", "JetBrains Mono", "Fira Code", "monospace"],
       },
 
-      // Mobile-first typography scale (Poppins)
+      // Mobile-first typography scale
       fontSize: {
         // Extra small - Legal/RGPD text
         "2xs": ["0.6875rem", { lineHeight: "1rem", letterSpacing: "0" }], // 11px

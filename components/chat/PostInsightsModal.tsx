@@ -10,7 +10,8 @@ import { useLanguage } from "@/contexts/LanguageContext";
 interface PostInsightsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  insights: PostInsights;
+  insights: PostInsights | null;
+  isLoading?: boolean;
 }
 
 /**
@@ -27,6 +28,7 @@ export default function PostInsightsModal({
   isOpen,
   onClose,
   insights,
+  isLoading = false,
 }: PostInsightsModalProps) {
   // Centralized scroll lock
   useScrollLock(isOpen);
@@ -52,7 +54,7 @@ export default function PostInsightsModal({
   // Prevent rendering on server
   if (typeof window === "undefined") return null;
 
-  const insightCards = [
+  const insightCards = insights ? [
     {
       id: "effective",
       icon: "✨",
@@ -85,7 +87,7 @@ export default function PostInsightsModal({
       iconBg: "bg-primary/10 border border-primary/20",
       textColor: "text-primary",
     },
-  ];
+  ] : [];
 
   return createPortal(
     <AnimatePresence>
@@ -162,55 +164,56 @@ export default function PostInsightsModal({
 
               {/* Content - Scrollable */}
               <div className="overflow-y-auto max-h-[calc(85vh-120px)] p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {insightCards.map((card, index) => (
-                    <motion.div
-                      key={card.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.08, duration: 0.3 }}
-                    >
-                      {/* Card */}
-                      <div className="h-full p-4 bg-white dark:bg-dark-elevated rounded-xl border border-gray-200 dark:border-dark-border hover:border-gray-300 dark:hover:border-dark-border-hover transition-colors duration-200">
-                        {/* Icon */}
-                        <div className={`w-12 h-12 mb-3 rounded-xl ${card.iconBg} flex items-center justify-center`}>
-                          <span className="text-2xl">{card.icon}</span>
-                        </div>
-
-                        {/* Title */}
-                        <h3 className={`text-sm font-bold uppercase tracking-wide mb-2 ${card.textColor}`}>
-                          {card.title}
-                        </h3>
-
-                        {/* Content */}
-                        <p className="text-sm leading-relaxed text-gray-700 dark:text-text-secondary">
-                          {card.content}
-                        </p>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-
-                {/* Bottom info */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.4 }}
-                  className="mt-6 p-4 bg-gray-50 dark:bg-dark-elevated rounded-xl border border-gray-200 dark:border-dark-border"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-                      <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
+                {isLoading ? (
+                  /* Loading state */
+                  <div className="flex flex-col items-center justify-center py-12 gap-4">
+                    <div className="relative w-12 h-12">
+                      <div className="absolute inset-0 rounded-full border-2 border-primary/20" />
+                      <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-primary animate-spin" />
                     </div>
-                    <div className="flex-1">
-                      <p className="text-xs text-gray-600 dark:text-text-muted leading-relaxed">
-                        <span className="font-semibold text-primary">{t.insights.tip}</span> {t.insights.tipDescription}
-                      </p>
+                    <div className="text-center">
+                      <p className="text-sm font-medium text-gray-700 dark:text-text-primary">{t.insights.analyzing}</p>
+                      <p className="text-xs text-gray-400 dark:text-text-muted mt-1">{t.insights.analyzingSub}</p>
                     </div>
                   </div>
-                </motion.div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {insightCards.map((card, index) => (
+                        <motion.div
+                          key={card.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.08, duration: 0.3 }}
+                        >
+                          <div className="h-full p-4 bg-white dark:bg-dark-elevated rounded-xl border border-gray-200 dark:border-dark-border hover:border-gray-300 dark:hover:border-dark-border-hover transition-colors duration-200">
+                            <div className="flex items-center gap-2.5 mb-2">
+                              <span className="text-lg">{card.icon}</span>
+                              <h3 className={`text-xs font-bold uppercase tracking-wide ${card.textColor}`}>
+                                {card.title}
+                              </h3>
+                            </div>
+                            <p className="text-sm leading-relaxed text-gray-700 dark:text-text-secondary">
+                              {card.content}
+                            </p>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+
+                    {/* Bottom info */}
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.4 }}
+                      className="mt-5 p-3 bg-gray-50 dark:bg-dark-elevated rounded-xl border border-gray-200 dark:border-dark-border"
+                    >
+                      <p className="text-xs text-gray-500 dark:text-text-muted leading-relaxed text-center">
+                        <span className="font-semibold text-primary">{t.insights.tip}</span> {t.insights.tipDescription}
+                      </p>
+                    </motion.div>
+                  </>
+                )}
               </div>
             </motion.div>
           </div>

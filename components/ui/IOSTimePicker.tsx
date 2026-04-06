@@ -45,7 +45,7 @@ const Wheel = memo(function Wheel({
   value,
   onChange,
   formatValue,
-  isDark = true,
+  isDark = false,
 }: {
   items: number[];
   value: number;
@@ -221,14 +221,14 @@ export default function IOSTimePicker({
   value,
   onChange,
   minuteStep = 5,
-  variant = "dark",
+  variant = "auto",
 }: IOSTimePickerProps) {
   const minutes = generateMinutes(minuteStep);
   const { trigger: triggerHaptic } = useHapticFeedback();
   const { t } = useLanguage();
 
-  // Determine if dark mode based on variant
-  const isDark = variant === "dark" || (variant === "auto" && typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  // Determine if dark mode based on variant and actual app theme
+  const isDark = variant === "dark" || (variant === "auto" && typeof document !== "undefined" && document.documentElement.classList.contains("dark"));
 
   // Find nearest valid minute
   const nearestMinute = minutes.reduce((prev, curr) =>
@@ -334,7 +334,7 @@ interface SmartTimeSuggestionsProps {
   selectedMinute?: number;
   selectedDate?: Date;
   isTimeDisabled?: (hour: number, minute: number) => boolean;
-  variant?: "light" | "dark";
+  variant?: "light" | "dark" | "auto";
 }
 
 export function SmartTimeSuggestions({
@@ -343,11 +343,11 @@ export function SmartTimeSuggestions({
   selectedMinute,
   selectedDate,
   isTimeDisabled,
-  variant = "dark",
+  variant = "auto",
 }: SmartTimeSuggestionsProps) {
   const { trigger: triggerHaptic } = useHapticFeedback();
   const { t } = useLanguage();
-  const isDark = variant === "dark";
+  const isDark = variant === "dark" || (variant === "auto" && typeof document !== "undefined" && document.documentElement.classList.contains("dark"));
   const locale = t.ui.timeLocale;
 
   const suggestions = [

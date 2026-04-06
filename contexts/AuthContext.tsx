@@ -27,8 +27,15 @@ import { auth, googleProvider } from "@/lib/db/firebase";
 import { createUserProfile, getUserProfile, deleteAllUserData, saveUserConsent } from "@/lib/db/firestore";
 import { AuthContextType, UserProfile } from "@/types";
 import toast from "@/components/ui/Toast";
+import { translations } from "@/lib/i18n";
+import type { Language } from "@/lib/i18n";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+function getT() {
+  const lang = (typeof window !== "undefined" ? localStorage.getItem("posty-language") : "en") as Language || "en";
+  return translations[lang];
+}
 
 // LocalStorage key for onboarding persistence (survives page refresh)
 const ONBOARDING_STORAGE_KEY = "posty_should_show_onboarding";
@@ -183,13 +190,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (consentError) {
           console.warn("Consent persistence deferred:", consentError);
         }
-        toast.success("Compte créé avec succès !");
+        toast.success(getT().toasts.accountCreated);
       } else {
         // Existing user — this is a LOGIN, not signup.
         // Clear the optimistic onboarding flags.
         setIsNewUser(false);
         setShouldShowOnboarding(false);
-        toast.success("Connexion réussie !");
+        toast.success(getT().toasts.loginSuccess);
       }
       // Profile will be loaded by onAuthStateChanged listener - no extra read needed
     } catch (error: unknown) {
@@ -235,7 +242,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       setShouldShowOnboarding(false);
-      toast.success("Connexion réussie !");
+      toast.success(getT().toasts.loginSuccess);
     } catch (error: unknown) {
       const firebaseError = error as { code?: string };
       let message: string;
@@ -303,7 +310,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.warn("Consent persistence deferred:", consentError);
       }
 
-      toast.success("Compte créé avec succès !");
+      toast.success(getT().toasts.accountCreated);
     } catch (error: unknown) {
       // Reset onboarding flags on failure — account was not created
       setIsNewUser(false);
@@ -421,12 +428,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         url: `${window.location.origin}/auth/action`,
         handleCodeInApp: true,
       });
-      toast.success("Email de réinitialisation envoyé !");
+      toast.success(getT().toasts.resetEmailSent);
     } catch (error: unknown) {
       const firebaseError = error as { code?: string };
       // Silently succeed for user-not-found to prevent email enumeration
       if (firebaseError.code === "auth/user-not-found") {
-        toast.success("Email de réinitialisation envoyé !");
+        toast.success(getT().toasts.resetEmailSent);
         return;
       }
       if (firebaseError.code === "auth/invalid-email") {

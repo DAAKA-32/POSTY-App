@@ -31,7 +31,7 @@ function getInitialTheme(): Theme {
     if (document.documentElement.classList.contains("light")) return "light";
     if (document.documentElement.classList.contains("dark")) return "dark";
   }
-  return "dark";
+  return "light";
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {

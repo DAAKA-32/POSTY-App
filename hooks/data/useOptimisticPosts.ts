@@ -5,6 +5,7 @@ import { Post } from "@/types";
 import { pinPost, deletePost, renamePost } from "@/lib/db/firestore";
 import toast from "@/components/ui/Toast";
 import { triggerHaptic } from "@/hooks/ui/useHapticFeedback";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface UseOptimisticPostsOptions {
   onSuccess?: () => void;
@@ -20,6 +21,7 @@ export function useOptimisticPosts(
   initialPosts: Post[],
   options: UseOptimisticPostsOptions = {}
 ) {
+  const { t } = useLanguage();
   const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -49,7 +51,7 @@ export function useOptimisticPosts(
 
       try {
         await pinPost(postId, newPinnedState);
-        toast.success(newPinnedState ? "Post epingle" : "Post desepingle");
+        toast.success(newPinnedState ? t.toasts.postPinned : t.toasts.postUnpinned);
         options.onSuccess?.();
       } catch (error) {
         // Rollback on error
@@ -59,11 +61,11 @@ export function useOptimisticPosts(
           )
         );
         triggerHaptic("error");
-        toast.error("Erreur lors de l'epinglage");
+        toast.error(t.toasts.pinError);
         options.onError?.(error as Error);
       }
     },
-    [posts, options]
+    [posts, options, t]
   );
 
   /**
@@ -83,7 +85,7 @@ export function useOptimisticPosts(
 
       try {
         await deletePost(postId);
-        toast.success("Post supprime");
+        toast.success(t.toasts.postDeleted);
         options.onSuccess?.();
       } catch (error) {
         // Rollback - re-insert at original position
@@ -93,11 +95,11 @@ export function useOptimisticPosts(
           return newPosts;
         });
         triggerHaptic("error");
-        toast.error("Erreur lors de la suppression");
+        toast.error(t.toasts.deleteError);
         options.onError?.(error as Error);
       }
     },
-    [posts, options]
+    [posts, options, t]
   );
 
   /**
@@ -121,7 +123,7 @@ export function useOptimisticPosts(
 
       try {
         await renamePost(postId, newTitle);
-        toast.success("Titre modifie");
+        toast.success(t.toasts.conversationRenamed);
         options.onSuccess?.();
       } catch (error) {
         // Rollback
@@ -131,11 +133,11 @@ export function useOptimisticPosts(
           )
         );
         triggerHaptic("error");
-        toast.error("Erreur lors du renommage");
+        toast.error(t.toasts.renameError);
         options.onError?.(error as Error);
       }
     },
-    [posts, options]
+    [posts, options, t]
   );
 
   /**
@@ -172,8 +174,8 @@ export function useOptimisticPosts(
         await batchPinPosts(postIds, isPinned);
         toast.success(
           isPinned
-            ? `${postIds.length} posts epingles`
-            : `${postIds.length} posts desepingles`
+            ? `${postIds.length} ${t.toasts.postPinned}`
+            : `${postIds.length} ${t.toasts.postUnpinned}`
         );
         options.onSuccess?.();
       } catch (error) {
@@ -187,11 +189,11 @@ export function useOptimisticPosts(
           })
         );
         triggerHaptic("error");
-        toast.error("Erreur lors de l'operation");
+        toast.error(t.toasts.operationError);
         options.onError?.(error as Error);
       }
     },
-    [options]
+    [options, t]
   );
 
   return {

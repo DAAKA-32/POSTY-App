@@ -91,9 +91,15 @@ export default function LoginPage() {
 
     root.classList.add("login-scroll-enabled");
     document.body.classList.add("login-scroll-enabled");
-    document.body.classList.remove("no-scroll", "scroll-locked", "modal-open");
+    document.body.classList.remove("pwa-mobile", "no-scroll", "scroll-locked", "modal-open", "bottomsheet-open", "template-modal-open");
+
+    // Guard: re-remove pwa-mobile periodically (other providers re-add it)
+    const guard = setInterval(() => {
+      document.body.classList.remove("pwa-mobile", "no-scroll", "scroll-locked");
+    }, 300);
 
     return () => {
+      clearInterval(guard);
       root.classList.remove("login-scroll-enabled");
       document.body.classList.remove("login-scroll-enabled");
     };

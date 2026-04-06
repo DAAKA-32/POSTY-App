@@ -650,6 +650,13 @@ const SECTOR_CONTEXT: Record<string, { fr: string; en: string }> = {
 
 // ============== PROFILE SYNTHESIS ==============
 
+/** Normalize a profile field that may be string or string[] to a single string */
+function flattenField(value: string | string[] | undefined): string {
+  if (!value) return "";
+  if (Array.isArray(value)) return value.join(", ");
+  return value.trim();
+}
+
 export function synthesizeProfile(
   profile: ProfileFields,
   language: Language
@@ -657,7 +664,7 @@ export function synthesizeProfile(
   const parts: string[] = [];
 
   const role = profile.role?.trim();
-  const sector = profile.sector?.trim();
+  const sector = flattenField(profile.sector);
 
   if (role && sector) {
     parts.push(`${role} (${sector})`);
@@ -667,14 +674,14 @@ export function synthesizeProfile(
     parts.push(language === "fr" ? `Secteur: ${sector}` : `Sector: ${sector}`);
   }
 
-  const audience = profile.targetAudience?.trim();
+  const audience = flattenField(profile.targetAudience);
   if (audience) {
     parts.push(
       language === "fr" ? `cible: ${audience}` : `targets: ${audience}`
     );
   }
 
-  const objective = profile.objective?.trim();
+  const objective = flattenField(profile.objective);
   if (objective) {
     parts.push(
       language === "fr" ? `objectif: ${objective}` : `goal: ${objective}`
@@ -704,10 +711,14 @@ function buildVoiceProfile(
     blocks.push(`${label}: ${identitySummary}`);
   }
 
-  // Tone → concrete style instructions
-  const tone = profile.communicationTone?.trim();
-  if (tone && TONE_STYLE_MAP[tone]) {
-    blocks.push(TONE_STYLE_MAP[tone][language]);
+  // Tone → concrete style instructions (supports array or string)
+  const tones = Array.isArray(profile.communicationTone)
+    ? profile.communicationTone
+    : profile.communicationTone ? [profile.communicationTone.trim()] : [];
+  for (const tone of tones) {
+    if (tone && TONE_STYLE_MAP[tone]) {
+      blocks.push(TONE_STYLE_MAP[tone][language]);
+    }
   }
 
   // Profile type → authentic narrative context
@@ -716,10 +727,14 @@ function buildVoiceProfile(
     blocks.push(PROFILE_TYPE_CONTEXT[profileType][language]);
   }
 
-  // Sector → industry-specific vocabulary and examples
-  const sector = profile.sector?.trim();
-  if (sector && SECTOR_CONTEXT[sector]) {
-    blocks.push(SECTOR_CONTEXT[sector][language]);
+  // Sector → industry-specific vocabulary and examples (supports array or string)
+  const sectors = Array.isArray(profile.sector)
+    ? profile.sector
+    : profile.sector ? [profile.sector.trim()] : [];
+  for (const sector of sectors) {
+    if (sector && SECTOR_CONTEXT[sector]) {
+      blocks.push(SECTOR_CONTEXT[sector][language]);
+    }
   }
 
   // Role → persona voice adaptation
