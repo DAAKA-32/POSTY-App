@@ -9,7 +9,8 @@ export async function generateMetadata(
   { searchParams }: { searchParams: Promise<{ lang?: string }> }
 ): Promise<Metadata> {
   const { lang } = await searchParams;
-  const t = lang === "fr" ? translations.fr : translations.en;
+  const resolved = (lang && lang in translations ? lang : "en") as keyof typeof translations;
+  const t = translations[resolved];
   const alternates = getAlternateLanguages(path);
 
   return {
@@ -32,5 +33,5 @@ export default async function LinkedInPostIdeasPage({
   searchParams: Promise<{ lang?: string }>;
 }) {
   const { lang } = await searchParams;
-  return <PageContent lang={lang === "fr" ? "fr" : "en"} />;
+  return <PageContent lang={lang && lang in translations ? lang : "en"} />;
 }

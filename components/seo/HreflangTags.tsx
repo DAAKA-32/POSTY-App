@@ -16,8 +16,10 @@ interface HreflangTagsProps {
  * - x-default: Fallback for unmatched languages
  */
 const LOCALES = [
-  { code: "fr", hreflang: "fr", name: "Français" },
   { code: "en", hreflang: "en-us", name: "English (US)" },
+  { code: "fr", hreflang: "fr", name: "Français" },
+  { code: "es", hreflang: "es", name: "Español" },
+  { code: "pt", hreflang: "pt", name: "Português" },
 ] as const;
 
 /**
@@ -48,19 +50,14 @@ export default function HreflangTags({ currentPath = "/" }: HreflangTagsProps) {
 
   return (
     <>
-      {/* French version */}
-      <link
-        rel="alternate"
-        hrefLang="fr"
-        href={`${baseUrl}${pathWithoutLang}?lang=fr`}
-      />
-
-      {/* English (US) version */}
-      <link
-        rel="alternate"
-        hrefLang="en-us"
-        href={`${baseUrl}${pathWithoutLang}?lang=en`}
-      />
+      {LOCALES.map((locale) => (
+        <link
+          key={locale.code}
+          rel="alternate"
+          hrefLang={locale.hreflang}
+          href={`${baseUrl}${pathWithoutLang}?lang=${locale.code}`}
+        />
+      ))}
 
       {/* x-default: fallback for users whose language isn't specified */}
       <link
@@ -84,8 +81,10 @@ export function getAlternateLanguages(path: string = "/") {
   return {
     canonical: `${baseUrl}${pathWithoutLang}`,
     languages: {
-      "fr-FR": `${baseUrl}${pathWithoutLang}?lang=fr`,
       "en-US": `${baseUrl}${pathWithoutLang}?lang=en`,
+      "fr-FR": `${baseUrl}${pathWithoutLang}?lang=fr`,
+      "es-ES": `${baseUrl}${pathWithoutLang}?lang=es`,
+      "pt-PT": `${baseUrl}${pathWithoutLang}?lang=pt`,
       "x-default": `${baseUrl}${pathWithoutLang}`,
     },
   };

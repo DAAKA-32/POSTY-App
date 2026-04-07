@@ -5,10 +5,10 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { FaqJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { translations } from "./translations";
 
-export default function PageContent({ lang: initialLang = "en" }: { lang?: "fr" | "en" }) {
+export default function PageContent({ lang: initialLang = "en" }: { lang?: string }) {
   const { language } = useLanguage();
-  const lang = language === "fr" ? "fr" : initialLang;
-  const t = lang === "fr" ? translations.fr : translations.en;
+  const lang = (language in translations ? language : initialLang in translations ? initialLang : "en") as keyof typeof translations;
+  const t = translations[lang] ?? translations.en;
 
   return (
     <>

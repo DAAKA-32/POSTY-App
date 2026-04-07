@@ -194,14 +194,15 @@ export function HowToJsonLd({
   description: string;
   steps: HowToStep[];
   totalTime?: string; // ISO 8601 duration format, e.g., "PT30S" for 30 seconds
-  lang?: "fr" | "en";
+  lang?: string;
 }) {
+  const langMap: Record<string, string> = { fr: "fr-FR", en: "en-US", es: "es-ES", pt: "pt-PT" };
   const schema = {
     "@context": "https://schema.org",
     "@type": "HowTo",
     name,
     description,
-    inLanguage: lang === "fr" ? "fr-FR" : "en-US",
+    inLanguage: langMap[lang] || "en-US",
     ...(totalTime && { totalTime }),
     step: steps.map((step, index) => ({
       "@type": "HowToStep",
@@ -232,8 +233,9 @@ export function HowToJsonLd({
 export function ServiceJsonLd({
   lang = "fr",
 }: {
-  lang?: "fr" | "en";
+  lang?: string;
 }) {
+  const resolvedLang = (lang === "fr" ? "fr" : "en") as "fr" | "en";
   const serviceData = {
     fr: {
       name: "Génération de posts LinkedIn par IA",
@@ -249,7 +251,7 @@ export function ServiceJsonLd({
     },
   };
 
-  const data = serviceData[lang];
+  const data = serviceData[resolvedLang];
 
   const schema = {
     "@context": "https://schema.org",
@@ -264,18 +266,18 @@ export function ServiceJsonLd({
     },
     areaServed: {
       "@type": "Place",
-      name: lang === "fr" ? "France" : "United States",
+      name: resolvedLang === "fr" ? "France" : "United States",
     },
     hasOfferCatalog: {
       "@type": "OfferCatalog",
-      name: lang === "fr" ? "Plans Posty" : "Posty Plans",
+      name: resolvedLang === "fr" ? "Plans Posty" : "Posty Plans",
       itemListElement: [
         {
           "@type": "Offer",
           itemOffered: {
             "@type": "Service",
             name: "Free",
-            description: lang === "fr" ? "3 posts par semaine" : "3 posts per week",
+            description: resolvedLang === "fr" ? "3 posts par semaine" : "3 posts per week",
           },
           price: "0",
           priceCurrency: "EUR",
@@ -285,7 +287,7 @@ export function ServiceJsonLd({
           itemOffered: {
             "@type": "Service",
             name: "Pro",
-            description: lang === "fr" ? "Posts illimités" : "Unlimited posts",
+            description: resolvedLang === "fr" ? "Posts illimités" : "Unlimited posts",
           },
           price: "9.99",
           priceCurrency: "EUR",
@@ -370,8 +372,9 @@ export function ArticleJsonLd({
   datePublished: string;
   dateModified?: string;
   author: string;
-  lang?: "fr" | "en";
+  lang?: string;
 }) {
+  const articleLangMap: Record<string, string> = { fr: "fr-FR", en: "en-US", es: "es-ES", pt: "pt-PT" };
   const schema = {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -380,7 +383,7 @@ export function ArticleJsonLd({
     image: image || `${seoConfig.siteUrl}/og-image.png`,
     datePublished,
     dateModified: dateModified || datePublished,
-    inLanguage: lang === "fr" ? "fr-FR" : "en-US",
+    inLanguage: articleLangMap[lang || "en"] || "en-US",
     author: {
       "@type": "Person",
       name: author,
@@ -459,7 +462,7 @@ export function VideoJsonLd({
 /**
  * Pricing Page Schema - Complete pricing structured data
  */
-export function PricingPageJsonLd({ lang = "fr" }: { lang?: "fr" | "en" }) {
+export function PricingPageJsonLd({ lang = "fr" }: { lang?: string }) {
   const schema = {
     "@context": "https://schema.org",
     "@type": "WebPage",

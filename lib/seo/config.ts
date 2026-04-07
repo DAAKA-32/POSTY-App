@@ -8,7 +8,7 @@ export const seoConfig = {
   siteName: "Posty AI",
   siteUrl: process.env.NEXT_PUBLIC_BASE_URL || "https://postyapp.ai",
   defaultLocale: "fr" as const,
-  supportedLocales: ["fr", "en"] as const,
+  supportedLocales: ["en", "fr", "es", "pt"] as const,
 
   // Branding
   brandName: "Posty AI",
