@@ -1221,14 +1221,13 @@ video {
 /* ============== POSTY DESIGN SYSTEM - TYPOGRAPHY ============== */
 
 :root {
-  /* Typography - Poppins (public pages) + Inter (connected pages) + Playfair Display (hero) */
-  --font-poppins: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  /* Typography - Inter everywhere */
   --font-inter: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
-  /* --font-sans: semantic alias — defaults to Poppins, overridden to Inter on connected pages */
-  --font-sans: var(--font-poppins);
+  /* --font-sans & --font-display: both Inter for full consistency */
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-inter);
 
   /* Font Weights - Poppins */
   --font-light: 300;
@@ -1265,21 +1264,7 @@ video {
   }
 }
 
-/* ============== CONNECTED PAGES: INTER FONT ============== */
-/* Override --font-sans to Inter inside the authenticated app shell (.app-layout)
-   and standalone connected pages (subscription, onboarding, checkout, etc.).
-   Public pages (landing, login) keep Poppins via the :root default. */
-.app-layout,
-body.subscription-scroll-enabled,
-body.onboarding-scroll-enabled,
-body.dashboard-scroll-enabled,
-body.settings-scroll-enabled,
-body.profile-scroll-enabled,
-body.analytics-scroll-enabled,
-body.schedule-scroll-enabled,
-body.history-scroll-enabled {
-  --font-sans: var(--font-inter);
-}
+/* Inter is now the global font — no per-page overrides needed */
 
 /* Line Heights - in main :root */
 :root {

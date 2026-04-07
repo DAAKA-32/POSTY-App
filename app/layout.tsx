@@ -1,5 +1,5 @@
 ﻿import type { Metadata, Viewport } from "next";
-import { Poppins, Playfair_Display, Inter } from "next/font/google";
+import { Inter } from "next/font/google";
 import { PremiumToaster } from "@/components/ui/Toast";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
@@ -21,26 +21,10 @@ import { HomepageJsonLd, HowToJsonLd, FaqJsonLd, postyHowToData, postyFaqData } 
 import HreflangTags from "@/components/seo/HreflangTags";
 import "./globals.css";
 
-const poppins = Poppins({
-  variable: "--font-poppins",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  style: ["normal", "italic"],
-  display: "swap",
-  preload: true,
-});
-
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
-  display: "swap",
-  preload: true,
-});
-
-const playfair = Playfair_Display({
-  variable: "--font-display",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["300", "400", "500", "600", "700"],
   display: "swap",
   preload: true,
 });
@@ -190,7 +174,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${poppins.variable} ${inter.variable} ${playfair.variable}`} data-scroll-behavior="smooth" suppressHydrationWarning>
+    <html lang="en" className={inter.variable} data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
         {/* Theme initialization + Web3/MetaMask error suppressor */}
         <script
@@ -271,8 +255,7 @@ export default function RootLayout({
         <meta name="theme-color" content="#FAFBFC" />
 
         {/* Preconnect to external origins for performance */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* next/font handles font preconnect automatically */}
         <link rel="preconnect" href="https://firebaseapp.com" />
         <link rel="dns-prefetch" href="https://api.openai.com" />
         <link rel="dns-prefetch" href="https://www.linkedin.com" />
@@ -285,7 +268,7 @@ export default function RootLayout({
         <HowToJsonLd {...postyHowToData.en} />
         <FaqJsonLd questions={postyFaqData.en} />
       </head>
-      <body className={`antialiased ${poppins.className}`}>
+      <body className={`antialiased ${inter.className}`}>
         {/* Portrait-only enforcement: blocks landscape on mobile phones */}
         <LandscapeBlocker />
         <ThemeProvider>

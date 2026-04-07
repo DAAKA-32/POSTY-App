@@ -258,7 +258,7 @@ export default function BrandPage() {
         </Section>
 
         {/* Typography Section */}
-        <Section title="Typographie" subtitle="Police Poppins - Echelle typographique">
+        <Section title="Typographie" subtitle="Police Inter - Echelle typographique">
           <Card className="p-6">
             <div className="space-y-6">
               {typography.map((item) => (
@@ -272,7 +272,7 @@ export default function BrandPage() {
                       style={{
                         fontSize: item.size,
                         fontWeight: parseInt(item.weight),
-                        fontFamily: "'Poppins', sans-serif"
+                        fontFamily: "'Inter', sans-serif"
                       }}
                     >
                       {item.sample}
