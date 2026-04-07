@@ -137,9 +137,20 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // Make file publicly readable (or use signed URL)
-      await fileRef.makePublic();
-      const downloadURL = `https://storage.googleapis.com/${bucket.name}/${storagePath}`;
+      // Generate a signed URL for preview (valid 7 days — covers max scheduling window)
+      // The Cloud Function uses Admin SDK download (not this URL) for publishing
+      let downloadURL: string;
+      try {
+        await fileRef.makePublic();
+        downloadURL = `https://storage.googleapis.com/${bucket.name}/${storagePath}`;
+      } catch {
+        // Uniform Bucket-Level Access may block makePublic — use signed URL instead
+        const [signedUrl] = await fileRef.getSignedUrl({
+          action: "read",
+          expires: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days
+        });
+        downloadURL = signedUrl;
+      }
 
       uploadedImages.push({
         storagePath,

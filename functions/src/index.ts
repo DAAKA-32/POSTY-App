@@ -151,7 +151,12 @@ async function postToLinkedInWithImages(
   const personUrn = `urn:li:person:${linkedInId}`;
   const mediaAssets: string[] = [];
 
-  for (const image of images) {
+  console.log(`[LinkedIn+Images] Starting upload for ${images.length} image(s), linkedInId=${linkedInId}`);
+
+  for (let i = 0; i < images.length; i++) {
+    const image = images[i];
+    console.log(`[LinkedIn+Images] Processing image ${i + 1}/${images.length}: ${image.storagePath} (${image.contentType})`);
+
     // Step 1: Register upload with LinkedIn
     const registerRes = await fetch(
       "https://api.linkedin.com/v2/assets?action=registerUpload",
@@ -178,7 +183,7 @@ async function postToLinkedInWithImages(
 
     if (!registerRes.ok) {
       const errText = await registerRes.text();
-      console.error("LinkedIn register upload failed:", errText);
+      console.error(`[LinkedIn+Images] Register upload failed for image ${i + 1}:`, registerRes.status, errText);
       return { success: false, error: "Échec de l'enregistrement de l'image sur LinkedIn." };
     }
 
@@ -188,35 +193,56 @@ async function postToLinkedInWithImages(
         "com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest"
       ].uploadUrl;
     const asset = registerData.value.asset as string;
+    console.log(`[LinkedIn+Images] Got upload URL and asset URN for image ${i + 1}: ${asset}`);
 
-    // Step 2: Download image from Firebase Storage
-    const imageResponse = await fetch(image.downloadURL);
-    if (!imageResponse.ok) {
-      console.error(`Failed to download image from Storage: ${image.storagePath}`);
+    // Step 2: Download image from Firebase Storage using Admin SDK
+    // (bypasses public URL access issues — Uniform Bucket-Level Access, expired URLs, etc.)
+    let imageBuffer: Buffer;
+    try {
+      const bucket = admin.storage().bucket();
+      const file = bucket.file(image.storagePath);
+
+      // Verify file exists before downloading
+      const [exists] = await file.exists();
+      if (!exists) {
+        console.error(`[LinkedIn+Images] File not found in Storage: ${image.storagePath}`);
+        return { success: false, error: "Image introuvable dans le stockage." };
+      }
+
+      const [fileBuffer] = await file.download();
+      imageBuffer = fileBuffer;
+      console.log(`[LinkedIn+Images] Downloaded image ${i + 1} from Storage: ${imageBuffer.length} bytes`);
+    } catch (downloadError) {
+      console.error(`[LinkedIn+Images] Failed to download from Storage: ${image.storagePath}`, downloadError);
       return { success: false, error: "Impossible de télécharger l'image depuis le stockage." };
     }
-    const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
 
     // Step 3: Upload binary to LinkedIn
+    // Convert Buffer to Uint8Array for Node 20 fetch() compatibility
+    const uploadBody = new Uint8Array(imageBuffer);
     const uploadRes = await fetch(uploadUrl, {
       method: "PUT",
       headers: {
         Authorization: `Bearer ${accessToken}`,
         "Content-Type": image.contentType,
+        "Content-Length": String(imageBuffer.length),
       },
-      body: imageBuffer,
+      body: uploadBody,
     });
 
     if (!uploadRes.ok) {
       const errText = await uploadRes.text();
-      console.error("LinkedIn image upload failed:", errText);
+      console.error(`[LinkedIn+Images] Binary upload to LinkedIn failed for image ${i + 1}:`, uploadRes.status, errText);
       return { success: false, error: "Échec de l'upload de l'image vers LinkedIn." };
     }
 
+    console.log(`[LinkedIn+Images] Image ${i + 1} uploaded to LinkedIn successfully`);
     mediaAssets.push(asset);
   }
 
   // Step 4: Create post with media
+  console.log(`[LinkedIn+Images] Creating post with ${mediaAssets.length} media asset(s)`);
+
   const shareBody = {
     author: personUrn,
     lifecycleState: "PUBLISHED",
@@ -247,7 +273,7 @@ async function postToLinkedInWithImages(
 
   if (!shareRes.ok) {
     const errorData = await shareRes.text();
-    console.error("LinkedIn publish with media failed:", shareRes.status, errorData);
+    console.error("[LinkedIn+Images] Publish with media failed:", shareRes.status, errorData);
     return { success: false, error: "La publication sur LinkedIn n'a pas pu aboutir. Veuillez réessayer." };
   }
 
@@ -255,6 +281,7 @@ async function postToLinkedInWithImages(
   const postId = shareData.id;
   const postUrl = postId ? `https://www.linkedin.com/feed/update/${postId}/` : undefined;
 
+  console.log(`[LinkedIn+Images] Post published successfully: ${postUrl}`);
   return { success: true, id: postId || undefined, postUrl };
 }
 
@@ -280,9 +307,22 @@ async function publishToLinkedIn(
   }
 
   // Use image upload flow if images are present
-  const result = images && images.length > 0
-    ? await postToLinkedInWithImages(connection.accessToken, connection.linkedInId, content, images)
-    : await postToLinkedIn(connection.accessToken, connection.linkedInId, content);
+  let result;
+  if (images && images.length > 0) {
+    console.log(`[publishToLinkedIn] Attempting publish with ${images.length} image(s) for userId=${userId}`);
+    result = await postToLinkedInWithImages(connection.accessToken, connection.linkedInId, content, images);
+
+    // Fallback: if image upload failed, publish text-only so the post isn't lost
+    if (!result.success) {
+      console.warn(`[publishToLinkedIn] Image flow failed (${result.error}), falling back to text-only for userId=${userId}`);
+      result = await postToLinkedIn(connection.accessToken, connection.linkedInId, content);
+      if (result.success) {
+        console.log(`[publishToLinkedIn] Text-only fallback succeeded for userId=${userId}`);
+      }
+    }
+  } else {
+    result = await postToLinkedIn(connection.accessToken, connection.linkedInId, content);
+  }
 
   if (!result.success) {
     return { success: false, error: result.error };
@@ -552,13 +592,20 @@ export const executeScheduledPosts = functions
 
         try {
           // Parse images array if present
+          const rawImages = post.images;
           const postImages: ScheduledPostImage[] | undefined =
-            post.images && Array.isArray(post.images) && post.images.length > 0
-              ? post.images
+            rawImages && Array.isArray(rawImages) && rawImages.length > 0
+              ? rawImages
               : undefined;
 
+          // Debug: log image detection
+          console.log(`[Scheduler] Post ${doc.id} image detection: raw=${typeof rawImages} isArray=${Array.isArray(rawImages)} length=${Array.isArray(rawImages) ? rawImages.length : 'N/A'} hasImages=${!!postImages}`);
           if (postImages) {
-            console.log(`[Scheduler] Post ${doc.id} has ${postImages.length} image(s)`);
+            console.log(`[Scheduler] Post ${doc.id} images:`, JSON.stringify(postImages.map(img => ({
+              storagePath: img.storagePath,
+              contentType: img.contentType,
+              hasDownloadURL: !!img.downloadURL,
+            }))));
           }
 
           const result = await publishScheduledPost(
