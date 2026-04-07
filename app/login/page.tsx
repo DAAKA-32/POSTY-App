@@ -238,7 +238,7 @@ export default function LoginPage() {
           {/* Main content - grows but scrolls when needed */}
           <motion.div
             variants={itemVariants}
-            className="flex-1 flex flex-col justify-center py-4"
+            className="flex-1 flex flex-col justify-center pt-12 pb-4"
           >
             <AuthPanel initialMode={initialMode} onSuccess={() => {}} />
           </motion.div>

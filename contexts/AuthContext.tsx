@@ -219,9 +219,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Real error — throw with appropriate message
-      console.error("Google sign-in error:", firebaseError.code, firebaseError.message);
+      console.error("Google sign-in error:", {
+        code: firebaseError.code,
+        message: firebaseError.message,
+        fullError: error,
+      });
       let message: string;
       switch (firebaseError.code) {
+        case "auth/unauthorized-domain":
+          message = "Ce domaine n'est pas autorisé pour la connexion Google. Contactez le support.";
+          break;
         case "auth/network-request-failed":
           message = "Connexion impossible. Vérifiez votre connexion internet.";
           break;
@@ -231,8 +238,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         case "auth/operation-not-allowed":
           message = "La connexion Google n'est pas disponible pour le moment.";
           break;
+        case "auth/internal-error":
+          message = "Erreur de configuration. Veuillez réessayer ou contacter le support.";
+          break;
         default:
-          message = "La connexion n'a pas abouti. Veuillez réessayer.";
+          message = `La connexion n'a pas abouti. Veuillez réessayer. (${firebaseError.code || "unknown"})`;
       }
       throw new Error(message);
     }

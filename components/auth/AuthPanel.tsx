@@ -441,34 +441,56 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
         </div>
       </motion.div>
 
-      {/* Header - Premium light mode styling */}
+      {/* Header - Stable container with crossfade to prevent layout shift */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: prefersReducedMotion ? 0 : 0.5, delay: 0.1 }}
-        className="text-center mb-4 sm:mb-6"
+        className="text-center mb-4 sm:mb-6 min-h-[56px] sm:min-h-[64px]"
       >
-        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-silver-vertical mb-1.5 sm:mb-2 tracking-tight">
-          {mode === "login" ? t.auth.welcomeBack : t.auth.createAccount}
-        </h1>
-        <p className="text-gray-500 text-xs sm:text-sm max-w-[280px] mx-auto leading-relaxed">
-          {mode === "login"
-            ? t.auth.loginSubtitle
-            : t.auth.signupSubtitle}
-        </p>
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={mode}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
+          >
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-silver-vertical mb-1.5 sm:mb-2 tracking-tight">
+              {mode === "login" ? t.auth.welcomeBack : t.auth.createAccount}
+            </h1>
+            <p className="text-gray-500 text-xs sm:text-sm max-w-[280px] mx-auto leading-relaxed">
+              {mode === "login"
+                ? t.auth.loginSubtitle
+                : t.auth.signupSubtitle}
+            </p>
+          </motion.div>
+        </AnimatePresence>
       </motion.div>
 
-      {/* Social proof - Signup only */}
-      {mode === "signup" && <SocialProof prefersReducedMotion={prefersReducedMotion} usersText={t.auth.users} thisWeekText={t.auth.thisWeek} />}
+      {/* Social proof - Signup only, animated height to prevent layout shift */}
+      <AnimatePresence initial={false}>
+        {mode === "signup" && (
+          <motion.div
+            initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+            animate={{ opacity: 1, height: "auto", marginBottom: 16 }}
+            exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+            transition={{ duration: prefersReducedMotion ? 0 : 0.25, ease: [0.25, 0.1, 0.25, 1] }}
+            className="overflow-hidden"
+          >
+            <SocialProof prefersReducedMotion={prefersReducedMotion} usersText={t.auth.users} thisWeekText={t.auth.thisWeek} />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Form */}
-      <AnimatePresence mode="wait">
+      <AnimatePresence mode="wait" initial={false}>
         <motion.div
           key={mode}
-          initial={{ opacity: 0, x: mode === "login" ? -20 : 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: mode === "login" ? 20 : -20 }}
-          transition={{ duration: prefersReducedMotion ? 0 : 0.3 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
         >
           {/* Success message - Instant display, no progressive expansion */}
           <AnimatePresence mode="wait">
