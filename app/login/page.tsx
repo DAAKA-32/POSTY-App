@@ -238,7 +238,7 @@ export default function LoginPage() {
           {/* Main content - grows but scrolls when needed */}
           <motion.div
             variants={itemVariants}
-            className="flex-1 flex flex-col justify-center pt-12 pb-4"
+            className="flex-1 flex flex-col justify-end pb-8"
           >
             <AuthPanel initialMode={initialMode} onSuccess={() => {}} />
           </motion.div>
@@ -349,20 +349,20 @@ export default function LoginPage() {
             >
               <AuthPanel initialMode={initialMode} onSuccess={() => {}} />
             </motion.div>
+          </motion.div>
 
-            {/* Footer links */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.25, ease: smoothEase }}
-              className="py-6 mt-auto shrink-0"
-            >
-              <div className="flex gap-4 text-xs text-text-muted justify-center">
-                <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="hover:text-warm-orange transition-colors duration-200">{t.common.privacy}</a>
-                <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="hover:text-warm-orange transition-colors duration-200">{t.common.terms}</a>
-                <a href="/legal/notices" target="_blank" rel="noopener noreferrer" className="hover:text-warm-orange transition-colors duration-200">{t.common.legalNotices}</a>
-              </div>
-            </motion.div>
+          {/* Footer links — positioned at bottom, outside flex center to not affect centering */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.25, ease: smoothEase }}
+            className="absolute bottom-0 left-0 right-0 py-6"
+          >
+            <div className="flex gap-4 text-xs text-text-muted justify-center">
+              <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="hover:text-warm-orange transition-colors duration-200">{t.common.privacy}</a>
+              <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="hover:text-warm-orange transition-colors duration-200">{t.common.terms}</a>
+              <a href="/legal/notices" target="_blank" rel="noopener noreferrer" className="hover:text-warm-orange transition-colors duration-200">{t.common.legalNotices}</a>
+            </div>
           </motion.div>
         </div>
       </div>
