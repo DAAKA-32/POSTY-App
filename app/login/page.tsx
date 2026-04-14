@@ -335,35 +335,38 @@ export default function LoginPage() {
 
         {/* Right: Auth Panel — fixed independent scroll container */}
         <div className="fixed top-0 right-0 w-1/2 h-[100dvh] overflow-y-auto overflow-x-hidden overscroll-contain bg-background-warm" data-allow-scroll>
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={slideInRight}
-            className="min-h-full flex flex-col items-center justify-center p-6 lg:p-10 xl:p-14"
-          >
+          <div className="min-h-full flex flex-col px-6 lg:px-10 xl:px-14 py-6">
+            {/* Form — flex-1 centered with mt-auto/mb-auto on child */}
             <motion.div
-              initial={{ opacity: 0, y: 30, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ duration: 0.45, delay: 0.1, ease: smoothEase }}
-              className="w-full max-w-md"
+              initial="hidden"
+              animate="visible"
+              variants={slideInRight}
+              className="flex-1 flex items-center justify-center w-full"
             >
-              <AuthPanel initialMode={initialMode} onSuccess={() => {}} />
+              <motion.div
+                initial={{ opacity: 0, y: 30, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.45, delay: 0.1, ease: smoothEase }}
+                className="w-full max-w-md py-8"
+              >
+                <AuthPanel initialMode={initialMode} onSuccess={() => {}} />
+              </motion.div>
             </motion.div>
-          </motion.div>
 
-          {/* Footer links — positioned at bottom, outside flex center to not affect centering */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.25, ease: smoothEase }}
-            className="absolute bottom-0 left-0 right-0 py-6"
-          >
-            <div className="flex gap-4 text-xs text-text-muted justify-center">
-              <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="hover:text-warm-orange transition-colors duration-200">{t.common.privacy}</a>
-              <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="hover:text-warm-orange transition-colors duration-200">{t.common.terms}</a>
-              <a href="/legal/notices" target="_blank" rel="noopener noreferrer" className="hover:text-warm-orange transition-colors duration-200">{t.common.legalNotices}</a>
-            </div>
-          </motion.div>
+            {/* Footer links — at the end of the flex flow, always below form */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.25, ease: smoothEase }}
+              className="shrink-0 pt-4"
+            >
+              <div className="flex gap-4 text-xs text-text-muted justify-center">
+                <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="hover:text-warm-orange transition-colors duration-200">{t.common.privacy}</a>
+                <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="hover:text-warm-orange transition-colors duration-200">{t.common.terms}</a>
+                <a href="/legal/notices" target="_blank" rel="noopener noreferrer" className="hover:text-warm-orange transition-colors duration-200">{t.common.legalNotices}</a>
+              </div>
+            </motion.div>
+          </div>
         </div>
       </div>
     </div>

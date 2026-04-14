@@ -291,7 +291,6 @@ export function CompactPostTemplates({ onSelect, onTemplateSelect, className = "
 
   // UI state (for re-renders)
   const [isDraggingState, setIsDraggingState] = useState(false);
-  const [scrollX, setScrollX] = useState(0);
   const [hoveredChip, setHoveredChip] = useState<string | null>(null);
 
   // Animation state as REFS (to avoid closure issues in RAF loop)
@@ -304,7 +303,7 @@ export function CompactPostTemplates({ onSelect, onTemplateSelect, className = "
   const lastTimeRef = useRef<number>(0);
   const startXRef = useRef<number>(0);
   const scrollStartRef = useRef<number>(0);
-  const scrollXRef = useRef<number>(0); // Mirror of scrollX for RAF access
+  const scrollXRef = useRef<number>(0); // Current scroll position for RAF loop
   const velocityRef = useRef<number>(0);
   const lastMoveTimeRef = useRef<number>(0);
   const lastMoveXRef = useRef<number>(0);
@@ -335,16 +334,8 @@ export function CompactPostTemplates({ onSelect, onTemplateSelect, className = "
     return normalized;
   }, []);
 
-  // Update scroll position (both ref and state)
-  const updateScrollX = useCallback((newX: number) => {
-    const normalized = normalizePosition(newX);
-    scrollXRef.current = normalized;
-    setScrollX(normalized);
-  }, [normalizePosition]);
-
   // Auto-scroll animation - uses REFS to avoid stale closure issues
-  // DOM updates happen directly via ref; React state syncs at lower frequency
-  const stateUpdateCounterRef = useRef(0);
+  // DOM updates happen directly via ref; NO React state sync during animation
   const animateFnRef = useRef<((ts: number) => void) | null>(null);
 
   const animate = useCallback((timestamp: number) => {
@@ -355,6 +346,15 @@ export function CompactPostTemplates({ onSelect, onTemplateSelect, className = "
     if (isPausedRef.current || isDraggingRef.current) {
       lastTimeRef.current = timestamp;
       return;
+    }
+
+    // Lazy-init track width: if still 0, try measuring now
+    if (trackWidthRef.current === 0 && trackRef.current) {
+      trackWidthRef.current = trackRef.current.scrollWidth / 3;
+      if (trackWidthRef.current === 0) {
+        lastTimeRef.current = timestamp;
+        return; // Still not ready, skip this frame
+      }
     }
 
     if (lastTimeRef.current === 0) {
@@ -381,7 +381,10 @@ export function CompactPostTemplates({ onSelect, onTemplateSelect, className = "
 
   // Start animation on mount (only once) — no deps to prevent re-firing
   useEffect(() => {
-    updateTrackWidth();
+    // Measure track width after a frame to ensure layout is complete
+    requestAnimationFrame(() => {
+      updateTrackWidth();
+    });
     window.addEventListener("resize", updateTrackWidth);
 
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -447,7 +450,11 @@ export function CompactPostTemplates({ onSelect, onTemplateSelect, className = "
     const diff = startXRef.current - clientX;
     const newX = normalizePosition(scrollStartRef.current + diff);
     scrollXRef.current = newX;
-    setScrollX(newX);
+
+    // Apply directly to DOM — avoid React re-render during drag
+    if (trackRef.current) {
+      trackRef.current.style.transform = `translate3d(-${newX}px, 0, 0)`;
+    }
   }, [normalizePosition]);
 
   const applyMomentum = useCallback(() => {
@@ -461,7 +468,7 @@ export function CompactPostTemplates({ onSelect, onTemplateSelect, className = "
         velocityRef.current = 0;
         momentumRef.current = null;
 
-        // Resume auto-scroll instantly for seamless transition
+        // Resume auto-scroll after brief pause for seamless transition
         resumeTimeoutRef.current = setTimeout(() => {
           isPausedRef.current = false;
         }, 100);
@@ -470,7 +477,11 @@ export function CompactPostTemplates({ onSelect, onTemplateSelect, className = "
 
       const newX = normalizePosition(scrollXRef.current - velocityRef.current * 16);
       scrollXRef.current = newX;
-      setScrollX(newX);
+
+      // Apply directly to DOM — avoid React re-render during momentum
+      if (trackRef.current) {
+        trackRef.current.style.transform = `translate3d(-${newX}px, 0, 0)`;
+      }
       momentumRef.current = requestAnimationFrame(animateMomentum);
     };
 
@@ -600,7 +611,6 @@ export function CompactPostTemplates({ onSelect, onTemplateSelect, className = "
         <div
           ref={trackRef}
           className="interactive-scroll-track"
-          style={{ transform: `translate3d(-${scrollX}px, 0, 0)` }}
         >
           {duplicatedTemplates.map((template, index) => {
             const chipId = `${template.id}-${index}`;

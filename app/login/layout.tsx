@@ -4,7 +4,7 @@ const baseUrl =
   process.env.NEXT_PUBLIC_BASE_URL || "https://postyapp.ai";
 
 export const metadata: Metadata = {
-  title: "Sign In | Posty AI",
+  title: "Sign In",
   description:
     "Sign in to Posty and generate high-converting LinkedIn posts using AI. Turn your content into clients automatically.",
   robots: {

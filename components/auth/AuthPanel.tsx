@@ -98,50 +98,6 @@ const SparklesIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
 
 // Premium animated background removed - using page's global background for seamless integration
 
-// Social proof component - Premium light mode styling
-const SocialProof = ({ prefersReducedMotion, usersText, thisWeekText }: { prefersReducedMotion: boolean; usersText: string; thisWeekText: string }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 10 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: prefersReducedMotion ? 0 : 0.5, delay: 0.2 }}
-    className="flex items-center justify-center gap-3 sm:gap-4 mb-4 sm:mb-6 px-4 py-2.5 sm:py-3 bg-gradient-to-r from-warm-orange/5 via-transparent to-warm-coral/5 rounded-xl sm:rounded-2xl border border-warm-orange/10"
-  >
-    {/* Real user avatars — social proof */}
-    <div className="flex -space-x-2 sm:-space-x-2.5">
-      {[
-        "/images/team/cerise-cottier.jpg",
-        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face",
-        "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop&crop=face",
-      ].map((src, i) => (
-        <motion.div
-          key={i}
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{
-            duration: prefersReducedMotion ? 0 : 0.3,
-            delay: prefersReducedMotion ? 0 : 0.3 + i * 0.1,
-            type: "spring",
-            stiffness: 200,
-          }}
-          className="w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 border-white shadow-md overflow-hidden"
-        >
-          <img
-            src={src}
-            alt=""
-            className="w-full h-full object-cover"
-            loading="lazy"
-          />
-        </motion.div>
-      ))}
-    </div>
-    <div className="flex flex-col">
-      <span className="text-[11px] sm:text-sm font-semibold text-gray-800">
-        <span className="text-warm-orange">2,847+</span> {usersText}
-      </span>
-      <span className="text-[9px] sm:text-xs text-gray-500">{thisWeekText}</span>
-    </div>
-  </motion.div>
-);
 
 // Premium input component
 interface PremiumInputProps {
@@ -468,21 +424,6 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
         </AnimatePresence>
       </motion.div>
 
-      {/* Social proof - Signup only, animated height to prevent layout shift */}
-      <AnimatePresence initial={false}>
-        {mode === "signup" && (
-          <motion.div
-            initial={{ opacity: 0, height: 0, marginBottom: 0 }}
-            animate={{ opacity: 1, height: "auto", marginBottom: 16 }}
-            exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-            transition={{ duration: prefersReducedMotion ? 0 : 0.25, ease: [0.25, 0.1, 0.25, 1] }}
-            className="overflow-hidden"
-          >
-            <SocialProof prefersReducedMotion={prefersReducedMotion} usersText={t.auth.users} thisWeekText={t.auth.thisWeek} />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Form */}
       <AnimatePresence mode="wait" initial={false}>
         <motion.div
@@ -788,37 +729,32 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
             onConsentMissing={() => { setShowConsentReminder(true); setTimeout(() => setShowConsentReminder(false), 3000); }}
           />
 
-          {/* Toggle mode - Enhanced visibility for signup */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.4 }}
-            className="mt-5 sm:mt-7"
-          >
+          {/* Toggle mode - inside form flow, proportional spacing */}
+          <div className="mt-5 sm:mt-6 text-center">
             {mode === "login" ? (
-              <p className="text-center text-gray-500 text-xs sm:text-sm">
+              <p className="text-gray-500 text-xs sm:text-sm">
                 {t.auth.noAccount}{" "}
                 <button
                   type="button"
                   onClick={() => handleModeSwitch("signup")}
-                  className="text-warm-orange hover:text-warm-coral font-semibold transition-colors underline-offset-2 hover:underline"
+                  className="text-warm-orange hover:text-warm-coral font-semibold transition-colors underline-offset-2 hover:underline cursor-pointer relative z-10"
                 >
                   {t.auth.signUpFree}
                 </button>
               </p>
             ) : (
-              <p className="text-center text-gray-500 text-xs sm:text-sm">
+              <p className="text-gray-500 text-xs sm:text-sm">
                 {t.auth.haveAccount}{" "}
                 <button
                   type="button"
                   onClick={() => handleModeSwitch("login")}
-                  className="text-warm-orange hover:text-warm-coral font-semibold transition-colors underline-offset-2 hover:underline"
+                  className="text-warm-orange hover:text-warm-coral font-semibold transition-colors underline-offset-2 hover:underline cursor-pointer relative z-10"
                 >
                   {t.auth.signIn}
                 </button>
               </p>
             )}
-          </motion.div>
+          </div>
 
         </motion.div>
       </AnimatePresence>
