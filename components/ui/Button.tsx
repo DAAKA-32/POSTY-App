@@ -27,10 +27,10 @@ export default function Button({
   const baseStyles = `
     btn-shimmer
     inline-flex items-center justify-center font-medium rounded-lg
-    transition-all duration-200 ease-out
-    focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background
-    disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none
-    active:scale-[0.98] active:transition-none
+    transition-all duration-200 ease-out transform-gpu will-change-transform
+    focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-app-surface
+    disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:hover:translate-y-0
+    active:scale-[0.98] active:translate-y-0 active:transition-none
     select-none
   `;
 
@@ -39,12 +39,13 @@ export default function Button({
     primary: `
       bg-gradient-to-r from-primary to-primary-hover
       text-white shadow-btn-primary
-      hover:shadow-btn-primary-hover
+      hover:-translate-y-[1px] hover:shadow-btn-primary-hover hover:shadow-glow
+      active:shadow-btn-primary
     `,
     secondary: `
       bg-light-card dark:bg-dark-card text-text-primary
       border border-light-border dark:border-dark-border
-      hover:border-primary/40 hover:bg-light-hover dark:hover:bg-dark-hover
+      hover:-translate-y-[1px] hover:border-primary/40 hover:bg-light-hover dark:hover:bg-dark-hover
       hover:shadow-md
     `,
     ghost: `
@@ -57,12 +58,12 @@ export default function Button({
       bg-gradient-to-r from-red-500 to-red-600
       text-white
       shadow-[0_4px_14px_rgba(239,68,68,0.35)]
-      hover:shadow-[0_6px_20px_rgba(239,68,68,0.45)]
+      hover:-translate-y-[1px] hover:shadow-[0_6px_20px_rgba(239,68,68,0.45)]
     `,
     accent: `
       bg-gradient-to-r from-accent to-accent-hover
       text-white shadow-glow-accent
-      hover:shadow-lg
+      hover:-translate-y-[1px] hover:shadow-lg
     `,
 
     // AUTOSCROLL COLORS - Vert
@@ -70,7 +71,7 @@ export default function Button({
       bg-gradient-to-r from-emerald-500 to-emerald-600
       text-white
       shadow-[0_4px_14px_rgba(16,185,129,0.3)]
-      hover:shadow-[0_6px_20px_rgba(16,185,129,0.4)]
+      hover:-translate-y-[1px] hover:shadow-[0_6px_20px_rgba(16,185,129,0.4)]
     `,
 
     // AUTOSCROLL COLORS - Jaune/Amber
@@ -78,7 +79,7 @@ export default function Button({
       bg-gradient-to-r from-amber-500 to-amber-600
       text-white
       shadow-[0_4px_14px_rgba(245,158,11,0.3)]
-      hover:shadow-[0_6px_20px_rgba(245,158,11,0.4)]
+      hover:-translate-y-[1px] hover:shadow-[0_6px_20px_rgba(245,158,11,0.4)]
     `,
 
     // AUTOSCROLL COLORS - Bleu
@@ -86,7 +87,7 @@ export default function Button({
       bg-gradient-to-r from-blue-500 to-blue-600
       text-white
       shadow-[0_4px_14px_rgba(59,130,246,0.3)]
-      hover:shadow-[0_6px_20px_rgba(59,130,246,0.4)]
+      hover:-translate-y-[1px] hover:shadow-[0_6px_20px_rgba(59,130,246,0.4)]
     `,
 
     // AUTOSCROLL COLORS - Violet/Premium
@@ -94,7 +95,7 @@ export default function Button({
       bg-gradient-to-r from-violet-500 to-purple-500
       text-white
       shadow-[0_4px_14px_rgba(139,92,246,0.3)]
-      hover:shadow-[0_6px_20px_rgba(139,92,246,0.4)]
+      hover:-translate-y-[1px] hover:shadow-[0_6px_20px_rgba(139,92,246,0.4)]
     `,
 
     outline: `

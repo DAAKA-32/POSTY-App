@@ -650,11 +650,32 @@ const SECTOR_CONTEXT: Record<string, { fr: string; en: string }> = {
 
 // ============== PROFILE SYNTHESIS ==============
 
-/** Normalize a profile field that may be string or string[] to a single string */
-function flattenField(value: string | string[] | undefined): string {
-  if (!value) return "";
-  if (Array.isArray(value)) return value.join(", ");
-  return value.trim();
+/** Normalize a profile field (unknown shape) to a single trimmed string. Never throws. */
+function flattenField(value: unknown): string {
+  if (typeof value === "string") return value.trim();
+  if (Array.isArray(value)) {
+    return value
+      .filter((v): v is string => typeof v === "string")
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .join(", ");
+  }
+  return "";
+}
+
+/** Normalize a profile field into a list of trimmed strings. Never throws. */
+function flattenFieldList(value: unknown): string[] {
+  if (typeof value === "string") {
+    const v = value.trim();
+    return v ? [v] : [];
+  }
+  if (Array.isArray(value)) {
+    return value
+      .filter((v): v is string => typeof v === "string")
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }
+  return [];
 }
 
 export function synthesizeProfile(
@@ -663,7 +684,7 @@ export function synthesizeProfile(
 ): string | null {
   const parts: string[] = [];
 
-  const role = profile.role?.trim();
+  const role = flattenField(profile.role);
   const sector = flattenField(profile.sector);
 
   if (role && sector) {
@@ -712,9 +733,7 @@ function buildVoiceProfile(
   }
 
   // Tone → concrete style instructions (supports array or string)
-  const tones = Array.isArray(profile.communicationTone)
-    ? profile.communicationTone
-    : profile.communicationTone ? [profile.communicationTone.trim()] : [];
+  const tones = flattenFieldList(profile.communicationTone);
   for (const tone of tones) {
     if (tone && TONE_STYLE_MAP[tone]) {
       blocks.push(TONE_STYLE_MAP[tone][language]);
@@ -722,15 +741,13 @@ function buildVoiceProfile(
   }
 
   // Profile type → authentic narrative context
-  const profileType = profile.profileType?.trim();
+  const profileType = flattenField(profile.profileType);
   if (profileType && PROFILE_TYPE_CONTEXT[profileType]) {
     blocks.push(PROFILE_TYPE_CONTEXT[profileType][language]);
   }
 
   // Sector → industry-specific vocabulary and examples (supports array or string)
-  const sectors = Array.isArray(profile.sector)
-    ? profile.sector
-    : profile.sector ? [profile.sector.trim()] : [];
+  const sectors = flattenFieldList(profile.sector);
   for (const sector of sectors) {
     if (sector && SECTOR_CONTEXT[sector]) {
       blocks.push(SECTOR_CONTEXT[sector][language]);
@@ -738,7 +755,7 @@ function buildVoiceProfile(
   }
 
   // Role → persona voice adaptation
-  const role = profile.role?.trim();
+  const role = flattenField(profile.role);
   if (role) {
     const roleKey = matchRoleKey(role);
     if (roleKey && ROLE_VOICE_MAP[roleKey]) {
@@ -754,7 +771,7 @@ function buildVoiceProfile(
   }
 
   // Personalized signature with displayName (Pro+)
-  const displayName = profile.displayName?.trim();
+  const displayName = flattenField(profile.displayName);
   if (displayName) {
     const signatureBlock = isFr
       ? `SIGNATURE PERSONNALISÉE: Termine le post par une signature avec "${displayName}". Varie le format à chaque post: parfois juste le prénom, parfois "— ${displayName}", parfois "${displayName}, ${role || 'expert'}", parfois une formule naturelle comme "À bientôt". JAMAIS "Cordialement" ni formule robotique. Chaque post = signature différente.`
@@ -779,11 +796,16 @@ function buildVoiceProfile(
 // ============== OBJECTIVE STRATEGY INJECTION ==============
 
 function getObjectiveStrategy(
-  objective: string | undefined,
+  objective: unknown,
   language: Language
 ): string | null {
-  if (!objective?.trim()) return null;
-  const strategy = OBJECTIVE_STRATEGIES[objective.trim()];
+  const normalized = typeof objective === "string"
+    ? objective.trim()
+    : Array.isArray(objective)
+      ? objective.filter((v) => typeof v === "string").join(", ").trim()
+      : "";
+  if (!normalized) return null;
+  const strategy = OBJECTIVE_STRATEGIES[normalized];
   return strategy ? strategy[language] : null;
 }
 
@@ -954,11 +976,12 @@ export function buildOptimizedPrompt(
   }
 
   // Inject audience targeting (now available for all Pro+ users)
-  if (profile.targetAudience?.trim()) {
+  const audience = flattenField(profile.targetAudience);
+  if (audience) {
     const audienceInstruction =
       language === "fr"
-        ? `\nCIBLAGE: Adapte le vocabulaire, les exemples et les références pour résonner avec ${profile.targetAudience.trim()}. Le lecteur doit se reconnaître immédiatement.`
-        : `\nTARGETING: Adapt vocabulary, examples, and references to resonate with ${profile.targetAudience.trim()}. The reader must immediately see themselves in it.`;
+        ? `\nCIBLAGE: Adapte le vocabulaire, les exemples et les références pour résonner avec ${audience}. Le lecteur doit se reconnaître immédiatement.`
+        : `\nTARGETING: Adapt vocabulary, examples, and references to resonate with ${audience}. The reader must immediately see themselves in it.`;
     prompt += audienceInstruction;
   }
 

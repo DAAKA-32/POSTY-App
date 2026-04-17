@@ -10,6 +10,7 @@ import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useChat } from "@/hooks/chat/useChat";
 import { useSmartScroll } from "@/hooks/scroll/useSmartScroll";
 import { useBrowserMode } from "@/hooks/ui/useBrowserMode";
+import { useKeyboardHeight } from "@/hooks/input/useKeyboardHeight";
 import { getPost, getUserPostsWithPinned, getDualModeUsageThisWeek } from "@/lib/db/firestore";
 import { getCachedConversation, setCachedConversation } from "@/lib/storage/conversation-cache";
 import { getPlanFeatures } from "@/lib/config/plan-features";
@@ -51,6 +52,7 @@ function ConversationContent() {
   const { canSendMessage } = useQuota();
   const { currentPlan, planLimits, isMaxPlan, isProPlan } = useSubscription();
   const browserMode = useBrowserMode();
+  const { keyboardHeight, isKeyboardVisible } = useKeyboardHeight();
 
   // Conversation state — try cache first for instant display
   const cachedPost = getCachedConversation(conversationId);
@@ -111,6 +113,7 @@ function ConversationContent() {
     generationPhaseMessage,
     error,
     generate,
+    stopGeneration,
     reset,
     loadConversation,
   } = useChat({
@@ -731,7 +734,13 @@ function ConversationContent() {
           className={`
             fixed-input-area
             ${browserMode.isMobileBrowser ? 'mobile-browser-mode' : ''}
+            ${isKeyboardVisible ? 'keyboard-visible' : ''}
           `}
+          style={
+            isKeyboardVisible
+              ? ({ '--keyboard-height': `${keyboardHeight}px` } as React.CSSProperties)
+              : undefined
+          }
         >
           <div className="max-w-3xl mx-auto px-3 sm:px-4 py-2 sm:py-3 lg:py-2">
             {/* Post Mode Selector / Upgrade Banner zone — hidden in general AI mode */}
@@ -822,8 +831,12 @@ function ConversationContent() {
                   setIsRecording(false);
                   try { recognitionRef.current.stop(); } catch { /* ignore */ }
                 }
+                // Scroll to bottom immediately so the user's message is in view
+                // while the AI response starts streaming (ChatGPT pattern).
+                requestAnimationFrame(() => scrollToBottom());
                 await generate(message);
               }}
+              onStop={stopGeneration}
               placeholder={PLACEHOLDER_EXAMPLES}
               disabled={false}
               isLoading={isLoading}

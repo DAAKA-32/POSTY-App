@@ -35,6 +35,8 @@ import { useLanguage } from "@/contexts/LanguageContext";
 interface UniversalChatInputProps {
   // Core functionality
   onSubmit: (message: string, file?: FileAttachment | null) => void;
+  /** Optional stop handler — when provided and `isLoading`, send button morphs into stop button (ChatGPT-style) */
+  onStop?: () => void;
   placeholder?: string | string[]; // Single string or rotating array
   disabled?: boolean;
   isLoading?: boolean;
@@ -93,6 +95,7 @@ export interface UniversalChatInputRef {
 
 const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputProps>(({
   onSubmit,
+  onStop,
   placeholder,
   disabled = false,
   isLoading = false,
@@ -309,29 +312,38 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
         // Reset textarea height to minimum immediately
         if (textareaRef.current) {
           textareaRef.current.style.height = `${effectiveMinHeight}px`;
-        }
-      }
-    },
-    [message, isLoading, disabled, trialLimitReached, quotaLimitReached, onSubmit, effectiveMinHeight, maxCharacters, attachedFile]
-  );
-
-  // Handle keyboard shortcuts
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Enter") {
-        if (!e.shiftKey) {
-          // Submit on Enter
-          e.preventDefault();
-          handleSubmit();
-        } else {
-          // Prevent line break on Shift+Enter if message is empty or contains only whitespace
-          if (!message.trim()) {
-            e.preventDefault();
+          // Desktop: keep focus so user can keep typing (ChatGPT pattern).
+          // Mobile: blur to let the keyboard dismiss naturally after send.
+          if (!isMobile) {
+            requestAnimationFrame(() => textareaRef.current?.focus());
           }
         }
       }
     },
-    [handleSubmit, message]
+    [message, isLoading, disabled, trialLimitReached, quotaLimitReached, onSubmit, effectiveMinHeight, maxCharacters, attachedFile, isMobile]
+  );
+
+  // Handle keyboard shortcuts
+  // Desktop: Enter sends, Shift+Enter inserts newline.
+  // Mobile: Enter always inserts a newline — users tap the send button (ChatGPT pattern).
+  //   This avoids accidental sends from the on-screen keyboard's Return key.
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "Enter") {
+        if (isMobile) {
+          // Let the default newline behavior happen on mobile
+          return;
+        }
+        if (!e.shiftKey) {
+          e.preventDefault();
+          handleSubmit();
+        } else if (!message.trim()) {
+          // Prevent line break on Shift+Enter if message is empty or only whitespace
+          e.preventDefault();
+        }
+      }
+    },
+    [handleSubmit, message, isMobile]
   );
 
   // Handle voice recording toggle
@@ -453,8 +465,8 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
               maxHeight: `${maxHeight}px`,
               overflowY: "auto",
               lineHeight: "1.5",
-              transition: "height 0.1s ease-out",
-              // Cross-platform consistency fixes
+              // No transition on height — let it grow instantly with text to avoid jitter while typing.
+              // The Spring-like feel comes from the browser's native layout being immediate.
               boxSizing: "border-box",
               WebkitBoxSizing: "border-box",
               // Prevent iOS zoom on focus (font-size >= 16px)
@@ -464,6 +476,8 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
               appearance: "none",
               // Prevent touch highlight issues
               WebkitTapHighlightColor: "transparent",
+              // Smooth momentum scroll on iOS when content exceeds maxHeight
+              WebkitOverflowScrolling: "touch",
             }}
           />
 
@@ -592,33 +606,72 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
               </AnimatePresence>
             )}
 
-            {/* Submit button */}
-            <motion.button
-              type="button"
-              onClick={quotaLimitReached ? openQuotaModal : handleSubmit}
-              disabled={!message.trim() || isLoading || disabled || trialLimitReached}
-              whileTap={{ scale: message.trim() && !isLoading && !disabled ? 0.95 : 1 }}
-              className={`
-                w-11 h-11 rounded-full
-                flex items-center justify-center
-                transition-all duration-300
-                ${message.trim() && !isLoading && !disabled && !trialLimitReached && !quotaLimitReached
-                  ? "bg-gradient-to-r from-primary to-accent text-white"
-                  : "bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed"
-                }
-              `}
-            >
-              {isLoading ? (
-                <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-              ) : (
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
-                </svg>
-              )}
-            </motion.button>
+            {/* Submit / Stop button — morphs into stop button while generating (ChatGPT pattern) */}
+            {isLoading && onStop ? (
+              <motion.button
+                key="stop-button"
+                type="button"
+                onClick={onStop}
+                aria-label="Arrêter la génération"
+                title="Arrêter la génération"
+                initial={{ opacity: 0, scale: 0.85 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.85 }}
+                whileTap={{ scale: 0.92 }}
+                className="
+                  w-11 h-11 rounded-full
+                  flex items-center justify-center
+                  bg-gray-900 dark:bg-white text-white dark:text-gray-900
+                  shadow-[0_0_0_4px_rgba(248,147,93,0.15)]
+                  transition-all duration-200
+                  hover:bg-black dark:hover:bg-gray-100
+                "
+              >
+                {/* Stop square with a subtle breathing ring to show something is happening */}
+                <span className="relative inline-flex">
+                  <span
+                    aria-hidden="true"
+                    className="absolute -inset-2 rounded-full border border-primary/30 animate-glow-pulse"
+                  />
+                  <svg className="w-4 h-4 relative" viewBox="0 0 20 20" fill="currentColor">
+                    <rect x="5" y="5" width="10" height="10" rx="2" />
+                  </svg>
+                </span>
+              </motion.button>
+            ) : (
+              <motion.button
+                key="send-button"
+                type="button"
+                onClick={quotaLimitReached ? openQuotaModal : handleSubmit}
+                disabled={!message.trim() || isLoading || disabled || trialLimitReached}
+                aria-label="Envoyer le message"
+                title="Envoyer"
+                initial={{ opacity: 0, scale: 0.85 }}
+                animate={{ opacity: 1, scale: 1 }}
+                whileTap={{ scale: message.trim() && !isLoading && !disabled ? 0.92 : 1 }}
+                className={`
+                  w-11 h-11 rounded-full
+                  flex items-center justify-center
+                  transition-all duration-200 ease-out
+                  ${message.trim() && !isLoading && !disabled && !trialLimitReached && !quotaLimitReached
+                    ? "bg-gradient-to-r from-primary to-accent text-white shadow-[0_4px_14px_rgba(248,147,93,0.35)] hover:shadow-[0_6px_18px_rgba(248,147,93,0.45)] hover:brightness-[1.05]"
+                    : "bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed"
+                  }
+                `}
+              >
+                {isLoading ? (
+                  <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5 translate-x-[1px] -translate-y-[0.5px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14" />
+                    <path d="M13 6l6 6-6 6" />
+                  </svg>
+                )}
+              </motion.button>
+            )}
           </div>
         </div>
       </div>

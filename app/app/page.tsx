@@ -180,6 +180,7 @@ function AppContent() {
     isStreaming,
     error,
     generate,
+    stopGeneration,
     reset,
     insights,
     postId,
@@ -937,6 +938,7 @@ function AppContent() {
                   if (isRecordingRef.current) forceStopRecording();
                   await handleGenerate(message, file);
                 }}
+                onStop={stopGeneration}
                 placeholder={aiMode === "general" ? t.appPage.placeholderGeneralFixed : t.appPage.placeholderFixed}
                 disabled={!canSendMessage}
                 isLoading={isLoading || isStreaming}

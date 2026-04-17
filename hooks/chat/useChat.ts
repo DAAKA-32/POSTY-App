@@ -60,6 +60,8 @@ interface UseChatReturn {
   generationCount: number;
   canGenerate: boolean;
   generate: (prompt: string, file?: FileAttachment | null) => Promise<void>;
+  /** Abort the in-flight generation without clearing messages (ChatGPT-style stop) */
+  stopGeneration: () => void;
   reset: () => void;
   loadConversation: (post: { prompt: string; responseA: string; responseB: string; id: string; messages?: ConversationTurn[]; responseMode?: string; selectedStyle?: string }) => void;
   lastPrompt: string;
@@ -552,6 +554,18 @@ export function useChat({
     [userId, isGuest, canGenerate, incrementGuestCount, dualMode, responseType, effectiveStyle, aiMode, setPostIdWithRef]
   );
 
+  // Stop any in-flight generation without resetting messages (ChatGPT-style stop)
+  const stopGeneration = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    setIsStreaming(false);
+    setIsLoading(false);
+    setGenerationPhase("idle");
+    setGenerationPhaseMessage("");
+  }, []);
+
   // Reset chat state - starts a NEW conversation
   const reset = useCallback(() => {
     // Increment generation to discard any in-flight async saves
@@ -684,6 +698,7 @@ export function useChat({
     generationCount,
     canGenerate,
     generate,
+    stopGeneration,
     reset,
     loadConversation,
     lastPrompt,

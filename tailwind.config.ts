@@ -30,6 +30,7 @@ export default {
         "background-warm": "var(--background-warm)",
         "background-peach": "var(--background-peach)",
         "background-cream": "var(--background-cream)",
+        "app-surface": "var(--background-app)",
         foreground: "var(--foreground)",
 
         // Primary - Orange clair (couleur principale CTA)
