@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"
+    />
+    <title>Posty</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        background: #0a0a0a;
+        color: #fafafa;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue",
+          Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      .wrap {
+        min-height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        text-align: center;
+      }
+      .logo {
+        width: 88px;
+        height: 88px;
+        border-radius: 22px;
+        margin-bottom: 24px;
+      }
+      h1 {
+        font-size: 22px;
+        margin: 0 0 8px;
+      }
+      p {
+        margin: 0;
+        opacity: 0.7;
+        max-width: 320px;
+        line-height: 1.5;
+        font-size: 15px;
+      }
+      button {
+        margin-top: 28px;
+        appearance: none;
+        border: 0;
+        background: #fafafa;
+        color: #0a0a0a;
+        font-size: 15px;
+        font-weight: 600;
+        padding: 14px 22px;
+        border-radius: 12px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <img class="logo" src="icon.png" alt="Posty" />
+      <h1>Connexion requise</h1>
+      <p>
+        Impossible de joindre Posty. Vérifiez votre connexion, puis réessayez.
+      </p>
+      <button onclick="location.reload()">Réessayer</button>
+    </div>
+  </body>
+</html>

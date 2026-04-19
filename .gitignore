@@ -50,3 +50,23 @@ nul
 
 # Claude local settings
 .claude/settings.local.json
+
+# Capacitor / iOS build artifacts
+ios/App/App/public/
+ios/App/Pods/
+ios/App/build/
+ios/App/DerivedData/
+ios/App/App.xcworkspace/xcuserdata/
+ios/App/App.xcodeproj/xcuserdata/
+ios/App/App.xcodeproj/project.xcworkspace/xcuserdata/
+ios/.gradle/
+ios/capacitor-cordova-ios-plugins/
+ios/App/output/
+*.ipa
+*.xcarchive
+*.mobileprovision
+*.p12
+*.p8
+*.cer
+*.certSigningRequest
+ExportOptions.plist

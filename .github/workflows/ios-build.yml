@@ -1,0 +1,206 @@
+name: iOS Build & Deploy
+
+# Builds a signed .ipa of the Posty iOS app (Capacitor shell pointing at
+# https://postyapp.ai) on a macOS runner, and optionally uploads to
+# TestFlight. Works entirely from a Windows workstation — everything iOS
+# happens in CI.
+#
+# Triggers:
+#   - Manual via "Run workflow" (choose target = artifact | testflight)
+#   - Push of a tag matching `ios-v*` (always uploads to TestFlight)
+#
+# Required GitHub secrets — see docs/IOS_SETUP.md for how to create them.
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Build target"
+        required: true
+        default: "artifact"
+        type: choice
+        options:
+          - artifact
+          - testflight
+      build_number:
+        description: "Build number (optional — defaults to run number)"
+        required: false
+        type: string
+  push:
+    tags:
+      - "ios-v*"
+
+concurrency:
+  group: ios-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-ios:
+    name: Build iOS (.ipa)
+    runs-on: macos-14
+    timeout-minutes: 45
+
+    env:
+      APP_BUNDLE_ID: ai.postyapp.mobile
+      APP_SCHEME: App
+      MARKETING_VERSION: "1.0.0"
+      BUILD_NUMBER: ${{ github.event.inputs.build_number || github.run_number }}
+      SHOULD_UPLOAD: ${{ github.event.inputs.target == 'testflight' || startsWith(github.ref, 'refs/tags/ios-v') }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select latest stable Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Setup Ruby (for CocoaPods)
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: false
+
+      - name: Install CocoaPods & xcpretty
+        run: |
+          gem install cocoapods --no-document
+          gem install xcpretty --no-document
+          pod --version
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Install App Store Connect API key (for xcodebuild & altool)
+        env:
+          ASC_KEY: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+          ASC_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+        run: |
+          mkdir -p "$RUNNER_TEMP"
+          printf '%s' "$ASC_KEY" > "$RUNNER_TEMP/AuthKey.p8"
+          mkdir -p ~/.appstoreconnect/private_keys
+          printf '%s' "$ASC_KEY" > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+          chmod 600 "$RUNNER_TEMP/AuthKey.p8" ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+
+      - name: Generate iOS native assets (icons & splash)
+        run: npx capacitor-assets generate --ios
+        continue-on-error: true
+
+      - name: Add iOS platform (if not committed)
+        run: |
+          if [ ! -d "ios" ]; then
+            echo "ios/ folder not present — scaffolding via capacitor"
+            npx cap add ios
+          else
+            echo "ios/ folder already present — skipping add"
+          fi
+
+      - name: Sync Capacitor → iOS
+        run: npx cap sync ios
+
+      - name: Install CocoaPods dependencies
+        working-directory: ios/App
+        run: pod install --repo-update
+
+      - name: Set marketing version & build number
+        working-directory: ios/App
+        run: |
+          /usr/bin/xcrun agvtool new-marketing-version "${MARKETING_VERSION}"
+          /usr/bin/xcrun agvtool new-version -all "${BUILD_NUMBER}"
+
+      - name: Import Apple distribution certificate
+        uses: apple-actions/import-codesign-certs@v3
+        with:
+          p12-file-base64: ${{ secrets.IOS_DIST_CERT_P12_BASE64 }}
+          p12-password: ${{ secrets.IOS_DIST_CERT_PASSWORD }}
+
+      - name: Download provisioning profile
+        uses: apple-actions/download-provisioning-profiles@v3
+        with:
+          bundle-id: ${{ env.APP_BUNDLE_ID }}
+          profile-type: IOS_APP_STORE
+          issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
+          api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
+          api-private-key: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+
+      - name: Write ExportOptions.plist
+        run: |
+          cat > ios/App/ExportOptions.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store</string>
+            <key>teamID</key>
+            <string>${{ secrets.APPLE_TEAM_ID }}</string>
+            <key>signingStyle</key>
+            <string>automatic</string>
+            <key>destination</key>
+            <string>export</string>
+            <key>stripSwiftSymbols</key>
+            <true/>
+            <key>uploadBitcode</key>
+            <false/>
+            <key>uploadSymbols</key>
+            <true/>
+          </dict>
+          </plist>
+          EOF
+
+      - name: Build & archive
+        working-directory: ios/App
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -workspace App.xcworkspace \
+            -scheme "${APP_SCHEME}" \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination "generic/platform=iOS" \
+            -archivePath "$PWD/build/App.xcarchive" \
+            -allowProvisioningUpdates \
+            -authenticationKeyID "${{ secrets.APPSTORE_KEY_ID }}" \
+            -authenticationKeyIssuerID "${{ secrets.APPSTORE_ISSUER_ID }}" \
+            -authenticationKeyPath "$RUNNER_TEMP/AuthKey.p8" \
+            DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
+            CODE_SIGN_STYLE=Automatic \
+            archive | xcpretty
+
+      - name: Export .ipa
+        working-directory: ios/App
+        run: |
+          set -o pipefail
+          xcodebuild -exportArchive \
+            -archivePath "$PWD/build/App.xcarchive" \
+            -exportPath "$PWD/build/ipa" \
+            -exportOptionsPlist ExportOptions.plist \
+            -allowProvisioningUpdates \
+            -authenticationKeyID "${{ secrets.APPSTORE_KEY_ID }}" \
+            -authenticationKeyIssuerID "${{ secrets.APPSTORE_ISSUER_ID }}" \
+            -authenticationKeyPath "$RUNNER_TEMP/AuthKey.p8" | xcpretty
+
+      - name: Upload .ipa as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Posty-iOS-${{ env.MARKETING_VERSION }}-${{ env.BUILD_NUMBER }}
+          path: ios/App/build/ipa/*.ipa
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload to TestFlight
+        if: env.SHOULD_UPLOAD == 'true'
+        run: |
+          IPA_PATH=$(ls ios/App/build/ipa/*.ipa | head -n 1)
+          echo "Uploading ${IPA_PATH} to TestFlight…"
+          xcrun altool --upload-app \
+            --type ios \
+            --file "${IPA_PATH}" \
+            --apiKey "${{ secrets.APPSTORE_KEY_ID }}" \
+            --apiIssuer "${{ secrets.APPSTORE_ISSUER_ID }}"
