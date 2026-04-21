@@ -18,6 +18,12 @@ interface ModalProps {
   scrollable?: boolean;
   /** ARIA description for accessibility */
   description?: string;
+  /**
+   * Optional sticky footer rendered outside the scrollable body. Use this
+   * for primary modal actions so they're flush with the modal's bottom
+   * edge (no gap from body padding, rounded corners follow the modal).
+   */
+  footer?: ReactNode;
 }
 
 // Spring animation config for smooth, natural feel
@@ -63,6 +69,7 @@ export default function Modal({
   size = "md",
   scrollable = true,
   description,
+  footer,
 }: ModalProps) {
   const { t } = useLanguage();
   const scrollPosRef = useRef(0);
@@ -145,7 +152,7 @@ export default function Modal({
               relative ${sizes[size]} w-full
               bg-light-card dark:bg-dark-card
               border border-light-border dark:border-dark-border
-              rounded-xl
+              rounded-xl overflow-hidden
               shadow-elevated
               my-auto
               max-h-[85vh]
@@ -215,13 +222,20 @@ export default function Modal({
             {/* Body - scrollable if content overflows */}
             <div
               className={`
-                p-5 pb-6
+                p-5 ${footer ? "" : "pb-6"}
                 ${scrollable ? "overflow-y-auto overscroll-contain gpu-scroll" : "overflow-visible"}
                 flex-1 min-h-0
               `}
             >
               {children}
             </div>
+
+            {/* Sticky footer — flush with modal bottom edge */}
+            {footer && (
+              <div className="flex-shrink-0 px-5 py-4 bg-light-card dark:bg-dark-card border-t border-light-border dark:border-dark-border">
+                {footer}
+              </div>
+            )}
           </motion.div>
         </div>
       )}
