@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { saveLinkedInConnectionAdmin } from "@/lib/db/firestore-admin";
+import { saveLinkedInConnectionAdmin, LinkedInOrganizationAdmin } from "@/lib/db/firestore-admin";
 import { isAdminInitialized, adminDb } from "@/lib/db/firebase-admin";
 import { LINKEDIN_CONFIG } from "@/lib/platforms/linkedin";
+import { fetchAdminOrganizations } from "@/lib/linkedin/organizations";
 
 /**
  * Route de callback OAuth 2.0 LinkedIn
@@ -85,6 +86,11 @@ export async function GET(request: NextRequest) {
     const tokenData = await tokenResponse.json();
     const accessToken = tokenData.access_token;
     const expiresIn = tokenData.expires_in; // Secondes jusqu'à expiration (généralement 60 jours)
+    // LinkedIn returns the actually granted scopes (may differ from requested
+    // ones if MDP products aren't enabled on the app or the user denied).
+    const grantedScopes: string[] = typeof tokenData.scope === "string"
+      ? tokenData.scope.split(/[\s,]+/).filter(Boolean)
+      : [];
 
     // 👤 ÉTAPE 2: Récupération du profil utilisateur LinkedIn
     const profileResponse = await fetch("https://api.linkedin.com/v2/userinfo", {
@@ -102,6 +108,24 @@ export async function GET(request: NextRequest) {
     }
 
     const profileData = await profileResponse.json();
+
+    // 🏢 ÉTAPE 2b: Récupération des Company Pages que l'user administre
+    // Non-bloquant : si la MDP n'est pas encore approuvée sur l'app LinkedIn,
+    // l'appel renverra 403 et on continue sans organisations (fallback perso).
+    let organizations: LinkedInOrganizationAdmin[] = [];
+    try {
+      organizations = await fetchAdminOrganizations(accessToken, grantedScopes);
+      if (organizations.length > 0) {
+        console.log(
+          `[LinkedIn OAuth] Fetched ${organizations.length} admin organization(s) for user ${userId}`
+        );
+      }
+    } catch (orgError) {
+      console.warn(
+        "[LinkedIn OAuth] Could not fetch organizations (scope missing or MDP not approved):",
+        orgError instanceof Error ? orgError.message : orgError
+      );
+    }
 
     // 🔍 Vérification de l'initialisation Firebase Admin
     if (!isAdminInitialized()) {
@@ -121,9 +145,14 @@ export async function GET(request: NextRequest) {
       profileName: profileData.name || "",
       profilePicture: profileData.picture || undefined,
       email: profileData.email || undefined,
+      organizations,
+      grantedScopes,
     });
 
     // 🖼️ ÉTAPE 3b: Synchronisation de la photo LinkedIn vers le profil utilisateur
+    // Assure que la photo LinkedIn est disponible sur TOUS les appareils dès que
+    // l'utilisateur charge son profil, même avant que LinkedInContext n'ait fini
+    // de lire linkedinConnections.
     if (profileData.picture && adminDb) {
       try {
         const userRef = adminDb.collection("users").doc(userId);

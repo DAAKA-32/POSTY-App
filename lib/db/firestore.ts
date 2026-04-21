@@ -751,6 +751,15 @@ export async function updateConsentPreference(
 // Collection: linkedinConnections
 // Fields: userId, linkedInId, accessToken, expiresAt, profileName, profilePicture, email, connectedAt, lastUsedAt
 
+export interface LinkedInOrganization {
+  urn: string;
+  organizationId: string;
+  name: string;
+  vanityName?: string;
+  logoUrl?: string;
+  role?: string;
+}
+
 export interface LinkedInConnectionData {
   userId: string;
   linkedInId: string;
@@ -761,6 +770,15 @@ export interface LinkedInConnectionData {
   email?: string;
   connectedAt: Timestamp;
   lastUsedAt?: Timestamp;
+  // Tracks when profilePicture was last fetched from LinkedIn. LinkedIn CDN
+  // URLs are signed and expire after hours, so other devices must refresh
+  // before using a stale URL.
+  photoUpdatedAt?: Timestamp;
+  // Company Pages the user administers (from Marketing Developer Platform).
+  // Only posts published as one of these orgs have API-accessible metrics.
+  organizations?: LinkedInOrganization[];
+  organizationsUpdatedAt?: Timestamp;
+  grantedScopes?: string[];
 }
 
 export async function saveLinkedInConnection(
@@ -785,6 +803,7 @@ export async function saveLinkedInConnection(
     email: data.email || null,
     connectedAt: serverTimestamp(),
     lastUsedAt: null,
+    photoUpdatedAt: data.profilePicture ? serverTimestamp() : null,
   });
 }
 
@@ -821,11 +840,17 @@ export interface LinkedInPostMetrics {
   comments: number;
   shares: number;
   impressions?: number;
+  uniqueImpressions?: number;
+  clicks?: number;
   clickRate?: number;
   engagementRate?: number;
   updatedAt: Timestamp;
   source: 'manual' | 'extension' | 'api';
 }
+
+export type LinkedInAuthorType = "person" | "organization";
+export type LinkedInPostStatus = "published" | "deleted" | "unknown";
+export type LinkedInMetricsSyncStatus = "synced" | "pending" | "failed" | "not_available";
 
 export interface LinkedInPostData {
   id: string;
@@ -838,6 +863,18 @@ export interface LinkedInPostData {
   success: boolean;
   error?: string;
   metrics?: LinkedInPostMetrics;
+  // Author tracking — determines whether API metrics are retrievable for this post
+  authorType?: LinkedInAuthorType;
+  authorUrn?: string;
+  organizationUrn?: string;
+  organizationName?: string;
+  // Lifecycle + sync
+  status?: LinkedInPostStatus;
+  deletedFromPlatform?: boolean;
+  deletedFromPlatformAt?: Timestamp;
+  syncStatus?: LinkedInMetricsSyncStatus;
+  syncError?: string;
+  lastMetricsSyncAt?: Timestamp;
 }
 
 export interface LinkedInAnalyticsSummary {
@@ -1958,9 +1995,12 @@ export interface DashboardStats {
   totalSessions: number;
   postsLast7Days: number;
   postsLast30Days: number;
+  scheduledPostsCount: number;
   postsByDay: { date: string; count: number }[];
+  /** @deprecated redundant with responseModeDistribution — kept for backward-compat, no longer rendered */
   styleDistribution: { style: string; count: number }[];
   responseModeDistribution: { mode: string; count: number }[];
+  featureUsage: { feature: string; count: number }[];
   recentActivity: { date: string; type: string; content: string }[];
 }
 
@@ -1998,6 +2038,12 @@ export async function getDashboardStats(userId: string): Promise<DashboardStats>
   const sessionsSnapshot = await getDocs(sessionsQuery);
   const totalSessions = sessionsSnapshot.size;
 
+  // Get scheduled posts count
+  const scheduledRef = collection(db, "scheduledPosts");
+  const scheduledQuery = query(scheduledRef, where("userId", "==", userId));
+  const scheduledSnapshot = await getDocs(scheduledQuery);
+  const scheduledPostsCount = scheduledSnapshot.size;
+
   // Calculate posts in last 7 and 30 days
   let postsLast7Days = 0;
   let postsLast30Days = 0;
@@ -2012,6 +2058,10 @@ export async function getDashboardStats(userId: string): Promise<DashboardStats>
     "Double Réponse": 0,
   };
 
+  // Feature usage counters
+  let templatePostsCount = 0;
+  let chatPostsCount = 0;
+
   posts.forEach((post) => {
     const postData = post as {
       createdAt?: Timestamp;
@@ -2019,7 +2069,15 @@ export async function getDashboardStats(userId: string): Promise<DashboardStats>
       contentB?: string;
       responseMode?: string;
       selectedStyle?: string;
+      templateId?: string;
+      source?: string;
     };
+    // Count feature usage (template vs chat) — an individual post cannot be both
+    if (postData.templateId || postData.source === "template") {
+      templatePostsCount++;
+    } else {
+      chatPostsCount++;
+    }
     if (postData.createdAt) {
       const postDate = postData.createdAt.toDate();
       const dateKey = postDate.toISOString().split("T")[0];
@@ -2073,6 +2131,14 @@ export async function getDashboardStats(userId: string): Promise<DashboardStats>
     count,
   }));
 
+  // Feature usage (chat vs templates vs scheduled vs published)
+  const featureUsage = [
+    { feature: "chat",      count: chatPostsCount },
+    { feature: "templates", count: templatePostsCount },
+    { feature: "scheduled", count: scheduledPostsCount },
+    { feature: "published", count: publishedPosts },
+  ];
+
   // Recent activity (last 5 posts)
   const recentActivity = posts.slice(0, 5).map((post) => {
     const postData = post as { createdAt?: Timestamp; prompt?: string };
@@ -2089,9 +2155,11 @@ export async function getDashboardStats(userId: string): Promise<DashboardStats>
     totalSessions,
     postsLast7Days,
     postsLast30Days,
+    scheduledPostsCount,
     postsByDay,
     styleDistribution,
     responseModeDistribution,
+    featureUsage,
     recentActivity,
   };
 }

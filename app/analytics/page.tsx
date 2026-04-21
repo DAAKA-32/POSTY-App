@@ -10,6 +10,7 @@ import {
   getLinkedInPosts,
   getLinkedInAnalytics,
   markLinkedInPostDeleted,
+  getScheduledPosts,
   LinkedInPostData,
   LinkedInAnalyticsSummary,
 } from "@/lib/db/firestore";
@@ -258,63 +259,26 @@ function PeriodFilterComponent({
   );
 }
 
-// Line Chart Component (Pure SVG + Framer Motion)
-function EngagementChart({
-  data,
-  period,
-}: {
-  data: { date: string; likes: number; comments: number; shares: number }[];
-  period: PeriodFilter;
-}) {
+// Bar chart — publications per day over the selected period.
+// Internal-only: counts from Posty's own `linkedinPosts` docs, no LinkedIn API.
+function PostsPerDayChart({ data }: { data: { date: string; count: number }[] }) {
+  const { t } = useLanguage();
   const chartHeight = 200;
   const chartWidth = 600;
-  const padding = { top: 20, right: 20, bottom: 40, left: 50 };
-
+  const padding = { top: 20, right: 20, bottom: 40, left: 40 };
   const innerWidth = chartWidth - padding.left - padding.right;
   const innerHeight = chartHeight - padding.top - padding.bottom;
 
-  // Calculate max value for scaling
-  const maxValue = useMemo(() => {
-    const allValues = data.flatMap((d) => [d.likes, d.comments, d.shares]);
-    return Math.max(...allValues, 10);
-  }, [data]);
+  const maxValue = useMemo(
+    () => Math.max(...data.map((d) => d.count), 1),
+    [data]
+  );
 
-  // Generate path for a line
-  const generatePath = (values: number[]) => {
-    if (values.length === 0) return "";
-
-    const points = values.map((value, index) => {
-      const x = padding.left + (index / Math.max(values.length - 1, 1)) * innerWidth;
-      const y = padding.top + innerHeight - (value / maxValue) * innerHeight;
-      return { x, y };
-    });
-
-    return points.reduce((path, point, index) => {
-      if (index === 0) return `M ${point.x} ${point.y}`;
-
-      // Smooth curve using quadratic bezier
-      const prev = points[index - 1];
-      const cpX = (prev.x + point.x) / 2;
-      return `${path} Q ${cpX} ${prev.y} ${point.x} ${point.y}`;
-    }, "");
-  };
-
-  const likesPath = generatePath(data.map((d) => d.likes));
-  const commentsPath = generatePath(data.map((d) => d.comments));
-  const sharesPath = generatePath(data.map((d) => d.shares));
-
-  // Y-axis labels
-  const yAxisLabels = [0, Math.round(maxValue / 2), maxValue];
-
-  // X-axis labels (dates)
   const xAxisLabels = useMemo(() => {
     if (data.length <= 7) return data.map((d) => d.date);
-    // Show fewer labels for longer periods
     const step = Math.ceil(data.length / 6);
     return data.filter((_, i) => i % step === 0 || i === data.length - 1).map((d) => d.date);
   }, [data]);
-
-  const { t } = useLanguage();
 
   if (data.length === 0) {
     return (
@@ -324,10 +288,16 @@ function EngagementChart({
     );
   }
 
+  // Bar width & gap computed so bars never touch on dense periods.
+  const slotWidth = innerWidth / data.length;
+  const barWidth = Math.max(4, Math.min(28, slotWidth * 0.7));
+
+  // Horizontal gridlines at 0, mid, max.
+  const yAxisLabels = [0, Math.max(1, Math.round(maxValue / 2)), maxValue];
+
   return (
     <div className="relative w-full">
       <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full" preserveAspectRatio="xMidYMid meet">
-        {/* Grid lines */}
         {yAxisLabels.map((value, i) => {
           const y = padding.top + innerHeight - (value / maxValue) * innerHeight;
           return (
@@ -342,7 +312,7 @@ function EngagementChart({
                 strokeDasharray="4 4"
               />
               <text
-                x={padding.left - 10}
+                x={padding.left - 8}
                 y={y + 4}
                 textAnchor="end"
                 className="fill-gray-400 text-[10px]"
@@ -353,10 +323,30 @@ function EngagementChart({
           );
         })}
 
-        {/* X-axis labels */}
+        {data.map((d, i) => {
+          const barHeight = (d.count / maxValue) * innerHeight;
+          const x = padding.left + i * slotWidth + (slotWidth - barWidth) / 2;
+          const y = padding.top + innerHeight - barHeight;
+          const cappedDelay = Math.min(i * 0.015, 0.3);
+          return (
+            <motion.rect
+              key={i}
+              x={x}
+              y={y}
+              width={barWidth}
+              height={barHeight}
+              rx={2}
+              fill="#F8935D"
+              initial={{ scaleY: 0, transformOrigin: `${x + barWidth / 2}px ${padding.top + innerHeight}px` }}
+              animate={{ scaleY: 1 }}
+              transition={{ duration: 0.4, delay: cappedDelay, ease: "easeOut" }}
+            />
+          );
+        })}
+
         {xAxisLabels.map((label, i) => {
           const dataIndex = data.findIndex((d) => d.date === label);
-          const x = padding.left + (dataIndex / Math.max(data.length - 1, 1)) * innerWidth;
+          const x = padding.left + dataIndex * slotWidth + slotWidth / 2;
           return (
             <text
               key={i}
@@ -369,92 +359,7 @@ function EngagementChart({
             </text>
           );
         })}
-
-        {/* Lines with animation */}
-        <motion.path
-          d={likesPath}
-          fill="none"
-          stroke="#3B82F6"
-          strokeWidth={2.5}
-          strokeLinecap="round"
-          initial={{ pathLength: 0, opacity: 0 }}
-          animate={{ pathLength: 1, opacity: 1 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-        />
-        <motion.path
-          d={commentsPath}
-          fill="none"
-          stroke="#10B981"
-          strokeWidth={2.5}
-          strokeLinecap="round"
-          initial={{ pathLength: 0, opacity: 0 }}
-          animate={{ pathLength: 1, opacity: 1 }}
-          transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
-        />
-        <motion.path
-          d={sharesPath}
-          fill="none"
-          stroke="#8B5CF6"
-          strokeWidth={2.5}
-          strokeLinecap="round"
-          initial={{ pathLength: 0, opacity: 0 }}
-          animate={{ pathLength: 1, opacity: 1 }}
-          transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
-        />
-
-        {/* Data points */}
-        {data.map((d, i) => {
-          const x = padding.left + (i / Math.max(data.length - 1, 1)) * innerWidth;
-          const cappedDelay = Math.min(i * 0.02, 0.3);
-          return (
-            <g key={i}>
-              <motion.circle
-                cx={x}
-                cy={padding.top + innerHeight - (d.likes / maxValue) * innerHeight}
-                r={4}
-                fill="#3B82F6"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.4 + cappedDelay }}
-              />
-              <motion.circle
-                cx={x}
-                cy={padding.top + innerHeight - (d.comments / maxValue) * innerHeight}
-                r={4}
-                fill="#10B981"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.45 + cappedDelay }}
-              />
-              <motion.circle
-                cx={x}
-                cy={padding.top + innerHeight - (d.shares / maxValue) * innerHeight}
-                r={4}
-                fill="#8B5CF6"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.5 + cappedDelay }}
-              />
-            </g>
-          );
-        })}
       </svg>
-
-      {/* Legend */}
-      <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 mt-4">
-        <div className="flex items-center gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-          <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{t.analytics.legendLikes}</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-          <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{t.analytics.legendComments}</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-full bg-violet-500" />
-          <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{t.analytics.legendShares}</span>
-        </div>
-      </div>
     </div>
   );
 }
@@ -508,6 +413,46 @@ function StatsCard({
   );
 }
 
+// Small pill shown on each post card to signal metrics-sync status.
+function SyncStatusPill({ post }: { post: LinkedInPostData }) {
+  const { t } = useLanguage();
+  const isOrg = post.authorType === "organization";
+
+  // Personal-profile post: LinkedIn has no metrics endpoint for these,
+  // so be honest about it — don't show a "pending" spinner forever.
+  if (!isOrg) {
+    return (
+      <span
+        title={t.analytics.metricsNotAvailableTooltip}
+        className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-100 dark:bg-dark-elevated text-gray-500 dark:text-gray-400"
+      >
+        {t.analytics.metricsPersonBadge}
+      </span>
+    );
+  }
+
+  if (post.syncStatus === "failed") {
+    return (
+      <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400">
+        {t.analytics.metricsSyncFailed}
+      </span>
+    );
+  }
+  if (post.syncStatus === "pending" || !post.syncStatus) {
+    return (
+      <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400">
+        {t.analytics.metricsSyncPending}
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+      {t.analytics.metricsSyncOk}
+    </span>
+  );
+}
+
 // Post Card with Metrics
 function PostCard({
   post,
@@ -546,6 +491,11 @@ function PostCard({
                 minute: "2-digit",
               })}
             </p>
+            {post.organizationName && (
+              <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                {post.organizationName}
+              </p>
+            )}
             {post.postUrl && (
               <a
                 href={post.postUrl}
@@ -576,27 +526,32 @@ function PostCard({
         {post.content}
       </p>
 
-      {/* Metrics */}
-      <div className="flex items-center gap-4 pt-4 border-t border-gray-100 dark:border-dark-border">
-        <div className="flex items-center gap-1.5 text-sm">
-          <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
-          </svg>
-          <span className="font-semibold text-gray-900 dark:text-white">{post.metrics?.likes || 0}</span>
+      {/* Engagement metrics — only rendered when we actually have real data
+          (either synced via the LinkedIn org API or pushed by an extension).
+          For personal-profile posts where no metrics exist, we skip this
+          entirely rather than display a row of misleading zeros. */}
+      {post.metrics && (post.metrics.source === "api" || post.metrics.source === "extension") && (
+        <div className="flex items-center gap-4 pt-4 border-t border-gray-100 dark:border-dark-border">
+          <div className="flex items-center gap-1.5 text-sm">
+            <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
+            </svg>
+            <span className="font-semibold text-gray-900 dark:text-white">{post.metrics.likes || 0}</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-sm">
+            <svg className="w-4 h-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zM7 8H5v2h2V8zm2 0h2v2H9V8zm6 0h-2v2h2V8z" clipRule="evenodd" />
+            </svg>
+            <span className="font-semibold text-gray-900 dark:text-white">{post.metrics.comments || 0}</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-sm">
+            <svg className="w-4 h-4 text-violet-500" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" />
+            </svg>
+            <span className="font-semibold text-gray-900 dark:text-white">{post.metrics.shares || 0}</span>
+          </div>
         </div>
-        <div className="flex items-center gap-1.5 text-sm">
-          <svg className="w-4 h-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zM7 8H5v2h2V8zm2 0h2v2H9V8zm6 0h-2v2h2V8z" clipRule="evenodd" />
-          </svg>
-          <span className="font-semibold text-gray-900 dark:text-white">{post.metrics?.comments || 0}</span>
-        </div>
-        <div className="flex items-center gap-1.5 text-sm">
-          <svg className="w-4 h-4 text-violet-500" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" />
-          </svg>
-          <span className="font-semibold text-gray-900 dark:text-white">{post.metrics?.shares || 0}</span>
-        </div>
-      </div>
+      )}
     </motion.div>
   );
 }
@@ -644,6 +599,9 @@ function AnalyticsContent() {
   const [loading, setLoading] = useState(true);
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>("30d");
   const [isVerifying, setIsVerifying] = useState(false);
+  // Upcoming scheduled posts — fetched from `scheduledPosts` so we can show
+  // "X publications programmées" as a real internal KPI.
+  const [upcomingScheduledCount, setUpcomingScheduledCount] = useState(0);
 
   // Enable full scrolling on Analytics page (mouse wheel, trackpad, touch, keyboard)
   useEffect(() => {
@@ -661,12 +619,22 @@ function AnalyticsContent() {
     if (!user) return;
     setLoading(true);
     try {
-      const [postsData, analyticsData] = await Promise.all([
+      const [postsData, analyticsData, scheduledData] = await Promise.all([
         getLinkedInPosts(user.uid, 100),
         getLinkedInAnalytics(user.uid),
+        getScheduledPosts(user.uid, "pending"),
       ]);
       setPosts(postsData);
       setAnalytics(analyticsData);
+      // Only count future scheduled posts — past-dated "pending" docs are
+      // stuck retries and don't belong in the "à venir" counter.
+      const nowMs = Date.now();
+      const upcoming = scheduledData.filter((p) => {
+        const ts: { toMillis?: () => number } | undefined = p.scheduledAt;
+        const scheduledAtMs = ts?.toMillis?.() ?? 0;
+        return scheduledAtMs > nowMs;
+      }).length;
+      setUpcomingScheduledCount(upcoming);
     } catch (error) {
       console.error("Error loading analytics:", error);
     } finally {
@@ -731,7 +699,7 @@ function AnalyticsContent() {
     loadData();
   }, [loadData]);
 
-  // Filter posts by period
+  // Filter posts by period (author-type filter removed — we're internal-only now)
   const filteredPosts = useMemo(() => {
     if (periodFilter === "all") return posts;
 
@@ -745,53 +713,100 @@ function AnalyticsContent() {
     });
   }, [posts, periodFilter]);
 
-  // Calculate filtered analytics
-  const filteredAnalytics = useMemo(() => {
-    const totalLikes = filteredPosts.reduce((sum, p) => sum + (p.metrics?.likes || 0), 0);
-    const totalComments = filteredPosts.reduce((sum, p) => sum + (p.metrics?.comments || 0), 0);
-    const totalShares = filteredPosts.reduce((sum, p) => sum + (p.metrics?.shares || 0), 0);
+  /**
+   * Internal Posty activity metrics — derived purely from `linkedinPosts`
+   * timestamps. No external LinkedIn API, no extension needed. This is the
+   * source of truth for the new analytics dashboard.
+   */
+  const internalMetrics = useMemo(() => {
+    // ---- Per-day series for the bar chart (aligned with the period filter) ----
+    const now = new Date();
+    const daysInPeriod = periodFilter === "7d" ? 7 : periodFilter === "30d" ? 30 : 90;
 
-    const postsWithEngagement = filteredPosts.filter(p => p.metrics?.engagementRate);
-    const avgEngagementRate = postsWithEngagement.length > 0
-      ? postsWithEngagement.reduce((sum, p) => sum + (p.metrics?.engagementRate || 0), 0) / postsWithEngagement.length
-      : 0;
+    // Build a dense array so empty days show as 0-height bars, not gaps.
+    const perDayCounts: Record<string, number> = {};
+    for (let i = daysInPeriod - 1; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const key = d.toLocaleDateString(t.ui.timeLocale, { day: "2-digit", month: "2-digit" });
+      perDayCounts[key] = 0;
+    }
+    filteredPosts.forEach((post) => {
+      const date = post.publishedAt?.toDate?.();
+      if (!date) return;
+      const key = date.toLocaleDateString(t.ui.timeLocale, { day: "2-digit", month: "2-digit" });
+      if (key in perDayCounts) perDayCounts[key]++;
+    });
+    const postsPerDay = Object.entries(perDayCounts).map(([date, count]) => ({ date, count }));
+
+    // ---- Publishing streak: consecutive days with ≥1 publication ----
+    // Computed over ALL posts (not just the filtered period) because a streak
+    // is inherently a continuous-run property.
+    const daysWithPost = new Set<string>();
+    posts.forEach((post) => {
+      const date = post.publishedAt?.toDate?.();
+      if (!date) return;
+      daysWithPost.add(date.toISOString().slice(0, 10));
+    });
+    let streak = 0;
+    const cursor = new Date();
+    // If no post today, start the streak check from yesterday — publishing
+    // daily but not yet today shouldn't zero out the user's streak mid-day.
+    const todayKey = cursor.toISOString().slice(0, 10);
+    if (!daysWithPost.has(todayKey)) cursor.setDate(cursor.getDate() - 1);
+    while (daysWithPost.has(cursor.toISOString().slice(0, 10))) {
+      streak++;
+      cursor.setDate(cursor.getDate() - 1);
+    }
+
+    // ---- Rolling frequency: posts per week over the last 30d ----
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const last30dCount = posts.filter((p) => {
+      const d = p.publishedAt?.toDate?.();
+      return d && d >= thirtyDaysAgo;
+    }).length;
+    const avgPostsPerWeek = last30dCount / (30 / 7);
+
+    // ---- Day-of-week and hour-of-day patterns (period-filtered) ----
+    const weekdayCounts = [0, 0, 0, 0, 0, 0, 0]; // Sun-Sat
+    const hourCounts = new Array<number>(24).fill(0);
+    let totalLength = 0;
+    filteredPosts.forEach((post) => {
+      const date = post.publishedAt?.toDate?.();
+      if (!date) return;
+      weekdayCounts[date.getDay()]++;
+      hourCounts[date.getHours()]++;
+      totalLength += (post.content || "").length;
+    });
+    const bestWeekdayIdx =
+      weekdayCounts.reduce((max, v, i, arr) => (v > arr[max] ? i : max), 0);
+    const bestHourIdx =
+      hourCounts.reduce((max, v, i, arr) => (v > arr[max] ? i : max), 0);
+    const bestWeekdayHasData = weekdayCounts[bestWeekdayIdx] > 0;
+    const bestHourHasData = hourCounts[bestHourIdx] > 0;
+    const avgLength =
+      filteredPosts.length > 0 ? Math.round(totalLength / filteredPosts.length) : 0;
 
     return {
-      totalPosts: filteredPosts.length,
-      totalLikes,
-      totalComments,
-      totalShares,
-      avgEngagementRate,
+      postsPerDay,
+      streak,
+      avgPostsPerWeek,
+      bestWeekdayIdx,
+      bestHourIdx,
+      bestWeekdayHasData,
+      bestHourHasData,
+      avgLength,
+      totalPublished: filteredPosts.length,
     };
-  }, [filteredPosts]);
+  }, [posts, filteredPosts, periodFilter, t]);
 
-  // Prepare chart data (aggregate by date)
-  const chartData = useMemo(() => {
-    const dataByDate: Record<string, { likes: number; comments: number; shares: number }> = {};
-
-    filteredPosts.forEach((post) => {
-      const date = post.publishedAt?.toDate?.() || new Date();
-      const dateKey = date.toLocaleDateString(t.ui.timeLocale, { day: "2-digit", month: "2-digit" });
-
-      if (!dataByDate[dateKey]) {
-        dataByDate[dateKey] = { likes: 0, comments: 0, shares: 0 };
-      }
-
-      dataByDate[dateKey].likes += post.metrics?.likes || 0;
-      dataByDate[dateKey].comments += post.metrics?.comments || 0;
-      dataByDate[dateKey].shares += post.metrics?.shares || 0;
-    });
-
-    // Sort by date and convert to array
-    return Object.entries(dataByDate)
-      .sort((a, b) => {
-        const [dayA, monthA] = a[0].split("/").map(Number);
-        const [dayB, monthB] = b[0].split("/").map(Number);
-        if (monthA !== monthB) return monthA - monthB;
-        return dayA - dayB;
-      })
-      .map(([date, metrics]) => ({ date, ...metrics }));
-  }, [filteredPosts]);
+  // Localized day-of-week label for the "Best day" patterns card.
+  const weekdayLabel = useMemo(() => {
+    if (!internalMetrics.bestWeekdayHasData) return "—";
+    const reference = new Date(2024, 0, 7); // Sun=0 so Jan 7 2024 is a Sunday
+    reference.setDate(reference.getDate() + internalMetrics.bestWeekdayIdx);
+    return reference.toLocaleDateString(t.ui.timeLocale, { weekday: "long" });
+  }, [internalMetrics.bestWeekdayIdx, internalMetrics.bestWeekdayHasData, t.ui.timeLocale]);
 
   return (
     <MainLayout
@@ -821,7 +836,7 @@ function AnalyticsContent() {
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8"
+                className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-4"
               >
                 <div>
                   <h1 className="text-xl font-bold text-silver-shimmer dark:text-white md:text-2xl lg:text-3xl">
@@ -834,11 +849,13 @@ function AnalyticsContent() {
                 <PeriodFilterComponent selected={periodFilter} onChange={setPeriodFilter} />
               </motion.div>
 
-              {/* Stats Cards */}
+              {/* Internal Posty KPIs — 4 cards.
+                  Everything here is computed from timestamps on `linkedinPosts`
+                  + count of pending `scheduledPosts`. No LinkedIn API needed. */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 <StatsCard
                   title={t.analytics.publications}
-                  value={filteredAnalytics.totalPosts}
+                  value={internalMetrics.totalPublished}
                   icon={
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -848,41 +865,49 @@ function AnalyticsContent() {
                   delay={0}
                 />
                 <StatsCard
-                  title={t.analytics.totalLikes}
-                  value={filteredAnalytics.totalLikes}
+                  title={t.analytics.scheduledUpcoming}
+                  value={upcomingScheduledCount}
                   icon={
-                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   }
                   color="#3B82F6"
                   delay={0.1}
                 />
                 <StatsCard
-                  title={t.analytics.comments}
-                  value={filteredAnalytics.totalComments}
+                  title={t.analytics.streakLabel}
+                  value={
+                    internalMetrics.streak > 0
+                      ? `${internalMetrics.streak} ${
+                          internalMetrics.streak > 1 ? t.analytics.daysPlural : t.analytics.daySingular
+                        }`
+                      : "—"
+                  }
                   icon={
                     <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zM7 8H5v2h2V8zm2 0h2v2H9V8zm6 0h-2v2h2V8z" clipRule="evenodd" />
+                      <path d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A3 3 0 0112.12 15.12z" />
                     </svg>
                   }
-                  color="#10B981"
+                  color="#EF4444"
                   delay={0.2}
                 />
                 <StatsCard
-                  title={t.analytics.shares}
-                  value={filteredAnalytics.totalShares}
+                  title={t.analytics.weeklyFrequency}
+                  value={internalMetrics.avgPostsPerWeek.toFixed(1)}
                   icon={
-                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" />
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                     </svg>
                   }
-                  color="#8B5CF6"
+                  color="#10B981"
                   delay={0.3}
                 />
               </div>
 
-              {/* Engagement Chart */}
+              {/* Posts per day — activity bar chart. Replaces the old line
+                  chart that used to plot likes/comments/shares (empty without
+                  LinkedIn API). */}
               <motion.div
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -890,12 +915,12 @@ function AnalyticsContent() {
                 className="bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-4 sm:p-6 mb-8"
               >
                 <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4 sm:mb-6">
-                  {t.analytics.engagementEvolution}
+                  {t.analytics.postsPerDayTitle}
                 </h3>
-                <EngagementChart data={chartData} period={periodFilter} />
+                <PostsPerDayChart data={internalMetrics.postsPerDay} />
               </motion.div>
 
-              {/* Activity Overview */}
+              {/* Publishing patterns — best day, best hour, avg length. */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-8">
                 <motion.div
                   initial={{ opacity: 0, y: 12 }}
@@ -908,9 +933,9 @@ function AnalyticsContent() {
                   transition={{ duration: 0.35, delay: 0.2, ease: premiumEase }}
                   className="bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-4 sm:p-6"
                 >
-                  <h3 className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 sm:mb-4">{t.analytics.thisWeek}</h3>
-                  <p className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">{analytics?.postsThisWeek || 0}</p>
-                  <p className="text-xs sm:text-sm text-gray-500 mt-1">{t.analytics.publicationsLabel}</p>
+                  <h3 className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 sm:mb-4">{t.analytics.bestDayOfWeek}</h3>
+                  <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white capitalize">{weekdayLabel}</p>
+                  <p className="text-xs sm:text-sm text-gray-500 mt-1">{t.analytics.bestDayCaption}</p>
                 </motion.div>
                 <motion.div
                   initial={{ opacity: 0, y: 12 }}
@@ -923,9 +948,11 @@ function AnalyticsContent() {
                   transition={{ duration: 0.35, delay: 0.25, ease: premiumEase }}
                   className="bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-4 sm:p-6"
                 >
-                  <h3 className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 sm:mb-4">{t.analytics.thisMonth}</h3>
-                  <p className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">{analytics?.postsThisMonth || 0}</p>
-                  <p className="text-xs sm:text-sm text-gray-500 mt-1">{t.analytics.publicationsLabel}</p>
+                  <h3 className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 sm:mb-4">{t.analytics.bestHourOfDay}</h3>
+                  <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+                    {internalMetrics.bestHourHasData ? `${String(internalMetrics.bestHourIdx).padStart(2, "0")}:00` : "—"}
+                  </p>
+                  <p className="text-xs sm:text-sm text-gray-500 mt-1">{t.analytics.bestHourCaption}</p>
                 </motion.div>
                 <motion.div
                   initial={{ opacity: 0, y: 12 }}
@@ -938,11 +965,11 @@ function AnalyticsContent() {
                   transition={{ duration: 0.35, delay: 0.3, ease: premiumEase }}
                   className="bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-4 sm:p-6"
                 >
-                  <h3 className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 sm:mb-4">{t.analytics.avgEngagementRate}</h3>
-                  <p className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
-                    {filteredAnalytics.avgEngagementRate ? `${filteredAnalytics.avgEngagementRate.toFixed(1)}%` : "\u2014"}
+                  <h3 className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 sm:mb-4">{t.analytics.avgPostLength}</h3>
+                  <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+                    {internalMetrics.avgLength > 0 ? internalMetrics.avgLength : "\u2014"}
                   </p>
-                  <p className="text-xs sm:text-sm text-gray-500 mt-1">{t.analytics.onPostsWithImpressions}</p>
+                  <p className="text-xs sm:text-sm text-gray-500 mt-1">{t.analytics.avgPostLengthCaption}</p>
                 </motion.div>
               </div>
 

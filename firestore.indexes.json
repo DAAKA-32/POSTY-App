@@ -75,6 +75,23 @@
       ]
     },
     {
+      "collectionGroup": "linkedinPosts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "authorType", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "lastMetricsSyncAt", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "linkedinPosts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "authorType", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "twitterPosts",
       "queryScope": "COLLECTION",
       "fields": [

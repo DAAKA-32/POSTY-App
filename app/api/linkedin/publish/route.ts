@@ -46,7 +46,16 @@ export async function POST(request: NextRequest) {
 
     // 🔐 ÉTAPE 1: Récupération et validation des données
     const body = await request.json();
-    const { userId: bodyUserId, content, postId, platforms, visibility = "PUBLIC" } = body;
+    const {
+      userId: bodyUserId,
+      content,
+      postId,
+      platforms,
+      visibility = "PUBLIC",
+      // Optional: publish as a Company Page the user administers.
+      // If omitted, falls back to personal-profile publishing (no API metrics).
+      organizationUrn,
+    } = body;
 
     // Use authenticated uid, fall back to body userId only in dev bypass mode
     const userId = auth.uid === "__dev_bypass__" ? bodyUserId : auth.uid;
@@ -182,6 +191,32 @@ export async function POST(request: NextRequest) {
     // 🏷️ ÉTAPE 4a: Append Free plan signature (Lead Growth Operator)
     const finalContent = appendFreeSignature(content, userPlan);
 
+    // 🏢 ÉTAPE 4a-bis: Resolve author URN (personal profile OR Company Page).
+    // If the client requested an organization, verify the user actually
+    // administers it (stored on the connection at OAuth time).
+    let authorUrn = `urn:li:person:${connection.linkedInId}`;
+    let authorType: "person" | "organization" = "person";
+    let resolvedOrgName: string | undefined;
+
+    if (organizationUrn && typeof organizationUrn === "string") {
+      const matchingOrg = (connection.organizations || []).find(
+        (o) => o.urn === organizationUrn
+      );
+      if (!matchingOrg) {
+        return NextResponse.json(
+          {
+            error: "organization_not_authorized",
+            message:
+              "Vous n'êtes pas administrateur de cette page LinkedIn. Reconnectez votre compte pour rafraîchir la liste.",
+          },
+          { status: 403 }
+        );
+      }
+      authorUrn = matchingOrg.urn;
+      authorType = "organization";
+      resolvedOrgName = matchingOrg.name;
+    }
+
     // 📝 ÉTAPE 4: Publication sur LinkedIn via Share API
     // Documentation: https://learn.microsoft.com/en-us/linkedin/consumer/integrations/self-serve/share-on-linkedin
     // Visibility options: PUBLIC (visible by everyone) or CONNECTIONS (only connections)
@@ -195,7 +230,7 @@ export async function POST(request: NextRequest) {
           "X-Restli-Protocol-Version": "2.0.0",
         },
         body: JSON.stringify({
-          author: `urn:li:person:${connection.linkedInId}`,
+          author: authorUrn,
           lifecycleState: "PUBLISHED",
           specificContent: {
             "com.linkedin.ugc.ShareContent": {
@@ -250,6 +285,10 @@ export async function POST(request: NextRequest) {
         content: content,
         postUrl: `https://www.linkedin.com/feed/update/${shareId}`,
         success: true,
+        authorType,
+        authorUrn,
+        organizationUrn: authorType === "organization" ? authorUrn : undefined,
+        organizationName: resolvedOrgName,
       });
 
       // Mise à jour de la date de dernière utilisation

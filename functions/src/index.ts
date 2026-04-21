@@ -5,6 +5,8 @@ admin.initializeApp();
 
 const db = admin.firestore();
 
+import { syncDueLinkedInMetrics } from "./linkedin-metrics";
+
 // ============================================================
 // Platform API configurations
 // ============================================================
@@ -328,16 +330,25 @@ async function publishToLinkedIn(
     return { success: false, error: result.error };
   }
 
-  // Save to linkedinPosts collection
+  // Save to linkedinPosts collection.
+  // NOTE: scheduled posts currently always publish as the personal profile
+  // (`urn:li:person:*`) — there's no org target stored on scheduledPosts yet.
+  // Scheduled-post org-mode would need an `organizationUrn` field on the
+  // scheduledPosts doc and logic above to pick the author. Not wired yet.
   try {
     await db.collection("linkedinPosts").add({
       userId,
-      linkedInId: connection.linkedInId,
-      postId: result.id || "",
+      linkedInId: result.id || "",
+      postId: "",
       content,
       postUrl: result.postUrl,
       success: true,
       publishedAt: admin.firestore.FieldValue.serverTimestamp(),
+      authorType: "person",
+      authorUrn: `urn:li:person:${connection.linkedInId}`,
+      status: "published",
+      syncStatus: "not_available", // personal profile posts have no API metrics
+      lastMetricsSyncAt: null,
     });
     await db.collection("linkedinConnections").doc(userId).update({
       lastUsedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -785,3 +796,30 @@ export const linkedinPost = functions.https.onRequest(async (req: functions.http
     });
   }
 });
+
+// ============================================================
+// SCHEDULED CLOUD FUNCTION — LinkedIn metrics sync
+// Runs every 3 hours. For each organization-published post:
+//   - refreshes likes/comments/shares/impressions/engagement from LinkedIn API
+//   - detects posts the user deleted on LinkedIn (→ status='deleted')
+// Personal-profile posts are skipped: LinkedIn does not expose any metrics
+// endpoint for them, MDP-approved app or not.
+// ============================================================
+
+export const syncLinkedInMetrics = functions
+  .runWith({ timeoutSeconds: 540, memory: "512MB" })
+  .pubsub.schedule("every 3 hours")
+  .timeZone("Europe/Paris")
+  .onRun(async () => {
+    const startedAt = Date.now();
+    console.log("[metrics-sync] Starting LinkedIn metrics sync");
+    try {
+      const result = await syncDueLinkedInMetrics(db, 200);
+      console.log(
+        `[metrics-sync] Done in ${Date.now() - startedAt}ms: scanned=${result.scanned} synced=${result.synced} failed=${result.failed} deleted=${result.deleted} skipped=${result.skipped}`
+      );
+    } catch (error) {
+      console.error("[metrics-sync] Fatal error:", error);
+    }
+    return null;
+  });

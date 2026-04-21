@@ -29,7 +29,12 @@ interface LinkedInContextType {
   // Actions
   connectLinkedIn: () => void;
   disconnectLinkedIn: () => Promise<void>;
-  publishToLinkedIn: (content: string, visibility?: "PUBLIC" | "CONNECTIONS") => Promise<{
+  publishToLinkedIn: (
+    content: string,
+    visibility?: "PUBLIC" | "CONNECTIONS",
+    postId?: string,
+    organizationUrn?: string
+  ) => Promise<{
     success: boolean;
     postUrl?: string;
     error?: string;
@@ -46,7 +51,11 @@ export function LinkedInProvider({ children }: { children: ReactNode }) {
   const [connection, setConnection] = useState<LinkedInConnectionData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load connection from Firestore
+  // Load connection from Firestore. If the cached profilePicture URL is older
+  // than this threshold, trigger a background refresh so other devices don't
+  // render a stale/expired LinkedIn CDN URL.
+  const PHOTO_STALE_MS = 12 * 60 * 60 * 1000; // 12h
+
   const loadConnection = useCallback(async () => {
     if (!user) {
       setConnection(null);
@@ -58,6 +67,39 @@ export function LinkedInProvider({ children }: { children: ReactNode }) {
     try {
       const conn = await getLinkedInConnection(user.uid);
       setConnection(conn);
+
+      // Background: if the stored photo URL is stale, refresh it from LinkedIn
+      // so any device loading the app gets a non-expired signed URL.
+      if (conn?.profilePicture) {
+        const updatedAtMs = conn.photoUpdatedAt?.toDate?.().getTime();
+        const isStale =
+          !updatedAtMs || Date.now() - updatedAtMs > PHOTO_STALE_MS;
+        const tokenStillValid = !isTokenExpired(conn.expiresAt.toDate());
+        if (isStale && tokenStillValid) {
+          // Fire-and-forget; don't block UI on network round-trip.
+          fetch("/api/linkedin/refresh-photo", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId: user.uid }),
+          })
+            .then((r) => (r.ok ? r.json() : null))
+            .then((data) => {
+              if (!data?.photoUrl) return;
+              setConnection((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      profilePicture: data.photoUrl,
+                      profileName: data.profileName || prev.profileName,
+                    }
+                  : prev
+              );
+            })
+            .catch(() => {
+              /* non-blocking */
+            });
+        }
+      }
     } catch (error) {
       console.error("Error loading LinkedIn connection:", error);
     } finally {
@@ -168,7 +210,12 @@ export function LinkedInProvider({ children }: { children: ReactNode }) {
 
   // Publish to LinkedIn
   const publishToLinkedIn = useCallback(
-    async (content: string, visibility: "PUBLIC" | "CONNECTIONS" = "PUBLIC", postId?: string): Promise<{ success: boolean; postUrl?: string; error?: string }> => {
+    async (
+      content: string,
+      visibility: "PUBLIC" | "CONNECTIONS" = "PUBLIC",
+      postId?: string,
+      organizationUrn?: string
+    ): Promise<{ success: boolean; postUrl?: string; error?: string }> => {
       if (!user || !connection) {
         return { success: false, error: "Non connecté à LinkedIn" };
       }
@@ -178,8 +225,11 @@ export function LinkedInProvider({ children }: { children: ReactNode }) {
       }
 
       try {
-        // Call Next.js API route which handles everything securely
-        const result = await postToLinkedInApi(user.uid, content, visibility, postId);
+        // Call Next.js API route which handles everything securely.
+        // organizationUrn is optional: when provided and valid, the post is
+        // published as a Company Page (unlocks metrics API). Otherwise falls
+        // back to personal-profile publishing (no metrics available).
+        const result = await postToLinkedInApi(user.uid, content, visibility, postId, organizationUrn);
 
         return {
           success: result.success,
@@ -223,9 +273,11 @@ export function LinkedInProvider({ children }: { children: ReactNode }) {
   }, [user, connection]);
 
   // Profile data shortcuts
-  // Photo URL is a CDN link (media.licdn.com), works independently of OAuth token validity
+  // Photo URL is a CDN link (media.licdn.com) and the display name don't change
+  // when the token expires — we still expose them so other devices keep showing
+  // the user's LinkedIn identity even if they need to re-auth to publish.
   const profilePicture = connection?.profilePicture || null;
-  const profileName = isTokenValid && connection?.profileName ? connection.profileName : null;
+  const profileName = connection?.profileName || null;
 
   const value: LinkedInContextType = {
     connection,

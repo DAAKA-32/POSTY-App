@@ -87,7 +87,11 @@ interface PublishToLinkedInModalProps {
   onClose: () => void;
   content: string;
   linkedInConnection: LinkedInConnectionData | null;
-  onPublish: (editedContent: string, visibility: PostVisibility) => Promise<{ success: boolean; postUrl?: string; error?: string }>;
+  onPublish: (
+    editedContent: string,
+    visibility: PostVisibility,
+    organizationUrn?: string
+  ) => Promise<{ success: boolean; postUrl?: string; error?: string }>;
   // Scheduling props
   postId?: string;
   title?: string;
@@ -125,6 +129,10 @@ export default function PublishToLinkedInModal({
   const [step, setStep] = useState<PublishStep>("preview");
   const [editedContent, setEditedContent] = useState(initialContent);
   const [visibility, setVisibility] = useState<PostVisibility>("PUBLIC");
+  // Publish-as target. "" = personal profile (default). A URN like
+  // "urn:li:organization:12345" = publish as that Company Page.
+  // Only orgs that the user administers (populated at OAuth) appear.
+  const [authorTargetUrn, setAuthorTargetUrn] = useState<string>("");
   const [publishedLinks, setPublishedLinks] = useState<{ platform: string; url: string }[]>([]);
   const [error, setError] = useState<string | undefined>();
   const [progress, setProgress] = useState(0);
@@ -338,6 +346,7 @@ export default function PublishToLinkedInModal({
       setStep("preview");
       setEditedContent(initialContent);
       setVisibility("PUBLIC");
+      setAuthorTargetUrn("");
       setPublishedLinks([]);
       setError(undefined);
       setProgress(0);
@@ -539,12 +548,13 @@ export default function PublishToLinkedInModal({
       // Publish to LinkedIn if selected
       if (selectedPlatforms.includes("linkedin")) {
         let result: { success: boolean; postUrl?: string; error?: string };
+        const orgUrn = authorTargetUrn || undefined;
         if (images.length > 0 && user) {
-          result = await postToLinkedInWithMedia(user.uid, editedContent, visibility, images);
+          result = await postToLinkedInWithMedia(user.uid, editedContent, visibility, images, postId, orgUrn);
         } else if (video && user) {
-          result = await postToLinkedInWithVideo(user.uid, editedContent, visibility, video);
+          result = await postToLinkedInWithVideo(user.uid, editedContent, visibility, video, postId, orgUrn);
         } else {
-          result = await onPublish(editedContent, visibility);
+          result = await onPublish(editedContent, visibility, orgUrn);
         }
         results.push({
           platform: "LinkedIn",
@@ -855,6 +865,53 @@ export default function PublishToLinkedInModal({
                     {t.publish.upgradeToMax}
                   </button>
                 )}
+              </div>
+            )}
+
+            {/* Publish-as Selector — profil perso vs Company Page */}
+            {isConnected && linkedInConnection?.organizations && linkedInConnection.organizations.length > 0 && (
+              <div className={`transition-opacity duration-200 ${selectedPlatforms.includes("linkedin") ? "opacity-100" : "opacity-40 pointer-events-none"}`}>
+                <div className="flex items-center gap-2 mb-2">
+                  <p className="text-xs text-text-muted font-medium uppercase tracking-wide">
+                    {t.publish.publishAsLabel}
+                  </p>
+                  <span className="text-[10px] text-text-muted/70 font-normal normal-case tracking-normal">
+                    LinkedIn
+                  </span>
+                </div>
+                <select
+                  value={authorTargetUrn}
+                  onChange={(e) => {
+                    if (selectedPlatforms.includes("linkedin")) {
+                      triggerHaptic("selection");
+                      setAuthorTargetUrn(e.target.value);
+                    }
+                  }}
+                  disabled={!selectedPlatforms.includes("linkedin")}
+                  className="w-full min-h-[44px] px-3 py-2 rounded-lg border border-gray-200 dark:border-dark-border bg-gray-50 dark:bg-dark-bg text-sm font-medium text-text-secondary hover:border-gray-300 dark:hover:border-dark-hover focus:outline-none focus:border-[#0A66C2] disabled:cursor-not-allowed"
+                >
+                  <option value="">
+                    {linkedInConnection.profileName
+                      ? `${linkedInConnection.profileName} — ${t.publish.publishAsPersonSuffix}`
+                      : t.publish.publishAsPersonSuffix}
+                  </option>
+                  {linkedInConnection.organizations.map((org) => (
+                    <option key={org.urn} value={org.urn}>
+                      {org.name} — {t.publish.publishAsOrgSuffix}
+                    </option>
+                  ))}
+                </select>
+                {/* Explain the metrics trade-off — honest about the LinkedIn limitation */}
+                <p className="text-[11px] text-text-muted mt-1.5 flex items-start gap-1.5">
+                  <svg className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>
+                    {authorTargetUrn
+                      ? t.publish.publishAsOrgMetricsHint
+                      : t.publish.publishAsPersonMetricsHint}
+                  </span>
+                </p>
               </div>
             )}
 
@@ -1220,21 +1277,25 @@ export default function PublishToLinkedInModal({
                 </button>
               </div>
 
-              {/* Schedule confirmed badge */}
+              {/* Schedule confirmed preview — "Ce post sera publié le ..." */}
               {publishMode === "schedule" && scheduleConfirmed && !showSchedulePicker && (
                 <motion.div
                   initial={{ opacity: 0, y: -8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-3 flex items-center justify-between p-3 bg-accent/10 border border-accent/30 rounded-xl"
+                  className="mt-3 flex items-center gap-3 p-4 bg-accent/5 border border-accent/20 rounded-xl"
                 >
-                  <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
                     <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <div>
-                      <p className="text-xs text-text-muted">{t.publish.scheduledFor}</p>
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white">{formattedScheduleDateTime}</p>
-                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-text-muted uppercase tracking-wide font-medium">
+                      {t.publish.scheduledFor}
+                    </p>
+                    <p className="text-base font-semibold text-gray-900 dark:text-white mt-0.5 tabular-nums">
+                      {formattedScheduleDateTime}
+                    </p>
                   </div>
                   <button
                     type="button"
@@ -1242,7 +1303,7 @@ export default function PublishToLinkedInModal({
                       setShowSchedulePicker(true);
                       setScheduleStep("date");
                     }}
-                    className="text-xs text-primary font-medium hover:underline min-h-[44px] px-2 flex items-center"
+                    className="shrink-0 text-sm text-primary font-medium hover:underline min-h-[44px] px-2 flex items-center"
                   >
                     {t.publish.changeSchedule}
                   </button>
@@ -1281,7 +1342,7 @@ export default function PublishToLinkedInModal({
                     transition={{ duration: 0.3 }}
                     className="overflow-hidden"
                   >
-                    <div className="mt-4 bg-gray-50 dark:bg-dark-elevated rounded-2xl p-4 border border-gray-200 dark:border-dark-border">
+                    <div className="mt-4 bg-gray-50/80 dark:bg-dark-elevated/60 rounded-2xl p-5 border border-gray-100 dark:border-dark-border/60">
                       <AnimatePresence mode="wait">
                         {scheduleStep === "date" && (
                           <motion.div
@@ -1290,12 +1351,18 @@ export default function PublishToLinkedInModal({
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                           >
-                            <div className="text-center mb-3">
-                              <h4 className="text-sm font-semibold text-gray-900 dark:text-white">{t.scheduler.chooseDate}</h4>
+                            {/* Step header — left aligned, title + subtitle */}
+                            <div className="mb-4">
+                              <h4 className="text-base font-semibold text-gray-900 dark:text-white tracking-tight">
+                                {t.scheduler.whenPublish}
+                              </h4>
+                              <p className="text-xs text-text-muted mt-0.5">
+                                {t.scheduler.chooseDate}
+                              </p>
                             </div>
 
-                            {/* Quick date shortcuts */}
-                            <div className="grid grid-cols-4 gap-2 mb-3">
+                            {/* Quick date shortcuts — pill chips, wrapping */}
+                            <div className="flex flex-wrap gap-2 mb-4">
                               {[
                                 { label: t.scheduler.todayShort, days: 0, requiresValid: true },
                                 { label: t.scheduler.tomorrow, days: 1, requiresValid: false },
@@ -1323,10 +1390,10 @@ export default function PublishToLinkedInModal({
                                       }
                                     }}
                                     disabled={unavailable}
-                                    className={`p-2.5 rounded-lg text-center text-xs font-medium transition-all min-h-[40px] ${
-                                      unavailable ? "opacity-40 cursor-not-allowed" :
-                                      selected ? "bg-primary text-white" :
-                                      "bg-white dark:bg-dark-card hover:bg-gray-100 dark:hover:bg-dark-hover text-text-secondary border border-gray-200 dark:border-dark-border"
+                                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all min-h-[40px] whitespace-nowrap ${
+                                      unavailable ? "opacity-40 cursor-not-allowed bg-transparent text-text-muted border border-gray-200 dark:border-dark-border" :
+                                      selected ? "bg-primary text-white shadow-sm" :
+                                      "bg-white dark:bg-dark-card hover:bg-gray-50 dark:hover:bg-dark-hover text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-dark-border"
                                     }`}
                                   >
                                     {label}
@@ -1335,37 +1402,39 @@ export default function PublishToLinkedInModal({
                               })}
                             </div>
 
-                            {/* Compact Calendar */}
-                            <div className="bg-white dark:bg-dark-card rounded-xl p-3 border border-gray-200 dark:border-dark-border">
-                              <div className="flex items-center justify-between mb-2">
+                            {/* Calendar — minimal, Linear/Notion style */}
+                            <div className="bg-white dark:bg-dark-card rounded-xl p-4 border border-gray-100 dark:border-dark-border/60">
+                              <div className="flex items-center justify-between mb-3">
                                 <button
                                   onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}
-                                  className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-hover min-w-[36px] min-h-[36px] flex items-center justify-center"
+                                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-hover min-w-[40px] min-h-[40px] flex items-center justify-center transition-colors"
+                                  aria-label="Previous month"
                                 >
                                   <svg className="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                                   </svg>
                                 </button>
-                                <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                                <span className="text-base font-semibold text-gray-900 dark:text-white tracking-tight">
                                   {getMonths(t)[currentMonth.getMonth()]} {currentMonth.getFullYear()}
                                 </span>
                                 <button
                                   onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}
-                                  className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-hover min-w-[36px] min-h-[36px] flex items-center justify-center"
+                                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-hover min-w-[40px] min-h-[40px] flex items-center justify-center transition-colors"
+                                  aria-label="Next month"
                                 >
                                   <svg className="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                   </svg>
                                 </button>
                               </div>
-                              <div className="grid grid-cols-7 gap-0.5 mb-1">
+                              <div className="grid grid-cols-7 gap-1 mb-1">
                                 {getDaysShort(t).map((day: string) => (
-                                  <div key={day} className="text-center text-[10px] text-text-muted font-medium py-1 uppercase">
+                                  <div key={day} className="text-center text-[10px] text-text-muted font-semibold py-1.5 uppercase tracking-wider">
                                     {day}
                                   </div>
                                 ))}
                               </div>
-                              <div className="grid grid-cols-7 gap-0.5">
+                              <div className="grid grid-cols-7 gap-1">
                                 {calendarDays.map((date, index) => {
                                   const selected = isDateSelected(date);
                                   const today = isDateToday(date);
@@ -1387,12 +1456,12 @@ export default function PublishToLinkedInModal({
                                       }}
                                       disabled={disabled}
                                       className={`
-                                        aspect-square flex items-center justify-center text-xs rounded-lg transition-all min-h-[40px] font-medium
+                                        aspect-square flex items-center justify-center text-sm rounded-lg transition-all min-h-[40px]
                                         ${!date ? "invisible" : ""}
                                         ${disabled ? "text-text-muted/25 cursor-not-allowed" : "cursor-pointer"}
-                                        ${selected ? "bg-primary text-white font-bold shadow-sm" : ""}
-                                        ${today && !selected ? "ring-1.5 ring-primary text-primary font-bold bg-primary/10" : ""}
-                                        ${!selected && !today && !disabled ? "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-hover" : ""}
+                                        ${selected ? "bg-primary text-white font-semibold shadow-sm" : ""}
+                                        ${today && !selected ? "ring-2 ring-inset ring-primary text-primary font-semibold" : ""}
+                                        ${!selected && !today && !disabled ? "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-dark-hover font-medium" : ""}
                                       `}
                                     >
                                       {date?.getDate()}
@@ -1411,15 +1480,29 @@ export default function PublishToLinkedInModal({
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                           >
-                            <div className="text-center mb-3">
-                              <h4 className="text-sm font-semibold text-gray-900 dark:text-white">{t.scheduler.chooseTime}</h4>
-                              <p className="text-xs text-primary font-medium mt-0.5">
-                                {getDaysShort(t)[scheduledDate.getDay()]} {scheduledDate.getDate()} {getMonths(t)[scheduledDate.getMonth()]}
-                              </p>
+                            {/* Step header — left aligned with selected date subtitle */}
+                            <div className="mb-4 flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <h4 className="text-base font-semibold text-gray-900 dark:text-white tracking-tight">
+                                  {t.scheduler.chooseTime}
+                                </h4>
+                                <p className="text-xs text-text-muted mt-0.5 truncate">
+                                  {getDaysShort(t)[scheduledDate.getDay()]} {scheduledDate.getDate()} {getMonths(t)[scheduledDate.getMonth()]}
+                                </p>
+                              </div>
+                              <button
+                                onClick={() => setScheduleStep("date")}
+                                className="shrink-0 text-xs text-primary font-medium hover:underline min-h-[32px] px-2 flex items-center gap-1"
+                              >
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                </svg>
+                                {t.ui.changeDate}
+                              </button>
                             </div>
 
                             {/* Smart time suggestions */}
-                            <div className="mb-3">
+                            <div className="mb-4">
                               <SmartTimeSuggestions
                                 onSelect={(hour, minute) => {
                                   if (!isTimeDisabled(hour, minute)) {
@@ -1436,50 +1519,41 @@ export default function PublishToLinkedInModal({
                               />
                             </div>
 
-                            {/* Time grid */}
-                            <div className="max-h-44 overflow-y-auto rounded-lg border border-gray-200 dark:border-dark-border overscroll-contain">
-                              <div className="grid grid-cols-4 gap-1 p-2">
-                                {Array.from({ length: 48 }, (_, i) => {
-                                  const hour = Math.floor(i / 2);
-                                  const minute = (i % 2) * 30;
-                                  const label = formatTimeLocale(hour, minute, t.ui.timeLocale);
-                                  const isSelected = scheduledTime.hour === hour && scheduledTime.minute === minute;
-                                  const disabled = isTimeDisabled(hour, minute);
-                                  return (
-                                    <button
-                                      key={i}
-                                      onClick={() => {
-                                        if (!disabled) {
-                                          triggerHaptic("medium");
-                                          setScheduledTime({ hour, minute });
-                                          setScheduleConfirmed(true);
-                                          setShowSchedulePicker(false);
-                                        }
-                                      }}
-                                      disabled={disabled}
-                                      className={`px-2 py-2 text-xs rounded-md transition-all min-h-[36px] ${
-                                        disabled ? "text-text-muted/30 cursor-not-allowed line-through" :
-                                        isSelected ? "bg-primary text-white font-medium" :
-                                        "hover:bg-gray-100 dark:hover:bg-dark-hover text-text-secondary hover:text-gray-900 dark:hover:text-white"
-                                      }`}
-                                    >
-                                      {label}
-                                    </button>
-                                  );
-                                })}
+                            {/* Time grid — denser, no hard-coded max-height */}
+                            <div className="bg-white dark:bg-dark-card rounded-xl border border-gray-100 dark:border-dark-border/60 overflow-hidden">
+                              <div className="max-h-56 overflow-y-auto overscroll-contain">
+                                <div className="grid grid-cols-4 sm:grid-cols-6 gap-1 p-2">
+                                  {Array.from({ length: 48 }, (_, i) => {
+                                    const hour = Math.floor(i / 2);
+                                    const minute = (i % 2) * 30;
+                                    const label = formatTimeLocale(hour, minute, t.ui.timeLocale);
+                                    const isSelected = scheduledTime.hour === hour && scheduledTime.minute === minute;
+                                    const disabled = isTimeDisabled(hour, minute);
+                                    return (
+                                      <button
+                                        key={i}
+                                        onClick={() => {
+                                          if (!disabled) {
+                                            triggerHaptic("medium");
+                                            setScheduledTime({ hour, minute });
+                                            setScheduleConfirmed(true);
+                                            setShowSchedulePicker(false);
+                                          }
+                                        }}
+                                        disabled={disabled}
+                                        className={`px-2 py-2 text-xs rounded-lg transition-all min-h-[40px] font-medium tabular-nums ${
+                                          disabled ? "text-text-muted/30 cursor-not-allowed line-through" :
+                                          isSelected ? "bg-primary text-white shadow-sm" :
+                                          "hover:bg-gray-50 dark:hover:bg-dark-hover text-gray-700 dark:text-gray-200"
+                                        }`}
+                                      >
+                                        {label}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
                               </div>
                             </div>
-
-                            {/* Back to date */}
-                            <button
-                              onClick={() => setScheduleStep("date")}
-                              className="mt-3 text-sm text-text-muted hover:text-gray-900 dark:hover:text-white flex items-center gap-1.5 min-h-[44px]"
-                            >
-                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                              </svg>
-                              {t.ui.changeDate}
-                            </button>
                           </motion.div>
                         )}
                       </AnimatePresence>
@@ -1555,42 +1629,7 @@ export default function PublishToLinkedInModal({
               </div>
             )}
 
-            {/* Actions — desktop only (mobile uses BottomSheet footer) */}
-            {!isMobile && (
-              <div className="sticky bottom-0 -mx-5 -mb-6 px-5 pt-3 pb-4 bg-white dark:bg-dark-card border-t border-gray-200 dark:border-dark-border mt-2 z-10 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] dark:shadow-[0_-4px_12px_rgba(0,0,0,0.2)]">
-                <div className="flex gap-3">
-                  <Button
-                    variant="secondary"
-                    fullWidth
-                    onClick={handleClose}
-                    className="min-h-[52px]"
-                  >
-                    {t.templates.cancel}
-                  </Button>
-                  <Button
-                    fullWidth
-                    onClick={handleConfirm}
-                    disabled={cannotPublishOrSchedule}
-                    className={`min-h-[52px] ${
-                      cannotPublishOrSchedule
-                        ? "bg-gray-100 dark:bg-dark-hover border-gray-200 dark:border-dark-border cursor-not-allowed opacity-50"
-                        : "bg-primary hover:bg-primary-hover border-none"
-                    }`}
-                  >
-                    {publishMode === "schedule" ? (
-                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    ) : (
-                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                      </svg>
-                    )}
-                    {publishMode === "schedule" ? t.scheduler.scheduleBtn : t.publish.publish}
-                  </Button>
-                </div>
-              </div>
-            )}
+            {/* Actions moved to Modal/BottomSheet footer prop (renderMobileFooter). */}
           </div>
         )}
 
@@ -1637,29 +1676,7 @@ export default function PublishToLinkedInModal({
                 </p>
               )}
             </div>
-            {/* Actions — desktop only (mobile uses BottomSheet footer) */}
-            {!isMobile && (
-              <div className="sticky bottom-0 -mx-5 px-5 pt-3 pb-1 bg-white dark:bg-dark-card border-t border-gray-100 dark:border-dark-border/50 mt-4">
-                <div className="flex gap-3">
-                  <Button
-                    variant="secondary"
-                    fullWidth
-                    onClick={() => setStep("preview")}
-                    className="min-h-[52px]"
-                  >
-                    {t.publish.back}
-                  </Button>
-                  <Button
-                    fullWidth
-                    onClick={publishMode === "schedule" ? handleScheduleSubmit : handlePublish}
-                    isLoading={isScheduleSubmitting || isUploading}
-                    className="bg-primary hover:bg-primary-hover border-none min-h-[52px]"
-                  >
-                    {publishMode === "schedule" ? t.publish.yesSchedule : t.publish.yesPublish}
-                  </Button>
-                </div>
-              </div>
-            )}
+            {/* Actions moved to Modal/BottomSheet footer prop (renderMobileFooter). */}
           </div>
         )}
 
@@ -1820,19 +1837,7 @@ export default function PublishToLinkedInModal({
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{t.publish.publishFailed}</h3>
               <p className="text-error text-sm">{error}</p>
             </div>
-            {/* Actions — desktop only (mobile uses BottomSheet footer) */}
-            {!isMobile && (
-              <div className="sticky bottom-0 -mx-5 px-5 pt-3 pb-1 bg-white dark:bg-dark-card border-t border-gray-100 dark:border-dark-border/50 mt-4">
-                <div className="flex gap-3">
-                  <Button variant="secondary" fullWidth onClick={handleClose} className="min-h-[52px]">
-                    {t.common.close}
-                  </Button>
-                  <Button fullWidth onClick={handleRetry} className="min-h-[52px]">
-                    {t.publish.retry}
-                  </Button>
-                </div>
-              </div>
-            )}
+            {/* Actions moved to Modal/BottomSheet footer prop (renderMobileFooter). */}
           </div>
         )}
       </>
@@ -1937,6 +1942,7 @@ export default function PublishToLinkedInModal({
           onClose={handleClose}
           title={step === "success" ? "" : step === "error" ? t.publish.error : t.ui.publishContent}
           size="md"
+          footer={renderMobileFooter()}
         >
           {renderContent()}
         </Modal>

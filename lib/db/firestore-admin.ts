@@ -9,6 +9,15 @@ import { SubscriptionPlan } from "@/types";
 import { DAILY_MESSAGE_LIMITS, HOURLY_MESSAGE_LIMITS, HOURLY_WINDOW_MS, getFounderOverridePlan, PlanType, PLAN_CONFIGS } from "@/lib/config/plans";
 
 // LinkedIn Connection Data type (matching the client-side type)
+export interface LinkedInOrganizationAdmin {
+  urn: string;
+  organizationId: string;
+  name: string;
+  vanityName?: string;
+  logoUrl?: string;
+  role?: string;
+}
+
 export interface LinkedInConnectionData {
   userId: string;
   linkedInId: string;
@@ -19,6 +28,10 @@ export interface LinkedInConnectionData {
   email?: string;
   connectedAt: Timestamp;
   lastUsedAt?: Timestamp;
+  photoUpdatedAt?: Timestamp;
+  organizations?: LinkedInOrganizationAdmin[];
+  organizationsUpdatedAt?: Timestamp;
+  grantedScopes?: string[];
 }
 
 /**
@@ -66,11 +79,20 @@ export async function saveLinkedInPostAdmin(
     postUrl?: string;
     success: boolean;
     error?: string;
+    authorType?: "person" | "organization";
+    authorUrn?: string;
+    organizationUrn?: string;
+    organizationName?: string;
   }
 ): Promise<string> {
   if (!adminDb) {
     throw new Error("Firebase Admin not initialized");
   }
+
+  const authorType = data.authorType || "person";
+  // Metrics are not retrievable for personal-profile posts. Mark accordingly
+  // so the analytics UI and the cron skip them cleanly.
+  const syncStatus = authorType === "organization" ? "pending" : "not_available";
 
   const postsRef = adminDb.collection("linkedinPosts");
   const docRef = await postsRef.add({
@@ -82,6 +104,13 @@ export async function saveLinkedInPostAdmin(
     success: data.success,
     error: data.error || null,
     publishedAt: FieldValue.serverTimestamp(),
+    authorType,
+    authorUrn: data.authorUrn || null,
+    organizationUrn: data.organizationUrn || null,
+    organizationName: data.organizationName || null,
+    status: "published",
+    syncStatus,
+    lastMetricsSyncAt: null,
   });
   return docRef.id;
 }
@@ -690,6 +719,8 @@ export async function saveLinkedInConnectionAdmin(
     profileName: string;
     profilePicture?: string;
     email?: string;
+    organizations?: LinkedInOrganizationAdmin[];
+    grantedScopes?: string[];
   }
 ): Promise<void> {
   if (!adminDb) {
@@ -707,6 +738,10 @@ export async function saveLinkedInConnectionAdmin(
     email: data.email || null,
     connectedAt: FieldValue.serverTimestamp(),
     lastUsedAt: null,
+    photoUpdatedAt: data.profilePicture ? FieldValue.serverTimestamp() : null,
+    organizations: data.organizations || [],
+    organizationsUpdatedAt: data.organizations ? FieldValue.serverTimestamp() : null,
+    grantedScopes: data.grantedScopes || [],
   });
 }
 

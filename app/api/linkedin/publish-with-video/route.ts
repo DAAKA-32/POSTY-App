@@ -46,6 +46,7 @@ export async function POST(request: NextRequest) {
     const bodyUserId = formData.get("userId") as string;
     const postId = (formData.get("postId") as string) || "";
     const visibility = (formData.get("visibility") as string) || "PUBLIC";
+    const organizationUrn = (formData.get("organizationUrn") as string) || "";
     const videoFile = formData.get("video") as File | null;
 
     const userId = auth.uid === "__dev_bypass__" ? bodyUserId : auth.uid;
@@ -138,6 +139,26 @@ export async function POST(request: NextRequest) {
     const accessToken = connection.accessToken;
     const personUrn = `urn:li:person:${connection.linkedInId}`;
 
+    // ── Resolve author (personal profile or Company Page) ─────────────
+    let authorUrn = personUrn;
+    let authorType: "person" | "organization" = "person";
+    let resolvedOrgName: string | undefined;
+    if (organizationUrn) {
+      const matchingOrg = (connection.organizations || []).find((o) => o.urn === organizationUrn);
+      if (!matchingOrg) {
+        return NextResponse.json(
+          {
+            error: "organization_not_authorized",
+            message: "Vous n'êtes pas administrateur de cette page LinkedIn.",
+          },
+          { status: 403 }
+        );
+      }
+      authorUrn = matchingOrg.urn;
+      authorType = "organization";
+      resolvedOrgName = matchingOrg.name;
+    }
+
     // ── Register video upload ──────────────────────────────────────────
     const registerRes = await fetch(
       "https://api.linkedin.com/v2/assets?action=registerUpload",
@@ -150,7 +171,7 @@ export async function POST(request: NextRequest) {
         body: JSON.stringify({
           registerUploadRequest: {
             recipes: ["urn:li:digitalmediaRecipe:feedshare-video"],
-            owner: personUrn,
+            owner: authorUrn,
             serviceRelationships: [
               {
                 relationshipType: "OWNER",
@@ -204,7 +225,7 @@ export async function POST(request: NextRequest) {
 
     // ── Create post with video ─────────────────────────────────────────
     const shareBody = {
-      author: personUrn,
+      author: authorUrn,
       lifecycleState: "PUBLISHED",
       specificContent: {
         "com.linkedin.ugc.ShareContent": {
@@ -261,6 +282,10 @@ export async function POST(request: NextRequest) {
         content,
         postUrl: `https://www.linkedin.com/feed/update/${shareId}`,
         success: true,
+        authorType,
+        authorUrn,
+        organizationUrn: authorType === "organization" ? authorUrn : undefined,
+        organizationName: resolvedOrgName,
       });
       await updateLinkedInLastUsedAdmin(userId);
     } catch (firestoreError) {

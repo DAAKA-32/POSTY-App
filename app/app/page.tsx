@@ -533,8 +533,12 @@ function AppContent() {
     setShowPublishModal(true);
   };
 
-  const handleConfirmPublish = async (editedContent: string, visibility: "PUBLIC" | "CONNECTIONS" = "PUBLIC") => {
-    return await publishToLinkedIn(editedContent, visibility);
+  const handleConfirmPublish = async (
+    editedContent: string,
+    visibility: "PUBLIC" | "CONNECTIONS" = "PUBLIC",
+    organizationUrn?: string
+  ) => {
+    return await publishToLinkedIn(editedContent, visibility, undefined, organizationUrn);
   };
 
   const handleSchedulePost = (content: string) => {

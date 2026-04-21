@@ -5,12 +5,46 @@ import { TOKEN_EXPIRY_BUFFER_MS } from "@/lib/config/platform-constants";
 
 const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://postyapp.ai").trim();
 
+/**
+ * OAuth scopes requested from LinkedIn.
+ *
+ * Base scopes (required to sign in and publish as the user's personal profile):
+ *   - openid / profile / email  → user identity
+ *   - w_member_social           → publish `urn:li:person:*` posts
+ *
+ * Organization scopes (require Marketing Developer Platform / Community
+ * Management API access on the LinkedIn app). When granted, they unlock:
+ *   - r_organization_social     → read posts + engagement metrics for pages
+ *                                  the user administers. This is the ONLY way
+ *                                  to retrieve likes/comments/impressions from
+ *                                  LinkedIn's API. Personal profile posts have
+ *                                  no metrics endpoint at all.
+ *   - w_organization_social     → publish posts as a page the user administers
+ *   - rw_organization_admin     → list the pages the user administers (needed
+ *                                  for the "Publish as…" dropdown)
+ *
+ * If these scopes are not approved on the app, LinkedIn silently drops them
+ * during the OAuth flow. We detect this server-side (see `grantedScopes` in
+ * the callback) and gracefully fall back to personal-profile-only mode.
+ */
+const BASE_SCOPES = ["openid", "profile", "email", "w_member_social"];
+const ORG_SCOPES = ["r_organization_social", "w_organization_social", "rw_organization_admin"];
+
 export const LINKEDIN_CONFIG = {
   clientId: process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID || "",
   redirectUri: `${baseUrl}/api/auth/linkedin/callback`,
-  scope: "openid profile email w_member_social",
+  scope: [...BASE_SCOPES, ...ORG_SCOPES].join(" "),
   authorizationUrl: "https://www.linkedin.com/oauth/v2/authorization",
 };
+
+/** Scopes required for the organization features (publish as page + metrics) */
+export const LINKEDIN_ORG_SCOPES = ORG_SCOPES;
+
+/** Check whether a list of granted scopes unlocks organization features */
+export function hasOrganizationAccess(grantedScopes: string[] | undefined | null): boolean {
+  if (!grantedScopes || grantedScopes.length === 0) return false;
+  return ORG_SCOPES.every((s) => grantedScopes.includes(s));
+}
 
 /**
  * Génère l'URL d'autorisation LinkedIn OAuth 2.0
@@ -104,7 +138,8 @@ export async function postToLinkedIn(
   userId: string,
   content: string,
   visibility: "PUBLIC" | "CONNECTIONS" = "PUBLIC",
-  postId?: string
+  postId?: string,
+  organizationUrn?: string
 ): Promise<LinkedInPostResult> {
   try {
     const authHeaders = await getAuthHeaders();
@@ -119,6 +154,7 @@ export async function postToLinkedIn(
         content,
         visibility,
         postId,
+        organizationUrn: organizationUrn || undefined,
       }),
     });
 
@@ -156,7 +192,8 @@ export async function postToLinkedInWithMedia(
   content: string,
   visibility: "PUBLIC" | "CONNECTIONS" = "PUBLIC",
   images: File[],
-  postId?: string
+  postId?: string,
+  organizationUrn?: string
 ): Promise<LinkedInPostResult> {
   try {
     const authHeaders = await getAuthHeaders();
@@ -166,6 +203,7 @@ export async function postToLinkedInWithMedia(
     formData.append("content", content);
     formData.append("visibility", visibility);
     if (postId) formData.append("postId", postId);
+    if (organizationUrn) formData.append("organizationUrn", organizationUrn);
     images.forEach((image) => formData.append("images", image));
 
     // Do NOT set Content-Type — browser sets multipart boundary automatically
@@ -209,7 +247,8 @@ export async function postToLinkedInWithVideo(
   content: string,
   visibility: "PUBLIC" | "CONNECTIONS" = "PUBLIC",
   video: File,
-  postId?: string
+  postId?: string,
+  organizationUrn?: string
 ): Promise<LinkedInPostResult> {
   try {
     const authHeaders = await getAuthHeaders();
@@ -219,6 +258,7 @@ export async function postToLinkedInWithVideo(
     formData.append("content", content);
     formData.append("visibility", visibility);
     if (postId) formData.append("postId", postId);
+    if (organizationUrn) formData.append("organizationUrn", organizationUrn);
     formData.append("video", video);
 
     const response = await fetch("/api/linkedin/publish-with-video", {

@@ -492,6 +492,21 @@ export interface TwitterPostData {
 
 // ============== LINKEDIN TYPES (re-exported for consistency) ==============
 
+/**
+ * A LinkedIn organization (Company Page) that a user administers.
+ * Populated from GET /v2/organizationAcls?q=roleAssignee during OAuth.
+ * Posts published as an organization are the only ones for which LinkedIn
+ * exposes engagement metrics via the Marketing Developer Platform.
+ */
+export interface LinkedInOrganization {
+  urn: string; // "urn:li:organization:12345"
+  organizationId: string; // "12345"
+  name: string;
+  vanityName?: string;
+  logoUrl?: string;
+  role?: "ADMINISTRATOR" | "DIRECT_SPONSORED_CONTENT_POSTER" | string;
+}
+
 export interface LinkedInConnectionData {
   userId: string;
   linkedInId: string;
@@ -502,7 +517,29 @@ export interface LinkedInConnectionData {
   email?: string;
   connectedAt: Timestamp;
   lastUsedAt?: Timestamp;
+  // Organizations the user administers (for publishing as page + metrics API)
+  organizations?: LinkedInOrganization[];
+  organizationsUpdatedAt?: Timestamp;
+  // Scopes granted by the user at OAuth (tracks whether org features are available)
+  grantedScopes?: string[];
 }
+
+/** Where a post was published from (affects metrics availability) */
+export type LinkedInAuthorType = "person" | "organization";
+
+/** Lifecycle state of a post relative to LinkedIn's platform */
+export type LinkedInPostStatus = "published" | "deleted" | "unknown";
+
+/**
+ * Sync status of engagement metrics:
+ * - 'synced'        : metrics pulled from LinkedIn API, up to date
+ * - 'pending'       : not yet synced (new post or never reached by cron)
+ * - 'failed'        : last sync attempt errored (see syncError)
+ * - 'not_available' : metrics cannot be fetched — post is on a personal profile.
+ *                     LinkedIn does not expose any metrics endpoint for
+ *                     `urn:li:person:*` posts, with or without MDP access.
+ */
+export type LinkedInMetricsSyncStatus = "synced" | "pending" | "failed" | "not_available";
 
 export interface LinkedInPostData {
   id: string;
@@ -516,6 +553,18 @@ export interface LinkedInPostData {
   error?: string;
   // Engagement metrics (user-provided or scraped)
   metrics?: LinkedInPostMetrics;
+  // ===== Author tracking (for metrics availability) =====
+  authorType?: LinkedInAuthorType; // 'person' (no API metrics) | 'organization' (API metrics available)
+  authorUrn?: string; // "urn:li:person:xxx" | "urn:li:organization:123"
+  organizationUrn?: string; // same as authorUrn when authorType === 'organization'
+  organizationName?: string; // cached for display
+  // ===== Lifecycle + sync =====
+  status?: LinkedInPostStatus;
+  deletedFromPlatform?: boolean; // legacy flag, kept for back-compat with existing docs
+  deletedFromPlatformAt?: Timestamp;
+  syncStatus?: LinkedInMetricsSyncStatus;
+  syncError?: string;
+  lastMetricsSyncAt?: Timestamp;
 }
 
 export interface LinkedInPostMetrics {
@@ -523,6 +572,8 @@ export interface LinkedInPostMetrics {
   comments: number;
   shares: number;
   impressions?: number;
+  uniqueImpressions?: number;
+  clicks?: number;
   clickRate?: number;
   engagementRate?: number;
   updatedAt: Timestamp;
