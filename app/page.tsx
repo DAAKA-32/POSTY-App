@@ -27,6 +27,7 @@ import AnimatedMacBook from "@/components/landing/AnimatedMacBook";
 import AuroraBackground from "@/components/landing/AuroraBackground";
 import HowItWorksSection from "@/components/landing/HowItWorksSection";
 import { CopilotSection } from "@/components/landing/MockupScreens";
+import { FaqJsonLd, postyFaqData } from "@/components/seo/JsonLd";
 
 // =============================================================================
 // SCROLL CONTAINER — shared across all landing components in this file
@@ -4743,6 +4744,9 @@ export default function LandingPage() {
 
   return (
     <div className="relative">
+      {/* Site-wide FAQPage JSON-LD — scoped to the homepage only to avoid
+          duplicating the schema on (seo) group pages that ship their own. */}
+      <FaqJsonLd questions={postyFaqData.en} />
       {/* Aurora background — fixed full viewport, stars stay in place on scroll */}
       <AuroraBackground />
       <Navbar />
