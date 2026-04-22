@@ -115,6 +115,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
       alternates: { languages: generateAlternates("/linkedin-post-examples") },
     },
+    {
+      url: `${baseUrl}/linkedin-algorithm`,
+      lastModified: currentDate,
+      changeFrequency: "monthly",
+      priority: 0.9,
+      alternates: { languages: generateAlternates("/linkedin-algorithm") },
+    },
   ];
 
   // Legal pages with multilingual support
