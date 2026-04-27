@@ -536,14 +536,30 @@ export const de = {
     testimonialsPrev: "Zurück",
     testimonialsNext: "Weiter",
     testimonialsSwipe: "Wischen zum Navigieren",
-    testimonial1Role: "Gründer",
-    testimonial1Company: "B2B-Agentur",
-    testimonial1Text: "Vor Posty habe ich einmal pro Woche gepostet, ohne zu wissen, was ich sagen soll. Jetzt poste ich jeden Tag und LinkedIn ist mein wichtigster Akquisitionskanal geworden. Ich habe 3 Kunden in 2 Monaten gewonnen.",
-    testimonial2Role: "Marketingleiter",
-    testimonial2Company: "B2B SaaS",
-    testimonial2Text: "Mein Team spart 5 Stunden pro Woche bei der Content-Erstellung. Wir investieren diese Zeit in Strategie und Akquise. Unsere Beiträge sind konsistenter und das Engagement hat sich in 30 Tagen verdreifacht.",
+    testimonial1Role: "Verifizierte Trustpilot-Bewertung",
+    testimonial1Company: "",
+    testimonial1Text: "Diese Website und ihre leistungsstarke KI haben wirklich verändert, wie ich poste und meine Inhalte optimiere. Sie berücksichtigt die Persona meiner potenziellen Kunden je nach Netzwerk und Format und postet sogar für mich. Wirklich lohnenswert — ich kann es empfehlen.",
+    testimonial2Role: "Student",
+    testimonial2Company: "Trustpilot-Bewertung",
+    testimonial2Text: "Posty ist wirklich eine tägliche Hilfe. Als Student im Hochschulbereich nutze ich vorerst das Pro-Abo und werde bald auf das nächsthöhere Paket umsteigen. Eine echte Zeitersparnis bei der Suche nach Praktika und dualen Ausbildungen.",
     testimonial3Role: "Kunstmarkt-Branche",
     testimonial3Text: "Posty vereinfacht die Content-Erstellung wirklich, indem es hilft, hochwertige LinkedIn-Beiträge zu produzieren. Es versteht unsere Bedürfnisse und macht das Schreiben relevanter Inhalte so viel einfacher.",
+
+    // Cerise Cottier — Featured client spotlight
+    ceriseSpotlightBadge: "Verifizierte Kundenstory",
+    ceriseSpotlightTitle1: "Mach es wie Cerise —",
+    ceriseSpotlightTitle2: "konvertiere ohne Akquise.",
+    ceriseSpotlightSubtitle: "Über 20 Unternehmen haben sie kontaktiert — ganz ohne Outbound.",
+    ceriseSpotlightStatNumber: "20+",
+    ceriseSpotlightStatLabel: "Unternehmen haben sie kontaktiert",
+    ceriseSpotlightStatSubLabel: "direkt, ohne Akquise",
+    ceriseSpotlightQuote: "Ich habe einfach mit Posty auf LinkedIn gepostet. Der Algorithmus hat meine Beiträge gepusht, meine Aufrufe sind explodiert, und über 20 Unternehmen haben mich direkt kontaktiert. Keine Akquise — nur eingehende Chancen.",
+    ceriseSpotlightName: "Cerise Cottier",
+    ceriseSpotlightRole: "Kunstmarkt-Branche",
+    ceriseSpotlightImageAlt: "Cerise Cottier, Posty-Kundin",
+    ceriseSpotlightProof1: "Posts vom LinkedIn-Algorithmus gepusht",
+    ceriseSpotlightProof2: "Null Outbound-Akquise",
+    ceriseSpotlightProof3: "20+ eingehende Anfragen erhalten",
 
     // Audience section
     audienceTitle1: "Für Sie gemacht",
@@ -715,6 +731,17 @@ export const de = {
     pricingSavingsLabel: "2 Monate gratis",
     pricingTrialIncluded: "Kostenlose Testphase inklusive · Keine Bindung",
 
+    // Business offer (B2B card under the pricing grid — expandable)
+    businessTitle: "Business-Angebot",
+    businessSubtitle: "Du leitest ein Unternehmen und möchtest Posty im großen Maßstab nutzen?",
+    businessCTA: "Anruf buchen",
+    businessBookCall: "Termin vereinbaren",
+    businessFootnote: "Antwort innerhalb 24h · Individuelles Angebot",
+    businessBullet1: "Multi-User-Bereitstellung",
+    businessBullet2: "Erweiterte Automatisierung",
+    businessBullet3: "Individuelle Integrationen",
+    businessBullet4: "Dedizierter Support & SLA",
+
     // FAQ section
     faqBadge: "Häufig gestellte Fragen",
     faqTitle1: "Alles, was Sie wissen müssen",
@@ -757,6 +784,24 @@ export const de = {
     howItWorksStep4Example: "Geplant für Dienstag 9 Uhr — maximales Engagement",
     howItWorksReadyCTA: "Bereit, Ihre LinkedIn-Präsenz zu transformieren?",
     howItWorksTryFree: "Kostenlos testen",
+    hiwBadge: "So funktioniert's",
+    hiwTitle: "Eine Idee.",
+    hiwTitleAccent: "Ein Post. Fertig.",
+    hiwSubtitle: "Tippe eine einfache Idee ein — Postys KI verwandelt sie in einen veröffentlichungsbereiten LinkedIn-Beitrag.",
+    hiwYourIdea: "Deine Idee",
+    hiwGeneratedPost: "Generierter Beitrag",
+    hiwUserInput: "Ich möchte 3 Lektionen teilen, die ich beim erstmaligen Führen eines Remote-Teams gelernt habe",
+    hiwAiIntro: "Hier ist dein Beitrag, optimiert für Engagement:",
+    hiwPostAuthor: "Emilien N.",
+    hiwPostRole: "Gründer @ Posty AI",
+    hiwPostHook: "Ich hätte fast mein ganzes Team in 3 Monaten verloren.",
+    hiwPostBody: "Als ich Remote-Manager wurde, dachte ich, das Schwierigste wären die Tools. Ich lag falsch.\n\nLektion 1: Vertrauen ist nicht optional — es ist dein Fundament.\nLektion 2: Kommuniziere mehr. Und dann kommuniziere noch mehr.\nLektion 3: Ergebnisse zählen mehr als Arbeitsstunden.\n\nHeute ist mein Team 40 % produktiver und glücklicher als je zuvor.",
+    hiwPostCta: "Was war die größte Lektion, die DU im Remote-Management gelernt hast?",
+    hiwGeneratedIn: "In 12s erstellt",
+    hiwInputPlaceholder: "Beschreibe deine nächste Idee...",
+    hiwPill1: "Für LinkedIn optimiert",
+    hiwPill2: "Für später planbar",
+    hiwPill3: "KI-Insights inklusive",
     hiwMockupOnline: "Online",
     hiwMockupLike: "Gefällt mir",
     hiwMockupComment: "Kommentieren",
@@ -782,6 +827,50 @@ export const de = {
     aiExpNotifSuccess: "Meeting scheduled",
     aiExpNotifSuccessDetail: "Marc D. — Tomorrow 14:00",
     aiExpContextualLabel: "This person signed a client from this post",
+
+    // Copilot Sans/Avec headers
+    aiExpWithout: "Ohne Posty",
+    aiExpWith: "Mit Posty",
+
+    // Copilot comparison rows 1-5
+    aiExpRow1Before: "2h für einen Post",
+    aiExpRow1After: "In 30 Sekunden fertig",
+    aiExpRow2Before: "Keine Idee, was zu posten",
+    aiExpRow2After: "KI schlägt virale Angles vor",
+    aiExpRow3Before: "0 Engagement, 0 Leads",
+    aiExpRow3After: "Posts, die Kunden anziehen",
+    aiExpRow4Before: "Unregelmäßiges Posten",
+    aiExpRow4After: "Automatische Planung",
+    aiExpRow5Before: "Kein Workflow",
+    aiExpRow5After: "Smarter 24/7-Kopilot",
+
+    // Copilot mockup labels
+    aiExpDraftLabel: "Dein Briefing",
+    aiExpOptimizedLabel: "Für LinkedIn optimiert",
+    aiExpGeneratedPost: "Storytelling ist kein Soft Skill — es ist der schnellste Weg, kalte Scroller in qualifizierte Meetings zu verwandeln. Hier ist der eine Absatz, der meine Pipeline verdoppelt hat.",
+    aiExpPublishCta: "Veröffentlichen",
+    aiExpPublishing: "Wird veröffentlicht…",
+    aiExpPublished: "Veröffentlicht",
+    aiExpScheduleCta: "Planen",
+    aiExpToastPublished: "Beitrag auf LinkedIn veröffentlicht",
+    aiExpToastPublishedSub: "Sichtbar für 4,7K Kontakte",
+    aiExpToastBoost: "KI-Reichweite +42 %",
+    aiExpToastBoostSub: "UX-Agent · Auto-Tuning",
+
+    // Multi-agent rail
+    agentIdle: "Bereit",
+    agentCopywriterLabel: "Copywriter",
+    agentCopywriterAnalyzing: "Analysiere…",
+    agentCopywriterDrafting: "Schreibe…",
+    agentCopywriterDone: "Poliert",
+    agentCopywriterThinking: "Copywriter-Agent schreibt um…",
+    agentSystemLabel: "System",
+    agentSystemValidating: "Prüfe…",
+    agentSystemDone: "Freigegeben",
+    agentSystemValidatedLine: "System-Agent: Beitrag freigegeben",
+    agentUxLabel: "UX Engine",
+    agentUxBroadcasting: "Verteilung",
+    agentUxDone: "Live",
 
     // Value block after features
     valueBlockTitle: "Warum Freelancer Posty wählen",
@@ -926,6 +1015,16 @@ export const de = {
 
   // Auth
   auth: {
+    // Rotating marketing taglines on the desktop login/signup hero panel.
+    loginHeroRotator: [
+      "Das KI-Tool, das Posts wie ein Profi schreibt",
+      "Lass dein Publikum schneller wachsen",
+      "Dein LinkedIn-Copilot, rund um die Uhr verfügbar",
+      "Hochwertige Inhalte in Sekunden",
+      "Mühelos veröffentlichen, Zeit sparen",
+      "Steigere deine Sichtbarkeit ohne Prospecting",
+    ],
+
     // Login
     loginTitle: "Willkommen zurück",
     loginSubtitle: "Melden Sie sich an, um fortzufahren",
@@ -2454,6 +2553,7 @@ export const de = {
     storyBusinessPerWeek: "Story + Business ({n}/Woche)",
     platformOnly: "Nur {name}",
     networksConnected: "4 Netzwerke verbunden",
+    networksMore: "weitere",
     unlimitedSharing: "Unbegrenztes Teilen mit Ihrem Team",
     shareWithContacts: "Mit {n} Kontakten teilen",
     postsUltraPrecise: "Ultrapräzise KI-Beiträge, 2x ausführlicher",
@@ -2675,6 +2775,21 @@ export const de = {
     tooltipPostsPublished: "Beiträge, die Sie direkt über Posty auf LinkedIn veröffentlicht haben",
     tooltipThisWeek: "Anzahl der in den letzten 7 Tagen generierten Beiträge",
     tooltipSessions: "Anzahl der von Ihnen gestarteten Generierungssitzungen",
+    thisMonth: "Dieser Monat",
+    last30Days: "Letzte 30 Tage",
+    scheduled: "Geplant",
+    upcoming: "Bevorstehend",
+    tooltipThisMonth: "In den letzten 30 Tagen generierte Beiträge",
+    tooltipScheduled: "Beiträge in der Warteschlange für die spätere Veröffentlichung",
+    featureUsageTitle: "Funktionsnutzung",
+    featureUsageSubtitle: "Wo Sie den meisten Wert aus Posty ziehen",
+    featureUsageEmpty: "Generieren Sie Ihren ersten Beitrag, um Ihre Aufteilung zu sehen",
+    featureUsageLabels: {
+      chat: "Direkt-Chat",
+      templates: "Vorlagen",
+      scheduled: "Planung",
+      published: "Auf LinkedIn veröffentlicht",
+    },
 
     // Insights section
     insightsTitle: "Insights",
@@ -2818,6 +2933,10 @@ export const de = {
     notConnected: "Nicht verbunden",
     unlockMorePlatforms: "Weitere Plattformen freischalten",
     upgradeToUnlock: "Auf Max upgraden, um alle Plattformen freizuschalten",
+    // ConnectPlatformPopup
+    connectPlatformTitle: "{platform} verbinden?",
+    connectPlatformDesc: "Verbinde dein {platform}-Konto, um direkt aus Posty zu veröffentlichen.",
+    connectAction: "Verbinden",
     // PublishOptions
     chooseBroadcastMode: "Wählen Sie Ihren Verbreitungsmodus",
     selectAtLeastOne: "Wählen Sie mindestens eine Option",

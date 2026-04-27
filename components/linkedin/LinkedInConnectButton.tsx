@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Button from "@/components/ui/Button";
 import { useLinkedIn } from "@/contexts/LinkedInContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -20,7 +20,8 @@ export default function LinkedInConnectButton({
     isLoading: contextLoading,
     connection,
     connectLinkedIn,
-    disconnectLinkedIn
+    disconnectLinkedIn,
+    refreshProfilePhoto,
   } = useLinkedIn();
 
   const handleConnect = () => {
@@ -32,6 +33,18 @@ export default function LinkedInConnectButton({
   };
 
   const [imgError, setImgError] = useState(false);
+  const refreshedRef = useRef(false);
+
+  // LinkedIn CDN URLs expire. On first error, try refreshing the URL from the
+  // server before falling back to the initial letter.
+  const handleImgError = async () => {
+    if (!refreshedRef.current) {
+      refreshedRef.current = true;
+      const fresh = await refreshProfilePhoto();
+      if (fresh) return;
+    }
+    setImgError(true);
+  };
 
   if (isConnected && connection) {
     const showPhoto = connection.profilePicture && !imgError;
@@ -48,7 +61,7 @@ export default function LinkedInConnectButton({
                 className="w-10 h-10 rounded-full object-cover border-2 border-[#0A66C2]"
                 loading="lazy"
                 referrerPolicy="no-referrer"
-                onError={() => setImgError(true)}
+                onError={handleImgError}
               />
             ) : (
               <div className="w-10 h-10 rounded-full bg-[#0A66C2]/15 flex items-center justify-center border-2 border-[#0A66C2]/30">

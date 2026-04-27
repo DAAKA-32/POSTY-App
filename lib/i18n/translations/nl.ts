@@ -536,14 +536,30 @@ export const nl = {
     testimonialsPrev: "Vorige",
     testimonialsNext: "Volgende",
     testimonialsSwipe: "Veeg om te navigeren",
-    testimonial1Role: "Oprichter",
-    testimonial1Company: "B2B-bureau",
-    testimonial1Text: "Vóór Posty postte ik één keer per week zonder te weten wat ik moest zeggen. Nu post ik elke dag en LinkedIn is mijn #1 acquisitiekanaal geworden. Ik heb 3 klanten binnengehaald in 2 maanden.",
-    testimonial2Role: "Marketingdirecteur",
-    testimonial2Company: "B2B SaaS",
-    testimonial2Text: "Mijn team bespaart 5 uur per week op content. Die tijd investeren we nu in strategie en prospectie. Onze berichten zijn consistenter en het engagement is verdrievoudigd in 30 dagen.",
+    testimonial1Role: "Geverifieerde Trustpilot-review",
+    testimonial1Company: "",
+    testimonial1Text: "Deze site en zijn krachtige AI hebben echt veranderd hoe ik post en mijn content optimaliseer. Hij houdt rekening met de persona van mijn potentiële klanten per netwerk en formaat, en publiceert zelfs in mijn plaats. Echt rendabel, ik raad het aan.",
+    testimonial2Role: "Student",
+    testimonial2Company: "Trustpilot-review",
+    testimonial2Text: "Posty is echt een dagelijkse hulp. Als student in het hoger onderwijs heb ik voorlopig het Pro-abonnement en ga ik binnenkort over naar het hogere plan. Een echte tijdwinst bij het zoeken naar stages en duale opleidingen.",
     testimonial3Role: "Kunstmarktsector",
     testimonial3Text: "Posty vereenvoudigt contentcreatie enorm door te helpen met het produceren van LinkedIn-berichten van hoge kwaliteit. Het begrijpt onze behoeften en maakt het schrijven van relevante content veel makkelijker.",
+
+    // Cerise Cottier — Featured client spotlight
+    ceriseSpotlightBadge: "Geverifieerd klantverhaal",
+    ceriseSpotlightTitle1: "Doe zoals Cerise —",
+    ceriseSpotlightTitle2: "converteer zonder prospectie.",
+    ceriseSpotlightSubtitle: "Meer dan 20 bedrijven namen contact met haar op — zonder enige outbound.",
+    ceriseSpotlightStatNumber: "20+",
+    ceriseSpotlightStatLabel: "bedrijven namen contact op",
+    ceriseSpotlightStatSubLabel: "rechtstreeks, geen prospectie",
+    ceriseSpotlightQuote: "Ik heb gewoon op LinkedIn gepost met Posty. Het algoritme pushte mijn berichten, mijn views schoten omhoog, en meer dan 20 bedrijven namen direct contact met me op. Geen prospectie — alleen inbound kansen.",
+    ceriseSpotlightName: "Cerise Cottier",
+    ceriseSpotlightRole: "Kunstmarktsector",
+    ceriseSpotlightImageAlt: "Cerise Cottier, Posty-klant",
+    ceriseSpotlightProof1: "Posts gepusht door het LinkedIn-algoritme",
+    ceriseSpotlightProof2: "Nul outbound prospectie",
+    ceriseSpotlightProof3: "20+ inbound kansen ontvangen",
 
     // Audience section
     audienceTitle1: "Gemaakt voor jou",
@@ -715,6 +731,17 @@ export const nl = {
     pricingSavingsLabel: "2 maanden gratis",
     pricingTrialIncluded: "Gratis proefperiode inbegrepen · Zonder verplichtingen",
 
+    // Business offer (B2B card under the pricing grid — expandable)
+    businessTitle: "Business-aanbod",
+    businessSubtitle: "Heb je een bedrijf en wil je Posty op grote schaal gebruiken?",
+    businessCTA: "Boek een gesprek",
+    businessBookCall: "Plan een gesprek",
+    businessFootnote: "Antwoord binnen 24u · Offerte op maat",
+    businessBullet1: "Multi-user uitrol",
+    businessBullet2: "Geavanceerde automatisering",
+    businessBullet3: "Aangepaste integraties",
+    businessBullet4: "Toegewijde ondersteuning & SLA",
+
     // FAQ section
     faqBadge: "Veelgestelde vragen",
     faqTitle1: "Alles wat je moet weten",
@@ -757,6 +784,24 @@ export const nl = {
     howItWorksStep4Example: "Gepland voor dinsdag 9 uur — piek engagement",
     howItWorksReadyCTA: "Klaar om je LinkedIn-aanwezigheid te transformeren?",
     howItWorksTryFree: "Gratis proberen",
+    hiwBadge: "Hoe het werkt",
+    hiwTitle: "Eén idee.",
+    hiwTitleAccent: "Eén post. Klaar.",
+    hiwSubtitle: "Typ een simpel idee — Posty's AI maakt er een publicatieklaar LinkedIn-bericht van.",
+    hiwYourIdea: "Jouw idee",
+    hiwGeneratedPost: "Gegenereerd bericht",
+    hiwUserInput: "Ik wil 3 lessen delen die ik leerde toen ik voor het eerst een remote team aanstuurde",
+    hiwAiIntro: "Hier is je bericht, geoptimaliseerd voor engagement:",
+    hiwPostAuthor: "Emilien N.",
+    hiwPostRole: "Oprichter @ Posty AI",
+    hiwPostHook: "Ik verloor bijna mijn hele team in 3 maanden.",
+    hiwPostBody: "Toen ik remote manager werd, dacht ik dat de tools het lastigst zouden zijn. Ik had het mis.\n\nLes 1: Vertrouwen is niet optioneel — het is je fundament.\nLes 2: Communiceer meer. En communiceer dan nog meer.\nLes 3: Resultaten tellen zwaarder dan uren.\n\nVandaag is mijn team 40% productiever en gelukkiger dan ooit.",
+    hiwPostCta: "Wat is de grootste les die JIJ hebt geleerd in remote management?",
+    hiwGeneratedIn: "Gegenereerd in 12s",
+    hiwInputPlaceholder: "Beschrijf je volgende idee...",
+    hiwPill1: "Geoptimaliseerd voor LinkedIn",
+    hiwPill2: "Inplanbaar voor later",
+    hiwPill3: "AI-inzichten inbegrepen",
     hiwMockupOnline: "Online",
     hiwMockupLike: "Vind ik leuk",
     hiwMockupComment: "Reageren",
@@ -782,6 +827,50 @@ export const nl = {
     aiExpNotifSuccess: "Meeting scheduled",
     aiExpNotifSuccessDetail: "Marc D. — Tomorrow 14:00",
     aiExpContextualLabel: "This person signed a client from this post",
+
+    // Copilot Sans/Avec headers
+    aiExpWithout: "Zonder Posty",
+    aiExpWith: "Met Posty",
+
+    // Copilot comparison rows 1-5
+    aiExpRow1Before: "2u om een post te schrijven",
+    aiExpRow1After: "Klaar in 30 seconden",
+    aiExpRow2Before: "Geen idee wat te posten",
+    aiExpRow2After: "AI stelt virale invalshoeken voor",
+    aiExpRow3Before: "0 engagement, 0 leads",
+    aiExpRow3After: "Posts die klanten aantrekken",
+    aiExpRow4Before: "Onregelmatig posten",
+    aiExpRow4After: "Automatisch inplannen",
+    aiExpRow5Before: "Geen workflow",
+    aiExpRow5After: "Slimme 24/7 copiloot",
+
+    // Copilot mockup labels
+    aiExpDraftLabel: "Jouw briefing",
+    aiExpOptimizedLabel: "Geoptimaliseerd voor LinkedIn",
+    aiExpGeneratedPost: "Storytelling is geen soft skill — het is de snelste manier om koude scrollers in gekwalificeerde meetings om te zetten. Dit is de paragraaf die mijn pipeline verdubbelde.",
+    aiExpPublishCta: "Publiceren",
+    aiExpPublishing: "Publiceren…",
+    aiExpPublished: "Gepubliceerd",
+    aiExpScheduleCta: "Inplannen",
+    aiExpToastPublished: "Bericht gepubliceerd op LinkedIn",
+    aiExpToastPublishedSub: "Zichtbaar voor 4,7k connecties",
+    aiExpToastBoost: "AI-bereik +42%",
+    aiExpToastBoostSub: "UX-agent · auto-tuning",
+
+    // Multi-agent rail
+    agentIdle: "Stand-by",
+    agentCopywriterLabel: "Copywriter",
+    agentCopywriterAnalyzing: "Analyseren…",
+    agentCopywriterDrafting: "Schrijven…",
+    agentCopywriterDone: "Gepolijst",
+    agentCopywriterThinking: "Copywriter-agent herschrijft…",
+    agentSystemLabel: "System",
+    agentSystemValidating: "Valideren…",
+    agentSystemDone: "Goedgekeurd",
+    agentSystemValidatedLine: "System-agent: bericht gevalideerd voor publicatie",
+    agentUxLabel: "UX Engine",
+    agentUxBroadcasting: "Uitzending",
+    agentUxDone: "Live",
 
     // Value block after features
     valueBlockTitle: "Waarom freelancers Posty kiezen",
@@ -926,6 +1015,16 @@ export const nl = {
 
   // Auth
   auth: {
+    // Rotating marketing taglines on the desktop login/signup hero panel.
+    loginHeroRotator: [
+      "De AI-tool die je posts als een pro schrijft",
+      "Laat je publiek sneller groeien",
+      "Je LinkedIn-copiloot, 24/7 beschikbaar",
+      "Krachtige content in seconden",
+      "Publiceer moeiteloos, bespaar tijd",
+      "Verhoog je zichtbaarheid zonder te prospecteren",
+    ],
+
     // Login
     loginTitle: "Welkom terug",
     loginSubtitle: "Log in om door te gaan",
@@ -2454,6 +2553,7 @@ export const nl = {
     storyBusinessPerWeek: "Story + Business ({n}/week)",
     platformOnly: "Alleen {name}",
     networksConnected: "4 netwerken gekoppeld",
+    networksMore: "meer",
     unlimitedSharing: "Onbeperkt delen met je team",
     shareWithContacts: "Delen met {n} contacten",
     postsUltraPrecise: "Ultraprecieze AI-berichten, 2x vollediger",
@@ -2675,6 +2775,21 @@ export const nl = {
     tooltipPostsPublished: "Berichten die je direct op LinkedIn hebt gepubliceerd via Posty",
     tooltipThisWeek: "Aantal berichten gegenereerd in de afgelopen 7 dagen",
     tooltipSessions: "Aantal generatiesessies dat je hebt gestart",
+    thisMonth: "Deze maand",
+    last30Days: "Laatste 30 dagen",
+    scheduled: "Gepland",
+    upcoming: "Aankomend",
+    tooltipThisMonth: "Berichten gegenereerd in de laatste 30 dagen",
+    tooltipScheduled: "Berichten in de wachtrij voor toekomstige publicatie",
+    featureUsageTitle: "Functiegebruik",
+    featureUsageSubtitle: "Waar je de meeste waarde uit Posty haalt",
+    featureUsageEmpty: "Genereer je eerste bericht om je verdeling te zien",
+    featureUsageLabels: {
+      chat: "Directe chat",
+      templates: "Sjablonen",
+      scheduled: "Planning",
+      published: "Gepubliceerd op LinkedIn",
+    },
 
     // Insights section
     insightsTitle: "Inzichten",
@@ -2818,6 +2933,10 @@ export const nl = {
     notConnected: "Niet gekoppeld",
     unlockMorePlatforms: "Meer platforms ontgrendelen",
     upgradeToUnlock: "Upgrade naar Max om alle platforms te ontgrendelen",
+    // ConnectPlatformPopup
+    connectPlatformTitle: "{platform} koppelen?",
+    connectPlatformDesc: "Koppel je {platform}-account om direct vanuit Posty te publiceren.",
+    connectAction: "Koppelen",
     // PublishOptions
     chooseBroadcastMode: "Kies je verzendmodus",
     selectAtLeastOne: "Selecteer ten minste één optie",

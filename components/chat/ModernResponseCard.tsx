@@ -49,10 +49,19 @@ interface ModernResponseCardProps {
   isStreaming?: boolean;
   userPlan: PlanType | null;
   onPublishToLinkedIn?: (content: string) => void;
-  onSchedule?: (content: string) => void;
+  /** Schedule the post; second arg is the optional AI-generated seed comment to pre-fill in the modal. */
+  onSchedule?: (content: string, seedCommentText?: string) => void;
   showVariantBadge?: boolean;
   /** When true, actions are always visible. When false, hover (desktop) / scroll (mobile). */
   isLastMessage?: boolean;
+  /** Auto-generated first-comment for this post (algo boost) */
+  seedComment?: {
+    text?: string;
+    loading?: boolean;
+    error?: string;
+  };
+  /** Callback invoked when the user clicks "Regenerate" on the seed comment */
+  onRegenerateSeedComment?: () => void;
 }
 
 interface MenuPosition {
@@ -81,6 +90,8 @@ export const ModernResponseCard = memo(function ModernResponseCard({
   onSchedule,
   showVariantBadge = false,
   isLastMessage = true,
+  seedComment,
+  onRegenerateSeedComment,
 }: ModernResponseCardProps) {
   const { trigger: triggerHaptic } = useHapticFeedback();
   const { canSchedulePosts } = useSubscription();
@@ -116,6 +127,20 @@ export const ModernResponseCard = memo(function ModernResponseCard({
       setCopied(true);
       triggerHaptic("success");
       setTimeout(() => setCopied(false), 2000);
+    } catch {
+      triggerHaptic("error");
+    }
+  };
+
+  // Seed comment copy state
+  const [seedCopied, setSeedCopied] = useState(false);
+  const handleCopySeed = async () => {
+    if (!seedComment?.text) return;
+    try {
+      await navigator.clipboard.writeText(seedComment.text);
+      setSeedCopied(true);
+      triggerHaptic("success");
+      setTimeout(() => setSeedCopied(false), 2000);
     } catch {
       triggerHaptic("error");
     }
@@ -249,7 +274,7 @@ export const ModernResponseCard = memo(function ModernResponseCard({
   const handleSchedule = () => {
     triggerHaptic("light");
     setIsMenuOpen(false);
-    onSchedule?.(content);
+    onSchedule?.(content, seedComment?.text);
   };
 
   // Lazy insights — only generated on click
@@ -448,6 +473,157 @@ export const ModernResponseCard = memo(function ModernResponseCard({
             )}
           </div>
         </div>
+
+        {/* Seed comment block — algo-boost first comment, separate from post body */}
+        {!isStreaming && content && (seedComment?.text || seedComment?.loading || seedComment?.error) && (
+          <div className="mx-4 mb-3 rounded-xl bg-gradient-to-br from-[#F8935D]/[0.05] to-[#F76B54]/[0.03] dark:from-[#F8935D]/[0.08] dark:to-[#F76B54]/[0.04] ring-1 ring-[#F8935D]/15 dark:ring-[#F8935D]/20 overflow-hidden">
+            {/* Header strip */}
+            <div className="flex items-center justify-between px-3 pt-2.5 pb-1.5">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="relative flex w-1.5 h-1.5 flex-shrink-0">
+                  <span className="absolute inset-0 rounded-full bg-[#F8935D]/40 animate-ping" />
+                  <span className="relative w-1.5 h-1.5 rounded-full bg-[#F8935D]" />
+                </span>
+                <span
+                  className="text-[10px] font-bold uppercase text-[#B5532E] dark:text-[#F8935D]"
+                  style={{ letterSpacing: "0.12em" }}
+                >
+                  1er commentaire · Boost algo
+                </span>
+                <span
+                  className="hidden sm:inline text-[10px] text-gray-400 dark:text-text-muted truncate"
+                  title="À publier 2-7 min après le post pour booster la portée"
+                >
+                  · à poster ~3 min après publish
+                </span>
+              </div>
+
+              {/* Mini action bar */}
+              {seedComment?.text && !seedComment.loading && (
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  {/* Regenerate */}
+                  {onRegenerateSeedComment && (
+                    <motion.button
+                      onClick={onRegenerateSeedComment}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="
+                        inline-flex items-center justify-center
+                        w-6 h-6 rounded-md
+                        text-[#B5532E] dark:text-[#F8935D]
+                        hover:bg-[#F8935D]/10 dark:hover:bg-[#F8935D]/15
+                        transition-colors duration-150
+                      "
+                      aria-label="Régénérer"
+                      title="Régénérer"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                    </motion.button>
+                  )}
+                  {/* Copy */}
+                  <motion.button
+                    onClick={handleCopySeed}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="
+                      inline-flex items-center justify-center
+                      w-6 h-6 rounded-md
+                      text-[#B5532E] dark:text-[#F8935D]
+                      hover:bg-[#F8935D]/10 dark:hover:bg-[#F8935D]/15
+                      transition-colors duration-150
+                    "
+                    aria-label={t.ui.copy}
+                    title={t.ui.copy}
+                  >
+                    <AnimatePresence mode="wait" initial={false}>
+                      {seedCopied ? (
+                        <motion.svg
+                          key="check"
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          exit={{ scale: 0 }}
+                          transition={{ duration: 0.15 }}
+                          className="w-3 h-3 text-green-600 dark:text-green-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                        </motion.svg>
+                      ) : (
+                        <motion.svg
+                          key="copy"
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          exit={{ scale: 0 }}
+                          transition={{ duration: 0.15 }}
+                          className="w-3 h-3"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          strokeWidth={2}
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </motion.svg>
+                      )}
+                    </AnimatePresence>
+                  </motion.button>
+                </div>
+              )}
+            </div>
+
+            {/* Body — text / skeleton / error */}
+            <div className="px-3 pb-3">
+              {seedComment?.loading ? (
+                <div className="space-y-1.5 py-1">
+                  <motion.div
+                    className="h-2.5 rounded-full bg-[#F8935D]/15 dark:bg-[#F8935D]/20"
+                    animate={{ opacity: [0.5, 1, 0.5] }}
+                    transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
+                    style={{ width: "92%" }}
+                  />
+                  <motion.div
+                    className="h-2.5 rounded-full bg-[#F8935D]/15 dark:bg-[#F8935D]/20"
+                    animate={{ opacity: [0.5, 1, 0.5] }}
+                    transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut", delay: 0.18 }}
+                    style={{ width: "78%" }}
+                  />
+                  <motion.div
+                    className="h-2.5 rounded-full bg-[#F8935D]/15 dark:bg-[#F8935D]/20"
+                    animate={{ opacity: [0.5, 1, 0.5] }}
+                    transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut", delay: 0.36 }}
+                    style={{ width: "60%" }}
+                  />
+                </div>
+              ) : seedComment?.error ? (
+                <div className="flex items-start gap-2 py-1">
+                  <span className="text-[12px] text-gray-500 dark:text-text-muted flex-1">
+                    Impossible de générer le commentaire.
+                  </span>
+                  {onRegenerateSeedComment && (
+                    <button
+                      onClick={onRegenerateSeedComment}
+                      className="text-[11px] font-semibold text-[#B5532E] dark:text-[#F8935D] hover:underline flex-shrink-0"
+                    >
+                      Réessayer
+                    </button>
+                  )}
+                </div>
+              ) : seedComment?.text ? (
+                <motion.p
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                  className="text-[13.5px] leading-relaxed text-gray-800 dark:text-text-primary whitespace-pre-wrap break-words"
+                >
+                  {seedComment.text}
+                </motion.p>
+              ) : null}
+            </div>
+          </div>
+        )}
 
         {/* Engagement footer + Action buttons */}
         <div className="px-4 py-2 border-t border-gray-100 dark:border-dark-border/30">

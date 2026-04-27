@@ -8,7 +8,7 @@ import Button from "@/components/ui/Button";
 import { ConfirmModal } from "@/components/ui/Modal";
 import { triggerHaptic } from "@/hooks/ui/useHapticFeedback";
 import { LinkedInIcon } from "@/components/linkedin/LinkedInConnectButton";
-import { RedditIcon, ThreadsIcon, FacebookIcon } from "@/components/publish/PlatformSelector";
+import { ThreadsIcon, FacebookIcon, BlueskyIcon, MastodonIcon, DiscordIcon } from "@/components/publish/PlatformSelector";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { formatTimeLocale } from "@/components/ui/IOSTimePicker";
 
@@ -25,7 +25,9 @@ const PLATFORM_LABELS: Record<string, string> = {
   linkedin: "LinkedIn",
   facebook: "Facebook",
   threads: "Threads",
-  reddit: "Reddit",
+  bluesky: "Bluesky",
+  mastodon: "Mastodon",
+  discord: "Discord",
 };
 
 // i18n day/month helpers — built from translation keys at render time
@@ -112,12 +114,26 @@ const PLATFORM_BADGE_CONFIG: Record<string, {
     bgColor: "bg-black/10 dark:bg-white/15",
     borderColor: "border-black/10 dark:border-white/20",
   },
-  reddit: {
-    icon: <RedditIcon className="w-3.5 h-3.5" />,
-    name: "Reddit",
-    textColor: "text-[#FF4500] dark:text-[#FF6B3D]",
-    bgColor: "bg-[#FF4500]/10 dark:bg-[#FF4500]/20",
-    borderColor: "border-[#FF4500]/10 dark:border-[#FF4500]/25",
+  bluesky: {
+    icon: <BlueskyIcon className="w-3.5 h-3.5" />,
+    name: "Bluesky",
+    textColor: "text-[#0085FF] dark:text-[#33A0FF]",
+    bgColor: "bg-[#0085FF]/10 dark:bg-[#0085FF]/20",
+    borderColor: "border-[#0085FF]/10 dark:border-[#0085FF]/25",
+  },
+  mastodon: {
+    icon: <MastodonIcon className="w-3.5 h-3.5" />,
+    name: "Mastodon",
+    textColor: "text-[#6364FF] dark:text-[#8485FF]",
+    bgColor: "bg-[#6364FF]/10 dark:bg-[#6364FF]/20",
+    borderColor: "border-[#6364FF]/10 dark:border-[#6364FF]/25",
+  },
+  discord: {
+    icon: <DiscordIcon className="w-3.5 h-3.5" />,
+    name: "Discord",
+    textColor: "text-[#5865F2] dark:text-[#7984FF]",
+    bgColor: "bg-[#5865F2]/10 dark:bg-[#5865F2]/20",
+    borderColor: "border-[#5865F2]/10 dark:border-[#5865F2]/25",
   },
 };
 

@@ -18,7 +18,7 @@ import {
   DocumentReference,
 } from "firebase/firestore";
 import { db } from "@/lib/db/firebase";
-import { UserProfile, Post, Session, ChatMessage, SubscriptionPlan, TwitterConnectionData, TwitterPostData, FacebookConnectionData, ThreadsConnectionData } from "@/types";
+import { UserProfile, Post, Session, ChatMessage, SubscriptionPlan, FacebookConnectionData, ThreadsConnectionData } from "@/types";
 import { PlanType, DAILY_MESSAGE_LIMITS, PLAN_CONFIGS, getFounderOverridePlan } from "@/lib/config/plans";
 
 /**
@@ -92,13 +92,19 @@ export async function getUserProfile(
 
   if (userSnap.exists()) {
     const data = userSnap.data();
+    /* Return the full document so downstream contexts (SubscriptionContext,
+     * LanguageContext, etc.) can derive state synchronously without a second
+     * Firestore fetch — that second fetch is what produced the visible
+     * "Vérification de votre abonnement…" loader after login. */
     return {
       id: userSnap.id,
       email: data.email,
       displayName: data.name || data.displayName,
       photoURL: data.photoURL || null,
       bio: data.bio || "",
+      language: data.language,
       onboardingComplete: data.onboardingComplete,
+      branding: data.branding,
       profile: data.profile || {
         sector: data.sector || "",
         role: data.role || "",
@@ -110,7 +116,13 @@ export async function getUserProfile(
         sessionsCount: 0,
         lastActive: null,
       },
+      subscription: data.subscription,
+      quota: data.quota,
+      usage: data.usage,
+      memory: data.memory,
       helpReadPages: data.helpReadPages || [],
+      showWelcomeModal: data.showWelcomeModal,
+      giftPopupSeen: data.giftPopupSeen,
       createdAt: data.createdAt,
     } as UserProfile;
   }
@@ -1829,122 +1841,6 @@ export async function searchPosts(
     .slice(0, limitCount);
 }
 
-// ============== TWITTER CONNECTION MANAGEMENT ==============
-// Collection: twitterConnections
-// Document ID: userId
-
-export async function saveTwitterConnection(
-  userId: string,
-  data: {
-    twitterId: string;
-    username: string;
-    accessToken: string;
-    refreshToken?: string;
-    expiresAt: Date;
-    profileName: string;
-    profilePicture?: string;
-  }
-): Promise<void> {
-  const connectionRef = doc(db, "twitterConnections", userId);
-  await setDoc(connectionRef, {
-    userId,
-    twitterId: data.twitterId,
-    username: data.username,
-    accessToken: data.accessToken,
-    refreshToken: data.refreshToken || null,
-    expiresAt: Timestamp.fromDate(data.expiresAt),
-    profileName: data.profileName,
-    profilePicture: data.profilePicture || null,
-    connectedAt: serverTimestamp(),
-    lastUsedAt: null,
-  });
-}
-
-export async function getTwitterConnection(
-  userId: string
-): Promise<TwitterConnectionData | null> {
-  const connectionRef = doc(db, "twitterConnections", userId);
-  const connectionSnap = await getDoc(connectionRef);
-
-  if (connectionSnap.exists()) {
-    return connectionSnap.data() as TwitterConnectionData;
-  }
-  return null;
-}
-
-export async function updateTwitterTokens(
-  userId: string,
-  accessToken: string,
-  refreshToken: string | undefined,
-  expiresAt: Date
-): Promise<void> {
-  const connectionRef = doc(db, "twitterConnections", userId);
-  await updateDoc(connectionRef, {
-    accessToken,
-    refreshToken: refreshToken || null,
-    expiresAt: Timestamp.fromDate(expiresAt),
-  });
-}
-
-export async function updateTwitterLastUsed(userId: string): Promise<void> {
-  const connectionRef = doc(db, "twitterConnections", userId);
-  await updateDoc(connectionRef, {
-    lastUsedAt: serverTimestamp(),
-  });
-}
-
-export async function deleteTwitterConnection(userId: string): Promise<void> {
-  const connectionRef = doc(db, "twitterConnections", userId);
-  await deleteDoc(connectionRef);
-}
-
-// ============== TWITTER POSTS HISTORY ==============
-// Collection: twitterPosts
-
-export async function saveTwitterPost(
-  userId: string,
-  data: {
-    twitterId: string;
-    tweetId: string;
-    content: string;
-    tweetUrl?: string;
-    success: boolean;
-    error?: string;
-  }
-): Promise<string> {
-  const postsRef = collection(db, "twitterPosts");
-  const docRef = await addDoc(postsRef, {
-    userId,
-    twitterId: data.twitterId,
-    tweetId: data.tweetId,
-    content: data.content,
-    tweetUrl: data.tweetUrl || null,
-    success: data.success,
-    error: data.error || null,
-    publishedAt: serverTimestamp(),
-  });
-  return docRef.id;
-}
-
-export async function getTwitterPosts(
-  userId: string,
-  limitCount: number = 20
-): Promise<TwitterPostData[]> {
-  const postsRef = collection(db, "twitterPosts");
-  const q = query(
-    postsRef,
-    where("userId", "==", userId),
-    orderBy("publishedAt", "desc"),
-    limit(limitCount)
-  );
-
-  const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map((docSnap) => ({
-    id: docSnap.id,
-    ...docSnap.data(),
-  })) as TwitterPostData[];
-}
-
 // ============== FACEBOOK CONNECTION MANAGEMENT ==============
 // Collection: facebookConnections
 // Document ID: userId
@@ -2237,6 +2133,16 @@ export async function createScheduledPost(
   // Add images array if provided
   if (images && images.length > 0) {
     postData.images = images;
+  }
+
+  // Optional seed comment (algo-boost first reply) — only persisted if the
+  // user opted in AND there's a non-trivial comment text to fire later.
+  if (data.seedComment?.enabled && data.seedComment.text?.trim().length >= 10) {
+    postData.seedComment = {
+      enabled: true,
+      text: data.seedComment.text.trim(),
+      delayMinutes: Math.max(1, Math.min(15, data.seedComment.delayMinutes || 3)),
+    };
   }
 
   if (preGeneratedId) {
@@ -2594,5 +2500,98 @@ export async function clearAllMemory(userId: string): Promise<void> {
     "memory.items": [],
     "memory.lastUpdated": serverTimestamp(),
   });
+}
+
+// ============== BLUESKY INTEGRATION ==============
+// Collection: blueskyConnections
+// Storage model: handle + did + PDS url + JWT pair (accessJwt short-lived,
+// refreshJwt rotated on every refresh). App password is NOT stored.
+
+export interface BlueskyConnectionData {
+  userId: string;
+  handle: string;
+  did: string;
+  service: string;
+  accessJwt: string;
+  refreshJwt: string;
+  profileName?: string;
+  profilePicture?: string;
+  connectedAt: Timestamp;
+  lastUsedAt?: Timestamp;
+  sessionRefreshedAt?: Timestamp;
+}
+
+export async function getBlueskyConnection(
+  userId: string
+): Promise<BlueskyConnectionData | null> {
+  const connectionRef = doc(db, "blueskyConnections", userId);
+  const snap = await getDoc(connectionRef);
+  if (snap.exists()) return snap.data() as BlueskyConnectionData;
+  return null;
+}
+
+export async function deleteBlueskyConnection(userId: string): Promise<void> {
+  const connectionRef = doc(db, "blueskyConnections", userId);
+  await deleteDoc(connectionRef);
+}
+
+// ============== MASTODON INTEGRATION ==============
+// Collection: mastodonConnections
+
+export interface MastodonConnectionData {
+  userId: string;
+  instance: string;
+  accountId: string;
+  username: string;
+  acct: string;
+  accessToken: string;
+  profileName?: string;
+  profilePicture?: string;
+  connectedAt: Timestamp;
+  lastUsedAt?: Timestamp;
+}
+
+export async function getMastodonConnection(
+  userId: string
+): Promise<MastodonConnectionData | null> {
+  const ref = doc(db, "mastodonConnections", userId);
+  const snap = await getDoc(ref);
+  if (snap.exists()) return snap.data() as MastodonConnectionData;
+  return null;
+}
+
+export async function deleteMastodonConnection(userId: string): Promise<void> {
+  const ref = doc(db, "mastodonConnections", userId);
+  await deleteDoc(ref);
+}
+
+// ============== DISCORD INTEGRATION ==============
+// Collection: discordConnections
+
+export interface DiscordConnectionData {
+  userId: string;
+  webhookUrl: string;
+  webhookId: string;
+  guildName?: string;
+  channelId?: string;
+  channelName?: string;
+  webhookName?: string;
+  webhookAvatar?: string;
+  connectedAt: Timestamp;
+  lastUsedAt?: Timestamp;
+}
+
+export async function getDiscordConnection(
+  userId: string
+): Promise<DiscordConnectionData | null> {
+  const ref = doc(db, "discordConnections", userId);
+  const snap = await getDoc(ref);
+  if (snap.exists()) return snap.data() as DiscordConnectionData;
+  return null;
+}
+
+export async function deleteDiscordConnection(userId: string): Promise<void> {
+  const ref = doc(db, "discordConnections", userId);
+  await deleteDoc(ref);
 }
 

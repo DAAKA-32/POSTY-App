@@ -169,9 +169,13 @@ export default function AnimatedMacBook({
     <div className="relative w-full">
       {/* Container */}
       <div className="relative w-full max-w-[1084px] mx-auto">
-        <div>
+        {/* MacBook lid — wraps the browser chrome */}
+        <div className="relative bg-gradient-to-b from-[#2a2a2c] via-[#1d1d1f] to-[#141416] rounded-[12px] sm:rounded-[18px] md:rounded-[22px] p-[5px] sm:p-2 md:p-2.5 shadow-2xl shadow-black/40 ring-1 ring-black/50">
+          {/* Camera notch (modern MacBook) */}
+          <div className="absolute top-[5px] sm:top-2 md:top-2.5 left-1/2 -translate-x-1/2 w-10 sm:w-14 md:w-16 h-1 md:h-1.5 bg-[#050505] rounded-b-[5px] z-20 pointer-events-none" />
+
           {/* Browser window frame */}
-          <div className="relative bg-white rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl shadow-gray-400/20 border border-gray-200/60">
+          <div className="relative bg-white rounded-md md:rounded-lg overflow-hidden border border-black/30">
 
             {/* Title bar */}
             <div className="flex items-center justify-between px-5 md:px-6 py-3.5 md:py-4 border-b border-gray-100 bg-gradient-to-b from-gray-50/80 to-white">
@@ -332,10 +336,17 @@ export default function AnimatedMacBook({
             </div>
           </div>
         </div>
+
+        {/* MacBook hinge — slightly wider strip below the lid */}
+        <div className="relative -mt-[1px] mx-auto w-[101%] sm:w-[101.5%] flex justify-center">
+          <div className="h-1 sm:h-1.5 md:h-2 w-full bg-gradient-to-b from-[#3a3a3c] via-[#2c2c2e] to-[#1d1d1f] rounded-b-lg sm:rounded-b-xl shadow-md shadow-black/20" />
+          {/* Hinge indent — center notch suggesting the lid-base seam */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[18%] h-[2px] sm:h-[3px] bg-[#0f0f0f] rounded-b-md" />
+        </div>
       </div>
 
       {/* Drop shadow under the frame */}
-      <div className="absolute -bottom-4 left-[8%] right-[8%] h-8 bg-black/8 blur-2xl rounded-[50%] pointer-events-none" />
+      <div className="absolute -bottom-4 left-[8%] right-[8%] h-8 bg-black/15 blur-2xl rounded-[50%] pointer-events-none" />
 
       {/* Screen navigation tabs — hidden on mobile */}
       <div className="mt-6 sm:mt-8 hidden sm:flex justify-center">
@@ -351,12 +362,12 @@ export default function AnimatedMacBook({
                   flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-[10px] sm:text-xs font-medium whitespace-nowrap transition-all duration-300 flex-shrink-0
                   ${isActive
                     ? "bg-white shadow-md shadow-gray-200/60 text-[#F8935D] border border-[#F8935D]/20 scale-[1.02]"
-                    : "bg-white/60 text-gray-400 border border-transparent hover:bg-white hover:text-gray-600 hover:shadow-sm"
+                    : "bg-white text-gray-600 border border-gray-200/70 hover:text-gray-900 hover:shadow-sm"
                   }
                 `}
                 aria-label={screen.label}
               >
-                <span className={isActive ? "text-[#F8935D]" : "text-gray-400"}>
+                <span className={isActive ? "text-[#F8935D]" : "text-gray-500"}>
                   {icon}
                 </span>
                 <span>{screen.label}</span>

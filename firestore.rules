@@ -77,11 +77,6 @@ service cloud.firestore {
       allow read, write: if isOwner(userId);
     }
 
-    // Twitter connections - OAuth tokens and profile data
-    match /twitterConnections/{userId} {
-      allow read, write: if isOwner(userId);
-    }
-
     // Facebook connections - OAuth tokens and profile data
     match /facebookConnections/{userId} {
       allow read, write: if isOwner(userId);
@@ -97,16 +92,55 @@ service cloud.firestore {
       allow read, write: if isOwner(userId);
     }
 
-    // LinkedIn posts history
-    match /linkedinPosts/{postId} {
+    // Bluesky connections - AT Protocol session (handle + JWT pair)
+    match /blueskyConnections/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // Bluesky posts history
+    match /blueskyPosts/{postId} {
       allow list: if isAuthenticated();
       allow get: if isResourceOwner();
       allow update, delete: if isResourceOwner();
       allow create: if isAuthenticated() && isRequestOwner();
     }
 
-    // Twitter posts history
-    match /twitterPosts/{postId} {
+    // Mastodon connections - instance URL + personal access token
+    match /mastodonConnections/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // Mastodon app credentials (one doc per instance, contains client_secret).
+    // Server-only via Admin SDK — explicitly deny client access for defense
+    // in depth. Reading this would let any user impersonate Posty on that
+    // instance.
+    match /mastodonApps/{docId} {
+      allow read, write: if false;
+    }
+
+    // Mastodon posts history
+    match /mastodonPosts/{postId} {
+      allow list: if isAuthenticated();
+      allow get: if isResourceOwner();
+      allow update, delete: if isResourceOwner();
+      allow create: if isAuthenticated() && isRequestOwner();
+    }
+
+    // Discord webhooks - stored webhook URL (no OAuth)
+    match /discordConnections/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // Discord posts history
+    match /discordPosts/{postId} {
+      allow list: if isAuthenticated();
+      allow get: if isResourceOwner();
+      allow update, delete: if isResourceOwner();
+      allow create: if isAuthenticated() && isRequestOwner();
+    }
+
+    // LinkedIn posts history
+    match /linkedinPosts/{postId} {
       allow list: if isAuthenticated();
       allow get: if isResourceOwner();
       allow update, delete: if isResourceOwner();

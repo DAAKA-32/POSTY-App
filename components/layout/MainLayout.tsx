@@ -151,11 +151,11 @@ function getNavItems(t: ReturnType<typeof useLanguage>["t"]) {
     {
       name: t.nav.chat,
       href: "/app",
-      activeClasses: "bg-[#F8935D]/8 text-gray-900 dark:text-white",
-      hoverClasses: "hover:text-[#F8935D] hover:bg-[#F8935D]/5",
-      indicatorColor: "bg-gradient-to-r from-[#F8935D] to-[#F76B54]",
       iconColor: "text-[#F8935D]",
-      glowColor: "rgba(248, 147, 93, 0.35)",
+      activeClasses: "",
+      hoverClasses: "",
+      indicatorColor: "",
+      glowColor: "",
       icon: (isActive: boolean) => (
         <svg className="w-5 h-5" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -170,11 +170,11 @@ function getNavItems(t: ReturnType<typeof useLanguage>["t"]) {
     {
       name: t.nav.history,
       href: "/history",
-      activeClasses: "bg-cyan-500/8 text-gray-900 dark:text-white",
-      hoverClasses: "hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-cyan-500/5",
-      indicatorColor: "bg-gradient-to-r from-cyan-500 to-cyan-400",
-      iconColor: "text-cyan-500",
-      glowColor: "rgba(6, 182, 212, 0.35)",
+      iconColor: "text-cyan-500/80 dark:text-cyan-400/80",
+      activeClasses: "",
+      hoverClasses: "",
+      indicatorColor: "",
+      glowColor: "",
       icon: (isActive: boolean) => (
         <svg className="w-5 h-5" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -189,11 +189,11 @@ function getNavItems(t: ReturnType<typeof useLanguage>["t"]) {
     {
       name: t.nav.schedule,
       href: "/schedule",
-      activeClasses: "bg-violet-500/8 text-gray-900 dark:text-white",
-      hoverClasses: "hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-500/5",
-      indicatorColor: "bg-gradient-to-r from-violet-500 to-violet-400",
-      iconColor: "text-violet-500",
-      glowColor: "rgba(139, 92, 246, 0.35)",
+      iconColor: "text-violet-500/80 dark:text-violet-400/80",
+      activeClasses: "",
+      hoverClasses: "",
+      indicatorColor: "",
+      glowColor: "",
       icon: (isActive: boolean) => (
         <svg className="w-5 h-5" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -208,11 +208,11 @@ function getNavItems(t: ReturnType<typeof useLanguage>["t"]) {
     {
       name: t.nav.analytics,
       href: "/analytics",
-      activeClasses: "bg-emerald-500/8 text-gray-900 dark:text-white",
-      hoverClasses: "hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-500/5",
-      indicatorColor: "bg-gradient-to-r from-emerald-500 to-emerald-400",
-      iconColor: "text-emerald-500",
-      glowColor: "rgba(16, 185, 129, 0.35)",
+      iconColor: "text-emerald-500/80 dark:text-emerald-400/80",
+      activeClasses: "",
+      hoverClasses: "",
+      indicatorColor: "",
+      glowColor: "",
       icon: (isActive: boolean) => (
         <svg className="w-5 h-5" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -737,7 +737,7 @@ export default function MainLayout({
             </button>
           </motion.div>
 
-          {/* Nav items with stagger animation and vivid colors */}
+          {/* Nav items — unified primary palette + shared layoutId active indicator */}
           {navItems.map((item, index) => {
             const isActive = pathname === item.href || (item.href === "/app" && pathname === "/chat");
             return (
@@ -749,66 +749,40 @@ export default function MainLayout({
                 animate="visible"
                 className="relative"
               >
-                {/* Enhanced active indicator with glow */}
+                {/* Shared active indicator — slides smoothly between items */}
                 {isActive && (
-                  <div
-                    className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-full bg-primary"
-                    style={{
-                      boxShadow: `0 0 12px ${item.glowColor}`,
-                    }}
-                  />
-                )}
-
-                {/* Subtle glow effect behind active item — contained to icon area only */}
-                {isActive && (
-                  <div
-                    className="absolute left-0 top-0 bottom-0 w-12 rounded-xl blur-lg opacity-40 pointer-events-none"
-                    style={{
-                      background: `radial-gradient(circle at center, ${item.glowColor} 0%, transparent 70%)`,
-                    }}
+                  <motion.div
+                    layoutId="mainlayout-active-indicator"
+                    className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-7 rounded-r-full bg-primary"
+                    transition={{ type: "spring", stiffness: 380, damping: 32 }}
                   />
                 )}
 
                 <Link
                   href={item.href}
                   className={`
-                    relative w-full h-11 rounded-xl flex items-center gap-3 transition-all duration-200 ease-out group transform-gpu
+                    relative w-full h-10 rounded-lg flex items-center gap-3 transition-colors duration-150 ease-out group
                     ${isCollapsed ? "justify-center px-0" : "px-3"}
-                    ${
-                      isActive
-                        ? item.activeClasses
-                        : `text-gray-900 dark:text-gray-200 ${item.hoverClasses} hover:translate-x-0.5 active:scale-[0.98]`
+                    ${isActive
+                      ? "bg-primary/[0.06] text-primary"
+                      : "text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-dark-hover/60 hover:text-gray-900 dark:hover:text-white"
                     }
                   `}
                   title={item.name}
                 >
-                  {/* Colored icon — full saturation when active, muted when inactive */}
                   <span
                     className={`
-                      relative shrink-0 transition-all duration-200
-                      ${isActive ? "scale-110" : "opacity-70 group-hover:opacity-100 group-hover:scale-110"}
-                      ${item.iconColor}
+                      relative shrink-0 transition-colors duration-150
+                      ${isActive
+                        ? "text-primary"
+                        : `${item.iconColor} opacity-80 group-hover:opacity-100`
+                      }
                     `}
-                    style={isActive ? {
-                      filter: `drop-shadow(0 0 4px ${item.glowColor})`
-                    } : undefined}
                   >
                     {item.icon(isActive)}
                   </span>
                   {!isCollapsed && (
-                    <span className={`whitespace-nowrap flex-1 ${isActive ? "font-semibold" : "font-medium"}`}>{item.name}</span>
-                  )}
-
-                  {/* Arrow indicator for active state */}
-                  {!isCollapsed && isActive && (
-                    <svg
-                      className={`w-4 h-4 transition-all duration-200 ${item.iconColor}`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
+                    <span className={`whitespace-nowrap flex-1 text-[13.5px] ${isActive ? "font-bold" : "font-semibold"}`}>{item.name}</span>
                   )}
 
                   {/* Tooltip for collapsed mode */}

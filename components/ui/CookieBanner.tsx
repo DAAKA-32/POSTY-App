@@ -157,7 +157,7 @@ export default function CookieBanner() {
         }
       `}
       style={{
-        fontFamily: "'Inter', system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif",
+        // Font inherited from <body> via design token (var(--font-sans) = Inter).
         paddingBottom: "max(env(safe-area-inset-bottom, 0px), 0px)",
       }}
     >

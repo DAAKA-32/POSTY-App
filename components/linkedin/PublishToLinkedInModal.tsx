@@ -6,7 +6,10 @@ import Modal from "@/components/ui/Modal";
 import BottomSheet from "@/components/ui/BottomSheet";
 import Button from "@/components/ui/Button";
 import UpgradeProModal from "@/components/ui/UpgradeProModal";
-import LinkedInConnectButton, { LinkedInIcon } from "./LinkedInConnectButton";
+import { LinkedInIcon } from "./LinkedInConnectButton";
+import ConnectPlatformPopup from "@/components/publish/ConnectPlatformPopup";
+import { PLATFORMS as ALL_PLATFORMS } from "@/components/publish/PlatformSelector";
+import { useLinkedIn } from "@/contexts/LinkedInContext";
 import { LinkedInConnectionData } from "@/lib/db/firestore";
 import { useQuota } from "@/contexts/QuotaContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
@@ -18,11 +21,15 @@ import { usePlatformSelection } from "@/hooks/gesture/usePlatformSelection";
 import { triggerHaptic } from "@/hooks/ui/useHapticFeedback";
 import { useFacebook } from "@/contexts/FacebookContext";
 import { useThreads } from "@/contexts/ThreadsContext";
+import { useBluesky } from "@/contexts/BlueskyContext";
+import { useMastodon } from "@/contexts/MastodonContext";
+import { useDiscord } from "@/contexts/DiscordContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { postToLinkedInWithMedia, postToLinkedInWithVideo } from "@/lib/platforms/linkedin";
 import { shouldShowFreeSignature, FREE_PLAN_SIGNATURE } from "@/lib/config/plans";
-import IOSTimePicker, { SmartTimeSuggestions, formatTimeLocale } from "@/components/ui/IOSTimePicker";
+import { formatTimeLocale } from "@/components/ui/IOSTimePicker";
+import TimeDropdown from "@/components/schedule/TimeDropdown";
 import FullScreenTextEditor from "@/components/publish/FullScreenTextEditor";
 import { useRouter } from "next/navigation";
 
@@ -122,8 +129,12 @@ export default function PublishToLinkedInModal({
   // Use either context to detect Max — SubscriptionContext is more reliable (normalizes plan names)
   const isMaxPlan = subIsMax || quotaIsMax;
   const currentPlan = subPlan || quotaPlan;
-  const { isConnected: facebookConnected, publishToFacebook } = useFacebook();
-  const { isConnected: threadsConnected, publishToThreads } = useThreads();
+  const { connectLinkedIn } = useLinkedIn();
+  const { isConnected: facebookConnected, publishToFacebook, connectFacebook } = useFacebook();
+  const { isConnected: threadsConnected, publishToThreads, connectThreads } = useThreads();
+  const { isConnected: blueskyConnected, publishToBluesky } = useBluesky();
+  const { isConnected: mastodonConnected, publishToMastodon } = useMastodon();
+  const { isConnected: discordConnected, publishToDiscord, connectDiscord } = useDiscord();
   const { schedulePost, isUploading } = useScheduling();
   const router = useRouter();
   const [step, setStep] = useState<PublishStep>("preview");
@@ -147,6 +158,9 @@ export default function PublishToLinkedInModal({
   });
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showFullScreenEditor, setShowFullScreenEditor] = useState(false);
+  // Platform pending the "Connect this platform?" popup. Triggered when the
+  // user clicks a non-connected platform in the selector.
+  const [connectPopupPlatform, setConnectPopupPlatform] = useState<Platform | null>(null);
 
   // Image state
   const [images, setImages] = useState<File[]>([]);
@@ -174,6 +188,14 @@ export default function PublishToLinkedInModal({
   const [scheduleStep, setScheduleStep] = useState<"date" | "time">("date");
   const [isScheduleSubmitting, setIsScheduleSubmitting] = useState(false);
   const timezone = useMemo(() => getUserTimezone(), []);
+
+  /**
+   * Sub-view state inside the modal's "preview" step. Drives the slide
+   * transition between the compose form and the date/time picker, so the
+   * picker no longer expands inline (forcing a scroll) but takes over the
+   * full modal body with a back arrow.
+   */
+  const [composeView, setComposeView] = useState<"compose" | "schedule">("compose");
 
   // Real-time clock for schedule validation
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -274,6 +296,9 @@ export default function PublishToLinkedInModal({
     ...(linkedInConnection ? ["linkedin" as Platform] : []),
     ...(facebookConnected ? ["facebook" as Platform] : []),
     ...(threadsConnected ? ["threads" as Platform] : []),
+    ...(blueskyConnected ? ["bluesky" as Platform] : []),
+    ...(mastodonConnected ? ["mastodon" as Platform] : []),
+    ...(discordConnected ? ["discord" as Platform] : []),
   ];
 
   // Smart platform selection with persistence
@@ -287,10 +312,56 @@ export default function PublishToLinkedInModal({
   });
 
   const handlePlatformToggle = (platform: Platform) => {
-    if (platform === "linkedin" || platform === "facebook" || platform === "threads") {
+    // Forward toggle for any real publishing platform. The previous whitelist
+    // only allowed linkedin/facebook/threads here and dropped clicks on
+    // bluesky/mastodon/discord silently — every platform with a publish
+    // dispatcher must be toggleable.
+    if (
+      platform === "linkedin" ||
+      platform === "facebook" ||
+      platform === "threads" ||
+      platform === "bluesky" ||
+      platform === "mastodon" ||
+      platform === "discord"
+    ) {
       togglePlatform(platform);
     }
   };
+
+  // Trigger the connection flow for the platform from the popup. OAuth
+  // platforms get an inline redirect; credential-based ones (Bluesky,
+  // Mastodon) need the form on the settings page.
+  const startPlatformConnection = useCallback((platform: Platform) => {
+    switch (platform) {
+      case "linkedin":
+        connectLinkedIn();
+        break;
+      case "facebook":
+        connectFacebook();
+        break;
+      case "threads":
+        connectThreads();
+        break;
+      case "discord":
+        connectDiscord();
+        break;
+      case "bluesky":
+      case "mastodon":
+        onClose();
+        router.push("/settings");
+        break;
+      default:
+        onClose();
+        router.push("/settings");
+    }
+  }, [connectLinkedIn, connectFacebook, connectThreads, connectDiscord, onClose, router]);
+
+  // Lookup table for the popup styling (icon + colors per platform).
+  const popupPlatformInfo = useMemo(() => {
+    if (!connectPopupPlatform) return null;
+    const info = ALL_PLATFORMS.find((p) => p.id === connectPopupPlatform);
+    return info || null;
+  }, [connectPopupPlatform]);
 
   // Localized publishing messages
   const publishingMessages = [
@@ -365,6 +436,7 @@ export default function PublishToLinkedInModal({
       setShowSchedulePicker(false);
       setScheduleConfirmed(false);
       setScheduleStep("date");
+      setComposeView("compose");
       setCurrentMonth(new Date());
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
@@ -587,6 +659,39 @@ export default function PublishToLinkedInModal({
         });
       }
 
+      // Publish to Bluesky if selected
+      if (selectedPlatforms.includes("bluesky")) {
+        const result = await publishToBluesky(editedContent);
+        results.push({
+          platform: "Bluesky",
+          success: result.success,
+          url: result.postUrl,
+          error: result.error,
+        });
+      }
+
+      // Publish to Mastodon if selected
+      if (selectedPlatforms.includes("mastodon")) {
+        const result = await publishToMastodon(editedContent);
+        results.push({
+          platform: "Mastodon",
+          success: result.success,
+          url: result.postUrl,
+          error: result.error,
+        });
+      }
+
+      // Publish to Discord if selected
+      if (selectedPlatforms.includes("discord")) {
+        const result = await publishToDiscord(editedContent);
+        results.push({
+          platform: "Discord",
+          success: result.success,
+          url: result.postUrl,
+          error: result.error,
+        });
+      }
+
       const successResults = results.filter((r) => r.success);
       const failedResults = results.filter((r) => !r.success);
 
@@ -739,9 +844,20 @@ export default function PublishToLinkedInModal({
   const characterCount = editedContent.length;
   const linkedInLimit = 3000;
   const threadsLimit = 500;
+  const blueskyLimit = 300;
+  const mastodonLimit = 500;
+  const discordLimit = 2000;
   const isOverLinkedInLimit = selectedPlatforms.includes("linkedin") && characterCount > linkedInLimit;
   const isOverThreadsLimit = selectedPlatforms.includes("threads") && characterCount > threadsLimit;
-  const isOverLimit = isOverLinkedInLimit || isOverThreadsLimit;
+  const isOverBlueskyLimit = selectedPlatforms.includes("bluesky") && characterCount > blueskyLimit;
+  const isOverMastodonLimit = selectedPlatforms.includes("mastodon") && characterCount > mastodonLimit;
+  const isOverDiscordLimit = selectedPlatforms.includes("discord") && characterCount > discordLimit;
+  const isOverLimit =
+    isOverLinkedInLimit ||
+    isOverThreadsLimit ||
+    isOverBlueskyLimit ||
+    isOverMastodonLimit ||
+    isOverDiscordLimit;
   const noPlatformSelected = selectedPlatforms.length === 0;
   const weeklyLimitReached = publishMode === "now" && hasWeeklyPublishLimit && !canPublishThisWeek;
   const scheduleNotReady = publishMode === "schedule" && !scheduleConfirmed;
@@ -749,82 +865,42 @@ export default function PublishToLinkedInModal({
 
   // Content to render inside modal/bottom sheet
   const renderContent = () => {
-    // If not connected, show enhanced connect prompt
-    if (!isConnected) {
-      return (
-        <div className="py-2">
-          {/* Visual header with LinkedIn branding */}
-          <div className="relative mb-6">
-            <div className="absolute inset-0 bg-gradient-to-br from-[#0A66C2]/20 to-[#004182]/10 rounded-2xl blur-xl" />
-            <div className="relative bg-gradient-to-br from-[#0A66C2]/10 to-[#004182]/5 rounded-2xl p-6 border border-[#0A66C2]/20">
-              <div className="flex flex-col items-center text-center">
-                <div className="w-20 h-20 mb-4 rounded-2xl bg-gradient-to-br from-[#0A66C2] to-[#004182] flex items-center justify-center shadow-lg shadow-[#0A66C2]/30">
-                  <LinkedInIcon className="w-10 h-10 text-white" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                  {t.publish.connectLinkedIn}
-                </h3>
-                <p className="text-text-secondary text-sm max-w-xs">
-                  {t.publish.connectLinkedInDesc}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Benefits list */}
-          <div className="space-y-3 mb-6">
-            {[
-              { icon: "⚡", text: t.publish.oneClickPublish },
-              { icon: "🔒", text: t.publish.secureConnection },
-              { icon: "📊", text: t.publish.trackPublications },
-            ].map((benefit, i) => (
-              <div key={i} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-dark-elevated/50 rounded-xl border border-gray-200 dark:border-dark-border/50">
-                <span className="text-lg">{benefit.icon}</span>
-                <span className="text-sm text-text-secondary">{benefit.text}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* Action buttons with improved sizing */}
-          <div className="space-y-3">
-            <LinkedInConnectButton className="w-full" variant="default" />
-            <Button
-              variant="ghost"
-              fullWidth
-              onClick={handleClose}
-              className="min-h-[48px] text-text-muted hover:text-gray-900 dark:hover:text-white"
-            >
-              {t.templates.cancel}
-            </Button>
-          </div>
-        </div>
-      );
-    }
-
     return (
       <>
         {/* Preview Step */}
         {step === "preview" && (
-          <div className="space-y-4">
-            {/* LinkedIn Profile */}
-            <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-dark-bg rounded-lg">
-              {linkedInConnection?.profilePicture ? (
-                <img
-                  src={linkedInConnection.profilePicture}
-                  alt={linkedInConnection.profileName}
-                  className="w-10 h-10 rounded-full object-cover"
-                  loading="lazy"
-                />
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-[#0A66C2]/20 flex items-center justify-center">
-                  <LinkedInIcon className="w-5 h-5 text-[#0A66C2]" />
+          <AnimatePresence mode="wait" initial={false}>
+          {composeView === "compose" && (
+          <motion.div
+            key="compose-view"
+            initial={{ x: -16, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: -16, opacity: 0 }}
+            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            className="space-y-4"
+          >
+            {/* LinkedIn Profile — only shown when LinkedIn is connected.
+                Other platforms surface their own context inside their card. */}
+            {isConnected && (
+              <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-dark-bg rounded-lg">
+                {linkedInConnection?.profilePicture ? (
+                  <img
+                    src={linkedInConnection.profilePicture}
+                    alt={linkedInConnection.profileName}
+                    className="w-10 h-10 rounded-full object-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-[#0A66C2]/20 flex items-center justify-center">
+                    <LinkedInIcon className="w-5 h-5 text-[#0A66C2]" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-gray-900 dark:text-white font-medium truncate">{linkedInConnection?.profileName}</p>
+                  <p className="text-xs text-text-muted">{t.publish.willBePublishedOnProfile}</p>
                 </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <p className="text-gray-900 dark:text-white font-medium truncate">{linkedInConnection?.profileName}</p>
-                <p className="text-xs text-text-muted">{t.publish.willBePublishedOnProfile}</p>
               </div>
-            </div>
+            )}
 
             {/* Platform Selector */}
             <PlatformSelector
@@ -832,6 +908,7 @@ export default function PublishToLinkedInModal({
               connectedPlatforms={connectedPlatforms}
               onToggle={handlePlatformToggle}
               showAllPlatforms={true}
+              onConnectRequest={(platform) => setConnectPopupPlatform(platform)}
             />
 
             {/* Quota Info — only for Pro users with a daily limit */}
@@ -1247,7 +1324,12 @@ export default function PublishToLinkedInModal({
                   type="button"
                   onClick={() => {
                     setPublishMode("schedule");
-                    if (!scheduleConfirmed) setShowSchedulePicker(true);
+                    if (!scheduleConfirmed && canSchedule) {
+                      /* Slide into the schedule sub-view (no inline expansion). */
+                      setShowSchedulePicker(true);
+                      setScheduleStep("date");
+                      setComposeView("schedule");
+                    }
                     triggerHaptic("selection");
                   }}
                   className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all duration-200 text-left ${
@@ -1302,6 +1384,7 @@ export default function PublishToLinkedInModal({
                     onClick={() => {
                       setShowSchedulePicker(true);
                       setScheduleStep("date");
+                      setComposeView("schedule");
                     }}
                     className="shrink-0 text-sm text-primary font-medium hover:underline min-h-[44px] px-2 flex items-center"
                   >
@@ -1332,9 +1415,12 @@ export default function PublishToLinkedInModal({
                 </motion.div>
               )}
 
-              {/* ── Inline Schedule Picker ─────────────────────────── */}
+              {/* Schedule picker is rendered as the "schedule" sub-view below
+                  (back arrow + slide-in). The block kept here is unreachable
+                  (`{false && …}`) — the JSX is preserved so closures still
+                  resolve at parse time, but it never renders. */}
               <AnimatePresence>
-                {publishMode === "schedule" && showSchedulePicker && canSchedule && (
+                {false && publishMode === "schedule" && showSchedulePicker && canSchedule && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
@@ -1501,59 +1587,17 @@ export default function PublishToLinkedInModal({
                               </button>
                             </div>
 
-                            {/* Smart time suggestions */}
-                            <div className="mb-4">
-                              <SmartTimeSuggestions
-                                onSelect={(hour, minute) => {
-                                  if (!isTimeDisabled(hour, minute)) {
-                                    triggerHaptic("medium");
-                                    setScheduledTime({ hour, minute });
-                                    setScheduleConfirmed(true);
-                                    setShowSchedulePicker(false);
-                                  }
-                                }}
-                                selectedHour={scheduledTime.hour}
-                                selectedMinute={scheduledTime.minute}
-                                selectedDate={scheduledDate}
-                                isTimeDisabled={isTimeDisabled}
-                              />
-                            </div>
-
-                            {/* Time grid — denser, no hard-coded max-height */}
-                            <div className="bg-white dark:bg-dark-card rounded-xl border border-gray-100 dark:border-dark-border/60 overflow-hidden">
-                              <div className="max-h-56 overflow-y-auto overscroll-contain">
-                                <div className="grid grid-cols-4 sm:grid-cols-6 gap-1 p-2">
-                                  {Array.from({ length: 48 }, (_, i) => {
-                                    const hour = Math.floor(i / 2);
-                                    const minute = (i % 2) * 30;
-                                    const label = formatTimeLocale(hour, minute, t.ui.timeLocale);
-                                    const isSelected = scheduledTime.hour === hour && scheduledTime.minute === minute;
-                                    const disabled = isTimeDisabled(hour, minute);
-                                    return (
-                                      <button
-                                        key={i}
-                                        onClick={() => {
-                                          if (!disabled) {
-                                            triggerHaptic("medium");
-                                            setScheduledTime({ hour, minute });
-                                            setScheduleConfirmed(true);
-                                            setShowSchedulePicker(false);
-                                          }
-                                        }}
-                                        disabled={disabled}
-                                        className={`px-2 py-2 text-xs rounded-lg transition-all min-h-[40px] font-medium tabular-nums ${
-                                          disabled ? "text-text-muted/30 cursor-not-allowed line-through" :
-                                          isSelected ? "bg-primary text-white shadow-sm" :
-                                          "hover:bg-gray-50 dark:hover:bg-dark-hover text-gray-700 dark:text-gray-200"
-                                        }`}
-                                      >
-                                        {label}
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            </div>
+                            {/* Compact time dropdown — recommended slots + full list */}
+                            <TimeDropdown
+                              value={scheduledTime}
+                              isTimeDisabled={isTimeDisabled}
+                              onSelect={(hour, minute) => {
+                                setScheduledTime({ hour, minute });
+                                setScheduleConfirmed(true);
+                                setShowSchedulePicker(false);
+                                setComposeView("compose");
+                              }}
+                            />
                           </motion.div>
                         )}
                       </AnimatePresence>
@@ -1630,7 +1674,212 @@ export default function PublishToLinkedInModal({
             )}
 
             {/* Actions moved to Modal/BottomSheet footer prop (renderMobileFooter). */}
-          </div>
+          </motion.div>
+          )}
+          {composeView === "schedule" && (
+          <motion.div
+            key="schedule-view"
+            initial={{ x: 16, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: 16, opacity: 0 }}
+            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+          >
+            {/* Back arrow header */}
+            <div className="flex items-center gap-2 mb-4 -mt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic("light");
+                  setComposeView("compose");
+                  /* If user backs out before confirming, keep them on
+                   * "Publish now" so the modal isn't stuck in an unfinishable
+                   * "schedule" state. Their date/time selections are preserved. */
+                  if (!scheduleConfirmed) setPublishMode("now");
+                }}
+                aria-label={t.dashboard.back}
+                className="p-2 -ml-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-hover transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
+              >
+                <svg className="w-5 h-5 text-gray-700 dark:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white tracking-tight">
+                {t.publish.schedulePost}
+              </h3>
+            </div>
+
+            <div className="bg-gray-50/80 dark:bg-dark-elevated/60 rounded-2xl p-5 border border-gray-100 dark:border-dark-border/60">
+              <AnimatePresence mode="wait">
+                {scheduleStep === "date" && (
+                  <motion.div
+                    key="schedule-date"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    <div className="mb-4">
+                      <h4 className="text-base font-semibold text-gray-900 dark:text-white tracking-tight">
+                        {t.scheduler.whenPublish}
+                      </h4>
+                      <p className="text-xs text-text-muted mt-0.5">
+                        {t.scheduler.chooseDate}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {[
+                        { label: t.scheduler.todayShort, days: 0, requiresValid: true },
+                        { label: t.scheduler.tomorrow, days: 1, requiresValid: false },
+                        { label: t.scheduler.in3Days, days: 3, requiresValid: false },
+                        { label: t.scheduler.oneWeek, days: 7, requiresValid: false },
+                      ].map(({ label, days, requiresValid }) => {
+                        const date = new Date();
+                        date.setDate(date.getDate() + days);
+                        date.setHours(0, 0, 0, 0);
+                        const selected = isDateSelected(date);
+                        const unavailable = requiresValid && !todayHasValidTimeSlots();
+                        return (
+                          <button
+                            key={days}
+                            onClick={() => {
+                              if (!unavailable && !isDateDisabled(date)) {
+                                triggerHaptic("light");
+                                setScheduledDate(date);
+                                if (isDateToday(date)) {
+                                  setScheduledTime(getFirstAvailableTimeForToday());
+                                } else {
+                                  setScheduledTime({ hour: 9, minute: 0 });
+                                }
+                                setScheduleStep("time");
+                              }
+                            }}
+                            disabled={unavailable}
+                            className={`px-4 py-2 rounded-full text-sm font-medium transition-all min-h-[40px] whitespace-nowrap ${
+                              unavailable ? "opacity-40 cursor-not-allowed bg-transparent text-text-muted border border-gray-200 dark:border-dark-border" :
+                              selected ? "bg-primary text-white shadow-sm" :
+                              "bg-white dark:bg-dark-card hover:bg-gray-50 dark:hover:bg-dark-hover text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-dark-border"
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <div className="bg-white dark:bg-dark-card rounded-xl p-4 border border-gray-100 dark:border-dark-border/60">
+                      <div className="flex items-center justify-between mb-3">
+                        <button
+                          onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}
+                          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-hover min-w-[40px] min-h-[40px] flex items-center justify-center transition-colors"
+                          aria-label="Previous month"
+                        >
+                          <svg className="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                          </svg>
+                        </button>
+                        <span className="text-base font-semibold text-gray-900 dark:text-white tracking-tight">
+                          {getMonths(t)[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+                        </span>
+                        <button
+                          onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}
+                          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-hover min-w-[40px] min-h-[40px] flex items-center justify-center transition-colors"
+                          aria-label="Next month"
+                        >
+                          <svg className="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-7 gap-1 mb-1">
+                        {getDaysShort(t).map((day: string) => (
+                          <div key={day} className="text-center text-[10px] text-text-muted font-semibold py-1.5 uppercase tracking-wider">
+                            {day}
+                          </div>
+                        ))}
+                      </div>
+                      <div className="grid grid-cols-7 gap-1">
+                        {calendarDays.map((date, index) => {
+                          const selected = isDateSelected(date);
+                          const today = isDateToday(date);
+                          const disabled = isDateDisabled(date);
+                          return (
+                            <button
+                              key={index}
+                              onClick={() => {
+                                if (date && !disabled) {
+                                  triggerHaptic("light");
+                                  setScheduledDate(date);
+                                  if (isDateToday(date)) {
+                                    setScheduledTime(getFirstAvailableTimeForToday());
+                                  } else {
+                                    setScheduledTime({ hour: 9, minute: 0 });
+                                  }
+                                  setScheduleStep("time");
+                                }
+                              }}
+                              disabled={disabled}
+                              className={`
+                                aspect-square flex items-center justify-center text-sm rounded-lg transition-all min-h-[40px]
+                                ${!date ? "invisible" : ""}
+                                ${disabled ? "text-text-muted/25 cursor-not-allowed" : "cursor-pointer"}
+                                ${selected ? "bg-primary text-white font-semibold shadow-sm" : ""}
+                                ${today && !selected ? "ring-2 ring-inset ring-primary text-primary font-semibold" : ""}
+                                ${!selected && !today && !disabled ? "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-dark-hover font-medium" : ""}
+                              `}
+                            >
+                              {date?.getDate()}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
+                {scheduleStep === "time" && (
+                  <motion.div
+                    key="schedule-time"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    <div className="mb-4 flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <h4 className="text-base font-semibold text-gray-900 dark:text-white tracking-tight">
+                          {t.scheduler.chooseTime}
+                        </h4>
+                        <p className="text-xs text-text-muted mt-0.5 truncate">
+                          {getDaysShort(t)[scheduledDate.getDay()]} {scheduledDate.getDate()} {getMonths(t)[scheduledDate.getMonth()]}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setScheduleStep("date")}
+                        className="shrink-0 text-xs text-primary font-medium hover:underline min-h-[32px] px-2 flex items-center gap-1"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                        {t.ui.changeDate}
+                      </button>
+                    </div>
+
+                    <TimeDropdown
+                      value={scheduledTime}
+                      isTimeDisabled={isTimeDisabled}
+                      onSelect={(hour, minute) => {
+                        setScheduledTime({ hour, minute });
+                        setScheduleConfirmed(true);
+                        setShowSchedulePicker(false);
+                        setComposeView("compose");
+                      }}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </motion.div>
+          )}
+          </AnimatePresence>
         )}
 
         {/* Confirm Step */}
@@ -1844,10 +2093,12 @@ export default function PublishToLinkedInModal({
     );
   };
 
-  // Mobile footer — fixed at bottom of BottomSheet, outside scroll
+  // Mobile footer — fixed at bottom of BottomSheet, outside scroll.
+  // Always render in preview/confirm/error so the modal stays usable even when
+  // LinkedIn isn't connected — the publish button is gated by
+  // cannotPublishOrSchedule (which becomes true when no connected platform is
+  // selected).
   const renderMobileFooter = () => {
-    if (!isConnected) return undefined;
-
     if (step === "preview") {
       return (
         <div className="flex gap-3">
@@ -1968,7 +2219,28 @@ export default function PublishToLinkedInModal({
         platformLimits={[
           ...(selectedPlatforms.includes("linkedin") ? [{ name: "LinkedIn", limit: linkedInLimit }] : []),
           ...(selectedPlatforms.includes("threads") ? [{ name: "Threads", limit: threadsLimit }] : []),
+          ...(selectedPlatforms.includes("bluesky") ? [{ name: "Bluesky", limit: blueskyLimit }] : []),
+          ...(selectedPlatforms.includes("mastodon") ? [{ name: "Mastodon", limit: mastodonLimit }] : []),
+          ...(selectedPlatforms.includes("discord") ? [{ name: "Discord", limit: discordLimit }] : []),
         ]}
+      />
+
+      {/* Lightweight connect popup — overlays the modal, never blocks it. */}
+      <ConnectPlatformPopup
+        isOpen={connectPopupPlatform !== null}
+        platform={connectPopupPlatform}
+        platformName={popupPlatformInfo?.name || ""}
+        platformIcon={popupPlatformInfo?.icon || null}
+        platformColor={popupPlatformInfo?.color || ""}
+        platformBgColor={popupPlatformInfo?.bgColor || ""}
+        onClose={() => setConnectPopupPlatform(null)}
+        onConnect={() => {
+          if (connectPopupPlatform) {
+            const target = connectPopupPlatform;
+            setConnectPopupPlatform(null);
+            startPlatformConnection(target);
+          }
+        }}
       />
     </>
   );

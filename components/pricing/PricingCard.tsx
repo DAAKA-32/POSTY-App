@@ -31,6 +31,13 @@ export interface PricingCardProps {
   onSelect?: () => void;
   /** CTA link for unauthenticated pages (used when onSelect is not provided) */
   ctaHref?: string;
+  /**
+   * Compact landing-page variant: only shows the top 5 *included* features
+   * (no excluded-with-strikethrough rows), drops the "ideal for" sub-line,
+   * and tightens the features header. Used by the marketing landing so the
+   * pricing block reads as a quick scan rather than a comparison sheet.
+   */
+  compact?: boolean;
 }
 
 export default function PricingCard({
@@ -42,12 +49,17 @@ export default function PricingCard({
   isLoading = false,
   onSelect,
   ctaHref,
+  compact = false,
 }: PricingCardProps) {
   const { t } = useLanguage();
   const isFree = plan.id === "free";
   const isPopular = plan.highlight;
   const isPremium = plan.premium;
-  const allFeatures = getLocalizedPlanFeaturesUnified(plan, t);
+  const allFeaturesFull = getLocalizedPlanFeaturesUnified(plan, t);
+  // Compact mode: only the top 5 included features, no excluded items.
+  const allFeatures = compact
+    ? allFeaturesFull.filter((f) => f.included).slice(0, 5)
+    : allFeaturesFull;
   const localizedTaglines = getLocalizedPlanTaglines(t);
   const planInfo = localizedTaglines[plan.id] || { tagline: plan.description, idealFor: "" };
 
@@ -159,11 +171,14 @@ export default function PricingCard({
           }`}>
             {planInfo.tagline}
           </p>
-          <p className={`text-[10px] sm:text-[11px] md:text-xs mt-1 hidden sm:block font-medium ${
-            isPopular ? "text-primary" : isGoldCard ? "text-amber-600 dark:text-amber-400/60" : "text-gray-400 dark:text-gray-500"
-          }`}>
-            {planInfo.idealFor}
-          </p>
+          {/* "Ideal for…" sub-line — hidden in compact landing mode */}
+          {!compact && (
+            <p className={`text-[10px] sm:text-[11px] md:text-xs mt-1 hidden sm:block font-medium ${
+              isPopular ? "text-primary" : isGoldCard ? "text-amber-600 dark:text-amber-400/60" : "text-gray-400 dark:text-gray-500"
+            }`}>
+              {planInfo.idealFor}
+            </p>
+          )}
         </div>
 
         {/* ── Price ── */}
@@ -290,15 +305,18 @@ export default function PricingCard({
           )}
         </div>
 
-        {/* ── Features — full comparison ── */}
+        {/* ── Features — full comparison (or compact top-5 on landing) ── */}
         <div className={`flex-1 px-3 sm:px-5 md:px-6 pb-4 sm:pb-5 md:pb-6 border-t ${
           isGoldCard ? "border-amber-200/50 dark:border-amber-400/15" : "border-gray-100 dark:border-dark-border/50"
         }`}>
-          <p className={`text-[10px] sm:text-xs md:text-sm font-semibold pt-3 sm:pt-4 pb-2 sm:pb-3 ${
-            isGoldCard ? "text-amber-700 dark:text-amber-300/80" : "text-gray-900 dark:text-white"
-          }`}>
-            {t.pricingCard.featuresIncluded}
-          </p>
+          {!compact && (
+            <p className={`text-[10px] sm:text-xs md:text-sm font-semibold pt-3 sm:pt-4 pb-2 sm:pb-3 ${
+              isGoldCard ? "text-amber-700 dark:text-amber-300/80" : "text-gray-900 dark:text-white"
+            }`}>
+              {t.pricingCard.featuresIncluded}
+            </p>
+          )}
+          {compact && <div className="pt-3 sm:pt-4" />}
           <ul className="space-y-1.5 sm:space-y-2 md:space-y-2.5">
             {allFeatures.map((feature, idx) => (
               <PricingFeatureItem

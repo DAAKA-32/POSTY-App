@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import Modal from "@/components/ui/Modal";
 import BottomSheet from "@/components/ui/BottomSheet";
 import Button from "@/components/ui/Button";
-import IOSTimePicker, { SmartTimeSuggestions, formatTimeLocale } from "@/components/ui/IOSTimePicker";
+import { formatTimeLocale } from "@/components/ui/IOSTimePicker";
+import TimeDropdown from "@/components/schedule/TimeDropdown";
 import { useScheduling } from "@/contexts/SchedulingContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useLinkedIn } from "@/contexts/LinkedInContext";
@@ -35,6 +36,13 @@ interface ScheduleModalProps {
   postId?: string;
   title?: string;
   onSuccess?: (scheduledPostId: string) => void;
+  /**
+   * AI-generated first-comment proposed for this post (algo boost).
+   * If provided, the modal shows a "Boost algo" toggle pre-filled with this
+   * text. Default: enabled when text is present, editable, fired ~3 min after
+   * publish (server-side jitter handled by Cloud Function).
+   */
+  seedCommentText?: string;
 }
 
 // Get user's timezone
@@ -54,6 +62,7 @@ export default function ScheduleModal({
   postId,
   title,
   onSuccess,
+  seedCommentText,
 }: ScheduleModalProps) {
   const { schedulePost, isUploading } = useScheduling();
   const { canSchedulePosts, currentPlan, subscription } = useSubscription();
@@ -70,23 +79,24 @@ export default function ScheduleModal({
 
   // Build available platforms based on plan + connection status
   const availablePlatforms = useMemo(() => {
+    // NOTE: Bluesky/Mastodon/Discord are wired in the main publish flow but
+    // not yet in the scheduling pipeline (no Cloud Function dispatcher for
+    // them). They appear here as "not connected" until that work lands.
     const connectionStatus: Record<string, boolean> = {
       linkedin: linkedInConnected,
       facebook: facebookConnected,
       threads: threadsConnected,
-      reddit: false,
     };
 
     return PLATFORMS.map((p) => {
       const hasAccess = canUsePlatform(subscription, p.id).allowed;
       const isConnected = connectionStatus[p.id] || false;
-      const isReddit = p.id === "reddit";
       return {
         ...p,
         hasAccess,
         isConnected,
-        isComingSoon: isReddit,
-        selectable: hasAccess && isConnected && !isReddit,
+        isComingSoon: false,
+        selectable: hasAccess && isConnected,
       };
     }).filter((p) => p.hasAccess);
   }, [linkedInConnected, facebookConnected, threadsConnected, subscription]);
@@ -154,6 +164,11 @@ export default function ScheduleModal({
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Seed comment (algo-boost first reply) — pre-filled from prop, editable.
+  // Only ever offered when the platform is LinkedIn (other platforms ignore).
+  const [seedEnabled, setSeedEnabled] = useState<boolean>(!!seedCommentText);
+  const [seedDraft, setSeedDraft] = useState<string>(seedCommentText ?? "");
+
   const timezone = useMemo(() => getUserTimezone(), []);
 
   // Reset state when modal opens
@@ -176,6 +191,10 @@ export default function ScheduleModal({
       imagePreviews.forEach((url) => URL.revokeObjectURL(url));
       setImages([]);
       setImagePreviews([]);
+
+      // Re-seed the boost-comment fields from the latest prop value.
+      setSeedEnabled(!!seedCommentText);
+      setSeedDraft(seedCommentText ?? "");
     }
   }, [isOpen, availablePlatforms]);
 
@@ -356,32 +375,13 @@ export default function ScheduleModal({
     setStep("time");
   };
 
-  // Handle time selection from suggestions
-  const handleTimeSelect = (hour: number, minute: number) => {
-    // Prevent selecting disabled times
+  // Handle time pick from the dropdown — sets value and advances to confirm
+  const handleTimePick = (hour: number, minute: number) => {
     if (isTimeDisabled(hour, minute)) {
       triggerHaptic("error");
       return;
     }
-    triggerHaptic("medium");
     setSelectedTime({ hour, minute });
-    setStep("confirm");
-  };
-
-  // Handle time change from iOS picker
-  const handleTimeChange = (time: { hour: number; minute: number }) => {
-    // If time is disabled, auto-correct to first available time
-    if (isTimeDisabled(time.hour, time.minute)) {
-      const firstAvailable = getFirstAvailableTimeForToday();
-      setSelectedTime(firstAvailable);
-      return;
-    }
-    setSelectedTime(time);
-  };
-
-  // Confirm time and go to next step
-  const handleConfirmTime = () => {
-    triggerHaptic("medium");
     setStep("confirm");
   };
 
@@ -496,6 +496,15 @@ export default function ScheduleModal({
     triggerHaptic("medium");
 
     try {
+      // Only attach seedComment when boost is on, text is meaningful, and
+      // we're targeting LinkedIn (other platforms have no comment-on-post API
+      // wired up — and the algo lever is LinkedIn-specific anyway).
+      const trimmedSeed = seedDraft.trim();
+      const seedComment =
+        platform === "linkedin" && seedEnabled && trimmedSeed.length >= 10
+          ? { enabled: true, text: trimmedSeed, delayMinutes: 3 }
+          : undefined;
+
       const result = await schedulePost({
         content,
         postId,
@@ -505,6 +514,7 @@ export default function ScheduleModal({
         platform,
         postType,
         imageFiles: showImagePicker && images.length > 0 ? images : undefined,
+        seedComment,
       });
 
       if (result.success && result.scheduledPostId) {
@@ -661,19 +671,22 @@ export default function ScheduleModal({
             exit={{ opacity: 0, x: 20 }}
             transition={{ duration: 0.2 }}
           >
-            <div className="text-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t.scheduler.chooseDate}</h3>
-              <p className="text-sm text-text-muted">{t.scheduler.whenPublish}</p>
+            {/* Header — left aligned, title + subtitle */}
+            <div className="mb-5">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white tracking-tight">
+                {t.scheduler.whenPublish}
+              </h3>
+              <p className="text-sm text-text-muted mt-0.5">{t.scheduler.chooseDate}</p>
             </div>
 
-            {/* Quick date shortcuts - More prominent on mobile */}
-            <div className="grid grid-cols-4 gap-2 mb-4">
+            {/* Quick date shortcuts — minimal pill chips */}
+            <div className="flex flex-wrap gap-2 mb-5">
               {[
-                { label: t.scheduler.todayShort, days: 0, emoji: "📍", requiresValidSlots: true },
-                { label: t.scheduler.tomorrow, days: 1, emoji: "🌅", requiresValidSlots: false },
-                { label: t.scheduler.in3Days, days: 3, emoji: "📆", requiresValidSlots: false },
-                { label: t.scheduler.oneWeek, days: 7, emoji: "🗓️", requiresValidSlots: false },
-              ].map(({ label, days, emoji, requiresValidSlots }) => {
+                { label: t.scheduler.todayShort, days: 0, requiresValidSlots: true },
+                { label: t.scheduler.tomorrow, days: 1, requiresValidSlots: false },
+                { label: t.scheduler.in3Days, days: 3, requiresValidSlots: false },
+                { label: t.scheduler.oneWeek, days: 7, requiresValidSlots: false },
+              ].map(({ label, days, requiresValidSlots }) => {
                 const date = new Date();
                 date.setDate(date.getDate() + days);
                 date.setHours(0, 0, 0, 0);
@@ -687,17 +700,16 @@ export default function ScheduleModal({
                     disabled={isUnavailable}
                     title={isUnavailable ? t.scheduler.noSlotsAvailableToday : undefined}
                     className={`
-                      p-3 rounded-xl text-center transition-all duration-200
+                      px-4 py-2 rounded-full text-sm font-medium transition-all min-h-[40px] whitespace-nowrap
                       ${isUnavailable
-                        ? "opacity-40 cursor-not-allowed bg-gray-100/50 dark:bg-dark-elevated/50 border-gray-200 dark:border-dark-border"
+                        ? "opacity-40 cursor-not-allowed bg-transparent text-text-muted border border-gray-200 dark:border-dark-border line-through"
                         : isSelected
-                          ? "bg-primary text-white shadow-lg shadow-primary/20"
-                          : "bg-gray-50 dark:bg-dark-elevated hover:bg-gray-100 dark:hover:bg-dark-hover text-text-secondary hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-dark-border"
+                          ? "bg-primary text-white shadow-sm"
+                          : "bg-white dark:bg-dark-card hover:bg-gray-50 dark:hover:bg-dark-hover text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-dark-border"
                       }
                     `}
                   >
-                    <span className={`text-xl block mb-1 ${isUnavailable ? "grayscale" : ""}`}>{emoji}</span>
-                    <span className={`text-sm font-medium block ${isUnavailable ? "line-through" : ""}`}>{label}</span>
+                    {label}
                   </button>
                 );
               })}
@@ -715,99 +727,78 @@ export default function ScheduleModal({
               </div>
             )}
 
-            {/* Premium Calendar */}
-            <div className="bg-white dark:bg-dark-elevated rounded-2xl p-4 border border-gray-200/80 dark:border-dark-border/80 shadow-xl dark:shadow-xl">
-              {/* Calendar header - Premium design */}
+            {/* Calendar — minimal, Linear/Notion inspired */}
+            <div className="bg-white dark:bg-dark-elevated rounded-2xl p-5 border border-gray-100 dark:border-dark-border/60">
+              {/* Month navigator */}
               <div className="flex items-center justify-between mb-4">
-                <motion.button
+                <button
                   onClick={goToPreviousMonth}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="p-2.5 rounded-xl bg-gray-50 dark:bg-dark-card hover:bg-gray-100 dark:hover:bg-dark-hover border border-gray-200/50 dark:border-dark-border/50 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center shadow-sm"
+                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-hover transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
                   aria-label={t.scheduler.monthsPrevious}
                 >
                   <svg className="w-5 h-5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                   </svg>
-                </motion.button>
-                <div className="text-center">
-                  <span className="text-gray-900 dark:text-white font-bold text-lg">
-                    {getMonths(t)[currentMonth.getMonth()]}
-                  </span>
-                  <span className="text-text-muted font-medium ml-2">
-                    {currentMonth.getFullYear()}
-                  </span>
-                </div>
-                <motion.button
+                </button>
+                <span className="text-base font-semibold text-gray-900 dark:text-white tracking-tight">
+                  {getMonths(t)[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+                </span>
+                <button
                   onClick={goToNextMonth}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="p-2.5 rounded-xl bg-gray-50 dark:bg-dark-card hover:bg-gray-100 dark:hover:bg-dark-hover border border-gray-200/50 dark:border-dark-border/50 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center shadow-sm"
+                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-hover transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
                   aria-label={t.scheduler.monthsNext}
                 >
                   <svg className="w-5 h-5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
-                </motion.button>
+                </button>
               </div>
 
-              {/* Days of week header - Premium styling */}
-              <div className="grid grid-cols-7 gap-1 mb-3 pb-2 border-b border-gray-200/50 dark:border-dark-border/50">
+              {/* Days of week header */}
+              <div className="grid grid-cols-7 gap-1 mb-2">
                 {getDaysShort(t).map((day: string) => (
-                  <div key={day} className="text-center text-xs text-text-muted font-semibold py-1.5 uppercase tracking-wider">
+                  <div key={day} className="text-center text-[10px] text-text-muted font-semibold py-1.5 uppercase tracking-wider">
                     {day}
                   </div>
                 ))}
               </div>
 
-              {/* Calendar grid - Premium design */}
-              <div className="grid grid-cols-7 gap-1.5">
+              {/* Calendar grid */}
+              <div className="grid grid-cols-7 gap-1">
                 {calendarDays.map((date, index) => {
                   const selected = isDateSelected(date);
                   const today = isToday(date);
                   const disabled = isDateDisabled(date);
 
                   return (
-                    <motion.button
+                    <button
                       key={index}
                       onClick={() => date && handleDateSelect(date)}
                       disabled={disabled}
-                      whileHover={!disabled && date ? { scale: 1.08 } : {}}
-                      whileTap={!disabled && date ? { scale: 0.95 } : {}}
                       className={`
-                        aspect-square flex items-center justify-center text-sm rounded-xl
-                        transition-all duration-200 min-h-[42px] font-medium
+                        aspect-square flex items-center justify-center text-sm rounded-lg
+                        transition-all min-h-[42px]
                         ${!date ? "invisible" : ""}
-                        ${disabled
-                          ? "text-text-muted/25 cursor-not-allowed"
-                          : "cursor-pointer"
-                        }
-                        ${selected
-                          ? "bg-gradient-to-br from-primary to-accent text-white font-bold shadow-lg shadow-primary/40 ring-2 ring-primary/30"
-                          : ""
-                        }
-                        ${today && !selected
-                          ? "ring-2 ring-primary text-primary font-bold bg-primary/10"
-                          : !selected && !disabled
-                            ? "text-gray-900 dark:text-white hover:bg-primary/20 hover:text-gray-900 dark:hover:text-white"
-                            : ""
-                        }
+                        ${disabled ? "text-text-muted/25 cursor-not-allowed" : "cursor-pointer"}
+                        ${selected ? "bg-primary text-white font-semibold shadow-sm" : ""}
+                        ${today && !selected ? "ring-2 ring-inset ring-primary text-primary font-semibold" : ""}
+                        ${!selected && !today && !disabled ? "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-dark-hover font-medium" : ""}
                       `}
                     >
                       {date?.getDate()}
-                    </motion.button>
+                    </button>
                   );
                 })}
               </div>
 
-              {/* Selected date preview */}
+              {/* Selected date preview — inline confirmation */}
               {selectedDate && (
                 <motion.div
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-4 pt-4 border-t border-gray-200/50 dark:border-dark-border/50 flex items-center justify-center gap-2"
+                  className="mt-4 pt-4 border-t border-gray-100 dark:border-dark-border/60 flex items-center gap-2"
                 >
-                  <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                   <p className="text-sm text-text-muted">
                     {t.scheduler.selected}{" "}
                     <span className="text-gray-900 dark:text-white font-semibold">
@@ -829,9 +820,23 @@ export default function ScheduleModal({
             exit={{ opacity: 0, x: 20 }}
             transition={{ duration: 0.2 }}
           >
-            <div className="text-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t.scheduler.chooseTime}</h3>
-              <p className="text-sm text-primary font-medium">{formattedDateShort}</p>
+            {/* Header — left aligned with selected date as subtitle */}
+            <div className="mb-5 flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white tracking-tight">
+                  {t.scheduler.chooseTime}
+                </h3>
+                <p className="text-sm text-text-muted mt-0.5 truncate">{formattedDateShort}</p>
+              </div>
+              <button
+                onClick={() => setStep("date")}
+                className="shrink-0 text-sm text-primary font-medium hover:underline min-h-[36px] px-2 flex items-center gap-1.5"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                {t.ui.changeDate}
+              </button>
             </div>
 
             {/* Info banner when today is selected */}
@@ -846,88 +851,12 @@ export default function ScheduleModal({
               </div>
             )}
 
-            {/* Smart suggestions */}
-            <div className="mb-5">
-              <SmartTimeSuggestions
-                onSelect={handleTimeSelect}
-                selectedHour={selectedTime.hour}
-                selectedMinute={selectedTime.minute}
-                selectedDate={selectedDate}
-                isTimeDisabled={isTimeDisabled}
-              />
-            </div>
-
-            {/* iOS-style time picker on mobile */}
-            {isMobile ? (
-              <div className="mb-4">
-                <p className="text-xs text-text-muted mb-3 uppercase tracking-wide px-1">
-                  {t.scheduler.selectManually}
-                </p>
-                <IOSTimePicker
-                  value={selectedTime}
-                  onChange={handleTimeChange}
-                  minuteStep={5}
-                />
-                <Button
-                  onClick={handleConfirmTime}
-                  className="w-full mt-4"
-                >
-                  {t.ui.confirmTime} {formatTimeLocale(selectedTime.hour, selectedTime.minute, t.ui.timeLocale)}
-                </Button>
-              </div>
-            ) : (
-              /* Desktop: Grid of time slots */
-              <div>
-                <p className="text-xs text-text-muted mb-2 uppercase tracking-wide">
-                  {t.scheduler.allTimes}
-                  {isSelectedDateToday && (
-                    <span className="text-amber-400 ml-2">{t.scheduler.pastSlotsGreyed}</span>
-                  )}
-                </p>
-                <div className="max-h-40 overflow-y-auto overscroll-contain rounded-lg border border-gray-200 dark:border-dark-border">
-                  <div className="grid grid-cols-4 gap-1 p-2">
-                    {Array.from({ length: 48 }, (_, i) => {
-                      const hour = Math.floor(i / 2);
-                      const minute = (i % 2) * 30;
-                      const label = formatTimeLocale(hour, minute, t.ui.timeLocale);
-                      const isSelected = selectedTime.hour === hour && selectedTime.minute === minute;
-                      const isDisabled = isTimeDisabled(hour, minute);
-
-                      return (
-                        <button
-                          key={i}
-                          onClick={() => !isDisabled && handleTimeSelect(hour, minute)}
-                          disabled={isDisabled}
-                          title={isDisabled ? t.scheduler.pastSlot : undefined}
-                          className={`
-                            px-3 py-2 text-sm rounded-lg transition-all duration-200
-                            ${isDisabled
-                              ? "text-text-muted/30 cursor-not-allowed line-through"
-                              : isSelected
-                                ? "bg-primary text-white font-medium"
-                                : "hover:bg-gray-100 dark:hover:bg-dark-hover text-text-secondary hover:text-gray-900 dark:hover:text-white"
-                            }
-                          `}
-                        >
-                          {label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Back button */}
-            <button
-              onClick={() => setStep("date")}
-              className="mt-4 text-sm text-text-muted hover:text-gray-900 dark:hover:text-white flex items-center gap-1 min-h-[44px]"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              {t.ui.changeDate}
-            </button>
+            {/* Compact time dropdown — recommended slots + full list */}
+            <TimeDropdown
+              value={selectedTime}
+              onSelect={handleTimePick}
+              isTimeDisabled={isTimeDisabled}
+            />
           </motion.div>
         )}
 
@@ -1024,7 +953,9 @@ export default function ScheduleModal({
                     linkedin: "#0A66C2",
                     facebook: "#1877F2",
                     threads: "#000000",
-                    reddit: "#FF4500",
+                    bluesky: "#0085FF",
+                    mastodon: "#6364FF",
+                    discord: "#5865F2",
                   };
                   return (
                     <>
@@ -1148,6 +1079,79 @@ export default function ScheduleModal({
                     e.target.value = "";
                   }}
                 />
+              </div>
+            )}
+
+            {/* Seed comment block — algo boost (LinkedIn only) */}
+            {platform === "linkedin" && (
+              <div
+                className="rounded-xl ring-1 overflow-hidden"
+                style={{
+                  borderColor: "rgba(248,147,93,0.18)",
+                  backgroundImage:
+                    "linear-gradient(180deg, rgba(248,147,93,0.05), rgba(247,107,84,0.03))",
+                  ['--tw-ring-color' as string]: "rgba(248,147,93,0.18)",
+                }}
+              >
+                <label className="flex items-start gap-3 px-3.5 py-3 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={seedEnabled}
+                    onChange={(e) => setSeedEnabled(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 rounded accent-[#F8935D] cursor-pointer"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span
+                        className="text-[11px] font-bold uppercase text-[#B5532E] dark:text-[#F8935D]"
+                        style={{ letterSpacing: "0.12em" }}
+                      >
+                        🚀 Boost algo · 1er commentaire
+                      </span>
+                      <span className="text-[10px] text-gray-400">
+                        ~3 min après publish
+                      </span>
+                    </div>
+                    <p className="mt-1 text-[11.5px] text-gray-500 leading-snug">
+                      Posty publiera automatiquement ce commentaire sur votre post quelques minutes après publication. Cela booste fortement la portée via l&apos;algorithme LinkedIn.
+                    </p>
+                  </div>
+                </label>
+
+                {seedEnabled && (
+                  <div className="px-3.5 pb-3">
+                    <textarea
+                      value={seedDraft}
+                      onChange={(e) => setSeedDraft(e.target.value.slice(0, 600))}
+                      placeholder="Écris ici le commentaire — une question ouverte, un bonus, une nuance…"
+                      rows={3}
+                      className="
+                        w-full resize-none rounded-lg border border-[#F8935D]/20
+                        bg-white/80 dark:bg-dark-card/60
+                        px-3 py-2 text-[13px] text-gray-800 dark:text-text-primary
+                        placeholder:text-gray-400
+                        focus:outline-none focus:ring-2 focus:ring-[#F8935D]/30 focus:border-[#F8935D]/40
+                        transition
+                      "
+                    />
+                    <div className="flex items-center justify-between mt-1.5">
+                      <span
+                        className={`text-[10px] ${
+                          seedDraft.trim().length < 10
+                            ? "text-red-500"
+                            : "text-gray-400"
+                        }`}
+                      >
+                        {seedDraft.trim().length < 10
+                          ? "Min. 10 caractères"
+                          : `${seedDraft.length}/600`}
+                      </span>
+                      <span className="text-[10px] text-gray-400">
+                        Modifiable, validation finale avant publication
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

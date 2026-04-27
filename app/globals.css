@@ -1221,13 +1221,19 @@ video {
 /* ============== POSTY DESIGN SYSTEM - TYPOGRAPHY ============== */
 
 :root {
-  /* Typography - Inter everywhere */
-  --font-inter: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  /* Typography — Inter everywhere.
+     Note: next/font injects its own --font-inter (hashed family name) at
+     <html>. The fallback below is only used if next/font hasn't applied
+     yet (SSR before hydration). The system stack mirrors what's used at
+     <body> so visuals are identical pre/post hydration. */
+  --font-inter: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
-  /* --font-sans & --font-display: both Inter for full consistency */
-  --font-sans: var(--font-inter);
-  --font-display: var(--font-inter);
+  /* --font-sans & --font-display: both Inter for full consistency.
+     Tailwind's `font-sans` reads --font-sans (see tailwind.config.ts), so
+     every default-style element resolves here. */
+  --font-sans: var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif;
 
   /* Font Weights - Poppins */
   --font-light: 300;
@@ -2822,14 +2828,20 @@ a:focus-visible,
 }
 
 @keyframes copilotPulseRing {
-  0% { transform: scale(1); opacity: 0.4; }
-  50% { transform: scale(1.15); opacity: 0.15; }
-  100% { transform: scale(1); opacity: 0.4; }
+  0% { transform: scale(1); opacity: 0.22; }
+  50% { transform: scale(1.06); opacity: 0.06; }
+  100% { transform: scale(1); opacity: 0.22; }
 }
 
 @keyframes copilotCardFloat {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+  50% { transform: translateY(-3px); }
+}
+
+/* Slow gradient shimmer for the section headline accent */
+@keyframes copilotGradient {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
 @keyframes fadeOut {
@@ -3218,17 +3230,20 @@ html.dark .loader-track {
     50% { background-position: 0% 0; }
   }
 
-  /* Primary silver — hero titles, prominent headings */
+  /* Primary "premium" ink — hero titles, prominent headings.
+     Was light-gray gradient (#9CA3AF–#D4D8DE) which washed out on warm/peach
+     surfaces. Now a tight dark-ink shimmer (#0F172A–#475569) that reads as
+     premium typography rather than faded text. One-shot drift, no infinite. */
   .text-silver-premium {
     background: linear-gradient(
       105deg,
-      #9CA3AF 0%,
-      #B0B5BD 25%,
-      #C4C8CF 45%,
-      #D4D8DE 55%,
-      #C4C8CF 65%,
-      #B0B5BD 80%,
-      #9CA3AF 100%
+      #0F172A 0%,
+      #1E293B 25%,
+      #334155 45%,
+      #475569 55%,
+      #334155 65%,
+      #1E293B 80%,
+      #0F172A 100%
     );
     background-size: 150% 100%;
     -webkit-background-clip: text;
@@ -3238,17 +3253,17 @@ html.dark .loader-track {
     will-change: background-position;
   }
 
-  /* Silver Shimmer — section titles, slightly lighter base */
+  /* Section title ink — same dark family, slightly softer mid-tone. */
   .text-silver-shimmer {
     background: linear-gradient(
       105deg,
-      #A3A8B0 0%,
-      #B5BAC2 25%,
-      #C8CCD3 45%,
-      #D8DCE2 55%,
-      #C8CCD3 65%,
-      #B5BAC2 80%,
-      #A3A8B0 100%
+      #0F172A 0%,
+      #1E293B 25%,
+      #3F4956 45%,
+      #4F5965 55%,
+      #3F4956 65%,
+      #1E293B 80%,
+      #0F172A 100%
     );
     background-size: 150% 100%;
     -webkit-background-clip: text;

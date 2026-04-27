@@ -536,14 +536,30 @@ export const zh = {
     testimonialsPrev: "上一页",
     testimonialsNext: "下一页",
     testimonialsSwipe: "滑动浏览",
-    testimonial1Role: "创始人",
-    testimonial1Company: "B2B 代理商",
-    testimonial1Text: "使用 Posty 之前，我每周只发一篇帖子，还不知道写什么。现在我每天都发帖，LinkedIn 已经成为我的第一获客渠道。2 个月签了 3 个客户。",
-    testimonial2Role: "市场总监",
-    testimonial2Company: "B2B SaaS",
-    testimonial2Text: "我的团队每周在内容上节省 5 小时，把这些时间重新投入到策略和获客上。帖子更一致了，30 天内互动量翻了三倍。",
+    testimonial1Role: "Trustpilot 已验证评价",
+    testimonial1Company: "",
+    testimonial1Text: "这个网站和它强大的 AI 真的改变了我发布和优化内容的方式。它会根据不同平台和格式考虑潜在客户的画像，甚至能代我发布。非常值得，强烈推荐。",
+    testimonial2Role: "学生",
+    testimonial2Company: "Trustpilot 评价",
+    testimonial2Text: "Posty 真的是日常的好帮手。作为高等教育学生，我目前用的是 Pro 订阅，很快会升级到更高级别。在寻找实习和工作时是真正的省时神器。",
     testimonial3Role: "艺术品行业",
     testimonial3Text: "Posty 真正简化了内容创作，帮助生成非常高质量的 LinkedIn 帖子。它理解我们的需求，让撰写优质内容变得容易多了。",
+
+    // Cerise Cottier — Featured client spotlight
+    ceriseSpotlightBadge: "已验证的客户故事",
+    ceriseSpotlightTitle1: "像 Cerise 一样，",
+    ceriseSpotlightTitle2: "无需主动开发也能转化。",
+    ceriseSpotlightSubtitle: "超过 20 家企业主动联系了她——零主动开发。",
+    ceriseSpotlightStatNumber: "20+",
+    ceriseSpotlightStatLabel: "家企业主动联系了她",
+    ceriseSpotlightStatSubLabel: "直接联系，无需开发",
+    ceriseSpotlightQuote: "我只是用 Posty 在 LinkedIn 上发布。算法推送了我的帖子，浏览量飙升，超过 20 家企业直接联系了我。没有任何主动开发——只有源源不断的入站机会。",
+    ceriseSpotlightName: "Cerise Cottier",
+    ceriseSpotlightRole: "艺术品行业",
+    ceriseSpotlightImageAlt: "Cerise Cottier，Posty 客户",
+    ceriseSpotlightProof1: "帖子被 LinkedIn 算法推送",
+    ceriseSpotlightProof2: "零主动外联",
+    ceriseSpotlightProof3: "收到 20+ 个入站机会",
 
     // Audience section
     audienceTitle1: "为你而建",
@@ -715,6 +731,17 @@ export const zh = {
     pricingSavingsLabel: "省 2 个月",
     pricingTrialIncluded: "含免费试用 · 无需承诺",
 
+    // Business offer (B2B card under the pricing grid — expandable)
+    businessTitle: "企业方案",
+    businessSubtitle: "您有公司并希望大规模使用 Posty？",
+    businessCTA: "预约通话",
+    businessBookCall: "安排通话",
+    businessFootnote: "24 小时内回复 · 定制报价",
+    businessBullet1: "多用户部署",
+    businessBullet2: "高级自动化",
+    businessBullet3: "定制集成",
+    businessBullet4: "专属支持与 SLA",
+
     // FAQ section
     faqBadge: "常见问题",
     faqTitle1: "开始前",
@@ -757,6 +784,24 @@ export const zh = {
     howItWorksStep4Example: "定时周二上午9点 — 互动高峰期",
     howItWorksReadyCTA: "准备好提升您的 LinkedIn 影响力了吗？",
     howItWorksTryFree: "免费试用",
+    hiwBadge: "如何运作",
+    hiwTitle: "一个想法。",
+    hiwTitleAccent: "一篇帖子。完成。",
+    hiwSubtitle: "输入一个简单的想法——Posty AI 将其转化为一篇可直接发布的 LinkedIn 帖子。",
+    hiwYourIdea: "您的想法",
+    hiwGeneratedPost: "生成的帖子",
+    hiwUserInput: "我想分享第一次管理远程团队时学到的 3 条经验",
+    hiwAiIntro: "这是您的帖子，已为互动优化：",
+    hiwPostAuthor: "Emilien N.",
+    hiwPostRole: "Posty AI 创始人",
+    hiwPostHook: "我差点在 3 个月内失去整个团队。",
+    hiwPostBody: "当我成为远程经理时，我以为最难的是工具。我错了。\n\n经验 1：信任不是可选项——它是基础。\n经验 2：多沟通。然后再多沟通一些。\n经验 3：结果比工时更重要。\n\n如今我的团队比以往任何时候都更有效率（提升 40%），也更有成就感。",
+    hiwPostCta: "在远程管理中，您学到的最大经验是什么？",
+    hiwGeneratedIn: "12 秒生成",
+    hiwInputPlaceholder: "描述您的下一个想法...",
+    hiwPill1: "为 LinkedIn 优化",
+    hiwPill2: "可定时发布",
+    hiwPill3: "包含 AI 洞察",
     hiwMockupOnline: "在线",
     hiwMockupLike: "赞",
     hiwMockupComment: "评论",
@@ -782,6 +827,50 @@ export const zh = {
     aiExpNotifSuccess: "Meeting scheduled",
     aiExpNotifSuccessDetail: "Marc D. — Tomorrow 14:00",
     aiExpContextualLabel: "This person signed a client from this post",
+
+    // Copilot Sans/Avec headers
+    aiExpWithout: "没有 Posty",
+    aiExpWith: "使用 Posty",
+
+    // Copilot comparison rows 1-5
+    aiExpRow1Before: "写一篇帖子要 2 小时",
+    aiExpRow1After: "30 秒内完成",
+    aiExpRow2Before: "不知道发什么",
+    aiExpRow2After: "AI 提供爆款角度",
+    aiExpRow3Before: "0 互动，0 客户线索",
+    aiExpRow3After: "吸引客户的帖子",
+    aiExpRow4Before: "发布不规律",
+    aiExpRow4After: "自动定时发布",
+    aiExpRow5Before: "没有工作流",
+    aiExpRow5After: "智能 24/7 副驾驶",
+
+    // Copilot mockup labels
+    aiExpDraftLabel: "你的 brief",
+    aiExpOptimizedLabel: "已为 LinkedIn 优化",
+    aiExpGeneratedPost: "故事力不是一项软技能——它是把冷漠的浏览者转化为高质量会议的最快方式。这是让我的销售管线翻倍的那一段。",
+    aiExpPublishCta: "发布",
+    aiExpPublishing: "发布中…",
+    aiExpPublished: "已发布",
+    aiExpScheduleCta: "定时",
+    aiExpToastPublished: "帖子已发布到 LinkedIn",
+    aiExpToastPublishedSub: "对 4.7k 联系人可见",
+    aiExpToastBoost: "AI 推送范围 +42%",
+    aiExpToastBoostSub: "UX 代理 · 自动优化",
+
+    // Multi-agent rail
+    agentIdle: "待命",
+    agentCopywriterLabel: "Copywriter",
+    agentCopywriterAnalyzing: "分析中…",
+    agentCopywriterDrafting: "撰写中…",
+    agentCopywriterDone: "已润色",
+    agentCopywriterThinking: "Copywriter 代理正在重写…",
+    agentSystemLabel: "System",
+    agentSystemValidating: "验证中…",
+    agentSystemDone: "已批准",
+    agentSystemValidatedLine: "System 代理：帖子已通过发布验证",
+    agentUxLabel: "UX Engine",
+    agentUxBroadcasting: "广播中",
+    agentUxDone: "上线",
 
     // Value block after features
     valueBlockTitle: "自由职业者为什么选择 Posty",
@@ -926,6 +1015,16 @@ export const zh = {
 
   // Auth
   auth: {
+    // Rotating marketing taglines on the desktop login/signup hero panel.
+    loginHeroRotator: [
+      "像专业人士一样撰写帖子的 AI 工具",
+      "更快地扩大你的受众",
+      "你的 LinkedIn 副驾驶，24/7 可用",
+      "几秒钟内创建高效内容",
+      "轻松发布，节省时间",
+      "无需勘探即可提升曝光率",
+    ],
+
     // Login
     loginTitle: "欢迎回来",
     loginSubtitle: "登录以继续",
@@ -2454,6 +2553,7 @@ export const zh = {
     storyBusinessPerWeek: "故事版 + 商务版（{n}/周）",
     platformOnly: "仅 {name}",
     networksConnected: "4 个平台已连接",
+    networksMore: "其他",
     unlimitedSharing: "与团队无限分享",
     shareWithContacts: "与 {n} 位联系人分享",
     postsUltraPrecise: "超精准 AI 帖子，内容量翻倍",
@@ -2675,6 +2775,21 @@ export const zh = {
     tooltipPostsPublished: "您通过 Posty 直接发布到 LinkedIn 的帖子",
     tooltipThisWeek: "最近 7 天内生成的帖子数",
     tooltipSessions: "您发起的生成会话数",
+    thisMonth: "本月",
+    last30Days: "过去30天",
+    scheduled: "已排期",
+    upcoming: "即将发布",
+    tooltipThisMonth: "过去30天生成的帖子数",
+    tooltipScheduled: "已排队等待未来发布的帖子",
+    featureUsageTitle: "功能使用情况",
+    featureUsageSubtitle: "您从Posty中获得最大价值的地方",
+    featureUsageEmpty: "生成您的第一个帖子以查看使用分布",
+    featureUsageLabels: {
+      chat: "直接对话",
+      templates: "模板",
+      scheduled: "定时发布",
+      published: "已发布到LinkedIn",
+    },
 
     // Insights section
     insightsTitle: "洞察",
@@ -2818,6 +2933,10 @@ export const zh = {
     notConnected: "未连接",
     unlockMorePlatforms: "解锁更多平台",
     upgradeToUnlock: "升级到 Max 解锁所有平台",
+    // ConnectPlatformPopup
+    connectPlatformTitle: "连接 {platform}？",
+    connectPlatformDesc: "连接您的 {platform} 账户，直接从 Posty 发布。",
+    connectAction: "连接",
     // PublishOptions
     chooseBroadcastMode: "选择发布方式",
     selectAtLeastOne: "请至少选择一个选项",

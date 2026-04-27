@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -98,31 +99,28 @@ function groupPostsByDate(posts: Post[], labels: SidebarTranslations) {
   return groups;
 }
 
+/**
+ * Nav data — each item has a soft accent color for its icon (low saturation
+ * for visual cohesion). The active state uses the primary color + a shared
+ * `layoutId` indicator pill for smooth transitions between items.
+ */
 const menuItems: {
   nameKey: "chat" | "history" | "schedule" | "analytics";
   href: string;
-  activeClasses: string;
-  hoverClasses: string;
-  indicatorColor: string;
   iconColor: string;
-  glowColor: string;
   icon: (isActive: boolean) => React.ReactNode;
   requiredPlan?: PlanType;
 }[] = [
   {
     nameKey: "chat" as const,
     href: "/app",
-    activeClasses: "bg-[#F8935D]/8 text-gray-900 dark:text-white",
-    hoverClasses: "hover:text-[#F8935D] hover:bg-[#F8935D]/5",
-    indicatorColor: "bg-gradient-to-b from-[#F8935D] to-[#F76B54]",
     iconColor: "text-[#F8935D]",
-    glowColor: "rgba(248, 147, 93, 0.4)",
     icon: (isActive: boolean) => (
-      <svg className="w-5 h-5" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="w-[18px] h-[18px]" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={isActive ? 0 : 2}
+          strokeWidth={isActive ? 0 : 1.75}
           d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
         />
       </svg>
@@ -131,17 +129,13 @@ const menuItems: {
   {
     nameKey: "history" as const,
     href: "/history",
-    activeClasses: "bg-cyan-500/8 text-gray-900 dark:text-white",
-    hoverClasses: "hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-cyan-500/5",
-    indicatorColor: "bg-gradient-to-b from-cyan-500 to-cyan-400",
-    iconColor: "text-cyan-500",
-    glowColor: "rgba(6, 182, 212, 0.4)",
+    iconColor: "text-cyan-500/80 dark:text-cyan-400/80",
     icon: (isActive: boolean) => (
-      <svg className="w-5 h-5" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="w-[18px] h-[18px]" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={isActive ? 0 : 2}
+          strokeWidth={isActive ? 0 : 1.75}
           d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
         />
       </svg>
@@ -151,17 +145,13 @@ const menuItems: {
     nameKey: "schedule" as const,
     href: "/schedule",
     requiredPlan: "pro",
-    activeClasses: "bg-violet-500/8 text-gray-900 dark:text-white",
-    hoverClasses: "hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-500/5",
-    indicatorColor: "bg-gradient-to-b from-violet-500 to-violet-400",
-    iconColor: "text-violet-500",
-    glowColor: "rgba(139, 92, 246, 0.4)",
+    iconColor: "text-violet-500/80 dark:text-violet-400/80",
     icon: (isActive: boolean) => (
-      <svg className="w-5 h-5" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="w-[18px] h-[18px]" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={isActive ? 0 : 2}
+          strokeWidth={isActive ? 0 : 1.75}
           d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
         />
       </svg>
@@ -170,17 +160,13 @@ const menuItems: {
   {
     nameKey: "analytics" as const,
     href: "/analytics",
-    activeClasses: "bg-emerald-500/8 text-gray-900 dark:text-white",
-    hoverClasses: "hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-500/5",
-    indicatorColor: "bg-gradient-to-b from-emerald-500 to-emerald-400",
-    iconColor: "text-emerald-500",
-    glowColor: "rgba(16, 185, 129, 0.4)",
+    iconColor: "text-emerald-500/80 dark:text-emerald-400/80",
     icon: (isActive: boolean) => (
-      <svg className="w-5 h-5" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="w-[18px] h-[18px]" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={isActive ? 0 : 2}
+          strokeWidth={isActive ? 0 : 1.75}
           d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
         />
       </svg>
@@ -542,29 +528,30 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
             )}
           </div>
 
-          {/* New post button */}
+          {/* New post button — refined: tighter padding, subtler shadow */}
           <button
             onClick={() => {
               onClose();
               router.push(`/app?new=${Date.now()}`);
             }}
             className="
-              flex items-center justify-center gap-2.5 w-full px-4 py-3
+              flex items-center justify-center gap-2 w-full px-4 py-2.5
               bg-primary hover:bg-primary-hover
-              text-white font-semibold rounded-xl
+              text-white text-[13.5px] font-semibold rounded-lg
               transition-all duration-200 ease-out cursor-pointer
-              shadow-md hover:shadow-lg hover:shadow-primary/20
+              shadow-sm shadow-primary/20 hover:shadow-md hover:shadow-primary/25
               active:scale-[0.98] active:transition-none
               haptic-feedback group
             "
           >
             <svg
-              className="w-5 h-5 transition-transform duration-200 group-hover:rotate-90"
+              className="w-[18px] h-[18px] transition-transform duration-200 group-hover:rotate-90"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
+              strokeWidth={2}
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
             </svg>
             <span>{t.sidebar.newPost}</span>
           </button>
@@ -572,35 +559,21 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
 
         {/* Scrollable navigation - overscroll-contain prevents scroll chaining */}
         <nav className="flex-1 p-4 pt-2 overflow-y-auto no-scrollbar overscroll-contain">
-          {/* Nav items - Harmonized with landing page Features section colors */}
-          <div className="space-y-1">
+          {/* Nav items — unified primary palette + shared layoutId active indicator */}
+          <div className="space-y-0.5">
             {menuItems.map((item) => {
               const isActive = pathname === item.href || (item.href === "/app" && pathname === "/chat");
               const itemName = t.nav[item.nameKey];
               const isLocked = item.requiredPlan && !meetsMinimumPlan(currentPlan as PlanType, item.requiredPlan);
 
-              // Icon color — per-feature color (dimmed if locked)
-              const iconColorClass = isLocked ? "text-gray-400 dark:text-gray-500" : item.iconColor;
-
               return (
                 <div key={item.nameKey} className="relative">
-                  {/* Enhanced active indicator with gradient matching Features section */}
+                  {/* Shared active indicator — slides smoothly between items via layoutId */}
                   {isActive && (
-                    <div
-                      className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-full ${item.indicatorColor}`}
-                      style={{
-                        boxShadow: `0 0 12px ${item.glowColor}`,
-                      }}
-                    />
-                  )}
-
-                  {/* Subtle glow effect behind active item — contained to icon area */}
-                  {isActive && (
-                    <div
-                      className="absolute left-0 top-0 bottom-0 w-12 rounded-lg blur-lg opacity-40 pointer-events-none"
-                      style={{
-                        background: `radial-gradient(circle at center, ${item.glowColor} 0%, transparent 70%)`,
-                      }}
+                    <motion.div
+                      layoutId="sidebar-active-indicator"
+                      className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 rounded-r-full bg-primary"
+                      transition={{ type: "spring", stiffness: 380, damping: 32 }}
                     />
                   )}
 
@@ -608,50 +581,36 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
                     href={item.href}
                     onClick={onClose}
                     className={`
-                      relative flex items-center gap-3 px-4 py-2 rounded-lg
-                      transition-all duration-200 ease-out group haptic-feedback
-                      transform-gpu
+                      relative flex items-center gap-3 px-3 py-2 rounded-lg
+                      transition-colors duration-150 ease-out group haptic-feedback
                       ${isLocked
-                        ? "text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-dark-hover"
+                        ? "text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-dark-hover/60"
                         : isActive
-                          ? item.activeClasses
-                          : `text-gray-900 dark:text-gray-200 ${item.hoverClasses} hover:translate-x-1 active:scale-[0.98] active:transition-none`
+                          ? "bg-primary/[0.06] text-primary"
+                          : "text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-dark-hover/60 hover:text-gray-900 dark:hover:text-white"
                       }
                     `}
                   >
-                    {/* Vivid colored icon matching Features section palette */}
                     <span
                       className={`
-                        relative transition-all duration-200
-                        ${isActive ? "scale-110" : "group-hover:scale-110"}
-                        ${iconColorClass}
+                        relative transition-colors duration-150
+                        ${isLocked
+                          ? "text-gray-400 dark:text-gray-500"
+                          : isActive
+                            ? "text-primary"
+                            : `${item.iconColor} opacity-80 group-hover:opacity-100`
+                        }
                       `}
-                      style={isActive ? {
-                        filter: `drop-shadow(0 0 4px ${item.glowColor})`
-                      } : undefined}
                     >
                       {item.icon(isActive)}
                     </span>
 
-                    <span className={`flex-1 ${isActive ? "font-bold" : "font-semibold"}`}>{itemName}</span>
+                    <span className={`flex-1 text-[13.5px] ${isActive ? "font-semibold" : "font-medium"}`}>{itemName}</span>
 
-                    {/* PRO badge for locked items */}
                     {isLocked && (
-                      <span className="px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide bg-gradient-to-r from-primary/15 to-accent/15 text-primary border border-primary/20 rounded shrink-0">
+                      <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-primary/10 text-primary rounded shrink-0">
                         PRO
                       </span>
-                    )}
-
-                    {/* Arrow indicator for active state */}
-                    {isActive && (
-                      <svg
-                        className={`w-4 h-4 transition-all duration-200 ${iconColorClass}`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
                     )}
                   </Link>
                 </div>

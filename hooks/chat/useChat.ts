@@ -70,6 +70,8 @@ interface UseChatReturn {
   insights: PostInsights | null;
   /** True when continuing an existing conversation */
   isFollowUp: boolean;
+  /** Regenerate the seed comment attached to a given response index */
+  regenerateSeedComment: (index: number) => void;
 }
 
 export function useChat({
@@ -119,6 +121,80 @@ export function useChat({
   // Abort controller for canceling streams
   const abortControllerRef = useRef<AbortController | null>(null);
   const smartTitleRef = useRef<string | null>(null);
+
+  /* ─────────────────────── Seed comment helper ──────────────────────────
+   * After a post is generated we fire a background fetch to /api/chat/seed-comment
+   * for every post response (non-conversational). The result is merged into
+   * the matching MockResponse via `seedComment.text`. While in-flight, the
+   * response shows `seedComment.loading = true` so the UI can render a skeleton.
+   *
+   * `regenerateSeedComment(index)` is exposed for the UI's "✨ Regenerate"
+   * button on the seed-comment block. */
+  const fetchSeedCommentFor = useCallback(
+    async (index: number, postContent: string) => {
+      if (!postContent || postContent.trim().length < 20) return;
+      const lang = (typeof window !== "undefined"
+        ? (localStorage.getItem("posty-language") || "fr")
+        : "fr") as "fr" | "en";
+
+      setResponses((prev) =>
+        prev.map((r, i) =>
+          i === index
+            ? { ...r, seedComment: { ...(r.seedComment ?? {}), loading: true, error: undefined } }
+            : r,
+        ),
+      );
+
+      try {
+        const headers = await getAuthHeaders();
+        const res = await fetch("/api/chat/seed-comment", {
+          method: "POST",
+          headers: { ...headers, "Content-Type": "application/json" },
+          body: JSON.stringify({ userId, postContent, language: lang }),
+        });
+        if (!res.ok) {
+          let msg = `Seed comment failed (${res.status})`;
+          try {
+            const j = await res.json();
+            msg = j.message || j.error || msg;
+          } catch {}
+          throw new Error(msg);
+        }
+        const data: { comment?: string } = await res.json();
+        if (!data.comment) throw new Error("Empty seed comment");
+
+        setResponses((prev) =>
+          prev.map((r, i) =>
+            i === index ? { ...r, seedComment: { text: data.comment, loading: false } } : r,
+          ),
+        );
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Failed";
+        setResponses((prev) =>
+          prev.map((r, i) =>
+            i === index ? { ...r, seedComment: { loading: false, error: msg } } : r,
+          ),
+        );
+      }
+    },
+    [userId],
+  );
+
+  /** Public API — let the UI request a fresh seed comment on demand. */
+  const regenerateSeedComment = useCallback(
+    (index: number) => {
+      // Read the latest content from state; we can't rely on closures here.
+      setResponses((prev) => {
+        const target = prev[index];
+        if (target?.content) {
+          // Fire async; don't await inside setResponses.
+          void fetchSeedCommentFor(index, target.content);
+        }
+        return prev;
+      });
+    },
+    [fetchSeedCommentFor],
+  );
 
   // Get guest generation count from localStorage
   const getGuestCount = useCallback((): number => {
@@ -415,23 +491,31 @@ export function useChat({
                           title: "Version Storytelling",
                           content: accumulatedContent.storytelling,
                           type: "storytelling",
+                          seedComment: { loading: true },
                         },
                         {
                           title: "Version Business",
                           content: accumulatedContent.business,
                           type: "business",
+                          seedComment: { loading: true },
                         },
                       ]);
+                      // Fire seed-comment fetches in parallel (non-blocking).
+                      void fetchSeedCommentFor(0, accumulatedContent.storytelling);
+                      void fetchSeedCommentFor(1, accumulatedContent.business);
                     } else {
+                      const onlyContent = accumulatedContent[responseType] || "";
                       setResponses([
                         {
                           title: responseType === "storytelling"
                             ? "Version Storytelling"
                             : "Version Business",
-                          content: accumulatedContent[responseType] || "",
+                          content: onlyContent,
                           type: responseType,
+                          seedComment: { loading: true },
                         },
                       ]);
+                      void fetchSeedCommentFor(0, onlyContent);
                     }
 
                     if (isGuest) {
@@ -705,6 +789,7 @@ export function useChat({
     postId,
     insights,
     isFollowUp,
+    regenerateSeedComment,
   };
 }
 

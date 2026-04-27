@@ -71,10 +71,10 @@ function LinkedInPostPreview({ content, userProfile, t }: { content: string; use
 
             {/* User info */}
             <div className="flex-1 min-w-0">
-              <h4 className="font-semibold text-gray-900 text-sm">
+              <h4 className="font-semibold text-gray-900 text-sm notranslate" translate="no">
                 {userProfile?.displayName || t.ui.yourName}
               </h4>
-              <p className="text-xs text-gray-600 truncate">
+              <p className="text-xs text-gray-600 truncate notranslate" translate="no">
                 {userProfile?.headline || t.ui.yourProfessionalTitle}
               </p>
               <div className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">

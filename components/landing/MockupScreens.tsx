@@ -10,6 +10,7 @@
 
 import { type ReactNode, useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import { motion, AnimatePresence, useInView, type Variants } from "framer-motion";
 
 export interface MockupScreen {
   id: string;
@@ -20,25 +21,648 @@ export interface MockupScreen {
   component?: ReactNode;
 }
 
+/**
+ * Cache-buster for the carousel PNGs. Bump after each `npm run generate-previews`
+ * so browsers (and Next.js Image optimizer) fetch the fresh screenshots instead
+ * of serving the previous cached optimization.
+ */
+const PREVIEWS_VERSION = "4";
+
 /** Build translated MockupScreen array from translation object */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function getMockupScreens(landing: any): MockupScreen[] {
+  const v = `?v=${PREVIEWS_VERSION}`;
   return [
-    { id: "chat-welcome", src: "/images/screenshots/app.png", alt: landing.mockupChatAlt, label: landing.mockupChatLabel },
-    { id: "conversation", src: "/images/screenshots/chat.png", alt: landing.mockupConversationAlt, label: landing.mockupConversationLabel },
-    { id: "history", src: "/images/screenshots/history.png", alt: landing.mockupHistoryAlt, label: landing.mockupHistoryLabel },
-    { id: "schedule", src: "/images/screenshots/schedule.png", alt: landing.mockupScheduleAlt, label: landing.mockupScheduleLabel },
-    { id: "analytics", src: "/images/screenshots/dashboard.png", alt: landing.mockupAnalyticsAlt, label: landing.mockupAnalyticsLabel },
+    { id: "chat-welcome", src: `/images/screenshots/app.png${v}`, alt: landing.mockupChatAlt, label: landing.mockupChatLabel },
+    { id: "conversation", src: `/images/screenshots/chat.png${v}`, alt: landing.mockupConversationAlt, label: landing.mockupConversationLabel },
+    { id: "history", src: `/images/screenshots/history.png${v}`, alt: landing.mockupHistoryAlt, label: landing.mockupHistoryLabel },
+    { id: "schedule", src: `/images/screenshots/schedule.png${v}`, alt: landing.mockupScheduleAlt, label: landing.mockupScheduleLabel },
+    { id: "analytics", src: `/images/screenshots/dashboard.png${v}`, alt: landing.mockupAnalyticsAlt, label: landing.mockupAnalyticsLabel },
   ];
 }
 
-/* ── Phase timing for the looping conversation animation ───────────── *
- * 0: User message  1: Typing  2: AI response  3: Buttons appear
- * 4: Click Publish  5: Engagement notif  6: Prospect DM  7: Success  8: Hold */
-const PHASE_DURATIONS = [1500, 1200, 300, 1800, 600, 1800, 1800, 2500, 1500];
+/* ── Phase timing for the multi-agent simulation loop ───────────────── *
+ * 0: Idle — user brief visible, all agents dim
+ * 1: Copywriter agent activates (analyzing intent)
+ * 2: Copywriter generates the optimized post (typewriter reveal)
+ * 3: System/CTO agent validates the draft (validation badge)
+ * 4: User clicks Publish → button morphs into "Publishing…" spinner
+ * 5: UX agent activates → "Published on LinkedIn" toast
+ * 6: Engagement detected toast (+312 views)
+ * 7: AI boosted reach toast (+42%)
+ * 8: Hold, then loop back to phase 0 */
+const PHASE_DURATIONS = [1300, 1300, 2200, 1300, 1000, 1500, 1700, 1900, 1400];
 const TOTAL_PHASES = PHASE_DURATIONS.length;
 
-/** AI Copilot experience — animated loop: post creation → client closing */
+/* ─────────────────────────────────────────────────────────────────────
+ * CopilotConversionPane — left side of the section.
+ *
+ * Headline + 5-row Sans/Avec comparison driven by Framer Motion.
+ * The "Avec Posty" column is the hero: stronger color, subtle hover lift,
+ * stagger from top-to-bottom. The "Sans Posty" column reads gray and faded.
+ *
+ * Why this lives in its own component: the parent runs a heavy phase-loop
+ * effect for the chat mockup; isolating the comparison keeps re-renders
+ * cheap and lets us use `useInView` cleanly.
+ * ───────────────────────────────────────────────────────────────────── */
+
+interface ComparisonRow {
+  before: string;
+  after: string;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function CopilotConversionPane({ landing, inView }: { landing: any; inView: boolean }) {
+  const paneRef = useRef<HTMLDivElement>(null);
+  // Use Framer Motion's useInView for the comparison rows so they stagger
+  // independently of the parent's phase-loop trigger.
+  const motionInView = useInView(paneRef, { once: true, margin: "-10% 0px" });
+
+  // i18n-driven copy with sensible defaults for the last two rows.
+  const rows: ComparisonRow[] = [
+    { before: landing.aiExpRow1Before, after: landing.aiExpRow1After },
+    { before: landing.aiExpRow2Before, after: landing.aiExpRow2After },
+    { before: landing.aiExpRow3Before, after: landing.aiExpRow3After },
+    {
+      before: landing.aiExpRow4Before || "Publication irrégulière",
+      after: landing.aiExpRow4After || "Programmation automatique",
+    },
+    {
+      before: landing.aiExpRow5Before || "Aucun workflow",
+      after: landing.aiExpRow5After || "Copilote intelligent 24/7",
+    },
+  ];
+
+  // Container variant orchestrates child stagger.
+  const container: Variants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.08, delayChildren: 0.2 } },
+  };
+
+  // Each row enters from a slight x offset; the After cell does so from the
+  // opposite side for a satisfying "convergence" feel.
+  const rowVariant: Variants = {
+    hidden: { opacity: 0, y: 16 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] } },
+  };
+
+  const headerVariant: Variants = {
+    hidden: { opacity: 0, y: -8 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } },
+  };
+
+  return (
+    <motion.div
+      ref={paneRef}
+      initial="hidden"
+      animate={motionInView || inView ? "visible" : "hidden"}
+      variants={container}
+      className="flex-1 min-w-0 text-center md:text-left"
+    >
+      {/* Headline — solid accent (no gradient on H2), tight tracking. The
+          "disponible 24h/24" already lives in the title, so no eyebrow tag. */}
+      <motion.h2
+        variants={headerVariant}
+        className="text-[1.75rem] sm:text-[2.25rem] md:text-[2.5rem] lg:text-[2.875rem] font-bold text-gray-900 leading-[1.05] tracking-[-0.015em] mb-3"
+      >
+        {landing.aiExpTitle}
+        <br />
+        <span className="text-[#F8935D]">{landing.aiExpTitleAccent}</span>
+      </motion.h2>
+
+      {/* Subtitle — generous leading, body weight */}
+      <motion.p
+        variants={headerVariant}
+        className="text-[14px] sm:text-[15px] text-gray-600 leading-relaxed max-w-[520px] mx-auto md:mx-0 mb-5 sm:mb-6"
+      >
+        {landing.aiExpSubtitle}
+      </motion.p>
+
+      {/* Comparison card — clean 2-column layout, generous breathing room. */}
+      <motion.div
+        variants={rowVariant}
+        className="relative max-w-[540px] mx-auto md:mx-0 rounded-2xl bg-white shadow-[0_8px_24px_-12px_rgba(15,23,42,0.12),0_2px_6px_-2px_rgba(15,23,42,0.06)] ring-1 ring-gray-200/70 overflow-hidden"
+      >
+        {/* Header — clean 2-column with strong contrast */}
+        <div className="grid grid-cols-2 items-center bg-gradient-to-b from-gray-50/60 to-white border-b border-gray-100">
+          <span className="py-3 text-center text-[10px] font-bold text-gray-400 uppercase tracking-[0.18em]">
+            {landing.aiExpWithout || "Sans Posty"}
+          </span>
+          <span className="py-3 text-center text-[10px] font-bold uppercase tracking-[0.18em] text-[#F8935D]">
+            {landing.aiExpWith || "Avec Posty"}
+          </span>
+        </div>
+
+        {/* Rows wrapper with center hairline divider */}
+        <div className="relative">
+          <div
+            className="absolute top-0 bottom-0 left-1/2 -translate-x-px hidden sm:block pointer-events-none w-px bg-gradient-to-b from-transparent via-gray-200 to-transparent"
+            aria-hidden="true"
+          />
+
+          {rows.map((row, i) => (
+            <motion.div
+              key={i}
+              variants={rowVariant}
+              className={`grid grid-cols-2 items-stretch ${
+                i < rows.length - 1 ? "border-b border-gray-50" : ""
+              }`}
+            >
+              {/* Before — gray, faded */}
+              <div className="flex items-center gap-2.5 px-4 py-3.5">
+                <span className="inline-flex w-4 h-4 rounded-full bg-gray-100 items-center justify-center flex-shrink-0">
+                  <svg className="w-2 h-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </span>
+                <span className="text-[12px] sm:text-[13px] text-gray-400 leading-snug">{row.before}</span>
+              </div>
+
+              {/* After — bold orange */}
+              <div className="flex items-center gap-2.5 px-4 py-3.5 bg-gradient-to-r from-[#F8935D]/[0.05] to-transparent">
+                <span className="inline-flex w-4 h-4 rounded-full bg-[#F8935D]/15 items-center justify-center flex-shrink-0 ring-2 ring-[#F8935D]/10">
+                  <svg className="w-2 h-2 text-[#F8935D]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </span>
+                <span className="text-[12px] sm:text-[13px] text-gray-900 font-semibold leading-snug">{row.after}</span>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+ * CopilotMultiAgentMockup — right side of the section.
+ *
+ * Multi-agent SaaS simulation: a single phase prop drives a coordinated
+ * sequence across the agent rail, the optimized-post output card, the
+ * validation badge, the publish button, and the floating toast stack.
+ *
+ * Phases (see PHASE_DURATIONS at top of file):
+ *   0 idle · 1 copywriter analyzes · 2 copywriter drafts · 3 system
+ *   validates · 4 publish click · 5 published toast · 6 engagement toast
+ *   · 7 reach-boost toast · 8 hold (loops to 0).
+ * ───────────────────────────────────────────────────────────────────── */
+
+interface AgentChipProps {
+  letter: string;
+  label: string;
+  state: string;
+  active: boolean;
+  done: boolean;
+  /** 6-char hex (no alpha). The chip composes alpha values from this. */
+  accent: string;
+}
+
+function AgentChip({ letter, label, state, active, done, accent }: AgentChipProps) {
+  return (
+    <div
+      className={`relative rounded-lg border px-2 py-1.5 transition-all duration-300 ${
+        active ? "border-transparent" : done ? "border-gray-100 bg-white" : "border-gray-100 bg-white/60"
+      }`}
+      style={
+        active
+          ? {
+              backgroundColor: `${accent}10`,
+              boxShadow: `0 0 0 1px ${accent}40, 0 4px 16px -8px ${accent}66`,
+            }
+          : undefined
+      }
+    >
+      <div className="flex items-center gap-1.5 mb-0.5">
+        <span
+          className="relative w-3.5 h-3.5 rounded-md flex items-center justify-center flex-shrink-0"
+          style={{ backgroundColor: active || done ? `${accent}26` : "#F3F4F6" }}
+        >
+          <span className="text-[7px] font-bold" style={{ color: active || done ? accent : "#9CA3AF" }}>
+            {letter}
+          </span>
+          {active && (
+            <span
+              className="absolute -inset-0.5 rounded-md opacity-50 animate-ping"
+              style={{ backgroundColor: `${accent}40` }}
+            />
+          )}
+        </span>
+        <span
+          className="text-[8px] font-bold uppercase tracking-wide truncate"
+          style={{ color: active || done ? "#1F2937" : "#9CA3AF" }}
+        >
+          {label}
+        </span>
+      </div>
+      <p
+        className="text-[7.5px] leading-tight truncate"
+        style={{ color: active ? accent : done ? "#6B7280" : "#D1D5DB" }}
+      >
+        {state}
+      </p>
+    </div>
+  );
+}
+
+/** Word-stagger typewriter. Hidden when `active` is false; reveals each
+ *  word in order when `active` flips true. Layout-stable: words occupy
+ *  their final position from the start (only opacity changes). */
+function TypewriterText({ text, active }: { text: string; active: boolean }) {
+  const words = text.split(" ");
+  return (
+    <p className="text-[10px] sm:text-[10.5px] text-gray-700 leading-relaxed">
+      {words.map((w, i) => (
+        <motion.span
+          key={i}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: active ? 1 : 0 }}
+          transition={{
+            duration: 0.18,
+            delay: active ? 0.05 + i * 0.045 : 0,
+            ease: "easeOut",
+          }}
+        >
+          {w}
+          {i < words.length - 1 ? " " : ""}
+        </motion.span>
+      ))}
+    </p>
+  );
+}
+
+interface MultiAgentMockupProps {
+  phase: number;
+  inView: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  landing: any;
+}
+
+function CopilotMultiAgentMockup({ phase, inView, landing }: MultiAgentMockupProps) {
+  const on = (min: number) => phase >= min;
+  const onRange = (min: number, max: number) => phase >= min && phase < max;
+
+  // Optimized post body. Falls back to a credible English LinkedIn post if
+  // no i18n key is supplied — keeps the mockup readable in every locale.
+  const generatedPost: string =
+    landing.aiExpGeneratedPost ||
+    "Storytelling isn't a soft skill — it's the fastest way to turn cold scrollers into qualified meetings. Here's the one paragraph that doubled my pipeline.";
+
+  // Agent activity windows. Each agent lights up during its active phase
+  // range and stays "done" afterwards so the rail tells a story.
+  const copywriterActive = onRange(1, 3);
+  const copywriterDone = on(3);
+  const systemActive = onRange(3, 5);
+  const systemDone = on(5);
+  const uxActive = onRange(5, 8);
+  const uxDone = on(7);
+
+  // Toast stack — each toast lingers through the phase 8 hold, so by the
+  // end of the loop all three are stacked together (the "broadcast finale").
+  const showPublished = onRange(5, 9);
+  const showEngagement = onRange(6, 9);
+  const showBoost = onRange(7, 9);
+
+  return (
+    <div
+      className={`flex-shrink-0 w-full max-w-[300px] sm:max-w-[330px] md:max-w-[360px] lg:max-w-[400px] transition-all duration-700 delay-200 ease-out ${
+        inView ? "opacity-100 translate-x-0" : "opacity-0 translate-x-12"
+      }`}
+    >
+      <div className="relative animate-[copilotCardFloat_8s_ease-in-out_infinite]">
+        {/* Pulsing ring + warm glow — same visual language as the legacy mockup */}
+        <div className="absolute -inset-2 sm:-inset-4 rounded-[28px] border border-[#F8935D]/10 animate-[copilotPulseRing_4s_ease-in-out_infinite]" />
+        <div className="absolute -inset-4 sm:-inset-8 bg-gradient-to-br from-[#F8935D]/10 to-[#F76B54]/[0.06] rounded-[32px] blur-2xl" />
+
+        {/* Browser chrome */}
+        <div className="relative bg-white rounded-xl sm:rounded-2xl border border-gray-200/80 shadow-2xl shadow-gray-400/25 overflow-hidden">
+          <div className="flex items-center px-3 sm:px-4 py-2 sm:py-2.5 border-b border-gray-100 bg-gradient-to-b from-gray-50 to-white">
+            <div className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-[#FF5F57]" />
+              <div className="w-2.5 h-2.5 rounded-full bg-[#FEBC2E]" />
+              <div className="w-2.5 h-2.5 rounded-full bg-[#28C840]" />
+            </div>
+            <div className="flex-1 mx-6 sm:mx-12">
+              <div className="bg-gray-100/80 rounded-md px-3 py-1 flex items-center justify-center gap-1.5">
+                <svg className="w-2.5 h-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                <span className="text-[9px] sm:text-[10px] text-gray-400 font-medium">postyapp.ai</span>
+              </div>
+            </div>
+            <div className="w-12" />
+          </div>
+
+          {/* App body */}
+          <div className="bg-[#FAFAF8] flex flex-col">
+            {/* App header */}
+            <div className="flex items-center justify-between px-3 sm:px-4 py-2 border-b border-gray-100 bg-white">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg overflow-hidden shadow-sm">
+                  <Image src="/logo.png" alt="Posty" width={28} height={28} className="w-full h-full object-cover" />
+                </div>
+                <span className="text-xs font-bold text-gray-900">Posty Copilot</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="px-2 py-0.5 rounded bg-[#F8935D]/10 text-[8px] font-bold text-[#F8935D]">LinkedIn</div>
+                <div className="px-2 py-0.5 rounded bg-[#F8935D]/[0.06] text-[8px] font-bold text-[#F8935D]/85">24/7</div>
+              </div>
+            </div>
+
+            {/* Agent rail — 3 specialist agents */}
+            <div className="px-3 sm:px-4 py-2.5 border-b border-gray-100 bg-gradient-to-b from-white to-[#FAFAF8]/40">
+              <div className="grid grid-cols-3 gap-1.5">
+                <AgentChip
+                  letter="C"
+                  label={landing.agentCopywriterLabel || "Copywriter"}
+                  state={
+                    copywriterActive
+                      ? onRange(1, 2)
+                        ? landing.agentCopywriterAnalyzing || "Analyzing…"
+                        : landing.agentCopywriterDrafting || "Drafting…"
+                      : copywriterDone
+                      ? landing.agentCopywriterDone || "Polished"
+                      : landing.agentIdle || "Standby"
+                  }
+                  active={copywriterActive}
+                  done={copywriterDone}
+                  accent="#F8935D"
+                />
+                <AgentChip
+                  letter="S"
+                  label={landing.agentSystemLabel || "System"}
+                  state={
+                    systemActive
+                      ? landing.agentSystemValidating || "Validating…"
+                      : systemDone
+                      ? landing.agentSystemDone || "Approved"
+                      : landing.agentIdle || "Standby"
+                  }
+                  active={systemActive}
+                  done={systemDone}
+                  accent="#3B82F6"
+                />
+                <AgentChip
+                  letter="U"
+                  label={landing.agentUxLabel || "UX Engine"}
+                  state={
+                    uxActive
+                      ? landing.agentUxBroadcasting || "Broadcasting"
+                      : uxDone
+                      ? landing.agentUxDone || "Live"
+                      : landing.agentIdle || "Standby"
+                  }
+                  active={uxActive}
+                  done={uxDone}
+                  accent="#10B981"
+                />
+              </div>
+            </div>
+
+            {/* Editor body */}
+            <div className="relative px-3 sm:px-4 py-3 space-y-2.5">
+              {/* User brief */}
+              <div
+                className={`rounded-lg bg-white border border-gray-200/80 shadow-sm px-2.5 py-2 flex items-start gap-2 transition-all duration-500 ease-out ${
+                  on(0) ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
+                }`}
+              >
+                <div className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center flex-shrink-0">
+                  <span className="text-[7px] font-bold text-white">EC</span>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[7.5px] uppercase tracking-wider text-gray-400 font-bold mb-0.5">
+                    {landing.aiExpDraftLabel || "Your brief"}
+                  </p>
+                  <p className="text-[10.5px] sm:text-[11px] text-gray-700 leading-snug">
+                    {landing.aiExpChatExample}
+                  </p>
+                </div>
+              </div>
+
+              {/* Copywriter "thinking" pill — only during phase 1 */}
+              <AnimatePresence>
+                {onRange(1, 2) && (
+                  <motion.div
+                    key="thinking"
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.25 }}
+                    className="flex items-center gap-1.5 px-1"
+                  >
+                    <span className="text-[9px] font-medium text-[#F8935D]">
+                      {landing.agentCopywriterThinking || "Copywriter agent is rewriting…"}
+                    </span>
+                    <span className="flex gap-0.5">
+                      <span className="w-1 h-1 rounded-full bg-[#F8935D] animate-[copilotTypingDot_1.2s_ease-in-out_infinite]" />
+                      <span className="w-1 h-1 rounded-full bg-[#F8935D] animate-[copilotTypingDot_1.2s_ease-in-out_0.2s_infinite]" />
+                      <span className="w-1 h-1 rounded-full bg-[#F8935D] animate-[copilotTypingDot_1.2s_ease-in-out_0.4s_infinite]" />
+                    </span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Optimized post output */}
+              <motion.div
+                initial={false}
+                animate={on(2) ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
+                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                className="rounded-xl bg-white border border-gray-100 shadow-sm overflow-hidden"
+              >
+                <div className="px-2.5 py-1.5 border-b border-gray-50 flex items-center justify-between bg-gradient-to-r from-[#F8935D]/[0.05] to-transparent">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-3.5 h-3.5 rounded bg-[#F8935D]/15 flex items-center justify-center">
+                      <svg className="w-2 h-2 text-[#F8935D]" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    </span>
+                    <span className="text-[8.5px] font-semibold text-gray-700">
+                      {landing.aiExpOptimizedLabel || "Optimized for LinkedIn"}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-0.5">
+                    <svg className="w-2.5 h-2.5 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                    <span className="text-[8px] font-bold text-[#F8935D]">9.4</span>
+                  </div>
+                </div>
+                <div className="px-2.5 py-2">
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <div className="w-4 h-4 rounded-full bg-gradient-to-br from-blue-400 to-blue-600" />
+                    <div className="space-y-0.5">
+                      <div className="h-1 bg-gray-300 rounded-full w-14" />
+                      <div className="h-1 bg-gray-200 rounded-full w-9" />
+                    </div>
+                  </div>
+                  <TypewriterText text={generatedPost} active={on(2)} />
+                </div>
+              </motion.div>
+
+              {/* System validation badge */}
+              <AnimatePresence>
+                {on(3) && (
+                  <motion.div
+                    key="validation"
+                    initial={{ opacity: 0, y: 6, scale: 0.96 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.96 }}
+                    transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                    className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-blue-50 border border-blue-100"
+                  >
+                    <span className="relative w-3.5 h-3.5 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-2 h-2 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                      {systemActive && (
+                        <span className="absolute inset-0 rounded-full bg-blue-400/40 animate-ping" />
+                      )}
+                    </span>
+                    <p className="text-[9.5px] font-semibold text-blue-700 leading-tight">
+                      {landing.agentSystemValidatedLine || "System agent: post validated for publication"}
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Action bar */}
+              <div
+                className={`flex gap-1.5 transition-all duration-500 ease-out ${
+                  on(2) ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
+                }`}
+              >
+                <motion.div
+                  animate={onRange(4, 5) ? { scale: [1, 0.94, 1] } : { scale: 1 }}
+                  transition={{ duration: 0.45 }}
+                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg shadow-md transition-colors duration-300 ${
+                    on(5)
+                      ? "bg-emerald-500 shadow-emerald-500/20"
+                      : "bg-gradient-to-r from-[#F8935D] to-[#F76B54] shadow-[#F8935D]/20"
+                  }`}
+                >
+                  {on(5) ? (
+                    <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  ) : onRange(4, 5) ? (
+                    <span className="w-2.5 h-2.5 border-[1.5px] border-white/40 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
+                    </svg>
+                  )}
+                  <span className="text-[8.5px] font-bold text-white">
+                    {on(5)
+                      ? landing.aiExpPublished || "Published"
+                      : onRange(4, 5)
+                      ? landing.aiExpPublishing || "Publishing…"
+                      : landing.aiExpPublishCta || "Publish"}
+                  </span>
+                </motion.div>
+                <div className="flex items-center gap-1 px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg">
+                  <svg className="w-2.5 h-2.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <span className="text-[8.5px] font-semibold text-gray-600">
+                    {landing.aiExpScheduleCta || "Schedule"}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Toast stack — published → engagement → boost. Each lingers so by
+            phase 7 all three are visible together (the "broadcast cascade"). */}
+        <AnimatePresence>
+          {showPublished && (
+            <motion.div
+              key="t-published"
+              initial={{ opacity: 0, x: 24, y: -2 }}
+              animate={{ opacity: 1, x: 0, y: 0 }}
+              exit={{ opacity: 0, x: 24 }}
+              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+              className="absolute -top-3 -right-2 sm:-right-12 z-30"
+            >
+              <div className="bg-white/95 backdrop-blur-sm rounded-xl border border-gray-200/80 shadow-xl shadow-gray-400/15 px-2.5 py-2 flex items-center gap-2 max-w-[180px]">
+                <div className="w-7 h-7 rounded-full bg-[#0A66C2] flex items-center justify-center flex-shrink-0">
+                  <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+                  </svg>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[9px] sm:text-[10px] font-semibold text-gray-800">
+                    {landing.aiExpToastPublished || "Post published on LinkedIn"}
+                  </p>
+                  <p className="text-[7px] sm:text-[8px] text-gray-400">
+                    {landing.aiExpToastPublishedSub || "Live for 4.7k connections"}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {showEngagement && (
+            <motion.div
+              key="t-engagement"
+              initial={{ opacity: 0, x: 24, y: -2 }}
+              animate={{ opacity: 1, x: 0, y: 0 }}
+              exit={{ opacity: 0, x: 24 }}
+              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1], delay: 0.05 }}
+              className="absolute top-[58px] sm:top-[68px] -right-1 sm:-right-10 z-30"
+            >
+              <div className="bg-white/95 backdrop-blur-sm rounded-xl border border-gray-200/80 shadow-xl shadow-gray-400/15 px-2.5 py-2 flex items-center gap-2 max-w-[180px]">
+                <div className="w-7 h-7 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.4}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 17l6-6 4 4 8-8" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M14 7h7v7" />
+                  </svg>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[9px] sm:text-[10px] font-semibold text-gray-800">
+                    {landing.aiExpNotifViews}
+                  </p>
+                  <p className="text-[7px] sm:text-[8px] text-gray-400">
+                    {landing.aiExpNotifViewsSub}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {showBoost && (
+            <motion.div
+              key="t-boost"
+              initial={{ opacity: 0, y: 8, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 8 }}
+              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+              className="absolute -bottom-5 left-1/2 -translate-x-1/2 z-30"
+            >
+              <div className="bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white rounded-full px-3.5 py-2 flex items-center gap-2 shadow-lg shadow-[#F8935D]/25 whitespace-nowrap">
+                <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.4}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <div>
+                  <p className="text-[9px] sm:text-[10px] font-bold">
+                    {landing.aiExpToastBoost || "AI boosted reach +42%"}
+                  </p>
+                  <p className="text-[7px] sm:text-[8px] text-white/80">
+                    {landing.aiExpToastBoostSub || "UX agent · auto-tuning"}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+}
+
+/** AI Copilot experience — animated loop: post creation → broadcast → growth */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function CopilotSection({ landing }: { landing: any }) {
   const [phase, setPhase] = useState(-1);
@@ -88,352 +712,23 @@ export function CopilotSection({ landing }: { landing: any }) {
       ref={sectionRef}
       className="relative w-full overflow-hidden h-screen max-h-screen flex items-center py-6 sm:py-8"
     >
-      {/* ── Background ─────────────────────────────────────────────── */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#FEF3EE] via-[#FFF5F0] to-[#FEF3EE]" />
-      <div className="absolute top-[8%] right-[8%] w-40 h-40 sm:w-64 sm:h-64 bg-[#F8935D]/10 rounded-full blur-[80px] animate-pulse" style={{ animationDuration: "4s" }} />
-      <div className="absolute bottom-[10%] left-[5%] w-32 h-32 sm:w-48 sm:h-48 bg-[#F76B54]/8 rounded-full blur-[60px] animate-pulse" style={{ animationDuration: "5s", animationDelay: "1s" }} />
-      <div className="absolute top-[45%] left-[50%] w-56 h-56 bg-[#F8935D]/5 rounded-full blur-[100px]" />
-      <div
-        className="absolute inset-0 opacity-[0.06]"
-        style={{
-          backgroundImage:
-            "linear-gradient(#F8935D 1px, transparent 1px), linear-gradient(90deg, #F8935D 1px, transparent 1px)",
-          backgroundSize: "40px 40px",
-        }}
-      />
+      {/* Background — single sober warm wash. One soft halo behind the mockup,
+          one fainter behind the comparison. No grain pattern (it competed
+          with the comparison table's visual density). */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#FEF6F0] via-white to-[#FEF6F0]" />
+      <div className="absolute top-[12%] right-[6%] w-[420px] h-[420px] bg-[#F8935D]/[0.06] rounded-full blur-[140px]" />
 
       {/* ── Content ────────────────────────────────────────────────── */}
       <div className="relative w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row items-center gap-6 md:gap-10 lg:gap-16">
 
-          {/* ── LEFT — Text content (slides in from left) ──────────── */}
-          <div
-            className={`flex-1 min-w-0 text-center md:text-left transition-all duration-700 ease-out ${
-              inView ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-12"
-            }`}
-          >
-            {/* Badge */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 border border-[#F8935D]/20 shadow-sm mb-3 sm:mb-4">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F8935D] opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#F8935D]" />
-              </span>
-              <span className="text-[10px] sm:text-xs font-semibold text-[#F8935D] uppercase tracking-wider">AI-Powered</span>
-            </div>
+          {/* ── LEFT — Refonte conversion-driven : headline punchy + comparaison
+              Sans/Avec dramatique avec stagger Framer Motion + hover. */}
+          <CopilotConversionPane landing={landing} inView={inView} />
 
-            {/* Title */}
-            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 leading-[1.15] mb-2 sm:mb-3">
-              {landing.aiExpTitle}
-              <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
-                {landing.aiExpTitleAccent}
-              </span>
-            </h2>
 
-            {/* Subtitle */}
-            <p className="text-xs sm:text-sm md:text-base text-gray-500 leading-relaxed max-w-md mx-auto md:mx-0 mb-4 sm:mb-6">
-              {landing.aiExpSubtitle}
-            </p>
-
-            {/* Feature pills */}
-            <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-4 sm:mb-5">
-              {[landing.aiExpFeature1Title, landing.aiExpFeature2Title, landing.aiExpFeature3Title].map((f: string, i: number) => (
-                <div key={i} className="flex items-center gap-1.5 px-3 py-1.5 bg-white/80 rounded-lg border border-gray-200/60 shadow-sm">
-                  <svg className="w-3.5 h-3.5 text-[#F8935D] flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                  <span className="text-[10px] sm:text-xs font-medium text-gray-700">{f}</span>
-                </div>
-              ))}
-            </div>
-
-            {/* Before/After — concrete line-by-line comparison with staggered reveal */}
-            <div
-              className={`max-w-md mx-auto md:mx-0 rounded-xl border border-gray-200/60 bg-white/70 overflow-hidden shadow-sm transition-all duration-700 ease-out ${
-                inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
-              }`}
-              style={{ transitionDelay: inView ? "0.5s" : "0s" }}
-            >
-              {/* Header row */}
-              <div className="grid grid-cols-[1fr,auto,1fr] text-center border-b border-gray-100">
-                <span className="py-2 text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wider">{landing.aiExpWithout || "Without"}</span>
-                <span className="py-2 w-px bg-gray-100" />
-                <span className="py-2 text-[10px] sm:text-xs font-semibold text-[#F8935D] uppercase tracking-wider">{landing.aiExpWith || "With Posty"}</span>
-              </div>
-              {/* Comparison rows — each row slides in with increasing delay */}
-              {[
-                { before: landing.aiExpRow1Before, after: landing.aiExpRow1After },
-                { before: landing.aiExpRow2Before, after: landing.aiExpRow2After },
-                { before: landing.aiExpRow3Before, after: landing.aiExpRow3After },
-              ].map((row, i) => (
-                <div
-                  key={i}
-                  className={`grid grid-cols-[1fr,auto,1fr] items-center transition-all duration-500 ease-out ${i < 2 ? "border-b border-gray-50" : ""} ${
-                    inView ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4"
-                  }`}
-                  style={{ transitionDelay: inView ? `${0.7 + i * 0.15}s` : "0s" }}
-                >
-                  {/* Before — faded, struck through */}
-                  <div className="flex items-center gap-1.5 px-3 py-2.5">
-                    <svg className="w-3 h-3 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                    <span className="text-[10px] sm:text-xs text-gray-400 line-through decoration-gray-300">{row.before}</span>
-                  </div>
-                  <span className="w-px self-stretch bg-gray-100" />
-                  {/* After — bold, accented, slides in from right */}
-                  <div
-                    className={`flex items-center gap-1.5 px-3 py-2.5 transition-all duration-500 ease-out ${
-                      inView ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"
-                    }`}
-                    style={{ transitionDelay: inView ? `${0.85 + i * 0.15}s` : "0s" }}
-                  >
-                    <svg className="w-3 h-3 text-[#F8935D] flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
-                    <span className="text-[10px] sm:text-xs text-gray-700 font-medium">{row.after}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* ── RIGHT — Animated mockup (slides in from right) ──────── */}
-          <div
-            className={`flex-shrink-0 w-full max-w-[280px] sm:max-w-[300px] md:max-w-[340px] lg:max-w-[380px] transition-all duration-700 delay-200 ease-out ${
-              inView ? "opacity-100 translate-x-0" : "opacity-0 translate-x-12"
-            }`}
-          >
-            {/* Floating container — mockup + overlays move together */}
-            <div className="relative animate-[copilotCardFloat_6s_ease-in-out_infinite]">
-              {/* Pulsing ring */}
-              <div className="absolute -inset-2 sm:-inset-4 rounded-[28px] border border-[#F8935D]/12 animate-[copilotPulseRing_3s_ease-in-out_infinite]" />
-              {/* Glow */}
-              <div className="absolute -inset-4 sm:-inset-8 bg-gradient-to-br from-[#F8935D]/15 to-[#F76B54]/8 rounded-[32px] blur-2xl" />
-
-              {/* ── Browser chrome ──────────────────────────────────── */}
-              <div className="relative bg-white rounded-xl sm:rounded-2xl border border-gray-200/80 shadow-2xl shadow-gray-400/25 overflow-hidden">
-                {/* Title bar */}
-                <div className="flex items-center px-3 sm:px-4 py-2 sm:py-2.5 border-b border-gray-100 bg-gradient-to-b from-gray-50 to-white">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2.5 h-2.5 rounded-full bg-[#FF5F57]" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-[#FEBC2E]" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-[#28C840]" />
-                  </div>
-                  <div className="flex-1 mx-6 sm:mx-12">
-                    <div className="bg-gray-100/80 rounded-md px-3 py-1 flex items-center justify-center gap-1.5">
-                      <svg className="w-2.5 h-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                      <span className="text-[9px] sm:text-[10px] text-gray-400 font-medium">postyapp.ai</span>
-                    </div>
-                  </div>
-                  <div className="w-12" />
-                </div>
-
-                {/* App content */}
-                <div className="flex flex-col bg-[#FAFAF8]" style={{ maxHeight: "clamp(300px, 55vh, 480px)" }}>
-                  <div className="flex-1 flex flex-col min-h-0">
-                    {/* Chat header */}
-                    <div className="flex items-center justify-between px-3 sm:px-4 py-2 border-b border-gray-100 bg-white">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-lg overflow-hidden shadow-sm">
-                          <Image src="/logo.png" alt="Posty" width={28} height={28} className="w-full h-full object-cover" />
-                        </div>
-                        <span className="text-xs font-bold text-gray-900">Posty AI</span>
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <div className="px-2 py-0.5 rounded bg-[#F8935D]/10 text-[8px] font-bold text-[#F8935D]">LinkedIn</div>
-                        <div className="px-2 py-0.5 rounded bg-emerald-50 text-[8px] font-bold text-emerald-600">24/7</div>
-                      </div>
-                    </div>
-
-                    {/* ── Messages — animated phase sequence ────────── */}
-                    <div className="relative flex-1 overflow-hidden px-3 sm:px-4 py-3 space-y-2.5">
-
-                      {/* Phase 0 — User message */}
-                      <div className={`flex justify-end transition-all duration-500 ease-out ${on(0) ? "opacity-100 translate-x-0" : "opacity-0 translate-x-5"}`}>
-                        <div className="flex items-end gap-1.5">
-                          <div className="max-w-[75%] bg-gradient-to-r from-[#F8935D] to-[#F76B54] !text-white text-[10px] sm:text-xs px-3 py-2 rounded-2xl rounded-tr-sm shadow-md shadow-[#F8935D]/15">
-                            {landing.aiExpChatExample}
-                          </div>
-                          <div className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center flex-shrink-0">
-                            <span className="text-[7px] font-bold text-white">EC</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Phase 1 — Typing indicator (collapses when done) */}
-                      <div className={`transition-all duration-300 ease-out overflow-hidden ${onRange(1, 2) ? "max-h-12 opacity-100" : "max-h-0 opacity-0"}`}>
-                        <div className="flex items-end gap-1.5 pb-0.5">
-                          <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#F8935D] to-[#F76B54] flex items-center justify-center flex-shrink-0">
-                            <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-                          </div>
-                          <div className="bg-white border border-gray-100 px-3 py-2 rounded-2xl rounded-tl-sm flex items-center gap-1.5 shadow-sm">
-                            <div className="w-1.5 h-1.5 rounded-full bg-[#F8935D] animate-[copilotTypingDot_1.2s_ease-in-out_infinite]" />
-                            <div className="w-1.5 h-1.5 rounded-full bg-[#F8935D] animate-[copilotTypingDot_1.2s_ease-in-out_0.2s_infinite]" />
-                            <div className="w-1.5 h-1.5 rounded-full bg-[#F8935D] animate-[copilotTypingDot_1.2s_ease-in-out_0.4s_infinite]" />
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Phase 2+ — AI response with LinkedIn post previews */}
-                      <div className={`flex items-start gap-1.5 transition-all duration-500 ease-out ${on(2) ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-5"}`}>
-                        <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#F8935D] to-[#F76B54] flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-                        </div>
-                        <div className="max-w-[85%] space-y-2">
-                          <div className="bg-white border border-gray-100 text-gray-600 text-[10px] sm:text-xs px-3 py-2 rounded-2xl rounded-tl-sm shadow-sm">
-                            <p className="leading-relaxed">{landing.aiExpChatResponse}</p>
-                          </div>
-
-                          {/* Two LinkedIn post previews */}
-                          <div className="flex gap-2">
-                            {/* Version A — Storytelling */}
-                            <div className="flex-1 bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                              <div className="px-2.5 py-1.5 border-b border-gray-50 flex items-center justify-between">
-                                <div className="flex items-center gap-1.5">
-                                  <div className="w-3.5 h-3.5 rounded bg-[#F8935D]/15 flex items-center justify-center"><span className="text-[7px] font-bold text-[#F8935D]">A</span></div>
-                                  <span className="text-[8px] font-semibold text-gray-600">Storytelling</span>
-                                </div>
-                                <div className="flex items-center gap-0.5">
-                                  <svg className="w-2.5 h-2.5 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-                                  <span className="text-[8px] font-medium text-gray-400">8.5</span>
-                                </div>
-                              </div>
-                              <div className="px-2.5 py-2">
-                                <div className="flex items-center gap-1.5 mb-1.5">
-                                  <div className="w-4 h-4 rounded-full bg-gray-200" />
-                                  <div className="space-y-0.5">
-                                    <div className="h-1 bg-gray-200 rounded-full w-12" />
-                                    <div className="h-1 bg-gray-100 rounded-full w-8" />
-                                  </div>
-                                </div>
-                                <div className="space-y-[3px]">
-                                  <div className="h-[3px] bg-gray-200 rounded-full w-full" />
-                                  <div className="h-[3px] bg-gray-200 rounded-full w-[92%]" />
-                                  <div className="h-[3px] bg-gray-100 rounded-full w-[78%]" />
-                                  <div className="h-[3px] bg-gray-100 rounded-full w-[85%]" />
-                                  <div className="h-[3px] bg-gray-50 rounded-full w-[60%]" />
-                                </div>
-                                <div className="flex items-center gap-2 mt-2 pt-1.5 border-t border-gray-50">
-                                  <div className="flex items-center gap-0.5"><svg className="w-2.5 h-2.5 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" /></svg><span className="text-[7px] text-gray-400">247</span></div>
-                                  <div className="flex items-center gap-0.5"><svg className="w-2.5 h-2.5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2z" clipRule="evenodd" /></svg><span className="text-[7px] text-gray-400">38</span></div>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Version B — Business (selected) */}
-                            <div className="flex-1 bg-white rounded-xl border-2 border-[#F8935D]/30 shadow-md shadow-[#F8935D]/5 overflow-hidden relative">
-                              <div className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-[#F8935D] flex items-center justify-center"><svg className="w-2 h-2 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg></div>
-                              <div className="px-2.5 py-1.5 border-b border-[#F8935D]/10 flex items-center justify-between">
-                                <div className="flex items-center gap-1.5">
-                                  <div className="w-3.5 h-3.5 rounded bg-[#F76B54]/15 flex items-center justify-center"><span className="text-[7px] font-bold text-[#F76B54]">B</span></div>
-                                  <span className="text-[8px] font-semibold text-gray-600">Business</span>
-                                </div>
-                                <div className="flex items-center gap-0.5">
-                                  <svg className="w-2.5 h-2.5 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-                                  <span className="text-[8px] font-bold text-[#F8935D]">9.2</span>
-                                </div>
-                              </div>
-                              <div className="px-2.5 py-2">
-                                <div className="flex items-center gap-1.5 mb-1.5">
-                                  <div className="w-4 h-4 rounded-full bg-gradient-to-br from-blue-400 to-blue-600" />
-                                  <div className="space-y-0.5">
-                                    <div className="h-1 bg-gray-300 rounded-full w-14" />
-                                    <div className="h-1 bg-gray-200 rounded-full w-9" />
-                                  </div>
-                                </div>
-                                <div className="space-y-[3px]">
-                                  <div className="h-[3px] bg-[#F8935D]/20 rounded-full w-full" />
-                                  <div className="h-[3px] bg-[#F8935D]/20 rounded-full w-[88%]" />
-                                  <div className="h-[3px] bg-[#F8935D]/15 rounded-full w-[95%]" />
-                                  <div className="h-[3px] bg-[#F8935D]/15 rounded-full w-[72%]" />
-                                  <div className="h-[3px] bg-[#F8935D]/10 rounded-full w-[55%]" />
-                                </div>
-                                <div className="flex items-center gap-2 mt-2 pt-1.5 border-t border-[#F8935D]/10">
-                                  <div className="flex items-center gap-0.5"><svg className="w-2.5 h-2.5 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" /></svg><span className="text-[7px] text-gray-400">312</span></div>
-                                  <div className="flex items-center gap-0.5"><svg className="w-2.5 h-2.5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2z" clipRule="evenodd" /></svg><span className="text-[7px] text-gray-400">52</span></div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Phase 3 — Action buttons / Phase 4 — Click Publish */}
-                          <div className={`flex gap-1.5 transition-all duration-500 ease-out ${on(3) ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"}`}>
-                            <div className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg shadow-md transition-all duration-200 ${
-                              on(4)
-                                ? `bg-emerald-500 shadow-emerald-500/20 ${onRange(4, 5) ? "scale-[0.92]" : "scale-100"}`
-                                : "bg-gradient-to-r from-[#F8935D] to-[#F76B54] shadow-[#F8935D]/20"
-                            }`}>
-                              <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                              <span className="text-[8px] font-bold text-white">{on(4) ? "Published!" : "Publish"}</span>
-                            </div>
-                            <div className="flex items-center gap-1 px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg">
-                              <svg className="w-2.5 h-2.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                              <span className="text-[8px] font-semibold text-gray-600">Schedule</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Bottom blur fade — premium depth effect */}
-                      <div className="absolute bottom-0 left-0 right-0 h-8 sm:h-12 bg-gradient-to-t from-[#FAFAF8] via-[#FAFAF8]/70 to-transparent pointer-events-none" />
-                    </div>
-
-                  </div>
-                </div>
-              </div>
-
-              {/* ── Notification overlays — story: engagement → prospect → close ── */}
-
-              {/* Phase 5 — LinkedIn engagement notification (after publish) */}
-              <div
-                className={`absolute top-14 right-0 sm:-right-3 z-20 transition-all duration-500 ease-out ${
-                  on(5) ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-3"
-                }`}
-              >
-                <div className="bg-white/95 backdrop-blur-sm rounded-xl border border-gray-200/80 shadow-xl shadow-gray-400/15 px-2.5 py-2 flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-full bg-[#0A66C2] flex items-center justify-center flex-shrink-0">
-                    <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" /></svg>
-                  </div>
-                  <div>
-                    <p className="text-[9px] sm:text-[10px] font-semibold text-gray-800">{landing.aiExpNotifViews}</p>
-                    <p className="text-[7px] sm:text-[8px] text-gray-400">{landing.aiExpNotifViewsSub}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Phase 6 — Prospect DM notification */}
-              <div
-                className={`absolute top-[6.5rem] right-1 sm:-right-1 z-20 transition-all duration-500 delay-100 ease-out ${
-                  on(6) ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-3"
-                }`}
-              >
-                <div className="bg-white/95 backdrop-blur-sm rounded-xl border border-gray-200/80 shadow-xl shadow-gray-400/15 px-2.5 py-2 flex items-start gap-2 max-w-[165px] sm:max-w-[185px]">
-                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-[8px] font-bold text-white">MD</span>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[9px] sm:text-[10px] font-semibold text-gray-800">Marc D.</p>
-                    <p className="text-[7px] sm:text-[8px] text-gray-500 leading-relaxed">{landing.aiExpNotifDm}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Phase 7 — Success: meeting scheduled */}
-              <div
-                className={`absolute bottom-2 sm:-bottom-4 left-1/2 -translate-x-1/2 z-20 transition-all duration-500 ease-out ${
-                  on(7) ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-3 scale-95"
-                }`}
-              >
-                <div className="bg-emerald-500 text-white rounded-full px-3.5 py-2 flex items-center gap-2 shadow-lg shadow-emerald-500/25 whitespace-nowrap">
-                  <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                  <div>
-                    <p className="text-[9px] sm:text-[10px] font-bold">{landing.aiExpNotifSuccess}</p>
-                    <p className="text-[7px] sm:text-[8px] text-emerald-100">{landing.aiExpNotifSuccessDetail}</p>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-
-          </div>
+          {/* ── RIGHT — Multi-agent simulation mockup ──────────────── */}
+          <CopilotMultiAgentMockup phase={phase} inView={inView} landing={landing} />
 
         </div>
       </div>

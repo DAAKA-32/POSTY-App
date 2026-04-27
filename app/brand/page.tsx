@@ -268,11 +268,10 @@ export default function BrandPage() {
                   </div>
                   <div className="flex-1">
                     <p
-                      className="text-gray-900 dark:text-white"
+                      className="text-gray-900 dark:text-white font-sans"
                       style={{
                         fontSize: item.size,
                         fontWeight: parseInt(item.weight),
-                        fontFamily: "'Inter', sans-serif"
                       }}
                     >
                       {item.sample}

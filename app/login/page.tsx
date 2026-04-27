@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import AuthPanel from "@/components/auth/AuthPanel";
@@ -61,6 +61,74 @@ const slideInRight = {
   },
 };
 
+/**
+ * RotatingHero — desktop-only marketing tagline rotator.
+ *
+ * Cycles through `t.auth.loginHeroRotator` (6 strings) every ROTATION_MS,
+ * fading the previous line out as the next fades in. Wrapper has a fixed
+ * min-height so the layout never reflows between phrases.
+ *
+ * Respects `prefers-reduced-motion`: when set, renders only the first line
+ * statically with no interval.
+ */
+const ROTATION_MS = 4000;
+
+function RotatingHero({ messages }: { messages: readonly string[] }) {
+  const reduced = useReducedMotion();
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    if (reduced || messages.length <= 1) return;
+    const id = setInterval(
+      () => setIndex((i) => (i + 1) % messages.length),
+      ROTATION_MS,
+    );
+    return () => clearInterval(id);
+  }, [messages.length, reduced]);
+
+  // Static fallback — first line, no animation. Explicit width matches the
+  // animated version below so layout stays consistent for reduced-motion users.
+  if (reduced || messages.length === 0) {
+    return (
+      <p className="w-[18rem] sm:w-[22rem] lg:w-[26rem] text-gray-600 text-center text-sm lg:text-base leading-relaxed">
+        {messages[0] ?? ""}
+      </p>
+    );
+  }
+
+  // Explicit fixed width (not `w-full`) — the parent is a column-flex with
+  // `items-center`, which sizes itself to its largest child (the logo, ~128px).
+  // `w-full` would inherit that small width and force per-word wrapping.
+  //
+  // Transition recipe: old line drifts up + softens via blur, new line rises
+  // from below + de-blurs as it fades in. Asymmetric timing (faster exit,
+  // slower enter) lets the new phrase "land" rather than collide.
+  return (
+    <div
+      className="relative w-[18rem] sm:w-[22rem] lg:w-[26rem] min-h-[3.5rem] lg:min-h-[4rem] flex items-center justify-center"
+      aria-live="polite"
+      aria-atomic="true"
+    >
+      <AnimatePresence mode="wait">
+        <motion.p
+          key={index}
+          initial={{ opacity: 0, y: 10, filter: "blur(6px)" }}
+          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          exit={{ opacity: 0, y: -10, filter: "blur(6px)" }}
+          transition={{
+            opacity: { duration: 0.55, ease: smoothEase },
+            y: { duration: 0.7, ease: smoothEase },
+            filter: { duration: 0.5, ease: smoothEase },
+          }}
+          className="absolute inset-0 flex items-center justify-center text-center text-gray-600 text-sm lg:text-base leading-relaxed px-2 will-change-[opacity,transform,filter]"
+        >
+          {messages[index]}
+        </motion.p>
+      </AnimatePresence>
+    </div>
+  );
+}
+
 export default function LoginPage() {
   const { user, userProfile, loading, needsOnboarding } = useAuth();
   const { t } = useLanguage();
@@ -68,15 +136,6 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [redirecting, setRedirecting] = useState(false);
-  const prefersReducedMotion = useReducedMotion();
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768);
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, []);
 
   // Read ?mode=signup from URL to open signup form directly
   const initialMode = searchParams.get("mode") === "signup" ? "signup" : "login";
@@ -142,65 +201,20 @@ export default function LoginPage() {
   // Only render the login page if user is definitely NOT authenticated
   return (
     <div className="min-h-[100dvh] bg-background-warm overflow-x-hidden">
-      {/* Premium AUTOSCROLL Background Effects - Couleurs dynamiques */}
+      {/* Minimalist background — single soft warm blob, no rainbow.
+          Linear/Stripe-style: focus on the form, not the chrome. */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        {/* ORANGE DOMINANT - top left */}
         <motion.div
-          initial={{ opacity: 0.1, scale: 1 }}
-          animate={(prefersReducedMotion || isMobile) ? {} : {
-            opacity: [0.1, 0.18, 0.1],
-            scale: [1, 1.1, 1],
-          }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-0 -left-1/4 w-[60%] h-[50%] bg-gradient-to-br from-orange-500/20 to-amber-500/15 rounded-full blur-[100px]"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, ease: smoothEase }}
+          className="absolute -top-1/4 -right-1/4 w-[55%] h-[55%] bg-gradient-to-br from-warm-orange/[0.07] to-warm-coral/[0.04] rounded-full blur-[120px]"
         />
-        {/* ROSE/PINK accent - top right */}
         <motion.div
-          initial={{ opacity: 0.08, scale: 1 }}
-          animate={(prefersReducedMotion || isMobile) ? {} : {
-            opacity: [0.08, 0.15, 0.08],
-            scale: [1, 1.12, 1],
-          }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-          className="absolute top-1/4 -right-1/4 w-[45%] h-[45%] bg-gradient-to-br from-pink-500/10 to-rose-500/8 rounded-full blur-[120px]"
-        />
-        {/* VIOLET premium - center */}
-        <motion.div
-          initial={{ opacity: 0.06, scale: 1 }}
-          animate={(prefersReducedMotion || isMobile) ? {} : {
-            opacity: [0.06, 0.12, 0.06],
-            scale: [1, 1.08, 1],
-          }}
-          transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[50%] h-[50%] bg-gradient-to-br from-violet-500/8 to-purple-500/6 rounded-full blur-[100px]"
-        />
-        {/* VERT success - bottom left */}
-        <motion.div
-          initial={{ opacity: 0.07, scale: 1 }}
-          animate={(prefersReducedMotion || isMobile) ? {} : {
-            opacity: [0.07, 0.13, 0.07],
-            scale: [1, 1.1, 1],
-          }}
-          transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
-          className="absolute bottom-0 -left-1/4 w-[40%] h-[40%] bg-gradient-to-br from-emerald-500/10 to-green-500/8 rounded-full blur-[90px]"
-        />
-        {/* BLEU confiance - bottom right */}
-        <motion.div
-          initial={{ opacity: 0.08, scale: 1 }}
-          animate={(prefersReducedMotion || isMobile) ? {} : {
-            opacity: [0.08, 0.14, 0.08],
-            scale: [1, 1.09, 1],
-          }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-          className="absolute bottom-0 -right-1/4 w-[45%] h-[45%] bg-gradient-to-br from-blue-500/9 to-cyan-500/7 rounded-full blur-[110px]"
-        />
-        {/* Grid pattern overlay */}
-        <div
-          className="absolute inset-0 opacity-[0.02]"
-          style={{
-            backgroundImage: `linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)`,
-            backgroundSize: '60px 60px',
-          }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.15, ease: smoothEase }}
+          className="absolute -bottom-1/4 -left-1/4 w-[45%] h-[45%] bg-gradient-to-tr from-warm-orange/[0.05] to-transparent rounded-full blur-[100px]"
         />
       </div>
 
@@ -304,13 +318,13 @@ export default function LoginPage() {
               />
             </motion.div>
 
-            {/* Tagline */}
-            <motion.p
-              variants={itemVariants}
-              className="text-gray-600 text-center text-sm lg:text-base max-w-xs"
-            >
-              {t.landing.heroSubtitle}
-            </motion.p>
+            {/* Rotating marketing taglines — fades through 6 messages.
+                No `w-full` wrapper: the parent flex-col is auto-width (sized
+                to its largest child); a percent-based width would inherit
+                that and squeeze the text into a tall column. */}
+            <motion.div variants={itemVariants}>
+              <RotatingHero messages={t.auth.loginHeroRotator ?? []} />
+            </motion.div>
 
           </motion.div>
 

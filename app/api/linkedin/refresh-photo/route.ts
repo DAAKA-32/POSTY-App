@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { FieldValue } from "firebase-admin/firestore";
 import { adminDb, isAdminInitialized } from "@/lib/db/firebase-admin";
 
 /**
@@ -49,12 +50,22 @@ export async function POST(request: NextRequest) {
 
     const profileData = await profileResponse.json();
     const newPhotoUrl = profileData.picture || null;
+    const newProfileName: string | null =
+      typeof profileData.name === "string" && profileData.name.length > 0
+        ? profileData.name
+        : null;
 
-    // Update photo in both collections
+    // Update photo in both collections. Also stamp photoUpdatedAt so other
+    // devices know the stored URL is fresh and skip re-refreshing on load.
     const updates: Promise<FirebaseFirestore.WriteResult>[] = [];
 
     if (newPhotoUrl) {
-      updates.push(connectionRef.update({ profilePicture: newPhotoUrl }));
+      const connectionPatch: Record<string, unknown> = {
+        profilePicture: newPhotoUrl,
+        photoUpdatedAt: FieldValue.serverTimestamp(),
+      };
+      if (newProfileName) connectionPatch.profileName = newProfileName;
+      updates.push(connectionRef.update(connectionPatch));
       updates.push(
         adminDb.collection("users").doc(userId).update({ photoURL: newPhotoUrl })
       );
@@ -62,7 +73,7 @@ export async function POST(request: NextRequest) {
 
     await Promise.all(updates);
 
-    return NextResponse.json({ photoUrl: newPhotoUrl });
+    return NextResponse.json({ photoUrl: newPhotoUrl, profileName: newProfileName });
   } catch (error) {
     console.error("LinkedIn photo refresh error:", error);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });

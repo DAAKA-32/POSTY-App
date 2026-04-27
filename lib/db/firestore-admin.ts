@@ -745,143 +745,6 @@ export async function saveLinkedInConnectionAdmin(
   });
 }
 
-// ============== TWITTER ADMIN FUNCTIONS ==============
-
-// Twitter Connection Data type
-export interface TwitterConnectionData {
-  userId: string;
-  twitterId: string;
-  username: string;
-  accessToken: string;
-  refreshToken?: string;
-  expiresAt: Timestamp;
-  profileName: string;
-  profilePicture?: string;
-  connectedAt: Timestamp;
-  lastUsedAt?: Timestamp;
-}
-
-/**
- * Get Twitter connection for a user (server-side)
- */
-export async function getTwitterConnectionAdmin(
-  userId: string
-): Promise<TwitterConnectionData | null> {
-  if (!adminDb) {
-    throw new Error("Firebase Admin not initialized");
-  }
-
-  const connectionRef = adminDb.collection("twitterConnections").doc(userId);
-  const connectionSnap = await connectionRef.get();
-
-  if (connectionSnap.exists) {
-    return connectionSnap.data() as TwitterConnectionData;
-  }
-  return null;
-}
-
-/**
- * Save Twitter connection (server-side)
- * Used by the OAuth callback route
- */
-export async function saveTwitterConnectionAdmin(
-  userId: string,
-  data: {
-    twitterId: string;
-    username: string;
-    accessToken: string;
-    refreshToken?: string;
-    expiresAt: Date;
-    profileName: string;
-    profilePicture?: string;
-  }
-): Promise<void> {
-  if (!adminDb) {
-    throw new Error("Firebase Admin not initialized");
-  }
-
-  const connectionRef = adminDb.collection("twitterConnections").doc(userId);
-  await connectionRef.set({
-    userId,
-    twitterId: data.twitterId,
-    username: data.username,
-    accessToken: data.accessToken,
-    refreshToken: data.refreshToken || null,
-    expiresAt: Timestamp.fromDate(data.expiresAt),
-    profileName: data.profileName,
-    profilePicture: data.profilePicture || null,
-    connectedAt: FieldValue.serverTimestamp(),
-    lastUsedAt: null,
-  });
-}
-
-/**
- * Update Twitter tokens after refresh (server-side)
- */
-export async function updateTwitterTokensAdmin(
-  userId: string,
-  accessToken: string,
-  refreshToken: string | undefined,
-  expiresAt: Date
-): Promise<void> {
-  if (!adminDb) {
-    throw new Error("Firebase Admin not initialized");
-  }
-
-  const connectionRef = adminDb.collection("twitterConnections").doc(userId);
-  await connectionRef.update({
-    accessToken,
-    refreshToken: refreshToken || null,
-    expiresAt: Timestamp.fromDate(expiresAt),
-  });
-}
-
-/**
- * Update Twitter last used timestamp (server-side)
- */
-export async function updateTwitterLastUsedAdmin(userId: string): Promise<void> {
-  if (!adminDb) {
-    throw new Error("Firebase Admin not initialized");
-  }
-
-  const connectionRef = adminDb.collection("twitterConnections").doc(userId);
-  await connectionRef.update({
-    lastUsedAt: FieldValue.serverTimestamp(),
-  });
-}
-
-/**
- * Save Twitter post record (server-side)
- */
-export async function saveTwitterPostAdmin(
-  userId: string,
-  data: {
-    twitterId: string;
-    tweetId: string;
-    content: string;
-    tweetUrl?: string;
-    success: boolean;
-    error?: string;
-  }
-): Promise<string> {
-  if (!adminDb) {
-    throw new Error("Firebase Admin not initialized");
-  }
-
-  const postsRef = adminDb.collection("twitterPosts");
-  const docRef = await postsRef.add({
-    userId,
-    twitterId: data.twitterId,
-    tweetId: data.tweetId,
-    content: data.content,
-    tweetUrl: data.tweetUrl || null,
-    success: data.success,
-    error: data.error || null,
-    publishedAt: FieldValue.serverTimestamp(),
-  });
-  return docRef.id;
-}
-
 // ============== FACEBOOK ADMIN FUNCTIONS ==============
 
 // Facebook Connection Data type
@@ -1154,5 +1017,315 @@ export async function saveUserMemoryAdmin(
     "memory.items": items,
     "memory.lastUpdated": FieldValue.serverTimestamp(),
   });
+}
+
+// ============== BLUESKY ADMIN ==============
+
+export interface BlueskyConnectionDataAdmin {
+  userId: string;
+  handle: string;
+  did: string;
+  service: string;
+  accessJwt: string;
+  refreshJwt: string;
+  profileName?: string;
+  profilePicture?: string;
+  connectedAt: Timestamp;
+  lastUsedAt?: Timestamp;
+  sessionRefreshedAt?: Timestamp;
+}
+
+export async function getBlueskyConnectionAdmin(
+  userId: string
+): Promise<BlueskyConnectionDataAdmin | null> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
+  const ref = adminDb.collection("blueskyConnections").doc(userId);
+  const snap = await ref.get();
+  if (snap.exists) return snap.data() as BlueskyConnectionDataAdmin;
+  return null;
+}
+
+export async function saveBlueskyConnectionAdmin(
+  userId: string,
+  data: {
+    handle: string;
+    did: string;
+    service: string;
+    accessJwt: string;
+    refreshJwt: string;
+    profileName?: string;
+    profilePicture?: string;
+  }
+): Promise<void> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
+  const ref = adminDb.collection("blueskyConnections").doc(userId);
+  await ref.set({
+    userId,
+    handle: data.handle,
+    did: data.did,
+    service: data.service,
+    accessJwt: data.accessJwt,
+    refreshJwt: data.refreshJwt,
+    profileName: data.profileName || null,
+    profilePicture: data.profilePicture || null,
+    connectedAt: FieldValue.serverTimestamp(),
+    lastUsedAt: null,
+    sessionRefreshedAt: FieldValue.serverTimestamp(),
+  });
+}
+
+export async function updateBlueskySessionAdmin(
+  userId: string,
+  data: { accessJwt: string; refreshJwt: string; handle?: string; did?: string }
+): Promise<void> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
+  const ref = adminDb.collection("blueskyConnections").doc(userId);
+  const patch: Record<string, unknown> = {
+    accessJwt: data.accessJwt,
+    refreshJwt: data.refreshJwt,
+    sessionRefreshedAt: FieldValue.serverTimestamp(),
+  };
+  if (data.handle) patch.handle = data.handle;
+  if (data.did) patch.did = data.did;
+  await ref.update(patch);
+}
+
+export async function updateBlueskyLastUsedAdmin(userId: string): Promise<void> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
+  const ref = adminDb.collection("blueskyConnections").doc(userId);
+  await ref.update({ lastUsedAt: FieldValue.serverTimestamp() });
+}
+
+export async function saveBlueskyPostAdmin(
+  userId: string,
+  data: {
+    did: string;
+    uri: string;
+    cid: string;
+    content: string;
+    postUrl?: string;
+    success: boolean;
+    error?: string;
+  }
+): Promise<string> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
+  const ref = await adminDb.collection("blueskyPosts").add({
+    userId,
+    did: data.did,
+    uri: data.uri,
+    cid: data.cid,
+    content: data.content,
+    postUrl: data.postUrl || null,
+    publishedAt: FieldValue.serverTimestamp(),
+    success: data.success,
+    error: data.error || null,
+  });
+  return ref.id;
+}
+
+// ============== MASTODON ADMIN ==============
+
+export interface MastodonConnectionDataAdmin {
+  userId: string;
+  instance: string;
+  accountId: string;
+  username: string;
+  acct: string;
+  accessToken: string;
+  profileName?: string;
+  profilePicture?: string;
+  connectedAt: Timestamp;
+  lastUsedAt?: Timestamp;
+}
+
+export async function getMastodonConnectionAdmin(
+  userId: string
+): Promise<MastodonConnectionDataAdmin | null> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
+  const ref = adminDb.collection("mastodonConnections").doc(userId);
+  const snap = await ref.get();
+  if (snap.exists) return snap.data() as MastodonConnectionDataAdmin;
+  return null;
+}
+
+export async function saveMastodonConnectionAdmin(
+  userId: string,
+  data: {
+    instance: string;
+    accountId: string;
+    username: string;
+    acct: string;
+    accessToken: string;
+    profileName?: string;
+    profilePicture?: string;
+  }
+): Promise<void> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
+  const ref = adminDb.collection("mastodonConnections").doc(userId);
+  await ref.set({
+    userId,
+    instance: data.instance,
+    accountId: data.accountId,
+    username: data.username,
+    acct: data.acct,
+    accessToken: data.accessToken,
+    profileName: data.profileName || null,
+    profilePicture: data.profilePicture || null,
+    connectedAt: FieldValue.serverTimestamp(),
+    lastUsedAt: null,
+  });
+}
+
+export async function updateMastodonLastUsedAdmin(userId: string): Promise<void> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
+  const ref = adminDb.collection("mastodonConnections").doc(userId);
+  await ref.update({ lastUsedAt: FieldValue.serverTimestamp() });
+}
+
+export async function saveMastodonPostAdmin(
+  userId: string,
+  data: {
+    instance: string;
+    accountId: string;
+    statusId: string;
+    content: string;
+    postUrl?: string;
+    success: boolean;
+    error?: string;
+  }
+): Promise<string> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
+  const ref = await adminDb.collection("mastodonPosts").add({
+    userId,
+    instance: data.instance,
+    accountId: data.accountId,
+    statusId: data.statusId,
+    content: data.content,
+    postUrl: data.postUrl || null,
+    publishedAt: FieldValue.serverTimestamp(),
+    success: data.success,
+    error: data.error || null,
+  });
+  return ref.id;
+}
+
+// Cached OAuth app credentials per Mastodon instance. Posty registers itself
+// once per instance via POST /api/v1/apps, then re-uses the returned
+// client_id/client_secret for every user on that instance.
+export interface MastodonAppCredentialsAdmin {
+  instance: string;
+  clientId: string;
+  clientSecret: string;
+  redirectUri: string;
+  registeredAt: Timestamp;
+}
+
+export async function getMastodonAppCredentialsAdmin(
+  docId: string
+): Promise<MastodonAppCredentialsAdmin | null> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
+  const ref = adminDb.collection("mastodonApps").doc(docId);
+  const snap = await ref.get();
+  if (snap.exists) return snap.data() as MastodonAppCredentialsAdmin;
+  return null;
+}
+
+export async function saveMastodonAppCredentialsAdmin(
+  docId: string,
+  data: { instance: string; clientId: string; clientSecret: string; redirectUri: string }
+): Promise<void> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
+  const ref = adminDb.collection("mastodonApps").doc(docId);
+  await ref.set({
+    instance: data.instance,
+    clientId: data.clientId,
+    clientSecret: data.clientSecret,
+    redirectUri: data.redirectUri,
+    registeredAt: FieldValue.serverTimestamp(),
+  });
+}
+
+// ============== DISCORD ADMIN ==============
+
+export interface DiscordConnectionDataAdmin {
+  userId: string;
+  webhookUrl: string;
+  webhookId: string;
+  guildName?: string;
+  channelId?: string;
+  channelName?: string;
+  webhookName?: string;
+  webhookAvatar?: string;
+  connectedAt: Timestamp;
+  lastUsedAt?: Timestamp;
+}
+
+export async function getDiscordConnectionAdmin(
+  userId: string
+): Promise<DiscordConnectionDataAdmin | null> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
+  const ref = adminDb.collection("discordConnections").doc(userId);
+  const snap = await ref.get();
+  if (snap.exists) return snap.data() as DiscordConnectionDataAdmin;
+  return null;
+}
+
+export async function saveDiscordConnectionAdmin(
+  userId: string,
+  data: {
+    webhookUrl: string;
+    webhookId: string;
+    guildName?: string;
+    channelId?: string;
+    channelName?: string;
+    webhookName?: string;
+    webhookAvatar?: string;
+  }
+): Promise<void> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
+  const ref = adminDb.collection("discordConnections").doc(userId);
+  await ref.set({
+    userId,
+    webhookUrl: data.webhookUrl,
+    webhookId: data.webhookId,
+    guildName: data.guildName || null,
+    channelId: data.channelId || null,
+    channelName: data.channelName || null,
+    webhookName: data.webhookName || null,
+    webhookAvatar: data.webhookAvatar || null,
+    connectedAt: FieldValue.serverTimestamp(),
+    lastUsedAt: null,
+  });
+}
+
+export async function updateDiscordLastUsedAdmin(userId: string): Promise<void> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
+  const ref = adminDb.collection("discordConnections").doc(userId);
+  await ref.update({ lastUsedAt: FieldValue.serverTimestamp() });
+}
+
+export async function saveDiscordPostAdmin(
+  userId: string,
+  data: {
+    webhookId: string;
+    messageId?: string;
+    content: string;
+    postUrl?: string;
+    success: boolean;
+    error?: string;
+  }
+): Promise<string> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
+  const ref = await adminDb.collection("discordPosts").add({
+    userId,
+    webhookId: data.webhookId,
+    messageId: data.messageId || null,
+    content: data.content,
+    postUrl: data.postUrl || null,
+    publishedAt: FieldValue.serverTimestamp(),
+    success: data.success,
+    error: data.error || null,
+  });
+  return ref.id;
 }
 

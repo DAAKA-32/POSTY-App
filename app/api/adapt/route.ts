@@ -18,7 +18,7 @@ import { verifyAuth } from "@/lib/auth";
  * Request body:
  * - userId: string - The authenticated user's ID
  * - postContent: string - The LinkedIn post content to adapt
- * - platform: "threads" | "twitter" | "facebook" - Target platform
+ * - platform: "threads" | "facebook" | "bluesky" | "mastodon" - Target platform
  * - language?: "fr" | "en" - Language for adaptation (default: "fr")
  *
  * Response:
@@ -50,11 +50,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const validPlatforms: AdaptationPlatform[] = ["threads", "twitter", "facebook"];
+    const validPlatforms: AdaptationPlatform[] = ["threads", "facebook", "bluesky", "mastodon"];
     if (!platform || !validPlatforms.includes(platform)) {
       return new Response(
         JSON.stringify({
-          error: "Invalid platform. Must be: threads, twitter, or facebook",
+          error: "Invalid platform. Must be: threads, facebook, bluesky, or mastodon",
         }),
         { status: 400, headers: { "Content-Type": "application/json" } }
       );

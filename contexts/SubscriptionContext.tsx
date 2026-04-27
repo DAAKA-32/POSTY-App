@@ -174,161 +174,144 @@ const SubscriptionContext = createContext<SubscriptionContextValue | null>(null)
 // ============================================
 
 export function SubscriptionProvider({ children }: { children: React.ReactNode }) {
-  const { user, userProfile, loading: authLoading } = useAuth();
-  const [state, setState] = useState<SubscriptionState>(defaultState);
+  const { user, userProfile, loading: authLoading, refreshUserProfile } = useAuth();
 
-  // ============================================
-  // LOAD SUBSCRIPTION FROM FIRESTORE
-  // ============================================
-
-  const loadSubscription = useCallback(async () => {
-    if (!user?.uid) {
-      setState(defaultState);
-      return;
-    }
-
-    try {
-      setState(prev => ({ ...prev, loading: true, error: null }));
-
-      const userDoc = await getDoc(doc(db, "users", user.uid));
-      const userData = userDoc.data();
-
-      if (!userData) {
-        setState({ ...defaultState, loading: false });
-        return;
-      }
-
-      // Parse subscription data
-      const subscriptionData = userData.subscription || {};
-      const usageData = userData.usage || {};
-      const quotaData = userData.quota || {};
-
-      // Test mode is fully disabled — ignore any leftover testMode data
-      const isTestMode = false;
-      const testPlan: PlanType | null = null;
-
-      // Normalize plan name (handles legacy names, casing, unknown values)
-      const rawPlan = subscriptionData.plan as string | undefined;
-      let stripePlan: PlanType | null = null;
-      if (rawPlan) {
-        const lower = rawPlan.toLowerCase().trim();
-        if (lower === "starter") stripePlan = "pro";
-        else if (lower === "free" || lower === "pro" || lower === "max") stripePlan = lower as PlanType;
-        // unknown values → null
-      }
-
-      // Founder override: founders get Max plan if they don't have an active Stripe subscription
-      const founderPlan = getFounderOverridePlan(user?.email);
-      const effectivePlan = stripePlan || founderPlan;
-      const isFounderOverride = !stripePlan && !!founderPlan;
-
-      // Build subscription object
-      const subscription: UserSubscription = {
-        plan: effectivePlan,
-        planSource: isFounderOverride ? "test" : "stripe",
-        status: isFounderOverride ? "active" : (subscriptionData.status || "inactive"),
-        currentPeriodStart: subscriptionData.subscribedAt?.toDate(),
-        currentPeriodEnd: subscriptionData.expiresAt?.toDate(),
-      };
-
-      // Parse usage data with quota reset logic
-      const weekStartDate = usageData.weekStartDate?.toDate();
-      const monthStartDate = usageData.monthStartDate?.toDate();
-
-      let conversationsThisWeek = usageData.conversationsThisWeek || 0;
-      let conversationsThisMonth = usageData.conversationsThisMonth || 0;
-
-      // Reset weekly quota if needed
-      if (shouldResetWeeklyQuota(weekStartDate)) {
-        conversationsThisWeek = 0;
-      }
-
-      // Reset monthly quota if needed
-      if (shouldResetMonthlyQuota(monthStartDate)) {
-        conversationsThisMonth = 0;
-      }
-
-      // Daily quota: check if lastMessageDate is today (UTC)
-      const lastMessageDate = quotaData.lastMessageDate?.toDate?.();
-      let messagesUsedToday = 0;
-      if (lastMessageDate) {
-        const now = new Date();
-        const isSameDay =
-          lastMessageDate.getUTCFullYear() === now.getUTCFullYear() &&
-          lastMessageDate.getUTCMonth() === now.getUTCMonth() &&
-          lastMessageDate.getUTCDate() === now.getUTCDate();
-        if (isSameDay) {
-          messagesUsedToday = quotaData.dailyMessageCount || 0;
-        }
-      }
-
-      const usage: UserUsage = {
-        messagesUsedToday,
-        lastMessageDate,
-        conversationsThisWeek,
-        conversationsThisMonth,
-        lastConversationDate: usageData.lastConversationDate?.toDate(),
-        weekStartDate,
-        monthStartDate,
-      };
-
-      // Trial state
-      const isTrialing = subscriptionData.status === "trialing";
-      const trialEndsAt = subscriptionData.trialEndsAt?.toDate() || null;
-      const trialDaysRemaining = getTrialDaysRemaining(trialEndsAt);
-      const trialPlan = subscriptionData.trialPlan as PlanType || null;
-      const trialEligibility = checkTrialEligibility(userData);
-
-      // Guarantee state
-      const firstPaymentDate = subscriptionData.firstPaymentDate?.toDate() || null;
-      const guaranteeResult = checkGuaranteeEligibility(firstPaymentDate);
-      const refundRequested = subscriptionData.refundRequested === true;
-
-      setState({
-        subscription,
-        usage,
-        planConfig: getPlanConfig(effectivePlan ?? "free"),
-        planLimits: getPlanLimits(effectivePlan ?? "free"),
-        isTestMode,
-        testPlan,
-        // Trial state
-        isTrialing,
-        trialDaysRemaining,
-        trialPlan: isTrialing ? trialPlan : null,
-        trialEndsAt,
-        trialEligible: trialEligibility.eligible,
-        // Guarantee state
-        guaranteeEligible: guaranteeResult.eligible && !refundRequested,
-        guaranteeDaysRemaining: guaranteeResult.daysRemaining,
-        refundRequested,
-        // Migration: user without a paid plan who hasn't used trial yet
-        needsMigration: stripePlan === null && trialEligibility.eligible,
-        loading: false,
-        error: null,
-      });
-
-      // Set cookies for middleware to use for server-side protection
-      // These cookies allow the middleware to check subscription status before rendering pages
-      if (typeof document !== "undefined") {
-        // Set subscription status cookie (expires in 1 hour - will refresh on next load)
-        document.cookie = `subscription_status=${subscription.status}; path=/; max-age=3600; SameSite=Strict`;
-        document.cookie = `subscription_plan=${subscription.plan}; path=/; max-age=3600; SameSite=Strict`;
-      }
-    } catch (error) {
-      console.error("Error loading subscription:", error);
-      setState(prev => ({
-        ...prev,
-        loading: false,
-        error: "Erreur lors du chargement de l'abonnement",
-      }));
-    }
-  }, [user?.uid]);
-
-  // Load on mount and when user changes — skip while auth is still resolving
+  /* Optimistic overlay for in-flight conversation increments. Cleared when
+   * `userProfile` changes (i.e. the next refresh has applied the real value). */
+  const [optimisticUsage, setOptimisticUsage] = useState<Partial<UserUsage> | null>(null);
   useEffect(() => {
-    if (authLoading) return;
-    loadSubscription();
-  }, [loadSubscription, authLoading]);
+    setOptimisticUsage(null);
+  }, [userProfile]);
+
+  // ============================================
+  // DERIVE STATE SYNCHRONOUSLY FROM userProfile
+  // ============================================
+  // Previously this context did its own `getDoc(users/{uid})` after auth
+  // completed, which produced a visible "Vérification de votre abonnement…"
+  // loader for every authenticated render. The same data already lives in
+  // `userProfile`, so we derive everything synchronously and `loading` simply
+  // tracks `authLoading`. Result: zero post-login spinner, zero double-fetch.
+
+  const state = useMemo<SubscriptionState>(() => {
+    if (!user?.uid || !userProfile) {
+      return { ...defaultState, loading: authLoading };
+    }
+
+    const subscriptionData = userProfile.subscription;
+    const usageData = userProfile.usage;
+    const quotaData = userProfile.quota;
+
+    // Test mode is fully disabled — ignore any leftover testMode data
+    const isTestMode = false;
+    const testPlan: PlanType | null = null;
+
+    // Normalize plan name (handles legacy names, casing, unknown values)
+    const rawPlan = subscriptionData?.plan as string | undefined;
+    let stripePlan: PlanType | null = null;
+    if (rawPlan) {
+      const lower = rawPlan.toLowerCase().trim();
+      if (lower === "starter") stripePlan = "pro";
+      else if (lower === "free" || lower === "pro" || lower === "max") stripePlan = lower as PlanType;
+      // unknown values → null
+    }
+
+    // Founder override ALWAYS wins (internal test accounts get full Max access).
+    const founderPlan = getFounderOverridePlan(user.email);
+    const effectivePlan = founderPlan || stripePlan;
+    const isFounderOverride = !!founderPlan;
+
+    const subscription: UserSubscription = {
+      plan: effectivePlan,
+      planSource: isFounderOverride ? "test" : "stripe",
+      status: isFounderOverride
+        ? "active"
+        : ((subscriptionData?.status as UserSubscription["status"]) || "inactive"),
+      currentPeriodStart: subscriptionData?.subscribedAt?.toDate?.(),
+      currentPeriodEnd: subscriptionData?.expiresAt?.toDate?.(),
+    };
+
+    // Parse usage with quota-reset logic
+    const weekStartDate = usageData?.weekStartDate?.toDate?.();
+    const monthStartDate = usageData?.monthStartDate?.toDate?.();
+
+    let conversationsThisWeek = usageData?.conversationsThisWeek || 0;
+    let conversationsThisMonth = usageData?.conversationsThisMonth || 0;
+    if (shouldResetWeeklyQuota(weekStartDate)) conversationsThisWeek = 0;
+    if (shouldResetMonthlyQuota(monthStartDate)) conversationsThisMonth = 0;
+
+    // Daily quota: check if lastMessageDate is today (UTC)
+    const lastMessageDate = quotaData?.lastMessageDate?.toDate?.();
+    let messagesUsedToday = 0;
+    if (lastMessageDate) {
+      const now = new Date();
+      if (
+        lastMessageDate.getUTCFullYear() === now.getUTCFullYear() &&
+        lastMessageDate.getUTCMonth() === now.getUTCMonth() &&
+        lastMessageDate.getUTCDate() === now.getUTCDate()
+      ) {
+        messagesUsedToday = quotaData?.dailyMessageCount || 0;
+      }
+    }
+
+    const usage: UserUsage = {
+      messagesUsedToday,
+      lastMessageDate,
+      conversationsThisWeek,
+      conversationsThisMonth,
+      lastConversationDate: usageData?.lastConversationDate?.toDate?.(),
+      weekStartDate,
+      monthStartDate,
+      ...optimisticUsage,
+    };
+
+    // Trial state
+    const isTrialing = subscriptionData?.status === "trialing";
+    const trialEndsAt = subscriptionData?.trialEndsAt?.toDate?.() || null;
+    const trialDaysRemaining = getTrialDaysRemaining(trialEndsAt);
+    const trialPlan = (subscriptionData?.trialPlan as PlanType) || null;
+    const trialEligibility = checkTrialEligibility(userProfile as unknown as Record<string, unknown>);
+
+    // Guarantee state
+    const firstPaymentDate = subscriptionData?.firstPaymentDate?.toDate?.() || null;
+    const guaranteeResult = checkGuaranteeEligibility(firstPaymentDate);
+    const refundRequested = subscriptionData?.refundRequested === true;
+
+    return {
+      subscription,
+      usage,
+      planConfig: getPlanConfig(effectivePlan ?? "free"),
+      planLimits: getPlanLimits(effectivePlan ?? "free"),
+      isTestMode,
+      testPlan,
+      isTrialing,
+      trialDaysRemaining,
+      trialPlan: isTrialing ? trialPlan : null,
+      trialEndsAt,
+      trialEligible: trialEligibility.eligible,
+      guaranteeEligible: guaranteeResult.eligible && !refundRequested,
+      guaranteeDaysRemaining: guaranteeResult.daysRemaining,
+      refundRequested,
+      needsMigration: stripePlan === null && trialEligibility.eligible,
+      loading: false,
+      error: null,
+    };
+  }, [user?.uid, user?.email, userProfile, authLoading, optimisticUsage]);
+
+  /* Cookies for the server-side middleware. Stays in a separate effect so it
+   * runs whenever the derived subscription changes (login, refresh, etc.). */
+  useEffect(() => {
+    if (state.loading) return;
+    if (typeof document === "undefined") return;
+    document.cookie = `subscription_status=${state.subscription.status}; path=/; max-age=3600; SameSite=Strict`;
+    document.cookie = `subscription_plan=${state.subscription.plan}; path=/; max-age=3600; SameSite=Strict`;
+  }, [state.loading, state.subscription.status, state.subscription.plan]);
+
+  /* Public refresh entry point — pulls a fresh userProfile from Firestore via
+   * AuthContext (single source of truth). Used by Stripe webhooks, refund flow,
+   * etc. No UI loading state is exposed; refresh happens in the background. */
+  const loadSubscription = useCallback(async () => {
+    await refreshUserProfile();
+  }, [refreshUserProfile]);
 
   // ============================================
   // USAGE TRACKING
@@ -342,29 +325,34 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       const weekStart = state.usage.weekStartDate || getWeekStartDate();
       const monthStart = state.usage.monthStartDate || getMonthStartDate();
 
-      // Calculate new counts
       let newWeeklyCount = state.usage.conversationsThisWeek;
       let newMonthlyCount = state.usage.conversationsThisMonth;
       let newWeekStart = weekStart;
       let newMonthStart = monthStart;
 
-      // Check if we need to reset weekly
       if (shouldResetWeeklyQuota(weekStart)) {
         newWeeklyCount = 0;
         newWeekStart = getWeekStartDate();
       }
-
-      // Check if we need to reset monthly
       if (shouldResetMonthlyQuota(monthStart)) {
         newMonthlyCount = 0;
         newMonthStart = getMonthStartDate();
       }
 
-      // Increment counts
       newWeeklyCount += 1;
       newMonthlyCount += 1;
 
-      // Update Firestore
+      /* Optimistic UI update — applied instantly so the UI reflects the new
+       * count before the Firestore round-trip. Cleared automatically when the
+       * next userProfile refresh arrives (effect above). */
+      setOptimisticUsage({
+        conversationsThisWeek: newWeeklyCount,
+        conversationsThisMonth: newMonthlyCount,
+        lastConversationDate: now,
+        weekStartDate: newWeekStart,
+        monthStartDate: newMonthStart,
+      });
+
       await updateDoc(doc(db, "users", user.uid), {
         "usage.conversationsThisWeek": newWeeklyCount,
         "usage.conversationsThisMonth": newMonthlyCount,
@@ -373,22 +361,13 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
         "usage.monthStartDate": Timestamp.fromDate(newMonthStart),
       });
 
-      // Update local state
-      setState(prev => ({
-        ...prev,
-        usage: {
-          ...prev.usage,
-          conversationsThisWeek: newWeeklyCount,
-          conversationsThisMonth: newMonthlyCount,
-          lastConversationDate: now,
-          weekStartDate: newWeekStart,
-          monthStartDate: newMonthStart,
-        },
-      }));
+      /* Refresh userProfile so the optimistic overlay is replaced with the
+       * authoritative server value on next render. */
+      await refreshUserProfile();
     } catch (error) {
       console.error("Error incrementing conversation count:", error);
     }
-  }, [user?.uid, state.usage]);
+  }, [user?.uid, state.usage, refreshUserProfile]);
 
   const refreshUsage = useCallback(async () => {
     await loadSubscription();

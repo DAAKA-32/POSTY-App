@@ -536,14 +536,30 @@ export const ko = {
     testimonialsPrev: "이전",
     testimonialsNext: "다음",
     testimonialsSwipe: "스와이프하여 탐색",
-    testimonial1Role: "창업자",
-    testimonial1Company: "B2B 에이전시",
-    testimonial1Text: "Posty 이전에는 무슨 말을 해야 할지 모른 채 주 1회 게시했어요. 이제 매일 게시하고 LinkedIn이 1위 고객 확보 채널이 됐어요. 2개월 만에 3건의 계약을 체결했어요.",
-    testimonial2Role: "마케팅 디렉터",
-    testimonial2Company: "B2B SaaS",
-    testimonial2Text: "우리 팀은 콘텐츠에 주당 5시간을 절약해요. 그 시간을 전략과 영업에 재투자합니다. 게시물이 더 일관되고, 30일 만에 참여도가 3배 늘었어요.",
+    testimonial1Role: "Trustpilot 검증된 리뷰",
+    testimonial1Company: "",
+    testimonial1Text: "이 사이트와 강력한 AI는 제가 게시하고 콘텐츠를 최적화하는 방식을 정말로 바꿨어요. 네트워크와 포맷에 맞춰 잠재 고객의 페르소나를 고려하고, 저 대신 게시까지 해줘요. 정말 가치 있고 추천합니다.",
+    testimonial2Role: "학생",
+    testimonial2Company: "Trustpilot 리뷰",
+    testimonial2Text: "Posty는 정말로 일상적인 도움이 됩니다. 대학생으로서 지금은 Pro 구독을 사용 중이고 곧 상위 플랜으로 업그레이드할 예정입니다. 인턴십과 일학습 병행 검색에 진정한 시간 절약입니다.",
     testimonial3Role: "아트 마켓 업계",
     testimonial3Text: "Posty는 매우 높은 품질의 LinkedIn 게시물을 만들어 콘텐츠 제작을 정말 간편하게 해줘요. 우리의 니즈를 이해하고 관련성 있는 콘텐츠 작성을 훨씬 쉽게 만들어줍니다.",
+
+    // Cerise Cottier — Featured client spotlight
+    ceriseSpotlightBadge: "검증된 고객 사례",
+    ceriseSpotlightTitle1: "Cerise처럼,",
+    ceriseSpotlightTitle2: "영업 없이 전환하세요.",
+    ceriseSpotlightSubtitle: "20개 이상의 기업이 그녀에게 먼저 연락했어요 — 아무런 영업 없이.",
+    ceriseSpotlightStatNumber: "20+",
+    ceriseSpotlightStatLabel: "개 기업이 그녀에게 연락",
+    ceriseSpotlightStatSubLabel: "직접, 영업 없이",
+    ceriseSpotlightQuote: "Posty로 LinkedIn에 게시하기만 했어요. 알고리즘이 제 게시물을 밀어줬고, 조회수가 폭발했고, 20개 이상의 기업이 직접 연락해 왔어요. 영업은 전혀 안 했어요 — 들어오는 기회뿐이에요.",
+    ceriseSpotlightName: "Cerise Cottier",
+    ceriseSpotlightRole: "아트 마켓 업계",
+    ceriseSpotlightImageAlt: "Cerise Cottier, Posty 고객",
+    ceriseSpotlightProof1: "LinkedIn 알고리즘이 밀어준 게시물",
+    ceriseSpotlightProof2: "아웃바운드 영업 제로",
+    ceriseSpotlightProof3: "20+ 인바운드 기회 수신",
 
     // Audience section
     audienceTitle1: "당신을 위해 만들어졌어요",
@@ -715,6 +731,17 @@ export const ko = {
     pricingSavingsLabel: "2개월 무료",
     pricingTrialIncluded: "무료 체험 포함 · 약정 없음",
 
+    // Business offer (B2B card under the pricing grid — expandable)
+    businessTitle: "비즈니스 플랜",
+    businessSubtitle: "회사에서 Posty를 대규모로 사용하고 싶으신가요?",
+    businessCTA: "통화 예약",
+    businessBookCall: "통화 예약하기",
+    businessFootnote: "24시간 이내 답변 · 맞춤 견적",
+    businessBullet1: "다중 사용자 배포",
+    businessBullet2: "고급 자동화",
+    businessBullet3: "맞춤 통합",
+    businessBullet4: "전담 지원 및 SLA",
+
     // FAQ section
     faqBadge: "자주 묻는 질문",
     faqTitle1: "시작하기 전에",
@@ -757,6 +784,24 @@ export const ko = {
     howItWorksStep4Example: "화요일 오전 9시 예약 — 참여율 피크",
     howItWorksReadyCTA: "LinkedIn 존재감을 바꿀 준비가 되셨나요?",
     howItWorksTryFree: "무료 체험",
+    hiwBadge: "작동 방식",
+    hiwTitle: "하나의 아이디어.",
+    hiwTitleAccent: "하나의 게시물. 완료.",
+    hiwSubtitle: "간단한 아이디어를 입력하세요 — Posty의 AI가 게시할 준비가 된 LinkedIn 게시물로 변환합니다.",
+    hiwYourIdea: "당신의 아이디어",
+    hiwGeneratedPost: "생성된 게시물",
+    hiwUserInput: "처음으로 원격 팀을 관리하면서 배운 3가지 교훈을 공유하고 싶어요",
+    hiwAiIntro: "참여를 위해 최적화된 게시물입니다:",
+    hiwPostAuthor: "Emilien N.",
+    hiwPostRole: "Posty AI 창업자",
+    hiwPostHook: "3개월 만에 팀 전체를 잃을 뻔했어요.",
+    hiwPostBody: "원격 매니저가 되었을 때, 가장 어려운 건 도구일 거라고 생각했어요. 틀렸어요.\n\n교훈 1: 신뢰는 선택이 아니에요 — 기반입니다.\n교훈 2: 더 많이 소통하세요. 그리고 더 많이 소통하세요.\n교훈 3: 결과가 시간보다 더 중요해요.\n\n지금 우리 팀은 40% 더 생산적이고 그 어느 때보다 만족스러워해요.",
+    hiwPostCta: "원격 관리에서 당신이 배운 가장 큰 교훈은 무엇인가요?",
+    hiwGeneratedIn: "12초 만에 생성",
+    hiwInputPlaceholder: "다음 아이디어를 설명해 주세요...",
+    hiwPill1: "LinkedIn에 최적화",
+    hiwPill2: "나중을 위해 예약 가능",
+    hiwPill3: "AI 인사이트 포함",
     hiwMockupOnline: "온라인",
     hiwMockupLike: "좋아요",
     hiwMockupComment: "댓글",
@@ -782,6 +827,50 @@ export const ko = {
     aiExpNotifSuccess: "Meeting scheduled",
     aiExpNotifSuccessDetail: "Marc D. — Tomorrow 14:00",
     aiExpContextualLabel: "This person signed a client from this post",
+
+    // Copilot Sans/Avec headers
+    aiExpWithout: "Posty 없이",
+    aiExpWith: "Posty와 함께",
+
+    // Copilot comparison rows 1-5
+    aiExpRow1Before: "게시물 작성에 2시간",
+    aiExpRow1After: "30초 만에 완료",
+    aiExpRow2Before: "무엇을 게시할지 모름",
+    aiExpRow2After: "AI가 바이럴 앵글 제안",
+    aiExpRow3Before: "참여 0, 리드 0",
+    aiExpRow3After: "고객을 끌어들이는 게시물",
+    aiExpRow4Before: "불규칙한 게시",
+    aiExpRow4After: "자동 예약",
+    aiExpRow5Before: "워크플로우 없음",
+    aiExpRow5After: "스마트한 24/7 코파일럿",
+
+    // Copilot mockup labels
+    aiExpDraftLabel: "당신의 브리프",
+    aiExpOptimizedLabel: "LinkedIn에 최적화",
+    aiExpGeneratedPost: "스토리텔링은 소프트 스킬이 아닙니다 — 냉담한 스크롤러를 자격 있는 미팅으로 바꾸는 가장 빠른 방법입니다. 제 파이프라인을 두 배로 만든 한 단락이 여기 있습니다.",
+    aiExpPublishCta: "게시",
+    aiExpPublishing: "게시 중…",
+    aiExpPublished: "게시됨",
+    aiExpScheduleCta: "예약",
+    aiExpToastPublished: "LinkedIn에 게시물 게시됨",
+    aiExpToastPublishedSub: "4.7k 연결에 표시 중",
+    aiExpToastBoost: "AI 도달 범위 +42%",
+    aiExpToastBoostSub: "UX 에이전트 · 자동 튜닝",
+
+    // Multi-agent rail
+    agentIdle: "대기 중",
+    agentCopywriterLabel: "Copywriter",
+    agentCopywriterAnalyzing: "분석 중…",
+    agentCopywriterDrafting: "작성 중…",
+    agentCopywriterDone: "다듬어짐",
+    agentCopywriterThinking: "Copywriter 에이전트가 다시 쓰는 중…",
+    agentSystemLabel: "System",
+    agentSystemValidating: "검증 중…",
+    agentSystemDone: "승인됨",
+    agentSystemValidatedLine: "System 에이전트: 게시 승인됨",
+    agentUxLabel: "UX Engine",
+    agentUxBroadcasting: "방송 중",
+    agentUxDone: "라이브",
 
     // Value block after features
     valueBlockTitle: "프리랜서가 Posty를 선택하는 이유",
@@ -926,6 +1015,16 @@ export const ko = {
 
   // Auth
   auth: {
+    // Rotating marketing taglines on the desktop login/signup hero panel.
+    loginHeroRotator: [
+      "프로처럼 게시물을 작성하는 AI 도구",
+      "더 빠르게 청중을 성장시키세요",
+      "당신의 LinkedIn 부조종사, 24/7 이용 가능",
+      "몇 초 만에 고성능 콘텐츠",
+      "노력 없이 게시하고 시간을 절약하세요",
+      "프로스펙팅 없이 가시성을 높이세요",
+    ],
+
     // Login
     loginTitle: "다시 오셨군요",
     loginSubtitle: "계속하려면 로그인하세요",
@@ -2454,6 +2553,7 @@ export const ko = {
     storyBusinessPerWeek: "스토리 + 비즈니스 ({n}/주)",
     platformOnly: "{name}만",
     networksConnected: "4개 네트워크 연결",
+    networksMore: "기타",
     unlimitedSharing: "팀과 무제한 공유",
     shareWithContacts: "{n}명 연락처와 공유",
     postsUltraPrecise: "초정밀 AI 게시물, 2배 더 완성도",
@@ -2675,6 +2775,21 @@ export const ko = {
     tooltipPostsPublished: "Posty를 통해 LinkedIn에 직접 게시한 게시물",
     tooltipThisWeek: "최근 7일간 생성된 게시물 수",
     tooltipSessions: "시작한 생성 세션 수",
+    thisMonth: "이번 달",
+    last30Days: "지난 30일",
+    scheduled: "예약됨",
+    upcoming: "예정됨",
+    tooltipThisMonth: "지난 30일 동안 생성된 게시물 수",
+    tooltipScheduled: "향후 게시를 위해 대기 중인 게시물",
+    featureUsageTitle: "기능 사용",
+    featureUsageSubtitle: "Posty에서 가장 많은 가치를 얻는 곳",
+    featureUsageEmpty: "첫 번째 게시물을 생성하여 분포를 확인하세요",
+    featureUsageLabels: {
+      chat: "직접 채팅",
+      templates: "템플릿",
+      scheduled: "예약",
+      published: "LinkedIn에 게시됨",
+    },
 
     // Insights section
     insightsTitle: "인사이트",
@@ -2818,6 +2933,10 @@ export const ko = {
     notConnected: "연결되지 않음",
     unlockMorePlatforms: "더 많은 플랫폼 잠금 해제",
     upgradeToUnlock: "Max로 업그레이드하여 모든 플랫폼 잠금 해제",
+    // ConnectPlatformPopup
+    connectPlatformTitle: "{platform}을(를) 연결할까요?",
+    connectPlatformDesc: "Posty에서 바로 게시할 수 있도록 {platform} 계정을 연결하세요.",
+    connectAction: "연결",
     // PublishOptions
     chooseBroadcastMode: "배포 모드를 선택하세요",
     selectAtLeastOne: "최소 하나의 옵션을 선택하세요",

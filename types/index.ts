@@ -38,8 +38,8 @@ export interface PostAnalysis {
   improvements: string[];
 }
 
-// Platform adaptation targets (Pro+ for reddit, Max for others)
-export type AdaptationPlatform = "reddit" | "threads" | "twitter" | "facebook";
+// Platform adaptation targets (Max plan)
+export type AdaptationPlatform = "threads" | "facebook" | "bluesky" | "mastodon";
 
 // Platform adaptation result (MAX)
 export interface PlatformAdaptation {
@@ -161,6 +161,14 @@ export interface UserProfile {
     weeklyPublishCount?: number;
     weekStartDate?: Timestamp;
   };
+  // Conversation usage counters (fed into SubscriptionContext)
+  usage?: {
+    conversationsThisWeek?: number;
+    conversationsThisMonth?: number;
+    lastConversationDate?: Timestamp;
+    weekStartDate?: Timestamp;
+    monthStartDate?: Timestamp;
+  };
   // AI contextual memory (Pro+)
   memory?: UserMemorySettings;
   // Help tooltips: pages the user has dismissed (synced across devices)
@@ -213,6 +221,17 @@ export interface MockResponse {
   title?: string;
   content: string;
   type: "storytelling" | "business";
+  /**
+   * Auto-generated first comment to drop on this post 2–7 minutes after
+   * publishing — boosts the LinkedIn algorithm via early author engagement.
+   * `loading` is true while the seed-comment API is in-flight; `error`
+   * holds the localised message if generation failed.
+   */
+  seedComment?: {
+    text?: string;
+    loading?: boolean;
+    error?: string;
+  };
 }
 
 // ============== SESSION TYPES ==============
@@ -432,18 +451,17 @@ export interface AuthContextType {
 // ============== MULTI-PLATFORM PUBLISHING TYPES ==============
 
 /**
- * Core platforms supported by Posty plans
- * - Free: linkedin only
- * - Pro: linkedin, reddit
- * - Max: linkedin, reddit, threads, facebook
+ * Core platforms supported by Posty plans.
+ * - Free / Pro: linkedin + bluesky + mastodon + discord
+ * - Max: same + threads + facebook
  */
-export type Platform = "linkedin" | "reddit" | "threads" | "facebook";
+export type Platform = "linkedin" | "threads" | "facebook" | "bluesky" | "mastodon" | "discord";
 
 /**
- * Extended platform type including legacy/additional platforms
- * Used for broader compatibility with existing features
+ * Extended platform type for any legacy/transient values surfaced in dynamic
+ * data. Currently identical to {@link Platform}.
  */
-export type ExtendedPlatform = Platform | "twitter";
+export type ExtendedPlatform = Platform;
 
 export interface PublishResult {
   platform: Platform | ExtendedPlatform;
@@ -461,33 +479,6 @@ export interface PlatformConnection {
   expiresAt?: Date;
   /** Minimum plan required for this platform */
   minPlan?: SubscriptionPlan;
-}
-
-// ============== TWITTER TYPES ==============
-
-export interface TwitterConnectionData {
-  userId: string;
-  twitterId: string;
-  username: string;
-  accessToken: string;
-  refreshToken?: string;
-  expiresAt: Timestamp;
-  profileName: string;
-  profilePicture?: string;
-  connectedAt: Timestamp;
-  lastUsedAt?: Timestamp;
-}
-
-export interface TwitterPostData {
-  id: string;
-  userId: string;
-  twitterId: string;
-  tweetId: string;
-  content: string;
-  tweetUrl?: string;
-  publishedAt: Timestamp;
-  success: boolean;
-  error?: string;
 }
 
 // ============== LINKEDIN TYPES (re-exported for consistency) ==============
@@ -591,36 +582,6 @@ export interface LinkedInAnalyticsSummary {
   postsThisMonth: number;
 }
 
-// ============== REDDIT TYPES ==============
-
-export interface RedditConnectionData {
-  userId: string;
-  redditId: string;
-  username: string;
-  accessToken: string;
-  refreshToken?: string;
-  expiresAt: Timestamp;
-  profileName: string;
-  profilePicture?: string;
-  karma?: number;
-  connectedAt: Timestamp;
-  lastUsedAt?: Timestamp;
-}
-
-export interface RedditPostData {
-  id: string;
-  userId: string;
-  redditId: string;
-  postId: string;
-  subreddit: string;
-  title: string;
-  content: string;
-  postUrl?: string;
-  publishedAt: Timestamp;
-  success: boolean;
-  error?: string;
-}
-
 // ============== THREADS TYPES ==============
 
 export interface ThreadsConnectionData {
@@ -678,11 +639,123 @@ export interface FacebookPostData {
   error?: string;
 }
 
+// ============== BLUESKY TYPES ==============
+
+// Bluesky auth is session-based (app password → JWT pair). Access JWT is
+// short-lived (~2h) and rotated via refreshJwt, which itself lasts weeks.
+export interface BlueskyConnectionData {
+  userId: string;
+  /** Full handle, e.g. "alice.bsky.social" */
+  handle: string;
+  /** DID (decentralized identifier) — the stable account ID */
+  did: string;
+  /** PDS base URL (defaults to https://bsky.social) */
+  service: string;
+  accessJwt: string;
+  refreshJwt: string;
+  profileName?: string;
+  profilePicture?: string;
+  connectedAt: Timestamp;
+  lastUsedAt?: Timestamp;
+  /** Tracks last time we refreshed the session */
+  sessionRefreshedAt?: Timestamp;
+}
+
+export interface BlueskyPostData {
+  id: string;
+  userId: string;
+  did: string;
+  /** AT Protocol record URI, e.g. at://did:plc:xyz/app.bsky.feed.post/abc */
+  uri: string;
+  /** CID of the record */
+  cid: string;
+  content: string;
+  /** User-facing URL (https://bsky.app/profile/handle/post/rkey) */
+  postUrl?: string;
+  publishedAt: Timestamp;
+  success: boolean;
+  error?: string;
+}
+
+// ============== MASTODON TYPES ==============
+
+// Mastodon is federated: each user is hosted on a different instance (server).
+// Instead of OAuth-per-instance (complex: dynamic app registration), we accept
+// a Personal Access Token generated by the user in their instance's
+// Settings → Development → New application. Scopes needed: write:statuses.
+export interface MastodonConnectionData {
+  userId: string;
+  /** Instance URL without trailing slash, e.g. "https://mastodon.social" */
+  instance: string;
+  /** Account ID on the instance */
+  accountId: string;
+  /** Username on the instance (e.g. "alice") */
+  username: string;
+  /** Full handle: @alice@mastodon.social */
+  acct: string;
+  accessToken: string;
+  profileName?: string;
+  profilePicture?: string;
+  connectedAt: Timestamp;
+  lastUsedAt?: Timestamp;
+}
+
+export interface MastodonPostData {
+  id: string;
+  userId: string;
+  instance: string;
+  accountId: string;
+  /** Mastodon status (toot) ID */
+  statusId: string;
+  content: string;
+  /** User-facing URL (https://instance/@user/statusId) */
+  postUrl?: string;
+  publishedAt: Timestamp;
+  success: boolean;
+  error?: string;
+}
+
+// ============== DISCORD TYPES ==============
+
+// Discord integration uses incoming webhooks — no OAuth at all. The user
+// creates a webhook in their server's channel settings and pastes the URL.
+// Posty validates the URL by a GET (webhooks return 200 with their metadata)
+// then POSTs JSON payloads to publish.
+export interface DiscordConnectionData {
+  userId: string;
+  /** Full webhook URL: https://discord.com/api/webhooks/{id}/{token} */
+  webhookUrl: string;
+  /** Webhook ID (parsed from URL) — for deduping */
+  webhookId: string;
+  /** Display-only hints returned by Discord when validating the webhook */
+  guildName?: string;
+  channelId?: string;
+  channelName?: string;
+  /** Webhook's own display name (user-chosen when creating it) */
+  webhookName?: string;
+  webhookAvatar?: string;
+  connectedAt: Timestamp;
+  lastUsedAt?: Timestamp;
+}
+
+export interface DiscordPostData {
+  id: string;
+  userId: string;
+  webhookId: string;
+  /** Discord message ID returned when posting with ?wait=true */
+  messageId?: string;
+  content: string;
+  postUrl?: string;
+  publishedAt: Timestamp;
+  success: boolean;
+  error?: string;
+}
+
 // ============== SCHEDULING TYPES ==============
 
 export type ScheduleStatus = "pending" | "published" | "failed" | "cancelled";
 
-export type SchedulePlatform = "linkedin" | "reddit" | "threads" | "facebook";
+export type SchedulePlatform = "linkedin" | "threads" | "facebook" | "bluesky" | "mastodon" | "discord";
 
 export type LinkedInPostType = "feed" | "article";
 
@@ -693,6 +766,18 @@ export interface ScheduledPostImage {
   fileName: string;      // Original filename
   contentType: string;   // MIME type (image/jpeg, image/png, etc.)
   size: number;          // File size in bytes
+}
+
+/**
+ * Seed comment configuration attached to a scheduled post — the post-author's
+ * own first reply, designed to drop 2-7 minutes after publishing to boost the
+ * LinkedIn algorithm via early author engagement.
+ */
+export interface SeedCommentConfig {
+  enabled: boolean;
+  text: string;
+  /** Base delay in minutes after publish; the worker adds a 0-3 min jitter. */
+  delayMinutes: number;
 }
 
 export interface ScheduledPost {
@@ -711,6 +796,8 @@ export interface ScheduledPost {
   // Platform config
   platform: SchedulePlatform;
   postType?: LinkedInPostType; // For LinkedIn: feed or article
+  /** Optional algo-boost seed comment (LinkedIn only, dropped a few min after) */
+  seedComment?: SeedCommentConfig;
   // Tracking
   createdAt: Timestamp;
   updatedAt: Timestamp;
@@ -734,6 +821,41 @@ export interface CreateScheduledPostData {
   postType?: LinkedInPostType;
   // Images to upload (File objects from the picker, client-side only)
   imageFiles?: File[];
+  /** Optional algo-boost seed comment dropped X minutes after publish */
+  seedComment?: SeedCommentConfig;
+}
+
+/**
+ * Pending seed comment in Firestore — created by the scheduler after a
+ * successful LinkedIn publish, picked up by `executePendingSeedComments`
+ * once `fireAt <= now` and the autopost flag is on.
+ */
+export type PendingSeedCommentStatus =
+  | "pending"
+  | "posted"
+  | "failed"
+  | "skipped_flag_off"
+  | "skipped_post_missing";
+
+export interface PendingSeedComment {
+  id: string;
+  userId: string;
+  /** Optional link back to the parent scheduledPost (null for instant publish). */
+  parentScheduledPostId?: string;
+  /** LinkedIn URN of the published post (e.g., "urn:li:share:7XXXXXXXXX"). */
+  parentPostUrn: string;
+  /** Public LinkedIn URL of the parent post (for support / debugging). */
+  parentPostUrl?: string;
+  /** Author URN posting the comment (e.g., "urn:li:person:XXX"). */
+  actorUrn: string;
+  text: string;
+  /** When the worker should fire this comment (server-side jitter applied). */
+  fireAt: Timestamp;
+  status: PendingSeedCommentStatus;
+  attemptCount: number;
+  createdAt: Timestamp;
+  postedAt?: Timestamp;
+  failureReason?: string;
 }
 
 // Scheduling context type

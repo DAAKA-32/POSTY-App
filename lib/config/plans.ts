@@ -98,7 +98,7 @@ export function isPlanTrialEligible(plan: PlanType): plan is PaidPlanType {
 }
 
 // Platform Types - All supported social platforms
-export type Platform = "linkedin" | "reddit" | "threads" | "facebook";
+export type Platform = "linkedin" | "threads" | "facebook" | "bluesky" | "mastodon" | "discord";
 
 // Platform display information
 export interface PlatformInfo {
@@ -119,14 +119,6 @@ export const PLATFORM_INFO: Record<Platform, PlatformInfo> = {
     description: "Réseau professionnel #1",
     minPlan: "free",
   },
-  reddit: {
-    id: "reddit",
-    name: "Reddit",
-    icon: "reddit",
-    color: "#FF4500",
-    description: "Bientôt disponible",
-    minPlan: "free",
-  },
   threads: {
     id: "threads",
     name: "Threads",
@@ -142,6 +134,30 @@ export const PLATFORM_INFO: Record<Platform, PlatformInfo> = {
     color: "#1877F2",
     description: "Réseau social grand public",
     minPlan: "max",
+  },
+  bluesky: {
+    id: "bluesky",
+    name: "Bluesky",
+    icon: "bluesky",
+    color: "#0085FF",
+    description: "Réseau décentralisé pro (AT Protocol)",
+    minPlan: "free",
+  },
+  mastodon: {
+    id: "mastodon",
+    name: "Mastodon",
+    icon: "mastodon",
+    color: "#6364FF",
+    description: "Fédéré, public tech & journalistes",
+    minPlan: "free",
+  },
+  discord: {
+    id: "discord",
+    name: "Discord",
+    icon: "discord",
+    color: "#5865F2",
+    description: "Communautés (webhook)",
+    minPlan: "free",
   },
 };
 
@@ -262,9 +278,10 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
       dualResponsesPerWeek: 0,
       weeklyPublishLimit: 3, // Free: max 3 publications per week
       hasUrlAnalysis: false,
-      allowedPlatforms: ["linkedin", "reddit"],
-      maxPlatformConnections: 1,
-      canPublishSimultaneously: false,
+      // Free plan: LinkedIn + the 3 free-friendly providers (no paid OAuth app needed).
+      allowedPlatforms: ["linkedin", "bluesky", "mastodon", "discord"],
+      maxPlatformConnections: 5,
+      canPublishSimultaneously: false, // Multi-publish is a Max-only feature
       quotaResetPeriod: "monthly",
     },
     highlight: false,
@@ -286,7 +303,7 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
       messagesPerHour: 50, // Rolling window: 50 msg/hour (anti-abuse)
       conversationsPerWeek: -1, // Unlimited
       conversationsPerMonth: -1, // Unlimited (daily enforcement only)
-      maxCharactersPerPrompt: 300,
+      maxCharactersPerPrompt: 1000,
       maxRelations: 10,
       responseQuality: "complete",
       responseLength: "medium",
@@ -301,10 +318,10 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
       weeklyPublishLimit: -1, // Pro: unlimited publications
       // URL Analysis
       hasUrlAnalysis: true,
-      // Multi-Platform: LinkedIn + Reddit
-      allowedPlatforms: ["linkedin", "reddit"],
-      maxPlatformConnections: 2,
-      canPublishSimultaneously: false, // One platform at a time
+      // Multi-Platform: LinkedIn + the 3 free-friendly providers
+      allowedPlatforms: ["linkedin", "bluesky", "mastodon", "discord"],
+      maxPlatformConnections: 5,
+      canPublishSimultaneously: false, // Multi-publish is a Max-only feature
       quotaResetPeriod: "daily",
     },
     badge: "Recommandé",
@@ -342,9 +359,9 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
       weeklyPublishLimit: -1, // Max: unlimited publications
       // URL Analysis
       hasUrlAnalysis: true,
-      // Multi-Platform: All 4 platforms + simultaneous publishing
-      allowedPlatforms: ["linkedin", "reddit", "threads", "facebook"],
-      maxPlatformConnections: 4, // All platforms
+      // Multi-Platform: all 6 platforms + simultaneous publishing
+      allowedPlatforms: ["linkedin", "threads", "facebook", "bluesky", "mastodon", "discord"],
+      maxPlatformConnections: 6,
       canPublishSimultaneously: true, // Publish to multiple platforms at once
       quotaResetPeriod: "monthly",
     },
@@ -710,9 +727,7 @@ export const CORE_FEATURES = [
  */
 export const SECONDARY_FEATURES = [
   { key: "prompts", label: "Briefs personnalisés" },
-  { key: "sharing", label: "Collaboration & partage" },
   { key: "conversations", label: "Gestion des conversations" },
-  { key: "postAnalysis", label: "Analyse de posts existants" },
   { key: "improveMode", label: "Réécriture & amélioration de posts" },
   { key: "priority", label: "Accès prioritaire (file VIP)" },
   { key: "fileAttachments", label: "Fichiers joints (images, PDF)" },
@@ -827,7 +842,9 @@ function getDynamicFeatureLabel(key: string, plan: PlanConfig): string {
 
   switch (key) {
     case "prompts":
-      if (limits.maxCharactersPerPrompt >= 1000) {
+      // Threshold raised to 3000 so Pro (1000) reads "Briefs jusqu'à 1000 caractères"
+      // and only Max (3000) gets the "Briefs détaillés" treatment.
+      if (limits.maxCharactersPerPrompt >= 3000) {
         return `Briefs détaillés (${limits.maxCharactersPerPrompt} car.)`;
       }
       return `Briefs jusqu'à ${limits.maxCharactersPerPrompt} caractères`;
@@ -844,10 +861,12 @@ function getDynamicFeatureLabel(key: string, plan: PlanConfig): string {
       const platforms = limits.allowedPlatforms;
       if (platforms.length === 1) {
         return `${PLATFORM_INFO[platforms[0]]?.name || platforms[0]} uniquement`;
-      } else if (platforms.length <= 2) {
-        return platforms.map(p => PLATFORM_INFO[p]?.name || p).join(" + ");
       }
-      return `4 réseaux connectés`;
+      const names = platforms.map((p) => PLATFORM_INFO[p]?.name || p);
+      // 2 platforms → "A + B"; 3-4 → comma list; 5+ → first 4 + "+N autres"
+      if (platforms.length <= 2) return names.join(" + ");
+      if (platforms.length <= 4) return names.join(", ");
+      return `${names.slice(0, 4).join(", ")} +${platforms.length - 4} autres`;
     }
 
     case "sharing":
@@ -930,7 +949,9 @@ function getLocalizedDynamicFeatureLabel(key: string, plan: PlanConfig, t: Trans
 
   switch (key) {
     case "prompts":
-      if (limits.maxCharactersPerPrompt >= 1000) {
+      // Threshold raised to 3000 so Pro (1000) reads as "up to 1000 characters"
+      // and only Max (3000) is labeled as "detailed briefs".
+      if (limits.maxCharactersPerPrompt >= 3000) {
         return t.plans.briefsDetailed.replace("{n}", String(limits.maxCharactersPerPrompt));
       }
       return t.plans.briefsUpTo.replace("{n}", String(limits.maxCharactersPerPrompt));
@@ -947,10 +968,16 @@ function getLocalizedDynamicFeatureLabel(key: string, plan: PlanConfig, t: Trans
       const platforms = limits.allowedPlatforms;
       if (platforms.length === 1) {
         return t.plans.platformOnly.replace("{name}", PLATFORM_INFO[platforms[0]]?.name || platforms[0]);
-      } else if (platforms.length <= 2) {
-        return platforms.map(p => PLATFORM_INFO[p]?.name || p).join(" + ");
       }
-      return t.plans.networksConnected;
+      const names = platforms.map((p) => PLATFORM_INFO[p]?.name || p);
+      // 2 platforms → "A + B"; 3-4 → comma list with all names so users see
+      // exactly which networks are unlocked (LinkedIn, Bluesky, Mastodon,
+      // Discord); 5+ → first 4 + "+N more" — keeps the line readable while
+      // still being explicit about scale.
+      if (platforms.length <= 2) return names.join(" + ");
+      if (platforms.length <= 4) return names.join(", ");
+      const moreLabel = t.plans.networksMore ?? "autres";
+      return `${names.slice(0, 4).join(", ")} +${platforms.length - 4} ${moreLabel}`;
     }
 
     case "sharing":
@@ -1078,7 +1105,7 @@ export function getPlanCardFeatures(planId: PlanType): CardFeatureSet {
           "Programmation automatique",
           "Mode Storytelling + Business",
           "Analyse et amélioration de posts",
-          "LinkedIn + Reddit",
+          "LinkedIn + Bluesky + Mastodon + Discord",
           "Ton adapté à votre profil",
         ],
       };

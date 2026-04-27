@@ -210,9 +210,11 @@ export function canUsePlatform(
     const requiredPlan = getMinimumPlanForPlatform(platform);
     const platformNames: Record<Platform, string> = {
       linkedin: "LinkedIn",
-      reddit: "Reddit",
       threads: "Threads",
       facebook: "Facebook",
+      bluesky: "Bluesky",
+      mastodon: "Mastodon",
+      discord: "Discord",
     };
 
     return {
@@ -398,7 +400,7 @@ export function getAllPlatformsAccessStatus(subscription: UserSubscription): Arr
   hasAccess: boolean;
   minPlan: PlanType;
 }> {
-  const platforms: Platform[] = ["linkedin", "reddit", "threads", "facebook"];
+  const platforms: Platform[] = ["linkedin", "threads", "facebook", "bluesky", "mastodon", "discord"];
 
   return platforms.map(platform => {
     const info = PLATFORM_INFO[platform];

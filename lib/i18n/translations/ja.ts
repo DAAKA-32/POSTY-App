@@ -536,14 +536,30 @@ export const ja = {
     testimonialsPrev: "前へ",
     testimonialsNext: "次へ",
     testimonialsSwipe: "スワイプして移動",
-    testimonial1Role: "創業者",
-    testimonial1Company: "B2Bエージェンシー",
-    testimonial1Text: "Postyの前は、何を書けばいいかわからず週1回しか投稿していませんでした。今は毎日投稿し、LinkedInがNo.1の顧客獲得チャネルになりました。2ヶ月で3件の契約を獲得しました。",
-    testimonial2Role: "マーケティングディレクター",
-    testimonial2Company: "B2B SaaS",
-    testimonial2Text: "チームはコンテンツ作成で週5時間を節約しています。その時間を戦略と見込み客開拓に再投資しています。投稿の一貫性が向上し、30日でエンゲージメントが3倍になりました。",
+    testimonial1Role: "Trustpilot認証レビュー",
+    testimonial1Company: "",
+    testimonial1Text: "このサイトと高性能なAIは、私の投稿方法とコンテンツ最適化を本当に変えてくれました。ネットワークやフォーマットに応じて見込み客のペルソナを考慮し、代わりに投稿までしてくれます。本当に価値があり、おすすめです。",
+    testimonial2Role: "学生",
+    testimonial2Company: "Trustpilotレビュー",
+    testimonial2Text: "Postyは本当に日々の助けになっています。高等教育の学生として、今のところPro契約で、すぐに上位プランに切り替える予定です。インターンシップや就活の時間短縮に本当に役立ちます。",
     testimonial3Role: "アート市場業界",
     testimonial3Text: "Postyは非常に高品質なLinkedIn投稿の作成を支援し、コンテンツ制作を本当に簡素化してくれます。私たちのニーズを理解し、関連性のあるコンテンツの執筆を格段に容易にしてくれます。",
+
+    // Cerise Cottier — Featured client spotlight
+    ceriseSpotlightBadge: "認証済みのお客様の声",
+    ceriseSpotlightTitle1: "Ceriseのように、",
+    ceriseSpotlightTitle2: "営業せずに成約しましょう。",
+    ceriseSpotlightSubtitle: "20社以上の企業から、一切の営業活動なしに連絡が来ました。",
+    ceriseSpotlightStatNumber: "20+",
+    ceriseSpotlightStatLabel: "社の企業から連絡が来ました",
+    ceriseSpotlightStatSubLabel: "営業活動なしに直接",
+    ceriseSpotlightQuote: "PostyでLinkedInに投稿しただけです。アルゴリズムが私の投稿を押し上げ、ビュー数が急増し、20社以上の企業から直接連絡が来ました。営業は一切なし——インバウンドの機会だけが舞い込んできます。",
+    ceriseSpotlightName: "Cerise Cottier",
+    ceriseSpotlightRole: "アート市場業界",
+    ceriseSpotlightImageAlt: "Cerise Cottier、Postyのお客様",
+    ceriseSpotlightProof1: "LinkedInアルゴリズムが投稿を後押し",
+    ceriseSpotlightProof2: "アウトバウンド営業ゼロ",
+    ceriseSpotlightProof3: "20社以上のインバウンド機会を獲得",
 
     // Audience section
     audienceTitle1: "あなたのために",
@@ -715,6 +731,17 @@ export const ja = {
     pricingSavingsLabel: "2ヶ月分無料",
     pricingTrialIncluded: "無料トライアル付き · 縛りなし",
 
+    // Business offer (B2B card under the pricing grid — expandable)
+    businessTitle: "ビジネスプラン",
+    businessSubtitle: "企業として大規模に Posty を活用したいですか？",
+    businessCTA: "通話を予約",
+    businessBookCall: "通話をスケジュール",
+    businessFootnote: "24時間以内に返信 · カスタム見積もり",
+    businessBullet1: "マルチユーザー展開",
+    businessBullet2: "高度な自動化",
+    businessBullet3: "カスタム統合",
+    businessBullet4: "専任サポート & SLA",
+
     // FAQ section
     faqBadge: "よくある質問",
     faqTitle1: "始める前に",
@@ -757,6 +784,24 @@ export const ja = {
     howItWorksStep4Example: "火曜日午前9時にスケジュール — エンゲージメントのピーク",
     howItWorksReadyCTA: "LinkedInでの存在感を変える準備はできましたか？",
     howItWorksTryFree: "無料で試す",
+    hiwBadge: "使い方",
+    hiwTitle: "ひとつのアイデア。",
+    hiwTitleAccent: "ひとつの投稿。完成。",
+    hiwSubtitle: "シンプルなアイデアを入力するだけ — PostyのAIが、すぐに投稿できるLinkedIn投稿に変換します。",
+    hiwYourIdea: "あなたのアイデア",
+    hiwGeneratedPost: "生成された投稿",
+    hiwUserInput: "初めてリモートチームをマネジメントして学んだ3つの教訓を共有したい",
+    hiwAiIntro: "エンゲージメントに最適化された投稿はこちらです：",
+    hiwPostAuthor: "Emilien N.",
+    hiwPostRole: "Posty AI 創業者",
+    hiwPostHook: "3か月でチーム全員を失いかけた。",
+    hiwPostBody: "リモートマネージャーになったとき、最も難しいのはツールだと思っていました。間違っていました。\n\n教訓1：信頼はオプションではない — 土台です。\n教訓2：もっと伝える。そしてさらに伝える。\n教訓3：結果は労働時間よりも重要です。\n\n今、私のチームは以前より40%生産性が高く、これまでで最も充実しています。",
+    hiwPostCta: "あなたがリモートマネジメントで学んだ最大の教訓は何ですか？",
+    hiwGeneratedIn: "12秒で生成",
+    hiwInputPlaceholder: "次のアイデアを記入してください...",
+    hiwPill1: "LinkedIn向けに最適化",
+    hiwPill2: "後でスケジュール可能",
+    hiwPill3: "AIインサイト付き",
     hiwMockupOnline: "オンライン",
     hiwMockupLike: "いいね",
     hiwMockupComment: "コメント",
@@ -782,6 +827,50 @@ export const ja = {
     aiExpNotifSuccess: "Meeting scheduled",
     aiExpNotifSuccessDetail: "Marc D. — Tomorrow 14:00",
     aiExpContextualLabel: "This person signed a client from this post",
+
+    // Copilot Sans/Avec headers
+    aiExpWithout: "Postyなし",
+    aiExpWith: "Postyあり",
+
+    // Copilot comparison rows 1-5
+    aiExpRow1Before: "投稿の作成に2時間",
+    aiExpRow1After: "30秒で完了",
+    aiExpRow2Before: "投稿のアイデアがない",
+    aiExpRow2After: "AIがバズる切り口を提案",
+    aiExpRow3Before: "エンゲージメント0、リード0",
+    aiExpRow3After: "顧客を引き寄せる投稿",
+    aiExpRow4Before: "不定期な投稿",
+    aiExpRow4After: "自動スケジューリング",
+    aiExpRow5Before: "ワークフローなし",
+    aiExpRow5After: "スマートな24/7コパイロット",
+
+    // Copilot mockup labels
+    aiExpDraftLabel: "あなたのブリーフ",
+    aiExpOptimizedLabel: "LinkedIn向けに最適化",
+    aiExpGeneratedPost: "ストーリーテリングはソフトスキルではない — 冷めたスクローラーを質の高い商談に変える最速の方法だ。私のパイプラインを倍にしたのは、この一段落だった。",
+    aiExpPublishCta: "公開",
+    aiExpPublishing: "公開中…",
+    aiExpPublished: "公開済み",
+    aiExpScheduleCta: "予約",
+    aiExpToastPublished: "LinkedInに投稿を公開しました",
+    aiExpToastPublishedSub: "4.7kのつながりに表示中",
+    aiExpToastBoost: "AIによるリーチ +42%",
+    aiExpToastBoostSub: "UXエージェント · 自動チューニング",
+
+    // Multi-agent rail
+    agentIdle: "待機中",
+    agentCopywriterLabel: "Copywriter",
+    agentCopywriterAnalyzing: "分析中…",
+    agentCopywriterDrafting: "執筆中…",
+    agentCopywriterDone: "仕上げ済み",
+    agentCopywriterThinking: "Copywriterエージェントが書き直し中…",
+    agentSystemLabel: "System",
+    agentSystemValidating: "検証中…",
+    agentSystemDone: "承認済み",
+    agentSystemValidatedLine: "Systemエージェント：投稿が公開承認されました",
+    agentUxLabel: "UX Engine",
+    agentUxBroadcasting: "配信中",
+    agentUxDone: "ライブ",
 
     // Value block after features
     valueBlockTitle: "フリーランサーがPostyを選ぶ理由",
@@ -926,6 +1015,16 @@ export const ja = {
 
   // Auth
   auth: {
+    // Rotating marketing taglines on the desktop login/signup hero panel.
+    loginHeroRotator: [
+      "プロのように投稿を作成するAIツール",
+      "オーディエンスをより早く成長させる",
+      "あなたのLinkedInコパイロット、24時間365日利用可能",
+      "数秒で高パフォーマンスのコンテンツ",
+      "簡単に投稿、時間を節約",
+      "営業活動なしで可視性を高める",
+    ],
+
     // Login
     loginTitle: "おかえりなさい",
     loginSubtitle: "ログインして続行",
@@ -2454,6 +2553,7 @@ export const ja = {
     storyBusinessPerWeek: "ストーリー＋ビジネス（週{n}回）",
     platformOnly: "{name}のみ",
     networksConnected: "4つのネットワーク接続",
+    networksMore: "その他",
     unlimitedSharing: "チームとの無制限共有",
     shareWithContacts: "{n}件のコンタクトと共有",
     postsUltraPrecise: "超精密なAI投稿、2倍充実",
@@ -2675,6 +2775,21 @@ export const ja = {
     tooltipPostsPublished: "Posty経由でLinkedInに直接公開した投稿",
     tooltipThisWeek: "過去7日間に生成した投稿数",
     tooltipSessions: "開始した生成セッションの数",
+    thisMonth: "今月",
+    last30Days: "過去30日間",
+    scheduled: "予約済み",
+    upcoming: "予定",
+    tooltipThisMonth: "過去30日間に生成した投稿数",
+    tooltipScheduled: "将来の公開のためにキューに入っている投稿",
+    featureUsageTitle: "機能の使用状況",
+    featureUsageSubtitle: "Postyから最も価値を得ている場所",
+    featureUsageEmpty: "最初の投稿を生成して、内訳を確認してください",
+    featureUsageLabels: {
+      chat: "ダイレクトチャット",
+      templates: "テンプレート",
+      scheduled: "スケジュール",
+      published: "LinkedInに公開済み",
+    },
 
     // Insights section
     insightsTitle: "インサイト",
@@ -2818,6 +2933,10 @@ export const ja = {
     notConnected: "未接続",
     unlockMorePlatforms: "他のプラットフォームを解除",
     upgradeToUnlock: "Maxにアップグレードしてすべてのプラットフォームを解除",
+    // ConnectPlatformPopup
+    connectPlatformTitle: "{platform}を接続しますか？",
+    connectPlatformDesc: "{platform}アカウントを接続して、Postyから直接投稿できます。",
+    connectAction: "接続",
     // PublishOptions
     chooseBroadcastMode: "配信モードを選択",
     selectAtLeastOne: "少なくとも1つのオプションを選択してください",

@@ -12,8 +12,8 @@ import {
 } from "@/lib/db/firestore";
 import KPICard from "@/components/dashboard/KPICard";
 import ActivityChart from "@/components/dashboard/ActivityChart";
-import StyleDistributionChart from "@/components/dashboard/StyleDistributionChart";
 import ResponseModeChart from "@/components/dashboard/ResponseModeChart";
+import FeatureUsageChart from "@/components/dashboard/FeatureUsageChart";
 import InsightsSection from "@/components/dashboard/InsightsSection";
 import DashboardOnboarding from "@/components/dashboard/DashboardOnboarding";
 import { AnimatedLogo } from "@/components/ui/Logo";
@@ -210,10 +210,10 @@ function DashboardContent() {
           </div>
         </div>
 
-        {/* KPI Cards */}
+        {/* KPI Cards — 6 métriques clés : posts, publiés, semaine, mois, programmés, sessions */}
         <div
           className={`
-            grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-10
+            grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 lg:gap-5 mb-10
             transition-all duration-400 ease-out delay-75
             ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}
           `}
@@ -260,6 +260,30 @@ function DashboardContent() {
             tooltip={t.dashboard.tooltipThisWeek}
           />
           <KPICard
+            title={t.dashboard.thisMonth}
+            value={stats.postsLast30Days}
+            subtitle={t.dashboard.last30Days}
+            icon={
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            }
+            color="primary"
+            tooltip={t.dashboard.tooltipThisMonth}
+          />
+          <KPICard
+            title={t.dashboard.scheduled}
+            value={stats.scheduledPostsCount}
+            subtitle={t.dashboard.upcoming}
+            icon={
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            }
+            color="warning"
+            tooltip={t.dashboard.tooltipScheduled}
+          />
+          <KPICard
             title={t.dashboard.sessions}
             value={stats.totalSessions}
             subtitle={t.dashboard.conversations}
@@ -273,11 +297,10 @@ function DashboardContent() {
           />
         </div>
 
-        {/* Charts section */}
+        {/* Activity chart — full width to highlight the daily trend */}
         <div
           className={`
-            grid lg:grid-cols-2 gap-6 mb-10
-            transition-all duration-400 ease-out delay-100
+            mb-10 transition-all duration-400 ease-out delay-100
             ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}
           `}
         >
@@ -286,10 +309,9 @@ function DashboardContent() {
             title={t.dashboard.generationActivity}
             subtitle={t.ui.postEvolution}
           />
-          <StyleDistributionChart data={stats.styleDistribution} />
         </div>
 
-        {/* Response Mode chart */}
+        {/* Response mode (donut) + Feature usage (bars) — complementary breakdowns */}
         <div
           className={`
             grid lg:grid-cols-2 gap-6 mb-10
@@ -299,6 +321,7 @@ function DashboardContent() {
           style={{ transitionDelay: "150ms" }}
         >
           <ResponseModeChart data={stats.responseModeDistribution} />
+          <FeatureUsageChart data={stats.featureUsage} />
         </div>
 
         {/* Insights section */}

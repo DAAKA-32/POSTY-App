@@ -44,6 +44,14 @@ export interface GeneratedPost {
   content: string;
 }
 
+export interface GenerateSeedCommentOptions {
+  /** The full text of the post the comment is meant to extend. */
+  postContent: string;
+  language?: "fr" | "en";
+  userProfile?: UserProfile;
+  config?: Partial<OpenAIConfig>;
+}
+
 export interface ChatMessage {
   role: "user" | "assistant" | "system";
   content: string;
@@ -539,44 +547,6 @@ Scores from 1 to 10. Constructive and encouraging, but honest.`,
 // ============== PLATFORM ADAPTATION PROMPTS (PRO+/MAX) ==============
 
 export const PLATFORM_PROMPTS = {
-  reddit: {
-    fr: `Tu es un expert en contenu Reddit. Adapte ce post LinkedIn pour Reddit.
-Règles:
-- Ton authentique et communautaire (pas de marketing agressif)
-- Titre accrocheur et informatif (séparé du contenu)
-- Style conversationnel, comme si tu partageais avec des amis
-- Pas de hashtags (Reddit n'utilise pas de hashtags)
-- Longueur: 200-800 caractères pour le corps
-- Valeur ajoutée claire pour la communauté
-- Évite le ton corporate
-
-Réponds UNIQUEMENT avec un objet JSON valide (sans markdown, sans backticks):
-{
-  "title": "Titre accrocheur pour le post Reddit",
-  "content": "Le contenu adapté pour Reddit",
-  "characterCount": 400,
-  "suggestedSubreddits": ["subreddit1", "subreddit2"],
-  "notes": "Conseil spécifique pour ce post Reddit"
-}`,
-    en: `You are a Reddit content expert. Adapt this LinkedIn post for Reddit.
-Rules:
-- Authentic and community-oriented tone (no aggressive marketing)
-- Catchy and informative title (separate from content)
-- Conversational style, like sharing with friends
-- No hashtags (Reddit doesn't use hashtags)
-- Length: 200-800 characters for the body
-- Clear added value for the community
-- Avoid corporate tone
-
-Respond ONLY with a valid JSON object (no markdown, no backticks):
-{
-  "title": "Catchy title for the Reddit post",
-  "content": "Adapted content for Reddit",
-  "characterCount": 400,
-  "suggestedSubreddits": ["subreddit1", "subreddit2"],
-  "notes": "Specific tip for this Reddit post"
-}`,
-  },
   threads: {
     fr: `Tu es un expert en contenu Threads (Meta). Adapte ce post LinkedIn pour Threads.
 Règles:
@@ -611,34 +581,66 @@ Respond ONLY with a valid JSON object (no markdown, no backticks):
   "notes": "Specific tip for this post on Threads"
 }`,
   },
-  twitter: {
-    fr: `Tu es un expert en contenu Twitter/X. Adapte ce post LinkedIn pour Twitter.
+  bluesky: {
+    fr: `Tu es un expert en contenu Bluesky (AT Protocol). Adapte ce post LinkedIn pour Bluesky.
 Règles:
-- Maximum 280 caractères (STRICTEMENT)
-- Style direct et percutant
-- 1-3 hashtags maximum
-- Emojis utilisés avec parcimonie
+- Maximum 300 caractères (STRICTEMENT)
+- Ton direct et conversationnel
+- 0-2 hashtags maximum (peu utilisés sur Bluesky)
+- Pas d'emojis excessifs
+- Style proche de Twitter early days mais plus authentique
 
 Réponds UNIQUEMENT avec un objet JSON valide (sans markdown, sans backticks):
 {
-  "content": "Le contenu adapté pour Twitter (max 280 car)",
-  "characterCount": 180,
-  "hashtags": ["hashtag1"],
-  "notes": "Conseil spécifique pour ce tweet"
+  "content": "Le contenu adapté pour Bluesky (max 300 car)",
+  "characterCount": 200,
+  "hashtags": [],
+  "notes": "Conseil spécifique pour ce post Bluesky"
 }`,
-    en: `You are a Twitter/X content expert. Adapt this LinkedIn post for Twitter.
+    en: `You are a Bluesky (AT Protocol) content expert. Adapt this LinkedIn post for Bluesky.
 Rules:
-- Maximum 280 characters (STRICTLY)
-- Direct and punchy style
-- 1-3 hashtags maximum
-- Emojis used sparingly
+- Maximum 300 characters (STRICTLY)
+- Direct and conversational tone
+- 0-2 hashtags maximum (rarely used on Bluesky)
+- No excessive emojis
+- Style close to early Twitter but more authentic
 
 Respond ONLY with a valid JSON object (no markdown, no backticks):
 {
-  "content": "Adapted content for Twitter (max 280 chars)",
-  "characterCount": 180,
-  "hashtags": ["hashtag1"],
-  "notes": "Specific tip for this tweet"
+  "content": "Adapted content for Bluesky (max 300 chars)",
+  "characterCount": 200,
+  "hashtags": [],
+  "notes": "Specific tip for this Bluesky post"
+}`,
+  },
+  mastodon: {
+    fr: `Tu es un expert en contenu Mastodon (Fédiverse). Adapte ce post LinkedIn pour Mastodon.
+Règles:
+- Maximum 500 caractères (limite par défaut, certaines instances acceptent plus)
+- Ton authentique et communautaire (pas de marketing pur)
+- Hashtags utiles bienvenus (le Fédiverse les utilise pour la découverte)
+- Style indépendant, valeur ajoutée privilégiée
+
+Réponds UNIQUEMENT avec un objet JSON valide (sans markdown, sans backticks):
+{
+  "content": "Le contenu adapté pour Mastodon",
+  "characterCount": 400,
+  "hashtags": ["tag1", "tag2"],
+  "notes": "Conseil spécifique pour ce post Mastodon"
+}`,
+    en: `You are a Mastodon (Fediverse) content expert. Adapt this LinkedIn post for Mastodon.
+Rules:
+- Maximum 500 characters (default cap, some instances allow more)
+- Authentic and community tone (no pure marketing)
+- Helpful hashtags welcome (Fediverse uses them for discovery)
+- Independent style, value-driven
+
+Respond ONLY with a valid JSON object (no markdown, no backticks):
+{
+  "content": "Adapted content for Mastodon",
+  "characterCount": 400,
+  "hashtags": ["tag1", "tag2"],
+  "notes": "Specific tip for this Mastodon post"
 }`,
   },
   facebook: {
@@ -840,6 +842,91 @@ export class OpenAIService {
     });
 
     return results;
+  }
+
+  /**
+   * Generate a *seed comment* — the post author's own first reply, dropped
+   * 2–7 minutes after publishing to boost early engagement (LinkedIn algo
+   * weights early author-comments very heavily).
+   *
+   * The comment is calibrated to:
+   *   - Reference 1 specific element of the post (sounds organic, not bot)
+   *   - End with an open question OR add a bonus tip not in the post
+   *   - 30–90 words, conversational, no hashtags, no emoji-spam
+   *   - Match the author's voice (passes through userProfile)
+   */
+  async generateSeedComment(
+    options: GenerateSeedCommentOptions,
+  ): Promise<string> {
+    const { postContent, language = "fr", userProfile } = options;
+    const systemPrompt = this.buildSeedCommentSystemPrompt(language, userProfile);
+    const userPrompt =
+      language === "fr"
+        ? `Voici le post LinkedIn que je viens de publier. Rédige le PREMIER commentaire que je laisserais moi-même 3 minutes après pour relancer la conversation et booster l'algo.\n\n— POST —\n${postContent}\n— FIN —\n\nRends UNIQUEMENT le texte du commentaire, sans guillemets, sans intro, sans signature.`
+        : `Here is the LinkedIn post I just published. Write the FIRST comment I would leave myself 3 minutes later to spark conversation and boost algorithm reach.\n\n— POST —\n${postContent}\n— END —\n\nReturn ONLY the comment text. No quotes, no preamble, no signature.`;
+
+    const completion = await this.client.chat.completions.create({
+      model: this.model,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      temperature: 0.75,
+      max_tokens: 220,
+    });
+
+    const raw = completion.choices[0]?.message?.content?.trim() ?? "";
+    // Strip surrounding quotes that some models add despite the instruction.
+    return raw.replace(/^["""'«»]+|["""'«»]+$/g, "").trim();
+  }
+
+  private buildSeedCommentSystemPrompt(
+    language: "fr" | "en",
+    userProfile?: UserProfile,
+  ): string {
+    const voiceHint =
+      userProfile?.tone || userProfile?.linkedinStyle || "";
+    const sectorHint = userProfile?.sector || "";
+
+    if (language === "fr") {
+      return [
+        "Tu rédiges le PREMIER commentaire qu'un créateur LinkedIn laisse SUR SON PROPRE POST, 3 minutes après publication. C'est un signal clé pour l'algorithme.",
+        "",
+        "Règles strictes :",
+        "- Le commentaire DOIT prolonger la pensée du post, pas la résumer.",
+        "- Choisis UNE approche : (a) question ouverte qui invite à témoigner, (b) bonus concret non mentionné dans le post, (c) angle contrarien qui nuance, OU (d) ressource/exemple précis.",
+        "- Référence 1 mot ou idée précise du post pour que ça paraisse organique.",
+        "- 30 à 90 mots. Une à trois phrases. Naturel, conversationnel.",
+        "- Aucune flatterie auto-référentielle (pas de 'génial post', pas de '🔥🚀').",
+        "- Pas de hashtag. Maximum 1 emoji discret si pertinent.",
+        "- Voix : je-narrateur, comme si l'auteur tapait depuis son téléphone.",
+        sectorHint ? `- Secteur de l'auteur : ${sectorHint}.` : "",
+        voiceHint ? `- Style de voix : ${voiceHint}.` : "",
+        "",
+        "Tu retournes UNIQUEMENT le texte du commentaire, prêt à coller.",
+      ]
+        .filter(Boolean)
+        .join("\n");
+    }
+
+    return [
+      "You write the FIRST comment a LinkedIn creator drops ON THEIR OWN POST, 3 minutes after publishing. This is a key signal for the algorithm.",
+      "",
+      "Strict rules:",
+      "- The comment MUST extend the post's thinking, not summarize it.",
+      "- Pick ONE approach: (a) open question inviting personal testimony, (b) concrete bonus not in the post, (c) contrarian nuance, OR (d) specific resource/example.",
+      "- Reference one specific word or idea from the post so it sounds organic.",
+      "- 30 to 90 words. One to three sentences. Natural, conversational.",
+      "- No self-flattery ('great post', '🔥🚀').",
+      "- No hashtags. At most 1 subtle emoji if it earns its place.",
+      "- Voice: first-person, as if the author is typing from their phone.",
+      sectorHint ? `- Author sector: ${sectorHint}.` : "",
+      voiceHint ? `- Voice style: ${voiceHint}.` : "",
+      "",
+      "Return ONLY the comment text, ready to paste.",
+    ]
+      .filter(Boolean)
+      .join("\n");
   }
 
   /**

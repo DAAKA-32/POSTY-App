@@ -207,8 +207,9 @@ export default function HowItWorksSection() {
             />
           )}
 
-          {/* Layout: text LEFT, mockup RIGHT (flex-row-reverse) */}
-          <div className="relative z-10 flex flex-col lg:flex-row-reverse gap-[clamp(1.5rem,3vw,2rem)] items-center">
+          {/* Layout: text LEFT, mockup RIGHT (flex-row-reverse on desktop).
+              Mobile: `flex-col-reverse` → content first then mockup (faster scan). */}
+          <div className="relative z-10 flex flex-col-reverse lg:flex-row-reverse gap-[clamp(1.5rem,3vw,2rem)] items-center">
 
             {/* RIGHT — Mockup */}
             <div className="w-full lg:w-[42%] flex-shrink-0 flex items-center justify-center relative lg:my-[clamp(-1.5rem,-2vw,-2.5rem)]">
@@ -251,22 +252,16 @@ export default function HowItWorksSection() {
                 {l.hiwTitle} {l.hiwTitleAccent}
               </h3>
 
-              {/* Description */}
-              <p className="text-gray-600 text-[clamp(0.9rem,1.2vw,1.125rem)] leading-relaxed mb-[clamp(1rem,1.5vw,1.25rem)]">
+              {/* Description — both paragraphs share the same type scale,
+                  color, weight and line-height so they read as one coherent
+                  body. Hierarchy comes from order (lead first, supporting
+                  second), not from size or color shifts. */}
+              <p className="text-gray-600 text-[clamp(0.9rem,1.2vw,1.125rem)] leading-relaxed mb-[clamp(0.75rem,1.2vw,1rem)] max-w-prose mx-auto lg:mx-0">
                 {l.hiwSubtitle}
               </p>
-
-              {/* Value pills */}
-              <div className="flex flex-wrap justify-center lg:justify-start gap-2 mb-[clamp(1rem,1.5vw,1.25rem)]">
-                {[l.hiwPill1, l.hiwPill2, l.hiwPill3].map((pill, i) => (
-                  <div key={i} className="flex items-center gap-1.5 px-3 py-1.5 bg-white/80 rounded-lg border border-gray-200/60 shadow-sm">
-                    <svg className="w-3.5 h-3.5 text-cyan-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    <span className="text-[10px] sm:text-xs font-medium text-gray-700">{pill}</span>
-                  </div>
-                ))}
-              </div>
+              <p className="text-gray-600 text-[clamp(0.9rem,1.2vw,1.125rem)] leading-relaxed mb-[clamp(1rem,1.5vw,1.25rem)] max-w-prose mx-auto lg:mx-0">
+                {l.hiwSecondaryText}
+              </p>
 
               {/* CTA */}
               <div>

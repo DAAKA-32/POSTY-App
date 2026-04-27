@@ -6,6 +6,9 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { LinkedInProvider } from "@/contexts/LinkedInContext";
 import { FacebookProvider } from "@/contexts/FacebookContext";
 import { ThreadsProvider } from "@/contexts/ThreadsContext";
+import { BlueskyProvider } from "@/contexts/BlueskyContext";
+import { MastodonProvider } from "@/contexts/MastodonContext";
+import { DiscordProvider } from "@/contexts/DiscordContext";
 import { SchedulingProvider } from "@/contexts/SchedulingContext";
 import { QuotaProvider } from "@/contexts/QuotaContext";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
@@ -285,10 +288,16 @@ export default function RootLayout({
                   <LinkedInProvider>
                     <FacebookProvider>
                       <ThreadsProvider>
-                        <SchedulingProvider>
-                          {children}
-                          <GlobalCommandPalette />
-                        </SchedulingProvider>
+                        <BlueskyProvider>
+                          <MastodonProvider>
+                            <DiscordProvider>
+                              <SchedulingProvider>
+                                {children}
+                                <GlobalCommandPalette />
+                              </SchedulingProvider>
+                            </DiscordProvider>
+                          </MastodonProvider>
+                        </BlueskyProvider>
                       </ThreadsProvider>
                     </FacebookProvider>
                   </LinkedInProvider>

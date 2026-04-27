@@ -116,6 +116,8 @@ function ConversationContent() {
     stopGeneration,
     reset,
     loadConversation,
+    responses,
+    regenerateSeedComment,
   } = useChat({
     userId: user?.uid,
     isGuest: false,
@@ -508,9 +510,12 @@ function ConversationContent() {
     return await publishToLinkedIn(editedContent, visibility, undefined, organizationUrn);
   };
 
-  // Schedule handlers
-  const handleSchedulePost = useCallback((content: string) => {
+  // Schedule handlers — seedCommentText (optional) pre-fills the modal's
+  // boost-comment block when the user came from a freshly-generated post.
+  const [scheduleSeedText, setScheduleSeedText] = useState<string | undefined>(undefined);
+  const handleSchedulePost = useCallback((content: string, seedCommentText?: string) => {
     setScheduleContent(content);
+    setScheduleSeedText(seedCommentText);
     setShowScheduleModal(true);
   }, []);
 
@@ -621,17 +626,35 @@ function ConversationContent() {
                                   variant: "storytelling",
                                   timestamp: storytelling.timestamp,
                                   isStreaming: storytelling.isStreaming,
+                                  // Seed comment only attached to the LATEST pair —
+                                  // older history doesn't get retroactive boost prompts.
+                                  seedComment:
+                                    i === lastAIIndex || i + 1 === lastAIIndex
+                                      ? responses.find((r) => r.type === "storytelling")?.seedComment
+                                      : undefined,
                                 }}
                                 businessResponse={{
                                   content: business.content,
                                   variant: "business",
                                   timestamp: business.timestamp,
                                   isStreaming: business.isStreaming,
+                                  seedComment:
+                                    i === lastAIIndex || i + 1 === lastAIIndex
+                                      ? responses.find((r) => r.type === "business")?.seedComment
+                                      : undefined,
                                 }}
                                 userPlan={currentPlan}
                                 onPublishToLinkedIn={handlePublishToLinkedIn}
                                 onSchedule={handleSchedulePost}
                                 isLastMessage={i === lastAIIndex || i + 1 === lastAIIndex}
+                                onRegenerateSeedComment={
+                                  i === lastAIIndex || i + 1 === lastAIIndex
+                                    ? (variant) => {
+                                        const idx = responses.findIndex((r) => r.type === variant);
+                                        if (idx >= 0) regenerateSeedComment(idx);
+                                      }
+                                    : undefined
+                                }
                               />
                             </div>
                           );
@@ -674,6 +697,16 @@ function ConversationContent() {
                                 onSchedule={handleSchedulePost}
                                 showVariantBadge={planFeatures.responseMode === "single-choice"}
                                 isLastMessage={i === lastAIIndex}
+                                seedComment={
+                                  i === lastAIIndex
+                                    ? responses[0]?.seedComment
+                                    : undefined
+                                }
+                                onRegenerateSeedComment={
+                                  i === lastAIIndex && responses[0]
+                                    ? () => regenerateSeedComment(0)
+                                    : undefined
+                                }
                               />
                             </motion.div>
                           );
@@ -883,6 +916,7 @@ function ConversationContent() {
         isOpen={showScheduleModal}
         onClose={() => setShowScheduleModal(false)}
         content={scheduleContent}
+        seedCommentText={scheduleSeedText}
       />
     </MainLayout>
   );

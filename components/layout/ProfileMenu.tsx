@@ -283,7 +283,7 @@ export default function ProfileMenu({ isCollapsed = false, onNavigate }: Profile
           <>
             <div className="flex-1 min-w-0 text-left">
               <div className="flex items-center gap-1.5">
-                <p className="text-sm font-semibold text-text-primary truncate">
+                <p className="text-sm font-semibold text-text-primary truncate notranslate" translate="no">
                   {userProfile?.displayName || t.ui.userProfile}
                 </p>
                 {/* Plan badge */}
@@ -329,10 +329,10 @@ export default function ProfileMenu({ isCollapsed = false, onNavigate }: Profile
       >
         {/* User info header */}
         <div className="px-4 py-3 border-b border-gray-100 dark:border-dark-border">
-          <p className="text-sm font-semibold text-text-primary truncate">
+          <p className="text-sm font-semibold text-text-primary truncate notranslate" translate="no">
             {userProfile?.displayName || t.ui.userProfile}
           </p>
-          <p className="text-xs text-text-muted truncate">{user.email}</p>
+          <p className="text-xs text-text-muted truncate notranslate" translate="no">{user.email}</p>
         </div>
 
         {/* Menu items */}
@@ -394,8 +394,8 @@ export default function ProfileMenu({ isCollapsed = false, onNavigate }: Profile
           shadow-lg
           pointer-events-none
         ">
-          <p className="font-semibold text-gray-900 dark:text-text-primary">{userProfile?.displayName || t.ui.userProfile}</p>
-          <p className="text-xs text-gray-500 dark:text-text-muted">{user.email}</p>
+          <p className="font-semibold text-gray-900 dark:text-text-primary notranslate" translate="no">{userProfile?.displayName || t.ui.userProfile}</p>
+          <p className="text-xs text-gray-500 dark:text-text-muted notranslate" translate="no">{user.email}</p>
           <div className="absolute -left-1 bottom-3 w-2 h-2 bg-white dark:bg-dark-elevated border-l border-b border-gray-200 dark:border-dark-border rotate-45" />
         </div>
       )}

@@ -29,50 +29,35 @@ export default function KPICard({
   const { language } = useLanguage();
   const [showTooltip, setShowTooltip] = useState(false);
 
-  // Clean color palette - solid colors, no glow
-  const colorClasses = {
-    primary: {
-      bg: "bg-primary/10",
-      border: "border-primary/20",
-      borderHover: "hover:border-primary/30",
-      icon: "text-primary",
-    },
-    accent: {
-      bg: "bg-violet-500/10",
-      border: "border-violet-500/20",
-      borderHover: "hover:border-violet-500/30",
-      icon: "text-violet-600 dark:text-violet-400",
-    },
-    warning: {
-      bg: "bg-amber-500/10",
-      border: "border-amber-500/20",
-      borderHover: "hover:border-amber-500/30",
-      icon: "text-amber-600 dark:text-amber-400",
-    },
-    success: {
-      bg: "bg-emerald-500/10",
-      border: "border-emerald-500/20",
-      borderHover: "hover:border-emerald-500/30",
-      icon: "text-emerald-600 dark:text-emerald-400",
-    },
+  /**
+   * Unified tonal palette — all icons share a subtle gray surface with a
+   * primary-tinted glyph for visual cohesion (Linear/Stripe vibe). The legacy
+   * `color` prop is preserved for the trend pill differentiation only.
+   */
+  const trendPillClasses = {
+    primary: "text-primary bg-primary/8 border-primary/15",
+    accent: "text-violet-600 dark:text-violet-400 bg-violet-500/8 border-violet-500/15",
+    warning: "text-amber-600 dark:text-amber-400 bg-amber-500/8 border-amber-500/15",
+    success: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/8 border-emerald-500/15",
   };
-
-  const colors = colorClasses[color];
+  // Suppress unused warning while preserving the API
+  void trendPillClasses[color];
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{
-        y: -4,
-        boxShadow: "0 8px 25px -5px rgba(0, 0, 0, 0.08), 0 4px 10px -6px rgba(0, 0, 0, 0.04)",
-        transition: { duration: 0.25, ease: [0.25, 0.1, 0.25, 1] },
+        y: -2,
+        boxShadow: "0 4px 14px -4px rgba(15, 23, 42, 0.06), 0 2px 6px -3px rgba(15, 23, 42, 0.04)",
+        transition: { duration: 0.18, ease: [0.22, 1, 0.36, 1] },
       }}
-      transition={{ duration: 0.3 }}
-      className={`
-        group relative bg-white dark:bg-dark-card border ${colors.border} ${colors.borderHover} rounded-2xl p-3 sm:p-5
-        transition-colors duration-200 cursor-default
-      `}
+      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+      className="
+        group relative bg-white dark:bg-dark-card border border-gray-200/70 dark:border-dark-border/60
+        hover:border-gray-300/80 dark:hover:border-dark-border-hover
+        rounded-2xl p-3 sm:p-5 transition-colors duration-200 cursor-default
+      "
       onMouseEnter={() => setShowTooltip(true)}
       onMouseLeave={() => setShowTooltip(false)}
     >
@@ -85,15 +70,17 @@ export default function KPICard({
       )}
 
       <div className="flex items-start justify-between mb-3 sm:mb-4">
-        {/* Icon */}
-        <div
-          className={`
-            w-10 h-10 sm:w-12 sm:h-12 rounded-xl ${colors.bg} border ${colors.border}
-            flex items-center justify-center
-            transition-colors duration-200
-          `}
-        >
-          <span className={colors.icon}>{icon}</span>
+        {/* Icon — unified subtle surface across all KPIs */}
+        <div className="
+          w-10 h-10 sm:w-11 sm:h-11 rounded-xl
+          bg-gradient-to-br from-gray-50 to-gray-100/70
+          dark:from-dark-elevated dark:to-dark-elevated/60
+          ring-1 ring-gray-200/50 dark:ring-dark-border/40
+          flex items-center justify-center
+          transition-all duration-200
+          group-hover:ring-primary/20 group-hover:from-primary/[0.04] group-hover:to-primary/[0.08]
+        ">
+          <span className="text-gray-600 dark:text-gray-300 group-hover:text-primary transition-colors duration-200">{icon}</span>
         </div>
 
         {/* Trend badge */}

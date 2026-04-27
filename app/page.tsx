@@ -21,12 +21,15 @@ const LANG_SHORT: Record<Language, string> = {
 };
 import BillingToggle from "@/components/ui/BillingToggle";
 import PricingCard from "@/components/pricing/PricingCard";
-import PricingTrustBadges from "@/components/pricing/PricingTrustBadges";
+import BusinessOffer from "@/components/pricing/BusinessOffer";
 import { useScrollLock } from "@/hooks/ui/useScrollLock";
 import AnimatedMacBook from "@/components/landing/AnimatedMacBook";
 import AuroraBackground from "@/components/landing/AuroraBackground";
 import HowItWorksSection from "@/components/landing/HowItWorksSection";
 import { CopilotSection } from "@/components/landing/MockupScreens";
+import ROISimulator from "@/components/landing/ROISimulator";
+import CeriseSpotlight from "@/components/landing/CeriseSpotlight";
+import { AmbientDecorations } from "@/components/landing/AmbientDecorations";
 import { FaqJsonLd, postyFaqData } from "@/components/seo/JsonLd";
 
 // =============================================================================
@@ -46,6 +49,25 @@ const colors = {
 // Premium animation easings - inspired by Linear, Notion
 const smoothEase = [0.25, 0.1, 0.25, 1] as const;
 const premiumEase = [0.22, 1, 0.36, 1] as const;
+
+// =============================================================================
+// SCROLL PROGRESS BAR — premium top-of-page indicator (Linear / Stripe style)
+// =============================================================================
+function ScrollProgressBar() {
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, {
+    stiffness: 120,
+    damping: 26,
+    restDelta: 0.001,
+  });
+  return (
+    <motion.div
+      style={{ scaleX }}
+      aria-hidden="true"
+      className="fixed top-0 left-0 right-0 z-[60] h-[2px] origin-left bg-gradient-to-r from-[#F8935D] via-[#F76B54] to-[#FBB9AD] shadow-[0_0_12px_rgba(248,147,93,0.45)] pointer-events-none"
+    />
+  );
+}
 
 // Lightweight mobile detection — avoids heavy infinite animations on mobile
 function useIsMobile() {
@@ -165,6 +187,7 @@ function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState<string>("");
   const [langOpen, setLangOpen] = useState(false);
+  const [mobileLangOpen, setMobileLangOpen] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
   const { t, language, setLanguage } = useLanguage();
   const NAV_LINKS_DATA = getNavLinks(t);
@@ -478,26 +501,63 @@ function Navbar() {
               transition={{ delay: 0.35, duration: 0.3 }}
               className="px-4 sm:px-6 pb-4"
             >
-              {/* Language Switcher - Mobile */}
+              {/* Language Switcher - Mobile (compact toggle + animated dropdown) */}
               <div className="mb-4">
-                <div className="flex flex-wrap justify-center gap-1.5">
-                  {(Object.keys(languageNames) as Language[]).map((code) => (
-                    <button
-                      key={code}
-                      onClick={() => { setLanguage(code); }}
-                      className={`
-                        flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-150
-                        ${language === code
-                          ? "bg-[#F8935D]/10 text-[#F8935D] border border-[#F8935D]/25"
-                          : "text-gray-500 bg-white/60 border border-gray-200/60 active:bg-gray-100"
-                        }
-                      `}
+                <button
+                  onClick={() => setMobileLangOpen((v) => !v)}
+                  aria-expanded={mobileLangOpen}
+                  aria-label="Language"
+                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-white/70 border border-gray-200/70 active:bg-white transition-colors"
+                >
+                  <span className="flex items-center gap-2.5 min-w-0">
+                    <span className="text-base leading-none">{LANG_FLAGS[language]}</span>
+                    <span className="text-[13px] font-medium text-gray-700 truncate">
+                      {languageNames[language]}
+                    </span>
+                  </span>
+                  <motion.svg
+                    animate={{ rotate: mobileLangOpen ? 180 : 0 }}
+                    transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                    className="w-3.5 h-3.5 text-gray-400 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </motion.svg>
+                </button>
+                <AnimatePresence initial={false}>
+                  {mobileLangOpen && (
+                    <motion.div
+                      key="mobile-lang-dropdown"
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+                      className="overflow-hidden"
                     >
-                      <span className="text-sm">{LANG_FLAGS[code]}</span>
-                      <span>{LANG_SHORT[code]}</span>
-                    </button>
-                  ))}
-                </div>
+                      <div className="mt-2 grid grid-cols-2 gap-1 p-1.5 rounded-xl bg-white/70 border border-gray-200/70">
+                        {(Object.keys(languageNames) as Language[]).map((code) => {
+                          const isActive = language === code;
+                          return (
+                            <button
+                              key={code}
+                              onClick={() => { setLanguage(code); setMobileLangOpen(false); }}
+                              className={`flex items-center gap-2 px-2.5 py-2 rounded-lg text-[12px] font-medium transition-colors duration-150 ${
+                                isActive
+                                  ? "bg-[#F8935D]/10 text-[#F8935D]"
+                                  : "text-gray-600 active:bg-gray-100"
+                              }`}
+                            >
+                              <span className="text-sm leading-none flex-shrink-0">{LANG_FLAGS[code]}</span>
+                              <span className="truncate">{languageNames[code]}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent mb-4" />
@@ -718,7 +778,7 @@ function HeroSection() {
               </motion.a>
             </motion.div>
 
-            {/* Trust indicators */}
+            {/* Trust indicators — minimal: trial + guarantee only */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -736,18 +796,6 @@ function HeroSection() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 {t.landing.heroGuarantee}
-              </span>
-              <span className="flex items-center gap-2">
-                <svg className="w-5 h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                {t.landing.heroReady}
-              </span>
-              <span className="flex items-center gap-2">
-                <svg className="w-5 h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                {t.landing.heroFirstPost}
               </span>
             </motion.div>
           </motion.div>
@@ -822,61 +870,6 @@ function HeroSection() {
               </motion.div>
             </div>
 
-            {/* Floating stats card — desktop only */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={isInView ? { opacity: 1, scale: 1, y: 0 } : {}}
-              transition={{ duration: 0.4, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-              className="hidden lg:block absolute -left-4 xl:-left-8 top-1/4 z-30"
-            >
-              <motion.div
-                animate={(prefersReducedMotion || isMobile) ? {} : {
-                  y: [0, -5, 0],
-                }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100/80 p-4"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-500 flex items-center justify-center">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">{t.landing.heroStatEngagement}</p>
-                    <p className="text-lg font-bold text-gray-900">x3</p>
-                  </div>
-                </div>
-              </motion.div>
-            </motion.div>
-
-            {/* Floating notification — desktop only */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={isInView ? { opacity: 1, scale: 1, y: 0 } : {}}
-              transition={{ duration: 0.4, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-              className="hidden lg:block absolute -right-2 xl:right-4 bottom-1/4 z-30"
-            >
-              <motion.div
-                animate={(prefersReducedMotion || isMobile) ? {} : {
-                  y: [0, 5, 0],
-                }}
-                transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100/80 p-4"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#F8935D] to-[#F76B54] flex items-center justify-center">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">{t.landing.heroStatNewClient}</p>
-                    <p className="text-sm font-semibold text-gray-900">{t.landing.heroStatViaLinkedin}</p>
-                  </div>
-                </div>
-              </motion.div>
-            </motion.div>
           </motion.div>
 
         </div>
@@ -993,7 +986,7 @@ function DemoSection() {
   const titleOpacity = useTransform(scrollYValue, [0, Math.max(titleHeight * 0.7, 150)], [1, 0]);
 
   // View mode state
-  const [viewMode, setViewMode] = useState<"demo" | "preview">("preview");
+  const [viewMode, setViewMode] = useState<"demo" | "preview" | "video">("preview");
 
   // Fallback: If user switches to demo before animation completes
   useEffect(() => {
@@ -1275,6 +1268,25 @@ function DemoSection() {
                 </span>
               </button>
 
+              {/* Video Tab */}
+              <button
+                onClick={() => setViewMode("video")}
+                className={`
+                  relative px-5 py-2 md:px-6 md:py-2.5 rounded-t-xl text-sm md:text-base font-semibold transition-all duration-300 ease-out border border-b-0
+                  ${viewMode === "video"
+                    ? "bg-white border-gray-200/60 text-[#F8935D] z-10"
+                    : "bg-gray-100/80 border-gray-200/40 text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                  }
+                `}
+              >
+                <span className="relative z-10 flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  {(t.landing as { demoVideoLabel?: string }).demoVideoLabel || "See in action"}
+                </span>
+              </button>
+
               {/* Demo Tab */}
               <button
                 onClick={() => setViewMode("demo")}
@@ -1480,6 +1492,72 @@ function DemoSection() {
                   isVisible={viewMode === "preview"}
                   onAnimationComplete={handleMacBookAnimationComplete}
                 />
+              </motion.div>
+            )}
+
+            {/* ============================================================ */}
+            {/* Video — MacBook frame wrapping a looping product demo video  */}
+            {/* ============================================================ */}
+            {viewMode === "video" && (
+              <motion.div
+                className="relative"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, ease: cinematicEase }}
+              >
+                <div className="relative w-full max-w-[1084px] mx-auto">
+                  {/* MacBook lid */}
+                  <div className="relative bg-gradient-to-b from-[#2a2a2c] via-[#1d1d1f] to-[#141416] rounded-[12px] sm:rounded-[18px] md:rounded-[22px] p-[5px] sm:p-2 md:p-2.5 shadow-2xl shadow-black/40 ring-1 ring-black/50">
+                    <div className="absolute top-[5px] sm:top-2 md:top-2.5 left-1/2 -translate-x-1/2 w-10 sm:w-14 md:w-16 h-1 md:h-1.5 bg-[#050505] rounded-b-[5px] z-20 pointer-events-none" />
+
+                    {/* Browser window frame */}
+                    <div className="relative bg-white rounded-md md:rounded-lg overflow-hidden border border-black/30">
+                      <div className="flex items-center justify-between px-5 md:px-6 py-3.5 md:py-4 border-b border-gray-100 bg-gradient-to-b from-gray-50/80 to-white">
+                        <div className="flex items-center gap-1.5 md:gap-2">
+                          <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-[#FF5F57] shadow-sm shadow-[#FF5F57]/30" />
+                          <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-[#FEBC2E] shadow-sm shadow-[#FEBC2E]/30" />
+                          <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-[#28C840] shadow-sm shadow-[#28C840]/30" />
+                        </div>
+                        <div className="flex-1 mx-4 md:mx-8">
+                          <div className="bg-gray-100/80 rounded-lg px-3 py-1 md:py-1.5 flex items-center justify-center gap-1.5">
+                            <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                            <span className="text-[11px] md:text-xs text-gray-400 font-medium truncate">postyapp.ai</span>
+                          </div>
+                        </div>
+                        <div className="w-[52px] md:w-[62px]" />
+                      </div>
+
+                      <div className="relative aspect-[16/9] bg-[#FAFAF8] overflow-hidden">
+                        {/* Real Posty workflow recording — autoplay loop muted,
+                            captured via Playwright + ffmpeg (scripts/record-demo.mjs).
+                            Inert text fallback inside <video> — never put a React
+                            component here: even when the video plays, the fallback
+                            children mount and their effects run in parallel, which
+                            collides with Suspense cleanup (React DevTools warning). */}
+                        <video
+                          src="/videos/posty-demo.mp4"
+                          autoPlay
+                          loop
+                          muted
+                          playsInline
+                          preload="metadata"
+                          aria-label="Posty product demo: prompt → AI generation → publish to LinkedIn"
+                          className="absolute inset-0 w-full h-full object-cover"
+                        >
+                          Your browser does not support HTML5 video.
+                        </video>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* MacBook hinge */}
+                  <div className="relative -mt-[1px] mx-auto w-[101%] sm:w-[101.5%] flex justify-center">
+                    <div className="h-1 sm:h-1.5 md:h-2 w-full bg-gradient-to-b from-[#3a3a3c] via-[#2c2c2e] to-[#1d1d1f] rounded-b-lg sm:rounded-b-xl shadow-md shadow-black/20" />
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[18%] h-[2px] sm:h-[3px] bg-[#0f0f0f] rounded-b-md" />
+                  </div>
+                </div>
               </motion.div>
             )}
 
@@ -2147,15 +2225,10 @@ function KeyBenefitsSection() {
               <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-[#F8935D]/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
               <div className="relative z-10">
-                <div className="flex items-start justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#F8935D]/10 to-[#F76B54]/10 flex items-center justify-center">
-                      <svg className="w-5 h-5 text-[#F8935D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                    <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">{t.landing.resultsProductivity}</span>
-                  </div>
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#F8935D]/10 to-[#F76B54]/10 flex items-center justify-center mb-6">
+                  <svg className="w-5 h-5 text-[#F8935D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
                 </div>
 
                 <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-3 leading-snug">
@@ -2459,96 +2532,71 @@ function _LegacyKeyBenefitsSection() {
 }
 
 // =============================================================================
-// TARGET AUDIENCE SECTION — Premium Interactive Light Showcase
+// TARGET AUDIENCE SECTION — Editorial warm series
 // =============================================================================
+/**
+ * Curated SaaS palette — three distinct hues, one per persona archetype.
+ * Brand orange anchors Posty's identity; indigo and emerald are reserved
+ * for the persona cards (the only place these cool colors are allowed,
+ * acting as semantic differentiation, not decoration).
+ *
+ * Saturation calibrated to feel premium (Stripe/Linear/Notion class), not
+ * the over-bright rainbow we had before. Text values are AA-safe darker
+ * variants for the persona's tag pill on white.
+ */
 const audienceAccents = {
-  cyan: {
-    gradient: "from-cyan-400 to-blue-500",
-    iconBg: "bg-gradient-to-br from-cyan-100 to-blue-100",
-    iconRing: "ring-cyan-200/60",
-    iconColor: "text-cyan-600",
-    tag: "bg-cyan-50 text-cyan-700 ring-1 ring-inset ring-cyan-200/60",
-    solutionDot: "bg-cyan-500",
-    solutionLabel: "text-cyan-600/80",
-    glowRgb: "6, 182, 212",
-    numberColor: "text-cyan-400/[0.08]",
-    accentBar: "from-cyan-400 to-blue-500",
+  sunrise: {
+    hex: "#F8935D",     // Posty brand orange — Entrepreneurs (action, speed)
+    rgb: "248, 147, 93",
+    text: "#B5532E",
   },
-  violet: {
-    gradient: "from-violet-400 to-purple-500",
-    iconBg: "bg-gradient-to-br from-violet-100 to-purple-100",
-    iconRing: "ring-violet-200/60",
-    iconColor: "text-violet-600",
-    tag: "bg-violet-50 text-violet-700 ring-1 ring-inset ring-violet-200/60",
-    solutionDot: "bg-violet-500",
-    solutionLabel: "text-violet-600/80",
-    glowRgb: "139, 92, 246",
-    numberColor: "text-violet-400/[0.08]",
-    accentBar: "from-violet-400 to-purple-500",
+  brand: {
+    hex: "#6366F1",     // Indigo-500 — Agencies (strategy, scale)
+    rgb: "99, 102, 241",
+    text: "#4338CA",    // Indigo-700, AA-safe on white
   },
-  amber: {
-    gradient: "from-amber-400 to-orange-500",
-    iconBg: "bg-gradient-to-br from-amber-100 to-orange-100",
-    iconRing: "ring-amber-200/60",
-    iconColor: "text-amber-600",
-    tag: "bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200/60",
-    solutionDot: "bg-amber-500",
-    solutionLabel: "text-amber-600/80",
-    glowRgb: "245, 158, 11",
-    numberColor: "text-amber-400/[0.08]",
-    accentBar: "from-amber-400 to-orange-500",
+  burnt: {
+    hex: "#10B981",     // Emerald-500 — Freelances (growth, craft)
+    rgb: "16, 185, 129",
+    text: "#047857",    // Emerald-700, AA-safe on white
   },
 } as const;
+type AudienceAccent = keyof typeof audienceAccents;
 
 function getAudienceProfiles(t: Translations) {
+  /* Dead i18n fields (subtitle/painPoint/Stat1/Stat2) are intentionally not
+   * destructured \u2014 they're not rendered. Keys are preserved in translations
+   * for potential future surfaces. */
   return [
     {
       title: t.landing.audience1Title,
-      subtitle: t.landing.audience1Roles,
-      painPoint: t.landing.audience1Problem,
       solution: t.landing.audience1Solution,
-      metrics: [
-        { value: "30s", label: t.landing.audience1Stat1 },
-        { value: "1/jour", label: t.landing.audience1Stat2 },
-      ],
       tag: t.landing.audience1Ideal,
-      accent: "cyan" as const,
+      accent: "sunrise" as AudienceAccent,
       icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.75}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 00-2.58 5.841m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 01-2.448-2.448 14.9 14.9 0 01.06-.312m-2.24 2.39a4.493 4.493 0 00-1.757 4.306 4.493 4.493 0 004.306-1.758M16.5 9a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
         </svg>
       ),
     },
     {
       title: t.landing.audience2Title,
-      subtitle: t.landing.audience2Roles,
-      painPoint: t.landing.audience2Problem,
       solution: t.landing.audience2Solution,
-      metrics: [
-        { value: "10+", label: t.landing.audience2Stat1 },
-        { value: "100%", label: t.landing.audience2Stat2 },
-      ],
       tag: t.landing.audience2Ideal,
-      accent: "violet" as const,
+      accent: "brand" as AudienceAccent,
       icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.75}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
         </svg>
       ),
     },
     {
       title: t.landing.audience3Title,
-      subtitle: t.landing.audience3Roles,
-      painPoint: t.landing.audience3Problem,
       solution: t.landing.audience3Solution,
-      metrics: [
-        { value: "2 min", label: t.landing.audience3Stat1 },
-        { value: "\u00d73", label: t.landing.audience3Stat2 },
-      ],
       tag: t.landing.audience3Ideal,
-      accent: "amber" as const,
+      accent: "burnt" as AudienceAccent,
       icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.75}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0M12 12.75h.008v.008H12v-.008z" />
         </svg>
       ),
@@ -2556,56 +2604,76 @@ function getAudienceProfiles(t: Translations) {
   ];
 }
 
-const AudienceCard = memo(function AudienceCard({ profile, index }: { profile: ReturnType<typeof getAudienceProfiles>[number]; index: number; skipEntryAnimation?: boolean }) {
+/**
+ * Single shared card for the marquee. Framer Motion variants drive the
+ * hover state: card lifts + border tints in the persona's warm hue, top
+ * accent bar brightens, icon container scales subtly. The shadow on hover
+ * also tints with the persona color — that's the signature detail.
+ */
+const AudienceMarqueeCard = memo(function AudienceMarqueeCard({
+  profile,
+}: {
+  profile: ReturnType<typeof getAudienceProfiles>[number];
+}) {
   const accent = audienceAccents[profile.accent];
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "0px 0px 80px 0px" }}
-      transition={{ delay: index * 0.08, duration: 0.4, ease: premiumEase }}
-      className="group relative h-full"
+      className="group relative flex-shrink-0 w-[320px]"
+      style={{ transform: "translateZ(0)", backfaceVisibility: "hidden" }}
+      initial="rest"
+      whileHover="hover"
+      animate="rest"
     >
-      <div className="relative h-full rounded-2xl bg-white border border-gray-200/70 hover:border-gray-300/80 hover:shadow-lg transition-all duration-200 overflow-hidden">
-        {/* Top accent line */}
-        <div className={`h-[2px] bg-gradient-to-r ${accent.gradient} opacity-60`} />
+      <motion.div
+        className="relative h-full rounded-2xl bg-white border overflow-hidden flex flex-col"
+        variants={{
+          rest: {
+            y: 0,
+            boxShadow: "0 1px 2px rgba(15, 23, 42, 0.04)",
+            borderColor: "rgba(15, 23, 42, 0.06)",
+          },
+          hover: {
+            y: -4,
+            boxShadow: `0 12px 32px -12px rgba(${accent.rgb}, 0.18), 0 4px 12px -6px rgba(15, 23, 42, 0.06)`,
+            borderColor: `rgba(${accent.rgb}, 0.30)`,
+          },
+        }}
+        transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+      >
+        {/* Top accent bar — 1px hairline that brightens on hover */}
+        <motion.div
+          className="h-[1px] flex-shrink-0 origin-left"
+          style={{ backgroundColor: accent.hex }}
+          variants={{ rest: { opacity: 0.6 }, hover: { opacity: 1 } }}
+          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+        />
 
-        <div className="p-6 sm:p-7">
-          {/* Icon + Title */}
-          <div className="flex items-center gap-3.5 mb-4">
-            <div
-              className={`w-11 h-11 rounded-xl ${accent.iconBg} ring-1 ${accent.iconRing} flex items-center justify-center ${accent.iconColor} flex-shrink-0`}
+        <div className="p-6 flex flex-col flex-1">
+          {/* Icon + Title row */}
+          <div className="flex items-center gap-3 mb-4">
+            <motion.div
+              className="w-10 h-10 rounded-[10px] flex items-center justify-center flex-shrink-0"
+              style={{ color: accent.hex }}
+              variants={{
+                rest: { scale: 1, backgroundColor: `rgba(${accent.rgb}, 0.08)` },
+                hover: { scale: 1.05, backgroundColor: `rgba(${accent.rgb}, 0.12)` },
+              }}
+              transition={{ duration: 0.18, ease: "easeOut" }}
             >
               {profile.icon}
-            </div>
-            <div className="min-w-0">
-              <h3 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight leading-snug">
-                {profile.title}
-              </h3>
-            </div>
+            </motion.div>
+            <h3 className="text-[15px] font-semibold text-gray-900 tracking-tight leading-snug">
+              {profile.title}
+            </h3>
           </div>
 
-          {/* Solution — the core message */}
-          <p className="text-sm text-gray-600 leading-relaxed mb-4">
+          {/* Solution copy */}
+          <p className="text-[13.5px] text-gray-600 leading-[1.55] flex-1">
             {profile.solution}
           </p>
-
-          {/* Tag */}
-          <div
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium ${accent.tag}`}
-          >
-            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-              <path
-                fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                clipRule="evenodd"
-              />
-            </svg>
-            {profile.tag}
-          </div>
         </div>
-      </div>
+      </motion.div>
     </motion.div>
   );
 });
@@ -2613,94 +2681,62 @@ const AudienceCard = memo(function AudienceCard({ profile, index }: { profile: R
 function TargetAudienceSection() {
   const { t } = useLanguage();
   const AUDIENCE_PROFILES = getAudienceProfiles(t);
+  const reduced = useReducedMotion();
 
   return (
-    <section id="audience" className="py-12 md:py-16 lg:py-20 overflow-hidden">
-      {/* Section Header — clean and minimal */}
+    <section
+      id="audience"
+      aria-label="Pour qui Posty"
+      className="py-12 md:py-16 lg:py-20 overflow-hidden"
+    >
+      {/* Section header — single brand orange on the accent word, no gradient */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "0px 0px 80px 0px" }}
           transition={{ duration: 0.4, ease: premiumEase }}
-          className="text-center mb-10 lg:mb-14"
+          className="text-center mb-12 lg:mb-14"
         >
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight">
             <span className="text-gray-900">{t.landing.audienceTitle2}</span>{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
-              {t.landing.audienceTitle3}
-            </span>
+            <span className="text-[#F8935D]">{t.landing.audienceTitle3}</span>
           </h2>
-          <p className="text-gray-500 text-sm sm:text-base max-w-lg mx-auto">
-            {t.landing.audienceSubtitle}
-          </p>
         </motion.div>
       </div>
 
-      {/* Infinite scroll marquee — 1084px centered */}
-      <div className="relative max-w-[1084px] mx-auto">
-        {/* Fade edges */}
-        <div className="absolute left-0 top-0 bottom-0 w-12 sm:w-24 bg-gradient-to-r from-[#FEF3EE] to-transparent z-10 pointer-events-none" />
-        <div className="absolute right-0 top-0 bottom-0 w-12 sm:w-24 bg-gradient-to-l from-[#FEF3EE] to-transparent z-10 pointer-events-none" />
-
-        <div className="overflow-hidden">
-        <div
-          className="flex items-stretch animate-marquee-value gap-5 w-max hover:[animation-play-state:paused]"
-          style={{ willChange: "transform", backfaceVisibility: "hidden" }}
-        >
-          {[...AUDIENCE_PROFILES, ...AUDIENCE_PROFILES, ...AUDIENCE_PROFILES, ...AUDIENCE_PROFILES].map((profile, i) => {
-            const accent = audienceAccents[profile.accent];
-            return (
-              <div
-                key={i}
-                className="group relative flex-shrink-0 w-[340px]"
-                style={{ transform: "translateZ(0)", backfaceVisibility: "hidden" }}
-              >
-                <div className="relative h-full rounded-2xl bg-white border border-gray-200/70 overflow-hidden flex flex-col">
-                  {/* Top accent line */}
-                  <div className={`h-[2px] bg-gradient-to-r ${accent.gradient} opacity-60 flex-shrink-0`} />
-
-                  <div className="p-6 sm:p-7 flex flex-col flex-1">
-                    {/* Icon + Title */}
-                    <div className="flex items-center gap-3.5 mb-4">
-                      <div
-                        className={`w-11 h-11 rounded-xl ${accent.iconBg} ring-1 ${accent.iconRing} flex items-center justify-center ${accent.iconColor} flex-shrink-0`}
-                      >
-                        {profile.icon}
-                      </div>
-                      <div className="min-w-0">
-                        <h3 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight leading-snug">
-                          {profile.title}
-                        </h3>
-                                </div>
-                    </div>
-
-                    {/* Solution — the core message */}
-                    <p className="text-sm text-gray-600 leading-relaxed mb-4 flex-1">
-                      {profile.solution}
-                    </p>
-
-                    {/* Tag — always at the bottom */}
-                    <div
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium ${accent.tag} self-start`}
-                    >
-                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                          fillRule="evenodd"
-                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                      {profile.tag}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+      {/* Reduced-motion fallback: static 3-up grid (the marquee is purely
+          decorative motion — when users opt out, the same 3 cards still
+          tell the story, just without the horizontal scroll). */}
+      {reduced ? (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          {AUDIENCE_PROFILES.map((profile, i) => (
+            <AudienceMarqueeCard key={i} profile={profile} />
+          ))}
         </div>
+      ) : (
+        <div className="relative max-w-[1084px] mx-auto">
+          {/* Edge fade — tighter than before (80px) for sharper attention */}
+          <div className="absolute left-0 top-0 bottom-0 w-12 sm:w-20 bg-gradient-to-r from-[#FEF3EE] to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-12 sm:w-20 bg-gradient-to-l from-[#FEF3EE] to-transparent z-10 pointer-events-none" />
+
+          <div className="overflow-hidden">
+            <div
+              className="flex items-stretch animate-marquee-value gap-4 w-max hover:[animation-play-state:paused]"
+              style={{
+                willChange: "transform",
+                backfaceVisibility: "hidden",
+                /* Slower marquee (60s) — premium pacing à la Stripe homepage. */
+                animationDuration: "60s",
+              }}
+            >
+              {[...AUDIENCE_PROFILES, ...AUDIENCE_PROFILES, ...AUDIENCE_PROFILES, ...AUDIENCE_PROFILES].map((profile, i) => (
+                <AudienceMarqueeCard key={i} profile={profile} />
+              ))}
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </section>
   );
 }
@@ -2809,13 +2845,7 @@ function AIExperienceSection() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
                   </svg>
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-900">Posty AI</p>
-                  <div className="flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    <span className="text-[10px] text-gray-400">{t.landing.demoOnline}</span>
-                  </div>
-                </div>
+                <p className="text-sm font-semibold text-gray-900">Posty AI</p>
               </div>
 
               {/* Chat messages */}
@@ -2884,6 +2914,7 @@ interface FeatureConfig {
     iconText: string;     // Icon text color
     badge: string;        // Badge background
     badgeText: string;    // Badge text
+    badgeDot?: string;    // Optional override for the pulsing dot (defaults to iconBg)
     glow: string;         // Glow effect
     accent: string;       // Accent details
     titleGradient: string; // Title text gradient
@@ -3264,7 +3295,6 @@ function getFeatures(t: Translations): FeatureConfig[] {
     description: t.landing.featuresMultiPlatformDesc,
     mockup: <MockupMultiPlatform />,
     badge: t.landing.featuresMultiPlatformLabel,
-    tierBadge: "Max",
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
@@ -3276,8 +3306,9 @@ function getFeatures(t: Translations): FeatureConfig[] {
       border: "border-orange-200 hover:border-[#F8935D]",
       iconBg: "bg-gradient-to-br from-[#F8935D] to-[#F76B54]",
       iconText: "text-white",
-      badge: "bg-orange-100",
-      badgeText: "text-orange-700",
+      badge: "bg-gradient-to-r from-[#F8935D] to-[#F76B54]",
+      badgeText: "text-white",
+      badgeDot: "bg-white",
       glow: "shadow-[#F8935D]/20",
       accent: "text-[#F76B54]",
       titleGradient: "from-[#F8935D] via-[#FBB9AD] to-slate-300",
@@ -3424,8 +3455,10 @@ function FeatureCard({ feature, index }: { feature: FeatureConfig; index: number
           />
         )}
 
-        {/* Inner flex layout: image + content */}
-        <div className={`relative z-10 flex flex-col ${isEven ? "lg:flex-row" : "lg:flex-row-reverse"} gap-[clamp(1.5rem,3vw,2rem)] items-center`}>
+        {/* Inner flex layout: image + content.
+            Mobile: `flex-col-reverse` → content first then mockup (faster scan).
+            Desktop: alternating left/right per `isEven`. */}
+        <div className={`relative z-10 flex flex-col-reverse ${isEven ? "lg:flex-row" : "lg:flex-row-reverse"} gap-[clamp(1.5rem,3vw,2rem)] items-center`}>
 
         {/* Visual — Centered Mockup — overflows card vertically for premium feel */}
         <div className="w-full lg:w-[42%] flex-shrink-0 flex items-center justify-center relative lg:my-[clamp(-1.5rem,-2vw,-2.5rem)]">
@@ -3459,7 +3492,7 @@ function FeatureCard({ feature, index }: { feature: FeatureConfig; index: number
                   text-xs font-semibold shadow-lg
                 `}
               >
-                <span className={`w-2 h-2 rounded-full ${feature.color.iconBg} animate-pulse`} />
+                <span className={`w-2 h-2 rounded-full ${feature.color.badgeDot ?? feature.color.iconBg} animate-pulse`} />
                 {feature.badge}
               </span>
             )}
@@ -3531,6 +3564,71 @@ function FeatureCard({ feature, index }: { feature: FeatureConfig; index: number
   );
 }
 
+/**
+ * SectionTitle — premium H2 with word-by-word reveal on scroll.
+ *
+ * Why a dedicated component:
+ *   • Section H2s on the warm peach landing were using `text-silver-premium`
+ *     (light-gray gradient) which washed out badly. The CSS class is now
+ *     dark-ink shimmer, but we also want the *motion* signature: words
+ *     stagger in from below, the brand keyword (LinkedIn) lands in orange.
+ *   • Splits the title on the highlight token so any language works as long
+ *     as the keyword appears in the i18n string.
+ *
+ * Animation budget: 0.4s per word reveal, 60ms stagger, ease [0.22,1,0.36,1].
+ * Triggers once on scroll into view.
+ */
+function SectionTitle({
+  text,
+  highlight,
+  className = "",
+}: {
+  text: string;
+  highlight?: string;
+  className?: string;
+}) {
+  /* Split the title into renderable tokens, isolating the highlight word so
+   * we can paint it in brand orange. Whitespace-preserving split. */
+  const tokens: { word: string; isHighlight: boolean }[] = [];
+  if (highlight && text.includes(highlight)) {
+    const parts = text.split(highlight);
+    parts.forEach((part, i) => {
+      part.split(/\s+/).filter(Boolean).forEach((w) => tokens.push({ word: w, isHighlight: false }));
+      if (i < parts.length - 1) tokens.push({ word: highlight, isHighlight: true });
+    });
+  } else {
+    text.split(/\s+/).filter(Boolean).forEach((w) => tokens.push({ word: w, isHighlight: false }));
+  }
+
+  return (
+    <motion.h2
+      className={`text-[clamp(1.75rem,4vw,3.25rem)] font-bold tracking-tight leading-[1.12] ${className}`}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, margin: "0px 0px -80px 0px" }}
+      variants={{
+        hidden: {},
+        visible: { transition: { staggerChildren: 0.06, delayChildren: 0.05 } },
+      }}
+    >
+      {tokens.map((t, i) => (
+        <motion.span
+          key={i}
+          variants={{
+            hidden: { opacity: 0, y: 14 },
+            visible: { opacity: 1, y: 0 },
+          }}
+          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          className={`inline-block ${t.isHighlight ? "text-[#F8935D]" : "text-silver-premium"}`}
+        >
+          {t.word}
+          {i < tokens.length - 1 && " "}
+        </motion.span>
+      ))}
+    </motion.h2>
+  );
+}
+
 function FeaturesSection() {
   const isMobile = useIsMobile();
   const { t } = useLanguage();
@@ -3539,17 +3637,9 @@ function FeaturesSection() {
   return (
     <section id="features" className="py-[clamp(1.5rem,3vw,2.5rem)] px-[clamp(1rem,4vw,3rem)] overflow-hidden">
       <div className="w-full max-w-[min(90vw,67.75rem)] mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "0px 0px 100px 0px" }}
-          transition={{ duration: 0.4, ease: premiumEase }}
-          className="text-center mb-[clamp(1.25rem,2vw,1.75rem)]"
-        >
-          <h2 className="text-[clamp(1.75rem,4vw,3.25rem)] font-bold">
-            <span className="text-silver-premium">{t.landing.featuresSectionTitle}</span>
-          </h2>
-        </motion.div>
+        <div className="text-center mb-[clamp(1.25rem,2vw,1.75rem)]">
+          <SectionTitle text={t.landing.featuresSectionTitle} highlight="LinkedIn" />
+        </div>
 
         {/* How it works — first feature card, right after title */}
         <HowItWorksSection />
@@ -3574,6 +3664,9 @@ function FeaturesSection() {
           ))}
         </div>
 
+        {/* Featured client testimonial — sibling of the feature cards above */}
+        <CeriseSpotlight />
+
       </div>
     </section>
   );
@@ -3583,21 +3676,277 @@ function FeaturesSection() {
 // VALUE BLOCK — Premium value proposition after Features
 // =============================================================================
 
+// Single card with cursor-tracking radial glow + magnetic hover
+type ValueItem = {
+  title: string;
+  desc: string;
+  gradientBg: string;
+  borderColor: string;
+  iconGradient: string;
+  accentColor: string;
+  accentRgb: string; // "248,147,93" — used in inline rgba()
+  icon: React.ReactNode;
+};
+
+function ValueCard({ item, index }: { item: ValueItem; index: number }) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const prefersReducedMotion = useReducedMotion();
+  const isMobile = useIsMobile();
+
+  // Cursor-tracked spotlight
+  const mx = useMotionValue(0);
+  const my = useMotionValue(0);
+  const spotlight = useMotionTemplate`radial-gradient(280px circle at ${mx}px ${my}px, rgba(${item.accentRgb}, 0.18), transparent 65%)`;
+
+  const onMove = useCallback((e: React.MouseEvent) => {
+    const el = cardRef.current;
+    if (!el || prefersReducedMotion || isMobile) return;
+    const rect = el.getBoundingClientRect();
+    mx.set(e.clientX - rect.left);
+    my.set(e.clientY - rect.top);
+  }, [mx, my, prefersReducedMotion, isMobile]);
+
+  const numberLabel = String(index + 1).padStart(2, "0");
+
+  return (
+    <motion.div
+      ref={cardRef}
+      onMouseMove={onMove}
+      initial={{ opacity: 0, y: 28 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "0px 0px -80px 0px" }}
+      transition={{
+        duration: 0.55,
+        delay: index * 0.08,
+        ease: premiumEase,
+      }}
+      whileHover={isMobile ? undefined : {
+        y: -6,
+        transition: { type: "spring", stiffness: 320, damping: 24 },
+      }}
+      className={`
+        group relative isolate overflow-hidden
+        rounded-[clamp(1rem,1.6vw,1.4rem)]
+        bg-gradient-to-br ${item.gradientBg}
+        border ${item.borderColor}
+        p-[clamp(1.25rem,2vw,1.75rem)]
+        shadow-[0_1px_2px_rgba(15,23,42,0.04),0_0_0_1px_rgba(15,23,42,0.02)]
+        transition-shadow duration-500
+        hover:shadow-[0_24px_60px_-20px_rgba(15,23,42,0.18),0_8px_24px_-12px_rgba(15,23,42,0.10)]
+      `}
+    >
+      {/* Cursor-tracked spotlight overlay */}
+      {!isMobile && !prefersReducedMotion && (
+        <motion.div
+          aria-hidden
+          style={{ background: spotlight }}
+          className="pointer-events-none absolute inset-0 -z-[1] opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+        />
+      )}
+
+      {/* Top edge highlight — refined detail */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-6 top-0 h-px opacity-60"
+        style={{ background: `linear-gradient(90deg, transparent, ${item.accentColor}55, transparent)` }}
+      />
+
+      <div className="relative z-10">
+        {/* Header row: icon + numeric mark */}
+        <div className="flex items-start justify-between mb-5">
+          <motion.div
+            whileHover={isMobile ? undefined : { rotate: -4, scale: 1.06 }}
+            transition={{ type: "spring", stiffness: 260, damping: 18 }}
+            className={`
+              relative w-12 h-12 rounded-xl
+              bg-gradient-to-br ${item.iconGradient}
+              flex items-center justify-center
+              shadow-[0_8px_20px_-6px_rgba(0,0,0,0.20)]
+            `}
+          >
+            {/* Icon glossy ring */}
+            <span aria-hidden className="absolute inset-0 rounded-xl ring-1 ring-white/30" />
+            {item.icon}
+          </motion.div>
+
+          <span
+            aria-hidden
+            className="font-mono text-[0.68rem] tracking-[0.2em] uppercase text-gray-400/90 mt-1"
+          >
+            {numberLabel}
+          </span>
+        </div>
+
+        {/* Title */}
+        <h3 className="text-[clamp(1.05rem,1.55vw,1.2rem)] font-semibold text-gray-900 leading-snug">
+          {item.title}
+        </h3>
+
+        {/* Animated accent rule under title */}
+        <motion.span
+          aria-hidden
+          className="block h-[2px] rounded-full mt-2.5 origin-left"
+          style={{ background: `linear-gradient(90deg, ${item.accentColor}, transparent)` }}
+          initial={{ scaleX: 0, width: "44%" }}
+          whileInView={{ scaleX: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.55, delay: 0.25 + index * 0.08, ease: premiumEase }}
+        />
+
+        {/* Description */}
+        <p className="mt-4 text-[clamp(0.85rem,1.15vw,0.95rem)] text-gray-600 leading-relaxed">
+          {item.desc}
+        </p>
+      </div>
+    </motion.div>
+  );
+}
+
+/**
+ * ZigzagConnector — premium S-curve drawn between two stacked ValueCards.
+ *
+ * - SVG path animates pathLength 0→1 via Framer Motion when the connector
+ *   scrolls into view (whileInView, fires once).
+ * - A linearGradient on the stroke transitions from the previous card's
+ *   accent into the next card's, so the connector visually "passes the baton".
+ * - A landing dot scales in at the path endpoint after the line completes.
+ * - preserveAspectRatio="none" stretches the viewBox to the container, and
+ *   non-scaling-stroke keeps the 1.5px line crisp at any width.
+ * - Hidden below md: vertical hairline + chevron is a sufficient mobile cue.
+ */
+function ZigzagConnector({
+  direction,
+  accentColor,
+  accentRgb,
+  nextAccentColor,
+}: {
+  direction: "left-to-right" | "right-to-left";
+  accentColor: string;
+  accentRgb: string;
+  nextAccentColor: string;
+}) {
+  const isLTR = direction === "left-to-right";
+  // Path travels from the bottom edge of the previous card down to the top
+  // edge of the next card — anchored at 26% / 74% which line up with the
+  // center of the 52% wide cards on each side.
+  const path = isLTR
+    ? "M 26 0 C 26 55, 74 45, 74 100"
+    : "M 74 0 C 74 55, 26 45, 26 100";
+  const endX = isLTR ? 74 : 26;
+  // Unique gradient id so multiple connectors don't collide.
+  const gradId = `zigzag-grad-${isLTR ? "ltr" : "rtl"}-${accentColor.replace("#", "")}`;
+
+  return (
+    <>
+      {/* ── Desktop: animated SVG curve ─────────────────────────────── */}
+      <div
+        className="relative h-24 md:h-32 -my-4 hidden md:block pointer-events-none"
+        aria-hidden
+      >
+        <svg
+          className="absolute inset-0 w-full h-full overflow-visible"
+          preserveAspectRatio="none"
+          viewBox="0 0 100 100"
+        >
+          <defs>
+            <linearGradient
+              id={gradId}
+              x1={isLTR ? "0%" : "100%"}
+              y1="0%"
+              x2={isLTR ? "100%" : "0%"}
+              y2="100%"
+            >
+              <stop offset="0%" stopColor={accentColor} stopOpacity="0.85" />
+              <stop offset="100%" stopColor={nextAccentColor} stopOpacity="0.85" />
+            </linearGradient>
+          </defs>
+          <motion.path
+            d={path}
+            stroke={`url(#${gradId})`}
+            strokeWidth={1.5}
+            strokeDasharray="2.5 2"
+            strokeLinecap="round"
+            fill="none"
+            vectorEffect="non-scaling-stroke"
+            initial={{ pathLength: 0, opacity: 0 }}
+            whileInView={{ pathLength: 1, opacity: 1 }}
+            viewport={{ once: true, margin: "0px 0px -15% 0px" }}
+            transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
+          />
+        </svg>
+
+        {/* Endpoint dot — scales in once the path finishes drawing. */}
+        <motion.div
+          className="absolute"
+          style={{
+            left: `${endX}%`,
+            top: "100%",
+            transform: "translate(-50%, -50%)",
+          }}
+          initial={{ opacity: 0, scale: 0 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true, margin: "0px 0px -15% 0px" }}
+          transition={{ duration: 0.4, delay: 0.95, ease: [0.34, 1.56, 0.64, 1] }}
+        >
+          <div
+            className="w-3 h-3 rounded-full ring-4"
+            style={{
+              backgroundColor: nextAccentColor,
+              boxShadow: `0 6px 16px -4px rgba(${accentRgb}, 0.45)`,
+              // ring-* utility uses --tw-ring-color; inline workaround for arbitrary rgba()
+              ["--tw-ring-color" as string]: `rgba(${accentRgb}, 0.18)`,
+            }}
+          />
+        </motion.div>
+      </div>
+
+      {/* ── Mobile: subtle vertical link with chevron ───────────────── */}
+      <div
+        className="md:hidden flex flex-col items-center justify-center py-3"
+        aria-hidden
+      >
+        <motion.div
+          initial={{ scaleY: 0 }}
+          whileInView={{ scaleY: 1 }}
+          viewport={{ once: true, margin: "-10%" }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          className="w-px h-6 origin-top"
+          style={{
+            background: `linear-gradient(to bottom, ${accentColor}55, ${nextAccentColor}55)`,
+          }}
+        />
+        <motion.svg
+          initial={{ opacity: 0, y: -4 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-10%" }}
+          transition={{ duration: 0.3, delay: 0.4 }}
+          className="w-3 h-3 mt-0.5"
+          fill="none"
+          stroke={nextAccentColor}
+          viewBox="0 0 24 24"
+          strokeWidth={2.5}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+        </motion.svg>
+      </div>
+    </>
+  );
+}
+
 function ValueBlock() {
   const { t } = useLanguage();
 
-  const items = [
+  const items: ValueItem[] = [
     {
       title: t.landing.valueBlockItem1Title,
       desc: t.landing.valueBlockItem1Desc,
-      // Orange — brand primary
       gradientBg: "from-[#FFF7F2] via-[#FFEDE3] to-[#FFE0D0]",
-      borderColor: "border-[#F8935D]/30 hover:border-[#F8935D]/60",
+      borderColor: "border-[#F8935D]/25 hover:border-[#F8935D]/55",
       iconGradient: "from-[#F8935D] to-[#F76B54]",
       accentColor: "#F8935D",
-      glowShadow: "hover:shadow-[0_8px_30px_rgba(248,147,93,0.25)]",
+      accentRgb: "248,147,93",
       icon: (
-        <svg className="w-6 h-6" fill="none" stroke="white" strokeWidth={2} viewBox="0 0 24 24">
+        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
         </svg>
       ),
@@ -3605,14 +3954,13 @@ function ValueBlock() {
     {
       title: t.landing.valueBlockItem2Title,
       desc: t.landing.valueBlockItem2Desc,
-      // Rose / Coral — accent
       gradientBg: "from-[#FFF2F5] via-[#FFE4EB] to-[#FFD5DF]",
-      borderColor: "border-[#F13452]/20 hover:border-[#F13452]/50",
+      borderColor: "border-[#F13452]/20 hover:border-[#F13452]/45",
       iconGradient: "from-[#F13452] to-[#D91E3D]",
       accentColor: "#F13452",
-      glowShadow: "hover:shadow-[0_8px_30px_rgba(241,52,82,0.2)]",
+      accentRgb: "241,52,82",
       icon: (
-        <svg className="w-6 h-6" fill="none" stroke="white" strokeWidth={2} viewBox="0 0 24 24">
+        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
         </svg>
       ),
@@ -3620,14 +3968,13 @@ function ValueBlock() {
     {
       title: t.landing.valueBlockItem3Title,
       desc: t.landing.valueBlockItem3Desc,
-      // Violet — premium/speed
       gradientBg: "from-[#F5F0FF] via-[#EDE5FF] to-[#E0D4FF]",
-      borderColor: "border-violet-300/40 hover:border-violet-400/70",
+      borderColor: "border-violet-300/35 hover:border-violet-400/65",
       iconGradient: "from-violet-500 to-purple-600",
       accentColor: "#7C3AED",
-      glowShadow: "hover:shadow-[0_8px_30px_rgba(124,58,237,0.2)]",
+      accentRgb: "124,58,237",
       icon: (
-        <svg className="w-6 h-6" fill="none" stroke="white" strokeWidth={2} viewBox="0 0 24 24">
+        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       ),
@@ -3635,14 +3982,13 @@ function ValueBlock() {
     {
       title: t.landing.valueBlockItem4Title,
       desc: t.landing.valueBlockItem4Desc,
-      // Emerald — growth/opportunities
       gradientBg: "from-[#EEFFF7] via-[#DCFCE7] to-[#CCFBDA]",
-      borderColor: "border-emerald-300/40 hover:border-emerald-400/70",
+      borderColor: "border-emerald-300/35 hover:border-emerald-400/65",
       iconGradient: "from-emerald-500 to-green-600",
       accentColor: "#059669",
-      glowShadow: "hover:shadow-[0_8px_30px_rgba(5,150,105,0.2)]",
+      accentRgb: "5,150,105",
       icon: (
-        <svg className="w-6 h-6" fill="none" stroke="white" strokeWidth={2} viewBox="0 0 24 24">
+        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
         </svg>
       ),
@@ -3650,85 +3996,82 @@ function ValueBlock() {
   ];
 
   return (
-    <section className="py-[clamp(2rem,4vw,3.5rem)] px-[clamp(1rem,4vw,3rem)] overflow-hidden">
-      <div className="max-w-[min(90vw,67.75rem)] mx-auto">
-        {/* Silver title — same style as Features heading */}
+    <section className="relative py-[clamp(2.5rem,5vw,4.5rem)] px-[clamp(1rem,4vw,3rem)] overflow-hidden">
+      {/* Ambient backdrop wash — reinforces premium atmosphere without changing layout */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-[1]">
+        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[820px] h-[420px] bg-gradient-to-b from-[#F8935D]/8 via-transparent to-transparent blur-3xl" />
+      </div>
+
+      <div className="relative max-w-[min(90vw,67.75rem)] mx-auto">
+
+        {/* Title */}
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 14 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "0px 0px 80px 0px" }}
-          transition={{ duration: 0.4, ease: premiumEase }}
-          className="text-center mb-[clamp(1.5rem,3vw,2.5rem)]"
+          viewport={{ once: true, margin: "0px 0px -80px 0px" }}
+          transition={{ duration: 0.5, ease: premiumEase }}
+          className="text-center mb-[clamp(1.75rem,3vw,2.75rem)]"
         >
-          <h2 className="text-[clamp(1.75rem,4vw,3.25rem)] font-bold">
+          <h2 className="text-[clamp(1.75rem,4vw,3.25rem)] font-bold leading-[1.08] tracking-[-0.015em]">
             <span className="text-silver-premium">{t.landing.valueBlockTitle}</span>
           </h2>
         </motion.div>
 
-        {/* Animated cards grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-[clamp(0.75rem,1.5vw,1.25rem)]">
-          {items.map((item, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 20, scale: 0.97 }}
-              whileInView={{ opacity: 1, y: 0, scale: 1 }}
-              viewport={{ once: true, margin: "0px 0px 60px 0px" }}
-              transition={{
-                duration: 0.5,
-                delay: i * 0.1,
-                ease: premiumEase,
-              }}
-              whileHover={{
-                y: -6,
-                transition: { duration: 0.25, ease: premiumEase },
-              }}
-              className={`group relative bg-gradient-to-br ${item.gradientBg} rounded-2xl border ${item.borderColor} p-[clamp(1.25rem,2vw,1.75rem)] overflow-hidden cursor-default transition-all duration-300 ${item.glowShadow}`}
-            >
-              <div className="relative z-10">
-                {/* Vivid gradient icon */}
+        {/* Zigzag layout — cards alternate L/R with animated SVG S-curve
+            connectors. Mobile collapses to a centered single column with a
+            simple vertical hairline so the rhythm still reads. */}
+        <div className="relative">
+          {items.map((item, i) => {
+            const isLeft = i % 2 === 0;
+            const isLast = i === items.length - 1;
+            return (
+              <div key={i}>
                 <div
-                  className={`w-12 h-12 rounded-xl bg-gradient-to-br ${item.iconGradient} flex items-center justify-center mb-4 shadow-lg transition-transform duration-200 group-hover:scale-110`}
+                  className={`md:w-[52%] ${
+                    isLeft ? "md:mr-auto md:pr-4" : "md:ml-auto md:pl-4"
+                  }`}
                 >
-                  {item.icon}
+                  <ValueCard item={item} index={i} />
                 </div>
 
-                {/* Title with accent underline */}
-                <h3 className="text-[clamp(1rem,1.5vw,1.15rem)] font-bold text-gray-900 mb-1.5 relative inline-block">
-                  {item.title}
-                  <motion.span
-                    className="absolute -bottom-0.5 left-0 h-[2px] rounded-full"
-                    style={{ background: `linear-gradient(90deg, ${item.accentColor}, transparent)` }}
-                    initial={{ width: 0 }}
-                    whileInView={{ width: "70%" }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.6, delay: 0.3 + i * 0.1, ease: premiumEase }}
+                {!isLast && (
+                  <ZigzagConnector
+                    direction={isLeft ? "left-to-right" : "right-to-left"}
+                    accentColor={item.accentColor}
+                    accentRgb={item.accentRgb}
+                    nextAccentColor={items[i + 1].accentColor}
                   />
-                </h3>
-                <p className="text-[clamp(0.8rem,1.2vw,0.9rem)] text-gray-600 leading-relaxed mt-2">
-                  {item.desc}
-                </p>
+                )}
               </div>
-            </motion.div>
-          ))}
+            );
+          })}
         </div>
 
-        {/* CTA with pulse animation */}
+        {/* CTA — shimmer sweep + spring scale */}
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 14 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.4, delay: 0.4, ease: premiumEase }}
-          className="text-center mt-[clamp(1.5rem,3vw,2.5rem)]"
+          viewport={{ once: true, margin: "0px 0px -60px 0px" }}
+          transition={{ duration: 0.45, delay: 0.15, ease: premiumEase }}
+          className="text-center mt-[clamp(1.75rem,3vw,2.75rem)]"
         >
-          <a
-            href="/login"
-            className="inline-flex items-center gap-2 px-7 py-3 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+          <motion.div
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ type: "spring", stiffness: 380, damping: 24 }}
+            className="inline-block"
           >
-            {t.landing.valueBlockCTA}
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-            </svg>
-          </a>
+            <Link
+              href="/signup"
+              className="group relative inline-flex items-center gap-2.5 px-7 py-3.5 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white font-semibold rounded-xl shadow-lg shadow-[#F8935D]/25 hover:shadow-xl hover:shadow-[#F8935D]/35 transition-shadow duration-300 overflow-hidden"
+            >
+              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent translate-x-[-120%] group-hover:translate-x-[120%] transition-transform duration-700 ease-out pointer-events-none" />
+              <span className="relative">{t.landing.valueBlockCTA}</span>
+              <svg className="relative w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+              </svg>
+            </Link>
+          </motion.div>
         </motion.div>
       </div>
     </section>
@@ -3747,17 +4090,17 @@ function ValueBlock() {
 function getTestimonials(t: Translations) {
   return [
     {
-      name: "Alexandre M.",
+      name: "Raffaël Bounous",
       role: t.landing.testimonial1Role,
       company: t.landing.testimonial1Company,
-      image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&h=200&fit=crop&crop=face",
+      image: "",
       quote: t.landing.testimonial1Text,
     },
     {
-      name: "Sophie L.",
+      name: "Louis Bruyas",
       role: t.landing.testimonial2Role,
       company: t.landing.testimonial2Company,
-      image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&h=200&fit=crop&crop=face",
+      image: "",
       quote: t.landing.testimonial2Text,
     },
     {
@@ -3770,90 +4113,279 @@ function getTestimonials(t: Translations) {
   ];
 }
 
-function TestimonialsSection() {
-  const isMobile = useIsMobile();
-  const { t } = useLanguage();
-  const TESTIMONIALS = getTestimonials(t);
-  return (
-    <section id="testimonials" className="py-12 md:py-16 2xl:py-20 px-4 sm:px-6 lg:px-8 2xl:px-12 overflow-hidden">
-      <div className="max-w-[1084px] mx-auto">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "0px 0px 100px 0px" }}
-          transition={{ duration: 0.4, ease: premiumEase }}
-          className="text-center mb-8 md:mb-12"
-        >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true, margin: "0px 0px 100px 0px" }}
-            transition={{ duration: 0.3, delay: 0.03 }}
-            className="inline-flex items-center gap-2 px-4 py-2 mb-6 bg-white border border-gray-200 rounded-full shadow-sm"
-          >
-            <div className="flex -space-x-2">
-              {TESTIMONIALS.slice(0, 3).map((testimonialItem, i) => (
-                <div key={i} className="w-6 h-6 rounded-full border-2 border-white overflow-hidden">
-                  <Image src={testimonialItem.image} alt={`${t.landing.testimonialsPhotoAlt} ${testimonialItem.name}`} width={24} height={24} className="w-full h-full object-cover" />
-                </div>
-              ))}
-            </div>
-            <span className="text-sm text-gray-600 font-medium">{t.landing.testimonialsLabel}</span>
-          </motion.div>
+function getTestimonialInitials(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w) => w[0] || "")
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+}
 
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
-            <span className="text-silver-premium">{t.landing.testimonialsTitle1}</span>{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
-              {t.landing.testimonialsTitle2}
-            </span>
-          </h2>
-          <p className="text-gray-500 text-lg max-w-2xl mx-auto">
-            {t.landing.testimonialsSubtitle}
-          </p>
+function TestimonialAvatar({
+  name,
+  image,
+  size = 40,
+}: {
+  name: string;
+  image?: string;
+  size?: number;
+}) {
+  if (image) {
+    return (
+      <Image
+        src={image}
+        alt={name}
+        width={size}
+        height={size}
+        className="w-full h-full object-cover"
+      />
+    );
+  }
+  const fontClass = size <= 24 ? "text-[9px]" : "text-sm";
+  return (
+    <div
+      aria-hidden="true"
+      className={`w-full h-full flex items-center justify-center bg-gradient-to-br from-[#F8935D]/20 to-[#F76B54]/25 text-[#F76B54] font-semibold ${fontClass}`}
+    >
+      {getTestimonialInitials(name)}
+    </div>
+  );
+}
+
+/**
+ * PremiumTestimonialCard — single card. Lives outside the section so the
+ * cursor-tracked spotlight and per-card MotionValues don't re-render the
+ * whole grid on every mousemove.
+ *
+ * Premium signals (in order of impact):
+ *  1. Cursor-tracked radial spotlight on hover (Framer MotionTemplate)
+ *  2. Big decorative serif quote mark, gradient-clipped, top-right
+ *  3. Top hairline accent, brightens on hover (color baton vocabulary)
+ *  4. Stars stagger-in with a spring overshoot (rotate + scale + opacity)
+ *  5. Avatar with brand gradient halo ring + emerald verified badge
+ *  6. Hover lifts -8px with intensified orange-tinted shadow
+ */
+function PremiumTestimonialCard({
+  testimonial,
+  isMobile,
+  prefersReducedMotion,
+}: {
+  testimonial: ReturnType<typeof getTestimonials>[number];
+  isMobile: boolean;
+  prefersReducedMotion: boolean;
+}) {
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  // Cursor spotlight — same pattern proven on the ValueBlock cards.
+  const mx = useMotionValue(0);
+  const my = useMotionValue(0);
+  const spotlight = useMotionTemplate`radial-gradient(420px circle at ${mx}px ${my}px, rgba(248, 147, 93, 0.12), transparent 65%)`;
+
+  const onMove = useCallback(
+    (e: React.MouseEvent) => {
+      const el = cardRef.current;
+      if (!el || prefersReducedMotion || isMobile) return;
+      const rect = el.getBoundingClientRect();
+      mx.set(e.clientX - rect.left);
+      my.set(e.clientY - rect.top);
+    },
+    [mx, my, prefersReducedMotion, isMobile],
+  );
+
+  // Card variant — used inside the parent's stagger container.
+  const cardVariant = {
+    hidden: { opacity: 0, y: 32 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.6, ease: premiumEase },
+    },
+  };
+
+  // Stars container variant — orchestrates per-star stagger after the card lands.
+  const starsContainer = {
+    hidden: {},
+    visible: { transition: { staggerChildren: 0.07, delayChildren: 0.35 } },
+  };
+  const starItem = {
+    hidden: { opacity: 0, scale: 0.4, rotate: -45 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      rotate: 0,
+      transition: { type: "spring" as const, stiffness: 380, damping: 16 },
+    },
+  };
+
+  return (
+    <motion.div
+      ref={cardRef}
+      onMouseMove={onMove}
+      variants={cardVariant}
+      whileHover={
+        isMobile
+          ? undefined
+          : { y: -8, transition: { type: "spring", stiffness: 300, damping: 22 } }
+      }
+      className="group relative isolate overflow-hidden rounded-2xl bg-white ring-1 ring-gray-200/70 shadow-[0_8px_24px_-12px_rgba(15,23,42,0.10),0_2px_6px_-2px_rgba(15,23,42,0.04)] transition-shadow duration-500 hover:shadow-[0_28px_60px_-20px_rgba(248,147,93,0.28),0_10px_28px_-12px_rgba(15,23,42,0.10)]"
+    >
+      {/* Top hairline accent — color baton matching the rest of the page */}
+      <div
+        aria-hidden
+        className="absolute inset-x-6 top-0 h-[3px] bg-gradient-to-r from-transparent via-[#F8935D] to-transparent opacity-60 group-hover:opacity-100 transition-opacity duration-500"
+      />
+
+      {/* Cursor-tracked spotlight overlay */}
+      {!isMobile && !prefersReducedMotion && (
+        <motion.div
+          aria-hidden
+          style={{ background: spotlight }}
+          className="pointer-events-none absolute inset-0 -z-[1] opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+        />
+      )}
+
+      {/* Decorative oversized opening quote — gradient clipped, drifts on hover */}
+      <motion.div
+        aria-hidden
+        initial={{ opacity: 0, y: -6 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-10%" }}
+        transition={{ duration: 0.6, delay: 0.25, ease: premiumEase }}
+        className="pointer-events-none absolute -top-2 right-4 select-none"
+        style={{
+          fontFamily: "Georgia, 'Times New Roman', serif",
+          fontSize: "6rem",
+          lineHeight: 1,
+          background: "linear-gradient(135deg, rgba(248,147,93,0.35), rgba(247,107,84,0.10))",
+          WebkitBackgroundClip: "text",
+          backgroundClip: "text",
+          color: "transparent",
+        }}
+      >
+        &ldquo;
+      </motion.div>
+
+      <div className="relative p-7 md:p-8 flex flex-col h-full">
+        {/* Stars — staggered pop-in with a spring overshoot */}
+        <motion.div
+          className="flex items-center gap-1 mb-5"
+          variants={starsContainer}
+        >
+          {[...Array(5)].map((_, i) => (
+            <motion.svg
+              key={i}
+              variants={starItem}
+              className="w-[18px] h-[18px] text-amber-400 drop-shadow-[0_2px_4px_rgba(245,158,11,0.30)]"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+              aria-hidden
+            >
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+            </motion.svg>
+          ))}
         </motion.div>
 
-        {/* Testimonials Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {TESTIMONIALS.map((testimonial, index) => (
-            <motion.div
-              key={testimonial.name}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "0px 0px 100px 0px" }}
-              transition={{ delay: index * 0.03, duration: 0.3, ease: premiumEase }}
-              className="group relative bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-[#F8935D]/30 transition-[border-color,box-shadow] duration-200 shadow-lg shadow-gray-100/60 hover:shadow-xl hover:shadow-[#F8935D]/10"
-            >
-              <div className="p-6">
-                {/* Author — photo + name/role on same line */}
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-gray-100 group-hover:ring-[#F8935D]/30 transition-[box-shadow] duration-200 flex-shrink-0">
-                    <Image src={testimonial.image} alt={testimonial.name} width={40} height={40} className="w-full h-full object-cover" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-gray-900 font-semibold text-sm truncate">{testimonial.name}</p>
-                    <p className="text-gray-500 text-xs truncate">{testimonial.role}{testimonial.company ? ` · ${testimonial.company}` : ""}</p>
-                  </div>
-                </div>
+        {/* Quote — larger and more breathable than before */}
+        <blockquote className="text-[15.5px] md:text-[16px] leading-[1.7] text-gray-700 mb-7 flex-1">
+          {testimonial.quote}
+        </blockquote>
 
-                {/* Star rating */}
-                <div className="flex items-center gap-0.5 mb-3">
-                  {[...Array(5)].map((_, i) => (
-                    <svg key={i} className="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                  ))}
-                </div>
+        {/* Author block — divider on top, bigger avatar with gradient halo */}
+        <div className="pt-5 border-t border-gray-100 flex items-center gap-3.5">
+          <div className="relative flex-shrink-0">
+            {/* Gradient halo — softer at rest, fully lit on hover */}
+            <div
+              aria-hidden
+              className="absolute -inset-[2px] rounded-full bg-gradient-to-br from-[#F8935D] to-[#F76B54] opacity-40 group-hover:opacity-100 transition-opacity duration-400 blur-[2px]"
+            />
+            <div className="relative w-12 h-12 rounded-full overflow-hidden ring-2 ring-white bg-white">
+              <TestimonialAvatar name={testimonial.name} image={testimonial.image} size={48} />
+            </div>
+            {/* Verified badge — emerald check, anchors trust */}
+            <div className="absolute -bottom-0.5 -right-0.5 w-[18px] h-[18px] rounded-full bg-emerald-500 ring-2 ring-white flex items-center justify-center shadow-sm">
+              <svg
+                className="w-2.5 h-2.5 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                strokeWidth={3.5}
+                aria-hidden
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+          </div>
 
-                {/* Quote */}
-                <blockquote className="text-gray-700 text-[15px] leading-relaxed">
-                  &ldquo;{testimonial.quote}&rdquo;
-                </blockquote>
-              </div>
-            </motion.div>
-          ))}
+          <div className="flex-1 min-w-0">
+            <p className="text-gray-900 font-semibold text-[14.5px] truncate">
+              {testimonial.name}
+            </p>
+            <p className="text-gray-500 text-xs truncate">
+              {testimonial.role}
+              {testimonial.company ? ` · ${testimonial.company}` : ""}
+            </p>
+          </div>
         </div>
+      </div>
+    </motion.div>
+  );
+}
 
+function TestimonialsSection() {
+  const isMobile = useIsMobile();
+  const prefersReducedMotion = useReducedMotion() ?? false;
+  const { t } = useLanguage();
+  const TESTIMONIALS = getTestimonials(t);
+
+  return (
+    <section
+      id="testimonials"
+      className="relative py-16 md:py-24 lg:py-28 px-4 sm:px-6 lg:px-8 overflow-hidden"
+    >
+      {/* Ambient motion layer — orbs + dots + corner-drifting arrows.
+          Adds quiet depth behind the testimonial cards without competing. */}
+      <AmbientDecorations variant={["orbs", "dots", "arrows"]} intensity={0.85} />
+
+      <div className="max-w-[1184px] mx-auto">
+        {/* Title — unified scale with the other premium sections */}
+        <motion.h2
+          initial={{ opacity: 0, y: 14 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "0px 0px -10% 0px" }}
+          transition={{ duration: 0.5, ease: premiumEase }}
+          className="text-center text-[1.75rem] sm:text-[2.25rem] md:text-[2.5rem] lg:text-[2.875rem] font-bold leading-[1.08] tracking-[-0.015em] mb-12 md:mb-16"
+        >
+          <span className="text-silver-premium">{t.landing.testimonialsTitle1}</span>{" "}
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
+            {t.landing.testimonialsTitle2}
+          </span>
+        </motion.h2>
+
+        {/* Cards grid — orchestrated stagger so cards cascade in */}
+        <motion.div
+          variants={{
+            hidden: { opacity: 0 },
+            visible: {
+              opacity: 1,
+              transition: { staggerChildren: 0.12, delayChildren: 0.1 },
+            },
+          }}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "0px 0px -8% 0px" }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-5 lg:gap-6"
+        >
+          {TESTIMONIALS.map((testimonial) => (
+            <PremiumTestimonialCard
+              key={testimonial.name}
+              testimonial={testimonial}
+              isMobile={isMobile}
+              prefersReducedMotion={prefersReducedMotion}
+            />
+          ))}
+        </motion.div>
       </div>
     </section>
   );
@@ -3969,11 +4501,6 @@ function BeforeAfterSection() {
                 </div>
               </div>
             </div>
-
-            {/* Quote */}
-            <p className="mt-4 text-sm text-gray-400 italic text-center px-2">
-              &ldquo;{t.landing.beforeAfterStruggle}&rdquo;
-            </p>
           </motion.div>
 
           {/* ── ARROW ── */}
@@ -4086,15 +4613,10 @@ function BeforeAfterSection() {
                 </div>
               </div>
             </div>
-
-            {/* Quote */}
-            <p className="mt-4 text-sm text-[#F8935D] font-medium text-center px-2">
-              &ldquo;{t.landing.beforeAfterTestimonial}&rdquo;
-            </p>
           </motion.div>
         </div>
 
-        {/* Bottom CTA */}
+        {/* Bottom CTA — minimal */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -4102,9 +4624,6 @@ function BeforeAfterSection() {
           transition={{ delay: 0.1, duration: 0.35 }}
           className="text-center mt-14 md:mt-20"
         >
-          <p className="text-gray-500 text-sm md:text-base mb-5">
-            {t.landing.beforeAfterCTA}
-          </p>
           <motion.div
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
@@ -4310,7 +4829,7 @@ function PricingSection() {
         >
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4 leading-tight">
             <span className="text-gray-900">{t.landing.pricingHeadline1}</span>{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] via-[#F76B54] to-[#F8935D] bg-[length:200%_100%] animate-[gradient-x_3s_ease_infinite]">
               {t.landing.pricingHeadline2}
             </span>
           </h2>
@@ -4341,8 +4860,8 @@ function PricingSection() {
           ))}
         </div>
 
-        {/* Trust badges */}
-        <PricingTrustBadges className="mt-10 sm:mt-12 md:mt-16" />
+        {/* Business offer — B2B funnel, expandable details on click */}
+        <BusinessOffer />
       </div>
     </section>
   );
@@ -4391,16 +4910,25 @@ function CtaBanner({
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "0px 0px 100px 0px" }}
           transition={{ duration: 0.35, delay: 0.1 }}
+          className="inline-block"
         >
-          <Link
-            href="/signup"
-            className="inline-flex items-center gap-2.5 h-12 md:h-14 px-7 md:px-9 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white text-sm md:text-base font-semibold rounded-xl shadow-lg shadow-[#F8935D]/15 hover:shadow-xl hover:shadow-[#F8935D]/25 transition-all duration-300"
+          <motion.div
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ type: "spring", stiffness: 380, damping: 24 }}
           >
-            {ctaLabel}
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-            </svg>
-          </Link>
+            <Link
+              href="/signup"
+              className="group relative inline-flex items-center gap-2.5 h-12 md:h-14 px-7 md:px-9 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white text-sm md:text-base font-semibold rounded-xl shadow-lg shadow-[#F8935D]/15 hover:shadow-xl hover:shadow-[#F8935D]/25 transition-shadow duration-300 overflow-hidden"
+            >
+              {/* Shine sweep on hover */}
+              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent translate-x-[-120%] group-hover:translate-x-[120%] transition-transform duration-700 ease-out pointer-events-none" />
+              <span className="relative">{ctaLabel}</span>
+              <svg className="relative w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </Link>
+          </motion.div>
         </motion.div>
 
         <motion.p
@@ -4454,7 +4982,7 @@ function FaqItem({
     >
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between py-6 text-left group"
+        className="relative w-full flex items-center justify-between py-6 text-left group rounded-xl px-2 -mx-2 hover:bg-[#F8935D]/[0.04] transition-colors duration-300"
         aria-expanded={isOpen}
       >
         <span
@@ -4505,6 +5033,8 @@ function FaqSection() {
 
   return (
     <section id="faq" className="relative py-16 md:py-24 2xl:py-28 px-4 sm:px-6 lg:px-8 2xl:px-12 overflow-hidden">
+      {/* Subtle ambient layer — single drawn wave + low-intensity dots */}
+      <AmbientDecorations variant={["dots", "waves"]} intensity={0.55} />
       <div className="relative z-[1] max-w-3xl 2xl:max-w-4xl mx-auto">
         {/* Section Header */}
         <motion.div
@@ -4514,29 +5044,12 @@ function FaqSection() {
           transition={{ duration: 0.4, ease: premiumEase }}
           className="text-center mb-10 md:mb-16"
         >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true, margin: "0px 0px 100px 0px" }}
-            transition={{ delay: 0.03, duration: 0.3 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-gray-100 to-gray-50 border border-gray-200 mb-6"
-          >
-            <span className="flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-[#F8935D] opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#F8935D]"></span>
-            </span>
-            <span className="text-sm font-medium text-gray-700">{t.landing.faqBadge}</span>
-          </motion.div>
-
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-5">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800">
             {t.landing.faqTitle1}{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
               {t.landing.faqTitle2}
             </span>
           </h2>
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-            {t.landing.faqSubtitle}
-          </p>
         </motion.div>
 
         {/* Accordion */}
@@ -4747,6 +5260,8 @@ export default function LandingPage() {
       {/* Site-wide FAQPage JSON-LD — scoped to the homepage only to avoid
           duplicating the schema on (seo) group pages that ship their own. */}
       <FaqJsonLd questions={postyFaqData.en} />
+      {/* Top-of-page scroll progress bar — premium Linear/Stripe touch */}
+      <ScrollProgressBar />
       {/* Aurora background — fixed full viewport, stars stay in place on scroll */}
       <AuroraBackground />
       <Navbar />
@@ -4754,13 +5269,15 @@ export default function LandingPage() {
         {/* Hero Demo Section — opening with descent animation */}
         <DemoSection />
 
-        {/* AI Copilot section — below the hero carousel */}
+        {/* Opaque sections — z-[5] + bg to cover the fixed hero title.
+            The absolutely-positioned overlay fades the DemoSection's transparent
+            bottom into the #FEF3EE wash so the boundary reads as a wash, not a
+            line. */}
         <div className="relative z-[5] bg-[#FEF3EE]">
-          <CopilotSectionWrapper />
-        </div>
-
-        {/* Opaque sections — z-[5] + bg to cover the fixed hero title */}
-        <div className="relative z-[5] bg-[#FEF3EE]">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute left-0 right-0 bottom-full h-40 md:h-56 bg-gradient-to-b from-transparent to-[#FEF3EE]"
+          />
           <FeaturesSection />
           <ValueBlock />
         </div>
@@ -4770,9 +5287,20 @@ export default function LandingPage() {
           <TargetAudienceSection />
         </div>
 
+        {/* AI Copilot section — strategically placed AFTER target identification
+            and BEFORE social proof. The funnel arc is:
+              hero → features → benefits → audience match → "but is it really
+              different?" → COPILOT SANS/AVEC answers it → testimonials confirm
+              → founder/ROI/pricing convert. */}
+        <div className="relative z-[5] bg-[#FEF3EE]">
+          <CopilotSectionWrapper />
+        </div>
+
         <div className="relative z-[5] bg-[#FEF3EE]">
           <TestimonialsSection />
           <FounderSection />
+          {/* ROI simulator — value-before-price anchor */}
+          <ROISimulator />
           <PricingSection />
         </div>
 

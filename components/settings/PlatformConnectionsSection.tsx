@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useScrollLock } from "@/hooks/ui/useScrollLock";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,31 +8,34 @@ import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useLinkedIn } from "@/contexts/LinkedInContext";
 import { useFacebook } from "@/contexts/FacebookContext";
 import { useThreads } from "@/contexts/ThreadsContext";
+import { useBluesky } from "@/contexts/BlueskyContext";
+import { useMastodon } from "@/contexts/MastodonContext";
+import { useDiscord } from "@/contexts/DiscordContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import Button from "@/components/ui/Button";
 import LinkedInConnectButton, { LinkedInIcon } from "@/components/linkedin/LinkedInConnectButton";
 import LinkedInDisconnectModal from "@/components/linkedin/LinkedInDisconnectModal";
+import BlueskyConnectModal from "@/components/bluesky/BlueskyConnectModal";
+import MastodonConnectModal from "@/components/mastodon/MastodonConnectModal";
+import { BlueskyIcon, MastodonIcon, DiscordIcon } from "@/components/publish/PlatformSelector";
 import { isTokenExpired } from "@/lib/platforms/linkedin";
-import { PLATFORM_INFO, Platform, PlanType } from "@/lib/config/plans";
+import { PLATFORM_INFO, Platform, PlanType, getMaxPlatformConnections } from "@/lib/config/plans";
 import { canUsePlatform, canConnectPlatform, getAllPlatformsAccessStatus } from "@/lib/config/permissions";
 import Link from "next/link";
 
 // Platform icon colors for Tailwind classes
 const platformColors: Record<Platform, { text: string; bg: string }> = {
   linkedin: { text: "text-[#0A66C2]", bg: "bg-[#0A66C2]/15" },
-  reddit: { text: "text-[#FF4500]", bg: "bg-[#FF4500]/15" },
   threads: { text: "text-black dark:text-white", bg: "bg-black/10 dark:bg-white/15" },
   facebook: { text: "text-[#1877F2]", bg: "bg-[#1877F2]/15" },
+  bluesky: { text: "text-[#0085FF]", bg: "bg-[#0085FF]/15" },
+  mastodon: { text: "text-[#6364FF]", bg: "bg-[#6364FF]/15" },
+  discord: { text: "text-[#5865F2]", bg: "bg-[#5865F2]/15" },
 };
 
 // Platform icons
 const PlatformIcons: Record<Platform, React.FC<{ className?: string }>> = {
   linkedin: LinkedInIcon,
-  reddit: ({ className }) => (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z" />
-    </svg>
-  ),
   threads: ({ className }) => (
     <svg className={className} viewBox="0 0 24 24" fill="currentColor">
       <path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.29 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.589 12c.027 3.086.718 5.496 2.057 7.164 1.43 1.783 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.75-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.801-1.063-.689-1.685-1.74-1.752-2.96-.065-1.187.408-2.26 1.33-3.017.88-.724 2.107-1.138 3.552-1.199 1.07-.044 2.064.068 2.967.315-.024-1.058-.175-1.878-.453-2.45-.354-.73-.942-1.1-1.746-1.1h-.075c-.596.02-1.09.218-1.468.591-.33.326-.53.77-.59 1.318l-2.07-.248c.101-.886.476-1.653 1.084-2.22.71-.662 1.652-1.013 2.723-1.054h.11c1.387 0 2.467.522 3.213 1.552.637.88.975 2.106 1.005 3.648v.156c1.145.504 2.06 1.265 2.652 2.226.756 1.227.911 2.759.436 4.313-.59 1.93-1.776 3.404-3.438 4.267-1.457.756-3.24 1.156-5.3 1.19zm-1.042-6.594c-.036 0-.072 0-.108.002-.982.053-1.74.358-2.19.882-.403.47-.583 1.04-.549 1.686.044.822.457 1.397 1.127 1.83.618.4 1.42.583 2.198.543 1.122-.06 1.98-.46 2.546-1.166.49-.61.82-1.49.954-2.553-.946-.326-2.024-.485-3.123-.485-.288 0-.576.013-.855.038v.223z" />
@@ -43,6 +46,9 @@ const PlatformIcons: Record<Platform, React.FC<{ className?: string }>> = {
       <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
     </svg>
   ),
+  bluesky: BlueskyIcon,
+  mastodon: MastodonIcon,
+  discord: DiscordIcon,
 };
 
 // Platform profile avatar with error fallback
@@ -51,17 +57,29 @@ function PlatformProfileAvatar({
   name,
   platform,
   userPhotoURL,
+  onRefresh,
 }: {
   src?: string;
   name: string;
   platform: Platform;
   userPhotoURL?: string | null;
+  onRefresh?: () => Promise<string | null>;
 }) {
   const [imgError, setImgError] = useState(false);
+  const refreshedRef = useRef(false);
   const colors = platformColors[platform];
   const Icon = PlatformIcons[platform];
 
-  const handleError = useCallback(() => setImgError(true), []);
+  // LinkedIn CDN URLs are signed and expire. On first image error, try to
+  // fetch a fresh URL from the platform API before showing the initial fallback.
+  const handleError = useCallback(async () => {
+    if (onRefresh && !refreshedRef.current) {
+      refreshedRef.current = true;
+      const fresh = await onRefresh();
+      if (fresh) return; // context updates `src` → React will re-render with new URL
+    }
+    setImgError(true);
+  }, [onRefresh]);
 
   // Try: 1) platform profilePicture, 2) user's auth photoURL, 3) initial fallback
   const photoUrl = !imgError && src ? src : null;
@@ -180,7 +198,12 @@ export default function PlatformConnectionsSection() {
   const { t } = useLanguage();
   const { user } = useAuth();
   const { currentPlan, subscription } = useSubscription();
-  const { connection: linkedInConnection, disconnectLinkedIn, isLoading: linkedInLoading } = useLinkedIn();
+  const {
+    connection: linkedInConnection,
+    disconnectLinkedIn,
+    isLoading: linkedInLoading,
+    refreshProfilePhoto: refreshLinkedInPhoto,
+  } = useLinkedIn();
   const {
     connection: facebookConnection,
     isTokenValid: facebookTokenValid,
@@ -200,11 +223,41 @@ export default function PlatformConnectionsSection() {
     profilePicture: threadsProfilePicture,
     username: threadsUsername,
   } = useThreads();
+  const {
+    connection: blueskyConnection,
+    isLoading: blueskyLoading,
+    disconnectBluesky,
+    handle: blueskyHandle,
+  } = useBluesky();
+  const {
+    connection: mastodonConnection,
+    isLoading: mastodonLoading,
+    disconnectMastodon,
+    acct: mastodonAcct,
+  } = useMastodon();
+  const {
+    connection: discordConnection,
+    isLoading: discordLoading,
+    connectDiscord,
+    disconnectDiscord,
+    webhookName: discordWebhookName,
+  } = useDiscord();
 
   const [showLinkedInDisconnectModal, setShowLinkedInDisconnectModal] = useState(false);
   const [showFacebookDisconnectConfirm, setShowFacebookDisconnectConfirm] = useState(false);
   const [showThreadsDisconnectConfirm, setShowThreadsDisconnectConfirm] = useState(false);
-  useScrollLock(showFacebookDisconnectConfirm || showThreadsDisconnectConfirm);
+  const [showBlueskyConnectModal, setShowBlueskyConnectModal] = useState(false);
+  const [showBlueskyDisconnectConfirm, setShowBlueskyDisconnectConfirm] = useState(false);
+  const [showMastodonConnectModal, setShowMastodonConnectModal] = useState(false);
+  const [showMastodonDisconnectConfirm, setShowMastodonDisconnectConfirm] = useState(false);
+  const [showDiscordDisconnectConfirm, setShowDiscordDisconnectConfirm] = useState(false);
+  useScrollLock(
+    showFacebookDisconnectConfirm ||
+      showThreadsDisconnectConfirm ||
+      showBlueskyDisconnectConfirm ||
+      showMastodonDisconnectConfirm ||
+      showDiscordDisconnectConfirm
+  );
 
   // Get all platforms access status
   const platformsStatus = getAllPlatformsAccessStatus(subscription);
@@ -218,7 +271,10 @@ export default function PlatformConnectionsSection() {
   const connectedCount =
     (linkedInConnection ? 1 : 0) +
     (facebookConnection ? 1 : 0) +
-    (threadsConnection ? 1 : 0);
+    (threadsConnection ? 1 : 0) +
+    (blueskyConnection ? 1 : 0) +
+    (mastodonConnection ? 1 : 0) +
+    (discordConnection ? 1 : 0);
 
   // Get max connections for current plan
   const connectionResult = canConnectPlatform(subscription, connectedCount);
@@ -238,6 +294,21 @@ export default function PlatformConnectionsSection() {
     setShowThreadsDisconnectConfirm(false);
   };
 
+  const handleBlueskyDisconnect = async () => {
+    await disconnectBluesky();
+    setShowBlueskyDisconnectConfirm(false);
+  };
+
+  const handleMastodonDisconnect = async () => {
+    await disconnectMastodon();
+    setShowMastodonDisconnectConfirm(false);
+  };
+
+  const handleDiscordDisconnect = async () => {
+    await disconnectDiscord();
+    setShowDiscordDisconnectConfirm(false);
+  };
+
   // Render platform card
   const renderPlatformCard = (platform: Platform) => {
     const info = PLATFORM_INFO[platform];
@@ -252,21 +323,57 @@ export default function PlatformConnectionsSection() {
       platform === "linkedin" ? !!linkedInConnection
       : platform === "facebook" ? !!facebookConnection
       : platform === "threads" ? !!threadsConnection
+      : platform === "bluesky" ? !!blueskyConnection
+      : platform === "mastodon" ? !!mastodonConnection
+      : platform === "discord" ? !!discordConnection
       : false;
+    // Bluesky, Mastodon and Discord have no UI-visible token expiration: their
+    // publish routes either auto-refresh (Bluesky) or use long-lived tokens
+    // (Mastodon personal access token, Discord webhook URL).
     const isTokenValid =
       platform === "linkedin" ? linkedInTokenValid
       : platform === "facebook" ? facebookTokenValid
       : platform === "threads" ? threadsTokenValid
+      : platform === "bluesky" ? true
+      : platform === "mastodon" ? true
+      : platform === "discord" ? true
       : false;
     const connectionData =
       platform === "linkedin" ? linkedInConnection
       : platform === "facebook" ? facebookConnection
       : platform === "threads" ? threadsConnection
+      : platform === "bluesky"
+        ? blueskyConnection
+          ? {
+              profileName: blueskyConnection.profileName || blueskyConnection.handle,
+              profilePicture: blueskyConnection.profilePicture,
+              username: blueskyConnection.handle,
+            }
+          : null
+      : platform === "mastodon"
+        ? mastodonConnection
+          ? {
+              profileName: mastodonConnection.profileName || mastodonConnection.username,
+              profilePicture: mastodonConnection.profilePicture,
+              username: mastodonConnection.acct,
+            }
+          : null
+      : platform === "discord"
+        ? discordConnection
+          ? {
+              profileName: discordConnection.webhookName || "Discord webhook",
+              profilePicture: discordConnection.webhookAvatar,
+              username: discordConnection.channelId || undefined,
+            }
+          : null
       : null;
     const isLoading =
       platform === "linkedin" ? linkedInLoading
       : platform === "facebook" ? facebookLoading
       : platform === "threads" ? threadsLoading
+      : platform === "bluesky" ? blueskyLoading
+      : platform === "mastodon" ? mastodonLoading
+      : platform === "discord" ? discordLoading
       : false;
 
     return (
@@ -319,7 +426,6 @@ export default function PlatformConnectionsSection() {
               <h3 className="text-sm font-medium text-gray-900 dark:text-white">{info.name}</h3>
               <p className="text-xs text-text-muted">{
                 platform === "linkedin" ? t.settings.platformLinkedinDesc
-                : platform === "reddit" ? t.settings.platformRedditDesc
                 : platform === "threads" ? t.settings.platformThreadsDesc
                 : platform === "facebook" ? t.settings.platformFacebookDesc
                 : info.description
@@ -352,6 +458,7 @@ export default function PlatformConnectionsSection() {
                     name={connectionData.profileName}
                     platform={platform}
                     userPhotoURL={user?.photoURL}
+                    onRefresh={platform === "linkedin" ? refreshLinkedInPhoto : undefined}
                   />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-gray-900 dark:text-white font-medium truncate">
@@ -369,6 +476,9 @@ export default function PlatformConnectionsSection() {
                       if (platform === "linkedin") setShowLinkedInDisconnectModal(true);
                       else if (platform === "facebook") setShowFacebookDisconnectConfirm(true);
                       else if (platform === "threads") setShowThreadsDisconnectConfirm(true);
+                      else if (platform === "bluesky") setShowBlueskyDisconnectConfirm(true);
+                      else if (platform === "mastodon") setShowMastodonDisconnectConfirm(true);
+                      else if (platform === "discord") setShowDiscordDisconnectConfirm(true);
                     }}
                     className="text-text-muted hover:text-error hover:bg-error/10"
                   >
@@ -433,6 +543,36 @@ export default function PlatformConnectionsSection() {
                   >
                     <Icon className={`w-4 h-4 mr-2 ${colors.text}`} />
                     {t.settings.connectThreads}
+                  </Button>
+                ) : platform === "bluesky" ? (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setShowBlueskyConnectModal(true)}
+                    className="w-full mt-3"
+                  >
+                    <Icon className={`w-4 h-4 mr-2 ${colors.text}`} />
+                    Connecter Bluesky
+                  </Button>
+                ) : platform === "mastodon" ? (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setShowMastodonConnectModal(true)}
+                    className="w-full mt-3"
+                  >
+                    <Icon className={`w-4 h-4 mr-2 ${colors.text}`} />
+                    Connecter Mastodon
+                  </Button>
+                ) : platform === "discord" ? (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={connectDiscord}
+                    className="w-full mt-3"
+                  >
+                    <Icon className={`w-4 h-4 mr-2 ${colors.text}`} />
+                    Connecter Discord
                   </Button>
                 ) : (
                   <Button
@@ -499,14 +639,14 @@ export default function PlatformConnectionsSection() {
             <div>
               <p className="text-sm text-gray-900 dark:text-white font-medium">{t.settings.connectionsUsed}</p>
               <p className="text-xs text-text-muted">
-                {currentPlan === "max" ? `${connectedCount} / 4` : currentPlan === "pro" ? `${connectedCount} / 2` : `${connectedCount} / 1`}
+                {connectedCount} / {currentPlan ? getMaxPlatformConnections(currentPlan as PlanType) : 0}
               </p>
             </div>
           </div>
           <div className="text-right">
             <p className="text-sm font-medium text-primary">{connectedCount}</p>
             <p className="text-xs text-text-muted">
-              / {currentPlan === "max" ? "4" : currentPlan === "pro" ? "2" : "1"}
+              / {currentPlan ? getMaxPlatformConnections(currentPlan as PlanType) : 0}
             </p>
           </div>
         </motion.div>
@@ -547,7 +687,7 @@ export default function PlatformConnectionsSection() {
 
         {/* Platform Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {(["linkedin", "reddit", "threads", "facebook"] as Platform[]).map(renderPlatformCard)}
+          {(["linkedin", "threads", "facebook", "bluesky", "mastodon", "discord"] as Platform[]).map(renderPlatformCard)}
         </div>
 
         {/* Security Notice */}
@@ -632,6 +772,129 @@ export default function PlatformConnectionsSection() {
                   {t.common.cancel}
                 </Button>
                 <Button variant="primary" size="sm" onClick={handleThreadsDisconnect} className="flex-1 !bg-error hover:!bg-error/80">
+                  {t.settings.disconnect}
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Bluesky Connect Modal */}
+      <BlueskyConnectModal
+        isOpen={showBlueskyConnectModal}
+        onClose={() => setShowBlueskyConnectModal(false)}
+      />
+
+      {/* Bluesky Disconnect Confirmation */}
+      <AnimatePresence>
+        {showBlueskyDisconnectConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            onClick={() => setShowBlueskyDisconnectConfirm(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-6 max-w-sm w-full shadow-xl"
+            >
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                Déconnecter Bluesky
+              </h3>
+              <p className="text-sm text-text-muted mb-4">
+                Voulez-vous vraiment déconnecter {blueskyHandle ? `@${blueskyHandle}` : "Bluesky"} ?
+              </p>
+              <div className="flex gap-3">
+                <Button variant="ghost" size="sm" onClick={() => setShowBlueskyDisconnectConfirm(false)} className="flex-1">
+                  {t.common.cancel}
+                </Button>
+                <Button variant="primary" size="sm" onClick={handleBlueskyDisconnect} className="flex-1 !bg-error hover:!bg-error/80">
+                  {t.settings.disconnect}
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Mastodon Connect Modal */}
+      <MastodonConnectModal
+        isOpen={showMastodonConnectModal}
+        onClose={() => setShowMastodonConnectModal(false)}
+      />
+
+      {/* Mastodon Disconnect Confirmation */}
+      <AnimatePresence>
+        {showMastodonDisconnectConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            onClick={() => setShowMastodonDisconnectConfirm(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-6 max-w-sm w-full shadow-xl"
+            >
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                Déconnecter Mastodon
+              </h3>
+              <p className="text-sm text-text-muted mb-4">
+                Voulez-vous vraiment déconnecter {mastodonAcct ? `@${mastodonAcct}` : "Mastodon"} ?
+              </p>
+              <div className="flex gap-3">
+                <Button variant="ghost" size="sm" onClick={() => setShowMastodonDisconnectConfirm(false)} className="flex-1">
+                  {t.common.cancel}
+                </Button>
+                <Button variant="primary" size="sm" onClick={handleMastodonDisconnect} className="flex-1 !bg-error hover:!bg-error/80">
+                  {t.settings.disconnect}
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Discord uses OAuth redirect — no modal needed (the connect button
+          triggers a full-page redirect to Discord). */}
+
+      {/* Discord Disconnect Confirmation */}
+      <AnimatePresence>
+        {showDiscordDisconnectConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            onClick={() => setShowDiscordDisconnectConfirm(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-6 max-w-sm w-full shadow-xl"
+            >
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                Déconnecter Discord
+              </h3>
+              <p className="text-sm text-text-muted mb-4">
+                Voulez-vous vraiment déconnecter {discordWebhookName ? `"${discordWebhookName}"` : "ce webhook Discord"} ?
+              </p>
+              <div className="flex gap-3">
+                <Button variant="ghost" size="sm" onClick={() => setShowDiscordDisconnectConfirm(false)} className="flex-1">
+                  {t.common.cancel}
+                </Button>
+                <Button variant="primary" size="sm" onClick={handleDiscordDisconnect} className="flex-1 !bg-error hover:!bg-error/80">
                   {t.settings.disconnect}
                 </Button>
               </div>

@@ -47,8 +47,20 @@ interface LinkedInProfile {
 interface PublishResult {
   success: boolean;
   publishedUrl?: string;
+  /** LinkedIn URN of the published post (e.g., "urn:li:share:7XXXXXXXXX"). */
+  urn?: string;
+  /** LinkedIn author URN of the publishing user (e.g., "urn:li:person:XXX"). */
+  actorUrn?: string;
   error?: string;
 }
+
+/** Master switch for posting seed comments on LinkedIn.
+ *  We always *enqueue* the comment after publish (so we can review/audit
+ *  via Firestore) but we only *fire the API call* when this is true.
+ *  Toggle with: firebase functions:config:set posty.seed_comment_autopost=true
+ */
+const SEED_COMMENT_AUTOPOST_ENABLED =
+  (functions.config().posty?.seed_comment_autopost ?? "false") === "true";
 
 // ============================================================
 // LinkedIn helpers (existing)
@@ -357,7 +369,57 @@ async function publishToLinkedIn(
     console.error("Failed to save LinkedIn post record:", e);
   }
 
-  return { success: true, publishedUrl: result.postUrl };
+  return {
+    success: true,
+    publishedUrl: result.postUrl,
+    urn: result.id,
+    actorUrn: `urn:li:person:${connection.linkedInId}`,
+  };
+}
+
+/**
+ * Post a seed comment on a LinkedIn UGC post the user just authored.
+ * Uses the same `w_member_social` scope already granted for publishing.
+ *
+ * IMPORTANT: this function performs the real API call. It is gated upstream
+ * by `SEED_COMMENT_AUTOPOST_ENABLED` so the worker can run in shadow mode
+ * (logging only) until you flip the flag.
+ */
+async function postCommentOnLinkedIn(
+  accessToken: string,
+  parentUrn: string,
+  actorUrn: string,
+  text: string,
+): Promise<PublishResult> {
+  // LinkedIn's socialActions endpoint requires the parent URN to be URL-encoded.
+  const encoded = encodeURIComponent(parentUrn);
+  const res = await fetch(
+    `${LINKEDIN_CONFIG.apiBaseUrl}/socialActions/${encoded}/comments`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+        "X-Restli-Protocol-Version": "2.0.0",
+      },
+      body: JSON.stringify({
+        actor: actorUrn,
+        object: parentUrn,
+        message: { text },
+      }),
+    },
+  );
+
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    console.error("[SeedComment] LinkedIn comment API failed:", res.status, detail);
+    return {
+      success: false,
+      error: `LinkedIn comment API ${res.status}`,
+    };
+  }
+  const data = await res.json().catch(() => ({}));
+  return { success: true, urn: data?.$URN || data?.id };
 }
 
 async function publishToFacebook(userId: string, content: string): Promise<PublishResult> {
@@ -636,6 +698,47 @@ export const executeScheduledPosts = functions
             });
             console.log(`[Scheduler] Post ${doc.id} published on ${post.platform} | url=${result.publishedUrl}`);
 
+            // Enqueue the seed comment (algo boost) if the user opted in and
+            // we got back a LinkedIn URN. The actual API call happens later
+            // in `executePendingSeedComments` once `fireAt <= now` AND the
+            // autopost flag is on. We always enqueue (auditable in Firestore)
+            // but the worker is the one that decides whether to fire.
+            const seed = post.seedComment;
+            if (
+              post.platform === "linkedin" &&
+              seed?.enabled &&
+              typeof seed?.text === "string" &&
+              seed.text.trim().length >= 10 &&
+              result.urn &&
+              result.actorUrn
+            ) {
+              try {
+                const baseDelayMin = Math.max(1, Math.min(15, Number(seed.delayMinutes) || 3));
+                const jitterMin = Math.random() * 3; // 0–3 min organic jitter
+                const fireAtMs = Date.now() + (baseDelayMin + jitterMin) * 60_000;
+                await db.collection("pendingSeedComments").add({
+                  userId: post.userId,
+                  parentScheduledPostId: doc.id,
+                  parentPostUrn: result.urn,
+                  parentPostUrl: result.publishedUrl || null,
+                  actorUrn: result.actorUrn,
+                  text: seed.text.trim(),
+                  fireAt: admin.firestore.Timestamp.fromMillis(fireAtMs),
+                  status: "pending",
+                  attemptCount: 0,
+                  createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                });
+                console.log(
+                  `[Scheduler] Enqueued seed comment for post ${doc.id} | fireAt=${new Date(fireAtMs).toISOString()} | autopost=${SEED_COMMENT_AUTOPOST_ENABLED}`,
+                );
+              } catch (enqueueErr) {
+                console.warn(
+                  `[Scheduler] Failed to enqueue seed comment for ${doc.id}:`,
+                  enqueueErr instanceof Error ? enqueueErr.message : enqueueErr,
+                );
+              }
+            }
+
             // Clean up images from Firebase Storage after successful publish
             if (postImages && postImages.length > 0) {
               try {
@@ -698,6 +801,163 @@ export const executeScheduledPosts = functions
 
     console.log(`[Scheduler] Done: ${publishedCount} published, ${failedCount} failed, ${skippedCount} skipped`);
 
+    return null;
+  });
+
+// ============================================================
+// SEED COMMENT WORKER — fires queued first-comments on LinkedIn
+// Runs every minute. Each pending doc has a `fireAt` timestamp; we pick
+// docs where fireAt has passed and either fire the comment (autopost ON)
+// or mark them `skipped_flag_off` (autopost OFF). The flag is read at
+// COLD START so flipping it requires a function redeploy or a config
+// reload — this is intentional: it forces an explicit ramp-up moment.
+// ============================================================
+
+export const executePendingSeedComments = functions
+  .runWith({ timeoutSeconds: 180, memory: "256MB" })
+  .pubsub.schedule("every 1 minutes")
+  .timeZone("Europe/Paris")
+  .onRun(async () => {
+    const now = admin.firestore.Timestamp.now();
+    console.log(
+      `[SeedComment] Tick ${now.toDate().toISOString()} | autopost=${SEED_COMMENT_AUTOPOST_ENABLED}`,
+    );
+
+    let due;
+    try {
+      due = await db
+        .collection("pendingSeedComments")
+        .where("status", "==", "pending")
+        .where("fireAt", "<=", now)
+        .limit(25)
+        .get();
+    } catch (err) {
+      console.error(
+        "[SeedComment] Firestore query failed (composite index pendingSeedComments(status,fireAt) missing?):",
+        err,
+      );
+      return null;
+    }
+
+    if (due.empty) {
+      return null;
+    }
+
+    console.log(`[SeedComment] ${due.size} due`);
+
+    const SEED_MAX_ATTEMPTS = 3;
+    let posted = 0;
+    let skipped = 0;
+    let failed = 0;
+
+    await Promise.allSettled(
+      due.docs.map(async (doc) => {
+        const item = doc.data();
+        const ref = doc.ref;
+        const attempt = (item.attemptCount || 0) + 1;
+
+        // Always increment attempt counter to avoid hot-loop on a poisoned doc.
+        await ref.update({
+          attemptCount: admin.firestore.FieldValue.increment(1),
+        });
+
+        // ── DRY-RUN MODE — flag off: don't call LinkedIn, mark skipped. ──
+        if (!SEED_COMMENT_AUTOPOST_ENABLED) {
+          await ref.update({
+            status: "skipped_flag_off",
+            failureReason: "Auto-post disabled (SEED_COMMENT_AUTOPOST_ENABLED=false)",
+          });
+          skipped++;
+          console.log(
+            `[SeedComment] DRY-RUN ${doc.id} | parent=${item.parentPostUrn} | text="${(item.text || "").slice(0, 80)}…"`,
+          );
+          return;
+        }
+
+        // ── Real path — fetch the user's LinkedIn token and fire ──
+        try {
+          const connSnap = await db
+            .collection("linkedinConnections")
+            .doc(item.userId)
+            .get();
+          if (!connSnap.exists) {
+            await ref.update({
+              status: "failed",
+              failureReason: "LinkedIn connection missing",
+            });
+            failed++;
+            return;
+          }
+          const conn = connSnap.data()!;
+          if (
+            conn.expiresAt &&
+            typeof conn.expiresAt.toMillis === "function" &&
+            conn.expiresAt.toMillis() <= Date.now()
+          ) {
+            await ref.update({
+              status: "failed",
+              failureReason: "LinkedIn token expired",
+            });
+            failed++;
+            return;
+          }
+
+          // (Optional safety) verify the parent post still exists. We skip
+          // for now to save an API call; LinkedIn returns a clean error if
+          // the parent was deleted, which we surface as failureReason.
+
+          const result = await postCommentOnLinkedIn(
+            conn.accessToken,
+            item.parentPostUrn,
+            item.actorUrn,
+            item.text,
+          );
+
+          if (result.success) {
+            await ref.update({
+              status: "posted",
+              postedAt: admin.firestore.FieldValue.serverTimestamp(),
+              failureReason: null,
+            });
+            posted++;
+            console.log(`[SeedComment] Posted ${doc.id} | parent=${item.parentPostUrn}`);
+          } else {
+            const finalize = attempt >= SEED_MAX_ATTEMPTS;
+            await ref.update({
+              status: finalize ? "failed" : "pending",
+              failureReason: result.error || "Unknown failure",
+              // re-arm fireAt with backoff if not finalized (5 min)
+              ...(finalize
+                ? {}
+                : {
+                    fireAt: admin.firestore.Timestamp.fromMillis(
+                      Date.now() + 5 * 60_000,
+                    ),
+                  }),
+            });
+            failed++;
+          }
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : "Unknown error";
+          const finalize = attempt >= SEED_MAX_ATTEMPTS;
+          await ref.update({
+            status: finalize ? "failed" : "pending",
+            failureReason: msg,
+            ...(finalize
+              ? {}
+              : {
+                  fireAt: admin.firestore.Timestamp.fromMillis(Date.now() + 5 * 60_000),
+                }),
+          });
+          failed++;
+          console.error(`[SeedComment] Exception on ${doc.id}:`, msg);
+        }
+      }),
+    );
+
+    console.log(
+      `[SeedComment] Done | posted=${posted} skipped=${skipped} failed=${failed}`,
+    );
     return null;
   });
 

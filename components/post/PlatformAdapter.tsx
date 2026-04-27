@@ -14,8 +14,9 @@ interface PlatformAdapterProps {
 
 const PLATFORMS: { id: AdaptationPlatform; icon: string; label: string }[] = [
   { id: "threads", icon: "🧵", label: "Threads" },
-  { id: "twitter", icon: "𝕏", label: "Twitter/X" },
   { id: "facebook", icon: "📘", label: "Facebook" },
+  { id: "bluesky", icon: "🦋", label: "Bluesky" },
+  { id: "mastodon", icon: "🐘", label: "Mastodon" },
 ];
 
 /**

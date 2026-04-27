@@ -62,9 +62,12 @@ export default function ShimmeringName({
   const characters = name.split("");
 
   return (
+    // translate="no" + notranslate class: user first-name must never be transformed
+    // by Chrome/Safari auto-translate, i18n fallback, or text normalization.
     <span
       ref={containerRef}
-      className={`relative inline-flex items-center ${className}`}
+      translate="no"
+      className={`notranslate relative inline-flex items-center ${className}`}
     >
       {/* Sparkle particles */}
       {showSparkles && !prefersReducedMotion && (

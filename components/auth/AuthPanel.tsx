@@ -90,9 +90,9 @@ const CheckIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
   </svg>
 );
 
-const SparklesIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+const RocketIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.63 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 00-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 01-2.448-2.448 14.9 14.9 0 01.06-.312m-2.24 2.39a4.493 4.493 0 00-1.757 4.306 4.493 4.493 0 004.306-1.758M16.5 9a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
   </svg>
 );
 
@@ -164,7 +164,7 @@ const PremiumInput = ({
         {icon}
       </motion.div>
 
-      {/* Input - Light mode styling */}
+      {/* Input — minimalist: lighter shadow, subtler focus ring, snappier transition */}
       <input
         ref={inputRef}
         type={type}
@@ -176,14 +176,16 @@ const PremiumInput = ({
         autoComplete={autoComplete}
         required={required}
         className={`
-          relative w-full pl-10 sm:pl-11 py-3.5 sm:py-4
-          bg-white border rounded-lg sm:rounded-xl
-          text-sm text-gray-900 placeholder:text-gray-400
-          focus:outline-none focus:bg-white
-          transition-all duration-300
-          shadow-sm
+          relative w-full pl-10 sm:pl-11 py-3 sm:py-3.5
+          bg-white border rounded-lg
+          text-[14px] text-gray-900 placeholder:text-gray-400
+          focus:outline-none
+          transition-[border-color,box-shadow] duration-150
           ${rightElement ? "pr-11 sm:pr-12" : "pr-4"}
-          ${isFocused ? "border-warm-orange ring-2 ring-warm-orange/20" : "border-gray-200 hover:border-gray-300"}
+          ${isFocused
+            ? "border-warm-orange shadow-[0_0_0_3px_rgba(248,147,93,0.12)]"
+            : "border-gray-200 hover:border-gray-300"
+          }
         `}
       />
 
@@ -658,52 +660,34 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
               </div>
             )}
 
-            {/* Submit button - Premium Warm Orange/Coral Gradient */}
+            {/* Submit button — single warm tone, subtle shadow, no infinite shimmer */}
             <motion.button
               type="submit"
               disabled={isLoading || showSuccess || (mode === "signup" && !acceptTerms)}
+              style={{ color: "#FFFFFF" }}
               className="
-                relative w-full py-3.5 sm:py-4 rounded-xl sm:rounded-2xl font-semibold text-sm sm:text-base text-white
-                bg-gradient-to-r from-warm-orange via-warm-coral to-warm-orange
-                bg-[length:200%_100%]
-                shadow-lg shadow-warm-orange/25
-                hover:shadow-xl hover:shadow-warm-orange/30
-                disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-lg
-                overflow-hidden group
-                transition-shadow duration-300
+                relative w-full py-3 sm:py-3.5 rounded-lg font-semibold text-[14px] !text-white
+                bg-warm-orange hover:bg-warm-coral
+                shadow-sm shadow-warm-orange/20
+                hover:shadow-md hover:shadow-warm-orange/25
+                disabled:opacity-50 disabled:cursor-not-allowed
+                transition-[background-color,box-shadow] duration-200
               "
-              whileHover={prefersReducedMotion ? {} : {
-                scale: 1.01,
-                backgroundPosition: "100% 0",
-              }}
-              whileTap={prefersReducedMotion ? {} : { scale: 0.98 }}
-              transition={{ duration: 0.3 }}
+              whileTap={prefersReducedMotion ? {} : { scale: 0.99 }}
+              transition={{ duration: 0.15 }}
             >
-              {/* Shimmer effect */}
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent"
-                initial={{ x: "-100%" }}
-                animate={{ x: "100%" }}
-                transition={{
-                  duration: 1.5,
-                  repeat: Infinity,
-                  repeatDelay: 3,
-                  ease: "easeInOut",
-                }}
-              />
-
               {isLoading ? (
-                <span className="flex items-center justify-center gap-2">
+                <span className="flex items-center justify-center gap-2 !text-white" style={{ color: "#FFFFFF" }}>
                   <motion.div
-                    className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/30 border-t-white rounded-full"
+                    className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
                     animate={{ rotate: 360 }}
                     transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
                   />
-                  <span className="text-white/90">{t.common.loading}</span>
+                  <span className="!text-white/90">{t.common.loading}</span>
                 </span>
               ) : (
-                <span className="relative flex items-center justify-center gap-2">
-                  {mode === "signup" && <SparklesIcon className="w-4 h-4 sm:w-5 sm:h-5" />}
+                <span className="relative flex items-center justify-center gap-2 !text-white" style={{ color: "#FFFFFF" }}>
+                  {mode === "signup" && <RocketIcon className="w-4 h-4" />}
                   {mode === "login" ? t.auth.signIn : t.auth.createMyAccount}
                 </span>
               )}

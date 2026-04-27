@@ -12,6 +12,12 @@ interface ResponseData {
   variant: "storytelling" | "business";
   timestamp?: Date;
   isStreaming?: boolean;
+  /** Auto-generated first-comment for algo boost */
+  seedComment?: {
+    text?: string;
+    loading?: boolean;
+    error?: string;
+  };
 }
 
 interface ModernAIResponsePairProps {
@@ -19,9 +25,11 @@ interface ModernAIResponsePairProps {
   businessResponse: ResponseData;
   userPlan: SubscriptionPlan | null;
   onPublishToLinkedIn?: (content: string) => void;
-  onSchedule?: (content: string) => void;
+  onSchedule?: (content: string, seedCommentText?: string) => void;
   /** When true, actions are always visible on both cards */
   isLastMessage?: boolean;
+  /** Called with variant when user requests a fresh seed comment */
+  onRegenerateSeedComment?: (variant: "storytelling" | "business") => void;
 }
 
 /**
@@ -93,6 +101,7 @@ export const ModernAIResponsePair = memo(function ModernAIResponsePair({
   onPublishToLinkedIn,
   onSchedule,
   isLastMessage = true,
+  onRegenerateSeedComment,
 }: ModernAIResponsePairProps) {
   // Mobile navigation state
   const [activeIndex, setActiveIndex] = useState(0);
@@ -214,6 +223,12 @@ export const ModernAIResponsePair = memo(function ModernAIResponsePair({
                 onSchedule={onSchedule}
                 showVariantBadge={true}
                 isLastMessage={isLastMessage}
+                seedComment={storytellingResponse.seedComment}
+                onRegenerateSeedComment={
+                  onRegenerateSeedComment
+                    ? () => onRegenerateSeedComment("storytelling")
+                    : undefined
+                }
               />
             )}
           </div>
@@ -233,6 +248,12 @@ export const ModernAIResponsePair = memo(function ModernAIResponsePair({
                 onSchedule={onSchedule}
                 showVariantBadge={true}
                 isLastMessage={isLastMessage}
+                seedComment={businessResponse.seedComment}
+                onRegenerateSeedComment={
+                  onRegenerateSeedComment
+                    ? () => onRegenerateSeedComment("business")
+                    : undefined
+                }
               />
             )}
           </div>
@@ -281,6 +302,12 @@ export const ModernAIResponsePair = memo(function ModernAIResponsePair({
                     onSchedule={onSchedule}
                     showVariantBadge={true}
                     isLastMessage={isLastMessage}
+                    seedComment={activeResponse.seedComment}
+                    onRegenerateSeedComment={
+                      onRegenerateSeedComment
+                        ? () => onRegenerateSeedComment(activeResponse.variant)
+                        : undefined
+                    }
                   />
                 )}
               </div>

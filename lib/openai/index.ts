@@ -24,6 +24,7 @@ export type {
   OpenAIConfig,
   OpenAIModel,
   GeneratePostOptions,
+  GenerateSeedCommentOptions,
   UserProfile,
   GeneratedPost,
   ChatMessage,
