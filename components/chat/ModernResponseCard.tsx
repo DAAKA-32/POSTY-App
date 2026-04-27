@@ -10,6 +10,7 @@ import { useVisibilityObserver } from "@/hooks/ui/useVisibilityObserver";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { getAuthHeaders } from "@/lib/api/client";
 import { PlanType } from "@/lib/config/plans";
 import PostInsightsModal from "./PostInsightsModal";
 import { generatePostInsights } from "@/lib/services/generateInsights";
@@ -132,12 +133,64 @@ export const ModernResponseCard = memo(function ModernResponseCard({
     }
   };
 
-  // Seed comment copy state
+  // Seed comment — primary source is the `seedComment` prop (driven by the
+  // parent useChat hook on fresh generations). For posts loaded from history
+  // or after a refresh, the parent prop is undefined: we fall back to a local
+  // state + on-demand fetch so the user can still generate one with a click.
   const [seedCopied, setSeedCopied] = useState(false);
-  const handleCopySeed = async () => {
-    if (!seedComment?.text) return;
+  const [localSeed, setLocalSeed] = useState<{
+    text?: string;
+    loading?: boolean;
+    error?: string;
+  } | null>(null);
+
+  const effectiveSeed = seedComment ?? localSeed ?? undefined;
+
+  const fetchLocalSeedComment = useCallback(async () => {
+    if (!content || content.trim().length < 20) return;
+    setLocalSeed({ loading: true });
     try {
-      await navigator.clipboard.writeText(seedComment.text);
+      const lang = (typeof window !== "undefined"
+        ? (localStorage.getItem("posty-language") || "fr")
+        : "fr") as "fr" | "en";
+      const headers = await getAuthHeaders();
+      const res = await fetch("/api/chat/seed-comment", {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({ postContent: content, language: lang }),
+      });
+      if (!res.ok) {
+        let msg = `Seed comment failed (${res.status})`;
+        try {
+          const j = await res.json();
+          msg = j.message || j.error || msg;
+        } catch {}
+        throw new Error(msg);
+      }
+      const data: { comment?: string } = await res.json();
+      if (!data.comment) throw new Error("Empty seed comment");
+      setLocalSeed({ text: data.comment, loading: false });
+    } catch (err) {
+      setLocalSeed({
+        loading: false,
+        error: err instanceof Error ? err.message : "Failed",
+      });
+    }
+  }, [content]);
+
+  const handleRegenerate = useCallback(() => {
+    // Parent handler wins (keeps `responses[]` in sync); fallback to local.
+    if (onRegenerateSeedComment) {
+      onRegenerateSeedComment();
+    } else {
+      void fetchLocalSeedComment();
+    }
+  }, [onRegenerateSeedComment, fetchLocalSeedComment]);
+
+  const handleCopySeed = async () => {
+    if (!effectiveSeed?.text) return;
+    try {
+      await navigator.clipboard.writeText(effectiveSeed.text);
       setSeedCopied(true);
       triggerHaptic("success");
       setTimeout(() => setSeedCopied(false), 2000);
@@ -474,8 +527,10 @@ export const ModernResponseCard = memo(function ModernResponseCard({
           </div>
         </div>
 
-        {/* Seed comment block — algo-boost first comment, separate from post body */}
-        {!isStreaming && content && (seedComment?.text || seedComment?.loading || seedComment?.error) && (
+        {/* Seed comment block — algo-boost first comment, separate from post body.
+            Always rendered when the post is final (so users discover the feature),
+            with a "Generate" CTA when no text/loading/error is set yet. */}
+        {!isStreaming && content && (
           <div className="mx-4 mb-3 rounded-xl bg-gradient-to-br from-[#F8935D]/[0.05] to-[#F76B54]/[0.03] dark:from-[#F8935D]/[0.08] dark:to-[#F76B54]/[0.04] ring-1 ring-[#F8935D]/15 dark:ring-[#F8935D]/20 overflow-hidden">
             {/* Header strip */}
             <div className="flex items-center justify-between px-3 pt-2.5 pb-1.5">
@@ -498,30 +553,28 @@ export const ModernResponseCard = memo(function ModernResponseCard({
                 </span>
               </div>
 
-              {/* Mini action bar */}
-              {seedComment?.text && !seedComment.loading && (
+              {/* Mini action bar — shown only when we have a comment text */}
+              {effectiveSeed?.text && !effectiveSeed.loading && (
                 <div className="flex items-center gap-1 flex-shrink-0">
                   {/* Regenerate */}
-                  {onRegenerateSeedComment && (
-                    <motion.button
-                      onClick={onRegenerateSeedComment}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="
-                        inline-flex items-center justify-center
-                        w-6 h-6 rounded-md
-                        text-[#B5532E] dark:text-[#F8935D]
-                        hover:bg-[#F8935D]/10 dark:hover:bg-[#F8935D]/15
-                        transition-colors duration-150
-                      "
-                      aria-label="Régénérer"
-                      title="Régénérer"
-                    >
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                      </svg>
-                    </motion.button>
-                  )}
+                  <motion.button
+                    onClick={handleRegenerate}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="
+                      inline-flex items-center justify-center
+                      w-6 h-6 rounded-md
+                      text-[#B5532E] dark:text-[#F8935D]
+                      hover:bg-[#F8935D]/10 dark:hover:bg-[#F8935D]/15
+                      transition-colors duration-150
+                    "
+                    aria-label="Régénérer"
+                    title="Régénérer"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  </motion.button>
                   {/* Copy */}
                   <motion.button
                     onClick={handleCopySeed}
@@ -574,9 +627,9 @@ export const ModernResponseCard = memo(function ModernResponseCard({
               )}
             </div>
 
-            {/* Body — text / skeleton / error */}
+            {/* Body — text / skeleton / error / idle CTA */}
             <div className="px-3 pb-3">
-              {seedComment?.loading ? (
+              {effectiveSeed?.loading ? (
                 <div className="space-y-1.5 py-1">
                   <motion.div
                     className="h-2.5 rounded-full bg-[#F8935D]/15 dark:bg-[#F8935D]/20"
@@ -597,30 +650,55 @@ export const ModernResponseCard = memo(function ModernResponseCard({
                     style={{ width: "60%" }}
                   />
                 </div>
-              ) : seedComment?.error ? (
+              ) : effectiveSeed?.error ? (
                 <div className="flex items-start gap-2 py-1">
                   <span className="text-[12px] text-gray-500 dark:text-text-muted flex-1">
                     Impossible de générer le commentaire.
                   </span>
-                  {onRegenerateSeedComment && (
-                    <button
-                      onClick={onRegenerateSeedComment}
-                      className="text-[11px] font-semibold text-[#B5532E] dark:text-[#F8935D] hover:underline flex-shrink-0"
-                    >
-                      Réessayer
-                    </button>
-                  )}
+                  <button
+                    onClick={handleRegenerate}
+                    className="text-[11px] font-semibold text-[#B5532E] dark:text-[#F8935D] hover:underline flex-shrink-0"
+                  >
+                    Réessayer
+                  </button>
                 </div>
-              ) : seedComment?.text ? (
+              ) : effectiveSeed?.text ? (
                 <motion.p
                   initial={{ opacity: 0, y: 4 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                   className="text-[13.5px] leading-relaxed text-gray-800 dark:text-text-primary whitespace-pre-wrap break-words"
                 >
-                  {seedComment.text}
+                  {effectiveSeed.text}
                 </motion.p>
-              ) : null}
+              ) : (
+                /* Idle state — no comment yet, prompt the user to generate one. */
+                <div className="flex items-center justify-between gap-3 py-1">
+                  <p className="text-[12px] text-gray-500 dark:text-text-muted leading-snug min-w-0">
+                    Booste la portée de ce post : Posty rédige un 1er commentaire à coller ~3 min après publication.
+                  </p>
+                  <motion.button
+                    onClick={handleRegenerate}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="
+                      flex-shrink-0 inline-flex items-center gap-1.5
+                      px-3 py-1.5 rounded-lg text-[11px] font-bold text-white
+                      shadow-sm
+                    "
+                    style={{
+                      backgroundImage: "linear-gradient(135deg,#F8935D,#F76B54)",
+                      boxShadow: "0 4px 10px -3px rgba(248,147,93,0.45), inset 0 1px 0 rgba(255,255,255,0.25)",
+                    }}
+                    aria-label="Générer un 1er commentaire"
+                  >
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                    Générer
+                  </motion.button>
+                </div>
+              )}
             </div>
           </div>
         )}
