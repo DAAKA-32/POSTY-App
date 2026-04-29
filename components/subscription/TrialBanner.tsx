@@ -4,19 +4,19 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSubscription } from "@/contexts/SubscriptionContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { TRIAL_PERIOD_DAYS, GUARANTEE_PERIOD_DAYS } from "@/lib/config/plans";
 
 /**
  * TrialBanner - Shows contextual banners for trial/guarantee status
  *
- * Displays:
- * - During trial: "X jours restants sur votre essai"
- * - After trial (guarantee active): "Garantie remboursement X jours"
- * - Last day of trial: urgent message
+ * Displays (in priority order):
+ * - Free-plan 14-day trial countdown (highest priority — drives upgrade)
+ * - Paid trial countdown (Stripe `trialing` status)
+ * - Money-back guarantee window
  *
- * Does NOT show:
- * - For users without a subscription who haven't started trial
- * - For active paid users past guarantee period
+ * Hidden for unsubscribed users with no active trial, and for paid users
+ * past the guarantee period.
  */
 export default function TrialBanner() {
   const {
@@ -26,8 +26,60 @@ export default function TrialBanner() {
     guaranteeEligible,
     guaranteeDaysRemaining,
     currentPlan,
+    freeTrialEndsAt,
+    freeTrialDaysRemaining,
+    freeTrialExpired,
   } = useSubscription();
+  const { t } = useLanguage();
   const pathname = usePathname();
+
+  // ===== Free-plan 14-day trial banner =====
+  // Shown to Free users while the trial clock is still running. Once
+  // expired, SubscriptionGuard redirects them to /subscription instead.
+  if (currentPlan === "free" && !freeTrialExpired && freeTrialEndsAt) {
+    const isUrgent = freeTrialDaysRemaining <= 1;
+    const message = freeTrialDaysRemaining === 1
+      ? t.subscriptionPage.freeTrialOneDayLeft
+      : t.subscriptionPage.freeTrialDaysLeft.replace("{n}", String(freeTrialDaysRemaining));
+
+    return (
+      <AnimatePresence>
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          className={`
+            w-full px-4 py-2.5 flex items-center justify-center gap-3 text-sm
+            ${isUrgent
+              ? "bg-gradient-to-r from-red-500/10 via-orange-500/10 to-red-500/10 border-b border-red-500/20"
+              : "bg-gradient-to-r from-primary/10 via-accent/5 to-primary/10 border-b border-primary/20"
+            }
+          `}
+        >
+          <svg className={`w-4 h-4 shrink-0 ${isUrgent ? "text-red-400" : "text-primary"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+
+          <span className={`${isUrgent ? "text-red-400 font-semibold" : "text-text-secondary"}`}>
+            {message}
+          </span>
+
+          <Link
+            href={`/subscription?from=${encodeURIComponent(pathname)}`}
+            className={`
+              ml-auto px-3 py-1 rounded-lg text-xs font-medium transition-colors
+              ${isUrgent
+                ? "bg-red-500/20 text-red-400 hover:bg-red-500/30"
+                : "bg-primary/20 text-primary hover:bg-primary/30"
+              }
+            `}
+          >
+            {t.subscriptionPage.freeTrialUpgradeCta}
+          </Link>
+        </motion.div>
+      </AnimatePresence>
+    );
+  }
 
   // Don't show anything if not relevant
   if (!isTrialing && !guaranteeEligible) return null;

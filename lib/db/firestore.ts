@@ -19,7 +19,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/db/firebase";
 import { UserProfile, Post, Session, ChatMessage, SubscriptionPlan, FacebookConnectionData, ThreadsConnectionData } from "@/types";
-import { PlanType, DAILY_MESSAGE_LIMITS, PLAN_CONFIGS, getFounderOverridePlan } from "@/lib/config/plans";
+import { PlanType, DAILY_MESSAGE_LIMITS, PLAN_CONFIGS, getFounderOverridePlan, calculateFreeTrialEndDate } from "@/lib/config/plans";
 
 /**
  * Normalize plan name from Firestore to a valid SubscriptionPlan.
@@ -45,6 +45,11 @@ export async function createUserProfile(
   const userRef = doc(db, "users", userId);
   const now = new Date();
   const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0, 0));
+  // 14-day Free-plan trial — clock starts at account creation regardless of
+  // whether the user picks Free explicitly later. This guarantees a fixed
+  // expiration window for analytics and prevents "reset by re-activating".
+  const freeTrialStart = now;
+  const freeTrialEnd = calculateFreeTrialEndDate(now);
 
   await setDoc(userRef, {
     uid: userId,
@@ -57,6 +62,8 @@ export async function createUserProfile(
     subscription: {
       plan: null,
       status: "inactive",
+      freeTrialStartedAt: Timestamp.fromDate(freeTrialStart),
+      freeTrialEndsAt: Timestamp.fromDate(freeTrialEnd),
     },
     // Initialize quota tracking to prevent race condition false positives
     quota: {
@@ -74,14 +81,32 @@ export async function createUserProfile(
 
 /**
  * Activate Free plan for a user — ensures subscription is set correctly in Firestore.
- * Idempotent: safe to call multiple times.
+ * Idempotent: safe to call multiple times. Free is a 14-day trial, so we also
+ * seed `freeTrialStartedAt`/`freeTrialEndsAt` if they don't exist yet (backfill
+ * for accounts created before the trial system landed). We never reset existing
+ * dates — once the clock starts, re-activating cannot extend it.
  */
 export async function activateFreePlan(userId: string): Promise<void> {
   const userRef = doc(db, "users", userId);
-  await updateDoc(userRef, {
+  const snap = await getDoc(userRef);
+  const data = snap.exists() ? snap.data() : null;
+
+  const update: Record<string, unknown> = {
     "subscription.plan": "free",
     "subscription.status": "active",
-  });
+  };
+
+  if (!data?.subscription?.freeTrialStartedAt) {
+    // Anchor to createdAt when available so existing accounts don't get a
+    // surprise fresh 14 days; otherwise start the clock now.
+    const createdAt: Date | null =
+      typeof data?.createdAt?.toDate === "function" ? data.createdAt.toDate() : null;
+    const start = createdAt || new Date();
+    update["subscription.freeTrialStartedAt"] = Timestamp.fromDate(start);
+    update["subscription.freeTrialEndsAt"] = Timestamp.fromDate(calculateFreeTrialEndDate(start));
+  }
+
+  await updateDoc(userRef, update);
 }
 
 export async function getUserProfile(

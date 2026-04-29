@@ -149,6 +149,11 @@ export interface UserProfile {
     trialStartedAt?: Timestamp;    // When trial started
     trialEndsAt?: Timestamp;       // When trial ends (for display)
     trialPlan?: SubscriptionPlan;  // Which plan was trialed (pro or max)
+    // Free-plan trial (14 days). Distinct from the Stripe trial above:
+    // every Free user gets 14 days of access starting at signup, then must
+    // upgrade. Backfilled lazily from `createdAt` for existing accounts.
+    freeTrialStartedAt?: Timestamp;
+    freeTrialEndsAt?: Timestamp;
     // Guarantee tracking (money-back guarantee after first payment)
     firstPaymentDate?: Timestamp;  // When first payment was made (guarantee starts here)
     refundRequested?: boolean;     // True if user has requested a refund

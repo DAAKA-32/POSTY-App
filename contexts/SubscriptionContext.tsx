@@ -21,6 +21,11 @@ import {
   checkGuaranteeEligibility,
   formatTrialStatusMessage,
   getFounderOverridePlan,
+  resolveFreeTrialEnd,
+  resolveFreeTrialStart,
+  getFreeTrialDaysRemaining,
+  isFreeTrialExpired,
+  FREE_TRIAL_DURATION_DAYS,
 } from "@/lib/config/plans";
 import {
   UserSubscription,
@@ -67,6 +72,13 @@ interface SubscriptionState {
   trialPlan: PlanType | null;
   trialEndsAt: Date | null;
   trialEligible: boolean;
+
+  // Free-plan trial (14 days)
+  freeTrialStartedAt: Date | null;
+  freeTrialEndsAt: Date | null;
+  freeTrialDaysRemaining: number;
+  /** True when the user is on the Free plan AND the 14-day clock has run out. */
+  freeTrialExpired: boolean;
 
   // Guarantee state
   guaranteeEligible: boolean;
@@ -117,6 +129,9 @@ interface SubscriptionContextValue extends SubscriptionState {
   trialStatusMessage: string | null;
   canStartTrial: boolean;
 
+  /** Free-plan trial total length in days (constant, exposed for UI). */
+  freeTrialTotalDays: number;
+
   // Guarantee info
   guaranteeEligible: boolean;
   guaranteeDaysRemaining: number;
@@ -153,6 +168,11 @@ const defaultState: SubscriptionState = {
   trialPlan: null,
   trialEndsAt: null,
   trialEligible: true, // Assume eligible until we check
+  // Free-plan trial
+  freeTrialStartedAt: null,
+  freeTrialEndsAt: null,
+  freeTrialDaysRemaining: 0,
+  freeTrialExpired: false,
   // Guarantee
   guaranteeEligible: false,
   guaranteeDaysRemaining: 0,
@@ -220,12 +240,33 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     const effectivePlan = founderPlan || stripePlan;
     const isFounderOverride = !!founderPlan;
 
+    // ===== Free-plan 14-day trial =====
+    // Resolve trial window from explicit fields with createdAt fallback so
+    // accounts created before the trial system landed are still gated.
+    const freeTrialStartedAt = isFounderOverride
+      ? null
+      : resolveFreeTrialStart(userProfile as unknown as Record<string, unknown>);
+    const freeTrialEndsAt = isFounderOverride
+      ? null
+      : resolveFreeTrialEnd(userProfile as unknown as Record<string, unknown>);
+    const freeTrialDaysRemaining = getFreeTrialDaysRemaining(freeTrialEndsAt);
+    const freeTrialExpired = isFreeTrialExpired(effectivePlan, freeTrialEndsAt);
+
+    const rawStatus = isFounderOverride
+      ? "active"
+      : ((subscriptionData?.status as UserSubscription["status"]) || "inactive");
+
+    // Once the Free trial expires, downgrade status to "inactive" so all
+    // existing guards (SubscriptionGuard, permission helpers) treat the user
+    // as unsubscribed without further changes.
+    const effectiveStatus: UserSubscription["status"] = freeTrialExpired
+      ? "inactive"
+      : rawStatus;
+
     const subscription: UserSubscription = {
       plan: effectivePlan,
       planSource: isFounderOverride ? "test" : "stripe",
-      status: isFounderOverride
-        ? "active"
-        : ((subscriptionData?.status as UserSubscription["status"]) || "inactive"),
+      status: effectiveStatus,
       currentPeriodStart: subscriptionData?.subscribedAt?.toDate?.(),
       currentPeriodEnd: subscriptionData?.expiresAt?.toDate?.(),
     };
@@ -288,6 +329,10 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       trialPlan: isTrialing ? trialPlan : null,
       trialEndsAt,
       trialEligible: trialEligibility.eligible,
+      freeTrialStartedAt,
+      freeTrialEndsAt,
+      freeTrialDaysRemaining,
+      freeTrialExpired,
       guaranteeEligible: guaranteeResult.eligible && !refundRequested,
       guaranteeDaysRemaining: guaranteeResult.daysRemaining,
       refundRequested,
@@ -493,6 +538,8 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       state.trialPlan || undefined
     ),
     canStartTrial: state.trialEligible && !state.isTrialing,
+
+    freeTrialTotalDays: FREE_TRIAL_DURATION_DAYS,
 
     // Guarantee info
     guaranteeEligible: state.guaranteeEligible,

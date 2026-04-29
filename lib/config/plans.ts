@@ -84,6 +84,105 @@ export const GUARANTEE_PERIOD_DAYS = 7;
 /** Trial period duration in milliseconds */
 export const TRIAL_PERIOD_MS = TRIAL_PERIOD_DAYS * 24 * 60 * 60 * 1000;
 
+// ============================================
+// FREE PLAN TRIAL (14 days)
+// ============================================
+// The Free plan is a time-limited trial. Users get full Free-plan access for
+// FREE_TRIAL_DURATION_DAYS days starting at signup (or first activation).
+// Once expired, the user must upgrade to Pro or Max to keep using Posty.
+
+/** Duration of the Free-plan trial in days. */
+export const FREE_TRIAL_DURATION_DAYS = 14;
+
+/** Duration of the Free-plan trial in milliseconds. */
+export const FREE_TRIAL_DURATION_MS = FREE_TRIAL_DURATION_DAYS * 24 * 60 * 60 * 1000;
+
+/** Compute trial end date from start date (defaults to now + 14 days). */
+export function calculateFreeTrialEndDate(startDate: Date = new Date()): Date {
+  return new Date(startDate.getTime() + FREE_TRIAL_DURATION_MS);
+}
+
+/** Coerce a Firestore Timestamp / Date / number into a JS Date (or null). */
+function toDateOrNull(value: unknown): Date | null {
+  if (!value) return null;
+  if (value instanceof Date) return value;
+  if (typeof value === "number") return new Date(value);
+  if (typeof (value as { toDate?: () => Date }).toDate === "function") {
+    try { return (value as { toDate: () => Date }).toDate(); } catch { return null; }
+  }
+  return null;
+}
+
+/**
+ * Resolve the effective Free-plan trial start date for a user.
+ * Order of precedence:
+ *   1. `subscription.freeTrialStartedAt` (set when activating Free plan)
+ *   2. `subscription.subscribedAt` (legacy fallback)
+ *   3. `createdAt` (account creation)
+ *   4. `null` (cannot determine — caller should treat as "not started")
+ */
+export function resolveFreeTrialStart(profile: {
+  subscription?: {
+    freeTrialStartedAt?: unknown;
+    subscribedAt?: unknown;
+  };
+  createdAt?: unknown;
+} | null | undefined): Date | null {
+  if (!profile) return null;
+  return (
+    toDateOrNull(profile.subscription?.freeTrialStartedAt) ||
+    toDateOrNull(profile.subscription?.subscribedAt) ||
+    toDateOrNull(profile.createdAt)
+  );
+}
+
+/**
+ * Resolve the effective Free-plan trial end date for a user.
+ * Uses the explicit `freeTrialEndsAt` if present, else derives from start.
+ */
+export function resolveFreeTrialEnd(profile: {
+  subscription?: {
+    freeTrialStartedAt?: unknown;
+    freeTrialEndsAt?: unknown;
+    subscribedAt?: unknown;
+  };
+  createdAt?: unknown;
+} | null | undefined): Date | null {
+  if (!profile) return null;
+  const explicit = toDateOrNull(profile.subscription?.freeTrialEndsAt);
+  if (explicit) return explicit;
+  const start = resolveFreeTrialStart(profile);
+  return start ? calculateFreeTrialEndDate(start) : null;
+}
+
+/**
+ * Days remaining in the Free-plan trial. Returns 0 once expired.
+ * Always rounds up — a partial day still counts as a full day for UX.
+ */
+export function getFreeTrialDaysRemaining(trialEnd: Date | null | undefined): number {
+  if (!trialEnd) return 0;
+  const remaining = trialEnd.getTime() - Date.now();
+  if (remaining <= 0) return 0;
+  return Math.ceil(remaining / (24 * 60 * 60 * 1000));
+}
+
+/**
+ * Whether a Free-plan user's trial has expired.
+ *
+ * Returns false for:
+ *   - users not on the Free plan (no trial to expire)
+ *   - founder/gift accounts (effective Max plan, never expires)
+ *   - users whose start date cannot be resolved (treat as fresh — fail-open)
+ */
+export function isFreeTrialExpired(
+  plan: PlanType | null,
+  trialEnd: Date | null | undefined
+): boolean {
+  if (plan !== "free") return false;
+  if (!trialEnd) return false; // Cannot determine — fail-open (lazy backfill will fix)
+  return trialEnd.getTime() < Date.now();
+}
+
 /** Default plan for trial (shown as primary CTA) */
 export const DEFAULT_TRIAL_PLAN: PaidPlanType = "pro";
 

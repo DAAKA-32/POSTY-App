@@ -22,8 +22,17 @@ function SubscriptionContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, signOut, userProfile } = useAuth();
-  const { currentPlan, canStartTrial, refreshSubscription, subscription, loading: subscriptionLoading } = useSubscription();
-  const { t } = useLanguage();
+  const {
+    currentPlan,
+    canStartTrial,
+    refreshSubscription,
+    subscription,
+    loading: subscriptionLoading,
+    freeTrialEndsAt,
+    freeTrialDaysRemaining,
+    freeTrialExpired,
+  } = useSubscription();
+  const { t, language } = useLanguage();
   usePageTitle("subscription");
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("yearly");
   const [isLoading, setIsLoading] = useState<PlanType | null>(null);
@@ -71,8 +80,14 @@ function SubscriptionContent() {
     return () => window.removeEventListener("popstate", handlePopState);
   }, [isFirstTimeUser]);
 
-  // Determine if user was redirected from a guard (for back button behavior)
-  const isRedirectedFromGuard = searchParams.get("reason") === "subscription_required" || searchParams.get("reason") === "trial_expired";
+  // Determine if user was redirected from a guard (for back button behavior).
+  // `free_trial_expired` is the new reason for the 14-day Free-plan trial
+  // running out — distinct from the legacy paid `trial_expired`.
+  const reason = searchParams.get("reason");
+  const isRedirectedFromGuard =
+    reason === "subscription_required" ||
+    reason === "trial_expired" ||
+    reason === "free_trial_expired";
 
   // Detect if we returned from Stripe (checkout success/cancel or external referrer)
   const isReturnedFromStripe = (() => {
@@ -230,7 +245,7 @@ function SubscriptionContent() {
           </p>
 
           {/* Contextual Message - Show reason for redirect */}
-          {searchParams.get("reason") && (
+          {reason && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -242,17 +257,21 @@ function SubscriptionContent() {
                 </svg>
                 <div className="flex-1">
                   <p className="text-sm font-semibold text-primary-dark dark:text-primary-light mb-1">
-                    {searchParams.get("reason") === "subscription_required"
+                    {reason === "subscription_required"
                       ? t.subscriptionPage.subscriptionRequired
-                      : searchParams.get("reason") === "trial_expired"
+                      : reason === "free_trial_expired"
+                      ? t.subscriptionPage.freeTrialExpired
+                      : reason === "trial_expired"
                       ? t.subscriptionPage.trialExpired
                       : t.subscriptionPage.upgradeNeeded
                     }
                   </p>
                   <p className="text-xs text-primary-dark dark:text-secondary">
-                    {searchParams.get("reason") === "subscription_required"
+                    {reason === "subscription_required"
                       ? t.subscriptionPage.subscriptionRequiredDesc
-                      : searchParams.get("reason") === "trial_expired"
+                      : reason === "free_trial_expired"
+                      ? t.subscriptionPage.freeTrialExpiredDesc
+                      : reason === "trial_expired"
                       ? t.subscriptionPage.trialExpiredDesc
                       : t.subscriptionPage.upgradeNeededDesc
                     }
@@ -261,6 +280,45 @@ function SubscriptionContent() {
               </div>
             </motion.div>
           )}
+
+          {/* Free-plan trial status — only shown when user is on Free and has a
+              live trial (not yet redirected for expiration above). */}
+          {!subscriptionLoading &&
+            currentPlan === "free" &&
+            !freeTrialExpired &&
+            freeTrialEndsAt &&
+            reason !== "free_trial_expired" && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="max-w-2xl mx-auto mb-8"
+              >
+                <div className="bg-primary/5 dark:bg-primary/10 border border-primary/20 dark:border-primary/30 rounded-xl p-4 flex items-start gap-3">
+                  <svg className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-semibold text-primary-dark dark:text-primary-light mb-1">
+                      {t.subscriptionPage.freeTrialBadge}
+                    </p>
+                    <p className="text-xs text-primary-dark dark:text-secondary">
+                      {freeTrialDaysRemaining === 1
+                        ? t.subscriptionPage.freeTrialOneDayLeft
+                        : t.subscriptionPage.freeTrialDaysLeft.replace("{n}", String(freeTrialDaysRemaining))}
+                      {" · "}
+                      {t.subscriptionPage.freeTrialEndsOn.replace(
+                        "{date}",
+                        freeTrialEndsAt.toLocaleDateString(language, {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        })
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
 
           {/* Billing Period Selection - Unified Toggle Style */}
           <BillingToggle
@@ -285,7 +343,7 @@ function SubscriptionContent() {
                 billingPeriod={billingPeriod}
                 index={index}
                 isAuthenticated={true}
-                isCurrentPlan={plan.id !== "free" && plan.id === currentPlan}
+                isCurrentPlan={plan.id === currentPlan}
                 isLoading={isLoading === plan.id}
                 onSelect={() => handleSelectPlan(plan)}
               />

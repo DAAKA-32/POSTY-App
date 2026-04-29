@@ -433,6 +433,7 @@ export const en = {
     navCancelAnytime: "No commitment",
     navCloseMenu: "Close menu",
     navOpenMenu: "Open menu",
+    navExplore: "Explore",
 
     // Hero — US SaaS conversion copy
     heroTrustBadge: "Trusted by",
@@ -482,6 +483,7 @@ export const en = {
     demoStreamError: "Stream unavailable",
     demoGenericError: "Something went wrong",
     demoInputDesc: "Describe your goal. Posty generates a LinkedIn post ready to publish in 30 seconds.",
+    trustpilotRated: "on Trustpilot",
     demoPreviewLabel: "Product preview",
     demoVideoLabel: "See in action",
     demoTryDemo: "Try the demo",
@@ -2628,6 +2630,15 @@ export const en = {
     subscriptionRequiredDesc: "An active subscription is required to access this feature. Upgrade to Pro or Max now!",
     trialExpiredDesc: "Your trial period has ended. Choose a plan to continue using Posty.",
     upgradeNeededDesc: "This feature requires a premium subscription.",
+    // Free-plan 14-day trial
+    freeTrialExpired: "Your free trial has ended",
+    freeTrialExpiredDesc: "Your 14 free days are over. Upgrade to Pro or Max to keep using Posty.",
+    freeTrialBadge: "Free Trial · 14 days included",
+    freeTrialEndsOn: "Your trial ends on {date}",
+    freeTrialDaysLeft: "{n} days left on your free trial",
+    freeTrialOneDayLeft: "Last day of your free trial",
+    freeTrialUpgradeCta: "Upgrade to Pro",
+    freeTrialUpgradeCtaMax: "Upgrade to Max",
     monthsFree: "2 months free",
     legalNotice: "By subscribing, you accept our",
     termsLink: "Terms of Service",

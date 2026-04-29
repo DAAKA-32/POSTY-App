@@ -49,7 +49,7 @@ export default function SubscriptionGuard({
   redirectTo = "/subscription",
   minimumPlan,
 }: SubscriptionGuardProps) {
-  const { subscription, loading } = useSubscription();
+  const { subscription, loading, freeTrialExpired } = useSubscription();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -61,12 +61,17 @@ export default function SubscriptionGuard({
       // Check 1: Active subscription with a plan
       if (!hasActiveSubscription || !subscription.plan) {
         console.warn(
-          `[SubscriptionGuard] Blocking access to ${pathname} - Status: ${subscription.status}, Plan: ${subscription.plan}`
+          `[SubscriptionGuard] Blocking access to ${pathname} - Status: ${subscription.status}, Plan: ${subscription.plan}, FreeTrialExpired: ${freeTrialExpired}`
         );
 
         const url = new URL(redirectTo, window.location.origin);
         url.searchParams.set("redirect", pathname);
-        url.searchParams.set("reason", "subscription_required");
+        // Distinct reason for an expired Free-plan trial so the
+        // /subscription page can show a targeted message.
+        url.searchParams.set(
+          "reason",
+          freeTrialExpired ? "free_trial_expired" : "subscription_required"
+        );
         router.replace(url.pathname + url.search);
         return;
       }

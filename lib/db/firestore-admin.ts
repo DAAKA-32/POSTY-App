@@ -6,7 +6,7 @@
 import { adminDb } from "@/lib/db/firebase-admin";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { SubscriptionPlan } from "@/types";
-import { DAILY_MESSAGE_LIMITS, HOURLY_MESSAGE_LIMITS, HOURLY_WINDOW_MS, getFounderOverridePlan, PlanType, PLAN_CONFIGS } from "@/lib/config/plans";
+import { DAILY_MESSAGE_LIMITS, HOURLY_MESSAGE_LIMITS, HOURLY_WINDOW_MS, getFounderOverridePlan, PlanType, PLAN_CONFIGS, resolveFreeTrialEnd, isFreeTrialExpired } from "@/lib/config/plans";
 
 // LinkedIn Connection Data type (matching the client-side type)
 export interface LinkedInOrganizationAdmin {
@@ -223,6 +223,24 @@ export async function checkUserQuotaAdmin(userId: string, authEmail?: string): P
       effectivePlan = "free";
     } else {
       return defaultResult;
+    }
+  }
+
+  // ========== FREE PLAN: 14-DAY TRIAL EXPIRATION ==========
+  // Free is a 14-day trial. Once expired, deny generation server-side
+  // regardless of monthly quota (founder/gift users skip this — they have an
+  // override plan, not "free").
+  if (effectivePlan === "free") {
+    const trialEnd = resolveFreeTrialEnd({ subscription: data.subscription, createdAt: data.createdAt });
+    if (isFreeTrialExpired("free", trialEnd)) {
+      return {
+        canGenerate: false,
+        plan: "free",
+        dailyLimit: 0,
+        usedToday: 0,
+        remaining: 0,
+        reason: "Essai gratuit expiré — passez à Pro ou Max pour continuer.",
+      };
     }
   }
 
@@ -477,6 +495,25 @@ export async function checkHourlyQuotaAdmin(userId: string, authEmail?: string):
       effectivePlan = "free";
     } else {
       return defaultResult;
+    }
+  }
+
+  // ========== FREE PLAN: 14-DAY TRIAL EXPIRATION ==========
+  // Mirror of the daily-quota check: deny once the Free trial window
+  // closes. Hits both /api/generate and /api/linkedin/publish since both
+  // funnel through this hourly guard.
+  if (effectivePlan === "free") {
+    const trialEnd = resolveFreeTrialEnd({ subscription: data.subscription, createdAt: data.createdAt });
+    if (isFreeTrialExpired("free", trialEnd)) {
+      return {
+        canGenerate: false,
+        plan: "free",
+        hourlyLimit: 0,
+        usedThisHour: 0,
+        remaining: 0,
+        resetInSeconds: 0,
+        reason: "Essai gratuit expiré — passez à Pro ou Max pour continuer.",
+      };
     }
   }
 
