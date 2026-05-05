@@ -65,7 +65,6 @@ export default function ProfileAvatar({
   const { profilePicture: linkedInPhoto, isConnected: linkedInConnected, refreshProfilePhoto } = useLinkedIn();
 
   const [imageError, setImageError] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [cacheBuster, setCacheBuster] = useState("");
   const refreshAttemptedRef = useRef(false);
@@ -96,7 +95,6 @@ export default function ProfileAvatar({
   // Reset error state whenever any source URL changes.
   useEffect(() => {
     setImageError(false);
-    setIsLoaded(false);
     setRetryCount(0);
     setCacheBuster("");
     refreshAttemptedRef.current = false;
@@ -127,8 +125,6 @@ export default function ProfileAvatar({
     setRetryCount((c) => c + 1);
   }, [retryCount, linkedInPhoto, refreshProfilePhoto]);
 
-  const handleImageLoad = () => setIsLoaded(true);
-
   const isClickable = !!onClick;
   // Allow callers to override the rounding via `!rounded-*` modifiers.
   const hasRoundedOverride = className.includes("!rounded");
@@ -152,12 +148,10 @@ export default function ProfileAvatar({
             sizes={`${config.px}px`}
             className={`
               object-cover object-center
-              transition-all duration-300
-              ${isLoaded ? "opacity-100 scale-100" : "opacity-0 scale-95"}
+              transition-transform duration-300
               ${isClickable ? "group-hover:scale-105" : ""}
             `}
             onError={handleImageError}
-            onLoad={handleImageLoad}
             priority={priority}
             loading={priority ? "eager" : "lazy"}
             referrerPolicy="no-referrer"
