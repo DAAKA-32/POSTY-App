@@ -14,6 +14,7 @@ import { QuotaProvider } from "@/contexts/QuotaContext";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import AppProvider from "@/components/providers/AppProvider";
+import StrategistDrawer from "@/components/strategist/StrategistDrawer";
 import GlobalCommandPalette from "@/components/providers/GlobalCommandPalette";
 import KeyboardNavigationProvider from "@/components/providers/KeyboardNavigationProvider";
 import SkipLinks from "@/components/accessibility/SkipLinks";
@@ -274,7 +275,14 @@ export default function RootLayout({
         <HomepageJsonLd />
         <HowToJsonLd {...postyHowToData.en} />
       </head>
-      <body className={`antialiased ${inter.className}`}>
+      {/* `inter.variable` on <html> exposes --font-inter to globals.css.
+          We deliberately do NOT slap `inter.className` here: that class would
+          set `font-family` directly on <body> with a class-level specificity
+          that overrides our CSS variable chain (--font-sans), which means
+          Windows users would never see Segoe UI as a fallback. Letting body
+          inherit from `body { font-family: var(--font-sans) }` in globals.css
+          keeps the full system stack working. */}
+      <body className="antialiased">
         {/* Portrait-only enforcement: blocks landscape on mobile phones */}
         <LandscapeBlocker />
         <ThemeProvider>
@@ -304,6 +312,11 @@ export default function RootLayout({
                 </QuotaProvider>
                 <CookieBanner />
                 <LegalUpdateNotification />
+                {/* Inline Marketing Strategist drawer — mounted here so it
+                    has access to SubscriptionContext + LanguageContext.
+                    Open/close state is owned by StrategistDrawerProvider
+                    further up (in AppProvider) so any consumer can trigger it. */}
+                <StrategistDrawer />
               </LanguageProvider>
             </SubscriptionProvider>
             <PremiumToaster />

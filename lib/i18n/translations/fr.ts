@@ -17,6 +17,7 @@ export const fr = {
     schedule: "Posts programmés",
     profile: "Profil",
     analytics: "Analytique",
+    strategist: "Stratège",
     onboarding: "Configuration du profil",
     signup: "Inscription Gratuite",
     login: "Connexion",
@@ -1199,6 +1200,7 @@ export const fr = {
     history: "Historique",
     schedule: "Programmes",
     analytics: "Analytics",
+    strategist: "Stratège",
     settings: "Paramètres",
     subscription: "Abonnement",
     profile: "Profil",
@@ -2720,6 +2722,42 @@ export const fr = {
     trialLimitReached: "Limite d'essai atteinte",
   },
 
+  // Ready-to-publish posts (carousel on /app)
+  readyPosts: {
+    ariaLabel: "Posts prêts à publier",
+    openPost: "Ouvrir ce post",
+    readyBadge: "Prêt",
+    categories: {
+      storytelling: "Storytelling",
+      tips: "Conseils pratiques",
+      controversial: "Opinion forte",
+      success: "Victoires & Résultats",
+      lesson: "Leçon apprise",
+      question: "Engagement",
+    },
+    lock: {
+      title: "Réservé au plan Max",
+      subtitle: "Débloquez les posts prêts à publier",
+      cta: "Passer au plan Max",
+    },
+    editor: {
+      title: "Post prêt à publier",
+      description: "Parcourez les posts et publiez ou programmez celui qui vous plaît.",
+      contentLabel: "Contenu du post",
+      placeholder: "Le contenu du post...",
+      editHint: "Tu peux modifier librement avant de publier.",
+      cancel: "Annuler",
+      schedule: "Programmer",
+      publish: "Publier maintenant",
+      previous: "Post précédent",
+      next: "Post suivant",
+      generating: "Posty rédige un post sur mesure pour vous…",
+      errorTitle: "Impossible de générer ce post pour le moment.",
+      retry: "Réessayer",
+      regenerate: "Regénérer",
+    },
+  },
+
   // Analytics Dashboard
   analytics: {
     periodFilter: {
@@ -3024,6 +3062,34 @@ export const fr = {
     proRequiredForSchedule: "La programmation nécessite un plan Pro ou Max",
     upgradeToSchedule: "Passez au Pro pour programmer",
   },
+
+  // ─── Erreurs LinkedIn — ton humain et rassurant ────────────────────────
+  linkedinErrors: {
+    sessionExpired:
+      "Votre session LinkedIn a expiré — reconnectez-vous une fois et tout fonctionnera normalement.",
+    sessionExpiredAction: "Reconnecter LinkedIn",
+    publishFailed:
+      "Nous n'avons pas pu publier votre post sur LinkedIn. Reconnecter votre compte règle souvent le problème.",
+    publishFailedAction: "Reconnecter et réessayer",
+    notConnected:
+      "Connectez LinkedIn à Posty pour publier vos posts en un clic.",
+    notConnectedAction: "Connecter LinkedIn",
+    rateLimited:
+      "LinkedIn nous demande de ralentir. Réessayez dans quelques minutes.",
+    invalidContent:
+      "LinkedIn n'a pas accepté ce post. Vérifiez le contenu (3 000 caractères max, pas de termes interdits).",
+    mediaUploadFailed:
+      "Nous n'avons pas pu téléverser votre média. Essayez un fichier plus léger ou un autre format (JPG, PNG, MP4).",
+    serverError:
+      "LinkedIn est brièvement indisponible. Votre post est sauvegardé — réessayez dans un moment.",
+    insufficientPermissions:
+      "Les autorisations LinkedIn manquent. Reconnectez avec un accès complet pour continuer.",
+    generic:
+      "Petit accroc avec LinkedIn. Reconnecter votre compte règle souvent le problème.",
+    genericAction: "Reconnecter",
+    retryAction: "Réessayer",
+  },
+
   // Checkout success page
   checkoutSuccess: {
     trialStarted: "Votre essai {plan} a commencé !",
@@ -3143,6 +3209,40 @@ export const fr = {
     analytics: "Analytiques",
     analyticsDesc: "Statistiques d'usage anonymes. Aucun tiers.",
     cookiePolicy: "Politique cookies",
+  },
+
+  strategist: {
+    pageTitle: "Stratège",
+    headerEyebrow: "Max · Stratège marketing",
+    headerTitle: "Construisez une stratégie, pas juste des posts.",
+    headerSubtitle: "Un conseiller marketing senior dans votre poche. Auditez votre présence LinkedIn, concevez des plans de contenu, affinez votre positionnement — en une conversation.",
+    inputPlaceholder: "Demandez un audit, un plan 30 jours, des angles d'accroche…",
+    sendButton: "Envoyer",
+    sending: "Réflexion…",
+    starterTitle: "Commencer par",
+    starter1Title: "Auditer mon LinkedIn",
+    starter1Prompt: "Audite ma présence LinkedIn à partir de mon profil. Donne-moi 3 points qui fonctionnent, 3 à corriger cette semaine, et 1 opportunité inexploitée.",
+    starter2Title: "Plan de contenu 30 jours",
+    starter2Prompt: "Construis un plan de contenu LinkedIn sur 30 jours adapté à mon secteur et mon audience. 3 posts/semaine, mélangeant storytelling, insight business et leadership d'opinion.",
+    starter3Title: "Définir mon positionnement",
+    starter3Prompt: "Aide-moi à définir mon positionnement sur LinkedIn. Quels 3 thèmes dois-je incarner, pourquoi, et comment me différencier de mes pairs ?",
+    starter4Title: "10 angles d'accroche",
+    starter4Prompt: "Génère 10 angles d'accroche puissants pour mes prochains posts LinkedIn, basés sur ce qui intéresse mon audience. Chaque hook doit arrêter le scroll.",
+    errorGeneric: "Le Stratège a rencontré une erreur. Réessayez dans un instant.",
+    errorRateLimit: "Vous avez atteint la limite. Réessayez dans quelques minutes.",
+    clearChat: "Effacer la conversation",
+    clearChatConfirm: "Effacer cette conversation ? Cette action est irréversible.",
+    locked: {
+      eyebrow: "Réservé au plan Max",
+      title: "Débloquez le Stratège marketing",
+      description: "Un conseiller marketing senior dédié dans Posty. Audits, plans de contenu, positionnement, analyse d'audience — en une conversation continue.",
+      benefit1: "Stratégie personnalisée selon votre profil",
+      benefit2: "Conversations multi-tour avec mémoire complète",
+      benefit3: "Plans de contenu, audits et frameworks de positionnement",
+      benefit4: "Accès prioritaire aux nouvelles capacités du Stratège",
+      cta: "Passer au plan Max",
+      backToChat: "Continuer avec le Chat",
+    },
   },
 } as const;
 

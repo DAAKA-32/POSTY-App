@@ -527,179 +527,92 @@ export const ModernResponseCard = memo(function ModernResponseCard({
           </div>
         </div>
 
-        {/* Seed comment block — algo-boost first comment, separate from post body.
-            Always rendered when the post is final (so users discover the feature),
-            with a "Generate" CTA when no text/loading/error is set yet. */}
+        {/* Seed comment — minimalist inline block under the post.
+            Single thin left border, tiny label, no decorative gradient.
+            States: idle (Generate link) / loading (1 shimmer line) /
+            text (read + tiny actions) / error (text + retry link). */}
         {!isStreaming && content && (
-          <div className="mx-4 mb-3 rounded-xl bg-gradient-to-br from-[#F8935D]/[0.05] to-[#F76B54]/[0.03] dark:from-[#F8935D]/[0.08] dark:to-[#F76B54]/[0.04] ring-1 ring-[#F8935D]/15 dark:ring-[#F8935D]/20 overflow-hidden">
-            {/* Header strip */}
-            <div className="flex items-center justify-between px-3 pt-2.5 pb-1.5">
-              <div className="flex items-center gap-1.5 min-w-0">
-                <span className="relative flex w-1.5 h-1.5 flex-shrink-0">
-                  <span className="absolute inset-0 rounded-full bg-[#F8935D]/40 animate-ping" />
-                  <span className="relative w-1.5 h-1.5 rounded-full bg-[#F8935D]" />
+          <div className="mx-4 mb-3 pl-3 border-l-2 border-[#F8935D]/40 dark:border-[#F8935D]/50">
+            {effectiveSeed?.loading ? (
+              <motion.div
+                className="h-2 rounded-full bg-gray-200 dark:bg-dark-border/60"
+                animate={{ opacity: [0.5, 1, 0.5] }}
+                transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
+                style={{ width: "75%" }}
+              />
+            ) : effectiveSeed?.error ? (
+              <div className="flex items-center gap-2">
+                <span className="text-[11.5px] text-gray-500 dark:text-text-muted">
+                  Erreur de génération.
                 </span>
-                <span
-                  className="text-[10px] font-bold uppercase text-[#B5532E] dark:text-[#F8935D]"
-                  style={{ letterSpacing: "0.12em" }}
+                <button
+                  onClick={handleRegenerate}
+                  className="text-[11.5px] font-medium text-[#F8935D] hover:underline"
                 >
-                  1er commentaire · Boost algo
-                </span>
-                <span
-                  className="hidden sm:inline text-[10px] text-gray-400 dark:text-text-muted truncate"
-                  title="À publier 2-7 min après le post pour booster la portée"
-                >
-                  · à poster ~3 min après publish
-                </span>
+                  Réessayer
+                </button>
               </div>
-
-              {/* Mini action bar — shown only when we have a comment text */}
-              {effectiveSeed?.text && !effectiveSeed.loading && (
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  {/* Regenerate */}
-                  <motion.button
-                    onClick={handleRegenerate}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="
-                      inline-flex items-center justify-center
-                      w-6 h-6 rounded-md
-                      text-[#B5532E] dark:text-[#F8935D]
-                      hover:bg-[#F8935D]/10 dark:hover:bg-[#F8935D]/15
-                      transition-colors duration-150
-                    "
-                    aria-label="Régénérer"
-                    title="Régénérer"
-                  >
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                  </motion.button>
-                  {/* Copy */}
-                  <motion.button
-                    onClick={handleCopySeed}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="
-                      inline-flex items-center justify-center
-                      w-6 h-6 rounded-md
-                      text-[#B5532E] dark:text-[#F8935D]
-                      hover:bg-[#F8935D]/10 dark:hover:bg-[#F8935D]/15
-                      transition-colors duration-150
-                    "
-                    aria-label={t.ui.copy}
-                    title={t.ui.copy}
-                  >
-                    <AnimatePresence mode="wait" initial={false}>
-                      {seedCopied ? (
-                        <motion.svg
-                          key="check"
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          exit={{ scale: 0 }}
-                          transition={{ duration: 0.15 }}
-                          className="w-3 h-3 text-green-600 dark:text-green-400"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                        </motion.svg>
-                      ) : (
-                        <motion.svg
-                          key="copy"
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          exit={{ scale: 0 }}
-                          transition={{ duration: 0.15 }}
-                          className="w-3 h-3"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                          strokeWidth={2}
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        </motion.svg>
-                      )}
-                    </AnimatePresence>
-                  </motion.button>
-                </div>
-              )}
-            </div>
-
-            {/* Body — text / skeleton / error / idle CTA */}
-            <div className="px-3 pb-3">
-              {effectiveSeed?.loading ? (
-                <div className="space-y-1.5 py-1">
-                  <motion.div
-                    className="h-2.5 rounded-full bg-[#F8935D]/15 dark:bg-[#F8935D]/20"
-                    animate={{ opacity: [0.5, 1, 0.5] }}
-                    transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
-                    style={{ width: "92%" }}
-                  />
-                  <motion.div
-                    className="h-2.5 rounded-full bg-[#F8935D]/15 dark:bg-[#F8935D]/20"
-                    animate={{ opacity: [0.5, 1, 0.5] }}
-                    transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut", delay: 0.18 }}
-                    style={{ width: "78%" }}
-                  />
-                  <motion.div
-                    className="h-2.5 rounded-full bg-[#F8935D]/15 dark:bg-[#F8935D]/20"
-                    animate={{ opacity: [0.5, 1, 0.5] }}
-                    transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut", delay: 0.36 }}
-                    style={{ width: "60%" }}
-                  />
-                </div>
-              ) : effectiveSeed?.error ? (
-                <div className="flex items-start gap-2 py-1">
-                  <span className="text-[12px] text-gray-500 dark:text-text-muted flex-1">
-                    Impossible de générer le commentaire.
+            ) : effectiveSeed?.text ? (
+              <div className="group/seed">
+                <div className="flex items-center justify-between gap-2 mb-0.5">
+                  <span className="text-[10px] uppercase tracking-wider text-gray-400 dark:text-text-muted/70 font-medium">
+                    1er commentaire
                   </span>
-                  <button
-                    onClick={handleRegenerate}
-                    className="text-[11px] font-semibold text-[#B5532E] dark:text-[#F8935D] hover:underline flex-shrink-0"
-                  >
-                    Réessayer
-                  </button>
+                  <div className="flex items-center gap-0.5 opacity-0 group-hover/seed:opacity-100 transition-opacity">
+                    <button
+                      onClick={handleRegenerate}
+                      className="p-1 rounded text-gray-400 hover:text-[#F8935D] transition-colors"
+                      aria-label="Régénérer"
+                      title="Régénérer"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={handleCopySeed}
+                      className="p-1 rounded text-gray-400 hover:text-[#F8935D] transition-colors"
+                      aria-label={t.ui.copy}
+                      title={t.ui.copy}
+                    >
+                      {seedCopied ? (
+                        <svg className="w-3 h-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
                 </div>
-              ) : effectiveSeed?.text ? (
                 <motion.p
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                  className="text-[13.5px] leading-relaxed text-gray-800 dark:text-text-primary whitespace-pre-wrap break-words"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                  className="text-[13px] leading-relaxed text-gray-700 dark:text-text-primary/90 whitespace-pre-wrap break-words"
                 >
                   {effectiveSeed.text}
                 </motion.p>
-              ) : (
-                /* Idle state — no comment yet, prompt the user to generate one. */
-                <div className="flex items-center justify-between gap-3 py-1">
-                  <p className="text-[12px] text-gray-500 dark:text-text-muted leading-snug min-w-0">
-                    Booste la portée de ce post : Posty rédige un 1er commentaire à coller ~3 min après publication.
-                  </p>
-                  <motion.button
-                    onClick={handleRegenerate}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="
-                      flex-shrink-0 inline-flex items-center gap-1.5
-                      px-3 py-1.5 rounded-lg text-[11px] font-bold text-white
-                      shadow-sm
-                    "
-                    style={{
-                      backgroundImage: "linear-gradient(135deg,#F8935D,#F76B54)",
-                      boxShadow: "0 4px 10px -3px rgba(248,147,93,0.45), inset 0 1px 0 rgba(255,255,255,0.25)",
-                    }}
-                    aria-label="Générer un 1er commentaire"
-                  >
-                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                    Générer
-                  </motion.button>
-                </div>
-              )}
-            </div>
+              </div>
+            ) : (
+              /* Idle — single line link, no fanfare. */
+              <button
+                onClick={handleRegenerate}
+                className="
+                  inline-flex items-center gap-1.5
+                  text-[12px] font-medium
+                  text-[#F8935D] hover:text-[#F76B54]
+                  transition-colors duration-150
+                "
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                Ajouter un 1er commentaire (boost algo)
+              </button>
+            )}
           </div>
         )}
 

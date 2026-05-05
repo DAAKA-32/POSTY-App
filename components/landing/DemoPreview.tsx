@@ -102,7 +102,7 @@ export default function DemoPreview({ onSubmit }: DemoPreviewProps) {
                 <span className="text-white font-bold text-lg hidden items-center justify-center">P</span>
               </div>
               <div>
-                <p className="text-white font-semibold">Posty</p>
+                <p translate="no" className="notranslate text-white font-semibold">Posty</p>
                 <p className="text-xs text-accent">{t.landing.demoAIAvailable}</p>
               </div>
               <motion.div

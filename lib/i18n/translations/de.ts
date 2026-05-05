@@ -483,6 +483,7 @@ export const de = {
     demoInputDesc: "Beschreiben Sie Ihr Ziel. Posty generiert einen LinkedIn-Beitrag, der in 30 Sekunden veröffentlicht werden kann.",
     trustpilotRated: "auf Trustpilot",
     demoPreviewLabel: "Produktvorschau",
+    demoVideoLabel: "In Aktion sehen",
     demoTryDemo: "Demo ausprobieren",
     demoReadyToGenerate: "Bereit zur Generierung",
     demoPostReady: "Ihr erster LinkedIn-Beitrag ist fertig",
@@ -790,6 +791,7 @@ export const de = {
     hiwTitle: "Eine Idee.",
     hiwTitleAccent: "Ein Post. Fertig.",
     hiwSubtitle: "Tippe eine einfache Idee ein — Postys KI verwandelt sie in einen veröffentlichungsbereiten LinkedIn-Beitrag.",
+    hiwSecondaryText: "Jeder Beitrag ist für den LinkedIn-Feed optimiert, im Voraus planbar und mit KI-Insights ausgestattet, um wirklich zu messen, was funktioniert.",
     hiwYourIdea: "Deine Idee",
     hiwGeneratedPost: "Generierter Beitrag",
     hiwUserInput: "Ich möchte 3 Lektionen teilen, die ich beim erstmaligen Führen eines Remote-Teams gelernt habe",
@@ -1161,6 +1163,7 @@ export const de = {
     history: "Verlauf",
     schedule: "Planung",
     analytics: "Analysen",
+    strategist: "Strategist",
     settings: "Einstellungen",
     subscription: "Abonnement",
     profile: "Profil",
@@ -2682,6 +2685,42 @@ export const de = {
     trialLimitReached: "Testlimit erreicht",
   },
 
+  // Ready-to-publish posts (carousel on /app)
+  readyPosts: {
+    ariaLabel: "Veröffentlichungsbereite Beiträge",
+    openPost: "Diesen Beitrag öffnen",
+    readyBadge: "Bereit",
+    categories: {
+      storytelling: "Storytelling",
+      tips: "Tipps",
+      controversial: "Klare Meinung",
+      success: "Ergebnisse",
+      lesson: "Lektion",
+      question: "Engagement",
+    },
+    lock: {
+      title: "Nur Max-Plan",
+      subtitle: "Veröffentlichungsbereite Beiträge freischalten",
+      cta: "Auf Max upgraden",
+    },
+    editor: {
+      title: "Veröffentlichungsbereiter Beitrag",
+      description: "Bearbeiten Sie den Beitrag bei Bedarf und veröffentlichen oder planen Sie ihn.",
+      contentLabel: "Beitragsinhalt",
+      placeholder: "Beitragsinhalt...",
+      editHint: "Sie können den Text vor der Veröffentlichung beliebig anpassen.",
+      cancel: "Abbrechen",
+      schedule: "Planen",
+      publish: "Jetzt veröffentlichen",
+      previous: "Vorheriger Beitrag",
+      next: "Nächster Beitrag",
+      generating: "Posty schreibt einen maßgeschneiderten Beitrag für Sie…",
+      errorTitle: "Beitrag konnte gerade nicht erstellt werden.",
+      retry: "Erneut versuchen",
+      regenerate: "Neu generieren",
+    },
+  },
+
   // Analytics Dashboard
   analytics: {
     periodFilter: {
@@ -3098,5 +3137,65 @@ export const de = {
     analytics: "Analytik",
     analyticsDesc: "Anonyme Nutzungsstatistiken. Keine Drittanbieter.",
     cookiePolicy: "Cookie-Richtlinie",
+  strategist: {
+    pageTitle: "Strategist",
+    headerEyebrow: "Max · Marketing Strategist",
+    headerTitle: "Build a strategy, not just posts.",
+    headerSubtitle: "A senior marketing advisor in your pocket. Audit your LinkedIn presence, design content plans, sharpen positioning — in one focused conversation.",
+    inputPlaceholder: "Ask for an audit, a 30-day plan, hook angles…",
+    sendButton: "Send",
+    sending: "Thinking…",
+    starterTitle: "Start with",
+    starter1Title: "Audit my LinkedIn",
+    starter1Prompt: "Audit my LinkedIn presence based on my profile. Give me 3 things working, 3 things to fix this week, and 1 untapped opportunity.",
+    starter2Title: "30-day content plan",
+    starter2Prompt: "Build a 30-day LinkedIn content plan tailored to my industry and audience. 3 posts/week, mixing storytelling, business insight, and thought leadership.",
+    starter3Title: "Define my positioning",
+    starter3Prompt: "Help me define my positioning on LinkedIn. What 3 themes should I own, why, and how do I differentiate from peers in my space?",
+    starter4Title: "10 hook angles",
+    starter4Prompt: "Generate 10 strong hook angles for my next LinkedIn posts based on what my audience cares about. Each hook should make people stop scrolling.",
+    errorGeneric: "The Strategist hit an error. Try again in a moment.",
+    errorRateLimit: "You have reached the rate limit. Try again in a few minutes.",
+    clearChat: "Clear conversation",
+    clearChatConfirm: "Clear this conversation? This cannot be undone.",
+    locked: {
+      eyebrow: "Reserved for Max",
+      title: "Unlock the Marketing Strategist",
+      description: "A dedicated senior marketing advisor inside Posty. Audits, content plans, positioning, audience analysis — all in one focused conversation.",
+      benefit1: "Personalized strategy based on your profile",
+      benefit2: "Multi-turn conversations with full memory",
+      benefit3: "Content plans, audits, and positioning frameworks",
+      benefit4: "Priority access to new strategist features",
+      cta: "Upgrade to Max",
+      backToChat: "Continue with Chat",
+    },
+  },
+  // LinkedIn errors — humane action-oriented copy (EN fallback)
+  linkedinErrors: {
+    sessionExpired:
+      "Your LinkedIn session has expired — reconnect once and everything will work normally.",
+    sessionExpiredAction: "Reconnect LinkedIn",
+    publishFailed:
+      "We couldn't publish your post on LinkedIn. Reconnecting your account usually fixes it.",
+    publishFailedAction: "Reconnect & retry",
+    notConnected:
+      "Connect LinkedIn to Posty to publish your posts in one click.",
+    notConnectedAction: "Connect LinkedIn",
+    rateLimited:
+      "LinkedIn is asking us to slow down. Try again in a few minutes.",
+    invalidContent:
+      "LinkedIn didn't accept this post. Check the content (max 3,000 characters, no banned terms).",
+    mediaUploadFailed:
+      "We couldn't upload your media. Try a smaller file or a different format (JPG, PNG, MP4).",
+    serverError:
+      "LinkedIn is briefly unavailable. Your post is safely saved — try again in a moment.",
+    insufficientPermissions:
+      "Your LinkedIn permissions are missing. Reconnect with full access to continue.",
+    generic:
+      "We hit a snag with LinkedIn. Reconnecting your account usually fixes it.",
+    genericAction: "Reconnect",
+    retryAction: "Try again",
+  },
+
   },
 } as const;

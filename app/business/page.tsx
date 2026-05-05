@@ -481,7 +481,7 @@ export default function BusinessPage() {
             <span className="w-6 h-6 rounded-md overflow-hidden ring-1 ring-black/5">
               <Image src="/logo.png" alt="Posty" width={24} height={24} className="w-full h-full object-cover" />
             </span>
-            <span>Posty</span>
+            <span translate="no" className="notranslate">Posty</span>
             <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded bg-gray-900 text-white text-[9px] font-bold tracking-wider uppercase">
               Business
             </span>

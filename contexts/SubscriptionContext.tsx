@@ -41,6 +41,7 @@ import {
   hasAudienceTargeting,
   hasPriorityProcessing,
   hasEarlyAccess,
+  hasMarketingStrategist,
   shouldResetWeeklyQuota,
   shouldResetMonthlyQuota,
   getWeekStartDate,
@@ -113,6 +114,7 @@ interface SubscriptionContextValue extends SubscriptionState {
   hasAudienceTargeting: boolean;
   hasPriorityProcessing: boolean;
   hasEarlyAccess: boolean;
+  hasMarketingStrategist: boolean; // Max-only conversational marketing advisor
 
   // Usage tracking
   incrementConversationCount: () => Promise<void>;
@@ -256,12 +258,17 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       ? "active"
       : ((subscriptionData?.status as UserSubscription["status"]) || "inactive");
 
-    // Once the Free trial expires, downgrade status to "inactive" so all
-    // existing guards (SubscriptionGuard, permission helpers) treat the user
-    // as unsubscribed without further changes.
+    // Effective status:
+    //  - Free trial expired → "inactive" (forces upgrade)
+    //  - Free trial active  → "active"   (the 14-day window IS the entitlement;
+    //                                     Firestore typically carries no status
+    //                                     for Free users, so we promote here)
+    //  - Pro / Max          → rawStatus  (Stripe is the source of truth)
     const effectiveStatus: UserSubscription["status"] = freeTrialExpired
       ? "inactive"
-      : rawStatus;
+      : effectivePlan === "free"
+        ? "active"
+        : rawStatus;
 
     const subscription: UserSubscription = {
       plan: effectivePlan,
@@ -343,12 +350,20 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   }, [user?.uid, user?.email, userProfile, authLoading, optimisticUsage]);
 
   /* Cookies for the server-side middleware. Stays in a separate effect so it
-   * runs whenever the derived subscription changes (login, refresh, etc.). */
+   * runs whenever the derived subscription changes (login, refresh, etc.).
+   *
+   * max-age was 3600 (1h) which produced a "stuck on /subscription after a
+   * page refresh / next-day visit" bug: the Firebase session is still valid
+   * but this cookie expires, the middleware sees no `subscription_status` and
+   * sends Free users on a /app → /pricing → /subscription redirect loop even
+   * while their trial is live. Bumped to 7 days; SubscriptionContext rewrites
+   * it on every state change, so the upper bound is just a safety net. */
   useEffect(() => {
     if (state.loading) return;
     if (typeof document === "undefined") return;
-    document.cookie = `subscription_status=${state.subscription.status}; path=/; max-age=3600; SameSite=Strict`;
-    document.cookie = `subscription_plan=${state.subscription.plan}; path=/; max-age=3600; SameSite=Strict`;
+    const maxAge = 60 * 60 * 24 * 7; // 7 days
+    document.cookie = `subscription_status=${state.subscription.status}; path=/; max-age=${maxAge}; SameSite=Strict`;
+    document.cookie = `subscription_plan=${state.subscription.plan}; path=/; max-age=${maxAge}; SameSite=Strict`;
   }, [state.loading, state.subscription.status, state.subscription.plan]);
 
   /* Public refresh entry point — pulls a fresh userProfile from Firestore via
@@ -519,6 +534,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     hasAudienceTargeting: hasAudienceTargeting(state.subscription),
     hasPriorityProcessing: hasPriorityProcessing(state.subscription),
     hasEarlyAccess: hasEarlyAccess(state.subscription),
+    hasMarketingStrategist: hasMarketingStrategist(state.subscription),
 
     // Usage tracking
     incrementConversationCount,

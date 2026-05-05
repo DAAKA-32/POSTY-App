@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     }
     if (connection.expiresAt?.toMillis?.() <= Date.now()) {
       return NextResponse.json(
-        { error: "token_expired", message: "Connexion LinkedIn expirée. Veuillez vous reconnecter." },
+        { error: "token_expired", message: "LinkedIn session expired. Reconnect to continue." },
         { status: 401 }
       );
     }

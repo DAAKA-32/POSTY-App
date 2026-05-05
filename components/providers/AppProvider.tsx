@@ -6,6 +6,8 @@ import { useAppInitialization } from "@/hooks/app/useAppInitialization";
 import SplashScreen from "@/components/ui/SplashScreen";
 import { SidebarProvider } from "@/contexts/SidebarContext";
 import { NavigationStateProvider } from "@/contexts/NavigationStateContext";
+import { PerformanceProvider } from "@/lib/performance/PerformanceProvider";
+import { StrategistDrawerProvider } from "@/contexts/StrategistDrawerContext";
 import MobileGestureProvider, { SwipeIndicator } from "./MobileGestureProvider";
 import { forceUnlockScroll } from "@/hooks/ui/useScrollLock";
 
@@ -47,14 +49,25 @@ export default function AppProvider({ children }: AppProviderProps) {
       {/* No splash screen for landing/auth pages - instant display */}
       {!isLandingPage && <SplashScreen isLoading={isLoading} />}
       <RouteChangeScrollCleanup />
-      <NavigationStateProvider>
-        <SidebarProvider>
-          <MobileGestureProvider>
-            <SwipeIndicator />
-            {children}
-          </MobileGestureProvider>
-        </SidebarProvider>
-      </NavigationStateProvider>
+      {/* PerformanceProvider sits at the top so every child can adapt motion
+          + decoration density to the detected device class. */}
+      <PerformanceProvider>
+        <NavigationStateProvider>
+          <SidebarProvider>
+            <MobileGestureProvider>
+              {/* StrategistDrawerProvider only manages open/close state — it
+                  does not read other contexts, so it can sit high in the tree
+                  where every page has access to open(). The drawer UI itself
+                  (which reads SubscriptionContext + LanguageContext) is
+                  mounted deeper in app/layout.tsx where those providers exist. */}
+              <StrategistDrawerProvider>
+                <SwipeIndicator />
+                {children}
+              </StrategistDrawerProvider>
+            </MobileGestureProvider>
+          </SidebarProvider>
+        </NavigationStateProvider>
+      </PerformanceProvider>
     </>
   );
 }

@@ -483,6 +483,7 @@ export const zh = {
     demoInputDesc: "描述您的目标。Posty 在 30 秒内生成一篇可发布的 LinkedIn 帖子。",
     trustpilotRated: "在 Trustpilot 上",
     demoPreviewLabel: "产品预览",
+    demoVideoLabel: "实际效果",
     demoTryDemo: "试用演示",
     demoReadyToGenerate: "准备生成",
     demoPostReady: "您的第一篇 LinkedIn 帖子已就绪",
@@ -790,6 +791,7 @@ export const zh = {
     hiwTitle: "一个想法。",
     hiwTitleAccent: "一篇帖子。完成。",
     hiwSubtitle: "输入一个简单的想法——Posty AI 将其转化为一篇可直接发布的 LinkedIn 帖子。",
+    hiwSecondaryText: "每篇帖子都为 LinkedIn 信息流优化、可提前定时发布，并附带 AI 洞察，帮你衡量真正有效的内容。",
     hiwYourIdea: "您的想法",
     hiwGeneratedPost: "生成的帖子",
     hiwUserInput: "我想分享第一次管理远程团队时学到的 3 条经验",
@@ -1161,6 +1163,7 @@ export const zh = {
     history: "历史记录",
     schedule: "定时发布",
     analytics: "数据分析",
+    strategist: "Strategist",
     settings: "设置",
     subscription: "订阅",
     profile: "个人资料",
@@ -2682,6 +2685,42 @@ export const zh = {
     trialLimitReached: "试用额度已用完",
   },
 
+  // Ready-to-publish posts (carousel on /app)
+  readyPosts: {
+    ariaLabel: "可立即发布的帖子",
+    openPost: "打开此帖子",
+    readyBadge: "就绪",
+    categories: {
+      storytelling: "故事讲述",
+      tips: "实用技巧",
+      controversial: "鲜明观点",
+      success: "成果",
+      lesson: "经验",
+      question: "互动",
+    },
+    lock: {
+      title: "仅限 Max 计划",
+      subtitle: "解锁可立即发布的帖子",
+      cta: "升级到 Max",
+    },
+    editor: {
+      title: "可立即发布的帖子",
+      description: "如需要可编辑帖子，然后立即发布或安排时间。",
+      contentLabel: "帖子内容",
+      placeholder: "帖子内容...",
+      editHint: "发布前可自由调整文字。",
+      cancel: "取消",
+      schedule: "安排发布",
+      publish: "立即发布",
+      previous: "上一个帖子",
+      next: "下一个帖子",
+      generating: "Posty 正在为您撰写专属帖子…",
+      errorTitle: "暂时无法生成帖子。",
+      retry: "重试",
+      regenerate: "重新生成",
+    },
+  },
+
   // Analytics Dashboard
   analytics: {
     periodFilter: {
@@ -3098,5 +3137,65 @@ export const zh = {
     analytics: "分析",
     analyticsDesc: "匿名使用统计。无第三方。",
     cookiePolicy: "Cookie 政策",
+  strategist: {
+    pageTitle: "Strategist",
+    headerEyebrow: "Max · Marketing Strategist",
+    headerTitle: "Build a strategy, not just posts.",
+    headerSubtitle: "A senior marketing advisor in your pocket. Audit your LinkedIn presence, design content plans, sharpen positioning — in one focused conversation.",
+    inputPlaceholder: "Ask for an audit, a 30-day plan, hook angles…",
+    sendButton: "Send",
+    sending: "Thinking…",
+    starterTitle: "Start with",
+    starter1Title: "Audit my LinkedIn",
+    starter1Prompt: "Audit my LinkedIn presence based on my profile. Give me 3 things working, 3 things to fix this week, and 1 untapped opportunity.",
+    starter2Title: "30-day content plan",
+    starter2Prompt: "Build a 30-day LinkedIn content plan tailored to my industry and audience. 3 posts/week, mixing storytelling, business insight, and thought leadership.",
+    starter3Title: "Define my positioning",
+    starter3Prompt: "Help me define my positioning on LinkedIn. What 3 themes should I own, why, and how do I differentiate from peers in my space?",
+    starter4Title: "10 hook angles",
+    starter4Prompt: "Generate 10 strong hook angles for my next LinkedIn posts based on what my audience cares about. Each hook should make people stop scrolling.",
+    errorGeneric: "The Strategist hit an error. Try again in a moment.",
+    errorRateLimit: "You have reached the rate limit. Try again in a few minutes.",
+    clearChat: "Clear conversation",
+    clearChatConfirm: "Clear this conversation? This cannot be undone.",
+    locked: {
+      eyebrow: "Reserved for Max",
+      title: "Unlock the Marketing Strategist",
+      description: "A dedicated senior marketing advisor inside Posty. Audits, content plans, positioning, audience analysis — all in one focused conversation.",
+      benefit1: "Personalized strategy based on your profile",
+      benefit2: "Multi-turn conversations with full memory",
+      benefit3: "Content plans, audits, and positioning frameworks",
+      benefit4: "Priority access to new strategist features",
+      cta: "Upgrade to Max",
+      backToChat: "Continue with Chat",
+    },
+  },
+  // LinkedIn errors — humane action-oriented copy (EN fallback)
+  linkedinErrors: {
+    sessionExpired:
+      "Your LinkedIn session has expired — reconnect once and everything will work normally.",
+    sessionExpiredAction: "Reconnect LinkedIn",
+    publishFailed:
+      "We couldn't publish your post on LinkedIn. Reconnecting your account usually fixes it.",
+    publishFailedAction: "Reconnect & retry",
+    notConnected:
+      "Connect LinkedIn to Posty to publish your posts in one click.",
+    notConnectedAction: "Connect LinkedIn",
+    rateLimited:
+      "LinkedIn is asking us to slow down. Try again in a few minutes.",
+    invalidContent:
+      "LinkedIn didn't accept this post. Check the content (max 3,000 characters, no banned terms).",
+    mediaUploadFailed:
+      "We couldn't upload your media. Try a smaller file or a different format (JPG, PNG, MP4).",
+    serverError:
+      "LinkedIn is briefly unavailable. Your post is safely saved — try again in a moment.",
+    insufficientPermissions:
+      "Your LinkedIn permissions are missing. Reconnect with full access to continue.",
+    generic:
+      "We hit a snag with LinkedIn. Reconnecting your account usually fixes it.",
+    genericAction: "Reconnect",
+    retryAction: "Try again",
+  },
+
   },
 } as const;

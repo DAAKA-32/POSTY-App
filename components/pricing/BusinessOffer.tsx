@@ -236,6 +236,11 @@ export default function BusinessOffer() {
             </ul>
 
             {/* ── Mobile CTA — full-width with animated arrow ─────────── */}
+            {/* Inline `color` + `-webkit-text-fill-color` on the SVG forces
+                the white stroke through iOS Safari's UA stylesheet, which
+                under system dark mode tints `<a>`/button descendants and
+                otherwise leaves the arrow rendering gray on real iPhones
+                (devtools mobile preview does NOT reproduce). */}
             <div className="sm:hidden mt-7 pt-5 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
               <span className="text-[13px] font-semibold text-gray-900 dark:text-white tracking-tight">
                 {t.landing.businessLearnMore ?? "Learn more"}
@@ -253,16 +258,16 @@ export default function BusinessOffer() {
                   className="absolute inset-0 rounded-full ring-1"
                   style={{ borderColor: ACCENT, boxShadow: `0 0 0 1px ${ACCENT}55` }}
                 />
-                <motion.svg
-                  variants={arrowVariants}
+                <svg
                   className="relative w-4 h-4 text-white dark:text-gray-900"
+                  style={{ color: "#ffffff", WebkitTextFillColor: "#ffffff" }}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
                   strokeWidth={2.4}
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                </motion.svg>
+                </svg>
               </motion.span>
             </div>
           </div>

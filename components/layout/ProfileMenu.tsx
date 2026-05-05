@@ -1,16 +1,14 @@
 ﻿"use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { useLinkedIn } from "@/contexts/LinkedInContext";
-import { useThreads } from "@/contexts/ThreadsContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { PlanBadge } from "@/components/subscription/PlanInfoCard";
 import { PlanType, meetsMinimumPlan } from "@/lib/config/plans";
-import Image from "next/image";
+import ProfileAvatar from "@/components/ui/ProfileAvatar";
 
 interface ProfileMenuProps {
   isCollapsed?: boolean;
@@ -106,17 +104,11 @@ const menuItems: {
 export default function ProfileMenu({ isCollapsed = false, onNavigate }: ProfileMenuProps) {
   const { t } = useLanguage();
   const { user, userProfile } = useAuth();
-  const { profilePicture: linkedInPhoto, refreshProfilePhoto } = useLinkedIn();
-  const { profilePicture: threadsPhoto } = useThreads();
   const { planConfig, isTestMode, currentPlan } = useSubscription();
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
-  const [imageError, setImageError] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
-  const [cacheBuster, setCacheBuster] = useState("");
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const refreshAttemptedRef = useRef(false);
 
   const menuItemNames: Record<string, string> = {
     dashboard: t.ui.dashboardNav,
@@ -124,48 +116,6 @@ export default function ProfileMenu({ isCollapsed = false, onNavigate }: Profile
     subscription: t.ui.subscriptionNav,
     settings: t.ui.settingsNav,
   };
-
-  // Priority: LinkedIn photo > Threads photo > Firestore photo > fallback
-  const basePhotoURL = !imageError
-    ? linkedInPhoto || threadsPhoto || userProfile?.photoURL || null
-    : null;
-  // Add cache-buster to avoid stale browser cache
-  const photoURL = basePhotoURL && cacheBuster
-    ? `${basePhotoURL}${basePhotoURL.includes("?") ? "&" : "?"}v=${cacheBuster}`
-    : basePhotoURL;
-  // All external CDN domains (LinkedIn, Instagram, Facebook) are in next.config remotePatterns
-  // so Next.js can optimize and cache them, preventing expired CDN URL issues
-
-  // Reset image error and retry state when photo URL changes
-  useEffect(() => {
-    setImageError(false);
-    setRetryCount(0);
-    refreshAttemptedRef.current = false;
-  }, [linkedInPhoto, threadsPhoto, userProfile?.photoURL]);
-
-  // On image error: try refreshing the LinkedIn photo URL, then retry
-  const handleImageError = useCallback(async () => {
-    if (retryCount >= 2) {
-      // Give up after 2 retries
-      setImageError(true);
-      return;
-    }
-
-    // If it's a LinkedIn photo and we haven't tried refreshing yet, refresh the URL
-    if (linkedInPhoto && !refreshAttemptedRef.current) {
-      refreshAttemptedRef.current = true;
-      const newUrl = await refreshProfilePhoto();
-      if (newUrl) {
-        // URL was refreshed, the state update in context will trigger re-render
-        setRetryCount((c) => c + 1);
-        return;
-      }
-    }
-
-    // Retry with cache-buster
-    setCacheBuster(Date.now().toString());
-    setRetryCount((c) => c + 1);
-  }, [retryCount, linkedInPhoto, refreshProfilePhoto]);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -255,30 +205,15 @@ export default function ProfileMenu({ isCollapsed = false, onNavigate }: Profile
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
-        <div className={`
-          relative w-10 h-10 rounded-full overflow-hidden
-          flex items-center justify-center shrink-0 border border-gray-200 dark:border-dark-border
-          group-hover:border-primary/30 group-hover:scale-105 transition-all duration-200
-          ${isOpen ? "border-primary/30 scale-105" : ""}
-          ${!photoURL ? "bg-gradient-to-br from-primary/20 to-accent/20" : ""}
-        `}>
-          {photoURL ? (
-            <Image
-              src={photoURL}
-              alt={userProfile?.displayName || "Avatar"}
-              fill
-              sizes="40px"
-              className="object-cover object-center"
-              referrerPolicy="no-referrer"
-              unoptimized
-              onError={handleImageError}
-            />
-          ) : (
-            <span className="text-primary font-semibold text-lg">
-              {userProfile?.displayName?.charAt(0) || user.email?.charAt(0) || "U"}
-            </span>
-          )}
-        </div>
+        <ProfileAvatar
+          size="sm"
+          className={`
+            !rounded-full
+            border border-gray-200 dark:border-dark-border
+            group-hover:border-primary/30 group-hover:scale-105 transition-all duration-200
+            ${isOpen ? "border-primary/30 scale-105" : ""}
+          `}
+        />
         {!isCollapsed && (
           <>
             <div className="flex-1 min-w-0 text-left">

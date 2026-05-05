@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useCallback } from "react";
+import { usePerformance } from "@/lib/performance/PerformanceProvider";
 
 /**
  * AuroraBackground — Premium animated hero background
@@ -134,6 +135,7 @@ export default function AuroraBackground() {
   const frameRef = useRef<number>(0);
   const particlesRef = useRef<Particle[]>([]);
   const sizeRef = useRef({ w: 0, h: 0 });
+  const { mode, hydrated } = usePerformance();
 
   const initCanvas = useCallback(() => {
     const canvas = canvasRef.current;
@@ -166,6 +168,13 @@ export default function AuroraBackground() {
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // Skip the canvas particle field entirely on low-end devices —
+    // it's the single most expensive thing on the landing hero.
+    if (hydrated && mode === "low") return;
+    // Skip on mobile too: the canvas is `display: none` via Tailwind below
+    // breakpoint md, so rendering produces no pixels but the rAF loop would
+    // still cost CPU + battery. Bail out cleanly on small viewports.
+    if (typeof window !== "undefined" && window.innerWidth < 768) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -186,9 +195,11 @@ export default function AuroraBackground() {
 
       let time = 0;
 
-      // Throttle to ~30fps instead of 60fps — halves GPU work with no visual difference for slow particles
+      // Adaptive frame budget:
+      //   high  → ~30 fps  (33ms)  — current default
+      //   medium → ~20 fps (50ms)  — softer particle drift, still fluid
       let lastDrawTime = 0;
-      const FRAME_INTERVAL = 33; // ~30fps
+      const FRAME_INTERVAL = mode === "medium" ? 50 : 33;
 
       const draw = () => {
         const now = performance.now();
@@ -288,7 +299,7 @@ export default function AuroraBackground() {
       cancelAnimationFrame(frameRef.current);
       window.removeEventListener("resize", handleResize);
     };
-  }, [initCanvas]);
+  }, [initCanvas, mode, hydrated]);
 
   return (
     <div
@@ -332,10 +343,14 @@ export default function AuroraBackground() {
         }}
       />
 
-      {/* Layer 3 — Canvas silver star particles */}
+      {/* Layer 3 — Canvas silver star particles.
+          Hidden on mobile (< md): the 80+ animated star field looked busy on
+          small screens and was the heaviest thing on iOS Safari (full-frame
+          canvas redraw at 30fps). Desktop keeps the cinematic look; mobile
+          gets a cleaner, faster experience anchored on the warm orbs above. */}
       <canvas
         ref={canvasRef}
-        className="absolute inset-0"
+        className="absolute inset-0 hidden md:block"
         style={{ width: "100%", height: "100%" }}
       />
 

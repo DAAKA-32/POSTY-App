@@ -600,7 +600,7 @@ export default function OnboardingPage() {
       <header className="p-4 sm:p-6 flex items-center justify-between max-w-2xl mx-auto w-full flex-shrink-0">
         <Link href="/" className="inline-flex items-center gap-2.5">
           <Image src="/logo.png" alt="Posty" width={36} height={36} className="w-9 h-9 rounded-xl" />
-          <span className="font-bold text-gray-900 text-lg">Posty</span>
+          <span translate="no" className="notranslate font-bold text-gray-900 text-lg">Posty</span>
         </Link>
         {!showRecap && (
           <span className="text-sm text-gray-400 font-medium">

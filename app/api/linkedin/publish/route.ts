@@ -176,13 +176,15 @@ export async function POST(request: NextRequest) {
     }
 
     // ⏰ ÉTAPE 3: Vérification de l'expiration du token
+    // The client maps `error: "token_expired"` to a friendly i18n message
+    // via `lib/utils/linkedin-errors.ts`. The `message` here is a neutral
+    // EN fallback for non-i18n consumers (logs, server-side scripts).
     const now = Timestamp.now();
     if (connection.expiresAt.toMillis() <= now.toMillis()) {
       return NextResponse.json(
         {
           error: "token_expired",
-          message:
-            "Votre connexion LinkedIn a expiré. Veuillez vous reconnecter.",
+          message: "LinkedIn session expired. Reconnect to continue.",
         },
         { status: 401 }
       );
@@ -267,8 +269,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: "publish_failed",
-          message:
-            "Échec de la publication sur LinkedIn. Veuillez réessayer.",
+          message: "Could not publish to LinkedIn.",
         },
         { status: shareResponse.status }
       );

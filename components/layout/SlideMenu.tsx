@@ -16,6 +16,7 @@ import ConversationOptionsMenu from "@/components/conversation/ConversationOptio
 import RenameConversationModal from "@/components/conversation/RenameConversationModal";
 import DeleteConfirmModal from "@/components/conversation/DeleteConfirmModal";
 import ProfileMenu from "@/components/layout/ProfileMenu";
+import SidebarSearchModal from "@/components/layout/SidebarSearchModal";
 import { useScrollLock } from "@/hooks/ui/useScrollLock";
 
 interface SlideMenuProps {
@@ -182,6 +183,8 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
   const { refreshScheduledPosts } = useScheduling();
   const { currentPlan } = useSubscription();
   const [searchQuery, setSearchQuery] = useState("");
+  // Whether the ChatGPT-style search modal is open (mirrors desktop UX).
+  const [searchOpen, setSearchOpen] = useState(false);
   const [showChatList, setShowChatList] = useState(true);
 
   // Local state for optimistic updates
@@ -470,7 +473,7 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
                 className="w-full h-full object-contain"
               />
             </div>
-            <span className="font-bold text-gray-900 dark:text-white text-lg sm:text-xl truncate">Posty</span>
+            <span translate="no" className="notranslate font-bold text-gray-900 dark:text-white text-lg sm:text-xl truncate">Posty</span>
           </Link>
           <button
             onClick={onClose}
@@ -487,13 +490,31 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
 
         {/* Fixed section: search + new post */}
         <div className="shrink-0 px-4 pt-4 pb-2">
-          {/* Search bar */}
-          <div className="relative mb-3">
+          {/* Search trigger — looks like an input but is a button. Tapping it
+              opens the ChatGPT-style search modal (same component used on
+              desktop), keeping mobile + desktop UX consistent. The modal
+              owns the actual input + auto-focus + result list. */}
+          <button
+            type="button"
+            onClick={() => setSearchOpen(true)}
+            aria-haspopup="dialog"
+            className="
+              relative w-full mb-3 pl-11 pr-4 py-3
+              flex items-center
+              text-left text-sm
+              bg-white/70 dark:bg-dark-bg border border-[#F8935D]/15 dark:border-dark-border rounded-lg
+              text-text-muted hover:text-text-primary
+              hover:border-[#F8935D]/30
+              focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary
+              transition-[border-color,box-shadow,color] duration-150
+            "
+          >
             <svg
               className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
+              aria-hidden
             >
               <path
                 strokeLinecap="round"
@@ -502,31 +523,27 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
               />
             </svg>
-            <input
-              type="text"
-              placeholder={t.sidebar.searchPlaceholder}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="
-                w-full pl-11 pr-4 py-3 text-sm
-                bg-white/70 dark:bg-dark-bg border border-[#F8935D]/15 dark:border-dark-border rounded-lg
-                text-text-primary placeholder-text-muted
-                focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary
-                transition-all duration-200
-              "
-            />
+            <span className="flex-1 truncate">
+              {searchQuery || t.sidebar.searchPlaceholder}
+            </span>
             {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-1 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] flex items-center justify-center text-text-muted hover:text-text-primary transition-colors"
+              <span
+                role="button"
+                aria-label={t.common.close}
+                onClick={(e) => {
+                  // Stop propagation so we don't also open the modal
+                  e.stopPropagation();
+                  setSearchQuery("");
+                }}
+                className="ml-2 inline-flex items-center justify-center w-6 h-6 rounded text-text-muted hover:text-text-primary hover:bg-gray-100 dark:hover:bg-dark-hover transition-colors"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 6L18 18" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6" />
                 </svg>
-              </button>
+              </span>
             )}
-          </div>
+          </button>
 
           {/* New post button — refined: tighter padding, subtler shadow */}
           <button
@@ -608,8 +625,16 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
                     <span className={`flex-1 text-[13.5px] ${isActive ? "font-semibold" : "font-medium"}`}>{itemName}</span>
 
                     {isLocked && (
-                      <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-primary/10 text-primary rounded shrink-0">
-                        PRO
+                      <span
+                        className={`
+                          px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded shrink-0
+                          ${item.requiredPlan === "max"
+                            ? "bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-400"
+                            : "bg-primary/10 text-primary"
+                          }
+                        `}
+                      >
+                        {item.requiredPlan === "max" ? "MAX" : "PRO"}
                       </span>
                     )}
                   </Link>
@@ -852,6 +877,20 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
         onClose={() => setPostToDelete(null)}
         post={postToDelete}
         onConfirm={handleDeleteConfirm}
+      />
+
+      {/* Search Modal — same ChatGPT-style command palette used on desktop.
+          On mobile it slides up as a bottom sheet (handled inside the modal
+          via responsive flex alignment). `onResultClick` also closes the
+          slide menu so the user lands cleanly on the selected conversation. */}
+      <SidebarSearchModal
+        open={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        filteredPosts={filteredPosts}
+        hasAnyPosts={localPosts.length > 0}
+        onResultClick={onClose}
       />
     </>
   );

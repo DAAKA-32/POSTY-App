@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { TRIAL_PERIOD_DAYS, GUARANTEE_PERIOD_DAYS } from "@/lib/config/plans";
+import { TRIAL_PERIOD_DAYS, GUARANTEE_PERIOD_DAYS, isFreeTrialGateEnabled } from "@/lib/config/plans";
 
 /**
  * TrialBanner - Shows contextual banners for trial/guarantee status
@@ -36,7 +36,10 @@ export default function TrialBanner() {
   // ===== Free-plan 14-day trial banner =====
   // Shown to Free users while the trial clock is still running. Once
   // expired, SubscriptionGuard redirects them to /subscription instead.
-  if (currentPlan === "free" && !freeTrialExpired && freeTrialEndsAt) {
+  // Gated by the same env flag as the expiration check — otherwise we'd
+  // show a misleading "14 days left" countdown in environments where the
+  // trial gate is disabled and Free is effectively unlimited.
+  if (isFreeTrialGateEnabled() && currentPlan === "free" && !freeTrialExpired && freeTrialEndsAt) {
     const isUrgent = freeTrialDaysRemaining <= 1;
     const message = freeTrialDaysRemaining === 1
       ? t.subscriptionPage.freeTrialOneDayLeft

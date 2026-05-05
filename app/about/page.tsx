@@ -98,7 +98,7 @@ export default function AboutPage() {
             </Link>
             <Link href="/" className="flex items-center gap-2">
               <Image src="/logo.png" alt="Posty" width={32} height={32} className="rounded-lg overflow-hidden" />
-              <span className="font-bold text-lg text-gray-900">Posty</span>
+              <span translate="no" className="notranslate font-bold text-lg text-gray-900">Posty</span>
             </Link>
           </div>
         </header>

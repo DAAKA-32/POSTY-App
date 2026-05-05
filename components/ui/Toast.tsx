@@ -141,22 +141,22 @@ function ActionToast({ t, type, message, action }: ActionToastProps) {
       exit={animationVariants.exit}
       transition={{ duration: 0.2, ease: smoothEase }}
       className={`
-        flex items-center gap-3 px-4 py-2.5
+        flex items-start gap-3 px-4 py-2.5
         bg-background/95 backdrop-blur-lg
         border ${variant.border}
-        rounded-full shadow-lg shadow-black/10
-        max-w-[calc(100vw-32px)] sm:max-w-sm
+        rounded-2xl shadow-lg shadow-black/10
+        max-w-[calc(100vw-32px)] sm:max-w-md
       `}
       role="alert"
       aria-live="polite"
     >
       {/* Icon */}
-      <span className={`flex-shrink-0 ${variant.color}`}>
+      <span className={`flex-shrink-0 mt-0.5 ${variant.color}`}>
         {variant.icon}
       </span>
 
       {/* Message */}
-      <span className="flex-1 text-sm font-medium text-text-primary truncate">
+      <span className="flex-1 text-sm font-medium text-text-primary whitespace-normal break-words">
         {message}
       </span>
 
@@ -206,26 +206,26 @@ function MinimalToast({ t, type, message }: CustomToastProps) {
       transition={{ duration: 0.2, ease: smoothEase }}
       onClick={() => hotToast.dismiss(t.id)}
       className={`
-        flex items-center gap-2.5 px-4 py-2.5
+        flex items-start gap-2.5 px-4 py-2.5
         bg-background/95 backdrop-blur-lg
         border ${variant.border}
-        rounded-full shadow-lg shadow-black/10
+        rounded-2xl shadow-lg shadow-black/10
         cursor-pointer select-none
         transition-all duration-150
         hover:bg-dark-elevated/80
         active:scale-[0.98]
-        max-w-[calc(100vw-32px)] sm:max-w-xs
+        max-w-[calc(100vw-32px)] sm:max-w-md
       `}
       role="alert"
       aria-live="polite"
     >
       {/* Icon */}
-      <span className={`flex-shrink-0 ${variant.color}`}>
+      <span className={`flex-shrink-0 mt-0.5 ${variant.color}`}>
         {variant.icon}
       </span>
 
-      {/* Message - single line, truncated if too long */}
-      <span className="text-sm font-medium text-text-primary truncate">
+      {/* Message — wraps freely, never truncated */}
+      <span className="flex-1 text-sm font-medium text-text-primary whitespace-normal break-words">
         {message}
       </span>
     </motion.div>
@@ -323,12 +323,27 @@ export const toast = {
    * Error toast - for errors and failures
    * Automatically triggers error haptic feedback on mobile
    */
-  error: (message: string, options?: { duration?: number; skipDedupe?: boolean; haptic?: boolean }) => {
+  error: (message: string, options?: {
+    duration?: number;
+    skipDedupe?: boolean;
+    haptic?: boolean;
+    action?: { label: string; onClick: () => void };
+  }) => {
     if (!options?.skipDedupe && isDuplicate(message)) return "";
 
     // Trigger haptic feedback (enabled by default, can be disabled with haptic: false)
     if (options?.haptic !== false) {
       triggerHaptic("error");
+    }
+
+    // Use ActionToast when an action is provided (e.g. "Reconnect LinkedIn"
+    // for a session-expired error). Renders the same error styling but with
+    // a recovery button alongside.
+    if (options?.action) {
+      return hotToast.custom(
+        (t) => <ActionToast t={t} type="error" message={message} action={options.action!} />,
+        { duration: options?.duration || 6000 }
+      );
     }
 
     return hotToast.custom(

@@ -155,30 +155,33 @@ function getNavLinks(t: Translations) {
   ];
 }
 
-// Staggered animation variants for menu items
+// iOS-style staggered reveal — items drop down from above with a tight
+// stagger, exit upward in reverse order. Snappier than the old slide-from-
+// right pattern and reads as "menu unfurling" rather than "items pushing in".
 const mobileMenuVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.06, delayChildren: 0.1 },
+    transition: { staggerChildren: 0.05, delayChildren: 0.08 },
   },
   exit: {
     opacity: 0,
-    transition: { staggerChildren: 0.03, staggerDirection: -1 },
+    transition: { staggerChildren: 0.02, staggerDirection: -1 },
   },
 };
 
 const mobileItemVariants = {
-  hidden: { opacity: 0, x: 24 },
+  hidden: { opacity: 0, y: -12, scale: 0.98 },
   visible: {
     opacity: 1,
-    x: 0,
-    transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
   },
   exit: {
     opacity: 0,
-    x: 16,
-    transition: { duration: 0.2 },
+    y: -8,
+    transition: { duration: 0.16 },
   },
 };
 
@@ -291,7 +294,7 @@ function Navbar() {
                 <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl overflow-hidden shadow-md shadow-[#F8935D]/15 ring-1 ring-gray-100">
                   <Image src="/og-image.jpg" alt="Posty" width={40} height={40} className="w-full h-full object-cover" />
                 </div>
-                <span className="text-lg md:text-xl font-bold text-gray-900 tracking-tight">Posty</span>
+                <span translate="no" className="notranslate text-lg md:text-xl font-bold text-gray-900 tracking-tight">Posty</span>
               </Link>
 
               {/* Desktop Nav — pill bg on hover + active indicator */}
@@ -428,7 +431,7 @@ function Navbar() {
                 <div className="w-9 h-9 rounded-2xl overflow-hidden shadow-md shadow-[#F8935D]/15 ring-1 ring-gray-100">
                   <Image src="/logo.png" alt="Posty" width={40} height={40} className="w-full h-full object-contain" />
                 </div>
-                <span className="text-lg font-bold text-gray-900 tracking-tight">Posty</span>
+                <span translate="no" className="notranslate text-lg font-bold text-gray-900 tracking-tight">Posty</span>
               </Link>
               <button
                 onClick={() => setIsMenuOpen(false)}
@@ -439,14 +442,32 @@ function Navbar() {
               </button>
             </div>
 
-            {/* Navigation items - at the top, not centered */}
-            <nav className="px-4 sm:px-6 pt-4" role="navigation">
+            {/* Navigation items — iOS-style cells with eyebrow, generous
+                tap targets (min 64px), tap-spring feedback, and a left
+                gradient bar indicator on the active section. */}
+            <nav className="px-4 sm:px-6 pt-2" role="navigation">
+              {/* Section eyebrow — iOS Settings-style group label */}
+              <motion.div
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.2, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
+                className="px-3 mb-3"
+              >
+                <span
+                  className="text-[10.5px] font-semibold text-gray-400 uppercase"
+                  style={{ letterSpacing: "0.12em" }}
+                >
+                  {t.landing.navExplore ?? "Explorer"}
+                </span>
+              </motion.div>
+
               <motion.div
                 variants={mobileMenuVariants}
                 initial="hidden"
                 animate="visible"
                 exit="exit"
-                className="space-y-2"
+                className="space-y-1.5"
               >
                 {NAV_LINKS_DATA.map((link) => {
                   const isActive = activeSection === link.href;
@@ -454,36 +475,67 @@ function Navbar() {
                     <motion.button
                       key={link.href}
                       variants={mobileItemVariants}
+                      whileTap={{ scale: 0.985 }}
+                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
                       onClick={() => scrollTo(link.href)}
                       className={`
-                        w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left
-                        transition-colors duration-200 group
+                        relative w-full flex items-center gap-3.5 pl-4 pr-3 py-3.5
+                        min-h-[64px] rounded-2xl text-left overflow-hidden
+                        transition-[background-color,box-shadow,border-color] duration-200
                         ${isActive
-                          ? "bg-white shadow-md shadow-[#F8935D]/10 border border-[#F8935D]/20"
-                          : "bg-white/50 border border-transparent hover:bg-white hover:shadow-sm active:bg-white"
+                          ? "bg-white shadow-[0_4px_20px_-8px_rgba(248,147,93,0.25)] ring-1 ring-[#F8935D]/20"
+                          : "bg-white/65 ring-1 ring-gray-200/60 active:bg-white active:ring-[#F8935D]/15"
                         }
                       `}
                     >
-                      {/* Icon */}
-                      <div className={`
-                        flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center transition-colors duration-200
-                        ${isActive
-                          ? "bg-gradient-to-br from-[#F8935D] to-[#F76B54] text-white shadow-sm"
-                          : "bg-[#FEF3EE] text-[#F8935D]/70 group-hover:text-[#F8935D]"
-                        }
-                      `}>
+                      {/* Left gradient bar — iOS active indicator */}
+                      <motion.span
+                        aria-hidden
+                        className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-r-full bg-gradient-to-b from-[#F8935D] to-[#F76B54]"
+                        animate={{ height: isActive ? 32 : 0, opacity: isActive ? 1 : 0 }}
+                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                      />
+
+                      {/* Icon — bigger, square-ish, gradient when active */}
+                      <div
+                        className={`
+                          flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center
+                          transition-colors duration-200
+                          ${isActive
+                            ? "bg-gradient-to-br from-[#F8935D] to-[#F76B54] text-white shadow-[0_4px_12px_-4px_rgba(248,147,93,0.45)]"
+                            : "bg-[#FEF3EE] text-[#F8935D]"
+                          }
+                        `}
+                      >
                         {link.icon}
                       </div>
-                      {/* Label + description */}
+
+                      {/* Label + description — refined hierarchy */}
                       <div className="flex-1 min-w-0">
-                        <p className={`text-[15px] font-semibold ${isActive ? "text-gray-900" : "text-gray-700 group-hover:text-gray-900"}`}>
+                        <p
+                          className={`text-[15.5px] font-semibold tracking-[-0.01em] leading-tight ${
+                            isActive ? "text-gray-900" : "text-gray-800"
+                          }`}
+                        >
                           {link.label}
                         </p>
-                        <p className="text-[11px] text-gray-400 mt-0.5 line-clamp-1">{link.description}</p>
+                        <p className="text-[11.5px] text-gray-400 mt-0.5 line-clamp-1 leading-snug">
+                          {link.description}
+                        </p>
                       </div>
-                      {/* Arrow */}
-                      <svg className={`w-4 h-4 flex-shrink-0 transition-colors duration-200 ${isActive ? "text-[#F8935D]" : "text-gray-300 group-hover:text-gray-400"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+
+                      {/* Chevron — iOS-style, tints with active state */}
+                      <svg
+                        className={`
+                          w-4 h-4 flex-shrink-0 transition-[color,transform] duration-200
+                          ${isActive ? "text-[#F8935D] translate-x-0.5" : "text-gray-300"}
+                        `}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        strokeWidth={2.4}
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                       </svg>
                     </motion.button>
                   );
@@ -501,8 +553,13 @@ function Navbar() {
               transition={{ delay: 0.35, duration: 0.3 }}
               className="px-4 sm:px-6 pb-4"
             >
-              {/* Language Switcher - Mobile (compact toggle + animated dropdown) */}
-              <div className="mb-4">
+              {/* Language Switcher - Mobile.
+                  The dropdown is an absolute-positioned overlay that opens
+                  UPWARD (bottom-full) so it never pushes the CTAs below the
+                  toggle. This kills the iOS Safari layout-shift bug where
+                  expanding the dropdown was bumping "Commencer gratuitement"
+                  and "Se connecter" out of the viewport. */}
+              <div className="relative mb-4">
                 <button
                   onClick={() => setMobileLangOpen((v) => !v)}
                   aria-expanded={mobileLangOpen}
@@ -530,13 +587,13 @@ function Navbar() {
                   {mobileLangOpen && (
                     <motion.div
                       key="mobile-lang-dropdown"
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
+                      initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 8, scale: 0.98 }}
                       transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-                      className="overflow-hidden"
+                      className="absolute left-0 right-0 bottom-full mb-2 z-50 origin-bottom"
                     >
-                      <div className="mt-2 grid grid-cols-2 gap-1 p-1.5 rounded-xl bg-white/70 border border-gray-200/70">
+                      <div className="grid grid-cols-2 gap-1 p-1.5 rounded-xl bg-white border border-gray-200 shadow-xl shadow-gray-900/10">
                         {(Object.keys(languageNames) as Language[]).map((code) => {
                           const isActive = language === code;
                           return (
@@ -560,32 +617,36 @@ function Navbar() {
                 </AnimatePresence>
               </div>
 
-              <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent mb-4" />
+              <div className="h-px bg-gradient-to-r from-transparent via-[#F8935D]/20 to-transparent mb-4" />
 
               <div className="space-y-2.5">
-                {/* Primary CTA */}
-                <Link
-                  href="/signup"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center justify-center gap-2 w-full h-12 rounded-xl font-bold text-white text-[15px] bg-gradient-to-r from-[#F8935D] to-[#F76B54] shadow-lg shadow-[#F8935D]/25 active:scale-[0.98] transition-transform duration-150"
-                >
-                  {t.landing.navStartFree}
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </Link>
+                {/* Primary CTA — bigger tap area, springier press */}
+                <motion.div whileTap={{ scale: 0.98 }} transition={{ type: "spring", stiffness: 500, damping: 30 }}>
+                  <Link
+                    href="/signup"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center justify-center gap-2 w-full h-[52px] rounded-2xl font-bold text-white text-[15.5px] bg-gradient-to-r from-[#F8935D] to-[#F76B54] shadow-[0_8px_24px_-8px_rgba(248,147,93,0.5)]"
+                  >
+                    {t.landing.navStartFree}
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  </Link>
+                </motion.div>
 
                 {/* Secondary — Login */}
-                <Link
-                  href="/login"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center justify-center gap-2 w-full h-11 rounded-xl font-medium text-sm text-gray-600 bg-white border border-gray-200 hover:border-gray-300 hover:text-gray-900 active:scale-[0.98] transition-all duration-200"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                  {t.landing.navLogin}
-                </Link>
+                <motion.div whileTap={{ scale: 0.98 }} transition={{ type: "spring", stiffness: 500, damping: 30 }}>
+                  <Link
+                    href="/login"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center justify-center gap-2 w-full h-12 rounded-2xl font-semibold text-sm text-gray-700 bg-white ring-1 ring-gray-200 active:ring-gray-300 transition-[box-shadow] duration-150"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    {t.landing.navLogin}
+                  </Link>
+                </motion.div>
               </div>
 
               {/* Trust indicators - compact */}
@@ -1215,6 +1276,41 @@ function DemoSection() {
             >
               {t.landing.demoInputDesc}
             </motion.p>
+
+            {/* Trustpilot rating — 5 golden stars + clickable label.
+                Stars are inline SVG (no extra HTTP request), the whole row is
+                a link to the public Posty review page. */}
+            <motion.a
+              href="https://www.trustpilot.com/review/postyapp.ai"
+              target="_blank"
+              rel="noopener noreferrer"
+              initial={{ opacity: 0, y: 6 }}
+              animate={hasAnimated ? { opacity: 1, y: 0 } : { opacity: 0, y: 6 }}
+              transition={{
+                duration: 0.4,
+                delay: hasAnimated ? 0.25 : 0,
+                ease: cinematicEase,
+              }}
+              className="mt-3 md:mt-4 inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors group/tp"
+              aria-label={`5/5 ${t.landing.trustpilotRated}`}
+            >
+              <span className="flex items-center gap-0.5" aria-hidden="true">
+                {[0, 1, 2, 3, 4].map((i) => (
+                  <svg
+                    key={i}
+                    className="w-4 h-4 md:w-[18px] md:h-[18px] text-amber-400 group-hover/tp:scale-110 transition-transform duration-200"
+                    style={{ transitionDelay: `${i * 30}ms` }}
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                ))}
+              </span>
+              <span className="text-sm md:text-[15px] font-medium underline-offset-2 group-hover/tp:underline">
+                {t.landing.trustpilotRated}
+              </span>
+            </motion.a>
           </div>
         </motion.div>
 
@@ -1325,7 +1421,7 @@ function DemoSection() {
                     <Image src="/logo.png" alt="Posty" width={40} height={40} className="w-full h-full object-contain" />
                   </div>
                   <div>
-                    <p className="text-gray-900 font-semibold text-sm md:text-base">Posty</p>
+                    <p translate="no" className="notranslate text-gray-900 font-semibold text-sm md:text-base">Posty</p>
                     <p className="text-[11px] md:text-xs text-emerald-600 flex items-center gap-1">
                       <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
                       {t.landing.demoReadyToGenerate}
@@ -1593,7 +1689,7 @@ function DemoSection() {
                   <Image src="/logo.png" alt="Posty" width={36} height={36} className="w-full h-full object-contain" />
                 </div>
                 <div>
-                  <p className="text-gray-900 font-semibold text-sm">Posty</p>
+                  <p translate="no" className="notranslate text-gray-900 font-semibold text-sm">Posty</p>
                   <p className="text-[11px] text-emerald-600 flex items-center gap-1">
                     <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
                     {isStreaming ? t.landing.demoWriting : t.landing.demoAIReady}
@@ -2845,7 +2941,7 @@ function AIExperienceSection() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
                   </svg>
                 </div>
-                <p className="text-sm font-semibold text-gray-900">Posty AI</p>
+                <p translate="no" className="notranslate text-sm font-semibold text-gray-900">Posty AI</p>
               </div>
 
               {/* Chat messages */}
@@ -2864,7 +2960,7 @@ function AIExperienceSection() {
                       <svg className="w-3.5 h-3.5 text-[#F8935D]" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                       </svg>
-                      <span className="text-xs font-medium text-[#F8935D]">Posty AI</span>
+                      <span translate="no" className="notranslate text-xs font-medium text-[#F8935D]">Posty AI</span>
                     </div>
                     <p className="leading-relaxed">{t.landing.aiExpChatResponse}</p>
                   </div>
@@ -3155,18 +3251,33 @@ function MockupDualGeneration() {
           className="flex-1 bg-white rounded-xl border border-gray-200 flex flex-col overflow-hidden"
         >
           {/* Gradient header bar like real app */}
-          <div className="px-2.5 py-2 bg-gradient-to-r from-[#F85751]/10 to-[#F85751]/5 border-b border-gray-100">
+          <div className="px-2.5 py-2 bg-gradient-to-r from-[#F85751]/10 to-[#F85751]/5 border-b border-gray-100 flex items-center justify-between">
             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[8px] font-medium rounded-full bg-[#F85751]/15 text-[#F85751] border border-[#F85751]/20">
               <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
               </svg>
               {t.landing.featuresStorytelling}
             </span>
+            <span className="text-[7px] font-bold text-emerald-600 tabular-nums">92</span>
           </div>
-          {/* Content preview */}
-          <div className="px-2.5 py-2 flex-1">
-            <div className="text-[8px] text-gray-600 leading-relaxed line-clamp-4">
-              {t.landing.featuresStorytellingPreview}
+          {/* Content preview — fills the card with hook + body + tags + meta */}
+          <div className="px-2.5 py-2 flex-1 flex flex-col gap-1.5">
+            <p className="text-[8.5px] font-bold text-gray-900 leading-snug">
+              Two years ago, I almost gave up on everything.
+            </p>
+            <div className="text-[7.5px] text-gray-500 leading-[1.55] line-clamp-6">
+              {t.landing.featuresStorytellingPreview} I was burning out, my team was scattered, and every Monday felt heavier than the last. Then I changed one thing — and everything shifted.
+            </div>
+            <div className="flex items-center gap-1 mt-auto pt-1">
+              <span className="text-[6.5px] text-[#0A66C2] font-medium">#story</span>
+              <span className="text-[6.5px] text-[#0A66C2] font-medium">#founder</span>
+            </div>
+            <div className="flex items-center justify-between text-[6.5px] text-gray-400 tabular-nums border-t border-gray-50 pt-1">
+              <span>~3.2k reach</span>
+              <span className="flex items-center gap-0.5">
+                <span className="w-1 h-1 rounded-full bg-[#F85751]" />
+                emotional
+              </span>
             </div>
           </div>
           {/* Actions like real app */}
@@ -3185,18 +3296,33 @@ function MockupDualGeneration() {
           className="flex-1 bg-white rounded-xl border border-gray-200 flex flex-col overflow-hidden"
         >
           {/* Gradient header bar like real app */}
-          <div className="px-2.5 py-2 bg-gradient-to-r from-[#F8935D]/10 to-[#F8935D]/5 border-b border-gray-100">
+          <div className="px-2.5 py-2 bg-gradient-to-r from-[#F8935D]/10 to-[#F8935D]/5 border-b border-gray-100 flex items-center justify-between">
             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[8px] font-medium rounded-full bg-[#F8935D]/15 text-[#F8935D] border border-[#F8935D]/20">
               <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
               {t.landing.featuresBusiness}
             </span>
+            <span className="text-[7px] font-bold text-emerald-600 tabular-nums">88</span>
           </div>
-          {/* Content preview */}
-          <div className="px-2.5 py-2 flex-1">
-            <div className="text-[8px] text-gray-600 leading-relaxed line-clamp-4">
-              {t.landing.featuresBusinessPreview}
+          {/* Content preview — same density treatment as Storytelling */}
+          <div className="px-2.5 py-2 flex-1 flex flex-col gap-1.5">
+            <p className="text-[8.5px] font-bold text-gray-900 leading-snug">
+              3 strategies that drove +40% B2B leads.
+            </p>
+            <div className="text-[7.5px] text-gray-500 leading-[1.55] line-clamp-6">
+              {t.landing.featuresBusinessPreview} Each one is repeatable, measurable, and works without paid ads. Save this if you want a step-by-step framework.
+            </div>
+            <div className="flex items-center gap-1 mt-auto pt-1">
+              <span className="text-[6.5px] text-[#0A66C2] font-medium">#B2B</span>
+              <span className="text-[6.5px] text-[#0A66C2] font-medium">#growth</span>
+            </div>
+            <div className="flex items-center justify-between text-[6.5px] text-gray-400 tabular-nums border-t border-gray-50 pt-1">
+              <span>~5.8k reach</span>
+              <span className="flex items-center gap-0.5">
+                <span className="w-1 h-1 rounded-full bg-[#F8935D]" />
+                actionable
+              </span>
             </div>
           </div>
           {/* Actions like real app */}
@@ -3294,7 +3420,7 @@ function getFeatures(t: Translations): FeatureConfig[] {
     title: t.landing.featuresMultiPlatformTitle,
     description: t.landing.featuresMultiPlatformDesc,
     mockup: <MockupMultiPlatform />,
-    badge: t.landing.featuresMultiPlatformLabel,
+    badge: "",
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
@@ -3341,7 +3467,7 @@ function getFeatures(t: Translations): FeatureConfig[] {
     title: t.landing.featuresGenerationTitle,
     description: t.landing.featuresGenerationDesc,
     mockup: <MockupDualGeneration />,
-    badge: t.landing.featuresGenerationLabel,
+    badge: "",
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -3364,7 +3490,7 @@ function getFeatures(t: Translations): FeatureConfig[] {
     title: t.landing.featuresPersonalizationTitle,
     description: t.landing.featuresPersonalizationDesc,
     mockup: <MockupContextProfile />,
-    badge: t.landing.featuresPersonalizationLabel,
+    badge: "",
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
@@ -3394,27 +3520,28 @@ function FeatureCard({ feature, index }: { feature: FeatureConfig; index: number
   const cardRef = useRef<HTMLDivElement>(null);
 
   // 3D perspective tilt — desktop only, driven by cursor position
-  const mouseX = useMotionValue(0.5);
-  const mouseY = useMotionValue(0.5);
-  const rawRotateX = useTransform(mouseY, [0, 1], [3, -3]);
-  const rawRotateY = useTransform(mouseX, [0, 1], [-3, 3]);
-  const rotateX = useSpring(rawRotateX, { stiffness: 100, damping: 26, restDelta: 0.001 });
-  const rotateY = useSpring(rawRotateY, { stiffness: 100, damping: 26, restDelta: 0.001 });
-
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    const card = cardRef.current;
-    if (!card || prefersReducedMotion || isMobile) return;
-    const rect = card.getBoundingClientRect();
-    const nx = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    const ny = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
-    mouseX.set(nx);
-    mouseY.set(ny);
-  }, [mouseX, mouseY, prefersReducedMotion, isMobile]);
-
-  const handleMouseLeave = useCallback(() => {
-    mouseX.set(0.5);
-    mouseY.set(0.5);
-  }, [mouseX, mouseY]);
+  // DISABLED: kept for reference, re-enable by restoring handlers + style props below.
+  // const mouseX = useMotionValue(0.5);
+  // const mouseY = useMotionValue(0.5);
+  // const rawRotateX = useTransform(mouseY, [0, 1], [3, -3]);
+  // const rawRotateY = useTransform(mouseX, [0, 1], [-3, 3]);
+  // const rotateX = useSpring(rawRotateX, { stiffness: 100, damping: 26, restDelta: 0.001 });
+  // const rotateY = useSpring(rawRotateY, { stiffness: 100, damping: 26, restDelta: 0.001 });
+  //
+  // const handleMouseMove = useCallback((e: React.MouseEvent) => {
+  //   const card = cardRef.current;
+  //   if (!card || prefersReducedMotion || isMobile) return;
+  //   const rect = card.getBoundingClientRect();
+  //   const nx = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+  //   const ny = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
+  //   mouseX.set(nx);
+  //   mouseY.set(ny);
+  // }, [mouseX, mouseY, prefersReducedMotion, isMobile]);
+  //
+  // const handleMouseLeave = useCallback(() => {
+  //   mouseX.set(0.5);
+  //   mouseY.set(0.5);
+  // }, [mouseX, mouseY]);
 
   // Strip hover: classes from border string on mobile
   const borderClasses = isMobile
@@ -3428,17 +3555,19 @@ function FeatureCard({ feature, index }: { feature: FeatureConfig; index: number
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "0px 0px 100px 0px" }}
       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-      onMouseMove={isMobile ? undefined : handleMouseMove}
-      onMouseLeave={isMobile ? undefined : handleMouseLeave}
+      // 3D tilt disabled — re-enable by restoring:
+      // onMouseMove={isMobile ? undefined : handleMouseMove}
+      // onMouseLeave={isMobile ? undefined : handleMouseLeave}
+      // style={isMobile ? undefined : { perspective: 1200 }}
       className={isMobile ? "" : "group/card"}
-      style={isMobile ? undefined : { perspective: 1200 }}
     >
       <motion.div
-        style={isMobile ? undefined : {
-          rotateX: prefersReducedMotion ? 0 : rotateX,
-          rotateY: prefersReducedMotion ? 0 : rotateY,
-          transformStyle: "preserve-3d",
-        }}
+        // 3D tilt disabled — re-enable by restoring:
+        // style={isMobile ? undefined : {
+        //   rotateX: prefersReducedMotion ? 0 : rotateX,
+        //   rotateY: prefersReducedMotion ? 0 : rotateY,
+        //   transformStyle: "preserve-3d",
+        // }}
         className={`
           relative bg-gradient-to-br ${feature.color.bg}
           border ${borderClasses} rounded-[clamp(1rem,2vw,1.5rem)]
@@ -3532,8 +3661,9 @@ function FeatureCard({ feature, index }: { feature: FeatureConfig; index: number
             {feature.description}
           </p>
 
-          {/* CTA Link with arrow slide on hover */}
-          <div>
+          {/* CTA Link with arrow slide on hover — hidden on mobile (the
+              feature cards already share a single global CTA below). */}
+          <div className="hidden sm:block">
             <Link
               href="/signup"
               className={`
@@ -4205,17 +4335,19 @@ function PremiumTestimonialCard({
   };
 
   // Stars container variant — orchestrates per-star stagger after the card lands.
+  // Removed rotate from the item variant: combining rotate+scale was causing
+  // visible jank/flicker on iOS Safari (extra GPU layer churn) and the rotation
+  // wasn't carrying the design.
   const starsContainer = {
     hidden: {},
     visible: { transition: { staggerChildren: 0.07, delayChildren: 0.35 } },
   };
   const starItem = {
-    hidden: { opacity: 0, scale: 0.4, rotate: -45 },
+    hidden: { opacity: 0, scale: 0.6 },
     visible: {
       opacity: 1,
       scale: 1,
-      rotate: 0,
-      transition: { type: "spring" as const, stiffness: 380, damping: 16 },
+      transition: { type: "spring" as const, stiffness: 360, damping: 18 },
     },
   };
 
@@ -4268,7 +4400,9 @@ function PremiumTestimonialCard({
       </motion.div>
 
       <div className="relative p-7 md:p-8 flex flex-col h-full">
-        {/* Stars — staggered pop-in with a spring overshoot */}
+        {/* Stars — staggered pop-in with a spring overshoot.
+            Slightly bigger on mobile (20px) to read clearly without zooming;
+            the drop-shadow gives the warm glow that anchors the gold tone. */}
         <motion.div
           className="flex items-center gap-1 mb-5"
           variants={starsContainer}
@@ -4277,7 +4411,7 @@ function PremiumTestimonialCard({
             <motion.svg
               key={i}
               variants={starItem}
-              className="w-[18px] h-[18px] text-amber-400 drop-shadow-[0_2px_4px_rgba(245,158,11,0.30)]"
+              className="w-5 h-5 md:w-[18px] md:h-[18px] text-amber-400 drop-shadow-[0_2px_4px_rgba(245,158,11,0.30)]"
               fill="currentColor"
               viewBox="0 0 20 20"
               aria-hidden
@@ -5094,7 +5228,7 @@ function Footer() {
                 <div className="w-7 h-7 rounded-lg overflow-hidden shadow-sm shadow-[#F8935D]/10">
                   <Image src="/og-image.jpg" alt="Posty" width={28} height={28} className="w-full h-full object-cover" />
                 </div>
-                <span className="text-sm font-bold text-gray-900">Posty</span>
+                <span translate="no" className="notranslate text-sm font-bold text-gray-900">Posty</span>
               </Link>
               <p className="text-[10px] text-gray-500 leading-tight max-w-[200px]">
                 {t.footer.tagline}
@@ -5153,7 +5287,7 @@ function Footer() {
                 <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-[#F8935D]/10">
                   <Image src="/og-image.jpg" alt="Posty" width={40} height={40} className="w-full h-full object-cover" />
                 </div>
-                <span className="text-xl font-bold text-gray-900">Posty</span>
+                <span translate="no" className="notranslate text-xl font-bold text-gray-900">Posty</span>
               </Link>
               <p className="text-gray-500 max-w-sm">
                 {t.footer.description}
@@ -5304,8 +5438,10 @@ export default function LandingPage() {
           <PricingSection />
         </div>
 
-        {/* FAQ — transparent to let aurora star particles show through */}
-        <div className="relative z-[5]">
+        {/* FAQ — opaque on mobile (cleaner reading background, no star
+            particles drifting through the accordion text) but transparent on
+            desktop so the aurora atmosphere can still show through. */}
+        <div className="relative z-[5] bg-[#FEF3EE] md:bg-transparent">
           <FaqSection />
         </div>
 

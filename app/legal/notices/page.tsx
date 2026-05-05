@@ -56,7 +56,7 @@ export default function LegalNoticesPage() {
             <strong className="text-[#1A1D21]">{notices.section2.email}</strong> postygroup@gmail.com
           </p>
           <p>
-            <strong className="text-[#1A1D21]">LinkedIn :</strong>{" "}
+            <strong translate="no" className="notranslate text-[#1A1D21]">LinkedIn :</strong>{" "}
             <a
               href="https://www.linkedin.com/in/emilien-nepveu-58a38127a/"
               target="_blank"

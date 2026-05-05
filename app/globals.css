@@ -3,6 +3,19 @@
 @tailwind utilities;
 
 /* ============================================================================
+   BRAND-NAME PROTECTION (Google Translate / browser translators)
+   ============================================================================
+   Belt-and-suspenders class for elements that already declare translate="no".
+   Pairing both signals fixes cases where Chrome respects the attribute but
+   the standalone Google Translate widget (and most extensions) only honor
+   the legacy `notranslate` class. Visual neutral by design — only purpose is
+   to keep proper nouns (LinkedIn, Discord, Threads, Posty…) intact.
+   ============================================================================ */
+.notranslate {
+  unicode-bidi: isolate;
+}
+
+/* ============================================================================
    SCROLL MANAGEMENT SYSTEM - CRITICAL SECTION
    ============================================================================
    This section MUST stay at the top to ensure scroll works correctly.
@@ -1231,11 +1244,13 @@ video {
 
   /* --font-sans & --font-display: both Inter for full consistency.
      Tailwind's `font-sans` reads --font-sans (see tailwind.config.ts), so
-     every default-style element resolves here. */
-  --font-sans: var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif;
-  --font-display: var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif;
+     every default-style element resolves here. The full system stack is
+     spelled out explicitly so a reader doesn't need to expand var() chains
+     to know which fallbacks fire on Windows / macOS / Linux. */
+  --font-sans: var(--font-inter), 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-display: var(--font-inter), 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
-  /* Font Weights - Poppins */
+  /* Font Weights - Inter */
   --font-light: 300;
   --font-regular: 400;
   --font-medium: 500;
@@ -2088,19 +2103,23 @@ html.light::-webkit-scrollbar-track {
 }
 
 html.light::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #FBB9AD 0%, #F89E85 50%, #F8935D 100%);
+  /* Solid orange thumb — full opacity guaranteed top-to-bottom.
+     Previous gradient started with #FBB9AD (near-identical to the track),
+     making the thumb fade to invisible near its top edge and giving the
+     impression the scrollbar lost opacity around bottom-page elements. */
+  background: #F8935D;
   border-radius: 5px;
   border: 2px solid #FEF3EE;
-  transition: all 0.2s ease;
+  transition: background 0.2s ease, border-color 0.2s ease;
 }
 
 html.light::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #F89E85 0%, #F8935D 50%, #E8834D 100%);
+  background: #F76B54;
   border-color: #FFF8F5;
 }
 
 html.light::-webkit-scrollbar-thumb:active {
-  background: linear-gradient(180deg, #F8935D 0%, #E8834D 50%, #D15A3D 100%);
+  background: #E8834D;
 }
 
 /* Scrollbar for all child elements */
@@ -2115,19 +2134,23 @@ html.light ::-webkit-scrollbar-track {
 }
 
 html.light ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #FBB9AD 0%, #F89E85 50%, #F8935D 100%);
+  /* Solid orange thumb — full opacity guaranteed top-to-bottom.
+     Previous gradient started with #FBB9AD (near-identical to the track),
+     making the thumb fade to invisible near its top edge and giving the
+     impression the scrollbar lost opacity around bottom-page elements. */
+  background: #F8935D;
   border-radius: 5px;
   border: 2px solid #FEF3EE;
-  transition: all 0.2s ease;
+  transition: background 0.2s ease, border-color 0.2s ease;
 }
 
 html.light ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #F89E85 0%, #F8935D 50%, #E8834D 100%);
+  background: #F76B54;
   border-color: #FFF8F5;
 }
 
 html.light ::-webkit-scrollbar-thumb:active {
-  background: linear-gradient(180deg, #F8935D 0%, #E8834D 50%, #D15A3D 100%);
+  background: #E8834D;
 }
 
 /* Firefox scrollbar - Light Mode */
@@ -2204,19 +2227,19 @@ html.light.landing-scroll-enabled body::-webkit-scrollbar-track {
 
 html.light.landing-scroll-enabled::-webkit-scrollbar-thumb,
 html.light.landing-scroll-enabled body::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #F8935D 0%, #F76B54 100%) !important;
+  background: #F8935D !important;
   border-radius: 5px !important;
   border: 2px solid #FEF3EE !important;
 }
 
 html.light.landing-scroll-enabled::-webkit-scrollbar-thumb:hover,
 html.light.landing-scroll-enabled body::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #F57C3A 0%, #E55A43 100%) !important;
+  background: #F76B54 !important;
 }
 
 html.light.landing-scroll-enabled::-webkit-scrollbar-thumb:active,
 html.light.landing-scroll-enabled body::-webkit-scrollbar-thumb:active {
-  background: linear-gradient(180deg, #E56A2E 0%, #D44A35 100%) !important;
+  background: #E56A2E !important;
 }
 
 /* Firefox */
@@ -2488,6 +2511,37 @@ body {
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   font-feature-settings: "kern" 1, "liga" 1;
+}
+
+/* Landing page only — use the platform system font stack instead of Inter.
+   Mac/iOS → SF Pro via -apple-system; Windows → Segoe UI; Android → Roboto.
+   Toggled by landing/page.tsx's useEffect (`landing-scroll-enabled` on <body>),
+   so the logged-in app keeps Inter and only public marketing pages render in
+   the native system font.
+
+   We must explicitly enumerate p/span/div/li/button/a etc. because the global
+   rules below (`p, span, div, li { font-family: var(--font-sans); }` and
+   `button, input, ... { font-family: var(--font-sans); }`) explicitly reset
+   font-family on those elements — that override breaks plain `body` inheritance,
+   so without this enumeration only headings would render in SF Pro on landing. */
+body.landing-scroll-enabled,
+body.landing-scroll-enabled h1,
+body.landing-scroll-enabled h2,
+body.landing-scroll-enabled h3,
+body.landing-scroll-enabled h4,
+body.landing-scroll-enabled h5,
+body.landing-scroll-enabled h6,
+body.landing-scroll-enabled p,
+body.landing-scroll-enabled span,
+body.landing-scroll-enabled div,
+body.landing-scroll-enabled li,
+body.landing-scroll-enabled a,
+body.landing-scroll-enabled button,
+body.landing-scroll-enabled input,
+body.landing-scroll-enabled textarea,
+body.landing-scroll-enabled select,
+body.landing-scroll-enabled label {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 /* ============== TYPOGRAPHY HIERARCHY ============== */

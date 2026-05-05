@@ -33,11 +33,10 @@ import {
   useSpring,
   useMotionValueEvent,
   useReducedMotion,
-  AnimatePresence,
   LayoutGroup,
 } from "framer-motion";
 import Link from "next/link";
-import { useEffect, useState, useMemo, memo, useCallback, useDeferredValue } from "react";
+import { useEffect, useState, useMemo, memo, useCallback } from "react";
 import { AmbientDecorations } from "@/components/landing/AmbientDecorations";
 
 const ACCENT = "#F8935D";
@@ -152,6 +151,10 @@ function ChipGroupBase<T extends number>({
               role="radio"
               aria-checked={selected}
               onClick={() => onChange(opt)}
+              style={{
+                color: selected ? "#ffffff" : "#4b5563",
+                WebkitTextFillColor: selected ? "#ffffff" : "#4b5563",
+              }}
               className="relative flex-1 min-w-[44px] py-2 px-3 text-[13px] font-semibold tabular-nums rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F8935D]/40"
             >
               {selected && (
@@ -166,13 +169,18 @@ function ChipGroupBase<T extends number>({
                   the 200ms color fade would briefly leave dark text sitting
                   on top of the dark pill that just slid into place via
                   layoutId, making the value invisible mid-transition.
-                  Inline `style.color` forces the value through any global CSS
-                  (button defaults, dark-mode resets, etc.) that was sometimes
-                  winning specificity against the Tailwind `text-white` class
-                  and leaving the selected chip black-on-black. */}
+                  Inline `color` + `-webkit-text-fill-color` forces the value
+                  through (1) global CSS (button defaults, dark-mode resets)
+                  and (2) iOS Safari's UA stylesheet, which under system dark
+                  mode tints button descendants via `-webkit-text-fill-color`
+                  and previously left the selected chip text rendering gray on
+                  real iPhones (devtools mobile preview did NOT reproduce). */}
               <span
                 className="relative z-10"
-                style={{ color: selected ? "#ffffff" : "#4b5563" }}
+                style={{
+                  color: selected ? "#ffffff" : "#4b5563",
+                  WebkitTextFillColor: selected ? "#ffffff" : "#4b5563",
+                }}
               >
                 {format(opt)}
               </span>
@@ -281,7 +289,10 @@ const Slider = memo(function Slider({
  *   - The component is `memo`'d AND only depends on `monthlyRevenue` for the
  *     `title` tooltips, so it re-renders only when that prop actually changes.
  */
-const MONTH_LABELS = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"] as const;
+// 3-letter abbreviations instead of single letters: with single letters,
+// "J" appeared 3× (Jan/Juin/Juil) and "M" 2× (Mars/Mai), making the chart
+// look like it had more than 12 months. Full month names below the bars.
+const MONTH_LABELS = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"] as const;
 
 const GrowthBars = memo(function GrowthBars({
   monthlyRevenue,
@@ -313,10 +324,10 @@ const GrowthBars = memo(function GrowthBars({
                 }}
                 style={{
                   height: `${heightPct}%`,
-                  // Softer, less saturated gradient — bars used to compete with
-                  // the big revenue number for attention. Now a quiet wash that
-                  // fades from very-light to mid orange.
-                  background: `linear-gradient(to top, ${ACCENT}30, ${ACCENT}80)`,
+                  // Single muted tone — looks like a financial-report bar
+                  // chart instead of a slot-machine reel. No gradient, no
+                  // animation on value change, just static height + entrance.
+                  backgroundColor: `${ACCENT}50`,
                 }}
                 role="presentation"
                 title={`${label} : ${formatEUR(value)}€`}
@@ -357,18 +368,6 @@ export default function ROISimulator() {
         newClients: Math.round(clients * 10) / 10,
       };
     }, [postsPerWeek, leadsPerPost, clientValue]);
-
-  // Tier label is driven by a deferred value so dragging the slider through
-  // multiple thresholds doesn't queue rapid AnimatePresence exit/enter cycles
-  // (which used to cause the tier pill to flicker mid-drag). React commits
-  // the deferred value at low priority, after the heavy spring updates settle.
-  const deferredAnnual = useDeferredValue(annualRevenue);
-  const tier = useMemo(() => {
-    if (deferredAnnual >= 100000) return { label: "Game changer", emoji: "🚀" };
-    if (deferredAnnual >= 36000) return { label: "Croissance solide", emoji: "📈" };
-    if (deferredAnnual >= 12000) return { label: "Bon démarrage", emoji: "✨" };
-    return { label: "Premiers résultats", emoji: "🌱" };
-  }, [deferredAnnual]);
 
   // Stable callbacks — ChipGroup/Slider are memo()'d, so passing a new fn ref
   // on every parent rerender would defeat the memo. useCallback keeps the
@@ -439,54 +438,30 @@ export default function ROISimulator() {
           />
 
           <div className="p-6 md:p-7 flex-1 flex flex-col">
-            {/* Tier pill — animates whenever the tier changes */}
-            <div className="flex justify-center mb-3">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={tier.label}
-                  initial={{ opacity: 0, y: 6, scale: 0.92 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -6, scale: 0.92 }}
-                  transition={{ duration: 0.3, ease: EASE }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F8935D]/10 ring-1 ring-[#F8935D]/20"
-                >
-                  <span className="text-[12px]" aria-hidden>
-                    {tier.emoji}
-                  </span>
-                  <span className="text-[11px] font-bold uppercase text-[#B5532E] tracking-wider">
-                    {tier.label}
-                  </span>
-                </motion.div>
-              </AnimatePresence>
-            </div>
-
-            {/* Big annual revenue — the money shot */}
+            {/* Big annual revenue — sober financial estimate.
+                No tier pill, no shimmer gradient, no "+" prefix shouting.
+                Solid brand color, clean tabular-nums. Reads as a real number,
+                not a slot-machine reveal. */}
             <div className="text-center mb-5">
-              <p className="text-[11px] uppercase font-bold text-gray-400 tracking-[0.18em] mb-2">
+              <p className="text-[11px] uppercase font-medium text-gray-500 tracking-[0.16em] mb-2.5">
                 Revenus supplémentaires projetés
               </p>
-              <p className="font-bold tabular-nums leading-[0.95] flex items-baseline justify-center gap-1">
-                <span
-                  className="text-[2.75rem] sm:text-[3.5rem] md:text-[3.75rem] lg:text-[4rem] text-transparent bg-clip-text bg-gradient-to-br from-[#F8935D] via-[#F76B54] to-[#F8935D]"
-                  style={{
-                    backgroundSize: "200% 200%",
-                    animation: "roi-shimmer 6s ease-in-out infinite",
-                  }}
-                >
-                  +<AnimatedNumber value={annualRevenue} springConfig={REVENUE_SPRING} />
-                  <span className="text-[1.75rem] sm:text-[2.25rem] md:text-[2.5rem]">€</span>
+              <p className="font-bold tabular-nums leading-[0.95] flex items-baseline justify-center gap-0.5 text-[#F76B54]">
+                <span className="text-[2.75rem] sm:text-[3.5rem] md:text-[3.75rem] lg:text-[4rem]">
+                  <AnimatedNumber value={annualRevenue} springConfig={REVENUE_SPRING} />
+                </span>
+                <span className="text-[1.75rem] sm:text-[2.25rem] md:text-[2.5rem]">€</span>
+                <span className="ml-2 text-[14px] sm:text-[15px] font-medium text-gray-400 self-end mb-1">
+                  / an
                 </span>
               </p>
-              <p className="mt-2 text-[14px] text-gray-500">
-                soit{" "}
-                <span className="font-semibold text-gray-800 tabular-nums">
+              <p className="mt-2.5 text-[13px] text-gray-500">
+                <span className="tabular-nums text-gray-700">
                   <AnimatedNumber value={revenue} />€
                 </span>{" "}
-                par mois •{" "}
-                <span className="font-semibold text-gray-800 tabular-nums">
-                  {newClients}
-                </span>{" "}
-                nouveaux clients/mois
+                / mois ·{" "}
+                <span className="tabular-nums text-gray-700">{newClients}</span>{" "}
+                nouveaux clients
               </p>
             </div>
 
@@ -649,18 +624,6 @@ export default function ROISimulator() {
           </p>
         </motion.div>
       </div>
-
-      {/* Local keyframes — used by the big number's gradient shimmer */}
-      <style jsx>{`
-        @keyframes roi-shimmer {
-          0%, 100% {
-            background-position: 0% 50%;
-          }
-          50% {
-            background-position: 100% 50%;
-          }
-        }
-      `}</style>
     </section>
   );
 }

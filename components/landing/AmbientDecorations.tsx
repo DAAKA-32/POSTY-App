@@ -18,6 +18,7 @@
  */
 
 import { motion, useReducedMotion } from "framer-motion";
+import { usePerformance } from "@/lib/performance/PerformanceProvider";
 
 const ACCENT = "#F8935D";
 const ACCENT_DEEP = "#F76B54";
@@ -36,23 +37,39 @@ export function AmbientDecorations({
   intensity = 1,
 }: AmbientDecorationsProps) {
   const reduced = useReducedMotion();
+  const { mode, hydrated } = usePerformance();
   const variants = Array.isArray(variant) ? variant : [variant];
+
+  // On low-end devices, ambient decorations are pure cost with no value —
+  // skip rendering entirely. We wait for `hydrated` so the SSR/CSR markup
+  // matches; otherwise the user sees a brief paint of decorations that
+  // then disappear (more jarring than just not having them).
+  if (hydrated && mode === "low") return null;
+
+  // On medium tier, drop the dot field (eight perpetual loops) and the
+  // drifting arrows (transform animations + non-scaling-stroke). Orbs +
+  // waves are cheap (one-shot pathLength + slow opacity pulses).
+  const allowedVariants = new Set<Variant>(variants);
+  if (hydrated && mode === "medium") {
+    allowedVariants.delete("dots");
+    allowedVariants.delete("arrows");
+  }
 
   return (
     <div
       aria-hidden
       className="pointer-events-none absolute inset-0 overflow-hidden -z-[1]"
     >
-      {variants.includes("orbs") && (
+      {allowedVariants.has("orbs") && (
         <FloatingOrbs reduced={!!reduced} intensity={intensity} />
       )}
-      {variants.includes("dots") && (
+      {allowedVariants.has("dots") && (
         <FloatingDots reduced={!!reduced} intensity={intensity} />
       )}
-      {variants.includes("arrows") && (
+      {allowedVariants.has("arrows") && (
         <DriftingArrows reduced={!!reduced} intensity={intensity} />
       )}
-      {variants.includes("waves") && (
+      {allowedVariants.has("waves") && (
         <WavyLines reduced={!!reduced} intensity={intensity} />
       )}
     </div>

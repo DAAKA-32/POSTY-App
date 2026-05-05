@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { getAuthHeaders } from "@/lib/api/client";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { getAllPlans, PlanConfig, PlanType, GUARANTEE_PERIOD_DAYS } from "@/lib/config/plans";
+import { getAllPlans, PlanConfig, PlanType, GUARANTEE_PERIOD_DAYS, isFreeTrialGateEnabled } from "@/lib/config/plans";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { activateFreePlan } from "@/lib/db/firestore";
 import BillingToggle from "@/components/ui/BillingToggle";
@@ -135,9 +135,27 @@ function SubscriptionContent() {
     // Free plan — activate in Firestore and show welcome modal
     // Handled BEFORE currentPlan check so free users are never stuck
     if (plan.id === "free") {
+      // If the user is already on Free and their 14-day trial has expired,
+      // re-clicking Free won't grant access (SubscriptionContext forces
+      // status="inactive" on expiry and the middleware blocks /app). Surface
+      // an upgrade prompt instead of silently looping the user back here.
+      if (currentPlan === "free" && freeTrialExpired) {
+        toast.error(t.subscriptionPage.freeTrialExpiredDesc);
+        return;
+      }
       if (!currentPlan || currentPlan === "free") {
         try {
           await activateFreePlan(user.uid);
+          // Write the middleware cookies eagerly so the WelcomeModal's auto-
+          // redirect to /app sees an active subscription on the very next
+          // request. The SubscriptionContext effect would also write these,
+          // but only after the next React render — which can lose a race
+          // against router.replace("/app") on slower devices.
+          if (typeof document !== "undefined") {
+            const maxAge = 60 * 60 * 24 * 7;
+            document.cookie = `subscription_status=active; path=/; max-age=${maxAge}; SameSite=Strict`;
+            document.cookie = `subscription_plan=free; path=/; max-age=${maxAge}; SameSite=Strict`;
+          }
           await refreshSubscription();
         } catch (error) {
           console.error("Error activating free plan:", error);
@@ -244,8 +262,18 @@ function SubscriptionContent() {
             {t.pricing.subtitleFull}
           </p>
 
-          {/* Contextual Message - Show reason for redirect */}
-          {reason && (
+          {/* Contextual Message — show whichever banner applies.
+             Effective reason: if a query-param reason was passed (the user got
+             here via SubscriptionGuard / middleware redirect) it wins; otherwise
+             we infer from current state. Without this fallback, a Free user
+             whose 14-day trial expired would land here with no explanation of
+             why /app is locked — they just see "Huidig" on the Free card and
+             can't proceed. */}
+          {(() => {
+            const effectiveReason = reason
+              ?? (freeTrialExpired && currentPlan === "free" ? "free_trial_expired" : null);
+            if (!effectiveReason) return null;
+            return (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -257,21 +285,21 @@ function SubscriptionContent() {
                 </svg>
                 <div className="flex-1">
                   <p className="text-sm font-semibold text-primary-dark dark:text-primary-light mb-1">
-                    {reason === "subscription_required"
+                    {effectiveReason === "subscription_required"
                       ? t.subscriptionPage.subscriptionRequired
-                      : reason === "free_trial_expired"
+                      : effectiveReason === "free_trial_expired"
                       ? t.subscriptionPage.freeTrialExpired
-                      : reason === "trial_expired"
+                      : effectiveReason === "trial_expired"
                       ? t.subscriptionPage.trialExpired
                       : t.subscriptionPage.upgradeNeeded
                     }
                   </p>
                   <p className="text-xs text-primary-dark dark:text-secondary">
-                    {reason === "subscription_required"
+                    {effectiveReason === "subscription_required"
                       ? t.subscriptionPage.subscriptionRequiredDesc
-                      : reason === "free_trial_expired"
+                      : effectiveReason === "free_trial_expired"
                       ? t.subscriptionPage.freeTrialExpiredDesc
-                      : reason === "trial_expired"
+                      : effectiveReason === "trial_expired"
                       ? t.subscriptionPage.trialExpiredDesc
                       : t.subscriptionPage.upgradeNeededDesc
                     }
@@ -279,11 +307,15 @@ function SubscriptionContent() {
                 </div>
               </div>
             </motion.div>
-          )}
+            );
+          })()}
 
           {/* Free-plan trial status — only shown when user is on Free and has a
-              live trial (not yet redirected for expiration above). */}
-          {!subscriptionLoading &&
+              live trial (not yet redirected for expiration above). Hidden when
+              the trial gate is disabled in the environment, since the countdown
+              would imply a deadline that the system never enforces. */}
+          {isFreeTrialGateEnabled() &&
+            !subscriptionLoading &&
             currentPlan === "free" &&
             !freeTrialExpired &&
             freeTrialEndsAt &&

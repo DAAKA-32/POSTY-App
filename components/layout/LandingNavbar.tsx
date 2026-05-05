@@ -177,7 +177,7 @@ export default function LandingNavbar() {
                   <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl overflow-hidden shadow-md shadow-[#F8935D]/15 ring-1 ring-gray-100">
                     <Image src="/og-image.jpg" alt="Posty" width={40} height={40} className="w-full h-full object-cover" />
                   </div>
-                  <span className="text-lg md:text-xl font-bold text-gray-900 tracking-tight">Posty</span>
+                  <span translate="no" className="notranslate text-lg md:text-xl font-bold text-gray-900 tracking-tight">Posty</span>
                 </Link>
 
                 {/* Desktop Nav */}
@@ -282,7 +282,7 @@ export default function LandingNavbar() {
                   <div className="w-9 h-9 rounded-2xl overflow-hidden shadow-md shadow-[#F8935D]/15 ring-1 ring-gray-100">
                     <Image src="/logo.png" alt="Posty" width={40} height={40} className="w-full h-full object-contain" />
                   </div>
-                  <span className="text-lg font-bold text-gray-900 tracking-tight">Posty</span>
+                  <span translate="no" className="notranslate text-lg font-bold text-gray-900 tracking-tight">Posty</span>
                 </Link>
                 <button
                   onClick={() => setIsMenuOpen(false)}

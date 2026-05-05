@@ -132,14 +132,13 @@ const ChatMessage = memo(function ChatMessage({
           ${isUser ? "items-end" : "items-start"}
         `}
       >
-        {/* Sender label and timestamp */}
-        {(!isUser || timestamp) && (
-          <div className={`flex items-center gap-2 mb-1.5 px-1 ${isUser ? "justify-end" : ""}`}>
-            {!isUser && (
-              <span className="text-xs font-bold tracking-wider bg-gradient-to-r from-primary via-accent to-primary bg-[length:200%_auto] animate-shimmer-slow bg-clip-text text-transparent">
-                POSTY
-              </span>
-            )}
+        {/* Sender label + timestamp — AI messages only.
+            User prompts no longer show "Just now" above them (cleaner). */}
+        {!isUser && (
+          <div className="flex items-center gap-2 mb-1.5 px-1">
+            <span className="text-xs font-bold tracking-wider bg-gradient-to-r from-primary via-accent to-primary bg-[length:200%_auto] animate-shimmer-slow bg-clip-text text-transparent">
+              POSTY
+            </span>
             {timestamp && (
               <span className="text-2xs text-text-muted/60">
                 {formatTimeAgo(timestamp, t.ui)}
@@ -148,12 +147,12 @@ const ChatMessage = memo(function ChatMessage({
           </div>
         )}
 
-        {/* Bubble */}
+        {/* Bubble — ChatGPT-style border + soft fill for user prompts */}
         <div
           className={`
             relative px-4 py-3 rounded-2xl transition-all duration-300 w-fit
             ${isUser
-              ? "bg-gradient-to-br from-primary via-primary-hover to-accent/80 text-white rounded-br-sm shadow-md shadow-primary/15"
+              ? "bg-gray-50 dark:bg-dark-elevated/80 border border-gray-200/80 dark:border-dark-border/70 text-gray-900 dark:text-white rounded-br-sm shadow-[0_1px_2px_-1px_rgba(15,23,42,0.06)]"
               : "bg-gradient-to-br from-white to-gray-50 dark:from-dark-card dark:to-dark-elevated border border-gray-200/80 dark:border-dark-border/80 text-text-primary rounded-bl-sm shadow-md hover:shadow-lg dark:shadow-none"
             }
           `}

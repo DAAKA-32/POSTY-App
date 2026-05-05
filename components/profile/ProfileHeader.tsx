@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { PersonalBranding, GRADIENT_PRESETS } from "@/types";
 import { Globe, Linkedin, Twitter, Github, Instagram, Youtube } from "lucide-react";
+import ProfileAvatar from "@/components/ui/ProfileAvatar";
 
 interface ProfileHeaderProps {
   displayName: string;
@@ -14,7 +15,6 @@ interface ProfileHeaderProps {
   isEditing?: boolean;
   // Personal branding props
   branding?: PersonalBranding;
-  photoURL?: string | null;
 }
 
 // Social link icons mapping
@@ -36,7 +36,6 @@ export default function ProfileHeader({
   onEdit,
   isEditing = false,
   branding,
-  photoURL,
 }: ProfileHeaderProps) {
   // Get gradient colors from branding or defaults
   const getGradientColors = () => {
@@ -52,7 +51,9 @@ export default function ProfileHeader({
 
   const gradientColors = getGradientColors();
   const accentColor = branding?.accentColor || "#F8935D";
-  const avatarURL = branding?.customAvatarURL || photoURL;
+  // ProfileAvatar auto-resolves LinkedIn → Firestore → fallback. Pass an
+  // override only when branding has its own custom avatar URL set.
+  const avatarOverride = branding?.customAvatarURL || undefined;
   const hasCover = !!branding?.coverImageURL;
   const hasTagline = !!branding?.tagline;
   const hasSocialLinks = branding?.socialLinks && Object.values(branding.socialLinks).some(Boolean);
@@ -61,14 +62,6 @@ export default function ProfileHeader({
   const showBio = branding?.visibility?.showBio !== false;
   const showSector = branding?.visibility?.showSector !== false;
   const showSocialLinks = branding?.visibility?.showSocialLinks !== false;
-
-  // Get user initials for fallback
-  const initials = displayName
-    ?.split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2) || "?";
 
   return (
     <motion.div
@@ -106,7 +99,8 @@ export default function ProfileHeader({
       )}
 
       <div className={`relative flex flex-col items-center text-center lg:flex-row lg:items-start lg:text-left gap-5 lg:gap-6 ${hasCover ? "pt-20" : ""}`}>
-        {/* Avatar */}
+        {/* Avatar — ProfileAvatar handles LinkedIn auto-resolution + retry +
+            gray-icon fallback. The branding gradient ring lives outside. */}
         <div className="relative shrink-0">
           <div
             className="w-24 h-24 lg:w-28 lg:h-28 rounded-2xl p-[3px] shadow-md"
@@ -114,22 +108,11 @@ export default function ProfileHeader({
               background: `linear-gradient(135deg, ${gradientColors.start}, ${gradientColors.end})`,
             }}
           >
-            <div className="w-full h-full rounded-[13px] overflow-hidden bg-white dark:bg-dark-card flex items-center justify-center">
-              {avatarURL ? (
-                <img
-                  src={avatarURL}
-                  alt={displayName}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <span
-                  className="text-3xl font-bold"
-                  style={{ color: accentColor }}
-                >
-                  {initials}
-                </span>
-              )}
-            </div>
+            <ProfileAvatar
+              size="xl"
+              className="!rounded-[13px] !w-full !h-full"
+              photoURLOverride={avatarOverride}
+            />
           </div>
         </div>
 

@@ -167,9 +167,27 @@ export function getFreeTrialDaysRemaining(trialEnd: Date | null | undefined): nu
 }
 
 /**
+ * Master switch for the 14-day Free trial gate.
+ *
+ * The hard expiration was shipped in code (commit 5929d5e) but is intentionally
+ * NOT enabled in production yet — flipping it on day-1 would lock every legacy
+ * Free user out of /app since the gate anchors to `createdAt`. We keep the flag
+ * OFF by default (prod behaviour: Free is unlimited) and only flip it on once
+ * we're ready to communicate the change + have a migration plan for existing
+ * Free users.
+ *
+ * To enable in a given environment, set `NEXT_PUBLIC_ENABLE_FREE_TRIAL_GATE=true`
+ * (covers both client + server since it's a NEXT_PUBLIC_ var).
+ */
+export function isFreeTrialGateEnabled(): boolean {
+  return process.env.NEXT_PUBLIC_ENABLE_FREE_TRIAL_GATE === "true";
+}
+
+/**
  * Whether a Free-plan user's trial has expired.
  *
  * Returns false for:
+ *   - the trial gate being disabled via env flag (production default)
  *   - users not on the Free plan (no trial to expire)
  *   - founder/gift accounts (effective Max plan, never expires)
  *   - users whose start date cannot be resolved (treat as fresh — fail-open)
@@ -178,6 +196,7 @@ export function isFreeTrialExpired(
   plan: PlanType | null,
   trialEnd: Date | null | undefined
 ): boolean {
+  if (!isFreeTrialGateEnabled()) return false;
   if (plan !== "free") return false;
   if (!trialEnd) return false; // Cannot determine — fail-open (lazy backfill will fix)
   return trialEnd.getTime() < Date.now();
@@ -315,6 +334,10 @@ export interface PlanLimits {
   // URL Analysis
   hasUrlAnalysis: boolean; // Analyze URL content for post generation (Pro+)
 
+  // Marketing Strategist — premium conversational advisor (Max-only).
+  // Distinct from post generation: this is a multi-turn strategy/audit agent.
+  hasMarketingStrategist: boolean;
+
   // Multi-Platform Publishing
   allowedPlatforms: Platform[];
   maxPlatformConnections: number; // Maximum number of platforms that can be connected
@@ -377,6 +400,7 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
       dualResponsesPerWeek: 0,
       weeklyPublishLimit: 3, // Free: max 3 publications per week
       hasUrlAnalysis: false,
+      hasMarketingStrategist: false,
       // Free plan: LinkedIn + the 3 free-friendly providers (no paid OAuth app needed).
       allowedPlatforms: ["linkedin", "bluesky", "mastodon", "discord"],
       maxPlatformConnections: 5,
@@ -417,6 +441,8 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
       weeklyPublishLimit: -1, // Pro: unlimited publications
       // URL Analysis
       hasUrlAnalysis: true,
+      // Marketing Strategist is reserved for Max — strong premium signal.
+      hasMarketingStrategist: false,
       // Multi-Platform: LinkedIn + the 3 free-friendly providers
       allowedPlatforms: ["linkedin", "bluesky", "mastodon", "discord"],
       maxPlatformConnections: 5,
@@ -458,6 +484,8 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
       weeklyPublishLimit: -1, // Max: unlimited publications
       // URL Analysis
       hasUrlAnalysis: true,
+      // Marketing Strategist — Max-exclusive
+      hasMarketingStrategist: true,
       // Multi-Platform: all 6 platforms + simultaneous publishing
       allowedPlatforms: ["linkedin", "threads", "facebook", "bluesky", "mastodon", "discord"],
       maxPlatformConnections: 6,
@@ -521,6 +549,7 @@ export function planHasFeature(
     | "hasDualResponseMode"
     | "canPublishSimultaneously"
     | "hasUrlAnalysis"
+    | "hasMarketingStrategist"
   >
 ): boolean {
   return getPlanLimits(plan)[feature];

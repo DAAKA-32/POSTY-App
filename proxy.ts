@@ -123,10 +123,14 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(pricingUrl);
     }
 
-    // Additional check: users without a valid plan should not access paid features
-    // (keeps "free" check for legacy cookies that may still carry that value)
-    if ((!subscriptionPlan || subscriptionPlan === "free") && pathname !== "/profile") {
-      console.warn(`[Middleware] Blocking user without valid plan from ${pathname}`);
+    // Sanity check: reject ONLY when no plan was resolved at all
+    // (cookie missing or literal "null" / "undefined" string).
+    // "free" is a valid, fully-supported plan during the 14-day trial window —
+    // the trial-expiration gate is enforced upstream via subscription.status.
+    const VALID_PLANS = new Set(["free", "pro", "max"]);
+    const planIsValid = !!subscriptionPlan && VALID_PLANS.has(subscriptionPlan);
+    if (!planIsValid && pathname !== "/profile") {
+      console.warn(`[Middleware] Blocking user without resolved plan from ${pathname}`);
       const pricingUrl = new URL("/pricing", request.url);
       pricingUrl.searchParams.set("reason", "upgrade_required");
       return NextResponse.redirect(pricingUrl);

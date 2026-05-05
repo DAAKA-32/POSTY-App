@@ -23,7 +23,7 @@ import { usePageTitle } from "@/hooks/ui/usePageTitle";
 
 function ProfileContent() {
   const { user, userProfile, refreshUserProfile } = useAuth();
-  const { isConnected: linkedInConnected, profilePicture: linkedInPhoto } = useLinkedIn();
+  const { isConnected: linkedInConnected } = useLinkedIn();
   const { t, language } = useLanguage();
   const { currentPlan } = useSubscription();
   usePageTitle("profile");
@@ -217,7 +217,6 @@ function ProfileContent() {
                   linkedInConnected={linkedInConnected}
                   onEdit={() => setIsEditing(true)}
                   isEditing={isEditing}
-                  photoURL={linkedInPhoto || userProfile?.photoURL || user?.photoURL || null}
                   branding={userProfile?.branding}
                 />
 
@@ -276,7 +275,7 @@ function ProfileContent() {
                   title={t.profile.quickActions}
                   collapsible={false}
                 >
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <Link href="/history">
                       <motion.div
                         whileHover={{ x: 4 }}

@@ -483,6 +483,7 @@ export const ko = {
     demoInputDesc: "목표를 설명하세요. Posty가 30초 만에 바로 게시할 수 있는 LinkedIn 게시물을 생성해요.",
     trustpilotRated: "Trustpilot에서",
     demoPreviewLabel: "제품 미리보기",
+    demoVideoLabel: "실제 동작 보기",
     demoTryDemo: "데모 체험",
     demoReadyToGenerate: "생성 준비 완료",
     demoPostReady: "첫 LinkedIn 게시물이 준비되었어요",
@@ -790,6 +791,7 @@ export const ko = {
     hiwTitle: "하나의 아이디어.",
     hiwTitleAccent: "하나의 게시물. 완료.",
     hiwSubtitle: "간단한 아이디어를 입력하세요 — Posty의 AI가 게시할 준비가 된 LinkedIn 게시물로 변환합니다.",
+    hiwSecondaryText: "모든 게시물은 LinkedIn 피드에 최적화되어 있고, 미리 예약 가능하며, 무엇이 정말 효과적인지 측정할 AI 인사이트와 함께 제공됩니다.",
     hiwYourIdea: "당신의 아이디어",
     hiwGeneratedPost: "생성된 게시물",
     hiwUserInput: "처음으로 원격 팀을 관리하면서 배운 3가지 교훈을 공유하고 싶어요",
@@ -1161,6 +1163,7 @@ export const ko = {
     history: "기록",
     schedule: "예약",
     analytics: "분석",
+    strategist: "Strategist",
     settings: "설정",
     subscription: "구독",
     profile: "프로필",
@@ -2682,6 +2685,42 @@ export const ko = {
     trialLimitReached: "체험 한도에 도달했어요",
   },
 
+  // Ready-to-publish posts (carousel on /app)
+  readyPosts: {
+    ariaLabel: "바로 게시할 수 있는 포스트",
+    openPost: "이 포스트 열기",
+    readyBadge: "준비됨",
+    categories: {
+      storytelling: "스토리텔링",
+      tips: "팁",
+      controversial: "강한 의견",
+      success: "성과",
+      lesson: "교훈",
+      question: "참여",
+    },
+    lock: {
+      title: "Max 플랜 전용",
+      subtitle: "바로 게시할 수 있는 포스트 잠금 해제",
+      cta: "Max로 업그레이드",
+    },
+    editor: {
+      title: "바로 게시할 수 있는 포스트",
+      description: "원하시면 포스트를 수정한 뒤 게시하거나 예약하세요.",
+      contentLabel: "포스트 내용",
+      placeholder: "포스트 내용...",
+      editHint: "게시 전에 자유롭게 수정할 수 있어요.",
+      cancel: "취소",
+      schedule: "예약",
+      publish: "지금 게시",
+      previous: "이전 포스트",
+      next: "다음 포스트",
+      generating: "Posty가 맞춤 포스트를 작성하고 있어요…",
+      errorTitle: "지금은 포스트를 생성할 수 없어요.",
+      retry: "다시 시도",
+      regenerate: "다시 생성",
+    },
+  },
+
   // Analytics Dashboard
   analytics: {
     periodFilter: {
@@ -3098,5 +3137,65 @@ export const ko = {
     analytics: "분석",
     analyticsDesc: "익명 사용 통계. 제3자 없음.",
     cookiePolicy: "쿠키 정책",
+  strategist: {
+    pageTitle: "Strategist",
+    headerEyebrow: "Max · Marketing Strategist",
+    headerTitle: "Build a strategy, not just posts.",
+    headerSubtitle: "A senior marketing advisor in your pocket. Audit your LinkedIn presence, design content plans, sharpen positioning — in one focused conversation.",
+    inputPlaceholder: "Ask for an audit, a 30-day plan, hook angles…",
+    sendButton: "Send",
+    sending: "Thinking…",
+    starterTitle: "Start with",
+    starter1Title: "Audit my LinkedIn",
+    starter1Prompt: "Audit my LinkedIn presence based on my profile. Give me 3 things working, 3 things to fix this week, and 1 untapped opportunity.",
+    starter2Title: "30-day content plan",
+    starter2Prompt: "Build a 30-day LinkedIn content plan tailored to my industry and audience. 3 posts/week, mixing storytelling, business insight, and thought leadership.",
+    starter3Title: "Define my positioning",
+    starter3Prompt: "Help me define my positioning on LinkedIn. What 3 themes should I own, why, and how do I differentiate from peers in my space?",
+    starter4Title: "10 hook angles",
+    starter4Prompt: "Generate 10 strong hook angles for my next LinkedIn posts based on what my audience cares about. Each hook should make people stop scrolling.",
+    errorGeneric: "The Strategist hit an error. Try again in a moment.",
+    errorRateLimit: "You have reached the rate limit. Try again in a few minutes.",
+    clearChat: "Clear conversation",
+    clearChatConfirm: "Clear this conversation? This cannot be undone.",
+    locked: {
+      eyebrow: "Reserved for Max",
+      title: "Unlock the Marketing Strategist",
+      description: "A dedicated senior marketing advisor inside Posty. Audits, content plans, positioning, audience analysis — all in one focused conversation.",
+      benefit1: "Personalized strategy based on your profile",
+      benefit2: "Multi-turn conversations with full memory",
+      benefit3: "Content plans, audits, and positioning frameworks",
+      benefit4: "Priority access to new strategist features",
+      cta: "Upgrade to Max",
+      backToChat: "Continue with Chat",
+    },
+  },
+  // LinkedIn errors — humane action-oriented copy (EN fallback)
+  linkedinErrors: {
+    sessionExpired:
+      "Your LinkedIn session has expired — reconnect once and everything will work normally.",
+    sessionExpiredAction: "Reconnect LinkedIn",
+    publishFailed:
+      "We couldn't publish your post on LinkedIn. Reconnecting your account usually fixes it.",
+    publishFailedAction: "Reconnect & retry",
+    notConnected:
+      "Connect LinkedIn to Posty to publish your posts in one click.",
+    notConnectedAction: "Connect LinkedIn",
+    rateLimited:
+      "LinkedIn is asking us to slow down. Try again in a few minutes.",
+    invalidContent:
+      "LinkedIn didn't accept this post. Check the content (max 3,000 characters, no banned terms).",
+    mediaUploadFailed:
+      "We couldn't upload your media. Try a smaller file or a different format (JPG, PNG, MP4).",
+    serverError:
+      "LinkedIn is briefly unavailable. Your post is safely saved — try again in a moment.",
+    insufficientPermissions:
+      "Your LinkedIn permissions are missing. Reconnect with full access to continue.",
+    generic:
+      "We hit a snag with LinkedIn. Reconnecting your account usually fixes it.",
+    genericAction: "Reconnect",
+    retryAction: "Try again",
+  },
+
   },
 } as const;

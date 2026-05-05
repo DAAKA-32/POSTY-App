@@ -29,7 +29,7 @@ function MockupChat({ l }: { l: Record<string, string> }) {
             <img src="/logo.png" alt="Posty" className="w-full h-full object-cover" />
           </div>
           <div>
-            <span className="text-[11px] font-bold text-gray-900 block leading-none">Posty AI</span>
+            <span translate="no" className="notranslate text-[11px] font-bold text-gray-900 block leading-none">Posty AI</span>
             <span className="text-[8px] text-emerald-500 font-medium flex items-center gap-1 mt-0.5">
               <span className="w-1 h-1 rounded-full bg-emerald-500 inline-block" />
               {l.hiwMockupOnline || "Online"}
@@ -37,7 +37,7 @@ function MockupChat({ l }: { l: Record<string, string> }) {
           </div>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="px-2 py-0.5 rounded-md bg-[#F8935D]/10 text-[7px] font-bold text-[#F8935D] tracking-wide">LinkedIn</div>
+          <div translate="no" className="notranslate px-2 py-0.5 rounded-md bg-[#F8935D]/10 text-[7px] font-bold text-[#F8935D] tracking-wide">LinkedIn</div>
         </div>
       </div>
 
@@ -148,25 +148,26 @@ export default function HowItWorksSection() {
   const l = t.landing as Record<string, string>;
 
   // 3D tilt — desktop only
-  const mouseX = useMotionValue(0.5);
-  const mouseY = useMotionValue(0.5);
-  const rawRotateX = useTransform(mouseY, [0, 1], [3, -3]);
-  const rawRotateY = useTransform(mouseX, [0, 1], [-3, 3]);
-  const rotateX = useSpring(rawRotateX, { stiffness: 100, damping: 26, restDelta: 0.001 });
-  const rotateY = useSpring(rawRotateY, { stiffness: 100, damping: 26, restDelta: 0.001 });
-
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    const card = cardRef.current;
-    if (!card || prefersReducedMotion || isMobile) return;
-    const rect = card.getBoundingClientRect();
-    mouseX.set(Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)));
-    mouseY.set(Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height)));
-  }, [mouseX, mouseY, prefersReducedMotion, isMobile]);
-
-  const handleMouseLeave = useCallback(() => {
-    mouseX.set(0.5);
-    mouseY.set(0.5);
-  }, [mouseX, mouseY]);
+  // DISABLED: kept for reference, re-enable by restoring handlers + style props below.
+  // const mouseX = useMotionValue(0.5);
+  // const mouseY = useMotionValue(0.5);
+  // const rawRotateX = useTransform(mouseY, [0, 1], [3, -3]);
+  // const rawRotateY = useTransform(mouseX, [0, 1], [-3, 3]);
+  // const rotateX = useSpring(rawRotateX, { stiffness: 100, damping: 26, restDelta: 0.001 });
+  // const rotateY = useSpring(rawRotateY, { stiffness: 100, damping: 26, restDelta: 0.001 });
+  //
+  // const handleMouseMove = useCallback((e: React.MouseEvent) => {
+  //   const card = cardRef.current;
+  //   if (!card || prefersReducedMotion || isMobile) return;
+  //   const rect = card.getBoundingClientRect();
+  //   mouseX.set(Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)));
+  //   mouseY.set(Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height)));
+  // }, [mouseX, mouseY, prefersReducedMotion, isMobile]);
+  //
+  // const handleMouseLeave = useCallback(() => {
+  //   mouseX.set(0.5);
+  //   mouseY.set(0.5);
+  // }, [mouseX, mouseY]);
 
   const borderClasses = isMobile
     ? "border-cyan-200"
@@ -180,17 +181,19 @@ export default function HowItWorksSection() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "0px 0px 100px 0px" }}
         transition={{ duration: 0.4, ease: premiumEase }}
-        onMouseMove={isMobile ? undefined : handleMouseMove}
-        onMouseLeave={isMobile ? undefined : handleMouseLeave}
+        // 3D tilt disabled — re-enable by restoring:
+        // onMouseMove={isMobile ? undefined : handleMouseMove}
+        // onMouseLeave={isMobile ? undefined : handleMouseLeave}
+        // style={isMobile ? undefined : { perspective: 1200 }}
         className={isMobile ? "" : "group/card"}
-        style={isMobile ? undefined : { perspective: 1200 }}
       >
         <motion.div
-          style={isMobile ? undefined : {
-            rotateX: prefersReducedMotion ? 0 : rotateX,
-            rotateY: prefersReducedMotion ? 0 : rotateY,
-            transformStyle: "preserve-3d",
-          }}
+          // 3D tilt disabled — re-enable by restoring:
+          // style={isMobile ? undefined : {
+          //   rotateX: prefersReducedMotion ? 0 : rotateX,
+          //   rotateY: prefersReducedMotion ? 0 : rotateY,
+          //   transformStyle: "preserve-3d",
+          // }}
           className={`
             relative bg-gradient-to-br from-cyan-50/70 via-white to-sky-50/30
             border ${borderClasses} rounded-[clamp(1rem,2vw,1.5rem)]
@@ -229,13 +232,6 @@ export default function HowItWorksSection() {
                 </div>
               </motion.div>
 
-              {/* Badges — top right */}
-              <div className="absolute top-2 right-0 z-20 flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-cyan-100 text-cyan-700 text-xs font-semibold shadow-lg">
-                  <span className="w-2 h-2 rounded-full bg-gradient-to-br from-cyan-500 to-sky-600 animate-pulse" />
-                  {l.hiwBadge}
-                </span>
-              </div>
             </div>
 
             {/* LEFT — Content */}
@@ -252,15 +248,10 @@ export default function HowItWorksSection() {
                 {l.hiwTitle} {l.hiwTitleAccent}
               </h3>
 
-              {/* Description — both paragraphs share the same type scale,
-                  color, weight and line-height so they read as one coherent
-                  body. Hierarchy comes from order (lead first, supporting
-                  second), not from size or color shifts. */}
-              <p className="text-gray-600 text-[clamp(0.9rem,1.2vw,1.125rem)] leading-relaxed mb-[clamp(0.75rem,1.2vw,1rem)] max-w-prose mx-auto lg:mx-0">
-                {l.hiwSubtitle}
-              </p>
+              {/* Description — lead + supporting copy merged into a single
+                  flowing paragraph for tighter reading rhythm. */}
               <p className="text-gray-600 text-[clamp(0.9rem,1.2vw,1.125rem)] leading-relaxed mb-[clamp(1rem,1.5vw,1.25rem)] max-w-prose mx-auto lg:mx-0">
-                {l.hiwSecondaryText}
+                {l.hiwSubtitle} {l.hiwSecondaryText}
               </p>
 
               {/* CTA */}

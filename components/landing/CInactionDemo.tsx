@@ -236,7 +236,7 @@ function ComposerCard({ phase }: { phase: number }) {
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
-              <span className="text-[11px]">Posty will draft your post here</span>
+              <span className="text-[11px]"><span translate="no" className="notranslate">Posty</span> will draft your post here</span>
             </motion.div>
           )}
         </AnimatePresence>
@@ -572,7 +572,7 @@ export default function CInactionDemo() {
           <div className="w-6 h-6 rounded-md overflow-hidden ring-1 ring-black/5">
             <Image src="/logo.png" alt="Posty" width={24} height={24} className="w-full h-full object-cover" />
           </div>
-          <span className="text-xs font-bold text-gray-900">Posty</span>
+          <span translate="no" className="notranslate text-xs font-bold text-gray-900">Posty</span>
           <span
             className="px-1.5 py-0.5 rounded text-[8px] font-bold"
             style={{ backgroundColor: "rgba(248,147,93,0.10)", color: ACCENT }}

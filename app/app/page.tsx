@@ -35,13 +35,14 @@ import toast from "@/components/ui/Toast";
 
 import ShimmeringName from "@/components/ui/ShimmeringName";
 import { useBrowserMode, setBrowserModeCSSVars } from "@/hooks/ui/useBrowserMode";
-import { CompactPostTemplates, PostTemplate } from "@/components/chat/PostTemplates";
-import TemplateFillerModal from "@/components/chat/TemplateFillerModal";
+import ReadyPostsCarousel from "@/components/ready-posts/ReadyPostsCarousel";
+import ReadyPostEditor from "@/components/ready-posts/ReadyPostEditor";
+import type { ReadyPostCategory } from "@/lib/data/ready-posts";
+import { isReadyPostsEnabled } from "@/lib/config/feature-flags";
 import { usePageTitle } from "@/hooks/ui/usePageTitle";
 import { trackPostGeneration, initAnalytics } from "@/lib/utils/analytics";
 import UniversalChatInput, { UniversalChatInputRef } from "@/components/chat/UniversalChatInput";
-import { getPersonalizedGreeting, getPersonalizedSubtitle, getPersonalizedTemplateOrder } from "@/lib/services/personalization";
-import { TEMPLATES } from "@/components/chat/PostTemplates";
+import { getPersonalizedGreeting, getPersonalizedSubtitle } from "@/lib/services/personalization";
 import { getGiftRecipientInfo } from "@/lib/config/plans";
 
 // Premium animation easings - inspired by Linear, Notion
@@ -111,9 +112,9 @@ function AppContent() {
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [publishContent, setPublishContent] = useState("");
   const [publishModalMode, setPublishModalMode] = useState<"now" | "schedule">("now");
-  // Template filler modal state
-  const [showTemplateModal, setShowTemplateModal] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<PostTemplate | null>(null);
+  // Ready-to-publish post editor state
+  const [showReadyEditor, setShowReadyEditor] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<ReadyPostCategory | null>(null);
   const [inputValue, setInputValue] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [isInputExpanded, setIsInputExpanded] = useState(false);
@@ -638,29 +639,25 @@ function AppContent() {
                   {getPersonalizedSubtitle(userProfile?.profile, language)}
                 </motion.p>
 
-                {/* Visual Post Templates */}
-                <motion.div
-                  variants={welcomeItemVariants}
-                  className="w-full max-w-2xl px-2 template-section"
-                >
-                  <CompactPostTemplates
-                    onSelect={(template) => {
-                      // Fallback: Inject template into UniversalChatInput directly
-                      chatInputRef.current?.setValue(template);
-                      setTimeout(() => {
-                        chatInputRef.current?.focus();
-                      }, 100);
-                    }}
-                    onTemplateSelect={(template) => {
-                      // Open modal for guided template filling
-                      setSelectedTemplate(template);
-                      setShowTemplateModal(true);
-                    }}
-                    className="justify-center infinite-scroll-stable"
-                    disabled={!canSendMessage}
-                    templateOrder={getPersonalizedTemplateOrder(TEMPLATES.map(t => t.id), userProfile?.profile)}
-                  />
-                </motion.div>
+                {/* Ready-to-publish post categories — gated behind a rollout
+                    flag while the template catalog is finalized. The editor
+                    modal stays imported so existing deep-links keep working
+                    if anyone navigates with a category preselected. */}
+                {isReadyPostsEnabled() && (
+                  <motion.div
+                    variants={welcomeItemVariants}
+                    className="w-full max-w-2xl px-2 template-section"
+                  >
+                    <ReadyPostsCarousel
+                      disabled={!canSendMessage}
+                      onPickCategory={(category) => {
+                        setSelectedCategory(category);
+                        setShowReadyEditor(true);
+                      }}
+                      className="justify-center"
+                    />
+                  </motion.div>
+                )}
               </motion.div>
             )}
 
@@ -984,24 +981,31 @@ function AppContent() {
         initialMode={publishModalMode}
       />
 
-      {/* Template filler modal - guided fill-in-the-blanks */}
-      <TemplateFillerModal
-        isOpen={showTemplateModal}
+      {/* Ready-to-publish post browser/editor */}
+      <ReadyPostEditor
+        isOpen={showReadyEditor}
+        category={selectedCategory}
+        unlocked={isMaxPlan}
+        profile={userProfile?.profile}
         onClose={() => {
-          setShowTemplateModal(false);
-          setSelectedTemplate(null);
+          setShowReadyEditor(false);
+          setSelectedCategory(null);
         }}
-        onSubmit={(filledTemplate) => {
-          // Inject filled template into UniversalChatInput
-          chatInputRef.current?.setValue(filledTemplate);
-          // Focus and close modal
-          setTimeout(() => {
-            chatInputRef.current?.focus();
-          }, 100);
-          setShowTemplateModal(false);
-          setSelectedTemplate(null);
+        onPublishNow={(content) => {
+          setShowReadyEditor(false);
+          setSelectedCategory(null);
+          handlePublishToLinkedIn(content);
         }}
-        template={selectedTemplate}
+        onSchedule={(content) => {
+          setShowReadyEditor(false);
+          setSelectedCategory(null);
+          handleSchedulePost(content);
+        }}
+        onUpgrade={() => {
+          setShowReadyEditor(false);
+          setSelectedCategory(null);
+          router.push("/pricing");
+        }}
       />
 
       {/* Gift Plan Popup - One-time for gift recipients */}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useRef, useEffect, useCallback, ReactNode } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback, Fragment, ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
@@ -14,6 +14,7 @@ import { useFacebook } from "@/contexts/FacebookContext";
 import { useThreads } from "@/contexts/ThreadsContext";
 import SlideMenu from "./SlideMenu";
 import ChatHistoryModal from "./ChatHistoryModal";
+import SidebarSearchModal from "./SidebarSearchModal";
 import ProfileMenu from "./ProfileMenu";
 import ConversationOptionsMenu from "@/components/conversation/ConversationOptionsMenu";
 import RenameConversationModal from "@/components/conversation/RenameConversationModal";
@@ -27,6 +28,7 @@ import TrialBanner from "@/components/subscription/TrialBanner";
 import UsageBanner from "@/components/ui/UsageBanner";
 import QuotaExceededModal from "@/components/ui/QuotaExceededModal";
 import HelpFloatingButton from "@/components/help/HelpFloatingButton";
+import StrategistFloatingButton from "@/components/strategist/StrategistFloatingButton";
 
 // Premium animation easings - consistent across app
 const smoothEase = [0.25, 0.1, 0.25, 1] as const;
@@ -476,66 +478,42 @@ export default function MainLayout({
   // Sidebar state is now managed by SidebarContext (see contexts/SidebarContext.tsx)
   // No need for local localStorage handling - it's centralized
 
-  // Ref for search input auto-focus
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const [shouldFocusSearch, setShouldFocusSearch] = useState(false);
-
-  // Auto-focus search input when sidebar opens via search click
-  useEffect(() => {
-    if (isSidebarOpen && shouldFocusSearch && searchInputRef.current) {
-      const timer = setTimeout(() => {
-        searchInputRef.current?.focus();
-        setShouldFocusSearch(false);
-      }, 150);
-      return () => clearTimeout(timer);
-    }
-  }, [isSidebarOpen, shouldFocusSearch]);
+  // Whether the search modal (ChatGPT-style command palette) is open.
+  // The modal owns its own input ref + focus management, so MainLayout no
+  // longer needs `searchInputRef` / `shouldFocusSearch`.
+  const [searchOpen, setSearchOpen] = useState(false);
 
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Cmd/Ctrl+K to focus search
+      // Cmd/Ctrl+K → open the search modal
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
-        if (!isSidebarOpen) {
-          setShouldFocusSearch(true);
-          openSidebar();
-        } else {
-          searchInputRef.current?.focus();
-        }
+        setSearchOpen(true);
       }
-      // Cmd/Ctrl+B to toggle sidebar collapse (desktop)
+      // Cmd/Ctrl+B → toggle sidebar collapse (desktop only)
       if ((e.metaKey || e.ctrlKey) && e.key === "b") {
         e.preventDefault();
-        // Only toggle on desktop (lg breakpoint)
         if (window.innerWidth >= 1024) {
           toggleCollapse();
         }
       }
-      // Escape to blur search or close sidebar
-      if (e.key === "Escape") {
-        if (document.activeElement === searchInputRef.current) {
-          searchInputRef.current?.blur();
-          setSearchQuery("");
-        } else if (isSidebarOpen) {
-          closeSidebar();
-        }
+      // Escape → close sidebar (the modal handles its own Esc internally)
+      if (e.key === "Escape" && !searchOpen && isSidebarOpen) {
+        closeSidebar();
       }
     };
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isSidebarOpen, openSidebar, closeSidebar, toggleCollapse]);
+  }, [isSidebarOpen, closeSidebar, toggleCollapse, searchOpen]);
 
-  // Handle search icon click
+  // Handle search nav-row click — just opens the modal. No more inline input
+  // toggle / sidebar-expand dance: the modal works the same on collapsed,
+  // expanded, mobile, desktop.
   const handleSearchClick = useCallback(() => {
-    if (!isSidebarOpen) {
-      setShouldFocusSearch(true);
-      openSidebar();
-    } else {
-      searchInputRef.current?.focus();
-    }
-  }, [isSidebarOpen, openSidebar]);
+    setSearchOpen(true);
+  }, []);
 
   // Filter and group posts (using localPosts for optimistic updates)
   const filteredPosts = useMemo(() => {
@@ -598,7 +576,7 @@ export default function MainLayout({
           ) : (
             /* Logo + Toggle when expanded */
             <>
-              <Link href="/app" className="flex items-center gap-3 group min-w-0">
+              <Link href="/app" className="flex items-center gap-2.5 group min-w-0">
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -607,8 +585,8 @@ export default function MainLayout({
                   whileHover={{ scale: 1.05 }}
                 >
                   {/* Subtle glow on hover */}
-                  <div className="absolute -inset-1 bg-gradient-to-br from-primary/30 to-accent/30 rounded-2xl opacity-0 group-hover:opacity-100 blur-md transition-opacity duration-300" />
-                  <div className="relative w-10 h-10 shrink-0 flex items-center justify-center rounded-2xl overflow-hidden shadow-md ring-1 ring-gray-200/50 dark:ring-dark-border/50">
+                  <div className="absolute -inset-1 bg-gradient-to-br from-primary/30 to-accent/30 rounded-xl opacity-0 group-hover:opacity-100 blur-md transition-opacity duration-300" />
+                  <div className="relative w-7 h-7 shrink-0 flex items-center justify-center rounded-lg overflow-hidden shadow-sm ring-1 ring-gray-200/50 dark:ring-dark-border/50">
                     <img
                       src="/logo.png"
                       alt="Posty Logo"
@@ -620,7 +598,7 @@ export default function MainLayout({
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.4, delay: 0.1, ease: smoothEase }}
-                  className="font-bold text-lg whitespace-nowrap text-gray-900 dark:text-white group-hover:text-primary transition-colors duration-300"
+                  className="font-bold text-sm whitespace-nowrap text-gray-900 dark:text-white group-hover:text-primary transition-colors duration-300"
                 >
                   Posty
                 </motion.span>
@@ -646,49 +624,9 @@ export default function MainLayout({
           )}
         </motion.div>
 
-        {/* Fixed navigation section (search, new post, nav items) */}
+        {/* Fixed navigation section (new post button + nav items + inline
+            search affordance injected right after the Chat nav item below). */}
         <div className="shrink-0 p-2 space-y-1">
-          {/* Search - Only show when expanded */}
-          {!isCollapsed && (
-            <div className="relative mb-2">
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input
-                ref={searchInputRef}
-                type="text"
-                placeholder={t.sidebar.searchShortPlaceholder}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="sidebar-search-input w-full pl-10 pr-10 py-2.5 text-sm bg-white/70 dark:bg-dark-bg/70 border border-[#F8935D]/12 dark:border-dark-border rounded-xl text-text-primary placeholder-text-muted shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] hover:border-[#F8935D]/25 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/70 transition-[border-color,box-shadow,background-color] duration-150"
-              />
-              {searchQuery && (
-                <button onClick={() => setSearchQuery("")} className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center text-text-muted hover:text-text-primary">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 6L18 18M6 18L18 6" />
-                  </svg>
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Search icon button - Only show when collapsed */}
-          {isCollapsed && (
-            <button
-              onClick={handleSearchClick}
-              className="w-full h-11 rounded-xl flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-[#F8935D]/10 dark:hover:bg-dark-hover transition-colors group relative"
-              title={t.sidebar.searchShortPlaceholder}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              {/* Tooltip */}
-              <span className="absolute left-full ml-2 px-2 py-1 bg-background-warm dark:bg-dark-elevated border border-[#F8935D]/15 dark:border-dark-border rounded-lg text-sm whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50 shadow-lg pointer-events-none">
-                {t.sidebar.searchShortPlaceholder}
-              </span>
-            </button>
-          )}
-
           {/* New post button - Clean professional version */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -704,7 +642,7 @@ export default function MainLayout({
               }}
               className={`
                 sidebar-new-post-btn group/newpost
-                relative w-full h-11 rounded-xl flex items-center gap-2.5
+                relative w-full h-10 rounded-lg flex items-center gap-3
                 bg-gradient-to-br from-primary to-[#F76B54] hover:brightness-[1.05]
                 text-white shadow-[0_4px_14px_rgba(248,147,93,0.25)]
                 hover:shadow-[0_6px_20px_rgba(248,147,93,0.40)]
@@ -727,7 +665,7 @@ export default function MainLayout({
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
               </svg>
-              {!isCollapsed && <span className="font-semibold whitespace-nowrap tracking-[-0.01em]">{t.sidebar.newPost}</span>}
+              {!isCollapsed && <span className="font-semibold whitespace-nowrap tracking-[-0.01em] text-[13.5px]">{t.sidebar.newPost}</span>}
               {/* Tooltip for collapsed mode */}
               {isCollapsed && (
                 <span className="absolute left-full ml-2 px-2 py-1 bg-background-warm dark:bg-dark-elevated border border-[#F8935D]/15 dark:border-dark-border rounded-lg text-sm text-text-primary whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50 shadow-lg pointer-events-none">
@@ -737,62 +675,122 @@ export default function MainLayout({
             </button>
           </motion.div>
 
-          {/* Nav items — unified primary palette + shared layoutId active indicator */}
+          {/* Nav items — unified primary palette + shared layoutId active
+              indicator. The search affordance is injected as the next sibling
+              right after the Chat item (index 0) so it sits "below Chat"
+              while keeping the same visual rhythm as the other rows. */}
           {navItems.map((item, index) => {
             const isActive = pathname === item.href || (item.href === "/app" && pathname === "/chat");
             return (
-              <motion.div
-                key={item.name}
-                custom={index}
-                variants={navItemVariants}
-                initial="hidden"
-                animate="visible"
-                className="relative"
-              >
-                {/* Shared active indicator — slides smoothly between items */}
-                {isActive && (
-                  <motion.div
-                    layoutId="mainlayout-active-indicator"
-                    className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-7 rounded-r-full bg-primary"
-                    transition={{ type: "spring", stiffness: 380, damping: 32 }}
-                  />
-                )}
-
-                <Link
-                  href={item.href}
-                  className={`
-                    relative w-full h-10 rounded-lg flex items-center gap-3 transition-colors duration-150 ease-out group
-                    ${isCollapsed ? "justify-center px-0" : "px-3"}
-                    ${isActive
-                      ? "bg-primary/[0.06] text-primary"
-                      : "text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-dark-hover/60 hover:text-gray-900 dark:hover:text-white"
-                    }
-                  `}
-                  title={item.name}
+              <Fragment key={item.name}>
+                <motion.div
+                  custom={index}
+                  variants={navItemVariants}
+                  initial="hidden"
+                  animate="visible"
+                  className="relative"
                 >
-                  <span
+                  {/* Shared active indicator — slides smoothly between items */}
+                  {isActive && (
+                    <motion.div
+                      layoutId="mainlayout-active-indicator"
+                      className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-7 rounded-r-full bg-primary"
+                      transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                    />
+                  )}
+
+                  <Link
+                    href={item.href}
                     className={`
-                      relative shrink-0 transition-colors duration-150
+                      relative w-full h-10 rounded-lg flex items-center gap-3 transition-colors duration-150 ease-out group
+                      ${isCollapsed ? "justify-center px-0" : "px-3"}
                       ${isActive
-                        ? "text-primary"
-                        : `${item.iconColor} opacity-80 group-hover:opacity-100`
+                        ? "bg-primary/[0.06] text-primary"
+                        : "text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-dark-hover/60 hover:text-gray-900 dark:hover:text-white"
                       }
                     `}
+                    title={item.name}
                   >
-                    {item.icon(isActive)}
-                  </span>
-                  {!isCollapsed && (
-                    <span className={`whitespace-nowrap flex-1 text-[13.5px] ${isActive ? "font-bold" : "font-semibold"}`}>{item.name}</span>
-                  )}
-
-                  {/* Tooltip for collapsed mode */}
-                  {isCollapsed && (
-                    <span className="absolute left-full ml-2 px-2 py-1 bg-background-warm dark:bg-dark-elevated border border-[#F8935D]/15 dark:border-dark-border rounded-lg text-sm text-text-primary whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50 shadow-lg pointer-events-none">
-                      {item.name}
+                    <span
+                      className={`
+                        relative shrink-0 transition-colors duration-150
+                        ${isActive
+                          ? "text-primary"
+                          : `${item.iconColor} opacity-80 group-hover:opacity-100`
+                        }
+                      `}
+                    >
+                      {item.icon(isActive)}
                     </span>
-                  )}
-                </Link>
-              </motion.div>
+                    {!isCollapsed && (
+                      <span className={`whitespace-nowrap flex-1 text-[13.5px] ${isActive ? "font-bold" : "font-semibold"}`}>{item.name}</span>
+                    )}
+
+                    {/* Tooltip for collapsed mode */}
+                    {isCollapsed && (
+                      <span className="absolute left-full ml-2 px-2 py-1 bg-background-warm dark:bg-dark-elevated border border-[#F8935D]/15 dark:border-dark-border rounded-lg text-sm text-text-primary whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50 shadow-lg pointer-events-none">
+                        {item.name}
+                      </span>
+                    )}
+                  </Link>
+                </motion.div>
+
+                {/* ─── Search affordance — injected directly under Chat ───
+                    Expanded sidebar: full text input.
+                    Collapsed sidebar: nav-row-styled icon button matching the
+                    height + spacing of the surrounding nav items. */}
+                {/* Search row — same shape as Chat / History / Schedule /
+                    Analytics (h-10, rounded-lg, hover bg, gap-3, px-3,
+                    13.5px label). Toggles `searchOpen` to reveal the input
+                    below. Active state: left primary indicator + bg tint +
+                    primary text — mirrors the active Link rows above. */}
+                {index === 0 && (
+                  <div className="relative">
+                    <button
+                      onClick={handleSearchClick}
+                      className={`
+                        relative w-full h-10 rounded-lg flex items-center gap-3 transition-colors duration-150 ease-out group
+                        ${isCollapsed ? "justify-center px-0" : "px-3"}
+                        ${searchOpen
+                          ? "bg-primary/[0.06] text-primary"
+                          : "text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-dark-hover/60 hover:text-gray-900 dark:hover:text-white"
+                        }
+                      `}
+                      title={t.common.search}
+                      aria-expanded={searchOpen}
+                    >
+                      <span
+                        className={`
+                          relative shrink-0 transition-colors duration-150
+                          ${searchOpen
+                            ? "text-primary"
+                            : "text-gray-500/80 dark:text-gray-400/80 opacity-80 group-hover:opacity-100"
+                          }
+                        `}
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                      </span>
+                      {!isCollapsed && (
+                        <span className={`whitespace-nowrap flex-1 text-left text-[13.5px] ${searchOpen ? "font-bold" : "font-semibold"}`}>
+                          {t.common.search}
+                        </span>
+                      )}
+                      {isCollapsed && (
+                        <span className="absolute left-full ml-2 px-2 py-1 bg-background-warm dark:bg-dark-elevated border border-[#F8935D]/15 dark:border-dark-border rounded-lg text-sm text-text-primary whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50 shadow-lg pointer-events-none">
+                          {t.common.search}
+                        </span>
+                      )}
+                    </button>
+
+                    {/* Inline input removed — search now opens in a centered
+                        modal (SidebarSearchModal) for a ChatGPT-style command
+                        palette experience. The modal is rendered once at the
+                        layout root, controlled by `searchOpen`. */}
+                  </div>
+                )}
+              </Fragment>
             );
           })}
 
@@ -963,13 +961,13 @@ export default function MainLayout({
                                 href={`/app/c/${post.id}`}
                                 className={`
                                   sidebar-conv-item
-                                  relative flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm w-full
+                                  relative flex items-center gap-2 pl-3 pr-9 py-1.5 rounded-lg text-sm w-full
                                   transition-[background-color,color,transform] duration-150 ease-out cursor-pointer transform-gpu
                                   active:scale-[0.985] active:transition-none
                                   ${
                                     isActive
                                       ? "sidebar-conv-item--active bg-primary/10 dark:bg-primary/10 text-text-primary shadow-sm"
-                                      : "text-gray-900 dark:text-gray-200 hover:text-gray-950 dark:hover:text-white hover:bg-[#F8935D]/8 dark:hover:bg-dark-hover"
+                                      : "text-gray-900 dark:text-gray-200 group-hover:text-gray-950 dark:group-hover:text-white group-hover:bg-[#F8935D]/8 dark:group-hover:bg-dark-hover"
                                   }
                                 `}
                               >
@@ -1121,6 +1119,10 @@ export default function MainLayout({
         {/* Help floating "?" button */}
         <HelpFloatingButton />
 
+        {/* Strategist quick-access — bottom-right FAB.
+            Hides itself on /strategist + auth/onboarding/subscription pages. */}
+        <StrategistFloatingButton />
+
         {/* Quota Exceeded Modal (opens when user attempts action at limit) */}
         <QuotaExceededModal />
       </main>
@@ -1131,6 +1133,18 @@ export default function MainLayout({
         onClose={() => setShowHistoryModal(false)}
         posts={localPosts}
         searchQuery={searchQuery}
+      />
+
+      {/* Sidebar Search Modal — ChatGPT-style command palette.
+          Opened by the "Rechercher" sidebar nav row. Shares searchQuery +
+          filteredPosts with the rest of the layout so results stay coherent. */}
+      <SidebarSearchModal
+        open={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        filteredPosts={filteredPosts}
+        hasAnyPosts={localPosts.length > 0}
       />
 
       {/* Conversation Modals */}

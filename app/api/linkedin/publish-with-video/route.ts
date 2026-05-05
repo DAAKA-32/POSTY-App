@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
     const now = Timestamp.now();
     if (connection.expiresAt.toMillis() <= now.toMillis()) {
       return NextResponse.json(
-        { error: "token_expired", message: "Votre connexion LinkedIn a expiré. Veuillez vous reconnecter." },
+        { error: "token_expired", message: "LinkedIn session expired. Reconnect to continue." },
         { status: 401 }
       );
     }
@@ -266,7 +266,7 @@ export async function POST(request: NextRequest) {
       }
 
       return NextResponse.json(
-        { error: "publish_failed", message: "Échec de la publication sur LinkedIn." },
+        { error: "publish_failed", message: "Could not publish to LinkedIn." },
         { status: shareRes.status }
       );
     }

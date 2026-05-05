@@ -17,6 +17,7 @@ export const en = {
     schedule: "Scheduled Posts",
     profile: "Profile",
     analytics: "Analytics",
+    strategist: "Strategist",
     onboarding: "Profile Setup",
     signup: "Free Sign Up",
     login: "Log In",
@@ -623,16 +624,16 @@ export const en = {
     featuresProfileRole: "Co-Founder · Co-CEO",
     featuresPersonalization: "Personalization",
     featuresMultiPlatformTitle: "1 post, 4 platforms, 4x the visibility",
-    featuresMultiPlatformDesc: "Publish on LinkedIn, Threads, Facebook — and soon Reddit. One piece of content reaches 4 audiences. More visibility, more inbound prospects.",
+    featuresMultiPlatformDesc: "Publish to LinkedIn, Threads, and Facebook — Reddit coming soon. One post, every audience. More visibility, more inbound leads.",
     featuresMultiPlatformLabel: "Multi-platform",
     featuresScheduleTitle: "Post at the right time, every day, without thinking",
     featuresScheduleDesc: "Schedule your posts when your audience is most active. The algorithm rewards good timing — Posty handles it for you.",
     featuresScheduleLabel: "Coming very soon",
     featuresGenerationTitle: "From idea to post in 30 seconds",
-    featuresGenerationDesc: "Describe your goal. Posty generates two calibrated versions: Storytelling to build connection, Business to trigger outreach.",
+    featuresGenerationDesc: "Describe your goal. Posty drafts two tailored versions: Storytelling to build connection, Business to trigger outreach.",
     featuresGenerationLabel: "AI Generation",
     featuresPersonalizationTitle: "Every post sounds like you",
-    featuresPersonalizationDesc: "From the moment you sign up, Posty learns your industry, target audience, and tone. The result: posts your prospects recognize as expert content, not generic AI output.",
+    featuresPersonalizationDesc: "From the moment you sign up, Posty learns your industry, target audience, and tone. The result: posts your prospects recognize as expert insight — not generic AI output.",
     featuresPersonalizationLabel: "Contextual AI",
     featuresTryFree: "Try for free",
     featuresConnected: "Connected",
@@ -1197,6 +1198,7 @@ export const en = {
     history: "History",
     schedule: "Schedule",
     analytics: "Analytics",
+    strategist: "Strategist",
     settings: "Settings",
     subscription: "Subscription",
     profile: "Profile",
@@ -2719,6 +2721,42 @@ export const en = {
     trialLimitReached: "Trial limit reached",
   },
 
+  // Ready-to-publish posts (carousel on /app)
+  readyPosts: {
+    ariaLabel: "Ready-to-publish posts",
+    openPost: "Open this post",
+    readyBadge: "Ready",
+    categories: {
+      storytelling: "Storytelling",
+      tips: "Practical Tips",
+      controversial: "Strong Opinion",
+      success: "Wins & Results",
+      lesson: "Lesson Learned",
+      question: "Engagement",
+    },
+    lock: {
+      title: "Max plan only",
+      subtitle: "Unlock ready-to-publish posts",
+      cta: "Upgrade to Max",
+    },
+    editor: {
+      title: "Ready-to-publish post",
+      description: "Browse the posts and publish or schedule the one you like.",
+      contentLabel: "Post content",
+      placeholder: "Post content...",
+      editHint: "Feel free to tweak the wording before publishing.",
+      cancel: "Cancel",
+      schedule: "Schedule",
+      publish: "Publish now",
+      previous: "Previous post",
+      next: "Next post",
+      generating: "Posty is writing a post tailored to you…",
+      errorTitle: "Couldn't generate this post right now.",
+      retry: "Retry",
+      regenerate: "Regenerate",
+    },
+  },
+
   // Analytics Dashboard
   analytics: {
     periodFilter: {
@@ -3023,6 +3061,37 @@ export const en = {
     proRequiredForSchedule: "Scheduling requires a Pro or Max plan",
     upgradeToSchedule: "Upgrade to unlock scheduling",
   },
+
+  // ─── LinkedIn errors — humane, action-oriented copy ────────────────────
+  // Each entry pairs a `message` (full sentence shown in toast/banner) with
+  // an optional `action` label for the recovery CTA. Mapped from API error
+  // codes via `lib/utils/linkedin-errors.ts`.
+  linkedinErrors: {
+    sessionExpired:
+      "Your LinkedIn session has expired — reconnect once and everything will work normally.",
+    sessionExpiredAction: "Reconnect LinkedIn",
+    publishFailed:
+      "We couldn't publish your post on LinkedIn. Reconnecting your account usually fixes it.",
+    publishFailedAction: "Reconnect & retry",
+    notConnected:
+      "Connect LinkedIn to Posty to publish your posts in one click.",
+    notConnectedAction: "Connect LinkedIn",
+    rateLimited:
+      "LinkedIn is asking us to slow down. Try again in a few minutes.",
+    invalidContent:
+      "LinkedIn didn't accept this post. Check the content (max 3,000 characters, no banned terms).",
+    mediaUploadFailed:
+      "We couldn't upload your media. Try a smaller file or a different format (JPG, PNG, MP4).",
+    serverError:
+      "LinkedIn is briefly unavailable. Your post is safely saved — try again in a moment.",
+    insufficientPermissions:
+      "Your LinkedIn permissions are missing. Reconnect with full access to continue.",
+    generic:
+      "We hit a snag with LinkedIn. Reconnecting your account usually fixes it.",
+    genericAction: "Reconnect",
+    retryAction: "Try again",
+  },
+
   // Checkout success page
   checkoutSuccess: {
     trialStarted: "Your {plan} trial has started!",
@@ -3142,5 +3211,39 @@ export const en = {
     analytics: "Analytics",
     analyticsDesc: "Anonymous usage statistics. No third parties.",
     cookiePolicy: "Cookie policy",
+  },
+
+  strategist: {
+    pageTitle: "Strategist",
+    headerEyebrow: "Max · Marketing Strategist",
+    headerTitle: "Build a strategy, not just posts.",
+    headerSubtitle: "A senior marketing advisor in your pocket. Audit your LinkedIn presence, design content plans, sharpen positioning — in one focused conversation.",
+    inputPlaceholder: "Ask for an audit, a 30-day plan, hook angles…",
+    sendButton: "Send",
+    sending: "Thinking…",
+    starterTitle: "Start with",
+    starter1Title: "Audit my LinkedIn",
+    starter1Prompt: "Audit my LinkedIn presence based on my profile. Give me 3 things working, 3 things to fix this week, and 1 untapped opportunity.",
+    starter2Title: "30-day content plan",
+    starter2Prompt: "Build a 30-day LinkedIn content plan tailored to my industry and audience. 3 posts/week, mixing storytelling, business insight, and thought leadership.",
+    starter3Title: "Define my positioning",
+    starter3Prompt: "Help me define my positioning on LinkedIn. What 3 themes should I own, why, and how do I differentiate from peers in my space?",
+    starter4Title: "10 hook angles",
+    starter4Prompt: "Generate 10 strong hook angles for my next LinkedIn posts based on what my audience cares about. Each hook should make people stop scrolling.",
+    errorGeneric: "The Strategist hit an error. Try again in a moment.",
+    errorRateLimit: "You've reached the rate limit. Try again in a few minutes.",
+    clearChat: "Clear conversation",
+    clearChatConfirm: "Clear this conversation? This cannot be undone.",
+    locked: {
+      eyebrow: "Reserved for Max",
+      title: "Unlock the Marketing Strategist",
+      description: "A dedicated senior marketing advisor inside Posty. Audits, content plans, positioning, audience analysis — all in one focused conversation.",
+      benefit1: "Personalized strategy based on your profile",
+      benefit2: "Multi-turn conversations with full memory",
+      benefit3: "Content plans, audits, and positioning frameworks",
+      benefit4: "Priority access to new strategist features",
+      cta: "Upgrade to Max",
+      backToChat: "Continue with Chat",
+    },
   },
 } as const;

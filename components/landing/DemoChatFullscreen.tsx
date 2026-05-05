@@ -258,7 +258,7 @@ export default function DemoChatFullscreen({
                   />
                   <span className="text-white font-bold hidden items-center justify-center">P</span>
                 </div>
-                <span className="text-white font-bold text-lg hidden sm:inline">Posty</span>
+                <span translate="no" className="notranslate text-white font-bold text-lg hidden sm:inline">Posty</span>
               </motion.div>
             </div>
           </motion.header>

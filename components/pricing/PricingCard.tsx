@@ -236,12 +236,21 @@ export default function PricingCard({
           {isAuthenticated && onSelect ? (
             <motion.button
               onClick={onSelect}
-              disabled={isCurrentPlan || isLoading}
+              /* Free's "current" state stays clickable so the user has a path
+                 back to /app from /subscription — the parent handler turns
+                 the click into a navigation when the trial is live, and an
+                 upgrade prompt when it has expired. Paid plans stay disabled
+                 when they're already current to avoid accidental re-checkout. */
+              disabled={(isCurrentPlan && !isFree) || isLoading}
               className={`
                 w-full text-center px-4 py-3 sm:py-3.5 md:py-4 rounded-xl font-semibold text-xs sm:text-sm md:text-base
                 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed
                 ${isCurrentPlan
-                  ? isGoldCard
+                  ? isFree
+                    /* Clickable Free-current: hover affordance + pointer cursor
+                       so the user understands the button still does something. */
+                    ? "bg-gray-100 dark:bg-dark-elevated text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-dark-hover border border-gray-200 dark:border-dark-border"
+                    : isGoldCard
                     ? "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-500"
                     : "bg-gray-100 dark:bg-dark-border text-gray-500 dark:text-gray-400"
                   : isGoldCard

@@ -28,7 +28,7 @@ export default function ChatBubble({
           rounded-2xl px-4 py-3
           shadow-md
           ${isUser
-            ? "bg-primary text-white rounded-br-md shadow-primary/20"
+            ? "bg-gray-100 dark:bg-dark-elevated text-gray-900 dark:text-white rounded-br-md"
             : "bg-dark-card border border-dark-border text-text-primary rounded-bl-md shadow-black/30"
           }
         `}

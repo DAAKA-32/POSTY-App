@@ -5,39 +5,24 @@ import { TOKEN_EXPIRY_BUFFER_MS } from "@/lib/config/platform-constants";
 
 const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://postyapp.ai").trim();
 
-/**
- * OAuth scopes requested from LinkedIn.
- *
- * Base scopes (required to sign in and publish as the user's personal profile):
- *   - openid / profile / email  → user identity
- *   - w_member_social           → publish `urn:li:person:*` posts
- *
- * Organization scopes (require Marketing Developer Platform / Community
- * Management API access on the LinkedIn app). When granted, they unlock:
- *   - r_organization_social     → read posts + engagement metrics for pages
- *                                  the user administers. This is the ONLY way
- *                                  to retrieve likes/comments/impressions from
- *                                  LinkedIn's API. Personal profile posts have
- *                                  no metrics endpoint at all.
- *   - w_organization_social     → publish posts as a page the user administers
- *   - rw_organization_admin     → list the pages the user administers (needed
- *                                  for the "Publish as…" dropdown)
- *
- * If these scopes are not approved on the app, LinkedIn silently drops them
- * during the OAuth flow. We detect this server-side (see `grantedScopes` in
- * the callback) and gracefully fall back to personal-profile-only mode.
- */
+// Only the base scopes are requested at OAuth: openid/profile/email for identity,
+// w_member_social to publish on the user's personal profile. Org scopes
+// (r_organization_social, w_organization_social, rw_organization_admin) require
+// Marketing Developer Platform approval and would cause LinkedIn to reject the
+// whole request if they're not enabled on the app.
 const BASE_SCOPES = ["openid", "profile", "email", "w_member_social"];
-const ORG_SCOPES = ["r_organization_social", "w_organization_social", "rw_organization_admin"];
 
 export const LINKEDIN_CONFIG = {
   clientId: process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID || "",
   redirectUri: `${baseUrl}/api/auth/linkedin/callback`,
-  scope: [...BASE_SCOPES, ...ORG_SCOPES].join(" "),
+  scope: BASE_SCOPES.join(" "),
   authorizationUrl: "https://www.linkedin.com/oauth/v2/authorization",
 };
 
-/** Scopes required for the organization features (publish as page + metrics) */
+// Kept as a constant so dependent modules (organizations.ts, hasOrganizationAccess)
+// can detect that org scopes are never granted and skip cleanly. Add these back
+// to LINKEDIN_CONFIG.scope above if Marketing Developer Platform gets approved.
+const ORG_SCOPES = ["r_organization_social", "w_organization_social", "rw_organization_admin"];
 export const LINKEDIN_ORG_SCOPES = ORG_SCOPES;
 
 /** Check whether a list of granted scopes unlocks organization features */

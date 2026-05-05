@@ -15,6 +15,7 @@ import { useQuota } from "@/contexts/QuotaContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useScheduling } from "@/contexts/SchedulingContext";
 import toast from "@/components/ui/Toast";
+import { useLinkedInErrorToast } from "@/components/linkedin/useLinkedInErrorToast";
 import PlatformSelector from "@/components/publish/PlatformSelector";
 import { Platform, SchedulePlatform } from "@/types";
 import { usePlatformSelection } from "@/hooks/gesture/usePlatformSelection";
@@ -130,6 +131,7 @@ export default function PublishToLinkedInModal({
   const isMaxPlan = subIsMax || quotaIsMax;
   const currentPlan = subPlan || quotaPlan;
   const { connectLinkedIn } = useLinkedIn();
+  const showLinkedInError = useLinkedInErrorToast();
   const { isConnected: facebookConnected, publishToFacebook, connectFacebook } = useFacebook();
   const { isConnected: threadsConnected, publishToThreads, connectThreads } = useThreads();
   const { isConnected: blueskyConnected, publishToBluesky } = useBluesky();
@@ -717,8 +719,21 @@ export default function PublishToLinkedInModal({
         toast.success(t.publish.postPublishedOn.replace("{platforms}", platformNames));
 
         if (failedResults.length > 0) {
-          const failedNames = failedResults.map((r) => r.platform).join(", ");
-          toast.error(t.publish.failedOn.replace("{platforms}", failedNames).replace("{error}", failedResults[0].error || ""));
+          // If LinkedIn is among the failures, surface a friendly,
+          // action-oriented LinkedIn toast instead of dumping the raw error.
+          const linkedinFailure = failedResults.find(
+            (r) => r.platform.toLowerCase() === "linkedin"
+          );
+          if (linkedinFailure) {
+            showLinkedInError(linkedinFailure.error);
+          } else {
+            const failedNames = failedResults.map((r) => r.platform).join(", ");
+            toast.error(
+              t.publish.failedOn
+                .replace("{platforms}", failedNames)
+                .replace("{error}", failedResults[0].error || "")
+            );
+          }
         }
       } else {
         // All failed

@@ -317,19 +317,20 @@ export default function ConversationOptionsMenu({
         onClick={handleToggle}
         className={`
           flex items-center justify-center
-          w-9 h-9 md:w-8 md:h-8 rounded-lg
-          transition-all duration-150 ease-out
-          text-text-secondary hover:text-text-primary hover:bg-dark-hover
-          active:scale-95 active:bg-dark-hover
+          w-7 h-7 rounded-md
+          transition-[background-color,color,transform] duration-150 ease-out
+          text-text-muted hover:text-text-primary
+          hover:bg-black/[0.06] dark:hover:bg-white/10
+          active:scale-95
           touch-manipulation
-          ${isOpen ? "bg-dark-hover text-text-primary" : ""}
+          ${isOpen ? "bg-black/[0.08] dark:bg-white/10 text-text-primary" : ""}
         `}
         aria-label={t.ui.openConversation}
         aria-expanded={isOpen}
         aria-haspopup="menu"
       >
         <svg
-          className="w-5 h-5"
+          className="w-4 h-4"
           viewBox="0 0 24 24"
           fill="currentColor"
           aria-hidden="true"

@@ -305,6 +305,18 @@ export function hasEarlyAccess(subscription: UserSubscription): boolean {
 }
 
 /**
+ * Marketing Strategist — Max-only conversational marketing advisor.
+ *
+ * Distinct from post generation: this is a multi-turn strategy session
+ * (audit, content plan, positioning, audience analysis). Premium signal,
+ * never offered on Free or Pro.
+ */
+export function hasMarketingStrategist(subscription: UserSubscription): boolean {
+  if (!subscription.plan) return false;
+  return planHasFeature(subscription.plan, "hasMarketingStrategist");
+}
+
+/**
  * Check if user has dual response mode (Storytelling + Business)
  */
 export function hasDualResponseMode(subscription: UserSubscription): boolean {

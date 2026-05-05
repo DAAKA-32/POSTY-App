@@ -20,6 +20,8 @@
     "ios:assets": "capacitor-assets generate --ios",
     "generate-previews": "node scripts/generate-previews.mjs",
     "generate-previews:headless": "node scripts/generate-previews.mjs --headless",
+    "generate-strategist-avatar": "node scripts/generate-strategist-avatar.mjs",
+    "generate-strategist-avatar-portrait": "node scripts/generate-strategist-avatar-portrait.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },
