@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useScrollLock } from "@/hooks/ui/useScrollLock";
@@ -128,6 +128,7 @@ const itemVariants = {
 export default function FreeTrialPaywall() {
   const { freeTrialExpired } = useSubscription();
   const { language } = useLanguage();
+  const reduceMotion = useReducedMotion();
 
   // Canonical POSTY scroll-lock — same hook used by every other modal.
   useScrollLock(freeTrialExpired);
@@ -205,11 +206,34 @@ export default function FreeTrialPaywall() {
               </span>
             </motion.div>
 
-            {/* Headline */}
+            {/* Headline — argented metallic shimmer.
+                Background gradient sweeps slowly across to mimic brushed
+                silver catching the light. Reduced-motion users get a
+                static silver gradient with the same hue range. */}
             <motion.h2
               id="free-trial-paywall-title"
               variants={itemVariants}
-              className="mt-5 text-center text-2xl sm:text-[1.85rem] lg:text-3xl font-bold tracking-tight text-text-primary"
+              className="mt-5 text-center text-2xl sm:text-[1.85rem] lg:text-3xl font-bold tracking-tight"
+              style={{
+                backgroundImage:
+                  "linear-gradient(110deg, #475569 0%, #94A3B8 18%, #E2E8F0 38%, #F8FAFC 50%, #E2E8F0 62%, #94A3B8 82%, #475569 100%)",
+                backgroundSize: reduceMotion ? "100% 100%" : "260% 100%",
+                backgroundClip: "text",
+                WebkitBackgroundClip: "text",
+                color: "transparent",
+                WebkitTextFillColor: "transparent",
+                filter: "drop-shadow(0 1px 0 rgba(15,23,42,0.08))",
+              }}
+              animate={
+                reduceMotion
+                  ? undefined
+                  : { backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }
+              }
+              transition={{
+                duration: 7,
+                repeat: Infinity,
+                ease: "linear",
+              }}
             >
               {copy.headline}
             </motion.h2>
@@ -247,6 +271,7 @@ export default function FreeTrialPaywall() {
                 href="/subscription?reason=free_trial_expired&plan=pro"
                 variant="recommended"
                 recommendedLabel={copy.recommended}
+                reduceMotion={!!reduceMotion}
               />
               <PlanCard
                 name={copy.maxName}
@@ -257,6 +282,7 @@ export default function FreeTrialPaywall() {
                 cta={copy.maxCta}
                 href="/subscription?reason=free_trial_expired&plan=max"
                 variant="premium"
+                reduceMotion={!!reduceMotion}
               />
             </motion.div>
 
@@ -287,7 +313,24 @@ interface PlanCardProps {
   href: string;
   variant: "recommended" | "premium";
   recommendedLabel?: string;
+  reduceMotion: boolean;
 }
+
+/** Deterministic sparkle positions for the Max card — feels organic without
+ *  burning random() each render. */
+const SPARKLE_SLOTS: Array<{
+  top: string;
+  left: string;
+  size: number;
+  delay: number;
+  duration: number;
+}> = [
+  { top: "12%", left: "8%",  size: 10, delay: 0,    duration: 2.4 },
+  { top: "30%", left: "92%", size: 8,  delay: 0.7,  duration: 2.8 },
+  { top: "62%", left: "6%",  size: 9,  delay: 1.4,  duration: 2.6 },
+  { top: "78%", left: "78%", size: 11, delay: 0.4,  duration: 3.0 },
+  { top: "45%", left: "50%", size: 7,  delay: 2.1,  duration: 2.5 },
+];
 
 function PlanCard({
   name,
@@ -299,25 +342,140 @@ function PlanCard({
   href,
   variant,
   recommendedLabel,
+  reduceMotion,
 }: PlanCardProps) {
   const isRecommended = variant === "recommended";
   const isPremium = variant === "premium";
 
   return (
-    <article
+    <motion.article
       className={`
-        group relative rounded-xl p-5 sm:p-6
-        transition-all duration-200 ease-out
+        group relative overflow-hidden rounded-xl p-5 sm:p-6
+        transition-shadow duration-300 ease-out
+        will-change-transform
         ${
           isRecommended
-            ? "bg-white dark:bg-dark-elevated border-2 border-primary shadow-[0_8px_28px_-8px_rgba(248,147,93,0.35)] hover:shadow-[0_12px_36px_-8px_rgba(248,147,93,0.5)]"
-            : "bg-gradient-to-b from-white to-amber-50/40 dark:from-dark-elevated dark:to-amber-950/10 border border-amber-200/70 dark:border-amber-400/20 shadow-[0_8px_28px_-10px_rgba(251,191,36,0.25)] hover:shadow-[0_14px_36px_-10px_rgba(251,191,36,0.4)]"
+            ? "bg-white dark:bg-dark-elevated border-2 border-primary shadow-[0_8px_28px_-8px_rgba(248,147,93,0.35)]"
+            : "bg-gradient-to-b from-white to-amber-50/40 dark:from-dark-elevated dark:to-amber-950/10 border border-amber-200/70 dark:border-amber-400/20 shadow-[0_8px_28px_-10px_rgba(251,191,36,0.28)]"
         }
       `}
+      whileHover={
+        reduceMotion ? undefined : { y: -3, scale: 1.005 }
+      }
+      transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
     >
+      {/* ─── Premium card decorative effects (Max only) ─────────────────── */}
+      {isPremium && !reduceMotion && (
+        <>
+          {/* Shimmer sweep — diagonal highlight that travels across the
+              card every ~5s. Soft, never aggressive. */}
+          <motion.span
+            aria-hidden
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background:
+                "linear-gradient(110deg, transparent 30%, rgba(255,236,179,0.55) 48%, rgba(255,255,255,0.7) 50%, rgba(255,236,179,0.55) 52%, transparent 70%)",
+              backgroundSize: "220% 100%",
+              mixBlendMode: "screen",
+            }}
+            animate={{ backgroundPosition: ["-100% 0%", "200% 0%"] }}
+            transition={{
+              duration: 2.8,
+              repeat: Infinity,
+              ease: "easeInOut",
+              repeatDelay: 2.2,
+            }}
+          />
+
+          {/* Animated sparkles — 5 deterministic slots, twinkle in & out */}
+          {SPARKLE_SLOTS.map((s, i) => (
+            <motion.svg
+              key={i}
+              aria-hidden
+              className="absolute pointer-events-none text-amber-400 drop-shadow-[0_0_4px_rgba(251,191,36,0.8)]"
+              style={{ top: s.top, left: s.left, width: s.size, height: s.size }}
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              animate={{
+                scale: [0, 1, 0],
+                rotate: [0, 90, 180],
+                opacity: [0, 1, 0],
+              }}
+              transition={{
+                duration: s.duration,
+                repeat: Infinity,
+                delay: s.delay,
+                ease: "easeInOut",
+              }}
+            >
+              <path d="M12 0L13.5 9L24 12L13.5 15L12 24L10.5 15L0 12L10.5 9Z" />
+            </motion.svg>
+          ))}
+
+          {/* Ambient golden glow that breathes */}
+          <motion.span
+            aria-hidden
+            className="absolute -inset-px rounded-xl pointer-events-none"
+            style={{
+              boxShadow: "0 0 0 1px rgba(251,191,36,0.0) inset",
+            }}
+            animate={{
+              boxShadow: [
+                "0 0 0 1px rgba(251,191,36,0.0) inset, 0 0 0 0 rgba(251,191,36,0)",
+                "0 0 0 1px rgba(251,191,36,0.35) inset, 0 0 24px 0 rgba(251,191,36,0.18)",
+                "0 0 0 1px rgba(251,191,36,0.0) inset, 0 0 0 0 rgba(251,191,36,0)",
+              ],
+            }}
+            transition={{
+              duration: 3.4,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          />
+        </>
+      )}
+
+      {/* ─── Recommended card breathing glow (Pro) ──────────────────────── */}
+      {isRecommended && !reduceMotion && (
+        <motion.span
+          aria-hidden
+          className="absolute -inset-px rounded-xl pointer-events-none"
+          animate={{
+            boxShadow: [
+              "0 0 0 0 rgba(248,147,93,0)",
+              "0 0 28px 0 rgba(248,147,93,0.22)",
+              "0 0 0 0 rgba(248,147,93,0)",
+            ],
+          }}
+          transition={{
+            duration: 3.2,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+      )}
+
       {/* Recommended pill (Pro) */}
       {isRecommended && recommendedLabel && (
-        <span className="absolute -top-2.5 right-5 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-accent text-white shadow-sm">
+        <motion.span
+          className="absolute -top-2.5 right-5 z-10 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-accent text-white shadow-[0_4px_12px_-2px_rgba(248,147,93,0.55)]"
+          animate={
+            reduceMotion
+              ? undefined
+              : {
+                  boxShadow: [
+                    "0 4px 12px -2px rgba(248,147,93,0.55)",
+                    "0 6px 18px 0px rgba(248,147,93,0.85)",
+                    "0 4px 12px -2px rgba(248,147,93,0.55)",
+                  ],
+                }
+          }
+          transition={{
+            duration: 2.2,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        >
           <svg
             className="w-2.5 h-2.5"
             viewBox="0 0 16 16"
@@ -327,46 +485,98 @@ function PlanCard({
             <path d="M8 0l2 5h6l-5 4 2 6-5-3-5 3 2-6-5-4h6z" />
           </svg>
           {recommendedLabel}
-        </span>
+        </motion.span>
       )}
 
-      {/* Premium crown badge (Max) — top-right gold accent */}
+      {/* Premium crown badge (Max) — pulsing gold disc */}
       {isPremium && (
-        <span
+        <motion.span
           aria-hidden
-          className="absolute -top-2.5 right-5 inline-flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-br from-amber-300 to-yellow-500 shadow-[0_3px_10px_-2px_rgba(245,158,11,0.55)] ring-2 ring-white dark:ring-dark-card"
+          className="absolute -top-2.5 right-5 z-10 inline-flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-br from-amber-300 via-yellow-400 to-yellow-500 ring-2 ring-white dark:ring-dark-card"
+          animate={
+            reduceMotion
+              ? undefined
+              : {
+                  boxShadow: [
+                    "0 3px 10px -2px rgba(245,158,11,0.55), 0 0 0 0 rgba(251,191,36,0)",
+                    "0 5px 20px 0px rgba(245,158,11,0.9),  0 0 0 6px rgba(251,191,36,0.18)",
+                    "0 3px 10px -2px rgba(245,158,11,0.55), 0 0 0 0 rgba(251,191,36,0)",
+                  ],
+                  rotate: [0, 8, -6, 0],
+                }
+          }
+          transition={{
+            duration: 2.6,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
         >
           <svg
-            className="w-3.5 h-3.5 text-gray-900"
+            className="w-4 h-4 text-gray-900"
             viewBox="0 0 24 24"
             fill="currentColor"
           >
             <path d="M5 16L3 6l5.5 4L12 4l3.5 6L21 6l-2 10H5zm0 2h14v2H5v-2z" />
           </svg>
-        </span>
+        </motion.span>
       )}
 
       {/* Header: name + price */}
-      <div className="flex items-baseline justify-between gap-2">
-        <h3
-          className={`text-xl font-bold ${
-            isPremium
-              ? "text-amber-700 dark:text-amber-300"
-              : "text-gray-900 dark:text-white"
-          }`}
-        >
-          {name}
-        </h3>
-        <div className="text-right whitespace-nowrap">
-          <span
-            className={`text-2xl font-bold ${
-              isPremium
-                ? "text-amber-700 dark:text-amber-300"
-                : "text-gray-900 dark:text-white"
-            }`}
+      <div className="relative z-[1] flex items-baseline justify-between gap-2">
+        {isPremium ? (
+          <motion.h3
+            className="text-xl font-bold tracking-tight"
+            style={{
+              backgroundImage:
+                "linear-gradient(110deg, #B45309 0%, #D97706 18%, #FBBF24 38%, #FEF3C7 50%, #FBBF24 62%, #D97706 82%, #B45309 100%)",
+              backgroundSize: reduceMotion ? "100% 100%" : "260% 100%",
+              backgroundClip: "text",
+              WebkitBackgroundClip: "text",
+              color: "transparent",
+              WebkitTextFillColor: "transparent",
+            }}
+            animate={
+              reduceMotion
+                ? undefined
+                : { backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }
+            }
+            transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
           >
-            {price}
-          </span>
+            {name}
+          </motion.h3>
+        ) : (
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+            {name}
+          </h3>
+        )}
+
+        <div className="text-right whitespace-nowrap">
+          {isPremium ? (
+            <motion.span
+              className="text-2xl font-bold inline-block tracking-tight"
+              style={{
+                backgroundImage:
+                  "linear-gradient(110deg, #B45309 0%, #D97706 18%, #FBBF24 38%, #FEF3C7 50%, #FBBF24 62%, #D97706 82%, #B45309 100%)",
+                backgroundSize: reduceMotion ? "100% 100%" : "260% 100%",
+                backgroundClip: "text",
+                WebkitBackgroundClip: "text",
+                color: "transparent",
+                WebkitTextFillColor: "transparent",
+              }}
+              animate={
+                reduceMotion
+                  ? undefined
+                  : { backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }
+              }
+              transition={{ duration: 6, repeat: Infinity, ease: "linear", delay: 0.3 }}
+            >
+              {price}
+            </motion.span>
+          ) : (
+            <span className="text-2xl font-bold text-gray-900 dark:text-white">
+              {price}
+            </span>
+          )}
           <span
             className={`text-xs ml-0.5 ${
               isPremium
@@ -381,7 +591,7 @@ function PlanCard({
 
       {/* Tagline */}
       <p
-        className={`mt-1 text-xs ${
+        className={`relative z-[1] mt-1 text-xs ${
           isPremium
             ? "text-amber-700/80 dark:text-amber-300/70"
             : "text-gray-600 dark:text-gray-300"
@@ -391,7 +601,7 @@ function PlanCard({
       </p>
 
       {/* Perks list */}
-      <ul className="mt-5 space-y-2.5">
+      <ul className="relative z-[1] mt-5 space-y-2.5">
         {perks.map((perk, idx) => (
           <li
             key={idx}
@@ -418,24 +628,43 @@ function PlanCard({
         ))}
       </ul>
 
-      {/* CTA */}
+      {/* CTA — inline shimmer sweep on the button itself */}
       <Link
         href={href}
         className={`
-          mt-6 group/btn relative w-full inline-flex items-center justify-center gap-2
+          relative z-[1] mt-6 group/btn w-full inline-flex items-center justify-center gap-2
+          overflow-hidden
           px-4 py-3 rounded-xl text-sm font-semibold
           transition-all duration-200 ease-out
           active:scale-[0.985]
           ${
             isRecommended
               ? "bg-gradient-to-r from-primary to-accent text-white shadow-[0_6px_18px_-4px_rgba(248,147,93,0.45)] hover:shadow-[0_10px_24px_-4px_rgba(248,147,93,0.6)] hover:-translate-y-0.5"
-              : "bg-gradient-to-r from-amber-400 to-yellow-500 text-gray-900 shadow-[0_6px_18px_-4px_rgba(245,158,11,0.45)] hover:shadow-[0_10px_24px_-4px_rgba(245,158,11,0.6)] hover:-translate-y-0.5"
+              : "bg-gradient-to-r from-amber-400 via-yellow-400 to-yellow-500 text-gray-900 shadow-[0_6px_18px_-4px_rgba(245,158,11,0.45)] hover:shadow-[0_10px_24px_-4px_rgba(245,158,11,0.6)] hover:-translate-y-0.5"
           }
         `}
       >
-        <span>{cta}</span>
+        {!reduceMotion && (
+          <motion.span
+            aria-hidden
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background:
+                "linear-gradient(110deg, transparent 35%, rgba(255,255,255,0.55) 50%, transparent 65%)",
+              backgroundSize: "220% 100%",
+            }}
+            animate={{ backgroundPosition: ["-100% 0%", "200% 0%"] }}
+            transition={{
+              duration: 1.8,
+              repeat: Infinity,
+              ease: "easeInOut",
+              repeatDelay: isPremium ? 1.6 : 2.4,
+            }}
+          />
+        )}
+        <span className="relative">{cta}</span>
         <svg
-          className="w-4 h-4 transition-transform duration-200 group-hover/btn:translate-x-0.5"
+          className="relative w-4 h-4 transition-transform duration-200 group-hover/btn:translate-x-0.5"
           fill="none"
           stroke="currentColor"
           strokeWidth={2}
@@ -449,7 +678,7 @@ function PlanCard({
           />
         </svg>
       </Link>
-    </article>
+    </motion.article>
   );
 }
 
