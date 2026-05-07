@@ -296,7 +296,8 @@ interface PlanCardProps {
 }
 
 /** Deterministic sparkle positions for the Max card — feels organic without
- *  burning random() each render. */
+ *  burning random() each render. Tuned slow & sparse so it reads as a calm
+ *  ambient glimmer rather than a busy disco. */
 const SPARKLE_SLOTS: Array<{
   top: string;
   left: string;
@@ -304,11 +305,10 @@ const SPARKLE_SLOTS: Array<{
   delay: number;
   duration: number;
 }> = [
-  { top: "12%", left: "8%",  size: 10, delay: 0,    duration: 2.4 },
-  { top: "30%", left: "92%", size: 8,  delay: 0.7,  duration: 2.8 },
-  { top: "62%", left: "6%",  size: 9,  delay: 1.4,  duration: 2.6 },
-  { top: "78%", left: "78%", size: 11, delay: 0.4,  duration: 3.0 },
-  { top: "45%", left: "50%", size: 7,  delay: 2.1,  duration: 2.5 },
+  { top: "14%", left: "10%", size: 8,  delay: 0,    duration: 5.5 },
+  { top: "32%", left: "90%", size: 7,  delay: 2.3,  duration: 6.0 },
+  { top: "70%", left: "8%",  size: 8,  delay: 4.1,  duration: 5.5 },
+  { top: "82%", left: "82%", size: 9,  delay: 1.6,  duration: 6.5 },
 ];
 
 function PlanCard({
@@ -354,39 +354,40 @@ function PlanCard({
       {/* ─── Premium card decorative effects (Max only) ─────────────────── */}
       {isPremium && !reduceMotion && (
         <>
-          {/* Shimmer sweep — diagonal highlight that travels across the
-              card every ~5s. Soft, never aggressive. */}
+          {/* Shimmer sweep — softened: lower opacity, slower travel,
+              long pause between sweeps so it reads as a gentle reflection
+              rather than a continuous animation. */}
           <motion.span
             aria-hidden
             className="absolute inset-0 pointer-events-none"
             style={{
               background:
-                "linear-gradient(110deg, transparent 30%, rgba(255,236,179,0.55) 48%, rgba(255,255,255,0.7) 50%, rgba(255,236,179,0.55) 52%, transparent 70%)",
+                "linear-gradient(110deg, transparent 38%, rgba(255,236,179,0.22) 48%, rgba(255,255,255,0.32) 50%, rgba(255,236,179,0.22) 52%, transparent 62%)",
               backgroundSize: "220% 100%",
               mixBlendMode: "screen",
             }}
             animate={{ backgroundPosition: ["-100% 0%", "200% 0%"] }}
             transition={{
-              duration: 2.8,
+              duration: 5.5,
               repeat: Infinity,
               ease: "easeInOut",
-              repeatDelay: 2.2,
+              repeatDelay: 4.5,
             }}
           />
 
-          {/* Animated sparkles — 5 deterministic slots, twinkle in & out */}
+          {/* Animated sparkles — 4 slots, slow twinkle, softer drop-shadow */}
           {SPARKLE_SLOTS.map((s, i) => (
             <motion.svg
               key={i}
               aria-hidden
-              className="absolute pointer-events-none text-amber-400 drop-shadow-[0_0_4px_rgba(251,191,36,0.8)]"
+              className="absolute pointer-events-none text-amber-400/80 drop-shadow-[0_0_3px_rgba(251,191,36,0.5)]"
               style={{ top: s.top, left: s.left, width: s.size, height: s.size }}
               viewBox="0 0 24 24"
               fill="currentColor"
               animate={{
-                scale: [0, 1, 0],
-                rotate: [0, 90, 180],
-                opacity: [0, 1, 0],
+                scale: [0, 0.85, 0],
+                rotate: [0, 45, 90],
+                opacity: [0, 0.75, 0],
               }}
               transition={{
                 duration: s.duration,
@@ -399,7 +400,7 @@ function PlanCard({
             </motion.svg>
           ))}
 
-          {/* Ambient golden glow that breathes */}
+          {/* Ambient golden glow — slowed, softened intensity */}
           <motion.span
             aria-hidden
             className="absolute -inset-px rounded-xl pointer-events-none"
@@ -409,12 +410,12 @@ function PlanCard({
             animate={{
               boxShadow: [
                 "0 0 0 1px rgba(251,191,36,0.0) inset, 0 0 0 0 rgba(251,191,36,0)",
-                "0 0 0 1px rgba(251,191,36,0.35) inset, 0 0 24px 0 rgba(251,191,36,0.18)",
+                "0 0 0 1px rgba(251,191,36,0.18) inset, 0 0 16px 0 rgba(251,191,36,0.10)",
                 "0 0 0 1px rgba(251,191,36,0.0) inset, 0 0 0 0 rgba(251,191,36,0)",
               ],
             }}
             transition={{
-              duration: 3.4,
+              duration: 6,
               repeat: Infinity,
               ease: "easeInOut",
             }}
@@ -422,7 +423,7 @@ function PlanCard({
         </>
       )}
 
-      {/* ─── Recommended card breathing glow (Pro) ──────────────────────── */}
+      {/* ─── Recommended card breathing glow (Pro) — calmed ─────────────── */}
       {isRecommended && !reduceMotion && (
         <motion.span
           aria-hidden
@@ -430,12 +431,12 @@ function PlanCard({
           animate={{
             boxShadow: [
               "0 0 0 0 rgba(248,147,93,0)",
-              "0 0 28px 0 rgba(248,147,93,0.22)",
+              "0 0 22px 0 rgba(248,147,93,0.12)",
               "0 0 0 0 rgba(248,147,93,0)",
             ],
           }}
           transition={{
-            duration: 3.2,
+            duration: 6,
             repeat: Infinity,
             ease: "easeInOut",
           }}
@@ -444,23 +445,23 @@ function PlanCard({
       </span>
       {/* End effects layer — badges below sit at z-10, free of clipping. */}
 
-      {/* Recommended pill (Pro) */}
+      {/* Recommended pill (Pro) — gentler shadow pulse */}
       {isRecommended && recommendedLabel && (
         <motion.span
-          className="absolute -top-2.5 right-5 z-10 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-accent text-white shadow-[0_4px_12px_-2px_rgba(248,147,93,0.55)]"
+          className="absolute -top-2.5 right-5 z-10 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-accent text-white shadow-[0_4px_12px_-2px_rgba(248,147,93,0.45)]"
           animate={
             reduceMotion
               ? undefined
               : {
                   boxShadow: [
-                    "0 4px 12px -2px rgba(248,147,93,0.55)",
-                    "0 6px 18px 0px rgba(248,147,93,0.85)",
-                    "0 4px 12px -2px rgba(248,147,93,0.55)",
+                    "0 4px 12px -2px rgba(248,147,93,0.45)",
+                    "0 5px 14px 0px rgba(248,147,93,0.6)",
+                    "0 4px 12px -2px rgba(248,147,93,0.45)",
                   ],
                 }
           }
           transition={{
-            duration: 2.2,
+            duration: 5,
             repeat: Infinity,
             ease: "easeInOut",
           }}
@@ -477,7 +478,7 @@ function PlanCard({
         </motion.span>
       )}
 
-      {/* Premium crown badge (Max) — pulsing gold disc */}
+      {/* Premium crown badge (Max) — calm gold pulse, almost no rotation */}
       {isPremium && (
         <motion.span
           aria-hidden
@@ -487,15 +488,15 @@ function PlanCard({
               ? undefined
               : {
                   boxShadow: [
-                    "0 3px 10px -2px rgba(245,158,11,0.55), 0 0 0 0 rgba(251,191,36,0)",
-                    "0 5px 20px 0px rgba(245,158,11,0.9),  0 0 0 6px rgba(251,191,36,0.18)",
-                    "0 3px 10px -2px rgba(245,158,11,0.55), 0 0 0 0 rgba(251,191,36,0)",
+                    "0 3px 10px -2px rgba(245,158,11,0.45), 0 0 0 0 rgba(251,191,36,0)",
+                    "0 4px 14px 0px rgba(245,158,11,0.65), 0 0 0 4px rgba(251,191,36,0.10)",
+                    "0 3px 10px -2px rgba(245,158,11,0.45), 0 0 0 0 rgba(251,191,36,0)",
                   ],
-                  rotate: [0, 8, -6, 0],
+                  rotate: [0, 2, -1.5, 0],
                 }
           }
           transition={{
-            duration: 2.6,
+            duration: 5,
             repeat: Infinity,
             ease: "easeInOut",
           }}
@@ -517,8 +518,8 @@ function PlanCard({
             className="text-xl font-bold tracking-tight"
             style={{
               backgroundImage:
-                "linear-gradient(110deg, #B45309 0%, #D97706 18%, #FBBF24 38%, #FEF3C7 50%, #FBBF24 62%, #D97706 82%, #B45309 100%)",
-              backgroundSize: reduceMotion ? "100% 100%" : "260% 100%",
+                "linear-gradient(110deg, #B45309 0%, #D97706 25%, #FBBF24 45%, #FCD34D 50%, #FBBF24 55%, #D97706 75%, #B45309 100%)",
+              backgroundSize: reduceMotion ? "100% 100%" : "220% 100%",
               backgroundClip: "text",
               WebkitBackgroundClip: "text",
               color: "transparent",
@@ -529,7 +530,7 @@ function PlanCard({
                 ? undefined
                 : { backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }
             }
-            transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
+            transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
           >
             {name}
           </motion.h3>
@@ -541,26 +542,21 @@ function PlanCard({
 
         <div className="text-right whitespace-nowrap">
           {isPremium ? (
-            <motion.span
+            // Static gold — no animation on the price (per spec). Keeps a
+            // soft warm gradient so it still reads as the premium tier.
+            <span
               className="text-2xl font-bold inline-block tracking-tight"
               style={{
                 backgroundImage:
-                  "linear-gradient(110deg, #B45309 0%, #D97706 18%, #FBBF24 38%, #FEF3C7 50%, #FBBF24 62%, #D97706 82%, #B45309 100%)",
-                backgroundSize: reduceMotion ? "100% 100%" : "260% 100%",
+                  "linear-gradient(110deg, #B45309 0%, #D97706 35%, #B45309 100%)",
                 backgroundClip: "text",
                 WebkitBackgroundClip: "text",
                 color: "transparent",
                 WebkitTextFillColor: "transparent",
               }}
-              animate={
-                reduceMotion
-                  ? undefined
-                  : { backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }
-              }
-              transition={{ duration: 6, repeat: Infinity, ease: "linear", delay: 0.3 }}
             >
               {price}
-            </motion.span>
+            </span>
           ) : (
             <span className="text-2xl font-bold text-gray-900 dark:text-white">
               {price}
@@ -639,15 +635,15 @@ function PlanCard({
             className="absolute inset-0 pointer-events-none"
             style={{
               background:
-                "linear-gradient(110deg, transparent 35%, rgba(255,255,255,0.55) 50%, transparent 65%)",
+                "linear-gradient(110deg, transparent 38%, rgba(255,255,255,0.30) 50%, transparent 62%)",
               backgroundSize: "220% 100%",
             }}
             animate={{ backgroundPosition: ["-100% 0%", "200% 0%"] }}
             transition={{
-              duration: 1.8,
+              duration: 3.5,
               repeat: Infinity,
               ease: "easeInOut",
-              repeatDelay: isPremium ? 1.6 : 2.4,
+              repeatDelay: isPremium ? 4 : 5.5,
             }}
           />
         )}
