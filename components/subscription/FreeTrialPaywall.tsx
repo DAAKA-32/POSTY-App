@@ -30,10 +30,6 @@ interface PaywallCopy {
   maxCta: string;
   maxPerks: string[];
   footerNote: string;
-  // —— additions, on-brand only ——
-  trustNoCommitment: string;
-  trustCancelAnytime: string;
-  trustGuarantee: string;
 }
 
 const COPY: Record<Lang, PaywallCopy> = {
@@ -68,9 +64,6 @@ const COPY: Record<Lang, PaywallCopy> = {
     ],
     footerNote:
       "Sans engagement. Annulable à tout moment. Garantie satisfait ou remboursé 7 jours.",
-    trustNoCommitment: "Sans engagement",
-    trustCancelAnytime: "Résiliable en 1 clic",
-    trustGuarantee: "Remboursé 7 jours",
   },
   en: {
     badge: `${FREE_TRIAL_DURATION_DAYS}-day trial ended`,
@@ -102,9 +95,6 @@ const COPY: Record<Lang, PaywallCopy> = {
     ],
     footerNote:
       "No commitment. Cancel anytime. 7-day money-back guarantee.",
-    trustNoCommitment: "No commitment",
-    trustCancelAnytime: "Cancel in 1 click",
-    trustGuarantee: "7-day refund",
   },
 };
 
@@ -270,19 +260,6 @@ export default function FreeTrialPaywall() {
               />
             </motion.div>
 
-            {/* Trust strip — 3 anchors with brand-orange icon chips */}
-            <motion.div
-              variants={itemVariants}
-              className="mt-8 pt-6 border-t border-light-border dark:border-dark-border"
-            >
-              <ul className="flex flex-col sm:flex-row sm:items-center sm:justify-center gap-3 sm:gap-0">
-                <TrustItem icon="lock" label={copy.trustNoCommitment} />
-                <TrustDivider />
-                <TrustItem icon="lightning" label={copy.trustCancelAnytime} />
-                <TrustDivider />
-                <TrustItem icon="shield" label={copy.trustGuarantee} />
-              </ul>
-            </motion.div>
           </motion.div>
 
           {/* Long-form trust line for screen readers (footerNote key kept) */}
@@ -430,50 +407,3 @@ function PlanCard({
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Trust strip primitives
-// ─────────────────────────────────────────────────────────────────────────────
-
-type TrustIcon = "lock" | "lightning" | "shield";
-
-const TRUST_ICON_PATHS: Record<TrustIcon, string> = {
-  lock: "M16 11V8a4 4 0 00-8 0v3M6 11h12a1 1 0 011 1v8a1 1 0 01-1 1H6a1 1 0 01-1-1v-8a1 1 0 011-1z",
-  lightning: "M13 10V3L4 14h7v7l9-11h-7z",
-  shield:
-    "M12 2.5l7.5 3v6c0 4.5-3.2 8.7-7.5 10C7.7 20.2 4.5 16 4.5 11.5v-6L12 2.5zM9 12l2 2 4-4",
-};
-
-function TrustItem({ icon, label }: { icon: TrustIcon; label: string }) {
-  return (
-    <li className="flex items-center justify-center gap-2 sm:px-5">
-      <span
-        aria-hidden
-        className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 ring-1 ring-primary/25"
-      >
-        <svg
-          className="w-3 h-3 text-primary"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d={TRUST_ICON_PATHS[icon]}
-          />
-        </svg>
-      </span>
-      <span className="text-xs font-medium text-text-secondary">{label}</span>
-    </li>
-  );
-}
-
-function TrustDivider() {
-  return (
-    <span
-      aria-hidden
-      className="hidden sm:inline-block w-1 h-1 rounded-full bg-primary/40"
-    />
-  );
-}
