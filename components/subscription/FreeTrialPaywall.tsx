@@ -206,34 +206,13 @@ export default function FreeTrialPaywall() {
               </span>
             </motion.div>
 
-            {/* Headline — argented metallic shimmer.
-                Background gradient sweeps slowly across to mimic brushed
-                silver catching the light. Reduced-motion users get a
-                static silver gradient with the same hue range. */}
+            {/* Headline — same dark-ink silver shimmer as the landing page
+                hero (text-silver-premium), so the paywall reads with the
+                same typographic texture as the rest of the brand. */}
             <motion.h2
               id="free-trial-paywall-title"
               variants={itemVariants}
-              className="mt-5 text-center text-2xl sm:text-[1.85rem] lg:text-3xl font-bold tracking-tight"
-              style={{
-                backgroundImage:
-                  "linear-gradient(110deg, #475569 0%, #94A3B8 18%, #E2E8F0 38%, #F8FAFC 50%, #E2E8F0 62%, #94A3B8 82%, #475569 100%)",
-                backgroundSize: reduceMotion ? "100% 100%" : "260% 100%",
-                backgroundClip: "text",
-                WebkitBackgroundClip: "text",
-                color: "transparent",
-                WebkitTextFillColor: "transparent",
-                filter: "drop-shadow(0 1px 0 rgba(15,23,42,0.08))",
-              }}
-              animate={
-                reduceMotion
-                  ? undefined
-                  : { backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }
-              }
-              transition={{
-                duration: 7,
-                repeat: Infinity,
-                ease: "linear",
-              }}
+              className="font-display mt-5 text-center text-[1.85rem] sm:text-[2.25rem] lg:text-[2.75rem] font-semibold leading-[1.1] tracking-[-0.02em] text-silver-premium"
             >
               {copy.headline}
             </motion.h2>
@@ -350,7 +329,7 @@ function PlanCard({
   return (
     <motion.article
       className={`
-        group relative overflow-hidden rounded-xl p-5 sm:p-6
+        group relative rounded-xl p-5 sm:p-6
         transition-shadow duration-300 ease-out
         will-change-transform
         ${
@@ -364,6 +343,14 @@ function PlanCard({
       }
       transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
     >
+      {/* Effects layer — clipped to the card shape so the shimmer sweep
+          and sparkles can never bleed past the rounded corners.  Sits
+          UNDER the badges (which use z-10) so they remain free to stick
+          out of the card top edge without being cropped. */}
+      <span
+        aria-hidden
+        className="absolute inset-0 overflow-hidden rounded-xl pointer-events-none"
+      >
       {/* ─── Premium card decorative effects (Max only) ─────────────────── */}
       {isPremium && !reduceMotion && (
         <>
@@ -454,6 +441,8 @@ function PlanCard({
           }}
         />
       )}
+      </span>
+      {/* End effects layer — badges below sit at z-10, free of clipping. */}
 
       {/* Recommended pill (Pro) */}
       {isRecommended && recommendedLabel && (
