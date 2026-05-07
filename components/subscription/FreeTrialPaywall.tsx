@@ -256,7 +256,7 @@ export default function FreeTrialPaywall() {
                 perks={copy.maxPerks}
                 cta={copy.maxCta}
                 href="/subscription?reason=free_trial_expired&plan=max"
-                variant="default"
+                variant="premium"
               />
             </motion.div>
 
@@ -272,6 +272,9 @@ export default function FreeTrialPaywall() {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PlanCard
+//   • "recommended" → Pro variant, brand orange/accent (POSTY primary CTA)
+//   • "premium"     → Max variant, gold/amber treatment matching the rest
+//                     of POSTY (PricingCard.tsx, PlanInfoCard.tsx)
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface PlanCardProps {
@@ -282,7 +285,7 @@ interface PlanCardProps {
   perks: string[];
   cta: string;
   href: string;
-  variant: "recommended" | "default";
+  variant: "recommended" | "premium";
   recommendedLabel?: string;
 }
 
@@ -298,6 +301,7 @@ function PlanCard({
   recommendedLabel,
 }: PlanCardProps) {
   const isRecommended = variant === "recommended";
+  const isPremium = variant === "premium";
 
   return (
     <article
@@ -307,11 +311,11 @@ function PlanCard({
         ${
           isRecommended
             ? "bg-white dark:bg-dark-elevated border-2 border-primary shadow-[0_8px_28px_-8px_rgba(248,147,93,0.35)] hover:shadow-[0_12px_36px_-8px_rgba(248,147,93,0.5)]"
-            : "bg-light-elevated dark:bg-dark-elevated border border-light-border dark:border-dark-border hover:border-primary/30"
+            : "bg-gradient-to-b from-white to-amber-50/40 dark:from-dark-elevated dark:to-amber-950/10 border border-amber-200/70 dark:border-amber-400/20 shadow-[0_8px_28px_-10px_rgba(251,191,36,0.25)] hover:shadow-[0_14px_36px_-10px_rgba(251,191,36,0.4)]"
         }
       `}
     >
-      {/* Recommended pill — anchored top-right inside the card border, no overlap */}
+      {/* Recommended pill (Pro) */}
       {isRecommended && recommendedLabel && (
         <span className="absolute -top-2.5 right-5 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-accent text-white shadow-sm">
           <svg
@@ -326,27 +330,67 @@ function PlanCard({
         </span>
       )}
 
+      {/* Premium crown badge (Max) — top-right gold accent */}
+      {isPremium && (
+        <span
+          aria-hidden
+          className="absolute -top-2.5 right-5 inline-flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-br from-amber-300 to-yellow-500 shadow-[0_3px_10px_-2px_rgba(245,158,11,0.55)] ring-2 ring-white dark:ring-dark-card"
+        >
+          <svg
+            className="w-3.5 h-3.5 text-gray-900"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+          >
+            <path d="M5 16L3 6l5.5 4L12 4l3.5 6L21 6l-2 10H5zm0 2h14v2H5v-2z" />
+          </svg>
+        </span>
+      )}
+
       {/* Header: name + price */}
       <div className="flex items-baseline justify-between gap-2">
-        <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+        <h3
+          className={`text-xl font-bold ${
+            isPremium
+              ? "text-amber-700 dark:text-amber-300"
+              : "text-gray-900 dark:text-white"
+          }`}
+        >
           {name}
         </h3>
         <div className="text-right whitespace-nowrap">
-          <span className="text-2xl font-bold text-gray-900 dark:text-white">
+          <span
+            className={`text-2xl font-bold ${
+              isPremium
+                ? "text-amber-700 dark:text-amber-300"
+                : "text-gray-900 dark:text-white"
+            }`}
+          >
             {price}
           </span>
-          <span className="text-xs text-gray-500 dark:text-gray-400 ml-0.5">
+          <span
+            className={`text-xs ml-0.5 ${
+              isPremium
+                ? "text-amber-600/70 dark:text-amber-400/60"
+                : "text-gray-500 dark:text-gray-400"
+            }`}
+          >
             {perMonth}
           </span>
         </div>
       </div>
 
       {/* Tagline */}
-      <p className="mt-1 text-xs text-gray-600 dark:text-gray-300">{tagline}</p>
+      <p
+        className={`mt-1 text-xs ${
+          isPremium
+            ? "text-amber-700/80 dark:text-amber-300/70"
+            : "text-gray-600 dark:text-gray-300"
+        }`}
+      >
+        {tagline}
+      </p>
 
-      {/* Perks list — plain emerald checkmarks for max contrast on any
-          background. Text classes are explicit (no theme variable) so we
-          can never hit a cascade/resolution edge case again. */}
+      {/* Perks list */}
       <ul className="mt-5 space-y-2.5">
         {perks.map((perk, idx) => (
           <li
@@ -354,7 +398,9 @@ function PlanCard({
             className="flex items-start gap-2.5 text-sm text-gray-900 dark:text-gray-100"
           >
             <svg
-              className="shrink-0 w-4 h-4 mt-0.5 text-emerald-500"
+              className={`shrink-0 w-4 h-4 mt-0.5 ${
+                isPremium ? "text-amber-500" : "text-emerald-500"
+              }`}
               fill="none"
               stroke="currentColor"
               strokeWidth={2.5}
@@ -383,7 +429,7 @@ function PlanCard({
           ${
             isRecommended
               ? "bg-gradient-to-r from-primary to-accent text-white shadow-[0_6px_18px_-4px_rgba(248,147,93,0.45)] hover:shadow-[0_10px_24px_-4px_rgba(248,147,93,0.6)] hover:-translate-y-0.5"
-              : "bg-text-primary text-light-card dark:text-dark-card hover:opacity-90"
+              : "bg-gradient-to-r from-amber-400 to-yellow-500 text-gray-900 shadow-[0_6px_18px_-4px_rgba(245,158,11,0.45)] hover:shadow-[0_10px_24px_-4px_rgba(245,158,11,0.6)] hover:-translate-y-0.5"
           }
         `}
       >
