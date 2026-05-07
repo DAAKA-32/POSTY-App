@@ -329,7 +329,7 @@ function PlanCard({
         transition-all duration-200 ease-out
         ${
           isRecommended
-            ? "bg-gradient-to-br from-primary/5 via-primary/[0.02] to-accent/5 border-2 border-primary shadow-[0_8px_28px_-8px_rgba(248,147,93,0.35)] hover:shadow-[0_12px_36px_-8px_rgba(248,147,93,0.5)]"
+            ? "bg-white dark:bg-dark-elevated border-2 border-primary shadow-[0_8px_28px_-8px_rgba(248,147,93,0.35)] hover:shadow-[0_12px_36px_-8px_rgba(248,147,93,0.5)]"
             : "bg-light-elevated dark:bg-dark-elevated border border-light-border dark:border-dark-border hover:border-primary/30"
         }
       `}
@@ -351,47 +351,45 @@ function PlanCard({
 
       {/* Header: name + price */}
       <div className="flex items-baseline justify-between gap-2">
-        <h3 className="text-xl font-bold text-text-primary">{name}</h3>
+        <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+          {name}
+        </h3>
         <div className="text-right whitespace-nowrap">
-          <span className="text-2xl font-bold text-text-primary">{price}</span>
-          <span className="text-xs text-text-muted ml-0.5">{perMonth}</span>
+          <span className="text-2xl font-bold text-gray-900 dark:text-white">
+            {price}
+          </span>
+          <span className="text-xs text-gray-500 dark:text-gray-400 ml-0.5">
+            {perMonth}
+          </span>
         </div>
       </div>
 
       {/* Tagline */}
-      <p className="mt-1 text-xs text-text-secondary">{tagline}</p>
+      <p className="mt-1 text-xs text-gray-600 dark:text-gray-300">{tagline}</p>
 
-      {/* Perks list */}
+      {/* Perks list — plain emerald checkmarks for max contrast on any
+          background. Text classes are explicit (no theme variable) so we
+          can never hit a cascade/resolution edge case again. */}
       <ul className="mt-5 space-y-2.5">
         {perks.map((perk, idx) => (
           <li
             key={idx}
-            className="flex items-start gap-2.5 text-sm text-text-primary"
+            className="flex items-start gap-2.5 text-sm text-gray-900 dark:text-gray-100"
           >
-            <span
-              className={`shrink-0 mt-0.5 inline-flex items-center justify-center w-4 h-4 rounded-full ${
-                isRecommended
-                  ? "bg-primary/15"
-                  : "bg-light-elevated dark:bg-dark-hover"
-              }`}
+            <svg
+              className="shrink-0 w-4 h-4 mt-0.5 text-emerald-500"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2.5}
+              viewBox="0 0 24 24"
               aria-hidden
             >
-              <svg
-                className={`w-3 h-3 ${
-                  isRecommended ? "text-primary" : "text-emerald-500"
-                }`}
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2.5}
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-            </span>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
             <span>{perk}</span>
           </li>
         ))}
