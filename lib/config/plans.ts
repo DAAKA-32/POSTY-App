@@ -22,10 +22,23 @@ const FOUNDER_OVERRIDE_PLAN: PlanType = "max";
 interface GiftRecipient {
   email: string;
   displayName: string; // First name for the welcome popup
+  /** If true, the user gets Max access but does NOT see the welcome popup */
+  skipPopup?: boolean;
 }
 
 const GIFT_RECIPIENTS: GiftRecipient[] = [
-  { email: "cerisecottier@gmail.com", displayName: "Cerise" },
+  // Pre-existing gift — Max access kept, no popup (predates the 2-week trial campaign)
+  { email: "cerisecottier@gmail.com",          displayName: "Cerise",   skipPopup: true },
+  // Beta / invited users — 2-week Max trial campaign
+  { email: "2jsh.immo@gmail.com",              displayName: "Julien"   },
+  { email: "sexotherapiebychris@gmail.com",    displayName: "Chris"    },
+  { email: "sandrarobidet@gmail.com",          displayName: "Sandra"   },
+  { email: "cynthiabordy@gmail.com",           displayName: "Cynthia"  },
+  { email: "marie.sarria77@gmail.com",         displayName: "Marie"    },
+  { email: "zoulikha.sophrologie@gmail.com",   displayName: "Zoulikha" },
+  { email: "aurelieanicet@gmail.com",          displayName: "Aurélie"  },
+  // Founder — receives the popup once like real recipients (validated in prod)
+  { email: "emilien.nepveu@gmail.com",         displayName: "Emilien"  },
 ];
 
 /** Check if an email belongs to a founder */
@@ -44,6 +57,40 @@ export function isGiftRecipient(email?: string | null): boolean {
 export function getGiftRecipientInfo(email?: string | null): GiftRecipient | null {
   if (!email) return null;
   return GIFT_RECIPIENTS.find(r => r.email === email.toLowerCase()) || null;
+}
+
+/**
+ * Founder/internal emails that should also see the gift welcome popup.
+ * Used purely for QA/preview — does NOT affect plan resolution.
+ * Empty in prod; add an email here only when iterating on the popup design.
+ */
+const GIFT_POPUP_PREVIEW_EMAILS: GiftRecipient[] = [];
+
+/**
+ * Resolve who should see the beta welcome popup. Returns:
+ *   - the GiftRecipient entry for real gift recipients, OR
+ *   - a preview entry for founder/QA emails, OR
+ *   - null if the user shouldn't see the popup at all.
+ */
+export function getGiftPopupInfo(email?: string | null): GiftRecipient | null {
+  if (!email) return null;
+  const lower = email.toLowerCase();
+  const real = GIFT_RECIPIENTS.find(r => r.email === lower);
+  if (real) return real.skipPopup ? null : real;
+  const preview = GIFT_POPUP_PREVIEW_EMAILS.find(r => r.email === lower);
+  if (preview) return preview;
+  return null;
+}
+
+/**
+ * Whether an email is a popup preview (founder/QA), in which case the
+ * `giftPopupSeen` flag is ignored — the popup re-displays on every load
+ * so the founder can iterate on the design without resetting Firestore.
+ */
+export function isGiftPopupPreviewEmail(email?: string | null): boolean {
+  if (!email) return false;
+  const lower = email.toLowerCase();
+  return GIFT_POPUP_PREVIEW_EMAILS.some(r => r.email === lower);
 }
 
 /**
@@ -85,14 +132,14 @@ export const GUARANTEE_PERIOD_DAYS = 7;
 export const TRIAL_PERIOD_MS = TRIAL_PERIOD_DAYS * 24 * 60 * 60 * 1000;
 
 // ============================================
-// FREE PLAN TRIAL (14 days)
+// FREE PLAN TRIAL (30 days)
 // ============================================
 // The Free plan is a time-limited trial. Users get full Free-plan access for
 // FREE_TRIAL_DURATION_DAYS days starting at signup (or first activation).
 // Once expired, the user must upgrade to Pro or Max to keep using Posty.
 
 /** Duration of the Free-plan trial in days. */
-export const FREE_TRIAL_DURATION_DAYS = 14;
+export const FREE_TRIAL_DURATION_DAYS = 30;
 
 /** Duration of the Free-plan trial in milliseconds. */
 export const FREE_TRIAL_DURATION_MS = FREE_TRIAL_DURATION_DAYS * 24 * 60 * 60 * 1000;
@@ -167,20 +214,14 @@ export function getFreeTrialDaysRemaining(trialEnd: Date | null | undefined): nu
 }
 
 /**
- * Master switch for the 14-day Free trial gate.
+ * Master switch for the 30-day Free trial gate.
  *
- * The hard expiration was shipped in code (commit 5929d5e) but is intentionally
- * NOT enabled in production yet — flipping it on day-1 would lock every legacy
- * Free user out of /app since the gate anchors to `createdAt`. We keep the flag
- * OFF by default (prod behaviour: Free is unlimited) and only flip it on once
- * we're ready to communicate the change + have a migration plan for existing
- * Free users.
- *
- * To enable in a given environment, set `NEXT_PUBLIC_ENABLE_FREE_TRIAL_GATE=true`
- * (covers both client + server since it's a NEXT_PUBLIC_ var).
+ * Default: ON. The expiration is now part of the product spec — Free users get
+ * 30 days of access then must upgrade. Set `NEXT_PUBLIC_ENABLE_FREE_TRIAL_GATE=false`
+ * in any environment that needs to disable the gate (e.g. local debugging).
  */
 export function isFreeTrialGateEnabled(): boolean {
-  return process.env.NEXT_PUBLIC_ENABLE_FREE_TRIAL_GATE === "true";
+  return process.env.NEXT_PUBLIC_ENABLE_FREE_TRIAL_GATE !== "false";
 }
 
 /**

@@ -25,7 +25,6 @@ import ModernResponseCard from "@/components/chat/ModernResponseCard";
 import ModernStyleSelector from "@/components/chat/ModernStyleSelector";
 import DualModeToggle from "@/components/chat/DualModeToggle";
 import MaxModeSelector from "@/components/chat/MaxModeSelector";
-import AIModeSwitch, { AIMode } from "@/components/chat/AIModeSwitch";
 import InlineUpgradeBanner from "@/components/chat/InlineUpgradeBanner";
 import { getPlanFeatures } from "@/lib/config/plan-features";
 import NewResponseIndicator from "@/components/chat/NewResponseIndicator";
@@ -42,8 +41,9 @@ import { isReadyPostsEnabled } from "@/lib/config/feature-flags";
 import { usePageTitle } from "@/hooks/ui/usePageTitle";
 import { trackPostGeneration, initAnalytics } from "@/lib/utils/analytics";
 import UniversalChatInput, { UniversalChatInputRef } from "@/components/chat/UniversalChatInput";
+import ActionConfirmCard from "@/components/ai-actions/ActionConfirmCard";
 import { getPersonalizedGreeting, getPersonalizedSubtitle } from "@/lib/services/personalization";
-import { getGiftRecipientInfo } from "@/lib/config/plans";
+import { getGiftPopupInfo, isGiftPopupPreviewEmail } from "@/lib/config/plans";
 
 // Premium animation easings - inspired by Linear, Notion
 const smoothEase = [0.25, 0.1, 0.25, 1] as const;
@@ -136,9 +136,6 @@ function AppContent() {
   // Max mode selector state (Max plan: choose between dual/storytelling/business)
   const [maxMode, setMaxMode] = useState<"dual" | "storytelling" | "business">("dual");
 
-  // AI mode: "linkedin" (Storytelling Business) or "general" (IA Générale)
-  const [aiMode, setAiMode] = useState<AIMode>("linkedin");
-
   // Inline upgrade banner state (replaces mode selector zone for Pro users)
   const [showUpgradeBanner, setShowUpgradeBanner] = useState(false);
   const [upgradeBannerReason, setUpgradeBannerReason] = useState<"dual-limit" | "max-feature">("max-feature");
@@ -191,7 +188,6 @@ function AppContent() {
     isGuest: false,
     selectedStyle: effectiveStyle,
     dualMode: effectiveDualMode,
-    aiMode,
   });
 
   // Track the last postId we redirected to — prevents duplicate redirects
@@ -292,24 +288,27 @@ function AppContent() {
     }
   }, [userProfile?.showWelcomeModal]);
 
-  // Gift plan popup — one-time display for gift recipients
+  // Gift plan popup — one-time display for gift recipients (+ founder preview)
   useEffect(() => {
     if (!user?.email) return;
-    const giftInfo = getGiftRecipientInfo(user.email);
+    const giftInfo = getGiftPopupInfo(user.email);
     if (!giftInfo) return;
 
-    // Check if already seen (Firestore flag)
-    if (userProfile?.giftPopupSeen === true) return;
+    // Preview emails (if any in GIFT_POPUP_PREVIEW_EMAILS) always re-display so
+    // we can iterate on the design without resetting Firestore. Real gift
+    // recipients see it once and the dismiss is persisted.
+    const isPreview = isGiftPopupPreviewEmail(user.email);
+    if (!isPreview && userProfile?.giftPopupSeen === true) return;
 
     setGiftRecipientName(giftInfo.displayName);
     const timer = setTimeout(() => setShowGiftPopup(true), 800);
     return () => clearTimeout(timer);
   }, [user?.email, userProfile?.giftPopupSeen]);
 
-  // Dismiss gift popup and persist in Firestore
+  // Dismiss gift popup and persist in Firestore (skipped for preview emails)
   const dismissGiftPopup = useCallback(() => {
     setShowGiftPopup(false);
-    if (user) {
+    if (user && !isGiftPopupPreviewEmail(user.email)) {
       updateDoc(doc(db, "users", user.uid), { giftPopupSeen: true }).catch(() => {});
     }
   }, [user]);
@@ -794,6 +793,46 @@ function AppContent() {
                           );
                           i++;
                         }
+                      } else if (message.type === "action" && message.action) {
+                        // Action confirmation card
+                        const action = message.action;
+                        elements.push(
+                          <motion.div
+                            key={message.id || `action-${i}`}
+                            initial={{ opacity: 0, y: 6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.2, ease: smoothEase }}
+                            className="w-full"
+                          >
+                            {/* POSTY Avatar */}
+                            <div className="flex items-center gap-3 mb-3">
+                              <div className="w-8 h-8 shrink-0 rounded-xl overflow-hidden shadow-sm">
+                                <Image
+                                  src="/logo.png"
+                                  alt="Posty"
+                                  width={32}
+                                  height={32}
+                                  className="w-full h-full object-contain"
+                                />
+                              </div>
+                              <span className="text-xs text-text-muted font-medium">POSTY</span>
+                            </div>
+                            <ActionConfirmCard
+                              action={action}
+                              onSuccess={(actionType, data) => {
+                                if (actionType === "publish_post" && action.params.content) {
+                                  handlePublishToLinkedIn(action.params.content);
+                                } else if (actionType === "delete_conversation") {
+                                  reset();
+                                  router.push(`/app?new=${Date.now()}`);
+                                }
+                                void data;
+                              }}
+                              onCancel={() => {}}
+                            />
+                          </motion.div>
+                        );
+                        i++;
                       } else {
                         i++;
                       }
@@ -853,9 +892,9 @@ function AppContent() {
           }}
         >
           <div className="max-w-3xl mx-auto px-3 sm:px-4 py-2 sm:py-3 lg:py-2">
-            {/* Post Mode Selector / Upgrade Banner zone — hidden in general AI mode */}
+            {/* Post Mode Selector / Upgrade Banner zone */}
             <AnimatePresence mode="wait">
-              {aiMode === "linkedin" && isMaxPlan && (
+              {isMaxPlan && (
                 <motion.div
                   key="max-selector"
                   initial={{ opacity: 0, height: 0 }}
@@ -868,10 +907,9 @@ function AppContent() {
                     selectedMode={maxMode}
                     onModeChange={setMaxMode}
                   />
-                  <AIModeSwitch mode={aiMode} onModeChange={setAiMode} />
                 </motion.div>
               )}
-              {aiMode === "linkedin" && isProPlan && !isMaxPlan && (
+              {isProPlan && !isMaxPlan && (
                 <motion.div
                   key="pro-selector"
                   initial={{ opacity: 0, height: 0 }}
@@ -898,33 +936,6 @@ function AppContent() {
                       }}
                     />
                   )}
-                  <AIModeSwitch mode={aiMode} onModeChange={setAiMode} />
-                </motion.div>
-              )}
-              {aiMode === "linkedin" && !isMaxPlan && !isProPlan && (
-                <motion.div
-                  key="free-selector"
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="mb-3 overflow-hidden"
-                >
-                  <div className="flex justify-end mb-1.5">
-                    <AIModeSwitch mode={aiMode} onModeChange={setAiMode} />
-                  </div>
-                </motion.div>
-              )}
-              {aiMode === "general" && (
-                <motion.div
-                  key="general-mode"
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="mb-3 flex justify-center overflow-hidden"
-                >
-                  <AIModeSwitch mode={aiMode} onModeChange={setAiMode} />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -940,7 +951,7 @@ function AppContent() {
                   await handleGenerate(message, file);
                 }}
                 onStop={stopGeneration}
-                placeholder={aiMode === "general" ? t.appPage.placeholderGeneralFixed : t.appPage.placeholderFixed}
+                placeholder={t.appPage.placeholderFixed}
                 disabled={!canSendMessage}
                 isLoading={isLoading || isStreaming}
                 enableVoiceRecording={speechSupported}
@@ -1016,7 +1027,7 @@ function AppContent() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/65 backdrop-blur-md"
             onClick={dismissGiftPopup}
           >
             <motion.div
@@ -1024,61 +1035,120 @@ function AppContent() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-              className="relative w-full max-w-md bg-white dark:bg-dark-card rounded-2xl p-8 shadow-2xl border border-gray-200 dark:border-dark-border text-center"
+              className="relative w-full max-w-lg bg-white dark:bg-dark-card rounded-2xl shadow-2xl border border-gray-200 dark:border-dark-border overflow-hidden max-h-[90vh] flex flex-col"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Close button */}
+              {/* Top gradient bar — Max plan signature */}
+              <div className="h-1.5 bg-gradient-to-r from-primary via-accent to-primary shrink-0" />
+
+              {/* Close button — 40px touch target for mobile, explicit colors */}
               <button
                 onClick={dismissGiftPopup}
-                className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-dark-hover transition-colors text-text-muted hover:text-text-primary"
+                className="absolute top-3 right-3 sm:top-4 sm:right-4 w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-colors text-gray-400 hover:text-gray-700 dark:text-gray-500 dark:hover:text-gray-200 z-10"
+                aria-label="Fermer"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
 
-              {/* Emoji */}
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.2, type: "spring", stiffness: 200, damping: 15 }}
-                className="text-5xl mb-5"
-              >
-                🎉
-              </motion.div>
+              <div className="px-5 sm:px-7 pt-7 sm:pt-8 pb-6 sm:pb-7 overflow-y-auto">
+                {/* Gift icon */}
+                <motion.div
+                  initial={{ scale: 0, rotate: -20 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ delay: 0.2, type: "spring", stiffness: 200, damping: 14 }}
+                  className="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-4 sm:mb-5 rounded-2xl bg-gradient-to-br from-primary/15 to-accent/15 border border-primary/20 flex items-center justify-center text-3xl sm:text-4xl"
+                >
+                  🎁
+                </motion.div>
 
-              {/* Title */}
-              <motion.h2
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="text-2xl font-bold text-gray-900 dark:text-white mb-3"
-              >
-                Bonjour {giftRecipientName} !
-              </motion.h2>
+                {/* Title */}
+                <motion.h2
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2 text-center px-2"
+                >
+                  Bonjour {giftRecipientName} 👋
+                </motion.h2>
 
-              {/* Message */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="text-text-secondary mb-6 space-y-2"
-              >
-                <p>Nous avons activ&eacute; pour vous le plan <span className="font-semibold text-primary">Max</span>.</p>
-                <p>Vous pouvez maintenant profiter de toutes les fonctionnalit&eacute;s premium de l&apos;application.</p>
-                <p className="mt-3">Amusez-vous bien avec l&apos;outil 🚀</p>
-              </motion.div>
+                {/* Hero pitch */}
+                <motion.p
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.35 }}
+                  className="text-center text-sm sm:text-base text-gray-700 dark:text-gray-300 mb-5 leading-relaxed"
+                >
+                  Comme prévu, voici vos <span className="font-semibold text-primary">2 semaines d&apos;accès offert au plan Max</span> 🚀
+                </motion.p>
 
-              {/* CTA */}
-              <motion.button
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-                onClick={dismissGiftPopup}
-                className="w-full py-3 px-6 bg-gradient-to-r from-primary to-accent text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-primary/25 transition-all duration-200"
-              >
-                J&apos;ai compris
-              </motion.button>
+                {/* Body — what's included (frosted glass card) */}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="bg-gray-100/70 dark:bg-white/[0.05] backdrop-blur-md border border-gray-200 dark:border-white/10 rounded-xl p-4 mb-5"
+                >
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                    Vous débloquez l&apos;intégralité de Posty :
+                  </p>
+                  <ul className="text-sm text-gray-900 dark:text-white space-y-1.5">
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary mt-0.5">✓</span>
+                      <span>Créations IA <strong>illimitées</strong>, qualité ultra</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary mt-0.5">✓</span>
+                      <span>Multi-réseaux + publication simultanée</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary mt-0.5">✓</span>
+                      <span>Programmation, mode Story + Business, briefs longs</span>
+                    </li>
+                  </ul>
+                </motion.div>
+
+                {/* Future offer teaser */}
+                <motion.p
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.45 }}
+                  className="text-sm text-gray-700 dark:text-gray-300 mb-4 leading-relaxed"
+                >
+                  À l&apos;issue de cet essai, on revient vers vous avec une <span className="font-semibold text-gray-900 dark:text-white">offre personnalisée</span> — taillée sur mesure pour automatiser entièrement votre présence sur Instagram, TikTok et plus, avec du contenu vraiment adapté à votre image.
+                </motion.p>
+
+                <motion.p
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="text-sm text-gray-700 dark:text-gray-300 mb-5 leading-relaxed"
+                >
+                  En attendant, profitez-en à fond — et n&apos;hésitez pas à nous partager vos retours, ils nous sont précieux.
+                </motion.p>
+
+                {/* Signature */}
+                <motion.p
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.55 }}
+                  className="text-sm text-gray-500 dark:text-gray-400 italic mb-6"
+                >
+                  — Côme &amp; Emilien
+                </motion.p>
+
+                {/* CTA */}
+                <motion.button
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.6 }}
+                  onClick={dismissGiftPopup}
+                  className="w-full py-3 px-6 bg-gradient-to-r from-primary to-accent text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-primary/25 transition-all duration-200"
+                >
+                  C&apos;est parti 🚀
+                </motion.button>
+              </div>
             </motion.div>
           </motion.div>
         )}
