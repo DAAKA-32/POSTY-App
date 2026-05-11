@@ -2,20 +2,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { getThreadsConnectionAdmin, saveThreadsConnectionAdmin } from "@/lib/db/firestore-admin";
 import { isAdminInitialized } from "@/lib/db/firebase-admin";
 import { THREADS_CONFIG } from "@/lib/platforms/meta";
+import { verifyAuth } from "@/lib/auth";
 
 /**
  * POST /api/threads/refresh
  * Refresh a Threads long-lived token before it expires.
  * Threads long-lived tokens can be refreshed if they have at least 24h remaining.
  * Returns a new token valid for 60 days.
+ *
+ * SECURITY: userId comes from the verified Firebase token, never from the request body.
  */
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await request.json();
-
-    if (!userId) {
-      return NextResponse.json({ error: "userId required" }, { status: 400 });
-    }
+    const auth = await verifyAuth(request);
+    if (auth.error) return auth.error;
+    const userId = auth.uid;
 
     if (!isAdminInitialized()) {
       return NextResponse.json({ error: "Service unavailable" }, { status: 503 });

@@ -9,35 +9,15 @@ import {
   useMemo,
   ReactNode,
 } from "react";
-import { fr } from "@/lib/i18n/translations/fr";
-import { en } from "@/lib/i18n/translations/en";
-import { es } from "@/lib/i18n/translations/es";
-import { de } from "@/lib/i18n/translations/de";
-import { it } from "@/lib/i18n/translations/it";
-import { pt } from "@/lib/i18n/translations/pt";
-import { nl } from "@/lib/i18n/translations/nl";
-import { zh } from "@/lib/i18n/translations/zh";
-import { ja } from "@/lib/i18n/translations/ja";
-import { ko } from "@/lib/i18n/translations/ko";
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "@/lib/db/firebase";
+import { getTranslations, loadTranslations } from "@/lib/i18n";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Language, Translations } from "@/lib/i18n";
 
 const STORAGE_KEY = "posty-language";
 
 const SUPPORTED_LANGUAGES: Language[] = ["en", "fr", "es", "de", "it", "pt", "nl", "zh", "ja", "ko"];
-
-const translationMap: Record<Language, Translations> = {
-  fr: fr as unknown as Translations,
-  en: en as unknown as Translations,
-  es: es as unknown as Translations,
-  de: de as unknown as Translations,
-  it: it as unknown as Translations,
-  pt: pt as unknown as Translations,
-  nl: nl as unknown as Translations,
-  zh: zh as unknown as Translations,
-  ja: ja as unknown as Translations,
-  ko: ko as unknown as Translations,
-};
 
 function isValidLanguage(lang: string | null): lang is Language {
   return lang !== null && SUPPORTED_LANGUAGES.includes(lang as Language);
@@ -72,41 +52,53 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   // Always start with "en" to match server render and avoid hydration mismatch.
   // localStorage sync happens in the useEffect below.
   const [language, setLanguageState] = useState<Language>("en");
+  // Bump on every successful async translation load so context consumers
+  // re-render with the freshly hydrated dictionary.
+  const [translationsTick, setTranslationsTick] = useState(0);
+
+  const switchLanguage = useCallback((lang: Language) => {
+    setLanguageState(lang);
+    // Eager (en/fr) resolves synchronously; the others are dynamic-imported
+    // and will trigger a tick when ready so consumers re-render.
+    loadTranslations(lang).then(() => {
+      setTranslationsTick((n) => n + 1);
+    });
+  }, []);
 
   // Sync language from localStorage on first client render
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (isValidLanguage(stored) && stored !== language) {
-      setLanguageState(stored);
+      switchLanguage(stored);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Sync language from user profile when user logs in
+  // Sync language from user profile when user logs in.
+  // Priority: localStorage (most recent explicit device choice) > Firestore profile > default "fr"
   useEffect(() => {
     if (userProfile) {
       const profileLang = userProfile.language as string | undefined;
-      if (profileLang && isValidLanguage(profileLang)) {
-        setLanguageState(profileLang);
+      const stored = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
+
+      if (isValidLanguage(stored)) {
+        // localStorage = user's most recent explicit choice on this device — always wins
+        switchLanguage(stored);
+      } else if (profileLang && isValidLanguage(profileLang)) {
+        // No local preference → fall back to Firestore profile (cross-device sync)
+        switchLanguage(profileLang);
         if (typeof window !== "undefined") {
           localStorage.setItem(STORAGE_KEY, profileLang);
         }
-      } else if (user && !profileLang) {
-        // Existing user without language in Firestore profile
-        // Respect localStorage if already set (user may have changed language in Settings)
-        const stored = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
-        if (isValidLanguage(stored)) {
-          setLanguageState(stored);
-        } else {
-          // No localStorage either → default to French for existing francophone users
-          setLanguageState("fr");
-          if (typeof window !== "undefined") {
-            localStorage.setItem(STORAGE_KEY, "fr");
-          }
+      } else if (user) {
+        // No preference anywhere → default to French for existing francophone users
+        switchLanguage("fr");
+        if (typeof window !== "undefined") {
+          localStorage.setItem(STORAGE_KEY, "fr");
         }
       }
     }
-  }, [user, userProfile]);
+  }, [user, userProfile, switchLanguage]);
 
   // Update html lang attribute when language changes
   useEffect(() => {
@@ -116,20 +108,27 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   }, [language]);
 
   const setLanguage = useCallback((lang: Language) => {
-    setLanguageState(lang);
+    switchLanguage(lang);
     if (typeof window !== "undefined") {
       localStorage.setItem(STORAGE_KEY, lang);
     }
-  }, []);
+    // Persist to Firestore so the preference survives cross-device sessions
+    // and the profile-sync effect doesn't override localStorage on next load
+    if (user) {
+      updateDoc(doc(db, "users", user.uid), { language: lang }).catch(() => {});
+    }
+  }, [user, switchLanguage]);
 
   // Memoize context value so consumers only re-render when language actually changes.
+  // `translationsTick` re-resolves the dictionary after a lazy chunk finishes loading.
   const contextValue = useMemo<LanguageContextType>(
     () => ({
       language,
-      t: translationMap[language],
+      t: getTranslations(language),
       setLanguage,
     }),
-    [language, setLanguage]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [language, setLanguage, translationsTick]
   );
 
   return (

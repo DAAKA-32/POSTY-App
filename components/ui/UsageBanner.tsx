@@ -4,6 +4,8 @@ import { useMemo } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuota } from "@/contexts/QuotaContext";
+import { useSubscription } from "@/contexts/SubscriptionContext";
+import { isFreeTrialGateEnabled } from "@/lib/config/plans";
 
 
 interface UsageBannerProps {
@@ -26,6 +28,7 @@ type BannerState =
     };
 
 export default function UsageBanner({ className = "" }: UsageBannerProps) {
+  const { currentPlan: subPlan, freeTrialExpired, freeTrialEndsAt } = useSubscription();
   const {
     currentPlan,
     isPremium,
@@ -119,7 +122,8 @@ export default function UsageBanner({ className = "" }: UsageBannerProps) {
     return { type: "hidden" as const, show: false };
   }, [isMaxPlan, isFreePlan, isProPlan, hasDailyLimit, hasMonthlyLimit, isPremium, canSendMessage, messagesRemaining, usagePercent, messagesUsedToday, dailyLimit, messagesUsedThisMonth, monthlyLimit, monthlyRemaining, quotaResetLabel]);
 
-  if (isLoading || !bannerState.show) return null;
+  const freeTrialBannerActive = isFreeTrialGateEnabled() && subPlan === "free" && !freeTrialExpired && !!freeTrialEndsAt;
+  if (isLoading || !bannerState.show || freeTrialBannerActive) return null;
 
   const isLimitReached = bannerState.type.endsWith("limit-reached");
   const isWarning = bannerState.type.endsWith("warning");
@@ -143,7 +147,8 @@ export default function UsageBanner({ className = "" }: UsageBannerProps) {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -4 }}
         transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
-        className={`w-full ${className}`}
+        className={`notranslate w-full ${className}`}
+        translate="no"
         role="region"
         aria-label="Quota d'utilisation"
         data-quota="true"

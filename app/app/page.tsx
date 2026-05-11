@@ -25,7 +25,10 @@ import ModernResponseCard from "@/components/chat/ModernResponseCard";
 import ModernStyleSelector from "@/components/chat/ModernStyleSelector";
 import DualModeToggle from "@/components/chat/DualModeToggle";
 import MaxModeSelector from "@/components/chat/MaxModeSelector";
+import AIModeSwitch, { AIMode } from "@/components/chat/AIModeSwitch";
 import InlineUpgradeBanner from "@/components/chat/InlineUpgradeBanner";
+import { useStrategistDrawer } from "@/contexts/StrategistDrawerContext";
+import { isStrategistEnabled } from "@/lib/config/feature-flags";
 import { getPlanFeatures } from "@/lib/config/plan-features";
 import NewResponseIndicator from "@/components/chat/NewResponseIndicator";
 import PublishToLinkedInModal from "@/components/linkedin/PublishToLinkedInModal";
@@ -106,7 +109,8 @@ function AppContent() {
   const { connection: linkedInConnection, publishToLinkedIn } = useLinkedIn();
   const { t, language } = useLanguage();
   const { canSendMessage } = useQuota();
-  const { isMaxPlan, isProPlan, currentPlan, planLimits } = useSubscription();
+  const { isMaxPlan, isProPlan, currentPlan, planLimits, hasMarketingStrategist } = useSubscription();
+  const { open: openStrategistDrawer } = useStrategistDrawer();
   usePageTitle("app");
   const [posts, setPosts] = useState<Post[]>([]);
   const [showPublishModal, setShowPublishModal] = useState(false);
@@ -135,6 +139,10 @@ function AppContent() {
 
   // Max mode selector state (Max plan: choose between dual/storytelling/business)
   const [maxMode, setMaxMode] = useState<"dual" | "storytelling" | "business">("dual");
+
+  // Top-level chat persona: post generation (default), Q&A support, or Strategist
+  // (drawer). Defaults to "posts" so existing post-generation flow is unchanged.
+  const [aiMode, setAiMode] = useState<AIMode>("posts");
 
   // Inline upgrade banner state (replaces mode selector zone for Pro users)
   const [showUpgradeBanner, setShowUpgradeBanner] = useState(false);
@@ -188,6 +196,7 @@ function AppContent() {
     isGuest: false,
     selectedStyle: effectiveStyle,
     dualMode: effectiveDualMode,
+    aiMode,
   });
 
   // Track the last postId we redirected to — prevents duplicate redirects
@@ -892,9 +901,21 @@ function AppContent() {
           }}
         >
           <div className="max-w-3xl mx-auto px-3 sm:px-4 py-2 sm:py-3 lg:py-2">
-            {/* Post Mode Selector / Upgrade Banner zone */}
+            {/* AI persona selector — Posts / Support / Stratège */}
+            {isStrategistEnabled() && (
+              <div className="mb-2 flex justify-center">
+                <AIModeSwitch
+                  mode={aiMode}
+                  onModeChange={setAiMode}
+                  onOpenStrategist={openStrategistDrawer}
+                  hasStrategistAccess={hasMarketingStrategist}
+                />
+              </div>
+            )}
+
+            {/* Post Mode Selector / Upgrade Banner zone — only when generating posts */}
             <AnimatePresence mode="wait">
-              {isMaxPlan && (
+              {aiMode === "posts" && isMaxPlan && (
                 <motion.div
                   key="max-selector"
                   initial={{ opacity: 0, height: 0 }}
@@ -909,7 +930,7 @@ function AppContent() {
                   />
                 </motion.div>
               )}
-              {isProPlan && !isMaxPlan && (
+              {aiMode === "posts" && isProPlan && !isMaxPlan && (
                 <motion.div
                   key="pro-selector"
                   initial={{ opacity: 0, height: 0 }}

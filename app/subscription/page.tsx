@@ -132,34 +132,34 @@ function SubscriptionContent() {
       return;
     }
 
-    // Free plan — activate in Firestore and show welcome modal
-    // Handled BEFORE currentPlan check so free users are never stuck
+    // Free plan
     if (plan.id === "free") {
-      // If the user is already on Free and their 14-day trial has expired,
-      // re-clicking Free won't grant access (SubscriptionContext forces
-      // status="inactive" on expiry and the middleware blocks /app). Surface
-      // an upgrade prompt instead of silently looping the user back here.
-      if (currentPlan === "free" && freeTrialExpired) {
-        toast.error(t.subscriptionPage.freeTrialExpiredDesc);
+      // Already on free — never show the modal again, just handle the state
+      if (currentPlan === "free") {
+        if (freeTrialExpired) {
+          toast.error(t.subscriptionPage.freeTrialExpiredDesc);
+        } else {
+          router.push("/app");
+        }
         return;
       }
-      if (!currentPlan || currentPlan === "free") {
-        try {
-          await activateFreePlan(user.uid);
-          // Write the middleware cookies eagerly so the WelcomeModal's auto-
-          // redirect to /app sees an active subscription on the very next
-          // request. The SubscriptionContext effect would also write these,
-          // but only after the next React render — which can lose a race
-          // against router.replace("/app") on slower devices.
-          if (typeof document !== "undefined") {
-            const maxAge = 60 * 60 * 24 * 7;
-            document.cookie = `subscription_status=active; path=/; max-age=${maxAge}; SameSite=Strict`;
-            document.cookie = `subscription_plan=free; path=/; max-age=${maxAge}; SameSite=Strict`;
-          }
-          await refreshSubscription();
-        } catch (error) {
-          console.error("Error activating free plan:", error);
+
+      // New activation — activate in Firestore then show welcome modal
+      try {
+        await activateFreePlan(user.uid);
+        // Write the middleware cookies eagerly so the WelcomeModal's auto-
+        // redirect to /app sees an active subscription on the very next
+        // request. The SubscriptionContext effect would also write these,
+        // but only after the next React render — which can lose a race
+        // against router.replace("/app") on slower devices.
+        if (typeof document !== "undefined") {
+          const maxAge = 60 * 60 * 24 * 7;
+          document.cookie = `subscription_status=active; path=/; max-age=${maxAge}; SameSite=Strict`;
+          document.cookie = `subscription_plan=free; path=/; max-age=${maxAge}; SameSite=Strict`;
         }
+        await refreshSubscription();
+      } catch (error) {
+        console.error("Error activating free plan:", error);
       }
       setWelcomePlanName(undefined);
       setShowWelcomeModal(true);
@@ -216,7 +216,8 @@ function SubscriptionContent() {
 
   return (
     <div
-      className="bg-background-warm dark:bg-background"
+      className="notranslate bg-background-warm dark:bg-background"
+      translate="no"
       style={{
         height: "100dvh",
         maxHeight: "100dvh",
@@ -378,6 +379,7 @@ function SubscriptionContent() {
                 isCurrentPlan={plan.id === currentPlan}
                 isLoading={isLoading === plan.id}
                 onSelect={() => handleSelectPlan(plan)}
+                isFreeTrialExpired={plan.id === "free" ? freeTrialExpired : undefined}
               />
             ))}
           </div>

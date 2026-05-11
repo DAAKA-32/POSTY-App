@@ -38,6 +38,8 @@ export interface PricingCardProps {
    * pricing block reads as a quick scan rather than a comparison sheet.
    */
   compact?: boolean;
+  /** Pass true for the Free plan when the 30-day trial has expired */
+  isFreeTrialExpired?: boolean;
 }
 
 export default function PricingCard({
@@ -50,6 +52,7 @@ export default function PricingCard({
   onSelect,
   ctaHref,
   compact = false,
+  isFreeTrialExpired = false,
 }: PricingCardProps) {
   const { t } = useLanguage();
   const isFree = plan.id === "free";
@@ -82,7 +85,8 @@ export default function PricingCard({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-50px" }}
       transition={{ delay: index * 0.08, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-      className={`relative group ${isPopular ? "md:scale-[1.03] md:z-10" : ""}`}
+      className={`notranslate relative group ${isPopular ? "md:scale-[1.03] md:z-10" : ""}`}
+      translate="no"
     >
       {/* Border glow — all cards get a gradient border ring */}
       <div
@@ -101,7 +105,9 @@ export default function PricingCard({
             ? "linear-gradient(135deg, rgba(248,147,93,0.4), rgba(247,107,84,0.6), rgba(248,147,93,0.4), rgba(247,107,84,0.6))"
             : isGoldCard
               ? "linear-gradient(135deg, rgba(251,191,36,0.35), rgba(245,158,11,0.55), rgba(251,191,36,0.35), rgba(217,119,6,0.5))"
-              : "linear-gradient(135deg, rgba(209,213,219,0.6), rgba(156,163,175,0.4), rgba(209,213,219,0.6), rgba(156,163,175,0.4))",
+              : isFree
+                ? "linear-gradient(135deg, rgba(16,185,129,0.3), rgba(5,150,105,0.5), rgba(16,185,129,0.3), rgba(5,150,105,0.5))"
+                : "linear-gradient(135deg, rgba(209,213,219,0.6), rgba(156,163,175,0.4), rgba(209,213,219,0.6), rgba(156,163,175,0.4))",
         }}
       />
 
@@ -114,7 +120,14 @@ export default function PricingCard({
             ? "bg-gradient-to-b from-white to-amber-50/40 dark:from-dark-card dark:to-amber-950/10 shadow-lg shadow-amber-400/10 group-hover:shadow-xl group-hover:shadow-amber-400/20"
             : "bg-white dark:bg-dark-card shadow-sm group-hover:shadow-lg"
         }
-        ${isCurrentPlan ? "ring-2 ring-emerald-500/40" : ""}
+        ${isCurrentPlan
+          ? isFree
+            ? "ring-2 ring-emerald-500/50 shadow-md shadow-emerald-500/10"
+            : isGoldCard
+              ? "ring-2 ring-amber-400/50"
+              : "ring-2 ring-primary/50"
+          : ""
+        }
       `}>
 
         {/* ── Badge ── */}
@@ -144,11 +157,13 @@ export default function PricingCard({
             <div className={`
               absolute top-3 sm:top-4 md:top-5 right-3 sm:right-4 md:right-5
               px-2 sm:px-2.5 py-0.5 sm:py-1
-              text-[9px] sm:text-[10px] md:text-xs font-medium rounded-full
+              text-[9px] sm:text-[10px] md:text-xs font-semibold rounded-full
               flex items-center gap-1
               ${isGoldCard
                 ? "bg-amber-100 text-amber-700 border border-amber-300/50 dark:bg-amber-400/15 dark:text-amber-400 dark:border-amber-400/25"
-                : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25"
+                : isPopular
+                  ? "bg-primary/10 text-primary border border-primary/25 dark:bg-primary/15 dark:text-primary dark:border-primary/30"
+                  : "bg-emerald-50 text-emerald-700 border border-emerald-300/60 dark:bg-emerald-500/15 dark:text-emerald-400 dark:border-emerald-500/25"
               }
             `}>
               <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -236,28 +251,31 @@ export default function PricingCard({
           {isAuthenticated && onSelect ? (
             <motion.button
               onClick={onSelect}
-              /* Free's "current" state stays clickable so the user has a path
-                 back to /app from /subscription — the parent handler turns
-                 the click into a navigation when the trial is live, and an
-                 upgrade prompt when it has expired. Paid plans stay disabled
-                 when they're already current to avoid accidental re-checkout. */
-              disabled={(isCurrentPlan && !isFree) || isLoading}
+              disabled={
+                isLoading ||
+                (isCurrentPlan && !isFree) ||        // paid plan already active
+                (isCurrentPlan && isFree && isFreeTrialExpired) // free trial expired
+              }
               className={`
                 w-full text-center px-4 py-3 sm:py-3.5 md:py-4 rounded-xl font-semibold text-xs sm:text-sm md:text-base
-                transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed
-                ${isCurrentPlan
-                  ? isFree
-                    /* Clickable Free-current: hover affordance + pointer cursor
-                       so the user understands the button still does something. */
-                    ? "bg-gray-100 dark:bg-dark-elevated text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-dark-hover border border-gray-200 dark:border-dark-border"
-                    : isGoldCard
-                    ? "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-500"
-                    : "bg-gray-100 dark:bg-dark-border text-gray-500 dark:text-gray-400"
-                  : isGoldCard
-                    ? "bg-gradient-to-r from-amber-400 to-yellow-500 text-gray-900 shadow-lg shadow-amber-500/20 hover:shadow-xl hover:shadow-amber-500/30"
-                    : isPopular
-                      ? "bg-gradient-to-r from-primary to-accent text-white shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/35"
-                      : "bg-gray-100 dark:bg-dark-elevated text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-dark-hover border border-gray-200 dark:border-dark-border"
+                transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed
+                ${isCurrentPlan && isFree && !isFreeTrialExpired
+                  // Active free plan → green "Ouvrir l'app" button
+                  ? "bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white shadow-md shadow-emerald-500/20"
+                  : isCurrentPlan && isFree && isFreeTrialExpired
+                    // Expired free plan → muted disabled
+                    ? "bg-gray-100 dark:bg-dark-elevated text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-dark-border"
+                    : isCurrentPlan && isGoldCard
+                      // Max current → muted gold
+                      ? "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-500"
+                      : isCurrentPlan
+                        // Pro current → muted orange
+                        ? "bg-primary/10 text-primary dark:bg-primary/15 border border-primary/20"
+                        : isGoldCard
+                          ? "bg-gradient-to-r from-amber-400 to-yellow-500 text-gray-900 shadow-lg shadow-amber-500/20 hover:shadow-xl hover:shadow-amber-500/30"
+                          : isPopular
+                            ? "bg-gradient-to-r from-primary to-accent text-white shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/35"
+                            : "bg-gray-100 dark:bg-dark-elevated text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-dark-hover border border-gray-200 dark:border-dark-border"
                 }
               `}
             >
@@ -270,7 +288,16 @@ export default function PricingCard({
                     </svg>
                     <span className="hidden sm:inline">{t.pricingCard.redirecting}</span>
                   </>
+                ) : isCurrentPlan && isFree && !isFreeTrialExpired ? (
+                  // Active free → "Open app" with arrow
+                  <>
+                    <span>{t.pricingCard.openApp}</span>
+                    <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  </>
                 ) : isCurrentPlan ? (
+                  // Any other current plan (paid, or expired free) → "Plan actuel"
                   <>
                     <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />

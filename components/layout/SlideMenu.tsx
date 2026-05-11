@@ -450,7 +450,7 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
       <aside
         className={`
           fixed top-0 left-0 z-[70] h-full w-[85vw] max-w-80
-          bg-background-warm dark:bg-dark-card border-r border-[#F8935D]/10 dark:border-dark-border
+          bg-background-warm dark:bg-dark-card border-r border-gray-200/65 dark:border-dark-border shadow-[1px_0_0_rgba(0,0,0,0.03)]
           flex flex-col
           transform transition-transform duration-300 ease-smooth
           lg:hidden
@@ -464,7 +464,7 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
         }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-[#F8935D]/10 dark:border-dark-border">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200/55 dark:border-dark-border">
           <Link href="/app" className="flex items-center gap-2.5 group min-w-0 flex-1" onClick={onClose}>
             <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-2xl overflow-hidden shadow-glow transition-transform group-hover:scale-105 flex-shrink-0">
               <img
@@ -576,8 +576,8 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
 
         {/* Scrollable navigation - overscroll-contain prevents scroll chaining */}
         <nav className="flex-1 p-4 pt-2 overflow-y-auto no-scrollbar overscroll-contain">
-          {/* Nav items — unified primary palette + shared layoutId active indicator */}
-          <div className="space-y-0.5">
+          {/* Nav items — grouped card for visual hierarchy */}
+          <div className="sidebar-nav-card rounded-xl overflow-hidden ring-1 ring-gray-200/55 dark:ring-white/[0.055] bg-white/50 dark:bg-white/[0.025]">
             {menuItems.map((item) => {
               const isActive = pathname === item.href || (item.href === "/app" && pathname === "/chat");
               const itemName = t.nav[item.nameKey];
@@ -598,13 +598,13 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
                     href={item.href}
                     onClick={onClose}
                     className={`
-                      relative flex items-center gap-3 px-3 py-2 rounded-lg
+                      relative flex items-center gap-3 px-3 py-2
                       transition-colors duration-150 ease-out group haptic-feedback
                       ${isLocked
-                        ? "text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-dark-hover/60"
+                        ? "text-gray-400 dark:text-gray-500 hover:bg-white/70 dark:hover:bg-white/[0.05]"
                         : isActive
-                          ? "bg-primary/[0.06] text-primary"
-                          : "text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-dark-hover/60 hover:text-gray-900 dark:hover:text-white"
+                          ? "bg-primary/[0.09] dark:bg-primary/[0.13] text-primary"
+                          : "text-gray-700 dark:text-gray-200 hover:bg-white/70 dark:hover:bg-white/[0.05] hover:text-gray-900 dark:hover:text-white"
                       }
                     `}
                   >
@@ -645,27 +645,24 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
 
           {/* Chat list section */}
           <div className="mt-4">
-            {/* Toggle header - Clean and simple */}
+            {/* Toggle header — Linear-style section label */}
             <button
               onClick={() => setShowChatList(!showChatList)}
-              className="group flex items-center justify-between w-full px-3 py-2 text-text-muted hover:text-text-primary hover:bg-gray-100 dark:hover:bg-dark-hover transition-colors duration-200 rounded-lg"
+              className="group flex items-center gap-2 w-full px-1 py-1.5 rounded-md hover:bg-gray-100/60 dark:hover:bg-dark-hover/40 transition-colors duration-150"
             >
-              <span className="text-xs font-semibold uppercase tracking-wide">
+              <span className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-gray-400 dark:text-gray-500 group-hover:text-gray-500 dark:group-hover:text-gray-400 transition-colors shrink-0">
                 {t.sidebar.conversations}
               </span>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-text-muted">
-                  {localPosts.length}
-                </span>
-                <svg
-                  className={`w-4 h-4 transition-transform duration-200 text-text-muted ${showChatList ? "rotate-0" : "-rotate-90"}`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
+              <div className="flex-1 h-px bg-gray-200/60 dark:bg-dark-border/50" />
+              <span className="text-[10px] tabular-nums text-gray-400 dark:text-gray-500 shrink-0">{localPosts.length}</span>
+              <svg
+                className={`w-3.5 h-3.5 transition-transform duration-200 text-gray-400 dark:text-gray-500 shrink-0 ${showChatList ? "rotate-0" : "-rotate-90"}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
             </button>
 
             {/* Grouped posts - No max-height for unified scroll */}
@@ -678,27 +675,22 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
               {groupedPosts.length > 0 ? (
                 <>
                   {groupedPosts.map((group, groupIndex) => {
-                    // Determine group visual properties
-                    const isToday = group.label.includes(t.sidebar.today || "Aujourd'hui");
-                    const isYesterday = group.label.includes(t.sidebar.yesterday || "Hier");
                     const isPinned = group.isPinnedGroup;
 
                     return (
                       <div key={group.label} className={groupIndex > 0 ? "mt-3" : "mt-1.5"}>
-                        {/* Group header - Clean and minimal */}
-                        <div className="px-3 py-1.5 flex items-center justify-between">
-                          <span className="text-xs font-medium text-text-muted">
-                            {isPinned && (
-                              <span className="inline-flex items-center gap-1.5">
-                                <svg className="w-3 h-3 text-primary" fill="currentColor" viewBox="0 0 24 24">
-                                  <path d="M16 4a1 1 0 0 1 1 1v3.586l1.707 1.707a1 1 0 0 1 .293.707v2a1 1 0 0 1-1 1h-4v6a1 1 0 0 1-2 0v-6H8a1 1 0 0 1-1-1v-2a1 1 0 0 1 .293-.707L9 8.586V5a1 1 0 0 1 1-1h6z"/>
-                                </svg>
-                                {group.label}
-                              </span>
-                            )}
-                            {!isPinned && group.label}
+                        {/* Group header — label + trailing rule */}
+                        <div className="px-1 pt-2 pb-1 flex items-center gap-2">
+                          {isPinned && (
+                            <svg className="w-2.5 h-2.5 shrink-0 text-primary/60" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M16 4a1 1 0 0 1 1 1v3.586l1.707 1.707a1 1 0 0 1 .293.707v2a1 1 0 0 1-1 1h-4v6a1 1 0 0 1-2 0v-6H8a1 1 0 0 1-1-1v-2a1 1 0 0 1 .293-.707L9 8.586V5a1 1 0 0 1 1-1h6z"/>
+                            </svg>
+                          )}
+                          <span className="text-[10px] font-semibold uppercase tracking-[0.07em] text-gray-400 dark:text-gray-500 shrink-0">
+                            {group.label}
                           </span>
-                          <span className="text-xs text-text-muted/60">
+                          <div className="flex-1 h-px bg-gray-200/50 dark:bg-dark-border/40" />
+                          <span className="text-[10px] tabular-nums text-gray-400/70 dark:text-gray-600 shrink-0">
                             {group.posts.length}
                           </span>
                         </div>
@@ -821,7 +813,7 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
 
         {/* Footer - User Profile Menu with safe area for iOS home indicator */}
         <div
-          className="px-3 py-3 border-t border-gray-200 dark:border-dark-border"
+          className="px-3 py-3 border-t border-gray-200/55 dark:border-dark-border bg-gradient-to-t from-gray-50/70 dark:from-dark-elevated/25 to-transparent"
           style={{
             paddingBottom: "max(env(safe-area-inset-bottom, 0px), 12px)",
           }}

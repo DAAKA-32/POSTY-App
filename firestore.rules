@@ -2,185 +2,116 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to check if user is authenticated
     function isAuthenticated() {
       return request.auth != null;
     }
 
-    // Helper function to check if user owns the document by userId path
+    // Owner-by-path: user matches the {userId} URL segment
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    // Helper function to check if user owns the resource (for existing docs)
+    // Owner-by-data: existing doc's userId field matches caller (used by get/list/update/delete)
     function isResourceOwner() {
-      return isAuthenticated() && request.auth.uid == resource.data.userId;
+      return isAuthenticated() && resource.data.userId == request.auth.uid;
     }
 
-    // Helper function to check if the request data has matching userId
+    // Owner-by-payload: caller writes a doc with their own userId (used by create)
     function isRequestOwner() {
       return isAuthenticated() && request.resource.data.userId == request.auth.uid;
     }
 
-    // Helper function to check if user can schedule posts (Pro or Max plan)
-    // Supports both regular subscription AND test mode
+    // Scheduling guard — Pro or Max plan (regular subscription OR test mode)
     function canSchedulePosts() {
       let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
-
-      // Check if user document exists
       let hasUser = userDoc != null && userDoc.data != null;
-
-      // Check regular subscription plan
       let hasRegularPlan = hasUser
         && userDoc.data.subscription != null
         && (userDoc.data.subscription.plan == 'pro' || userDoc.data.subscription.plan == 'max');
-
-      // Check test mode - if active with pro or max plan, allow scheduling
       let hasTestModePlan = hasUser
         && userDoc.data.testMode != null
         && userDoc.data.testMode.active == true
         && (userDoc.data.testMode.plan == 'pro' || userDoc.data.testMode.plan == 'max');
-
       return hasRegularPlan || hasTestModePlan;
     }
 
-    // Users collection - only owner can read/write
-    match /users/{userId} {
-      allow read, write: if isOwner(userId);
-    }
+    // ───────────────────────── OWNED-BY-PATH collections ─────────────────────────
+    // These collections use the user's uid as the document ID, so isOwner(userId)
+    // is sufficient and there is no way one user can read another user's row.
 
-    // Posts collection - owner can read/write, any authenticated user can create
+    match /users/{userId}                  { allow read, write: if isOwner(userId); }
+    match /consents/{userId}               { allow read, write: if isOwner(userId); }
+    match /linkedinConnections/{userId}    { allow read, write: if isOwner(userId); }
+    match /facebookConnections/{userId}    { allow read, write: if isOwner(userId); }
+    match /threadsConnections/{userId}     { allow read, write: if isOwner(userId); }
+    match /mediumConnections/{userId}      { allow read, write: if isOwner(userId); }
+    match /blueskyConnections/{userId}     { allow read, write: if isOwner(userId); }
+    match /mastodonConnections/{userId}    { allow read, write: if isOwner(userId); }
+    match /discordConnections/{userId}     { allow read, write: if isOwner(userId); }
+
+    // Server-only: contains client_secret. Explicit deny for defense-in-depth.
+    match /mastodonApps/{docId}            { allow read, write: if false; }
+
+    // ───────────────────────── OWNED-BY-DATA collections ─────────────────────────
+    // Documents identified by random IDs but carrying a userId field. We require
+    // resource.data.userId == auth.uid on every read (get AND list) — this means
+    // list queries MUST include where("userId","==", uid) to succeed, which closes
+    // the previous "any authed user can list everything" hole.
+
     match /posts/{postId} {
-      // Allow list queries for authenticated users (queries filter by userId anyway)
-      allow list: if isAuthenticated();
-      // Allow read for single document if owner
-      allow get: if isResourceOwner();
+      allow read:   if isResourceOwner();
       allow update, delete: if isResourceOwner();
       allow create: if isAuthenticated() && isRequestOwner();
     }
 
-    // Sessions collection - for chat history
     match /sessions/{sessionId} {
-      allow list: if isAuthenticated();
-      allow get: if isResourceOwner();
+      allow read:   if isResourceOwner();
       allow update, delete: if isResourceOwner();
       allow create: if isAuthenticated() && isRequestOwner();
     }
 
-    // Consents collection - RGPD consent management
-    match /consents/{userId} {
-      allow read, write: if isOwner(userId);
-    }
-
-    // LinkedIn connections - OAuth tokens and profile data
-    match /linkedinConnections/{userId} {
-      allow read, write: if isOwner(userId);
-    }
-
-    // Facebook connections - OAuth tokens and profile data
-    match /facebookConnections/{userId} {
-      allow read, write: if isOwner(userId);
-    }
-
-    // Threads connections - OAuth tokens and profile data
-    match /threadsConnections/{userId} {
-      allow read, write: if isOwner(userId);
-    }
-
-    // Medium connections - integration tokens and profile data
-    match /mediumConnections/{userId} {
-      allow read, write: if isOwner(userId);
-    }
-
-    // Bluesky connections - AT Protocol session (handle + JWT pair)
-    match /blueskyConnections/{userId} {
-      allow read, write: if isOwner(userId);
-    }
-
-    // Bluesky posts history
-    match /blueskyPosts/{postId} {
-      allow list: if isAuthenticated();
-      allow get: if isResourceOwner();
-      allow update, delete: if isResourceOwner();
-      allow create: if isAuthenticated() && isRequestOwner();
-    }
-
-    // Mastodon connections - instance URL + personal access token
-    match /mastodonConnections/{userId} {
-      allow read, write: if isOwner(userId);
-    }
-
-    // Mastodon app credentials (one doc per instance, contains client_secret).
-    // Server-only via Admin SDK — explicitly deny client access for defense
-    // in depth. Reading this would let any user impersonate Posty on that
-    // instance.
-    match /mastodonApps/{docId} {
-      allow read, write: if false;
-    }
-
-    // Mastodon posts history
-    match /mastodonPosts/{postId} {
-      allow list: if isAuthenticated();
-      allow get: if isResourceOwner();
-      allow update, delete: if isResourceOwner();
-      allow create: if isAuthenticated() && isRequestOwner();
-    }
-
-    // Discord webhooks - stored webhook URL (no OAuth)
-    match /discordConnections/{userId} {
-      allow read, write: if isOwner(userId);
-    }
-
-    // Discord posts history
-    match /discordPosts/{postId} {
-      allow list: if isAuthenticated();
-      allow get: if isResourceOwner();
-      allow update, delete: if isResourceOwner();
-      allow create: if isAuthenticated() && isRequestOwner();
-    }
-
-    // LinkedIn posts history
     match /linkedinPosts/{postId} {
-      allow list: if isAuthenticated();
-      allow get: if isResourceOwner();
+      allow read:   if isResourceOwner();
       allow update, delete: if isResourceOwner();
       allow create: if isAuthenticated() && isRequestOwner();
     }
 
-    // Medium posts history
+    match /blueskyPosts/{postId} {
+      allow read:   if isResourceOwner();
+      allow update, delete: if isResourceOwner();
+      allow create: if isAuthenticated() && isRequestOwner();
+    }
+
+    match /mastodonPosts/{postId} {
+      allow read:   if isResourceOwner();
+      allow update, delete: if isResourceOwner();
+      allow create: if isAuthenticated() && isRequestOwner();
+    }
+
+    match /discordPosts/{postId} {
+      allow read:   if isResourceOwner();
+      allow update, delete: if isResourceOwner();
+      allow create: if isAuthenticated() && isRequestOwner();
+    }
+
     match /mediumPosts/{postId} {
-      allow list: if isAuthenticated();
-      allow get: if isResourceOwner();
+      allow read:   if isResourceOwner();
       allow update, delete: if isResourceOwner();
       allow create: if isAuthenticated() && isRequestOwner();
     }
 
-    // Scheduled posts collection - Pro/Max plans only for create
     match /scheduledPosts/{postId} {
-      // Allow list queries for authenticated users
-      allow list: if isAuthenticated();
-
-      // Allow get if user owns the scheduled post
-      allow get: if isResourceOwner();
-
-      // Allow update and delete if user owns the scheduled post
+      allow read:   if isResourceOwner();
       allow update, delete: if isResourceOwner();
-
-      // Allow create only if authenticated, owns the data, and has Pro/Max plan
-      allow create: if isAuthenticated()
-        && isRequestOwner()
-        && canSchedulePosts();
+      allow create: if isAuthenticated() && isRequestOwner() && canSchedulePosts();
     }
 
-    // Payments collection - read only for owner
     match /payments/{paymentId} {
-      allow list: if isAuthenticated();
-      allow get: if isResourceOwner();
-      allow create: if false; // Only server can create
-      allow update, delete: if false; // Read-only
+      allow read:   if isResourceOwner();
+      allow create, update, delete: if false; // Server-only via Admin SDK
     }
 
-    // Default deny all other access
+    // ───────────────────────── Default deny ─────────────────────────
     match /{document=**} {
       allow read, write: if false;
     }

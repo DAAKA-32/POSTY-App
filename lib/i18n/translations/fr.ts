@@ -60,6 +60,11 @@ export const fr = {
     learnMore: "En savoir plus",
     discover: "Découvrir",
     getStarted: "Commencer",
+    welcomeModalTitle: "Bienvenue sur Posty !",
+    welcomeModalTitlePlan: "Bienvenue dans {planName} !",
+    welcomeModalMessage: "L'équipe Posty vous remercie pour votre confiance !",
+    welcomeModalSubtitle: "Votre espace est prêt.",
+    welcomeModalRedirect: "Redirection automatique...",
     tryNow: "Essayer maintenant",
     signUp: "S'inscrire",
     signIn: "Se connecter",
@@ -1246,6 +1251,8 @@ export const fr = {
     noResults: "Aucun résultat",
     noConversations: "Aucune conversation",
     forQuery: "pour",
+    emptyStateTitle: "Prêt à publier ?",
+    emptyStateSubtitle: "Crée ton premier post LinkedIn en quelques secondes.",
   },
 
   // Chat - Improved micro-copy for better UX
@@ -2623,6 +2630,7 @@ export const fr = {
     guaranteeDays: "j remboursé",
     noCommitment: "Sans engagement",
     redirecting: "Redirection...",
+    openApp: "Ouvrir l'app",
   },
 
   // Subscription Page
@@ -2633,10 +2641,10 @@ export const fr = {
     subscriptionRequiredDesc: "Un abonnement actif est nécessaire pour accéder à cette fonctionnalité. Passez au plan Pro ou Max dès maintenant !",
     trialExpiredDesc: "Votre période d'essai est terminée. Choisissez un plan pour continuer à profiter de Posty.",
     upgradeNeededDesc: "Cette fonctionnalité nécessite un abonnement premium.",
-    // Free-plan 14-day trial
+    // Free-plan 30-day trial
     freeTrialExpired: "Votre essai gratuit est terminé",
-    freeTrialExpiredDesc: "Vos 14 jours d'essai sont écoulés. Passez à Pro ou Max pour continuer à utiliser Posty.",
-    freeTrialBadge: "Essai gratuit · 14 jours inclus",
+    freeTrialExpiredDesc: "Vos 30 jours d'essai sont écoulés. Passez à Pro ou Max pour continuer à utiliser Posty.",
+    freeTrialBadge: "Essai gratuit · 30 jours inclus",
     freeTrialEndsOn: "Votre essai se termine le {date}",
     freeTrialDaysLeft: "{n} jours restants sur votre essai gratuit",
     freeTrialOneDayLeft: "Dernier jour de votre essai gratuit",
@@ -2651,6 +2659,12 @@ export const fr = {
     editProfile: "Modifier mon profil",
     backToLogin: "Retour à la connexion",
     backToOnboarding: "Modifier mon onboarding",
+    paidTrialLastDay: "Dernier jour de votre essai {plan} !",
+    paidTrialDaysLeft: "{n} jours restants sur votre essai {plan}",
+    paidTrialNoCharge: "Aucun débit pendant l'essai",
+    paidTrialManage: "Gérer",
+    guaranteeBadge: "Garantie satisfait ou remboursé —",
+    guaranteeDaysLeft: "{n}j restants",
   },
 
   // Schedule Page
@@ -3088,6 +3102,51 @@ export const fr = {
       "Petit accroc avec LinkedIn. Reconnecter votre compte règle souvent le problème.",
     genericAction: "Reconnecter",
     retryAction: "Réessayer",
+  },
+
+  // ─── Modale de connexion Bluesky — clair, brandé, bleu ciel ─────────────
+  blueskyConnect: {
+    title: "Connecter Bluesky",
+    subtitle: "Publiez sur Bluesky depuis Posty en un clic.",
+    trustNote: "Posty ne voit jamais votre vrai mot de passe. Vous générez un mot de passe d'application dédié, révocable à tout moment.",
+    handleLabel: "Identifiant Bluesky",
+    handlePlaceholder: "alice.bsky.social",
+    handleHint: "Inutile de mettre le @. Si vous tapez juste votre pseudo, on ajoute .bsky.social automatiquement.",
+    appPasswordLabel: "Mot de passe d'application",
+    appPasswordPlaceholder: "xxxx-xxxx-xxxx-xxxx",
+    appPasswordHint: "Code à 16 caractères généré dans vos paramètres Bluesky.",
+    showPassword: "Afficher le mot de passe",
+    hidePassword: "Masquer le mot de passe",
+    howToTitle: "Comment obtenir un mot de passe d'application",
+    howToStep1: "Ouvrez <strong>bsky.app</strong> → Paramètres → Mots de passe d'app",
+    howToStep2: "Cliquez sur <strong>Ajouter un mot de passe d'app</strong> et nommez-le « Posty »",
+    howToStep3: "Copiez le code à 16 caractères et collez-le ci-dessous",
+    openBlueskySettings: "Ouvrir les paramètres Bluesky",
+    submit: "Se connecter à Bluesky",
+    cancel: "Annuler",
+    successToast: "Bluesky connecté",
+    errorMissingFields: "Renseignez votre identifiant et votre mot de passe d'application.",
+    errorInvalidCredentials: "Bluesky n'a pas accepté ces identifiants. Vérifiez votre identifiant et votre mot de passe d'application.",
+    errorGeneric: "Connexion à Bluesky impossible. Réessayez dans un instant.",
+  },
+
+  // ─── Modale de connexion Mastodon — fédérée, choix d'instance ──────────
+  mastodonConnect: {
+    title: "Connecter Mastodon",
+    subtitle: "Choisissez votre instance — nous vous redirigeons pour une connexion sécurisée.",
+    trustNote: "Votre mot de passe ne quitte jamais votre instance. Posty reçoit uniquement un jeton d'autorisation, révocable à tout moment depuis vos paramètres Mastodon.",
+    instanceLabel: "Votre instance",
+    instancePlaceholder: "mastodon.social",
+    instanceHint: "Vous ne connaissez pas votre instance ? Regardez votre identifiant : @vous@<strong>c'est-celle-là</strong>",
+    popularInstancesTitle: "Instances populaires",
+    customInstance: "Utiliser une autre instance",
+    submit: "Continuer vers Mastodon",
+    submitting: "Redirection…",
+    cancel: "Annuler",
+    redirectNote: "Vous serez redirigé·e vers votre instance pour autoriser Posty. Après confirmation, vous reviendrez ici automatiquement.",
+    errorMissingInstance: "Indiquez votre instance Mastodon.",
+    errorInvalidInstance: "Nous n'avons pas pu joindre cette instance. Vérifiez l'orthographe et réessayez.",
+    errorGeneric: "Impossible de démarrer la connexion à Mastodon. Réessayez dans un instant.",
   },
 
   // Checkout success page

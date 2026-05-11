@@ -14,7 +14,7 @@ import { useFacebook } from "@/contexts/FacebookContext";
 import { useThreads } from "@/contexts/ThreadsContext";
 import { SchedulePlatform, LinkedInPostType } from "@/types";
 import { canUsePlatform } from "@/lib/config/permissions";
-import { PLATFORMS } from "@/components/publish/PlatformSelector";
+import { PLATFORMS } from "@/components/publish/platforms-config";
 import { LinkedInIcon } from "@/components/linkedin/LinkedInConnectButton";
 import { useRouter } from "next/navigation";
 import { useHapticFeedback } from "@/hooks/ui/useHapticFeedback";

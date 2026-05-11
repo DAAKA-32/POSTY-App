@@ -60,6 +60,11 @@ export const en = {
     learnMore: "Learn more",
     discover: "Discover",
     getStarted: "Get started",
+    welcomeModalTitle: "Welcome to Posty!",
+    welcomeModalTitlePlan: "Welcome to {planName}!",
+    welcomeModalMessage: "The Posty team thanks you for your trust!",
+    welcomeModalSubtitle: "Your workspace is ready.",
+    welcomeModalRedirect: "Automatic redirect...",
     tryNow: "Try now",
     signUp: "Sign up",
     signIn: "Sign in",
@@ -1244,6 +1249,8 @@ export const en = {
     noResults: "No results",
     noConversations: "No conversations",
     forQuery: "for",
+    emptyStateTitle: "Ready to publish?",
+    emptyStateSubtitle: "Create your first LinkedIn post in seconds.",
   },
 
   // Chat - Improved micro-copy for better UX
@@ -2622,6 +2629,7 @@ export const en = {
     guaranteeDays: "day money-back guarantee",
     noCommitment: "No commitment",
     redirecting: "Redirecting...",
+    openApp: "Open app",
   },
 
   // Subscription Page
@@ -2632,10 +2640,10 @@ export const en = {
     subscriptionRequiredDesc: "An active subscription is required to access this feature. Upgrade to Pro or Max now!",
     trialExpiredDesc: "Your trial period has ended. Choose a plan to continue using Posty.",
     upgradeNeededDesc: "This feature requires a premium subscription.",
-    // Free-plan 14-day trial
+    // Free-plan 30-day trial
     freeTrialExpired: "Your free trial has ended",
-    freeTrialExpiredDesc: "Your 14 free days are over. Upgrade to Pro or Max to keep using Posty.",
-    freeTrialBadge: "Free Trial · 14 days included",
+    freeTrialExpiredDesc: "Your 30 free days are over. Upgrade to Pro or Max to keep using Posty.",
+    freeTrialBadge: "Free Trial · 30 days included",
     freeTrialEndsOn: "Your trial ends on {date}",
     freeTrialDaysLeft: "{n} days left on your free trial",
     freeTrialOneDayLeft: "Last day of your free trial",
@@ -2650,6 +2658,12 @@ export const en = {
     editProfile: "Edit my profile",
     backToLogin: "Back to login",
     backToOnboarding: "Edit my onboarding",
+    paidTrialLastDay: "Last day of your {plan} trial!",
+    paidTrialDaysLeft: "{n} days left on your {plan} trial",
+    paidTrialNoCharge: "No charge during the trial",
+    paidTrialManage: "Manage",
+    guaranteeBadge: "Satisfaction guarantee —",
+    guaranteeDaysLeft: "{n}d remaining",
   },
 
   // Schedule Page
@@ -3090,6 +3104,51 @@ export const en = {
       "We hit a snag with LinkedIn. Reconnecting your account usually fixes it.",
     genericAction: "Reconnect",
     retryAction: "Try again",
+  },
+
+  // ─── Bluesky connect modal — clear, branded, on-brand sky-blue ─────────
+  blueskyConnect: {
+    title: "Connect Bluesky",
+    subtitle: "Post to Bluesky from Posty in one click.",
+    trustNote: "Posty never sees your real password. You generate a dedicated app password and revoke it whenever you want.",
+    handleLabel: "Bluesky handle",
+    handlePlaceholder: "alice.bsky.social",
+    handleHint: "No need for the @. If you only enter your username, we add .bsky.social automatically.",
+    appPasswordLabel: "App password",
+    appPasswordPlaceholder: "xxxx-xxxx-xxxx-xxxx",
+    appPasswordHint: "16-character code generated in your Bluesky settings.",
+    showPassword: "Show password",
+    hidePassword: "Hide password",
+    howToTitle: "How to get an app password",
+    howToStep1: "Open <strong>bsky.app</strong> → Settings → App Passwords",
+    howToStep2: "Click <strong>Add App Password</strong> and name it \"Posty\"",
+    howToStep3: "Copy the 16-character code and paste it below",
+    openBlueskySettings: "Open Bluesky settings",
+    submit: "Connect to Bluesky",
+    cancel: "Cancel",
+    successToast: "Bluesky connected",
+    errorMissingFields: "Please enter your handle and app password.",
+    errorInvalidCredentials: "Bluesky didn't accept those credentials. Double-check your handle and app password.",
+    errorGeneric: "We couldn't connect to Bluesky. Try again in a moment.",
+  },
+
+  // ─── Mastodon connect modal — branded, federated-aware ─────────────────
+  mastodonConnect: {
+    title: "Connect Mastodon",
+    subtitle: "Pick your home instance — we redirect you there for a safe sign-in.",
+    trustNote: "Your password never leaves your instance. Posty receives only a permission token, which you can revoke anytime from your Mastodon settings.",
+    instanceLabel: "Your instance",
+    instancePlaceholder: "mastodon.social",
+    instanceHint: "Don't know your instance? Look at your handle: @you@<strong>this-is-it</strong>",
+    popularInstancesTitle: "Popular instances",
+    customInstance: "Use a different instance",
+    submit: "Continue to Mastodon",
+    submitting: "Redirecting…",
+    cancel: "Cancel",
+    redirectNote: "You'll be redirected to your instance to authorize Posty. After approval, you'll come right back here.",
+    errorMissingInstance: "Please enter your Mastodon instance.",
+    errorInvalidInstance: "We couldn't reach this instance. Check the spelling and try again.",
+    errorGeneric: "We couldn't start the Mastodon connection. Try again in a moment.",
   },
 
   // Checkout success page

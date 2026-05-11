@@ -24,6 +24,8 @@ import MaxModeSelector from "@/components/chat/MaxModeSelector";
 import DualModeToggle from "@/components/chat/DualModeToggle";
 import AIModeSwitch, { AIMode } from "@/components/chat/AIModeSwitch";
 import InlineUpgradeBanner from "@/components/chat/InlineUpgradeBanner";
+import { useStrategistDrawer } from "@/contexts/StrategistDrawerContext";
+import { isStrategistEnabled } from "@/lib/config/feature-flags";
 import NewResponseIndicator from "@/components/chat/NewResponseIndicator";
 import PublishToLinkedInModal from "@/components/linkedin/PublishToLinkedInModal";
 import ScheduleModal from "@/components/schedule/ScheduleModal";
@@ -31,6 +33,7 @@ import { AnimatedScaleFade } from "@/components/animations/AnimatedPageWrapper";
 import toast from "@/components/ui/Toast";
 import UniversalChatInput, { UniversalChatInputRef } from "@/components/chat/UniversalChatInput";
 import { useLanguage } from "@/contexts/LanguageContext";
+import ActionConfirmCard from "@/components/ai-actions/ActionConfirmCard";
 
 // Dynamic placeholder examples that rotate
 const PLACEHOLDER_EXAMPLES = [
@@ -50,7 +53,8 @@ function ConversationContent() {
   const { user, userProfile } = useAuth();
   const { connection: linkedInConnection, publishToLinkedIn } = useLinkedIn();
   const { canSendMessage } = useQuota();
-  const { currentPlan, planLimits, isMaxPlan, isProPlan } = useSubscription();
+  const { currentPlan, planLimits, isMaxPlan, isProPlan, hasMarketingStrategist } = useSubscription();
+  const { open: openStrategistDrawer } = useStrategistDrawer();
   const browserMode = useBrowserMode();
   const { keyboardHeight, isKeyboardVisible } = useKeyboardHeight();
 
@@ -75,7 +79,8 @@ function ConversationContent() {
   const [dualMode, setDualMode] = useState(false);
   const [dualUsedThisWeek, setDualUsedThisWeek] = useState(0);
   const [maxMode, setMaxMode] = useState<"dual" | "storytelling" | "business">("dual");
-  const [aiMode, setAiMode] = useState<AIMode>("linkedin");
+  // Top-level chat persona for follow-up messages in this conversation.
+  const [aiMode, setAiMode] = useState<AIMode>("posts");
   const [showUpgradeBanner, setShowUpgradeBanner] = useState(false);
   const [upgradeBannerReason, setUpgradeBannerReason] = useState<"dual-limit" | "max-feature">("max-feature");
 
@@ -712,6 +717,37 @@ function ConversationContent() {
                           );
                           i++;
                         }
+                      } else if (message.type === "action" && message.action) {
+                        const action = message.action;
+                        elements.push(
+                          <motion.div
+                            key={message.id || `action-${i}`}
+                            initial={{ opacity: 0, y: 6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.2, ease: smoothEase }}
+                            className="w-full"
+                          >
+                            <div className="flex items-center gap-3 mb-3">
+                              <div className="w-8 h-8 shrink-0 rounded-xl overflow-hidden shadow-sm">
+                                <img src="/logo.png" alt="Posty" className="w-full h-full object-contain" />
+                              </div>
+                              <span className="text-xs text-text-muted font-medium">POSTY</span>
+                            </div>
+                            <ActionConfirmCard
+                              action={action}
+                              onSuccess={(actionType, data) => {
+                                if (actionType === "publish_post" && action.params.content) {
+                                  handlePublishToLinkedIn(action.params.content);
+                                } else if (actionType === "delete_conversation") {
+                                  router.push("/app?new=" + Date.now());
+                                }
+                                void data;
+                              }}
+                              onCancel={() => {}}
+                            />
+                          </motion.div>
+                        );
+                        i++;
                       } else {
                         i++;
                       }
@@ -780,9 +816,21 @@ function ConversationContent() {
           }
         >
           <div className="max-w-3xl mx-auto px-3 sm:px-4 py-2 sm:py-3 lg:py-2">
-            {/* Post Mode Selector / Upgrade Banner zone — hidden in general AI mode */}
+            {/* AI persona selector — Posts / Support / Stratège */}
+            {isStrategistEnabled() && (
+              <div className="mb-2 flex justify-center">
+                <AIModeSwitch
+                  mode={aiMode}
+                  onModeChange={setAiMode}
+                  onOpenStrategist={openStrategistDrawer}
+                  hasStrategistAccess={hasMarketingStrategist}
+                />
+              </div>
+            )}
+
+            {/* Post Mode Selector / Upgrade Banner zone — only when generating posts */}
             <AnimatePresence mode="wait">
-              {aiMode === "linkedin" && isMaxPlan && (
+              {aiMode === "posts" && isMaxPlan && (
                 <motion.div
                   key="max-selector"
                   initial={{ opacity: 0, height: 0 }}
@@ -795,10 +843,9 @@ function ConversationContent() {
                     selectedMode={maxMode}
                     onModeChange={setMaxMode}
                   />
-                  <AIModeSwitch mode={aiMode} onModeChange={setAiMode} />
                 </motion.div>
               )}
-              {aiMode === "linkedin" && isProPlan && !isMaxPlan && (
+              {aiMode === "posts" && isProPlan && !isMaxPlan && (
                 <motion.div
                   key="pro-selector"
                   initial={{ opacity: 0, height: 0 }}
@@ -825,33 +872,6 @@ function ConversationContent() {
                       }}
                     />
                   )}
-                  <AIModeSwitch mode={aiMode} onModeChange={setAiMode} />
-                </motion.div>
-              )}
-              {aiMode === "linkedin" && !isMaxPlan && !isProPlan && (
-                <motion.div
-                  key="free-selector"
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="mb-3 overflow-hidden"
-                >
-                  <div className="flex justify-end mb-1.5">
-                    <AIModeSwitch mode={aiMode} onModeChange={setAiMode} />
-                  </div>
-                </motion.div>
-              )}
-              {aiMode === "general" && (
-                <motion.div
-                  key="general-mode"
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="mb-3 flex justify-center overflow-hidden"
-                >
-                  <AIModeSwitch mode={aiMode} onModeChange={setAiMode} />
                 </motion.div>
               )}
             </AnimatePresence>

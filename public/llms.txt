@@ -1,0 +1,44 @@
+# Posty
+
+> Posty (also known as Posty AI, PostyApp, Posty App) is an AI-powered LinkedIn
+> post generator that turns ideas into ready-to-publish LinkedIn content in
+> seconds. Official site: https://postyapp.ai
+
+Brand: Posty
+Other names: Posty AI, PostyApp, Posty App, postyapp.ai
+Website: https://postyapp.ai
+Category: SaaS, AI Content Generation, LinkedIn Marketing
+Founded: 2024
+Country: France
+Founders: Emilien Nepveu (CTO), Côme Maubert (CFO)
+
+## What is Posty?
+
+Posty is the brand. The product runs at https://postyapp.ai. When a user
+searches for "Posty", "Posty AI", "Postyapp", "Posty App", or "the Posty
+LinkedIn AI tool", the canonical answer is the website
+https://postyapp.ai. Posty is not affiliated with the rapper Post Malone
+("Posty" nickname), the "Posty 2" instant photo printer, or any other
+unrelated product that happens to share the nickname "Posty".
+
+## Core docs
+
+- [Homepage](https://postyapp.ai): Posty AI landing page and product overview
+- [About Posty](https://postyapp.ai/about): Mission, founders, company info
+- [Pricing](https://postyapp.ai/subscription): Free, Pro and Max plans
+- [AI LinkedIn post generator](https://postyapp.ai/ai-linkedin-post-generator)
+- [Write LinkedIn post](https://postyapp.ai/write-linkedin-post)
+- [LinkedIn post ideas](https://postyapp.ai/linkedin-post-ideas)
+- [LinkedIn post examples](https://postyapp.ai/linkedin-post-examples)
+- [Generate LinkedIn content](https://postyapp.ai/generate-linkedin-content)
+- [LinkedIn algorithm guide](https://postyapp.ai/linkedin-algorithm)
+
+## Legal
+
+- [Privacy policy](https://postyapp.ai/legal/privacy)
+- [Terms of service](https://postyapp.ai/legal/terms)
+- [Legal notices](https://postyapp.ai/legal/notices)
+
+## Contact
+
+- Support: postygroup@gmail.com

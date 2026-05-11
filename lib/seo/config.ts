@@ -323,6 +323,11 @@ export const structuredData = {
     "@type": "Organization",
     "@id": `${seoConfig.siteUrl}/#organization`,
     name: "Posty AI",
+    // Brand-entity disambiguation: declare every name a user may search for.
+    // Without this, Google indexes the entity as "Posty AI" only and
+    // brand-search "Posty" loses to homonyms (Post Malone nickname,
+    // Posty instant photo printer, posty.com.br, etc.).
+    alternateName: ["Posty", "PostyApp", "Posty App", "postyapp.ai"],
     url: seoConfig.siteUrl,
     logo: {
       "@type": "ImageObject",
@@ -338,7 +343,15 @@ export const structuredData = {
       jobTitle: f.role,
       ...(f.linkedIn ? { sameAs: [f.linkedIn] } : {}),
     })),
-    sameAs: [seoConfig.founders[0].linkedIn].filter(Boolean),
+    // Identity cluster — every additional verified profile here strengthens
+    // the "Posty" brand-entity in Google's Knowledge Graph.
+    // Add/remove URLs as social profiles are claimed.
+    sameAs: [
+      "https://www.linkedin.com/company/posty-app",
+      "https://twitter.com/posty_app",
+      "https://x.com/posty_app",
+      ...seoConfig.founders.map((f) => f.linkedIn).filter(Boolean),
+    ],
     contactPoint: {
       "@type": "ContactPoint",
       email: seoConfig.supportEmail,
@@ -356,8 +369,10 @@ export const structuredData = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     name: "Posty AI",
+    alternateName: ["Posty", "PostyApp", "Posty App"],
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web",
+    url: seoConfig.siteUrl,
     offers: {
       "@type": "Offer",
       price: "0",

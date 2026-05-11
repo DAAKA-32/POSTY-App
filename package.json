@@ -50,7 +50,8 @@
     "react-dom": "19.0.0",
     "react-hot-toast": "^2.4.1",
     "stripe": "20.1.0",
-    "swr": "2.3.8"
+    "swr": "2.3.8",
+    "zod": "4.4.3"
   },
   "devDependencies": {
     "@capacitor/assets": "^3.0.5",

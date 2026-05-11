@@ -513,9 +513,13 @@ export const ModernResponseCard = memo(function ModernResponseCard({
           </div>
         </div>
 
-        {/* Post content */}
+        {/* Post content — the user's deliverable. Browser auto-translation
+            would corrupt the exact text about to be published to LinkedIn. */}
         <div className="px-4 pb-3">
-          <div className="whitespace-pre-wrap break-words overflow-wrap-anywhere text-[14px] leading-relaxed text-gray-900 dark:text-text-primary">
+          <div
+            className="notranslate whitespace-pre-wrap break-words overflow-wrap-anywhere text-[14px] leading-relaxed text-gray-900 dark:text-text-primary"
+            translate="no"
+          >
             {formatPostContent(content)}
             {isStreaming && (
               <motion.span

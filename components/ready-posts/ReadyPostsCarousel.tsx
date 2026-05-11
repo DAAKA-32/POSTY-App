@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { CATEGORY_STYLES, type ReadyPostCategory } from "@/lib/data/ready-posts";
 
@@ -13,7 +14,6 @@ const CATEGORIES: ReadyPostCategory[] = [
   "controversial",
 ];
 
-// Pastel pill backgrounds matching the legacy chip aesthetic.
 const CHIP_TONES: Record<ReadyPostCategory, { bg: string; border: string }> = {
   storytelling: {
     bg: "bg-[#F8935D]/8 dark:bg-[#F8935D]/12",
@@ -41,25 +41,136 @@ const CHIP_TONES: Record<ReadyPostCategory, { bg: string; border: string }> = {
   },
 };
 
+// Per-category colored hover shadow — contextual depth, not generic black
+const CHIP_HOVER_SHADOW: Record<ReadyPostCategory, string> = {
+  storytelling: "0 8px 24px -4px rgba(248,147,93,0.32), 0 3px 10px -2px rgba(248,147,93,0.20)",
+  tips:         "0 8px 24px -4px rgba(6,182,212,0.30),  0 3px 10px -2px rgba(6,182,212,0.18)",
+  controversial:"0 8px 24px -4px rgba(139,92,246,0.30), 0 3px 10px -2px rgba(139,92,246,0.18)",
+  success:      "0 8px 24px -4px rgba(16,185,129,0.30), 0 3px 10px -2px rgba(16,185,129,0.18)",
+  lesson:       "0 8px 24px -4px rgba(248,147,93,0.32), 0 3px 10px -2px rgba(248,147,93,0.20)",
+  question:     "0 8px 24px -4px rgba(6,182,212,0.30),  0 3px 10px -2px rgba(6,182,212,0.18)",
+};
+
+const REST_SHADOW = "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)";
+const TAP_SHADOW  = "0 1px 2px rgba(0,0,0,0.05)";
+
+// Linear/Vercel-grade spring — snappy but not bouncy
+const SPRING = {
+  type: "spring" as const,
+  stiffness: 380,
+  damping: 26,
+  mass: 0.7,
+};
+
+// Per-category icon personality on hover
+const ICON_HOVER: Record<ReadyPostCategory, { rotate?: number; scale?: number; y?: number }> = {
+  storytelling: { rotate: -8, scale: 1.2,  y: 0  },
+  tips:         { rotate: 12, scale: 1.22, y: 0  },
+  controversial:{ rotate: 0,  scale: 1.2,  y: 0  },
+  success:      { rotate: 0,  scale: 1.25, y: -2 },
+  lesson:       { rotate: -5, scale: 1.18, y: 0  },
+  question:     { rotate: 6,  scale: 1.2,  y: 0  },
+};
+
+// ---------------------------------------------------------------------------
+// CarouselChip — isolated sub-component so variant propagation works correctly
+// (variant names must be on the same animate-controlled component hierarchy)
+// ---------------------------------------------------------------------------
+
+interface ChipProps {
+  category: ReadyPostCategory;
+  disabled: boolean;
+  isDragging: boolean;
+  label: string;
+  onChipClick: (category: ReadyPostCategory, clientX: number, clientY: number) => void;
+  onHoverEnter: () => void;
+  onHoverLeave: () => void;
+}
+
+function CarouselChip({
+  category,
+  disabled,
+  isDragging,
+  label,
+  onChipClick,
+  onHoverEnter,
+  onHoverLeave,
+}: ChipProps) {
+  const style  = CATEGORY_STYLES[category];
+  const tone   = CHIP_TONES[category];
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <motion.button
+      type="button"
+      disabled={disabled}
+      onClick={(e: React.MouseEvent) => onChipClick(category, e.clientX, e.clientY)}
+      onHoverStart={() => {
+        if (disabled || isDragging) return;
+        setIsHovered(true);
+        onHoverEnter();
+      }}
+      onHoverEnd={() => {
+        setIsHovered(false);
+        onHoverLeave();
+      }}
+      draggable={false}
+      className={[
+        "template-chip-interactive",
+        "flex-shrink-0 px-4 py-2.5 rounded-xl border-2",
+        tone.bg,
+        tone.border,
+        "flex items-center gap-2 select-none",
+        disabled ? "cursor-not-allowed opacity-90" : "",
+      ].join(" ")}
+      // Variant names propagate to all motion children automatically
+      animate={isHovered ? "hover" : "rest"}
+      whileTap={disabled ? undefined : "tap"}
+      variants={{
+        rest: { scale: 1,    y: 0,  boxShadow: REST_SHADOW },
+        hover:{ scale: 1.04, y: -3, boxShadow: CHIP_HOVER_SHADOW[category] },
+        tap:  { scale: 0.97, y: 1,  boxShadow: TAP_SHADOW },
+      }}
+      transition={SPRING}
+    >
+      {/* Icon — animated with per-category personality via variant propagation */}
+      <motion.span
+        className="text-lg pointer-events-none"
+        variants={{
+          rest: { scale: 1,   rotate: 0,                y: 0   },
+          hover:{ ...ICON_HOVER[category] },
+          tap:  { scale: 0.9, rotate: 0,                y: 0   },
+        }}
+        transition={SPRING}
+      >
+        {style.icon}
+      </motion.span>
+
+      {/* Label — color/weight transition via CSS (no Framer re-render needed) */}
+      <span
+        className={[
+          "text-xs whitespace-nowrap pointer-events-none transition-colors duration-150",
+          isHovered && !disabled
+            ? "text-gray-900 dark:text-white font-semibold"
+            : "text-gray-700 dark:text-text-secondary font-medium",
+        ].join(" ")}
+      >
+        {label}
+      </span>
+    </motion.button>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// ReadyPostsCarousel — infinite horizontal auto-scroll with drag + hover pause
+// ---------------------------------------------------------------------------
+
 interface ReadyPostsCarouselProps {
   disabled?: boolean;
-  /** Fired when a chip is clicked. Plan gating (Max vs Free/Pro) is handled by the parent's category browser. */
   onPickCategory: (category: ReadyPostCategory) => void;
   className?: string;
 }
 
-/**
- * ReadyPostsCarousel — infinite horizontal chip carousel.
- *
- * Each chip represents a post category (Storytelling, Tips, Engagement…).
- * Clicking a chip surfaces the ready-to-publish posts for that category in
- * the parent's browser modal. The chips themselves are not plan-gated; the
- * lock kicks in inside the browser for Free / Pro users.
- *
- * The auto-scroll loop uses the same battle-tested RAF pattern as the
- * legacy carousel: refs drive the animation, DOM transforms apply directly,
- * and the track triplicates the dataset to wrap seamlessly.
- */
 export default function ReadyPostsCarousel({
   disabled = false,
   onPickCategory,
@@ -70,24 +181,24 @@ export default function ReadyPostsCarousel({
   const tripled = [...CATEGORIES, ...CATEGORIES, ...CATEGORIES];
 
   const [isDragging, setIsDragging] = useState(false);
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
 
-  const containerRef = useRef<HTMLDivElement>(null);
-  const trackRef = useRef<HTMLDivElement>(null);
-  const animationRef = useRef<number | null>(null);
-  const lastTimeRef = useRef(0);
-  const isPausedRef = useRef(false);
-  const isDraggingRef = useRef(false);
-  const startXRef = useRef(0);
-  const scrollStartRef = useRef(0);
-  const scrollXRef = useRef(0);
-  const trackWidthRef = useRef(0);
-  const velocityRef = useRef(0);
-  const lastMoveTimeRef = useRef(0);
-  const lastMoveXRef = useRef(0);
-  const resumeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const momentumRef = useRef<number | null>(null);
-  const clickStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+  const containerRef       = useRef<HTMLDivElement>(null);
+  const trackRef           = useRef<HTMLDivElement>(null);
+  const animationRef       = useRef<number | null>(null);
+  const lastTimeRef        = useRef(0);
+  const isPausedRef        = useRef(false);
+  const isDraggingRef      = useRef(false);
+  const startXRef          = useRef(0);
+  const scrollStartRef     = useRef(0);
+  const scrollXRef         = useRef(0);
+  const trackWidthRef      = useRef(0);
+  const velocityRef        = useRef(0);
+  const lastMoveTimeRef    = useRef(0);
+  const lastMoveXRef       = useRef(0);
+  const resumeTimeoutRef   = useRef<NodeJS.Timeout | null>(null);
+  const hoverResumeRef     = useRef<NodeJS.Timeout | null>(null);
+  const momentumRef        = useRef<number | null>(null);
+  const clickStartRef      = useRef<{ x: number; y: number; time: number } | null>(null);
 
   const updateTrackWidth = useCallback(() => {
     if (trackRef.current) {
@@ -129,8 +240,7 @@ export default function ReadyPostsCarousel({
       const dt = Math.min((timestamp - lastTimeRef.current) / 1000, 0.02);
       lastTimeRef.current = timestamp;
 
-      const movement = 60 * dt;
-      const newX = normalize(scrollXRef.current + movement);
+      const newX = normalize(scrollXRef.current + 60 * dt);
       scrollXRef.current = newX;
 
       if (trackRef.current) {
@@ -152,9 +262,10 @@ export default function ReadyPostsCarousel({
 
     return () => {
       window.removeEventListener("resize", updateTrackWidth);
-      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+      if (animationRef.current)  cancelAnimationFrame(animationRef.current);
       if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
-      if (momentumRef.current) cancelAnimationFrame(momentumRef.current);
+      if (hoverResumeRef.current)   clearTimeout(hoverResumeRef.current);
+      if (momentumRef.current)   cancelAnimationFrame(momentumRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -163,6 +274,10 @@ export default function ReadyPostsCarousel({
     if (resumeTimeoutRef.current) {
       clearTimeout(resumeTimeoutRef.current);
       resumeTimeoutRef.current = null;
+    }
+    if (hoverResumeRef.current) {
+      clearTimeout(hoverResumeRef.current);
+      hoverResumeRef.current = null;
     }
     if (momentumRef.current) {
       cancelAnimationFrame(momentumRef.current);
@@ -189,8 +304,7 @@ export default function ReadyPostsCarousel({
       lastMoveTimeRef.current = now;
       lastMoveXRef.current = clientX;
 
-      const diff = startXRef.current - clientX;
-      const newX = normalize(scrollStartRef.current + diff);
+      const newX = normalize(scrollStartRef.current + (startXRef.current - clientX));
       scrollXRef.current = newX;
 
       if (trackRef.current) {
@@ -238,6 +352,22 @@ export default function ReadyPostsCarousel({
     applyMomentum();
   }, [applyMomentum]);
 
+  // Pause the carousel scroll so the chip stays under the cursor while hovering
+  const handleChipHoverEnter = useCallback(() => {
+    if (hoverResumeRef.current) {
+      clearTimeout(hoverResumeRef.current);
+      hoverResumeRef.current = null;
+    }
+    isPausedRef.current = true;
+  }, []);
+
+  const handleChipHoverLeave = useCallback(() => {
+    hoverResumeRef.current = setTimeout(() => {
+      if (!isDraggingRef.current) isPausedRef.current = false;
+      hoverResumeRef.current = null;
+    }, 350);
+  }, []);
+
   const isClick = useCallback((clientX: number, clientY: number) => {
     const start = clickStartRef.current;
     if (!start) return false;
@@ -276,7 +406,6 @@ export default function ReadyPostsCarousel({
         onMouseUp={handleEnd}
         onMouseLeave={() => {
           if (isDraggingRef.current) handleEnd();
-          setHoveredId(null);
         }}
         onTouchStart={(e) => {
           const t0 = e.touches[0];
@@ -288,52 +417,20 @@ export default function ReadyPostsCarousel({
       >
         <div ref={trackRef} className="interactive-scroll-track">
           {tripled.map((category, idx) => {
-            const chipId = `${category}-${idx}`;
-            const style = CATEGORY_STYLES[category];
-            const tone = CHIP_TONES[category];
-            const isHovered = hoveredId === chipId;
             const label =
               (t.readyPosts.categories as Record<string, string>)[category] ?? category;
 
             return (
-              <button
-                key={chipId}
-                type="button"
+              <CarouselChip
+                key={`${category}-${idx}`}
+                category={category}
                 disabled={disabled}
-                onClick={(e) => handleChipClick(category, e.clientX, e.clientY)}
-                onMouseEnter={() => !disabled && setHoveredId(chipId)}
-                onMouseLeave={() => setHoveredId(null)}
-                draggable={false}
-                className={`
-                  template-chip-interactive
-                  flex-shrink-0 px-4 py-2.5 rounded-xl border-2
-                  ${tone.bg} ${tone.border}
-                  flex items-center gap-2
-                  select-none
-                  transition-all duration-200
-                  ${disabled
-                    ? "cursor-not-allowed opacity-90"
-                    : isHovered
-                      ? `scale-105 shadow-lg ring-2 ${style.ring}`
-                      : "scale-100"
-                  }
-                  ${!disabled ? "hover:shadow-md" : ""}
-                `}
-              >
-                <span className="text-lg pointer-events-none">{style.icon}</span>
-                <span
-                  className={`
-                    text-xs font-medium whitespace-nowrap pointer-events-none
-                    transition-colors duration-200
-                    ${isHovered && !disabled
-                      ? "text-gray-900 dark:text-white font-semibold"
-                      : "text-gray-700 dark:text-text-secondary"
-                    }
-                  `}
-                >
-                  {label}
-                </span>
-              </button>
+                isDragging={isDragging}
+                label={label}
+                onChipClick={handleChipClick}
+                onHoverEnter={handleChipHoverEnter}
+                onHoverLeave={handleChipHoverLeave}
+              />
             );
           })}
         </div>

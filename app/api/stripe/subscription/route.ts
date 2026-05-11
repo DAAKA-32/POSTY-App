@@ -2,6 +2,24 @@ import { NextRequest, NextResponse } from "next/server";
 import { getStripeServer } from "@/lib/config/stripe";
 import Stripe from "stripe";
 import { verifyAuth } from "@/lib/auth";
+import { adminDb } from "@/lib/db/firebase-admin";
+
+/**
+ * Returns the authenticated user's Stripe customer/subscription IDs from
+ * Firestore. Used to guard against IDOR: a logged-in attacker must not be
+ * able to retrieve another user's subscription by passing an arbitrary ID.
+ */
+async function getOwnedStripeIds(uid: string): Promise<{ customerId: string | null; subscriptionId: string | null }> {
+  if (!adminDb) return { customerId: null, subscriptionId: null };
+  const snap = await adminDb.collection("users").doc(uid).get();
+  const sub = snap.data()?.subscription as
+    | { stripeCustomerId?: string; stripeSubscriptionId?: string }
+    | undefined;
+  return {
+    customerId: sub?.stripeCustomerId ?? null,
+    subscriptionId: sub?.stripeSubscriptionId ?? null,
+  };
+}
 
 // Helper to extract subscription data
 function extractSubscriptionData(subscription: Stripe.Subscription) {
@@ -37,15 +55,24 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // IDOR guard: the IDs in the query string must match what we have stored
+    // for THIS user. Without this check, any logged-in user could pass another
+    // user's customerId and read their Stripe subscription.
+    const owned = await getOwnedStripeIds(auth.uid);
+    if (customerId && owned.customerId !== customerId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    if (subscriptionId && owned.subscriptionId !== subscriptionId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const stripe = getStripeServer();
 
-    // If we have a subscription ID, get it directly
     if (subscriptionId) {
       const subscription = await stripe.subscriptions.retrieve(subscriptionId);
       return NextResponse.json(extractSubscriptionData(subscription));
     }
 
-    // If we only have customer ID, find their active subscription
     if (customerId) {
       const subscriptions = await stripe.subscriptions.list({
         customer: customerId,
@@ -88,6 +115,12 @@ export async function POST(request: NextRequest) {
         { error: "Missing subscriptionId" },
         { status: 400 }
       );
+    }
+
+    // IDOR guard for mutations: ensure the subscription belongs to the caller.
+    const owned = await getOwnedStripeIds(auth.uid);
+    if (owned.subscriptionId !== subscriptionId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const stripe = getStripeServer();

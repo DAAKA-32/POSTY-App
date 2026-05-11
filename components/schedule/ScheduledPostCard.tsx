@@ -8,7 +8,7 @@ import Button from "@/components/ui/Button";
 import { ConfirmModal } from "@/components/ui/Modal";
 import { triggerHaptic } from "@/hooks/ui/useHapticFeedback";
 import { LinkedInIcon } from "@/components/linkedin/LinkedInConnectButton";
-import { ThreadsIcon, FacebookIcon, BlueskyIcon, MastodonIcon, DiscordIcon } from "@/components/publish/PlatformSelector";
+import { ThreadsIcon, FacebookIcon, BlueskyIcon, MastodonIcon, DiscordIcon } from "@/components/publish/platform-icons";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { formatTimeLocale } from "@/components/ui/IOSTimePicker";
 

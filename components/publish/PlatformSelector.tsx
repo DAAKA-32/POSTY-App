@@ -1,115 +1,14 @@
 ﻿"use client";
 
 import { Platform } from "@/types";
-import { LinkedInIcon } from "@/components/linkedin/LinkedInConnectButton";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import { PLATFORM_INFO, PlanType } from "@/lib/config/plans";
+import { PlanType } from "@/lib/config/plans";
 import { canUsePlatform, canPublishSimultaneously } from "@/lib/config/permissions";
 import Link from "next/link";
 import { triggerHaptic } from "@/hooks/ui/useHapticFeedback";
 import { useLanguage } from "@/contexts/LanguageContext";
 import toast from "@/components/ui/Toast";
-
-// Platform icons
-const ThreadsIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-    <path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.29 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.589 12c.027 3.086.718 5.496 2.057 7.164 1.43 1.783 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.75-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.801-1.063-.689-1.685-1.74-1.752-2.96-.065-1.187.408-2.26 1.33-3.017.88-.724 2.107-1.138 3.552-1.199 1.07-.044 2.064.068 2.967.315-.024-1.058-.175-1.878-.453-2.45-.354-.73-.942-1.1-1.746-1.1h-.075c-.596.02-1.09.218-1.468.591-.33.326-.53.77-.59 1.318l-2.07-.248c.101-.886.476-1.653 1.084-2.22.71-.662 1.652-1.013 2.723-1.054h.11c1.387 0 2.467.522 3.213 1.552.637.88.975 2.106 1.005 3.648v.156c1.145.504 2.06 1.265 2.652 2.226.756 1.227.911 2.759.436 4.313-.59 1.93-1.776 3.404-3.438 4.267-1.457.756-3.24 1.156-5.3 1.19zm-1.042-6.594c-.036 0-.072 0-.108.002-.982.053-1.74.358-2.19.882-.403.47-.583 1.04-.549 1.686.044.822.457 1.397 1.127 1.83.618.4 1.42.583 2.198.543 1.122-.06 1.98-.46 2.546-1.166.49-.61.82-1.49.954-2.553-.946-.326-2.024-.485-3.123-.485-.288 0-.576.013-.855.038v.223z" />
-  </svg>
-);
-
-const FacebookIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-  </svg>
-);
-
-// Bluesky butterfly logo (simplified path, solid fill)
-export const BlueskyIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 600 530" fill="currentColor" aria-hidden="true">
-    <path d="M135.72 44.03C202.22 93.95 273.77 195.17 300 249.5c26.23-54.33 97.78-155.55 164.28-205.47C512.28 8.03 590 -19.56 590 68.0c0 17.46-10.01 146.62-15.89 167.59-20.44 72.87-94.75 91.46-160.85 80.2 115.5 19.65 144.87 84.77 81.42 149.89-120.56 123.68-173.28-31.03-186.79-70.67-2.47-7.27-3.62-10.66-3.64-7.78-0.02-2.88-1.17 0.52-3.64 7.78-13.5 39.64-66.23 194.35-186.79 70.67-63.45-65.12-34.08-130.24 81.42-149.89-66.1 11.26-140.41-7.33-160.85-80.2C28.01 214.62 18 85.46 18 68.0c0-87.56 77.72-59.97 125.72-23.97z"/>
-  </svg>
-);
-
-// Mastodon logo (simplified path)
-export const MastodonIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <path d="M23.268 5.313c-.35-2.578-2.617-4.61-5.304-5.004C17.51.242 15.792 0 11.813 0h-.03C7.8 0 6.986.242 6.531.309 3.919.692 1.533 2.518.956 5.127.68 6.412.65 7.837.702 9.143c.074 1.874.088 3.745.26 5.611.118 1.24.325 2.47.62 3.68.55 2.237 2.777 4.098 4.96 4.857 2.336.792 4.849.923 7.256.38.265-.061.527-.132.786-.213.585-.184 1.27-.39 1.774-.753a.057.057 0 0 0 .023-.043v-1.809a.052.052 0 0 0-.02-.041.053.053 0 0 0-.046-.01 20.282 20.282 0 0 1-4.709.545c-2.73 0-3.463-1.284-3.674-1.818a5.593 5.593 0 0 1-.319-1.433.053.053 0 0 1 .066-.054c1.517.363 3.072.546 4.632.546.376 0 .75 0 1.125-.01 1.57-.044 3.224-.124 4.768-.422.038-.008.077-.015.11-.024 2.435-.464 4.753-1.92 4.989-5.604.008-.145.03-1.52.03-1.67.002-.512.167-3.63-.024-5.545zm-3.748 9.195h-2.561V8.29c0-1.309-.55-1.976-1.67-1.976-1.23 0-1.846.79-1.846 2.35v3.403h-2.546V8.663c0-1.56-.617-2.35-1.848-2.35-1.112 0-1.668.668-1.67 1.977v6.218H4.822V8.102c0-1.31.337-2.35 1.011-3.12.696-.77 1.608-1.164 2.74-1.164 1.311 0 2.302.5 2.962 1.498l.638 1.06.638-1.06c.66-.999 1.65-1.498 2.96-1.498 1.13 0 2.043.395 2.74 1.164.675.77 1.012 1.81 1.012 3.12z"/>
-  </svg>
-);
-
-// Discord Clyde mark
-export const DiscordIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
-  </svg>
-);
-
-interface PlatformOption {
-  id: Platform;
-  name: string;
-  icon: React.ReactNode;
-  color: string;
-  bgColor: string;
-  borderColor: string;
-  minPlan: PlanType;
-}
-
-const PLATFORMS: PlatformOption[] = [
-  {
-    id: "linkedin",
-    name: "LinkedIn",
-    icon: <LinkedInIcon className="w-5 h-5" />,
-    color: "text-[#0A66C2]",
-    bgColor: "bg-[#0A66C2]/20",
-    borderColor: "border-[#0A66C2]",
-    minPlan: "pro",
-  },
-  {
-    id: "threads",
-    name: "Threads",
-    icon: <ThreadsIcon className="w-5 h-5" />,
-    color: "text-[#000000] dark:text-white",
-    bgColor: "bg-black/10 dark:bg-white/20",
-    borderColor: "border-black dark:border-white",
-    minPlan: "max",
-  },
-  {
-    id: "facebook",
-    name: "Facebook",
-    icon: <FacebookIcon className="w-5 h-5" />,
-    color: "text-[#1877F2]",
-    bgColor: "bg-[#1877F2]/20",
-    borderColor: "border-[#1877F2]",
-    minPlan: "max",
-  },
-  {
-    id: "bluesky",
-    name: "Bluesky",
-    icon: <BlueskyIcon className="w-5 h-5" />,
-    color: "text-[#0085FF]",
-    bgColor: "bg-[#0085FF]/20",
-    borderColor: "border-[#0085FF]",
-    minPlan: "free",
-  },
-  {
-    id: "mastodon",
-    name: "Mastodon",
-    icon: <MastodonIcon className="w-5 h-5" />,
-    color: "text-[#6364FF]",
-    bgColor: "bg-[#6364FF]/20",
-    borderColor: "border-[#6364FF]",
-    minPlan: "free",
-  },
-  {
-    id: "discord",
-    name: "Discord",
-    icon: <DiscordIcon className="w-5 h-5" />,
-    color: "text-[#5865F2]",
-    bgColor: "bg-[#5865F2]/20",
-    borderColor: "border-[#5865F2]",
-    minPlan: "free",
-  },
-];
+import { PLATFORMS } from "./platforms-config";
 
 // Plan badge component
 function PlanBadge({ plan }: { plan: PlanType }) {
@@ -297,4 +196,3 @@ export default function PlatformSelector({
   );
 }
 
-export { PLATFORMS, ThreadsIcon, FacebookIcon };

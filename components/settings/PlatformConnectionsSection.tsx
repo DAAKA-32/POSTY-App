@@ -17,7 +17,7 @@ import LinkedInConnectButton, { LinkedInIcon } from "@/components/linkedin/Linke
 import LinkedInDisconnectModal from "@/components/linkedin/LinkedInDisconnectModal";
 import BlueskyConnectModal from "@/components/bluesky/BlueskyConnectModal";
 import MastodonConnectModal from "@/components/mastodon/MastodonConnectModal";
-import { BlueskyIcon, MastodonIcon, DiscordIcon } from "@/components/publish/PlatformSelector";
+import { BlueskyIcon, MastodonIcon, DiscordIcon } from "@/components/publish/platform-icons";
 import { isTokenExpired } from "@/lib/platforms/linkedin";
 import { PLATFORM_INFO, Platform, PlanType, getMaxPlatformConnections } from "@/lib/config/plans";
 import { canUsePlatform, canConnectPlatform, getAllPlatformsAccessStatus } from "@/lib/config/permissions";

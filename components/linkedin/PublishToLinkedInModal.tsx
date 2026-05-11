@@ -8,7 +8,7 @@ import Button from "@/components/ui/Button";
 import UpgradeProModal from "@/components/ui/UpgradeProModal";
 import { LinkedInIcon } from "./LinkedInConnectButton";
 import ConnectPlatformPopup from "@/components/publish/ConnectPlatformPopup";
-import { PLATFORMS as ALL_PLATFORMS } from "@/components/publish/PlatformSelector";
+import { PLATFORMS as ALL_PLATFORMS } from "@/components/publish/platforms-config";
 import { useLinkedIn } from "@/contexts/LinkedInContext";
 import { LinkedInConnectionData } from "@/lib/db/firestore";
 import { useQuota } from "@/contexts/QuotaContext";

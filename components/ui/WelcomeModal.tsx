@@ -145,8 +145,8 @@ export default function WelcomeModal({
                 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2"
               >
                 {planName
-                  ? `Bienvenue dans ${planName} !`
-                  : "Bienvenue sur Posty !"
+                  ? t.common.welcomeModalTitlePlan.replace("{planName}", planName)
+                  : t.common.welcomeModalTitle
                 }
               </motion.h2>
 
@@ -157,8 +157,8 @@ export default function WelcomeModal({
                 transition={{ delay: 0.35 }}
                 className="text-sm sm:text-base text-gray-600 dark:text-text-secondary mb-6 leading-relaxed"
               >
-                L&apos;equipe Posty vous remercie pour votre confiance !<br />
-                <span className="text-primary font-medium">Votre espace est pret.</span>
+                {t.common.welcomeModalMessage}<br />
+                <span className="text-primary font-medium">{t.common.welcomeModalSubtitle}</span>
               </motion.p>
 
               {/* CTA */}
@@ -182,7 +182,7 @@ export default function WelcomeModal({
                 transition={{ delay: 0.55 }}
                 className="mt-4 text-xs text-gray-400 dark:text-text-muted"
               >
-                Redirection automatique...
+                {t.common.welcomeModalRedirect}
               </motion.p>
             </div>
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback, memo, useMemo } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -25,12 +26,24 @@ import BusinessOffer from "@/components/pricing/BusinessOffer";
 import { useScrollLock } from "@/hooks/ui/useScrollLock";
 import AnimatedMacBook from "@/components/landing/AnimatedMacBook";
 import AuroraBackground from "@/components/landing/AuroraBackground";
-import HowItWorksSection from "@/components/landing/HowItWorksSection";
-import { CopilotSection } from "@/components/landing/MockupScreens";
-import ROISimulator from "@/components/landing/ROISimulator";
-import CeriseSpotlight from "@/components/landing/CeriseSpotlight";
-import { AmbientDecorations } from "@/components/landing/AmbientDecorations";
 import { FaqJsonLd, postyFaqData } from "@/components/seo/JsonLd";
+
+/* Below-the-fold sections — each is a multi-hundred-line component that
+ * eagerly pulls Framer Motion sub-modules and decorative assets. Splitting
+ * them keeps the landing route's first dev compile leaner; they hydrate as
+ * soon as the script chunk arrives (no Suspense fallback flicker because the
+ * placeholder is a transparent block of the same min-height). */
+const HowItWorksSection = dynamic(() => import("@/components/landing/HowItWorksSection"), { ssr: true });
+const CopilotSection = dynamic(
+  () => import("@/components/landing/MockupScreens").then((m) => ({ default: m.CopilotSection })),
+  { ssr: true }
+);
+const ROISimulator = dynamic(() => import("@/components/landing/ROISimulator"), { ssr: true });
+const CeriseSpotlight = dynamic(() => import("@/components/landing/CeriseSpotlight"), { ssr: true });
+const AmbientDecorations = dynamic(
+  () => import("@/components/landing/AmbientDecorations").then((m) => ({ default: m.AmbientDecorations })),
+  { ssr: false } // pure decoration — never blocks first paint
+);
 
 // =============================================================================
 // SCROLL CONTAINER — shared across all landing components in this file
@@ -768,6 +781,19 @@ function HeroSection() {
                 ))}
               </div>
             </motion.div>
+
+            {/* Brand eyebrow — surfaces the bare brand token "Posty" in
+                visible hero copy. Critical for brand-search SEO: without
+                this, the word "Posty" appears 0 times in rendered hero text,
+                weakening the signal that postyapp.ai is THE Posty entity. */}
+            <motion.p
+              initial={{ opacity: 0, y: 12 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.4, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+              className="text-sm font-semibold uppercase tracking-[0.18em] mb-3 lg:mb-4 bg-gradient-to-r from-[#F8935D] to-[#F76B54] bg-clip-text text-transparent"
+            >
+              Posty · The AI LinkedIn copilot
+            </motion.p>
 
             {/* Main headline */}
             <h1 className="font-display text-[2.5rem] sm:text-5xl lg:text-[3.25rem] xl:text-[3.75rem] 2xl:text-[4.25rem] font-semibold leading-[1.1] tracking-[-0.02em]">
@@ -5276,6 +5302,14 @@ function Footer() {
             <p className="text-gray-400 text-[10px]">{t.footer.copyright.replace("{year}", String(year))}</p>
             <p className="text-gray-400 text-[10px]">{t.footer.madeInShort}</p>
           </div>
+          {/* Brand-entity triple line — sitewide signal for Google to fuse
+              "Posty" + "Posty AI" + "postyapp.ai" into one entity. */}
+          <p
+            translate="no"
+            className="notranslate mt-2 text-center text-gray-400 text-[10px] tracking-wide"
+          >
+            © {year} <span className="font-semibold text-gray-500">Posty</span> — Posty AI · postyapp.ai
+          </p>
         </div>
 
         {/* ─── DESKTOP FOOTER (full) ─── */}
@@ -5332,6 +5366,14 @@ function Footer() {
             <p className="text-gray-500 text-sm">{t.footer.copyright.replace("{year}", String(year))}</p>
             <p className="text-gray-500 text-sm">{t.footer.madeIn}</p>
           </div>
+          {/* Brand-entity triple line — sitewide signal for Google to fuse
+              "Posty" + "Posty AI" + "postyapp.ai" into one entity. */}
+          <p
+            translate="no"
+            className="notranslate mt-3 text-center text-gray-400 text-xs tracking-wide"
+          >
+            © {year} <span className="font-semibold text-gray-600">Posty</span> — Posty AI · postyapp.ai
+          </p>
         </div>
 
       </motion.div>

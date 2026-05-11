@@ -235,9 +235,13 @@ const ResponseCard = memo(function ResponseCard({
         </div>
       </div>
 
-      {/* Content */}
+      {/* Content — AI-generated post about to be published. notranslate
+          prevents Chrome / Translate widget from rewriting the deliverable. */}
       <div className="flex-1 px-4 py-4 overflow-y-auto custom-scrollbar">
-        <div className="whitespace-pre-wrap text-sm text-text-primary leading-relaxed">
+        <div
+          className="notranslate whitespace-pre-wrap text-sm text-text-primary leading-relaxed"
+          translate="no"
+        >
           {response.content}
           {response.isStreaming && (
             <motion.span

@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useScrollLock } from "@/hooks/ui/useScrollLock";
 import {
   FREE_TRIAL_DURATION_DAYS,
@@ -30,6 +32,7 @@ interface PaywallCopy {
   maxCta: string;
   maxPerks: string[];
   footerNote: string;
+  signOutLabel: string;
 }
 
 const COPY: Record<Lang, PaywallCopy> = {
@@ -64,6 +67,7 @@ const COPY: Record<Lang, PaywallCopy> = {
     ],
     footerNote:
       "Sans engagement. Annulable à tout moment. Garantie satisfait ou remboursé 7 jours.",
+    signOutLabel: "Se déconnecter",
   },
   en: {
     badge: `${FREE_TRIAL_DURATION_DAYS}-day trial ended`,
@@ -95,6 +99,7 @@ const COPY: Record<Lang, PaywallCopy> = {
     ],
     footerNote:
       "No commitment. Cancel anytime. 7-day money-back guarantee.",
+    signOutLabel: "Sign out",
   },
 };
 
@@ -128,7 +133,14 @@ const itemVariants = {
 export default function FreeTrialPaywall() {
   const { freeTrialExpired } = useSubscription();
   const { language } = useLanguage();
+  const { signOut } = useAuth();
+  const router = useRouter();
   const reduceMotion = useReducedMotion();
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.push("/login");
+  };
 
   // Canonical POSTY scroll-lock — same hook used by every other modal.
   useScrollLock(freeTrialExpired);
@@ -151,7 +163,8 @@ export default function FreeTrialPaywall() {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.25 }}
-        className="fixed inset-0 z-[100] flex items-center justify-center px-4 py-6"
+        className="notranslate fixed inset-0 z-[100] flex items-center justify-center px-4 py-6"
+        translate="no"
       >
         {/* Light blur backdrop — POSTY canonical pattern */}
         <div
@@ -263,6 +276,30 @@ export default function FreeTrialPaywall() {
                 variant="premium"
                 reduceMotion={!!reduceMotion}
               />
+            </motion.div>
+
+            {/* Sign-out link */}
+            <motion.div variants={itemVariants} className="mt-6 flex justify-center">
+              <button
+                onClick={handleSignOut}
+                className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-text-secondary transition-colors duration-150"
+              >
+                <svg
+                  className="w-3.5 h-3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  viewBox="0 0 24 24"
+                  aria-hidden
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                  />
+                </svg>
+                {copy.signOutLabel}
+              </button>
             </motion.div>
 
           </motion.div>

@@ -1,21 +1,30 @@
 import { NextRequest } from "next/server";
 import OpenAI from "openai";
 import { isValidApiKeyFormat } from "@/lib/openai";
+import { verifyAuth } from "@/lib/auth";
+import { enforceRateLimit } from "@/lib/api/rate-limit";
 
 /**
  * POST /api/openai/validate
- * Validates an OpenAI API key
+ * Validates an OpenAI API key against the OpenAI API.
  *
- * Request body:
- * - apiKey: string - The API key to validate
- *
- * Response:
- * - valid: boolean - Whether the key is valid
- * - models?: string[] - Available models if key is valid
- * - error?: string - Error message if validation failed
+ * SECURITY: This route makes a live OpenAI request with whatever key is
+ * provided, so without auth + rate-limit it can be abused as a free
+ * key-validation oracle (enumerating leaked/guessed keys). We require
+ * a logged-in user and cap to 10 attempts per hour per uid.
  */
 export async function POST(request: NextRequest) {
   try {
+    const auth = await verifyAuth(request);
+    if (auth.error) return auth.error;
+
+    const rateLimited = enforceRateLimit(
+      request,
+      { namespace: "openai-validate", limit: 10, windowMs: 60 * 60 * 1000 },
+      auth.uid,
+    );
+    if (rateLimited) return rateLimited;
+
     const body = await request.json();
     const { apiKey } = body;
 

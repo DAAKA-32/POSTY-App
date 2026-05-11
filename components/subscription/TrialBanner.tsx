@@ -11,7 +11,7 @@ import { TRIAL_PERIOD_DAYS, GUARANTEE_PERIOD_DAYS, isFreeTrialGateEnabled } from
  * TrialBanner - Shows contextual banners for trial/guarantee status
  *
  * Displays (in priority order):
- * - Free-plan 14-day trial countdown (highest priority — drives upgrade)
+ * - Free-plan 30-day trial countdown (highest priority — drives upgrade)
  * - Paid trial countdown (Stripe `trialing` status)
  * - Money-back guarantee window
  *
@@ -33,12 +33,13 @@ export default function TrialBanner() {
   const { t } = useLanguage();
   const pathname = usePathname();
 
-  // ===== Free-plan 14-day trial banner =====
+  // ===== Free-plan 30-day trial banner =====
   // Shown to Free users while the trial clock is still running. Once
-  // expired, SubscriptionGuard redirects them to /subscription instead.
+  // expired, MainLayout's FreeTrialPaywall takes over (no redirect — the
+  // paywall blurs /app and forces a plan choice in-context).
   // Gated by the same env flag as the expiration check — otherwise we'd
-  // show a misleading "14 days left" countdown in environments where the
-  // trial gate is disabled and Free is effectively unlimited.
+  // show a misleading countdown in environments where the trial gate is
+  // disabled and Free is effectively unlimited.
   if (isFreeTrialGateEnabled() && currentPlan === "free" && !freeTrialExpired && freeTrialEndsAt) {
     const isUrgent = freeTrialDaysRemaining <= 1;
     const message = freeTrialDaysRemaining === 1
@@ -55,7 +56,7 @@ export default function TrialBanner() {
             w-full px-4 py-2.5 flex items-center justify-center gap-3 text-sm
             ${isUrgent
               ? "bg-gradient-to-r from-red-500/10 via-orange-500/10 to-red-500/10 border-b border-red-500/20"
-              : "bg-gradient-to-r from-primary/10 via-accent/5 to-primary/10 border-b border-primary/20"
+              : "bg-[#FFF3EE] border-b border-[#F8935D]/20 dark:bg-[#1E1610] dark:border-[#F8935D]/15"
             }
           `}
         >
@@ -63,17 +64,17 @@ export default function TrialBanner() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
 
-          <span className={`${isUrgent ? "text-red-400 font-semibold" : "text-text-secondary"}`}>
+          <span className={`${isUrgent ? "text-red-400 font-semibold" : "text-gray-800 dark:text-gray-100 font-medium"}`}>
             {message}
           </span>
 
           <Link
             href={`/subscription?from=${encodeURIComponent(pathname)}`}
             className={`
-              ml-auto px-3 py-1 rounded-lg text-xs font-medium transition-colors
+              ml-auto px-3 py-1 rounded-lg text-xs font-semibold transition-colors
               ${isUrgent
                 ? "bg-red-500/20 text-red-400 hover:bg-red-500/30"
-                : "bg-primary/20 text-primary hover:bg-primary/30"
+                : "bg-primary text-gray-950 hover:bg-primary-hover"
               }
             `}
           >
@@ -105,7 +106,7 @@ export default function TrialBanner() {
             w-full px-4 py-2.5 flex items-center justify-center gap-3 text-sm
             ${isUrgent
               ? "bg-gradient-to-r from-red-500/10 via-orange-500/10 to-red-500/10 border-b border-red-500/20"
-              : "bg-gradient-to-r from-primary/10 via-accent/5 to-primary/10 border-b border-primary/20"
+              : "bg-[#FFF3EE] border-b border-[#F8935D]/20 dark:bg-[#1E1610] dark:border-[#F8935D]/15"
             }
           `}
         >
@@ -115,10 +116,10 @@ export default function TrialBanner() {
           </svg>
 
           {/* Message */}
-          <span className={`${isUrgent ? "text-red-400 font-semibold" : "text-text-secondary"}`}>
+          <span className={`${isUrgent ? "text-red-400 font-semibold" : "text-gray-800 dark:text-gray-100 font-medium"}`}>
             {isUrgent
-              ? `Dernier jour de votre essai ${planName} !`
-              : `${trialDaysRemaining} jour${trialDaysRemaining > 1 ? "s" : ""} restant${trialDaysRemaining > 1 ? "s" : ""} sur votre essai ${planName}`
+              ? t.subscriptionPage.paidTrialLastDay.replace("{plan}", planName)
+              : t.subscriptionPage.paidTrialDaysLeft.replace("{n}", String(trialDaysRemaining)).replace("{plan}", planName)
             }
           </span>
 
@@ -127,21 +128,21 @@ export default function TrialBanner() {
 
           {/* CTA */}
           <span className="text-text-muted text-xs hidden sm:inline">
-            Aucun debit pendant l'essai
+            {t.subscriptionPage.paidTrialNoCharge}
           </span>
 
           {/* Link to manage */}
           <Link
             href={`/settings?from=${encodeURIComponent(pathname)}`}
             className={`
-              ml-auto px-3 py-1 rounded-lg text-xs font-medium transition-colors
+              ml-auto px-3 py-1 rounded-lg text-xs font-semibold transition-colors
               ${isUrgent
                 ? "bg-red-500/20 text-red-400 hover:bg-red-500/30"
-                : "bg-primary/20 text-primary hover:bg-primary/30"
+                : "bg-primary text-gray-950 hover:bg-primary-hover"
               }
             `}
           >
-            Gérer
+            {t.subscriptionPage.paidTrialManage}
           </Link>
         </motion.div>
       </AnimatePresence>
@@ -162,8 +163,11 @@ export default function TrialBanner() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
           </svg>
 
-          <span className="text-text-secondary">
-            Garantie satisfait ou remboursé — <span className="text-white font-medium">{guaranteeDaysRemaining}j restants</span>
+          <span className="text-gray-700 dark:text-gray-200">
+            {t.subscriptionPage.guaranteeBadge}{" "}
+            <span className="text-gray-900 dark:text-white font-semibold">
+              {t.subscriptionPage.guaranteeDaysLeft.replace("{n}", String(guaranteeDaysRemaining))}
+            </span>
           </span>
         </motion.div>
       </AnimatePresence>

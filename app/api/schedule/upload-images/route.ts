@@ -13,6 +13,34 @@ const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10 MB
 const MAX_IMAGES = 9;
 
 /**
+ * Inspect a file's first bytes to determine its real format, regardless of
+ * what the client claims in `file.type`. Returns null if the buffer doesn't
+ * match a supported image format — that's our cue to reject the upload as
+ * a likely disguised file.
+ */
+function detectImageMime(buf: Buffer): string | null {
+  if (buf.length < 12) return null;
+  // JPEG: FF D8 FF
+  if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return "image/jpeg";
+  // PNG: 89 50 4E 47 0D 0A 1A 0A
+  if (
+    buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47 &&
+    buf[4] === 0x0d && buf[5] === 0x0a && buf[6] === 0x1a && buf[7] === 0x0a
+  ) return "image/png";
+  // GIF: 47 49 46 38 (37|39) 61  →  GIF87a / GIF89a
+  if (
+    buf[0] === 0x47 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x38 &&
+    (buf[4] === 0x37 || buf[4] === 0x39) && buf[5] === 0x61
+  ) return "image/gif";
+  // WebP: "RIFF" .... "WEBP"
+  if (
+    buf[0] === 0x52 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x46 &&
+    buf[8] === 0x57 && buf[9] === 0x45 && buf[10] === 0x42 && buf[11] === 0x50
+  ) return "image/webp";
+  return null;
+}
+
+/**
  * Server-side image upload for scheduled posts.
  * Bypasses CORS issues by uploading from the server to Firebase Storage.
  *
@@ -119,6 +147,18 @@ export async function POST(request: NextRequest) {
       // Read file buffer
       const buffer = Buffer.from(await file.arrayBuffer());
 
+      // Magic-byte validation — `file.type` is client-supplied and trivially
+      // spoofed. Reject anything whose actual header doesn't match a supported
+      // image format, or where the real format disagrees with the declared
+      // MIME type (e.g. a .jpg masquerading as image/png).
+      const actualMime = detectImageMime(buffer);
+      if (!actualMime || actualMime !== file.type) {
+        return NextResponse.json(
+          { error: "invalid_type", message: "Image content does not match its declared type." },
+          { status: 400 }
+        );
+      }
+
       // Build storage path
       const extension = file.name.split(".").pop() || "jpg";
       const filename = `${i}_${Date.now()}.${extension}`;
@@ -128,7 +168,7 @@ export async function POST(request: NextRequest) {
       const fileRef = bucket.file(storagePath);
       await fileRef.save(buffer, {
         metadata: {
-          contentType: file.type,
+          contentType: actualMime,
           metadata: {
             uploadedBy: userId,
             scheduledPostId,

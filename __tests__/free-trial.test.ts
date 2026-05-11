@@ -18,7 +18,7 @@ function fakeTs(date: Date) {
   return { toDate: () => date };
 }
 
-describe("Free-plan 14-day trial — pure helpers", () => {
+describe("Free-plan 30-day trial — pure helpers", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     // Anchor "now" to a fixed instant so all relative-day math is deterministic.
@@ -30,22 +30,22 @@ describe("Free-plan 14-day trial — pure helpers", () => {
   });
 
   describe("constants", () => {
-    it("locks the trial at 14 days", () => {
-      expect(FREE_TRIAL_DURATION_DAYS).toBe(14);
-      expect(FREE_TRIAL_DURATION_MS).toBe(14 * DAY_MS);
+    it("locks the trial at 30 days", () => {
+      expect(FREE_TRIAL_DURATION_DAYS).toBe(30);
+      expect(FREE_TRIAL_DURATION_MS).toBe(30 * DAY_MS);
     });
   });
 
   describe("calculateFreeTrialEndDate", () => {
-    it("returns start + 14 days", () => {
+    it("returns start + 30 days", () => {
       const start = new Date("2026-04-29T12:00:00.000Z");
       const end = calculateFreeTrialEndDate(start);
-      expect(end.getTime() - start.getTime()).toBe(14 * DAY_MS);
+      expect(end.getTime() - start.getTime()).toBe(30 * DAY_MS);
     });
 
     it("defaults start to now when omitted", () => {
       const end = calculateFreeTrialEndDate();
-      expect(end.getTime() - Date.now()).toBe(14 * DAY_MS);
+      expect(end.getTime() - Date.now()).toBe(30 * DAY_MS);
     });
   });
 
@@ -92,7 +92,7 @@ describe("Free-plan 14-day trial — pure helpers", () => {
 
   describe("resolveFreeTrialEnd", () => {
     it("uses explicit freeTrialEndsAt when present", () => {
-      const explicitEnd = new Date("2026-05-20T00:00:00.000Z");
+      const explicitEnd = new Date("2026-06-20T00:00:00.000Z");
       const profile = {
         subscription: {
           freeTrialStartedAt: fakeTs(new Date("2026-04-01T00:00:00.000Z")),
@@ -102,21 +102,21 @@ describe("Free-plan 14-day trial — pure helpers", () => {
       expect(resolveFreeTrialEnd(profile)?.toISOString()).toBe(explicitEnd.toISOString());
     });
 
-    it("derives end = start + 14d when only start is set", () => {
+    it("derives end = start + 30d when only start is set", () => {
       const start = new Date("2026-04-15T00:00:00.000Z");
       const profile = {
         subscription: { freeTrialStartedAt: fakeTs(start) },
       };
       const end = resolveFreeTrialEnd(profile);
       expect(end).not.toBeNull();
-      expect(end!.getTime() - start.getTime()).toBe(14 * DAY_MS);
+      expect(end!.getTime() - start.getTime()).toBe(30 * DAY_MS);
     });
 
     it("derives end from createdAt for legacy users", () => {
       const created = new Date("2026-04-01T00:00:00.000Z");
       const profile = { createdAt: fakeTs(created) };
       const end = resolveFreeTrialEnd(profile);
-      expect(end!.getTime() - created.getTime()).toBe(14 * DAY_MS);
+      expect(end!.getTime() - created.getTime()).toBe(30 * DAY_MS);
     });
 
     it("returns null when no anchor exists", () => {
@@ -131,9 +131,9 @@ describe("Free-plan 14-day trial — pure helpers", () => {
       expect(getFreeTrialDaysRemaining(end)).toBe(2);
     });
 
-    it("returns 14 when trial just started", () => {
-      const end = new Date(Date.now() + 14 * DAY_MS);
-      expect(getFreeTrialDaysRemaining(end)).toBe(14);
+    it("returns 30 when trial just started", () => {
+      const end = new Date(Date.now() + 30 * DAY_MS);
+      expect(getFreeTrialDaysRemaining(end)).toBe(30);
     });
 
     it("returns 1 on the last day", () => {
@@ -164,12 +164,12 @@ describe("Free-plan 14-day trial — pure helpers", () => {
     });
 
     it("never expires for Pro users (no trial concept)", () => {
-      const end = new Date(Date.now() - 30 * DAY_MS);
+      const end = new Date(Date.now() - 60 * DAY_MS);
       expect(isFreeTrialExpired("pro", end)).toBe(false);
     });
 
     it("never expires for Max users (no trial concept)", () => {
-      const end = new Date(Date.now() - 30 * DAY_MS);
+      const end = new Date(Date.now() - 60 * DAY_MS);
       expect(isFreeTrialExpired("max", end)).toBe(false);
     });
 
@@ -187,14 +187,14 @@ describe("Free-plan 14-day trial — pure helpers", () => {
   });
 
   describe("end-to-end scenarios", () => {
-    it("legacy account created 30 days ago is immediately expired", () => {
-      const created = new Date(Date.now() - 30 * DAY_MS);
+    it("legacy account created 60 days ago is immediately expired", () => {
+      const created = new Date(Date.now() - 60 * DAY_MS);
       const profile = { createdAt: fakeTs(created) };
       const end = resolveFreeTrialEnd(profile);
       expect(isFreeTrialExpired("free", end)).toBe(true);
     });
 
-    it("fresh signup (today) has 14 days remaining and is not expired", () => {
+    it("fresh signup (today) has 30 days remaining and is not expired", () => {
       const now = new Date();
       const profile = {
         subscription: {
@@ -205,7 +205,7 @@ describe("Free-plan 14-day trial — pure helpers", () => {
       };
       const end = resolveFreeTrialEnd(profile);
       expect(isFreeTrialExpired("free", end)).toBe(false);
-      expect(getFreeTrialDaysRemaining(end)).toBe(14);
+      expect(getFreeTrialDaysRemaining(end)).toBe(30);
     });
 
     it("user who upgrades to Pro mid-trial keeps full access (plan check short-circuits)", () => {
@@ -214,16 +214,16 @@ describe("Free-plan 14-day trial — pure helpers", () => {
       expect(isFreeTrialExpired("pro", expiredEnd)).toBe(false);
     });
 
-    it("user on day 14 (last day) gets 1 day remaining + not expired", () => {
-      // Trial started 13 days ago → ends ~24h from now.
-      const start = new Date(Date.now() - 13 * DAY_MS);
+    it("user on day 30 (last day) gets 1 day remaining + not expired", () => {
+      // Trial started 29 days ago → ends ~24h from now.
+      const start = new Date(Date.now() - 29 * DAY_MS);
       const end = calculateFreeTrialEndDate(start);
       expect(getFreeTrialDaysRemaining(end)).toBe(1);
       expect(isFreeTrialExpired("free", end)).toBe(false);
     });
 
-    it("user on day 15 is expired with 0 days remaining", () => {
-      const start = new Date(Date.now() - 15 * DAY_MS);
+    it("user on day 31 is expired with 0 days remaining", () => {
+      const start = new Date(Date.now() - 31 * DAY_MS);
       const end = calculateFreeTrialEndDate(start);
       expect(getFreeTrialDaysRemaining(end)).toBe(0);
       expect(isFreeTrialExpired("free", end)).toBe(true);

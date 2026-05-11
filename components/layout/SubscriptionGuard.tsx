@@ -58,20 +58,20 @@ export default function SubscriptionGuard({
       const hasActiveSubscription =
         subscription.status === "active" || subscription.status === "trialing";
 
+      // When the 30-day Free trial expires we deliberately KEEP the user on
+      // /app so the paywall overlay (FreeTrialPaywall) can do the conversion
+      // work in-context. No redirect — the overlay blocks all interactions.
+      if (freeTrialExpired) return;
+
       // Check 1: Active subscription with a plan
       if (!hasActiveSubscription || !subscription.plan) {
         console.warn(
-          `[SubscriptionGuard] Blocking access to ${pathname} - Status: ${subscription.status}, Plan: ${subscription.plan}, FreeTrialExpired: ${freeTrialExpired}`
+          `[SubscriptionGuard] Blocking access to ${pathname} - Status: ${subscription.status}, Plan: ${subscription.plan}`
         );
 
         const url = new URL(redirectTo, window.location.origin);
         url.searchParams.set("redirect", pathname);
-        // Distinct reason for an expired Free-plan trial so the
-        // /subscription page can show a targeted message.
-        url.searchParams.set(
-          "reason",
-          freeTrialExpired ? "free_trial_expired" : "subscription_required"
-        );
+        url.searchParams.set("reason", "subscription_required");
         router.replace(url.pathname + url.search);
         return;
       }
@@ -89,7 +89,7 @@ export default function SubscriptionGuard({
         router.replace(url.pathname + url.search);
       }
     }
-  }, [subscription.status, subscription.plan, loading, router, pathname, redirectTo, minimumPlan]);
+  }, [subscription.status, subscription.plan, freeTrialExpired, loading, router, pathname, redirectTo, minimumPlan]);
 
   // Show loading state while checking subscription
   if (loading) {
@@ -103,6 +103,12 @@ export default function SubscriptionGuard({
         </div>
       </div>
     );
+  }
+
+  // Free trial expired → render the children so MainLayout's FreeTrialPaywall
+  // overlays them. We rely on the paywall's pointer-events to block usage.
+  if (freeTrialExpired) {
+    return <>{children}</>;
   }
 
   // Check subscription status

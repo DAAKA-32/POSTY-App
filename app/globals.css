@@ -6073,10 +6073,17 @@ html:not(.dark) .shimmer-text-gradient {
 /* Premium interactive auto-scroll with touch/drag support */
 
 .interactive-scroll-container {
+  /* overflow: hidden — clips the infinite scroll track horizontally.
+     padding-top/bottom pushes the clip boundary far enough from the chips
+     so scale(1.04) + y(-3) + box-shadow (0 8px 24px) all render inside
+     the container without being cut and without overflowing the section. */
   overflow: hidden;
   position: relative;
   width: 100%;
   min-height: 52px;
+  /* 10px above: room for y:-3 translate + scale expansion (~4px total)
+     36px below: room for the full colored shadow (offset 8 + blur 24 + margin = ~34px) */
+  padding: 10px 0 36px;
   /* Hide scrollbar completely */
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -6088,7 +6095,10 @@ html:not(.dark) .shimmer-text-gradient {
   will-change: contents;
   /* Touch action for horizontal drag only */
   touch-action: pan-y pinch-zoom;
-  /* Gradient mask for fade edges */
+  /* Gradient mask — provides the left/right fade-in/out effect.
+     The horizontal gradient (to right) is fully opaque (black) in the
+     vertical centre so vertical overflow (shadows, y-transforms) is
+     unaffected. */
   -webkit-mask-image: linear-gradient(
     to right,
     transparent,
@@ -6122,44 +6132,27 @@ html:not(.dark) .shimmer-text-gradient {
   perspective: 1000px;
   /* Smooth transform transitions */
   transition: none;
-  /* Render optimization */
-  contain: layout style paint;
-}
-
-/* Template chip for interactive scroll - no hover scale */
-.template-chip-interactive {
-  position: relative;
-  transition: filter 150ms ease-out, box-shadow 150ms ease-out;
-  overflow: hidden;
-  cursor: pointer;
-  /* Prevent zoom on double-tap mobile */
-  touch-action: manipulation;
-  /* GPU acceleration - Ultra optimized */
-  transform: translate3d(0, 0, 0);
-  backface-visibility: hidden;
-  will-change: filter;
-  /* Render isolation */
+  /* paint removed — would clip child box-shadows to track bounds */
   contain: layout style;
 }
 
-/* Subtle active state feedback */
-.template-chip-interactive:active {
-  filter: brightness(0.95);
-  transition: filter 50ms ease-out;
-}
-
-/* Hover state - subtle brightness only, NO scale */
-.template-chip-interactive:hover {
-  filter: brightness(1.05);
-}
-
-/* Dark mode adjustments */
-.dark .template-chip-interactive:hover {
-  filter: brightness(1.08);
-}
-
-.dark .template-chip-interactive:active {
-  filter: brightness(0.92);
+/* Template chip — Framer Motion owns all hover/tap/scale animations */
+.template-chip-interactive {
+  position: relative;
+  /* overflow: visible — box-shadow is painted outside the border box and
+     is never clipped by overflow:hidden anyway, but removing it prevents
+     any future internal element from being accidentally clipped, and
+     aligns with the parent containers now being overflow:visible. */
+  overflow: visible;
+  cursor: pointer;
+  /* Prevent zoom on double-tap mobile */
+  touch-action: manipulation;
+  /* GPU layer promotion before animation kicks in */
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  will-change: transform;
+  /* Render isolation (no paint — Framer Motion needs to paint box-shadow freely) */
+  contain: layout style;
 }
 
 /* Grabbing cursor state */
@@ -6172,8 +6165,12 @@ html:not(.dark) .shimmer-text-gradient {
   pointer-events: none;
 }
 
-/* Reduced motion: disable auto-scroll */
+/* Reduced motion: disable auto-scroll, expose as a plain horizontal scrollbar */
 @media (prefers-reduced-motion: reduce) {
+  .infinite-scroll-stable {
+    overflow-x: auto;
+  }
+
   .interactive-scroll-container {
     overflow-x: auto;
     -webkit-mask-image: none;
@@ -7129,6 +7126,14 @@ html.dark .sidebar-root {
     rgba(248, 147, 93, 0.02) 40%,
     rgba(0, 0, 0, 0) 100%
   );
+}
+
+/* Nav card — subtle inner shadow for inset depth */
+.sidebar-nav-card {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), inset 0 -1px 0 rgba(0,0,0,0.03);
+}
+html.dark .sidebar-nav-card {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), inset 0 -1px 0 rgba(0,0,0,0.15);
 }
 
 /* Conversation item — stable 2px left indicator that fades in without shifting layout */

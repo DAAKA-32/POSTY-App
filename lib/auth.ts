@@ -30,8 +30,14 @@ type AuthResult = AuthSuccess | AuthError;
 export async function verifyAuth(request: NextRequest): Promise<AuthResult> {
   // Check Firebase Admin is initialized
   if (!isAdminInitialized()) {
-    // In development without Firebase Admin, allow requests with userId in body
-    if (process.env.NODE_ENV !== "production") {
+    // Dev-only escape hatch: lets API routes work locally without a full
+    // Firebase Admin setup. Must be opted into explicitly via env var —
+    // implicit "any non-prod env" was too easy to inherit accidentally
+    // (CI runners, preview deployments with broken admin credentials).
+    if (
+      process.env.NODE_ENV !== "production" &&
+      process.env.ENABLE_DEV_AUTH_BYPASS === "1"
+    ) {
       return { uid: "__dev_bypass__" };
     }
     return {

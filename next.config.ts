@@ -56,8 +56,15 @@ const nextConfig: NextConfig = {
 
   // Experimental features for performance
   experimental: {
-    // Optimize CSS loading for better FCP/LCP
-    optimizeCss: true,
+    // `optimizeCss` runs `critters` over the global stylesheet to inline
+    // critical CSS. With a 7k-line `globals.css` it pushes dev-server compile
+    // times from "instant" to "many seconds per route", and Turbopack already
+    // ships better CSS handling in dev. Scope to production where the LCP win
+    // is worth the build-time cost.
+    optimizeCss: process.env.NODE_ENV === "production",
+    // Tree-shake icon barrels so a single `import { X } from "lucide-react"`
+    // doesn't pull the whole icon catalog into the client bundle.
+    optimizePackageImports: ["lucide-react", "framer-motion", "firebase"],
   },
 
   // Disable Vercel Toolbar in production
@@ -68,10 +75,37 @@ const nextConfig: NextConfig = {
 
   // Headers for security and caching
   async headers() {
+    // Content Security Policy — defense-in-depth against XSS and data exfil.
+    // 'unsafe-inline' on scripts is required for the theme-init script in
+    // app/layout.tsx and JSON-LD blocks; migrating to nonce-based CSP would
+    // require touching every Server Component. The other directives still
+    // close the most exploitable attack surfaces (object embedding, base
+    // hijacking, form-action redirection, framing).
+    const csp = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://*.firebaseio.com https://www.gstatic.com https://apis.google.com https://accounts.google.com",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "img-src 'self' data: blob: https:",
+      "font-src 'self' data: https://fonts.gstatic.com",
+      "connect-src 'self' https: wss://*.firebaseio.com wss://*.firebase.com",
+      "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://accounts.google.com https://*.firebaseapp.com",
+      "worker-src 'self' blob:",
+      "media-src 'self' blob:",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self' https://checkout.stripe.com",
+      "frame-ancestors 'none'",
+      "upgrade-insecure-requests",
+    ].join("; ");
+
     return [
       {
         source: "/(.*)",
         headers: [
+          {
+            key: "Content-Security-Policy",
+            value: csp,
+          },
           {
             key: "X-Content-Type-Options",
             value: "nosniff",
@@ -95,6 +129,12 @@ const nextConfig: NextConfig = {
           {
             key: "Permissions-Policy",
             value: "camera=(), microphone=(self), geolocation=()",
+          },
+          {
+            // Isolate the browsing context from cross-origin pages while
+            // still allowing OAuth popup flows (LinkedIn, Google) to work.
+            key: "Cross-Origin-Opener-Policy",
+            value: "same-origin-allow-popups",
           },
         ],
       },

@@ -2,11 +2,12 @@
 
 import { useState, useCallback, useRef } from "react";
 import { savePost, addMessagesToConversation, getConversationHistory, renamePost } from "@/lib/db/firestore";
-import { MockResponse, PostInsights, ConversationTurn, FileAttachment, Post } from "@/types";
+import { MockResponse, PostInsights, ConversationTurn, FileAttachment, Post, DetectedAIAction } from "@/types";
 import { getAuthHeaders } from "@/lib/api/client";
 import { triggerHaptic } from "@/lib/ui/haptic";
 import { getFriendlyMessage } from "@/lib/utils/error-messages";
 import { setCachedConversation, updateCachedConversation, getCachedConversation } from "@/lib/storage/conversation-cache";
+import { detectIntent } from "@/lib/ai/intent-detection";
 
 const GUEST_GENERATION_LIMIT = 2;
 const GUEST_STORAGE_KEY = "posty_guest_generations";
@@ -14,11 +15,13 @@ const GUEST_STORAGE_KEY = "posty_guest_generations";
 // Message types for conversational display
 export interface ConversationMessage {
   id: string;
-  type: "user" | "ai";
+  type: "user" | "ai" | "action";
   content: string;
   timestamp: Date;
   variant?: "storytelling" | "business";
   isStreaming?: boolean;
+  // Populated when type === "action"
+  action?: DetectedAIAction;
 }
 
 // Streaming content for each response type
@@ -39,8 +42,13 @@ interface UseChatOptions {
   responseType?: "storytelling" | "business";
   /** Style selection for PRO users (ignored for FREE/MAX) */
   selectedStyle?: "storytelling" | "business";
-  /** AI mode: "linkedin" for post generation, "general" for Q&A/support */
-  aiMode?: "linkedin" | "general";
+  /**
+   * Chat persona for the next request.
+   *   - "posts"   → LinkedIn post generation (default)
+   *   - "support" → conversational Q&A; the API forces EXPLORATORY/ASSISTANCE
+   *                 intent so we never produce a post in this mode.
+   */
+  aiMode?: "posts" | "support";
 }
 
 /** Generation phase reported by the server via SSE "phase" events */
@@ -81,7 +89,7 @@ export function useChat({
   dualMode = false,
   responseType = "business",
   selectedStyle = "business",
-  aiMode = "linkedin",
+  aiMode = "posts",
 }: UseChatOptions): UseChatReturn {
   const [responses, setResponses] = useState<MockResponse[]>([]);
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
@@ -105,12 +113,14 @@ export function useChat({
   // Refs to avoid stale closures in async streaming callbacks
   const postIdRef = useRef<string | null>(postId);
   const messagesLengthRef = useRef<number>(0);
+  const responsesRef = useRef<MockResponse[]>(responses);
   // Generation counter — incremented on reset() to discard stale async saves
   const generationRef = useRef(0);
 
   // Keep refs in sync with state
   postIdRef.current = postId;
   messagesLengthRef.current = messages.length;
+  responsesRef.current = responses;
 
   // Wrapper to update both state and ref atomically
   const setPostIdWithRef = useCallback((newId: string | null) => {
@@ -230,6 +240,34 @@ export function useChat({
         return;
       }
 
+      // ── Intent detection: intercept action commands before calling /api/generate ──
+      const currentResponses = responsesRef.current;
+      const latestPost = currentResponses[currentResponses.length - 1];
+      const detectedAction = detectIntent(prompt, {
+        hasCurrentPost: currentResponses.length > 0 && !!latestPost?.content,
+        postContent: latestPost?.content,
+        postId: postIdRef.current || undefined,
+      });
+
+      if (detectedAction) {
+        const userMsg: ConversationMessage = {
+          id: `user-${Date.now()}`,
+          type: "user",
+          content: prompt,
+          timestamp: new Date(),
+        };
+        const actionMsg: ConversationMessage = {
+          id: `action-${Date.now()}`,
+          type: "action",
+          content: "",
+          timestamp: new Date(),
+          action: detectedAction,
+        };
+        setMessages((prev) => [...prev, userMsg, actionMsg]);
+        setLastPrompt(prompt);
+        return;
+      }
+
       // Cancel any ongoing stream
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
@@ -291,7 +329,8 @@ export function useChat({
             requestDualMode: dualMode, // Server-side dual mode enforcement
             responseType: effectiveStyle,
             selectedStyle: effectiveStyle,
-            aiMode, // "linkedin" or "general" — forces conversational when "general"
+            // "posts" → "linkedin" (server's existing key), "support" → "general"
+            aiMode: aiMode === "support" ? "general" : "linkedin",
             // Send conversation context for follow-ups
             conversationId: currentPostId,
             conversationHistory,

@@ -4,12 +4,16 @@ import {
   isOpenAIConfigured,
   OpenAIModel,
 } from "@/lib/openai";
+import { enforceRateLimit } from "@/lib/api/rate-limit";
 
 /**
  * POST /api/demo
- * Demo endpoint for landing page - limited to one use per visitor
- * No authentication required, but rate-limited on frontend via localStorage
+ * Public landing-page demo endpoint. No auth required by design, so the
+ * defense-in-depth is: per-IP server-side rate limit (5/hour) + hard input
+ * size cap + OpenAI max_tokens=500 to bound cost per call.
  */
+
+const DEMO_MAX_INPUT_CHARS = 1000;
 
 const DEMO_SYSTEM_PROMPT = `Tu es Posty, un assistant IA expert en création de contenu LinkedIn professionnel et engageant.
 
@@ -27,6 +31,15 @@ C'est une démo, donc sois impressionnant pour montrer la valeur de Posty!`;
 
 export async function POST(request: NextRequest) {
   try {
+    // Per-IP rate limit — bound OpenAI cost from scripted abuse.
+    // Cap is intentionally aggressive since this is an anonymous demo.
+    const rateLimited = enforceRateLimit(request, {
+      namespace: "demo",
+      limit: 5,
+      windowMs: 60 * 60 * 1000,
+    });
+    if (rateLimited) return rateLimited;
+
     const body = await request.json();
     const { message } = body;
 
@@ -35,6 +48,12 @@ export async function POST(request: NextRequest) {
       return new Response(
         JSON.stringify({ error: "Message is required" }),
         { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+    if (message.length > DEMO_MAX_INPUT_CHARS) {
+      return new Response(
+        JSON.stringify({ error: "Message too long" }),
+        { status: 413, headers: { "Content-Type": "application/json" } }
       );
     }
 

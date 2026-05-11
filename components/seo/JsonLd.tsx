@@ -67,14 +67,29 @@ export function WebsiteJsonLd() {
   const schema = {
     "@context": "https://schema.org",
     "@type": "WebSite",
+    "@id": `${seoConfig.siteUrl}/#website`,
     name: seoConfig.siteName,
+    // Brand-entity disambiguation — see Organization.alternateName for rationale.
+    alternateName: ["Posty", "PostyApp", "Posty App"],
     url: seoConfig.siteUrl,
-    description: "Générateur de posts LinkedIn IA - Créez du contenu impactant en quelques secondes",
+    description:
+      "Posty (Posty AI) — Générateur de posts LinkedIn par IA. Créez du contenu impactant en quelques secondes.",
     publisher: {
       "@type": "Organization",
+      "@id": `${seoConfig.siteUrl}/#organization`,
       name: seoConfig.brandName,
     },
     inLanguage: ["fr-FR", "en-US"],
+    // Sitelinks Searchbox — surfaces an in-Google search field under the
+    // brand result and reinforces "Posty" as a search-target entity.
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${seoConfig.siteUrl}/?q={search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
+    },
   };
 
   return (
@@ -594,6 +609,7 @@ export function EnhancedOrganizationJsonLd() {
     "@type": "Organization",
     "@id": `${seoConfig.siteUrl}/#organization`,
     name: "Posty AI",
+    alternateName: ["Posty", "PostyApp", "Posty App", "postyapp.ai"],
     url: seoConfig.siteUrl,
     logo: {
       "@type": "ImageObject",
@@ -621,6 +637,8 @@ export function EnhancedOrganizationJsonLd() {
     ],
     sameAs: [
       "https://www.linkedin.com/company/posty-app",
+      "https://twitter.com/posty_app",
+      "https://x.com/posty_app",
     ],
     contactPoint: {
       "@type": "ContactPoint",
@@ -704,6 +722,7 @@ export function AboutPageJsonLd() {
     "@type": "Organization",
     "@id": `${seoConfig.siteUrl}/#organization`,
     name: "Posty AI",
+    alternateName: ["Posty", "PostyApp", "Posty App", "postyapp.ai"],
     url: seoConfig.siteUrl,
     logo: `${seoConfig.siteUrl}/favicon-512.png`,
     description: "Posty AI est un générateur de posts LinkedIn alimenté par l'intelligence artificielle. Notre mission : démocratiser le contenu professionnel et automatiser le personal branding pour tous.",

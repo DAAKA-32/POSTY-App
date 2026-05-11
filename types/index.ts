@@ -149,8 +149,8 @@ export interface UserProfile {
     trialStartedAt?: Timestamp;    // When trial started
     trialEndsAt?: Timestamp;       // When trial ends (for display)
     trialPlan?: SubscriptionPlan;  // Which plan was trialed (pro or max)
-    // Free-plan trial (14 days). Distinct from the Stripe trial above:
-    // every Free user gets 14 days of access starting at signup, then must
+    // Free-plan trial (30 days). Distinct from the Stripe trial above:
+    // every Free user gets 30 days of access starting at signup, then must
     // upgrade. Backfilled lazily from `createdAt` for existing accounts.
     freeTrialStartedAt?: Timestamp;
     freeTrialEndsAt?: Timestamp;
@@ -754,6 +754,31 @@ export interface DiscordPostData {
   publishedAt: Timestamp;
   success: boolean;
   error?: string;
+}
+
+// ============== AI ACTION TYPES ==============
+
+export type AIActionType =
+  | "schedule_post"
+  | "publish_post"
+  | "delete_conversation";
+
+export interface AIActionParams {
+  content?: string;
+  postId?: string;
+  scheduledAt?: string;
+  platform?: string;
+  timezone?: string;
+  title?: string;
+}
+
+export interface DetectedAIAction {
+  type: AIActionType;
+  confidence: "high" | "medium";
+  params: AIActionParams;
+  displayLabel: string;
+  displayDetails: string;
+  userMessage: string;
 }
 
 // ============== SCHEDULING TYPES ==============

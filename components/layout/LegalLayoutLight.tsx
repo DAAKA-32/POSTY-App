@@ -146,6 +146,14 @@ export default function LegalLayoutLight({ children, title }: LegalLayoutLightPr
                 © {new Date().getFullYear()} POSTY. {t.ui.allRightsReserved}.
               </span>
             </div>
+            {/* Brand-entity triple line — fuses Posty + Posty AI + postyapp.ai
+                into a single Knowledge-Graph entity for Google. */}
+            <p
+              translate="no"
+              className="notranslate text-xs text-[#9CA3AF] tracking-wide"
+            >
+              <span className="font-semibold text-[#6B7280]">Posty</span> — Posty AI · postyapp.ai
+            </p>
 
             {/* Legal links */}
             <div className="flex flex-wrap justify-center gap-4 md:gap-6 text-sm">

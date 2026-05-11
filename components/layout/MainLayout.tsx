@@ -25,6 +25,7 @@ import { invalidateCachedConversation } from "@/lib/storage/conversation-cache";
 import { AnimatedSlideIn, AnimatedPageWrapper } from "@/components/animations/AnimatedPageWrapper";
 import toast from "@/components/ui/Toast";
 import TrialBanner from "@/components/subscription/TrialBanner";
+import FreeTrialPaywall from "@/components/subscription/FreeTrialPaywall";
 import UsageBanner from "@/components/ui/UsageBanner";
 import QuotaExceededModal from "@/components/ui/QuotaExceededModal";
 import HelpFloatingButton from "@/components/help/HelpFloatingButton";
@@ -252,13 +253,15 @@ export default function MainLayout({
   const [showChatList, setShowChatList] = useState(true);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [autoLoadedPosts, setAutoLoadedPosts] = useState<Post[]>([]);
+  // True until we have confirmed data state — prevents empty-state flash for users with conversations
+  const [sidebarLoading, setSidebarLoading] = useState(true);
   const [localPosts, setLocalPosts] = useState<Post[]>([]);
   const [postToDelete, setPostToDelete] = useState<Post | null>(null);
   const [postToRename, setPostToRename] = useState<Post | null>(null);
   const [hoveredPostId, setHoveredPostId] = useState<string | null>(null);
   const pathname = usePathname();
   const router = useRouter();
-  const { user, userProfile } = useAuth();
+  const { user, userProfile, loading: authLoading } = useAuth();
   const { t } = useLanguage();
   const prefersReducedMotion = useReducedMotion();
   const { refreshScheduledPosts } = useScheduling();
@@ -308,8 +311,19 @@ export default function MainLayout({
     }
   }, [linkedInConnection, facebookConnection, threadsConnection]);
 
-  // Auto-load posts for sidebar when not provided and not on subscription page
+  // Immediately unblock loading when the parent already provides posts (e.g. /app page)
   useEffect(() => {
+    if (posts.length > 0 || isSubscriptionPage) {
+      setSidebarLoading(false);
+    }
+  }, [posts.length, isSubscriptionPage]);
+
+  // Auto-load posts for sidebar when not provided and not on subscription page.
+  // setSidebarLoading(false) is called in finally so the empty state only appears
+  // after we have confirmed there are no conversations — never during the fetch.
+  useEffect(() => {
+    if (authLoading) return; // wait for Firebase auth to resolve before fetching
+
     const loadPosts = async () => {
       if (user && posts.length === 0 && !isSubscriptionPage) {
         try {
@@ -317,11 +331,16 @@ export default function MainLayout({
           setAutoLoadedPosts(userPosts);
         } catch (error) {
           console.error("Error auto-loading posts for sidebar:", error);
+        } finally {
+          setSidebarLoading(false);
         }
+      } else {
+        // Subscription page, or parent provided posts, or no user — nothing to fetch
+        setSidebarLoading(false);
       }
     };
     loadPosts();
-  }, [user, posts.length, isSubscriptionPage]);
+  }, [user, authLoading, posts.length, isSubscriptionPage]);
 
   // Use provided posts or auto-loaded posts (but not on subscription page)
   const effectivePosts = useMemo(() => {
@@ -540,7 +559,7 @@ export default function MainLayout({
       <aside
         role="navigation"
         aria-label="Navigation principale"
-        className="sidebar-root hidden lg:flex flex-col h-screen bg-background-warm dark:bg-dark-card border-r border-[#F8935D]/10 dark:border-dark-border fixed left-0 top-0 z-40 overflow-hidden scroll-disabled transition-all duration-200 ease-out"
+        className="sidebar-root hidden lg:flex flex-col h-screen bg-background-warm dark:bg-dark-card border-r border-gray-200/65 dark:border-dark-border fixed left-0 top-0 z-40 overflow-hidden scroll-disabled transition-all duration-200 ease-out shadow-[1px_0_0_rgba(0,0,0,0.03)]"
         style={{ width: currentSidebarWidth }}
       >
         {/* Header - Logo when expanded, Toggle when collapsed */}
@@ -548,7 +567,7 @@ export default function MainLayout({
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: smoothEase }}
-          className={`h-16 border-b border-[#F8935D]/10 dark:border-dark-border flex items-center shrink-0 ${isCollapsed ? "justify-center px-2" : "justify-between px-3"}`}
+          className={`h-16 border-b border-gray-200/55 dark:border-dark-border flex items-center shrink-0 ${isCollapsed ? "justify-center px-2" : "justify-between px-3"}`}
         >
           {isCollapsed ? (
             /* Toggle button when collapsed - replaces logo */
@@ -626,7 +645,7 @@ export default function MainLayout({
 
         {/* Fixed navigation section (new post button + nav items + inline
             search affordance injected right after the Chat nav item below). */}
-        <div className="shrink-0 p-2 space-y-1">
+        <div className="shrink-0 px-2.5 pt-2 pb-3">
           {/* New post button - Clean professional version */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -675,14 +694,15 @@ export default function MainLayout({
             </button>
           </motion.div>
 
-          {/* Nav items — unified primary palette + shared layoutId active
-              indicator. The search affordance is injected as the next sibling
-              right after the Chat item (index 0) so it sits "below Chat"
-              while keeping the same visual rhythm as the other rows. */}
+          {/* Nav items — grouped in a subtle card for visual hierarchy */}
+          <div className="sidebar-nav-card mt-2 rounded-xl overflow-hidden ring-1 ring-gray-200/55 dark:ring-white/[0.055] bg-white/50 dark:bg-white/[0.025]">
           {navItems.map((item, index) => {
             const isActive = pathname === item.href || (item.href === "/app" && pathname === "/chat");
             return (
               <Fragment key={item.name}>
+                {index > 0 && (
+                  <div className="h-px bg-gray-100/70 dark:bg-white/[0.04] mx-0" />
+                )}
                 <motion.div
                   custom={index}
                   variants={navItemVariants}
@@ -702,11 +722,11 @@ export default function MainLayout({
                   <Link
                     href={item.href}
                     className={`
-                      relative w-full h-10 rounded-lg flex items-center gap-3 transition-colors duration-150 ease-out group
+                      relative w-full h-10 flex items-center gap-3 transition-colors duration-150 ease-out group
                       ${isCollapsed ? "justify-center px-0" : "px-3"}
                       ${isActive
-                        ? "bg-primary/[0.06] text-primary"
-                        : "text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-dark-hover/60 hover:text-gray-900 dark:hover:text-white"
+                        ? "bg-primary/[0.09] dark:bg-primary/[0.13] text-primary"
+                        : "text-gray-700 dark:text-gray-200 hover:bg-white/80 dark:hover:bg-white/[0.05] hover:text-gray-900 dark:hover:text-white"
                       }
                     `}
                     title={item.name}
@@ -746,14 +766,15 @@ export default function MainLayout({
                     primary text — mirrors the active Link rows above. */}
                 {index === 0 && (
                   <div className="relative">
+                    <div className="h-px bg-gray-100/70 dark:bg-white/[0.04] mx-0" />
                     <button
                       onClick={handleSearchClick}
                       className={`
-                        relative w-full h-10 rounded-lg flex items-center gap-3 transition-colors duration-150 ease-out group
+                        relative w-full h-10 flex items-center gap-3 transition-colors duration-150 ease-out group
                         ${isCollapsed ? "justify-center px-0" : "px-3"}
                         ${searchOpen
-                          ? "bg-primary/[0.06] text-primary"
-                          : "text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-dark-hover/60 hover:text-gray-900 dark:hover:text-white"
+                          ? "bg-primary/[0.09] dark:bg-primary/[0.13] text-primary"
+                          : "text-gray-700 dark:text-gray-200 hover:bg-white/80 dark:hover:bg-white/[0.05] hover:text-gray-900 dark:hover:text-white"
                         }
                       `}
                       title={t.common.search}
@@ -793,6 +814,7 @@ export default function MainLayout({
               </Fragment>
             );
           })}
+          </div>
 
           {/* Conversations icon - Only show when collapsed and has posts */}
           {isCollapsed && localPosts.length > 0 && (
@@ -819,43 +841,27 @@ export default function MainLayout({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.4, delay: 0.3, ease: smoothEase }}
-              className="pt-4 border-t border-[#F8935D]/10 dark:border-dark-border"
+              className="pt-4 border-t border-gray-200/55 dark:border-dark-border"
             >
               <button
                 onClick={() => setShowChatList(!showChatList)}
-                className="group flex items-center justify-between w-full px-3 py-2 text-text-muted hover:text-text-primary hover:bg-[#F8935D]/8 dark:hover:bg-dark-hover transition-[background-color,color] duration-150 rounded-lg"
+                className="group flex items-center gap-2 w-full px-2 py-1.5 rounded-md hover:bg-gray-100/60 dark:hover:bg-dark-hover/40 transition-colors duration-150"
               >
-                <span className="text-xs font-bold uppercase tracking-wider text-silver-solid flex items-center gap-2">
-                  <svg
-                    className="w-4 h-4 text-primary group-hover:text-primary-hover transition-colors"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                    />
-                  </svg>
+                <span className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-gray-400 dark:text-gray-500 group-hover:text-gray-500 dark:group-hover:text-gray-400 transition-colors shrink-0">
                   {t.sidebar.conversations}
                 </span>
-                <div className="flex items-center gap-2">
-                  <span className="text-2xs font-semibold text-primary dark:text-primary bg-[#F8935D]/10 dark:bg-[#F8935D]/20 px-2 py-0.5 rounded-full">
-                    {localPosts.length}
-                  </span>
-                  <motion.svg
-                    animate={{ rotate: showChatList ? 0 : -90 }}
-                    transition={{ duration: 0.2, ease: smoothEase }}
-                    className="w-4 h-4 text-primary"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </motion.svg>
-                </div>
+                <div className="flex-1 h-px bg-gray-200/60 dark:bg-dark-border/50" />
+                <span className="text-[10px] tabular-nums text-gray-400 dark:text-gray-500 shrink-0">{localPosts.length}</span>
+                <motion.svg
+                  animate={{ rotate: showChatList ? 0 : -90 }}
+                  transition={{ duration: 0.2, ease: smoothEase }}
+                  className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </motion.svg>
               </button>
 
               {showChatList && (
@@ -863,82 +869,27 @@ export default function MainLayout({
                   >
                     {groupedPosts.map((group, groupIndex) => {
                       // Determine group visual properties
-                      const isToday = group.label.includes(t.sidebar.today || "Aujourd'hui");
-                      const isYesterday = group.label.includes(t.sidebar.yesterday || "Hier");
                       const isPinned = group.isPinned;
 
                       return (
                       <div key={group.label} className={groupIndex > 0 ? "mt-2.5 mb-3" : "mb-3"}>
-                        {/* Simple group header */}
+                        {/* Group header — label + trailing rule + count */}
                         <motion.div
                           initial={{ opacity: 0, x: -10 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ duration: 0.3, delay: groupIndex * 0.05, ease: smoothEase }}
-                          className="px-3 py-1.5 flex items-center gap-2"
+                          className="px-2 pt-2 pb-1 flex items-center gap-2"
                         >
-                          {/* Simple colored icon based on group type */}
                           {isPinned && (
-                            <svg
-                              className="w-3.5 h-3.5 text-primary dark:text-primary"
-                              fill="currentColor"
-                              viewBox="0 0 24 24"
-                            >
+                            <svg className="w-2.5 h-2.5 shrink-0 text-primary/60" fill="currentColor" viewBox="0 0 24 24">
                               <path d="M16 4a1 1 0 0 1 1 1v3.586l1.707 1.707a1 1 0 0 1 .293.707v2a1 1 0 0 1-1 1h-4v6a1 1 0 0 1-2 0v-6H8a1 1 0 0 1-1-1v-2a1 1 0 0 1 .293-.707L9 8.586V5a1 1 0 0 1 1-1h6z"/>
                             </svg>
                           )}
-                          {isToday && (
-                            <svg
-                              className="w-3.5 h-3.5 text-primary dark:text-primary"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-                              />
-                            </svg>
-                          )}
-                          {isYesterday && (
-                            <svg
-                              className="w-3.5 h-3.5 text-text-muted dark:text-text-muted"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-                              />
-                            </svg>
-                          )}
-                          {!isPinned && !isToday && !isYesterday && (
-                            <svg
-                              className="w-3.5 h-3.5 text-text-muted"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                              />
-                            </svg>
-                          )}
-
-                          {/* Group label - simple text */}
-                          <span className="text-2xs font-semibold uppercase tracking-wider text-text-muted">
+                          <span className="text-[10px] font-semibold uppercase tracking-[0.07em] text-gray-400 dark:text-gray-500 shrink-0">
                             {group.label}
                           </span>
-
-                          {/* Post count badge - Simple text */}
-                          <span className="ml-auto text-2xs font-medium text-text-muted">
+                          <div className="flex-1 h-px bg-gray-200/50 dark:bg-dark-border/40" />
+                          <span className="text-[10px] tabular-nums text-gray-400/70 dark:text-gray-600 shrink-0">
                             {group.posts.length}
                           </span>
                         </motion.div>
@@ -1030,10 +981,67 @@ export default function MainLayout({
               )}
             </motion.div>
           )}
+
+          {/* Skeleton — shown while the initial data fetch is in progress */}
+          {!isCollapsed && sidebarLoading && localPosts.length === 0 && (
+            <div className="px-3 pt-2 space-y-1" aria-hidden="true">
+              {[72, 55, 80, 63].map((w, i) => (
+                <div key={i} className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg">
+                  <div className="w-3.5 h-3.5 rounded bg-gray-200 dark:bg-dark-elevated animate-pulse flex-shrink-0" />
+                  <div
+                    className="h-2.5 bg-gray-200 dark:bg-dark-elevated rounded-full animate-pulse"
+                    style={{ width: `${w}%` }}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Empty state CTA — only after loading confirmed no conversations exist */}
+          {!isCollapsed && !sidebarLoading && localPosts.length === 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.2, ease: smoothEase }}
+              className="flex flex-col items-center justify-center px-5 text-center py-16"
+            >
+              {/* Icon */}
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-3">
+                <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+              </div>
+
+              {/* Text */}
+              <p className="text-[13px] font-semibold text-gray-800 dark:text-gray-100 mb-1">
+                {t.sidebar.emptyStateTitle}
+              </p>
+              <p className="text-[11.5px] text-text-muted leading-snug mb-4">
+                {t.sidebar.emptyStateSubtitle}
+              </p>
+
+              {/* CTA button */}
+              <button
+                onClick={() => router.push(`/app?new=${Date.now()}`)}
+                className="
+                  flex items-center gap-1.5 px-4 py-2
+                  bg-primary hover:bg-primary-hover
+                  text-white text-[12px] font-semibold rounded-lg
+                  shadow-sm shadow-primary/20 hover:shadow-md hover:shadow-primary/30
+                  transition-all duration-200 active:scale-95 cursor-pointer
+                "
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                {t.sidebar.newPost}
+              </button>
+            </motion.div>
+          )}
         </nav>
 
         {/* Profile */}
-        <div className="p-2 border-t border-[#F8935D]/10 dark:border-dark-border shrink-0">
+        <div className="px-2.5 py-2.5 border-t border-gray-200/55 dark:border-dark-border shrink-0 bg-gradient-to-t from-gray-50/70 dark:from-dark-elevated/25 to-transparent">
           <ProfileMenu isCollapsed={isCollapsed} />
         </div>
       </aside>
@@ -1161,6 +1169,12 @@ export default function MainLayout({
         post={postToDelete}
         onConfirm={handleDeleteConfirm}
       />
+
+      {/* 30-day Free trial expiration paywall — renders only when expired.
+          Sits at z-[100] above every modal/sheet so the user can SEE the
+          familiar UI behind a blur but cannot interact with it. The user
+          stays on /app: conversion happens in-context, not via redirect. */}
+      <FreeTrialPaywall />
     </div>
   );
 }
