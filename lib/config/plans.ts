@@ -227,17 +227,31 @@ export function isFreeTrialGateEnabled(): boolean {
 /**
  * Whether a Free-plan user's trial has expired.
  *
+ * Plan hierarchy enforced here (highest tier always wins, no exceptions):
+ *   1. MAX            → never expired (paid OR gifted via override)
+ *   2. PRO            → never expired (Stripe-managed billing handles renewal)
+ *   3. FREE (active)  → not yet expired, still inside the 30-day window
+ *   4. FREE (expired) → paywall shows, user must upgrade
+ *
+ * Always pass the EFFECTIVE plan here (the value already produced by
+ * SubscriptionContext after applying the founder/gift override) — NOT the raw
+ * Firestore subscription.plan. This guarantees a gifted Max user with a stale
+ * Firestore plan=="free" record NEVER triggers the paywall, because the
+ * effective plan resolves to "max" and the first guard below skips out.
+ *
  * Returns false for:
  *   - the trial gate being disabled via env flag (production default)
- *   - users not on the Free plan (no trial to expire)
- *   - founder/gift accounts (effective Max plan, never expires)
- *   - users whose start date cannot be resolved (treat as fresh — fail-open)
+ *   - any non-Free effective plan (Pro/Max/null/legacy — never gated)
+ *   - users whose trial-end date cannot be resolved (treat as fresh — fail-open)
  */
 export function isFreeTrialExpired(
   plan: PlanType | null,
   trialEnd: Date | null | undefined
 ): boolean {
   if (!isFreeTrialGateEnabled()) return false;
+  // Hierarchy guard: only the Free plan can be in "trial expired" state.
+  // Pro, Max, or null/unknown plans always pass through cleanly. This is the
+  // single source of truth — do not duplicate this check anywhere else.
   if (plan !== "free") return false;
   if (!trialEnd) return false; // Cannot determine — fail-open (lazy backfill will fix)
   return trialEnd.getTime() < Date.now();

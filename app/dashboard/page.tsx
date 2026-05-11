@@ -19,10 +19,15 @@ import DashboardOnboarding from "@/components/dashboard/DashboardOnboarding";
 import { AnimatedLogo } from "@/components/ui/Logo";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useSubscription } from "@/contexts/SubscriptionContext";
 import { usePageTitle } from "@/hooks/ui/usePageTitle";
 
 function DashboardContent() {
   const { user, userProfile, loading } = useAuth();
+  // Use the EFFECTIVE plan from SubscriptionContext (gift/founder override
+  // already applied) — reading userProfile?.subscription?.plan directly here
+  // would show "Free" for whitelisted Max users with stale Firestore records.
+  const { currentPlan } = useSubscription();
   const router = useRouter();
   const { t, language } = useLanguage();
   usePageTitle("dashboard");
@@ -179,23 +184,23 @@ function DashboardContent() {
             {/* Plan badge */}
             <div className="flex flex-wrap items-center gap-3">
               <div className={`px-4 py-3 rounded-xl transition-colors duration-200 ${
-                userProfile?.subscription?.plan === "max"
+                currentPlan === "max"
                   ? "bg-primary-hover/10 border border-primary-hover/20 hover:border-primary-hover/30"
-                  : userProfile?.subscription?.plan === "pro"
+                  : currentPlan === "pro"
                     ? "bg-primary/10 border border-primary/20 hover:border-primary/30"
                     : "bg-gray-100 dark:bg-dark-card border border-gray-200 dark:border-dark-border hover:border-gray-300 dark:hover:border-dark-border-hover"
               }`}>
                 <p className="text-xs text-text-muted mb-1">{t.dashboard.currentPlan}</p>
                 <p className={`text-sm font-semibold ${
-                  userProfile?.subscription?.plan === "max"
+                  currentPlan === "max"
                     ? "text-primary-hover"
-                    : userProfile?.subscription?.plan === "pro"
+                    : currentPlan === "pro"
                       ? "text-primary"
                       : "text-primary"
                 }`}>
-                  {userProfile?.subscription?.plan === "pro"
+                  {currentPlan === "pro"
                     ? "Pro"
-                    : userProfile?.subscription?.plan === "max"
+                    : currentPlan === "max"
                       ? "Max"
                       : t.dashboard.free}
                 </p>

@@ -7,6 +7,7 @@ import React, {
   useEffect,
   useCallback,
   useMemo,
+  useRef,
 } from "react";
 import { useAuth } from "./AuthContext";
 import {
@@ -48,7 +49,7 @@ import {
   getMonthStartDate,
   Platform,
 } from "@/lib/config/permissions";
-import { doc, getDoc, updateDoc, Timestamp } from "firebase/firestore";
+import { doc, getDoc, updateDoc, Timestamp, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/db/firebase";
 import { getAuthHeaders } from "@/lib/api/client";
 
@@ -74,11 +75,11 @@ interface SubscriptionState {
   trialEndsAt: Date | null;
   trialEligible: boolean;
 
-  // Free-plan trial (14 days)
+  // Free-plan trial (30 days)
   freeTrialStartedAt: Date | null;
   freeTrialEndsAt: Date | null;
   freeTrialDaysRemaining: number;
-  /** True when the user is on the Free plan AND the 14-day clock has run out. */
+  /** True when the user is on the Free plan AND the 30-day clock has run out. */
   freeTrialExpired: boolean;
 
   // Guarantee state
@@ -242,7 +243,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     const effectivePlan = founderPlan || stripePlan;
     const isFounderOverride = !!founderPlan;
 
-    // ===== Free-plan 14-day trial =====
+    // ===== Free-plan 30-day trial =====
     // Resolve trial window from explicit fields with createdAt fallback so
     // accounts created before the trial system landed are still gated.
     const freeTrialStartedAt = isFounderOverride
@@ -260,7 +261,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
 
     // Effective status:
     //  - Free trial expired → "inactive" (forces upgrade)
-    //  - Free trial active  → "active"   (the 14-day window IS the entitlement;
+    //  - Free trial active  → "active"   (the 30-day window IS the entitlement;
     //                                     Firestore typically carries no status
     //                                     for Free users, so we promote here)
     //  - Pro / Max          → rawStatus  (Stripe is the source of truth)
@@ -365,6 +366,57 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     document.cookie = `subscription_status=${state.subscription.status}; path=/; max-age=${maxAge}; SameSite=Strict`;
     document.cookie = `subscription_plan=${state.subscription.plan}; path=/; max-age=${maxAge}; SameSite=Strict`;
   }, [state.loading, state.subscription.status, state.subscription.plan]);
+
+  /* Stale-state migration for gifted users.
+   *
+   * Scenario: a user was on the Free plan, their 30-day trial expired (Firestore
+   * holds subscription.status === "inactive" and a past freeTrialEndsAt). They
+   * are then added to GIFT_RECIPIENTS / FOUNDER_EMAILS. The runtime override in
+   * the useMemo above ALREADY produces a clean state (plan=max, status=active,
+   * freeTrialExpired=false) — but the raw Firestore record stays stale, which
+   * confuses admin dashboards, analytics queries, and any future code path that
+   * reads subscription.plan directly instead of going through this context.
+   *
+   * This effect lazily heals the document on next login: a single write that
+   * marks the user as gifted and flips status back to "active". Idempotent —
+   * the condition becomes false after one write so we don't loop.
+   *
+   * We deliberately DO NOT mutate `subscription.plan` here — keeping the raw
+   * Stripe plan ("free") preserves the gift semantic: remove the email from
+   * GIFT_RECIPIENTS and the override falls away, the user goes back to Free
+   * (and the trial-expired paywall kicks in normally on past trialEnd dates). */
+  const migrationRanRef = useRef(false);
+  useEffect(() => {
+    if (migrationRanRef.current) return;
+    if (state.loading || !user?.uid || !user?.email || !userProfile) return;
+
+    const founderPlan = getFounderOverridePlan(user.email);
+    if (!founderPlan) return; // not a gifted user, nothing to migrate
+
+    // Cast to string: the typed union doesn't include "inactive" but legacy
+    // Firestore records may carry it. We compare loosely to cover all stale
+    // states that the runtime override clears.
+    const firestoreStatus = userProfile.subscription?.status as string | undefined;
+    const needsMigration =
+      firestoreStatus === "inactive" ||
+      firestoreStatus === "canceled" ||
+      firestoreStatus === "past_due" ||
+      firestoreStatus === "unpaid";
+    if (!needsMigration) return;
+
+    migrationRanRef.current = true;
+    updateDoc(doc(db, "users", user.uid), {
+      "subscription.status": "active",
+      "subscription.giftedAt": serverTimestamp(),
+    })
+      .then(() => refreshUserProfile())
+      .catch((err) => {
+        // Non-fatal: runtime override still produces correct UI state. We just
+        // failed to heal the Firestore record. Log for observability.
+        console.error("[SubscriptionContext] Gifted-user stale-state migration failed:", err);
+        migrationRanRef.current = false; // allow retry on next render
+      });
+  }, [state.loading, user?.uid, user?.email, userProfile, refreshUserProfile]);
 
   /* Public refresh entry point — pulls a fresh userProfile from Firestore via
    * AuthContext (single source of truth). Used by Stripe webhooks, refund flow,

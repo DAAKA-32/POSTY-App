@@ -12,6 +12,7 @@ import {
   PlanSource,
   getPlanLimits,
   Platform,
+  getFounderOverridePlan,
 } from "@/lib/config/plans";
 import {
   UserSubscription,
@@ -88,13 +89,18 @@ export async function getUserSubscriptionData(userId: string): Promise<Subscript
       stripePlan = subscriptionData.plan as PlanType;
     }
 
-    const effectivePlan = stripePlan;
+    // Founder/gift override ALWAYS wins — matches the runtime priority used by
+    // SubscriptionContext and firestore-admin. Without this, server-side
+    // permission checks would treat whitelisted Max users as still-Free.
+    const founderPlan = getFounderOverridePlan(userData.email);
+    const effectivePlan = founderPlan || stripePlan;
+    const isFounderOverride = !!founderPlan;
 
     // Build subscription object
     const subscription: UserSubscription = {
       plan: effectivePlan,
-      planSource: "stripe",
-      status: subscriptionData.status || "active",
+      planSource: isFounderOverride ? "test" : "stripe",
+      status: isFounderOverride ? "active" : (subscriptionData.status || "active"),
       currentPeriodStart: subscriptionData.subscribedAt?.toDate(),
       currentPeriodEnd: subscriptionData.expiresAt?.toDate(),
     };
