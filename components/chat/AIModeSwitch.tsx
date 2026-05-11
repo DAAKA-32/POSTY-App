@@ -1,17 +1,19 @@
 "use client";
 
 /**
- * AIModeSwitch — premium 2-mode selector for the main chat input.
+ * AIModeSwitch — premium mode selector for the main chat input.
  *
- *   - "posts"      Generate LinkedIn posts (default and only state-toggle)
+ *   - "posts"      Generate LinkedIn posts (default state-toggle)
+ *   - "support"    General Q&A / help — DEV-ONLY in the UI. The button is
+ *                  rendered only when NODE_ENV === "development" so we can
+ *                  iterate on the Q&A flow locally without exposing it to
+ *                  production users (the conversion narrative is "AI LinkedIn
+ *                  posts", not a help chat). The mode literal is kept in the
+ *                  AIMode union so persisted state and the back-end routes
+ *                  still typecheck.
  *   - "strategist" Marketing Strategist (Max-only) — opens the side drawer
  *                  rather than routing through the main input, since the
  *                  agent has its own conversation surface and system prompt.
- *
- * The "support" Q&A mode was retired from the production UI: it was confusing
- * the conversion narrative (Posty = LinkedIn post generator, not a help chat).
- * The AIMode type still carries the literal for backward compatibility with
- * persisted state, but no UI element ever transitions to it now.
  *
  * Visually: a single pill control. Posts is the state-toggle segment;
  * Strategist is always shown with an amber gradient and a "MAX" badge for
@@ -20,7 +22,14 @@
  */
 
 import { motion } from "framer-motion";
-import { PenLine, Sparkles } from "lucide-react";
+import { PenLine, HelpCircle, Sparkles } from "lucide-react";
+
+/**
+ * NODE_ENV is statically replaced at build time by Next.js / Turbopack, so
+ * this constant tree-shakes the dev-only Support branch out of the production
+ * bundle entirely — no runtime cost, no client-side env leak.
+ */
+const SHOW_DEV_SUPPORT = process.env.NODE_ENV === "development";
 
 export type AIMode = "posts" | "support";
 
@@ -77,6 +86,37 @@ export default function AIModeSwitch({
           <span>Posts</span>
         </span>
       </button>
+
+      {/* Support — DEV-ONLY (NODE_ENV === "development"). Tree-shaken out of
+          the prod bundle by the static const guard above. */}
+      {SHOW_DEV_SUPPORT && (
+        <button
+          type="button"
+          onClick={() => mode !== "support" && onModeChange("support")}
+          aria-pressed={mode === "support"}
+          className={`
+            relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg
+            text-xs font-medium transition-colors duration-200 cursor-pointer
+            ${
+              mode === "support"
+                ? "text-emerald-600 dark:text-emerald-400"
+                : "text-text-muted hover:text-text-secondary"
+            }
+          `}
+        >
+          {mode === "support" && (
+            <motion.div
+              layoutId="aiModeIndicator"
+              className="absolute inset-0 rounded-lg bg-emerald-500/15 border border-emerald-500/30"
+              transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            />
+          )}
+          <span className="relative z-10 flex items-center gap-1.5">
+            <HelpCircle className="w-3.5 h-3.5" />
+            <span>Support</span>
+          </span>
+        </button>
+      )}
 
       {/* Strategist — opens the drawer (Max-only experience). Solid gold
           gradient so it pops out of the light pill as a clear premium CTA. */}
