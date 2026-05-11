@@ -516,14 +516,18 @@ export default function OnboardingPage() {
       clearOnboardingProgress();
 
       if (isEditMode) {
-        // Returning user editing their profile — go straight to subscription
+        // Returning user editing their profile.
+        // Whitelisted/gifted/paid users already have an active subscription —
+        // skip the picker and send them back to /app. Others go to the picker.
         await refreshUserProfile();
-        router.replace("/subscription");
+        router.replace(hasActiveSubscription ? "/app" : "/subscription");
       } else {
-        // First-time onboarding — show recap then auto-redirect to subscription
+        // First-time onboarding — show recap, then auto-redirect.
+        // The recap's onRedirect (below) routes to /app for already-active users
+        // (gifted/founder/paid) or /subscription for users still on the picker.
         // CRITICAL: Set showRecap BEFORE refreshUserProfile/clearOnboardingFlag
-        // to prevent the redirect useEffect from navigating to /app
-        // during intermediate renders where onboardingComplete=true but showRecap=false
+        // to prevent the redirect useEffect from navigating to /app during
+        // intermediate renders where onboardingComplete=true but showRecap=false.
         setShowRecap(true);
         await refreshUserProfile();
         clearOnboardingFlag();
@@ -536,8 +540,11 @@ export default function OnboardingPage() {
     }
   };
 
-  const handleRedirectToSubscription = () => {
-    router.replace("/subscription");
+  // Post-onboarding redirect. Gifted/whitelisted/founder users (and anyone with
+  // an active subscription) skip the /subscription picker and go straight to
+  // /app — they already have a plan, the picker would be a dead-end.
+  const handleRedirectAfterOnboarding = () => {
+    router.replace(hasActiveSubscription ? "/app" : "/subscription");
   };
 
   const stepConfig = STEP_CONFIGS[currentStep];
@@ -629,7 +636,7 @@ export default function OnboardingPage() {
           <ProfileRecapScreen
             data={data}
             userName={user.displayName || user.email?.split("@")[0] || t.onboarding.defaultUser}
-            onRedirect={handleRedirectToSubscription}
+            onRedirect={handleRedirectAfterOnboarding}
           />
         ) : (
           <div className="w-full max-w-lg px-4 sm:px-6 py-8 sm:py-12 my-auto">
