@@ -51,6 +51,21 @@ export async function createUserProfile(
   const freeTrialStart = now;
   const freeTrialEnd = calculateFreeTrialEndDate(now);
 
+  // Pre-applied gift/founder treatment for whitelisted emails creating their
+  // account for the first time. Without this, the user lands with
+  // status="inactive" and we'd rely entirely on the runtime override + the
+  // migration useEffect to heal the record on next mount. Seeding the
+  // correct state at signup is cleaner: admin counts and any server-side
+  // status check are correct from the very first request.
+  //
+  // We deliberately keep `plan: null` (not "max"): the runtime override
+  // resolves the effective plan from the email, and leaving plan=null
+  // preserves the revocable gift semantic — remove the email from
+  // GIFT_RECIPIENTS and the user reverts to "no plan" rather than keeping
+  // Max forever.
+  const giftedPlan = getFounderOverridePlan(data.email || null);
+  const isGifted = !!giftedPlan;
+
   await setDoc(userRef, {
     uid: userId,
     email: data.email || "",
@@ -61,9 +76,10 @@ export async function createUserProfile(
     onboardingComplete: false,
     subscription: {
       plan: null,
-      status: "inactive",
+      status: isGifted ? "active" : "inactive",
       freeTrialStartedAt: Timestamp.fromDate(freeTrialStart),
       freeTrialEndsAt: Timestamp.fromDate(freeTrialEnd),
+      ...(isGifted ? { giftedAt: serverTimestamp() } : {}),
     },
     // Initialize quota tracking to prevent race condition false positives
     quota: {

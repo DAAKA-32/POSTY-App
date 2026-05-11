@@ -14,16 +14,26 @@ import { QuotaProvider } from "@/contexts/QuotaContext";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import AppProvider from "@/components/providers/AppProvider";
-import StrategistDrawer from "@/components/strategist/StrategistDrawer";
-import GlobalCommandPalette from "@/components/providers/GlobalCommandPalette";
 import KeyboardNavigationProvider from "@/components/providers/KeyboardNavigationProvider";
 import SkipLinks from "@/components/accessibility/SkipLinks";
-import CookieBanner from "@/components/ui/CookieBanner";
-import LegalUpdateNotification from "@/components/ui/LegalUpdateNotification";
-import LandscapeBlocker from "@/components/ui/LandscapeBlocker";
 import { HomepageJsonLd, HowToJsonLd, postyHowToData } from "@/components/seo/JsonLd";
 import HreflangTags from "@/components/seo/HreflangTags";
 import "./globals.css";
+
+// Secondary widgets — never on the critical path. Deferring them shaves the
+// root layout's eager module graph, which Turbopack must rebuild on every
+// dev compile. None of these need SSR (overlays, listeners, post-mount UX).
+// They live in a Client Component module because Next.js 16 forbids
+// `dynamic(..., { ssr: false })` from running inside Server Components, and
+// keeping this layout as a Server Component preserves SEO/metadata behavior.
+import {
+  StrategistDrawer,
+  GlobalCommandPalette,
+  CookieBanner,
+  LegalUpdateNotification,
+  LandscapeBlocker,
+  AnalyticsTracker,
+} from "@/components/providers/DeferredLayoutWidgets";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -45,14 +55,22 @@ export const metadata: Metadata = {
   // Base metadata
   metadataBase: new URL(siteConfig.url),
   title: {
-    default: "Posty AI – Turn LinkedIn posts into clients with AI",
-    template: "%s | Posty AI",
+    // Brand-first: leads with the bare token "Posty" so brand-search
+    // ("Posty" alone) matches the title token directly. "Posty AI" is
+    // kept as the full brand right after for entity reinforcement.
+    default: "Posty — Posty AI · Turn LinkedIn posts into clients with AI",
+    template: "%s · Posty AI",
   },
   description:
-    "Create high-performing LinkedIn posts in seconds with AI. Posty generates ready-to-publish content tailored to your audience. Start free today.",
+    "Posty (Posty AI, postyapp.ai) — Create high-performing LinkedIn posts in seconds with AI. Posty generates ready-to-publish content tailored to your audience. Start free today.",
   keywords: [
     "Posty",
     "Posty AI",
+    "PostyApp",
+    "Posty App",
+    "postyapp.ai",
+    "Posty LinkedIn",
+    "Posty AI LinkedIn",
     "LinkedIn post generator",
     "AI LinkedIn tool",
     "LinkedIn automation",
@@ -106,16 +124,16 @@ export const metadata: Metadata = {
     locale: "en_US",
     alternateLocale: "fr_FR",
     url: siteConfig.url,
-    siteName: "Posty AI",
-    title: "Posty AI – Turn LinkedIn posts into clients with AI",
+    siteName: "Posty",
+    title: "Posty — Posty AI · Turn LinkedIn posts into clients with AI",
     description:
-      "Create high-performing LinkedIn posts in seconds with AI. Posty generates ready-to-publish content tailored to your audience.",
+      "Posty (Posty AI) — Create high-performing LinkedIn posts in seconds with AI. Posty generates ready-to-publish content tailored to your audience.",
     images: [
       {
         url: `${siteConfig.url}/og-image.jpg`,
         width: 1200,
         height: 630,
-        alt: "Posty AI – Turn LinkedIn posts into clients with AI",
+        alt: "Posty AI — Turn LinkedIn posts into clients with AI",
         type: "image/jpeg",
       },
     ],
@@ -124,9 +142,10 @@ export const metadata: Metadata = {
   // Twitter Cards
   twitter: {
     card: "summary_large_image",
-    title: "Posty AI – Turn LinkedIn posts into clients with AI",
+    site: "@posty_app",
+    title: "Posty — Posty AI · Turn LinkedIn posts into clients with AI",
     description:
-      "Create high-performing LinkedIn posts in seconds with AI. Start free today.",
+      "Posty (Posty AI) — Create high-performing LinkedIn posts in seconds with AI. Start free today.",
     images: [`${siteConfig.url}/og-image.jpg`],
     creator: "@posty_app",
   },
@@ -178,7 +197,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={inter.variable} data-scroll-behavior="smooth" suppressHydrationWarning>
+    // translate="no" + notranslate disable browser auto-translation site-wide.
+    // Posty has its own i18n in 10 languages; layering Chrome / Google Translate
+    // on top produced broken output ("Total aujourd'hui d'aujourd'hui",
+    // mangled Stripe CTAs). Critical leaves (brand, prices, AI-generated posts)
+    // also carry `notranslate` for the manual-translate override case.
+    <html lang="en" translate="no" className={`${inter.variable} notranslate`} data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
         {/* Theme initialization + Web3/MetaMask error suppressor */}
         <script
@@ -243,6 +267,11 @@ export default function RootLayout({
             `,
           }}
         />
+        {/* Disable Google Translate toolbar prompts site-wide (paired with
+            translate="no" on <html>). The toolbar honors this meta even when
+            users would otherwise see the "Translate this page?" banner. */}
+        <meta name="google" content="notranslate" />
+
         {/* PWA Manifest */}
         <link rel="manifest" href="/manifest.json" />
         <meta name="mobile-web-app-capable" content="yes" />
@@ -301,6 +330,7 @@ export default function RootLayout({
                             <DiscordProvider>
                               <SchedulingProvider>
                                 {children}
+                                <AnalyticsTracker />
                                 <GlobalCommandPalette />
                               </SchedulingProvider>
                             </DiscordProvider>
