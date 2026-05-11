@@ -22,13 +22,12 @@ import MainLayout from "@/components/layout/MainLayout";
 import ChatMessage, { TypingIndicator } from "@/components/chat/ChatMessage";
 import ModernAIResponsePair from "@/components/chat/ModernAIResponsePair";
 import ModernResponseCard from "@/components/chat/ModernResponseCard";
+import ConversationalResponse from "@/components/chat/ConversationalResponse";
 import ModernStyleSelector from "@/components/chat/ModernStyleSelector";
 import DualModeToggle from "@/components/chat/DualModeToggle";
 import MaxModeSelector from "@/components/chat/MaxModeSelector";
 import AIModeSwitch, { AIMode } from "@/components/chat/AIModeSwitch";
 import InlineUpgradeBanner from "@/components/chat/InlineUpgradeBanner";
-import { useStrategistDrawer } from "@/contexts/StrategistDrawerContext";
-import { isStrategistEnabled } from "@/lib/config/feature-flags";
 import { getPlanFeatures } from "@/lib/config/plan-features";
 import NewResponseIndicator from "@/components/chat/NewResponseIndicator";
 import PublishToLinkedInModal from "@/components/linkedin/PublishToLinkedInModal";
@@ -109,8 +108,7 @@ function AppContent() {
   const { connection: linkedInConnection, publishToLinkedIn } = useLinkedIn();
   const { t, language } = useLanguage();
   const { canSendMessage } = useQuota();
-  const { isMaxPlan, isProPlan, currentPlan, planLimits, hasMarketingStrategist } = useSubscription();
-  const { open: openStrategistDrawer } = useStrategistDrawer();
+  const { isMaxPlan, isProPlan, currentPlan, planLimits } = useSubscription();
   usePageTitle("app");
   const [posts, setPosts] = useState<Post[]>([]);
   const [showPublishModal, setShowPublishModal] = useState(false);
@@ -215,54 +213,80 @@ function AppContent() {
     }
   }, [newParam, reset]);
 
-  // Pre-cache the conversation before navigating so the conversation page loads instantly
+  // Stable refs for values that change rapidly during streaming. Keeping them
+  // out of the redirect effect's deps prevents the effect body from being
+  // re-evaluated on every SSE chunk (which caused jitter during a stream).
+  const redirectInputsRef = useRef({
+    messages,
+    lastPrompt,
+    userId: user?.uid,
+    effectiveDualMode,
+    effectiveStyle,
+    insights,
+  });
+  redirectInputsRef.current = {
+    messages,
+    lastPrompt,
+    userId: user?.uid,
+    effectiveDualMode,
+    effectiveStyle,
+    insights,
+  };
+
+  // Pre-cache the conversation before navigating so the conversation page loads
+  // instantly. Triggered only by stream completion (`isStreaming` flips false)
+  // — never during a stream, never on every message chunk.
   useEffect(() => {
-    if (postId && postId !== lastRedirectedPostIdRef.current && !isStreaming) {
-      lastRedirectedPostIdRef.current = postId;
+    if (!postId || postId === lastRedirectedPostIdRef.current || isStreaming) return;
+    lastRedirectedPostIdRef.current = postId;
 
-      // Extract response content from messages we already have in memory
-      const aiMessages = messages.filter((m) => m.type === "ai");
-      const storytellingMsg = aiMessages.find((m) => m.variant === "storytelling");
-      const businessMsg = aiMessages.find((m) => m.variant === "business");
-      // Fallback: if no variant, use the first AI message as responseA
-      const fallbackContent = aiMessages[0]?.content || "";
+    const {
+      messages: msgs,
+      lastPrompt: lp,
+      userId,
+      effectiveDualMode: dual,
+      effectiveStyle: style,
+      insights: ins,
+    } = redirectInputsRef.current;
 
-      // Build a complete Post from local data — no Firestore round-trip needed
-      const cachedPost: Post = {
-        id: postId,
-        userId: user?.uid || "",
-        prompt: lastPrompt,
-        responseA: storytellingMsg?.content || fallbackContent,
-        responseB: businessMsg?.content || "",
-        selectedVersion: null,
-        createdAt: { toDate: () => new Date() } as Post["createdAt"],
-        title: lastPrompt.length <= 40
-          ? lastPrompt
-          : lastPrompt.slice(0, 40).replace(/\s+\S*$/, "") + "…",
-        responseMode: effectiveDualMode ? "dual" : "single-choice",
-        selectedStyle: effectiveDualMode ? undefined : effectiveStyle,
-        insights: insights || undefined,
-      };
+    // Extract response content from messages we already have in memory
+    const aiMessages = msgs.filter((m) => m.type === "ai");
+    const storytellingMsg = aiMessages.find((m) => m.variant === "storytelling");
+    const businessMsg = aiMessages.find((m) => m.variant === "business");
+    const fallbackContent = aiMessages[0]?.content || "";
 
-      // Cache before navigating — conversation page will find it instantly
-      setCachedConversation(cachedPost);
-      setPosts((prev) => [cachedPost, ...prev]);
+    // Build a complete Post from local data — no Firestore round-trip needed
+    const cachedPost: Post = {
+      id: postId,
+      userId: userId || "",
+      prompt: lp,
+      responseA: storytellingMsg?.content || fallbackContent,
+      responseB: businessMsg?.content || "",
+      selectedVersion: null,
+      createdAt: { toDate: () => new Date() } as Post["createdAt"],
+      title: lp.length <= 40
+        ? lp
+        : lp.slice(0, 40).replace(/\s+\S*$/, "") + "…",
+      responseMode: dual ? "dual" : "single-choice",
+      selectedStyle: dual ? undefined : style,
+      insights: ins || undefined,
+    };
 
-      // Navigate immediately — no flash since cache is already populated
-      router.replace(`/app/c/${postId}`);
+    setCachedConversation(cachedPost);
+    setPosts((prev) => [cachedPost, ...prev]);
 
-      // Background refresh: update cache with full Firestore data silently
-      // Delay to let the Firestore save from useChat complete first
-      setTimeout(() => {
-        getPost(postId).then((freshPost) => {
-          if (freshPost) {
-            setCachedConversation(freshPost);
-            setPosts((prev) => prev.map((p) => p.id === postId ? freshPost : p));
-          }
-        }).catch(() => {});
-      }, 2000);
-    }
-  }, [postId, isStreaming, router, lastPrompt, user?.uid, messages, effectiveDualMode, effectiveStyle, insights]);
+    router.replace(`/app/c/${postId}`);
+
+    // Background refresh: update cache with full Firestore data silently
+    setTimeout(() => {
+      getPost(postId).then((freshPost) => {
+        if (freshPost) {
+          setCachedConversation(freshPost);
+          setPosts((prev) => prev.map((p) => p.id === postId ? freshPost : p));
+        }
+      }).catch(() => {});
+    }, 2000);
+  }, [postId, isStreaming, router]);
 
   // Smart scroll: only auto-scroll when user is near bottom
   const {
@@ -786,18 +810,28 @@ function AppContent() {
                                 <span className="text-xs text-text-muted font-medium">POSTY</span>
                               </div>
 
-                              {/* Modern Response Card - No border, no block, like ChatGPT */}
-                              <ModernResponseCard
-                                content={message.content}
-                                variant={message.variant || "business"}
-                                timestamp={message.timestamp}
-                                isStreaming={message.isStreaming}
-                                userPlan={currentPlan}
-                                onPublishToLinkedIn={handlePublishToLinkedIn}
-                                onSchedule={handleSchedulePost}
-                                showVariantBadge={planFeatures.responseMode === "single-choice"}
-                                isLastMessage={i === lastAIIndex}
-                              />
+                              {/* Conversational (Support / ASSISTANCE) replies render as plain
+                                  prose — no LinkedIn preview, no author block — because they
+                                  aren't deliverable posts. Variant === undefined is the signal
+                                  the server / useChat sets for non-post responses. */}
+                              {message.variant === undefined ? (
+                                <ConversationalResponse
+                                  content={message.content}
+                                  isStreaming={message.isStreaming}
+                                />
+                              ) : (
+                                <ModernResponseCard
+                                  content={message.content}
+                                  variant={message.variant}
+                                  timestamp={message.timestamp}
+                                  isStreaming={message.isStreaming}
+                                  userPlan={currentPlan}
+                                  onPublishToLinkedIn={handlePublishToLinkedIn}
+                                  onSchedule={handleSchedulePost}
+                                  showVariantBadge={planFeatures.responseMode === "single-choice"}
+                                  isLastMessage={i === lastAIIndex}
+                                />
+                              )}
                             </motion.div>
                           );
                           i++;
@@ -904,14 +938,7 @@ function AppContent() {
             {/* Single toolbar row — AI persona chip + post-style selector.
                 Wraps on narrow viewports so it stays one block visually. */}
             <div className="mb-3 flex flex-wrap items-center justify-center gap-2">
-              {isStrategistEnabled() && (
-                <AIModeSwitch
-                  mode={aiMode}
-                  onModeChange={setAiMode}
-                  onOpenStrategist={openStrategistDrawer}
-                  hasStrategistAccess={hasMarketingStrategist}
-                />
-              )}
+              <AIModeSwitch mode={aiMode} onModeChange={setAiMode} />
 
               <AnimatePresence mode="wait" initial={false}>
                 {aiMode === "posts" && isMaxPlan && (

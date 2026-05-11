@@ -30,9 +30,10 @@ export function isStrategistEnabled(): boolean {
  * Ready-to-publish posts carousel on the /app welcome screen
  * (the chip row: Storytelling, Lesson Learned, Engagement, …).
  *
- * Why gated: ships templated content that hasn't gone through final editorial
- * review; flagging keeps it out of prod until the catalog is locked.
+ * Enabled by default in all environments now that the template catalog has
+ * shipped. Setting `NEXT_PUBLIC_ENABLE_READY_POSTS=false` still hides it as
+ * a kill-switch if we need to pull it post-deploy.
  */
 export function isReadyPostsEnabled(): boolean {
-  return process.env.NEXT_PUBLIC_ENABLE_READY_POSTS === "true";
+  return process.env.NEXT_PUBLIC_ENABLE_READY_POSTS !== "false";
 }

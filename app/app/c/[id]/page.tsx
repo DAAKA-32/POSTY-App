@@ -20,12 +20,11 @@ import MainLayout from "@/components/layout/MainLayout";
 import ChatMessage, { TypingIndicator, GenerationLoader } from "@/components/chat/ChatMessage";
 import ModernAIResponsePair from "@/components/chat/ModernAIResponsePair";
 import ModernResponseCard from "@/components/chat/ModernResponseCard";
+import ConversationalResponse from "@/components/chat/ConversationalResponse";
 import MaxModeSelector from "@/components/chat/MaxModeSelector";
 import DualModeToggle from "@/components/chat/DualModeToggle";
 import AIModeSwitch, { AIMode } from "@/components/chat/AIModeSwitch";
 import InlineUpgradeBanner from "@/components/chat/InlineUpgradeBanner";
-import { useStrategistDrawer } from "@/contexts/StrategistDrawerContext";
-import { isStrategistEnabled } from "@/lib/config/feature-flags";
 import NewResponseIndicator from "@/components/chat/NewResponseIndicator";
 import PublishToLinkedInModal from "@/components/linkedin/PublishToLinkedInModal";
 import ScheduleModal from "@/components/schedule/ScheduleModal";
@@ -53,8 +52,7 @@ function ConversationContent() {
   const { user, userProfile } = useAuth();
   const { connection: linkedInConnection, publishToLinkedIn } = useLinkedIn();
   const { canSendMessage } = useQuota();
-  const { currentPlan, planLimits, isMaxPlan, isProPlan, hasMarketingStrategist } = useSubscription();
-  const { open: openStrategistDrawer } = useStrategistDrawer();
+  const { currentPlan, planLimits, isMaxPlan, isProPlan } = useSubscription();
   const browserMode = useBrowserMode();
   const { keyboardHeight, isKeyboardVisible } = useKeyboardHeight();
 
@@ -187,18 +185,6 @@ function ConversationContent() {
   // Track whether we've already loaded this conversation into the chat
   const loadedConversationRef = useRef<string | null>(null);
 
-  // Suppress background refresh right after streaming ends (Firestore save may still be in flight)
-  const skipBgRefreshRef = useRef(false);
-  const prevStreamingForBgRef = useRef(false);
-  useEffect(() => {
-    if (prevStreamingForBgRef.current && !isStreaming) {
-      skipBgRefreshRef.current = true;
-      const timer = setTimeout(() => { skipBgRefreshRef.current = false; }, 3000);
-      return () => clearTimeout(timer);
-    }
-    prevStreamingForBgRef.current = isStreaming;
-  }, [isStreaming]);
-
   // Load the original conversation/post (including follow-up messages for multi-turn)
   useEffect(() => {
     if (!conversationId || !user) return;
@@ -215,20 +201,18 @@ function ConversationContent() {
         restorePostState(cached);
         loadPostIntoChat(cached);
 
-        // Background refresh: fetch latest from Firestore silently
-        // Skip if streaming just ended — the Firestore save may not have landed yet
-        if (!skipBgRefreshRef.current) {
-          getPost(conversationId).then((freshPost) => {
-            if (freshPost && freshPost.userId === user.uid) {
-              setCachedConversation(freshPost);
-              setOriginalPost(freshPost);
-              // Only reload chat if messages changed (new follow-ups added elsewhere)
-              if ((freshPost.messages?.length ?? 0) !== (cached.messages?.length ?? 0)) {
-                loadPostIntoChat(freshPost);
-              }
-            }
-          }).catch(() => { /* silent background refresh */ });
-        }
+        // Background refresh — silently update the cache + sidebar for the next
+        // page visit. We deliberately do NOT call loadPostIntoChat() with the
+        // fresh Firestore result here: useChat owns the message timeline now,
+        // including any follow-ups streamed locally. Overwriting that state
+        // with a Firestore snapshot raced against an active stream is the
+        // exact bug that caused mid-typing/mid-streaming resets.
+        getPost(conversationId).then((freshPost) => {
+          if (freshPost && freshPost.userId === user.uid) {
+            setCachedConversation(freshPost);
+            setOriginalPost(freshPost);
+          }
+        }).catch(() => { /* silent background refresh */ });
         return;
       }
 
@@ -691,28 +675,37 @@ function ConversationContent() {
                                 <span className="text-xs text-text-muted font-medium">POSTY</span>
                               </div>
 
-                              {/* Modern Response Card - No border, no block, like ChatGPT */}
-                              <ModernResponseCard
-                                content={message.content}
-                                variant={message.variant || "business"}
-                                timestamp={message.timestamp}
-                                isStreaming={message.isStreaming}
-                                userPlan={currentPlan}
-                                onPublishToLinkedIn={handlePublishToLinkedIn}
-                                onSchedule={handleSchedulePost}
-                                showVariantBadge={planFeatures.responseMode === "single-choice"}
-                                isLastMessage={i === lastAIIndex}
-                                seedComment={
-                                  i === lastAIIndex
-                                    ? responses[0]?.seedComment
-                                    : undefined
-                                }
-                                onRegenerateSeedComment={
-                                  i === lastAIIndex && responses[0]
-                                    ? () => regenerateSeedComment(0)
-                                    : undefined
-                                }
-                              />
+                              {/* Conversational (Support / ASSISTANCE) → plain prose, no
+                                  LinkedIn preview. Variant === undefined is the signal set
+                                  by useChat for non-post responses. */}
+                              {message.variant === undefined ? (
+                                <ConversationalResponse
+                                  content={message.content}
+                                  isStreaming={message.isStreaming}
+                                />
+                              ) : (
+                                <ModernResponseCard
+                                  content={message.content}
+                                  variant={message.variant}
+                                  timestamp={message.timestamp}
+                                  isStreaming={message.isStreaming}
+                                  userPlan={currentPlan}
+                                  onPublishToLinkedIn={handlePublishToLinkedIn}
+                                  onSchedule={handleSchedulePost}
+                                  showVariantBadge={planFeatures.responseMode === "single-choice"}
+                                  isLastMessage={i === lastAIIndex}
+                                  seedComment={
+                                    i === lastAIIndex
+                                      ? responses[0]?.seedComment
+                                      : undefined
+                                  }
+                                  onRegenerateSeedComment={
+                                    i === lastAIIndex && responses[0]
+                                      ? () => regenerateSeedComment(0)
+                                      : undefined
+                                  }
+                                />
+                              )}
                             </motion.div>
                           );
                           i++;
@@ -818,14 +811,7 @@ function ConversationContent() {
           <div className="max-w-3xl mx-auto px-3 sm:px-4 py-2 sm:py-3 lg:py-2">
             {/* Single toolbar row — AI persona chip + post-style selector */}
             <div className="mb-3 flex flex-wrap items-center justify-center gap-2">
-              {isStrategistEnabled() && (
-                <AIModeSwitch
-                  mode={aiMode}
-                  onModeChange={setAiMode}
-                  onOpenStrategist={openStrategistDrawer}
-                  hasStrategistAccess={hasMarketingStrategist}
-                />
-              )}
+              <AIModeSwitch mode={aiMode} onModeChange={setAiMode} />
 
               <AnimatePresence mode="wait" initial={false}>
                 {aiMode === "posts" && isMaxPlan && (

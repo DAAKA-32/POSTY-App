@@ -11,12 +11,12 @@
  *   - Mobile: bottom-sheet 92vh with a small drag handle (decorative)
  */
 
+import Link from "next/link";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useStrategistDrawer } from "@/contexts/StrategistDrawerContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import StrategistChatPanel from "./StrategistChatPanel";
-import StrategistLockedCard from "./StrategistLockedCard";
 
 const PREMIUM_EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -84,9 +84,7 @@ export default function StrategistDrawer() {
               ) : hasMarketingStrategist ? (
                 <StrategistChatPanel />
               ) : (
-                <div className="flex-1 overflow-y-auto">
-                  <StrategistLockedCard />
-                </div>
+                <StrategistTeaser />
               )}
             </div>
           </motion.aside>
@@ -160,5 +158,78 @@ function DrawerHeader({ onClose }: { onClose: () => void }) {
         </svg>
       </button>
     </header>
+  );
+}
+
+// ── Teaser (Free/Pro) ─────────────────────────────────────────────────────
+// Renders the real chat panel underneath, blurred and non-interactive, so
+// Free/Pro users get a real preview of the Max-only experience. A centered
+// glass card explains the gate and links to /subscription.
+
+function StrategistTeaser() {
+  const { t } = useLanguage();
+  const l = t.strategist.locked;
+
+  return (
+    <div className="relative flex-1 flex flex-col min-h-0">
+      {/* Real panel — visible but blurred and inert */}
+      <div
+        aria-hidden
+        className="flex-1 flex flex-col min-h-0 pointer-events-none select-none blur-[3px]"
+      >
+        <StrategistChatPanel />
+      </div>
+
+      {/* Lock overlay — transparent so the blurred panel reads through */}
+      <div className="absolute inset-0 z-10 flex items-center justify-center px-5">
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+          className="
+            w-full max-w-sm text-center
+            bg-white/75 dark:bg-dark-card/75
+            backdrop-blur-xl
+            border border-white/60 dark:border-white/10
+            rounded-xl p-6
+            shadow-[0_20px_60px_-15px_rgba(15,23,42,0.35)]
+          "
+        >
+          <span
+            className="
+              inline-flex items-center
+              px-1.5 py-[2px] rounded
+              bg-amber-50 dark:bg-amber-400/10
+              text-amber-700 dark:text-amber-400
+              text-[9.5px] font-semibold uppercase tracking-wider
+              border border-amber-200/60 dark:border-amber-400/15
+            "
+          >
+            {l.eyebrow}
+          </span>
+
+          <h3 className="mt-3 text-[15px] font-medium text-gray-900 dark:text-white leading-snug">
+            {l.title}
+          </h3>
+
+          <p className="mt-1.5 text-[13px] text-gray-500 dark:text-gray-400 leading-relaxed">
+            {l.description}
+          </p>
+
+          <Link
+            href="/subscription"
+            className="
+              mt-5 inline-flex items-center justify-center w-full
+              px-4 py-2.5 rounded-lg
+              bg-amber-500 hover:bg-amber-600
+              text-white font-medium text-[13.5px]
+              transition-colors
+            "
+          >
+            {l.cta}
+          </Link>
+        </motion.div>
+      </div>
+    </div>
   );
 }

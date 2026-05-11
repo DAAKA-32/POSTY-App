@@ -20,7 +20,6 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useStrategistDrawer } from "@/contexts/StrategistDrawerContext";
 import { isStrategistEnabled } from "@/lib/config/feature-flags";
 
@@ -40,7 +39,6 @@ const HIDDEN_PATHS = [
 export default function StrategistFloatingButton() {
   const pathname = usePathname();
   const { t } = useLanguage();
-  const { hasMarketingStrategist } = useSubscription();
   const { open, isOpen } = useStrategistDrawer();
   const [hovered, setHovered] = useState(false);
 
@@ -54,11 +52,6 @@ export default function StrategistFloatingButton() {
   }
   // Hide while the drawer itself is open (drawer has its own close affordance).
   if (isOpen) return null;
-  // Max-only entry point — Free/Pro don't see the FAB at all.
-  // (The Strategist is a Max-exclusive feature; surfacing the FAB to other
-  // tiers just to show a locked upgrade card creates noise. Upgrade pitch
-  // happens on /subscription, not via a teasing button on every page.)
-  if (!hasMarketingStrategist) return null;
 
   return (
     <button
@@ -67,14 +60,14 @@ export default function StrategistFloatingButton() {
       aria-label={t.strategist.pageTitle}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      // Vertical alignment:
-      //   - Desktop (lg+): aligned with the chat composer input bar (≈ bottom 5rem)
-      //   - Mobile: lifted above the BottomNavbar + chat composer
-      // z-50 sits below modals (z-60+) but above content.
+      // Desktop-only quick access (lg+). Mobile users reach the Strategist
+      // via the AI-mode dropdown in the chat input toolbar — surfacing both an
+      // FAB and a dropdown entry on a small screen would crowd the viewport
+      // and duplicate the same action. z-50 sits below modals (z-60+).
       className="
+        hidden lg:flex
         fixed z-50
-        right-4 lg:right-6
-        bottom-40 lg:bottom-20
+        right-6 bottom-20
         group
       "
     >

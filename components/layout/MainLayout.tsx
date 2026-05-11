@@ -29,7 +29,6 @@ import FreeTrialPaywall from "@/components/subscription/FreeTrialPaywall";
 import UsageBanner from "@/components/ui/UsageBanner";
 import QuotaExceededModal from "@/components/ui/QuotaExceededModal";
 import HelpFloatingButton from "@/components/help/HelpFloatingButton";
-import StrategistFloatingButton from "@/components/strategist/StrategistFloatingButton";
 
 // Premium animation easings - consistent across app
 const smoothEase = [0.25, 0.1, 0.25, 1] as const;
@@ -1126,12 +1125,6 @@ export default function MainLayout({
 
         {/* Help floating "?" button */}
         <HelpFloatingButton />
-
-        {/* Strategist quick-access — desktop-only FAB.
-            On mobile, the Strategist is reached via the AI-mode dropdown in
-            the chat input toolbar (Posts / Support / Stratège) to avoid two
-            competing entry points on a small viewport. */}
-        <StrategistFloatingButton />
 
         {/* Quota Exceeded Modal (opens when user attempts action at limit) */}
         <QuotaExceededModal />
