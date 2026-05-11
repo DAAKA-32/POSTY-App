@@ -37,6 +37,7 @@ const GIFT_RECIPIENTS: GiftRecipient[] = [
   { email: "marie.sarria77@gmail.com",         displayName: "Marie"    },
   { email: "zoulikha.sophrologie@gmail.com",   displayName: "Zoulikha" },
   { email: "aurelieanicet@gmail.com",          displayName: "Aurélie"  },
+  { email: "bibi42@gmail.com",                 displayName: "Bibi"     },
   // Founder — receives the popup once like real recipients (validated in prod)
   { email: "emilien.nepveu@gmail.com",         displayName: "Emilien"  },
 ];
