@@ -380,8 +380,12 @@ export default function PlatformConnectionsSection() {
       <motion.div
         key={platform}
         variants={itemVariants}
+        /* Cards size to their content; the CSS grid keeps siblings within the
+           same row aligned automatically. Locked cards keep a small min-height
+           so the upgrade overlay has room to breathe. */
         className={`
-          relative overflow-hidden p-4 rounded-xl border transition-all duration-200 min-h-[120px]
+          relative overflow-hidden p-4 rounded-xl border transition-all duration-200
+          flex flex-col ${hasAccess ? "" : "min-h-[130px]"}
           ${hasAccess
             ? "bg-gray-50 dark:bg-dark-bg border-gray-200 dark:border-dark-border hover:border-primary/20"
             : "bg-gray-50 dark:bg-dark-bg border-gray-200 dark:border-dark-border"
@@ -488,20 +492,12 @@ export default function PlatformConnectionsSection() {
                   </Button>
                 </div>
 
-                {/* Token expired warning */}
-                {!isTokenValid && (
-                  <div className="flex items-start gap-2 p-2 bg-warning/10 border border-warning/20 rounded-lg">
-                    <svg className="w-4 h-4 text-warning shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                    <div>
-                      <p className="text-xs text-warning font-medium">{t.settings.sessionExpired}</p>
-                      <p className="text-xs text-text-muted mt-0.5">{t.settings.reconnectToPublish}</p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Reconnect button if token expired */}
+                {/* Reconnect button if token expired
+                    The redundant "Session expired / Reconnect to publish"
+                    yellow warning box was removed: the inline status row above
+                    already shows "Session expired" via <ConnectionStatus>, so
+                    the warning was duplicating info AND making token-expired
+                    cards visibly taller than other cards in the grid. */}
                 {!isTokenValid && platform === "linkedin" && (
                   <LinkedInConnectButton variant="compact" className="w-full" />
                 )}
