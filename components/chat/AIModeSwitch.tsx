@@ -1,22 +1,26 @@
 "use client";
 
 /**
- * AIModeSwitch — premium 3-mode selector for the main chat input.
+ * AIModeSwitch — premium 2-mode selector for the main chat input.
  *
- *   - "posts"      Generate LinkedIn posts (default)
- *   - "support"    General Q&A / advice / how-tos
+ *   - "posts"      Generate LinkedIn posts (default and only state-toggle)
  *   - "strategist" Marketing Strategist (Max-only) — opens the side drawer
  *                  rather than routing through the main input, since the
  *                  agent has its own conversation surface and system prompt.
  *
- * Visually: a single pill control (matches <MaxModeSelector />). Posts/Support
- * are state-toggle segments; Strategist is always shown with an amber sparkle
- * accent and a "MAX" badge for Free/Pro users (clicking still opens the drawer
- * — that drawer renders the teaser overlay for non-Max plans).
+ * The "support" Q&A mode was retired from the production UI: it was confusing
+ * the conversion narrative (Posty = LinkedIn post generator, not a help chat).
+ * The AIMode type still carries the literal for backward compatibility with
+ * persisted state, but no UI element ever transitions to it now.
+ *
+ * Visually: a single pill control. Posts is the state-toggle segment;
+ * Strategist is always shown with an amber gradient and a "MAX" badge for
+ * Free/Pro users (clicking still opens the drawer — that drawer renders the
+ * teaser overlay for non-Max plans).
  */
 
 import { motion } from "framer-motion";
-import { PenLine, HelpCircle, Sparkles } from "lucide-react";
+import { PenLine, Sparkles } from "lucide-react";
 
 export type AIMode = "posts" | "support";
 
@@ -74,57 +78,32 @@ export default function AIModeSwitch({
         </span>
       </button>
 
-      {/* Support — general Q&A */}
-      <button
-        type="button"
-        onClick={() => mode !== "support" && onModeChange("support")}
-        aria-pressed={mode === "support"}
-        className={`
-          relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg
-          text-xs font-medium transition-colors duration-200 cursor-pointer
-          ${
-            mode === "support"
-              ? "text-emerald-600 dark:text-emerald-400"
-              : "text-text-muted hover:text-text-secondary"
-          }
-        `}
-      >
-        {mode === "support" && (
-          <motion.div
-            layoutId="aiModeIndicator"
-            className="absolute inset-0 rounded-lg bg-emerald-500/15 border border-emerald-500/30"
-            transition={{ type: "spring", stiffness: 400, damping: 30 }}
-          />
-        )}
-        <span className="relative z-10 flex items-center gap-1.5">
-          <HelpCircle className="w-3.5 h-3.5" />
-          <span>Support</span>
-        </span>
-      </button>
-
-      {/* Strategist — opens the drawer (Max-only experience) */}
+      {/* Strategist — opens the drawer (Max-only experience). Solid gold
+          gradient so it pops out of the light pill as a clear premium CTA. */}
       <button
         type="button"
         onClick={onOpenStrategist}
         aria-label="Ouvrir le Stratège marketing"
         className="
           relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg
-          text-xs font-medium cursor-pointer
-          text-amber-700 dark:text-amber-400
-          bg-gradient-to-r from-amber-500/10 to-yellow-500/10
-          hover:from-amber-500/20 hover:to-yellow-500/20
-          transition-colors duration-200
+          text-xs font-semibold cursor-pointer
+          text-gray-900
+          bg-gradient-to-r from-amber-400 to-yellow-500
+          hover:from-amber-500 hover:to-yellow-600
+          shadow-[0_2px_8px_-2px_rgba(245,158,11,0.5)]
+          ring-1 ring-amber-300/40
+          transition-all duration-200
         "
       >
         <span className="flex items-center gap-1.5">
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>Stratège</span>
+          <Sparkles className="w-3.5 h-3.5 drop-shadow-sm" />
+          <span className="drop-shadow-sm">Stratège</span>
           {!hasStrategistAccess && (
             <span
               className="
                 ml-0.5 px-1 py-[1px] rounded
                 text-[8.5px] font-bold uppercase tracking-wider
-                bg-amber-500/20 text-amber-700 dark:text-amber-400
+                bg-gray-900/15 text-gray-900
               "
             >
               Max
