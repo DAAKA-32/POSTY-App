@@ -901,65 +901,65 @@ function AppContent() {
           }}
         >
           <div className="max-w-3xl mx-auto px-3 sm:px-4 py-2 sm:py-3 lg:py-2">
-            {/* AI persona selector — Posts / Support / Stratège */}
-            {isStrategistEnabled() && (
-              <div className="mb-2 flex justify-center">
+            {/* Single toolbar row — AI persona chip + post-style selector.
+                Wraps on narrow viewports so it stays one block visually. */}
+            <div className="mb-3 flex flex-wrap items-center justify-center gap-2">
+              {isStrategistEnabled() && (
                 <AIModeSwitch
                   mode={aiMode}
                   onModeChange={setAiMode}
                   onOpenStrategist={openStrategistDrawer}
                   hasStrategistAccess={hasMarketingStrategist}
                 />
-              </div>
-            )}
+              )}
 
-            {/* Post Mode Selector / Upgrade Banner zone — only when generating posts */}
-            <AnimatePresence mode="wait">
-              {aiMode === "posts" && isMaxPlan && (
-                <motion.div
-                  key="max-selector"
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="mb-3 flex items-center justify-center gap-2 overflow-hidden"
-                >
-                  <MaxModeSelector
-                    selectedMode={maxMode}
-                    onModeChange={setMaxMode}
-                  />
-                </motion.div>
-              )}
-              {aiMode === "posts" && isProPlan && !isMaxPlan && (
-                <motion.div
-                  key="pro-selector"
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="mb-3 flex items-center justify-center gap-2 overflow-hidden"
-                >
-                  {showUpgradeBanner ? (
-                    <InlineUpgradeBanner
-                      reason={upgradeBannerReason}
-                      onClose={() => setShowUpgradeBanner(false)}
+              <AnimatePresence mode="wait" initial={false}>
+                {aiMode === "posts" && isMaxPlan && (
+                  <motion.div
+                    key="max-selector"
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: "auto" }}
+                    exit={{ opacity: 0, width: 0 }}
+                    transition={{ duration: 0.18 }}
+                    className="overflow-hidden"
+                  >
+                    <MaxModeSelector
+                      selectedMode={maxMode}
+                      onModeChange={setMaxMode}
                     />
-                  ) : (
-                    <DualModeToggle
-                      enabled={dualMode}
-                      onToggle={(val) => setDualMode(val)}
-                      responseType={selectedStyle}
-                      onResponseTypeChange={setSelectedStyle}
-                      dualUsedThisWeek={dualUsedThisWeek}
-                      onUpgradePrompt={(reason) => {
-                        setUpgradeBannerReason(reason);
-                        setShowUpgradeBanner(true);
-                      }}
-                    />
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  </motion.div>
+                )}
+                {aiMode === "posts" && isProPlan && !isMaxPlan && (
+                  <motion.div
+                    key="pro-selector"
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: "auto" }}
+                    exit={{ opacity: 0, width: 0 }}
+                    transition={{ duration: 0.18 }}
+                    className="overflow-hidden"
+                  >
+                    {showUpgradeBanner ? (
+                      <InlineUpgradeBanner
+                        reason={upgradeBannerReason}
+                        onClose={() => setShowUpgradeBanner(false)}
+                      />
+                    ) : (
+                      <DualModeToggle
+                        enabled={dualMode}
+                        onToggle={(val) => setDualMode(val)}
+                        responseType={selectedStyle}
+                        onResponseTypeChange={setSelectedStyle}
+                        dualUsedThisWeek={dualUsedThisWeek}
+                        onUpgradePrompt={(reason) => {
+                          setUpgradeBannerReason(reason);
+                          setShowUpgradeBanner(true);
+                        }}
+                      />
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
             <div className="relative">
               {/* Voice feedback is handled by UniversalChatInput's built-in status bar */}

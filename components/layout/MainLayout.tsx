@@ -1127,8 +1127,10 @@ export default function MainLayout({
         {/* Help floating "?" button */}
         <HelpFloatingButton />
 
-        {/* Strategist quick-access — bottom-right FAB.
-            Hides itself on /strategist + auth/onboarding/subscription pages. */}
+        {/* Strategist quick-access — desktop-only FAB.
+            On mobile, the Strategist is reached via the AI-mode dropdown in
+            the chat input toolbar (Posts / Support / Stratège) to avoid two
+            competing entry points on a small viewport. */}
         <StrategistFloatingButton />
 
         {/* Quota Exceeded Modal (opens when user attempts action at limit) */}
