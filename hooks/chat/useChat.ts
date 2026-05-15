@@ -44,7 +44,11 @@ interface UseChatOptions {
   selectedStyle?: "storytelling" | "business";
   /**
    * Chat persona for the next request.
-   *   - "posts"   → LinkedIn post generation (default)
+   *   - "posts"   → LinkedIn post generation (default). The visual sub-intent
+   *                 ("fais une image…", "fais un post avec un visuel…") is
+   *                 detected by /api/intent at the page layer and the image
+   *                 pipeline is invoked directly — this hook only sees the
+   *                 cleaned post brief when text generation is needed.
    *   - "support" → conversational Q&A; the API forces EXPLORATORY/ASSISTANCE
    *                 intent so we never produce a post in this mode.
    */

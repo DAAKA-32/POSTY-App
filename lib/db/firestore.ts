@@ -308,6 +308,58 @@ export async function createPost(data: {
   return savePost(data.userId, data.prompt, data.responseA, data.responseB);
 }
 
+/**
+ * Create a post that holds visuals generated via the image pipeline.
+ *
+ * Image-mode runs don't produce A/B post copy, but we still persist them as
+ * regular `posts/{id}` docs so they show up in the sidebar's conversation
+ * list and survive a reload. `contentA` / `contentB` stay empty strings —
+ * the conversation route checks `generatedImages.length` to know it's a
+ * visual-first conversation and renders accordingly.
+ */
+export async function createImagePost(
+  userId: string,
+  prompt: string,
+  firstImage: import("@/types").GeneratedImageRecord
+): Promise<string> {
+  const postsRef = collection(db, "posts");
+  const timestamp = serverTimestamp();
+  const autoTitle = prompt.length <= 40
+    ? prompt
+    : prompt.slice(0, 40).replace(/\s+\S*$/, "") + "…";
+  const docRef = await addDoc(postsRef, {
+    userId,
+    prompt,
+    contentA: "",
+    contentB: "",
+    chosenVersion: null,
+    title: autoTitle,
+    responseMode: "conversational",
+    generatedImages: [firstImage],
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  });
+  return docRef.id;
+}
+
+/**
+ * Append one rendered visual to an existing post's `generatedImages` array.
+ * Used both when the user generates a follow-up visual in the same chat and
+ * when an image regeneration replaces a failed one — we never mutate the
+ * existing array in place, we just push a new entry. `arrayUnion` keeps
+ * duplicates out if the same entry id is re-sent (idempotent retries).
+ */
+export async function appendGeneratedImage(
+  postId: string,
+  image: import("@/types").GeneratedImageRecord
+): Promise<void> {
+  const postRef = doc(db, "posts", postId);
+  await updateDoc(postRef, {
+    generatedImages: arrayUnion(image),
+    updatedAt: serverTimestamp(),
+  });
+}
+
 // Save post analysis (PRO+ feature)
 export async function savePostAnalysis(
   postId: string,
@@ -370,6 +422,7 @@ export async function getUserPosts(
       responseMode: data.responseMode,
       selectedStyle: data.selectedStyle,
       messages: data.messages || [],
+      generatedImages: data.generatedImages || [],
     };
   }) as Post[];
 }
@@ -401,6 +454,8 @@ export async function getPost(postId: string): Promise<Post | null> {
       selectedStyle: data.selectedStyle,
       // Conversation messages for multi-turn support
       messages: data.messages || [],
+      // Visual-mode entries (empty for post-only conversations)
+      generatedImages: data.generatedImages || [],
     } as Post;
   }
   return null;
@@ -562,6 +617,7 @@ export async function getUserPostsWithPinned(
       responseMode: data.responseMode,
       selectedStyle: data.selectedStyle,
       messages: data.messages || [],
+      generatedImages: data.generatedImages || [],
     };
   }) as Post[];
 

@@ -35,11 +35,9 @@ function ProfileContent() {
   const [sessionsCount, setSessionsCount] = useState(0);
   const [statsLoading, setStatsLoading] = useState(true);
 
-  // Enable full scrolling on Profile page (mouse wheel, trackpad, touch, keyboard)
   useEffect(() => {
     document.documentElement.classList.add("profile-scroll-enabled");
     document.body.classList.add("profile-scroll-enabled");
-    // Remove any classes that might block scroll
     document.body.classList.remove("pwa-mobile", "no-scroll", "scroll-locked", "modal-open");
 
     return () => {
@@ -48,7 +46,6 @@ function ProfileContent() {
     };
   }, []);
 
-  // Fetch stats
   useEffect(() => {
     async function fetchStats() {
       if (user) {

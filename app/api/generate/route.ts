@@ -501,11 +501,30 @@ export async function POST(request: NextRequest) {
     const stream = new ReadableStream({
       async start(controller) {
         const encoder = new TextEncoder();
+        // Track whether the client has disconnected. When the browser
+        // navigates away (e.g. our `router.replace('/app/c/{id}')` after
+        // the redirect-on-completion effect), the controller transitions
+        // to a closed state and any subsequent `enqueue` throws
+        // `ERR_INVALID_STATE`. Catching it once and flipping this flag
+        // means the rest of the request — quota increment, memory
+        // extraction, the trailing "complete" event — finishes silently
+        // instead of polluting the server logs.
+        let streamClosed = false;
 
         const sendEvent = (event: string, data: object) => {
-          controller.enqueue(
-            encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
-          );
+          if (streamClosed) return;
+          try {
+            controller.enqueue(
+              encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
+            );
+          } catch (err) {
+            const code = (err as { code?: string })?.code;
+            if (code === "ERR_INVALID_STATE") {
+              streamClosed = true;
+              return;
+            }
+            throw err;
+          }
         };
 
         try {
@@ -523,13 +542,12 @@ export async function POST(request: NextRequest) {
 
             // ========== INTENT CLASSIFICATION ==========
             // Force PRODUCTION intent when URL content was extracted (user clearly wants a post from a link)
-            // In general mode: SOCIAL stays social, everything else → ASSISTANCE
-            // In LinkedIn mode: SOCIAL → social, ASSISTANCE → assistance, PRODUCTION → post generation
+            // In general mode: SOCIAL stays social, HYBRID/PRODUCTION → ASSISTANCE (Support mode never produces posts)
+            // In LinkedIn mode: full routing — SOCIAL / ASSISTANCE / HYBRID / PRODUCTION
             let intent: IntentType;
             if (extractedUrlContent) {
               intent = "PRODUCTION";
             } else if (aiMode === "general") {
-              // General mode: classify, but route PRODUCTION → ASSISTANCE (user chose general mode)
               const classified = await classifyIntent(
                 openaiService,
                 cleanedPrompt,
@@ -537,7 +555,6 @@ export async function POST(request: NextRequest) {
               );
               intent = classified === "SOCIAL" ? "SOCIAL" : "ASSISTANCE";
             } else {
-              // LinkedIn mode: full classification with all 3 intents
               const classified = await classifyIntent(
                 openaiService,
                 cleanedPrompt,
@@ -567,6 +584,45 @@ export async function POST(request: NextRequest) {
                 serverUserProfile,
                 conversationHistory as Array<{ role: "user" | "assistant"; content: string }> | undefined
               );
+            } else if (intent === "HYBRID") {
+              // Hybrid: stream a conversational explanation FIRST, then stream the
+              // LinkedIn post as a second message. The client (useChat) handles two
+              // sequential "start" events by creating two separate bubbles.
+              const explainPrompt = language === "fr"
+                ? `${cleanedPrompt}\n\n(Réponds en 3-5 phrases conversationnelles avant qu'on passe à la rédaction du post. Pas de liste à puces, pas de structure de post.)`
+                : `${cleanedPrompt}\n\n(Answer in 3-5 conversational sentences before we move on to drafting the post. No bullet lists, no post structure.)`;
+
+              const explanation = await generateAssistance(
+                openaiService,
+                explainPrompt,
+                language as "fr" | "en",
+                sendEvent,
+                serverUserProfile,
+                conversationHistory as Array<{ role: "user" | "assistant"; content: string }> | undefined
+              );
+
+              sendEvent("phase", { phase: "preparing", message: language === "fr" ? "Préparation du post…" : "Preparing your post…" });
+
+              const post = await generateWithOpenAI(
+                openaiService,
+                cleanedPrompt,
+                language,
+                serverUserProfile,
+                sendEvent,
+                typesToGenerate,
+                maxTokens,
+                (userPlan as PlanTier) ?? null,
+                conversationHistory as Array<{ role: "user" | "assistant"; content: string }> | undefined,
+                processedFileContent,
+                extractedUrlContent,
+                memoryContext
+              );
+
+              // generatedContent is used downstream for insights/memory/title extraction —
+              // those should run on the post, not the explanation.
+              generatedContent = post;
+              // isConversational stays false so insights/title still fire for the post.
+              void explanation;
             } else {
               // ========== PHASE: PREPARING → WRITING ==========
               sendEvent("phase", { phase: "preparing", message: language === "fr" ? "Préparation du post…" : "Preparing your post…" });
@@ -694,12 +750,22 @@ export async function POST(request: NextRequest) {
             sendEvent("complete", { usedOpenAI: !!openaiService });
           }
         } catch (error) {
-          console.error("Generation error:", error);
-          const message =
-            error instanceof Error ? error.message : "Generation failed";
-          sendEvent("error", { message });
+          // Ignore "client navigated away" — it's not a generation failure,
+          // it's the user's browser cleanly closing the SSE socket while we
+          // were still sending. The server-side post is already persisted.
+          const code = (error as { code?: string })?.code;
+          if (code === "ERR_INVALID_STATE") {
+            streamClosed = true;
+          } else {
+            console.error("Generation error:", error);
+            const message =
+              error instanceof Error ? error.message : "Generation failed";
+            sendEvent("error", { message });
+          }
         } finally {
-          controller.close();
+          if (!streamClosed) {
+            try { controller.close(); } catch { /* already closed */ }
+          }
         }
       },
     });
@@ -1011,102 +1077,106 @@ async function generateInsights(
 
 // ============== INTENT CLASSIFICATION ==============
 
-type IntentType = "SOCIAL" | "EXPLORATORY" | "ASSISTANCE" | "PRODUCTION";
+type IntentType = "SOCIAL" | "EXPLORATORY" | "ASSISTANCE" | "PRODUCTION" | "HYBRID";
+
+const PRODUCTION_TRIGGERS = /\b(fais|fait|crée|créé|écris|écrit|génère|rédige|compose|prépare|propose-moi un|write|create|generate|make|draft|compose)\s*(moi|me|nous)?\s*(un|une|des|le|la|a|an|the)?\s*(post|article|texte|contenu|publication|story|carrousel)/i;
+
+const EXPLAIN_TRIGGERS = /\b(explique|explique-moi|parle-moi|raconte-moi|dis-moi|détaille|résume|c'?est quoi|qu'?est[- ]ce que|peux-tu (m')?expliquer|explain|tell me (about|what)|describe|walk me through|summarize)/i;
 
 /**
- * Fast pattern-based intent detection for common cases
- * Falls back to AI classification for ambiguous prompts
+ * Hybrid request: the user wants BOTH a conversational answer (explanation,
+ * discussion, opinion) AND a generated post. Typical phrasing: "explique X
+ * puis fais un post", "parle-moi de Y et écris un post LinkedIn".
+ *
+ * Detection: at least one explanation trigger AND at least one production
+ * trigger (or a connector like "puis/et/then" before a production trigger).
+ */
+function detectHybrid(prompt: string): boolean {
+  const t = prompt.trim().toLowerCase();
+  if (!EXPLAIN_TRIGGERS.test(t)) return false;
+  if (PRODUCTION_TRIGGERS.test(t)) return true;
+  return /\b(puis|ensuite|et\s+(fais|fait|crée|écris|rédige)|then\s+(write|create|make|draft)|and\s+(write|create|make|draft))/i.test(t);
+}
+
+/**
+ * Fast pattern-based intent detection for common cases.
+ * Falls back to AI classification (returns null) whenever a message is ambiguous.
+ *
+ * Design rule: only return PRODUCTION on an EXPLICIT post request, or on a
+ * clear post draft (multiline structured content). When in doubt, return null
+ * so the AI classifier — which defaults to ASSISTANCE — decides.
  */
 function detectIntentFast(prompt: string): IntentType | null {
-  const trimmed = prompt.trim().toLowerCase();
+  const raw = prompt.trim();
+  const trimmed = raw.toLowerCase();
 
-  // Social patterns (greetings, very short messages)
-  const socialPatterns = [
-    /^(coucou|salut|hello|hey|hi|yo|bonjour|bonsoir)[\s!.,?]*$/i,
-    /^(ça va|ca va|comment ça va|comment ca va|comment vas-tu|how are you|what's up|quoi de neuf)[\s!?,]*$/i,
-    /^(merci|thanks|thank you|thx)[\s!.,]*$/i,
-  ];
-
-  for (const pattern of socialPatterns) {
-    if (pattern.test(trimmed)) {
-      return "SOCIAL";
-    }
+  // -- 0. HYBRID: explanation + post in one ask (must be checked BEFORE PRODUCTION)
+  if (detectHybrid(prompt)) {
+    return "HYBRID";
   }
 
-  // Assistance patterns (ideas, advice, analysis, templates, strategy)
+  // -- 1. Explicit PRODUCTION request always wins (even mixed with other text)
+  if (PRODUCTION_TRIGGERS.test(trimmed) || /\b(post\s+(sur|about|on)\s+\w)/i.test(trimmed) || /\blinkedin\s+post\b/i.test(trimmed)) {
+    return "PRODUCTION";
+  }
+
+  // -- 2. SOCIAL: greetings / small talk (short standalone messages)
+  const socialPatterns = [
+    /^(coucou|salut|hello|hey|hi|yo|bonjour|bonsoir|hola|wesh)[\s!.,?]*$/i,
+    /^(ça va|ca va|comment ça va|comment ca va|comment vas-tu|how are you|what's up|quoi de neuf|sup)[\s!?,]*$/i,
+    /^(merci|thanks|thank you|thx|cool|nickel|parfait|super|génial|great|ok|d'accord|ouais|yes|no|non)[\s!.,]*$/i,
+  ];
+  for (const pattern of socialPatterns) {
+    if (pattern.test(trimmed)) return "SOCIAL";
+  }
+
+  // -- 3. ASSISTANCE: questions, explanations, advice, ideas, analysis
+  // These all want a conversational answer, never a LinkedIn preview card.
   const assistancePatterns = [
-    // Ideas requests
-    /\b(donne|propose|suggère|trouve|génère|donne-moi|propose-moi)\s*(moi|nous)?\s*(des|quelques|les)?\s*(idées?|sujets?|thèmes?|topics?|angles?)/i,
+    // Conversational questions about people, products, concepts
+    /\b(tu connais|connais-tu|tu sais|sais-tu|as-tu (déjà )?entendu|do you know|have you heard|are you familiar)/i,
+    // Explanation requests
+    /\b(explique|explique-moi|peux-tu (m')?expliquer|peux-tu me dire|dis-moi|raconte-moi|parle-moi|tell me|explain|describe|walk me through)/i,
+    /\b(c'?est quoi|qu'?est[- ]ce que|qu'?est[- ]ce qu[ei]|what is|what are|what does|what's)\b/i,
+    // Opinion / discussion
+    /\b(que penses-tu|qu'?en penses-tu|ton avis|what do you think|what's your (take|opinion)|your thoughts)/i,
+    // Ideas / brainstorm
+    /\b(donne|propose|suggère|trouve|génère|donne-moi|propose-moi)\s*(moi|nous)?\s*(des|quelques|les)?\s*(idées?|sujets?|thèmes?|topics?|angles?|pistes?)/i,
     /\b(give|suggest|propose|find|brainstorm)\s*(me|us)?\s*(some|a few)?\s*(ideas?|topics?|themes?|angles?|subjects?)/i,
     /\b(idées?\s+(de|pour)\s+(posts?|contenu|publications?))/i,
     /\b(ideas?\s+(for|about)\s+(posts?|content|publications?))/i,
-    // Advice/strategy requests
-    /\b(conseils?|astuces?|tips?|stratégie|strategy)\s*(pour|for|sur|on|about|de|linkedin)/i,
-    /\b(comment\s+(améliorer|optimiser|augmenter|booster|développer))/i,
-    /\b(how\s+to\s+(improve|optimize|increase|boost|grow|get\s+more))/i,
-    // Analysis requests
-    /\b(analyse|analyze|critique|évalue|review|feedback)\s*(ce|cet?|mon|ma|this|my)?\s*(post|texte|contenu|profil|content|text|profile)?/i,
+    // Advice / strategy
+    /\b(conseils?|astuces?|tips?|stratégie|strategy|recommandations?|recommendations?)\b/i,
+    /\b(comment\s+(faire|améliorer|optimiser|augmenter|booster|développer|gagner))/i,
+    /\b(how\s+to\s+(improve|optimize|increase|boost|grow|get\s+more|do|start))/i,
+    // Analysis / review
+    /\b(analyse|analyze|critique|évalue|review|feedback|améliore|améliore-moi|improve|fix|reformule|reformulate|rephrase)\s*(ce|cet?|mon|ma|this|my)?\b/i,
     // Template requests
     /\b(template|modèle|structure|framework|format)\s*(de|pour|for|of)?\s*(post|contenu|content)?/i,
-    // Help with specific LinkedIn topics
-    /\b(aide|help)\s*(moi|me)?\s*(à|to|avec|with)?\s*(rédiger|écrire|trouver|write|find|craft)/i,
-    /\b(qu'?est[- ]ce qu[ei]|what\s+(is|are|makes))\s*(un bon|a good|the best)\s*(hook|accroche|post|cta)/i,
+    // Help requests
+    /\b(aide|help)\s*(moi|me)?\s*(à|to|avec|with)?\b/i,
+    // Generic question openers
+    /^(pourquoi|why|comment|how|quand|when|où|where|qui|who|lequel|laquelle|which|combien|how (many|much))\b/i,
+    // "Est-ce que" / "is it" yes-no questions
+    /^(est[- ]ce que|est[- ]ce qu'|is\s+(it|there)|are\s+(there|you)|do\s+you|does\s+it|can\s+(you|i))\b/i,
   ];
-
   for (const pattern of assistancePatterns) {
-    if (pattern.test(trimmed)) {
-      return "ASSISTANCE";
-    }
+    if (pattern.test(trimmed)) return "ASSISTANCE";
   }
 
-  // Production patterns (explicit content requests — "write me a post")
-  const productionPatterns = [
-    /\b(fais|fait|crée|créé|écris|écrit|génère|génère|rédige|compose)\s*(moi|me|nous)?\s*(un|une|des|le|la)?\s*(post|article|texte|contenu|publication)/i,
-    /\b(write|create|generate|make)\s*(me|us)?\s*(a|an|the)?\s*(post|article|content|text)/i,
-    /\b(post\s+(sur|about|on))\b/i,
-    /\b(linkedin\s+post)\b/i,
-  ];
+  // -- 4. Any question (ends with "?") → ASSISTANCE, not a post draft
+  if (raw.endsWith("?")) return "ASSISTANCE";
 
-  for (const pattern of productionPatterns) {
-    if (pattern.test(trimmed)) {
-      return "PRODUCTION";
-    }
-  }
+  // -- 5. Structured multiline content (3+ lines OR bullets/numbered lists with content)
+  // This is a strong signal it's a draft of a post, not a chat message.
+  const lineCount = raw.split("\n").filter(l => l.trim().length > 0).length;
+  const hasBullets = /(^|\n)\s*[•\-\*]\s+\S/.test(raw) || /(^|\n)\s*\d+[\.\)]\s+\S/.test(raw);
+  if (lineCount >= 3 && hasBullets) return "PRODUCTION";
 
-  // Template/structured content detection — these are PRODUCTION intent
-  // Templates contain bracket placeholders like [durée], [objectif], etc.
-  if (/\[.+?\]/.test(trimmed)) {
-    return "PRODUCTION";
-  }
+  // -- 6. Short messages we couldn't classify = treat as SOCIAL (chitchat)
+  if (trimmed.length < 20) return "SOCIAL";
 
-  // Content that looks like a draft/idea for a post (declarative sentences with a topic)
-  // Multi-line content or content with bullet points/lists = post draft
-  if (trimmed.includes("\n") || /^[•\-\d]/.test(trimmed)) {
-    return "PRODUCTION";
-  }
-
-  // Content with typical post structure markers (colons, numbered items)
-  if (/\d+[\.\)]\s/.test(trimmed) || /:\s*\n/.test(prompt.trim())) {
-    return "PRODUCTION";
-  }
-
-  // Longer messages (>40 chars) that aren't questions are likely post ideas/content
-  if (trimmed.length > 40 && !trimmed.endsWith("?") && !/^(comment|how|what|pourquoi|why|est-ce|is |are |do |does |can )/i.test(trimmed)) {
-    return "PRODUCTION";
-  }
-
-  // Questions about LinkedIn/content → ASSISTANCE (not social)
-  if (trimmed.endsWith("?") && trimmed.length > 20) {
-    return "ASSISTANCE";
-  }
-
-  // Very short messages without production keywords = likely social
-  // Only apply to genuinely short messages (< 15 chars) that matched no other pattern
-  if (trimmed.length < 15) {
-    return "SOCIAL";
-  }
-
-  // Cannot determine fast - need AI classification
+  // -- 7. Everything else: hand off to AI classifier (defaults to ASSISTANCE on doubt)
   return null;
 }
 
@@ -1148,8 +1218,9 @@ async function classifyIntent(
     return "ASSISTANCE";
   } catch (error) {
     console.error("Intent classification failed:", error);
-    // Default to production on error
-    return "PRODUCTION";
+    // On classifier failure, default to ASSISTANCE so we don't surprise the
+    // user with an unwanted post preview. PRODUCTION must always be an opt-in.
+    return "ASSISTANCE";
   }
 }
 

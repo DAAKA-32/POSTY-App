@@ -434,42 +434,60 @@ export const FILLER_PATTERNS: RegExp[] = [
 // ============== INTENT CLASSIFICATION PROMPT ==============
 
 export const INTENT_CLASSIFICATION_PROMPT = {
-  fr: `Classifie l'intention de ce message en UNE seule catégorie:
+  fr: `Tu classes l'intention d'un message dans UNE catégorie. Tu es CONSERVATEUR sur PRODUCTION : un post LinkedIn ne se génère QUE sur demande explicite ou brouillon évident.
 
-SOCIAL = Salutations, bavardage, messages courts informels (ex: "Coucou", "Salut", "Ça va ?", "Hello", "Hey", "Yo")
-ASSISTANCE = Demandes d'idées, conseils, aide, analyse, templates, stratégie LinkedIn. L'utilisateur veut de l'aide SANS demander la rédaction d'un post complet. Inclut:
-  - Demandes d'idées (ex: "Donne-moi des idées de posts", "Quels sujets aborder ?")
-  - Demandes de conseils (ex: "Comment améliorer mon engagement ?", "Des tips pour LinkedIn ?")
-  - Demandes d'analyse (ex: "Analyse ce post", "Qu'est-ce qui ne va pas dans mon texte ?")
-  - Demandes de templates (ex: "Donne-moi un template de post")
-  - Questions sur LinkedIn ou le contenu (ex: "C'est quoi un bon hook ?")
-PRODUCTION = Demande explicite de RÉDIGER un post complet, OU contenu qui EST un brouillon/sujet de post. Inclut:
-  - Demandes explicites (ex: "Fais-moi un post sur...", "Écris un post LinkedIn")
-  - Templates avec placeholders (ex: "Il y a [durée], j'ai pris une décision...")
-  - Brouillons ou idées de post (ex: "Le leadership en 2025", "L'IA va transformer le marketing")
-  - Contenu structuré (listes, points, paragraphes)
-  - Tout sujet ou thème déclaratif qui peut devenir un post LinkedIn
+SOCIAL = Salutations, bavardage, messages très courts sans contenu réel.
+  Exemples: "Salut", "Coucou", "Ça va ?", "Merci", "Cool", "Ok"
 
-RÈGLE: "Donne-moi des idées" = ASSISTANCE. "Fais-moi un post" = PRODUCTION. En cas de doute, choisis ASSISTANCE.
+ASSISTANCE = TOUT message conversationnel : question, explication, idée, conseil, analyse, opinion, discussion. C'est le DÉFAUT.
+  Exemples:
+  - "Tu connais X ?" / "C'est quoi Y ?" / "Explique-moi Z"
+  - "Que penses-tu de…" / "Donne-moi ton avis sur…"
+  - "Donne-moi des idées de posts" / "Quels sujets aborder ?"
+  - "Comment améliorer mon engagement ?" / "Des tips LinkedIn ?"
+  - "Analyse ce post" / "Reformule cette phrase"
+  - "Pourquoi…", "Comment…", "Quand…", "Est-ce que…" — toute question
+  - Toute déclaration ou réflexion qui appelle une réponse conversationnelle
+
+PRODUCTION = Demande EXPLICITE de rédiger un post LinkedIn complet, OU contenu qui EST manifestement un brouillon de post (multi-paragraphes structurés, ton publication).
+  Exemples:
+  - "Fais-moi un post sur…" / "Écris un post LinkedIn sur…"
+  - "Rédige une publication à propos de…" / "Crée-moi un contenu sur…"
+  - Brouillon multi-lignes structuré (hook + corps + chute) que l'utilisateur veut polir
+
+RÈGLES DURES:
+1. Si le message ressemble à une question ou une discussion, c'est ASSISTANCE — JAMAIS PRODUCTION.
+2. Un sujet seul ("Le leadership", "L'IA en 2026") sans verbe d'action = ASSISTANCE (l'utilisateur veut probablement discuter, pas un post).
+3. La présence du mot "post" SANS verbe de rédaction (fais/écris/crée/rédige) = ASSISTANCE.
+4. En cas de doute → ASSISTANCE.
 
 Réponds UNIQUEMENT avec: SOCIAL, ASSISTANCE, ou PRODUCTION`,
-  en: `Classify the intent of this message into ONE category:
+  en: `You classify the intent of a message into ONE category. You are CONSERVATIVE about PRODUCTION: a LinkedIn post is only generated on an explicit request or an obvious draft.
 
-SOCIAL = Greetings, small talk, short informal messages (e.g., "Hey", "Hi", "How are you?", "Hello", "What's up")
-ASSISTANCE = Requests for ideas, advice, help, analysis, templates, LinkedIn strategy. The user wants help WITHOUT asking for a full post to be written. Includes:
-  - Idea requests (e.g., "Give me post ideas", "What topics should I cover?")
-  - Advice requests (e.g., "How to improve my engagement?", "LinkedIn tips?")
-  - Analysis requests (e.g., "Analyze this post", "What's wrong with my text?")
-  - Template requests (e.g., "Give me a post template")
-  - Questions about LinkedIn or content (e.g., "What makes a good hook?")
-PRODUCTION = Explicit request to WRITE a complete post, OR content that IS a draft/post topic. Includes:
-  - Explicit requests (e.g., "Write me a post about...", "Create a LinkedIn post")
-  - Templates with placeholders (e.g., "X months ago, I made a decision that changed...")
-  - Drafts or post ideas (e.g., "Leadership in 2025", "AI will transform marketing")
-  - Structured content (lists, bullet points, paragraphs)
-  - Any declarative topic or theme that can become a LinkedIn post
+SOCIAL = Greetings, small talk, very short messages with no real content.
+  Examples: "Hi", "Hey", "How are you?", "Thanks", "Cool", "Ok"
 
-RULE: "Give me ideas" = ASSISTANCE. "Write me a post" = PRODUCTION. When in doubt, choose ASSISTANCE.
+ASSISTANCE = ANY conversational message: question, explanation, idea, advice, analysis, opinion, discussion. This is the DEFAULT.
+  Examples:
+  - "Do you know X?" / "What is Y?" / "Explain Z to me"
+  - "What do you think about…" / "Give me your take on…"
+  - "Give me post ideas" / "What topics should I cover?"
+  - "How to improve my engagement?" / "LinkedIn tips?"
+  - "Analyze this post" / "Rephrase this sentence"
+  - "Why…", "How…", "When…", "Is it…" — any question
+  - Any statement or reflection that calls for a conversational reply
+
+PRODUCTION = EXPLICIT request to write a complete LinkedIn post, OR content that IS obviously a post draft (structured multi-paragraph, publication tone).
+  Examples:
+  - "Write me a post about…" / "Create a LinkedIn post on…"
+  - "Draft a publication about…" / "Make me content on…"
+  - Multi-line structured draft (hook + body + close) the user wants polished
+
+HARD RULES:
+1. If the message looks like a question or discussion, it is ASSISTANCE — NEVER PRODUCTION.
+2. A bare topic ("Leadership", "AI in 2026") with no action verb = ASSISTANCE (the user likely wants to discuss, not a post).
+3. The word "post" WITHOUT a writing verb (write/create/draft/make) = ASSISTANCE.
+4. When in doubt → ASSISTANCE.
 
 Respond ONLY with: SOCIAL, ASSISTANCE, or PRODUCTION`,
 };

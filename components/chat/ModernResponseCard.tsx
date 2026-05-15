@@ -63,6 +63,14 @@ interface ModernResponseCardProps {
   };
   /** Callback invoked when the user clicks "Regenerate" on the seed comment */
   onRegenerateSeedComment?: () => void;
+  /**
+   * Visual paired with this post — rendered as a media attachment inside the
+   * preview card (mimicking a real LinkedIn post with an image). Set only
+   * when the same generation produced BOTH a post and a visual; image-only
+   * generations stay as standalone GeneratedImageCard cards. The publish
+   * flow uses `url` to upload the media to LinkedIn when the user opts in.
+   */
+  attachedImage?: { url: string; alt?: string } | null;
 }
 
 interface MenuPosition {
@@ -93,6 +101,7 @@ export const ModernResponseCard = memo(function ModernResponseCard({
   isLastMessage = true,
   seedComment,
   onRegenerateSeedComment,
+  attachedImage = null,
 }: ModernResponseCardProps) {
   const { trigger: triggerHaptic } = useHapticFeedback();
   const { canSchedulePosts } = useSubscription();
@@ -530,6 +539,42 @@ export const ModernResponseCard = memo(function ModernResponseCard({
             )}
           </div>
         </div>
+
+        {/* Attached image — rendered as a LinkedIn-style media attachment
+            INSIDE the preview card. Full-width edge-to-edge, square 1:1 ratio
+            (matches Posty's 1080² output), no padding so it reads as a real
+            post media. Clicking opens the source in a new tab for inspection. */}
+        {attachedImage && !isStreaming && (
+          <motion.button
+            type="button"
+            onClick={() => window.open(attachedImage.url, "_blank", "noopener,noreferrer")}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3, delay: 0.05 }}
+            className="
+              notranslate
+              relative w-full aspect-square overflow-hidden
+              border-t border-gray-200 dark:border-dark-border
+              bg-gray-50 dark:bg-dark-elevated
+              group/img cursor-zoom-in
+            "
+            aria-label="Voir le visuel généré en grand"
+            translate="no"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={attachedImage.url}
+              alt={attachedImage.alt || "Visuel généré"}
+              className="
+                w-full h-full object-cover
+                transition-transform duration-500 ease-out
+                group-hover/img:scale-[1.02]
+              "
+              loading="lazy"
+              draggable={false}
+            />
+          </motion.button>
+        )}
 
         {/* Seed comment — minimalist inline block under the post.
             Single thin left border, tiny label, no decorative gradient.

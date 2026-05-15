@@ -5,9 +5,7 @@ import toast from "@/components/ui/Toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface DeleteWithUndoOptions<T> {
-  /** Duration in ms before permanent deletion (default: 5000) */
   undoDuration?: number;
-  /** Called to perform the actual deletion */
   onDelete: (item: T) => Promise<void>;
   /** Called when deletion is undone */
   onUndo?: (item: T) => void;
@@ -67,18 +65,15 @@ export function useDeleteWithUndo<T extends { id: string }>({
               return next;
             });
 
-            // Call onUndo callback
             onUndo?.(item);
           },
         },
       });
 
-      // Schedule actual deletion
       const timeoutId = setTimeout(async () => {
         try {
           await onDelete(item);
         } catch (error) {
-          // Restore on error
           setDeletedIds((prev) => {
             const next = new Set(prev);
             next.delete(itemId);
@@ -86,13 +81,11 @@ export function useDeleteWithUndo<T extends { id: string }>({
           });
           toast.error(t.toasts.deleteError);
         } finally {
-          // Clean up pending state
           pendingRef.current.delete(itemId);
           setPendingDeletes(new Map(pendingRef.current));
         }
       }, undoDuration);
 
-      // Store pending delete
       const deleteState: DeleteState<T> = {
         item,
         timeoutId,

@@ -211,6 +211,21 @@ export interface Post {
   // Multi-turn conversation support
   messages?: ConversationTurn[]; // Follow-up messages after initial exchange
   updatedAt?: Timestamp; // Last message timestamp
+  // Image-mode entries — populated when the conversation contains visuals
+  // generated via the Posty image pipeline. Stored alongside `messages` so a
+  // single conversation can mix posts and visuals.
+  generatedImages?: GeneratedImageRecord[];
+}
+
+/** Persisted shape of a visual produced by /api/image/generate. Kept narrow
+ *  on purpose — the rendering DSL is intentionally not stored, only the
+ *  inputs/outputs the user actually needs to reload the conversation. */
+export interface GeneratedImageRecord {
+  id: string;                 // local entry id (UUID) — stable across reloads
+  prompt: string;
+  url: string;                // Firebase Storage download URL
+  imageId: string;            // storage path basename
+  generatedAt: number;        // ms epoch
 }
 
 // Message in a multi-turn conversation

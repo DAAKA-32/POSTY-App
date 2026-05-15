@@ -3,21 +3,19 @@
 /**
  * AIModeSwitch — compact dropdown for the chat persona (Posts / Support).
  *
- * Why a dropdown rather than a pill row: when stacked above the post-style
- * toggles (MaxModeSelector / DualModeToggle), a full pill ate too much
- * vertical space on mobile and visually competed with the post mode. The
- * dropdown collapses both options into a single chip that sits on the SAME
- * row as the post-style selector — one line, clear hierarchy.
+ * Two top-level personas only:
+ *   - Posts:   default. Goes through Posty's content pipeline — but the
+ *              underlying intent (post text, visual, or both) is detected
+ *              automatically from the prompt itself by /api/intent. The
+ *              user never has to pick a sub-mode.
+ *   - Support: Q&A / conversational mode. Forces the API into ASSISTANCE
+ *              intent so we render replies as plain prose instead of a
+ *              LinkedIn preview card.
  *
- *   - Posts:   default state-toggle (chip label = "Posts"). Generates
- *              LinkedIn-ready post variants via /api/generate.
- *   - Support: Q&A / advice. The API forces ASSISTANCE intent so we render
- *              the response as plain prose, not a LinkedIn preview card.
- *
- * (The Strategist persona has been pulled out of this menu pending its
- * launch; the drawer + route still exist behind the env-gated FAB and are
- * not referenced here. Re-adding a row here is the only change required
- * when we ship it.)
+ * Why we dropped the explicit "Visuel" row: the LLM classifier handles
+ * "fais une image…" prompts in <300ms with ~$0.0001 cost. Making the user
+ * pick a mode was a UX leak — every modern AI assistant routes by intent,
+ * not by sub-menu.
  */
 
 import { useState, useRef, useEffect } from "react";
@@ -39,7 +37,7 @@ const MODE_META: Record<
   posts: {
     Icon: PenLine,
     label: "Posts",
-    description: "Génère des posts LinkedIn",
+    description: "Posts, visuels — l'IA détecte l'intention",
     accent: "text-primary",
     activeBg: "bg-primary/15",
   },
@@ -121,10 +119,15 @@ export default function AIModeSwitch({
         {open && (
           <motion.div
             role="menu"
-            initial={{ opacity: 0, y: 4, scale: 0.97 }}
+            initial={{ opacity: 0, y: 8, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 4, scale: 0.97 }}
-            transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
+            exit={{ opacity: 0, y: 6, scale: 0.98 }}
+            transition={{
+              opacity: { duration: 0.18, ease: [0.22, 1, 0.36, 1] },
+              y: { type: "spring", stiffness: 360, damping: 30, mass: 0.6 },
+              scale: { type: "spring", stiffness: 360, damping: 30, mass: 0.6 },
+            }}
+            style={{ transformOrigin: "bottom center", willChange: "transform, opacity" }}
             className="
               absolute bottom-full left-1/2 -translate-x-1/2 mb-2
               w-[min(260px,calc(100vw-2rem))]
@@ -176,9 +179,8 @@ function MenuRow({
       className="
         w-full text-left px-2.5 py-2 rounded-lg
         flex items-start gap-3
-        hover:bg-gray-50 dark:hover:bg-dark-hover
         transition-colors duration-150
-        cursor-pointer
+        hover:bg-gray-50 dark:hover:bg-dark-hover cursor-pointer
       "
     >
       <div
@@ -201,7 +203,9 @@ function MenuRow({
           </span>
           {active && <Check className={`w-3.5 h-3.5 ${accent}`} />}
         </div>
-        <p className="text-[11px] text-text-muted mt-0.5 leading-snug">{description}</p>
+        <p className="text-[11px] text-text-muted mt-0.5 leading-snug">
+          {description}
+        </p>
       </div>
     </button>
   );

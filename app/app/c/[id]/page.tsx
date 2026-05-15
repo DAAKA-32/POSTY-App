@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLinkedIn } from "@/contexts/LinkedInContext";
 import { useQuota } from "@/contexts/QuotaContext";
@@ -11,7 +11,7 @@ import { useChat } from "@/hooks/chat/useChat";
 import { useSmartScroll } from "@/hooks/scroll/useSmartScroll";
 import { useBrowserMode } from "@/hooks/ui/useBrowserMode";
 import { useKeyboardHeight } from "@/hooks/input/useKeyboardHeight";
-import { getPost, getUserPostsWithPinned, getDualModeUsageThisWeek } from "@/lib/db/firestore";
+import { getPost, getUserPostsWithPinned, getDualModeUsageThisWeek, appendGeneratedImage } from "@/lib/db/firestore";
 import { getCachedConversation, setCachedConversation } from "@/lib/storage/conversation-cache";
 import { getPlanFeatures } from "@/lib/config/plan-features";
 import { Post } from "@/types";
@@ -25,6 +25,11 @@ import MaxModeSelector from "@/components/chat/MaxModeSelector";
 import DualModeToggle from "@/components/chat/DualModeToggle";
 import AIModeSwitch, { AIMode } from "@/components/chat/AIModeSwitch";
 import InlineUpgradeBanner from "@/components/chat/InlineUpgradeBanner";
+import GeneratedImageCard from "@/components/chat/GeneratedImageCard";
+import ImageGenLoader from "@/components/chat/ImageGenLoader";
+import { useImageGeneration, type GeneratedImage } from "@/hooks/image/useImageGeneration";
+import { getAuthHeaders } from "@/lib/api/client";
+import Image from "next/image";
 import NewResponseIndicator from "@/components/chat/NewResponseIndicator";
 import PublishToLinkedInModal from "@/components/linkedin/PublishToLinkedInModal";
 import ScheduleModal from "@/components/schedule/ScheduleModal";
@@ -82,6 +87,38 @@ function ConversationContent() {
   const [showUpgradeBanner, setShowUpgradeBanner] = useState(false);
   const [upgradeBannerReason, setUpgradeBannerReason] = useState<"dual-limit" | "max-feature">("max-feature");
 
+  // Image-gen entries — same shape as /app. Each entry tracks one generation
+  // attempt (prompt + status + image/error) so the conversation shows the
+  // user's brief, the loader, and the resolved card in chronological order.
+  type ImageEntryStatus = "generating" | "done" | "error";
+  interface ImageEntry {
+    id: string;
+    prompt: string;
+    createdAt: number;
+    status: ImageEntryStatus;
+    image?: GeneratedImage;
+    errorMessage?: string;
+  }
+  const [imageEntries, setImageEntries] = useState<ImageEntry[]>([]);
+  // Links a chat message id → the image entry id generated in the SAME
+  // "both" intent run. Same role as on /app — the renderer uses this to
+  // embed the image inside the LinkedIn preview instead of standalone.
+  const [messageImagePairs, setMessageImagePairs] = useState<Record<string, string>>({});
+  const {
+    generate: generateImage,
+    isLoading: isGeneratingImage,
+    quota: imageQuota,
+  } = useImageGeneration();
+
+  const upsertImageEntry = useCallback(
+    (id: string, patch: Partial<ImageEntry>) => {
+      setImageEntries((prev) =>
+        prev.map((e) => (e.id === id ? { ...e, ...patch } : e))
+      );
+    },
+    []
+  );
+
   // Voice recording state
   const [isRecording, setIsRecording] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
@@ -134,6 +171,75 @@ function ConversationContent() {
   const generateRef = useRef(generate);
   useEffect(() => { generateRef.current = generate; }, [generate]);
 
+  /** Image-mode entry point. `displayPrompt` is what the user actually typed
+   *  (rendered in the chat bubble), `brief` is the cleaned-by-classifier
+   *  version we pass to the image pipeline. When omitted, both are the same.
+   *  Persists to the current `posts/{id}` doc on success so the visual
+   *  survives a reload. */
+  const handleImageGenerate = useCallback(
+    async (displayPrompt: string, brief: string = displayPrompt) => {
+      const entryId =
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `img-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      setImageEntries((prev) => [
+        ...prev,
+        { id: entryId, prompt: displayPrompt, createdAt: Date.now(), status: "generating" },
+      ]);
+      const lastAssistantMessage = [...messages].reverse().find((m) => m.type === "ai");
+      const result = await generateImage(brief, {
+        postContext: lastAssistantMessage?.content,
+        language: (t as { meta?: { lang?: "fr" | "en" } })?.meta?.lang ?? "fr",
+        silent: true,
+      });
+      if (result.ok) {
+        upsertImageEntry(entryId, { status: "done", image: result.image });
+        try {
+          await appendGeneratedImage(conversationId, {
+            id: entryId,
+            prompt: displayPrompt,
+            url: result.image.url,
+            imageId: result.image.imageId,
+            generatedAt: result.image.generatedAt,
+          });
+        } catch (err) {
+          console.warn("[image-gen] persist failed (image still shown):", err);
+        }
+      } else {
+        upsertImageEntry(entryId, {
+          status: "error",
+          errorMessage: result.error.message,
+        });
+      }
+    },
+    [messages, generateImage, t, upsertImageEntry, conversationId]
+  );
+
+  const handleRegenerateImage = useCallback(
+    async (entryId: string) => {
+      const entry = imageEntries.find((e) => e.id === entryId);
+      if (!entry) return;
+      upsertImageEntry(entryId, {
+        status: "generating",
+        image: undefined,
+        errorMessage: undefined,
+      });
+      const result = await generateImage(entry.prompt, {
+        language: (t as { meta?: { lang?: "fr" | "en" } })?.meta?.lang ?? "fr",
+        silent: true,
+      });
+      if (result.ok) {
+        upsertImageEntry(entryId, { status: "done", image: result.image });
+      } else {
+        upsertImageEntry(entryId, {
+          status: "error",
+          errorMessage: result.error.message,
+        });
+      }
+    },
+    [imageEntries, generateImage, t, upsertImageEntry]
+  );
+
   // Smart scroll
   const {
     containerRef: scrollContainerRef,
@@ -180,6 +286,24 @@ function ConversationContent() {
       responseMode: post.responseMode,
       selectedStyle: post.selectedStyle,
     });
+    // Hydrate the visual-mode timeline so reloading a conversation that
+    // contains generated images shows them in the chat, not a blank surface.
+    if (post.generatedImages && post.generatedImages.length > 0) {
+      setImageEntries(
+        post.generatedImages.map((img) => ({
+          id: img.id,
+          prompt: img.prompt,
+          createdAt: img.generatedAt,
+          status: "done" as const,
+          image: {
+            url: img.url,
+            imageId: img.imageId,
+            prompt: img.prompt,
+            generatedAt: img.generatedAt,
+          },
+        }))
+      );
+    }
   }, [loadConversation]);
 
   // Track whether we've already loaded this conversation into the chat
@@ -538,8 +662,9 @@ function ConversationContent() {
           <div
             className={`max-w-3xl mx-auto px-4 pt-6 lg:pt-12 content-with-fixed-input ${browserMode.isMobileBrowser ? 'mobile-browser-mode' : ''}`}
           >
-            {/* Conversation messages */}
-            {messages.length > 0 && (
+            {/* Conversation messages — also opens for image-mode runs so
+                imageEntries below find a visible container. */}
+            {(messages.length > 0 || imageEntries.length > 0) && (
               <div className="space-y-6 mb-8">
                 <AnimatePresence mode="popLayout">
                   {(() => {
@@ -704,6 +829,14 @@ function ConversationContent() {
                                       ? () => regenerateSeedComment(0)
                                       : undefined
                                   }
+                                  attachedImage={(() => {
+                                    if (!message.id) return null;
+                                    const entryId = messageImagePairs[message.id];
+                                    if (!entryId) return null;
+                                    const entry = imageEntries.find((e) => e.id === entryId);
+                                    if (!entry || entry.status !== "done" || !entry.image) return null;
+                                    return { url: entry.image.url, alt: entry.prompt };
+                                  })()}
                                 />
                               )}
                             </motion.div>
@@ -758,6 +891,120 @@ function ConversationContent() {
                       : <TypingIndicator />
                   )}
                 </AnimatePresence>
+
+                {/* Image-generation conversation — same chat-bubble shape as
+                    /app: user prompt on the right, assistant body swapping
+                    between loader / final image / inline error. */}
+                {imageEntries.length > 0 && (() => {
+                  // Paired entries are already embedded inside the post
+                  // preview as a media attachment — skip them here so we
+                  // don't render the same image twice.
+                  const pairedEntryIds = new Set(Object.values(messageImagePairs));
+                  const standaloneEntries = imageEntries.filter((e) => !pairedEntryIds.has(e.id));
+                  if (standaloneEntries.length === 0) return null;
+                  return (
+                  <div className="flex flex-col gap-6 mt-4">
+                    {standaloneEntries.map((entry) => (
+                      <div key={entry.id} className="flex flex-col gap-3">
+                        <motion.div
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.25, ease: smoothEase }}
+                          className="flex justify-end"
+                        >
+                          {/* Same neutral-fill bubble as ChatMessage so image
+                              prompts blend into the rest of the conversation. */}
+                          <div className="
+                            max-w-[85%] lg:max-w-[70%] w-fit
+                            px-4 py-3 rounded-2xl rounded-br-sm
+                            bg-gray-50 dark:bg-dark-elevated/80
+                            border border-gray-200/80 dark:border-dark-border/70
+                            text-gray-900 dark:text-white
+                            text-[14px] leading-snug whitespace-pre-wrap break-words
+                            shadow-[0_1px_2px_-1px_rgba(15,23,42,0.06)]
+                          ">
+                            {entry.prompt}
+                          </div>
+                        </motion.div>
+
+                        {/* No "POSTY · VISUEL" header — the image card
+                            stands on its own, the chip was visual noise. */}
+                        <AnimatePresence mode="wait" initial={false}>
+                          {entry.status === "generating" && (
+                            <motion.div
+                              key="loader"
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              <ImageGenLoader prompt={entry.prompt} />
+                            </motion.div>
+                          )}
+
+                          {entry.status === "done" && entry.image && (
+                            <motion.div
+                              key="image"
+                              initial={{ opacity: 0, scale: 0.98 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0 }}
+                              transition={{ duration: 0.3, ease: smoothEase }}
+                            >
+                              <GeneratedImageCard
+                                image={entry.image}
+                                onRegenerate={() => handleRegenerateImage(entry.id)}
+                                isRegenerating={false}
+                              />
+                            </motion.div>
+                          )}
+
+                          {entry.status === "error" && (
+                            <motion.div
+                              key="error"
+                              initial={{ opacity: 0, y: 6 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0 }}
+                              transition={{ duration: 0.2 }}
+                              className="
+                                w-full max-w-2xl
+                                rounded-2xl rounded-bl-md
+                                border border-error/30 bg-error/5
+                                px-4 py-3
+                                flex items-start gap-3
+                              "
+                            >
+                              <div className="mt-0.5 w-6 h-6 shrink-0 rounded-full bg-error/15 text-error flex items-center justify-center text-[13px]">
+                                !
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[13px] text-text-primary font-medium">
+                                  Le visuel n&apos;a pas pu être généré.
+                                </p>
+                                <p className="text-[12px] text-text-secondary mt-0.5">
+                                  {entry.errorMessage || "Réessaye dans un instant."}
+                                </p>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRegenerateImage(entry.id)}
+                                  className="
+                                    mt-2 inline-flex items-center gap-1.5
+                                    px-2.5 py-1 rounded-lg
+                                    bg-error/10 hover:bg-error/15
+                                    text-error text-[12px] font-medium
+                                    transition-colors
+                                  "
+                                >
+                                  Réessayer
+                                </button>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    ))}
+                  </div>
+                  );
+                })()}
               </div>
             )}
 
@@ -789,7 +1036,7 @@ function ConversationContent() {
 
         {/* Scroll arrow — visible whenever user is scrolled up and there are messages */}
         <NewResponseIndicator
-          isVisible={!isNearBottom && messages.length > 0}
+          isVisible={!isNearBottom && (messages.length > 0 || imageEntries.length > 0)}
           onClick={scrollToBottom}
           newCount={newContentCount}
           mode={hasNewContent ? "new-content" : "scroll-down"}
@@ -809,57 +1056,79 @@ function ConversationContent() {
           }
         >
           <div className="max-w-3xl mx-auto px-3 sm:px-4 py-2 sm:py-3 lg:py-2">
-            {/* Single toolbar row — AI persona chip + post-style selector */}
-            <div className="mb-3 flex flex-wrap items-center justify-center gap-2">
-              <AIModeSwitch mode={aiMode} onModeChange={setAiMode} />
+            {/* Single toolbar row — AI persona chip + post-style selector.
+                LayoutGroup + `layout` keeps the chip's recentring smooth when
+                the neighbour selector swaps in/out (posts ↔ support). */}
+            <LayoutGroup id="ai-mode-toolbar-conv">
+              <motion.div
+                layout
+                transition={{ layout: { type: "spring", stiffness: 380, damping: 32, mass: 0.7 } }}
+                className="mb-3 flex flex-wrap items-center justify-center gap-2"
+              >
+                <motion.div layout="position">
+                  <AIModeSwitch mode={aiMode} onModeChange={setAiMode} />
+                </motion.div>
 
-              <AnimatePresence mode="wait" initial={false}>
-                {aiMode === "posts" && isMaxPlan && (
-                  <motion.div
-                    key="max-selector"
-                    initial={{ opacity: 0, width: 0 }}
-                    animate={{ opacity: 1, width: "auto" }}
-                    exit={{ opacity: 0, width: 0 }}
-                    transition={{ duration: 0.18 }}
-                    className="overflow-hidden"
-                  >
-                    <MaxModeSelector
-                      selectedMode={maxMode}
-                      onModeChange={setMaxMode}
-                    />
-                  </motion.div>
-                )}
-                {aiMode === "posts" && isProPlan && !isMaxPlan && (
-                  <motion.div
-                    key="pro-selector"
-                    initial={{ opacity: 0, width: 0 }}
-                    animate={{ opacity: 1, width: "auto" }}
-                    exit={{ opacity: 0, width: 0 }}
-                    transition={{ duration: 0.18 }}
-                    className="overflow-hidden"
-                  >
-                    {showUpgradeBanner ? (
-                      <InlineUpgradeBanner
-                        reason={upgradeBannerReason}
-                        onClose={() => setShowUpgradeBanner(false)}
+                <AnimatePresence mode="popLayout" initial={false}>
+                  {aiMode === "posts" && isMaxPlan && (
+                    <motion.div
+                      key="max-selector"
+                      layout
+                      initial={{ opacity: 0, scale: 0.92, y: 4 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.92, y: 4 }}
+                      transition={{
+                        opacity: { duration: 0.18, ease: [0.22, 1, 0.36, 1] },
+                        scale: { type: "spring", stiffness: 380, damping: 30, mass: 0.6 },
+                        y: { type: "spring", stiffness: 380, damping: 30, mass: 0.6 },
+                        layout: { type: "spring", stiffness: 380, damping: 32, mass: 0.7 },
+                      }}
+                      style={{ willChange: "transform, opacity" }}
+                    >
+                      <MaxModeSelector
+                        selectedMode={maxMode}
+                        onModeChange={setMaxMode}
                       />
-                    ) : (
-                      <DualModeToggle
-                        enabled={dualMode}
-                        onToggle={(val) => setDualMode(val)}
-                        responseType={selectedStyle}
-                        onResponseTypeChange={setSelectedStyle}
-                        dualUsedThisWeek={dualUsedThisWeek}
-                        onUpgradePrompt={(reason) => {
-                          setUpgradeBannerReason(reason);
-                          setShowUpgradeBanner(true);
-                        }}
-                      />
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+                    </motion.div>
+                  )}
+                  {aiMode === "posts" && isProPlan && !isMaxPlan && (
+                    <motion.div
+                      key="pro-selector"
+                      layout
+                      initial={{ opacity: 0, scale: 0.92, y: 4 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.92, y: 4 }}
+                      transition={{
+                        opacity: { duration: 0.18, ease: [0.22, 1, 0.36, 1] },
+                        scale: { type: "spring", stiffness: 380, damping: 30, mass: 0.6 },
+                        y: { type: "spring", stiffness: 380, damping: 30, mass: 0.6 },
+                        layout: { type: "spring", stiffness: 380, damping: 32, mass: 0.7 },
+                      }}
+                      style={{ willChange: "transform, opacity" }}
+                    >
+                      {showUpgradeBanner ? (
+                        <InlineUpgradeBanner
+                          reason={upgradeBannerReason}
+                          onClose={() => setShowUpgradeBanner(false)}
+                        />
+                      ) : (
+                        <DualModeToggle
+                          enabled={dualMode}
+                          onToggle={(val) => setDualMode(val)}
+                          responseType={selectedStyle}
+                          onResponseTypeChange={setSelectedStyle}
+                          dualUsedThisWeek={dualUsedThisWeek}
+                          onUpgradePrompt={(reason) => {
+                            setUpgradeBannerReason(reason);
+                            setShowUpgradeBanner(true);
+                          }}
+                        />
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            </LayoutGroup>
 
             {/* UniversalChatInput - Unified premium input component */}
             <UniversalChatInput
@@ -873,15 +1142,71 @@ function ConversationContent() {
                   setIsRecording(false);
                   try { recognitionRef.current.stop(); } catch { /* ignore */ }
                 }
-                // Scroll to bottom immediately so the user's message is in view
-                // while the AI response starts streaming (ChatGPT pattern).
                 requestAnimationFrame(() => scrollToBottom());
-                await generate(message);
+
+                if (aiMode === "support") {
+                  await generate(message);
+                  return;
+                }
+
+                // Posts mode: classify intent then route. Same fallback rule
+                // as /app — anything other than image/both lands on the post
+                // pipeline, including conversational replies (rendered as
+                // plain prose by ConversationalResponse).
+                let intent: "post" | "image" | "both" | "conversation" = "post";
+                let postBrief = message;
+                let imageBrief = message;
+                try {
+                  const headers = await getAuthHeaders();
+                  const controller = new AbortController();
+                  const timeout = setTimeout(() => controller.abort(), 1500);
+                  const res = await fetch("/api/intent", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", ...headers },
+                    body: JSON.stringify({ prompt: message, hasPriorConversation: true }),
+                    signal: controller.signal,
+                  });
+                  clearTimeout(timeout);
+                  if (res.ok) {
+                    const data = await res.json();
+                    intent = data.intent ?? "post";
+                    postBrief = data.postBrief ?? message;
+                    imageBrief = data.imageBrief ?? message;
+                  }
+                } catch { /* keep defaults — safe fallback to post */ }
+
+                if (intent === "image") {
+                  await handleImageGenerate(message, imageBrief);
+                } else if (intent === "both") {
+                  // Snapshot length so we can pair the new image entry with
+                  // the freshly-streamed AI message after both pipelines
+                  // complete.
+                  const entriesBeforeCount = imageEntries.length;
+                  await Promise.all([
+                    generate(postBrief),
+                    handleImageGenerate(message, imageBrief),
+                  ]);
+                  setImageEntries((current) => {
+                    const newEntry = current[entriesBeforeCount];
+                    if (newEntry?.status === "done") {
+                      const newestAi = [...messages].reverse().find((m) => m.type === "ai");
+                      if (newestAi?.id) {
+                        setMessageImagePairs((prev) => ({
+                          ...prev,
+                          [newestAi.id!]: newEntry.id,
+                        }));
+                      }
+                    }
+                    return current;
+                  });
+                } else {
+                  await generate(postBrief);
+                }
               }}
               onStop={stopGeneration}
               placeholder={PLACEHOLDER_EXAMPLES}
               disabled={false}
-              isLoading={isLoading}
+              isLoading={isLoading || isGeneratingImage}
               enableVoiceRecording={speechSupported}
               onVoiceRecordingStart={toggleRecording}
               onVoiceRecordingStop={toggleRecording}

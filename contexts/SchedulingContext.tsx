@@ -30,6 +30,7 @@ import {
 } from "@/lib/db/firestore";
 import { deleteScheduledPostImages } from "@/lib/storage/storage";
 import { getAuthHeaders } from "@/lib/api/client";
+import { auth } from "@/lib/db/firebase";
 import toast from "@/components/ui/Toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -46,7 +47,11 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
   const [isUploading, setIsUploading] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
 
-  // Load scheduled posts from Firestore
+  // Load scheduled posts from Firestore.
+  // `permission-denied` on first paint is almost always a stale auth token:
+  // React already has `user`, but the Firestore SDK hasn't been re-attached
+  // to the refreshed ID token yet. We retry once after a forced token refresh
+  // before surfacing the alarming toast — silent recovery beats a false alert.
   const loadScheduledPosts = useCallback(async () => {
     if (!user) {
       setScheduledPosts([]);
@@ -55,21 +60,36 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    const fetchOnce = async () => {
+      const posts = await getScheduledPosts(user.uid);
+      const count = await getPendingScheduledPostsCount(user.uid);
+      return { posts, count };
+    };
+
     setIsLoading(true);
     try {
-      const posts = await getScheduledPosts(user.uid);
-      setScheduledPosts(posts);
-
-      // Get pending count for badge
-      const count = await getPendingScheduledPostsCount(user.uid);
-      setPendingCount(count);
+      let result;
+      try {
+        result = await fetchOnce();
+      } catch (err) {
+        const code = (err as { code?: string })?.code;
+        if (code === "permission-denied" && auth?.currentUser) {
+          // Force-refresh the ID token so the next request carries fresh auth.
+          await auth.currentUser.getIdToken(true).catch(() => {});
+          result = await fetchOnce();
+        } else {
+          throw err;
+        }
+      }
+      setScheduledPosts(result.posts);
+      setPendingCount(result.count);
     } catch (error) {
       console.error("Error loading scheduled posts:", error);
       toast.error(t.toasts.scheduleLoadError);
     } finally {
       setIsLoading(false);
     }
-  }, [user]);
+  }, [user, t]);
 
   // Load posts on mount and when user changes
   useEffect(() => {

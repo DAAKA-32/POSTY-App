@@ -54,6 +54,12 @@ const nextConfig: NextConfig = {
     removeConsole: process.env.NODE_ENV === "production" ? { exclude: ["error", "warn"] } : false,
   },
 
+  // Native modules that must not be bundled by Turbopack/webpack. `sharp` is
+  // a prebuilt-binary module — bundling it can make the image-gen route slow
+  // to compile in dev and breaks the runtime on some platforms. Externalising
+  // it tells Next to `require()` it at runtime from node_modules instead.
+  serverExternalPackages: ["sharp"],
+
   // Experimental features for performance
   experimental: {
     // `optimizeCss` runs `critters` over the global stylesheet to inline

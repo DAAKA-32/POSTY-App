@@ -394,6 +394,11 @@ export interface PlanLimits {
   // Distinct from post generation: this is a multi-turn strategy/audit agent.
   hasMarketingStrategist: boolean;
 
+  // Visual image generation (creative-coding pipeline, not external image AI).
+  // 0 = feature locked. Tracked on a daily UTC reset, independent of the
+  // post quota so generating a visual doesn't burn a post credit.
+  imagesPerDay: number;
+
   // Multi-Platform Publishing
   allowedPlatforms: Platform[];
   maxPlatformConnections: number; // Maximum number of platforms that can be connected
@@ -462,6 +467,7 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
       maxPlatformConnections: 5,
       canPublishSimultaneously: false, // Multi-publish is a Max-only feature
       quotaResetPeriod: "monthly",
+      imagesPerDay: 0, // Locked on Free
     },
     highlight: false,
     premium: false,
@@ -504,6 +510,7 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
       maxPlatformConnections: 5,
       canPublishSimultaneously: false, // Multi-publish is a Max-only feature
       quotaResetPeriod: "daily",
+      imagesPerDay: 3, // Pro: 3 visuals per day
     },
     badge: "Recommandé",
     highlight: true,
@@ -547,6 +554,7 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
       maxPlatformConnections: 6,
       canPublishSimultaneously: true, // Publish to multiple platforms at once
       quotaResetPeriod: "monthly",
+      imagesPerDay: 5, // Max: 5 visuals per day
     },
     badge: "Le plus performant",
     highlight: false,

@@ -15,6 +15,7 @@ import {
   LinkedInConnectionData,
 } from "@/lib/db/firestore";
 import { isTokenExpired, postToLinkedIn as postToLinkedInApi, getLinkedInAuthUrl } from "@/lib/platforms/linkedin";
+import { getAuthHeaders } from "@/lib/api/client";
 import toast from "@/components/ui/Toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -77,10 +78,12 @@ export function LinkedInProvider({ children }: { children: ReactNode }) {
         const tokenStillValid = !isTokenExpired(conn.expiresAt.toDate());
         if (isStale && tokenStillValid) {
           // Fire-and-forget; don't block UI on network round-trip.
+          // The route now derives userId from the Firebase token — no body
+          // needed, but the Bearer header is required.
+          const authHeaders = await getAuthHeaders();
           fetch("/api/linkedin/refresh-photo", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId: user.uid }),
+            headers: { "Content-Type": "application/json", ...authHeaders },
           })
             .then((r) => (r.ok ? r.json() : null))
             .then((data) => {
@@ -244,15 +247,17 @@ export function LinkedInProvider({ children }: { children: ReactNode }) {
     [user, connection, isTokenValid]
   );
 
-  // Refresh LinkedIn profile photo by re-fetching from LinkedIn API
+  // Refresh LinkedIn profile photo by re-fetching from LinkedIn API.
+  // The route reads the target userId from the verified Firebase token, so
+  // we MUST send the Bearer header — sending only the body returns 401.
   const refreshProfilePhoto = useCallback(async (): Promise<string | null> => {
     if (!user || !connection) return null;
 
     try {
+      const authHeaders = await getAuthHeaders();
       const response = await fetch("/api/linkedin/refresh-photo", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.uid }),
+        headers: { "Content-Type": "application/json", ...authHeaders },
       });
 
       if (!response.ok) return null;
