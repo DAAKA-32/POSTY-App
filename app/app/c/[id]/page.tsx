@@ -1145,7 +1145,7 @@ function ConversationContent() {
                 requestAnimationFrame(() => scrollToBottom());
 
                 if (aiMode === "support") {
-                  await generate(message);
+                  await generate(message, undefined, "ASSISTANCE");
                   return;
                 }
 
@@ -1156,6 +1156,7 @@ function ConversationContent() {
                 let intent: "post" | "image" | "both" | "conversation" = "post";
                 let postBrief = message;
                 let imageBrief = message;
+                let postType: "PRODUCTION" | "HYBRID" | "ASSISTANCE" | "SOCIAL" | undefined;
                 try {
                   const headers = await getAuthHeaders();
                   const controller = new AbortController();
@@ -1172,6 +1173,7 @@ function ConversationContent() {
                     intent = data.intent ?? "post";
                     postBrief = data.postBrief ?? message;
                     imageBrief = data.imageBrief ?? message;
+                    postType = data.postType;
                   }
                 } catch { /* keep defaults — safe fallback to post */ }
 
@@ -1183,7 +1185,7 @@ function ConversationContent() {
                   // complete.
                   const entriesBeforeCount = imageEntries.length;
                   await Promise.all([
-                    generate(postBrief),
+                    generate(postBrief, undefined, postType),
                     handleImageGenerate(message, imageBrief),
                   ]);
                   setImageEntries((current) => {
@@ -1200,7 +1202,7 @@ function ConversationContent() {
                     return current;
                   });
                 } else {
-                  await generate(postBrief);
+                  await generate(postBrief, undefined, postType);
                 }
               }}
               onStop={stopGeneration}

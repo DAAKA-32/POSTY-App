@@ -21,6 +21,18 @@
 import OpenAI from "openai";
 import { z } from "zod";
 
+/**
+ * Sub-classification for prompts routed to the post pipeline. Matches the
+ * IntentType used internally by /api/generate so the route can use this as
+ * a hint and skip its own classification pass entirely:
+ *   - PRODUCTION : explicit post request ("fais un post sur X")
+ *   - HYBRID     : conversational explanation + post ("explique X puis fais un post")
+ *   - ASSISTANCE : ideas, advice, brainstorming, analysis
+ *   - SOCIAL     : pure greeting / small talk
+ */
+export const PostTypeEnum = z.enum(["PRODUCTION", "HYBRID", "ASSISTANCE", "SOCIAL"]);
+export type PostType = z.infer<typeof PostTypeEnum>;
+
 export const ContentIntentSchema = z.object({
   intent: z.enum(["post", "image", "both", "conversation"]),
   confidence: z.number().min(0).max(1),
@@ -30,6 +42,10 @@ export const ContentIntentSchema = z.object({
   /** Cleaned, scoped instruction for the image pipeline. Only set when
    *  intent ∈ {"image", "both"}. */
   imageBrief: z.string().min(1).max(800).optional(),
+  /** Hint for /api/generate's internal routing — when set, the post route
+   *  trusts this value and skips its own classifier. Only set when
+   *  intent ∈ {"post", "both", "conversation"}. */
+  postType: PostTypeEnum.optional(),
 });
 
 export type ContentIntent = z.infer<typeof ContentIntentSchema>;
@@ -60,10 +76,20 @@ RÈGLES de classification:
    Exemples: "fais un post sur X", "écris un post LinkedIn", "rédige un post growth".
    Dans ce cas, mets postBrief mais PAS imageBrief.
 
-3. "both" — la demande mentionne EXPLICITEMENT post ET image/visuel.
-   Exemples: "fais un post avec un visuel", "post LinkedIn + image moderne",
-             "génère un post et une image qui l'accompagne".
-   Dans ce cas, mets postBrief ET imageBrief, chacun scopé.
+3. "both" — la demande mentionne EXPLICITEMENT un post LinkedIn ET un
+   visuel/image/photo/illustration. Les DEUX modalités (texte + image)
+   doivent être présentes. Une explication conversationnelle suivie d'un
+   post n'est PAS "both" — c'est juste un post avec contexte explicatif,
+   et tu réponds "post".
+   Exemples "both" valides:
+     - "fais un post avec un visuel"
+     - "post LinkedIn + image moderne"
+     - "génère un post et une image qui l'accompagne"
+   Contre-exemples (à classer "post", PAS "both"):
+     - "explique-moi X puis fais-moi un post dessus" → post (le "puis"
+       relie deux étapes texte, pas un visuel)
+     - "parle-moi de Y et rédige un post" → post
+   Dans ce cas (vrai "both"), mets postBrief ET imageBrief, chacun scopé.
 
 4. "conversation" — c'est une question, un avis, un brainstorming, une discussion.
    Exemples: "tu connais X ?", "comment améliorer mon marketing ?",
@@ -144,9 +170,62 @@ export async function classifyContentIntent(
  * is unambiguous in ~99% of cases. Skipping the LLM here saves ~250ms +
  * a token cost on the most common pattern.
  */
+/**
+ * Sub-classify a prompt that's heading to the post pipeline. Mirrors the
+ * fast-path regex inside /api/generate (PRODUCTION / HYBRID / ASSISTANCE /
+ * SOCIAL) so the downstream route can trust this value as a hint and skip
+ * its own classifier. Returns null when the prompt is too ambiguous — the
+ * caller falls back to PRODUCTION as a safe default for "intent=post".
+ */
+function fastClassifyPostType(prompt: string): PostType | null {
+  const raw = prompt.trim();
+  const lower = raw.toLowerCase();
+
+  const PRODUCTION_TRIGGERS = /\b(fais|fait|cr[eé]e|cr[eé]é|[eé]cris|[eé]crit|g[eé]n[eè]re|r[eé]dige|compose|pr[eé]pare|write|create|generate|make|draft)\s*(moi|me|nous)?\s*(un|une|des|le|la|a|an|the)?\s*(post|article|texte|contenu|publication|story|carrousel)/i;
+  const EXPLAIN_TRIGGERS = /\b(explique|explique-moi|parle-moi|raconte-moi|dis-moi|d[eé]taille|r[eé]sume|c'?est quoi|qu'?est[- ]ce que|peux-tu (m')?expliquer|explain|tell me (about|what)|describe|walk me through|summarize)/i;
+
+  // HYBRID first — explanation + post in one ask.
+  if (EXPLAIN_TRIGGERS.test(lower) && (PRODUCTION_TRIGGERS.test(lower)
+    || /\b(puis|ensuite|et\s+(fais|fait|cr[eé]e|[eé]cris|r[eé]dige)|then\s+(write|create|make|draft)|and\s+(write|create|make|draft))/i.test(lower))) {
+    return "HYBRID";
+  }
+  // Explicit PRODUCTION request always wins.
+  if (PRODUCTION_TRIGGERS.test(lower) || /\bpost\s+(sur|about|on)\s+\w/i.test(lower) || /\blinkedin\s+post\b/i.test(lower)) {
+    return "PRODUCTION";
+  }
+  // SOCIAL: greetings / small talk, short standalone messages.
+  if (/^(coucou|salut|hello|hey|hi|yo|bonjour|bonsoir|hola|wesh)[\s!.,?]*$/i.test(lower)
+    || /^(ça va|ca va|comment ça va|comment ca va|how are you|what's up|quoi de neuf|sup)[\s!?,]*$/i.test(lower)
+    || /^(merci|thanks|thank you|cool|nickel|parfait|super|génial|great|ok|d'accord|ouais|yes|no|non)[\s!.,]*$/i.test(lower)) {
+    return "SOCIAL";
+  }
+  // ASSISTANCE: questions, explanations, advice, ideas, analysis.
+  if (raw.endsWith("?")
+    || /^(comment|pourquoi|quand|qui|est-?ce|peux-tu|tu connais|tu peux|donne-?moi des id[eé]es|explique|c'est quoi|qu'est-?ce)/i.test(lower)
+    || /\b(conseils?|astuces?|tips?|strat[eé]gie|recommandations?|aide|help)\b/i.test(lower)
+    || /\b(analyse|review|am[eé]liore|reformule|critique)\b/i.test(lower)) {
+    return "ASSISTANCE";
+  }
+  return null;
+}
+
 export function fastClassifyIntent(prompt: string): ContentIntent | null {
   const lower = prompt.toLowerCase().trim();
-  if (lower.length < 4) return null;
+  if (lower.length < 2) return null;
+
+  // Short greetings / acknowledgements — instant conversation classification
+  // with SOCIAL post-type. Catches "salut", "hello", "merci", "ok", etc.
+  // BEFORE we look for image/post markers so we never mis-route a 5-char
+  // social ping to the post pipeline.
+  if (/^(coucou|salut|hello|hey|hi|yo|bonjour|bonsoir|hola|wesh)[\s!.,?]*$/i.test(lower)
+    || /^(ça va|ca va|comment ça va|comment ca va|how are you|what's up|quoi de neuf|sup)[\s!?,]*$/i.test(lower)
+    || /^(merci|thanks|thank you|cool|nickel|parfait|super|génial|great|ok|d'accord|ouais|yes|no|non)[\s!.,]*$/i.test(lower)) {
+    return {
+      intent: "conversation",
+      confidence: 0.95,
+      postType: "SOCIAL",
+    };
+  }
 
   const imageWords = /(\bimage\b|\bvisuel\b|\billustration\b|\bphoto\b|\bpublicit[eé]\b|\bbanni[eè]re\b|\bcover\b|\bgraphique\b)/i;
   const postWords = /(\bpost\b|\barticle\b|\bcaption\b|\bcopy\b|\br[eé]dige\b)/i;
@@ -176,6 +255,7 @@ export function fastClassifyIntent(prompt: string): ContentIntent | null {
       confidence: 0.9,
       postBrief: prompt,
       imageBrief: prompt,
+      postType: "PRODUCTION",
     };
   }
   // Conversational pure question — no creation verb anywhere
@@ -183,6 +263,7 @@ export function fastClassifyIntent(prompt: string): ContentIntent | null {
     return {
       intent: "conversation",
       confidence: 0.85,
+      postType: fastClassifyPostType(prompt) ?? "ASSISTANCE",
     };
   }
   return null; // Let the LLM decide

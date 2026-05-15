@@ -71,7 +71,13 @@ interface UseChatReturn {
   error: string | null;
   generationCount: number;
   canGenerate: boolean;
-  generate: (prompt: string, file?: FileAttachment | null) => Promise<void>;
+  generate: (
+    prompt: string,
+    file?: FileAttachment | null,
+    /** Pre-classified routing hint from /api/intent — lets the post route
+     *  skip its internal classifier when the caller has already figured it out. */
+    intentHint?: "PRODUCTION" | "HYBRID" | "ASSISTANCE" | "SOCIAL"
+  ) => Promise<void>;
   /** Abort the in-flight generation without clearing messages (ChatGPT-style stop) */
   stopGeneration: () => void;
   reset: () => void;
@@ -233,7 +239,17 @@ export function useChat({
 
   // Generate responses with streaming
   const generate = useCallback(
-    async (prompt: string, file?: FileAttachment | null) => {
+    async (
+      prompt: string,
+      file?: FileAttachment | null,
+      /**
+       * Optional pre-classified post sub-type. When provided, /api/generate
+       * trusts this value and skips its own intent classifier, which saves
+       * a regex pass (or rarely a gpt-3.5-turbo call) when the page-layer
+       * /api/intent already figured out the routing.
+       */
+      intentHint?: "PRODUCTION" | "HYBRID" | "ASSISTANCE" | "SOCIAL"
+    ) => {
       if (!prompt.trim()) {
         setError("Veuillez entrer une description");
         return;
@@ -335,6 +351,9 @@ export function useChat({
             selectedStyle: effectiveStyle,
             // "posts" → "linkedin" (server's existing key), "support" → "general"
             aiMode: aiMode === "support" ? "general" : "linkedin",
+            // Pre-classified routing hint from /api/intent — lets the post
+            // route skip its internal classifier when the page already knows.
+            ...(intentHint && { intentHint }),
             // Send conversation context for follow-ups
             conversationId: currentPostId,
             conversationHistory,

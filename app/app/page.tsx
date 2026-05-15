@@ -656,6 +656,9 @@ function AppContent() {
       intent: "post" | "image" | "both" | "conversation";
       postBrief?: string;
       imageBrief?: string;
+      /** Fine-grained sub-type — forwarded to /api/generate as intentHint
+       *  so the post route skips its own classifier. */
+      postType?: "PRODUCTION" | "HYBRID" | "ASSISTANCE" | "SOCIAL";
     }> => {
       try {
         const headers = await getAuthHeaders();
@@ -677,6 +680,7 @@ function AppContent() {
           intent: data.intent ?? "post",
           postBrief: data.postBrief ?? prompt,
           imageBrief: data.imageBrief ?? prompt,
+          postType: data.postType,
         };
       } catch {
         return { intent: "post", postBrief: prompt };
@@ -687,9 +691,10 @@ function AppContent() {
 
   const handleGenerate = async (prompt: string, file?: FileAttachment | null) => {
     // Support mode is an explicit user choice — never re-classify, just go
-    // straight to the conversational pipeline.
+    // straight to the conversational pipeline. ASSISTANCE is the hint that
+    // tells /api/generate to skip its classifier and use the assistant path.
     if (aiMode === "support") {
-      await generate(prompt, file);
+      await generate(prompt, file, "ASSISTANCE");
       trackPostGeneration();
       return;
     }
@@ -714,7 +719,7 @@ function AppContent() {
       // diff is safer than reading state inside the callback).
       const entriesBeforeCount = imageEntries.length;
       await Promise.all([
-        generate(classification.postBrief || prompt, file),
+        generate(classification.postBrief || prompt, file, classification.postType),
         runImageGeneration(prompt, classification.imageBrief || prompt),
       ]);
       // Pair the newest AI message (post just streamed in) with the newest
@@ -743,7 +748,8 @@ function AppContent() {
     // intent === "post" OR "conversation" — both flow through the post
     // pipeline. "Conversation" is rendered as plain prose by the existing
     // ConversationalResponse component when no LinkedIn structure is detected.
-    await generate(classification.postBrief || prompt, file);
+    // Pass `postType` so /api/generate skips its internal classifier.
+    await generate(classification.postBrief || prompt, file, classification.postType);
     trackPostGeneration();
     if (user?.uid && isProPlan && planLimits.dualResponsesPerWeek > 0) {
       getDualModeUsageThisWeek(user.uid).then(setDualUsedThisWeek).catch(() => {});

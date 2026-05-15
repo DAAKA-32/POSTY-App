@@ -42,14 +42,16 @@ if (!exJson.idToken) { console.error("token exchange failed", exJson); process.e
 const ID_TOKEN = exJson.idToken;
 
 const cases = [
-  { prompt: "Fais une image sur l'entreprenariat", expectIntent: "image" },
-  { prompt: "Fais une image moderne sur l'IA", expectIntent: "image" },
-  { prompt: "Crée un visuel startup premium", expectIntent: "image" },
-  { prompt: "Fais un post LinkedIn sur le growth", expectIntent: "post" },
-  { prompt: "Écris un post sur ma transition de carrière", expectIntent: "post" },
-  { prompt: "Fais un post avec un visuel sur l'IA", expectIntent: "both" },
-  { prompt: "Tu connais le content marketing ?", expectIntent: "conversation" },
-  { prompt: "Comment améliorer mon hook ?", expectIntent: "conversation" },
+  { prompt: "Fais une image sur l'entreprenariat", expectIntent: "image", expectPostType: undefined },
+  { prompt: "Fais une image moderne sur l'IA", expectIntent: "image", expectPostType: undefined },
+  { prompt: "Crée un visuel startup premium", expectIntent: "image", expectPostType: undefined },
+  { prompt: "Fais un post LinkedIn sur le growth", expectIntent: "post", expectPostType: "PRODUCTION" },
+  { prompt: "Écris un post sur ma transition de carrière", expectIntent: "post", expectPostType: "PRODUCTION" },
+  { prompt: "Fais un post avec un visuel sur l'IA", expectIntent: "both", expectPostType: "PRODUCTION" },
+  { prompt: "Tu connais le content marketing ?", expectIntent: "conversation", expectPostType: "ASSISTANCE" },
+  { prompt: "Comment améliorer mon hook ?", expectIntent: "conversation", expectPostType: "ASSISTANCE" },
+  { prompt: "Salut", expectIntent: "conversation", expectPostType: "SOCIAL" },
+  { prompt: "Explique-moi le content marketing puis fais-moi un post dessus", expectIntent: "post", expectPostType: "HYBRID" },
 ];
 
 let pass = 0;
@@ -61,12 +63,14 @@ for (const c of cases) {
     body: JSON.stringify({ prompt: c.prompt, hasPriorConversation: false }),
   });
   const data = await res.json().catch(() => ({}));
-  const ok = res.ok && data.intent === c.expectIntent;
+  const intentOk = res.ok && data.intent === c.expectIntent;
+  const postTypeOk = data.postType === c.expectPostType;
+  const ok = intentOk && postTypeOk;
   const mark = ok ? "✓" : "✗";
   console.log(`  ${mark} "${c.prompt.slice(0, 50)}"`);
-  console.log(`     expected=${c.expectIntent}  got=${data.intent}  source=${data.source}  conf=${data.confidence}`);
-  if (data.imageBrief) console.log(`     imageBrief=${JSON.stringify(data.imageBrief)}`);
-  if (data.postBrief) console.log(`     postBrief=${JSON.stringify(data.postBrief)}`);
+  console.log(`     intent: expected=${c.expectIntent}  got=${data.intent}  ${intentOk ? "OK" : "FAIL"}`);
+  console.log(`     postType: expected=${c.expectPostType}  got=${data.postType}  ${postTypeOk ? "OK" : "FAIL"}`);
+  console.log(`     source=${data.source}  conf=${data.confidence}`);
   if (ok) pass++; else fail++;
 }
 

@@ -83,6 +83,11 @@ export async function POST(request: NextRequest) {
       fileAttachment,
       // AI mode: "linkedin" (post generation) or "general" (conversational Q&A)
       aiMode = "linkedin",
+      // Pre-classified intent from /api/intent — when set, the internal
+      // classifier below is skipped and we trust this value. Must match
+      // one of the existing IntentType literals (SOCIAL/ASSISTANCE/HYBRID/
+      // PRODUCTION); anything else is ignored as if absent.
+      intentHint,
     } = body;
 
     // Use authenticated uid (fallback to body userId in dev bypass mode)
@@ -541,12 +546,32 @@ export async function POST(request: NextRequest) {
             }
 
             // ========== INTENT CLASSIFICATION ==========
-            // Force PRODUCTION intent when URL content was extracted (user clearly wants a post from a link)
-            // In general mode: SOCIAL stays social, HYBRID/PRODUCTION → ASSISTANCE (Support mode never produces posts)
-            // In LinkedIn mode: full routing — SOCIAL / ASSISTANCE / HYBRID / PRODUCTION
+            // Force PRODUCTION intent when URL content was extracted (user
+            // clearly wants a post from a link). Otherwise, prefer the
+            // client-supplied `intentHint` (set by /api/intent at the page
+            // layer) and only fall back to the internal classifier when no
+            // hint was provided — keeps backward compat for legacy callers.
+            // In `general` mode (Support), we still narrow HYBRID/PRODUCTION
+            // down to ASSISTANCE because Support never produces real posts.
+            const validHints: ReadonlyArray<IntentType> = [
+              "SOCIAL",
+              "ASSISTANCE",
+              "HYBRID",
+              "PRODUCTION",
+            ] as const;
+            const hintedIntent: IntentType | undefined =
+              validHints.includes(intentHint as IntentType)
+                ? (intentHint as IntentType)
+                : undefined;
+
             let intent: IntentType;
             if (extractedUrlContent) {
               intent = "PRODUCTION";
+            } else if (hintedIntent) {
+              // Trust the page-layer classification — no second OpenAI call.
+              intent = aiMode === "general" && hintedIntent !== "SOCIAL"
+                ? "ASSISTANCE"
+                : hintedIntent;
             } else if (aiMode === "general") {
               const classified = await classifyIntent(
                 openaiService,
