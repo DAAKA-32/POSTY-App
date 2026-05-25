@@ -44,6 +44,20 @@
   }
 }
 
+/* MOBILE / TOUCH — horizontal overflow safety net.
+   The desktop block above only fires on `pointer: fine`, so mobile
+   devices were left without an overflow-x guard. When a child element
+   spills past the viewport (modal/banner/fixed picker), the page scrolls
+   horizontally and the layout looks "shifted to the side". This belt-and-
+   suspenders rule clamps the document body to the viewport width without
+   breaking the scroll-locked modal flow (those rules still win via their
+   own `overflow: hidden`). */
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
 /* Scroll lock - ONLY applied when explicitly needed (modals, sheets) */
 /* Using overflow:hidden WITHOUT position:fixed so that child elements
    (textareas, scrollable containers inside modals/sheets) can still scroll.
