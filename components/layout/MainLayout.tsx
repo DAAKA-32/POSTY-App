@@ -29,60 +29,13 @@ import FreeTrialPaywall from "@/components/subscription/FreeTrialPaywall";
 import UsageBanner from "@/components/ui/UsageBanner";
 import QuotaExceededModal from "@/components/ui/QuotaExceededModal";
 import HelpFloatingButton from "@/components/help/HelpFloatingButton";
+import MobileMaintenanceOverlay from "@/components/ui/MobileMaintenanceOverlay";
 import { useScrolledPast } from "@/hooks/scroll/useScrolledPast";
-
-// Premium animation easings - consistent across app
-const smoothEase = [0.25, 0.1, 0.25, 1] as const;
-
-// Sidebar animation variants
-const sidebarContainerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.04,
-      delayChildren: 0.02,
-    },
-  },
-};
-
-const sidebarItemVariants = {
-  hidden: { opacity: 0, x: -10 },
-  visible: {
-    opacity: 1,
-    x: 0,
-    transition: {
-      duration: 0.25,
-      ease: smoothEase,
-    },
-  },
-};
-
-const navItemVariants = {
-  hidden: { opacity: 0, x: -8 },
-  visible: (i: number) => ({
-    opacity: 1,
-    x: 0,
-    transition: {
-      duration: 0.25,
-      delay: 0.08 + i * 0.04,
-      ease: smoothEase,
-    },
-  }),
-};
-
-const conversationItemVariants = {
-  hidden: { opacity: 0, x: -8 },
-  visible: (i: number) => ({
-    opacity: 1,
-    x: 0,
-    transition: {
-      duration: 0.3,
-      delay: i * 0.03,
-      ease: smoothEase,
-    },
-  }),
-};
+import {
+  navItemVariants,
+  conversationItemVariants,
+  sidebarSmoothEase as smoothEase,
+} from "@/lib/motion";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -901,8 +854,12 @@ export default function MainLayout({
           )}
         </div>
 
-        {/* Scrollable conversations list (header + items scroll together) */}
-        <nav className="sidebar-scroll flex-1 overflow-y-auto overflow-x-hidden px-2">
+        {/* Scrollable conversations list (header + items scroll together).
+            `min-h-0` is critical for flex children to actually scroll instead
+            of pushing the sidebar past the viewport — without it, a long
+            conversation list would push the footer (profile menu) off-screen
+            on shorter viewports. */}
+        <nav className="sidebar-scroll flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-2">
           {!isCollapsed && localPosts.length > 0 && (
             <motion.div
               initial={{ opacity: 0 }}
@@ -1119,8 +1076,14 @@ export default function MainLayout({
         </div>
       </aside>
 
-      {/* Mobile Slide Menu */}
-      <div className="lg:hidden">
+      {/* Mobile Slide Menu — `display: contents` makes the wrapper invisible
+          to flex layout, so the (otherwise) static block doesn't claim a full
+          viewport of height inside the column-flex `.pwa-mobile .app-layout`,
+          which would push <main> entirely off-screen on mobile. The
+          SlideMenu's own backdrop + aside are `position: fixed` and render
+          at the viewport regardless — the wrapper just needs to disappear
+          from the flex flow. */}
+      <div className="contents lg:hidden">
         <SlideMenu isOpen={isSidebarOpen} onClose={closeSidebar} onOpen={openSidebar} posts={effectivePosts} onPostUpdate={onPostUpdate} />
       </div>
 
@@ -1261,6 +1224,11 @@ export default function MainLayout({
           familiar UI behind a blur but cannot interact with it. The user
           stays on /app: conversion happens in-context, not via redirect. */}
       <FreeTrialPaywall />
+
+      {/* Mobile maintenance blocker — fully opaque overlay shown only on
+          mobile (<lg). Blocks all navigation/interaction with the app below
+          while the mobile UI is being finalized. Desktop unaffected. */}
+      <MobileMaintenanceOverlay />
     </div>
   );
 }
