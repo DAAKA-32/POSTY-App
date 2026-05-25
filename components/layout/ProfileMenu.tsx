@@ -3,12 +3,18 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { PlanBadge } from "@/components/subscription/PlanInfoCard";
 import { PlanType, meetsMinimumPlan } from "@/lib/config/plans";
 import ProfileAvatar from "@/components/ui/ProfileAvatar";
+import {
+  menuContainerVariants,
+  menuRowVariants,
+  transition,
+} from "@/lib/motion";
 
 interface ProfileMenuProps {
   isCollapsed?: boolean;
@@ -19,8 +25,13 @@ const menuItems: {
   id: string;
   href: string;
   iconColor: string;
+  /** Hover surface tint — kept very low alpha so it reads as a glass wash,
+      not a colored chip — and lets the page-tone ambient still come through. */
   hoverBg: string;
   hoverText: string;
+  /** 2-px signature accent rail (left edge) on hover/focus. Matches the
+      item's identity color; same pattern as ConversationOptionsMenu. */
+  accentBar: string;
   icon: React.ReactNode;
   requiredPlan?: PlanType;
 }[] = [
@@ -28,8 +39,9 @@ const menuItems: {
     id: "dashboard",
     href: "/dashboard",
     iconColor: "text-emerald-500",
-    hoverBg: "hover:bg-emerald-500/10",
+    hoverBg: "hover:bg-emerald-500/[0.08] dark:hover:bg-emerald-500/[0.12]",
     hoverText: "hover:text-emerald-600 dark:hover:text-emerald-400",
+    accentBar: "bg-emerald-500",
     requiredPlan: "pro",
     icon: (
       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -46,8 +58,9 @@ const menuItems: {
     id: "profile",
     href: "/profile",
     iconColor: "text-cyan-500",
-    hoverBg: "hover:bg-cyan-500/10",
+    hoverBg: "hover:bg-cyan-500/[0.08] dark:hover:bg-cyan-500/[0.12]",
     hoverText: "hover:text-cyan-600 dark:hover:text-cyan-400",
+    accentBar: "bg-cyan-500",
     icon: (
       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -63,8 +76,9 @@ const menuItems: {
     id: "subscription",
     href: "/subscription",
     iconColor: "text-[#F8935D]",
-    hoverBg: "hover:bg-[#F8935D]/10",
+    hoverBg: "hover:bg-[#F8935D]/[0.10] dark:hover:bg-[#F8935D]/[0.14]",
     hoverText: "hover:text-[#F8935D]",
+    accentBar: "bg-[#F8935D]",
     icon: (
       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -80,8 +94,9 @@ const menuItems: {
     id: "settings",
     href: "/settings",
     iconColor: "text-violet-500",
-    hoverBg: "hover:bg-violet-500/10",
+    hoverBg: "hover:bg-violet-500/[0.08] dark:hover:bg-violet-500/[0.12]",
     hoverText: "hover:text-violet-600 dark:hover:text-violet-400",
+    accentBar: "bg-violet-500",
     icon: (
       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -192,28 +207,38 @@ export default function ProfileMenu({ isCollapsed = false, onNavigate }: Profile
 
   return (
     <div className="relative">
-      {/* Profile Button */}
-      <button
+      {/* Profile Button — fully transparent at all states (rest / hover /
+          open). No bg fill, no border, no shadow — so the sidebar's own
+          gradient ambient flows through unbroken. Feedback comes purely
+          from chevron rotation + tap scale. */}
+      <motion.button
         ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
+        whileTap={{ scale: 0.985 }}
+        transition={transition.springSettle}
         className={`
           flex items-center gap-3 p-2 rounded-lg w-full
-          hover:bg-gray-100 dark:hover:bg-dark-hover transition-all duration-200 group
+          bg-transparent transition-colors duration-200 group
           ${isCollapsed ? "justify-center" : ""}
-          ${isOpen ? "bg-gray-100 dark:bg-dark-hover" : ""}
         `}
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
-        <ProfileAvatar
-          size="sm"
-          className={`
-            !rounded-full
-            border border-gray-200 dark:border-dark-border
-            group-hover:border-primary/30 group-hover:scale-105 transition-all duration-200
-            ${isOpen ? "border-primary/30 scale-105" : ""}
-          `}
-        />
+        <motion.span
+          animate={{ scale: isOpen ? 1.06 : 1 }}
+          whileHover={{ scale: 1.06 }}
+          transition={transition.springSettle}
+          className="inline-flex"
+        >
+          <ProfileAvatar
+            size="sm"
+            className={`
+              !rounded-full
+              border transition-colors duration-200
+              ${isOpen ? "border-primary/30" : "border-gray-200 dark:border-dark-border group-hover:border-primary/30"}
+            `}
+          />
+        </motion.span>
         {!isCollapsed && (
           <>
             <div className="flex-1 min-w-0 text-left">
@@ -230,108 +255,140 @@ export default function ProfileMenu({ isCollapsed = false, onNavigate }: Profile
                 <p className="text-xs text-text-muted truncate">{user.email}</p>
               )}
             </div>
-            {/* Chevron indicator */}
+            {/* Chevron indicator — spring rotation, no abrupt flip. */}
             <div className="shrink-0 w-6 h-6 flex items-center justify-center">
-              <svg
-                className={`w-5 h-5 text-text-muted group-hover:text-text-primary transition-all duration-200 ${isOpen ? "rotate-180" : ""}`}
+              <motion.svg
+                animate={{ rotate: isOpen ? 180 : 0 }}
+                transition={transition.springSnappy}
+                className="w-5 h-5 text-text-muted group-hover:text-text-primary transition-colors duration-200"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
+              </motion.svg>
             </div>
           </>
         )}
-      </button>
+      </motion.button>
 
-      {/* Dropdown Menu */}
-      <div
-        ref={menuRef}
-        className={`
-          absolute z-50 w-56
-          ${isCollapsed ? "left-full ml-2 bottom-0" : "bottom-full left-0 mb-2"}
-          bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-xl
-          shadow-xl shadow-black/8 dark:shadow-black/20
-          transform transition-all duration-200 origin-bottom
-          ${isOpen
-            ? "opacity-100 scale-100 translate-y-0"
-            : "opacity-0 scale-95 translate-y-2 pointer-events-none"
-          }
-        `}
-        role="menu"
-        aria-orientation="vertical"
-      >
-        {/* User info header */}
-        <div className="px-4 py-3 border-b border-gray-100 dark:border-dark-border">
-          <p className="text-sm font-semibold text-text-primary truncate notranslate" translate="no">
-            {userProfile?.displayName || t.ui.userProfile}
-          </p>
-          <p className="text-xs text-text-muted truncate notranslate" translate="no">{user.email}</p>
-        </div>
+      {/* Dropdown Menu — glass surface via shared .posty-glass-panel token,
+          staggered children via motion tokens. Identical chrome to
+          ConversationOptionsMenu so every floating surface in Posty reads as
+          one continuous design language. */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            ref={menuRef}
+            variants={menuContainerVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            style={{
+              transformOrigin: isCollapsed ? "left bottom" : "bottom left",
+              willChange: "transform, opacity",
+            }}
+            className={`
+              posty-glass-panel
+              absolute z-50 w-56 overflow-hidden rounded-xl
+              ${isCollapsed ? "left-full ml-2 bottom-0" : "bottom-full left-0 mb-2"}
+            `}
+            role="menu"
+            aria-orientation="vertical"
+          >
+            <span aria-hidden="true" className="posty-glass-sheen" />
+            <span aria-hidden="true" className="posty-glass-wash rounded-xl" />
 
-        {/* Menu items */}
-        <div className="p-1.5">
-          {menuItems.map((item) => {
-            const isLocked = item.requiredPlan && !meetsMinimumPlan(currentPlan as PlanType, item.requiredPlan);
+            {/* User info header — soft inner divider, not a hard border. */}
+            <motion.div
+              variants={menuRowVariants}
+              className="px-4 py-3 border-b border-white/40 dark:border-white/10"
+            >
+              <p className="text-sm font-semibold text-text-primary truncate notranslate" translate="no">
+                {userProfile?.displayName || t.ui.userProfile}
+              </p>
+              <p className="text-xs text-text-muted truncate notranslate" translate="no">{user.email}</p>
+            </motion.div>
 
-            return (
-              <Link
-                key={item.id}
-                href={isLocked ? "/subscription" : item.id === "settings" ? `/settings?from=${encodeURIComponent(pathname)}` : item.href}
-                onClick={handleItemClick}
-                className={`
-                  flex items-center gap-3 px-3 py-2.5 rounded-lg
-                  text-sm transition-all duration-200 group/item
-                  ${isLocked
-                    ? "text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-dark-hover"
-                    : `text-gray-900 dark:text-gray-200 hover:translate-x-0.5 active:scale-[0.98] ${item.hoverBg} ${item.hoverText}`
-                  }
-                `}
-                role="menuitem"
-              >
-                {/* Colored icon */}
-                <span
-                  className={`
-                    transition-all duration-200
-                    ${isLocked ? "text-gray-400 dark:text-gray-500" : item.iconColor}
-                    group-hover/item:scale-110
-                  `}
-                >
-                  {item.icon}
-                </span>
-                <span className="font-medium transition-colors duration-200 flex-1">{menuItemNames[item.id]}</span>
-                {/* PRO badge for locked items */}
-                {isLocked && (
-                  <span className="px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide bg-gradient-to-r from-primary/15 to-accent/15 text-primary border border-primary/20 rounded">
-                    PRO
-                  </span>
-                )}
-              </Link>
-            );
-          })}
-        </div>
+            {/* Menu items */}
+            <div className="p-1.5">
+              {menuItems.map((item) => {
+                const isLocked = item.requiredPlan && !meetsMinimumPlan(currentPlan as PlanType, item.requiredPlan);
 
-        {/* Arrow indicator for collapsed mode */}
-        {isCollapsed && (
-          <div className="absolute -left-1.5 bottom-4 w-3 h-3 bg-white dark:bg-dark-card border-l border-b border-gray-200 dark:border-dark-border rotate-45" />
+                return (
+                  <motion.div key={item.id} variants={menuRowVariants}>
+                    <Link
+                      href={isLocked ? "/subscription" : item.id === "settings" ? `/settings?from=${encodeURIComponent(pathname)}` : item.href}
+                      onClick={handleItemClick}
+                      className={`
+                        group/item relative
+                        flex items-center gap-3 px-3 py-2.5 rounded-lg
+                        text-sm transition-colors duration-150
+                        ${isLocked
+                          ? "text-gray-400 dark:text-gray-500 hover:bg-white/40 dark:hover:bg-white/[0.06]"
+                          : `text-gray-900 dark:text-gray-200 ${item.hoverBg} ${item.hoverText}`
+                        }
+                      `}
+                      role="menuitem"
+                    >
+                      {/* Signature accent rail — 2px on the left edge, reveals
+                          on hover. Same pattern as ConversationOptionsMenu;
+                          color matches the item's identity. */}
+                      <span
+                        aria-hidden="true"
+                        className={`
+                          absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-5 rounded-r-full
+                          transition-opacity duration-150
+                          opacity-0 group-hover/item:opacity-70
+                          ${isLocked ? "bg-gray-400 dark:bg-gray-500" : item.accentBar}
+                        `}
+                      />
+                      {/* Colored icon */}
+                      <span
+                        className={`
+                          transition-colors duration-150
+                          ${isLocked ? "text-gray-400 dark:text-gray-500" : item.iconColor}
+                        `}
+                      >
+                        {item.icon}
+                      </span>
+                      <span className="font-medium transition-colors duration-150 flex-1">{menuItemNames[item.id]}</span>
+                      {/* PRO badge for locked items */}
+                      {isLocked && (
+                        <span className="px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide bg-gradient-to-r from-primary/15 to-accent/15 text-primary border border-primary/20 rounded">
+                          PRO
+                        </span>
+                      )}
+                    </Link>
+                  </motion.div>
+                );
+              })}
+            </div>
+
+            {/* Arrow indicator for collapsed mode — same glass surface as the
+                panel so the seam reads as one continuous piece of glass. */}
+            {isCollapsed && (
+              <div className="posty-glass-panel absolute -left-1.5 bottom-4 w-3 h-3 rotate-45" />
+            )}
+          </motion.div>
         )}
-      </div>
+      </AnimatePresence>
 
-      {/* Tooltip for collapsed mode (only when menu is closed) */}
+      {/* Tooltip for collapsed mode (only when menu is closed) — shares the
+          same glass token; lighter blur (sized via its own class) keeps it
+          feeling secondary. */}
       {isCollapsed && !isOpen && (
         <div className="
-          absolute left-full ml-2 bottom-0
-          px-3 py-2 bg-white dark:bg-dark-elevated border border-gray-200 dark:border-dark-border rounded-lg
-          text-sm whitespace-nowrap
+          posty-glass-panel
+          absolute left-full ml-2 bottom-0 rounded-lg
+          px-3 py-2 text-sm whitespace-nowrap
           opacity-0 invisible group-hover:opacity-100 group-hover:visible
-          transition-all duration-200 z-40
-          shadow-lg
+          transition-opacity duration-200 z-40
           pointer-events-none
         ">
           <p className="font-semibold text-gray-900 dark:text-text-primary notranslate" translate="no">{userProfile?.displayName || t.ui.userProfile}</p>
           <p className="text-xs text-gray-500 dark:text-text-muted notranslate" translate="no">{user.email}</p>
-          <div className="absolute -left-1 bottom-3 w-2 h-2 bg-white dark:bg-dark-elevated border-l border-b border-gray-200 dark:border-dark-border rotate-45" />
+          <div className="posty-glass-panel absolute -left-1 bottom-3 w-2 h-2 rotate-45" />
         </div>
       )}
     </div>

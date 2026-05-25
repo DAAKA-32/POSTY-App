@@ -36,7 +36,7 @@ export default function MaxModeSelector({
 
   return (
     <div
-      className={`inline-flex items-center gap-0.5 p-1 rounded-xl bg-gray-100 dark:bg-dark-elevated border border-border-primary ${className}`}
+      className={`inline-flex items-center gap-0.5 p-1 rounded-xl bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border shadow-sm dark:shadow-black/20 ${className}`}
     >
       {MODE_ORDER.map((modeId) => {
         const Icon = MODE_ICONS[modeId];

@@ -2,8 +2,9 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { normalizeHashtagsInText } from "@/lib/hashtags/normalize";
 
 interface LinkedInPreviewProps {
   content: string;
@@ -41,9 +42,14 @@ export default function LinkedInPreview({
   const LINKEDIN_MAX_CHARS = 3000;
   const LINKEDIN_TRUNCATE_AT = 210; // LinkedIn truncates at ~210 chars before "...voir plus"
 
+  // Defense-in-depth: normalize hashtag casing once at render time. Server-side
+  // normalization runs on generation/adaptation, but historical posts loaded
+  // from Firestore may still contain pre-normalization #POSTY / #PascalCase.
+  const displaySource = useMemo(() => normalizeHashtagsInText(content || ""), [content]);
+
   useEffect(() => {
-    setCharCount(content.length);
-  }, [content]);
+    setCharCount(displaySource.length);
+  }, [displaySource]);
 
   // Format content for LinkedIn display (handle line breaks, hashtags, etc.)
   const formatContent = (text: string) => {
@@ -82,11 +88,11 @@ export default function LinkedInPreview({
     });
   };
 
-  // Truncate content for preview
-  const shouldTruncate = content.length > LINKEDIN_TRUNCATE_AT && !showFullContent;
+  // Truncate content for preview (uses normalized source)
+  const shouldTruncate = displaySource.length > LINKEDIN_TRUNCATE_AT && !showFullContent;
   const displayContent = shouldTruncate
-    ? content.slice(0, LINKEDIN_TRUNCATE_AT) + "..."
-    : content;
+    ? displaySource.slice(0, LINKEDIN_TRUNCATE_AT) + "..."
+    : displaySource;
 
   // Character count color
   const getCharCountColor = () => {
@@ -200,7 +206,7 @@ export default function LinkedInPreview({
                     ...{t.ui.expand}
                   </button>
                 )}
-                {showFullContent && content.length > LINKEDIN_TRUNCATE_AT && (
+                {showFullContent && displaySource.length > LINKEDIN_TRUNCATE_AT && (
                   <button
                     onClick={() => setShowFullContent(false)}
                     className="text-gray-500 hover:text-[#0A66C2] hover:underline text-sm block mt-1"

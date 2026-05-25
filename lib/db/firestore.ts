@@ -208,6 +208,9 @@ export async function updateUserProfile(
   if (data.helpReadPages !== undefined) {
     updateData.helpReadPages = data.helpReadPages;
   }
+  if (data.hasSeenAppTour !== undefined) {
+    updateData.hasSeenAppTour = data.hasSeenAppTour;
+  }
 
   await updateDoc(userRef, updateData);
 }
@@ -358,6 +361,112 @@ export async function appendGeneratedImage(
     generatedImages: arrayUnion(image),
     updatedAt: serverTimestamp(),
   });
+}
+
+/**
+ * Patch a generated-image record with the chat-message id it pairs with.
+ * Used when the message id isn't known at image-write time (e.g. inline
+ * "both" intent: post and image run in parallel, so the new AI message id
+ * only exists after `generate()` resolves). Persisting the link lets the
+ * conversation re-hydrate the embedded image on reload — without it, the
+ * image falls through to standalone full-width rendering and the publish
+ * flow loses the attachment.
+ *
+ * Idempotent: if the record already carries the same messageId we skip the
+ * write. Returns true on a successful update, false when no matching record
+ * was found.
+ */
+export async function setGeneratedImageMessageId(
+  postId: string,
+  imageRecordId: string,
+  messageId: string
+): Promise<boolean> {
+  const postRef = doc(db, "posts", postId);
+  const snap = await getDoc(postRef);
+  if (!snap.exists()) return false;
+  const data = snap.data() as Post;
+  const arr = data.generatedImages ?? [];
+  let mutated = false;
+  const next = arr.map((entry) => {
+    if (entry.id !== imageRecordId) return entry;
+    if (entry.messageId === messageId) return entry;
+    mutated = true;
+    return { ...entry, messageId };
+  });
+  if (!mutated) return false;
+  await updateDoc(postRef, {
+    generatedImages: next,
+    updatedAt: serverTimestamp(),
+  });
+  return true;
+}
+
+/**
+ * Persist which variants of a multi-variant image the user picked for
+ * publishing. Multi-select aware — accepts an ordered array of indices so
+ * the publish flow can ship 0..N visuals per post (LinkedIn allows up to 9).
+ *
+ * Firestore can't update a single field inside an array element directly —
+ * we read-modify-write the whole `generatedImages` array. The cost is
+ * acceptable here: arrays cap at a few dozen entries per post, and the user
+ * only triggers this on actual selection changes.
+ *
+ * Also keeps the deprecated `selectedVariantIndex` mirror in sync (= first
+ * picked index) so older client code reading the legacy field still shows a
+ * coherent default selection.
+ *
+ * Returns true when a matching record was found and updated, false when the
+ * imageId wasn't present (caller should keep the in-memory selection but
+ * skip the persist).
+ */
+export async function setGeneratedImageVariantSelections(
+  postId: string,
+  imageRecordId: string,
+  selectedVariantIndices: number[]
+): Promise<boolean> {
+  const postRef = doc(db, "posts", postId);
+  const snap = await getDoc(postRef);
+  if (!snap.exists()) return false;
+  const data = snap.data() as Post;
+  const arr = data.generatedImages ?? [];
+  let mutated = false;
+  // De-dupe + clamp negative values; the UI never sends them but defensive
+  // here so a Firestore write stays well-formed even on a buggy caller.
+  const cleaned = Array.from(new Set(selectedVariantIndices.filter((i) => i >= 0)));
+  const next = arr.map((entry) => {
+    if (entry.id !== imageRecordId) return entry;
+    const prev = entry.selectedVariantIndices ?? [];
+    const isSame =
+      prev.length === cleaned.length &&
+      prev.every((v, i) => v === cleaned[i]);
+    if (isSame) return entry;
+    mutated = true;
+    return {
+      ...entry,
+      selectedVariantIndices: cleaned,
+      // Keep legacy single-index field aligned with the first pick (or 0
+      // when the user deselected everything) so old readers stay coherent.
+      selectedVariantIndex: cleaned[0] ?? 0,
+    };
+  });
+  if (!mutated) return false;
+  await updateDoc(postRef, {
+    generatedImages: next,
+    updatedAt: serverTimestamp(),
+  });
+  return true;
+}
+
+/**
+ * @deprecated Single-select wrapper kept as a thin alias for legacy call-sites.
+ * New code should use `setGeneratedImageVariantSelections` with `[index]`.
+ */
+export async function setGeneratedImageVariantSelection(
+  postId: string,
+  imageRecordId: string,
+  selectedVariantIndex: number
+): Promise<boolean> {
+  return setGeneratedImageVariantSelections(postId, imageRecordId, [selectedVariantIndex]);
 }
 
 // Save post analysis (PRO+ feature)
@@ -2230,6 +2339,25 @@ export async function createScheduledPost(
   // Add images array if provided
   if (images && images.length > 0) {
     postData.images = images;
+  }
+
+  // LinkedIn visibility — parity with direct flow. Only persisted for LinkedIn
+  // and only when explicitly set; the Cloud Function defaults to PUBLIC when
+  // the field is absent (preserves legacy rows).
+  if (data.platform === "linkedin" && (data.visibility === "PUBLIC" || data.visibility === "CONNECTIONS")) {
+    postData.visibility = data.visibility;
+  }
+
+  // LinkedIn Company Page URN — parity with direct flow. Stored verbatim;
+  // the Cloud Function re-validates against `linkedinConnections.organizations`
+  // at publish time so a stale doc cannot publish to a page the user has
+  // since lost admin access to.
+  if (
+    data.platform === "linkedin" &&
+    typeof data.organizationUrn === "string" &&
+    data.organizationUrn.startsWith("urn:li:organization:")
+  ) {
+    postData.organizationUrn = data.organizationUrn;
   }
 
   // Optional seed comment (algo-boost first reply) — only persisted if the

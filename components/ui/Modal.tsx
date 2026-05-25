@@ -8,6 +8,12 @@ import { useScrollLock } from "@/hooks/ui/useScrollLock";
 import Button from "./Button";
 import { useLanguage } from "@/contexts/LanguageContext";
 
+/** Posty signature accent applied as a 1-px gradient bar across the modal's
+ *  top edge. Each value maps to one of the onboarding-carousel gradients so
+ *  the modal subtly inherits the emotional tone of its context (writing →
+ *  `posts`, scheduling → `schedule`, etc.). `none` disables the bar. */
+export type ModalAccent = "welcome" | "posts" | "visuals" | "schedule" | "optimize" | "none";
+
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -24,7 +30,18 @@ interface ModalProps {
    * edge (no gap from body padding, rounded corners follow the modal).
    */
   footer?: ReactNode;
+  /** Signature accent bar at the top edge. Defaults to `welcome` (brand). */
+  accent?: ModalAccent;
 }
+
+const accentClassMap: Record<ModalAccent, string> = {
+  welcome: "bg-signature-welcome",
+  posts: "bg-signature-posts",
+  visuals: "bg-signature-visuals",
+  schedule: "bg-signature-schedule",
+  optimize: "bg-signature-optimize",
+  none: "",
+};
 
 // Spring animation config for smooth, natural feel
 const springConfig = {
@@ -70,6 +87,7 @@ export default function Modal({
   scrollable = true,
   description,
   footer,
+  accent = "welcome",
 }: ModalProps) {
   const { t } = useLanguage();
   const scrollPosRef = useRef(0);
@@ -174,6 +192,16 @@ export default function Modal({
               <span id={descriptionId} className="sr-only">
                 {description}
               </span>
+            )}
+
+            {/* Signature accent bar — 1-px gradient stripe at the top edge.
+                Uses the Posty signature gradients to give the modal a
+                contextual emotional tint (caller picks via `accent` prop). */}
+            {accent !== "none" && (
+              <span
+                aria-hidden="true"
+                className={`absolute top-0 left-0 right-0 h-[2px] ${accentClassMap[accent]} pointer-events-none`}
+              />
             )}
 
             {/* Header */}

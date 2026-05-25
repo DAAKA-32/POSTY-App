@@ -25,6 +25,38 @@ const THREADS_API_URL = functions.config().threads?.api_url || "https://graph.th
 const MAX_ATTEMPTS = 3;
 
 // ============================================================
+// Algorithm-friendly publishing knobs
+// ============================================================
+
+/**
+ * Consistent User-Agent for every LinkedIn API call from this Cloud Function.
+ * Goals:
+ *  1. Stop sending the raw Node/undici default UA which screams "datacenter bot"
+ *  2. Identify Posty as a registered LinkedIn integration (we have an OAuth app)
+ *  3. Match a stable, app-identifying string LinkedIn can recognize across calls
+ * We deliberately do NOT impersonate a browser — LinkedIn's REST API is meant
+ * for server clients, and a Chrome UA on /v2/ugcPosts from a datacenter IP is
+ * MORE suspicious than an honest app UA, not less.
+ */
+const POSTY_LINKEDIN_UA = "Posty/1.0 (+https://posty.app; scheduled-publisher)";
+
+/** Shared headers for every authenticated LinkedIn JSON call. */
+function linkedInJsonHeaders(accessToken: string): Record<string, string> {
+  return {
+    Authorization: `Bearer ${accessToken}`,
+    "Content-Type": "application/json",
+    "X-Restli-Protocol-Version": "2.0.0",
+    "User-Agent": POSTY_LINKEDIN_UA,
+    Accept: "application/json",
+  };
+}
+
+/** Sleep helper for intra-batch spreading. */
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// ============================================================
 // Types
 // ============================================================
 
@@ -105,10 +137,12 @@ async function getLinkedInProfile(accessToken: string): Promise<LinkedInProfile>
 async function postToLinkedIn(
   accessToken: string,
   linkedInId: string,
-  content: string
+  content: string,
+  visibility: "PUBLIC" | "CONNECTIONS" = "PUBLIC",
+  authorUrnOverride?: string
 ): Promise<{ success: boolean; id?: string; postUrl?: string; error?: string }> {
   const requestBody = {
-    author: `urn:li:person:${linkedInId}`,
+    author: authorUrnOverride || `urn:li:person:${linkedInId}`,
     lifecycleState: "PUBLISHED",
     specificContent: {
       "com.linkedin.ugc.ShareContent": {
@@ -117,17 +151,13 @@ async function postToLinkedIn(
       },
     },
     visibility: {
-      "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC",
+      "com.linkedin.ugc.MemberNetworkVisibility": visibility,
     },
   };
 
   const response = await fetch(`${LINKEDIN_CONFIG.apiBaseUrl}/ugcPosts`, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-      "X-Restli-Protocol-Version": "2.0.0",
-    },
+    headers: linkedInJsonHeaders(accessToken),
     body: JSON.stringify(requestBody),
   });
 
@@ -160,9 +190,11 @@ async function postToLinkedInWithImages(
   accessToken: string,
   linkedInId: string,
   content: string,
-  images: ScheduledPostImage[]
+  images: ScheduledPostImage[],
+  visibility: "PUBLIC" | "CONNECTIONS" = "PUBLIC",
+  authorUrnOverride?: string
 ): Promise<{ success: boolean; id?: string; postUrl?: string; error?: string }> {
-  const personUrn = `urn:li:person:${linkedInId}`;
+  const personUrn = authorUrnOverride || `urn:li:person:${linkedInId}`;
   const mediaAssets: string[] = [];
 
   console.log(`[LinkedIn+Images] Starting upload for ${images.length} image(s), linkedInId=${linkedInId}`);
@@ -179,6 +211,8 @@ async function postToLinkedInWithImages(
         headers: {
           Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
+          "User-Agent": POSTY_LINKEDIN_UA,
+          Accept: "application/json",
         },
         body: JSON.stringify({
           registerUploadRequest: {
@@ -240,6 +274,7 @@ async function postToLinkedInWithImages(
         Authorization: `Bearer ${accessToken}`,
         "Content-Type": image.contentType,
         "Content-Length": String(imageBuffer.length),
+        "User-Agent": POSTY_LINKEDIN_UA,
       },
       body: uploadBody,
     });
@@ -271,17 +306,13 @@ async function postToLinkedInWithImages(
       },
     },
     visibility: {
-      "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC",
+      "com.linkedin.ugc.MemberNetworkVisibility": visibility,
     },
   };
 
   const shareRes = await fetch("https://api.linkedin.com/v2/ugcPosts", {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-      "X-Restli-Protocol-Version": "2.0.0",
-    },
+    headers: linkedInJsonHeaders(accessToken),
     body: JSON.stringify(shareBody),
   });
 
@@ -300,13 +331,44 @@ async function postToLinkedInWithImages(
 }
 
 // ============================================================
+// Self-warmup helper — simulates author-side session activity right after
+// a scheduled publish, to compensate for the fact that the author is not
+// physically on LinkedIn at the moment a scheduled post goes live.
+// Both calls are GETs (read-only, idempotent, no audit trail visible to
+// the author or anyone else) and are issued with the user's own token.
+// ============================================================
+
+async function runSelfWarmupPings(accessToken: string, shareId: string): Promise<void> {
+  const baseHeaders = {
+    Authorization: `Bearer ${accessToken}`,
+    "User-Agent": POSTY_LINKEDIN_UA,
+    Accept: "application/json",
+  } as const;
+
+  // Tiny natural delay before the warmup — humans never refresh in the same
+  // millisecond they hit "post". 1.5-4s is a realistic "see-it-published" lag.
+  await sleep(1500 + Math.floor(Math.random() * 2500));
+
+  // 1) /v2/me — cheapest authenticated GET, ubiquitous signal of an active
+  //    LinkedIn session. Anyone browsing the LinkedIn web app hits this often.
+  await fetch(`${LINKEDIN_CONFIG.apiBaseUrl}/me`, { headers: baseHeaders }).catch(() => {});
+
+  // 2) GET the share itself — equivalent to the author re-opening their post.
+  //    LinkedIn requires URL-encoding the URN here.
+  const encoded = encodeURIComponent(shareId);
+  await fetch(`${LINKEDIN_CONFIG.apiBaseUrl}/ugcPosts/${encoded}`, { headers: baseHeaders }).catch(() => {});
+}
+
+// ============================================================
 // Platform publish functions for scheduled posts
 // ============================================================
 
 async function publishToLinkedIn(
   userId: string,
   content: string,
-  images?: ScheduledPostImage[]
+  images?: ScheduledPostImage[],
+  visibility: "PUBLIC" | "CONNECTIONS" = "PUBLIC",
+  organizationUrn?: string
 ): Promise<PublishResult> {
   const connectionSnap = await db.collection("linkedinConnections").doc(userId).get();
   if (!connectionSnap.exists) {
@@ -320,33 +382,71 @@ async function publishToLinkedIn(
     return { success: false, error: "Token LinkedIn expiré. Reconnexion nécessaire." };
   }
 
+  // ── Resolve author (personal profile or Company Page) ─────────────────────
+  // Org membership is re-validated at publish time against the live
+  // connection doc — a stale `organizationUrn` stored on `scheduledPosts`
+  // cannot publish to a page the user has since lost admin access to.
+  const personUrn = `urn:li:person:${connection.linkedInId}`;
+  let authorUrn = personUrn;
+  let authorType: "person" | "organization" = "person";
+  let resolvedOrgName: string | undefined;
+  if (organizationUrn) {
+    const matchingOrg = (connection.organizations || []).find(
+      (o: { urn?: string; name?: string }) => o.urn === organizationUrn,
+    );
+    if (matchingOrg && typeof matchingOrg.urn === "string") {
+      authorUrn = matchingOrg.urn;
+      authorType = "organization";
+      resolvedOrgName = matchingOrg.name;
+    } else {
+      console.warn(
+        `[publishToLinkedIn] organizationUrn=${organizationUrn} not in connection.organizations for userId=${userId} — falling back to personal profile`,
+      );
+    }
+  }
+
   // Use image upload flow if images are present
   let result;
   if (images && images.length > 0) {
-    console.log(`[publishToLinkedIn] Attempting publish with ${images.length} image(s) for userId=${userId}`);
-    result = await postToLinkedInWithImages(connection.accessToken, connection.linkedInId, content, images);
+    console.log(`[publishToLinkedIn] Attempting publish with ${images.length} image(s) for userId=${userId} visibility=${visibility} authorType=${authorType}`);
+    result = await postToLinkedInWithImages(connection.accessToken, connection.linkedInId, content, images, visibility, authorUrn);
 
     // Fallback: if image upload failed, publish text-only so the post isn't lost
     if (!result.success) {
       console.warn(`[publishToLinkedIn] Image flow failed (${result.error}), falling back to text-only for userId=${userId}`);
-      result = await postToLinkedIn(connection.accessToken, connection.linkedInId, content);
+      result = await postToLinkedIn(connection.accessToken, connection.linkedInId, content, visibility, authorUrn);
       if (result.success) {
         console.log(`[publishToLinkedIn] Text-only fallback succeeded for userId=${userId}`);
       }
     }
   } else {
-    result = await postToLinkedIn(connection.accessToken, connection.linkedInId, content);
+    result = await postToLinkedIn(connection.accessToken, connection.linkedInId, content, visibility, authorUrn);
   }
 
   if (!result.success) {
     return { success: false, error: result.error };
   }
 
+  // ── Self-warmup pings (fire-and-forget) ─────────────────────────────────
+  // After a successful publish, immediately make two lightweight authenticated
+  // GETs using the SAME access token: /v2/me and the share URN itself.
+  // Rationale: when a user publishes directly from the app they're typically
+  // active on LinkedIn at that moment (their session pings /v2/me as they
+  // browse, and they often view their own post). Scheduled publishes have
+  // zero such signal — the author looks "absent" to the algorithm in the
+  // critical first seconds, which is widely believed to suppress reach.
+  // These two calls re-create that minimal "author present" footprint with
+  // negligible overhead and no risk of duplicate/visible action.
+  if (result.id) {
+    void runSelfWarmupPings(connection.accessToken, result.id).catch((err) => {
+      console.warn("[publishToLinkedIn] Self-warmup ping failed (non-blocking):", err);
+    });
+  }
+
   // Save to linkedinPosts collection.
-  // NOTE: scheduled posts currently always publish as the personal profile
-  // (`urn:li:person:*`) — there's no org target stored on scheduledPosts yet.
-  // Scheduled-post org-mode would need an `organizationUrn` field on the
-  // scheduledPosts doc and logic above to pick the author. Not wired yet.
+  // Org posts have metrics available via the LinkedIn API; personal posts
+  // do not. `syncStatus` reflects that asymmetry so the analytics worker
+  // knows which rows to attempt syncing against /organizationalEntity stats.
   try {
     await db.collection("linkedinPosts").add({
       userId,
@@ -356,10 +456,12 @@ async function publishToLinkedIn(
       postUrl: result.postUrl,
       success: true,
       publishedAt: admin.firestore.FieldValue.serverTimestamp(),
-      authorType: "person",
-      authorUrn: `urn:li:person:${connection.linkedInId}`,
+      authorType,
+      authorUrn,
+      organizationUrn: authorType === "organization" ? authorUrn : null,
+      organizationName: resolvedOrgName || null,
       status: "published",
-      syncStatus: "not_available", // personal profile posts have no API metrics
+      syncStatus: authorType === "organization" ? "pending" : "not_available",
       lastMetricsSyncAt: null,
     });
     await db.collection("linkedinConnections").doc(userId).update({
@@ -373,6 +475,9 @@ async function publishToLinkedIn(
     success: true,
     publishedUrl: result.postUrl,
     urn: result.id,
+    // For org posts, seed comments must still be authored by the human
+    // (Company Pages can't comment on their own posts via the API), so we
+    // intentionally pick the personal URN here regardless of author type.
     actorUrn: `urn:li:person:${connection.linkedInId}`,
   };
 }
@@ -397,11 +502,7 @@ async function postCommentOnLinkedIn(
     `${LINKEDIN_CONFIG.apiBaseUrl}/socialActions/${encoded}/comments`,
     {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-        "X-Restli-Protocol-Version": "2.0.0",
-      },
+      headers: linkedInJsonHeaders(accessToken),
       body: JSON.stringify({
         actor: actorUrn,
         object: parentUrn,
@@ -581,11 +682,13 @@ async function publishScheduledPost(
   platform: string,
   userId: string,
   content: string,
-  images?: ScheduledPostImage[]
+  images?: ScheduledPostImage[],
+  visibility: "PUBLIC" | "CONNECTIONS" = "PUBLIC",
+  organizationUrn?: string
 ): Promise<PublishResult> {
   switch (platform) {
     case "linkedin":
-      return publishToLinkedIn(userId, content, images);
+      return publishToLinkedIn(userId, content, images, visibility, organizationUrn);
     case "facebook":
       return publishToFacebook(userId, content);
     case "threads":
@@ -636,11 +739,44 @@ export const executeScheduledPosts = functions
     let failedCount = 0;
     let skippedCount = 0;
 
+    // ── Intra-batch spread plan ────────────────────────────────────────────
+    // When the cron fires at HH:MM:00 with N due posts, the previous code
+    // hammered LinkedIn with all of them in a near-simultaneous Promise.all.
+    // For LinkedIn's anti-spam pipeline that's a textbook "datacenter burst"
+    // signature. We pre-assign each post a per-doc start offset in the
+    // 0–45s window so they trickle out instead of arriving in lockstep,
+    // and the order is shuffled so two posts from the same user never go
+    // back-to-back if we can help it.
+    const docs = [...pendingSnapshot.docs].sort(() => Math.random() - 0.5);
+    const SPREAD_WINDOW_MS = 45_000;
+    const offsets = new Map<string, number>();
+    if (docs.length === 1) {
+      // Single post: tiny natural delay (1-6s) so we never publish at exactly HH:MM:00.000
+      offsets.set(docs[0].id, 1000 + Math.floor(Math.random() * 5000));
+    } else {
+      // Multiple posts: spread across the window with per-slot jitter so two
+      // posts never share the same start instant.
+      const slot = SPREAD_WINDOW_MS / docs.length;
+      docs.forEach((d, i) => {
+        const base = i * slot;
+        const jitter = Math.floor((Math.random() - 0.5) * slot * 0.8);
+        offsets.set(d.id, Math.max(0, Math.floor(base + jitter)));
+      });
+    }
+
     await Promise.allSettled(
-      pendingSnapshot.docs.map(async (doc) => {
+      docs.map(async (doc) => {
         const post = doc.data();
         const postRef = db.collection("scheduledPosts").doc(doc.id);
         const currentAttempts = (post.attemptCount || 0);
+        const offsetMs = offsets.get(doc.id) ?? 0;
+
+        // Wait our assigned slice of the window before doing anything user-
+        // visible on LinkedIn (we still log immediately so logs reflect order).
+        if (offsetMs > 0) {
+          console.log(`[Scheduler] Post ${doc.id} waiting ${offsetMs}ms before publish (spread)`);
+          await sleep(offsetMs);
+        }
 
         console.log(`[Scheduler] Processing post ${doc.id} | platform=${post.platform} | userId=${post.userId} | attempt=${currentAttempts + 1}/${MAX_ATTEMPTS} | scheduledAt=${post.scheduledAt?.toDate?.().toISOString()}`);
 
@@ -671,8 +807,21 @@ export const executeScheduledPosts = functions
               ? rawImages
               : undefined;
 
+          // Read user-chosen visibility — defaults to PUBLIC for legacy docs
+          // and for non-LinkedIn platforms (where the field is ignored).
+          const docVisibility: "PUBLIC" | "CONNECTIONS" =
+            post.visibility === "CONNECTIONS" ? "CONNECTIONS" : "PUBLIC";
+
+          // Optional org target. Re-validated in `publishToLinkedIn` against
+          // the live connection doc so a stale value cannot publish to a page
+          // the user has since lost admin access to.
+          const docOrgUrn: string | undefined =
+            typeof post.organizationUrn === "string" && post.organizationUrn.startsWith("urn:li:organization:")
+              ? post.organizationUrn
+              : undefined;
+
           // Debug: log image detection
-          console.log(`[Scheduler] Post ${doc.id} image detection: raw=${typeof rawImages} isArray=${Array.isArray(rawImages)} length=${Array.isArray(rawImages) ? rawImages.length : 'N/A'} hasImages=${!!postImages}`);
+          console.log(`[Scheduler] Post ${doc.id} image detection: raw=${typeof rawImages} isArray=${Array.isArray(rawImages)} length=${Array.isArray(rawImages) ? rawImages.length : 'N/A'} hasImages=${!!postImages} visibility=${docVisibility} orgUrn=${docOrgUrn || "(personal)"}`);
           if (postImages) {
             console.log(`[Scheduler] Post ${doc.id} images:`, JSON.stringify(postImages.map(img => ({
               storagePath: img.storagePath,
@@ -685,7 +834,9 @@ export const executeScheduledPosts = functions
             post.platform,
             post.userId,
             post.content,
-            postImages
+            postImages,
+            docVisibility,
+            docOrgUrn
           );
 
           if (result.success) {
@@ -713,8 +864,15 @@ export const executeScheduledPosts = functions
               result.actorUrn
             ) {
               try {
-                const baseDelayMin = Math.max(1, Math.min(15, Number(seed.delayMinutes) || 3));
-                const jitterMin = Math.random() * 3; // 0–3 min organic jitter
+                // Base delay defaults to 5min (was 3min) so the comment lands
+                // AFTER the post has accumulated initial impressions — landing
+                // a self-reply at +30s reads as "scripted" to LinkedIn's NLP.
+                // Range clamp 1-15min still respected.
+                const baseDelayMin = Math.max(1, Math.min(15, Number(seed.delayMinutes) || 5));
+                // Wider organic jitter (was 0-3 → now 0-4 min) so two posts
+                // with the same configured delay don't fire at near-identical
+                // offsets and create a detectable seed-comment cadence.
+                const jitterMin = Math.random() * 4;
                 const fireAtMs = Date.now() + (baseDelayMin + jitterMin) * 60_000;
                 await db.collection("pendingSeedComments").add({
                   userId: post.userId,
@@ -731,6 +889,14 @@ export const executeScheduledPosts = functions
                 console.log(
                   `[Scheduler] Enqueued seed comment for post ${doc.id} | fireAt=${new Date(fireAtMs).toISOString()} | autopost=${SEED_COMMENT_AUTOPOST_ENABLED}`,
                 );
+                // EXPLICIT warning when we enqueue but the autopost flag is
+                // off — this is the silent "scheduled posts have no algo
+                // boost" failure mode we want to make impossible to miss.
+                if (!SEED_COMMENT_AUTOPOST_ENABLED) {
+                  console.warn(
+                    `[Scheduler] ⚠️ Seed comment enqueued but SEED_COMMENT_AUTOPOST_ENABLED=false — algo-boost will NOT fire. Set with: firebase functions:config:set posty.seed_comment_autopost=true && firebase deploy --only functions`,
+                  );
+                }
               } catch (enqueueErr) {
                 console.warn(
                   `[Scheduler] Failed to enqueue seed comment for ${doc.id}:`,
@@ -1081,5 +1247,111 @@ export const syncLinkedInMetrics = functions
     } catch (error) {
       console.error("[metrics-sync] Fatal error:", error);
     }
+    return null;
+  });
+
+// ============================================================
+// AUTONOMOUS STRATEGIST — Phase 4
+// ------------------------------------------------------------
+// Runs daily at 08:00 Europe/Paris. For each user who has
+// `autonomousMode.enabled === true` AND `autonomousMode.dayOfWeek` matching
+// today, fires one HTTP POST to /api/strategist/auto-batch which:
+//   - generates a fresh draft batch via the shared `generateBatchPlan` core
+//   - sets `pendingAutoBatchId` on the user doc (UI banner picks it up)
+//   - bumps `autonomousMode.lastTriggeredAt` (dedup guard inside the endpoint)
+//
+// Why HTTP from the cron instead of importing the lib directly?
+//   The lib lives under Next.js (path aliases `@/lib/...`, depends on
+//   `lib/db/firebase-admin`). Pulling it into the Functions bundle would
+//   require building two TS configs in lock-step. One HTTP hop is the
+//   cheap, boring solution — and the endpoint is already isolated behind
+//   a CRON_SECRET so it's safe to expose.
+//
+// Required config:
+//   firebase functions:config:set posty.app_url="https://<your-app>"
+//   firebase functions:config:set posty.cron_secret="<long random string>"
+// ============================================================
+
+const APP_URL: string = functions.config().posty?.app_url || "";
+const CRON_SECRET: string = functions.config().posty?.cron_secret || "";
+
+export const weeklyAutonomousStrategist = functions
+  .runWith({ timeoutSeconds: 540, memory: "512MB" })
+  .pubsub.schedule("0 8 * * *") // every day at 08:00
+  .timeZone("Europe/Paris")
+  .onRun(async () => {
+    if (!APP_URL || !CRON_SECRET) {
+      console.error(
+        "[autonomous-strategist] Skipping run — posty.app_url and posty.cron_secret must be configured"
+      );
+      return null;
+    }
+
+    // dayOfWeek matches JavaScript Date semantics (0=Sun..6=Sat). We use the
+    // function's executing date in Europe/Paris (set by .timeZone above), so
+    // a Sunday-EU run won't misfire as Monday for Pacific-time servers.
+    const todayDow = new Date().getDay();
+    const startedAt = Date.now();
+
+    let snap;
+    try {
+      snap = await db
+        .collection("users")
+        .where("autonomousMode.enabled", "==", true)
+        .where("autonomousMode.dayOfWeek", "==", todayDow)
+        .limit(500) // generous cap; we don't have >500 max users yet
+        .get();
+    } catch (err) {
+      console.error("[autonomous-strategist] Firestore query failed (missing index?):", err);
+      return null;
+    }
+
+    if (snap.empty) {
+      console.log(`[autonomous-strategist] No opted-in users for dayOfWeek=${todayDow}`);
+      return null;
+    }
+
+    console.log(`[autonomous-strategist] Found ${snap.size} user(s) to trigger`);
+
+    let success = 0;
+    let skipped = 0;
+    let failed = 0;
+
+    for (const userDoc of snap.docs) {
+      const uid = userDoc.id;
+      // Inline plan check — saves a wasted HTTP hop for downgraded users.
+      const plan = userDoc.get("subscription.plan");
+      if (plan !== "max") {
+        skipped++;
+        continue;
+      }
+      try {
+        const res = await fetch(`${APP_URL}/api/strategist/auto-batch`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-cron-secret": CRON_SECRET,
+          },
+          body: JSON.stringify({ userId: uid }),
+        });
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          console.warn(`[autonomous-strategist] user=${uid} → HTTP ${res.status}: ${text.slice(0, 200)}`);
+          failed++;
+        } else {
+          success++;
+        }
+      } catch (err) {
+        console.error(`[autonomous-strategist] user=${uid} fetch failed:`, err);
+        failed++;
+      }
+      // Tiny spread (250ms) between calls so we don't fan-out 500 OpenAI
+      // requests in the same second. The endpoint itself is idempotent.
+      await new Promise((r) => setTimeout(r, 250));
+    }
+
+    console.log(
+      `[autonomous-strategist] Done in ${Date.now() - startedAt}ms: success=${success} skipped=${skipped} failed=${failed}`
+    );
     return null;
   });

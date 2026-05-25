@@ -28,6 +28,8 @@ import "./globals.css";
 // keeping this layout as a Server Component preserves SEO/metadata behavior.
 import {
   StrategistDrawer,
+  AutonomousBatchBanner,
+  WhatsNewModal,
   GlobalCommandPalette,
   CookieBanner,
   LegalUpdateNotification,
@@ -258,11 +260,43 @@ export default function RootLayout({
                       root.setAttribute('data-theme', 'light');
                     }
                   }
+
+                  // Page-tone signature gradient is applied directly as a
+                  // Tailwind utility on MainLayout's outer wrapper. No inline
+                  // style/script gradient logic needed — the SSR'd class is
+                  // already in the initial HTML.
                 } catch (e) {
                   document.documentElement.classList.add('light');
                   document.documentElement.style.colorScheme = 'light';
                   document.documentElement.setAttribute('data-theme', 'light');
                 }
+
+                // Scrollbar width detection — exposes --app-scrollbar-width on
+                // :root so the fixed chat-input backdrop can stop short of the
+                // scrollbar gutter and stop fading the scrollbar thumb at the
+                // bottom of the chat scroll container. Returns 0 on overlay-
+                // scrollbar platforms (touch, macOS default), which is exactly
+                // what we want — no gutter needed there.
+                function measureAppScrollbarWidth() {
+                  try {
+                    var probe = document.createElement('div');
+                    probe.setAttribute('aria-hidden', 'true');
+                    probe.style.cssText = 'position:absolute;top:-9999px;left:-9999px;width:50px;height:50px;overflow:scroll;visibility:hidden;pointer-events:none;';
+                    document.body.appendChild(probe);
+                    var w = probe.offsetWidth - probe.clientWidth;
+                    document.body.removeChild(probe);
+                    document.documentElement.style.setProperty('--app-scrollbar-width', w + 'px');
+                  } catch (err) { /* leave the CSS fallback (0px) in place */ }
+                }
+                if (document.readyState === 'loading') {
+                  document.addEventListener('DOMContentLoaded', measureAppScrollbarWidth, { once: true });
+                } else {
+                  measureAppScrollbarWidth();
+                }
+                // Re-measure on viewport changes (zoom, OS-level scrollbar
+                // preference toggles, dev-tools resize) so the gutter stays
+                // accurate without a page reload.
+                window.addEventListener('resize', measureAppScrollbarWidth, { passive: true });
               })();
             `,
           }}
@@ -338,15 +372,21 @@ export default function RootLayout({
                         </BlueskyProvider>
                       </ThreadsProvider>
                     </FacebookProvider>
+                    {/* Strategist drawer & autonomous banner MUST live inside
+                        LinkedInProvider — useStrategistEligibility calls
+                        useLinkedIn() to gate access on a connected LinkedIn
+                        account. Mounting them outside the provider crashes
+                        at runtime with "useLinkedIn must be used within a
+                        LinkedInProvider". */}
+                    <StrategistDrawer />
+                    <AutonomousBatchBanner />
+                    {/* Release notes popup — surfaces what's new for
+                        authenticated users once per RELEASE_KEY bump. */}
+                    <WhatsNewModal />
                   </LinkedInProvider>
                 </QuotaProvider>
                 <CookieBanner />
                 <LegalUpdateNotification />
-                {/* Inline Marketing Strategist drawer — mounted here so it
-                    has access to SubscriptionContext + LanguageContext.
-                    Open/close state is owned by StrategistDrawerProvider
-                    further up (in AppProvider) so any consumer can trigger it. */}
-                <StrategistDrawer />
               </LanguageProvider>
             </SubscriptionProvider>
             <PremiumToaster />

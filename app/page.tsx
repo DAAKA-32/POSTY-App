@@ -26,6 +26,7 @@ import BusinessOffer from "@/components/pricing/BusinessOffer";
 import { useScrollLock } from "@/hooks/ui/useScrollLock";
 import AnimatedMacBook from "@/components/landing/AnimatedMacBook";
 import AuroraBackground from "@/components/landing/AuroraBackground";
+import LandingAmbientCanvas from "@/components/landing/LandingAmbientCanvas";
 import { FaqJsonLd, postyFaqData } from "@/components/seo/JsonLd";
 
 /* Below-the-fold sections — each is a multi-hundred-line component that
@@ -763,7 +764,7 @@ function HeroSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.45, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
-              className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/80 backdrop-blur-md border border-gray-200/60 shadow-lg shadow-gray-200/30 mb-4 md:mb-5 lg:mb-8"
+              className="posty-landing-glass-chip inline-flex items-center gap-2.5 px-4 py-2 rounded-full mb-4 md:mb-5 lg:mb-8"
             >
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75" />
@@ -801,7 +802,7 @@ function HeroSection() {
               <span className="block mt-1 lg:mt-2 text-silver-premium">
                 {t.landing.heroTitleLine2}{" "}
                 <span className="relative inline-block">
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] via-[#F76B54] to-[#F8935D] bg-[length:200%_100%] animate-[gradient-x_3s_ease_infinite]">
+                  <span className="text-transparent bg-clip-text bg-signature-welcome bg-[length:200%_100%] animate-[gradient-x_3s_ease_infinite]">
                     {t.landing.heroTitleHighlight}
                   </span>
                   <motion.span
@@ -842,7 +843,7 @@ function HeroSection() {
               >
                 <Link
                   href="/signup"
-                  className="group relative inline-flex items-center justify-center gap-2.5 px-8 py-4 bg-gradient-to-r from-[#F8935D] to-[#F76B54] text-white text-base font-semibold rounded-2xl shadow-xl shadow-[#F8935D]/30 hover:shadow-2xl hover:shadow-[#F8935D]/40 transition-all duration-300 overflow-hidden"
+                  className="group relative inline-flex items-center justify-center gap-2.5 px-8 py-4 bg-signature-welcome bg-[length:200%_100%] animate-[gradient-x_6s_ease_infinite] text-white text-base font-semibold rounded-2xl shadow-xl shadow-[#F8935D]/30 hover:shadow-2xl hover:shadow-[#F8935D]/40 transition-all duration-300 overflow-hidden"
                 >
                   {/* Shine effect on hover */}
                   <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
@@ -856,7 +857,7 @@ function HeroSection() {
                 href="#demo"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="inline-flex items-center justify-center gap-2.5 px-8 py-4 bg-white/80 backdrop-blur-sm border-2 border-gray-200/80 text-gray-700 text-base font-semibold rounded-2xl hover:border-[#F8935D]/40 hover:bg-white hover:text-gray-900 hover:shadow-lg transition-all duration-300"
+                className="posty-landing-glass-chip inline-flex items-center justify-center gap-2.5 px-8 py-4 text-gray-700 text-base font-semibold rounded-2xl hover:border-[#F8935D]/40 hover:text-gray-900 hover:shadow-lg transition-[color,border-color,box-shadow] duration-300"
               >
                 <svg className="w-5 h-5 text-[#F8935D]" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M8 5v14l11-7z" />
@@ -1245,7 +1246,7 @@ function DemoSection() {
       <section
         ref={sectionRef}
         id="demo"
-        className="relative z-[2] min-h-[100dvh]"
+        className="relative z-[6] min-h-[100dvh]"
       >
         {/* Hero title — sticky: stays on screen while content scrolls over it, fades out via titleOpacity */}
         <motion.div ref={titleRef} style={{ opacity: titleOpacity }} className="sticky top-0 left-0 right-0 z-[1] pt-24 pb-6 md:pb-2 px-4 sm:px-6 lg:px-8">
@@ -2298,12 +2299,13 @@ function KeyBenefitsSection() {
 
   return (
     <section id="benefices" className="relative py-20 md:py-28 lg:py-32 overflow-hidden">
-      {/* Subtle background - premium warm gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-white via-[#FFFBF8] to-white" />
+      {/* Transparent — let the LandingAmbientCanvas wash (posts zone:
+          violet/coral) shine through. The white bento cards below still pop
+          because they own opaque white surfaces with rings/shadows. */}
 
-      {/* Subtle texture overlay */}
+      {/* Subtle texture overlay — kept for organic grain on top of ambient */}
       <div
-        className="absolute inset-0 opacity-[0.015]"
+        className="absolute inset-0 opacity-[0.015] pointer-events-none"
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
         }}
@@ -2838,9 +2840,10 @@ function TargetAudienceSection() {
         </div>
       ) : (
         <div className="relative max-w-[1084px] mx-auto">
-          {/* Edge fade — tighter than before (80px) for sharper attention */}
-          <div className="absolute left-0 top-0 bottom-0 w-12 sm:w-20 bg-gradient-to-r from-[#FEF3EE] to-transparent z-10 pointer-events-none" />
-          <div className="absolute right-0 top-0 bottom-0 w-12 sm:w-20 bg-gradient-to-l from-[#FEF3EE] to-transparent z-10 pointer-events-none" />
+          {/* Edge fade — tinted to the section wrapper so the marquee edges
+              dissolve into the ambient wash without producing a hard band. */}
+          <div className="absolute left-0 top-0 bottom-0 w-12 sm:w-20 bg-gradient-to-r from-[#FEF3EE]/85 via-[#FEF3EE]/55 to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-12 sm:w-20 bg-gradient-to-l from-[#FEF3EE]/85 via-[#FEF3EE]/55 to-transparent z-10 pointer-events-none" />
 
           <div className="overflow-hidden">
             <div
@@ -5438,41 +5441,52 @@ export default function LandingPage() {
       <FaqJsonLd questions={postyFaqData.en} />
       {/* Top-of-page scroll progress bar — premium Linear/Stripe touch */}
       <ScrollProgressBar />
-      {/* Aurora background — fixed full viewport, stars stay in place on scroll */}
+      {/* Aurora background — fixed full viewport, stars stay in place on scroll.
+          Anchors the hero with silver particles + warm orange orbs. */}
       <AuroraBackground />
+      {/* Landing ambient canvas — fixed full-viewport color wash that crossfades
+          through the 5 Posty signature gradients (welcome → posts → visuals →
+          schedule → optimize) as the user scrolls. Unifies the landing DA with
+          the per-route gradients used inside /app. Sits below cards/text but
+          above the AuroraBackground so each section feels its own color. */}
+      <LandingAmbientCanvas />
       <Navbar />
       <div key={currentLang} className="text-gray-900 relative">
         {/* Hero Demo Section — opening with descent animation */}
         <DemoSection />
 
-        {/* Opaque sections — z-[5] + bg to cover the fixed hero title.
+        {/* Sections below — semi-transparent warm wash (#FEF3EE @ 55%) so the
+            LandingAmbientCanvas color cycle bleeds through. White content cards
+            inside each section keep their own opaque surfaces, so legibility is
+            unchanged — the ambient only shows in section gutters and around card
+            edges, exactly like Linear / Arc / Vercel.
             The absolutely-positioned overlay fades the DemoSection's transparent
-            bottom into the #FEF3EE wash so the boundary reads as a wash, not a
-            line. */}
-        <div className="relative z-[5] bg-[#FEF3EE]">
+            bottom into the wash so the boundary reads as a gradient, not a line. */}
+        <div className="relative z-[5] bg-[#FEF3EE]/55 backdrop-blur-[2px]">
           <div
             aria-hidden
-            className="pointer-events-none absolute left-0 right-0 bottom-full h-40 md:h-56 bg-gradient-to-b from-transparent to-[#FEF3EE]"
+            className="pointer-events-none absolute left-0 right-0 bottom-full h-40 md:h-56 bg-gradient-to-b from-transparent to-[#FEF3EE]/55"
           />
           <FeaturesSection />
           <ValueBlock />
         </div>
 
-        {/* TargetAudience — opaque to prevent hero/demo content bleeding through */}
-        <div className="relative z-[5] bg-[#FEF3EE]">
+        {/* TargetAudience — visuals zone (fuchsia/rose) is at its peak here */}
+        <div className="relative z-[5] bg-[#FEF3EE]/50 backdrop-blur-[2px]">
           <TargetAudienceSection />
         </div>
 
-        {/* AI Copilot section — strategically placed AFTER target identification
-            and BEFORE social proof. The funnel arc is:
+        {/* AI Copilot section — visuals → schedule transition. The funnel arc is:
               hero → features → benefits → audience match → "but is it really
               different?" → COPILOT SANS/AVEC answers it → testimonials confirm
               → founder/ROI/pricing convert. */}
-        <div className="relative z-[5] bg-[#FEF3EE]">
+        <div className="relative z-[5] bg-[#FEF3EE]/50 backdrop-blur-[2px]">
           <CopilotSectionWrapper />
         </div>
 
-        <div className="relative z-[5] bg-[#FEF3EE]">
+        {/* Testimonials → Pricing — schedule (sky/violet) cross-fades into
+            optimize (emerald/orange) across this block */}
+        <div className="relative z-[5] bg-[#FEF3EE]/50 backdrop-blur-[2px]">
           <TestimonialsSection />
           <FounderSection />
           {/* ROI simulator — value-before-price anchor */}
@@ -5480,15 +5494,16 @@ export default function LandingPage() {
           <PricingSection />
         </div>
 
-        {/* FAQ — opaque on mobile (cleaner reading background, no star
-            particles drifting through the accordion text) but transparent on
-            desktop so the aurora atmosphere can still show through. */}
-        <div className="relative z-[5] bg-[#FEF3EE] md:bg-transparent">
+        {/* FAQ — slightly heavier wash on mobile (cleaner reading background, no
+            star particles drifting through the accordion text) but lighter on
+            desktop so the optimize-zone ambient still shows through. */}
+        <div className="relative z-[5] bg-[#FEF3EE]/70 md:bg-[#FEF3EE]/45 backdrop-blur-[2px]">
           <FaqSection />
         </div>
 
-        {/* Footer — opaque, no stars */}
-        <div className="relative z-[5] bg-[#FEF3EE]">
+        {/* Footer — heavier wash so legal copy stays crisp; ambient still
+            subtly visible at the seam. */}
+        <div className="relative z-[5] bg-[#FEF3EE]/85 backdrop-blur-[2px]">
           <Footer />
         </div>
       </div>

@@ -15,6 +15,36 @@ import { PlanType } from "@/lib/config/plans";
 import PostInsightsModal from "./PostInsightsModal";
 import { generatePostInsights } from "@/lib/services/generateInsights";
 
+/**
+ * Variant payload threaded from the page to the LinkedIn preview. The card
+ * doesn't own the entry — it just renders what the parent passes. Selection
+ * lives in the parent so the publish flow can pick the right URL without
+ * cross-component refs.
+ *
+ * Mirrors the standalone `<GeneratedImageVariants>` card so a user gets the
+ * SAME picker UX whether they typed "fais-moi des images" (standalone) or
+ * clicked "Ajouter des visuels" / hit the intent=both path (embedded).
+ */
+export interface AttachedVisual {
+  /** All rendered variants — usually 3 on Pro/Max. Keep ordered as the
+   *  server returned them so thumb positions stay stable across re-renders. */
+  variants: Array<{ url: string; imageId: string; alt?: string }>;
+  /** Indices of variants picked for publishing, in click order. Empty array
+   *  = "publish without any visual". Length 0..variants.length. The publish
+   *  flow forwards `selectedIndices.map(i => variants[i].url)` to LinkedIn. */
+  selectedIndices: number[];
+  /** Toggle a variant in/out of the selection. First click adds it at the
+   *  next publish position; click on an already-selected variant removes it. */
+  onToggle: (index: number) => void;
+  /** Optional — regenerate the whole set of variants in place. */
+  onRegenerate?: () => void;
+  /** True while a regenerate request is in flight (spinner overlay on hero). */
+  isRegenerating?: boolean;
+  /** False when the user has hit their daily image quota — hides the
+   *  regenerate icon since clicking would just fail with a toast. */
+  canRegenerate?: boolean;
+}
+
 // Static variant styles (outside component to avoid re-creation)
 const variantStyles = {
   storytelling: {
@@ -64,13 +94,37 @@ interface ModernResponseCardProps {
   /** Callback invoked when the user clicks "Regenerate" on the seed comment */
   onRegenerateSeedComment?: () => void;
   /**
-   * Visual paired with this post — rendered as a media attachment inside the
-   * preview card (mimicking a real LinkedIn post with an image). Set only
-   * when the same generation produced BOTH a post and a visual; image-only
-   * generations stay as standalone GeneratedImageCard cards. The publish
-   * flow uses `url` to upload the media to LinkedIn when the user opts in.
+   * Visual(s) paired with this post — rendered as a media attachment inside
+   * the preview card. Carries ALL generated variants + the user's multi-
+   * selection so the publish flow can ship 1..N visuals. The hero block
+   * adapts its layout to the count of picked variants (single hero / split
+   * pair / mosaic of three).
+   *
+   * The hero block is capped to `max-w-md mx-auto` so the embedded preview
+   * lands at ~448px wide — the exact rhythm as the standalone
+   * <GeneratedImageVariants> card. Both flows produce the same picker UX
+   * as a result.
    */
+  attachedVisual?: AttachedVisual | null;
+  /** @deprecated Pass `attachedVisual` instead. Kept as a thin alias so
+   *  legacy single-image call-sites (loaded from older Firestore records
+   *  without variants[]) still render. Maps to a 1-variant attachedVisual. */
   attachedImage?: { url: string; alt?: string } | null;
+  /**
+   * True when this post is part of an intent=both run and the paired visual
+   * is still rendering. We show a shimmer placeholder in the attached-image
+   * slot so the user sees that an image IS coming for this post, without
+   * having to scroll to a separate "generating visual" entry.
+   */
+  attachedImageLoading?: boolean;
+  /**
+   * Optional shortcut surfaced on the LAST post bubble when it has no visual
+   * attached yet. Lets the user fire the image pipeline against this post's
+   * text in one click — no need to retype "ajoute des visuels", no risk of
+   * the intent classifier hedging. Hidden when an image is already attached
+   * or currently rendering (would be redundant).
+   */
+  onAddVisual?: (postContent: string, variantCount: 1 | 2 | 3) => void;
 }
 
 interface MenuPosition {
@@ -101,8 +155,40 @@ export const ModernResponseCard = memo(function ModernResponseCard({
   isLastMessage = true,
   seedComment,
   onRegenerateSeedComment,
+  attachedVisual = null,
   attachedImage = null,
+  attachedImageLoading = false,
+  onAddVisual,
 }: ModernResponseCardProps) {
+  // Unify both prop shapes — `attachedVisual` is the new canonical payload,
+  // `attachedImage` is the legacy single-URL fallback. Downstream rendering
+  // only ever sees a normalized AttachedVisual (or null).
+  const effectiveVisual: AttachedVisual | null = attachedVisual
+    ? attachedVisual
+    : attachedImage
+      ? {
+          variants: [{ url: attachedImage.url, imageId: "legacy", alt: attachedImage.alt }],
+          selectedIndices: [0],
+          onToggle: () => {},
+        }
+      : null;
+  // Clamp to valid indices so a stale selection (e.g. after a regen that
+  // shrank the variants list) doesn't crash the hero grid.
+  const safeSelectedIndices = effectiveVisual
+    ? effectiveVisual.selectedIndices.filter(
+        (i) => i >= 0 && i < effectiveVisual.variants.length
+      )
+    : [];
+  const selectedVariants = effectiveVisual
+    ? safeSelectedIndices.map((i) => effectiveVisual.variants[i])
+    : [];
+  // When the user has deselected everything, fall back to variants[0] as the
+  // hero so the preview never collapses to an empty space. Publish still
+  // ships zero images (selectedIndices is empty).
+  const heroVariant = effectiveVisual
+    ? selectedVariants[0] ?? effectiveVisual.variants[0]
+    : null;
+  const hasMultipleVariants = (effectiveVisual?.variants.length ?? 0) > 1;
   const { trigger: triggerHaptic } = useHapticFeedback();
   const { canSchedulePosts } = useSubscription();
   const { userProfile } = useAuth();
@@ -540,40 +626,237 @@ export const ModernResponseCard = memo(function ModernResponseCard({
           </div>
         </div>
 
-        {/* Attached image — rendered as a LinkedIn-style media attachment
-            INSIDE the preview card. Full-width edge-to-edge, square 1:1 ratio
-            (matches Posty's 1080² output), no padding so it reads as a real
-            post media. Clicking opens the source in a new tab for inspection. */}
-        {attachedImage && !isStreaming && (
-          <motion.button
-            type="button"
-            onClick={() => window.open(attachedImage.url, "_blank", "noopener,noreferrer")}
+        {/* Visual-still-generating skeleton — capped to the same max-w-md
+            rhythm as the final hero so layout doesn't snap when the image
+            lands. A short shimmer band; the full hero reveals on resolve. */}
+        {!effectiveVisual && attachedImageLoading && (
+          <div className="px-4 pt-3 pb-1 border-t border-gray-100 dark:border-dark-border/30">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.25 }}
+              className="
+                relative max-w-md mx-auto w-full aspect-square overflow-hidden
+                rounded-xl
+                bg-gradient-to-br from-gray-100 to-gray-200
+                dark:from-dark-elevated dark:to-dark-border
+                border border-gray-200 dark:border-dark-border
+              "
+              aria-label="Visuel en cours de génération"
+            >
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 dark:via-white/10 to-transparent"
+                animate={{ x: ["-100%", "100%"] }}
+                transition={{ duration: 1.6, repeat: Infinity, ease: "linear" }}
+              />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-[11px] uppercase tracking-wider text-text-secondary/80 font-medium">
+                  Visuel en cours…
+                </span>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Attached visual(s) — LinkedIn-style media attachment, capped to
+            max-w-md (~448px) so it matches the standalone <GeneratedImageVariants>
+            card. The hero block is a layout that adapts to the count of
+            selected variants: 0 picks → fallback hero (greyscale CTA),
+            1 pick → square hero, 2 picks → 50/50 split, 3 picks → mosaic.
+            Below the hero we render a multi-select picker (when 2-3 variants
+            exist) with order badges and inline X-on-hover deselection. */}
+        {effectiveVisual && heroVariant && !isStreaming && (
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3, delay: 0.05 }}
             className="
-              notranslate
-              relative w-full aspect-square overflow-hidden
-              border-t border-gray-200 dark:border-dark-border
-              bg-gray-50 dark:bg-dark-elevated
-              group/img cursor-zoom-in
+              notranslate px-4 pt-3 pb-1
+              border-t border-gray-100 dark:border-dark-border/30
             "
-            aria-label="Voir le visuel généré en grand"
             translate="no"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={attachedImage.url}
-              alt={attachedImage.alt || "Visuel généré"}
-              className="
-                w-full h-full object-cover
-                transition-transform duration-500 ease-out
-                group-hover/img:scale-[1.02]
-              "
-              loading="lazy"
-              draggable={false}
-            />
-          </motion.button>
+            <div className="max-w-md mx-auto w-full">
+              {/* Hero block — adaptive layout based on selection count.
+                  Always square (1080² source) so the rhythm with the
+                  standalone card stays identical. */}
+              <div
+                className="
+                  relative w-full aspect-square overflow-hidden
+                  rounded-xl
+                  border border-gray-200 dark:border-dark-border
+                  bg-gray-50 dark:bg-dark-elevated
+                "
+                aria-label={
+                  selectedVariants.length === 0
+                    ? "Aucun visuel sélectionné"
+                    : `${selectedVariants.length} visuel${selectedVariants.length > 1 ? "s" : ""} sélectionné${selectedVariants.length > 1 ? "s" : ""}`
+                }
+              >
+                <AttachedHeroLayout
+                  selectedVariants={selectedVariants}
+                  heroVariant={heroVariant}
+                  selectedIndices={safeSelectedIndices}
+                  onToggle={effectiveVisual.onToggle}
+                />
+                {selectedVariants.length === 0 && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-900/40 backdrop-blur-[2px] pointer-events-none">
+                    <span className="text-[12px] uppercase tracking-wider font-semibold text-white/90">
+                      Aucun visuel — ce post sera publié seul
+                    </span>
+                  </div>
+                )}
+                {effectiveVisual.isRegenerating && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+                    <svg
+                      className="w-6 h-6 text-white animate-spin"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      strokeWidth={2}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  </div>
+                )}
+              </div>
+
+              {/* Variant picker — appears only when more than one variant
+                  was generated. Multi-select with numbered order badge in
+                  click order; click an already-selected variant to deselect. */}
+              {hasMultipleVariants && (
+                <div className="mt-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] uppercase tracking-wider text-text-secondary font-medium">
+                      Sélectionne 1 à {effectiveVisual.variants.length} visuels
+                    </span>
+                    {effectiveVisual.onRegenerate && effectiveVisual.canRegenerate !== false && (
+                      <button
+                        type="button"
+                        onClick={effectiveVisual.onRegenerate}
+                        disabled={effectiveVisual.isRegenerating}
+                        className="
+                          inline-flex items-center gap-1
+                          text-[11px] font-medium
+                          text-[#F8935D] hover:text-[#F76B54]
+                          disabled:opacity-40 disabled:cursor-not-allowed
+                          transition-colors
+                        "
+                        aria-label="Régénérer les variantes"
+                        title="Régénérer 3 nouvelles variantes"
+                      >
+                        <svg
+                          className={`w-3 h-3 ${effectiveVisual.isRegenerating ? "animate-spin" : ""}`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          strokeWidth={2}
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Régénérer
+                      </button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {effectiveVisual.variants.map((v, i) => {
+                      const order = safeSelectedIndices.indexOf(i);
+                      const isSelected = order >= 0;
+                      return (
+                        <button
+                          key={v.imageId + i}
+                          type="button"
+                          onClick={() => effectiveVisual.onToggle(i)}
+                          aria-pressed={isSelected}
+                          aria-label={
+                            isSelected
+                              ? `Variante ${i + 1} — sélectionnée en position ${order + 1}. Cliquer pour retirer.`
+                              : `Variante ${i + 1} — cliquer pour ajouter.`
+                          }
+                          className={`
+                            group/thumb relative aspect-square rounded-lg overflow-hidden
+                            border-2 transition-all duration-200
+                            ${
+                              isSelected
+                                ? "border-[#F8935D] ring-2 ring-[#F8935D]/30 shadow-[0_0_0_4px_rgba(248,147,93,0.10)]"
+                                : "border-transparent hover:border-gray-300 dark:hover:border-dark-border"
+                            }
+                          `}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={v.url}
+                            alt={`Variante ${i + 1}`}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                          {isSelected && (
+                            <div className="absolute inset-0 bg-[#F8935D]/10 pointer-events-none" />
+                          )}
+                          {isSelected && (
+                            <div
+                              className="
+                                absolute top-1.5 left-1.5
+                                bg-[#F8935D] text-white
+                                rounded-full w-6 h-6
+                                flex items-center justify-center
+                                text-[11px] font-bold
+                                shadow-sm
+                                pointer-events-none
+                              "
+                            >
+                              {order + 1}
+                            </div>
+                          )}
+                          {isSelected && (
+                            <span
+                              role="presentation"
+                              aria-hidden="true"
+                              className="
+                                absolute top-1.5 right-1.5
+                                w-5 h-5 rounded-full
+                                flex items-center justify-center
+                                bg-white/95 dark:bg-dark-card/95
+                                text-gray-700 dark:text-text-primary
+                                shadow-sm shadow-black/10
+                                opacity-0 group-hover/thumb:opacity-100
+                                transition-opacity duration-150
+                                pointer-events-none
+                              "
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="mt-2 text-[11px] text-text-secondary">
+                    {safeSelectedIndices.length === 0
+                      ? "Aucun visuel ne sera publié."
+                      : `${safeSelectedIndices.length} visuel${safeSelectedIndices.length > 1 ? "s" : ""} publié${safeSelectedIndices.length > 1 ? "s" : ""} avec ce post.`}
+                  </p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+
+        {/* "+ Visuel" — variant-count picker shown UNDER the post when:
+              - the stream has finished
+              - no visual is attached or rendering
+              - the parent passed onAddVisual (last AI bubble only)
+            User picks how many variants (1, 2, 3) to generate — one tap on
+            the number fires the pipeline directly. The cost is the same
+            (1 user credit) whatever the count, but rendering 3 takes ~50%
+            longer than 1, so we let the user trade speed vs. choice. */}
+        {onAddVisual && !effectiveVisual && !attachedImageLoading && !isStreaming && content && (
+          <AddVisualPicker onPick={(count) => {
+            triggerHaptic?.();
+            onAddVisual(content, count);
+          }} />
         )}
 
         {/* Seed comment — minimalist inline block under the post.
@@ -811,5 +1094,216 @@ export const ModernResponseCard = memo(function ModernResponseCard({
     </div>
   );
 });
+
+/**
+ * Renders the hero block above the variant picker. Layout adapts to how many
+ * variants the user picked: 1 = single square, 2 = vertical split (50/50),
+ * 3 = mosaic (one tall left + two stacked right). Each cell carries an
+ * always-on X to deselect — gives the user the same one-click removal the
+ * publish modal already exposes, but inline in the conversation.
+ *
+ * When no variants are selected, falls back to the first available variant
+ * in a muted state — the caller overlays the "Aucun visuel" hint.
+ */
+function AttachedHeroLayout({
+  selectedVariants,
+  heroVariant,
+  selectedIndices,
+  onToggle,
+}: {
+  selectedVariants: Array<{ url: string; imageId: string; alt?: string }>;
+  heroVariant: { url: string; imageId: string; alt?: string };
+  selectedIndices: number[];
+  onToggle: (index: number) => void;
+}) {
+  // No selection: render the hero as a muted backdrop. Click reactivates it.
+  if (selectedVariants.length === 0) {
+    return (
+      <div className="relative w-full h-full">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={heroVariant.url}
+          alt={heroVariant.alt || "Visuel non sélectionné"}
+          className="w-full h-full object-cover grayscale opacity-50"
+          loading="lazy"
+          draggable={false}
+        />
+      </div>
+    );
+  }
+
+  // Single selection — full-bleed hero, click X to deselect (publish without
+  // visual). Click image opens full-size.
+  if (selectedVariants.length === 1) {
+    return (
+      <HeroCell
+        variant={selectedVariants[0]}
+        sourceIndex={selectedIndices[0]}
+        onRemove={() => onToggle(selectedIndices[0])}
+        roundedClass=""
+      />
+    );
+  }
+
+  // Two selections — 50/50 vertical split.
+  if (selectedVariants.length === 2) {
+    return (
+      <div className="grid grid-cols-2 gap-1 w-full h-full">
+        {selectedVariants.map((v, k) => (
+          <HeroCell
+            key={v.imageId + k}
+            variant={v}
+            sourceIndex={selectedIndices[k]}
+            onRemove={() => onToggle(selectedIndices[k])}
+            roundedClass=""
+          />
+        ))}
+      </div>
+    );
+  }
+
+  // Three selections — mosaic: one tall on left, two stacked on right.
+  return (
+    <div className="grid grid-cols-2 grid-rows-2 gap-1 w-full h-full">
+      <div className="row-span-2 relative">
+        <HeroCell
+          variant={selectedVariants[0]}
+          sourceIndex={selectedIndices[0]}
+          onRemove={() => onToggle(selectedIndices[0])}
+          roundedClass=""
+        />
+      </div>
+      <HeroCell
+        variant={selectedVariants[1]}
+        sourceIndex={selectedIndices[1]}
+        onRemove={() => onToggle(selectedIndices[1])}
+        roundedClass=""
+      />
+      <HeroCell
+        variant={selectedVariants[2]}
+        sourceIndex={selectedIndices[2]}
+        onRemove={() => onToggle(selectedIndices[2])}
+        roundedClass=""
+      />
+    </div>
+  );
+}
+
+function HeroCell({
+  variant,
+  sourceIndex,
+  onRemove,
+  roundedClass,
+}: {
+  variant: { url: string; imageId: string; alt?: string };
+  sourceIndex: number;
+  onRemove: () => void;
+  roundedClass: string;
+}) {
+  return (
+    <div className={`group/hero relative w-full h-full overflow-hidden ${roundedClass}`}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={variant.url}
+        alt={variant.alt || `Visuel sélectionné (variante ${sourceIndex + 1})`}
+        className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover/hero:scale-[1.02]"
+        loading="lazy"
+        draggable={false}
+      />
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onRemove();
+        }}
+        aria-label={`Retirer le visuel ${sourceIndex + 1}`}
+        title="Retirer ce visuel"
+        className="
+          absolute top-2 right-2
+          w-7 h-7 rounded-full
+          flex items-center justify-center
+          bg-black/55 hover:bg-black/75
+          text-white
+          backdrop-blur-sm
+          shadow-sm
+          opacity-0 group-hover/hero:opacity-100
+          focus-visible:opacity-100
+          transition-opacity duration-150
+        "
+      >
+        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
+/**
+ * AddVisualPicker — segmented control "1 / 2 / 3" for choosing how many
+ * variants to generate. Each cell is the click target; no intermediate
+ * "Generate" button, the pick IS the action. Brand-orange so it reads as
+ * the same affordance as the previous full-width CTA.
+ */
+function AddVisualPicker({ onPick }: { onPick: (count: 1 | 2 | 3) => void }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 4 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25, delay: 0.05 }}
+      className="px-4 pt-3 pb-1"
+    >
+      <div
+        className="
+          flex items-stretch gap-1
+          rounded-xl p-1
+          bg-[#FFF1E8] dark:bg-[#F8935D]/15
+          border border-[#F8935D]/60 dark:border-[#F8935D]/40
+          shadow-[0_1px_2px_-1px_rgba(247,107,84,0.2)]
+        "
+      >
+        <div className="flex items-center gap-1.5 pl-2.5 pr-1.5 text-[#C0421F] dark:text-[#F8935D] text-[12.5px] font-semibold whitespace-nowrap">
+          <svg
+            className="w-3.5 h-3.5 flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          Visuels
+        </div>
+        {([1, 2, 3] as const).map((n) => (
+          <motion.button
+            key={n}
+            type="button"
+            onClick={() => onPick(n)}
+            whileHover={{ y: -1 }}
+            whileTap={{ scale: 0.96 }}
+            aria-label={`Générer ${n} visuel${n > 1 ? "s" : ""}`}
+            className="
+              flex-1 flex items-center justify-center
+              py-2 rounded-lg
+              text-[14px] font-bold tabular-nums
+              text-[#C0421F] dark:text-[#F8935D]
+              bg-white/60 dark:bg-white/[0.04]
+              hover:bg-white dark:hover:bg-white/[0.08]
+              border border-[#F8935D]/30 dark:border-[#F8935D]/30
+              hover:border-[#F76B54] dark:hover:border-[#F8935D]/60
+              transition-colors duration-150
+              cursor-pointer
+            "
+          >
+            {n}
+          </motion.button>
+        ))}
+      </div>
+      <p className="mt-1.5 text-[10.5px] text-text-muted px-1">
+        Choisis le nombre de variantes à générer · 1 crédit visuel.
+      </p>
+    </motion.div>
+  );
+}
 
 export default ModernResponseCard;

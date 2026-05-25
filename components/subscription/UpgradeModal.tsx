@@ -118,9 +118,11 @@ export default function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
                 <span className="text-text-secondary">/mois</span>
               </div>
 
-              {/* CTA buttons */}
+              {/* CTA buttons — `premium` variant inherits the signature posts
+                  gradient (violet → rose → coral) so the upgrade CTA pops
+                  visually while staying within the Posty DA. */}
               <div className="space-y-3">
-                <Button variant="primary" fullWidth onClick={handleUpgrade} className="shadow-glow">
+                <Button variant="premium" fullWidth onClick={handleUpgrade}>
                   Passer à Pro
                 </Button>
                 <Button variant="ghost" fullWidth onClick={onClose}>

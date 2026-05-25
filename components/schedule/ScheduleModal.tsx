@@ -12,7 +12,7 @@ import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useLinkedIn } from "@/contexts/LinkedInContext";
 import { useFacebook } from "@/contexts/FacebookContext";
 import { useThreads } from "@/contexts/ThreadsContext";
-import { SchedulePlatform, LinkedInPostType } from "@/types";
+import { SchedulePlatform, LinkedInPostType, LinkedInVisibility } from "@/types";
 import { canUsePlatform } from "@/lib/config/permissions";
 import { PLATFORMS } from "@/components/publish/platforms-config";
 import { LinkedInIcon } from "@/components/linkedin/LinkedInConnectButton";
@@ -166,8 +166,19 @@ export default function ScheduleModal({
 
   // Seed comment (algo-boost first reply) — pre-filled from prop, editable.
   // Only ever offered when the platform is LinkedIn (other platforms ignore).
-  const [seedEnabled, setSeedEnabled] = useState<boolean>(!!seedCommentText);
+  // DEFAULTS TO ENABLED (was: only when a prefill text was passed). The seed
+  // comment is the single most effective LinkedIn algo signal we can fire on
+  // behalf of scheduled posts (no user is online to comment first); flipping
+  // the default closes a big chunk of the direct-vs-scheduled reach gap.
+  // If the user doesn't want it, they can uncheck.
+  const [seedEnabled, setSeedEnabled] = useState<boolean>(true);
   const [seedDraft, setSeedDraft] = useState<string>(seedCommentText ?? "");
+
+  // LinkedIn visibility — parity with the direct publish flow. PUBLIC is the
+  // safer default for reach (matches what the direct route also defaults to
+  // in most UI paths); CONNECTIONS is offered for users prioritizing
+  // engagement density over raw impressions.
+  const [visibility, setVisibility] = useState<LinkedInVisibility>("PUBLIC");
 
   const timezone = useMemo(() => getUserTimezone(), []);
 
@@ -193,8 +204,11 @@ export default function ScheduleModal({
       setImagePreviews([]);
 
       // Re-seed the boost-comment fields from the latest prop value.
-      setSeedEnabled(!!seedCommentText);
+      // Boost is on by default; user can opt out per-post if they want to.
+      setSeedEnabled(true);
       setSeedDraft(seedCommentText ?? "");
+      // Reset visibility to default (PUBLIC) every time the modal opens.
+      setVisibility("PUBLIC");
     }
   }, [isOpen, availablePlatforms]);
 
@@ -499,10 +513,13 @@ export default function ScheduleModal({
       // Only attach seedComment when boost is on, text is meaningful, and
       // we're targeting LinkedIn (other platforms have no comment-on-post API
       // wired up — and the algo lever is LinkedIn-specific anyway).
+      // delayMinutes: 5 matches the new Cloud Function default — picks a
+      // landing window 5-9 min post-publish, the sweet spot for "real
+      // engagement" signal vs the previous "looks scripted" 3-6 min range.
       const trimmedSeed = seedDraft.trim();
       const seedComment =
         platform === "linkedin" && seedEnabled && trimmedSeed.length >= 10
-          ? { enabled: true, text: trimmedSeed, delayMinutes: 3 }
+          ? { enabled: true, text: trimmedSeed, delayMinutes: 5 }
           : undefined;
 
       const result = await schedulePost({
@@ -513,6 +530,7 @@ export default function ScheduleModal({
         timezone,
         platform,
         postType,
+        visibility: platform === "linkedin" ? visibility : undefined,
         imageFiles: showImagePicker && images.length > 0 ? images : undefined,
         seedComment,
       });
@@ -1082,6 +1100,39 @@ export default function ScheduleModal({
               </div>
             )}
 
+            {/* Visibility selector (LinkedIn only) — parity with direct flow */}
+            {platform === "linkedin" && (
+              <div className="mb-3">
+                <p className="text-xs text-text-muted font-medium uppercase tracking-wide mb-2">
+                  Audience
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setVisibility("PUBLIC")}
+                    className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                      visibility === "PUBLIC"
+                        ? "bg-primary text-white shadow-lg shadow-primary/20"
+                        : "bg-gray-50 dark:bg-dark-elevated text-text-secondary hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-dark-border"
+                    }`}
+                  >
+                    🌍 Public
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setVisibility("CONNECTIONS")}
+                    className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                      visibility === "CONNECTIONS"
+                        ? "bg-primary text-white shadow-lg shadow-primary/20"
+                        : "bg-gray-50 dark:bg-dark-elevated text-text-secondary hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-dark-border"
+                    }`}
+                  >
+                    🤝 Relations
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Seed comment block — algo boost (LinkedIn only) */}
             {platform === "linkedin" && (
               <div
@@ -1109,7 +1160,7 @@ export default function ScheduleModal({
                         🚀 Boost algo · 1er commentaire
                       </span>
                       <span className="text-[10px] text-gray-400">
-                        ~3 min après publish
+                        ~5-9 min après publish
                       </span>
                     </div>
                     <p className="mt-1 text-[11.5px] text-gray-500 leading-snug">

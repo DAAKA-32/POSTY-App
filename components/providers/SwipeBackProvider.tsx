@@ -315,25 +315,30 @@ export default function SwipeBackProvider({ children, disabled = false }: SwipeB
       {/* Overlay de feedback visuel */}
       <SwipeBackIndicator />
 
-      {/* Contenu de la page avec effet de translation */}
-      <motion.div
+      {/*
+        Contenu de la page avec effet de translation.
+        IMPORTANT: when at rest (no active swipe), we set `transform: undefined`
+        — not `translate3d(0,0,0)` — so the element does NOT create a
+        containing block for fixed-position descendants. Otherwise any
+        page that uses `.posty-soft-*` (which paint the signature gradient
+        via a `position: fixed` pseudo-element) would lose its background:
+        a `transform`-ed ancestor reparents `position: fixed` from the
+        viewport down to that ancestor, masking the gradient.
+       */}
+      <div
         className="min-h-screen"
-        animate={{
-          x: isSwipingBack ? swipeProgress * 80 : 0,
-          scale: isSwipingBack ? 1 - swipeProgress * 0.03 : 1,
-        }}
-        transition={{
-          type: "spring",
-          stiffness: 400,
-          damping: 40,
-          mass: 0.5,
-        }}
         style={{
+          transform: isSwipingBack
+            ? `translate3d(${swipeProgress * 80}px, 0, 0) scale(${1 - swipeProgress * 0.03})`
+            : undefined,
           transformOrigin: "center left",
+          transition: isSwipingBack
+            ? "none"
+            : "transform 300ms cubic-bezier(0.22, 1, 0.36, 1)",
         }}
       >
         {children}
-      </motion.div>
+      </div>
     </SwipeBackContext.Provider>
   );
 }

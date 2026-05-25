@@ -19,6 +19,16 @@ export const StrategistDrawer = dynamic(
   { ssr: false },
 );
 
+export const AutonomousBatchBanner = dynamic(
+  () => import("@/components/strategist/AutonomousBatchBanner"),
+  { ssr: false },
+);
+
+export const WhatsNewModal = dynamic(
+  () => import("@/components/onboarding/WhatsNewModal"),
+  { ssr: false },
+);
+
 export const GlobalCommandPalette = dynamic(
   () => import("@/components/providers/GlobalCommandPalette"),
   { ssr: false },

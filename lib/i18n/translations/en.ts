@@ -2580,6 +2580,7 @@ export const en = {
     // Core feature labels
     featureCreations: "Daily creations",
     featureQuality: "AI content quality",
+    featureImages: "Visual generation",
     featureScheduling: "Post scheduling",
     featurePersonalized: "Tone adapted to your profile",
     featureDualMode: "Dual Story + Business format",
@@ -2611,6 +2612,8 @@ export const en = {
     unlimitedCreations: "Unlimited creations, zero quota",
     creationsPerMonth: "{n} creations per month",
     creationsPerDay: "{n} creations per day",
+    imagesPerDay: "{n} visuals per day",
+    imagesNearUnlimited: "Visuals near-unlimited",
 
     // Savings
     monthsFree: "{n} month free",
@@ -2695,6 +2698,46 @@ export const en = {
       "January", "February", "March", "April", "May", "June",
       "July", "August", "September", "October", "November", "December",
     ],
+  },
+
+  // Premium first-time feature tour (5-slide carousel shown after onboarding)
+  appTour: {
+    welcome: {
+      eyebrow: "Welcome",
+      title: "Meet Posty, your AI co-pilot",
+      description: "A premium workspace built to turn your ideas into LinkedIn posts that grow your audience — without the empty page.",
+    },
+    posts: {
+      eyebrow: "Smart writing",
+      title: "Generate posts that sound like you",
+      description: "Chat in natural language. Posty captures your voice, your sector, your audience — and drafts posts ready to ship.",
+    },
+    visuals: {
+      eyebrow: "AI visuals",
+      title: "Striking visuals, instantly",
+      description: "Get multiple on-brand variants for every post. Pick the one that fits — carousels, illustrations, hero images.",
+    },
+    schedule: {
+      eyebrow: "Publish everywhere",
+      title: "Schedule across platforms",
+      description: "Plan your week, publish in one click on LinkedIn, X, Bluesky, Threads and more. Posty handles the timing.",
+    },
+    optimize: {
+      eyebrow: "Growth engine",
+      title: "Optimize for engagement",
+      description: "Live hook scores, analytics, and AI suggestions guide every post toward stronger reach and conversation.",
+    },
+    controls: {
+      skip: "Skip",
+      back: "Back",
+      next: "Next",
+      start: "Get started",
+    },
+    settings: {
+      replayLabel: "Replay product tour",
+      replayDesc: "Watch the premium feature tour again",
+      replayCta: "Replay",
+    },
   },
 
   // App Page
@@ -3277,20 +3320,20 @@ export const en = {
 
   strategist: {
     pageTitle: "Strategist",
-    headerEyebrow: "Max · Marketing Strategist",
-    headerTitle: "Build a strategy, not just posts.",
-    headerSubtitle: "A senior marketing advisor in your pocket. Audit your LinkedIn presence, design content plans, sharpen positioning — in one focused conversation.",
-    inputPlaceholder: "Ask for an audit, a 30-day plan, hook angles…",
+    headerEyebrow: "Autonomous marketing agent",
+    headerTitle: "Your AI community manager, on duty 24/7.",
+    headerSubtitle: "The agent analyzes your LinkedIn profile, plans your week, drafts the posts and schedules publication. You approve in one click.",
+    inputPlaceholder: "Audit, strategic plan, hook angles…",
     sendButton: "Send",
-    sending: "Thinking…",
-    starterTitle: "Start with",
-    starter1Title: "Audit my LinkedIn",
+    sending: "Analyzing…",
+    starterTitle: "One-off requests",
+    starter1Title: "Audit my presence",
     starter1Prompt: "Audit my LinkedIn presence based on my profile. Give me 3 things working, 3 things to fix this week, and 1 untapped opportunity.",
-    starter2Title: "30-day content plan",
-    starter2Prompt: "Build a 30-day LinkedIn content plan tailored to my industry and audience. 3 posts/week, mixing storytelling, business insight, and thought leadership.",
-    starter3Title: "Define my positioning",
-    starter3Prompt: "Help me define my positioning on LinkedIn. What 3 themes should I own, why, and how do I differentiate from peers in my space?",
-    starter4Title: "10 hook angles",
+    starter2Title: "Plan my week",
+    starter2Prompt: "Prepare 5 LinkedIn posts for this week, tailored to my industry and audience. Vary the formats and angles.",
+    starter3Title: "Sharpen my positioning",
+    starter3Prompt: "Help me sharpen my positioning on LinkedIn. What 3 themes should I own, why, and how do I differentiate from peers in my space?",
+    starter4Title: "Find 10 hook angles",
     starter4Prompt: "Generate 10 strong hook angles for my next LinkedIn posts based on what my audience cares about. Each hook should make people stop scrolling.",
     errorGeneric: "The Strategist hit an error. Try again in a moment.",
     errorRateLimit: "You've reached the rate limit. Try again in a few minutes.",

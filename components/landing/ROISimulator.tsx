@@ -313,7 +313,7 @@ const GrowthBars = memo(function GrowthBars({
             >
               <motion.div
                 aria-hidden
-                className="w-full rounded-sm origin-bottom will-change-transform"
+                className="w-full rounded-sm origin-bottom will-change-transform bg-gradient-to-t from-[#F8935D]/55 via-[#F8935D]/40 to-[#F76B54]/30"
                 initial={{ scaleY: 0 }}
                 whileInView={{ scaleY: 1 }}
                 viewport={{ once: true, margin: "-15%" }}
@@ -324,10 +324,6 @@ const GrowthBars = memo(function GrowthBars({
                 }}
                 style={{
                   height: `${heightPct}%`,
-                  // Single muted tone — looks like a financial-report bar
-                  // chart instead of a slot-machine reel. No gradient, no
-                  // animation on value change, just static height + entrance.
-                  backgroundColor: `${ACCENT}50`,
                 }}
                 role="presentation"
                 title={`${label} : ${formatEUR(value)}€`}
@@ -382,6 +378,14 @@ export default function ROISimulator() {
       aria-label="Simulateur ROI"
       className="relative py-16 md:py-24 lg:py-28 px-4 sm:px-6 lg:px-8 overflow-hidden"
     >
+      {/* Warm wash + paired soft halos — same ambient grammar as the rest of
+          the landing (CopilotSection, app sidebar). Brings the "financial
+          calculator" feel in line with the new Posty DA without competing
+          with the cards' content. */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#FEF6F0] via-white to-[#FEF6F0] pointer-events-none" />
+      <div className="absolute top-[8%] left-[6%] w-[460px] h-[460px] bg-[#F8935D]/[0.10] rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute bottom-[8%] right-[4%] w-[400px] h-[400px] bg-[#F76B54]/[0.08] rounded-full blur-[130px] pointer-events-none" />
+
       {/* Ambient motion layer — orbs only here so the chart remains the focal
           point and we don't add particle/arrow noise around active controls. */}
       <AmbientDecorations variant="orbs" intensity={0.7} />
@@ -429,7 +433,7 @@ export default function ROISimulator() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-8%" }}
           transition={{ duration: 0.65, delay: 0.1, ease: EASE }}
-          className="relative lg:order-2 h-full flex flex-col rounded-2xl bg-white shadow-[0_24px_70px_-24px_rgba(248,147,93,0.32),0_4px_12px_-4px_rgba(15,23,42,0.06)] ring-1 ring-gray-200/70 overflow-hidden"
+          className="relative lg:order-2 h-full flex flex-col rounded-2xl bg-gradient-to-br from-white via-white to-[#FEF6F0] shadow-[0_24px_70px_-24px_rgba(248,147,93,0.32),0_4px_12px_-4px_rgba(15,23,42,0.06)] ring-1 ring-[#F8935D]/15 overflow-hidden"
         >
           {/* Top gradient hairline — color baton */}
           <div
@@ -522,7 +526,7 @@ export default function ROISimulator() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-5%" }}
           transition={{ duration: 0.55, delay: 0.18, ease: EASE }}
-          className="lg:order-1 h-full flex flex-col justify-center rounded-2xl bg-white ring-1 ring-gray-200/70 shadow-[0_8px_24px_-12px_rgba(15,23,42,0.10)] p-6 md:p-7 space-y-5 lg:space-y-7"
+          className="lg:order-1 h-full flex flex-col justify-center rounded-2xl bg-gradient-to-br from-white via-white to-[#FEF6F0]/60 ring-1 ring-[#F8935D]/15 shadow-[0_8px_24px_-12px_rgba(15,23,42,0.10),0_18px_60px_-30px_rgba(248,147,93,0.20)] p-6 md:p-7 space-y-5 lg:space-y-7"
         >
           {/* Posts per week — chips */}
           <div>

@@ -105,6 +105,14 @@ interface PublishToLinkedInModalProps {
   title?: string;
   initialMode?: PublishMode;
   onScheduleSuccess?: (scheduledPostId: string) => void;
+  /**
+   * Optional list of fully-resolved image URLs (e.g. Firebase Storage URLs
+   * for visuals Posty just generated). When provided, the modal fetches each
+   * URL on open and seeds the `images: File[]` state so the user sees the
+   * visual already attached instead of having to re-upload. Failed fetches
+   * are silently dropped — we never block the open on a network hiccup.
+   */
+  preloadedImageUrls?: string[];
 }
 
 export default function PublishToLinkedInModal({
@@ -117,6 +125,7 @@ export default function PublishToLinkedInModal({
   title,
   initialMode = "now",
   onScheduleSuccess,
+  preloadedImageUrls,
 }: PublishToLinkedInModalProps) {
   const { user } = useAuth();
   const { t, language } = useLanguage();
@@ -448,6 +457,62 @@ export default function PublishToLinkedInModal({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, initialContent, initialMode]);
+
+  // Pre-attach generated visuals when the page passes URLs along. Runs after
+  // the reset effect (same `isOpen` trigger, ordered by declaration). Each
+  // URL is fetched and converted into a `File` so it goes through the same
+  // pipeline as a user-uploaded image — validation, preview, multi-image
+  // grid, LinkedIn upload — without any special-case branch downstream.
+  //
+  // Failures are swallowed: if a fetch hangs or the URL is unreachable, we
+  // simply skip that file. The user can still upload manually, and we don't
+  // want to block the publish flow on a transient network error.
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!preloadedImageUrls || preloadedImageUrls.length === 0) return;
+
+    let cancelled = false;
+    const cap = Math.min(preloadedImageUrls.length, MAX_IMAGES);
+
+    (async () => {
+      const fetched = await Promise.all(
+        preloadedImageUrls.slice(0, cap).map(async (url, i) => {
+          try {
+            const res = await fetch(url);
+            if (!res.ok) return null;
+            const blob = await res.blob();
+            if (!ACCEPTED_IMAGE_TYPES.includes(blob.type) && blob.type !== "") {
+              // Storage may return application/octet-stream — derive from URL.
+              // Fall back to image/png which is what the generator emits.
+            }
+            const mime = ACCEPTED_IMAGE_TYPES.includes(blob.type)
+              ? blob.type
+              : "image/png";
+            const ext = mime === "image/jpeg" ? "jpg" : mime.split("/")[1] || "png";
+            const file = new File([blob], `posty-visuel-${i + 1}.${ext}`, {
+              type: mime,
+            });
+            if (file.size > MAX_IMAGE_SIZE) return null;
+            return file;
+          } catch {
+            return null;
+          }
+        })
+      );
+
+      if (cancelled) return;
+      const files = fetched.filter((f): f is File => f !== null);
+      if (files.length === 0) return;
+
+      const previews = files.map((f) => URL.createObjectURL(f));
+      setImages(files);
+      setImagePreviews(previews);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, preloadedImageUrls]);
 
   // Cleanup object URLs on unmount
   useEffect(() => {
@@ -804,6 +869,13 @@ export default function PublishToLinkedInModal({
         setTimeout(() => reject(new Error("TIMEOUT")), SCHEDULE_TIMEOUT_MS)
       );
 
+      // Propagate audience + org target to the scheduled doc so the cron
+      // publishes with the same author/visibility the user picked here.
+      // Without this the scheduler silently downgraded to personal + PUBLIC.
+      const isLinkedIn = schedulePlatform === "linkedin";
+      const scheduleOrgUrn = isLinkedIn ? (authorTargetUrn || undefined) : undefined;
+      const scheduleVisibility = isLinkedIn ? visibility : undefined;
+
       const result = await Promise.race([
         schedulePost({
           content: editedContent,
@@ -813,6 +885,8 @@ export default function PublishToLinkedInModal({
           timezone,
           platform: schedulePlatform,
           postType: "feed",
+          visibility: scheduleVisibility,
+          organizationUrn: scheduleOrgUrn,
           imageFiles: images.length > 0 ? images : undefined,
         }),
         timeoutPromise,

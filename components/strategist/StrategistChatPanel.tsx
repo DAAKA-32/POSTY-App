@@ -19,10 +19,22 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getAuthHeaders } from "@/lib/api/client";
 import StrategistStarterCard from "./StrategistStarterCard";
+import StrategistAutonomousPanel from "./StrategistAutonomousPanel";
 import StrategistMessageBubble from "./StrategistMessageBubble";
 import StrategistComposer from "./StrategistComposer";
+import BatchPlanCard from "./BatchPlanCard";
+import { detectBatchPlanIntent } from "@/lib/strategist/batch-intent";
+import { getStrategyBatch } from "@/lib/db/strategy-batches";
+import type { StrategyBatch } from "@/types";
 
-type Msg = { id: string; role: "user" | "assistant"; content: string };
+/** A chat turn. Assistant turns can carry an inline `batch` instead of
+ *  markdown prose — when set, the renderer shows a BatchPlanCard. */
+type Msg = {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  batch?: StrategyBatch;
+};
 
 /**
  * Splits the editorial title at the first comma to highlight the second
@@ -82,6 +94,44 @@ export default function StrategistChatPanel() {
     el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
+  // Listen for "open this batch" events fired by AutonomousBatchBanner (and
+  // potentially future entry points like deep links). Fetches the batch from
+  // Firestore and injects it as a fresh assistant turn so the user immediately
+  // sees the BatchPlanCard without going through chat flow.
+  useEffect(() => {
+    const handler = async (e: Event) => {
+      const detail = (e as CustomEvent<{ batchId?: string }>).detail;
+      const batchId = detail?.batchId;
+      if (!batchId) return;
+      try {
+        const batch = await getStrategyBatch(batchId);
+        if (!batch) return;
+        // Skip if this batch is already in the thread (user double-clicked
+        // banner, drawer was closed and reopened, etc.).
+        if (messagesRef.current.some((m) => m.batch?.id === batch.id)) return;
+        const id = `a_auto_${Date.now()}`;
+        const next: Msg[] = [
+          ...messagesRef.current,
+          {
+            id,
+            role: "assistant",
+            content:
+              language === "fr"
+                ? `Voici le plan que j'ai préparé pour toi : « ${batch.theme} »`
+                : `Here is the plan I prepared for you: "${batch.theme}"`,
+            batch,
+          },
+        ];
+        setMessages(next);
+        messagesRef.current = next;
+      } catch (err) {
+        console.warn("[StrategistChatPanel] open-batch handler failed:", err);
+      }
+    };
+    window.addEventListener("strategist:open-batch", handler as EventListener);
+    return () => window.removeEventListener("strategist:open-batch", handler as EventListener);
+  }, [language]);
+
   // Cleanup any in-flight request on unmount (drawer close)
   useEffect(() => {
     return () => {
@@ -109,6 +159,87 @@ export default function StrategistChatPanel() {
 
       const ctrl = new AbortController();
       abortRef.current = ctrl;
+
+      // ── Batch-plan route ────────────────────────────────────────────────
+      // "prépare-moi 5 posts pour cette semaine" / "planning du mois" / etc.
+      // bypasses the conversational SSE entirely and calls the dedicated
+      // /api/strategist/batch-plan endpoint, then renders the result as a
+      // <BatchPlanCard> attached to the assistant turn. Detection is pure
+      // client-side regex (no LLM cost) and conservative — false positives
+      // fall through to the normal flow.
+      const batchIntent = detectBatchPlanIntent(text);
+      if (batchIntent.shouldBatch) {
+        try {
+          const headers = await getAuthHeaders();
+          // User's timezone — captured client-side so the LLM proposes slots
+          // in the user's local time, not the server's.
+          const timezone =
+            (typeof Intl !== "undefined" &&
+              Intl.DateTimeFormat().resolvedOptions().timeZone) ||
+            "UTC";
+
+          const res = await fetch("/api/strategist/batch-plan", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", ...headers },
+            body: JSON.stringify({
+              sourcePrompt: text,
+              count: batchIntent.count,
+              timezone,
+              language: language === "fr" ? "fr" : "en",
+            }),
+            signal: ctrl.signal,
+          });
+
+          if (!res.ok) {
+            const errBody = await res.json().catch(() => ({}));
+            setError(
+              res.status === 429
+                ? t.strategist.errorRateLimit
+                : res.status === 403
+                  ? errBody.message || t.strategist.errorGeneric
+                  : errBody.message || t.strategist.errorGeneric
+            );
+            setMessages((prev) => prev.filter((m) => m.id !== assistantId));
+            return;
+          }
+
+          const data = await res.json();
+          const batch = data?.batch as StrategyBatch | undefined;
+          if (!batch || !Array.isArray(batch.posts) || batch.posts.length === 0) {
+            setError(t.strategist.errorGeneric);
+            setMessages((prev) => prev.filter((m) => m.id !== assistantId));
+            return;
+          }
+
+          // Attach the batch to the placeholder assistant message instead
+          // of streaming markdown — the renderer will detect `m.batch` and
+          // show <BatchPlanCard>.
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantId
+                ? {
+                    ...m,
+                    content:
+                      language === "fr"
+                        ? `Voici un plan de ${batch.posts.length} posts pour : « ${batch.theme} »`
+                        : `Here is a ${batch.posts.length}-post plan for: "${batch.theme}"`,
+                    batch,
+                  }
+                : m
+            )
+          );
+          return;
+        } catch (err) {
+          if ((err as Error).name === "AbortError") return;
+          console.error("[strategist] batch-plan error:", err);
+          setError(t.strategist.errorGeneric);
+          setMessages((prev) => prev.filter((m) => m.id !== assistantId));
+          return;
+        } finally {
+          setStreaming(false);
+          abortRef.current = null;
+        }
+      }
 
       try {
         const headers = await getAuthHeaders();
@@ -274,9 +405,19 @@ export default function StrategistChatPanel() {
                 {t.strategist.headerSubtitle}
               </p>
 
-              {/* Starter cards */}
+              {/* Autonomous mode — the primary action of the Strategist.
+                  Promoted above starter cards because "delegating the whole
+                  presence" is the agent's value proposition; one-off requests
+                  (starter cards below) are the escape hatch, not the default. */}
               <div className="mt-9">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-gray-400 dark:text-gray-500 mb-3">
+                <StrategistAutonomousPanel />
+              </div>
+
+              {/* Starter cards — one-off requests, secondary action.
+                  Label reflects this: "Demandes ponctuelles" / "One-off
+                  requests" instead of the old "Commencer par" framing. */}
+              <div className="mt-6">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-text-muted mb-2.5">
                   {t.strategist.starterTitle}
                 </p>
                 <div className="space-y-2">
@@ -305,16 +446,41 @@ export default function StrategistChatPanel() {
           >
             <div ref={scrollRef} className="flex-1 overflow-y-auto py-6 space-y-5">
               {messages.map((m, i) => (
-                <StrategistMessageBubble
-                  key={m.id}
-                  role={m.role}
-                  content={m.content}
-                  isStreaming={
-                    streaming && m.role === "assistant" && i === messages.length - 1
-                  }
-                  showActions={m.id === lastCompletedAssistantId}
-                  onRegenerate={regenerate}
-                />
+                <div key={m.id}>
+                  <StrategistMessageBubble
+                    role={m.role}
+                    content={m.content}
+                    isStreaming={
+                      streaming &&
+                      m.role === "assistant" &&
+                      i === messages.length - 1 &&
+                      !m.batch
+                    }
+                    showActions={m.id === lastCompletedAssistantId && !m.batch}
+                    onRegenerate={regenerate}
+                  />
+                  {/* Assistant turn carrying a batch plan → render the
+                      editorial table directly under the short ack message. */}
+                  {m.role === "assistant" && m.batch && (
+                    <BatchPlanCard
+                      batch={m.batch}
+                      onApproved={(updated) =>
+                        setMessages((prev) =>
+                          prev.map((x) => (x.id === m.id ? { ...x, batch: updated } : x))
+                        )
+                      }
+                      onDiscarded={() =>
+                        setMessages((prev) =>
+                          prev.map((x) =>
+                            x.id === m.id
+                              ? { ...x, batch: { ...m.batch!, status: "discarded" } }
+                              : x
+                          )
+                        )
+                      }
+                    />
+                  )}
+                </div>
               ))}
             </div>
           </motion.section>

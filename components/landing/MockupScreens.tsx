@@ -220,16 +220,20 @@ export function CopilotSection({ landing }: { landing: any }) {
   return (
     <section
       ref={sectionRef}
-      // On mobile: natural height + overflow-visible so the title and the
-      // 5-row comparison table are never cropped by the 100vh box.
-      // On md+: keep the cinematic full-viewport behavior with vertical centering.
-      className="relative w-full overflow-visible md:overflow-hidden md:h-screen md:max-h-screen flex items-start md:items-center py-10 sm:py-12 md:py-6"
+      // Natural-height layout. The previous `md:h-screen md:max-h-screen`
+      // reserved a full viewport on desktop but the headline + table only
+      // filled ~50% of it, producing the "empty zone" the user flagged. The
+      // py rhythm matches the surrounding sections (py-16 → md:py-24 → lg:py-28),
+      // so the page breathes consistently without locking a viewport.
+      className="relative w-full overflow-visible py-16 sm:py-20 md:py-24 lg:py-28"
     >
-      {/* Background — single sober warm wash. One soft halo behind the mockup,
-          one fainter behind the comparison. No grain pattern (it competed
-          with the comparison table's visual density). */}
+      {/* Background — warm wash + paired soft halos (top-right + bottom-left)
+          so the section gets the same ambient premium feel as the app's
+          per-route signature gradients. Heavier opacity than before (0.10 vs
+          0.06) so the orange actually reads on screen instead of vanishing. */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#FEF6F0] via-white to-[#FEF6F0]" />
-      <div className="absolute top-[12%] right-[6%] w-[420px] h-[420px] bg-[#F8935D]/[0.06] rounded-full blur-[140px]" />
+      <div className="absolute top-[8%] right-[4%] w-[480px] h-[480px] bg-[#F8935D]/[0.10] rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute bottom-[10%] left-[2%] w-[360px] h-[360px] bg-[#F76B54]/[0.07] rounded-full blur-[120px] pointer-events-none" />
 
       {/* ── Content ────────────────────────────────────────────────── */}
       <div className="relative w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">

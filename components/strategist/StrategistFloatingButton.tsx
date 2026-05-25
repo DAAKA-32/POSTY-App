@@ -22,6 +22,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useStrategistDrawer } from "@/contexts/StrategistDrawerContext";
 import { isStrategistEnabled } from "@/lib/config/feature-flags";
+import { useStrategistEligibility } from "@/hooks/strategist/useStrategistEligibility";
+import StrategistMark from "./StrategistMark";
 
 // Routes where the FAB should NOT appear (wrong context).
 const HIDDEN_PATHS = [
@@ -40,10 +42,17 @@ export default function StrategistFloatingButton() {
   const pathname = usePathname();
   const { t } = useLanguage();
   const { open, isOpen } = useStrategistDrawer();
+  const eligibility = useStrategistEligibility();
   const [hovered, setHovered] = useState(false);
 
-  // Feature is gated behind an env flag while we hold off the prod launch.
-  if (!isStrategistEnabled()) return null;
+  // Three gates rolled into the eligibility hook:
+  //   - env feature flag (kill-switch)
+  //   - email allowlist (enterprise-only invite)
+  //   - LinkedIn connected (Strategist produces LinkedIn posts — useless
+  //     without a connected account)
+  // We hide the FAB entirely on miss — no upgrade nudge, no "connect LinkedIn"
+  // banner here. The drawer surfaces those affordances when explicitly opened.
+  if (!isStrategistEnabled() || !eligibility.ok) return null;
 
   // Path-based scoping. Landing ("/") is also excluded.
   if (!pathname || pathname === "/") return null;
@@ -94,16 +103,10 @@ export default function StrategistFloatingButton() {
           style={{ animationDuration: "2.4s" }}
         />
 
-        {/* Sparkle mark — same shape as the drawer header + tooltip,
-            in dark gray here for max contrast on the gold gradient. */}
-        <svg
-          className="relative w-6 h-6 text-gray-900 drop-shadow-sm"
-          viewBox="0 0 24 24"
-          fill="currentColor"
-          aria-hidden
-        >
-          <path d="M12 2.5l1.8 6.4L20.5 12l-6.7 3.1L12 21.5l-1.8-6.4L3.5 12l6.7-3.1L12 2.5z" />
-        </svg>
+        {/* Canonical Strategist mark — same glyph as the drawer header,
+            dropdown row, batch cards, banner. Dark gray here for max
+            contrast on the gold gradient FAB background. */}
+        <StrategistMark className="relative w-6 h-6 text-gray-900 drop-shadow-sm" />
       </motion.div>
 
       {/* Tooltip — desktop only (mobile users get the icon alone, no hover state) */}
@@ -124,11 +127,7 @@ export default function StrategistFloatingButton() {
               pointer-events-none
             "
           >
-            {/* Gold sparkle — brand-consistent AI signature, reads premium
-                next to the agent name without competing with the FAB photo. */}
-            <svg className="w-3.5 h-3.5 text-amber-400" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-              <path d="M12 2.5l1.8 6.4L20.5 12l-6.7 3.1L12 21.5l-1.8-6.4L3.5 12l6.7-3.1L12 2.5z" />
-            </svg>
+            <StrategistMark className="w-3.5 h-3.5 text-amber-400" />
             {t.strategist.pageTitle}
           </motion.span>
         )}

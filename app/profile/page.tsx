@@ -11,6 +11,7 @@ import { useSubscription } from "@/contexts/SubscriptionContext";
 import { updateUserProfile, getUserPosts, getUserSessions } from "@/lib/db/firestore";
 import { PlanType, DAILY_MESSAGE_LIMITS } from "@/lib/config/plans";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
+import PageHeader from "@/components/layout/PageHeader";
 import {
   ProfileHeader,
   ProfilePlanCard,
@@ -150,7 +151,7 @@ function ProfileContent() {
 
   return (
     <div
-      className="bg-background-warm dark:bg-background"
+      className="posty-soft-schedule"
       style={{
         height: "100dvh",
         maxHeight: "100dvh",
@@ -159,25 +160,11 @@ function ProfileContent() {
         WebkitOverflowScrolling: "touch",
       }}
     >
-      {/* Sticky Header with Back Button */}
-      <div className="sticky top-0 z-40 bg-background-warm/80 dark:bg-dark-bg/80 backdrop-blur-xl border-b border-[#F8935D]/10 dark:border-dark-border">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative flex items-center h-16">
-            <button
-              onClick={() => router.back()}
-              className="flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors group z-10"
-            >
-              <svg className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              <span className="hidden sm:inline">{t.common.back}</span>
-            </button>
-            <div className="absolute left-1/2 -translate-x-1/2 text-lg font-semibold text-gray-900 dark:text-white">
-              {t.profile.title}
-            </div>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title={t.profile.title}
+        onBack={() => router.back()}
+        backLabel={t.common.back}
+      />
 
       {/* Main Content */}
       <div className="

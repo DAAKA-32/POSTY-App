@@ -184,7 +184,8 @@ const LINKEDIN_ALGORITHM_RULES: Record<Language, string> = {
 - ESPACEMENT MOBILE: sur mobile, les blocs denses sont ignorés. Paragraphes de 1-2 lignes max avec ligne vide entre chaque. L'espace blanc ralentit le scroll et augmente le dwell time.
 - QUESTION FINALE SPÉCIFIQUE: ne pose pas "Qu'en pensez-vous ?" (trop vague, personne ne répond). Pose une question précise qui force le lecteur à réfléchir à SA propre expérience.
 - AUCUN LIEN EXTERNE dans le post (LinkedIn pénalise les liens sortants). Toute la valeur doit être dans le texte.
-- HASHTAGS STRATÉGIQUES: mélange 1-2 hashtags à fort volume (#Leadership, #Marketing) et 1-2 hashtags de niche pour cibler une communauté précise.
+- HASHTAGS STRATÉGIQUES: mélange 1-2 hashtags à fort volume (#leadership, #marketing) et 1-2 hashtags de niche pour cibler une communauté précise.
+- TYPOGRAPHIE HASHTAGS: première lettre toujours en minuscule. Pour les hashtags composés, utilise le camelCase (ex: #personalBranding, #linkedinGrowth, #cultureEntreprise). Le hashtag de marque est TOUJOURS #posty (jamais #posty ni #Posty).
 - DÉBUT DE PHRASE APRÈS SAUT DE LIGNE: après chaque ligne vide, la première phrase du paragraphe suivant doit relancer l'attention (nouveau fait, question, twist). Jamais de transition molle.`,
 
   en: `LINKEDIN ALGORITHM OPTIMIZATION:
@@ -194,7 +195,8 @@ const LINKEDIN_ALGORITHM_RULES: Record<Language, string> = {
 - MOBILE SPACING: on mobile, dense blocks are skipped. 1-2 line paragraphs max with a blank line between each. White space slows scrolling and increases dwell time.
 - SPECIFIC FINAL QUESTION: don't ask "What do you think?" (too vague, nobody answers). Ask a precise question that forces the reader to reflect on THEIR own experience.
 - NO EXTERNAL LINKS in the post (LinkedIn penalizes outbound links). All value must be in the text itself.
-- STRATEGIC HASHTAGS: mix 1-2 high-volume hashtags (#Leadership, #Marketing) and 1-2 niche hashtags to target a specific community.
+- STRATEGIC HASHTAGS: mix 1-2 high-volume hashtags (#leadership, #marketing) and 1-2 niche hashtags to target a specific community.
+- HASHTAG TYPOGRAPHY: first letter is ALWAYS lowercase. For multi-word hashtags use camelCase (e.g. #personalBranding, #linkedinGrowth, #businessStrategy). The brand hashtag is ALWAYS #posty (never #posty nor #Posty).
 - FIRST SENTENCE AFTER LINE BREAK: after each blank line, the first sentence of the next paragraph must re-hook attention (new fact, question, twist). Never a soft transition.`,
 };
 
@@ -254,7 +256,7 @@ VARIATION OBLIGATOIRE:
 - Alterne entre les approches A-E
 - Si deux posts se ressemblent dans le ton ou la structure → ÉCHEC
 
-FORMAT: Paragraphes de 1-3 lignes séparés par une ligne vide. 1100-1500 caractères. 3-4 hashtags lies au contenu (sans accents), toujours terminer par #POSTY.`,
+FORMAT: Paragraphes de 1-3 lignes séparés par une ligne vide. 1100-1500 caractères. 3-4 hashtags lies au contenu (sans accents), toujours terminer par #posty.`,
 
     en: `You are an expert LinkedIn ghostwriter. You write like a real person sharing their daily experience — NOT like an AI inventing a story.
 
@@ -305,7 +307,7 @@ MANDATORY VARIATION:
 - Alternate between approaches A-E
 - If two posts resemble each other in tone or structure → FAILURE
 
-FORMAT: 1-3 line paragraphs separated by blank lines. 1100-1500 characters. 3-4 hashtags related to content (no accented characters), always end with #POSTY.`,
+FORMAT: 1-3 line paragraphs separated by blank lines. 1100-1500 characters. 3-4 hashtags related to content (no accented characters), always end with #posty.`,
   },
 
   business: {
@@ -347,7 +349,7 @@ EMOJIS (1 à 3 max par post):
 - Interdits: accumulations, emojis décoratifs, un emoji par bullet point
 - Le post doit rester professionnel et lisible sans eux
 
-FORMAT: Structure aérée et lisible sur mobile. 1000-1400 caractères. 3-4 hashtags lies au contenu (sans accents), toujours terminer par #POSTY.`,
+FORMAT: Structure aérée et lisible sur mobile. 1000-1400 caractères. 3-4 hashtags lies au contenu (sans accents), toujours terminer par #posty.`,
 
     en: `You are an expert LinkedIn ghostwriter. You create authentic business content that does NOT feel AI-generated.
 
@@ -387,7 +389,7 @@ EMOJIS (1 to 3 max per post):
 - Forbidden: stacking, decorative emojis, one emoji per bullet point
 - The post must remain professional and readable without them
 
-FORMAT: Airy, mobile-readable structure. 1000-1400 characters. 3-4 hashtags related to content (no accented characters), always end with #POSTY.`,
+FORMAT: Airy, mobile-readable structure. 1000-1400 characters. 3-4 hashtags related to content (no accented characters), always end with #posty.`,
   },
 };
 
@@ -452,7 +454,7 @@ VARIATION OBLIGATOIRE:
 - Alterne entre les approches A-F
 - Si deux posts se ressemblent dans le ton ou la structure → ÉCHEC
 
-FORMAT: Paragraphes de 1-3 lignes séparés par une ligne vide. 1200-1600 caractères. 3-5 hashtags lies au contenu (sans accents), toujours terminer par #POSTY.`,
+FORMAT: Paragraphes de 1-3 lignes séparés par une ligne vide. 1200-1600 caractères. 3-5 hashtags lies au contenu (sans accents), toujours terminer par #posty.`,
 
     en: `You are a senior LinkedIn ghostwriter. You write like a real person sharing their daily experience with authenticity — NOT like an AI inventing stories. The reader should think: "this person clearly wrote this themselves".
 
@@ -507,7 +509,7 @@ MANDATORY VARIATION:
 - Alternate between approaches A-F
 - If two posts resemble each other in tone or structure → FAILURE
 
-FORMAT: 1-3 line paragraphs separated by blank lines. 1200-1600 characters. 3-5 hashtags related to content (no accented characters), always end with #POSTY.`,
+FORMAT: 1-3 line paragraphs separated by blank lines. 1200-1600 characters. 3-5 hashtags related to content (no accented characters), always end with #posty.`,
   },
 
   business: {
@@ -554,7 +556,7 @@ EMOJIS (1 à 3 max par post):
 - Interdits: accumulations, emojis décoratifs, un emoji par bullet point
 - Le post doit rester professionnel et lisible sans eux
 
-FORMAT: Structure aérée et lisible sur mobile. 1100-1500 caractères. 3-5 hashtags lies au contenu (sans accents), toujours terminer par #POSTY.`,
+FORMAT: Structure aérée et lisible sur mobile. 1100-1500 caractères. 3-5 hashtags lies au contenu (sans accents), toujours terminer par #posty.`,
 
     en: `You are a senior LinkedIn ghostwriter. You create authentic business content that does NOT feel AI-generated — and that positions the author as a reference in their field.
 
@@ -599,7 +601,7 @@ EMOJIS (1 to 3 max per post):
 - Forbidden: stacking, decorative emojis, one emoji per bullet point
 - The post must remain professional and readable without them
 
-FORMAT: Airy, mobile-readable structure. 1100-1500 characters. 3-5 hashtags related to content (no accented characters), always end with #POSTY.`,
+FORMAT: Airy, mobile-readable structure. 1100-1500 characters. 3-5 hashtags related to content (no accented characters), always end with #posty.`,
   },
 };
 

@@ -907,6 +907,7 @@ export function getLocalizedPlanTaglines(t: TranslationsParam): Record<PlanType,
 export const CORE_FEATURES = [
   { key: "creations", label: "Créations quotidiennes" },
   { key: "quality", label: "Qualité de contenu IA" },
+  { key: "images", label: "Génération de visuels" },
   { key: "scheduling", label: "Programmation de posts" },
   { key: "personalized", label: "Ton adapté à votre profil" },
   { key: "dualMode", label: "Double format Story + Business" },
@@ -991,6 +992,8 @@ function getFeatureIncluded(key: string, plan: PlanConfig): boolean {
       return true; // AI Insights available for all plans
     case "quality":
       return limits.responseQuality === "complete" || limits.responseQuality === "ultra";
+    case "images":
+      return limits.imagesPerDay > 0;
     case "styleChoice":
       return planId === "pro" || planId === "max";
     case "postAnalysis":
@@ -1085,6 +1088,16 @@ function getDynamicFeatureLabel(key: string, plan: PlanConfig): string {
         return `${limits.conversationsPerMonth} créations par mois`;
       }
       return `${limits.messagesPerDay} créations par jour`;
+
+    case "images":
+      // Marketing wording is intentionally distinct from the raw quota:
+      // Max ships with a daily cap of 5 today but is sold as "quasi
+      // illimité" because that's the perceived experience for the typical
+      // user (most never hit 5/day). If we ever bump Max above ~30, swap
+      // this label to a hard "illimité" claim.
+      if (limits.imagesPerDay >= 5) return "Visuels quasi illimités";
+      if (limits.imagesPerDay > 0) return `${limits.imagesPerDay} visuels par jour`;
+      return "";
 
     default:
       return "";
@@ -1197,6 +1210,18 @@ function getLocalizedDynamicFeatureLabel(key: string, plan: PlanConfig, t: Trans
       }
       return t.plans.creationsPerDay.replace("{n}", String(limits.messagesPerDay));
 
+    case "images":
+      // See note on `images` in the non-localized variant above — wording
+      // is marketing-driven and intentionally diverges from the raw quota
+      // for Max (5/day surfaced as "quasi unlimited").
+      if (limits.imagesPerDay >= 5) {
+        return t.plans.imagesNearUnlimited;
+      }
+      if (limits.imagesPerDay > 0) {
+        return t.plans.imagesPerDay.replace("{n}", String(limits.imagesPerDay));
+      }
+      return "";
+
     default:
       return "";
   }
@@ -1209,6 +1234,7 @@ function getLocalizedFeatureLabel(key: string, t: TranslationsParam): string {
   const featureKeyMap: Record<string, string> = {
     creations: "featureCreations",
     quality: "featureQuality",
+    images: "featureImages",
     scheduling: "featureScheduling",
     personalized: "featurePersonalized",
     dualMode: "featureDualMode",

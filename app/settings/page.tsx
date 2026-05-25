@@ -19,6 +19,7 @@ import {
 } from "@/lib/db/firestore";
 import type { MemoryItem } from "@/types";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
+import PageHeader from "@/components/layout/PageHeader";
 import Button from "@/components/ui/Button";
 import { ToggleField } from "@/components/ui/Toggle";
 import DeleteAccountModal from "@/components/ui/DeleteAccountModal";
@@ -28,9 +29,14 @@ import { useTheme } from "@/contexts/ThemeContext";
 import toast from "@/components/ui/Toast";
 import { translations, languageNames } from "@/lib/i18n";
 import type { Language } from "@/lib/i18n";
-import { SubscriptionManagement, PlatformConnectionsSection } from "@/components/settings";
+import {
+  SubscriptionManagement,
+  PlatformConnectionsSection,
+} from "@/components/settings";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { usePageTitle } from "@/hooks/ui/usePageTitle";
+import { useAppTour } from "@/hooks/app/useAppTour";
+import AppTourModal from "@/components/onboarding/AppTourModal";
 
 // Animation variants for staggered sections
 const containerVariants = {
@@ -60,6 +66,7 @@ function SettingsContent() {
   const { user, deleteUserAccount, signOut } = useAuth();
   const { t, language, setLanguage } = useLanguage();
   const { theme, toggleTheme, isDark } = useTheme();
+  const appTour = useAppTour();
   useSubscription();
   usePageTitle("settings");
   const router = useRouter();
@@ -280,7 +287,7 @@ function SettingsContent() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background-warm dark:bg-background flex flex-col items-center justify-center gap-4">
+      <div className="min-h-screen bg-transparent flex flex-col items-center justify-center gap-4">
         <div className="w-10 h-10 md:w-12 md:h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
         <p className="text-text-secondary text-sm md:text-base">{t.common.loading}</p>
       </div>
@@ -289,7 +296,7 @@ function SettingsContent() {
 
   return (
     <div
-      className="bg-background-warm dark:bg-background"
+      className="posty-soft-welcome"
       style={{
         height: "100dvh",
         maxHeight: "100dvh",
@@ -299,25 +306,11 @@ function SettingsContent() {
         touchAction: "pan-y",
       }}
     >
-      {/* Sticky Header with Back Button */}
-      <div className="sticky top-0 z-40 bg-background-warm/80 dark:bg-dark-bg/80 backdrop-blur-xl border-b border-[#F8935D]/10 dark:border-dark-border">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative flex items-center h-16">
-            <button
-              onClick={handleBack}
-              className="flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors group z-10"
-            >
-              <svg className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              <span className="hidden sm:inline">{t.common.back}</span>
-            </button>
-            <div className="absolute left-1/2 -translate-x-1/2 text-lg font-semibold text-gray-900 dark:text-white">
-              {t.settings.title}
-            </div>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title={t.settings.title}
+        onBack={handleBack}
+        backLabel={t.common.back}
+      />
 
       {/* Main Content */}
       <div className="
@@ -362,7 +355,7 @@ function SettingsContent() {
             {/* Appearance Section - Theme Toggle */}
             <motion.section
               variants={sectionVariants}
-              className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-xl p-4 md:p-5 lg:p-6 transition-colors duration-200"
+              className="posty-card-glass posty-card-glass-hover rounded-xl p-4 md:p-5 lg:p-6"
             >
               <div className="flex items-center gap-3 mb-4 lg:mb-5">
                 <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-[#F8935D]/10 flex items-center justify-center">
@@ -391,10 +384,53 @@ function SettingsContent() {
               />
             </motion.section>
 
+            {/* Product Tour Section — replay the premium feature carousel */}
+            <motion.section
+              variants={sectionVariants}
+              className="posty-card-glass posty-card-glass-hover rounded-xl p-4 md:p-5 lg:p-6"
+            >
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-gradient-to-br from-brand-orange to-brand-rose flex items-center justify-center flex-shrink-0 shadow-glow">
+                    <svg className="w-5 h-5 lg:w-6 lg:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2L14.5 8.5L21 10L16 14.5L17.5 21L12 17.5L6.5 21L8 14.5L3 10L9.5 8.5L12 2Z" />
+                    </svg>
+                  </div>
+                  <div className="min-w-0">
+                    <h2 className="text-base lg:text-lg font-semibold text-silver-solid dark:text-white truncate">
+                      {((t as unknown as { appTour?: { settings?: { replayLabel?: string } } }).appTour?.settings?.replayLabel) ?? "Replay product tour"}
+                    </h2>
+                    <p className="text-xs lg:text-sm text-text-muted mt-0.5">
+                      {((t as unknown as { appTour?: { settings?: { replayDesc?: string } } }).appTour?.settings?.replayDesc) ?? "Watch the premium feature tour again"}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={appTour.replay}
+                  className="
+                    flex-shrink-0 inline-flex items-center gap-1.5
+                    h-10 px-4 rounded-xl text-sm font-semibold text-white
+                    bg-gradient-to-r from-brand-orange to-brand-rose
+                    shadow-btn-primary hover:shadow-btn-primary-hover
+                    hover:-translate-y-[1px] active:translate-y-0
+                    transition-all duration-200
+                    focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40
+                  "
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-4 h-4">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.4} d="M4 4v5h.582M20 20v-5h-.581M19.418 9A8 8 0 005.582 9m13.836 6A8 8 0 014.582 15" />
+                  </svg>
+                  <span>
+                    {((t as unknown as { appTour?: { settings?: { replayCta?: string } } }).appTour?.settings?.replayCta) ?? "Replay"}
+                  </span>
+                </button>
+              </div>
+            </motion.section>
+
             {/* Language Section */}
             <motion.section
               variants={sectionVariants}
-              className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-xl p-4 md:p-5 lg:p-6 transition-colors duration-200"
+              className="posty-card-glass posty-card-glass-hover rounded-xl p-4 md:p-5 lg:p-6"
             >
               <div className="flex items-center gap-3 mb-4 lg:mb-5">
                 <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-[#F8935D]/10 flex items-center justify-center">
@@ -460,7 +496,7 @@ function SettingsContent() {
             {/* Notifications Section */}
             <motion.section
               variants={sectionVariants}
-              className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-xl p-4 md:p-5 lg:p-6 transition-colors duration-200"
+              className="posty-card-glass posty-card-glass-hover rounded-xl p-4 md:p-5 lg:p-6"
             >
               <div className="flex items-center gap-3 mb-4 lg:mb-5">
                 <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-[#F8935D]/10 flex items-center justify-center">
@@ -494,7 +530,7 @@ function SettingsContent() {
             {/* AI Contextual Memory */}
             <motion.section
               variants={sectionVariants}
-              className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-xl p-4 md:p-5 lg:p-6 transition-colors duration-200"
+              className="posty-card-glass posty-card-glass-hover rounded-xl p-4 md:p-5 lg:p-6"
             >
               <div className="flex items-center gap-3 mb-4 lg:mb-5">
                 <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-[#F8935D]/10 flex items-center justify-center">
@@ -572,7 +608,7 @@ function SettingsContent() {
             {/* Consent preferences */}
             <motion.section
               variants={sectionVariants}
-              className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-xl p-4 md:p-5 lg:p-6 transition-colors duration-200"
+              className="posty-card-glass posty-card-glass-hover rounded-xl p-4 md:p-5 lg:p-6"
             >
               <div className="flex items-center gap-3 mb-4 lg:mb-5">
                 <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-[#F8935D]/10 flex items-center justify-center">
@@ -607,7 +643,7 @@ function SettingsContent() {
             {/* Your rights */}
             <motion.section
               variants={sectionVariants}
-              className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-xl p-4 md:p-5 lg:p-6 transition-colors duration-200"
+              className="posty-card-glass posty-card-glass-hover rounded-xl p-4 md:p-5 lg:p-6"
             >
               <div className="flex items-center gap-3 mb-4 lg:mb-5">
                 <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-[#F8935D]/10 flex items-center justify-center">
@@ -640,7 +676,7 @@ function SettingsContent() {
             {/* Actions */}
             <motion.section
               variants={sectionVariants}
-              className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-xl p-4 md:p-5 lg:p-6 transition-colors duration-200"
+              className="posty-card-glass posty-card-glass-hover rounded-xl p-4 md:p-5 lg:p-6"
             >
               <div className="flex items-center gap-3 mb-4 lg:mb-5">
                 <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-gray-100 dark:bg-dark-hover flex items-center justify-center">
@@ -735,7 +771,7 @@ function SettingsContent() {
             {/* Legal links */}
             <motion.section
               variants={sectionVariants}
-              className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-xl p-4 md:p-5 lg:p-6 transition-colors duration-200"
+              className="posty-card-glass posty-card-glass-hover rounded-xl p-4 md:p-5 lg:p-6"
             >
               <div className="flex items-center gap-3 mb-4 lg:mb-5">
                 <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-gray-100 dark:bg-dark-hover flex items-center justify-center">
@@ -836,6 +872,9 @@ function SettingsContent() {
         onClose={() => setShowDeleteConversationsModal(false)}
         onConfirm={handleDeleteConversations}
       />
+
+      {/* Premium feature tour (replayable from this page) */}
+      <AppTourModal isOpen={appTour.isOpen} onClose={appTour.markAsSeen} />
     </div>
   );
 }

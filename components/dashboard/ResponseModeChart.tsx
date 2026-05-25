@@ -58,7 +58,7 @@ export default function ResponseModeChart({ data }: ResponseModeChartProps) {
   };
 
   return (
-    <div className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-4 sm:p-6 hover:border-gray-300 dark:hover:border-dark-border-hover transition-colors duration-200">
+    <div className="posty-card-glass posty-card-glass-hover rounded-2xl p-4 sm:p-6">
       {/* Header */}
       <div className="mb-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t.dashboard.responseMode}</h3>

@@ -14,15 +14,18 @@
 import Link from "next/link";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useStrategistDrawer } from "@/contexts/StrategistDrawerContext";
-import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useStrategistEligibility } from "@/hooks/strategist/useStrategistEligibility";
+import { useLinkedIn } from "@/contexts/LinkedInContext";
 import StrategistChatPanel from "./StrategistChatPanel";
+import StrategistMark from "./StrategistMark";
+import StrategistActivePill from "./StrategistActivePill";
 
 const PREMIUM_EASE = [0.22, 1, 0.36, 1] as const;
 
 export default function StrategistDrawer() {
   const { isOpen, close } = useStrategistDrawer();
-  const { hasMarketingStrategist, loading } = useSubscription();
+  const eligibility = useStrategistEligibility();
   const { t } = useLanguage();
   const reduced = useReducedMotion();
 
@@ -77,14 +80,16 @@ export default function StrategistDrawer() {
             <DrawerHeader onClose={close} />
 
             <div className="flex-1 flex flex-col min-h-0">
-              {loading ? (
+              {eligibility.reason === "loading" ? (
                 <div className="flex-1 flex items-center justify-center">
                   <div className="w-5 h-5 border-2 border-gray-200 border-t-gray-600 dark:border-gray-700 dark:border-t-gray-300 rounded-full animate-spin" />
                 </div>
-              ) : hasMarketingStrategist ? (
-                <StrategistChatPanel />
-              ) : (
+              ) : eligibility.reason === "no-access" ? (
                 <StrategistTeaser />
+              ) : eligibility.reason === "no-linkedin" ? (
+                <StrategistLinkedInRequired />
+              ) : (
+                <StrategistChatPanel />
               )}
             </div>
           </motion.aside>
@@ -114,31 +119,16 @@ function DrawerHeader({ onClose }: { onClose: () => void }) {
       />
 
       <div className="flex items-center gap-2 mt-1.5 lg:mt-0">
-        {/* Gold sparkle — same minimal mark used in the FAB tooltip,
-            keeps the header visually quiet while signaling the AI agent. */}
-        <svg
-          className="w-4 h-4 text-amber-500 dark:text-amber-400 flex-shrink-0"
-          viewBox="0 0 24 24"
-          fill="currentColor"
-          aria-hidden
-        >
-          <path d="M12 2.5l1.8 6.4L20.5 12l-6.7 3.1L12 21.5l-1.8-6.4L3.5 12l6.7-3.1L12 2.5z" />
-        </svg>
+        {/* Canonical Strategist mark — single source of truth, same glyph
+            as the FAB, the dropdown row, the batch cards, the banner. */}
+        <StrategistMark className="w-4 h-4 text-amber-500 dark:text-amber-400 flex-shrink-0" />
         <h2 className="text-[14px] font-medium text-gray-900 dark:text-white tracking-tight">
           {t.strategist.pageTitle}
         </h2>
-        <span
-          className="
-            inline-flex items-center
-            px-1.5 py-[2px] rounded
-            bg-amber-50 dark:bg-amber-400/10
-            text-amber-700 dark:text-amber-400
-            text-[9.5px] font-semibold uppercase tracking-wider
-            border border-amber-200/60 dark:border-amber-400/15
-          "
-        >
-          Max
-        </span>
+        {/* Conditional "Actif" status pill — visible only when the user has
+            turned on the autonomous weekly mode. Tells them at a glance
+            that the agent is on duty without opening the config. */}
+        <StrategistActivePill />
       </div>
 
       <button
@@ -228,6 +218,100 @@ function StrategistTeaser() {
           >
             {l.cta}
           </Link>
+        </motion.div>
+      </div>
+    </div>
+  );
+}
+
+// ── LinkedIn-required state ──────────────────────────────────────────────
+// User passed the allowlist but has no LinkedIn account connected. Distinct
+// from the access teaser: this is RECOVERABLE — one click → /settings →
+// connect → come back. Use the same blurred-panel pattern so the affordance
+// reads as a soft block, not a hard error.
+
+function StrategistLinkedInRequired() {
+  const { close } = useStrategistDrawer();
+  const { connectLinkedIn } = useLinkedIn();
+
+  return (
+    <div className="relative flex-1 flex flex-col min-h-0">
+      {/* Real panel — visible but blurred and inert, same as the access teaser */}
+      <div
+        aria-hidden
+        className="flex-1 flex flex-col min-h-0 pointer-events-none select-none blur-[3px]"
+      >
+        <StrategistChatPanel />
+      </div>
+
+      {/* Connect overlay */}
+      <div className="absolute inset-0 z-10 flex items-center justify-center px-5">
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+          className="
+            w-full max-w-sm text-center
+            bg-white/85 dark:bg-dark-card/85
+            backdrop-blur-xl
+            border border-white/60 dark:border-white/10
+            rounded-xl p-6
+            shadow-[0_20px_60px_-15px_rgba(15,23,42,0.35)]
+          "
+        >
+          <span
+            className="
+              inline-flex items-center
+              px-1.5 py-[2px] rounded
+              bg-blue-50 dark:bg-blue-400/10
+              text-blue-700 dark:text-blue-400
+              text-[9.5px] font-semibold uppercase tracking-wider
+              border border-blue-200/60 dark:border-blue-400/15
+            "
+          >
+            LinkedIn requis
+          </span>
+
+          <h3 className="mt-3 text-[15px] font-medium text-gray-900 dark:text-white leading-snug">
+            Connecte ton compte LinkedIn
+          </h3>
+
+          <p className="mt-1.5 text-[13px] text-gray-500 dark:text-gray-400 leading-relaxed">
+            Le Stratège planifie, génère et programme des posts directement
+            sur LinkedIn. Sans compte connecté, il ne sert à rien.
+          </p>
+
+          <div className="mt-5 flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                close();
+                connectLinkedIn();
+              }}
+              className="
+                inline-flex items-center justify-center gap-2
+                px-4 py-2 rounded-lg
+                bg-[#0A66C2] hover:bg-[#004182]
+                text-white font-medium text-[13.5px]
+                transition-colors shadow-sm
+              "
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+                <path d="M19 0H5a5 5 0 00-5 5v14a5 5 0 005 5h14a5 5 0 005-5V5a5 5 0 00-5-5zM8 19H5V8h3v11zM6.5 6.7a1.8 1.8 0 110-3.6 1.8 1.8 0 010 3.6zM20 19h-3v-5.6c0-1.4-.5-2.4-1.8-2.4-1 0-1.6.7-1.9 1.4-.1.2-.1.6-.1.9V19h-3V8h3v1.3c.4-.6 1.1-1.5 2.7-1.5 2 0 3.5 1.3 3.5 4.1V19z" />
+              </svg>
+              Connecter LinkedIn
+            </button>
+            <Link
+              href="/settings"
+              onClick={close}
+              className="
+                text-[12px] text-text-muted hover:text-gray-900 dark:hover:text-white
+                transition-colors
+              "
+            >
+              Gérer mes connexions dans les paramètres
+            </Link>
+          </div>
         </motion.div>
       </div>
     </div>

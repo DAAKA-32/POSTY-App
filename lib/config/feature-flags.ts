@@ -21,8 +21,15 @@
  * Why gated: feature is shipped in the codebase but not yet announced; we
  * don't want production users to discover it via the bottom-right FAB before
  * the launch comms go out.
+ *
+ * Always ON in development (`NODE_ENV === "development"`) so the feature is
+ * usable in localhost without juggling `.env.local` or restarting the dev
+ * server when the var was added after boot (NEXT_PUBLIC_* is inlined at
+ * build time — a missed restart silently leaves the FAB hidden). In
+ * production, the explicit env flag is still the gate.
  */
 export function isStrategistEnabled(): boolean {
+  if (process.env.NODE_ENV === "development") return true;
   return process.env.NEXT_PUBLIC_ENABLE_STRATEGIST === "true";
 }
 

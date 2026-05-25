@@ -201,20 +201,30 @@ export default function LoginPage() {
   // Only render the login page if user is definitely NOT authenticated
   return (
     <div className="min-h-[100dvh] bg-background-warm overflow-x-hidden">
-      {/* Minimalist background — single soft warm blob, no rainbow.
-          Linear/Stripe-style: focus on the form, not the chrome. */}
+      {/* Warm ambient blobs — saturated enough that the glass-card backdrop-filter
+          actually reveals color. Sober palette (peach + coral + soft rose accent)
+          aligned with the brand signature gradient. */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, ease: smoothEase }}
-          className="absolute -top-1/4 -right-1/4 w-[55%] h-[55%] bg-gradient-to-br from-warm-orange/[0.07] to-warm-coral/[0.04] rounded-full blur-[120px]"
+          transition={{ duration: 0.9, ease: smoothEase }}
+          className="absolute -top-[15%] -right-[10%] w-[70%] h-[70%] rounded-full blur-[110px]"
+          style={{ background: "radial-gradient(circle, rgba(248,147,93,0.32) 0%, rgba(247,107,84,0.18) 45%, transparent 75%)" }}
         />
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.15, ease: smoothEase }}
-          className="absolute -bottom-1/4 -left-1/4 w-[45%] h-[45%] bg-gradient-to-tr from-warm-orange/[0.05] to-transparent rounded-full blur-[100px]"
+          transition={{ duration: 0.9, delay: 0.15, ease: smoothEase }}
+          className="absolute -bottom-[20%] -left-[15%] w-[65%] h-[65%] rounded-full blur-[110px]"
+          style={{ background: "radial-gradient(circle, rgba(251,185,173,0.38) 0%, rgba(248,147,93,0.18) 40%, transparent 75%)" }}
+        />
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1.1, delay: 0.3, ease: smoothEase }}
+          className="absolute top-[35%] left-[42%] -translate-x-1/2 w-[40%] h-[40%] rounded-full blur-[90px]"
+          style={{ background: "radial-gradient(circle, rgba(241,52,82,0.14) 0%, rgba(139,92,246,0.08) 55%, transparent 75%)" }}
         />
       </div>
 
@@ -254,7 +264,11 @@ export default function LoginPage() {
             variants={itemVariants}
             className="flex-1 flex flex-col justify-end pb-8"
           >
-            <AuthPanel initialMode={initialMode} onSuccess={() => {}} />
+            <div className="posty-landing-glass-card relative overflow-hidden rounded-3xl px-5 py-7 sm:px-6 sm:py-8">
+              <span aria-hidden className="posty-glass-sheen" />
+              <span aria-hidden className="posty-glass-wash" />
+              <AuthPanel initialMode={initialMode} onSuccess={() => {}} />
+            </div>
           </motion.div>
 
           {/* Footer links */}
@@ -363,7 +377,11 @@ export default function LoginPage() {
                 transition={{ duration: 0.45, delay: 0.1, ease: smoothEase }}
                 className="w-full max-w-md py-8"
               >
-                <AuthPanel initialMode={initialMode} onSuccess={() => {}} />
+                <div className="posty-landing-glass-card relative overflow-hidden rounded-3xl px-6 py-10 sm:px-8 lg:px-10">
+                  <span aria-hidden className="posty-glass-sheen" />
+                  <span aria-hidden className="posty-glass-wash" />
+                  <AuthPanel initialMode={initialMode} onSuccess={() => {}} />
+                </div>
               </motion.div>
             </motion.div>
 

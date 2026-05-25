@@ -2545,6 +2545,7 @@ export const nl = {
     // Core feature labels
     featureCreations: "Dagelijkse creaties",
     featureQuality: "AI-contentkwaliteit",
+    featureImages: "Visual generation",
     featureScheduling: "Berichten inplannen",
     featurePersonalized: "Toon afgestemd op je profiel",
     featureDualMode: "Dubbel Story + Business-format",
@@ -2576,6 +2577,8 @@ export const nl = {
     unlimitedCreations: "Onbeperkte creaties, geen quotum",
     creationsPerMonth: "{n} creaties per maand",
     creationsPerDay: "{n} creaties per dag",
+    imagesPerDay: "{n} visuals per day",
+    imagesNearUnlimited: "Visuals near-unlimited",
 
     // Savings
     monthsFree: "{n} maand gratis",
@@ -2659,6 +2662,46 @@ export const nl = {
       "Januari", "Februari", "Maart", "April", "Mei", "Juni",
       "Juli", "Augustus", "September", "Oktober", "November", "December",
     ],
+  },
+
+  // Premium first-time feature tour (5-slide carousel shown after onboarding)
+  appTour: {
+    welcome: {
+      eyebrow: "Welkom",
+      title: "Maak kennis met Posty, je AI-copiloot",
+      description: "Een premium werkruimte om je ideeën om te zetten in LinkedIn-posts die je publiek laten groeien — zonder de lege pagina.",
+    },
+    posts: {
+      eyebrow: "Slim schrijven",
+      title: "Posts die klinken zoals jij",
+      description: "Chat in natuurlijke taal. Posty vangt jouw stem, jouw sector, jouw publiek — en schrijft posts die klaar zijn om te publiceren.",
+    },
+    visuals: {
+      eyebrow: "AI-visuals",
+      title: "Indrukwekkende visuals, direct",
+      description: "Meerdere on-brand varianten voor elke post. Kies degene die past — carrousels, illustraties, hero-afbeeldingen.",
+    },
+    schedule: {
+      eyebrow: "Overal publiceren",
+      title: "Plan op alle platforms",
+      description: "Plan je week, publiceer in één klik op LinkedIn, X, Bluesky, Threads en meer. Posty regelt de timing.",
+    },
+    optimize: {
+      eyebrow: "Groeimotor",
+      title: "Optimaliseer voor engagement",
+      description: "Live hook-scores, analytics en AI-suggesties leiden elke post naar meer bereik en gesprek.",
+    },
+    controls: {
+      skip: "Overslaan",
+      back: "Terug",
+      next: "Volgende",
+      start: "Aan de slag",
+    },
+    settings: {
+      replayLabel: "Producttour opnieuw bekijken",
+      replayDesc: "Bekijk de premium feature-tour opnieuw",
+      replayCta: "Opnieuw",
+    },
   },
 
   // App Page
@@ -3156,7 +3199,7 @@ export const nl = {
     cookiePolicy: "Cookiebeleid",
   strategist: {
     pageTitle: "Strategist",
-    headerEyebrow: "Max · Marketing Strategist",
+    headerEyebrow: "Marketing Strategist",
     headerTitle: "Build a strategy, not just posts.",
     headerSubtitle: "A senior marketing advisor in your pocket. Audit your LinkedIn presence, design content plans, sharpen positioning — in one focused conversation.",
     inputPlaceholder: "Ask for an audit, a 30-day plan, hook angles…",

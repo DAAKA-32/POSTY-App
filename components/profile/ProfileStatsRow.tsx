@@ -37,7 +37,7 @@ export default function ProfileStatsRow({ stats, isLoading }: ProfileStatsRowPro
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3, delay: 0.2 + index * 0.05 }}
-          className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-xl p-4 lg:p-5 text-center"
+          className="posty-card-glass rounded-xl p-4 lg:p-5 text-center"
         >
           {/* Value */}
           <div className={`text-2xl lg:text-3xl font-bold mb-1 ${stat.color ? colorClasses[stat.color] : "text-gray-900 dark:text-white"}`}>

@@ -153,11 +153,13 @@ export default function BusinessOffer() {
                 </span>
               </div>
 
-              {/* Inline CTA — neutral text, animated disc + arrow */}
+              {/* Inline CTA — neutral text, animated disc + arrow.
+                  Type scale aligned on PricingCard CTA (xs → sm → base) so the
+                  Business strip reads as the same rank as the paid plans. */}
               <span
                 className="
                   hidden sm:inline-flex items-center gap-2.5
-                  text-[13px] font-semibold tracking-tight
+                  text-xs sm:text-sm md:text-base font-semibold tracking-tight
                   text-gray-900 dark:text-white
                   shrink-0
                 "
@@ -204,10 +206,13 @@ export default function BusinessOffer() {
               </span>
             </div>
 
-            {/* ── Editorial headline ──────────────────────────────────── */}
+            {/* ── Editorial headline — scale matches PricingCard.plan-name
+                  (text-base → sm:text-xl → md:text-2xl) so the Business row
+                  belongs to the same typographic family as the paid plans
+                  above it. The previous md:text-[26px] broke the scale. */}
             <h3
               className="
-                text-xl sm:text-2xl md:text-[26px]
+                text-base sm:text-xl md:text-2xl
                 font-bold tracking-tight leading-[1.15]
                 text-gray-900 dark:text-white
                 max-w-md
@@ -216,7 +221,9 @@ export default function BusinessOffer() {
               {t.landing.businessForTeams ?? "For teams, agencies and companies."}
             </h3>
 
-            {/* ── Capability bullets — typographic, neutral ───────────── */}
+            {/* ── Capability bullets — aligned on the PricingCard tagline
+                  scale (text-[11px] → sm:text-xs → md:text-sm) so list items
+                  read with the same rank across all pricing surfaces. */}
             <ul className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-x-5 gap-y-2.5">
               {bullets.map((bullet, i) => (
                 <li
@@ -228,7 +235,7 @@ export default function BusinessOffer() {
                     className="flex-shrink-0 w-3 h-px"
                     style={{ backgroundColor: ACCENT, opacity: 0.7 }}
                   />
-                  <span className="text-[13px] text-gray-600 dark:text-gray-400 leading-snug truncate">
+                  <span className="text-[11px] sm:text-xs md:text-sm text-gray-600 dark:text-gray-400 leading-snug truncate">
                     {bullet}
                   </span>
                 </li>
@@ -242,7 +249,7 @@ export default function BusinessOffer() {
                 otherwise leaves the arrow rendering gray on real iPhones
                 (devtools mobile preview does NOT reproduce). */}
             <div className="sm:hidden mt-7 pt-5 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
-              <span className="text-[13px] font-semibold text-gray-900 dark:text-white tracking-tight">
+              <span className="text-xs font-semibold text-gray-900 dark:text-white tracking-tight">
                 {t.landing.businessLearnMore ?? "Learn more"}
               </span>
               <motion.span

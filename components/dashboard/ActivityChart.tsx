@@ -28,7 +28,7 @@ export default function ActivityChart({ data, title, subtitle }: ActivityChartPr
   };
 
   return (
-    <div className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-4 sm:p-6 hover:border-gray-300 dark:hover:border-dark-border-hover transition-colors duration-200">
+    <div className="posty-card-glass posty-card-glass-hover rounded-2xl p-4 sm:p-6">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div>

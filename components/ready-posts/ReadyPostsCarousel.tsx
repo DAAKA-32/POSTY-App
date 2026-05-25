@@ -14,30 +14,35 @@ const CATEGORIES: ReadyPostCategory[] = [
   "controversial",
 ];
 
+// Use arbitrary opacity values (`/[0.NN]`) so Tailwind's JIT reliably
+// generates the dark mode variants. Non-standard opacity steps like `/8`,
+// `/12`, `/30`, `/35` are NOT in the default scale and were being silently
+// dropped → dark-mode chips fell back to the opaque light backgrounds
+// (`bg-cyan-50` etc), making them look bright/light against the dark shell.
 const CHIP_TONES: Record<ReadyPostCategory, { bg: string; border: string }> = {
   storytelling: {
-    bg: "bg-[#F8935D]/8 dark:bg-[#F8935D]/12",
-    border: "border-[#F8935D]/30 dark:border-[#F8935D]/35",
+    bg: "bg-[#F8935D]/[0.08] dark:bg-[#F8935D]/[0.12]",
+    border: "border-[#F8935D]/[0.30] dark:border-[#F8935D]/[0.35]",
   },
   tips: {
-    bg: "bg-cyan-50 dark:bg-cyan-500/12",
-    border: "border-cyan-200 dark:border-cyan-500/35",
+    bg: "bg-cyan-500/[0.08] dark:bg-cyan-500/[0.12]",
+    border: "border-cyan-500/[0.30] dark:border-cyan-500/[0.35]",
   },
   controversial: {
-    bg: "bg-violet-50 dark:bg-violet-500/12",
-    border: "border-violet-200 dark:border-violet-500/35",
+    bg: "bg-violet-500/[0.08] dark:bg-violet-500/[0.12]",
+    border: "border-violet-500/[0.30] dark:border-violet-500/[0.35]",
   },
   success: {
-    bg: "bg-emerald-50 dark:bg-emerald-500/12",
-    border: "border-emerald-200 dark:border-emerald-500/35",
+    bg: "bg-emerald-500/[0.08] dark:bg-emerald-500/[0.12]",
+    border: "border-emerald-500/[0.30] dark:border-emerald-500/[0.35]",
   },
   lesson: {
-    bg: "bg-[#F8935D]/8 dark:bg-[#F8935D]/12",
-    border: "border-[#F8935D]/30 dark:border-[#F8935D]/35",
+    bg: "bg-[#F8935D]/[0.08] dark:bg-[#F8935D]/[0.12]",
+    border: "border-[#F8935D]/[0.30] dark:border-[#F8935D]/[0.35]",
   },
   question: {
-    bg: "bg-cyan-50 dark:bg-cyan-500/12",
-    border: "border-cyan-200 dark:border-cyan-500/35",
+    bg: "bg-cyan-500/[0.08] dark:bg-cyan-500/[0.12]",
+    border: "border-cyan-500/[0.30] dark:border-cyan-500/[0.35]",
   },
 };
 
@@ -118,6 +123,10 @@ function CarouselChip({
       className={[
         "template-chip-interactive",
         "flex-shrink-0 px-4 py-2.5 rounded-xl border-2",
+        // Glass effect — backdrop blur + light saturation makes the per-category
+        // tone sit on the page gradient like a frosted-glass pill.
+        // Saturate boost only in light mode; on dark the bg is already vivid.
+        "backdrop-blur-md backdrop-saturate-150 dark:backdrop-saturate-100",
         tone.bg,
         tone.border,
         "flex items-center gap-2 select-none",

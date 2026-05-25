@@ -348,14 +348,14 @@ function HistoryContent() {
         - app-content-wrapper: allows flex child to scroll
         - app-scroll-container: defines scrollable area
       */}
-      <div className="flex flex-col min-h-full bg-background-warm dark:bg-dark-bg app-content-wrapper">
+      <div className="flex flex-col min-h-full app-content-wrapper">
         {/*
           Responsive container with smooth scroll and pull-to-refresh (mobile only)
           - Mobile: Full height with native scroll + pull-to-refresh
           - Tablet/Desktop: Optimized spacing and width
         */}
         <div
-          className="flex-1 min-h-0 bg-background-warm dark:bg-dark-bg scroll-smooth app-scroll-container"
+          className="flex-1 min-h-0 bg-transparent scroll-smooth app-scroll-container"
         >
         {/*
           Content wrapper with responsive max-width and padding

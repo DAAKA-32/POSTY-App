@@ -29,6 +29,7 @@ import FreeTrialPaywall from "@/components/subscription/FreeTrialPaywall";
 import UsageBanner from "@/components/ui/UsageBanner";
 import QuotaExceededModal from "@/components/ui/QuotaExceededModal";
 import HelpFloatingButton from "@/components/help/HelpFloatingButton";
+import { useScrolledPast } from "@/hooks/scroll/useScrolledPast";
 
 // Premium animation easings - consistent across app
 const smoothEase = [0.25, 0.1, 0.25, 1] as const;
@@ -262,6 +263,38 @@ export default function MainLayout({
   const router = useRouter();
   const { user, userProfile, loading: authLoading } = useAuth();
   const { t } = useLanguage();
+  const { isScrolled: isMobileScrolled, sentinelRef: mobileScrollSentinelRef } = useScrolledPast(8);
+
+  // Per-route Posty signature ambient — applied directly as a CSS class on
+  // this layout's outer wrapper. Parent background paints BEFORE children
+  // (CSS spec), so no descendant stacking context can mask it. SSR-safe: the
+  // class is computed from `usePathname()` and serialized in the initial HTML.
+  //
+  // We use the `.posty-soft-{tone}` classes (defined in globals.css) instead
+  // of the full-saturation `bg-signature-{tone}` Tailwind tokens. Soft
+  // variants composite two radial halos at ~30-45% alpha over the theme
+  // surface — the identity color is unmistakable, but content cards and
+  // floating text remain perfectly readable without contrast hacks. Same
+  // pattern as Linear, Arc, Vercel and Notion AI.
+  //
+  // ⚙ FEATURE FLAG: flip `ENABLE_PAGE_TONE_BG` to disable the ambients.
+  const ENABLE_PAGE_TONE_BG = true;
+  const toneBg = ENABLE_PAGE_TONE_BG ? (() => {
+    const p = pathname || "";
+    // Each app page wears a distinct signature ambient so the user feels they
+    // move into a different "room" of the product on every navigation.
+    if (p.startsWith("/app/c/")) return "posty-soft-posts";        // writing room — violet + coral
+    if (p === "/app" || p.startsWith("/app/")) return "posty-soft-welcome"; // chat home — warm brand
+    if (p.startsWith("/history")) return "posty-soft-visuals";     // archive — fuchsia + rose
+    if (p.startsWith("/schedule")) return "posty-soft-schedule";   // planning — sky + violet
+    if (p.startsWith("/analytics") || p.startsWith("/dashboard")) return "posty-soft-optimize"; // growth — emerald + orange
+    if (p.startsWith("/settings")) return "posty-soft-welcome";    // home base — warm brand
+    if (p.startsWith("/profile") || p.startsWith("/brand")) return "posty-soft-visuals"; // creative archive
+    if (p.startsWith("/subscription") || p.startsWith("/pricing")) return "posty-soft-posts"; // VIP plans — violet + coral
+    if (p.startsWith("/chat")) return "posty-soft-posts";
+    return "posty-soft-welcome";
+  })() : "";
+
   const prefersReducedMotion = useReducedMotion();
   const { refreshScheduledPosts } = useScheduling();
   const { connection: linkedInConnection } = useLinkedIn();
@@ -553,14 +586,53 @@ export default function MainLayout({
   );
 
   return (
-    <div className="h-screen bg-app-surface flex overflow-hidden app-layout">
-      {/* ========== DESKTOP SIDEBAR - COLLAPSIBLE ========== */}
+    <div className={`relative h-screen flex overflow-hidden app-layout isolate`}>
+      {/* Per-route signature ambient — viewport-fixed gradient layer behind
+          everything. Using `position: fixed; inset: 0` (instead of painting
+          on `.app-layout`, which is `h-screen` and gets scrolled past on
+          long pages like /settings) guarantees the halo always covers the
+          full viewport, no matter the scroll mode of the route. */}
+      <div
+        aria-hidden="true"
+        className={`pointer-events-none fixed inset-0 ${toneBg}`}
+        style={{ zIndex: -1 }}
+      />
+      {/* ========== DESKTOP SIDEBAR - COLLAPSIBLE ==========
+          Sidebar stays fully transparent — the per-route signature ambient
+          painted on the MainLayout outer wrapper (a CSS sibling/parent here)
+          bleeds through and gives the sidebar the SAME continuous gradient
+          as the page. No mini per-element gradient, no white opaque layer:
+          one single ambient spanning the whole shell, morphing on each
+          navigation. */}
       <aside
         role="navigation"
         aria-label="Navigation principale"
-        className="sidebar-root hidden lg:flex flex-col h-screen bg-background-warm dark:bg-dark-card border-r border-gray-200/65 dark:border-dark-border fixed left-0 top-0 z-40 overflow-hidden scroll-disabled transition-all duration-200 ease-out shadow-[1px_0_0_rgba(0,0,0,0.03)]"
+        // Surface en verre poli — même recette que le menu options et le
+        // header mobile. Translucide (bg-white/15) + double bordure (border +
+        // ring-inset) + multi-ombres pour la profondeur + saturate-200 pour
+        // garder la teinte de la page derrière vivante. Le dégradé signature
+        // bleed through depuis la fixed div à z=-1.
+        className="sidebar-root hidden lg:flex flex-col h-screen fixed left-0 top-0 z-40 overflow-hidden scroll-disabled transition-all duration-200 ease-out
+          bg-white/15 dark:bg-white/[0.04]
+          border-r border-white/50 dark:border-white/15
+          ring-1 ring-inset ring-white/40 dark:ring-white/10
+          backdrop-blur-2xl backdrop-saturate-200
+          shadow-[0_12px_40px_rgba(15,17,21,0.10),0_2px_10px_rgba(15,17,21,0.06)]
+          dark:shadow-[0_12px_40px_rgba(0,0,0,0.45),0_2px_10px_rgba(0,0,0,0.30)]"
         style={{ width: currentSidebarWidth }}
       >
+        {/* Glass sheen — fine horizontal highlight running along the top
+            edge, catches the light to read as polished glass. */}
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-4 top-0 h-px rounded-full bg-gradient-to-r from-transparent via-white/80 dark:via-white/40 to-transparent z-[1]"
+        />
+        {/* Subtle internal gradient wash — adds depth + matter without
+            obstructing the per-page ambient bleeding through. */}
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/20 via-white/[0.02] to-transparent dark:from-white/[0.04] dark:via-transparent z-0"
+        />
         {/* Header - Logo when expanded, Toggle when collapsed */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
@@ -602,8 +674,10 @@ export default function MainLayout({
                   className="relative"
                   whileHover={{ scale: 1.05 }}
                 >
-                  {/* Subtle glow on hover */}
-                  <div className="absolute -inset-1 bg-gradient-to-br from-primary/30 to-accent/30 rounded-xl opacity-0 group-hover:opacity-100 blur-md transition-opacity duration-300" />
+                  {/* Subtle gradient halo on hover — uses the Posty signature
+                      "welcome" gradient (orange → coral → rose) so the brand
+                      stamp echoes the onboarding hero. */}
+                  <div className="absolute -inset-1 bg-signature-welcome rounded-xl opacity-0 group-hover:opacity-30 blur-md transition-opacity duration-300" />
                   <div className="relative w-7 h-7 shrink-0 flex items-center justify-center rounded-lg overflow-hidden shadow-sm ring-1 ring-gray-200/50 dark:ring-dark-border/50">
                     <img
                       src="/logo.png"
@@ -694,7 +768,7 @@ export default function MainLayout({
           </motion.div>
 
           {/* Nav items — grouped in a subtle card for visual hierarchy */}
-          <div className="sidebar-nav-card mt-2 rounded-xl overflow-hidden ring-1 ring-gray-200/55 dark:ring-white/[0.055] bg-white/50 dark:bg-white/[0.025]">
+          <div className="sidebar-nav-card mt-2 rounded-xl overflow-hidden ring-1 ring-gray-200/40 dark:ring-white/[0.04] bg-white/15 dark:bg-white/[0.02]">
           {navItems.map((item, index) => {
             const isActive = pathname === item.href || (item.href === "/app" && pathname === "/chat");
             return (
@@ -707,25 +781,19 @@ export default function MainLayout({
                   variants={navItemVariants}
                   initial="hidden"
                   animate="visible"
-                  className="relative"
+                  whileTap={{ scale: 0.985 }}
+                  transition={{ type: "spring", stiffness: 420, damping: 22, mass: 0.7 }}
+                  className="relative mx-2 my-0.5"
                 >
-                  {/* Shared active indicator — slides smoothly between items */}
-                  {isActive && (
-                    <motion.div
-                      layoutId="mainlayout-active-indicator"
-                      className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-7 rounded-r-full bg-primary"
-                      transition={{ type: "spring", stiffness: 380, damping: 32 }}
-                    />
-                  )}
-
                   <Link
                     href={item.href}
                     className={`
-                      relative w-full h-10 flex items-center gap-3 transition-colors duration-150 ease-out group
+                      relative w-full h-10 flex items-center gap-3 rounded-lg
+                      border transition-[background-color,border-color,color,box-shadow] duration-200 ease-out group
                       ${isCollapsed ? "justify-center px-0" : "px-3"}
                       ${isActive
-                        ? "bg-primary/[0.09] dark:bg-primary/[0.13] text-primary"
-                        : "text-gray-700 dark:text-gray-200 hover:bg-white/80 dark:hover:bg-white/[0.05] hover:text-gray-900 dark:hover:text-white"
+                        ? "bg-white/55 dark:bg-white/[0.12] backdrop-blur-md backdrop-saturate-150 dark:backdrop-saturate-125 border-white/60 dark:border-white/20 shadow-sm dark:shadow-black/20 text-primary"
+                        : "border-transparent text-gray-700 dark:text-gray-200 hover:bg-white/35 dark:hover:bg-white/[0.08] hover:backdrop-blur-md hover:border-white/40 dark:hover:border-white/15 hover:text-gray-900 dark:hover:text-white"
                       }
                     `}
                     title={item.name}
@@ -764,16 +832,16 @@ export default function MainLayout({
                     below. Active state: left primary indicator + bg tint +
                     primary text — mirrors the active Link rows above. */}
                 {index === 0 && (
-                  <div className="relative">
-                    <div className="h-px bg-gray-100/70 dark:bg-white/[0.04] mx-0" />
+                  <div className="relative mx-2 my-0.5">
                     <button
                       onClick={handleSearchClick}
                       className={`
-                        relative w-full h-10 flex items-center gap-3 transition-colors duration-150 ease-out group
+                        relative w-full h-10 flex items-center gap-3 rounded-lg
+                        border transition-all duration-200 ease-out group
                         ${isCollapsed ? "justify-center px-0" : "px-3"}
                         ${searchOpen
-                          ? "bg-primary/[0.09] dark:bg-primary/[0.13] text-primary"
-                          : "text-gray-700 dark:text-gray-200 hover:bg-white/80 dark:hover:bg-white/[0.05] hover:text-gray-900 dark:hover:text-white"
+                          ? "bg-white/55 dark:bg-white/[0.12] backdrop-blur-md backdrop-saturate-150 dark:backdrop-saturate-125 border-white/60 dark:border-white/20 shadow-sm dark:shadow-black/20 text-primary"
+                          : "border-transparent text-gray-700 dark:text-gray-200 hover:bg-white/35 dark:hover:bg-white/[0.08] hover:backdrop-blur-md hover:border-white/40 dark:hover:border-white/15 hover:text-gray-900 dark:hover:text-white"
                         }
                       `}
                       title={t.common.search}
@@ -844,7 +912,7 @@ export default function MainLayout({
             >
               <button
                 onClick={() => setShowChatList(!showChatList)}
-                className="group flex items-center gap-2 w-full px-2 py-1.5 rounded-md hover:bg-gray-100/60 dark:hover:bg-dark-hover/40 transition-colors duration-150"
+                className="group flex items-center gap-2 w-full px-2 py-1.5 rounded-md hover:bg-white/30 dark:hover:bg-white/[0.05] hover:backdrop-blur-md transition-all duration-150"
               >
                 <span className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-gray-400 dark:text-gray-500 group-hover:text-gray-500 dark:group-hover:text-gray-400 transition-colors shrink-0">
                   {t.sidebar.conversations}
@@ -903,6 +971,8 @@ export default function MainLayout({
                               variants={conversationItemVariants}
                               initial="hidden"
                               animate="visible"
+                              whileTap={{ scale: 0.985 }}
+                              transition={{ type: "spring", stiffness: 420, damping: 22, mass: 0.7 }}
                               onMouseEnter={() => setHoveredPostId(post.id)}
                               onMouseLeave={() => setHoveredPostId(null)}
                               className="relative group"
@@ -912,12 +982,11 @@ export default function MainLayout({
                                 className={`
                                   sidebar-conv-item
                                   relative flex items-center gap-2 pl-3 pr-9 py-1.5 rounded-lg text-sm w-full
-                                  transition-[background-color,color,transform] duration-150 ease-out cursor-pointer transform-gpu
-                                  active:scale-[0.985] active:transition-none
+                                  border transition-[background-color,border-color,color,box-shadow] duration-200 ease-out cursor-pointer transform-gpu
                                   ${
                                     isActive
-                                      ? "sidebar-conv-item--active bg-primary/10 dark:bg-primary/10 text-text-primary shadow-sm"
-                                      : "text-gray-900 dark:text-gray-200 group-hover:text-gray-950 dark:group-hover:text-white group-hover:bg-[#F8935D]/8 dark:group-hover:bg-dark-hover"
+                                      ? "sidebar-conv-item--active bg-white/55 dark:bg-white/[0.12] backdrop-blur-md backdrop-saturate-150 dark:backdrop-saturate-125 border-white/60 dark:border-white/20 text-text-primary shadow-sm dark:shadow-black/20"
+                                      : "border-transparent text-gray-900 dark:text-gray-200 group-hover:text-gray-950 dark:group-hover:text-white group-hover:bg-white/35 dark:group-hover:bg-white/[0.08] group-hover:backdrop-blur-md group-hover:border-white/40 dark:group-hover:border-white/15"
                                   }
                                 `}
                               >
@@ -1039,8 +1108,13 @@ export default function MainLayout({
           )}
         </nav>
 
-        {/* Profile */}
-        <div className="px-2.5 py-2.5 border-t border-gray-200/55 dark:border-dark-border shrink-0 bg-gradient-to-t from-gray-50/70 dark:from-dark-elevated/25 to-transparent">
+        {/* Profile — fully transparent wrapper so the per-route signature
+            ambient continues seamlessly through the bottom of the sidebar.
+            Coverage is now guaranteed by a bottom-left halo added to each
+            `posty-soft-*` tone in globals.css (the original 2-anchor design
+            left the sidebar foot outside both ellipses, causing the bare
+            `#FAFBFC` to bleed through). */}
+        <div className="px-2.5 py-2.5 shrink-0 border-t border-[#F8935D]/15 dark:border-white/10">
           <ProfileMenu isCollapsed={isCollapsed} />
         </div>
       </aside>
@@ -1066,7 +1140,15 @@ export default function MainLayout({
           <header
             role="banner"
             aria-label="En-tête mobile"
-            className="mobile-header lg:hidden fixed top-0 left-0 right-0 bg-background-warm/95 dark:bg-dark-card/95 backdrop-blur-xl border-b border-[#F8935D]/10 dark:border-dark-border z-[60]"
+            // Transparent au repos pour laisser passer le dégradé signature
+            // de la page (fixed inset-0 à z=-1). Bascule en glass dès qu'un
+            // scroll commence, pour garder la lisibilité du contenu qui
+            // passe en dessous.
+            className={`mobile-header lg:hidden fixed top-0 left-0 right-0 z-[60] transition-[background-color,border-color,box-shadow,backdrop-filter] duration-300 ease-out ${
+              isMobileScrolled
+                ? "backdrop-blur-xl backdrop-saturate-150 bg-white/60 dark:bg-black/40 border-b border-white/30 dark:border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.04)]"
+                : "bg-transparent border-b border-transparent"
+            }`}
             style={{
               paddingTop: "env(safe-area-inset-top, 0px)",
             }}
@@ -1109,6 +1191,15 @@ export default function MainLayout({
             style={{
               height: "calc(env(safe-area-inset-top, 0px) + 56px)",
             }}
+          />
+        )}
+
+        {/* Sentinel for scroll-aware mobile header (transparent → glass) */}
+        {showMobileHeader && (
+          <div
+            ref={mobileScrollSentinelRef}
+            aria-hidden="true"
+            className="lg:hidden h-2 w-full -mb-2 pointer-events-none"
           />
         )}
 

@@ -18,6 +18,13 @@ export default {
     'text-success', 'bg-success/10',
     'text-error', 'bg-error/10',
     'text-warning', 'bg-warning/10',
+    // Posty signature gradients — assigned dynamically from per-slide config
+    // in AppTourModal (and reusable elsewhere from runtime values).
+    'bg-signature-welcome', 'bg-signature-posts', 'bg-signature-visuals',
+    'bg-signature-schedule', 'bg-signature-optimize',
+    'shadow-glow', 'shadow-glow-accent',
+    'shadow-glow-posts', 'shadow-glow-visuals',
+    'shadow-glow-schedule', 'shadow-glow-optimize',
   ],
   darkMode: "class",
   theme: {
@@ -201,6 +208,23 @@ export default {
         },
       },
 
+      // ========================================================================
+      // POSTY SIGNATURE GRADIENTS
+      // The 5 signature gradients used in the onboarding feature-tour. Exposing
+      // them as `bg-signature-*` Tailwind utilities lets every component reuse
+      // the brand DA without duplicating literal color stops. The `ambient`
+      // variant is the subtle radial halo used in the app shell.
+      // ========================================================================
+      backgroundImage: {
+        "signature-welcome": "linear-gradient(135deg, #F8935D 0%, #F76B54 50%, #F13452 100%)",
+        "signature-posts": "linear-gradient(135deg, #8B5CF6 0%, #F13452 50%, #F76B54 100%)",
+        "signature-visuals": "linear-gradient(135deg, #F13452 0%, #D946EF 50%, #8B5CF6 100%)",
+        "signature-schedule": "linear-gradient(135deg, #0EA5E9 0%, #06B6D4 50%, #8B5CF6 100%)",
+        "signature-optimize": "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #F8935D 100%)",
+        "signature-ambient":
+          "radial-gradient(ellipse 90% 40% at 50% -10%, rgba(248, 147, 93, 0.10), transparent 60%), radial-gradient(ellipse 60% 50% at 90% 100%, rgba(241, 52, 82, 0.06), transparent 60%)",
+      },
+
       borderRadius: {
         // Professional, subtle rounded corners - SaaS Premium style
         none: "0",
@@ -291,6 +315,13 @@ export default {
         "glow-accent": "0 0 20px rgba(241, 52, 82, 0.25)", // Rose F13452
         "glow-success": "0 0 20px rgba(16, 185, 129, 0.25)",
         "glow-error": "0 0 20px rgba(239, 68, 68, 0.25)",
+        // Posty signature glows — assorted to each onboarding gradient so any
+        // component using `bg-signature-posts` can pair it with `shadow-glow-posts`
+        // for a coherent premium hover/active feel.
+        "glow-posts": "0 0 24px rgba(139, 92, 246, 0.32)",      // Violet 8B5CF6
+        "glow-visuals": "0 0 24px rgba(217, 70, 239, 0.30)",    // Fuchsia D946EF
+        "glow-schedule": "0 0 24px rgba(14, 165, 233, 0.30)",   // Sky 0EA5E9
+        "glow-optimize": "0 0 24px rgba(16, 185, 129, 0.30)",   // Emerald 10B981
         // Premium card shadows
         "soft": "0 2px 8px rgba(0, 0, 0, 0.06)",
         "elevated": "0 8px 24px rgba(0, 0, 0, 0.1)",

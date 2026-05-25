@@ -182,7 +182,36 @@ export interface UserProfile {
   showWelcomeModal?: boolean;
   // Gift plan popup flag (set to true after gift recipient sees the popup)
   giftPopupSeen?: boolean;
+  // Premium feature tour (5-slide carousel shown on first /app visit)
+  hasSeenAppTour?: boolean;
+  // Strategist Phase 4 — autonomous weekly batch generation (Max only).
+  // When `enabled`, a Cloud Function fires on `dayOfWeek` each week and
+  // generates a fresh draft batch via the Strategist. The user reviews it
+  // through the in-app banner (`pendingAutoBatchId` below).
+  autonomousMode?: AutonomousStrategistConfig;
+  /** Id of the latest auto-generated batch waiting for user review. Set by
+   *  the cron, cleared by the UI once the user opens/dismisses the batch. */
+  pendingAutoBatchId?: string;
   createdAt: Timestamp;
+}
+
+/** Per-user config for the Phase 4 autonomous Strategist. Stored inline on
+ *  the user profile (not a sub-collection) — read on every Strategist page
+ *  load to render the Settings UI without an extra Firestore round-trip. */
+export interface AutonomousStrategistConfig {
+  enabled: boolean;
+  /** Day of week the cron should fire: 0=Sunday, 1=Monday, …, 6=Saturday.
+   *  Default Sunday so the batch is ready when the user plans their week. */
+  dayOfWeek: 0 | 1 | 2 | 3 | 4 | 5 | 6;
+  /** How many briefs to generate per weekly batch. Clamped to [3, 10] in
+   *  the UI; the API endpoint re-clamps to [1, 15] as a hard safety. */
+  count: number;
+  /** Optional user-overridable prompt. When empty/undefined, the cron uses
+   *  a default template derived from the user's profile sector + objective. */
+  customPrompt?: string;
+  /** Last time the cron actually generated a batch for this user. Used by
+   *  the cron itself as a dedup guard (no double-fire within 6 days). */
+  lastTriggeredAt?: Timestamp;
 }
 
 // Legacy quota constants (kept for compatibility)
@@ -217,15 +246,40 @@ export interface Post {
   generatedImages?: GeneratedImageRecord[];
 }
 
+/** One rendered variant of a visual. Multiple variants share the same parent
+ *  GeneratedImageRecord and represent different art-direction takes on the
+ *  same brief (different accent / template / composition). */
+export interface GeneratedImageVariant {
+  url: string;                // Firebase Storage download URL
+  imageId: string;            // storage path basename
+}
+
 /** Persisted shape of a visual produced by /api/image/generate. Kept narrow
  *  on purpose — the rendering DSL is intentionally not stored, only the
- *  inputs/outputs the user actually needs to reload the conversation. */
+ *  inputs/outputs the user actually needs to reload the conversation.
+ *
+ *  Legacy `url`/`imageId` at the top level are kept for back-compat with
+ *  conversations written before multi-variant generation existed; they
+ *  always mirror `variants[0]` when both shapes are present. */
 export interface GeneratedImageRecord {
   id: string;                 // local entry id (UUID) — stable across reloads
   prompt: string;
-  url: string;                // Firebase Storage download URL
-  imageId: string;            // storage path basename
+  url: string;                // mirrors variants[0].url
+  imageId: string;            // mirrors variants[0].imageId
   generatedAt: number;        // ms epoch
+  /** All rendered variants, in render order. Length ≥ 1. */
+  variants?: GeneratedImageVariant[];
+  /** @deprecated Use `selectedVariantIndices` instead. Kept for back-compat
+   *  with records written before multi-select existed; on read, falls back
+   *  to `[selectedVariantIndex]` when the new field is absent. */
+  selectedVariantIndex?: number;
+  /** Indices of the variants the user picked for publishing, in click order.
+   *  Empty array = no visual will ship with the post. When omitted, the UI
+   *  layer hydrates with `[selectedVariantIndex ?? 0]` for back-compat. */
+  selectedVariantIndices?: number[];
+  /** Optional chat message id this image is paired with (so re-loading a
+   *  conversation can re-thread the visual inside the post bubble). */
+  messageId?: string;
 }
 
 // Message in a multi-turn conversation
@@ -821,9 +875,16 @@ export interface ScheduledPostImage {
 export interface SeedCommentConfig {
   enabled: boolean;
   text: string;
-  /** Base delay in minutes after publish; the worker adds a 0-3 min jitter. */
+  /** Base delay in minutes after publish; the worker adds extra organic jitter on top. */
   delayMinutes: number;
 }
+
+/**
+ * LinkedIn audience visibility for the published post.
+ * Mirrors the values accepted by /api/linkedin/publish so scheduled posts
+ * have full parity with the direct flow (previously hardcoded to PUBLIC).
+ */
+export type LinkedInVisibility = "PUBLIC" | "CONNECTIONS";
 
 export interface ScheduledPost {
   id: string;
@@ -841,6 +902,12 @@ export interface ScheduledPost {
   // Platform config
   platform: SchedulePlatform;
   postType?: LinkedInPostType; // For LinkedIn: feed or article
+  /** LinkedIn audience — defaults to PUBLIC server-side when unset (legacy rows). */
+  visibility?: LinkedInVisibility;
+  /** LinkedIn Company Page URN to publish as. Absent → personal profile (default).
+   *  Validated at publish time against the user's `linkedinConnections.organizations`
+   *  membership, never trusted blindly. */
+  organizationUrn?: string;
   /** Optional algo-boost seed comment (LinkedIn only, dropped a few min after) */
   seedComment?: SeedCommentConfig;
   // Tracking
@@ -864,6 +931,10 @@ export interface CreateScheduledPostData {
   timezone: string;
   platform: SchedulePlatform;
   postType?: LinkedInPostType;
+  /** LinkedIn audience for the published post — parity with direct flow. */
+  visibility?: LinkedInVisibility;
+  /** LinkedIn Company Page URN — parity with direct flow. Absent → personal. */
+  organizationUrn?: string;
   // Images to upload (File objects from the picker, client-side only)
   imageFiles?: File[];
   /** Optional algo-boost seed comment dropped X minutes after publish */
@@ -934,6 +1005,98 @@ export interface OptimalTimeSlot {
   time: string; // e.g., "09:00"
   reason: string; // e.g., "Meilleur engagement pour votre audience"
   engagementScore: number; // 1-100
+}
+
+// ============== STRATEGIST BATCH PLANNING (Phase 1) ==============
+
+/** One row in a Strategist-generated batch plan. At this stage we only have
+ *  the editorial brief — the full post text and visual are materialized in
+ *  Phase 2 (`/api/generate` per brief). Keep this narrow on purpose: anything
+ *  the LLM produces here must be cheap to regenerate per-row. */
+export interface PostBrief {
+  /** Stable id within the batch, used for table keys + per-row regen. */
+  id: string;
+  /** First line / opening sentence of the post — the scroll-stop hook. */
+  hook: string;
+  /** Editorial angle — what the post will argue / show / teach in 1-2 lines. */
+  angle: string;
+  /** Post format the angle is best delivered in. Free text on purpose
+   *  ("storytelling", "lesson-learned", "how-to", "opinion", "carrousel",
+   *  "data drop", …) — the LLM picks the wording, the UI just renders it. */
+  format: string;
+  /** ISO date string YYYY-MM-DD for the day the post should ship. */
+  suggestedDate: string;
+  /** 24h HH:MM in the user's timezone (captured client-side via
+   *  Intl.DateTimeFormat — the batch plan is generated in user-local time). */
+  suggestedTime: string;
+  /** Why the LLM picked this slot — surfaced as a small tooltip in the
+   *  table so the user can sanity-check the strategy without re-asking. */
+  rationale: string;
+  /** Optional one-line note attached during user review (manual edit). */
+  userNote?: string;
+  /** Phase 2 — the finished post copy materialized from this brief. When
+   *  present, the row swaps from "brief preview" to "post preview" UI and
+   *  the row offers regen/edit/copy actions instead of brief-level edits. */
+  materialized?: MaterializedPost;
+  /** Phase 3 — the id of the `scheduledPosts` doc once this brief has been
+   *  handed off to the publishing cron. Lets the UI link the row to the
+   *  schedule page and surface cancellation. Empty until scheduling. */
+  scheduledPostId?: string;
+  /** Phase 3 — UTC millis of the resolved publish slot (after smart-scheduler
+   *  conflict resolution). Mirrors `scheduledPosts.scheduledAt.toMillis()`
+   *  so the row can render the actual fire time without a second read. */
+  scheduledAt?: number;
+}
+
+/** A finished post produced by Phase 2 from a PostBrief. Kept inline on the
+ *  brief (rather than a separate Firestore doc) so the whole batch reads /
+ *  writes as a single document — atomic patches, no fan-out. */
+export interface MaterializedPost {
+  /** The body the user will publish. Plain text with line breaks, ready for
+   *  LinkedIn (no markdown — the publisher doesn't render it). */
+  content: string;
+  /** Generated-at millis (server time). Used in the UI to show "il y a 2 min"
+   *  on regen and to invalidate stale visual pairings if any. */
+  generatedAt: number;
+  /** Model that produced this — useful for debugging regressions when we
+   *  swap models (gpt-4o → gpt-4o-mini for cost, etc.). */
+  model?: string;
+  /** Phase 2.5 — optional visual generated alongside the post. Mirrors the
+   *  shape used by the regular image pipeline (variants from
+   *  /api/image/generate) so the same preview component can render both. */
+  visual?: {
+    variants: Array<{ url: string; imageId: string }>;
+    generatedAt: number;
+  };
+}
+
+/** A full batch generated by the Strategist (Phase 1 deliverable). Stored in
+ *  Firestore collection `strategyBatches` so the user can come back to it,
+ *  edit rows, and (Phase 2/3) materialize + schedule the approved subset. */
+export interface StrategyBatch {
+  id: string;
+  userId: string;
+  /** The user prompt that triggered the batch ("prépare-moi 5 posts cette
+   *  semaine"). Stored verbatim — useful for regeneration with same intent. */
+  sourcePrompt: string;
+  /** Editorial theme the LLM extracted/proposed for the batch. Lets the
+   *  table header read "Cette semaine : <theme>" instead of just "5 posts". */
+  theme: string;
+  /** Briefs in chronological order. */
+  posts: PostBrief[];
+  /** Lifecycle:
+   *   - "draft"      : just generated, user hasn't reviewed yet
+   *   - "approved"   : user clicked "Approve" — ready for Phase 2 materialization
+   *   - "materialized": Phase 2 turned briefs into full posts (later)
+   *   - "scheduled"  : Phase 3 wrote them to `scheduledPosts` (later)
+   *   - "discarded"  : user dismissed the plan without using it
+   */
+  status: "draft" | "approved" | "materialized" | "scheduled" | "discarded";
+  /** User timezone at generation time — captured so Phase 3 scheduling
+   *  honors the slots the user saw in the UI, not the server TZ. */
+  timezone: string;
+  createdAt: Timestamp;
+  updatedAt?: Timestamp;
 }
 
 // ============== WEB SPEECH API TYPES ==============

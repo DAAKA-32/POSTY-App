@@ -2545,6 +2545,7 @@ export const zh = {
     // Core feature labels
     featureCreations: "每日创建数",
     featureQuality: "AI 内容质量",
+    featureImages: "Visual generation",
     featureScheduling: "定时发布",
     featurePersonalized: "根据资料适配语调",
     featureDualMode: "故事版 + 商务版双模式",
@@ -2576,6 +2577,8 @@ export const zh = {
     unlimitedCreations: "无限创建，无额度限制",
     creationsPerMonth: "每月 {n} 次创建",
     creationsPerDay: "每天 {n} 次创建",
+    imagesPerDay: "{n} visuals per day",
+    imagesNearUnlimited: "Visuals near-unlimited",
 
     // Savings
     monthsFree: "免费 {n} 个月",
@@ -2659,6 +2662,46 @@ export const zh = {
       "一月", "二月", "三月", "四月", "五月", "六月",
       "七月", "八月", "九月", "十月", "十一月", "十二月",
     ],
+  },
+
+  // Premium first-time feature tour (5-slide carousel shown after onboarding)
+  appTour: {
+    welcome: {
+      eyebrow: "欢迎",
+      title: "认识 Posty，你的 AI 副驾",
+      description: "一个高端工作空间，将你的想法转化为能扩大受众的 LinkedIn 帖子 — 告别空白页。",
+    },
+    posts: {
+      eyebrow: "智能写作",
+      title: "听起来像你的帖子",
+      description: "用自然语言对话。Posty 捕捉你的声音、你的行业、你的受众 — 并撰写可立即发布的帖子。",
+    },
+    visuals: {
+      eyebrow: "AI 视觉",
+      title: "瞬间打造夺目视觉",
+      description: "每条帖子提供多种品牌一致的变体。选择最合适的 — 轮播图、插画、Hero 图片。",
+    },
+    schedule: {
+      eyebrow: "随处发布",
+      title: "跨平台排程",
+      description: "规划你的一周，一键发布到 LinkedIn、X、Bluesky、Threads 等平台。Posty 处理时机。",
+    },
+    optimize: {
+      eyebrow: "增长引擎",
+      title: "为互动而优化",
+      description: "实时 Hook 评分、分析和 AI 建议引导每条帖子获得更高的覆盖和对话。",
+    },
+    controls: {
+      skip: "跳过",
+      back: "上一步",
+      next: "下一步",
+      start: "开始",
+    },
+    settings: {
+      replayLabel: "重看产品导览",
+      replayDesc: "再次观看高级功能导览",
+      replayCta: "重看",
+    },
   },
 
   // App Page
@@ -3156,7 +3199,7 @@ export const zh = {
     cookiePolicy: "Cookie 政策",
   strategist: {
     pageTitle: "Strategist",
-    headerEyebrow: "Max · Marketing Strategist",
+    headerEyebrow: "Marketing Strategist",
     headerTitle: "Build a strategy, not just posts.",
     headerSubtitle: "A senior marketing advisor in your pocket. Audit your LinkedIn presence, design content plans, sharpen positioning — in one focused conversation.",
     inputPlaceholder: "Ask for an audit, a 30-day plan, hook angles…",

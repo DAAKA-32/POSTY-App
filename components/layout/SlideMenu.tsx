@@ -192,6 +192,24 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
   const [postToDelete, setPostToDelete] = useState<Post | null>(null);
   const [postToRename, setPostToRename] = useState<Post | null>(null);
 
+  // Per-route signature ambient — mirrors MainLayout's toneBg mapping so the
+  // mobile drawer wears the SAME atmosphere as the page underneath. The
+  // gradient lives on the sidebar itself (not a bleed-through), because the
+  // popup overlay between sidebar and page would otherwise darken everything.
+  const toneBg = (() => {
+    const p = pathname || "";
+    if (p.startsWith("/app/c/")) return "posty-soft-posts";
+    if (p === "/app" || p.startsWith("/app/")) return "posty-soft-welcome";
+    if (p.startsWith("/history")) return "posty-soft-visuals";
+    if (p.startsWith("/schedule")) return "posty-soft-schedule";
+    if (p.startsWith("/analytics") || p.startsWith("/dashboard")) return "posty-soft-optimize";
+    if (p.startsWith("/settings")) return "posty-soft-welcome";
+    if (p.startsWith("/profile") || p.startsWith("/brand")) return "posty-soft-visuals";
+    if (p.startsWith("/subscription") || p.startsWith("/pricing")) return "posty-soft-posts";
+    if (p.startsWith("/chat")) return "posty-soft-posts";
+    return "posty-soft-welcome";
+  })();
+
 
   // Sync local posts with prop
   useEffect(() => {
@@ -446,11 +464,17 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
         }}
       />
 
-      {/* Slide Menu - PWA Safe Area Support */}
+      {/* Slide Menu — gradient base + polished glass finishing (sheen,
+          ring-inset, multi-shadow, white-tinted borders). Pas de pleine
+          translucidité car le popup-overlay derrière assombrirait tout. */}
       <aside
         className={`
           fixed top-0 left-0 z-[70] h-full w-[85vw] max-w-80
-          bg-background-warm dark:bg-dark-card border-r border-gray-200/65 dark:border-dark-border shadow-[1px_0_0_rgba(0,0,0,0.03)]
+          ${toneBg}
+          border-r border-white/60 dark:border-white/20
+          ring-1 ring-inset ring-white/40 dark:ring-white/10
+          shadow-[0_20px_60px_rgba(15,17,21,0.20),0_4px_16px_rgba(15,17,21,0.10)]
+          dark:shadow-[0_20px_60px_rgba(0,0,0,0.55),0_4px_16px_rgba(0,0,0,0.35)]
           flex flex-col
           transform transition-transform duration-300 ease-smooth
           lg:hidden
@@ -463,6 +487,18 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
           willChange: "transform",
         }}
       >
+        {/* Glass sheen — fine horizontal highlight running along the top
+            edge, catches the light to read as polished glass. */}
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-4 top-0 h-px rounded-full bg-gradient-to-r from-transparent via-white/80 dark:via-white/40 to-transparent z-[1]"
+        />
+        {/* Subtle internal gradient wash — adds matter without obstructing
+            the per-page ambient bleeding through from behind. */}
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/20 via-white/[0.02] to-transparent dark:from-white/[0.04] dark:via-transparent z-0"
+        />
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200/55 dark:border-dark-border">
           <Link href="/app" className="flex items-center gap-2.5 group min-w-0 flex-1" onClick={onClose}>
@@ -577,7 +613,7 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
         {/* Scrollable navigation - overscroll-contain prevents scroll chaining */}
         <nav className="flex-1 p-4 pt-2 overflow-y-auto no-scrollbar overscroll-contain">
           {/* Nav items — grouped card for visual hierarchy */}
-          <div className="sidebar-nav-card rounded-xl overflow-hidden ring-1 ring-gray-200/55 dark:ring-white/[0.055] bg-white/50 dark:bg-white/[0.025]">
+          <div className="sidebar-nav-card rounded-xl overflow-hidden ring-1 ring-gray-200/40 dark:ring-white/[0.04] bg-white/15 dark:bg-white/[0.02]">
             {menuItems.map((item) => {
               const isActive = pathname === item.href || (item.href === "/app" && pathname === "/chat");
               const itemName = t.nav[item.nameKey];

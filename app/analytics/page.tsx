@@ -814,7 +814,7 @@ function AnalyticsContent() {
       showMobileHeader={true}
       headerTitle="Analytics"
     >
-      <div className="min-h-full bg-background-warm dark:bg-dark-bg scroll-smooth lg:overflow-y-auto">
+      <div className="min-h-full scroll-smooth lg:overflow-y-auto">
         <div className="w-full mx-auto px-4 py-6 md:px-6 md:py-8 lg:px-8 lg:py-10 lg:max-w-4xl xl:max-w-5xl 2xl:max-w-6xl overflow-x-hidden">
           {loading ? (
             <motion.div

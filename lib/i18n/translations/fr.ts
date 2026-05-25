@@ -2581,6 +2581,7 @@ export const fr = {
     // Core feature labels
     featureCreations: "Créations quotidiennes",
     featureQuality: "Qualité de contenu IA",
+    featureImages: "Génération de visuels",
     featureScheduling: "Programmation de posts",
     featurePersonalized: "Ton adapté à votre profil",
     featureDualMode: "Double format Story + Business",
@@ -2612,6 +2613,8 @@ export const fr = {
     unlimitedCreations: "Créations illimitées, zéro quota",
     creationsPerMonth: "{n} créations par mois",
     creationsPerDay: "{n} créations par jour",
+    imagesPerDay: "{n} visuels par jour",
+    imagesNearUnlimited: "Visuels quasi illimités",
 
     // Savings
     monthsFree: "{n} mois gratuit",
@@ -2696,6 +2699,46 @@ export const fr = {
       "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
       "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
     ],
+  },
+
+  // Premium first-time feature tour (5-slide carousel shown after onboarding)
+  appTour: {
+    welcome: {
+      eyebrow: "Bienvenue",
+      title: "Découvrez Posty, votre copilote IA",
+      description: "Un atelier premium pensé pour transformer vos idées en posts LinkedIn qui font grandir votre audience — sans la page blanche.",
+    },
+    posts: {
+      eyebrow: "Rédaction intelligente",
+      title: "Des posts qui vous ressemblent",
+      description: "Discutez en langage naturel. Posty capture votre voix, votre secteur, votre audience — et rédige des posts prêts à publier.",
+    },
+    visuals: {
+      eyebrow: "Visuels IA",
+      title: "Des visuels saisissants, instantanément",
+      description: "Plusieurs variantes on-brand pour chaque post. Choisissez celle qui colle — carrousels, illustrations, images hero.",
+    },
+    schedule: {
+      eyebrow: "Publication multi-réseaux",
+      title: "Programmez sur toutes les plateformes",
+      description: "Planifiez votre semaine, publiez en un clic sur LinkedIn, X, Bluesky, Threads et plus. Posty gère le timing.",
+    },
+    optimize: {
+      eyebrow: "Moteur de croissance",
+      title: "Optimisez chaque engagement",
+      description: "Hook scores en direct, analytics, et suggestions IA guident chaque post vers plus de portée et de conversation.",
+    },
+    controls: {
+      skip: "Passer",
+      back: "Précédent",
+      next: "Suivant",
+      start: "Commencer",
+    },
+    settings: {
+      replayLabel: "Revoir la visite guidée",
+      replayDesc: "Relancer la présentation premium des fonctionnalités",
+      replayCta: "Relancer",
+    },
   },
 
   // App Page
@@ -3275,20 +3318,20 @@ export const fr = {
 
   strategist: {
     pageTitle: "Stratège",
-    headerEyebrow: "Max · Stratège marketing",
-    headerTitle: "Construisez une stratégie, pas juste des posts.",
-    headerSubtitle: "Un conseiller marketing senior dans votre poche. Auditez votre présence LinkedIn, concevez des plans de contenu, affinez votre positionnement — en une conversation.",
-    inputPlaceholder: "Demandez un audit, un plan 30 jours, des angles d'accroche…",
+    headerEyebrow: "Agent marketing autonome",
+    headerTitle: "Votre community manager IA, opérationnel en continu.",
+    headerSubtitle: "L'agent analyse votre profil LinkedIn, planifie votre semaine, rédige les posts et programme la publication. Vous validez d'un clic.",
+    inputPlaceholder: "Audit, plan stratégique, angles…",
     sendButton: "Envoyer",
-    sending: "Réflexion…",
-    starterTitle: "Commencer par",
-    starter1Title: "Auditer mon LinkedIn",
+    sending: "Analyse…",
+    starterTitle: "Demandes ponctuelles",
+    starter1Title: "Auditer ma présence",
     starter1Prompt: "Audite ma présence LinkedIn à partir de mon profil. Donne-moi 3 points qui fonctionnent, 3 à corriger cette semaine, et 1 opportunité inexploitée.",
-    starter2Title: "Plan de contenu 30 jours",
-    starter2Prompt: "Construis un plan de contenu LinkedIn sur 30 jours adapté à mon secteur et mon audience. 3 posts/semaine, mélangeant storytelling, insight business et leadership d'opinion.",
-    starter3Title: "Définir mon positionnement",
-    starter3Prompt: "Aide-moi à définir mon positionnement sur LinkedIn. Quels 3 thèmes dois-je incarner, pourquoi, et comment me différencier de mes pairs ?",
-    starter4Title: "10 angles d'accroche",
+    starter2Title: "Planifier ma semaine",
+    starter2Prompt: "Prépare-moi un plan de 5 posts LinkedIn pour cette semaine, adapté à mon secteur et mon audience. Varie les formats et les angles.",
+    starter3Title: "Affiner mon positionnement",
+    starter3Prompt: "Aide-moi à affiner mon positionnement sur LinkedIn. Quels 3 thèmes dois-je incarner, pourquoi, et comment me différencier de mes pairs ?",
+    starter4Title: "Trouver 10 angles d'accroche",
     starter4Prompt: "Génère 10 angles d'accroche puissants pour mes prochains posts LinkedIn, basés sur ce qui intéresse mon audience. Chaque hook doit arrêter le scroll.",
     errorGeneric: "Le Stratège a rencontré une erreur. Réessayez dans un instant.",
     errorRateLimit: "Vous avez atteint la limite. Réessayez dans quelques minutes.",

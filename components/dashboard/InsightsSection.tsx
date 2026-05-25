@@ -285,13 +285,18 @@ export default function InsightsSection({ stats, userProfile }: InsightsSectionP
     },
   };
 
-  // Empty state
+  // Empty state — no outer wrapping card, just the header + a single hint card.
   if (insights.length === 0) {
     return (
-      <div className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-4 sm:p-6 hover:border-gray-300 dark:hover:border-dark-border-hover transition-colors duration-200">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{d.insightsTitle}</h3>
-        <div className="text-center py-8">
-          <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-dark-elevated rounded-full flex items-center justify-center border border-gray-200 dark:border-dark-border">
+      <div>
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{d.insightsTitle}</h3>
+          <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center border border-primary/20">
+            <span className="text-lg">🎯</span>
+          </div>
+        </div>
+        <div className="posty-card-glass rounded-2xl p-6 text-center">
+          <div className="w-16 h-16 mx-auto mb-4 bg-white/40 dark:bg-white/[0.04] rounded-full flex items-center justify-center border border-white/40 dark:border-white/10">
             <LightbulbIcon className="w-8 h-8 text-gray-400 dark:text-text-muted" />
           </div>
           <p className="text-gray-600 dark:text-text-secondary">{d.insightsEmpty}</p>
@@ -300,8 +305,11 @@ export default function InsightsSection({ stats, userProfile }: InsightsSectionP
     );
   }
 
+  // Standard state — the wrapping card is gone. Each insight is its own glass
+  // pane in a 2-col grid so the page gradient bleeds between them instead of
+  // being masked by one tall monolithic block.
   return (
-    <div className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-4 sm:p-6 hover:border-gray-300 dark:hover:border-dark-border-hover transition-colors duration-200">
+    <div>
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{d.insightsTitle}</h3>
@@ -312,13 +320,13 @@ export default function InsightsSection({ stats, userProfile }: InsightsSectionP
         </div>
       </div>
 
-      <div className="space-y-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
         {insights.map((insight, index) => {
           const style = typeStyles[insight.type];
           return (
             <div
               key={index}
-              className={`p-4 rounded-xl border ${style.bg} ${style.border} ${style.borderHover} transition-colors duration-200`}
+              className={`posty-card-glass posty-card-glass-hover rounded-2xl p-4 sm:p-5 ${style.bg}`}
             >
               <div className="flex gap-3">
                 <div className={`flex-shrink-0 w-9 h-9 rounded-lg ${style.iconBg} flex items-center justify-center`}>

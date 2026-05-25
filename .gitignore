@@ -54,6 +54,12 @@ nul
 # Playwright preview-generation persistent browser context (keeps Firebase auth)
 .preview-browser/
 
+# Playwright E2E artifacts
+/test-results/
+/playwright-report/
+/playwright/.cache/
+.env.e2e
+
 # Capacitor / iOS build artifacts
 ios/App/App/public/
 ios/App/Pods/

@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Post } from "@/types";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { menuContainerVariants, menuRowVariants } from "@/lib/motion";
 
 interface ConversationOptionsMenuProps {
   post: Post;
@@ -247,62 +248,69 @@ export default function ConversationOptionsMenu({
             key="conversation-options-menu"
             ref={menuRef}
             role="menu"
-            initial={{
-              opacity: 0,
-              scale: 0.95,
-              y: menuPosition.placement === "bottom" ? -6 : 6,
-            }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{
-              opacity: 0,
-              scale: 0.95,
-              y: menuPosition.placement === "bottom" ? -6 : 6,
-            }}
-            transition={{ duration: 0.15, ease: [0.22, 1, 0.36, 1] }}
+            variants={menuContainerVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
             style={{
               position: "fixed",
               top: menuPosition.top,
               left: menuPosition.left,
               transformOrigin: menuPosition.transformOrigin,
               zIndex: 9999,
+              willChange: "transform, opacity",
             }}
-            className="
-              min-w-[180px] py-2
-              bg-dark-card border border-dark-border
-              rounded-xl shadow-2xl shadow-black/40
-              backdrop-blur-xl
-            "
+            className="posty-glass-panel min-w-[180px] py-2 overflow-hidden rounded-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            {menuItems.map((item, index) => (
-              <button
-                key={item.id}
-                role="menuitem"
-                onClick={() => handleAction(item.action)}
-                onMouseEnter={() => setFocusedIndex(index)}
-                className={`
-                  w-full flex items-center gap-3 px-4 py-3
-                  text-sm font-medium transition-colors duration-150
-                  min-h-[44px]
-                  ${item.variant === "danger"
-                    ? "text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                    : "text-text-secondary hover:text-text-primary hover:bg-dark-hover"
-                  }
-                  ${focusedIndex === index
-                    ? item.variant === "danger"
-                      ? "bg-red-500/10"
-                      : "bg-dark-hover"
-                    : ""
-                  }
-                  ${item.id === "delete" ? "border-t border-dark-border mt-1" : ""}
-                `}
-              >
-                <span className="w-5 h-5 flex items-center justify-center shrink-0">
-                  {item.icon}
-                </span>
-                <span>{item.label}</span>
-              </button>
-            ))}
+            <span aria-hidden="true" className="posty-glass-sheen" />
+            <span aria-hidden="true" className="posty-glass-wash rounded-xl" />
+            {menuItems.map((item, index) => {
+              const isFocused = focusedIndex === index;
+              return (
+                <motion.button
+                  key={item.id}
+                  role="menuitem"
+                  variants={menuRowVariants}
+                  onClick={() => handleAction(item.action)}
+                  onMouseEnter={() => setFocusedIndex(index)}
+                  className={`
+                    group relative
+                    w-full flex items-center gap-3 px-4 py-3
+                    text-sm font-medium transition-colors duration-150
+                    min-h-[44px]
+                    ${item.variant === "danger"
+                      ? "text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-500/10"
+                      : "text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white hover:bg-white/45 dark:hover:bg-white/10"
+                    }
+                    ${isFocused
+                      ? item.variant === "danger"
+                        ? "bg-red-500/10"
+                        : "bg-white/45 dark:bg-white/10"
+                      : ""
+                    }
+                    ${item.id === "delete" ? "border-t border-white/40 dark:border-white/10 mt-1" : ""}
+                  `}
+                >
+                  {/* Signature hover accent — 2-px left bar that reveals on
+                      hover/focus. Danger items keep the rose-red identity;
+                      neutral items pick up the Posty welcome gradient. */}
+                  <span
+                    aria-hidden="true"
+                    className={`
+                      absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-5 rounded-r-full
+                      transition-opacity duration-150
+                      ${isFocused ? "opacity-70" : "opacity-0 group-hover:opacity-70"}
+                      ${item.variant === "danger" ? "bg-red-400" : "bg-signature-welcome"}
+                    `}
+                  />
+                  <span className="w-5 h-5 flex items-center justify-center shrink-0">
+                    {item.icon}
+                  </span>
+                  <span>{item.label}</span>
+                </motion.button>
+              );
+            })}
           </motion.div>
         )}
       </AnimatePresence>,

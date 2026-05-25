@@ -76,8 +76,25 @@ interface UseChatReturn {
     file?: FileAttachment | null,
     /** Pre-classified routing hint from /api/intent — lets the post route
      *  skip its internal classifier when the caller has already figured it out. */
-    intentHint?: "PRODUCTION" | "HYBRID" | "ASSISTANCE" | "SOCIAL"
-  ) => Promise<void>;
+    intentHint?: "PRODUCTION" | "HYBRID" | "ASSISTANCE" | "SOCIAL",
+    /** Per-call overrides. Today only carries `forceSingleStyle` for the
+     *  intent=both path, where pairing a post with a visual is busy enough
+     *  that dual-mode would overload the chat surface. The hook's own
+     *  `dualMode` / `selectedStyle` config stays untouched for other calls. */
+    options?: { forceSingleStyle?: "storytelling" | "business" }
+  ) => Promise<{
+    /** The Firestore `posts/{id}` document id this generation was saved to.
+     *  Always set for authenticated users on successful generations, both
+     *  new posts and follow-ups. Null when generation failed, was aborted,
+     *  or the user is in guest mode. */
+    postId: string | null;
+    /** Final assistant content for the primary variant (storytelling first,
+     *  otherwise the single selected style or the conversational reply). */
+    content: string;
+    /** True for SOCIAL/ASSISTANCE/HYBRID intents where the reply is plain
+     *  prose, not a LinkedIn post draft. */
+    isConversational: boolean;
+  }>;
   /** Abort the in-flight generation without clearing messages (ChatGPT-style stop) */
   stopGeneration: () => void;
   reset: () => void;
@@ -143,13 +160,13 @@ export function useChat({
   const smartTitleRef = useRef<string | null>(null);
 
   /* ─────────────────────── Seed comment helper ──────────────────────────
-   * After a post is generated we fire a background fetch to /api/chat/seed-comment
-   * for every post response (non-conversational). The result is merged into
-   * the matching MockResponse via `seedComment.text`. While in-flight, the
-   * response shows `seedComment.loading = true` so the UI can render a skeleton.
-   *
-   * `regenerateSeedComment(index)` is exposed for the UI's "✨ Regenerate"
-   * button on the seed-comment block. */
+   * Seed comments (LinkedIn-algo "boost" first comment) are generated ONLY
+   * on explicit user action — never automatically after a post is streamed.
+   * The "Ajouter un 1er commentaire (boost algo)" button in ModernResponseCard
+   * fires the request via the public `regenerateSeedComment(index)` API
+   * below, which internally calls `fetchSeedCommentFor`. While in-flight,
+   * the response shows `seedComment.loading = true` so the UI can render
+   * its shimmer; on success, `seedComment.text` is populated. */
   const fetchSeedCommentFor = useCallback(
     async (index: number, postContent: string) => {
       if (!postContent || postContent.trim().length < 20) return;
@@ -248,16 +265,36 @@ export function useChat({
        * a regex pass (or rarely a gpt-3.5-turbo call) when the page-layer
        * /api/intent already figured out the routing.
        */
-      intentHint?: "PRODUCTION" | "HYBRID" | "ASSISTANCE" | "SOCIAL"
+      intentHint?: "PRODUCTION" | "HYBRID" | "ASSISTANCE" | "SOCIAL",
+      /**
+       * Per-call overrides. `forceSingleStyle` collapses this generation to
+       * a single post variant (ignoring the hook's `dualMode` flag) — used
+       * by the intent=both path so we don't stack two posts AND multiple
+       * image variants in the same chat turn.
+       */
+      options?: { forceSingleStyle?: "storytelling" | "business" }
     ) => {
+      // Resolve dual-mode + style for THIS specific call. When the caller
+      // asked for a single style, we honour it regardless of the hook's
+      // ambient `dualMode` setting (so a Max user with "Dual Response" on
+      // still gets one post + 3 visuals on an intent=both prompt).
+      const callDualMode = options?.forceSingleStyle ? false : dualMode;
+      const callStyle: "storytelling" | "business" =
+        options?.forceSingleStyle ?? effectiveStyle;
+      // Empty result used for the early-return branches (validation,
+      // guest limit, action detection). Keeps the call-site contract simple:
+      // generate() always resolves to a `{ postId, content, isConversational }`
+      // shape — callers can ignore it when they don't need it.
+      const emptyResult = { postId: null, content: "", isConversational: false };
+
       if (!prompt.trim()) {
         setError("Veuillez entrer une description");
-        return;
+        return emptyResult;
       }
 
       if (isGuest && !canGenerate) {
         setError("Limite atteinte. Connectez-vous pour continuer.");
-        return;
+        return emptyResult;
       }
 
       // ── Intent detection: intercept action commands before calling /api/generate ──
@@ -285,14 +322,21 @@ export function useChat({
         };
         setMessages((prev) => [...prev, userMsg, actionMsg]);
         setLastPrompt(prompt);
-        return;
+        return emptyResult;
       }
 
       // Cancel any ongoing stream
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
-      abortControllerRef.current = new AbortController();
+      // Hold the controller in a local — if a previous in-flight generate
+      // call's `finally` lands between this assignment and the `fetch` below,
+      // it can null the ref out from under us, which is what caused the
+      // "Cannot read properties of null (reading 'signal')" crash on
+      // follow-up prompts after a parallel intent=both run. Reading the
+      // signal from `controller` (the local) is immune to that race.
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
       smartTitleRef.current = null;
 
       // Capture generation ID to discard results if reset() is called mid-save
@@ -328,6 +372,14 @@ export function useChat({
         conversational: `ai-${Date.now()}-conversational`,
       };
 
+      // Captured during the SSE "complete" event so we can return them once
+      // the function exits. Callers (page-level orchestrator on intent=both)
+      // need the saved postId to attach freshly-generated visuals to the
+      // SAME Firestore doc instead of creating a duplicate via createImagePost.
+      let savedPostId: string | null = null;
+      let savedContent = "";
+      let savedIsConversational = false;
+
       try {
         // Get conversation history if continuing existing conversation
         let conversationHistory: Array<{ role: "user" | "assistant"; content: string }> | undefined;
@@ -345,10 +397,10 @@ export function useChat({
           body: JSON.stringify({
             userId: userId || "guest",
             prompt,
-            dualMode,
-            requestDualMode: dualMode, // Server-side dual mode enforcement
-            responseType: effectiveStyle,
-            selectedStyle: effectiveStyle,
+            dualMode: callDualMode,
+            requestDualMode: callDualMode, // Server-side dual mode enforcement
+            responseType: callStyle,
+            selectedStyle: callStyle,
             // "posts" → "linkedin" (server's existing key), "support" → "general"
             aiMode: aiMode === "support" ? "general" : "linkedin",
             // Pre-classified routing hint from /api/intent — lets the post
@@ -367,7 +419,7 @@ export function useChat({
               },
             }),
           }),
-          signal: abortControllerRef.current.signal,
+          signal: controller.signal,
         });
 
         if (!response.ok) {
@@ -397,7 +449,7 @@ export function useChat({
             setMessages((prev) => [...prev, limitMessage]);
             setIsLoading(false);
             setIsStreaming(false);
-            return; // Exit gracefully without error
+            return emptyResult; // Exit gracefully without error
           }
           throw new Error(errorData.error || "Generation failed");
         }
@@ -462,7 +514,7 @@ export function useChat({
                     if (variantType === "conversational") {
                       // Conversational response (SOCIAL/EXPLORATORY) — single message, no dual layout
                       setMessages((prev) => [...prev, newMessage]);
-                    } else if (dualMode && variantType === "storytelling") {
+                    } else if (callDualMode && variantType === "storytelling") {
                       // Pre-create business placeholder for stable dual layout
                       const businessPlaceholder: ConversationMessage = {
                         id: messageIds.business,
@@ -473,7 +525,7 @@ export function useChat({
                         isStreaming: true,
                       };
                       setMessages((prev) => [...prev, newMessage, businessPlaceholder]);
-                    } else if (dualMode && variantType === "business") {
+                    } else if (callDualMode && variantType === "business") {
                       // Business placeholder already exists from storytelling start — skip
                     } else {
                       setMessages((prev) => [...prev, newMessage]);
@@ -502,10 +554,18 @@ export function useChat({
 
                   case "done": {
                     const type = data.type as "storytelling" | "business";
+                    // Server sends the normalized final text (hashtag casing
+                    // fixed) in `content`. Overwrite the accumulator so the
+                    // saved post and the rendered message both use it.
+                    const normalized = typeof data.content === "string" ? data.content : null;
+                    if (normalized !== null) {
+                      accumulatedContent[type] = normalized;
+                      setStreamingContent((prev) => ({ ...prev, [type]: normalized }));
+                    }
                     setMessages((prev) =>
                       prev.map((msg) =>
                         msg.id === messageIds[type]
-                          ? { ...msg, isStreaming: false }
+                          ? { ...msg, isStreaming: false, content: normalized ?? msg.content }
                           : msg
                       )
                     );
@@ -538,6 +598,7 @@ export function useChat({
 
                     // Determine if this was a conversational response (SOCIAL/EXPLORATORY)
                     const isConversational = !!accumulatedContent.conversational;
+                    savedIsConversational = isConversational;
 
                     // Set final responses based on mode
                     if (isConversational) {
@@ -547,37 +608,38 @@ export function useChat({
                         content: accumulatedContent.conversational,
                         type: "business", // fallback type for compatibility
                       }]);
-                    } else if (dualMode) {
+                    } else if (callDualMode) {
+                      // Seed comment is NOT auto-generated — explicit user
+                      // action only. The "Ajouter un 1er commentaire (boost
+                      // algo)" button in ModernResponseCard fires it on
+                      // click via `regenerateSeedComment(index)`. Reasons:
+                      //   1. Saves an LLM call per post for users who never
+                      //      use the seed comment.
+                      //   2. Avoids a shimmer placeholder for a feature
+                      //      that's a power-user nicety, not a default.
                       setResponses([
                         {
                           title: "Version Storytelling",
                           content: accumulatedContent.storytelling,
                           type: "storytelling",
-                          seedComment: { loading: true },
                         },
                         {
                           title: "Version Business",
                           content: accumulatedContent.business,
                           type: "business",
-                          seedComment: { loading: true },
                         },
                       ]);
-                      // Fire seed-comment fetches in parallel (non-blocking).
-                      void fetchSeedCommentFor(0, accumulatedContent.storytelling);
-                      void fetchSeedCommentFor(1, accumulatedContent.business);
                     } else {
-                      const onlyContent = accumulatedContent[responseType] || "";
+                      const onlyContent = accumulatedContent[callStyle] || "";
                       setResponses([
                         {
-                          title: responseType === "storytelling"
+                          title: callStyle === "storytelling"
                             ? "Version Storytelling"
                             : "Version Business",
                           content: onlyContent,
-                          type: responseType,
-                          seedComment: { loading: true },
+                          type: callStyle,
                         },
                       ]);
-                      void fetchSeedCommentFor(0, onlyContent);
                     }
 
                     if (isGuest) {
@@ -589,12 +651,32 @@ export function useChat({
                       // Get the actual content to save (conversational or post content)
                       const primaryContent = isConversational
                         ? accumulatedContent.conversational
-                        : dualMode
+                        : callDualMode
                           ? accumulatedContent.storytelling
-                          : accumulatedContent[responseType] || "";
+                          : accumulatedContent[callStyle] || "";
+                      savedContent = primaryContent;
 
                       try {
                         if (isExistingConversation && currentPostId) {
+                          // Follow-up: the post id is the existing conversation.
+                          savedPostId = currentPostId;
+                          // Resolve the id+variant of the PRIMARY assistant turn.
+                          // In dual mode primaryContent is the storytelling
+                          // content, so it must carry the storytelling id (not
+                          // business). The previous swap corrupted Firestore
+                          // pairings between messages and embedded images.
+                          const primaryAssistantId = isConversational
+                            ? messageIds.conversational
+                            : callDualMode
+                              ? messageIds.storytelling
+                              : messageIds[callStyle];
+                          const primaryVariant: "storytelling" | "business" | undefined =
+                            isConversational
+                              ? undefined
+                              : callDualMode
+                                ? "storytelling"
+                                : callStyle;
+
                           // FOLLOW-UP: Add messages to existing conversation
                           const newMessages: ConversationTurn[] = [
                             {
@@ -604,18 +686,20 @@ export function useChat({
                               timestamp: userMessage.timestamp,
                             },
                             {
-                              id: isConversational ? messageIds.conversational : messageIds.business,
+                              id: primaryAssistantId,
                               role: "assistant",
                               content: primaryContent,
-                              variant: isConversational ? undefined : (dualMode ? "storytelling" : responseType),
+                              variant: primaryVariant,
                               timestamp: new Date(),
                             },
                           ];
 
-                          // Add business response if dual mode (not conversational)
-                          if (!isConversational && dualMode && accumulatedContent.business) {
+                          // Add business response if dual mode (not conversational).
+                          // Its id MUST be messageIds.business so the persisted
+                          // record stays consistent with what was rendered live.
+                          if (!isConversational && callDualMode && accumulatedContent.business) {
                             newMessages.push({
-                              id: messageIds.storytelling,
+                              id: messageIds.business,
                               role: "assistant",
                               content: accumulatedContent.business,
                               variant: "business",
@@ -637,10 +721,10 @@ export function useChat({
                             userId,
                             prompt,
                             primaryContent,
-                            (!isConversational && dualMode) ? accumulatedContent.business : "",
+                            (!isConversational && callDualMode) ? accumulatedContent.business : "",
                             {
-                              responseMode: isConversational ? "conversational" : (dualMode ? "dual" : "single-choice"),
-                              selectedStyle: (isConversational || dualMode) ? undefined : effectiveStyle,
+                              responseMode: isConversational ? "conversational" : (callDualMode ? "dual" : "single-choice"),
+                              selectedStyle: (isConversational || callDualMode) ? undefined : callStyle,
                             }
                           );
                           // Update with smart title if available (GPT-generated topic)
@@ -651,6 +735,7 @@ export function useChat({
                           // Only set postId if this generation is still current
                           // (user may have clicked "New Post" during the save)
                           if (generationRef.current === currentGeneration) {
+                            savedPostId = newPostId;
                             setPostIdWithRef(newPostId);
                             // Update cache so background refreshes find fresh data
                             setCachedConversation({
@@ -658,11 +743,11 @@ export function useChat({
                               userId: userId!,
                               prompt,
                               responseA: primaryContent,
-                              responseB: (!isConversational && dualMode) ? accumulatedContent.business : "",
+                              responseB: (!isConversational && callDualMode) ? accumulatedContent.business : "",
                               selectedVersion: null,
                               createdAt: { toDate: () => new Date() } as Post["createdAt"],
-                              responseMode: isConversational ? "conversational" : (dualMode ? "dual" : "single-choice"),
-                              selectedStyle: (isConversational || dualMode) ? undefined : effectiveStyle,
+                              responseMode: isConversational ? "conversational" : (callDualMode ? "dual" : "single-choice"),
+                              selectedStyle: (isConversational || callDualMode) ? undefined : callStyle,
                               title: smartTitleRef.current || prompt.slice(0, 40),
                             } as Post);
                           }
@@ -687,15 +772,20 @@ export function useChat({
         }
       } catch (err) {
         if (err instanceof Error && err.name === "AbortError") {
-          return;
+          return { postId: savedPostId, content: savedContent, isConversational: savedIsConversational };
         }
         console.error("Generation error:", err);
         setError(getFriendlyMessage(err));
         setIsStreaming(false);
       } finally {
         setIsLoading(false);
-        abortControllerRef.current = null;
+        // Only clear the ref if it still points to OUR controller — guards
+        // against a concurrent generate() call having already replaced it.
+        if (abortControllerRef.current === controller) {
+          abortControllerRef.current = null;
+        }
       }
+      return { postId: savedPostId, content: savedContent, isConversational: savedIsConversational };
     },
     [userId, isGuest, canGenerate, incrementGuestCount, dualMode, responseType, effectiveStyle, aiMode, setPostIdWithRef]
   );
@@ -754,24 +844,43 @@ export function useChat({
             ? "storytelling" // Dual mode: responseA is always storytelling
             : (post.selectedStyle as "storytelling" | "business") || "storytelling";
 
-      // Create messages from the original post
-      const timestamp = new Date();
+      // Anchor the original turn at the post's creation time so the
+      // chronological sort below keeps it strictly before any follow-up.
+      // Using `new Date()` for the seed turn made it sort AFTER older
+      // follow-ups whenever a Firestore clock skew put a follow-up's
+      // timestamp slightly ahead — visible as "first answer jumps below
+      // a follow-up after reload". Falling back to `now` only when no
+      // createdAt is available preserves the previous behaviour for
+      // legacy/in-memory posts without a Firestore timestamp.
+      const postCreatedAt: Date | null = (() => {
+        const raw = (post as { createdAt?: unknown }).createdAt;
+        if (!raw) return null;
+        if (raw instanceof Date) return raw;
+        const maybeFs = raw as { toDate?: () => Date };
+        if (typeof maybeFs.toDate === "function") {
+          try { return maybeFs.toDate(); } catch { return null; }
+        }
+        return null;
+      })();
+      const seedTimestamp = postCreatedAt ?? new Date();
+
       const newMessages: ConversationMessage[] = [
         {
           id: `user-${post.id}`,
           type: "user",
           content: post.prompt,
-          timestamp,
+          timestamp: seedTimestamp,
         },
       ];
 
-      // Add original AI responses
+      // Add original AI responses (offset by 1ms so a sort by timestamp keeps
+      // user → assistant order even when timestamps collide on the seed turn).
       if (post.responseA) {
         newMessages.push({
           id: isConversational ? `ai-${post.id}-conversational` : `ai-${post.id}-${responseAVariant}`,
           type: "ai",
           content: post.responseA,
-          timestamp,
+          timestamp: new Date(seedTimestamp.getTime() + 1),
           variant: responseAVariant,
           isStreaming: false,
         });
@@ -781,7 +890,7 @@ export function useChat({
           id: `ai-${post.id}-business`,
           type: "ai",
           content: post.responseB,
-          timestamp,
+          timestamp: new Date(seedTimestamp.getTime() + 2),
           variant: "business",
           isStreaming: false,
         });
@@ -807,7 +916,17 @@ export function useChat({
         });
       }
 
-      setMessages(newMessages);
+      // Stable chronological sort. Equal timestamps keep their insertion order
+      // (storyteller before business on a same-turn dual reply, user before
+      // assistant on a same-second exchange) — Array.prototype.sort is stable
+      // since ES2019, but we use indices anyway for clarity and to guard
+      // against any host that still reorders ties.
+      const indexed = newMessages.map((m, idx) => ({ m, idx }));
+      indexed.sort((a, b) => {
+        const diff = a.m.timestamp.getTime() - b.m.timestamp.getTime();
+        return diff !== 0 ? diff : a.idx - b.idx;
+      });
+      setMessages(indexed.map((x) => x.m));
 
       // Set responses for compatibility
       setResponses([

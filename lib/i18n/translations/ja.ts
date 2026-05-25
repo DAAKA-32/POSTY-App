@@ -2545,6 +2545,7 @@ export const ja = {
     // Core feature labels
     featureCreations: "1日の作成数",
     featureQuality: "AIコンテンツの品質",
+    featureImages: "Visual generation",
     featureScheduling: "投稿の予約",
     featurePersonalized: "プロフィールに合わせたトーン",
     featureDualMode: "デュアル ストーリー＋ビジネスフォーマット",
@@ -2576,6 +2577,8 @@ export const ja = {
     unlimitedCreations: "無制限の作成、クォータなし",
     creationsPerMonth: "月{n}回の作成",
     creationsPerDay: "1日{n}回の作成",
+    imagesPerDay: "{n} visuals per day",
+    imagesNearUnlimited: "Visuals near-unlimited",
 
     // Savings
     monthsFree: "{n}ヶ月分無料",
@@ -2659,6 +2662,46 @@ export const ja = {
       "1月", "2月", "3月", "4月", "5月", "6月",
       "7月", "8月", "9月", "10月", "11月", "12月",
     ],
+  },
+
+  // Premium first-time feature tour (5-slide carousel shown after onboarding)
+  appTour: {
+    welcome: {
+      eyebrow: "ようこそ",
+      title: "AI コパイロット Posty へ",
+      description: "あなたのアイデアを LinkedIn の投稿に変え、オーディエンスを成長させるためのプレミアム ワークスペース — 白紙のページにさようなら。",
+    },
+    posts: {
+      eyebrow: "スマートな執筆",
+      title: "あなたらしい投稿を生成",
+      description: "自然な言葉でチャット。Posty があなたの声、業界、オーディエンスを捉え、すぐに公開できる投稿を作成します。",
+    },
+    visuals: {
+      eyebrow: "AI ビジュアル",
+      title: "瞬時に印象的なビジュアル",
+      description: "すべての投稿に複数のブランドに沿ったバリエーション。最適なものを選択 — カルーセル、イラスト、ヒーロー画像。",
+    },
+    schedule: {
+      eyebrow: "どこにでも公開",
+      title: "プラットフォーム横断でスケジュール",
+      description: "1 週間を計画し、LinkedIn、X、Bluesky、Threads など、ワンクリックで公開。タイミングは Posty にお任せ。",
+    },
+    optimize: {
+      eyebrow: "成長エンジン",
+      title: "エンゲージメントを最適化",
+      description: "リアルタイムのフック スコア、分析、AI 提案が、各投稿をより高いリーチと会話へ導きます。",
+    },
+    controls: {
+      skip: "スキップ",
+      back: "戻る",
+      next: "次へ",
+      start: "始める",
+    },
+    settings: {
+      replayLabel: "プロダクトツアーを再生",
+      replayDesc: "プレミアム機能ツアーをもう一度見る",
+      replayCta: "再生",
+    },
   },
 
   // App Page
@@ -3156,7 +3199,7 @@ export const ja = {
     cookiePolicy: "Cookieポリシー",
   strategist: {
     pageTitle: "Strategist",
-    headerEyebrow: "Max · Marketing Strategist",
+    headerEyebrow: "Marketing Strategist",
     headerTitle: "Build a strategy, not just posts.",
     headerSubtitle: "A senior marketing advisor in your pocket. Audit your LinkedIn presence, design content plans, sharpen positioning — in one focused conversation.",
     inputPlaceholder: "Ask for an audit, a 30-day plan, hook angles…",

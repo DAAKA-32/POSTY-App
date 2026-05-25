@@ -53,6 +53,11 @@ export default function MastodonConnectModal({ isOpen, onClose }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [useCustom, setUseCustom] = useState(false);
 
+  // Same guard as BlueskyConnectModal — skip the JSX construction when closed
+  // (perf) and bail safely if the translation chunk for `mastodonConnect`
+  // hasn't landed yet (defensive — protects against future i18n regressions).
+  if (!isOpen || !c) return null;
+
   const reset = () => {
     setInstance("");
     setError(null);

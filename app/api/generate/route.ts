@@ -32,6 +32,7 @@ import { planHasFeature, PlanType, getPlanLimits, getMaxTokensForPlan } from "@/
 import { SubscriptionPlan, PostInsights } from "@/types";
 import { detectUrl, removeUrlFromPrompt, extractUrlContent, ExtractedUrlContent } from "@/lib/utils/url-extract";
 import { detectPromptLanguage } from "@/lib/utils/detect-language";
+import { normalizeHashtagsInText } from "@/lib/hashtags/normalize";
 
 // Streaming configuration for mock responses
 const MOCK_CHUNK_SIZE = 3;
@@ -998,12 +999,17 @@ STRICT RULES:
       }
     }
 
+    // Normalize hashtag casing on the final aggregated text. The streamed
+    // chunks may contain raw LLM output (#POSTY, #PersonalBranding); the
+    // client overwrites its accumulator with `content` from the done event.
+    const normalized = normalizeHashtagsInText(fullContent);
+
     // Capture first post for insights generation
     if (!firstPostContent) {
-      firstPostContent = fullContent;
+      firstPostContent = normalized;
     }
 
-    sendEvent("done", { type });
+    sendEvent("done", { type, content: normalized });
 
     // Small pause between responses
     await new Promise((resolve) => setTimeout(resolve, 300));
@@ -1303,9 +1309,10 @@ async function generateConversational(
     }
   }
 
-  sendEvent("done", { type: "conversational" });
+  const normalized = normalizeHashtagsInText(fullContent);
+  sendEvent("done", { type: "conversational", content: normalized });
 
-  return fullContent;
+  return normalized;
 }
 
 /**
@@ -1369,7 +1376,8 @@ async function generateAssistance(
     }
   }
 
-  sendEvent("done", { type: "conversational" });
+  const normalized = normalizeHashtagsInText(fullContent);
+  sendEvent("done", { type: "conversational", content: normalized });
 
-  return fullContent;
+  return normalized;
 }

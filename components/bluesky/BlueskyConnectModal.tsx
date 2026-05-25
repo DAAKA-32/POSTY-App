@@ -47,6 +47,15 @@ export default function BlueskyConnectModal({ isOpen, onClose }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [howToOpen, setHowToOpen] = useState(false);
 
+  // Skip the entire JSX construction when the modal is closed. The previous
+  // code built the `footer` const (which reads c.cancel / c.submit) on every
+  // render of the parent settings page, even when isOpen=false — so a
+  // momentarily missing `t.blueskyConnect` (lazy-loading lang chunk, HMR
+  // hiccup) crashed the whole settings tree instead of staying inert.
+  // Defensive `!c` guard catches the same class of regression for the open
+  // case: better a closed modal than a runtime error.
+  if (!isOpen || !c) return null;
+
   const reset = () => {
     setHandle("");
     setPassword("");

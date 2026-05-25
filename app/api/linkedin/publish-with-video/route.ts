@@ -9,6 +9,11 @@ import { adminDb, isAdminInitialized } from "@/lib/db/firebase-admin";
 import { Timestamp } from "firebase-admin/firestore";
 import { isPlatformAllowed, PlanType, appendFreeSignature } from "@/lib/config/plans";
 import { verifyAuth } from "@/lib/auth";
+import {
+  linkedInJsonHeaders,
+  linkedInBinaryUploadHeaders,
+  runSelfWarmupPings,
+} from "@/lib/linkedin/signals";
 
 /**
  * LinkedIn publish with video
@@ -164,10 +169,7 @@ export async function POST(request: NextRequest) {
       "https://api.linkedin.com/v2/assets?action=registerUpload",
       {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
+        headers: linkedInJsonHeaders(accessToken),
         body: JSON.stringify({
           registerUploadRequest: {
             recipes: ["urn:li:digitalmediaRecipe:feedshare-video"],
@@ -204,10 +206,7 @@ export async function POST(request: NextRequest) {
 
     const uploadRes = await fetch(uploadUrl, {
       method: "PUT",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": videoFile.type,
-      },
+      headers: linkedInBinaryUploadHeaders(accessToken, videoFile.type, videoBuffer.length),
       body: videoBuffer,
     });
 
@@ -246,11 +245,7 @@ export async function POST(request: NextRequest) {
 
     const shareRes = await fetch("https://api.linkedin.com/v2/ugcPosts", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-        "X-Restli-Protocol-Version": "2.0.0",
-      },
+      headers: linkedInJsonHeaders(accessToken),
       body: JSON.stringify(shareBody),
     });
 
@@ -273,6 +268,11 @@ export async function POST(request: NextRequest) {
 
     const shareData = await shareRes.json();
     const shareId = shareData.id;
+
+    // "Author present" footprint — parity with scheduler. Fire-and-forget.
+    if (shareId) {
+      void runSelfWarmupPings(accessToken, shareId).catch(() => {});
+    }
 
     // ── Save to Firestore (non-blocking) ───────────────────────────────
     try {

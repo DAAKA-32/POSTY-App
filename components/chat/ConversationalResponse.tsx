@@ -31,7 +31,7 @@ export default function ConversationalResponse({ content, isStreaming }: Props) 
       transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
       className="max-w-full"
     >
-      <div className="relative">
+      <div className="relative notranslate" translate="no">
         <StrategistMarkdown content={content} />
 
         {/* Blinking cursor while streaming — placed inline at the end of the

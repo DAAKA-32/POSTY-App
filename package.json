@@ -23,7 +23,12 @@
     "generate-strategist-avatar": "node scripts/generate-strategist-avatar.mjs",
     "generate-strategist-avatar-portrait": "node scripts/generate-strategist-avatar-portrait.mjs",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:report": "playwright show-report",
+    "test:e2e:install": "playwright install chromium webkit"
   },
   "dependencies": {
     "@capacitor/app": "^7.0.0",
@@ -58,12 +63,14 @@
   "devDependencies": {
     "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^7.0.0",
+    "@playwright/test": "1.59.1",
     "@types/canvas-confetti": "1.9.0",
     "@types/node": "^20",
     "@types/pdf-parse": "1.1.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitest/expect": "4.1.5",
+    "dotenv": "17.4.2",
     "eslint": "^9.39.2",
     "eslint-config-next": "^16.1.1",
     "playwright": "1.59.1",

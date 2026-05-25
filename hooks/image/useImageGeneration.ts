@@ -31,9 +31,12 @@ export interface GenerationError {
 }
 
 /** Discriminated result so the caller can render image vs. error inline
- *  without juggling separate hook-state reads after the await resolves. */
+ *  without juggling separate hook-state reads after the await resolves.
+ *
+ *  `images` always has at least one entry on success. `image` is kept as a
+ *  back-compat alias for callers that only care about the first variant. */
 export type GenerationResult =
-  | { ok: true; image: GeneratedImage }
+  | { ok: true; image: GeneratedImage; images: GeneratedImage[] }
   | { ok: false; error: GenerationError };
 
 export function useImageGeneration() {
@@ -45,7 +48,14 @@ export function useImageGeneration() {
   const generate = useCallback(
     async (
       brief: string,
-      opts?: { postContext?: string; language?: "fr" | "en"; silent?: boolean }
+      opts?: {
+        postContext?: string;
+        language?: "fr" | "en";
+        silent?: boolean;
+        /** How many variants to ask the API for (1-3). The server clamps
+         *  this by plan. Defaults to 1 to preserve existing call-sites. */
+        variantCount?: number;
+      }
     ): Promise<GenerationResult> => {
       // `silent: true` lets the caller render errors inline (in the chat
       // bubble) instead of surfacing a global toast. Quota errors still
@@ -55,10 +65,27 @@ export function useImageGeneration() {
       setIsLoading(true);
       setError(null);
       try {
+        // Defensive clipping — `/api/image/generate` enforces brief ≤ 800
+        // and postContext ≤ 2000 (Zod schema). LinkedIn posts routinely
+        // blow past those, which used to throw a 400 when the "Add Visual"
+        // shortcut forwarded the whole post text. We trim at a word boundary
+        // when possible so we don't cut mid-word.
+        const clipAtWord = (s: string, max: number): string => {
+          if (s.length <= max) return s;
+          const slice = s.slice(0, max);
+          const lastSpace = slice.lastIndexOf(" ");
+          return lastSpace > max * 0.7 ? slice.slice(0, lastSpace) + "…" : slice + "…";
+        };
+        const safeBrief = clipAtWord(brief.trim(), 800);
+        const safeContext = opts?.postContext
+          ? clipAtWord(opts.postContext.trim(), 2000)
+          : undefined;
+
         const body = JSON.stringify({
-          brief,
-          postContext: opts?.postContext,
+          brief: safeBrief,
+          ...(safeContext ? { postContext: safeContext } : {}),
           language: opts?.language ?? "fr",
+          ...(opts?.variantCount ? { variantCount: opts.variantCount } : {}),
         });
 
         // First attempt with the (possibly cached) ID token.
@@ -92,6 +119,10 @@ export function useImageGeneration() {
           quota?: QuotaInfo;
           url?: string;
           imageId?: string;
+          /** Multi-variant payload — present when server-side variantCount > 1
+           *  is supported. Each entry has its own url + imageId. Older route
+           *  versions only return the legacy top-level url/imageId. */
+          images?: Array<{ url: string; imageId: string }>;
         };
 
         const finish = (err: GenerationError): GenerationResult => {
@@ -123,21 +154,23 @@ export function useImageGeneration() {
             quota: data?.quota,
           };
 
-          // Quota errors always toast — they're paired with an upsell action
-          // (open the pricing page) that the inline card alone can't carry.
+          // Quota errors always toast — Pro gets paired with an upsell
+          // action (opens pricing for Max upgrade), Max gets a friendly
+          // "come back tomorrow" since there's no higher tier to push to.
           if (err.code === "quota_exceeded") {
             const plan = data?.quota?.plan;
             const limit = data?.quota?.limit;
             const isPro = plan === "pro";
-            toast.error(
-              isPro
-                ? `Quota Pro atteint (${limit}/jour). Passe en Max pour 5 visuels par jour.`
-                : err.message,
-              {
-                duration: 6000,
-                ...(isPro ? { icon: "🎨" } : {}),
-              }
-            );
+            const isMax = plan === "max";
+            const message = isPro
+              ? `Quota Pro atteint (${limit}/jour). Passe en Max pour 5 visuels par jour.`
+              : isMax
+                ? `Limite quotidienne atteinte (${limit}/jour). Reviens demain ✨`
+                : err.message;
+            toast.error(message, {
+              duration: 6000,
+              ...(isPro || isMax ? { icon: "🎨" } : {}),
+            });
             if (isPro && typeof window !== "undefined") {
               setTimeout(() => {
                 window.open("/subscription?plan=max&from=image_quota", "_blank", "noopener,noreferrer");
@@ -160,7 +193,17 @@ export function useImageGeneration() {
           return finish(err);
         }
 
-        if (!data.url || !data.imageId) {
+        // Prefer the multi-variant payload if the server emitted it; fall
+        // back to the legacy top-level url/imageId so older route versions
+        // still feed the new client transparently.
+        const rawVariants: Array<{ url: string; imageId: string }> =
+          Array.isArray(data.images) && data.images.length > 0
+            ? data.images
+            : data.url && data.imageId
+              ? [{ url: data.url, imageId: data.imageId }]
+              : [];
+
+        if (rawVariants.length === 0) {
           const err: GenerationError = {
             code: "invalid_response",
             message: "Réponse serveur incomplète.",
@@ -168,15 +211,17 @@ export function useImageGeneration() {
           if (!silent) toast.error(err.message + " Réessaye.");
           return finish(err);
         }
-        const image: GeneratedImage = {
-          url: data.url,
-          imageId: data.imageId,
+
+        const generatedAt = Date.now();
+        const images: GeneratedImage[] = rawVariants.map((v) => ({
+          url: v.url,
+          imageId: v.imageId,
           prompt: brief,
-          generatedAt: Date.now(),
-        };
-        setResult(image);
+          generatedAt,
+        }));
+        setResult(images[0]);
         if (data.quota) setQuota(data.quota);
-        return { ok: true, image };
+        return { ok: true, image: images[0], images };
       } catch (e) {
         const message = e instanceof Error ? e.message : "Réseau indisponible.";
         const err: GenerationError = { code: "network", message };

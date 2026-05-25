@@ -184,7 +184,7 @@ function ScheduleContent() {
       showMobileHeader={true}
       headerTitle={t.schedulePage.headerTitle}
     >
-      <div className="min-h-full bg-background-warm dark:bg-dark-bg scroll-smooth lg:overflow-y-auto">
+      <div className="min-h-full scroll-smooth lg:overflow-y-auto">
         <div className="w-full min-w-0 mx-auto px-3 py-5 sm:px-4 sm:py-6 md:px-6 md:py-8 lg:px-8 lg:py-10 lg:max-w-4xl xl:max-w-5xl 2xl:max-w-6xl overflow-x-clip">
           {/* Premium Header */}
           <motion.div
@@ -365,8 +365,9 @@ function ScheduleContent() {
                   <div
                     key={group.date}
                   >
-                    {/* Date header - Clean professional styling */}
-                    <div className="sticky top-0 z-10 flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 py-2 bg-background-warm/95 dark:bg-dark-bg/95 backdrop-blur-sm -mx-3 px-3 sm:-mx-4 sm:px-4 min-w-0">
+                    {/* Date header - frosted glass so the page-tone gradient
+                        flows through while keeping the sticky readable. */}
+                    <div className="sticky top-0 z-10 flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 py-2 bg-white/40 dark:bg-white/[0.08] backdrop-blur-md backdrop-saturate-150 dark:backdrop-saturate-125 -mx-3 px-3 sm:-mx-4 sm:px-4 min-w-0 rounded-lg dark:shadow-black/20">
                       <h2 className="text-sm md:text-base font-semibold text-gray-900 dark:text-white whitespace-nowrap">
                         {group.date}
                       </h2>

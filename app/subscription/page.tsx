@@ -13,6 +13,7 @@ import BillingToggle from "@/components/ui/BillingToggle";
 import toast from "@/components/ui/Toast";
 import WelcomeModal from "@/components/ui/WelcomeModal";
 import PricingCard from "@/components/pricing/PricingCard";
+import PageHeader from "@/components/layout/PageHeader";
 import { usePageTitle } from "@/hooks/ui/usePageTitle";
 
 // Get all plans (Free + Pro + Max) from lib/plans.ts (single source of truth)
@@ -216,7 +217,7 @@ function SubscriptionContent() {
 
   return (
     <div
-      className="notranslate bg-background-warm dark:bg-background"
+      className="notranslate posty-soft-visuals"
       translate="no"
       style={{
         height: "100dvh",
@@ -227,27 +228,12 @@ function SubscriptionContent() {
         touchAction: "pan-y",
       }}
     >
-      {/* Header */}
-      <div className="sticky top-0 z-40 bg-background-warm/80 dark:bg-dark-bg/80 backdrop-blur-xl border-b border-[#F8935D]/10 dark:border-dark-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative flex items-center h-16">
-            {!subscriptionLoading && !isFirstTimeUser && (
-              <button
-                onClick={handleBack}
-                className="flex items-center gap-2 text-gray-600 dark:text-text-secondary hover:text-gray-900 dark:hover:text-white transition-colors group z-10"
-              >
-                <svg className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                <span className="hidden sm:inline">{t.pricing.back}</span>
-              </button>
-            )}
-            <div className="absolute left-1/2 -translate-x-1/2 text-lg font-semibold text-gray-900 dark:text-white">
-              {t.pricing.subscription}
-            </div>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title={t.pricing.subscription}
+        onBack={!subscriptionLoading && !isFirstTimeUser ? handleBack : undefined}
+        backLabel={t.pricing.back}
+        maxWidthClass="max-w-7xl"
+      />
 
       {/* Hero Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-8">

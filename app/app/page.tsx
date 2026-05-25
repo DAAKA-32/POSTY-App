@@ -11,7 +11,7 @@ import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useChat } from "@/hooks/chat/useChat";
 import { useSmartScroll } from "@/hooks/scroll/useSmartScroll";
 import { useKeyboardHeight } from "@/hooks/input/useKeyboardHeight";
-import { getUserPostsWithPinned, getDualModeUsageThisWeek, getPost, createImagePost, appendGeneratedImage } from "@/lib/db/firestore";
+import { getUserPostsWithPinned, getDualModeUsageThisWeek, getPost, createImagePost, appendGeneratedImage, setGeneratedImageVariantSelections } from "@/lib/db/firestore";
 import { setCachedConversation } from "@/lib/storage/conversation-cache";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/db/firebase";
@@ -28,13 +28,17 @@ import DualModeToggle from "@/components/chat/DualModeToggle";
 import MaxModeSelector from "@/components/chat/MaxModeSelector";
 import AIModeSwitch, { AIMode } from "@/components/chat/AIModeSwitch";
 import InlineUpgradeBanner from "@/components/chat/InlineUpgradeBanner";
-import GeneratedImageCard from "@/components/chat/GeneratedImageCard";
+import GeneratedImageVariants from "@/components/chat/GeneratedImageVariants";
 import ImageGenLoader from "@/components/chat/ImageGenLoader";
 import { useImageGeneration, type GeneratedImage } from "@/hooks/image/useImageGeneration";
+import { resolveImageBrief } from "@/lib/ai/brief-resolver";
+import { clientFastIntent } from "@/lib/ai/client-intent";
 import { getAuthHeaders } from "@/lib/api/client";
 import { getPlanFeatures } from "@/lib/config/plan-features";
 import NewResponseIndicator from "@/components/chat/NewResponseIndicator";
 import PublishToLinkedInModal from "@/components/linkedin/PublishToLinkedInModal";
+import AppTourModal from "@/components/onboarding/AppTourModal";
+import { useAppTour } from "@/hooks/app/useAppTour";
 import { AnimatedScaleFade } from "@/components/animations/AnimatedPageWrapper";
 import toast from "@/components/ui/Toast";
 
@@ -114,10 +118,16 @@ function AppContent() {
   const { canSendMessage } = useQuota();
   const { isMaxPlan, isProPlan, currentPlan, planLimits } = useSubscription();
   usePageTitle("app");
+  // Premium first-time feature tour (5-slide carousel). Auto-opens after the
+  // user finishes the profile onboarding form and lands on /app.
+  const appTour = useAppTour();
   const [posts, setPosts] = useState<Post[]>([]);
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [publishContent, setPublishContent] = useState("");
   const [publishModalMode, setPublishModalMode] = useState<"now" | "schedule">("now");
+  // Pre-generated visual(s) to attach in the publish modal — one URL per
+  // image to surface as a ready-to-go File. Empty array = no media pre-attached.
+  const [publishPreloadedImageUrls, setPublishPreloadedImageUrls] = useState<string[]>([]);
   // Ready-to-publish post editor state
   const [showReadyEditor, setShowReadyEditor] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<ReadyPostCategory | null>(null);
@@ -156,10 +166,30 @@ function AppContent() {
     prompt: string;
     createdAt: number;
     status: ImageEntryStatus;
+    /** First variant — kept as a back-compat alias and as the default
+     *  selection when `images` isn't populated (legacy entries). */
     image?: GeneratedImage;
+    /** All rendered variants in order. Length ≥ 1 when status === "done". */
+    images?: GeneratedImage[];
+    /** Indices inside `images` the user picked for publishing, in click order.
+     *  Defaults to `[0]` on first render (one visual selected) and `[]` after
+     *  the user deselects everything. Survives re-renders so the publish
+     *  modal knows which URLs to pre-attach. */
+    selectedVariantIndices?: number[];
+    /** True when this entry was generated as part of an intent=both run.
+     *  The renderer uses it to (a) suppress the duplicate user-prompt
+     *  bubble that the post pipeline already shows and (b) keep the entry
+     *  out of the standalone-image list — the visual will be embedded
+     *  inside the matching post bubble via `attachedImage`. */
+    embed?: boolean;
     errorMessage?: string;
   }
   const [imageEntries, setImageEntries] = useState<ImageEntry[]>([]);
+  /** How many variants we ask /api/image/generate for. The server caps this
+   *  to plan limits (Pro ≤ 2, Max ≤ 3), so requesting 3 here is the natural
+   *  "give me up to the max your plan allows" knob. Free plans never reach
+   *  this code because the prior quota check blocks them. */
+  const VARIANT_COUNT_PER_REQUEST = 3;
   // Tracks the `posts/{id}` Firestore doc that owns the current image-mode
   // conversation. Null on the welcome screen; assigned on the first successful
   // generation, then reused for follow-ups on the same chat surface. Cleared
@@ -170,6 +200,12 @@ function AppContent() {
   // the post preview (LinkedIn-style media attachment) instead of showing
   // two separate cards stacked vertically.
   const [messageImagePairs, setMessageImagePairs] = useState<Record<string, string>>({});
+  /** True while an intent=both run is awaiting both pipelines + the Firestore
+   *  write that links the image to its message. The auto-redirect to
+   *  /app/c/[id] gates on this — redirecting early left the new page to
+   *  hydrate from Firestore BEFORE the image record was written, so the
+   *  embed silently dropped and the user had to refresh to see the visual. */
+  const [imageEmbedPersisting, setImageEmbedPersisting] = useState(false);
   const {
     generate: generateImage,
     isLoading: isGeneratingImage,
@@ -182,6 +218,25 @@ function AppContent() {
     (id: string, patch: Partial<ImageEntry>) => {
       setImageEntries((prev) =>
         prev.map((e) => (e.id === id ? { ...e, ...patch } : e))
+      );
+    },
+    []
+  );
+
+  /** Toggle a variant index in/out of an entry's selection, preserving click
+   *  order. The first click adds to the end of the array; clicking an already-
+   *  selected variant removes it (and renumbers the badges for the rest). */
+  const toggleVariantSelection = useCallback(
+    (entryId: string, variantIndex: number) => {
+      setImageEntries((prev) =>
+        prev.map((e) => {
+          if (e.id !== entryId) return e;
+          const cur = e.selectedVariantIndices ?? (e.image ? [0] : []);
+          const next = cur.includes(variantIndex)
+            ? cur.filter((i) => i !== variantIndex)
+            : [...cur, variantIndex];
+          return { ...e, selectedVariantIndices: next };
+        })
       );
     },
     []
@@ -270,6 +325,8 @@ function AppContent() {
     effectiveDualMode,
     effectiveStyle,
     insights,
+    imageEntries,
+    messageImagePairs,
   });
   redirectInputsRef.current = {
     messages,
@@ -278,6 +335,8 @@ function AppContent() {
     effectiveDualMode,
     effectiveStyle,
     insights,
+    imageEntries,
+    messageImagePairs,
   };
 
   // Pre-cache the conversation before navigating so the conversation page loads
@@ -285,6 +344,12 @@ function AppContent() {
   // — never during a stream, never on every message chunk.
   useEffect(() => {
     if (!postId || postId === lastRedirectedPostIdRef.current || isStreaming) return;
+    // Wait for the intent=both Firestore write to settle. Without this guard,
+    // the post finishes streaming first → redirect fires → /app/c/[id] hydrates
+    // from Firestore that doesn't yet contain the image → user sees text only
+    // and needs to refresh. With it, redirect waits the few seconds image gen
+    // takes; user stays on /app watching the placeholder until the image lands.
+    if (imageEmbedPersisting) return;
     lastRedirectedPostIdRef.current = postId;
 
     const {
@@ -294,6 +359,8 @@ function AppContent() {
       effectiveDualMode: dual,
       effectiveStyle: style,
       insights: ins,
+      imageEntries: entries,
+      messageImagePairs: pairs,
     } = redirectInputsRef.current;
 
     // Extract response content from messages we already have in memory.
@@ -309,6 +376,36 @@ function AppContent() {
     const isConversational =
       aiMessages.length > 0 && !storytellingMsg && !businessMsg;
     const fallbackContent = aiMessages[0]?.content || "";
+
+    // Reverse-map pair (msg.id → entry.id) for quick lookup when serialising
+    // the embed entries into GeneratedImageRecord shape. Without this, the
+    // image lands in Firestore (via appendGeneratedImage) but the cached
+    // Post we hand to /app/c/[id] omits `generatedImages`, so the new page
+    // hydrates from a visual-less cache and the user sees text only —
+    // exactly the "loader → empty bubble → Add Visuals button" symptom.
+    const entryIdToMessageId = new Map<string, string>();
+    for (const [mid, eid] of Object.entries(pairs)) entryIdToMessageId.set(eid, mid);
+    const generatedImages = entries
+      .filter((e) => e.status === "done" && e.image)
+      .map((e) => ({
+        id: e.id,
+        prompt: e.prompt,
+        url: e.image!.url,
+        imageId: e.image!.imageId,
+        generatedAt: e.image!.generatedAt,
+        variants: (e.images && e.images.length > 0 ? e.images : [e.image!]).map((v) => ({
+          url: v.url,
+          imageId: v.imageId,
+        })),
+        // Persist BOTH the multi-select array (new field) and the legacy
+        // single-index (= first pick) so older clients keep working. Default
+        // to [0] when the entry has no explicit selection yet.
+        selectedVariantIndices: e.selectedVariantIndices ?? [0],
+        selectedVariantIndex: (e.selectedVariantIndices ?? [0])[0] ?? 0,
+        ...(entryIdToMessageId.has(e.id)
+          ? { messageId: entryIdToMessageId.get(e.id) }
+          : {}),
+      }));
 
     // Build a complete Post from local data — no Firestore round-trip needed
     const cachedPost: Post = {
@@ -332,6 +429,7 @@ function AppContent() {
       // in /api/generate). Drop them here too so a stale insight from a prior
       // post doesn't bleed into a conversational reply's cached snapshot.
       insights: isConversational ? undefined : (ins || undefined),
+      ...(generatedImages.length > 0 ? { generatedImages } : {}),
     };
 
     setCachedConversation(cachedPost);
@@ -348,7 +446,7 @@ function AppContent() {
         }
       }).catch(() => {});
     }, 2000);
-  }, [postId, isStreaming, router]);
+  }, [postId, isStreaming, imageEmbedPersisting, router]);
 
   // Smart scroll: only auto-scroll when user is near bottom
   const {
@@ -582,38 +680,105 @@ function AppContent() {
    * calls the API, then persists / redirects on first success. Extracted
    * so the unified `handleGenerate` can fire it standalone (intent=image)
    * or in parallel with the post pipeline (intent=both).
+   *
+   * Returns the entry id and the rendered record (when successful) so the
+   * caller can hand the visual off to a sibling pipeline — specifically,
+   * the intent=both path uses this to append the image to the post Firestore
+   * doc created by useChat instead of creating a duplicate image-only Post.
    */
   const runImageGeneration = useCallback(
-    async (displayPrompt: string, brief: string) => {
+    async (
+      displayPrompt: string,
+      brief: string,
+      opts?: {
+        /** When true, the function skips its own Firestore writes (no
+         *  createImagePost / appendGeneratedImage call, no redirect). The
+         *  caller is responsible for persisting the returned record onto
+         *  whichever post it ends up attached to. Used by intent=both. */
+        embed?: boolean;
+        /** Override the default VARIANT_COUNT_PER_REQUEST. Used by the
+         *  "Ajouter des visuels" picker where the user explicitly chooses
+         *  1, 2, or 3 variants. */
+        variantCount?: 1 | 2 | 3;
+      }
+    ): Promise<{
+      entryId: string;
+      record?: import("@/types").GeneratedImageRecord;
+      ok: boolean;
+    }> => {
       const entryId =
         typeof crypto !== "undefined" && "randomUUID" in crypto
           ? crypto.randomUUID()
           : `img-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       setImageEntries((prev) => [
         ...prev,
-        { id: entryId, prompt: displayPrompt, createdAt: Date.now(), status: "generating" },
+        {
+          id: entryId,
+          prompt: displayPrompt,
+          createdAt: Date.now(),
+          status: "generating",
+          // `embed` tells the renderer this entry is paired with a post —
+          // suppresses the duplicate user-prompt bubble and prevents the
+          // standalone image card from showing alongside the post bubble.
+          embed: opts?.embed === true,
+        } as ImageEntry,
       ]);
 
-      const lastAssistantMessage = [...messages].reverse().find((m) => m.type === "ai");
-      const result = await generateImage(brief, {
-        postContext: lastAssistantMessage?.content,
+      // Pull the latest assistant POST (with a variant — conversational
+      // replies have variant=undefined and aren't valid image briefs). The
+      // brief resolver then decides: if the caller's brief is referential
+      // ("ajoute des images", "regenere", a bare noun like "images"), it
+      // substitutes a post-derived brief so the visual hits the right
+      // topic. Concrete briefs ("Visuel moderne sur la tech") pass through.
+      const lastAssistantPost = [...messages]
+        .reverse()
+        .find((m) => m.type === "ai" && m.variant !== undefined);
+      const lastAssistantAnything = [...messages]
+        .reverse()
+        .find((m) => m.type === "ai");
+      const resolved = resolveImageBrief({
+        rawBrief: brief,
+        postContent: lastAssistantPost?.content ?? null,
+      });
+      const result = await generateImage(resolved.brief, {
+        // postContext keeps the full post visible to the art director (~2000
+        // char cap defended in the hook). When the brief was already
+        // post-derived, postContext gives extra fidelity (tone, structure).
+        postContext: lastAssistantPost?.content ?? lastAssistantAnything?.content,
         language: (t as { meta?: { lang?: "fr" | "en" } })?.meta?.lang ?? "fr",
         silent: true,
+        variantCount: opts?.variantCount ?? VARIANT_COUNT_PER_REQUEST,
       });
       if (!result.ok) {
         upsertImageEntry(entryId, { status: "error", errorMessage: result.error.message });
-        return;
+        return { entryId, ok: false };
       }
-      upsertImageEntry(entryId, { status: "done", image: result.image });
+      upsertImageEntry(entryId, {
+        status: "done",
+        image: result.image,
+        images: result.images,
+        // Default = first variant pre-selected; user can toggle others or
+        // deselect to publish without any visual.
+        selectedVariantIndices: [0],
+      });
 
-      if (!user?.uid) return;
-      const record = {
+      const record: import("@/types").GeneratedImageRecord = {
         id: entryId,
         prompt: displayPrompt,
         url: result.image.url,
         imageId: result.image.imageId,
         generatedAt: result.image.generatedAt,
+        variants: result.images.map((img) => ({ url: img.url, imageId: img.imageId })),
+        selectedVariantIndices: [0],
+        selectedVariantIndex: 0,
       };
+
+      if (!user?.uid) return { entryId, record, ok: true };
+
+      // Embedded mode: the caller (intent=both orchestration) owns the
+      // Firestore write. We just hand back the record.
+      if (opts?.embed) return { entryId, record, ok: true };
+
       try {
         const existingPostId = imagePostIdRef.current;
         if (!existingPostId) {
@@ -641,15 +806,32 @@ function AppContent() {
       } catch (err) {
         console.warn("[image-gen] persist failed (image still shown):", err);
       }
+      return { entryId, record, ok: true };
     },
     [messages, generateImage, t, upsertImageEntry, user, router]
   );
 
   /**
-   * Fires `/api/intent` to classify the prompt. Returns "post" as a safe
-   * default if the call fails or times out — Posty's main pipeline is the
-   * least surprising fallback. The 1.5s timeout caps the latency cost so
-   * we never block the user on a stalled classifier.
+   * Fires `/api/intent` to classify the prompt with a two-layer safety net:
+   *
+   *   1. **Client fast-path** (`clientFastIntent`) runs synchronously BEFORE
+   *      the network call. When the user's wording is unambiguous (e.g.
+   *      "fais un post avec des visuels"), we already know it's `both` —
+   *      we still await the server response to capture clean briefs, but
+   *      this gives us a reliable fallback if the server is slow or down.
+   *
+   *   2. **3.5s soft timeout** on the network call. gpt-4o-mini classifies
+   *      in ~150-300ms typical but spikes to 2-3s on bad OpenAI days. The
+   *      old 1.5s cap silently dropped slow classifications and routed the
+   *      prompt to "post", killing every "post + images" request that hit
+   *      a latency blip.
+   *
+   *   3. **Intent-aware fallback** — never silently default to "post" when
+   *      the user explicitly mentioned visuals. If the server returns "post"
+   *      / "conversation" but the prompt clearly asks for an image, we
+   *      surface that mismatch via `userWantedVisuals` so the UI can
+   *      highlight the "Add Visual" CTA instead of pretending nothing
+   *      happened.
    */
   const classifyIntent = useCallback(
     async (prompt: string): Promise<{
@@ -659,11 +841,36 @@ function AppContent() {
       /** Fine-grained sub-type — forwarded to /api/generate as intentHint
        *  so the post route skips its own classifier. */
       postType?: "PRODUCTION" | "HYBRID" | "ASSISTANCE" | "SOCIAL";
+      /** True when the prompt clearly mentioned a visual deliverable but
+       *  the resolved intent didn't end up firing the image pipeline
+       *  (server timed out, server returned "post", etc.). Lets the UI
+       *  promote the "Add Visual" CTA instead of burying it. */
+      userWantedVisuals: boolean;
     }> => {
+      const local = clientFastIntent(prompt);
+
+      // Build a deterministic fallback BEFORE the network call. If the
+      // server times out or 5xx's, we use this instead of the historical
+      // silent "post" default — keeps "fais un post avec des images" on
+      // the both-pipeline even when /api/intent is unhealthy.
+      const localFallback: {
+        intent: "post" | "image" | "both" | "conversation";
+        postBrief?: string;
+        imageBrief?: string;
+        postType?: "PRODUCTION" | "HYBRID" | "ASSISTANCE" | "SOCIAL";
+      } =
+        local.intent === "both"
+          ? { intent: "both", postBrief: local.postBrief, imageBrief: local.imageBrief, postType: "PRODUCTION" }
+          : local.intent === "image"
+            ? { intent: "image", imageBrief: local.imageBrief }
+            : local.intent === "post"
+              ? { intent: "post", postBrief: local.postBrief, postType: "PRODUCTION" }
+              : { intent: "post", postBrief: prompt };
+
       try {
         const headers = await getAuthHeaders();
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 1500);
+        const timeout = setTimeout(() => controller.abort(), 3500);
         const res = await fetch("/api/intent", {
           method: "POST",
           headers: { "Content-Type": "application/json", ...headers },
@@ -674,16 +881,25 @@ function AppContent() {
           signal: controller.signal,
         });
         clearTimeout(timeout);
-        if (!res.ok) return { intent: "post", postBrief: prompt };
+        if (!res.ok) {
+          return { ...localFallback, userWantedVisuals: local.hasImageMention };
+        }
         const data = await res.json();
+        const intent = (data.intent ?? localFallback.intent) as "post" | "image" | "both" | "conversation";
+        // Mismatch detection: user asked for visuals but the server didn't
+        // route to image/both. Don't silently downgrade — flag it so the
+        // CTA can pulse and the user can recover in one click.
+        const userWantedVisuals =
+          local.hasImageMention && intent !== "image" && intent !== "both";
         return {
-          intent: data.intent ?? "post",
-          postBrief: data.postBrief ?? prompt,
-          imageBrief: data.imageBrief ?? prompt,
+          intent,
+          postBrief: data.postBrief ?? localFallback.postBrief ?? prompt,
+          imageBrief: data.imageBrief ?? localFallback.imageBrief ?? prompt,
           postType: data.postType,
+          userWantedVisuals,
         };
       } catch {
-        return { intent: "post", postBrief: prompt };
+        return { ...localFallback, userWantedVisuals: local.hasImageMention && localFallback.intent !== "image" && localFallback.intent !== "both" };
       }
     },
     [messages.length, imageEntries.length]
@@ -711,33 +927,78 @@ function AppContent() {
     }
 
     if (classification.intent === "both") {
-      // Run post + image in parallel — the post stream and the image render
-      // are independent pipelines; awaiting Promise.all lets either one
-      // finish at its own pace without blocking the other from appearing.
-      // We snapshot the imageEntries length BEFORE firing so we can locate
-      // the new entry afterwards (state updates may queue, so a length-based
-      // diff is safer than reading state inside the callback).
-      const entriesBeforeCount = imageEntries.length;
-      await Promise.all([
-        generate(classification.postBrief || prompt, file, classification.postType),
-        runImageGeneration(prompt, classification.imageBrief || prompt),
-      ]);
-      // Pair the newest AI message (post just streamed in) with the newest
-      // done image entry. Inside the render tree, ModernResponseCard then
-      // displays the image as a LinkedIn-style media attachment.
-      setImageEntries((current) => {
-        const newEntry = current[entriesBeforeCount];
-        if (newEntry?.status === "done") {
-          // useChat appends streamed messages synchronously by the time the
-          // generate() promise resolves — read it via the ref we already keep.
+      // Conversational acknowledgement: tell the user we understood the
+      // multimodal ask BEFORE the two pipelines start streaming. Without
+      // this, the UI looks like a regular post generation that suddenly
+      // sprouts a visual at the end — confusing for "fais un post avec
+      // des images" which is supposed to feel coordinated.
+      toast.info("✨ Création du post et des visuels en parallèle…", { duration: 3500 });
+      // Block the auto-redirect until the image record is written to
+      // Firestore with its messageId — otherwise the redirect races the
+      // write and /app/c/[id] hydrates without the image, forcing a refresh.
+      setImageEmbedPersisting(true);
+      // Post + image in parallel. Both are independent pipelines so
+      // Promise.all lets the post stream and the image render finish at
+      // their own pace. Two important constraints versus a vanilla run:
+      //
+      //   1. The post is forced to a single style (storytelling). Stacking
+      //      a dual post on top of 3 image variants overloads the chat
+      //      surface and was explicitly flagged as a regression. dualMode
+      //      stays on for plain post requests; it's only the both-flow
+      //      that collapses to one variant.
+      //   2. Image generation runs in `embed: true` mode — it does NOT
+      //      create a separate image-only Post in Firestore. The post
+      //      pipeline owns the Post doc; we append the image to it once
+      //      we know its id, so a reload still finds both the text and
+      //      the visual in the same conversation.
+      let imageResult: Awaited<ReturnType<typeof runImageGeneration>> | null = null;
+      let postResult: Awaited<ReturnType<typeof generate>> | null = null;
+      try {
+        [postResult, imageResult] = await Promise.all([
+          generate(
+            classification.postBrief || prompt,
+            file,
+            classification.postType,
+            { forceSingleStyle: "storytelling" }
+          ),
+          runImageGeneration(
+            prompt,
+            classification.imageBrief || prompt,
+            { embed: true }
+          ),
+        ]);
+
+        // Pair the newest AI message with the just-rendered image so
+        // ModernResponseCard embeds it as a LinkedIn-style media attachment.
+        if (imageResult.ok && imageResult.record) {
           const latestMessages = redirectInputsRef.current.messages;
           const newestAi = [...latestMessages].reverse().find((m) => m.type === "ai");
           if (newestAi?.id) {
-            setMessageImagePairs((prev) => ({ ...prev, [newestAi.id!]: newEntry.id }));
+            setMessageImagePairs((prev) => ({ ...prev, [newestAi.id!]: imageResult!.entryId }));
+          }
+          // Attach the image to the post Firestore doc so the conversation
+          // re-loads with text + visual instead of one of them being lost.
+          // The `messageId` field is the critical part — without it, reload
+          // sees an unowned image and renders it standalone (full-width),
+          // breaking the embedded LinkedIn-card geometry and the publish flow
+          // (which derives attached images from messageImagePairs).
+          if (postResult?.postId && user?.uid) {
+            try {
+              await appendGeneratedImage(postResult.postId, {
+                ...imageResult.record,
+                messageId: newestAi?.id,
+              });
+            } catch (err) {
+              console.warn("[intent=both] failed to append image to post (image still rendered):", err);
+            }
           }
         }
-        return current;
-      });
+      } finally {
+        // Release the redirect gate even on failure so the user still lands
+        // on the conversation page (with text only, in the worst case).
+        setImageEmbedPersisting(false);
+      }
+
       trackPostGeneration();
       if (user?.uid && isProPlan && planLimits.dualResponsesPerWeek > 0) {
         getDualModeUsageThisWeek(user.uid).then(setDualUsedThisWeek).catch(() => {});
@@ -753,6 +1014,13 @@ function AppContent() {
     trackPostGeneration();
     if (user?.uid && isProPlan && planLimits.dualResponsesPerWeek > 0) {
       getDualModeUsageThisWeek(user.uid).then(setDualUsedThisWeek).catch(() => {});
+    }
+    // Recovery toast — the user explicitly asked for visuals but the
+    // classifier landed on post/conversation (e.g. server down, ambiguous
+    // wording the LLM mis-routed). Offer one-click recovery instead of
+    // making them re-type or hunt for the CTA below the post.
+    if (classification.userWantedVisuals) {
+      toast.info("Tu as mentionné des visuels — clique sur \"Ajouter des visuels\" sous le post pour les générer.", { duration: 5000 });
     }
   };
 
@@ -771,9 +1039,17 @@ function AppContent() {
       const result = await generateImage(entry.prompt, {
         language: (t as { meta?: { lang?: "fr" | "en" } })?.meta?.lang ?? "fr",
         silent: true,
+        variantCount: VARIANT_COUNT_PER_REQUEST,
       });
       if (result.ok) {
-        upsertImageEntry(entryId, { status: "done", image: result.image });
+        upsertImageEntry(entryId, {
+          status: "done",
+          image: result.image,
+          images: result.images,
+          // Regenerated → reset to first variant pre-selected; the previous
+          // selection no longer maps to the new variants anyway.
+          selectedVariantIndices: [0],
+        });
       } else {
         upsertImageEntry(entryId, {
           status: "error",
@@ -819,8 +1095,53 @@ function AppContent() {
     }
   };
 
+  /**
+   * Resolve the visual URL(s) that should be pre-attached to the publish
+   * modal for a given post body. We walk back through the chat messages,
+   * find the assistant bubble whose content matches `content`, then look
+   * up its image pair via `messageImagePairs`. Multi-select aware — returns
+   * every URL the user picked (in click order). LinkedIn supports up to 9
+   * images per post, so forwarding the full array is correct.
+   *
+   * Empty array can mean: no paired image, OR the user deselected everything
+   * (publish without any visual). Both cases produce the same "no pre-attach"
+   * outcome in the modal, which is the intended behaviour.
+   */
+  const resolvePreloadedImagesFor = useCallback(
+    (content: string): string[] => {
+      // Match against the latest AI message with this content. Trimmed
+      // comparison is enough — the publish handler always passes the exact
+      // text we rendered. We don't fuzz-match because surrogate posts
+      // (history, ready-posts) shouldn't accidentally pick up an image.
+      const target = content.trim();
+      for (let i = messages.length - 1; i >= 0; i--) {
+        const m = messages[i];
+        if (m.type !== "ai") continue;
+        if (m.content.trim() !== target) continue;
+        if (!m.id) return [];
+        const entryId = messageImagePairs[m.id];
+        if (!entryId) return [];
+        const entry = imageEntries.find((e) => e.id === entryId);
+        if (!entry || entry.status !== "done") return [];
+        const variants = entry.images && entry.images.length > 0
+          ? entry.images
+          : (entry.image ? [entry.image] : []);
+        if (variants.length === 0) return [];
+        // Default to first variant when no explicit selection has been made
+        // (e.g. legacy entries that didn't track multi-select yet).
+        const indices = entry.selectedVariantIndices ?? [0];
+        return indices
+          .filter((idx) => idx >= 0 && idx < variants.length)
+          .map((idx) => variants[idx].url);
+      }
+      return [];
+    },
+    [messages, messageImagePairs, imageEntries]
+  );
+
   const handlePublishToLinkedIn = (content: string) => {
     setPublishContent(content);
+    setPublishPreloadedImageUrls(resolvePreloadedImagesFor(content));
     setPublishModalMode("now");
     setShowPublishModal(true);
   };
@@ -835,6 +1156,7 @@ function AppContent() {
 
   const handleSchedulePost = (content: string) => {
     setPublishContent(content);
+    setPublishPreloadedImageUrls(resolvePreloadedImagesFor(content));
     setPublishModalMode("schedule");
     setShowPublishModal(true);
   };
@@ -857,7 +1179,7 @@ function AppContent() {
 
   return (
     <MainLayout posts={posts} showMobileHeader={true}>
-      <div className="flex flex-col h-full bg-background-warm dark:bg-background app-content-wrapper">
+      <div className="flex flex-col h-full app-content-wrapper">
         {/* Messages area - with padding for content to scroll behind fixed input */}
         <div
           ref={scrollContainerRef}
@@ -976,8 +1298,14 @@ function AppContent() {
                       }
                     }
 
-                    // Group messages: user messages standalone, AI responses based on plan
-                    const elements: React.ReactNode[] = [];
+                    // Group messages + standalone image entries into ordered "slots".
+                    // Each slot carries the timestamp it was created at so we can
+                    // sort the unified stream chronologically before rendering —
+                    // the bug we're fixing is that image-mode prompts and post
+                    // prompts were rendered in two separate sections (messages
+                    // first, then imageEntries), so a later post answer always
+                    // appeared ABOVE an earlier image generation.
+                    const elements: { ts: Date; node: React.ReactNode }[] = [];
                     let i = 0;
                     let pairIndex = 0;
 
@@ -986,16 +1314,19 @@ function AppContent() {
 
                       if (message.type === "user") {
                         // Render user message with ChatMessage
-                        elements.push(
-                          <ChatMessage
-                            key={message.id || `user-${i}`}
-                            type={message.type}
-                            content={message.content}
-                            timestamp={message.timestamp}
-                            showActions={false}
-                            index={i}
-                          />
-                        );
+                        elements.push({
+                          ts: message.timestamp,
+                          node: (
+                            <ChatMessage
+                              key={message.id || `user-${i}`}
+                              type={message.type}
+                              content={message.content}
+                              timestamp={message.timestamp}
+                              showActions={false}
+                              index={i}
+                            />
+                          ),
+                        });
                         i++;
                       } else if (message.type === "ai") {
                         // Check if next message is also AI (paired response for MAX plan)
@@ -1010,46 +1341,51 @@ function AppContent() {
                           const business = message.variant === "business" ? message : nextMessage;
 
                           // Render paired responses with ModernAIResponsePair (MAX plan only)
-                          elements.push(
-                            <div key={`pair-${message.id || i}-${pairIndex}`}>
-                              {/* POSTY Avatar and Label */}
-                              <div className="flex items-center gap-3 mb-3">
-                                <div className="w-8 h-8 shrink-0 rounded-xl overflow-hidden shadow-sm">
-                                  <Image
-                                    src="/logo.png"
-                                    alt="Posty"
-                                    width={32}
-                                    height={32}
-                                    className="w-full h-full object-contain"
-                                  />
+                          elements.push({
+                            ts: message.timestamp,
+                            node: (
+                              <div key={`pair-${message.id || i}-${pairIndex}`}>
+                                {/* POSTY Avatar and Label */}
+                                <div className="flex items-center gap-3 mb-3">
+                                  <div className="w-8 h-8 shrink-0 rounded-xl overflow-hidden shadow-sm">
+                                    <Image
+                                      src="/logo.png"
+                                      alt="Posty"
+                                      width={32}
+                                      height={32}
+                                      className="w-full h-full object-contain"
+                                    />
+                                  </div>
+                                  <span className="text-xs text-text-muted font-medium">POSTY</span>
                                 </div>
-                                <span className="text-xs text-text-muted font-medium">POSTY</span>
+                                <ModernAIResponsePair
+                                  storytellingResponse={{
+                                    content: storytelling.content,
+                                    variant: "storytelling",
+                                    timestamp: storytelling.timestamp,
+                                    isStreaming: storytelling.isStreaming,
+                                  }}
+                                  businessResponse={{
+                                    content: business.content,
+                                    variant: "business",
+                                    timestamp: business.timestamp,
+                                    isStreaming: business.isStreaming,
+                                  }}
+                                  userPlan={currentPlan}
+                                  onPublishToLinkedIn={handlePublishToLinkedIn}
+                                  onSchedule={handleSchedulePost}
+                                  isLastMessage={i === lastAIIndex || i + 1 === lastAIIndex}
+                                />
                               </div>
-                              <ModernAIResponsePair
-                                storytellingResponse={{
-                                  content: storytelling.content,
-                                  variant: "storytelling",
-                                  timestamp: storytelling.timestamp,
-                                  isStreaming: storytelling.isStreaming,
-                                }}
-                                businessResponse={{
-                                  content: business.content,
-                                  variant: "business",
-                                  timestamp: business.timestamp,
-                                  isStreaming: business.isStreaming,
-                                }}
-                                userPlan={currentPlan}
-                                onPublishToLinkedIn={handlePublishToLinkedIn}
-                                onSchedule={handleSchedulePost}
-                                isLastMessage={i === lastAIIndex || i + 1 === lastAIIndex}
-                              />
-                            </div>
-                          );
+                            ),
+                          });
                           pairIndex++;
                           i += 2; // Skip both messages
                         } else {
                           // Single AI response (FREE/PRO plans) - use ModernResponseCard
-                          elements.push(
+                          elements.push({
+                            ts: message.timestamp,
+                            node: (
                             <motion.div
                               key={message.id || `ai-${i}`}
                               initial={{ opacity: 0, y: 6 }}
@@ -1094,66 +1430,323 @@ function AppContent() {
                                   onSchedule={handleSchedulePost}
                                   showVariantBadge={planFeatures.responseMode === "single-choice"}
                                   isLastMessage={i === lastAIIndex}
-                                  attachedImage={(() => {
+                                  attachedVisual={(() => {
                                     if (!message.id) return null;
                                     const entryId = messageImagePairs[message.id];
                                     if (!entryId) return null;
                                     const entry = imageEntries.find((e) => e.id === entryId);
                                     if (!entry || entry.status !== "done" || !entry.image) return null;
-                                    return { url: entry.image.url, alt: entry.prompt };
+                                    // Build the unified variant payload so the
+                                    // embed surfaces the same 3-thumbnail picker
+                                    // and regenerate action as the standalone
+                                    // <GeneratedImageVariants> card. Falls back
+                                    // to a single-variant payload for legacy
+                                    // entries that pre-date multi-variant.
+                                    const variants =
+                                      entry.images && entry.images.length > 0
+                                        ? entry.images
+                                        : [entry.image];
+                                    return {
+                                      variants: variants.map((v) => ({
+                                        url: v.url,
+                                        imageId: v.imageId,
+                                        alt: entry.prompt,
+                                      })),
+                                      // Hydrate from the new multi-select
+                                      // field, falling back to the legacy
+                                      // single-index for entries written
+                                      // before multi-select existed.
+                                      selectedIndices:
+                                        entry.selectedVariantIndices ?? [0],
+                                      onToggle: (idx: number) => {
+                                        toggleVariantSelection(entry.id, idx);
+                                        // Persist silently — user's selection
+                                        // must survive a reload so the
+                                        // publish flow ships the right set.
+                                        // We snapshot the post-toggle state
+                                        // from the current entry to avoid a
+                                        // race with the setState above.
+                                        if (postId) {
+                                          const cur =
+                                            entry.selectedVariantIndices ?? [0];
+                                          const nextSel = cur.includes(idx)
+                                            ? cur.filter((i) => i !== idx)
+                                            : [...cur, idx];
+                                          setGeneratedImageVariantSelections(
+                                            postId,
+                                            entry.id,
+                                            nextSel
+                                          ).catch(() => {});
+                                        }
+                                      },
+                                      onRegenerate: () => handleRegenerateImage(entry.id),
+                                      isRegenerating: false,
+                                      // Hide the regenerate icon once the
+                                      // daily image quota is exhausted —
+                                      // clicking would just fire a toast.
+                                      // `remaining` is null until the first
+                                      // call returns, so we default to true.
+                                      canRegenerate:
+                                        imageQuota?.remaining === undefined || imageQuota.remaining > 0,
+                                    };
                                   })()}
+                                  attachedImageLoading={(() => {
+                                    // Show the "visuel en cours…" slot on the
+                                    // last AI bubble while an embed entry is
+                                    // either still rendering OR finished but
+                                    // not yet paired. The pair gets set one
+                                    // render after the entry flips to "done";
+                                    // without the "done && unpaired" branch
+                                    // the loader disappears one frame before
+                                    // the image attaches, producing a visible
+                                    // blink and tricking the user into thinking
+                                    // generation silently failed (the exact
+                                    // intent=both regression the user reported).
+                                    if (i !== lastAIIndex) return false;
+                                    if (!message.id) return false;
+                                    if (messageImagePairs[message.id]) return false;
+                                    const pairedEntryIds = new Set(Object.values(messageImagePairs));
+                                    return imageEntries.some(
+                                      (e) =>
+                                        e.embed &&
+                                        !pairedEntryIds.has(e.id) &&
+                                        (e.status === "generating" || e.status === "done")
+                                    );
+                                  })()}
+                                  // One-click shortcut: feeds the post's text
+                                  // straight into the image pipeline. Only on
+                                  // the last AI bubble — older posts in the
+                                  // scrollback shouldn't sprout an Add Visual
+                                  // chip every time you scroll past them.
+                                  onAddVisual={
+                                    i === lastAIIndex
+                                      ? (_postContent, variantCount) =>
+                                          runImageGeneration(
+                                            "Visuel pour ce post",
+                                            // Referential brief — resolveImageBrief
+                                            // (inside runImageGeneration) detects
+                                            // this is short/referential and
+                                            // substitutes a post-derived brief
+                                            // from the last assistant POST. No need
+                                            // to duplicate the derivation here.
+                                            "Visuels",
+                                            { embed: true, variantCount }
+                                          ).then(async (imageResult) => {
+                                            if (
+                                              !imageResult.ok ||
+                                              !imageResult.record ||
+                                              !message.id
+                                            )
+                                              return;
+                                            setMessageImagePairs((prev) => ({
+                                              ...prev,
+                                              [message.id!]: imageResult.entryId,
+                                            }));
+                                            if (postId && user?.uid) {
+                                              try {
+                                                await appendGeneratedImage(
+                                                  postId,
+                                                  imageResult.record
+                                                );
+                                              } catch {
+                                                /* image still rendered locally */
+                                              }
+                                            }
+                                          })
+                                      : undefined
+                                  }
                                 />
                               )}
                             </motion.div>
-                          );
+                            ),
+                          });
                           i++;
                         }
                       } else if (message.type === "action" && message.action) {
                         // Action confirmation card
                         const action = message.action;
-                        elements.push(
-                          <motion.div
-                            key={message.id || `action-${i}`}
-                            initial={{ opacity: 0, y: 6 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.2, ease: smoothEase }}
-                            className="w-full"
-                          >
-                            {/* POSTY Avatar */}
-                            <div className="flex items-center gap-3 mb-3">
-                              <div className="w-8 h-8 shrink-0 rounded-xl overflow-hidden shadow-sm">
-                                <Image
-                                  src="/logo.png"
-                                  alt="Posty"
-                                  width={32}
-                                  height={32}
-                                  className="w-full h-full object-contain"
-                                />
+                        elements.push({
+                          ts: message.timestamp,
+                          node: (
+                            <motion.div
+                              key={message.id || `action-${i}`}
+                              initial={{ opacity: 0, y: 6 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.2, ease: smoothEase }}
+                              className="w-full"
+                            >
+                              {/* POSTY Avatar */}
+                              <div className="flex items-center gap-3 mb-3">
+                                <div className="w-8 h-8 shrink-0 rounded-xl overflow-hidden shadow-sm">
+                                  <Image
+                                    src="/logo.png"
+                                    alt="Posty"
+                                    width={32}
+                                    height={32}
+                                    className="w-full h-full object-contain"
+                                  />
+                                </div>
+                                <span className="text-xs text-text-muted font-medium">POSTY</span>
                               </div>
-                              <span className="text-xs text-text-muted font-medium">POSTY</span>
-                            </div>
-                            <ActionConfirmCard
-                              action={action}
-                              onSuccess={(actionType, data) => {
-                                if (actionType === "publish_post" && action.params.content) {
-                                  handlePublishToLinkedIn(action.params.content);
-                                } else if (actionType === "delete_conversation") {
-                                  reset();
-                                  router.push(`/app?new=${Date.now()}`);
-                                }
-                                void data;
-                              }}
-                              onCancel={() => {}}
-                            />
-                          </motion.div>
-                        );
+                              <ActionConfirmCard
+                                action={action}
+                                onSuccess={(actionType, data) => {
+                                  if (actionType === "publish_post" && action.params.content) {
+                                    handlePublishToLinkedIn(action.params.content);
+                                  } else if (actionType === "delete_conversation") {
+                                    reset();
+                                    router.push(`/app?new=${Date.now()}`);
+                                  }
+                                  void data;
+                                }}
+                                onCancel={() => {}}
+                              />
+                            </motion.div>
+                          ),
+                        });
                         i++;
                       } else {
                         i++;
                       }
                     }
 
-                    return elements;
+                    // Merge standalone image-mode entries into the same ordered
+                    // stream, keyed by their `createdAt` so they appear at the
+                    // exact point in time the user submitted the image prompt
+                    // (not lumped at the bottom under every text answer).
+                    const pairedEntryIds = new Set(Object.values(messageImagePairs));
+                    const standaloneImageEntries = imageEntries.filter(
+                      // Embed entries that errored still surface so the user
+                      // sees an explicit failure card with retry — same rule
+                      // as the previous standalone-only block.
+                      (e) => !pairedEntryIds.has(e.id) && (!e.embed || e.status === "error")
+                    );
+                    for (const entry of standaloneImageEntries) {
+                      elements.push({
+                        ts: new Date(entry.createdAt),
+                        node: (
+                          <div key={`image-${entry.id}`} className="flex flex-col gap-3">
+                            {/* User prompt bubble */}
+                            <motion.div
+                              initial={{ opacity: 0, y: 8 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.25, ease: smoothEase }}
+                              className="flex justify-end"
+                            >
+                              <div className="
+                                max-w-[85%] lg:max-w-[70%] w-fit
+                                px-4 py-3 rounded-2xl rounded-br-sm
+                                bg-gray-50 dark:bg-dark-elevated/80
+                                border border-gray-200/80 dark:border-dark-border/70
+                                text-gray-900 dark:text-white
+                                text-[14px] leading-snug whitespace-pre-wrap break-words
+                                shadow-[0_1px_2px_-1px_rgba(15,23,42,0.06)]
+                              ">
+                                {entry.prompt}
+                              </div>
+                            </motion.div>
+
+                            {/* Assistant body — switches by entry status. */}
+                            <AnimatePresence mode="wait" initial={false}>
+                              {entry.status === "generating" && (
+                                <motion.div
+                                  key="loader"
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  exit={{ opacity: 0 }}
+                                  transition={{ duration: 0.2 }}
+                                >
+                                  <ImageGenLoader prompt={entry.prompt} />
+                                </motion.div>
+                              )}
+
+                              {entry.status === "done" && entry.image && (
+                                <motion.div
+                                  key="image"
+                                  initial={{ opacity: 0, scale: 0.98 }}
+                                  animate={{ opacity: 1, scale: 1 }}
+                                  exit={{ opacity: 0 }}
+                                  transition={{ duration: 0.3, ease: smoothEase }}
+                                >
+                                  <GeneratedImageVariants
+                                    prompt={entry.prompt}
+                                    variants={entry.images && entry.images.length > 0 ? entry.images : [entry.image]}
+                                    selectedIndices={entry.selectedVariantIndices ?? [0]}
+                                    onToggle={(idx) => {
+                                      toggleVariantSelection(entry.id, idx);
+                                      const pid = imagePostIdRef.current ?? postId;
+                                      if (pid) {
+                                        const cur = entry.selectedVariantIndices ?? [0];
+                                        const nextSel = cur.includes(idx)
+                                          ? cur.filter((i) => i !== idx)
+                                          : [...cur, idx];
+                                        setGeneratedImageVariantSelections(pid, entry.id, nextSel)
+                                          .catch(() => {});
+                                      }
+                                    }}
+                                    onRegenerate={() => handleRegenerateImage(entry.id)}
+                                    isRegenerating={false}
+                                  />
+                                </motion.div>
+                              )}
+
+                              {entry.status === "error" && (
+                                <motion.div
+                                  key="error"
+                                  initial={{ opacity: 0, y: 6 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  exit={{ opacity: 0 }}
+                                  transition={{ duration: 0.2 }}
+                                  className="
+                                    w-full max-w-2xl
+                                    rounded-2xl rounded-bl-md
+                                    border border-error/30 bg-error/5
+                                    px-4 py-3
+                                    flex items-start gap-3
+                                  "
+                                >
+                                  <div className="mt-0.5 w-6 h-6 shrink-0 rounded-full bg-error/15 text-error flex items-center justify-center text-[13px]">
+                                    !
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-[13px] text-text-primary font-medium">
+                                      Le visuel n&apos;a pas pu être généré.
+                                    </p>
+                                    <p className="text-[12px] text-text-secondary mt-0.5">
+                                      {entry.errorMessage || "Réessaye dans un instant."}
+                                    </p>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRegenerateImage(entry.id)}
+                                      className="
+                                        mt-2 inline-flex items-center gap-1.5
+                                        px-2.5 py-1 rounded-lg
+                                        bg-error/10 hover:bg-error/15
+                                        text-error text-[12px] font-medium
+                                        transition-colors
+                                      "
+                                    >
+                                      Réessayer
+                                    </button>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        ),
+                      });
+                    }
+
+                    // Stable chronological sort. Equal timestamps keep their
+                    // insertion order (user-before-AI within a same-second
+                    // exchange) — Array.prototype.sort is stable since ES2019,
+                    // but we use index tiebreakers anyway for clarity.
+                    const indexed = elements.map((el, idx) => ({ el, idx }));
+                    indexed.sort((a, b) => {
+                      const diff = a.el.ts.getTime() - b.el.ts.getTime();
+                      return diff !== 0 ? diff : a.idx - b.idx;
+                    });
+                    return indexed.map((x) => x.el.node);
                   })()}
                 </AnimatePresence>
 
@@ -1161,125 +1754,6 @@ function AppContent() {
                 <AnimatePresence>
                   {isLoading && !isStreaming && <TypingIndicator />}
                 </AnimatePresence>
-
-                {/* Image-generation conversation — one user bubble + one
-                    assistant bubble per request. The assistant bubble swaps
-                    between loader / final image / inline error so the user
-                    always sees something change, even when the API stalls. */}
-                {imageEntries.length > 0 && (() => {
-                  // Filter out entries paired with a post — those are already
-                  // rendered inside the LinkedIn preview as a media attachment,
-                  // so the standalone image card would be a duplicate.
-                  const pairedEntryIds = new Set(Object.values(messageImagePairs));
-                  const standaloneEntries = imageEntries.filter((e) => !pairedEntryIds.has(e.id));
-                  if (standaloneEntries.length === 0) return null;
-                  return (
-                  <div className="flex flex-col gap-6 mt-4">
-                    {standaloneEntries.map((entry) => (
-                      <div key={entry.id} className="flex flex-col gap-3">
-                        {/* User message (right-aligned, matches chat bubbles) */}
-                        <motion.div
-                          initial={{ opacity: 0, y: 8 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.25, ease: smoothEase }}
-                          className="flex justify-end"
-                        >
-                          {/* Match the normal chat user bubble so image-mode
-                              prompts read as part of the same conversation —
-                              same neutral fill, same border, same shadow. */}
-                          <div className="
-                            max-w-[85%] lg:max-w-[70%] w-fit
-                            px-4 py-3 rounded-2xl rounded-br-sm
-                            bg-gray-50 dark:bg-dark-elevated/80
-                            border border-gray-200/80 dark:border-dark-border/70
-                            text-gray-900 dark:text-white
-                            text-[14px] leading-snug whitespace-pre-wrap break-words
-                            shadow-[0_1px_2px_-1px_rgba(15,23,42,0.06)]
-                          ">
-                            {entry.prompt}
-                          </div>
-                        </motion.div>
-
-                        {/* Assistant body — switches by entry status.
-                            No "POSTY · VISUEL" header here: the card itself
-                            is self-explanatory and the extra label was
-                            visual noise on a chat-sized bubble. */}
-                        <AnimatePresence mode="wait" initial={false}>
-                          {entry.status === "generating" && (
-                            <motion.div
-                              key="loader"
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              exit={{ opacity: 0 }}
-                              transition={{ duration: 0.2 }}
-                            >
-                              <ImageGenLoader prompt={entry.prompt} />
-                            </motion.div>
-                          )}
-
-                          {entry.status === "done" && entry.image && (
-                            <motion.div
-                              key="image"
-                              initial={{ opacity: 0, scale: 0.98 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              exit={{ opacity: 0 }}
-                              transition={{ duration: 0.3, ease: smoothEase }}
-                            >
-                              <GeneratedImageCard
-                                image={entry.image}
-                                onRegenerate={() => handleRegenerateImage(entry.id)}
-                                isRegenerating={false}
-                              />
-                            </motion.div>
-                          )}
-
-                          {entry.status === "error" && (
-                            <motion.div
-                              key="error"
-                              initial={{ opacity: 0, y: 6 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0 }}
-                              transition={{ duration: 0.2 }}
-                              className="
-                                w-full max-w-2xl
-                                rounded-2xl rounded-bl-md
-                                border border-error/30 bg-error/5
-                                px-4 py-3
-                                flex items-start gap-3
-                              "
-                            >
-                              <div className="mt-0.5 w-6 h-6 shrink-0 rounded-full bg-error/15 text-error flex items-center justify-center text-[13px]">
-                                !
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-[13px] text-text-primary font-medium">
-                                  Le visuel n'a pas pu être généré.
-                                </p>
-                                <p className="text-[12px] text-text-secondary mt-0.5">
-                                  {entry.errorMessage || "Réessaye dans un instant."}
-                                </p>
-                                <button
-                                  type="button"
-                                  onClick={() => handleRegenerateImage(entry.id)}
-                                  className="
-                                    mt-2 inline-flex items-center gap-1.5
-                                    px-2.5 py-1 rounded-lg
-                                    bg-error/10 hover:bg-error/15
-                                    text-error text-[12px] font-medium
-                                    transition-colors
-                                  "
-                                >
-                                  Réessayer
-                                </button>
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
-                    ))}
-                  </div>
-                  );
-                })()}
 
               </div>
             )}
@@ -1411,6 +1885,13 @@ function AppContent() {
               <UniversalChatInput
                 ref={chatInputRef}
                 onSubmit={async (message, file) => {
+                  // Guard against a second submit landing while the current
+                  // turn is still streaming / generating. Without this, the new
+                  // generate() aborts the in-flight one via abortControllerRef
+                  // and the chat surface shows a half-finished bubble followed
+                  // by the new turn — the visible symptom of "messages
+                  // duplicated / out of order".
+                  if (isLoading || isStreaming || isGeneratingImage) return;
                   if (isRecordingRef.current) forceStopRecording();
                   await handleGenerate(message, file);
                 }}
@@ -1446,14 +1927,23 @@ function AppContent() {
         </motion.div>
       </div>
 
+      {/* Premium first-time feature tour */}
+      <AppTourModal isOpen={appTour.isOpen} onClose={appTour.markAsSeen} />
+
       {/* Unified publish / schedule modal */}
       <PublishToLinkedInModal
         isOpen={showPublishModal}
-        onClose={() => setShowPublishModal(false)}
+        onClose={() => {
+          setShowPublishModal(false);
+          // Reset the pre-attach on close so re-opening from elsewhere
+          // (history, ready-posts) starts clean.
+          setPublishPreloadedImageUrls([]);
+        }}
         content={publishContent}
         linkedInConnection={linkedInConnection}
         onPublish={handleConfirmPublish}
         initialMode={publishModalMode}
+        preloadedImageUrls={publishPreloadedImageUrls}
       />
 
       {/* Ready-to-publish post browser/editor */}

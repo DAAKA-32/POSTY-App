@@ -11,6 +11,7 @@ import { adminDb, isAdminInitialized } from "@/lib/db/firebase-admin";
 import { Timestamp } from "firebase-admin/firestore";
 import { isPlatformAllowed, PlanType, appendFreeSignature } from "@/lib/config/plans";
 import { verifyAuth } from "@/lib/auth";
+import { linkedInJsonHeaders, runSelfWarmupPings } from "@/lib/linkedin/signals";
 
 /**
  * Route de publication sur LinkedIn
@@ -226,11 +227,7 @@ export async function POST(request: NextRequest) {
       "https://api.linkedin.com/v2/ugcPosts",
       {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${connection.accessToken}`,
-          "Content-Type": "application/json",
-          "X-Restli-Protocol-Version": "2.0.0",
-        },
+        headers: linkedInJsonHeaders(connection.accessToken),
         body: JSON.stringify({
           author: authorUrn,
           lifecycleState: "PUBLISHED",
@@ -277,6 +274,13 @@ export async function POST(request: NextRequest) {
 
     const shareData = await shareResponse.json();
     const shareId = shareData.id;
+
+    // "Author present" footprint — mirrors the scheduler so LinkedIn cannot
+    // tell direct vs scheduled posts apart by the absence of a post-publish
+    // session signal. Fire-and-forget: must not block the response.
+    if (shareId) {
+      void runSelfWarmupPings(connection.accessToken, shareId).catch(() => {});
+    }
 
     // 💾 ÉTAPE 5: Enregistrement de la publication dans Firestore
     try {

@@ -25,6 +25,8 @@ import { checkHourlyQuotaAdmin, incrementUserQuotaAdmin } from "@/lib/db/firesto
 import { getPlanLimits, PlanType } from "@/lib/config/plans";
 import { verifyAuth } from "@/lib/auth";
 import { STRATEGIST_SYSTEM_PROMPT } from "@/lib/ai/strategist-prompt";
+import { isStrategistAllowedForEmail } from "@/lib/strategist/access";
+import { hasLinkedInConnected } from "@/lib/strategist/access-server";
 
 type StrategistMessage = { role: "user" | "assistant"; content: string };
 
@@ -102,23 +104,35 @@ export async function POST(request: NextRequest) {
       return jsonError("invalid_payload", "messages array is required", 400);
     }
 
-    // ── Plan gate — Max only ─────────────────────────────────────────────
+    // ── Access gate — enterprise email allowlist ────────────────────────
+    if (!isStrategistAllowedForEmail(auth.email)) {
+      return jsonError(
+        "access_denied",
+        language === "fr"
+          ? "Le Stratège est réservé aux entreprises. Contacte-nous pour activer ton compte."
+          : "The Strategist is reserved for enterprise accounts. Contact us to enable yours.",
+        403
+      );
+    }
+
+    // ── LinkedIn required ────────────────────────────────────────────────
+    // The Strategist produces LinkedIn posts and schedules them through the
+    // LinkedIn publishing pipeline — useless without a connected account.
+    if (!(await hasLinkedInConnected(userId))) {
+      return jsonError(
+        "linkedin_required",
+        language === "fr"
+          ? "Connecte ton compte LinkedIn pour utiliser le Stratège."
+          : "Connect your LinkedIn account to use the Strategist.",
+        428 // Precondition Required
+      );
+    }
+
     let userPlan: PlanType | null = null;
     if (isAdminInitialized()) {
       try {
         const quota = await checkHourlyQuotaAdmin(userId, auth.email);
         userPlan = quota.plan as PlanType;
-
-        if (quota.plan !== "max") {
-          return jsonError(
-            "max_plan_required",
-            language === "fr"
-              ? "Le Stratège est réservé au plan Max."
-              : "The Strategist is reserved for the Max plan.",
-            403,
-            { requiredPlan: "max" }
-          );
-        }
 
         if (!quota.canGenerate) {
           const resetMin = Math.ceil(quota.resetInSeconds / 60);

@@ -23,14 +23,18 @@ export default function Button({
   disabled,
   ...props
 }: ButtonProps) {
-  // Premium micro-interactions: shimmer effect, smooth transitions, refined feedback
+  // Premium micro-interactions: shimmer effect, smooth transitions, refined feedback.
+  // The easing matches lib/motion.ts `enter` curve so buttons feel part of the
+  // same motion system as menus and drawers.
   const baseStyles = `
     btn-shimmer
     inline-flex items-center justify-center font-medium rounded-lg
-    transition-all duration-200 ease-out transform-gpu will-change-transform
+    transition-[transform,box-shadow,background-color,border-color,color,filter]
+    duration-200 [transition-timing-function:cubic-bezier(0.22,1,0.36,1)]
+    transform-gpu will-change-transform
     focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-app-surface
     disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:hover:translate-y-0
-    active:scale-[0.98] active:translate-y-0 active:transition-none
+    active:scale-[0.97] active:translate-y-0 active:duration-75
     select-none
   `;
 
@@ -90,12 +94,14 @@ export default function Button({
       hover:-translate-y-[1px] hover:shadow-[0_6px_20px_rgba(59,130,246,0.4)]
     `,
 
-    // AUTOSCROLL COLORS - Violet/Premium
+    // PREMIUM — Posty signature "posts" gradient (violet → rose → coral).
+    // Pulled from the centralized brand DA so any future tweak to the gradient
+    // propagates here automatically. Shadow uses the matching `glow-posts` token.
     premium: `
-      bg-gradient-to-r from-violet-500 to-purple-500
+      bg-signature-posts
       text-white
-      shadow-[0_4px_14px_rgba(139,92,246,0.3)]
-      hover:-translate-y-[1px] hover:shadow-[0_6px_20px_rgba(139,92,246,0.4)]
+      shadow-glow-posts
+      hover:-translate-y-[1px] hover:shadow-[0_8px_28px_rgba(139,92,246,0.45)]
     `,
 
     outline: `

@@ -9,6 +9,7 @@ import { isAdminInitialized } from "@/lib/db/firebase-admin";
 import { canAdaptToMultiPlatform } from "@/lib/config/plan-features";
 import { SubscriptionPlan, AdaptationPlatform, PlatformAdaptation } from "@/types";
 import { verifyAuth } from "@/lib/auth";
+import { normalizeHashtagsInText, normalizeHashtagList } from "@/lib/hashtags/normalize";
 
 /**
  * POST /api/adapt
@@ -142,11 +143,16 @@ export async function POST(request: NextRequest) {
     try {
       const parsed = JSON.parse(content);
 
+      // Normalize hashtag casing — both inside the adapted text (LLM may inline
+      // hashtags in `content`) and on the dedicated `hashtags` array.
+      const normalizedContent = normalizeHashtagsInText(parsed.content || "");
+      const normalizedHashtags = normalizeHashtagList(parsed.hashtags);
+
       const adaptation: PlatformAdaptation = {
         platform: platform as AdaptationPlatform,
-        content: parsed.content || "",
-        characterCount: parsed.characterCount || parsed.content?.length || 0,
-        hashtags: parsed.hashtags || [],
+        content: normalizedContent,
+        characterCount: parsed.characterCount || normalizedContent.length || 0,
+        hashtags: normalizedHashtags,
         notes: parsed.notes || "",
       };
 

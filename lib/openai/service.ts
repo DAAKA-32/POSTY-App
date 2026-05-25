@@ -11,6 +11,7 @@
 
 import OpenAI from "openai";
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions";
+import { normalizeHashtagsInText, normalizeHashtagList } from "@/lib/hashtags/normalize";
 
 // ============== TYPES ==============
 
@@ -95,7 +96,8 @@ Format LinkedIn optimisé:
 - Paragraphes courts (1-2 lignes max) séparés par une ligne vide
 - Espaces pour la lisibilité mobile — l'espace blanc ralentit le scroll
 - Emojis avec parcimonie (0-2, uniquement si naturels)
-- 3-5 hashtags directement lies au contenu du post (sans accents), toujours terminer par #POSTY
+- 3-5 hashtags directement lies au contenu du post (sans accents), toujours terminer par #posty
+- TYPOGRAPHIE HASHTAGS: première lettre toujours en minuscule, camelCase pour les hashtags composés (ex: #personalBranding, #linkedinGrowth). Jamais #POSTY ni #Posty — toujours #posty.
 
 Longueur: 1200-1500 caractères.
 Ton: naturel, direct, conversationnel — comme une vraie personne qui partage une réflexion.`,
@@ -120,7 +122,8 @@ Optimized LinkedIn format:
 - Short paragraphs (1-2 lines max) separated by a blank line
 - White space for mobile readability — white space slows scrolling
 - Emojis used sparingly (0-2, only if natural)
-- 3-5 hashtags directly related to the post content (no accented characters), always end with #POSTY
+- 3-5 hashtags directly related to the post content (no accented characters), always end with #posty
+- HASHTAG TYPOGRAPHY: first letter ALWAYS lowercase, camelCase for multi-word hashtags (e.g. #personalBranding, #linkedinGrowth). Never #POSTY nor #Posty — always #posty.
 
 Length: 1200-1500 characters.
 Tone: natural, direct, conversational — like a real person sharing a reflection.`,
@@ -148,7 +151,8 @@ Format LinkedIn optimisé:
 - Données concrètes quand pertinent
 - Conseils actionnables immédiatement
 - Call-to-action ou question engageante et spécifique
-- 3-5 hashtags strategiques lies au contenu (sans accents), toujours terminer par #POSTY
+- 3-5 hashtags strategiques lies au contenu (sans accents), toujours terminer par #posty
+- TYPOGRAPHIE HASHTAGS: première lettre toujours en minuscule, camelCase pour les hashtags composés (ex: #businessStrategy, #leadership). Jamais #POSTY ni #Posty — toujours #posty.
 
 Longueur: 1000-1300 caractères.
 Ton: expert mais accessible, confiant sans arrogance.`,
@@ -174,7 +178,8 @@ Optimized LinkedIn format:
 - Concrete data when relevant
 - Immediately actionable advice
 - Engaging and specific call-to-action or question
-- 3-5 strategic hashtags related to the content (no accented characters), always end with #POSTY
+- 3-5 strategic hashtags related to the content (no accented characters), always end with #posty
+- HASHTAG TYPOGRAPHY: first letter ALWAYS lowercase, camelCase for multi-word hashtags (e.g. #businessStrategy, #leadership). Never #POSTY nor #Posty — always #posty.
 
 Length: 1000-1300 characters.
 Tone: expert but accessible, confident without arrogance.`,
@@ -212,7 +217,7 @@ Si PRODUCTION EXPLICITE:
 - Là, tu deviens expert LinkedIn
 - Génère un post structuré et impactant
 - Hook percutant, structure aérée, CTA engageant
-- 1200-1500 caractères, hashtags lies au contenu (sans accents), toujours terminer par #POSTY
+- 1200-1500 caractères, hashtags lies au contenu (sans accents), toujours terminer par #posty
 
 === TA PERSONNALITÉ ===
 - Naturel, comme un ami compétent
@@ -259,7 +264,7 @@ If EXPLICIT PRODUCTION:
 - Now you become a LinkedIn expert
 - Generate a structured, impactful post
 - Powerful hook, airy structure, engaging CTA
-- 1200-1500 characters, hashtags related to content (no accented characters), always end with #POSTY
+- 1200-1500 characters, hashtags related to content (no accented characters), always end with #posty
 
 === YOUR PERSONALITY ===
 - Natural, like a competent friend
@@ -798,8 +803,12 @@ export class OpenAIService {
         }
       }
 
-      callbacks.onDone?.(type, fullContent);
-      return fullContent;
+      // Normalize hashtag casing on the final aggregated text. We deliberately
+      // don't touch the streamed chunks (would create visible flicker mid-token).
+      // Callers store/use this returned value; the on-screen stream is cosmetic.
+      const normalized = normalizeHashtagsInText(fullContent);
+      callbacks.onDone?.(type, normalized);
+      return normalized;
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       callbacks.onError?.(err);

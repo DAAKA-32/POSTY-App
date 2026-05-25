@@ -68,7 +68,9 @@ body.scroll-locked {
   overscroll-behavior: contain !important;
 }
 
-/* Ensure scroll-locked state preserves theme background (prevents flash on iOS) */
+/* Ensure scroll-locked state preserves theme background (prevents flash on iOS).
+   The page-tone gradient is rendered on MainLayout's outer wrapper which paints
+   above body, so the body color set here doesn't mask the gradient. */
 html.light.scroll-locked,
 html.light.scroll-locked body {
   background-color: #FAFBFC !important;
@@ -81,6 +83,494 @@ html.dark.scroll-locked body {
 /* ============================================================================
    END SCROLL MANAGEMENT SYSTEM
    ============================================================================ */
+
+/* ============================================================================
+   POSTY SIGNATURE AMBIENT — Brand atmosphere overlay
+   ============================================================================
+   A whisper-soft radial halo placed behind the main app shell. Reuses the two
+   signature stops (orange F8935D and rose F13452) at very low alpha so the UI
+   never feels "tinted" — it just gains a subtle warmth that says "Posty"
+   without overriding the underlying app-surface background. Theme-aware so
+   the halo doesn't blow out the dark mode. Used as a fallback when no
+   page-specific tone is matched.
+   ============================================================================ */
+.posty-signature-ambient {
+  pointer-events: none;
+  background-image:
+    radial-gradient(ellipse 90% 40% at 50% -8%, rgba(248, 147, 93, 0.10), transparent 60%),
+    radial-gradient(ellipse 60% 50% at 95% 105%, rgba(241, 52, 82, 0.06), transparent 60%);
+}
+html.dark .posty-signature-ambient {
+  background-image:
+    radial-gradient(ellipse 90% 40% at 50% -8%, rgba(248, 147, 93, 0.07), transparent 60%),
+    radial-gradient(ellipse 60% 50% at 95% 105%, rgba(241, 52, 82, 0.04), transparent 60%);
+}
+
+/* ============================================================================
+   POSTY SURFACE SYSTEM — Unified glass cards across Dashboard / Profile / Settings
+   ============================================================================
+   Replaces the opaque `bg-white dark:bg-dark-card` pattern that was stacking
+   6–11 white boxes per page on top of the signature gradient. Each card now
+   reads as a polished glass pane through which the page's ambient gradient
+   bleeds — same vocabulary as the sidebar surface and the scrolled header.
+   Subscription's PricingCard / FAQItem stay opaque on purpose (reference UX).
+   ============================================================================ */
+.posty-card-glass {
+  background-color: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  -webkit-backdrop-filter: blur(28px) saturate(170%);
+  backdrop-filter: blur(28px) saturate(170%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.3),
+    0 4px 14px -4px rgba(15, 17, 21, 0.05),
+    0 1px 3px -1px rgba(15, 17, 21, 0.03);
+  transition: background-color 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+}
+html.dark .posty-card-glass {
+  background-color: rgba(255, 255, 255, 0.025);
+  border-color: rgba(255, 255, 255, 0.09);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 4px 14px -4px rgba(0, 0, 0, 0.4),
+    0 1px 3px -1px rgba(0, 0, 0, 0.25);
+}
+
+.posty-card-glass-hover:hover {
+  background-color: rgba(255, 255, 255, 0.28);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+html.dark .posty-card-glass-hover:hover {
+  background-color: rgba(255, 255, 255, 0.055);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+/* ============================================================================
+   POSTY PAGE TONES — Per-route signature gradient backgrounds
+   ============================================================================
+   The page-tone gradient is applied via Tailwind utilities (`bg-signature-*`)
+   directly on MainLayout's outer wrapper. Parent backgrounds paint BEFORE
+   children in the CSS spec, so no descendant stacking context can mask the
+   gradient. The `.posty-page-tone-{tone}` classes below remain as a reusable
+   utility for any component (cards, highlights) that wants to render one of
+   the signature gradients explicitly.
+   ============================================================================ */
+
+/* ============================================================================
+   POSTY SOFT PAGE BG — Premium ambient gradients per route (Linear/Arc-style)
+   ============================================================================
+   Diffused radial compositions on top of the theme surface. The identity
+   color of each route is unmistakable, but the saturation is dialed down to
+   ~35-45% (light) / ~18-25% (dark) so floating text and the chat input read
+   naturally without needing text-shadow gymnastics. Content cards keep their
+   own white/dark backgrounds — they pop on the ambient halo, not the other
+   way around. This is the same atmosphere Linear, Arc, Vercel and Notion AI
+   ship: identity through hue, premium through restraint.
+
+   Mapped routes (in MainLayout):
+   - welcome → /app, /settings        (warm — orange + rose)
+   - posts   → /app/c/[id], /chat     (writing — violet + coral)
+   - visuals → /history, /profile     (archive — fuchsia + rose)
+   - schedule → /schedule              (planning — sky + violet)
+   - optimize → /analytics, /dashboard (growth — emerald + orange)
+   ============================================================================ */
+
+/* WELCOME — warm orange anchor top-left, rose tail bottom-right
+   + sidebar wash (orange, full height, off-screen left)
+   + central diffuse wash so the middle never reads as bare #FAFBFC.
+
+   IMPORTANT: gradient lives on a `::before` with `position: fixed` rather
+   than `background-attachment: fixed` on the element. Mobile Safari / iOS
+   Chrome silently fall back from `bg-attachment: fixed` to `local`, sizing
+   the gradient to the (scrollable) element instead of the viewport — so
+   the user only sees the top of the gradient and bare #FAFBFC below the
+   fold. `position: fixed` on a pseudo-element is rock-solid mobile. */
+.posty-soft-welcome {
+  position: relative;
+  isolation: isolate;
+  background-color: transparent;
+}
+.posty-soft-welcome::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: #FAFBFC;
+  background-image:
+    radial-gradient(ellipse 160% 50% at 60% 0%, rgba(241, 52, 82, 0.35), transparent 72%),
+    radial-gradient(ellipse 80% 60% at 20% 5%, rgba(248, 147, 93, 0.58), transparent 62%),
+    radial-gradient(ellipse 70% 60% at 90% 95%, rgba(241, 52, 82, 0.50), transparent 60%),
+    radial-gradient(ellipse 45% 100% at -8% 50%, rgba(248, 147, 93, 0.32), transparent 65%),
+    radial-gradient(ellipse 110% 80% at 50% 50%, rgba(248, 147, 93, 0.14), transparent 78%);
+  background-repeat: no-repeat;
+}
+html.dark .posty-soft-welcome::before {
+  background-color: #0F1115;
+  background-image:
+    radial-gradient(ellipse 160% 50% at 60% 0%, rgba(241, 52, 82, 0.20), transparent 72%),
+    radial-gradient(ellipse 80% 60% at 20% 5%, rgba(248, 147, 93, 0.32), transparent 62%),
+    radial-gradient(ellipse 70% 60% at 90% 95%, rgba(241, 52, 82, 0.26), transparent 60%),
+    radial-gradient(ellipse 45% 100% at -8% 50%, rgba(248, 147, 93, 0.18), transparent 65%),
+    radial-gradient(ellipse 110% 80% at 50% 50%, rgba(248, 147, 93, 0.08), transparent 78%);
+}
+
+/* POSTS — creative violet anchor top-left, coral tail bottom-right
+   + sidebar wash (violet, full height, off-screen left)
+   + central diffuse wash so the middle never reads as bare #FAFBFC.
+   Gradient on `::before` (fixed) — see .posty-soft-welcome for rationale. */
+.posty-soft-posts {
+  position: relative;
+  isolation: isolate;
+  background-color: transparent;
+}
+.posty-soft-posts::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: #FAFBFC;
+  background-image:
+    radial-gradient(ellipse 130% 22% at 70% -8%, rgba(247, 107, 84, 0.22), transparent 72%),
+    radial-gradient(ellipse 70% 55% at 18% 10%, rgba(139, 92, 246, 0.45), transparent 62%),
+    radial-gradient(ellipse 60% 55% at 92% 92%, rgba(247, 107, 84, 0.40), transparent 60%),
+    radial-gradient(ellipse 45% 100% at -8% 50%, rgba(139, 92, 246, 0.28), transparent 65%),
+    radial-gradient(ellipse 110% 80% at 50% 50%, rgba(139, 92, 246, 0.12), transparent 78%);
+  background-repeat: no-repeat;
+}
+html.dark .posty-soft-posts::before {
+  background-color: #0F1115;
+  background-image:
+    radial-gradient(ellipse 130% 22% at 70% -8%, rgba(247, 107, 84, 0.13), transparent 72%),
+    radial-gradient(ellipse 70% 55% at 18% 10%, rgba(139, 92, 246, 0.26), transparent 62%),
+    radial-gradient(ellipse 60% 55% at 92% 92%, rgba(247, 107, 84, 0.22), transparent 60%),
+    radial-gradient(ellipse 45% 100% at -8% 50%, rgba(139, 92, 246, 0.16), transparent 65%),
+    radial-gradient(ellipse 110% 80% at 50% 50%, rgba(139, 92, 246, 0.07), transparent 78%);
+}
+
+/* VISUALS — archive fuchsia anchor top-right, rose tail bottom-left
+   + sidebar wash (fuchsia, full height, off-screen left)
+   + central diffuse wash so the middle never reads as bare #FAFBFC.
+   Gradient on `::before` (fixed) — see .posty-soft-welcome for rationale. */
+.posty-soft-visuals {
+  position: relative;
+  isolation: isolate;
+  background-color: transparent;
+}
+.posty-soft-visuals::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: #FAFBFC;
+  background-image:
+    radial-gradient(ellipse 130% 22% at 30% -8%, rgba(217, 70, 239, 0.30), transparent 72%),
+    radial-gradient(ellipse 75% 55% at 85% 8%, rgba(217, 70, 239, 0.55), transparent 62%),
+    radial-gradient(ellipse 65% 55% at 12% 95%, rgba(241, 52, 82, 0.48), transparent 60%),
+    radial-gradient(ellipse 45% 100% at -8% 45%, rgba(217, 70, 239, 0.28), transparent 65%),
+    radial-gradient(ellipse 110% 80% at 50% 50%, rgba(217, 70, 239, 0.12), transparent 78%);
+  background-repeat: no-repeat;
+}
+html.dark .posty-soft-visuals::before {
+  background-color: #0F1115;
+  background-image:
+    radial-gradient(ellipse 130% 22% at 30% -8%, rgba(217, 70, 239, 0.16), transparent 72%),
+    radial-gradient(ellipse 75% 55% at 85% 8%, rgba(217, 70, 239, 0.30), transparent 62%),
+    radial-gradient(ellipse 65% 55% at 12% 95%, rgba(241, 52, 82, 0.24), transparent 60%),
+    radial-gradient(ellipse 45% 100% at -8% 45%, rgba(217, 70, 239, 0.16), transparent 65%),
+    radial-gradient(ellipse 110% 80% at 50% 50%, rgba(217, 70, 239, 0.07), transparent 78%);
+}
+
+/* SCHEDULE — planning sky anchor top-right, violet tail bottom-left
+   + sidebar wash (sky, full height, off-screen left)
+   + central diffuse wash so the middle never reads as bare #FAFBFC.
+   Gradient on `::before` (fixed) — see .posty-soft-welcome for rationale. */
+.posty-soft-schedule {
+  position: relative;
+  isolation: isolate;
+  background-color: transparent;
+}
+.posty-soft-schedule::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: #FAFBFC;
+  background-image:
+    radial-gradient(ellipse 130% 22% at 30% -8%, rgba(14, 165, 233, 0.30), transparent 72%),
+    radial-gradient(ellipse 75% 55% at 85% 10%, rgba(14, 165, 233, 0.55), transparent 62%),
+    radial-gradient(ellipse 65% 55% at 10% 95%, rgba(139, 92, 246, 0.48), transparent 60%),
+    radial-gradient(ellipse 45% 100% at -8% 45%, rgba(14, 165, 233, 0.30), transparent 65%),
+    radial-gradient(ellipse 110% 80% at 50% 50%, rgba(14, 165, 233, 0.12), transparent 78%);
+  background-repeat: no-repeat;
+}
+html.dark .posty-soft-schedule::before {
+  background-color: #0F1115;
+  background-image:
+    radial-gradient(ellipse 130% 22% at 30% -8%, rgba(14, 165, 233, 0.16), transparent 72%),
+    radial-gradient(ellipse 75% 55% at 85% 10%, rgba(14, 165, 233, 0.30), transparent 62%),
+    radial-gradient(ellipse 65% 55% at 10% 95%, rgba(139, 92, 246, 0.24), transparent 60%),
+    radial-gradient(ellipse 45% 100% at -8% 45%, rgba(14, 165, 233, 0.17), transparent 65%),
+    radial-gradient(ellipse 110% 80% at 50% 50%, rgba(14, 165, 233, 0.07), transparent 78%);
+}
+
+/* OPTIMIZE — growth emerald anchor top-left, orange tail bottom-right
+   + sidebar wash (emerald, full height, off-screen left)
+   + central diffuse wash so the middle never reads as bare #FAFBFC.
+   Gradient on `::before` (fixed) — see .posty-soft-welcome for rationale. */
+.posty-soft-optimize {
+  position: relative;
+  isolation: isolate;
+  background-color: transparent;
+}
+.posty-soft-optimize::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: #FAFBFC;
+  background-image:
+    radial-gradient(ellipse 130% 22% at 30% -8%, rgba(16, 185, 129, 0.30), transparent 72%),
+    radial-gradient(ellipse 75% 55% at 85% 8%, rgba(16, 185, 129, 0.55), transparent 62%),
+    radial-gradient(ellipse 65% 55% at 12% 95%, rgba(248, 147, 93, 0.48), transparent 60%),
+    radial-gradient(ellipse 45% 100% at -8% 45%, rgba(16, 185, 129, 0.28), transparent 65%),
+    radial-gradient(ellipse 110% 80% at 50% 50%, rgba(16, 185, 129, 0.12), transparent 78%);
+  background-repeat: no-repeat;
+}
+html.dark .posty-soft-optimize::before {
+  background-color: #0F1115;
+  background-image:
+    radial-gradient(ellipse 130% 22% at 30% -8%, rgba(16, 185, 129, 0.16), transparent 72%),
+    radial-gradient(ellipse 75% 55% at 85% 8%, rgba(16, 185, 129, 0.30), transparent 62%),
+    radial-gradient(ellipse 65% 55% at 12% 95%, rgba(248, 147, 93, 0.24), transparent 60%),
+    radial-gradient(ellipse 45% 100% at -8% 45%, rgba(16, 185, 129, 0.16), transparent 65%),
+    radial-gradient(ellipse 110% 80% at 50% 50%, rgba(16, 185, 129, 0.07), transparent 78%);
+}
+
+/* ---- Full-saturation page tone classes (reusable on any element, e.g.
+   modal hero zones — kept for AppTourModal and other premium overlays) ---- */
+
+/* Welcome — /app, /history, /settings (warm brand identity) */
+.posty-page-tone-welcome {
+  pointer-events: none;
+  background-image: linear-gradient(135deg, #F8935D 0%, #F76B54 50%, #F13452 100%);
+}
+
+/* Posts — /app/c/[id] (creative writing tone, violet → rose → coral) */
+.posty-page-tone-posts {
+  pointer-events: none;
+  background-image: linear-gradient(135deg, #8B5CF6 0%, #F13452 50%, #F76B54 100%);
+}
+
+/* Visuals — /profile, /brand (rose → fuchsia → violet) */
+.posty-page-tone-visuals {
+  pointer-events: none;
+  background-image: linear-gradient(135deg, #F13452 0%, #D946EF 50%, #8B5CF6 100%);
+}
+
+/* Schedule — /schedule (cool, methodical: sky → cyan → violet) */
+.posty-page-tone-schedule {
+  pointer-events: none;
+  background-image: linear-gradient(135deg, #0EA5E9 0%, #06B6D4 50%, #8B5CF6 100%);
+}
+
+/* Optimize — /analytics, /dashboard (growth: emerald → cyan → orange) */
+.posty-page-tone-optimize {
+  pointer-events: none;
+  background-image: linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #F8935D 100%);
+}
+
+/* ============================================================================
+   POSTY GLASS SURFACES — Shared floating-surface design system
+   ============================================================================
+   Single source of truth for every floating premium surface in the app:
+   context menus, dropdowns, popovers, tooltips, and any other overlay that
+   should read as glass over the per-route ambient gradient.
+
+   Layered model:
+     - .posty-glass-panel : the surface itself (bg + border + blur + ring + shadow)
+     - .posty-glass-sheen : the top edge highlight (use on a child <span>)
+     - .posty-glass-wash  : the diagonal interior light wash (use on a child <span>)
+
+   Token deliberately uses LOW background opacity (light 22%, dark 5%) and HIGH
+   blur (28px) + saturation (200%) so the page-tone gradient bleeds through
+   meaningfully — Linear / Arc / Apple VisionOS feel — rather than the cheap
+   "white box at 90%" of mainstream Tailwind glassmorphism.
+   ============================================================================ */
+
+.posty-glass-panel {
+  position: relative;
+  isolation: isolate;
+  background-color: rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.42),
+    0 12px 40px rgba(15, 17, 21, 0.16),
+    0 2px 10px rgba(15, 17, 21, 0.08);
+  -webkit-backdrop-filter: blur(28px) saturate(200%);
+  backdrop-filter: blur(28px) saturate(200%);
+}
+html.dark .posty-glass-panel {
+  background-color: rgba(255, 255, 255, 0.045);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 12px 40px rgba(0, 0, 0, 0.55),
+    0 2px 10px rgba(0, 0, 0, 0.35);
+}
+
+/* Top-edge hairline highlight — Apple/macOS Tahoe trick that signals
+   "polished surface" rather than "flat translucent rectangle". Use on a
+   positioned child <span aria-hidden /> inside .posty-glass-panel. */
+.posty-glass-sheen {
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  left: 0.5rem;
+  right: 0.5rem;
+  height: 1px;
+  border-radius: 9999px;
+  background-image: linear-gradient(
+    to right,
+    transparent,
+    rgba(255, 255, 255, 0.85),
+    transparent
+  );
+}
+html.dark .posty-glass-sheen {
+  background-image: linear-gradient(
+    to right,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+}
+
+/* Diagonal interior light wash — subtle depth without masking the ambient
+   gradient bleeding through from behind. Use on a positioned child
+   <span aria-hidden /> inside .posty-glass-panel with inset:0. */
+.posty-glass-wash {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.32),
+    rgba(255, 255, 255, 0.05) 38%,
+    transparent 72%
+  );
+}
+html.dark .posty-glass-wash {
+  background-image: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.05),
+    rgba(255, 255, 255, 0.01) 38%,
+    transparent 72%
+  );
+}
+
+/* ============================================================================
+   POSTY LANDING GLASS — Warm-paper variant for the landing + login surfaces
+   ============================================================================
+   Companion to `.posty-glass-panel` but tuned for the warm/peach paper
+   background (#FFF8F5 / #FEF3EE) used on /, /login, /signup. The canonical
+   `.posty-glass-panel` keeps very low opacity (22%) because it sits over the
+   per-route saturated signature gradients; here the page background is paper,
+   not gradient, so we lift opacity (62–68%) and warm the shadow toward the
+   brand peach (#F8935D) — depth without the "frosted box" trap.
+
+   - .posty-landing-glass-card : main floating card (login form, encarts)
+   - .posty-landing-glass-chip : pill / badge (trust badge, navbar pill)
+   ============================================================================ */
+
+.posty-landing-glass-card {
+  position: relative;
+  isolation: isolate;
+  background-color: rgba(255, 250, 247, 0.5);
+  background-image: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.38) 0%,
+    rgba(255, 255, 255, 0.18) 45%,
+    rgba(255, 248, 245, 0.32) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.45),
+    0 1px 2px rgba(15, 17, 21, 0.04),
+    0 24px 56px -18px rgba(248, 147, 93, 0.22),
+    0 10px 28px -10px rgba(15, 17, 21, 0.08);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  backdrop-filter: blur(28px) saturate(180%);
+}
+html.dark .posty-landing-glass-card {
+  background-color: rgba(20, 23, 29, 0.55);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 1px 2px rgba(0, 0, 0, 0.35),
+    0 20px 44px -16px rgba(0, 0, 0, 0.45),
+    0 8px 24px -8px rgba(0, 0, 0, 0.3);
+}
+
+.posty-landing-glass-chip {
+  position: relative;
+  background-color: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 4px 14px -4px rgba(248, 147, 93, 0.14),
+    0 1px 2px rgba(15, 17, 21, 0.04);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  backdrop-filter: blur(14px) saturate(160%);
+}
+html.dark .posty-landing-glass-chip {
+  background-color: rgba(20, 23, 29, 0.6);
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 4px 14px -4px rgba(0, 0, 0, 0.45),
+    0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Reveal page-tone gradient — page wrappers across the app ship their own
+   `bg-background-warm`/`bg-background` utilities that would mask the layout's
+   ambient gradient div. We flip the shared `.app-content-wrapper` class to
+   fully transparent so the per-route signature gradient (set on the ambient
+   div in MainLayout) shines through. Content cards (chat bubbles, KPI cards,
+   etc.) still keep their own white/dark backgrounds so they pop on top.
+
+   `html body` boosts specificity to beat any Tailwind utility cascade order. */
+html body .app-content-wrapper {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+/* Defense-in-depth — any viewport-filling page-root wrapper that ships
+   `.bg-background-warm` or `.bg-background` becomes transparent inside the
+   app shell so the MainLayout signature gradient shines through. Scoped
+   narrowly by:
+     - matching only on viewport-filling utilities (`min-h-screen`, `h-screen`,
+       inline `height: 100dvh`) — the signature of a page-root wrapper, never
+       a card or modal;
+     - excluding `aside` (the sidebar legitimately ships `bg-background-warm`
+       on an `aside[role="navigation"]` and stays opaque).
+   This guarantees the gradient survives if a new page ships its own bg-warm
+   wrapper in the future without having to remember the transparency convention. */
+.app-layout :not(aside).bg-background-warm.min-h-screen,
+.app-layout :not(aside).bg-background.min-h-screen,
+.app-layout :not(aside).bg-background-warm.h-screen,
+.app-layout :not(aside).bg-background.h-screen,
+.app-layout :not(aside).bg-background-warm[style*="100dvh"],
+.app-layout :not(aside).bg-background[style*="100dvh"] {
+  background-color: transparent !important;
+  background-image: none !important;
+}
 
 /* ============================================================================
    LANDSCAPE BLOCKER — Mobile portrait-only enforcement
@@ -1686,15 +2176,17 @@ html.light [class*="border-dark-border"] {
   border-color: #E5E7EB !important;
 }
 
-/* ===== Structural elements - Force light ===== */
+/* ===== Structural elements =====
+   Sidebar background is the per-route signature ambient (`.posty-soft-{tone}`
+   applied in MainLayout) so the gradient extends through the nav column and
+   morphs with each route. We only lock the right-border tint here. */
 html.light aside {
-  background-color: #FFFFFF !important;
   border-right-color: #E5E7EB !important;
 }
 
-/* All divs inside sidebar should inherit white background */
+/* Inner divs stay transparent so the sidebar's gradient shines through. */
 html.light aside div {
-  background-color: inherit;
+  background-color: transparent;
 }
 
 /* Sidebar containers with dark backgrounds */
@@ -1706,8 +2198,15 @@ html.light aside [class*="border-dark"] {
   border-color: #E5E7EB !important;
 }
 
+/* Default `<main>` in light mode = white fill (landing, login, etc.). */
 html.light main {
   background-color: #FAFBFC !important;
+}
+/* `<main>` inside MainLayout (.app-layout) must stay transparent so the
+   signature gradient on the outer wrapper shines through. Higher specificity
+   than the rule above so it wins inside the app shell. */
+html.light .app-layout main {
+  background-color: transparent !important;
 }
 
 html.light header {
@@ -1715,7 +2214,10 @@ html.light header {
   border-bottom-color: #E5E7EB !important;
 }
 
-/* ===== Body and root ===== */
+/* ===== Body and root =====
+   Light-mode default fill. The signature gradient is rendered on MainLayout's
+   outer wrapper (`.app-layout`) which paints above body, so this opaque body
+   fill never masks the gradient inside the app shell. */
 html.light,
 html.light body {
   background-color: #FAFBFC !important;
@@ -2017,12 +2519,6 @@ html.light [class*="bg-dark-card/"] {
   background-color: rgba(248, 163, 93, 0.1) !important;
 }
 
-/* Profile menu - Light Mode */
-.light .profile-menu {
-  background-color: #FFFFFF !important;
-  border-color: #E5E7EB !important;
-}
-
 /* ===== Quote badge / Plan section - Light Mode ===== */
 html.light .quota-badge,
 html.light [class*="quota"],
@@ -2042,12 +2538,6 @@ html.light [class*="to-accent/20"] {
 html.light [class*="bg-dark-hover/"],
 html.light .bg-dark-hover\/50 {
   background-color: rgba(243, 244, 246, 0.7) !important;
-}
-
-/* Plan section bottom of sidebar */
-html.light aside > div:last-child,
-html.light aside [class*="mt-auto"] {
-  background-color: #FFFFFF !important;
 }
 
 /* Quota progress bar track */
@@ -2290,8 +2780,11 @@ html.light .sidebar-scroll:hover::-webkit-scrollbar-thumb:hover {
 /* Input area container styling for /app page */
 /* Mobile: Fixed at bottom with safe area support */
 /* Desktop (lg+): Relative within main content */
+/* Background is fully transparent so the MainLayout signature gradient stays
+   visible behind the input. The `backdrop-filter: blur(16px)` (set below)
+   still provides the soft blur on messages that scroll behind the input. */
 .input-area-container {
-  background-color: var(--background);
+  background-color: transparent;
   /* Ensure it's above other content on mobile */
   isolation: isolate;
 }
@@ -2337,12 +2830,13 @@ html.light .sidebar-scroll:hover::-webkit-scrollbar-thumb:hover {
     }
   }
 
-  /* Backdrop blur support */
+  /* Backdrop blur support — keep the blur, drop the opaque overlay so the
+     page-tone gradient stays visible behind the input zone. */
   @supports ((-webkit-backdrop-filter: blur(16px)) or (backdrop-filter: blur(16px))) {
     .input-area-container {
       -webkit-backdrop-filter: blur(16px);
       backdrop-filter: blur(16px);
-      background-color: rgba(11, 14, 17, 0.95) !important;
+      background-color: transparent !important;
     }
   }
 }
@@ -2358,9 +2852,11 @@ html.light .sidebar-scroll:hover::-webkit-scrollbar-thumb:hover {
   }
 }
 
-/* Light mode - Force solid white/light background on input area */
+/* Light mode — input area stays transparent so the signature gradient stays
+   visible behind it. The blur (set above) still softens any messages that
+   scroll behind the input zone. */
 html.light .input-area-container {
-  background-color: #FAFBFC !important;
+  background-color: transparent !important;
 }
 
 /* Light mode - Mobile input area */
@@ -2371,7 +2867,7 @@ html.light .input-area-container {
 
   @supports ((-webkit-backdrop-filter: blur(16px)) or (backdrop-filter: blur(16px))) {
     html.light .input-area-container {
-      background-color: rgba(250, 251, 252, 0.95) !important;
+      background-color: transparent !important;
     }
   }
 }
@@ -2414,15 +2910,19 @@ html.light .input-area-container .bg-dark-card:focus-within {
   box-shadow: 0 0 0 3px rgba(248, 163, 93, 0.1) !important;
 }
 
-/* ===== CHAT PAGE BACKGROUNDS - LIGHT MODE ===== */
-/* Main chat container */
+/* ===== CHAT PAGE BACKGROUNDS - LIGHT MODE =====
+   Legacy rules from when /chat was the only authenticated route. The newer
+   /app and /app/c/[id] routes share the same `.overflow-y-auto.gpu-scroll`
+   class on their messages scroll container, so the original opaque `#FAFBFC`
+   fill masked the per-route body gradient (Posty page-tone system). These
+   rules are kept TRANSPARENT now: chat bubbles ship their own backgrounds,
+   the scroll container itself must let the gradient shine through. */
 html.light .flex.flex-col.h-full.bg-background {
-  background-color: #FAFBFC !important;
+  background-color: transparent !important;
 }
 
-/* Messages area background */
 html.light .overflow-y-auto.gpu-scroll {
-  background-color: #FAFBFC !important;
+  background-color: transparent !important;
 }
 
 /* Welcome screen area - transparent to show parent bg */
@@ -2430,9 +2930,10 @@ html.light .flex.flex-col.items-center.justify-center.w-full.text-center {
   background-color: transparent !important;
 }
 
-/* Override any remaining gradient backgrounds in light mode */
+/* Override any remaining gradient backgrounds in light mode — transparent
+   so the page-tone body gradient remains the source of truth. */
 html.light [class*="bg-gradient-to-t"][class*="from-background"] {
-  background: #FAFBFC !important;
+  background: transparent !important;
 }
 
 html.light [class*="to-transparent"] {
@@ -3348,17 +3849,19 @@ html.dark .loader-track {
     animation: silver-drift 20s ease-in-out infinite;
   }
 
-  /* Silver Solid — subtle metallic, minimal movement */
+  /* Silver Solid — graphite metallic, tuned for glass cards over warm gradients.
+     Stops live in the slate-600/700 range to keep premium shimmer while
+     restoring contrast against translucent surfaces. Dark mode override below. */
   .text-silver-solid {
     background: linear-gradient(
       105deg,
-      #B0B0B0 0%,
-      #BCBCBC 25%,
-      #C8C8C8 45%,
-      #D4D4D4 55%,
-      #C8C8C8 65%,
-      #BCBCBC 80%,
-      #B0B0B0 100%
+      #3D434F 0%,
+      #494F5C 25%,
+      #535A68 45%,
+      #5C6371 55%,
+      #535A68 65%,
+      #494F5C 80%,
+      #3D434F 100%
     );
     background-size: 150% 100%;
     -webkit-background-clip: text;
@@ -6637,34 +7140,69 @@ html:not(.dark) .shimmer-text-gradient {
   right: 0;
   z-index: 40;
 
-  /* Premium blur effect - frosted glass style */
-  background: linear-gradient(
-    to top,
-    rgba(250, 251, 252, 0.85) 0%,
-    rgba(250, 251, 252, 0.75) 60%,
-    rgba(250, 251, 252, 0) 100%
-  );
-  backdrop-filter: blur(12px) saturate(180%);
-  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  /* The frosted-glass backdrop (gradient + blur) lives in ::before so it can
+     stop `--app-scrollbar-width` short of the right edge. Otherwise the fade
+     would paint over the `.app-scroll-container` scrollbar thumb when the
+     user scrolls to the bottom, making the thumb look faded/cut off. The bar
+     itself stays full-width so the centered input geometry never shifts. */
+  background: transparent;
+  isolation: isolate;
 
   /* Smooth transitions — cubic-bezier matches iOS keyboard curve for a natural "rise" */
   transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
-              padding-bottom 0.2s ease-out,
-              backdrop-filter 0.3s ease-out;
+              padding-bottom 0.2s ease-out;
 
   /* Desktop: quasi-collé au bas */
   padding-bottom: env(safe-area-inset-bottom);
   margin: 0;
 }
 
-/* Dark mode - adjusted blur effect */
-html.dark .fixed-input-area {
-  background: linear-gradient(
-    to top,
-    rgba(15, 17, 21, 0.85) 0%,
-    rgba(15, 17, 21, 0.75) 60%,
-    rgba(15, 17, 21, 0) 100%
+.fixed-input-area::before {
+  content: "";
+  position: absolute;
+  /* Extend the blur zone above the input bar so chat content fades into
+     softness BEFORE it slides under the input — gives a smooth "frosted
+     glass approach" feel instead of a hard edge at the bar's top. */
+  top: -72px;
+  bottom: 0;
+  left: 0;
+  /* Reserve a clean gutter equal to the host scrollbar width so the backdrop
+     never overlaps the scrollbar thumb. Resolves to 0 on overlay-scrollbar
+     platforms (touch, macOS default) — exactly the desired behavior there. */
+  right: var(--app-scrollbar-width, 0px);
+  z-index: -1;
+  pointer-events: none;
+
+  /* Frosted-glass blur ONLY — no opaque overlay. The blur softens any chat
+     messages that scroll behind the input zone, while the MainLayout
+     signature gradient remains fully visible through the transparent layer. */
+  background: transparent;
+  backdrop-filter: blur(10px) saturate(180%);
+  -webkit-backdrop-filter: blur(10px) saturate(180%);
+  /* Progressive reveal of the blur via mask: transparent at the top of the
+     extended zone (no effect on content well above the input), ramping up
+     to fully opaque at the bar's own top. Result: a message scrolling down
+     past the input zone gains blur gradually instead of snapping into it. */
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.3) 30%,
+    rgba(0, 0, 0, 0.75) 65%,
+    #000 100%
   );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.3) 30%,
+    rgba(0, 0, 0, 0.75) 65%,
+    #000 100%
+  );
+  transition: backdrop-filter 0.3s ease-out;
+}
+
+/* Dark mode keeps the same transparent-only behavior. */
+html.dark .fixed-input-area::before {
+  background: transparent;
 }
 
 /* Mobile/Tablet: quasi-collé au bas de l'écran */
@@ -6690,25 +7228,16 @@ html.dark .fixed-input-area {
   }
 }
 
-/* Fallback for browsers that don't support backdrop-filter */
+/* Fallback for browsers that don't support backdrop-filter — keep the input
+   zone fully transparent here too so the signature gradient is never masked.
+   Users on these (rare) browsers won't get the frosted-glass blur, but the
+   gradient identity stays intact. */
 @supports not (backdrop-filter: blur(12px)) {
-  .fixed-input-area {
-    /* More opaque background when blur is not supported */
-    background: linear-gradient(
-      to top,
-      rgba(250, 251, 252, 0.95) 0%,
-      rgba(250, 251, 252, 0.85) 60%,
-      rgba(250, 251, 252, 0) 100%
-    );
+  .fixed-input-area::before {
+    background: transparent;
   }
-
-  html.dark .fixed-input-area {
-    background: linear-gradient(
-      to top,
-      rgba(15, 17, 21, 0.95) 0%,
-      rgba(15, 17, 21, 0.85) 60%,
-      rgba(15, 17, 21, 0) 100%
-    );
+  html.dark .fixed-input-area::before {
+    background: transparent;
   }
 }
 

@@ -402,18 +402,18 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
           />
         )}
 
-        {/* Inner container - stable dimensions with elegant glow */}
+        {/* Inner container - frosted glass card with elegant glow */}
         <div
           className={`
             relative
-            bg-white dark:bg-dark-card
-            backdrop-blur-sm
+            bg-white/70 dark:bg-dark-card/65
+            backdrop-blur-xl backdrop-saturate-150 dark:backdrop-saturate-125
             transition-all duration-300 ease-out
             overflow-hidden rounded-3xl
             chat-input-inner
             ${showPremiumEffects
-              ? "shadow-glow border border-primary/20"
-              : "border border-gray-200 dark:border-dark-border"
+              ? "shadow-glow border border-primary/30"
+              : "border border-white/60 dark:border-white/20 shadow-md shadow-black/[0.04] dark:shadow-black/30"
             }
           `}
           style={{

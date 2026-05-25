@@ -67,9 +67,23 @@ Tu lis la demande utilisateur et tu réponds UNIQUEMENT par un objet JSON:
 
 RÈGLES de classification:
 
-1. "image" — la demande mentionne UNIQUEMENT un visuel/image/photo/illustration/visuel.
-   Exemples: "fais une image sur l'entrepreneuriat", "génère un visuel startup",
-             "crée une publicité SaaS", "fais-moi une illustration moderne".
+1. "image" — la demande concerne UN OU PLUSIEURS visuels (image, visuel,
+   illustration, photo, créa, asset, slide, carrousel, infographie, mockup,
+   bannière, cover, publicité, graphique).
+   Inclut les demandes CRÉATIVES ("fais une image sur l'entrepreneuriat",
+   "génère un visuel startup", "crée une publicité SaaS") MAIS AUSSI les
+   demandes ADDITIVES qui font référence au post précédent dans une
+   conversation en cours :
+     - "ajoute des images"        → image
+     - "ajoute des visuels"       → image
+     - "mets des illustrations"   → image
+     - "rajoute un carrousel"     → image
+     - "ajoute 3 créas premium"   → image
+     - "mets-moi des slides"      → image
+     - "ajoute des assets"        → image
+   Dès qu'un nom d'asset visuel est présent ET qu'il n'y a pas de demande
+   explicite de RÉÉCRITURE de texte, classe "image". L'utilisateur cherche
+   à enrichir le post existant avec un visuel, pas à modifier le texte.
    Dans ce cas, mets imageBrief mais PAS postBrief.
 
 2. "post" — la demande mentionne UNIQUEMENT un post/texte/article LinkedIn.
@@ -95,6 +109,18 @@ RÈGLES de classification:
    Exemples: "tu connais X ?", "comment améliorer mon marketing ?",
              "donne-moi des idées", "explique-moi le content marketing".
    Dans ce cas, ne mets ni postBrief ni imageBrief.
+
+RÈGLE ANTI-RÉPONSE-ROBOTIQUE (IMPORTANTE):
+   Si la demande contient un mot d'asset visuel (image, visuel, photo,
+   illustration, créa, slide, carrousel, banner, mockup, etc.) ET n'est PAS
+   formulée comme une pure question ("c'est quoi", "comment faire ?"), tu
+   NE DOIS JAMAIS retourner "conversation". Choisis toujours "image" ou
+   "both". L'utilisateur veut un livrable visuel, pas une explication —
+   répondre "je ne peux pas générer d'images directement" est interdit
+   (Posty SAIT générer des images via /api/image/generate, n'invente pas de
+   limite). Au pire : si la demande est trop floue, classe "image" et mets
+   un imageBrief court — le pipeline image se débrouillera ou redemandera
+   un détail proprement côté UX.
 
 Quand le mot "post" est absent ET aucun mot image n'est présent ("fais sur l'entrepreneuriat"),
 considère que c'est un POST (intent par défaut Posty).
@@ -227,21 +253,38 @@ export function fastClassifyIntent(prompt: string): ContentIntent | null {
     };
   }
 
-  const imageWords = /(\bimage\b|\bvisuel\b|\billustration\b|\bphoto\b|\bpublicit[eé]\b|\bbanni[eè]re\b|\bcover\b|\bgraphique\b)/i;
-  const postWords = /(\bpost\b|\barticle\b|\bcaption\b|\bcopy\b|\br[eé]dige\b)/i;
+  // IMPORTANT: every noun is `s?`-suffixed. Without it `\bimage\b` doesn't
+  // match "images" because `e`→`s` has no word boundary (both word chars),
+  // and that's exactly how follow-up asks like "ajoute des images" / "mets
+  // des visuels" used to slip past the fast path and get mis-routed to
+  // `conversation` by the LLM. Synonyms also extended to the user-listed
+  // surface: créas, assets, slides, carrousel, infographie, mockup.
+  const imageWords = /\b(?:images?|visuels?|illustrations?|photos?|publicit[eé]s?|banni[eè]res?|covers?|graphiques?|cr[eé]as?|assets?|slides?|carrousels?|carousels?|infographies?|infographics?|mockups?|vignettes?)\b/i;
+  const postWords = /\b(?:posts?|articles?|captions?|copys?|copies?|r[eé]dig(?:e|er)|drafts?|contenus?|publications?|stor(?:y|ies))\b/i;
   const conversationWords = /^(comment|pourquoi|quand|qui|est-?ce|peux-tu|tu connais|tu peux|donne-?moi des id[eé]es|explique|c'est quoi|qu'est-?ce)/i;
+  // Additive verbs that, combined with an image noun, signal an "add a
+  // visual to the existing post" follow-up. Catches "ajoute / mets / rajoute
+  // / inclus / colle des images" — all phrasings the user listed verbatim
+  // as needing to trigger the image pipeline.
+  const additiveImageVerbs = /\b(?:ajoute|ajouter|rajoute|rajouter|mets|met|mettre|inclus|inclu|colle|joins|joindre|complete|compl[eè]te|adjoint)/i;
 
   const hasImage = imageWords.test(lower);
   const hasPost = postWords.test(lower);
   const hasQuestion = conversationWords.test(lower) || /\?$/.test(lower);
+  const isAdditiveImageAsk = additiveImageVerbs.test(lower) && hasImage;
 
-  // Unambiguous image-only
-  if (hasImage && !hasPost && !hasQuestion) {
+  // Unambiguous image-only — covers two surfaces:
+  //   (a) classic create verbs + image noun: "fais une image sur X"
+  //   (b) additive verbs + image noun in a follow-up: "ajoute des visuels"
+  //       (the user's #1 reported mis-classification — these MUST land on
+  //        the image pipeline even if the prompt also drops the word "post"
+  //        in a non-creation sense like "ajoute un visuel à mon post").
+  if ((hasImage && !hasPost && !hasQuestion) || (isAdditiveImageAsk && !hasQuestion)) {
     return {
       intent: "image",
       confidence: 0.95,
       imageBrief: prompt
-        .replace(/^(fais|cr[eé]e?|g[eé]n[eè]re|montre-?moi|donne-?moi)\s+(une?|le|la)?\s*/i, "")
+        .replace(/^(fais|cr[eé]e?|g[eé]n[eè]re|montre-?moi|donne-?moi|ajoute(?:-moi)?|rajoute|mets(?:-moi)?|inclus)\s+(une?|des|le|la|quelques|plusieurs|\d+)?\s*/i, "")
         // Keep the noun ("image", "visuel"…) — it tells the AI what to build —
         // but normalize the spacing so we don't pass "image  sur X" downstream.
         .replace(/\s+/g, " ")

@@ -21,15 +21,67 @@ import { z } from "zod";
 export const ACCENT_KEYS = ["coral", "midnight", "moss", "amber", "iris"] as const;
 export type AccentKey = (typeof ACCENT_KEYS)[number];
 
+/**
+ * Per-palette colour roles. Splitting them by role (text vs. accent text vs.
+ * chip fill) instead of generic light/dark pairs is what guarantees legibility
+ * on the dark palette (midnight). Previously templates hardcoded `#1A1D21`
+ * for body text, which on midnight's `#0F1115` background read as black-on-
+ * black — invisible. With explicit `text` / `textMuted` / `accentText` per
+ * palette we get correct contrast on every palette automatically.
+ *
+ *   - `text`        : body copy color on this palette's background
+ *   - `textMuted`   : secondary / supporting copy color
+ *   - `accentText`  : large display copy (KPI stat, opening quote mark, etc.)
+ *                     where we want the brand colour to pop against the bg
+ *   - `chipBg`      : background fill for accent chips / pills (CTA, dividers)
+ *   - `chipText`    : text rendered ON `chipBg`
+ *   - `soft/hard/on/bg/bgEnd` are kept for back-compat (used by the avatar
+ *     generation script and a few decorative elements).
+ */
 export const ACCENT_PALETTE: Record<
   AccentKey,
-  { soft: string; hard: string; on: string; bg: string; bgEnd: string }
+  {
+    soft: string; hard: string; on: string; bg: string; bgEnd: string;
+    text: string; textMuted: string; accentText: string;
+    chipBg: string; chipText: string;
+  }
 > = {
-  coral:    { soft: "#FBB9AD", hard: "#F76B54", on: "#1A1D21", bg: "#FFF7F3", bgEnd: "#FFE8DE" },
-  midnight: { soft: "#A3AED0", hard: "#1A1D21", on: "#FFFFFF", bg: "#0F1115", bgEnd: "#1A1D21" },
-  moss:     { soft: "#B7D7B0", hard: "#3F7A4F", on: "#FFFFFF", bg: "#F2F7F2", bgEnd: "#E2EFE3" },
-  amber:    { soft: "#F8E0A1", hard: "#C9831D", on: "#1A1D21", bg: "#FFFBEF", bgEnd: "#FBF1D3" },
-  iris:     { soft: "#C6BBF0", hard: "#5A4FCF", on: "#FFFFFF", bg: "#F3F1FB", bgEnd: "#E5E0F8" },
+  coral: {
+    soft: "#FBB9AD", hard: "#F76B54", on: "#1A1D21",
+    bg: "#FFF7F3", bgEnd: "#FFE8DE",
+    text: "#1A1D21", textMuted: "#5A6068", accentText: "#F76B54",
+    chipBg: "#F76B54", chipText: "#FFFFFF",
+  },
+  midnight: {
+    // Dark palette — `text` MUST be light or copy disappears against `bg`.
+    // `accentText` stays white (full pop on dark) rather than `hard` which
+    // would be `#1A1D21` and merge with the gradient.
+    soft: "#A3AED0", hard: "#1A1D21", on: "#FFFFFF",
+    bg: "#0F1115", bgEnd: "#1A1D21",
+    text: "#FFFFFF", textMuted: "#A3AED0", accentText: "#FFFFFF",
+    // CTA pill: light blue-grey fill with dark text — actually pops against
+    // the near-black gradient. Using `hard` here (= bg) would render the
+    // pill invisible.
+    chipBg: "#A3AED0", chipText: "#1A1D21",
+  },
+  moss: {
+    soft: "#B7D7B0", hard: "#3F7A4F", on: "#FFFFFF",
+    bg: "#F2F7F2", bgEnd: "#E2EFE3",
+    text: "#1A1D21", textMuted: "#5A6068", accentText: "#3F7A4F",
+    chipBg: "#3F7A4F", chipText: "#FFFFFF",
+  },
+  amber: {
+    soft: "#F8E0A1", hard: "#C9831D", on: "#1A1D21",
+    bg: "#FFFBEF", bgEnd: "#FBF1D3",
+    text: "#1A1D21", textMuted: "#5A6068", accentText: "#C9831D",
+    chipBg: "#C9831D", chipText: "#FFFFFF",
+  },
+  iris: {
+    soft: "#C6BBF0", hard: "#5A4FCF", on: "#FFFFFF",
+    bg: "#F3F1FB", bgEnd: "#E5E0F8",
+    text: "#1A1D21", textMuted: "#5A6068", accentText: "#5A4FCF",
+    chipBg: "#5A4FCF", chipText: "#FFFFFF",
+  },
 };
 
 // ─── Template-specific schemas ──────────────────────────────────────────────

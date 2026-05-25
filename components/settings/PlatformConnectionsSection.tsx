@@ -13,7 +13,7 @@ import { useMastodon } from "@/contexts/MastodonContext";
 import { useDiscord } from "@/contexts/DiscordContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import Button from "@/components/ui/Button";
-import LinkedInConnectButton, { LinkedInIcon } from "@/components/linkedin/LinkedInConnectButton";
+import { LinkedInIcon } from "@/components/linkedin/LinkedInConnectButton";
 import LinkedInDisconnectModal from "@/components/linkedin/LinkedInDisconnectModal";
 import BlueskyConnectModal from "@/components/bluesky/BlueskyConnectModal";
 import MastodonConnectModal from "@/components/mastodon/MastodonConnectModal";
@@ -200,6 +200,7 @@ export default function PlatformConnectionsSection() {
   const { currentPlan, subscription } = useSubscription();
   const {
     connection: linkedInConnection,
+    connectLinkedIn,
     disconnectLinkedIn,
     isLoading: linkedInLoading,
     refreshProfilePhoto: refreshLinkedInPhoto,
@@ -310,6 +311,21 @@ export default function PlatformConnectionsSection() {
   };
 
   // Render platform card
+  //
+  // STABLE LAYOUT: every card uses a 3-zone flex column with a fixed
+  // baseline height. This guarantees that "Connect", "Reconnect" and
+  // "Disconnect" buttons remain pixel-aligned across all rows of the grid
+  // regardless of state (loading, connected, session expired, etc.).
+  //
+  //   ┌────────────────────────────────────┐
+  //   │ Zone 1 — Header (icon + meta)      │  fixed
+  //   ├────────────────────────────────────┤
+  //   │ Zone 2 — Body (flex-1, centered)   │  absorbs height variance
+  //   │   • status + profile info          │
+  //   ├────────────────────────────────────┤
+  //   │ Zone 3 — Action footer             │  always present
+  //   │   • Connect / Reconnect / Disconnect│
+  //   └────────────────────────────────────┘
   const renderPlatformCard = (platform: Platform) => {
     const info = PLATFORM_INFO[platform];
     const Icon = PlatformIcons[platform];
@@ -318,7 +334,6 @@ export default function PlatformConnectionsSection() {
     const hasAccess = access?.hasAccess ?? false;
     const requiredPlan = info.minPlan;
 
-    // Check if this platform is connected
     const isConnected =
       platform === "linkedin" ? !!linkedInConnection
       : platform === "facebook" ? !!facebookConnection
@@ -379,32 +394,54 @@ export default function PlatformConnectionsSection() {
     // Threads and Facebook are positioned as enterprise-only offerings (not
     // standard Max): their Meta Graph API integrations require a business
     // verification + app review that we only support inside the Business plan.
-    // Locked overlay shows "Reserved for business plans" + a discover CTA
-    // pointing at /business, instead of the regular "Upgrade to Max" message.
     const isBusinessOnlyPlatform = platform === "threads" || platform === "facebook";
+
+    // Centralised connect/disconnect dispatch — keeps the action zone tidy.
+    const triggerConnect = () => {
+      if (platform === "linkedin") connectLinkedIn();
+      else if (platform === "facebook") connectFacebook();
+      else if (platform === "threads") connectThreads();
+      else if (platform === "bluesky") setShowBlueskyConnectModal(true);
+      else if (platform === "mastodon") setShowMastodonConnectModal(true);
+      else if (platform === "discord") connectDiscord();
+    };
+    const triggerDisconnect = () => {
+      if (platform === "linkedin") setShowLinkedInDisconnectModal(true);
+      else if (platform === "facebook") setShowFacebookDisconnectConfirm(true);
+      else if (platform === "threads") setShowThreadsDisconnectConfirm(true);
+      else if (platform === "bluesky") setShowBlueskyDisconnectConfirm(true);
+      else if (platform === "mastodon") setShowMastodonDisconnectConfirm(true);
+      else if (platform === "discord") setShowDiscordDisconnectConfirm(true);
+    };
+    const connectLabel =
+      platform === "linkedin" ? t.settings.connectLinkedIn
+      : platform === "facebook" ? t.settings.connectFacebook
+      : platform === "threads" ? t.settings.connectThreads
+      : platform === "bluesky" ? (t.settings as any).connectBluesky ?? "Connecter Bluesky"
+      : platform === "mastodon" ? (t.settings as any).connectMastodon ?? "Connecter Mastodon"
+      : platform === "discord" ? (t.settings as any).connectDiscord ?? "Connecter Discord"
+      : t.settings.comingSoonButton;
+    const reconnectLabel =
+      platform === "linkedin" ? (t.linkedinErrors?.sessionExpiredAction ?? t.settings.connectLinkedIn)
+      : platform === "facebook" ? t.settings.reconnectFacebook
+      : platform === "threads" ? t.settings.reconnectThreads
+      : connectLabel;
 
     return (
       <motion.div
         key={platform}
         variants={itemVariants}
-        /* Cards size to their content; the CSS grid keeps siblings within the
-           same row aligned automatically. Locked cards keep a small min-height
-           so the upgrade overlay has room to breathe. */
         className={`
           relative overflow-hidden p-4 rounded-xl border transition-all duration-200
-          flex flex-col ${hasAccess ? "" : "min-h-[130px]"}
-          ${hasAccess
-            ? "bg-gray-50 dark:bg-dark-bg border-gray-200 dark:border-dark-border hover:border-primary/20"
-            : "bg-gray-50 dark:bg-dark-bg border-gray-200 dark:border-dark-border"
-          }
+          flex flex-col h-full min-h-[200px]
+          bg-gray-50 dark:bg-dark-bg border-gray-200 dark:border-dark-border
+          ${hasAccess ? "hover:border-primary/20" : ""}
         `}
       >
         {/* Locked overlay — platform icon stays visible underneath */}
         {!hasAccess && (
           <div className="absolute inset-0 z-10 rounded-xl overflow-hidden">
-            {/* Semi-transparent backdrop — lighter to keep icon visible */}
             <div className="absolute inset-0 bg-white/60 dark:bg-dark-bg/65 backdrop-blur-[1px]" />
-            {/* Centered lock + upgrade content */}
             <div className="relative h-full flex flex-col items-center justify-center px-4 py-3">
               <div className="w-8 h-8 mb-2 rounded-full bg-gray-100/90 dark:bg-dark-hover/90 border border-gray-200 dark:border-dark-border flex items-center justify-center shadow-sm">
                 <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -446,15 +483,20 @@ export default function PlatformConnectionsSection() {
           </div>
         )}
 
-        {/* Platform header */}
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${colors.bg}`}>
+        {/* ──────────────────────────────────────────────────────────
+            Zone 1 — Header (fixed)
+            Icon + name + truncated description + plan badge.
+            min-h keeps the row identical even if the description wraps to two
+            lines on one card and one line on another.
+           ────────────────────────────────────────────────────────── */}
+        <div className="flex items-start justify-between gap-2 min-h-[44px]">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className={`w-10 h-10 shrink-0 rounded-lg flex items-center justify-center ${colors.bg}`}>
               <Icon className={`w-5 h-5 ${colors.text}`} />
             </div>
-            <div>
-              <h3 className="text-sm font-medium text-gray-900 dark:text-white">{info.name}</h3>
-              <p className="text-xs text-text-muted">{
+            <div className="min-w-0">
+              <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate">{info.name}</h3>
+              <p className="text-xs text-text-muted line-clamp-1">{
                 platform === "linkedin" ? t.settings.platformLinkedinDesc
                 : platform === "threads" ? t.settings.platformThreadsDesc
                 : platform === "facebook" ? t.settings.platformFacebookDesc
@@ -462,31 +504,37 @@ export default function PlatformConnectionsSection() {
               }</p>
             </div>
           </div>
-          {isBusinessOnlyPlatform ? (
-            <span className="px-2 py-0.5 text-xs font-medium rounded-md border bg-gradient-to-r from-amber-500/10 to-yellow-500/10 text-amber-700 dark:text-amber-400 border-amber-500/25">
-              {t.settings.businessBadge}
-            </span>
-          ) : requiredPlan ? (
-            <PlanBadge plan={requiredPlan} />
-          ) : null}
+          <div className="shrink-0">
+            {isBusinessOnlyPlatform ? (
+              <span className="px-2 py-0.5 text-xs font-medium rounded-md border bg-gradient-to-r from-amber-500/10 to-yellow-500/10 text-amber-700 dark:text-amber-400 border-amber-500/25">
+                {t.settings.businessBadge}
+              </span>
+            ) : requiredPlan ? (
+              <PlanBadge plan={requiredPlan} />
+            ) : null}
+          </div>
         </div>
 
-        {/* Connection status / action */}
         {hasAccess && (
-          <div className="mt-3 pt-3 border-t border-gray-200 dark:border-dark-border">
-            {isLoading ? (
-              <div className="flex items-center gap-2">
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  className={`w-4 h-4 border-2 border-t-transparent rounded-full ${colors.text}`}
-                />
-                <span className="text-xs text-text-muted">{t.common.loading}</span>
-              </div>
-            ) : isConnected && connectionData ? (
-              <div className="space-y-3">
-                {/* Connected profile */}
-                <div className="flex items-center gap-3">
+          <>
+            {/* ──────────────────────────────────────────────────────
+                Zone 2 — Body (flex-1, vertically centered)
+                Absorbs all height variance from the grid stretch so that
+                the footer button never moves. Shows either the status pill
+                (not connected) or the profile row (connected).
+               ────────────────────────────────────────────────────── */}
+            <div className="flex-1 flex flex-col justify-center pt-3 mt-3 border-t border-gray-200 dark:border-dark-border min-h-[56px]">
+              {isLoading ? (
+                <div className="flex items-center gap-2">
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    className={`w-4 h-4 border-2 border-t-transparent rounded-full ${colors.text}`}
+                  />
+                  <span className="text-xs text-text-muted">{t.common.loading}</span>
+                </div>
+              ) : isConnected && connectionData ? (
+                <div className="flex items-center gap-3 min-w-0">
                   <PlatformProfileAvatar
                     src={connectionData.profilePicture}
                     name={connectionData.profileName}
@@ -503,117 +551,63 @@ export default function PlatformConnectionsSection() {
                     )}
                     <ConnectionStatus connected={true} tokenValid={isTokenValid} t={t} />
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      if (platform === "linkedin") setShowLinkedInDisconnectModal(true);
-                      else if (platform === "facebook") setShowFacebookDisconnectConfirm(true);
-                      else if (platform === "threads") setShowThreadsDisconnectConfirm(true);
-                      else if (platform === "bluesky") setShowBlueskyDisconnectConfirm(true);
-                      else if (platform === "mastodon") setShowMastodonDisconnectConfirm(true);
-                      else if (platform === "discord") setShowDiscordDisconnectConfirm(true);
-                    }}
-                    className="text-text-muted hover:text-error hover:bg-error/10"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                  </Button>
                 </div>
-
-                {/* Reconnect button if token expired
-                    The redundant "Session expired / Reconnect to publish"
-                    yellow warning box was removed: the inline status row above
-                    already shows "Session expired" via <ConnectionStatus>, so
-                    the warning was duplicating info AND making token-expired
-                    cards visibly taller than other cards in the grid. */}
-                {!isTokenValid && platform === "linkedin" && (
-                  <LinkedInConnectButton variant="compact" className="w-full" />
-                )}
-                {!isTokenValid && platform === "facebook" && (
-                  <Button variant="secondary" size="sm" onClick={connectFacebook} className="w-full">
-                    <Icon className={`w-4 h-4 mr-2 ${colors.text}`} />
-                    {t.settings.reconnectFacebook}
-                  </Button>
-                )}
-                {!isTokenValid && platform === "threads" && (
-                  <Button variant="secondary" size="sm" onClick={connectThreads} className="w-full">
-                    <Icon className={`w-4 h-4 mr-2 ${colors.text}`} />
-                    {t.settings.reconnectThreads}
-                  </Button>
-                )}
-              </div>
-            ) : (
-              /* Not connected - show connect button */
-              <div>
+              ) : (
                 <ConnectionStatus connected={false} tokenValid={false} t={t} />
-                {platform === "linkedin" ? (
-                  <LinkedInConnectButton variant="compact" className="w-full mt-3" />
-                ) : platform === "facebook" ? (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={connectFacebook}
-                    className="w-full mt-3"
-                  >
-                    <Icon className={`w-4 h-4 mr-2 ${colors.text}`} />
-                    {t.settings.connectFacebook}
-                  </Button>
-                ) : platform === "threads" ? (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={connectThreads}
-                    className="w-full mt-3"
-                  >
-                    <Icon className={`w-4 h-4 mr-2 ${colors.text}`} />
-                    {t.settings.connectThreads}
-                  </Button>
-                ) : platform === "bluesky" ? (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => setShowBlueskyConnectModal(true)}
-                    className="w-full mt-3"
-                  >
-                    <Icon className={`w-4 h-4 mr-2 ${colors.text}`} />
-                    Connecter Bluesky
-                  </Button>
-                ) : platform === "mastodon" ? (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => setShowMastodonConnectModal(true)}
-                    className="w-full mt-3"
-                  >
-                    <Icon className={`w-4 h-4 mr-2 ${colors.text}`} />
-                    Connecter Mastodon
-                  </Button>
-                ) : platform === "discord" ? (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={connectDiscord}
-                    className="w-full mt-3"
-                  >
-                    <Icon className={`w-4 h-4 mr-2 ${colors.text}`} />
-                    Connecter Discord
-                  </Button>
+              )}
+            </div>
+
+            {/* ──────────────────────────────────────────────────────
+                Zone 3 — Action footer (always present)
+                ONE full-width button per state. Same vertical position on
+                every card, on every row, regardless of session expiry or
+                connection status.
+               ────────────────────────────────────────────────────── */}
+            <div className="mt-3 min-h-[36px]">
+              {!isLoading && (
+                isConnected ? (
+                  !isTokenValid ? (
+                    /* Session expired → discreet warning-toned Reconnect */
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={triggerConnect}
+                      className="w-full !border-warning/40 !text-warning hover:!bg-warning/10"
+                    >
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                      {reconnectLabel}
+                    </Button>
+                  ) : (
+                    /* Connected & healthy → subtle Disconnect */
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={triggerDisconnect}
+                      className="w-full text-text-muted hover:text-error hover:bg-error/5"
+                    >
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                      </svg>
+                      {t.settings.disconnect}
+                    </Button>
+                  )
                 ) : (
+                  /* Not connected → primary platform-tinted Connect */
                   <Button
                     variant="secondary"
                     size="sm"
-                    disabled
-                    className="w-full mt-3 opacity-50"
+                    onClick={triggerConnect}
+                    className="w-full"
                   >
                     <Icon className={`w-4 h-4 mr-2 ${colors.text}`} />
-                    {t.settings.comingSoonButton}
+                    {connectLabel}
                   </Button>
-                )}
-              </div>
-            )}
-          </div>
+                )
+              )}
+            </div>
+          </>
         )}
       </motion.div>
     );

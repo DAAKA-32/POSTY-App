@@ -2545,6 +2545,7 @@ export const pt = {
     // Core feature labels
     featureCreations: "Criações diárias",
     featureQuality: "Qualidade do conteúdo IA",
+    featureImages: "Visual generation",
     featureScheduling: "Agendamento de posts",
     featurePersonalized: "Tom adaptado ao seu perfil",
     featureDualMode: "Formato duplo Story + Business",
@@ -2576,6 +2577,8 @@ export const pt = {
     unlimitedCreations: "Criações ilimitadas, zero cota",
     creationsPerMonth: "{n} criações por mês",
     creationsPerDay: "{n} criações por dia",
+    imagesPerDay: "{n} visuals per day",
+    imagesNearUnlimited: "Visuals near-unlimited",
 
     // Savings
     monthsFree: "{n} mês grátis",
@@ -2659,6 +2662,46 @@ export const pt = {
       "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
       "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
     ],
+  },
+
+  // Premium first-time feature tour (5-slide carousel shown after onboarding)
+  appTour: {
+    welcome: {
+      eyebrow: "Bem-vindo",
+      title: "Conheça o Posty, seu copiloto IA",
+      description: "Um espaço premium pensado para transformar suas ideias em posts do LinkedIn que fazem sua audiência crescer — sem a página em branco.",
+    },
+    posts: {
+      eyebrow: "Escrita inteligente",
+      title: "Posts que soam como você",
+      description: "Converse em linguagem natural. O Posty captura sua voz, seu setor, seu público — e escreve posts prontos para publicar.",
+    },
+    visuals: {
+      eyebrow: "Visuais IA",
+      title: "Visuais marcantes, instantaneamente",
+      description: "Várias variantes on-brand para cada post. Escolha a que combina — carrosséis, ilustrações, imagens hero.",
+    },
+    schedule: {
+      eyebrow: "Publique em qualquer lugar",
+      title: "Agende em todas as plataformas",
+      description: "Planeje sua semana, publique com um clique no LinkedIn, X, Bluesky, Threads e mais. O Posty cuida do timing.",
+    },
+    optimize: {
+      eyebrow: "Motor de crescimento",
+      title: "Otimize para engajamento",
+      description: "Hook scores ao vivo, analytics e sugestões IA guiam cada post para mais alcance e conversa.",
+    },
+    controls: {
+      skip: "Pular",
+      back: "Voltar",
+      next: "Próximo",
+      start: "Começar",
+    },
+    settings: {
+      replayLabel: "Refazer tour do produto",
+      replayDesc: "Reveja o tour premium de funcionalidades",
+      replayCta: "Refazer",
+    },
   },
 
   // App Page
@@ -3156,7 +3199,7 @@ export const pt = {
     cookiePolicy: "Política de cookies",
   strategist: {
     pageTitle: "Strategist",
-    headerEyebrow: "Max · Marketing Strategist",
+    headerEyebrow: "Marketing Strategist",
     headerTitle: "Build a strategy, not just posts.",
     headerSubtitle: "A senior marketing advisor in your pocket. Audit your LinkedIn presence, design content plans, sharpen positioning — in one focused conversation.",
     inputPlaceholder: "Ask for an audit, a 30-day plan, hook angles…",

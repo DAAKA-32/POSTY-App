@@ -18,6 +18,7 @@ import InsightsSection from "@/components/dashboard/InsightsSection";
 import DashboardOnboarding from "@/components/dashboard/DashboardOnboarding";
 import { AnimatedLogo } from "@/components/ui/Logo";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
+import PageHeader from "@/components/layout/PageHeader";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { usePageTitle } from "@/hooks/ui/usePageTitle";
@@ -90,7 +91,7 @@ function DashboardContent() {
   // Loading state
   if (loading || loadingStats) {
     return (
-      <div className="min-h-screen bg-background-warm dark:bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-transparent flex items-center justify-center">
         <div className="text-center">
           <div className="mx-auto mb-4">
             <AnimatedLogo size="xl" />
@@ -109,7 +110,7 @@ function DashboardContent() {
 
   return (
     <div
-      className="bg-background-warm dark:bg-background"
+      className="posty-soft-schedule"
       style={{
         height: "100dvh",
         maxHeight: "100dvh",
@@ -125,42 +126,20 @@ function DashboardContent() {
       )}
 
 
-      {/* Header - Unified style with other pages */}
-      <header className="sticky top-0 z-40 bg-background-warm/80 dark:bg-dark-bg/80 backdrop-blur-xl border-b border-[#F8935D]/10 dark:border-dark-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
-          <div className="relative flex items-center justify-between h-16">
-            {/* Back button - Consistent with profile/settings */}
-            <button
-              onClick={() => router.back()}
-              className="flex items-center gap-2 text-gray-600 dark:text-text-secondary hover:text-gray-900 dark:hover:text-white transition-colors group z-10"
-              aria-label={t.dashboard.back}
-            >
-              <svg
-                className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              <span className="hidden sm:inline">{t.dashboard.back}</span>
-            </button>
-
-            {/* Page title - Centered */}
-            <div className="absolute left-1/2 -translate-x-1/2 text-lg font-semibold text-gray-900 dark:text-white">
-              Dashboard
-            </div>
-
-            {/* Actions - Right side */}
-            <Link
-              href="/profile"
-              className="px-3 py-2 bg-[#F8935D]/10 dark:bg-dark-hover hover:bg-[#F8935D]/15 dark:hover:bg-dark-active border border-[#F8935D]/15 dark:border-dark-border text-gray-700 dark:text-text-secondary hover:text-gray-900 dark:hover:text-white text-sm font-medium rounded-xl transition-all duration-200"
-            >
-              {t.dashboard.myProfile}
-            </Link>
-          </div>
-        </div>
-      </header>
+      <PageHeader
+        title="Dashboard"
+        onBack={() => router.back()}
+        backLabel={t.dashboard.back}
+        maxWidthClass="max-w-7xl"
+        actions={
+          <Link
+            href="/profile"
+            className="px-3 py-2 bg-[#F8935D]/10 dark:bg-dark-hover hover:bg-[#F8935D]/15 dark:hover:bg-dark-active border border-[#F8935D]/15 dark:border-dark-border text-gray-700 dark:text-text-secondary hover:text-gray-900 dark:hover:text-white text-sm font-medium rounded-xl transition-all duration-200"
+          >
+            {t.dashboard.myProfile}
+          </Link>
+        }
+      />
 
       {/* Main content */}
       <main className="relative z-10 px-4 sm:px-6 lg:px-12 py-6 sm:py-8 max-w-7xl mx-auto">
@@ -188,7 +167,7 @@ function DashboardContent() {
                   ? "bg-primary-hover/10 border border-primary-hover/20 hover:border-primary-hover/30"
                   : currentPlan === "pro"
                     ? "bg-primary/10 border border-primary/20 hover:border-primary/30"
-                    : "bg-gray-100 dark:bg-dark-card border border-gray-200 dark:border-dark-border hover:border-gray-300 dark:hover:border-dark-border-hover"
+                    : "posty-card-glass posty-card-glass-hover"
               }`}>
                 <p className="text-xs text-text-muted mb-1">{t.dashboard.currentPlan}</p>
                 <p className={`text-sm font-semibold ${
@@ -351,48 +330,46 @@ function DashboardContent() {
               ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}
             `}
           >
-            <div className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-4 sm:p-6 hover:border-gray-300 dark:hover:border-dark-border-hover transition-colors duration-200">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{t.dashboard.recentActivity}</h3>
-              <div className="space-y-3">
-                {stats.recentActivity.map((activity, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center gap-4 p-3 bg-gray-50 dark:bg-dark-elevated rounded-xl hover:bg-gray-100 dark:hover:bg-dark-hover border border-gray-200 dark:border-dark-border transition-colors duration-200"
-                  >
-                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0 border border-primary/20">
-                      <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-900 dark:text-white truncate">
-                        {activity.content}...
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-text-muted">
-                        {new Date(activity.date).toLocaleDateString(language === "en" ? "en-US" : "fr-FR", {
-                          day: "numeric",
-                          month: "short",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
-                    </div>
-                    <Link
-                      href="/history"
-                      className="text-xs text-primary hover:text-primary-hover transition-colors duration-200 font-medium px-2.5 py-1 bg-primary/10 hover:bg-primary/15 rounded-lg"
-                    >
-                      {t.dashboard.view}
-                    </Link>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{t.dashboard.recentActivity}</h3>
+            <div className="space-y-2.5">
+              {stats.recentActivity.map((activity, index) => (
+                <div
+                  key={index}
+                  className="posty-card-glass posty-card-glass-hover flex items-center gap-4 p-3 rounded-xl"
+                >
+                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0 border border-primary/20">
+                    <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
                   </div>
-                ))}
-              </div>
-              <Link
-                href="/history"
-                className="mt-4 block text-center text-sm text-primary hover:text-primary-hover transition-colors duration-200 font-medium"
-              >
-                {t.dashboard.viewAllHistory}
-              </Link>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-gray-900 dark:text-white truncate">
+                      {activity.content}...
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-text-muted">
+                      {new Date(activity.date).toLocaleDateString(language === "en" ? "en-US" : "fr-FR", {
+                        day: "numeric",
+                        month: "short",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </p>
+                  </div>
+                  <Link
+                    href="/history"
+                    className="text-xs text-primary hover:text-primary-hover transition-colors duration-200 font-medium px-2.5 py-1 bg-primary/10 hover:bg-primary/15 rounded-lg"
+                  >
+                    {t.dashboard.view}
+                  </Link>
+                </div>
+              ))}
             </div>
+            <Link
+              href="/history"
+              className="mt-4 block text-center text-sm text-primary hover:text-primary-hover transition-colors duration-200 font-medium"
+            >
+              {t.dashboard.viewAllHistory}
+            </Link>
           </div>
         )}
 

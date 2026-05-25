@@ -26,13 +26,10 @@ type Palette = (typeof ACCENT_PALETTE)[keyof typeof ACCENT_PALETTE];
 function Frame({
   children,
   palette,
-  variant = "soft",
 }: {
   children: React.ReactNode;
   palette: Palette;
-  variant?: "soft" | "hard";
 }) {
-  const isHard = variant === "hard";
   return (
     <div
       style={{
@@ -41,10 +38,12 @@ function Frame({
         display: "flex",
         flexDirection: "column",
         padding: PAD,
-        backgroundImage: isHard
-          ? `linear-gradient(135deg, ${palette.bg} 0%, ${palette.bgEnd} 100%)`
-          : `linear-gradient(160deg, ${palette.bg} 0%, ${palette.bgEnd} 100%)`,
-        color: isHard ? palette.on : "#1A1D21",
+        backgroundImage: `linear-gradient(160deg, ${palette.bg} 0%, ${palette.bgEnd} 100%)`,
+        // Default body color = palette.text. This is what fixes the dark-text-
+        // on-dark-bg bug on the midnight palette: midnight.text is white, the
+        // others are near-black, so every palette renders legibly without a
+        // per-template branch.
+        color: palette.text,
         fontFamily: "Inter",
         position: "relative",
       }}
@@ -66,29 +65,14 @@ function Frame({
   );
 }
 
-function BrandMark({ brand, palette }: { brand: string; palette: Palette }) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-      }}
-    >
-      <div
-        style={{
-          width: 36,
-          height: 36,
-          borderRadius: 12,
-          backgroundImage: `linear-gradient(135deg, ${palette.hard} 0%, ${palette.soft} 100%)`,
-          display: "flex",
-        }}
-      />
-      <span style={{ fontSize: 22, fontWeight: 600, letterSpacing: -0.2 }}>{brand}</span>
-    </div>
-  );
-}
-
+// NOTE: BrandMark + top-right Eyebrow tag were removed on purpose. The
+// generated visual now has no chrome — no "Posty" badge, no editorial
+// uppercase tag in the corner. Cleaner / more pro look, and avoids the
+// chrome leaking the SaaS brand onto every published asset.
+//
+// The AnnouncementCard's centred Eyebrow (used inside the main content
+// column, distinct from the corner tag) is kept below — it's editorial
+// typography, part of the design, not Posty chrome.
 function Eyebrow({ text, palette }: { text: string; palette: Palette }) {
   return (
     <span
@@ -97,7 +81,7 @@ function Eyebrow({ text, palette }: { text: string; palette: Palette }) {
         fontWeight: 600,
         letterSpacing: 2,
         textTransform: "uppercase",
-        color: palette.hard,
+        color: palette.accentText,
       }}
     >
       {text}
@@ -111,13 +95,8 @@ function KpiCard(dsl: Extract<ImageDSL, { template: "kpi-card" }>) {
   const palette = ACCENT_PALETTE[dsl.accent];
   return (
     <Frame palette={palette}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <BrandMark brand={dsl.brand} palette={palette} />
-        <span style={{ fontSize: 18, color: "#6B7280", letterSpacing: 1 }}>
-          {dsl.eyebrow.toUpperCase()}
-        </span>
-      </div>
-
+      {/* No top header row anymore (brand mark + corner eyebrow removed for
+          a cleaner look). The stat block fills the canvas vertically. */}
       <div
         style={{
           flex: 1,
@@ -133,7 +112,7 @@ function KpiCard(dsl: Extract<ImageDSL, { template: "kpi-card" }>) {
             lineHeight: 1,
             fontWeight: 800,
             letterSpacing: -8,
-            color: palette.hard,
+            color: palette.accentText,
           }}
         >
           {dsl.stat}
@@ -143,7 +122,7 @@ function KpiCard(dsl: Extract<ImageDSL, { template: "kpi-card" }>) {
             fontSize: 56,
             lineHeight: 1.15,
             fontWeight: 500,
-            color: "#1A1D21",
+            color: palette.text,
             maxWidth: 880,
           }}
         >
@@ -155,7 +134,7 @@ function KpiCard(dsl: Extract<ImageDSL, { template: "kpi-card" }>) {
         <span
           style={{
             fontSize: 22,
-            color: "#6B7280",
+            color: palette.textMuted,
             fontWeight: 500,
           }}
         >
@@ -172,15 +151,7 @@ function QuoteCard(dsl: Extract<ImageDSL, { template: "quote-card" }>) {
   const palette = ACCENT_PALETTE[dsl.accent];
   return (
     <Frame palette={palette}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <BrandMark brand={dsl.brand} palette={palette} />
-        {dsl.eyebrow && (
-          <span style={{ fontSize: 18, color: "#6B7280", letterSpacing: 1 }}>
-            {dsl.eyebrow.toUpperCase()}
-          </span>
-        )}
-      </div>
-
+      {/* Top header row removed — no brand badge, no corner eyebrow tag. */}
       <div
         style={{
           flex: 1,
@@ -195,7 +166,7 @@ function QuoteCard(dsl: Extract<ImageDSL, { template: "quote-card" }>) {
             fontSize: 180,
             lineHeight: 0.9,
             fontWeight: 800,
-            color: palette.hard,
+            color: palette.accentText,
             height: 80,
           }}
         >
@@ -207,7 +178,7 @@ function QuoteCard(dsl: Extract<ImageDSL, { template: "quote-card" }>) {
             lineHeight: 1.1,
             fontWeight: 600,
             letterSpacing: -1.5,
-            color: "#1A1D21",
+            color: palette.text,
             maxWidth: 920,
           }}
         >
@@ -220,11 +191,11 @@ function QuoteCard(dsl: Extract<ImageDSL, { template: "quote-card" }>) {
           style={{
             width: 56,
             height: 4,
-            backgroundColor: palette.hard,
+            backgroundColor: palette.accentText,
             borderRadius: 4,
           }}
         />
-        <span style={{ fontSize: 26, fontWeight: 600, color: "#1A1D21" }}>{dsl.attribution}</span>
+        <span style={{ fontSize: 26, fontWeight: 600, color: palette.text }}>{dsl.attribution}</span>
       </div>
     </Frame>
   );
@@ -236,10 +207,7 @@ function AnnouncementCard(dsl: Extract<ImageDSL, { template: "announcement-card"
   const palette = ACCENT_PALETTE[dsl.accent];
   return (
     <Frame palette={palette}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <BrandMark brand={dsl.brand} palette={palette} />
-      </div>
-
+      {/* Top brand badge removed — clean canvas, no Posty chrome. */}
       <div
         style={{
           flex: 1,
@@ -256,7 +224,7 @@ function AnnouncementCard(dsl: Extract<ImageDSL, { template: "announcement-card"
             lineHeight: 1.02,
             fontWeight: 800,
             letterSpacing: -3,
-            color: "#1A1D21",
+            color: palette.text,
             maxWidth: 940,
           }}
         >
@@ -267,7 +235,7 @@ function AnnouncementCard(dsl: Extract<ImageDSL, { template: "announcement-card"
             fontSize: 40,
             lineHeight: 1.3,
             fontWeight: 400,
-            color: "#3F434A",
+            color: palette.textMuted,
             maxWidth: 880,
           }}
         >
@@ -284,8 +252,11 @@ function AnnouncementCard(dsl: Extract<ImageDSL, { template: "announcement-card"
           paddingLeft: 28,
           paddingRight: 28,
           borderRadius: 999,
-          backgroundColor: palette.hard,
-          color: palette.on,
+          // chipBg/chipText gives midnight an actual visible CTA pill
+          // (light blue-grey on near-black) instead of the previous
+          // black-on-black that read as a void.
+          backgroundColor: palette.chipBg,
+          color: palette.chipText,
           fontSize: 24,
           fontWeight: 600,
           letterSpacing: 0.2,

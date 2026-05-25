@@ -207,8 +207,12 @@ const ChatMessage = memo(function ChatMessage({
             </span>
           )}
 
-          {/* Content */}
-          <div className="whitespace-pre-wrap break-words overflow-wrap-anywhere text-sm leading-relaxed">
+          {/* Content — notranslate so Chrome/Google Translate never rewrites
+              AI-generated or user-authored message bodies. */}
+          <div
+            className="notranslate whitespace-pre-wrap break-words overflow-wrap-anywhere text-sm leading-relaxed"
+            translate="no"
+          >
             {content}
             {isStreaming && (
               <motion.span

@@ -87,33 +87,36 @@ export default function ChatPage() {
     }
   }, [generationCount, responses.length, showSignupPrompt]);
 
-  // When responses are received, add them to messages
+  // When responses are received, add them to messages.
+  // Dedup by a stable signature derived from the responses themselves —
+  // matching by `content === lastPrompt` blocked legitimate repeats like
+  // "oui", "ok", "merci" (the user types the same prompt twice and the
+  // second exchange never appears). The signature includes the response
+  // contents so a repeated prompt with a fresh AI reply still gets added.
+  const lastAppendedSigRef = useRef<string | null>(null);
   useEffect(() => {
-    if (responses.length > 0 && lastPrompt) {
-      setMessages(prevMessages => {
-        const hasUserMsg = prevMessages.some(m => m.content === lastPrompt && m.role === "user");
+    if (responses.length === 0 || !lastPrompt) return;
+    const sig = `${lastPrompt}::${responses.map((r) => r.content).join("||")}`;
+    if (lastAppendedSigRef.current === sig) return;
+    lastAppendedSigRef.current = sig;
 
-        if (!hasUserMsg) {
-          const userMsgId = `user-${Date.now()}`;
-          const newMessages: Message[] = [
-            ...prevMessages,
-            { id: userMsgId, role: "user", content: lastPrompt },
-          ];
-
-          responses.forEach((response, index) => {
-            newMessages.push({
-              id: `ai-${Date.now()}-${index}`,
-              role: "assistant",
-              content: response.content,
-              type: response.type as "storytelling" | "business",
-            });
-          });
-
-          return newMessages;
-        }
-        return prevMessages;
+    setMessages((prevMessages) => {
+      const baseTs = Date.now();
+      const userMsgId = `user-${baseTs}`;
+      const newMessages: Message[] = [
+        ...prevMessages,
+        { id: userMsgId, role: "user", content: lastPrompt },
+      ];
+      responses.forEach((response, index) => {
+        newMessages.push({
+          id: `ai-${baseTs}-${index}`,
+          role: "assistant",
+          content: response.content,
+          type: response.type as "storytelling" | "business",
+        });
       });
-    }
+      return newMessages;
+    });
   }, [responses, lastPrompt]);
 
   // Auto-resize textarea
@@ -164,13 +167,16 @@ export default function ChatPage() {
       return;
     }
     setMessages([]);
+    // Forget the last appended signature so the next exchange (even with the
+    // exact same prompt/responses, e.g. a regen test) lands cleanly.
+    lastAppendedSigRef.current = null;
     reset();
   };
 
   // Show loading while checking auth
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-transparent flex items-center justify-center">
         <div className="relative">
           <div className="w-12 h-12 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center">
             <span className="text-white font-bold text-xl">T</span>
@@ -182,7 +188,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="h-screen bg-background flex flex-col overflow-hidden app-layout">
+    <div className="h-screen bg-transparent flex flex-col overflow-hidden app-layout">
       {/* Header */}
       <header className="flex-shrink-0 bg-white/95 dark:bg-dark-card/95 backdrop-blur-xl border-b border-gray-200 dark:border-dark-border z-40 pwa-fixed-header">
         <div className="max-w-2xl mx-auto px-4 h-16 flex items-center justify-between">
