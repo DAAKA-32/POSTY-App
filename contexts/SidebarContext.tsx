@@ -132,6 +132,30 @@ export function SidebarProvider({
     return () => window.removeEventListener("resize", handleResize);
   }, [isOpen]);
 
+  // Toggle `body.mobile-sidebar-open` whenever the mobile drawer opens/closes.
+  // This drives the global CSS rule (globals.css) that blurs the page
+  // content (header, banners, page portals) so the drawer feels like it
+  // actively pushes everything else into the background. Scoped to mobile
+  // via the resize check — desktop has its own permanent sidebar and must
+  // never be blurred.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const apply = () => {
+      const isMobile = window.innerWidth < 1024;
+      if (isOpen && isMobile) {
+        document.body.classList.add("mobile-sidebar-open");
+      } else {
+        document.body.classList.remove("mobile-sidebar-open");
+      }
+    };
+    apply();
+    window.addEventListener("resize", apply);
+    return () => {
+      window.removeEventListener("resize", apply);
+      document.body.classList.remove("mobile-sidebar-open");
+    };
+  }, [isOpen]);
+
   // Actions mobile avec haptic feedback
   const open = useCallback(() => {
     setIsOpen(true);

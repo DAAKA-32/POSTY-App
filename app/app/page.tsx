@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useState, useEffect, useRef, useCallback, Suspense } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
@@ -122,6 +123,24 @@ function AppContent() {
   // user finishes the profile onboarding form and lands on /app.
   const appTour = useAppTour();
   const [posts, setPosts] = useState<Post[]>([]);
+  // True when the viewport is below the `lg` breakpoint (1024px). Drives the
+  // mobile vs desktop render switch so we never mount two copies of the
+  // chat content tree at the same time — child components like ChatInput,
+  // PublishToLinkedInModal etc. own refs/state that go haywire when
+  // duplicated. Use a function initializer so the first client render
+  // already has the right value (avoiding a desktop→mobile remount that
+  // would tear down child component state mid-load). SSR safely returns
+  // false here; React's hydration mismatch warning is acceptable in dev.
+  const [isMobileViewport, setIsMobileViewport] = useState<boolean>(
+    () => typeof window !== "undefined" && window.innerWidth < 1024,
+  );
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const check = () => setIsMobileViewport(window.innerWidth < 1024);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [publishContent, setPublishContent] = useState("");
   const [publishModalMode, setPublishModalMode] = useState<"now" | "schedule">("now");
@@ -1177,8 +1196,15 @@ function AppContent() {
   const hasChatContent = messages.length > 0 || imageEntries.length > 0;
   const shouldDisableScroll = !hasChatContent && !isLoading;
 
-  return (
-    <MainLayout posts={posts} showMobileHeader={true}>
+  // Mobile renders the entire content tree through a React Portal under
+  // <body>. This bypasses every ancestor's containing block (notably the
+  // desktop-sidebar offset on MainLayout's <main>) so the page never
+  // gets squeezed sideways. The body class `mobile-sidebar-open` (set by
+  // SidebarContext) drives the global CSS rule that drops the portal
+  // behind .app-layout when the drawer opens, so the SlideMenu's backdrop
+  // can layer over the page content properly. See MobileAppPortal below.
+  const contentInner = (
+    <>
       <div className="flex flex-col h-full app-content-wrapper">
         {/* Messages area - with padding for content to scroll behind fixed input */}
         <div
@@ -2214,14 +2240,64 @@ function AppContent() {
           </motion.div>
         )}
       </AnimatePresence>
+    </>
+  );
+
+  return (
+    <MainLayout posts={posts} showMobileHeader={true}>
+      {isMobileViewport ? (
+        // Mobile: portal under <body> to bypass the sidebar-offset
+        // containing block. fixed-input-area inside still anchors to
+        // the viewport (no transform/filter on the portal root).
+        <MobileAppPortal>{contentInner}</MobileAppPortal>
+      ) : (
+        // Desktop: render content inline inside MainLayout.
+        <div className="flex flex-col h-full w-full">{contentInner}</div>
+      )}
     </MainLayout>
   );
 }
 
+// See MobileHistoryPortal on /history — same recipe. `overflow-hidden` (not
+// `overflow-y-auto`) because /app has its own internal scroll container
+// (`.app-scroll-container`) and the page's `.fixed-input-area` lives below
+// it — both need to coexist without a double-scroll trap on the portal.
+function MobileAppPortal({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  if (!mounted) return null;
+  return createPortal(
+    <div
+      data-mobile-page-portal=""
+      className="lg:hidden fixed left-0 right-0 bottom-0 z-30 overflow-hidden"
+      style={{
+        top: "calc(env(safe-area-inset-top, 0px) + 56px)",
+        paddingBottom: "env(safe-area-inset-bottom, 0px)",
+      }}
+    >
+      {children}
+    </div>,
+    document.body,
+  );
+}
+
+// Stable Suspense fallback. Using `null` for a Suspense fallback corrupts the
+// React DevTools instrumentation on HMR reloads — the Offscreen Fiber that
+// React inserts for hidden Suspense children has nothing to point at, so the
+// devtools throws "There should always be an Offscreen Fiber child in a
+// hydrated Suspense boundary." A single hidden span gives the dev-time
+// reconciler a stable node to track without affecting layout or production
+// behavior (the fallback is only visible until <AppContent /> hydrates).
+const AppSuspenseFallback = () => (
+  <span aria-hidden="true" style={{ display: "none" }} data-app-suspense-fallback />
+);
+
 export default function AppPage() {
   return (
     <ProtectedRoute requireOnboarding requireSubscription>
-      <Suspense fallback={null}>
+      <Suspense fallback={<AppSuspenseFallback />}>
         <AppContent />
       </Suspense>
     </ProtectedRoute>

@@ -8,8 +8,14 @@ import { motion } from "framer-motion";
  * interaction with the app behind it.
  *
  * Hidden at the `lg` breakpoint (>= 1024px) so desktop is unaffected.
+ *
+ * Disabled in development (`next dev` on localhost) so we can iterate on
+ * the mobile UI behind the overlay. `process.env.NODE_ENV` is statically
+ * replaced at build time, so the check produces no SSR/CSR mismatch.
  */
 export default function MobileMaintenanceOverlay() {
+  if (process.env.NODE_ENV === "development") return null;
+
   return (
     <div
       role="alertdialog"

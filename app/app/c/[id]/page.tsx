@@ -927,7 +927,7 @@ function ConversationContent() {
         {/* Messages area - with padding for content to scroll behind fixed input */}
         <div
           ref={scrollContainerRef}
-          className="flex-1 overflow-y-auto gpu-scroll app-scroll-container overscroll-contain"
+          className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden gpu-scroll app-scroll-container overscroll-contain"
         >
           <div
             className={`max-w-3xl mx-auto px-4 pt-6 lg:pt-12 content-with-fixed-input ${browserMode.isMobileBrowser ? 'mobile-browser-mode' : ''}`}
@@ -1353,9 +1353,9 @@ function ConversationContent() {
                                       type="button"
                                       onClick={() => handleRegenerateImage(entry.id)}
                                       className="
-                                        mt-2 inline-flex items-center gap-1.5
-                                        px-2.5 py-1 rounded-lg
-                                        bg-error/10 hover:bg-error/15
+                                        mt-2 inline-flex items-center justify-center gap-1.5
+                                        min-h-[36px] px-3 py-1.5 rounded-lg
+                                        bg-error/10 hover:bg-error/15 active:bg-error/20
                                         text-error text-[12px] font-medium
                                         transition-colors
                                       "

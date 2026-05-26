@@ -45,17 +45,13 @@
 }
 
 /* MOBILE / TOUCH — horizontal overflow safety net.
-   The desktop block above only fires on `pointer: fine`, so mobile
-   devices were left without an overflow-x guard. When a child element
-   spills past the viewport (modal/banner/fixed picker), the page scrolls
-   horizontally and the layout looks "shifted to the side". This belt-and-
-   suspenders rule clamps the document body to the viewport width without
-   breaking the scroll-locked modal flow (those rules still win via their
-   own `overflow: hidden`). */
-html,
-body {
-  max-width: 100vw;
-  overflow-x: hidden;
+   Scoped to touch devices only so we don't fight with the desktop block
+   above (which already handles overflow-x via the long media query). */
+@media (hover: none), (pointer: coarse) {
+  html:not(.scroll-locked),
+  body:not(.scroll-locked):not(.modal-open) {
+    overflow-x: hidden;
+  }
 }
 
 /* Scroll lock - ONLY applied when explicitly needed (modals, sheets) */
@@ -1614,34 +1610,58 @@ body.force-scroll-enabled * {
   box-sizing: border-box;
 }
 
-/* Mobile-specific: True vertical centering with flex */
+/* Mobile-specific: viewport-relative vertical centering.
+   We do NOT rely on `min-height: 100%` (which requires every ancestor in
+   the flex chain to declare an explicit height — fragile on mobile where
+   banners/keyboard/safe-area perturb the cascade and the container
+   collapses to 0, leaving only the gradient visible). Instead we lock the
+   container to a known fraction of the dynamic viewport so flex centering
+   always has room to work, no matter what the parent chain looks like. */
 @media (max-width: 1023px) {
   .welcome-screen-container {
-    /* True vertical centering on mobile */
     justify-content: center;
     padding-top: 0;
     padding-bottom: 0;
-    /* Full available height for perfect centering */
-    min-height: 100%;
-    height: 100%;
-    /* No offset - pure center */
+    /* 100vh - mobile header (56px) - fixed input area (≈200px) - safe
+       areas. The dvh override right below upgrades this to the dynamic
+       viewport unit on browsers that support it (avoiding the iOS Safari
+       chrome-resize issue). */
+    min-height: calc(
+      100vh
+      - 56px
+      - 200px
+      - env(safe-area-inset-top, 0px)
+      - env(safe-area-inset-bottom, 0px)
+    );
+    height: auto;
     margin-top: 0;
   }
 
-  /* Small phones (iPhone SE, etc.) */
-  @media (max-height: 700px) {
-    .welcome-screen-container {
-      margin-top: 0;
-    }
-  }
-
-  /* Very small phones or landscape - no centering, stack from top */
+  /* Very small phones or landscape - stack from top so the input area
+     never crowds the carousel. */
   @media (max-height: 550px) {
     .welcome-screen-container {
       justify-content: flex-start;
       padding-top: 16px;
       margin-top: 0;
       min-height: auto;
+    }
+  }
+}
+
+/* Upgrade to `dvh` (dynamic viewport height) on browsers that support it,
+   so the mobile Safari address bar showing/hiding doesn't snap the welcome
+   layout. Same calc, just better units. */
+@supports (height: 100dvh) {
+  @media (max-width: 1023px) {
+    .welcome-screen-container {
+      min-height: calc(
+        100dvh
+        - 56px
+        - 200px
+        - env(safe-area-inset-top, 0px)
+        - env(safe-area-inset-bottom, 0px)
+      );
     }
   }
 }
@@ -2221,6 +2241,66 @@ html.light main {
    than the rule above so it wins inside the app shell. */
 html.light .app-layout main {
   background-color: transparent !important;
+}
+
+/* MOBILE GUARD — force `<main>` inside MainLayout to zero left/right padding
+   on phones, regardless of any Tailwind utility that may attempt to apply
+   the desktop-sidebar offset (`lg:pl-[288px]` / `lg:pl-[68px]`). On certain
+   dev/HMR cycles + DevTools responsive emulation, the `lg:` arbitrary-value
+   utilities have leaked onto mobile viewports, squeezing all page content
+   into the right ~25% of the screen. This guard makes the bug structurally
+   impossible by stripping the padding under the mobile breakpoint.
+   Belt-and-suspenders: matches both `<main>` directly and any
+   `.app-content-wrapper` inside it. */
+@media (max-width: 1023px) {
+  .app-layout > main {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+}
+
+/* MOBILE SIDEBAR — page content goes BEHIND the drawer.
+   When the mobile drawer (SlideMenu) opens, `body.mobile-sidebar-open`
+   toggles ON (set by SidebarContext). The page-content portals
+   (/history, /analytics, /schedule) are rendered into <body> via
+   createPortal, which gives them z-30 in document.body's stacking
+   context — that beats `.app-layout` (which has `isolation: isolate`
+   and is z-auto in body), so the SlideMenu's backdrop (z-[60] *inside*
+   .app-layout) cannot cover the portal content from the outside. Fix:
+   when the drawer opens, drop the portal to a negative z so the entire
+   .app-layout block (header, backdrop, drawer) layers above it. The
+   backdrop itself ships `backdrop-filter: blur(8px)`, so the page
+   content reads as a soft, dimmed shape behind the drawer — exactly
+   the "in arrière-plan" UX requested.
+
+   We also blur `<main>` so the mobile header + banners fade in the same
+   way (those live inside .app-layout and don't have the z-fight issue,
+   only the cosmetic blur). Scoped to mobile so desktop's permanent
+   sidebar never triggers any of this. */
+@media (max-width: 1023px) {
+  /* Push the portal entirely behind .app-layout AND fade it to 0 so the
+     SlideMenu's backdrop (which has its own `backdrop-filter: blur(8px)`
+     + semi-opaque tint) becomes the only thing visible behind the drawer.
+     Without `opacity: 0`, the chat input bar of /app stays slightly
+     visible at the bottom through the transparent <main>, which reads
+     as a stray "header en flou" floating below the drawer. */
+  body.mobile-sidebar-open [data-mobile-page-portal] {
+    z-index: -1;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease-out, z-index 0s linear 0s;
+  }
+  body:not(.mobile-sidebar-open) [data-mobile-page-portal] {
+    transition: opacity 0.15s ease-in, z-index 0s linear 0.15s;
+  }
+  body.mobile-sidebar-open .app-layout > main {
+    filter: blur(6px);
+    transition: filter 0.2s ease-out;
+    pointer-events: none;
+  }
+  body:not(.mobile-sidebar-open) .app-layout > main {
+    transition: filter 0.15s ease-in;
+  }
 }
 
 html.light header {

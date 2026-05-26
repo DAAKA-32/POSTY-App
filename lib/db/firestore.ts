@@ -17,7 +17,7 @@ import {
   writeBatch,
   DocumentReference,
 } from "firebase/firestore";
-import { db } from "@/lib/db/firebase";
+import { auth, db } from "@/lib/db/firebase";
 import { UserProfile, Post, Session, ChatMessage, SubscriptionPlan, FacebookConnectionData, ThreadsConnectionData } from "@/types";
 import { PlanType, DAILY_MESSAGE_LIMITS, PLAN_CONFIGS, getFounderOverridePlan, calculateFreeTrialEndDate } from "@/lib/config/plans";
 
@@ -646,10 +646,22 @@ export async function getConversationHistory(postId: string): Promise<{
 }
 
 export async function deletePost(postId: string): Promise<void> {
+  // Firestore rules require list queries to include userId == auth.uid.
+  const userId = auth.currentUser?.uid;
+  if (!userId) throw new Error("Not authenticated");
+
   // Cascade: find linked records in parallel before deleting
   const [linkedInSnap, scheduledSnap] = await Promise.all([
-    getDocs(query(collection(db, "linkedinPosts"), where("postId", "==", postId))),
-    getDocs(query(collection(db, "scheduledPosts"), where("postId", "==", postId))),
+    getDocs(query(
+      collection(db, "linkedinPosts"),
+      where("userId", "==", userId),
+      where("postId", "==", postId),
+    )),
+    getDocs(query(
+      collection(db, "scheduledPosts"),
+      where("userId", "==", userId),
+      where("postId", "==", postId),
+    )),
   ]);
 
   const batch = writeBatch(db);

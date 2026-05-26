@@ -287,12 +287,16 @@ export default function ProfileMenu({ isCollapsed = false, onNavigate }: Profile
             style={{
               transformOrigin: isCollapsed ? "left bottom" : "bottom left",
               willChange: "transform, opacity",
+              // Inline positioning bypasses any Tailwind class purge or
+              // CSS-override surprise. The menu always opens ABOVE the
+              // profile button (its trigger sits at the bottom of the
+              // sidebar — opening downward would push the menu off-screen).
+              position: "absolute",
+              ...(isCollapsed
+                ? { left: "100%", marginLeft: "0.5rem", bottom: 0 }
+                : { bottom: "100%", left: 0, marginBottom: "0.5rem" }),
             }}
-            className={`
-              posty-glass-panel
-              absolute z-50 w-56 overflow-hidden rounded-xl
-              ${isCollapsed ? "left-full ml-2 bottom-0" : "bottom-full left-0 mb-2"}
-            `}
+            className="posty-glass-panel z-50 w-56 overflow-hidden rounded-xl"
             role="menu"
             aria-orientation="vertical"
           >

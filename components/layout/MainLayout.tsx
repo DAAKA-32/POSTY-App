@@ -29,7 +29,6 @@ import FreeTrialPaywall from "@/components/subscription/FreeTrialPaywall";
 import UsageBanner from "@/components/ui/UsageBanner";
 import QuotaExceededModal from "@/components/ui/QuotaExceededModal";
 import HelpFloatingButton from "@/components/help/HelpFloatingButton";
-import MobileMaintenanceOverlay from "@/components/ui/MobileMaintenanceOverlay";
 import { useScrolledPast } from "@/hooks/scroll/useScrolledPast";
 import {
   navItemVariants,
@@ -1224,11 +1223,6 @@ export default function MainLayout({
           familiar UI behind a blur but cannot interact with it. The user
           stays on /app: conversion happens in-context, not via redirect. */}
       <FreeTrialPaywall />
-
-      {/* Mobile maintenance blocker — fully opaque overlay shown only on
-          mobile (<lg). Blocks all navigation/interaction with the app below
-          while the mobile UI is being finalized. Desktop unaffected. */}
-      <MobileMaintenanceOverlay />
     </div>
   );
 }

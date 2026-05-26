@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
@@ -336,33 +337,26 @@ function HistoryContent() {
     [handleDelete, handlePin, handleRename, t.history],
   );
 
-  return (
-    <MainLayout
-      posts={posts}
-      showMobileHeader={true}
-      headerTitle={t.history.title}
-      onPostUpdate={loadPosts}
-    >
-      {/*
-        Wrapper for PWA mobile scroll management
-        - app-content-wrapper: allows flex child to scroll
-        - app-scroll-container: defines scrollable area
-      */}
-      <div className="flex flex-col min-h-full app-content-wrapper">
-        {/*
-          Responsive container with smooth scroll and pull-to-refresh (mobile only)
-          - Mobile: Full height with native scroll + pull-to-refresh
-          - Tablet/Desktop: Optimized spacing and width
-        */}
+  // Mobile renders the entire content tree through a React Portal directly
+  // under <body>. This bypasses every ancestor's containing block (notably
+  // <main className="lg:pl-[288px]"> + AnimatedPageWrapper's gpu-layer
+  // `translateZ(0)`) which was squeezing the page content into the
+  // right-hand sliver of the viewport on mobile. The Portal is rendered
+  // in parallel to MainLayout, so the SlideMenu drawer + mobile header
+  // still come from MainLayout — only the central page content moves out.
+  const contentInner = (
+    <div className="flex flex-col h-full app-content-wrapper">
         <div
-          className="flex-1 min-h-0 bg-transparent scroll-smooth app-scroll-container"
+          className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden bg-transparent scroll-smooth app-scroll-container"
         >
         {/*
-          Content wrapper with responsive max-width and padding
-          - Mobile: px-4, compact
-          - Tablet (md): px-6, max-w-2xl
-          - Desktop (lg): px-8, max-w-3xl
-          - Large Desktop (xl): max-w-4xl
+          Content wrapper with responsive max-width and padding.
+          On mobile this whole subtree is rendered through a React portal
+          (see MobileHistoryPortal at the bottom of the file), so the
+          desktop sidebar offset on MainLayout's <main> can never push it
+          sideways. We therefore use a single straightforward centering
+          recipe here for every viewport — `w-full mx-auto` plus responsive
+          max-widths from md onward.
         */}
         <div
           className="
@@ -576,16 +570,17 @@ function HistoryContent() {
                       flex items-center gap-3
                       mb-4 py-2
                       bg-background-warm/95 dark:bg-dark-bg/95 backdrop-blur-sm
-                      -mx-4 px-4
+                      -mx-4 px-4 md:-mx-6 md:px-6 lg:-mx-8 lg:px-8
+                      min-w-0
                     "
                     >
-                      <h2 className="text-sm md:text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                      <h2 className="text-sm md:text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2 min-w-0 flex-shrink truncate">
                         {group.isPinnedGroup && (
-                          <svg className="w-4 h-4 text-primary" fill="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4 shrink-0 text-primary" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M16 4a1 1 0 0 1 1 1v3.586l1.707 1.707a1 1 0 0 1 .293.707v2a1 1 0 0 1-1 1h-4v6a1 1 0 0 1-2 0v-6H8a1 1 0 0 1-1-1v-2a1 1 0 0 1 .293-.707L9 8.586V5a1 1 0 0 1 1-1h6z"/>
                           </svg>
                         )}
-                        {group.date}
+                        <span className="truncate">{group.date}</span>
                       </h2>
                       <div className="flex-1 h-px bg-gray-200 dark:bg-dark-border" />
                       <span className="text-xs md:text-sm px-2.5 py-1 rounded-lg font-medium text-gray-500 dark:text-text-muted bg-gray-100 dark:bg-dark-card border border-gray-200 dark:border-dark-border">
@@ -646,6 +641,24 @@ function HistoryContent() {
         </div>
         </div>
       </div>
+  );
+
+  return (
+    <MainLayout
+      posts={posts}
+      showMobileHeader={true}
+      headerTitle={t.history.title}
+      onPostUpdate={loadPosts}
+    >
+      {/* Desktop: render content normally inside MainLayout */}
+      <div className="hidden lg:flex h-full">{contentInner}</div>
+
+      {/* Mobile: render content via React Portal so it bypasses every
+          ancestor's containing block (no `lg:pl-[288px]` offset, no
+          `gpu-layer` transform anchor problem). MainLayout still renders
+          its mobile header + SlideMenu drawer; only the central content
+          area moves out of the layout tree. */}
+      <MobileHistoryPortal>{contentInner}</MobileHistoryPortal>
 
       {/* Publish to LinkedIn modal */}
       <PublishToLinkedInModal
@@ -672,6 +685,39 @@ function HistoryContent() {
         onRename={handleRenameSubmit}
       />
     </MainLayout>
+  );
+}
+
+// Renders its children directly under <body> via a React portal so the
+// content escapes MainLayout's flex/transform stacking context and is
+// never affected by the desktop sidebar offset on `<main>`. Mount-gated
+// to dodge SSR/CSR hydration mismatch (document only exists client-side).
+// The overlay reserves the mobile header (56 px + safe-area-top) and
+// scrolls vertically, matching the canonical mobile-shell behavior.
+// Hidden on lg+ via Tailwind so desktop renders normally.
+function MobileHistoryPortal({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  if (!mounted) return null;
+  return createPortal(
+    <div
+      data-mobile-page-portal=""
+      className="lg:hidden fixed left-0 right-0 bottom-0 z-30 overflow-y-auto overflow-x-hidden overscroll-contain"
+      style={{
+        // Start BELOW the mobile header so the Portal never covers the
+        // hamburger button. Without this, the Portal's stacking context
+        // (rendered in <body>, z-30) wins over MainLayout's tree (which
+        // has no explicit z on its root), trapping all clicks even on
+        // the z-[60] header.
+        top: "calc(env(safe-area-inset-top, 0px) + 56px)",
+        paddingBottom: "env(safe-area-inset-bottom, 0px)",
+      }}
+    >
+      {children}
+    </div>,
+    document.body,
   );
 }
 

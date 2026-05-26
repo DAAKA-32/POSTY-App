@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
@@ -296,8 +297,12 @@ function PostsPerDayChart({ data }: { data: { date: string; count: number }[] })
   const yAxisLabels = [0, Math.max(1, Math.round(maxValue / 2)), maxValue];
 
   return (
-    <div className="relative w-full">
-      <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full" preserveAspectRatio="xMidYMid meet">
+    <div className="relative w-full overflow-x-auto -mx-1 px-1">
+      <svg
+        viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+        className="w-full min-w-[360px]"
+        preserveAspectRatio="xMidYMid meet"
+      >
         {yAxisLabels.map((value, i) => {
           const y = padding.top + innerHeight - (value / maxValue) * innerHeight;
           return (
@@ -474,15 +479,15 @@ function PostCard({
       className="bg-white/80 dark:bg-dark-card rounded-2xl border border-[#F8935D]/10 dark:border-dark-border p-4 sm:p-5 hover:shadow-lg transition-shadow duration-200"
     >
       {/* Header */}
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0077B5] to-[#00A0DC] flex items-center justify-center">
+      <div className="flex items-start justify-between gap-3 mb-4">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          <div className="w-10 h-10 shrink-0 rounded-xl bg-gradient-to-br from-[#0077B5] to-[#00A0DC] flex items-center justify-center">
             <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
               <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
             </svg>
           </div>
-          <div>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
               {publishedDate.toLocaleDateString(t.ui.timeLocale, {
                 day: "numeric",
                 month: "short",
@@ -492,7 +497,7 @@ function PostCard({
               })}
             </p>
             {post.organizationName && (
-              <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+              <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 truncate">
                 {post.organizationName}
               </p>
             )}
@@ -808,14 +813,14 @@ function AnalyticsContent() {
     return reference.toLocaleDateString(t.ui.timeLocale, { weekday: "long" });
   }, [internalMetrics.bestWeekdayIdx, internalMetrics.bestWeekdayHasData, t.ui.timeLocale]);
 
-  return (
-    <MainLayout
-      posts={[]}
-      showMobileHeader={true}
-      headerTitle="Analytics"
-    >
-      <div className="min-h-full scroll-smooth lg:overflow-y-auto">
-        <div className="w-full mx-auto px-4 py-6 md:px-6 md:py-8 lg:px-8 lg:py-10 lg:max-w-4xl xl:max-w-5xl 2xl:max-w-6xl overflow-x-hidden">
+  // Mobile renders the entire content through a React Portal under <body>
+  // so the desktop-sidebar offset on MainLayout's <main> can never push
+  // the page content sideways. See MobileAnalyticsPortal below — same
+  // recipe as MobileHistoryPortal on /history.
+  const contentInner = (
+    <div className="flex flex-col h-full app-content-wrapper">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scroll-smooth app-scroll-container">
+          <div className="w-full mx-auto px-4 py-6 sm:px-5 sm:py-7 md:px-6 md:py-8 lg:px-8 lg:py-10 lg:max-w-4xl xl:max-w-5xl 2xl:max-w-6xl">
           {loading ? (
             <motion.div
               initial={{ opacity: 0 }}
@@ -852,7 +857,7 @@ function AnalyticsContent() {
               {/* Internal Posty KPIs — 4 cards.
                   Everything here is computed from timestamps on `linkedinPosts`
                   + count of pending `scheduledPosts`. No LinkedIn API needed. */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-8">
                 <StatsCard
                   title={t.analytics.publications}
                   value={internalMetrics.totalPublished}
@@ -1015,10 +1020,49 @@ function AnalyticsContent() {
 
           {/* Bottom spacing for mobile navigation */}
           <div className="h-20 md:h-8" />
+          </div>
         </div>
       </div>
+  );
 
+  return (
+    <MainLayout
+      posts={[]}
+      showMobileHeader={true}
+      headerTitle="Analytics"
+    >
+      {/* Desktop: render content inline inside MainLayout */}
+      <div className="hidden lg:flex h-full">{contentInner}</div>
+
+      {/* Mobile: render content through a React Portal so it bypasses
+          MainLayout's containing block (no `lg:pl-[288px]` offset, no
+          gpu-layer transform anchor). MainLayout still owns the mobile
+          header + SlideMenu drawer; only the central page content
+          relocates to <body>. */}
+      <MobileAnalyticsPortal>{contentInner}</MobileAnalyticsPortal>
     </MainLayout>
+  );
+}
+
+// See MobileHistoryPortal on /history — same recipe.
+function MobileAnalyticsPortal({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  if (!mounted) return null;
+  return createPortal(
+    <div
+      data-mobile-page-portal=""
+      className="lg:hidden fixed left-0 right-0 bottom-0 z-30 overflow-y-auto overflow-x-hidden overscroll-contain"
+      style={{
+        top: "calc(env(safe-area-inset-top, 0px) + 56px)",
+        paddingBottom: "env(safe-area-inset-bottom, 0px)",
+      }}
+    >
+      {children}
+    </div>,
+    document.body,
   );
 }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
@@ -42,7 +43,10 @@ function ScheduleContent() {
   const { canSchedulePosts } = useSubscription();
   const canSchedule = canSchedulePosts().allowed;
 
-  // Enable full scrolling on Schedule page (mouse wheel, trackpad, touch, keyboard)
+  // Schedule page opts into its own scroll model: on mobile <main> becomes the
+  // scroll container (driven by the `body.schedule-scroll-enabled` CSS rules
+  // in globals.css). Must remove `pwa-mobile` so the canonical
+  // `app-content-wrapper`/`app-scroll-container` rules don't fight it.
   useEffect(() => {
     document.documentElement.classList.add("schedule-scroll-enabled");
     document.body.classList.add("schedule-scroll-enabled");
@@ -178,13 +182,12 @@ function ScheduleContent() {
   const pendingCount = scheduledPosts.filter((p) => p.status === "pending").length;
   const failedCount = scheduledPosts.filter((p) => p.status === "failed").length;
 
-  return (
-    <MainLayout
-      posts={[]}
-      showMobileHeader={true}
-      headerTitle={t.schedulePage.headerTitle}
-    >
-      <div className="min-h-full scroll-smooth lg:overflow-y-auto">
+  // Mobile renders the entire content through a React Portal under <body>
+  // so the desktop-sidebar offset on MainLayout's <main> can never push
+  // the page content sideways. See MobileSchedulePortal below — same
+  // recipe as the portals on /history and /analytics.
+  const contentInner = (
+    <div className="min-h-full scroll-smooth lg:overflow-y-auto">
         <div className="w-full min-w-0 mx-auto px-3 py-5 sm:px-4 sm:py-6 md:px-6 md:py-8 lg:px-8 lg:py-10 lg:max-w-4xl xl:max-w-5xl 2xl:max-w-6xl overflow-x-clip">
           {/* Premium Header */}
           <motion.div
@@ -367,8 +370,8 @@ function ScheduleContent() {
                   >
                     {/* Date header - frosted glass so the page-tone gradient
                         flows through while keeping the sticky readable. */}
-                    <div className="sticky top-0 z-10 flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 py-2 bg-white/40 dark:bg-white/[0.08] backdrop-blur-md backdrop-saturate-150 dark:backdrop-saturate-125 -mx-3 px-3 sm:-mx-4 sm:px-4 min-w-0 rounded-lg dark:shadow-black/20">
-                      <h2 className="text-sm md:text-base font-semibold text-gray-900 dark:text-white whitespace-nowrap">
+                    <div className="sticky top-0 z-10 flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 py-2 bg-white/40 dark:bg-white/[0.08] backdrop-blur-md backdrop-saturate-150 dark:backdrop-saturate-125 -mx-3 px-3 sm:-mx-4 sm:px-4 md:-mx-6 md:px-6 lg:-mx-8 lg:px-8 min-w-0 rounded-lg dark:shadow-black/20">
+                      <h2 className="text-sm md:text-base font-semibold text-gray-900 dark:text-white truncate min-w-0">
                         {group.date}
                       </h2>
                       <div className="flex-1 h-px bg-gray-200 dark:bg-dark-border min-w-4" />
@@ -498,7 +501,7 @@ function ScheduleContent() {
                                 <div
                                   key={post.id}
                                   className={`
-                                    text-[7px] sm:text-[9px] md:text-xs px-0.5 sm:px-1 md:px-1.5 py-px sm:py-0.5 md:py-1 rounded-sm sm:rounded-md truncate font-medium leading-tight
+                                    text-[9px] sm:text-[10px] md:text-xs px-1 sm:px-1 md:px-1.5 py-px sm:py-0.5 md:py-1 rounded-sm sm:rounded-md truncate font-medium leading-tight
                                     ${postIdx > 0 ? "hidden sm:block" : ""}
                                     ${post.status === "pending"
                                       ? "bg-primary/10 text-primary"
@@ -519,7 +522,7 @@ function ScheduleContent() {
                               ))}
                               {/* Mobile: show +N if more than 1 post */}
                               {dayData.posts.length > 1 && (
-                                <div className="sm:hidden text-[7px] text-gray-500 dark:text-text-muted px-0.5 font-medium leading-tight">
+                                <div className="sm:hidden text-[9px] text-gray-500 dark:text-text-muted px-1 font-medium leading-tight">
                                   +{dayData.posts.length - 1}
                                 </div>
                               )}
@@ -545,6 +548,20 @@ function ScheduleContent() {
           <div className="h-24 sm:h-20 md:h-8" />
         </div>
       </div>
+  );
+
+  return (
+    <MainLayout
+      posts={[]}
+      showMobileHeader={true}
+      headerTitle={t.schedulePage.headerTitle}
+    >
+      {/* Desktop: render content inline inside MainLayout */}
+      <div className="hidden lg:flex flex-col h-full">{contentInner}</div>
+
+      {/* Mobile: render content through a React Portal so it bypasses
+          MainLayout's containing block. */}
+      <MobileSchedulePortal>{contentInner}</MobileSchedulePortal>
 
       {/* Reschedule Modal */}
       {selectedPost && (
@@ -569,6 +586,28 @@ function ScheduleContent() {
         onClose={() => setShowPaywall(false)}
       />
     </MainLayout>
+  );
+}
+
+// See MobileHistoryPortal on /history — same recipe.
+function MobileSchedulePortal({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  if (!mounted) return null;
+  return createPortal(
+    <div
+      data-mobile-page-portal=""
+      className="lg:hidden fixed left-0 right-0 bottom-0 z-30 overflow-y-auto overflow-x-hidden overscroll-contain"
+      style={{
+        top: "calc(env(safe-area-inset-top, 0px) + 56px)",
+        paddingBottom: "env(safe-area-inset-bottom, 0px)",
+      }}
+    >
+      {children}
+    </div>,
+    document.body,
   );
 }
 

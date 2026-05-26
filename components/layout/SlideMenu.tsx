@@ -1,16 +1,19 @@
-﻿"use client";
+"use client";
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef, Fragment } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useScheduling } from "@/contexts/SchedulingContext";
-import { useSubscription } from "@/contexts/SubscriptionContext";
-import { PlanType, meetsMinimumPlan } from "@/lib/config/plans";
 import { Post } from "@/types";
 import { pinPost, renamePost, deletePost } from "@/lib/db/firestore";
+import {
+  navItemVariants,
+  conversationItemVariants,
+  sidebarSmoothEase,
+} from "@/lib/motion";
 import toast from "@/components/ui/Toast";
 import ConversationOptionsMenu from "@/components/conversation/ConversationOptionsMenu";
 import RenameConversationModal from "@/components/conversation/RenameConversationModal";
@@ -101,27 +104,27 @@ function groupPostsByDate(posts: Post[], labels: SidebarTranslations) {
 }
 
 /**
- * Nav data — each item has a soft accent color for its icon (low saturation
- * for visual cohesion). The active state uses the primary color + a shared
- * `layoutId` indicator pill for smooth transitions between items.
+ * Nav data — mirrors the desktop sidebar's getNavItems shape so that mobile
+ * and desktop render identical rows. Icons sized at w-5 h-5 / strokeWidth=2
+ * to match the desktop's optical weight (do NOT shrink for mobile — the
+ * drawer is 85vw wide and matches the desktop sidebar's spacing).
  */
 const menuItems: {
   nameKey: "chat" | "history" | "schedule" | "analytics";
   href: string;
   iconColor: string;
   icon: (isActive: boolean) => React.ReactNode;
-  requiredPlan?: PlanType;
 }[] = [
   {
     nameKey: "chat" as const,
     href: "/app",
     iconColor: "text-[#F8935D]",
     icon: (isActive: boolean) => (
-      <svg className="w-[18px] h-[18px]" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="w-5 h-5" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={isActive ? 0 : 1.75}
+          strokeWidth={isActive ? 0 : 2}
           d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
         />
       </svg>
@@ -132,11 +135,11 @@ const menuItems: {
     href: "/history",
     iconColor: "text-cyan-500/80 dark:text-cyan-400/80",
     icon: (isActive: boolean) => (
-      <svg className="w-[18px] h-[18px]" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="w-5 h-5" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={isActive ? 0 : 1.75}
+          strokeWidth={isActive ? 0 : 2}
           d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
         />
       </svg>
@@ -145,14 +148,13 @@ const menuItems: {
   {
     nameKey: "schedule" as const,
     href: "/schedule",
-    requiredPlan: "pro",
     iconColor: "text-violet-500/80 dark:text-violet-400/80",
     icon: (isActive: boolean) => (
-      <svg className="w-[18px] h-[18px]" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="w-5 h-5" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={isActive ? 0 : 1.75}
+          strokeWidth={isActive ? 0 : 2}
           d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
         />
       </svg>
@@ -163,11 +165,11 @@ const menuItems: {
     href: "/analytics",
     iconColor: "text-emerald-500/80 dark:text-emerald-400/80",
     icon: (isActive: boolean) => (
-      <svg className="w-[18px] h-[18px]" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="w-5 h-5" fill={isActive ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={isActive ? 0 : 1.75}
+          strokeWidth={isActive ? 0 : 2}
           d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
         />
       </svg>
@@ -175,13 +177,12 @@ const menuItems: {
   },
 ];
 
-export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostUpdate }: SlideMenuProps) {
+export default function SlideMenu({ isOpen, onClose, posts = [], onPostUpdate }: SlideMenuProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, userProfile } = useAuth();
+  const { user } = useAuth();
   const { t } = useLanguage();
   const { refreshScheduledPosts } = useScheduling();
-  const { currentPlan } = useSubscription();
   const [searchQuery, setSearchQuery] = useState("");
   // Whether the ChatGPT-style search modal is open (mirrors desktop UX).
   const [searchOpen, setSearchOpen] = useState(false);
@@ -464,23 +465,33 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
         }}
       />
 
-      {/* Slide Menu — gradient base + polished glass finishing (sheen,
-          ring-inset, multi-shadow, white-tinted borders). Pas de pleine
-          translucidité car le popup-overlay derrière assombrirait tout. */}
+      {/* Slide Menu — same polished glass recipe as the desktop sidebar:
+          translucent surface, ring-inset, multi-shadow, white-tinted borders,
+          backdrop-blur-2xl + saturate-200. The per-route signature ambient is
+          painted on the panel itself (not bleed-through) because the popup
+          overlay between drawer and page would otherwise darken everything.
+          Border + shadow values match the desktop sidebar so the surface
+          reads as the same UI element across breakpoints. */}
       <aside
         className={`
-          fixed top-0 left-0 z-[70] h-full w-[85vw] max-w-80
+          fixed top-0 left-0 z-[70] w-[85vw] max-w-80
           ${toneBg}
-          border-r border-white/60 dark:border-white/20
+          bg-white/15 dark:bg-white/[0.04]
+          border-r border-white/50 dark:border-white/15
           ring-1 ring-inset ring-white/40 dark:ring-white/10
-          shadow-[0_20px_60px_rgba(15,17,21,0.20),0_4px_16px_rgba(15,17,21,0.10)]
-          dark:shadow-[0_20px_60px_rgba(0,0,0,0.55),0_4px_16px_rgba(0,0,0,0.35)]
+          backdrop-blur-2xl backdrop-saturate-200
+          shadow-[0_12px_40px_rgba(15,17,21,0.10),0_2px_10px_rgba(15,17,21,0.06)]
+          dark:shadow-[0_12px_40px_rgba(0,0,0,0.45),0_2px_10px_rgba(0,0,0,0.30)]
           flex flex-col
           transform transition-transform duration-300 ease-smooth
           lg:hidden
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
         `}
         style={{
+          // Use dynamic viewport height so mobile browser chrome (URL bar
+          // showing/hiding) doesn't cut off the footer. Falls back to 100vh
+          // on browsers without dvh support.
+          height: "100dvh",
           touchAction: "pan-y",
           paddingTop: "env(safe-area-inset-top, 0px)",
           contain: "layout style",
@@ -499,224 +510,262 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/20 via-white/[0.02] to-transparent dark:from-white/[0.04] dark:via-transparent z-0"
         />
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200/55 dark:border-dark-border">
-          <Link href="/app" className="flex items-center gap-2.5 group min-w-0 flex-1" onClick={onClose}>
-            <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-2xl overflow-hidden shadow-glow transition-transform group-hover:scale-105 flex-shrink-0">
-              <img
-                src="/logo.png"
-                alt="Posty Logo"
-                className="w-full h-full object-contain"
-              />
-            </div>
-            <span translate="no" className="notranslate font-bold text-gray-900 dark:text-white text-lg sm:text-xl truncate">Posty</span>
+
+        {/* Header — same shape as desktop sidebar header: 64px tall, logo +
+            wordmark on the left, close affordance on the right (mobile-only,
+            replaces the desktop "collapse" affordance). */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: sidebarSmoothEase }}
+          className="h-16 border-b border-gray-200/55 dark:border-dark-border flex items-center justify-between px-3 shrink-0"
+        >
+          <Link href="/app" className="flex items-center gap-2.5 group min-w-0" onClick={onClose}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5, ease: sidebarSmoothEase }}
+              className="relative"
+              whileHover={{ scale: 1.05 }}
+            >
+              {/* Subtle gradient halo on hover — uses the Posty signature
+                  "welcome" gradient (orange → coral → rose) so the brand
+                  stamp echoes the onboarding hero. Identical to desktop. */}
+              <div className="absolute -inset-1 bg-signature-welcome rounded-xl opacity-0 group-hover:opacity-30 blur-md transition-opacity duration-300" />
+              <div className="relative w-7 h-7 shrink-0 flex items-center justify-center rounded-lg overflow-hidden shadow-sm ring-1 ring-gray-200/50 dark:ring-dark-border/50">
+                <img
+                  src="/logo.png"
+                  alt="Posty Logo"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+            </motion.div>
+            <motion.span
+              translate="no"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.4, delay: 0.1, ease: sidebarSmoothEase }}
+              className="notranslate font-bold text-sm whitespace-nowrap text-gray-900 dark:text-white group-hover:text-primary transition-colors duration-300"
+            >
+              Posty
+            </motion.span>
           </Link>
-          <button
+          <motion.button
             onClick={onClose}
-            className="min-w-[44px] min-h-[44px] p-2.5 flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-[#F8935D]/10 dark:hover:bg-dark-hover rounded-lg transition-all duration-200 haptic-feedback"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            className="w-9 h-9 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-[#F8935D]/10 dark:hover:bg-dark-hover transition-colors duration-200 haptic-feedback"
             aria-label={t.sidebar.closeMenu}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              {/* Symmetric X icon - both lines use absolute coordinates */}
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 6L18 18" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6" />
             </svg>
-          </button>
-        </div>
+          </motion.button>
+        </motion.div>
 
-        {/* Fixed section: search + new post */}
-        <div className="shrink-0 px-4 pt-4 pb-2">
-          {/* Search trigger — looks like an input but is a button. Tapping it
-              opens the ChatGPT-style search modal (same component used on
-              desktop), keeping mobile + desktop UX consistent. The modal
-              owns the actual input + auto-focus + result list. */}
-          <button
-            type="button"
-            onClick={() => setSearchOpen(true)}
-            aria-haspopup="dialog"
-            className="
-              relative w-full mb-3 pl-11 pr-4 py-3
-              flex items-center
-              text-left text-sm
-              bg-white/70 dark:bg-dark-bg border border-[#F8935D]/15 dark:border-dark-border rounded-lg
-              text-text-muted hover:text-text-primary
-              hover:border-[#F8935D]/30
-              focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary
-              transition-[border-color,box-shadow,color] duration-150
-            "
+        {/* Fixed navigation section — new post button + nav-card. Matches the
+            desktop sidebar structure exactly: New Post first, then the
+            nav-card containing Chat / Search / History / Schedule /
+            Analytics with horizontal dividers between rows. */}
+        <div className="shrink-0 px-2.5 pt-2 pb-3">
+          {/* New post button — same gradient + top-sheen + premium shadow
+              treatment as the desktop sidebar so the primary CTA reads
+              identically on every breakpoint. */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1, ease: sidebarSmoothEase }}
+            className="relative group"
           >
-            <svg
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-            <span className="flex-1 truncate">
-              {searchQuery || t.sidebar.searchPlaceholder}
-            </span>
-            {searchQuery && (
-              <span
-                role="button"
-                aria-label={t.common.close}
-                onClick={(e) => {
-                  // Stop propagation so we don't also open the modal
-                  e.stopPropagation();
-                  setSearchQuery("");
-                }}
-                className="ml-2 inline-flex items-center justify-center w-6 h-6 rounded text-text-muted hover:text-text-primary hover:bg-gray-100 dark:hover:bg-dark-hover transition-colors"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 6L18 18" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6" />
-                </svg>
-              </span>
-            )}
-          </button>
-
-          {/* New post button — refined: tighter padding, subtler shadow */}
-          <button
-            onClick={() => {
-              onClose();
-              router.push(`/app?new=${Date.now()}`);
-            }}
-            className="
-              flex items-center justify-center gap-2 w-full px-4 py-2.5
-              bg-primary hover:bg-primary-hover
-              text-white text-[13.5px] font-semibold rounded-lg
-              transition-all duration-200 ease-out cursor-pointer
-              shadow-sm shadow-primary/20 hover:shadow-md hover:shadow-primary/25
-              active:scale-[0.98] active:transition-none
-              haptic-feedback group
-            "
-          >
-            <svg
-              className="w-[18px] h-[18px] transition-transform duration-200 group-hover:rotate-90"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              strokeWidth={2}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-            </svg>
-            <span>{t.sidebar.newPost}</span>
-          </button>
-        </div>
-
-        {/* Scrollable navigation - overscroll-contain prevents scroll chaining */}
-        <nav className="flex-1 p-4 pt-2 overflow-y-auto no-scrollbar overscroll-contain">
-          {/* Nav items — grouped card for visual hierarchy */}
-          <div className="sidebar-nav-card rounded-xl overflow-hidden ring-1 ring-gray-200/40 dark:ring-white/[0.04] bg-white/15 dark:bg-white/[0.02]">
-            {menuItems.map((item) => {
-              const isActive = pathname === item.href || (item.href === "/app" && pathname === "/chat");
-              const itemName = t.nav[item.nameKey];
-              const isLocked = item.requiredPlan && !meetsMinimumPlan(currentPlan as PlanType, item.requiredPlan);
-
-              return (
-                <div key={item.nameKey} className="relative">
-                  {/* Shared active indicator — slides smoothly between items via layoutId */}
-                  {isActive && (
-                    <motion.div
-                      layoutId="sidebar-active-indicator"
-                      className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 rounded-r-full bg-primary"
-                      transition={{ type: "spring", stiffness: 380, damping: 32 }}
-                    />
-                  )}
-
-                  <Link
-                    href={item.href}
-                    onClick={onClose}
-                    className={`
-                      relative flex items-center gap-3 px-3 py-2
-                      transition-colors duration-150 ease-out group haptic-feedback
-                      ${isLocked
-                        ? "text-gray-400 dark:text-gray-500 hover:bg-white/70 dark:hover:bg-white/[0.05]"
-                        : isActive
-                          ? "bg-primary/[0.09] dark:bg-primary/[0.13] text-primary"
-                          : "text-gray-700 dark:text-gray-200 hover:bg-white/70 dark:hover:bg-white/[0.05] hover:text-gray-900 dark:hover:text-white"
-                      }
-                    `}
-                  >
-                    <span
-                      className={`
-                        relative transition-colors duration-150
-                        ${isLocked
-                          ? "text-gray-400 dark:text-gray-500"
-                          : isActive
-                            ? "text-primary"
-                            : `${item.iconColor} opacity-80 group-hover:opacity-100`
-                        }
-                      `}
-                    >
-                      {item.icon(isActive)}
-                    </span>
-
-                    <span className={`flex-1 text-[13.5px] ${isActive ? "font-semibold" : "font-medium"}`}>{itemName}</span>
-
-                    {isLocked && (
-                      <span
-                        className={`
-                          px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded shrink-0
-                          ${item.requiredPlan === "max"
-                            ? "bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-400"
-                            : "bg-primary/10 text-primary"
-                          }
-                        `}
-                      >
-                        {item.requiredPlan === "max" ? "MAX" : "PRO"}
-                      </span>
-                    )}
-                  </Link>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Chat list section */}
-          <div className="mt-4">
-            {/* Toggle header — Linear-style section label */}
             <button
-              onClick={() => setShowChatList(!showChatList)}
-              className="group flex items-center gap-2 w-full px-1 py-1.5 rounded-md hover:bg-gray-100/60 dark:hover:bg-dark-hover/40 transition-colors duration-150"
+              onClick={() => {
+                onClose();
+                router.push(`/app?new=${Date.now()}`);
+              }}
+              className="
+                sidebar-new-post-btn group/newpost
+                relative w-full h-10 px-3 rounded-lg flex items-center gap-3
+                bg-gradient-to-br from-primary to-[#F76B54] hover:brightness-[1.05]
+                text-white shadow-[0_4px_14px_rgba(248,147,93,0.25)]
+                hover:shadow-[0_6px_20px_rgba(248,147,93,0.40)]
+                transition-[box-shadow,filter,transform] duration-150 ease-out cursor-pointer
+                active:scale-[0.985] haptic-feedback
+              "
+              title={t.sidebar.newPost}
             >
-              <span className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-gray-400 dark:text-gray-500 group-hover:text-gray-500 dark:group-hover:text-gray-400 transition-colors shrink-0">
-                {t.sidebar.conversations}
-              </span>
-              <div className="flex-1 h-px bg-gray-200/60 dark:bg-dark-border/50" />
-              <span className="text-[10px] tabular-nums text-gray-400 dark:text-gray-500 shrink-0">{localPosts.length}</span>
+              {/* subtle top highlight — adds depth without being flashy */}
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-2 top-0 h-px rounded-full bg-white/40"
+              />
               <svg
-                className={`w-3.5 h-3.5 transition-transform duration-200 text-gray-400 dark:text-gray-500 shrink-0 ${showChatList ? "rotate-0" : "-rotate-90"}`}
+                className="w-5 h-5 shrink-0 transition-transform duration-200 ease-out group-hover/newpost:rotate-90"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
               </svg>
+              <span className="font-semibold whitespace-nowrap tracking-[-0.01em] text-[13.5px]">
+                {t.sidebar.newPost}
+              </span>
             </button>
+          </motion.div>
 
-            {/* Grouped posts - No max-height for unified scroll */}
-            <div
-              className={`
-                transition-all duration-300 ease-smooth
-                ${showChatList ? "opacity-100" : "max-h-0 opacity-0 overflow-hidden"}
-              `}
+          {/* Nav items — grouped in the same subtle card as desktop.
+              Search affordance is injected after the first item (Chat) so
+              the row order mirrors the desktop sidebar exactly. */}
+          <div className="sidebar-nav-card mt-2 rounded-xl overflow-hidden ring-1 ring-gray-200/40 dark:ring-white/[0.04] bg-white/15 dark:bg-white/[0.02]">
+            {menuItems.map((item, index) => {
+              const isActive = pathname === item.href || (item.href === "/app" && pathname === "/chat");
+              const itemName = t.nav[item.nameKey];
+
+              return (
+                <Fragment key={item.nameKey}>
+                  {index > 0 && (
+                    <div className="h-px bg-gray-100/70 dark:bg-white/[0.04] mx-0" />
+                  )}
+                  <motion.div
+                    custom={index}
+                    variants={navItemVariants}
+                    initial="hidden"
+                    animate="visible"
+                    whileTap={{ scale: 0.985 }}
+                    transition={{ type: "spring", stiffness: 420, damping: 22, mass: 0.7 }}
+                    className="relative mx-2 my-0.5"
+                  >
+                    <Link
+                      href={item.href}
+                      onClick={onClose}
+                      className={`
+                        relative w-full h-10 flex items-center gap-3 px-3 rounded-lg
+                        border transition-[background-color,border-color,color,box-shadow] duration-200 ease-out group haptic-feedback
+                        ${isActive
+                          ? "bg-white/55 dark:bg-white/[0.12] backdrop-blur-md backdrop-saturate-150 dark:backdrop-saturate-125 border-white/60 dark:border-white/20 shadow-sm dark:shadow-black/20 text-primary"
+                          : "border-transparent text-gray-700 dark:text-gray-200 hover:bg-white/35 dark:hover:bg-white/[0.08] hover:backdrop-blur-md hover:border-white/40 dark:hover:border-white/15 hover:text-gray-900 dark:hover:text-white"
+                        }
+                      `}
+                      title={itemName}
+                    >
+                      <span
+                        className={`
+                          relative shrink-0 transition-colors duration-150
+                          ${isActive
+                            ? "text-primary"
+                            : `${item.iconColor} opacity-80 group-hover:opacity-100`
+                          }
+                        `}
+                      >
+                        {item.icon(isActive)}
+                      </span>
+                      <span className={`whitespace-nowrap flex-1 text-[13.5px] ${isActive ? "font-bold" : "font-semibold"}`}>
+                        {itemName}
+                      </span>
+                    </Link>
+                  </motion.div>
+
+                  {/* Search row — injected after Chat (index 0), styled
+                      identically to the surrounding nav rows: h-10, glass
+                      hover, primary text + glass surface when open. Tapping
+                      it opens the shared SidebarSearchModal (same component
+                      used on desktop). */}
+                  {index === 0 && (
+                    <>
+                      <div className="h-px bg-gray-100/70 dark:bg-white/[0.04] mx-0" />
+                      <div className="relative mx-2 my-0.5">
+                        <button
+                          onClick={() => setSearchOpen(true)}
+                          aria-haspopup="dialog"
+                          aria-expanded={searchOpen}
+                          className={`
+                            relative w-full h-10 flex items-center gap-3 px-3 rounded-lg
+                            border transition-all duration-200 ease-out group haptic-feedback
+                            ${searchOpen
+                              ? "bg-white/55 dark:bg-white/[0.12] backdrop-blur-md backdrop-saturate-150 dark:backdrop-saturate-125 border-white/60 dark:border-white/20 shadow-sm dark:shadow-black/20 text-primary"
+                              : "border-transparent text-gray-700 dark:text-gray-200 hover:bg-white/35 dark:hover:bg-white/[0.08] hover:backdrop-blur-md hover:border-white/40 dark:hover:border-white/15 hover:text-gray-900 dark:hover:text-white"
+                            }
+                          `}
+                          title={t.common.search}
+                        >
+                          <span
+                            className={`
+                              relative shrink-0 transition-colors duration-150
+                              ${searchOpen
+                                ? "text-primary"
+                                : "text-gray-500/80 dark:text-gray-400/80 opacity-80 group-hover:opacity-100"
+                              }
+                            `}
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                          </span>
+                          <span className={`whitespace-nowrap flex-1 text-left text-[13.5px] ${searchOpen ? "font-bold" : "font-semibold"}`}>
+                            {t.common.search}
+                          </span>
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </Fragment>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Scrollable conversations list — same structure and styling as
+            desktop sidebar: section toggle header (label + rule + count +
+            chevron), grouped posts with per-group header, glass active /
+            hover states (no border-l-2 layout shift).
+
+            `min-h-0` is critical: without it, flex children default to
+            `min-height: auto`, so a tall conversations list would push the
+            <aside> beyond the viewport and the footer (profile) off-screen.
+            With min-h-0, the nav properly constrains and scrolls internally. */}
+        <nav className="sidebar-scroll flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-2 no-scrollbar overscroll-contain">
+          {localPosts.length > 0 ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.4, delay: 0.3, ease: sidebarSmoothEase }}
+              className="pt-4 border-t border-gray-200/55 dark:border-dark-border"
             >
-              {groupedPosts.length > 0 ? (
-                <>
+              <button
+                onClick={() => setShowChatList(!showChatList)}
+                className="group flex items-center gap-2 w-full px-2 py-1.5 rounded-md hover:bg-white/30 dark:hover:bg-white/[0.05] hover:backdrop-blur-md transition-all duration-150"
+              >
+                <span className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-gray-400 dark:text-gray-500 group-hover:text-gray-500 dark:group-hover:text-gray-400 transition-colors shrink-0">
+                  {t.sidebar.conversations}
+                </span>
+                <div className="flex-1 h-px bg-gray-200/60 dark:bg-dark-border/50" />
+                <span className="text-[10px] tabular-nums text-gray-400 dark:text-gray-500 shrink-0">{localPosts.length}</span>
+                <motion.svg
+                  animate={{ rotate: showChatList ? 0 : -90 }}
+                  transition={{ duration: 0.2, ease: sidebarSmoothEase }}
+                  className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </motion.svg>
+              </button>
+
+              {showChatList && (
+                <div className="mt-2 space-y-0.5">
                   {groupedPosts.map((group, groupIndex) => {
                     const isPinned = group.isPinnedGroup;
 
                     return (
-                      <div key={group.label} className={groupIndex > 0 ? "mt-3" : "mt-1.5"}>
-                        {/* Group header — label + trailing rule */}
-                        <div className="px-1 pt-2 pb-1 flex items-center gap-2">
+                      <div key={group.label} className={groupIndex > 0 ? "mt-2.5 mb-3" : "mb-3"}>
+                        {/* Group header — label + trailing rule + count */}
+                        <motion.div
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.3, delay: groupIndex * 0.05, ease: sidebarSmoothEase }}
+                          className="px-2 pt-2 pb-1 flex items-center gap-2"
+                        >
                           {isPinned && (
                             <svg className="w-2.5 h-2.5 shrink-0 text-primary/60" fill="currentColor" viewBox="0 0 24 24">
                               <path d="M16 4a1 1 0 0 1 1 1v3.586l1.707 1.707a1 1 0 0 1 .293.707v2a1 1 0 0 1-1 1h-4v6a1 1 0 0 1-2 0v-6H8a1 1 0 0 1-1-1v-2a1 1 0 0 1 .293-.707L9 8.586V5a1 1 0 0 1 1-1h6z"/>
@@ -729,136 +778,164 @@ export default function SlideMenu({ isOpen, onClose, onOpen, posts = [], onPostU
                           <span className="text-[10px] tabular-nums text-gray-400/70 dark:text-gray-600 shrink-0">
                             {group.posts.length}
                           </span>
-                        </div>
+                        </motion.div>
 
-                        {/* Posts list - Compact spacing for professional look */}
+                        {/* Posts list — same glass active / hover states as
+                            the desktop sidebar. No border-l-2 + pl-shift
+                            (the old mobile pattern caused a jiggle on
+                            hover and visually drifted from desktop). */}
                         <div className="space-y-0.5 mt-0.5">
-                          {group.posts.map((post) => {
-                          const isActive = pathname === `/app/c/${post.id}`;
-                          return (
-                            <div
-                              key={post.id}
-                              className={`
-                                relative flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm
-                                transition-all duration-200 ease-out group haptic-feedback
-                                cursor-pointer transform-gpu
-                                active:scale-[0.98] active:transition-none
-                                ${
-                                  isActive
-                                    ? "bg-primary/10 dark:bg-primary/10 text-text-primary border-l-2 border-primary pl-[10px] shadow-sm"
-                                    : "text-gray-900 dark:text-gray-200 hover:text-gray-950 dark:hover:text-white hover:bg-[#F8935D]/10 dark:hover:bg-dark-hover hover:border-l-2 hover:border-primary/40 hover:pl-[10px]"
-                                }
-                              `}
-                            >
-                            {/* Pin indicator - Premium violet color */}
-                            {post.isPinned && (
-                              <svg
-                                className="w-3.5 h-3.5 shrink-0 text-primary dark:text-primary group-hover:scale-110 transition-transform duration-200"
-                                fill="currentColor"
-                                viewBox="0 0 24 24"
+                          {group.posts.map((post, postIndex) => {
+                            const isActive = pathname === `/app/c/${post.id}`;
+                            return (
+                              <motion.div
+                                key={post.id}
+                                custom={postIndex}
+                                variants={conversationItemVariants}
+                                initial="hidden"
+                                animate="visible"
+                                whileTap={{ scale: 0.985 }}
+                                transition={{ type: "spring", stiffness: 420, damping: 22, mass: 0.7 }}
+                                className="relative group"
                               >
-                                <path d="M16 4a1 1 0 0 1 1 1v3.586l1.707 1.707a1 1 0 0 1 .293.707v2a1 1 0 0 1-1 1h-4v6a1 1 0 0 1-2 0v-6H8a1 1 0 0 1-1-1v-2a1 1 0 0 1 .293-.707L9 8.586V5a1 1 0 0 1 1-1h6z"/>
-                              </svg>
-                            )}
-                            <Link
-                              href={`/app/c/${post.id}`}
-                              onClick={onClose}
-                              className="flex items-center gap-2 flex-1 min-w-0"
-                            >
-                              {!post.isPinned && (
-                                <svg
-                                  className={`w-4 h-4 shrink-0 group-hover:scale-110 transition-all duration-200 ${
-                                    isActive ? "text-primary" : "text-text-muted group-hover:text-primary"
-                                  }`}
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
+                                <Link
+                                  href={`/app/c/${post.id}`}
+                                  onClick={onClose}
+                                  className={`
+                                    sidebar-conv-item
+                                    relative flex items-center gap-2 pl-3 pr-9 py-1.5 rounded-lg text-sm w-full
+                                    border transition-[background-color,border-color,color,box-shadow] duration-200 ease-out cursor-pointer transform-gpu haptic-feedback
+                                    ${
+                                      isActive
+                                        ? "sidebar-conv-item--active bg-white/55 dark:bg-white/[0.12] backdrop-blur-md backdrop-saturate-150 dark:backdrop-saturate-125 border-white/60 dark:border-white/20 text-text-primary shadow-sm dark:shadow-black/20"
+                                        : "border-transparent text-gray-900 dark:text-gray-200 group-hover:text-gray-950 dark:group-hover:text-white group-hover:bg-white/35 dark:group-hover:bg-white/[0.08] group-hover:backdrop-blur-md group-hover:border-white/40 dark:group-hover:border-white/15"
+                                    }
+                                  `}
                                 >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                                  {post.isPinned ? (
+                                    <svg
+                                      className="w-3.5 h-3.5 shrink-0 text-primary dark:text-primary group-hover:scale-110 transition-transform duration-200"
+                                      fill="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path d="M16 4a1 1 0 0 1 1 1v3.586l1.707 1.707a1 1 0 0 1 .293.707v2a1 1 0 0 1-1 1h-4v6a1 1 0 0 1-2 0v-6H8a1 1 0 0 1-1-1v-2a1 1 0 0 1 .293-.707L9 8.586V5a1 1 0 0 1 1-1h6z"/>
+                                    </svg>
+                                  ) : (
+                                    <svg
+                                      className={`w-4 h-4 shrink-0 group-hover:scale-110 transition-all duration-200 ${
+                                        isActive ? "text-primary" : "text-text-muted group-hover:text-primary"
+                                      }`}
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                                      />
+                                    </svg>
+                                  )}
+                                  <span className={`truncate flex-1 group-hover:translate-x-0.5 transition-transform duration-200 ${
+                                    isActive ? "font-semibold" : ""
+                                  }`}>
+                                    {(post.title || post.prompt).slice(0, 25)}
+                                    {(post.title || post.prompt).length > 25 ? "..." : ""}
+                                  </span>
+                                </Link>
+                                <div className="absolute right-1 top-1/2 -translate-y-1/2 shrink-0 z-10">
+                                  <ConversationOptionsMenu
+                                    post={post}
+                                    onPin={handlePin}
+                                    onRename={handleRename}
+                                    onDelete={handleDeleteClick}
                                   />
-                                </svg>
-                              )}
-                              <span className={`truncate flex-1 group-hover:translate-x-0.5 transition-transform duration-200 ${
-                                isActive ? "font-semibold" : ""
-                              }`}>
-                                {(post.title || post.prompt).slice(0, 30)}
-                                {(post.title || post.prompt).length > 30 ? "..." : ""}
-                              </span>
-                            </Link>
-                            {/* Options menu */}
-                            <div className="shrink-0">
-                              <ConversationOptionsMenu
-                                post={post}
-                                onPin={handlePin}
-                                onRename={handleRename}
-                                onDelete={handleDeleteClick}
-                              />
-                            </div>
-                          </div>
-                          );
-                        })}
+                                </div>
+                              </motion.div>
+                            );
+                          })}
                         </div>
                       </div>
                     );
                   })}
 
-                  {/* View all button - Always show for full history page access */}
+                  {/* View all link — leads to full history. Same primary
+                      treatment as desktop's "View all" affordance. */}
                   {localPosts.length > 0 && (
-                    <Link
-                      href="/history"
-                      onClick={onClose}
-                      className="
-                        flex items-center justify-center gap-2 mt-4 px-3 py-2.5
-                        text-sm text-primary hover:text-accent
-                        hover:bg-primary/5 rounded-lg transition-all duration-200 haptic-feedback
-                      "
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.3, delay: 0.2, ease: sidebarSmoothEase }}
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                      </svg>
-                      {t.sidebar.viewAllHistory}
-                    </Link>
-                  )}
-                </>
-              ) : (
-                <div className="px-3 py-8 text-center">
-                  <div className="w-12 h-12 mx-auto mb-3 bg-[#F8935D]/10 dark:bg-dark-elevated rounded-lg flex items-center justify-center">
-                    <svg className="w-6 h-6 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      {searchQuery ? (
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                      ) : (
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                      )}
-                    </svg>
-                  </div>
-                  <p className="text-sm text-text-muted">
-                    {searchQuery ? t.sidebar.noResults : t.sidebar.noConversations}
-                  </p>
-                  {searchQuery && (
-                    <p className="text-xs text-text-muted mt-1">{t.sidebar.forQuery} &ldquo;{searchQuery}&rdquo;</p>
+                      <Link
+                        href="/history"
+                        onClick={onClose}
+                        className="flex items-center justify-center gap-1.5 w-full mt-2 px-2 py-1.5 text-xs text-primary hover:text-accent hover:bg-primary/5 rounded-lg transition-colors haptic-feedback"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                        </svg>
+                        {t.sidebar.viewAllHistory}
+                      </Link>
+                    </motion.div>
                   )}
                 </div>
               )}
-            </div>
-          </div>
+            </motion.div>
+          ) : (
+            /* Empty state — same warm CTA as desktop. */
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.2, ease: sidebarSmoothEase }}
+              className="flex flex-col items-center justify-center px-5 text-center py-16"
+            >
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-3">
+                <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+              </div>
+              <p className="text-[13px] font-semibold text-gray-800 dark:text-gray-100 mb-1">
+                {t.sidebar.emptyStateTitle}
+              </p>
+              <p className="text-[11.5px] text-text-muted leading-snug mb-4">
+                {t.sidebar.emptyStateSubtitle}
+              </p>
+              <button
+                onClick={() => {
+                  onClose();
+                  router.push(`/app?new=${Date.now()}`);
+                }}
+                className="
+                  flex items-center gap-1.5 px-4 py-2
+                  bg-primary hover:bg-primary-hover
+                  text-white text-[12px] font-semibold rounded-lg
+                  shadow-sm shadow-primary/20 hover:shadow-md hover:shadow-primary/30
+                  transition-all duration-200 active:scale-95 cursor-pointer haptic-feedback
+                "
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                {t.sidebar.newPost}
+              </button>
+            </motion.div>
+          )}
         </nav>
 
-        {/* Footer - User Profile Menu with safe area for iOS home indicator */}
+        {/* Profile footer — fully transparent wrapper so the per-route
+            signature ambient continues seamlessly through the bottom of the
+            drawer, exactly as on desktop. The only mobile-specific concession
+            is `env(safe-area-inset-bottom)` padding for iOS notched devices. */}
         <div
-          className="px-3 py-3 border-t border-gray-200/55 dark:border-dark-border bg-gradient-to-t from-gray-50/70 dark:from-dark-elevated/25 to-transparent"
+          className="px-2.5 py-2.5 shrink-0 border-t border-[#F8935D]/15 dark:border-white/10"
           style={{
-            paddingBottom: "max(env(safe-area-inset-bottom, 0px), 12px)",
+            paddingBottom: "max(env(safe-area-inset-bottom, 0px), 10px)",
           }}
         >
           {user ? (
-            // Compact profile container - reduced width for balanced mobile appearance
-            <div className="max-w-[92%]">
-              <ProfileMenu onNavigate={onClose} />
-            </div>
+            <ProfileMenu onNavigate={onClose} />
           ) : (
             <div className="space-y-2">
               <Link

@@ -167,6 +167,50 @@ export const drawerPanelVariants: Variants = {
   exit: { y: "100%", opacity: 0.4, transition: { duration: dur.slow, ease: ease.exit } },
 };
 
+// ─── Variants — sidebar nav and conversation rows ─────────────────────────
+
+/**
+ * Smooth easing curve used by both desktop and mobile sidebars for nav and
+ * conversation item stagger animations. Kept here so the two sidebar codepaths
+ * cannot drift apart.
+ */
+export const sidebarSmoothEase = [0.25, 0.1, 0.25, 1] as const;
+
+/**
+ * Nav item stagger — each item fades up from x: -8 with a small per-index
+ * delay so the list reads as a wave. Use with `custom={index}` and
+ * `variants={navItemVariants}`.
+ */
+export const navItemVariants: Variants = {
+  hidden: { opacity: 0, x: -8 },
+  visible: (i: number) => ({
+    opacity: 1,
+    x: 0,
+    transition: {
+      duration: 0.25,
+      delay: 0.08 + i * 0.04,
+      ease: sidebarSmoothEase,
+    },
+  }),
+};
+
+/**
+ * Conversation row stagger — same shape as navItemVariants but tighter delay
+ * since there are typically more items.
+ */
+export const conversationItemVariants: Variants = {
+  hidden: { opacity: 0, x: -8 },
+  visible: (i: number) => ({
+    opacity: 1,
+    x: 0,
+    transition: {
+      duration: 0.3,
+      delay: i * 0.03,
+      ease: sidebarSmoothEase,
+    },
+  }),
+};
+
 // ─── Whileful presets — for inline use on motion buttons ───────────────────
 
 /**
