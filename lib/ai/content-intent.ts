@@ -16,6 +16,12 @@
  * Designed to be cheap (~$0.0001/call) and fast (~150-300ms). The route that
  * uses it caches nothing — content intent is highly prompt-specific so a
  * cache would barely hit.
+ *
+ * 2026-05-26 refactor: the fast-path regex AND the LLM prompt were both
+ * tightened to distinguish an image noun used as a SUBJECT ("fais un post
+ * SUR la photo de mariage") from an image noun used as a DELIVERABLE
+ * ("fais un post AVEC une photo"). The old version routed both to "both"
+ * and produced phantom image loaders on text-only requests.
  */
 
 import OpenAI from "openai";
@@ -65,73 +71,94 @@ Tu lis la demande utilisateur et tu réponds UNIQUEMENT par un objet JSON:
   "imageBrief": "<instruction nettoyée pour le pipeline image, si applicable>"
 }
 
-RÈGLES de classification:
+═══════════════════════════════════════════════════════════════════
+RÈGLE FONDAMENTALE — ASSET COMME LIVRABLE vs ASSET COMME SUJET
+═══════════════════════════════════════════════════════════════════
 
-1. "image" — la demande concerne UN OU PLUSIEURS visuels (image, visuel,
-   illustration, photo, créa, asset, slide, carrousel, infographie, mockup,
-   bannière, cover, publicité, graphique).
-   Inclut les demandes CRÉATIVES ("fais une image sur l'entrepreneuriat",
-   "génère un visuel startup", "crée une publicité SaaS") MAIS AUSSI les
-   demandes ADDITIVES qui font référence au post précédent dans une
-   conversation en cours :
-     - "ajoute des images"        → image
-     - "ajoute des visuels"       → image
-     - "mets des illustrations"   → image
-     - "rajoute un carrousel"     → image
-     - "ajoute 3 créas premium"   → image
-     - "mets-moi des slides"      → image
-     - "ajoute des assets"        → image
-   Dès qu'un nom d'asset visuel est présent ET qu'il n'y a pas de demande
-   explicite de RÉÉCRITURE de texte, classe "image". L'utilisateur cherche
-   à enrichir le post existant avec un visuel, pas à modifier le texte.
-   Dans ce cas, mets imageBrief mais PAS postBrief.
+Un mot d'asset visuel (image, visuel, photo, illustration, publicité, bannière, carrousel, mockup, etc.) peut apparaître dans deux fonctions très différentes:
 
-2. "post" — la demande mentionne UNIQUEMENT un post/texte/article LinkedIn.
-   Exemples: "fais un post sur X", "écris un post LinkedIn", "rédige un post growth".
-   Dans ce cas, mets postBrief mais PAS imageBrief.
+1. LIVRABLE (l'utilisateur veut qu'on lui RENDE ce visuel)
+   → préposition "avec / + / et / accompagné de"
+   → verbe additif "ajoute / mets / rajoute / inclus"
+   → verbe créatif direct "fais une image / génère un visuel"
+   Exemples LIVRABLE:
+     - "fais un post avec une image"            → both
+     - "post LinkedIn + visuel"                 → both
+     - "ajoute des visuels"                     → image
+     - "fais une image moderne sur l'IA"        → image
 
-3. "both" — la demande mentionne EXPLICITEMENT un post LinkedIn ET un
-   visuel/image/photo/illustration. Les DEUX modalités (texte + image)
-   doivent être présentes. Une explication conversationnelle suivie d'un
-   post n'est PAS "both" — c'est juste un post avec contexte explicatif,
-   et tu réponds "post".
-   Exemples "both" valides:
+2. SUJET (l'utilisateur parle DU thème "la photo", "la pub", mais veut juste du texte)
+   → préposition "sur / à propos de / au sujet de / concernant"
+   → le mot d'asset est introduit comme topic, pas comme objet à produire
+   Exemples SUJET (à classer "post", JAMAIS "image" ni "both"):
+     - "fais un post sur la photo de mariage"           → post
+     - "rédige un article sur la publicité digitale"    → post
+     - "post LinkedIn sur l'industrie graphique"        → post
+     - "fais un post sur les illustrations IA"          → post
+     - "post sur Instagram Stories"                     → post
+     - "fais un post sur l'impact visuel des marques"   → post
+
+Si tu doutes entre LIVRABLE et SUJET, défaut = SUJET → classe "post".
+Posty a un bouton "Ajouter des visuels" sous chaque post : l'utilisateur peut générer un visuel après coup s'il en veut un. Une génération d'image non demandée est un bug grave qui détruit l'UX. Une absence de génération quand l'utilisateur en voulait une est récupérable en un clic.
+
+═══════════════════════════════════════════════════════════════════
+RÈGLES DE CLASSIFICATION (dans l'ordre de priorité)
+═══════════════════════════════════════════════════════════════════
+
+1. "both" — la demande contient:
+   - un mot de post/article ET
+   - un mot d'asset visuel ET
+   - un signal LIVRABLE clair (préposition "avec/+/et" entre les deux, OU verbe créatif partagé)
+   Exemples valides "both":
      - "fais un post avec un visuel"
      - "post LinkedIn + image moderne"
      - "génère un post et une image qui l'accompagne"
-   Contre-exemples (à classer "post", PAS "both"):
-     - "explique-moi X puis fais-moi un post dessus" → post (le "puis"
-       relie deux étapes texte, pas un visuel)
-     - "parle-moi de Y et rédige un post" → post
-   Dans ce cas (vrai "both"), mets postBrief ET imageBrief, chacun scopé.
+     - "rédige un post avec illustration"
+   Contre-exemples (PAS "both", à classer "post"):
+     - "fais un post sur la photo"          (sur = sujet)
+     - "explique-moi X puis fais un post"   ("puis" relie deux étapes texte)
+     - "fais un post à propos des visuels"  ("à propos de" = sujet)
 
-4. "conversation" — c'est une question, un avis, un brainstorming, une discussion.
-   Exemples: "tu connais X ?", "comment améliorer mon marketing ?",
-             "donne-moi des idées", "explique-moi le content marketing".
-   Dans ce cas, ne mets ni postBrief ni imageBrief.
+2. "image" — l'utilisateur veut UN OU PLUSIEURS visuels comme LIVRABLE PRINCIPAL:
+   a) Création standalone: "fais une image", "génère un visuel", "crée une publicité SaaS"
+      → mot d'asset présent + verbe créatif + AUCUN mot de post
+   b) Ajout additif dans une conversation: "ajoute des images", "mets des visuels",
+      "rajoute un carrousel", "inclus 3 illustrations"
+      → verbe additif + mot d'asset
+   Dans ce cas: imageBrief rempli, postBrief vide.
 
-RÈGLE ANTI-RÉPONSE-ROBOTIQUE (IMPORTANTE):
-   Si la demande contient un mot d'asset visuel (image, visuel, photo,
-   illustration, créa, slide, carrousel, banner, mockup, etc.) ET n'est PAS
-   formulée comme une pure question ("c'est quoi", "comment faire ?"), tu
-   NE DOIS JAMAIS retourner "conversation". Choisis toujours "image" ou
-   "both". L'utilisateur veut un livrable visuel, pas une explication —
-   répondre "je ne peux pas générer d'images directement" est interdit
-   (Posty SAIT générer des images via /api/image/generate, n'invente pas de
-   limite). Au pire : si la demande est trop floue, classe "image" et mets
-   un imageBrief court — le pipeline image se débrouillera ou redemandera
-   un détail proprement côté UX.
+3. "post" — DÉFAUT pour la plupart des demandes textuelles. À choisir si:
+   - Le prompt mentionne un post/article SANS signal livrable d'image
+   - OU le prompt mentionne un mot d'asset uniquement comme SUJET
+   - OU le prompt ne mentionne ni image-livrable ni question pure
+   Exemples:
+     - "fais un post sur X"                     → post (PRODUCTION)
+     - "rédige un post growth"                  → post (PRODUCTION)
+     - "fais un post sur la photographie"       → post (SUJET, pas LIVRABLE)
+     - "explique-moi X puis fais un post"       → post (HYBRID)
 
-Quand le mot "post" est absent ET aucun mot image n'est présent ("fais sur l'entrepreneuriat"),
-considère que c'est un POST (intent par défaut Posty).
+4. "conversation" — questions pures, brainstorming, conseils, analyses:
+   - "tu connais X ?", "comment améliorer mon marketing ?"
+   - "donne-moi des idées", "explique-moi le content marketing"
+   - "ça va ?", "merci", "ok parfait" → conversation (SOCIAL)
+   Le prompt ne demande PAS de livrable créatif (ni post ni image).
 
-postBrief / imageBrief: reformule la demande de manière propre, concise, sans le mot
-"fais" ou "crée" — juste le sujet/contenu attendu. Exemple:
+═══════════════════════════════════════════════════════════════════
+RÈGLES DE BRIEF
+═══════════════════════════════════════════════════════════════════
+
+postBrief / imageBrief: reformule la demande de manière propre, concise, sans le verbe
+"fais"/"crée"/"génère" — juste le sujet/contenu attendu. Exemple:
 - Input: "fais une image moderne sur l'IA en startup"
 - imageBrief: "visuel moderne sur l'IA en startup"
 
-Confiance: 1.0 quand le mot-clé est explicite, 0.7 quand c'est implicite,
-0.5 si vraiment ambigu (par défaut, choisis "post").
+═══════════════════════════════════════════════════════════════════
+CONFIANCE
+═══════════════════════════════════════════════════════════════════
+
+- 1.0 quand le signal livrable/sujet est totalement explicite
+- 0.7 quand c'est implicite mais clair
+- 0.5 si vraiment ambigu (par défaut, choisis "post" — c'est la classe la plus sûre)
 
 Ne renvoie rien d'autre que l'objet JSON.`;
 
@@ -187,15 +214,62 @@ export async function classifyContentIntent(
   return check.data;
 }
 
-/**
- * Cheap regex pre-pass used when we want to short-circuit obvious cases
- * without paying for an LLM call. Returns null if the prompt is ambiguous,
- * letting the caller fall back to `classifyContentIntent`.
- *
- * Why we keep this: a single image-only request like "fais une image sur X"
- * is unambiguous in ~99% of cases. Skipping the LLM here saves ~250ms +
- * a token cost on the most common pattern.
- */
+// ──────────────────────────────────────────────────────────────────────────
+// Regex fast-path
+// ──────────────────────────────────────────────────────────────────────────
+// Mirrors lib/ai/client-intent.ts EXACTLY so the server fast-path and the
+// client pre-pass make the same decision. When you change one, change the
+// other. Both default to POST in ambiguous cases — see the rule in the
+// system prompt above.
+
+const IMAGE_NOUNS_SRC = `images?|visuels?|illustrations?|photos?|publicit[eé]s?|banni[eè]res?|banners?|covers?|graphiques?|cr[eé]as?|assets?|slides?|carrousels?|carousels?|infographies?|infographics?|mockups?|vignettes?|pictures?`;
+// Unicode-aware "word boundaries" — JS's native `\b` fails AFTER accented
+// letters ("publicité" + space wouldn't match `\b` because `é` is treated
+// as non-word). See the matching block in client-intent.ts for the full
+// rationale. Both files MUST use the same constants or they will diverge.
+const WB_PRE = `(?<![A-Za-z\\u00C0-\\u024F0-9_])`;
+const WB_POST = `(?![A-Za-z\\u00C0-\\u024F0-9_])`;
+const IMAGE_NOUNS_RE = new RegExp(`${WB_PRE}(?:${IMAGE_NOUNS_SRC})${WB_POST}`, "i");
+
+const POST_NOUNS_SRC = `posts?|articles?|captions?|copys?|copies?|drafts?|contenus?|publications?|stor(?:y|ies)`;
+const POST_NOUNS_RE = new RegExp(`${WB_PRE}(?:${POST_NOUNS_SRC})${WB_POST}`, "i");
+const POST_REDIGE = new RegExp(`${WB_PRE}r[eé]dig(?:e|er|es|ent)${WB_POST}`, "i");
+
+const ADDITIVE_VERBS_SRC = `ajoute|ajouter|rajoute|rajouter|mets|met|mettre|inclus|inclu|colle|joins|joindre|compl[eè]te|compl[eè]ter|adjoint|add(?:s|ed|ing)?|attach(?:es|ed|ing)?`;
+const CREATE_VERBS_SRC = `fais|fait|faire|cr[eé]e|cr[eé]er|cr[eé]é|[eé]cris|[eé]crit|[eé]crire|g[eé]n[eè]re|g[eé]n[eè]rer|r[eé]dige|r[eé]diger|compose|composer|pr[eé]pare|pr[eé]parer|write|create|generate|make|draft|design`;
+
+const QUESTION_OPENERS = /^(?:comment|pourquoi|quand|qui|est-?ce|peux-tu|tu connais|tu peux|donne-?moi des id[eé]es|explique|c'est quoi|qu'est-?ce|how|why|when|who|what|can you|do you know)/i;
+
+const IMAGE_AS_ADJECTIVE = new RegExp(
+  `${WB_PRE}(?:impact|aspect|style|c[oô]t[eé]|design|rendu|effet|attrait|appel|approche|fil|guideline|charte|identit[eé])\\s+(?:visuels?|graphiques?)${WB_POST}`,
+  "i"
+);
+
+const SUBJECT_PREP_BEFORE_IMAGE = new RegExp(
+  `${WB_PRE}(?:sur|[aà]\\s+propos\\s+de|au\\s+sujet\\s+de|concernant|about|on|regarding|over|de(?:\\s+la)?)${WB_POST}\\s+(?:un|une|des|le|la|les|l['’]|mon|ma|mes|ton|ta|tes|son|sa|ses|leur|leurs|du|de\\s+l['’]?|d['’])?\\s*(?:[\\w\\u00C0-\\u024F]+\\s+){0,3}(?:${IMAGE_NOUNS_SRC})${WB_POST}`,
+  "i"
+);
+
+const ADDITIVE_DELIVERABLE = new RegExp(
+  `${WB_PRE}(?:${ADDITIVE_VERBS_SRC})${WB_POST}(?:[- ](?:moi|me|nous|us))?\\s+(?:un|une|des|le|la|les|quelques|plusieurs|mes|tes|ses|leur|leurs|\\d+|trois|quatre|cinq|two|three|four|five)?\\s*(?:[\\w\\u00C0-\\u024F]+\\s+){0,2}(?:${IMAGE_NOUNS_SRC})${WB_POST}`,
+  "i"
+);
+
+const STANDALONE_IMAGE_CREATION = new RegExp(
+  `${WB_PRE}(?:${CREATE_VERBS_SRC})${WB_POST}(?:[- ](?:moi|me|nous|us))?\\s+(?:un|une|des|le|la|les|quelques|plusieurs|\\d+|trois|quatre|cinq|two|three|four|five)?\\s*(?:[\\w\\u00C0-\\u024F]+\\s+){0,2}(?:${IMAGE_NOUNS_SRC})${WB_POST}`,
+  "i"
+);
+
+const DELIVERABLE_PREP_IMAGE = new RegExp(
+  `(?:${WB_PRE}(?:avec|with|accompagn[eé](?:s|es|[eé]es?)?\\s+(?:d['’]?|de|par)?|illustr[eé](?:s|es|[eé]es?)?\\s+(?:par|d['’]?|de|avec)?|including|incluant|inclu(?:s|ses)?|comprenant)${WB_POST}|[+&])\\s*(?:un|une|des|le|la|les|quelques|plusieurs|\\d+|trois|quatre|cinq|two|three|four|five)?\\s*(?:[\\w\\u00C0-\\u024F]+\\s+){0,2}(?:${IMAGE_NOUNS_SRC})${WB_POST}`,
+  "i"
+);
+
+const POST_AND_IMAGE = new RegExp(
+  `${WB_PRE}(?:${POST_NOUNS_SRC})${WB_POST}[^.!?]*?\\s(?:et|and|puis)\\s+(?:un|une|des|le|la|quelques|plusieurs|\\d+)?\\s*(?:[\\w\\u00C0-\\u024F]+\\s+){0,2}(?:${IMAGE_NOUNS_SRC})${WB_POST}`,
+  "i"
+);
+
 /**
  * Sub-classify a prompt that's heading to the post pipeline. Mirrors the
  * fast-path regex inside /api/generate (PRODUCTION / HYBRID / ASSISTANCE /
@@ -210,22 +284,18 @@ function fastClassifyPostType(prompt: string): PostType | null {
   const PRODUCTION_TRIGGERS = /\b(fais|fait|cr[eé]e|cr[eé]é|[eé]cris|[eé]crit|g[eé]n[eè]re|r[eé]dige|compose|pr[eé]pare|write|create|generate|make|draft)\s*(moi|me|nous)?\s*(un|une|des|le|la|a|an|the)?\s*(post|article|texte|contenu|publication|story|carrousel)/i;
   const EXPLAIN_TRIGGERS = /\b(explique|explique-moi|parle-moi|raconte-moi|dis-moi|d[eé]taille|r[eé]sume|c'?est quoi|qu'?est[- ]ce que|peux-tu (m')?expliquer|explain|tell me (about|what)|describe|walk me through|summarize)/i;
 
-  // HYBRID first — explanation + post in one ask.
   if (EXPLAIN_TRIGGERS.test(lower) && (PRODUCTION_TRIGGERS.test(lower)
     || /\b(puis|ensuite|et\s+(fais|fait|cr[eé]e|[eé]cris|r[eé]dige)|then\s+(write|create|make|draft)|and\s+(write|create|make|draft))/i.test(lower))) {
     return "HYBRID";
   }
-  // Explicit PRODUCTION request always wins.
   if (PRODUCTION_TRIGGERS.test(lower) || /\bpost\s+(sur|about|on)\s+\w/i.test(lower) || /\blinkedin\s+post\b/i.test(lower)) {
     return "PRODUCTION";
   }
-  // SOCIAL: greetings / small talk, short standalone messages.
   if (/^(coucou|salut|hello|hey|hi|yo|bonjour|bonsoir|hola|wesh)[\s!.,?]*$/i.test(lower)
     || /^(ça va|ca va|comment ça va|comment ca va|how are you|what's up|quoi de neuf|sup)[\s!?,]*$/i.test(lower)
     || /^(merci|thanks|thank you|cool|nickel|parfait|super|génial|great|ok|d'accord|ouais|yes|no|non)[\s!.,]*$/i.test(lower)) {
     return "SOCIAL";
   }
-  // ASSISTANCE: questions, explanations, advice, ideas, analysis.
   if (raw.endsWith("?")
     || /^(comment|pourquoi|quand|qui|est-?ce|peux-tu|tu connais|tu peux|donne-?moi des id[eé]es|explique|c'est quoi|qu'est-?ce)/i.test(lower)
     || /\b(conseils?|astuces?|tips?|strat[eé]gie|recommandations?|aide|help)\b/i.test(lower)
@@ -235,8 +305,45 @@ function fastClassifyPostType(prompt: string): PostType | null {
   return null;
 }
 
+/**
+ * Decide if a prompt contains a clear DELIVERABLE signal for an image.
+ * Conservative — when in doubt, returns no signal so the caller defaults
+ * to the post pipeline.
+ */
+function detectImageDeliverableServer(lower: string): {
+  isAdditive: boolean;
+  isStandaloneCreation: boolean;
+  isPairedWithPost: boolean;
+} {
+  // Strip adjective compounds ("impact visuel") so they don't trigger
+  // the deliverable patterns below.
+  const cleaned = lower.replace(IMAGE_AS_ADJECTIVE, " ");
+  const subjectOnly = SUBJECT_PREP_BEFORE_IMAGE.test(cleaned);
+
+  const isAdditive = ADDITIVE_DELIVERABLE.test(cleaned);
+  const pairedPrep = DELIVERABLE_PREP_IMAGE.test(cleaned) || POST_AND_IMAGE.test(cleaned);
+  const standalone = STANDALONE_IMAGE_CREATION.test(cleaned) && !POST_NOUNS_RE.test(cleaned) && !POST_REDIGE.test(cleaned);
+  const standaloneSafe = standalone && (!subjectOnly || isAdditive || pairedPrep);
+
+  return {
+    isAdditive,
+    isStandaloneCreation: standaloneSafe,
+    isPairedWithPost: pairedPrep,
+  };
+}
+
+/**
+ * Cheap regex pre-pass used when we want to short-circuit obvious cases
+ * without paying for an LLM call. Returns null if the prompt is ambiguous,
+ * letting the caller fall back to `classifyContentIntent`.
+ *
+ * 2026-05-26 refactor: tightened so a bare image noun never routes to
+ * image/both unless paired with a deliverable verb or preposition. Subject
+ * mentions ("fais un post SUR la photo") now correctly land on "post".
+ */
 export function fastClassifyIntent(prompt: string): ContentIntent | null {
-  const lower = prompt.toLowerCase().trim();
+  const raw = prompt.trim();
+  const lower = raw.toLowerCase();
   if (lower.length < 2) return null;
 
   // Short greetings / acknowledgements — instant conversation classification
@@ -253,55 +360,51 @@ export function fastClassifyIntent(prompt: string): ContentIntent | null {
     };
   }
 
-  // IMPORTANT: every noun is `s?`-suffixed. Without it `\bimage\b` doesn't
-  // match "images" because `e`→`s` has no word boundary (both word chars),
-  // and that's exactly how follow-up asks like "ajoute des images" / "mets
-  // des visuels" used to slip past the fast path and get mis-routed to
-  // `conversation` by the LLM. Synonyms also extended to the user-listed
-  // surface: créas, assets, slides, carrousel, infographie, mockup.
-  const imageWords = /\b(?:images?|visuels?|illustrations?|photos?|publicit[eé]s?|banni[eè]res?|covers?|graphiques?|cr[eé]as?|assets?|slides?|carrousels?|carousels?|infographies?|infographics?|mockups?|vignettes?)\b/i;
-  const postWords = /\b(?:posts?|articles?|captions?|copys?|copies?|r[eé]dig(?:e|er)|drafts?|contenus?|publications?|stor(?:y|ies))\b/i;
-  const conversationWords = /^(comment|pourquoi|quand|qui|est-?ce|peux-tu|tu connais|tu peux|donne-?moi des id[eé]es|explique|c'est quoi|qu'est-?ce)/i;
-  // Additive verbs that, combined with an image noun, signal an "add a
-  // visual to the existing post" follow-up. Catches "ajoute / mets / rajoute
-  // / inclus / colle des images" — all phrasings the user listed verbatim
-  // as needing to trigger the image pipeline.
-  const additiveImageVerbs = /\b(?:ajoute|ajouter|rajoute|rajouter|mets|met|mettre|inclus|inclu|colle|joins|joindre|complete|compl[eè]te|adjoint)/i;
+  const hasImage = IMAGE_NOUNS_RE.test(lower);
+  const hasPost = POST_NOUNS_RE.test(lower) || POST_REDIGE.test(lower);
+  const hasQuestion = QUESTION_OPENERS.test(lower) || raw.endsWith("?");
 
-  const hasImage = imageWords.test(lower);
-  const hasPost = postWords.test(lower);
-  const hasQuestion = conversationWords.test(lower) || /\?$/.test(lower);
-  const isAdditiveImageAsk = additiveImageVerbs.test(lower) && hasImage;
+  const deliverable = detectImageDeliverableServer(lower);
 
-  // Unambiguous image-only — covers two surfaces:
-  //   (a) classic create verbs + image noun: "fais une image sur X"
-  //   (b) additive verbs + image noun in a follow-up: "ajoute des visuels"
-  //       (the user's #1 reported mis-classification — these MUST land on
-  //        the image pipeline even if the prompt also drops the word "post"
-  //        in a non-creation sense like "ajoute un visuel à mon post").
-  if ((hasImage && !hasPost && !hasQuestion) || (isAdditiveImageAsk && !hasQuestion)) {
-    return {
-      intent: "image",
-      confidence: 0.95,
-      imageBrief: prompt
-        .replace(/^(fais|cr[eé]e?|g[eé]n[eè]re|montre-?moi|donne-?moi|ajoute(?:-moi)?|rajoute|mets(?:-moi)?|inclus)\s+(une?|des|le|la|quelques|plusieurs|\d+)?\s*/i, "")
-        // Keep the noun ("image", "visuel"…) — it tells the AI what to build —
-        // but normalize the spacing so we don't pass "image  sur X" downstream.
-        .replace(/\s+/g, " ")
-        .trim(),
-    };
-  }
-  // Unambiguous post + image combo
-  if (hasImage && hasPost && !hasQuestion) {
+  // intent="both" — post + image deliverable in the same ask.
+  if (hasPost && deliverable.isPairedWithPost && !hasQuestion) {
     return {
       intent: "both",
-      confidence: 0.9,
+      confidence: 0.95,
       postBrief: prompt,
       imageBrief: prompt,
       postType: "PRODUCTION",
     };
   }
-  // Conversational pure question — no creation verb anywhere
+
+  // intent="image" — image is the primary deliverable.
+  if (deliverable.isAdditive && !hasQuestion) {
+    return {
+      intent: "image",
+      confidence: 0.95,
+      imageBrief: cleanImageBrief(prompt),
+    };
+  }
+  if (deliverable.isStandaloneCreation && !hasPost && !hasQuestion) {
+    return {
+      intent: "image",
+      confidence: 0.9,
+      imageBrief: cleanImageBrief(prompt),
+    };
+  }
+
+  // intent="post" — explicit post mention with no image deliverable.
+  // CRITICAL: image-noun-as-subject ("post sur la photo") lands here.
+  if (hasPost && !hasQuestion) {
+    return {
+      intent: "post",
+      confidence: hasImage ? 0.75 : 0.9,
+      postBrief: prompt,
+      postType: fastClassifyPostType(prompt) ?? "PRODUCTION",
+    };
+  }
+
+  // intent="conversation" — pure question with no creation verb.
   if (hasQuestion && !hasImage && !hasPost && !/\b(fais|cr[eé]e?|g[eé]n[eè]re|r[eé]dige|[eé]cris)\b/i.test(lower)) {
     return {
       intent: "conversation",
@@ -309,5 +412,13 @@ export function fastClassifyIntent(prompt: string): ContentIntent | null {
       postType: fastClassifyPostType(prompt) ?? "ASSISTANCE",
     };
   }
+
   return null; // Let the LLM decide
+}
+
+function cleanImageBrief(prompt: string): string {
+  return prompt
+    .replace(/^(fais|cr[eé]e?|g[eé]n[eè]re|montre-?moi|donne-?moi|ajoute(?:-moi)?|rajoute|mets(?:-moi)?|inclus|write|create|generate|make|draft|add)\s+(une?|des|le|la|quelques|plusieurs|\d+)?\s*/i, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }

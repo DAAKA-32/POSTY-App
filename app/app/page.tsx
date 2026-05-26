@@ -868,6 +868,16 @@ function AppContent() {
     }> => {
       const local = clientFastIntent(prompt);
 
+      // "Did the user clearly ask for a visual deliverable?" — drives the
+      // recovery toast when the server routes to post/conversation. We use
+      // the local classifier's own decision (intent + isAdditive) instead
+      // of the older `hasImageMention` heuristic, which fired on any
+      // image-noun mention including pure subject mentions like
+      // "fais un post sur la photo de mariage". The new flag is silent
+      // on subject mentions and only loud on real deliverable signals.
+      const localWantedVisuals =
+        local.intent === "image" || local.intent === "both" || local.isAdditive;
+
       // Build a deterministic fallback BEFORE the network call. If the
       // server times out or 5xx's, we use this instead of the historical
       // silent "post" default — keeps "fais un post avec des images" on
@@ -890,6 +900,7 @@ function AppContent() {
         const headers = await getAuthHeaders();
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 3500);
+        const t0 = Date.now();
         const res = await fetch("/api/intent", {
           method: "POST",
           headers: { "Content-Type": "application/json", ...headers },
@@ -900,16 +911,28 @@ function AppContent() {
           signal: controller.signal,
         });
         clearTimeout(timeout);
+        const elapsedMs = Date.now() - t0;
         if (!res.ok) {
-          return { ...localFallback, userWantedVisuals: local.hasImageMention };
+          console.warn("[intent] server returned non-ok", { status: res.status, elapsedMs, fallback: localFallback.intent });
+          return { ...localFallback, userWantedVisuals: localWantedVisuals && localFallback.intent !== "image" && localFallback.intent !== "both" };
         }
         const data = await res.json();
         const intent = (data.intent ?? localFallback.intent) as "post" | "image" | "both" | "conversation";
-        // Mismatch detection: user asked for visuals but the server didn't
-        // route to image/both. Don't silently downgrade — flag it so the
-        // CTA can pulse and the user can recover in one click.
+        // Mismatch detection: the user explicitly asked for a visual
+        // (additive verb or local fast-path said image/both) but the
+        // server still landed on post/conversation. Surface the CTA so
+        // the user can recover in one click instead of re-typing.
         const userWantedVisuals =
-          local.hasImageMention && intent !== "image" && intent !== "both";
+          localWantedVisuals && intent !== "image" && intent !== "both";
+        if (process.env.NODE_ENV !== "production") {
+          console.debug("[intent]", {
+            promptPreview: prompt.slice(0, 60),
+            local: local.intent,
+            server: intent,
+            source: data.source,
+            elapsedMs,
+          });
+        }
         return {
           intent,
           postBrief: data.postBrief ?? localFallback.postBrief ?? prompt,
@@ -917,8 +940,9 @@ function AppContent() {
           postType: data.postType,
           userWantedVisuals,
         };
-      } catch {
-        return { ...localFallback, userWantedVisuals: local.hasImageMention && localFallback.intent !== "image" && localFallback.intent !== "both" };
+      } catch (err) {
+        console.warn("[intent] classifier unreachable, using local fallback", { fallback: localFallback.intent, err: (err as Error)?.message });
+        return { ...localFallback, userWantedVisuals: localWantedVisuals && localFallback.intent !== "image" && localFallback.intent !== "both" };
       }
     },
     [messages.length, imageEntries.length]
@@ -994,6 +1018,13 @@ function AppContent() {
           const newestAi = [...latestMessages].reverse().find((m) => m.type === "ai");
           if (newestAi?.id) {
             setMessageImagePairs((prev) => ({ ...prev, [newestAi.id!]: imageResult!.entryId }));
+          } else {
+            // No AI message id to pair with — demote the entry from
+            // embedded to standalone so it renders as a regular image
+            // bubble instead of hiding behind a phantom attachment slot
+            // on the last AI bubble (which would also lock out the
+            // "Ajouter des visuels" CTA).
+            upsertImageEntry(imageResult.entryId, { embed: false });
           }
           // Attach the image to the post Firestore doc so the conversation
           // re-loads with text + visual instead of one of them being lost.
@@ -1525,18 +1556,22 @@ function AppContent() {
                                     // without the "done && unpaired" branch
                                     // the loader disappears one frame before
                                     // the image attaches, producing a visible
-                                    // blink and tricking the user into thinking
-                                    // generation silently failed (the exact
-                                    // intent=both regression the user reported).
+                                    // blink. 60s age cap prevents a stuck
+                                    // entry (rare race where pairing never
+                                    // resolves) from blocking the bubble's
+                                    // "Ajouter des visuels" CTA forever.
                                     if (i !== lastAIIndex) return false;
                                     if (!message.id) return false;
                                     if (messageImagePairs[message.id]) return false;
                                     const pairedEntryIds = new Set(Object.values(messageImagePairs));
+                                    const ATTACHMENT_LOADER_MAX_AGE_MS = 60_000;
+                                    const now = Date.now();
                                     return imageEntries.some(
                                       (e) =>
                                         e.embed &&
                                         !pairedEntryIds.has(e.id) &&
-                                        (e.status === "generating" || e.status === "done")
+                                        (e.status === "generating" || e.status === "done") &&
+                                        now - e.createdAt < ATTACHMENT_LOADER_MAX_AGE_MS
                                     );
                                   })()}
                                   // One-click shortcut: feeds the post's text

@@ -78,9 +78,11 @@ export async function POST(request: NextRequest) {
 
   // Fast path: regex pre-pass on obvious cases. Save ~250ms + token cost on
   // the most common patterns ("fais une image sur X", "tu connais Y ?", etc.).
+  const t0 = Date.now();
   const fast = fastClassifyIntent(prompt);
   if (fast) {
     const postType = fast.postType ?? inferPostType(fast.intent, prompt);
+    console.info("[intent]", { source: "fast", intent: fast.intent, postType, elapsedMs: Date.now() - t0, promptLen: prompt.length });
     return NextResponse.json({ ...fast, postType, source: "fast" });
   }
 
@@ -88,9 +90,10 @@ export async function POST(request: NextRequest) {
   try {
     const intent = await classifyContentIntent(prompt, hasPriorConversation);
     const postType = inferPostType(intent.intent, prompt);
+    console.info("[intent]", { source: "llm", intent: intent.intent, postType, confidence: intent.confidence, elapsedMs: Date.now() - t0, promptLen: prompt.length });
     return NextResponse.json({ ...intent, postType, source: "llm" });
   } catch (err) {
-    console.error("[intent] classifier error:", err);
+    console.error("[intent] classifier error:", { elapsedMs: Date.now() - t0, err: (err as Error)?.message });
     // Default to "post" so the user still gets SOMETHING useful — never a
     // hard 5xx for a classification miss. The post pipeline is the safest
     // fallback because that's what Posty was built around.

@@ -1173,17 +1173,20 @@ function ConversationContent() {
                                     // — otherwise the loader disappears one
                                     // render before the image attaches, which
                                     // is the visible blink behind the bug
-                                    // report ("loader, then nothing, then the
-                                    // user has to click Add Visuals").
+                                    // report. 60s age cap prevents a stuck
+                                    // entry from blocking the bubble's CTA.
                                     if (i !== lastAIIndex) return false;
                                     if (!message.id) return false;
                                     if (messageImagePairs[message.id]) return false;
                                     const pairedEntryIds = new Set(Object.values(messageImagePairs));
+                                    const ATTACHMENT_LOADER_MAX_AGE_MS = 60_000;
+                                    const now = Date.now();
                                     return imageEntries.some(
                                       (e) =>
                                         e.embed &&
                                         !pairedEntryIds.has(e.id) &&
-                                        (e.status === "generating" || e.status === "done")
+                                        (e.status === "generating" || e.status === "done") &&
+                                        now - e.createdAt < ATTACHMENT_LOADER_MAX_AGE_MS
                                     );
                                   })()}
                                   onAddVisual={
@@ -1559,11 +1562,17 @@ function ConversationContent() {
                 let postType: "PRODUCTION" | "HYBRID" | "ASSISTANCE" | "SOCIAL" | undefined =
                   local.intent === "both" || local.intent === "post" ? "PRODUCTION" : undefined;
                 let userWantedVisuals = false;
+                // Same signal as /app: "did the user clearly ask for a
+                // visual?" — silent on subject mentions, loud on real
+                // deliverable cues.
+                const localWantedVisuals =
+                  local.intent === "image" || local.intent === "both" || local.isAdditive;
 
                 try {
                   const headers = await getAuthHeaders();
                   const controller = new AbortController();
                   const timeout = setTimeout(() => controller.abort(), 3500);
+                  const t0 = Date.now();
                   const res = await fetch("/api/intent", {
                     method: "POST",
                     headers: { "Content-Type": "application/json", ...headers },
@@ -1571,19 +1580,34 @@ function ConversationContent() {
                     signal: controller.signal,
                   });
                   clearTimeout(timeout);
+                  const elapsedMs = Date.now() - t0;
                   if (res.ok) {
                     const data = await res.json();
                     intent = data.intent ?? intent;
                     postBrief = data.postBrief ?? postBrief;
                     imageBrief = data.imageBrief ?? imageBrief;
                     postType = data.postType ?? postType;
+                    if (process.env.NODE_ENV !== "production") {
+                      console.debug("[intent]", {
+                        promptPreview: message.slice(0, 60),
+                        local: local.intent,
+                        server: intent,
+                        source: data.source,
+                        elapsedMs,
+                      });
+                    }
+                  } else {
+                    console.warn("[intent] server returned non-ok", { status: res.status, elapsedMs, fallback: intent });
                   }
-                } catch { /* keep local fast-path defaults — never silently drop image asks */ }
+                } catch (err) {
+                  console.warn("[intent] classifier unreachable, using local fallback", { fallback: intent, err: (err as Error)?.message });
+                }
 
-                // Mismatch detection: prompt mentioned visuals but the
+                // Mismatch detection: prompt asked for a visual deliverable
+                // (additive verb or fast-path said image/both) but the
                 // resolved intent didn't trigger the image pipeline. Surface
                 // a recovery toast so the user can click the CTA in one shot.
-                userWantedVisuals = local.hasImageMention && intent !== "image" && intent !== "both";
+                userWantedVisuals = localWantedVisuals && intent !== "image" && intent !== "both";
 
                 if (intent === "image") {
                   await handleImageGenerate(message, imageBrief);
@@ -1601,32 +1625,37 @@ function ConversationContent() {
                   ]);
                   setImageEntries((current) => {
                     const newEntry = current[entriesBeforeCount];
-                    if (newEntry?.status === "done") {
-                      // Read from ref, not closure — `messages` captured at
-                      // submit time doesn't include the AI turn that
-                      // generate() just streamed in.
-                      const newestAi = [...messagesRef.current]
-                        .reverse()
-                        .find((m) => m.type === "ai");
-                      if (newestAi?.id) {
-                        setMessageImagePairs((prev) => ({
-                          ...prev,
-                          [newestAi.id!]: newEntry.id,
-                        }));
-                        // Patch the Firestore record now that the AI message
-                        // id exists. Without this, reload sees an unowned
-                        // image and renders it standalone (full-width),
-                        // breaking the embedded preview + publish flow.
-                        setGeneratedImageMessageId(
-                          conversationId,
-                          newEntry.id,
-                          newestAi.id
-                        ).catch((err) => {
-                          console.warn("[intent=both] failed to persist messageId on image:", err);
-                        });
-                      }
+                    if (newEntry?.status !== "done") return current;
+                    // Read from ref, not closure — `messages` captured at
+                    // submit time doesn't include the AI turn that
+                    // generate() just streamed in.
+                    const newestAi = [...messagesRef.current]
+                      .reverse()
+                      .find((m) => m.type === "ai");
+                    if (newestAi?.id) {
+                      setMessageImagePairs((prev) => ({
+                        ...prev,
+                        [newestAi.id!]: newEntry.id,
+                      }));
+                      // Patch the Firestore record now that the AI message
+                      // id exists. Without this, reload sees an unowned
+                      // image and renders it standalone (full-width),
+                      // breaking the embedded preview + publish flow.
+                      setGeneratedImageMessageId(
+                        conversationId,
+                        newEntry.id,
+                        newestAi.id
+                      ).catch((err) => {
+                        console.warn("[intent=both] failed to persist messageId on image:", err);
+                      });
+                      return current;
                     }
-                    return current;
+                    // No AI message to pair with — demote to standalone so
+                    // the bubble's attachment loader releases and the user
+                    // sees the image rendered normally instead of waiting.
+                    return current.map((e) =>
+                      e.id === newEntry.id ? { ...e, embed: false } : e
+                    );
                   });
                 } else {
                   await generate(postBrief, undefined, postType);

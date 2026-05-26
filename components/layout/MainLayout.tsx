@@ -29,7 +29,6 @@ import FreeTrialPaywall from "@/components/subscription/FreeTrialPaywall";
 import UsageBanner from "@/components/ui/UsageBanner";
 import QuotaExceededModal from "@/components/ui/QuotaExceededModal";
 import HelpFloatingButton from "@/components/help/HelpFloatingButton";
-import { useScrolledPast } from "@/hooks/scroll/useScrolledPast";
 import {
   navItemVariants,
   conversationItemVariants,
@@ -215,7 +214,6 @@ export default function MainLayout({
   const router = useRouter();
   const { user, userProfile, loading: authLoading } = useAuth();
   const { t } = useLanguage();
-  const { isScrolled: isMobileScrolled, sentinelRef: mobileScrollSentinelRef } = useScrolledPast(8);
 
   // Per-route Posty signature ambient — applied directly as a CSS class on
   // this layout's outer wrapper. Parent background paints BEFORE children
@@ -1097,71 +1095,19 @@ export default function MainLayout({
         {/* Desktop spacer - hidden on mobile */}
         <div className="hidden lg:block" />
 
-        {/* Mobile Header - Fixed position WITHOUT animation wrapper for true viewport positioning */}
-        {showMobileHeader && (
-          <header
-            role="banner"
-            aria-label="En-tête mobile"
-            // Transparent au repos pour laisser passer le dégradé signature
-            // de la page (fixed inset-0 à z=-1). Bascule en glass dès qu'un
-            // scroll commence, pour garder la lisibilité du contenu qui
-            // passe en dessous.
-            className={`mobile-header lg:hidden fixed top-0 left-0 right-0 z-[60] transition-[background-color,border-color,box-shadow,backdrop-filter] duration-300 ease-out ${
-              isMobileScrolled
-                ? "backdrop-blur-xl backdrop-saturate-150 bg-white/60 dark:bg-black/40 border-b border-white/30 dark:border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.04)]"
-                : "bg-transparent border-b border-transparent"
-            }`}
-            style={{
-              paddingTop: "env(safe-area-inset-top, 0px)",
-            }}
-          >
-            <div className="flex items-center justify-between h-14 min-h-[56px] px-4">
-              <button
-                onClick={openSidebar}
-                className="min-w-[44px] min-h-[44px] p-2.5 -ml-2 flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-[#F8935D]/10 dark:hover:bg-dark-hover rounded-lg transition-colors duration-200"
-                aria-label={t.sidebar.openMenu}
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              </button>
-              <div className="flex items-center gap-2.5">
-                <div className="relative">
-                  {/* Subtle glow */}
-                  <div className="absolute -inset-0.5 bg-gradient-to-br from-primary/20 to-accent/20 rounded-xl blur-sm" />
-                  <div className="relative w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-2xl overflow-hidden shadow-md ring-1 ring-white/50 dark:ring-dark-border/50 flex-shrink-0">
-                    <img
-                      src="/logo.png"
-                      alt="Posty Logo"
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
-                </div>
-                <span className="font-bold text-gray-900 dark:text-white text-base sm:text-lg tracking-tight truncate max-w-[200px] sm:max-w-none">
-                  {headerTitle || "Posty"}
-                </span>
-              </div>
-              <div className="w-10 flex-shrink-0" />
-            </div>
-          </header>
-        )}
-
-        {/* Spacer for fixed mobile header - accounts for safe area + header height */}
+        {/* Mobile Header — rendered ONCE at the root layout level by
+            `<PersistentMobileHeader />` so the hamburger + logo + title never
+            unmount between routes. MainLayout only reserves the vertical
+            space the fixed header occupies, so page content starts below it.
+            `showMobileHeader` and `headerTitle` are kept on the prop interface
+            for backwards compatibility but the title is now derived from the
+            pathname inside the persistent header itself. */}
         {showMobileHeader && (
           <div
             className="lg:hidden flex-shrink-0"
             style={{
               height: "calc(env(safe-area-inset-top, 0px) + 56px)",
             }}
-          />
-        )}
-
-        {/* Sentinel for scroll-aware mobile header (transparent → glass) */}
-        {showMobileHeader && (
-          <div
-            ref={mobileScrollSentinelRef}
-            aria-hidden="true"
-            className="lg:hidden h-2 w-full -mb-2 pointer-events-none"
           />
         )}
 

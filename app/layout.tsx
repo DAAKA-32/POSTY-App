@@ -16,6 +16,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import AppProvider from "@/components/providers/AppProvider";
 import KeyboardNavigationProvider from "@/components/providers/KeyboardNavigationProvider";
 import SkipLinks from "@/components/accessibility/SkipLinks";
+import PersistentMobileHeader from "@/components/layout/PersistentMobileHeader";
 import { HomepageJsonLd, HowToJsonLd, postyHowToData } from "@/components/seo/JsonLd";
 import HreflangTags from "@/components/seo/HreflangTags";
 import "./globals.css";
@@ -355,6 +356,15 @@ export default function RootLayout({
             <SubscriptionProvider>
               <LanguageProvider>
                 <SkipLinks />
+                {/* PersistentMobileHeader lives ABOVE every page's MainLayout
+                    so its DOM node is created exactly once per session and
+                    never gets torn down on route change. This kills the
+                    "flash square" that appeared when each page's inline
+                    `<header>` was unmounted and remounted on every
+                    navigation (the hamburger and logo image briefly went
+                    missing between routes). Reads SidebarContext (via
+                    AppProvider above) + LanguageContext (this provider). */}
+                <PersistentMobileHeader />
                 <QuotaProvider>
                   <LinkedInProvider>
                     <FacebookProvider>
