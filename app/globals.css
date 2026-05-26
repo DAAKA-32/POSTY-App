@@ -1529,10 +1529,14 @@ body.force-scroll-enabled * {
 
       /* Mobile browser input - iOS Safari specific */
       .mobile-browser-input {
-        /* iOS Safari: use CSS variable with fallback */
+        /* iOS Safari: use CSS variable with fallback.
+           Fallback set to 0 (was 75 px) so the input bar sits flush against
+           the safe-area when JS hasn't yet measured the browser chrome —
+           previously the static fallback pushed the bar uncomfortably up
+           on the screen. */
         padding-bottom: calc(
-          env(safe-area-inset-bottom, 20px) +
-          var(--input-bottom-padding, 75px)
+          env(safe-area-inset-bottom, 8px) +
+          var(--input-bottom-padding, 0px)
         ) !important;
       }
 
@@ -1550,10 +1554,11 @@ body.force-scroll-enabled * {
     /* When in Chrome/Firefox browser (not PWA) on Android */
     @supports not (-webkit-touch-callout: none) {
       .mobile-browser-input {
-        /* Android browsers: use CSS variable with fallback */
+        /* Android browsers: use CSS variable with fallback (lowered to 0
+           from 65 px so the bar sits flush against the bottom safe-area). */
         padding-bottom: calc(
-          env(safe-area-inset-bottom, 16px) +
-          var(--input-bottom-padding, 65px)
+          env(safe-area-inset-bottom, 8px) +
+          var(--input-bottom-padding, 0px)
         ) !important;
       }
 
@@ -2907,10 +2912,12 @@ html.light .sidebar-scroll:hover::-webkit-scrollbar-thumb:hover {
   /* Mobile browser mode (not PWA) - extra padding for browser UI */
   /* Uses data attribute set by useBrowserMode hook */
   html[data-mobile-browser="true"] .input-area-container {
-    /* Use CSS variable set by JavaScript, with generous fallback */
+    /* JS sets `--input-bottom-padding` to the measured browser-chrome
+       height when needed; fallback lowered to 0 so the bar sits flush
+       against the safe-area when no chrome adjustment is required. */
     padding-bottom: calc(
-      max(env(safe-area-inset-bottom, 20px), 20px) +
-      var(--input-bottom-padding, 75px)
+      max(env(safe-area-inset-bottom, 8px), 8px) +
+      var(--input-bottom-padding, 0px)
     ) !important;
   }
 
