@@ -27,6 +27,11 @@ import { verifyAuth } from "@/lib/auth";
 import { STRATEGIST_SYSTEM_PROMPT } from "@/lib/ai/strategist-prompt";
 import { isStrategistAllowedForEmail } from "@/lib/strategist/access";
 import { hasLinkedInConnected } from "@/lib/strategist/access-server";
+import {
+  trackAIUsage,
+  readUsageFromChunk,
+  emptyUsage,
+} from "@/lib/ai-cost/tracker";
 
 type StrategistMessage = { role: "user" | "assistant"; content: string };
 
@@ -215,8 +220,9 @@ export async function POST(request: NextRequest) {
           // We tap into the OpenAI client directly (same pattern as /api/chat)
           // to keep streaming low-latency. The Strategist runs on Max plan
           // tokens budget — generous, but still bounded.
+          const strategistModel = openaiService["model"];
           const streamResponse = await openaiService["client"].chat.completions.create({
-            model: openaiService["model"],
+            model: strategistModel,
             messages: chatMessages,
             // Slightly lower temperature than chat → more grounded advice,
             // less "creative writing" energy.
@@ -224,15 +230,19 @@ export async function POST(request: NextRequest) {
             // Strategist replies are longer than post copy — let them breathe.
             max_tokens: 2200,
             stream: true,
+            stream_options: { include_usage: true },
           });
 
           let full = "";
+          let stratUsage = emptyUsage();
           for await (const chunk of streamResponse) {
             const c = chunk.choices[0]?.delta?.content || "";
             if (c) {
               full += c;
               sendEvent("chunk", { content: c });
             }
+            const captured = readUsageFromChunk(chunk);
+            if (captured) stratUsage = captured;
           }
 
           if (isAdminInitialized()) {
@@ -242,6 +252,15 @@ export async function POST(request: NextRequest) {
               console.error("[strategist] quota increment failed:", e);
             }
           }
+
+          void trackAIUsage({
+            userId,
+            route: "strategist",
+            model: strategistModel,
+            inputTokens: stratUsage.inputTokens,
+            outputTokens: stratUsage.outputTokens,
+            cachedInputTokens: stratUsage.cachedInputTokens,
+          });
 
           sendEvent("done", { fullContent: full });
         } catch (err) {

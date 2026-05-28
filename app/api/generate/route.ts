@@ -33,6 +33,12 @@ import { SubscriptionPlan, PostInsights } from "@/types";
 import { detectUrl, removeUrlFromPrompt, extractUrlContent, ExtractedUrlContent } from "@/lib/utils/url-extract";
 import { detectPromptLanguage } from "@/lib/utils/detect-language";
 import { normalizeHashtagsInText } from "@/lib/hashtags/normalize";
+import {
+  trackAIUsage,
+  readUsageFromChunk,
+  readUsageFromResponse,
+  emptyUsage,
+} from "@/lib/ai-cost/tracker";
 
 // Streaming configuration for mock responses
 const MOCK_CHUNK_SIZE = 3;
@@ -577,14 +583,16 @@ export async function POST(request: NextRequest) {
               const classified = await classifyIntent(
                 openaiService,
                 cleanedPrompt,
-                language as "fr" | "en"
+                language as "fr" | "en",
+                userId
               );
               intent = classified === "SOCIAL" ? "SOCIAL" : "ASSISTANCE";
             } else {
               const classified = await classifyIntent(
                 openaiService,
                 cleanedPrompt,
-                language as "fr" | "en"
+                language as "fr" | "en",
+                userId
               );
               intent = classified;
             }
@@ -597,6 +605,7 @@ export async function POST(request: NextRequest) {
                 cleanedPrompt,
                 language as "fr" | "en",
                 sendEvent,
+                userId,
                 conversationHistory as Array<{ role: "user" | "assistant"; content: string }> | undefined
               );
             } else if (intent === "ASSISTANCE") {
@@ -607,6 +616,7 @@ export async function POST(request: NextRequest) {
                 cleanedPrompt,
                 language as "fr" | "en",
                 sendEvent,
+                userId,
                 serverUserProfile,
                 conversationHistory as Array<{ role: "user" | "assistant"; content: string }> | undefined
               );
@@ -623,6 +633,7 @@ export async function POST(request: NextRequest) {
                 explainPrompt,
                 language as "fr" | "en",
                 sendEvent,
+                userId,
                 serverUserProfile,
                 conversationHistory as Array<{ role: "user" | "assistant"; content: string }> | undefined
               );
@@ -638,6 +649,7 @@ export async function POST(request: NextRequest) {
                 typesToGenerate,
                 maxTokens,
                 (userPlan as PlanTier) ?? null,
+                userId,
                 conversationHistory as Array<{ role: "user" | "assistant"; content: string }> | undefined,
                 processedFileContent,
                 extractedUrlContent,
@@ -663,6 +675,7 @@ export async function POST(request: NextRequest) {
                 typesToGenerate,
                 maxTokens,
                 (userPlan as PlanTier) ?? null,
+                userId,
                 conversationHistory as Array<{ role: "user" | "assistant"; content: string }> | undefined,
                 processedFileContent,
                 extractedUrlContent,
@@ -683,7 +696,8 @@ export async function POST(request: NextRequest) {
               const insights = await generateInsights(
                 openaiService,
                 generatedContent,
-                language
+                language,
+                userId
               );
               if (insights) {
                 sendEvent("insights", { insights });
@@ -828,6 +842,7 @@ async function generateWithOpenAI(
   typesToGenerate: Array<"storytelling" | "business">,
   maxTokens: number,
   plan: PlanTier,
+  userId: string,
   conversationHistory?: Array<{ role: "user" | "assistant"; content: string }>,
   fileContent?: { type: "image"; mimeType: string; base64: string } | { type: "pdf"; extractedText: string } | null,
   urlContent?: ExtractedUrlContent | null,
@@ -988,16 +1003,30 @@ STRICT RULES:
       temperature: getGenerationTemperature(type, plan),
       max_tokens: maxTokens,
       stream: true,
+      stream_options: { include_usage: true },
     });
 
     let fullContent = "";
+    let genUsage = emptyUsage();
     for await (const chunk of stream) {
       const content = chunk.choices[0]?.delta?.content || "";
       if (content) {
         fullContent += content;
         sendEvent("chunk", { content, type });
       }
+      const captured = readUsageFromChunk(chunk);
+      if (captured) genUsage = captured;
     }
+
+    void trackAIUsage({
+      userId,
+      route: "generate",
+      model: modelToUse,
+      inputTokens: genUsage.inputTokens,
+      outputTokens: genUsage.outputTokens,
+      cachedInputTokens: genUsage.cachedInputTokens,
+      metadata: { type, plan: plan ?? "unknown", language },
+    });
 
     // Normalize hashtag casing on the final aggregated text. The streamed
     // chunks may contain raw LLM output (#POSTY, #PersonalBranding); the
@@ -1066,17 +1095,29 @@ async function generateWithMock(
 async function generateInsights(
   service: NonNullable<ReturnType<typeof createOpenAIService>>,
   postContent: string,
-  language: "fr" | "en"
+  language: "fr" | "en",
+  userId: string
 ): Promise<PostInsights | null> {
   try {
+    const insightsModel = "gpt-3.5-turbo";
     const response = await service["client"].chat.completions.create({
-      model: "gpt-3.5-turbo", // Use faster/cheaper model for insights
+      model: insightsModel, // Use faster/cheaper model for insights
       messages: [
         { role: "system", content: INSIGHTS_PROMPT[language] },
         { role: "user", content: postContent },
       ],
       temperature: 0.5,
       max_tokens: 500,
+    });
+
+    const insightsUsage = readUsageFromResponse(response);
+    void trackAIUsage({
+      userId,
+      route: "generate.insights",
+      model: insightsModel,
+      inputTokens: insightsUsage.inputTokens,
+      outputTokens: insightsUsage.outputTokens,
+      cachedInputTokens: insightsUsage.cachedInputTokens,
     });
 
     const content = response.choices[0]?.message?.content;
@@ -1218,7 +1259,8 @@ function detectIntentFast(prompt: string): IntentType | null {
 async function classifyIntent(
   service: NonNullable<ReturnType<typeof createOpenAIService>>,
   prompt: string,
-  language: "fr" | "en"
+  language: "fr" | "en",
+  userId: string
 ): Promise<IntentType> {
   // Try fast detection first
   const fastIntent = detectIntentFast(prompt);
@@ -1228,14 +1270,25 @@ async function classifyIntent(
 
   // Fall back to AI classification
   try {
+    const intentModel = "gpt-3.5-turbo";
     const response = await service["client"].chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: intentModel,
       messages: [
         { role: "system", content: INTENT_CLASSIFICATION_PROMPT[language] },
         { role: "user", content: prompt },
       ],
       temperature: 0,
       max_tokens: 20,
+    });
+
+    const intentUsage = readUsageFromResponse(response);
+    void trackAIUsage({
+      userId,
+      route: "generate.classify-intent",
+      model: intentModel,
+      inputTokens: intentUsage.inputTokens,
+      outputTokens: intentUsage.outputTokens,
+      cachedInputTokens: intentUsage.cachedInputTokens,
     });
 
     const result = response.choices[0]?.message?.content?.trim().toUpperCase();
@@ -1264,6 +1317,7 @@ async function generateConversational(
   prompt: string,
   language: "fr" | "en",
   sendEvent: (event: string, data: object) => void,
+  userId: string,
   conversationHistory?: Array<{ role: "user" | "assistant"; content: string }>
 ): Promise<string> {
   // Use a simple "chat" type for the response
@@ -1292,22 +1346,37 @@ async function generateConversational(
 
   messages.push({ role: "user", content: prompt });
 
+  const convModel = "gpt-3.5-turbo";
   const stream = await service["client"].chat.completions.create({
-    model: "gpt-3.5-turbo", // Use faster model for conversation
+    model: convModel, // Use faster model for conversation
     messages,
     temperature: 0.7,
     max_tokens: 300, // Keep responses short for conversation
     stream: true,
+    stream_options: { include_usage: true },
   });
 
   let fullContent = "";
+  let convUsage = emptyUsage();
   for await (const chunk of stream) {
     const content = chunk.choices[0]?.delta?.content || "";
     if (content) {
       fullContent += content;
       sendEvent("chunk", { content, type: "conversational" });
     }
+    const captured = readUsageFromChunk(chunk);
+    if (captured) convUsage = captured;
   }
+
+  void trackAIUsage({
+    userId,
+    route: "generate.conversational",
+    model: convModel,
+    inputTokens: convUsage.inputTokens,
+    outputTokens: convUsage.outputTokens,
+    cachedInputTokens: convUsage.cachedInputTokens,
+    metadata: { language },
+  });
 
   const normalized = normalizeHashtagsInText(fullContent);
   sendEvent("done", { type: "conversational", content: normalized });
@@ -1325,6 +1394,7 @@ async function generateAssistance(
   prompt: string,
   language: "fr" | "en",
   sendEvent: (event: string, data: object) => void,
+  userId: string,
   userProfile?: ProfileFields,
   conversationHistory?: Array<{ role: "user" | "assistant"; content: string }>
 ): Promise<string> {
@@ -1359,22 +1429,37 @@ async function generateAssistance(
   messages.push({ role: "user", content: prompt });
 
   // Use GPT-4 for high-quality assistance (not 3.5-turbo)
+  const assistModel = service["model"] || "gpt-4";
   const stream = await service["client"].chat.completions.create({
-    model: service["model"] || "gpt-4",
+    model: assistModel,
     messages,
     temperature: 0.7,
     max_tokens: 1500, // Enough for structured ideas/advice
     stream: true,
+    stream_options: { include_usage: true },
   });
 
   let fullContent = "";
+  let assistUsage = emptyUsage();
   for await (const chunk of stream) {
     const content = chunk.choices[0]?.delta?.content || "";
     if (content) {
       fullContent += content;
       sendEvent("chunk", { content, type: "conversational" });
     }
+    const captured = readUsageFromChunk(chunk);
+    if (captured) assistUsage = captured;
   }
+
+  void trackAIUsage({
+    userId,
+    route: "generate.assistance",
+    model: assistModel,
+    inputTokens: assistUsage.inputTokens,
+    outputTokens: assistUsage.outputTokens,
+    cachedInputTokens: assistUsage.cachedInputTokens,
+    metadata: { language },
+  });
 
   const normalized = normalizeHashtagsInText(fullContent);
   sendEvent("done", { type: "conversational", content: normalized });

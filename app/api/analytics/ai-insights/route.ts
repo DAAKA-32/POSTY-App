@@ -4,6 +4,7 @@ import { checkUserQuotaAdmin } from "@/lib/db/firestore-admin";
 import { isAdminInitialized } from "@/lib/db/firebase-admin";
 import { SubscriptionPlan } from "@/types";
 import { verifyAuth } from "@/lib/auth";
+import { trackAIUsage, readUsageFromResponse } from "@/lib/ai-cost/tracker";
 
 /**
  * POST /api/analytics/ai-insights
@@ -114,14 +115,25 @@ Respond ONLY with a valid JSON object (no markdown, no backticks):
 }
 contentScore is 1-10. Be constructive and encouraging but honest.`;
 
+    const insightsModel = "gpt-4";
     const response = await service["client"].chat.completions.create({
-      model: "gpt-4",
+      model: insightsModel,
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: `Here are the user's recent LinkedIn posts:\n\n${postSummaries}` },
       ],
       temperature: 0.5,
       max_tokens: 800,
+    });
+
+    const insightsUsage = readUsageFromResponse(response);
+    void trackAIUsage({
+      userId,
+      route: "analytics.ai-insights",
+      model: insightsModel,
+      inputTokens: insightsUsage.inputTokens,
+      outputTokens: insightsUsage.outputTokens,
+      cachedInputTokens: insightsUsage.cachedInputTokens,
     });
 
     const result = response.choices[0]?.message?.content?.trim();

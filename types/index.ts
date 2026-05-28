@@ -176,6 +176,9 @@ export interface UserProfile {
   };
   // AI contextual memory (Pro+)
   memory?: UserMemorySettings;
+  // Lifetime aggregates of AI cost & token usage (written by lib/ai-cost/tracker).
+  // Used by the admin dashboard to surface per-user spend and rentability.
+  aiUsage?: AIUsageAggregate;
   // Help tooltips: pages the user has dismissed (synced across devices)
   helpReadPages?: string[];
   // Welcome modal flag (set by webhook after first payment, cleared on dismiss)
@@ -212,6 +215,28 @@ export interface AutonomousStrategistConfig {
   /** Last time the cron actually generated a batch for this user. Used by
    *  the cron itself as a dedup guard (no double-fire within 6 days). */
   lastTriggeredAt?: Timestamp;
+}
+
+/** Per-model / per-route sub-aggregate written by the AI cost tracker. */
+export interface AIUsageModelBreakdown {
+  inputTokens: number;
+  outputTokens: number;
+  costUSD: number;
+  calls: number;
+  /** Only present on image-generation routes. */
+  imageCount?: number;
+}
+
+/** Lifetime aggregate of AI spend for a single user. */
+export interface AIUsageAggregate {
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  totalCostUSD: number;
+  totalImagesGenerated?: number;
+  callsCount: number;
+  lastCallAt?: Timestamp;
+  byModel?: Record<string, AIUsageModelBreakdown>;
+  byRoute?: Record<string, AIUsageModelBreakdown>;
 }
 
 // Legacy quota constants (kept for compatibility)

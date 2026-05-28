@@ -107,7 +107,7 @@ export default function PersistentMobileHeader() {
     <header
       role="banner"
       aria-label="En-tête mobile"
-      className={`mobile-header lg:hidden fixed top-0 left-0 right-0 z-[60] transition-[background-color,border-color,box-shadow,backdrop-filter] duration-300 ease-out ${
+      className={`mobile-header lg:hidden fixed top-0 left-0 right-0 z-[40] transition-[background-color,border-color,box-shadow,backdrop-filter,filter,opacity] duration-300 ease-out ${
         isScrolled
           ? "backdrop-blur-xl backdrop-saturate-150 bg-white/60 dark:bg-black/40 border-b border-white/30 dark:border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.04)]"
           : "bg-transparent border-b border-transparent"

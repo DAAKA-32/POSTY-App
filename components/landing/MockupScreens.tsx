@@ -227,13 +227,11 @@ export function CopilotSection({ landing }: { landing: any }) {
       // so the page breathes consistently without locking a viewport.
       className="relative w-full overflow-visible py-16 sm:py-20 md:py-24 lg:py-28"
     >
-      {/* Background — warm wash + paired soft halos (top-right + bottom-left)
-          so the section gets the same ambient premium feel as the app's
-          per-route signature gradients. Heavier opacity than before (0.10 vs
-          0.06) so the orange actually reads on screen instead of vanishing. */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#FEF6F0] via-white to-[#FEF6F0]" />
-      <div className="absolute top-[8%] right-[4%] w-[480px] h-[480px] bg-[#F8935D]/[0.10] rounded-full blur-[140px] pointer-events-none" />
-      <div className="absolute bottom-[10%] left-[2%] w-[360px] h-[360px] bg-[#F76B54]/[0.07] rounded-full blur-[120px] pointer-events-none" />
+      {/* Background painting removed — the global LandingSceneEngine on
+          app/page.tsx now paints this section's ambient (schedule scene:
+          sky-blue + violet). The previous local peach wash + warm orbs were
+          opaque overlays that hid the engine and produced a peach "strip"
+          breaking the unified scroll narrative. */}
 
       {/* ── Content ────────────────────────────────────────────────── */}
       <div className="relative w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">

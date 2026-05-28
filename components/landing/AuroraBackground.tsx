@@ -130,7 +130,18 @@ function drawStar(
   ctx.restore();
 }
 
-export default function AuroraBackground() {
+interface AuroraBackgroundProps {
+  /**
+   * When `true`, hide the warm peach base gradient + the 4 warm orbs.
+   * Only the silver star canvas + dot grid remain. Use this when the
+   * surrounding container already paints its own ambient (e.g. the
+   * `posty-soft-welcome` signature gradient on the hero) — otherwise the
+   * peach base + warm orbs visually compete with the signature ambient.
+   */
+  transparent?: boolean;
+}
+
+export default function AuroraBackground({ transparent = false }: AuroraBackgroundProps = {}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef<number>(0);
   const particlesRef = useRef<Particle[]>([]);
@@ -236,12 +247,19 @@ export default function AuroraBackground() {
           const centerFade = 0.3 + 0.7 * Math.min(1, cx / 0.4);
           p.opacity = pulse * centerFade;
 
-          // Silver tones — cool metallic, slightly cold
+          // Silver tones — cool metallic, slightly cold.
+          // In `transparent` mode the canvas sits on top of an almost-white
+          // ambient (#FAFBFC), so the default silver (~RGB 135-160) blends
+          // into the background and reads as invisible. Shift the palette
+          // ~70 units darker so each star draws as a crisp dark-slate point
+          // against the light surface — same shape and motion, just enough
+          // contrast to actually be seen.
           const warmth =
             0.3 + 0.7 * Math.sin(time * 0.00015 + p.pulseOffset);
-          const r = Math.round(135 + warmth * 25); // 135-160
-          const g = Math.round(138 + warmth * 22); // 138-160
-          const b = Math.round(155 + warmth * 20); // 155-175
+          const tintShift = transparent ? -75 : 0;
+          const r = Math.round(135 + warmth * 25 + tintShift); // silver: 135-160 · transparent: 60-85
+          const g = Math.round(138 + warmth * 22 + tintShift); // silver: 138-160 · transparent: 63-85
+          const b = Math.round(155 + warmth * 20 + tintShift); // silver: 155-175 · transparent: 80-100
 
           // Soft radial glow behind star
           const grad = ctx.createRadialGradient(
@@ -299,49 +317,58 @@ export default function AuroraBackground() {
       cancelAnimationFrame(frameRef.current);
       window.removeEventListener("resize", handleResize);
     };
-  }, [initCanvas, mode, hydrated]);
+  }, [initCanvas, mode, hydrated, transparent]);
 
   return (
     <div
       className="fixed inset-0 overflow-hidden pointer-events-none"
       aria-hidden="true"
     >
-      {/* Layer 1 — Base gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#FEF3EE] via-[#FFFBF9] to-white" />
+      {/* Layers 1 + 2 — Base peach gradient + warm floating orbs. Skipped
+          in `transparent` mode so the host container's own ambient (e.g.
+          `posty-soft-welcome` on the hero) reads cleanly without the warm
+          wash competing on top. The silver stars + dot grid below still
+          render — that's the whole point of the "stars only" mode. */}
+      {!transparent && (
+        <>
+          {/* Layer 1 — Base gradient */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#FEF3EE] via-[#FFFBF9] to-white" />
 
-      {/* Layer 2 — Floating orbs (kept warm for brand identity) */}
-      <div
-        className="hero-orb absolute top-[8%] left-[3%] w-[350px] h-[300px] rounded-full will-change-transform"
-        style={{
-          background:
-            "radial-gradient(circle, rgba(248,147,93,0.07) 0%, transparent 70%)",
-          animation: "float-orb-1 25s ease-in-out infinite",
-        }}
-      />
-      <div
-        className="hero-orb absolute bottom-[10%] right-[3%] w-[400px] h-[350px] rounded-full will-change-transform"
-        style={{
-          background:
-            "radial-gradient(circle, rgba(247,107,84,0.05) 0%, transparent 70%)",
-          animation: "float-orb-2 30s ease-in-out infinite",
-        }}
-      />
-      <div
-        className="hero-orb absolute top-[45%] right-[6%] w-[250px] h-[250px] rounded-full will-change-transform"
-        style={{
-          background:
-            "radial-gradient(circle, rgba(248,168,120,0.06) 0%, transparent 65%)",
-          animation: "float-orb-3 20s ease-in-out infinite",
-        }}
-      />
-      <div
-        className="hero-orb absolute top-[30%] left-[8%] w-[200px] h-[200px] rounded-full will-change-transform"
-        style={{
-          background:
-            "radial-gradient(circle, rgba(248,147,93,0.04) 0%, transparent 60%)",
-          animation: "float-orb-2 22s ease-in-out infinite reverse",
-        }}
-      />
+          {/* Layer 2 — Floating orbs (kept warm for brand identity) */}
+          <div
+            className="hero-orb absolute top-[8%] left-[3%] w-[350px] h-[300px] rounded-full will-change-transform"
+            style={{
+              background:
+                "radial-gradient(circle, rgba(248,147,93,0.07) 0%, transparent 70%)",
+              animation: "float-orb-1 25s ease-in-out infinite",
+            }}
+          />
+          <div
+            className="hero-orb absolute bottom-[10%] right-[3%] w-[400px] h-[350px] rounded-full will-change-transform"
+            style={{
+              background:
+                "radial-gradient(circle, rgba(247,107,84,0.05) 0%, transparent 70%)",
+              animation: "float-orb-2 30s ease-in-out infinite",
+            }}
+          />
+          <div
+            className="hero-orb absolute top-[45%] right-[6%] w-[250px] h-[250px] rounded-full will-change-transform"
+            style={{
+              background:
+                "radial-gradient(circle, rgba(248,168,120,0.06) 0%, transparent 65%)",
+              animation: "float-orb-3 20s ease-in-out infinite",
+            }}
+          />
+          <div
+            className="hero-orb absolute top-[30%] left-[8%] w-[200px] h-[200px] rounded-full will-change-transform"
+            style={{
+              background:
+                "radial-gradient(circle, rgba(248,147,93,0.04) 0%, transparent 60%)",
+              animation: "float-orb-2 22s ease-in-out infinite reverse",
+            }}
+          />
+        </>
+      )}
 
       {/* Layer 3 — Canvas silver star particles.
           Hidden on mobile (< md): the 80+ animated star field looked busy on

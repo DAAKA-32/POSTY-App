@@ -650,8 +650,14 @@ function HistoryContent() {
       headerTitle={t.history.title}
       onPostUpdate={loadPosts}
     >
-      {/* Desktop: render content normally inside MainLayout */}
-      <div className="hidden lg:flex h-full">{contentInner}</div>
+      {/* Desktop: render content normally inside MainLayout.
+          `lg:block w-full` is critical — switching from `lg:flex` fixed the
+          left-aligned content bug. The old `flex` row left `contentInner`
+          sized to its intrinsic content width (~max-w-3xl ≈ 768px) instead
+          of filling main, so `mx-auto` was centering inside 768px instead
+          of the full ~1280px (viewport − sidebar). Block + w-full lets the
+          inner `mx-auto max-w-*` recipe center against the real main width. */}
+      <div className="hidden lg:block h-full w-full">{contentInner}</div>
 
       {/* Mobile: render content via React Portal so it bypasses every
           ancestor's containing block (no `lg:pl-[288px]` offset, no

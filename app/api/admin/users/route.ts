@@ -3,6 +3,8 @@ import { Timestamp } from "firebase-admin/firestore";
 import { requireAdmin } from "@/lib/admin";
 import { adminDb } from "@/lib/db/firebase-admin";
 import { getFounderOverridePlan } from "@/lib/config/plans";
+import { computeRentability } from "@/lib/ai-cost/rentability";
+import type { AIUsageAggregate } from "@/types";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -30,6 +32,16 @@ type AdminUserRow = {
   onboardingComplete: boolean;
   createdAt: number | null;
   language: string | null;
+  // AI cost & rentability — populated from users.aiUsage (written by
+  // lib/ai-cost/tracker). Zeros for users with no tracked calls.
+  aiTotalCostUSD: number;
+  aiTotalCalls: number;
+  aiTotalTokens: number;
+  aiAvgCostPerCallUSD: number;
+  monthlyRevenueUSD: number;
+  marginPctOneMonth: number | null;
+  rentabilityStatus: "no-data" | "profitable" | "watch" | "unprofitable" | "free";
+  aiLastCallAt: number | null;
 };
 
 function tsToMillis(value: unknown): number | null {
@@ -90,6 +102,7 @@ export async function GET(request: NextRequest) {
       const subscription = (data.subscription || {}) as Record<string, unknown>;
       const stats = (data.stats || {}) as Record<string, unknown>;
       const usage = (data.usage || {}) as Record<string, unknown>;
+      const aiUsage = (data.aiUsage as AIUsageAggregate | undefined) || undefined;
 
       // Apply the founder/gift override so whitelisted Max users are surfaced
       // with their EFFECTIVE plan/status, matching the runtime priority used
@@ -149,6 +162,19 @@ export async function GET(request: NextRequest) {
         createdAt: tsToMillis(data.createdAt),
         language:
           typeof data.language === "string" ? (data.language as string) : null,
+        ...(() => {
+          const r = computeRentability(effectivePlan, aiUsage);
+          return {
+            aiTotalCostUSD: r.totalCostUSD,
+            aiTotalCalls: r.totalCalls,
+            aiTotalTokens: r.totalTokens,
+            aiAvgCostPerCallUSD: r.avgCostPerCallUSD,
+            monthlyRevenueUSD: r.monthlyRevenueUSD,
+            marginPctOneMonth: r.marginPctOneMonth,
+            rentabilityStatus: r.status,
+            aiLastCallAt: tsToMillis(aiUsage?.lastCallAt),
+          };
+        })(),
       };
     });
 

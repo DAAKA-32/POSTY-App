@@ -58,7 +58,10 @@ export async function POST(request: NextRequest) {
     });
 
     if (result.success) {
-      await Promise.all([
+      // Audit writes use allSettled: the Discord post already shipped, so a
+      // Firestore failure must NOT trigger a 500 (the client would retry and
+      // double-post on Discord). Log the failure, return success.
+      const auditResults = await Promise.allSettled([
         updateDiscordLastUsedAdmin(userId),
         saveDiscordPostAdmin(userId, {
           webhookId: connection.webhookId,
@@ -68,6 +71,11 @@ export async function POST(request: NextRequest) {
           success: true,
         }),
       ]);
+      for (const r of auditResults) {
+        if (r.status === "rejected") {
+          console.error("Discord audit write failed (post still published):", r.reason);
+        }
+      }
       return NextResponse.json(result);
     }
 

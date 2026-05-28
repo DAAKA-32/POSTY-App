@@ -9,6 +9,7 @@ import { isAdminInitialized } from "@/lib/db/firebase-admin";
 import { canAnalyzePosts } from "@/lib/config/plan-features";
 import { SubscriptionPlan, PostAnalysis } from "@/types";
 import { verifyAuth } from "@/lib/auth";
+import { trackAIUsage, readUsageFromResponse } from "@/lib/ai-cost/tracker";
 
 /**
  * POST /api/analyze
@@ -106,14 +107,26 @@ export async function POST(request: NextRequest) {
 
     // Generate analysis
     const lang = language === "en" ? "en" : "fr";
+    const model = "gpt-4";
     const response = await openaiService["client"].chat.completions.create({
-      model: "gpt-4",
+      model,
       messages: [
         { role: "system", content: ANALYSIS_PROMPT[lang] },
         { role: "user", content: postContent },
       ],
       temperature: 0.5,
       max_tokens: 800,
+    });
+
+    const usage = readUsageFromResponse(response);
+    void trackAIUsage({
+      userId,
+      route: "analyze",
+      model,
+      inputTokens: usage.inputTokens,
+      outputTokens: usage.outputTokens,
+      cachedInputTokens: usage.cachedInputTokens,
+      metadata: { plan: userPlan, language: lang },
     });
 
     const content = response.choices[0]?.message?.content;

@@ -192,7 +192,7 @@ export default function LoginPage() {
   // This state is very brief as router.push happens immediately
   if (redirecting || user) {
     return (
-      <div className="min-h-screen bg-background-warm flex items-center justify-center">
+      <div className="posty-soft-welcome min-h-screen flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-warm-orange/30 border-t-warm-orange rounded-full animate-spin" />
       </div>
     );
@@ -200,33 +200,12 @@ export default function LoginPage() {
 
   // Only render the login page if user is definitely NOT authenticated
   return (
-    <div className="min-h-[100dvh] bg-background-warm overflow-x-hidden">
-      {/* Warm ambient blobs — saturated enough that the glass-card backdrop-filter
-          actually reveals color. Sober palette (peach + coral + soft rose accent)
-          aligned with the brand signature gradient. */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.9, ease: smoothEase }}
-          className="absolute -top-[15%] -right-[10%] w-[70%] h-[70%] rounded-full blur-[110px]"
-          style={{ background: "radial-gradient(circle, rgba(248,147,93,0.32) 0%, rgba(247,107,84,0.18) 45%, transparent 75%)" }}
-        />
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.9, delay: 0.15, ease: smoothEase }}
-          className="absolute -bottom-[20%] -left-[15%] w-[65%] h-[65%] rounded-full blur-[110px]"
-          style={{ background: "radial-gradient(circle, rgba(251,185,173,0.38) 0%, rgba(248,147,93,0.18) 40%, transparent 75%)" }}
-        />
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1.1, delay: 0.3, ease: smoothEase }}
-          className="absolute top-[35%] left-[42%] -translate-x-1/2 w-[40%] h-[40%] rounded-full blur-[90px]"
-          style={{ background: "radial-gradient(circle, rgba(241,52,82,0.14) 0%, rgba(139,92,246,0.08) 55%, transparent 75%)" }}
-        />
-      </div>
+    <div className="posty-soft-welcome min-h-[100dvh] overflow-x-hidden">
+      {/* Ambient background is now painted by the shared `posty-soft-welcome`
+          class — the exact same fixed `::before` 5-layer radial gradient used
+          inside /app (orange + rose, see app/globals.css). The previous 3
+          locally-animated blurred blobs were replaced so the login page reads
+          as the same "room" the user enters after authenticating. */}
 
       {/* Mobile Layout - Independent scroll container for PWA compatibility */}
       <div
@@ -285,8 +264,10 @@ export default function LoginPage() {
 
       {/* Desktop Layout */}
       <div className="hidden md:block min-h-[100dvh] relative z-10">
-        {/* Left: Premium Branding Area - Fixed so it never scrolls */}
-        <div className="fixed top-0 left-0 w-1/2 h-[100dvh] bg-background-peach flex flex-col items-center justify-center overflow-hidden z-10">
+        {/* Left: Premium Branding Area - Fixed so it never scrolls.
+            Transparent now so the page-wide `posty-soft-welcome` ambient
+            shows through uniformly across both halves, matching /app. */}
+        <div className="fixed top-0 left-0 w-1/2 h-[100dvh] flex flex-col items-center justify-center overflow-hidden z-10">
           {/* Additional warm accent for left panel - animated */}
           <div className="absolute inset-0 pointer-events-none">
             <motion.div
@@ -361,8 +342,11 @@ export default function LoginPage() {
           </motion.div>
         </div>
 
-        {/* Right: Auth Panel — fixed independent scroll container */}
-        <div className="fixed top-0 right-0 w-1/2 h-[100dvh] overflow-y-auto overflow-x-hidden overscroll-contain bg-background-warm" data-allow-scroll>
+        {/* Right: Auth Panel — fixed independent scroll container.
+            Transparent (no `bg-background-warm`) so the page-wide
+            `posty-soft-welcome` ambient covers this half uniformly with
+            the left, matching /app. */}
+        <div className="fixed top-0 right-0 w-1/2 h-[100dvh] overflow-y-auto overflow-x-hidden overscroll-contain" data-allow-scroll>
           <div className="min-h-full flex flex-col px-6 lg:px-10 xl:px-14 py-6">
             {/* Form — flex-1 centered with mt-auto/mb-auto on child */}
             <motion.div

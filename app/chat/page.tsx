@@ -188,7 +188,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="h-screen bg-transparent flex flex-col overflow-hidden app-layout">
+    <div className="h-screen h-[100dvh] bg-transparent flex flex-col overflow-hidden app-layout">
       {/* Header */}
       <header className="flex-shrink-0 bg-white/95 dark:bg-dark-card/95 backdrop-blur-xl border-b border-gray-200 dark:border-dark-border z-40 pwa-fixed-header">
         <div className="max-w-2xl mx-auto px-4 h-16 flex items-center justify-between">

@@ -2306,6 +2306,23 @@ html.light .app-layout main {
   body:not(.mobile-sidebar-open) .app-layout > main {
     transition: filter 0.15s ease-in;
   }
+  /* PersistentMobileHeader lives at the root layout (sibling of {children}),
+     OUTSIDE .app-layout. The blur rule above does not reach it, so without
+     this companion rule it would float in front of the drawer's backdrop,
+     fully crisp. We blur + fade it in lockstep with <main> so the user
+     reads a single "page pushed behind the drawer" gesture across the
+     entire viewport. The header's own z-[40] sits BELOW the drawer's
+     overlay (z=60) and panel (z=70), so layering is already correct —
+     this purely handles the cosmetic absorption into the background. */
+  body.mobile-sidebar-open .mobile-header {
+    filter: blur(6px);
+    opacity: 0.6;
+    transition: filter 0.2s ease-out, opacity 0.2s ease-out;
+    pointer-events: none;
+  }
+  body:not(.mobile-sidebar-open) .mobile-header {
+    transition: filter 0.15s ease-in, opacity 0.15s ease-in;
+  }
 }
 
 html.light header {
@@ -7306,24 +7323,27 @@ html.dark .fixed-input-area::before {
   background: transparent;
 }
 
-/* Mobile/Tablet: quasi-collé au bas de l'écran */
+/* Mobile/Tablet: collé au bas de l'écran (flush like ChatGPT/Claude) */
 @media (max-width: 1023px) {
   .fixed-input-area {
-    /* Minimum 8px bottom padding so the input is never clipped on tablets
-       where env(safe-area-inset-bottom) resolves to 0 */
-    padding-bottom: max(8px, env(safe-area-inset-bottom));
+    /* Flush against the bottom edge. On notched devices, env() lifts the bar
+       above the home indicator. On non-notched devices, env() resolves to 0
+       and the bar sits exactly at the screen edge — no artificial floor. */
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
-  /* Mobile browser mode - additional padding for browser UI when in browser (not PWA) */
+  /* Mobile browser mode — only add extra space when visualViewport ACTUALLY
+     reports a toolbar overlap. `--input-bottom-padding` is 0 in 99% of cases
+     on modern iOS 15+ Safari / Android Chrome (the visual viewport already
+     excludes the toolbar). */
   @media not all and (display-mode: standalone) {
     .fixed-input-area.mobile-browser-mode {
-      /* Dynamic padding set by JavaScript based on browser UI */
-      padding-bottom: calc(env(safe-area-inset-bottom) + var(--input-bottom-padding, 0px));
+      padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--input-bottom-padding, 0px));
     }
 
-    /* When keyboard is visible, minimal padding */
+    /* When keyboard is visible: flush bottom, lifted by keyboard height */
     .fixed-input-area.mobile-browser-mode.keyboard-visible {
-      padding-bottom: env(safe-area-inset-bottom);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
       transform: translateY(calc(-1 * var(--keyboard-height, 0px)));
     }
   }
@@ -7354,24 +7374,26 @@ html.dark .fixed-input-area::before {
 
 /* Content padding to prevent overlap with fixed input + mode selector */
 .content-with-fixed-input {
-  /* Desktop: input (~56px) + mode selector (~50px) + margin (~74px) */
-  padding-bottom: calc(180px + env(safe-area-inset-bottom, 16px));
+  /* Desktop: input (~56px) + mode selector (~50px) + breathing room */
+  padding-bottom: calc(160px + env(safe-area-inset-bottom, 0px));
 }
 
-/* Mobile content padding */
+/* Mobile content padding — sized to the actual bar height (~64px input
+   + ~50px mode selector + ~16px breathing) instead of the legacy 200px
+   estimate that left a large empty gap above the input. */
 @media (max-width: 1023px) {
   .content-with-fixed-input {
-    /* Mobile: input + mode selector + bottom nav + margin */
-    padding-bottom: calc(200px + env(safe-area-inset-bottom, 16px));
+    padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px));
   }
 
-  /* Mobile browser mode - account for browser UI */
+  /* Mobile browser mode — only adds whatever the live visualViewport reports
+     via `--input-bottom-padding`. Default 0 (no artificial baseline). */
   @media not all and (display-mode: standalone) {
     .content-with-fixed-input.mobile-browser-mode {
       padding-bottom: calc(
-        200px +
-        env(safe-area-inset-bottom, 16px) +
-        var(--input-bottom-padding, 60px)
+        140px +
+        env(safe-area-inset-bottom, 0px) +
+        var(--input-bottom-padding, 0px)
       );
     }
   }

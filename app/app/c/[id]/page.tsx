@@ -16,7 +16,7 @@ import { getCachedConversation, setCachedConversation } from "@/lib/storage/conv
 import { getPlanFeatures } from "@/lib/config/plan-features";
 import { Post } from "@/types";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
-import MainLayout from "@/components/layout/MainLayout";
+import { useSidebarPostsOptional } from "@/contexts/SidebarPostsContext";
 import ChatMessage, { TypingIndicator, GenerationLoader } from "@/components/chat/ChatMessage";
 import ModernAIResponsePair from "@/components/chat/ModernAIResponsePair";
 import ModernResponseCard from "@/components/chat/ModernResponseCard";
@@ -57,6 +57,9 @@ function ConversationContent() {
   const { t } = useLanguage();
 
   const { user, userProfile } = useAuth();
+  // Shared sidebar posts — refresh through context so the persistent shell's
+  // sidebar reflects new messages without remounting.
+  const sidebarPosts = useSidebarPostsOptional();
   const { connection: linkedInConnection, publishToLinkedIn } = useLinkedIn();
   const { canSendMessage } = useQuota();
   const { currentPlan, planLimits, isMaxPlan, isProPlan } = useSubscription();
@@ -605,9 +608,12 @@ function ConversationContent() {
       getUserPostsWithPinned(user.uid, 20).then((userPosts) => {
         setPosts(userPosts);
         userPosts.forEach((p) => setCachedConversation(p));
+        // Mirror into the shared sidebar so the persistent shell picks up
+        // the new title / latest-message timestamp without a remount.
+        userPosts.forEach((p) => sidebarPosts?.upsertPost(p));
       }).catch(() => {});
     }
-  }, [user, isStreaming]);
+  }, [user, isStreaming, sidebarPosts]);
 
   // Auto-resize textarea
   const resizeTextarea = useCallback(() => {
@@ -907,22 +913,23 @@ function ConversationContent() {
   const userName = userProfile?.displayName || "Vous";
   const userPhotoURL = user?.photoURL || userProfile?.photoURL || null;
 
-  // Loading state
+  // Loading state — the persistent shell (app/app/layout.tsx) provides the
+  // sidebar + gradient ambient, so this page only needs to render its
+  // conversation content. No <MainLayout> wrapper here: it would remount
+  // the shell and produce the empty-screen flash users reported.
   if (isLoadingPost) {
     return (
-      <MainLayout posts={posts} showMobileHeader={true}>
-        <div className="flex items-center justify-center h-full">
-          <div className="text-center">
-            <div className="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-text-muted">Chargement de la conversation...</p>
-          </div>
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <div className="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-text-muted">Chargement de la conversation...</p>
         </div>
-      </MainLayout>
+      </div>
     );
   }
 
   return (
-    <MainLayout posts={posts} showMobileHeader={true}>
+    <>
       <div className="flex flex-col h-full app-content-wrapper">
         {/* Messages area - with padding for content to scroll behind fixed input */}
         <div
@@ -1720,7 +1727,7 @@ function ConversationContent() {
         content={scheduleContent}
         seedCommentText={scheduleSeedText}
       />
-    </MainLayout>
+    </>
   );
 }
 

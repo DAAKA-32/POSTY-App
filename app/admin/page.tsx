@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { authFetch } from "@/lib/api/client";
@@ -15,6 +16,13 @@ type AdminStats = {
   newUsersLast30Days: number;
   totalPostsTracked: number;
 };
+
+type RentabilityStatus =
+  | "no-data"
+  | "profitable"
+  | "watch"
+  | "unprofitable"
+  | "free";
 
 type AdminUserRow = {
   id: string;
@@ -36,6 +44,14 @@ type AdminUserRow = {
   onboardingComplete: boolean;
   createdAt: number | null;
   language: string | null;
+  aiTotalCostUSD: number;
+  aiTotalCalls: number;
+  aiTotalTokens: number;
+  aiAvgCostPerCallUSD: number;
+  monthlyRevenueUSD: number;
+  marginPctOneMonth: number | null;
+  rentabilityStatus: RentabilityStatus;
+  aiLastCallAt: number | null;
 };
 
 type AnalyticsDay = {
@@ -88,6 +104,52 @@ function formatRelative(ms: number | null): string {
   const days = Math.floor(hours / 24);
   if (days < 30) return `il y a ${days} j`;
   return formatDate(ms);
+}
+
+function formatUSD(value: number, fractionDigits: number = 2): string {
+  if (!Number.isFinite(value)) return "—";
+  if (value === 0) return "$0";
+  if (value < 0.01) return `$${value.toFixed(4)}`;
+  return `$${value.toFixed(fractionDigits)}`;
+}
+
+function formatCompact(value: number): string {
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+  if (value >= 1_000) return `${(value / 1_000).toFixed(1)}k`;
+  return `${value}`;
+}
+
+function RentabilityBadge({ status, margin }: { status: RentabilityStatus; margin: number | null }) {
+  const map: Record<RentabilityStatus, { label: string; cls: string }> = {
+    profitable: {
+      label: margin !== null ? `+${margin.toFixed(0)}%` : "Rentable",
+      cls: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/20",
+    },
+    watch: {
+      label: margin !== null ? `${margin.toFixed(0)}%` : "À surveiller",
+      cls: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/20",
+    },
+    unprofitable: {
+      label: margin !== null ? `${margin.toFixed(0)}%` : "Déficitaire",
+      cls: "bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-300 dark:border-red-500/20",
+    },
+    free: {
+      label: "Free",
+      cls: "bg-gray-50 text-gray-500 border-gray-200 dark:bg-white/5 dark:text-gray-400 dark:border-white/10",
+    },
+    "no-data": {
+      label: "—",
+      cls: "bg-gray-50 text-gray-400 border-gray-200 dark:bg-white/5 dark:text-gray-500 dark:border-white/10",
+    },
+  };
+  const { label, cls } = map[status];
+  return (
+    <span
+      className={`inline-flex items-center px-2 py-0.5 text-[11px] font-medium rounded-md border ${cls}`}
+    >
+      {label}
+    </span>
+  );
 }
 
 function PlanBadge({ plan }: { plan: string | null }) {
@@ -336,6 +398,24 @@ export default function AdminPage() {
     });
   }, [users, search, planFilter]);
 
+  // Aggregate AI cost / revenue across the loaded user set. Computed client-side
+  // so it always reflects the current filter (admin can scope "Pro users only"
+  // and see the partial totals — useful for plan-level rentability checks).
+  const aiTotals = useMemo(() => {
+    return filteredUsers.reduce(
+      (acc, u) => {
+        acc.totalCostUSD += u.aiTotalCostUSD;
+        acc.totalCalls += u.aiTotalCalls;
+        acc.totalTokens += u.aiTotalTokens;
+        acc.monthlyRevenueUSD += u.monthlyRevenueUSD;
+        if (u.rentabilityStatus === "unprofitable") acc.unprofitable += 1;
+        if (u.rentabilityStatus === "watch") acc.watch += 1;
+        return acc;
+      },
+      { totalCostUSD: 0, totalCalls: 0, totalTokens: 0, monthlyRevenueUSD: 0, unprofitable: 0, watch: 0 }
+    );
+  }, [filteredUsers]);
+
   // Discretion: if backend rejects (or user is logged out), render the
   // standard Next.js 404. The API never returns 401/403, so an unauthorized
   // visitor cannot tell whether the route exists.
@@ -475,6 +555,47 @@ export default function AdminPage() {
         ) : null}
 
         <section>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-base font-semibold">Coûts IA & rentabilité</h2>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                Agrégé sur les utilisateurs filtrés ({filteredUsers.length}) ·
+                données depuis l&apos;instrumentation
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-8">
+            <StatCard
+              label="Coût IA cumulé"
+              value={formatUSD(aiTotals.totalCostUSD)}
+              hint={`${formatCompact(aiTotals.totalCalls)} appels · ${formatCompact(aiTotals.totalTokens)} tokens`}
+            />
+            <StatCard
+              label="Revenu mensuel (MRR)"
+              value={formatUSD(aiTotals.monthlyRevenueUSD, 0)}
+              hint="Somme des plans payants"
+            />
+            <StatCard
+              label="Marge brute IA / mois"
+              value={
+                aiTotals.monthlyRevenueUSD > 0
+                  ? `${Math.round(((aiTotals.monthlyRevenueUSD - aiTotals.totalCostUSD) / aiTotals.monthlyRevenueUSD) * 100)}%`
+                  : "—"
+              }
+              hint={`Coût ${formatUSD(aiTotals.totalCostUSD)} / Rev ${formatUSD(aiTotals.monthlyRevenueUSD, 0)}`}
+            />
+            <StatCard
+              label="À surveiller"
+              value={aiTotals.watch}
+              hint="Coût > 40% du revenu"
+            />
+            <StatCard
+              label="Déficitaires"
+              value={aiTotals.unprofitable}
+              hint="Coût > 90% du revenu"
+            />
+          </div>
+
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
             <h2 className="text-base font-semibold">
               Utilisateurs{" "}
@@ -518,20 +639,23 @@ export default function AdminPage() {
                     <th className="px-4 py-3 font-medium">Statut</th>
                     <th className="px-4 py-3 font-medium text-right">Posts</th>
                     <th className="px-4 py-3 font-medium text-right">
-                      Sessions
-                    </th>
-                    <th className="px-4 py-3 font-medium text-right">
                       Convos&nbsp;(mois)
                     </th>
+                    <th className="px-4 py-3 font-medium text-right">
+                      Coût IA
+                    </th>
+                    <th className="px-4 py-3 font-medium text-right">
+                      Tokens
+                    </th>
+                    <th className="px-4 py-3 font-medium">Rentabilité</th>
                     <th className="px-4 py-3 font-medium">Dernière activité</th>
-                    <th className="px-4 py-3 font-medium">Inscrit le</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-white/5">
                   {filteredUsers.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={8}
+                        colSpan={9}
                         className="px-4 py-12 text-center text-sm text-gray-500 dark:text-gray-400"
                       >
                         Aucun utilisateur ne correspond aux filtres.
@@ -541,10 +665,17 @@ export default function AdminPage() {
                     filteredUsers.map((u) => (
                       <tr
                         key={u.id}
-                        className="hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors"
+                        className="hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors cursor-pointer"
+                        onClick={() => {
+                          window.location.href = `/admin/users/${u.id}`;
+                        }}
                       >
                         <td className="px-4 py-3">
-                          <div className="flex items-center gap-3 min-w-0">
+                          <Link
+                            href={`/admin/users/${u.id}`}
+                            className="flex items-center gap-3 min-w-0 hover:opacity-90"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <div className="h-8 w-8 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 dark:from-white/10 dark:to-white/5 flex items-center justify-center text-xs font-medium text-gray-600 dark:text-gray-300 shrink-0">
                               {(u.displayName || u.email || "?")
                                 .charAt(0)
@@ -558,7 +689,7 @@ export default function AdminPage() {
                                 {u.email || u.id}
                               </div>
                             </div>
-                          </div>
+                          </Link>
                         </td>
                         <td className="px-4 py-3">
                           <PlanBadge plan={u.plan} />
@@ -575,9 +706,6 @@ export default function AdminPage() {
                           {u.postsCount}
                         </td>
                         <td className="px-4 py-3 text-right tabular-nums text-gray-700 dark:text-gray-200">
-                          {u.sessionsCount}
-                        </td>
-                        <td className="px-4 py-3 text-right tabular-nums text-gray-700 dark:text-gray-200">
                           {u.conversationsThisMonth}
                           {u.conversationsThisWeek > 0 ? (
                             <span className="ml-1 text-[10px] text-gray-400 dark:text-gray-500">
@@ -585,11 +713,25 @@ export default function AdminPage() {
                             </span>
                           ) : null}
                         </td>
-                        <td className="px-4 py-3 text-gray-600 dark:text-gray-300">
-                          {formatRelative(u.lastActive ?? u.lastConversationDate)}
+                        <td className="px-4 py-3 text-right tabular-nums text-gray-700 dark:text-gray-200">
+                          {formatUSD(u.aiTotalCostUSD)}
+                          {u.aiTotalCalls > 0 ? (
+                            <span className="ml-1 text-[10px] text-gray-400 dark:text-gray-500">
+                              · {u.aiTotalCalls}
+                            </span>
+                          ) : null}
+                        </td>
+                        <td className="px-4 py-3 text-right tabular-nums text-gray-700 dark:text-gray-200">
+                          {u.aiTotalTokens > 0 ? formatCompact(u.aiTotalTokens) : "—"}
+                        </td>
+                        <td className="px-4 py-3">
+                          <RentabilityBadge
+                            status={u.rentabilityStatus}
+                            margin={u.marginPctOneMonth}
+                          />
                         </td>
                         <td className="px-4 py-3 text-gray-600 dark:text-gray-300">
-                          {formatDate(u.createdAt)}
+                          {formatRelative(u.lastActive ?? u.lastConversationDate ?? u.aiLastCallAt)}
                         </td>
                       </tr>
                     ))

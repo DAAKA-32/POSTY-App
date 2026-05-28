@@ -18,9 +18,11 @@ import { verifyAuth } from "@/lib/auth";
 import {
   classifyContentIntent,
   fastClassifyIntent,
+  INTENT_MODEL,
   type ContentIntent,
   type PostType,
 } from "@/lib/ai/content-intent";
+import { trackAIUsage } from "@/lib/ai-cost/tracker";
 
 /**
  * Map a top-level intent onto a default postType. The LLM classifier doesn't
@@ -88,8 +90,17 @@ export async function POST(request: NextRequest) {
 
   // Slow path: actual LLM classification.
   try {
-    const intent = await classifyContentIntent(prompt, hasPriorConversation);
+    const { intent, usage } = await classifyContentIntent(prompt, hasPriorConversation);
     const postType = inferPostType(intent.intent, prompt);
+    void trackAIUsage({
+      userId: auth.uid,
+      route: "intent",
+      model: INTENT_MODEL,
+      inputTokens: usage.inputTokens,
+      outputTokens: usage.outputTokens,
+      cachedInputTokens: usage.cachedInputTokens,
+      metadata: { intent: intent.intent, confidence: intent.confidence },
+    });
     console.info("[intent]", { source: "llm", intent: intent.intent, postType, confidence: intent.confidence, elapsedMs: Date.now() - t0, promptLen: prompt.length });
     return NextResponse.json({ ...intent, postType, source: "llm" });
   } catch (err) {

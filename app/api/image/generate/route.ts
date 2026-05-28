@@ -39,6 +39,7 @@ import {
   computeDiversityBias,
   type ImageGenHistoryEntry,
 } from "@/lib/image-gen/history";
+import { trackAIUsage, readUsageFromResponse } from "@/lib/ai-cost/tracker";
 
 export const runtime = "nodejs";
 // Satori font fetch + render typically takes 800-2000ms end-to-end. With
@@ -256,6 +257,16 @@ Rules:
           { role: "user", content: directorUser },
         ],
       });
+      const directorUsage = readUsageFromResponse(completion);
+      void trackAIUsage({
+        userId: uid,
+        route: "image.generate",
+        model: "gpt-4o-mini",
+        inputTokens: directorUsage.inputTokens,
+        outputTokens: directorUsage.outputTokens,
+        cachedInputTokens: directorUsage.cachedInputTokens,
+        metadata: { step: "director", variants: n },
+      });
       const raw = completion.choices[0]?.message?.content;
       if (!raw) return null;
       const parsed = JSON.parse(raw) as { angles?: Array<Partial<VariantAngle>> };
@@ -380,6 +391,16 @@ Rules:
           temperature: 0.7 + Math.min(variantIndex, 2) * 0.1,
           max_tokens: 600,
           messages,
+        });
+        const dslUsage = readUsageFromResponse(completion);
+        void trackAIUsage({
+          userId: uid,
+          route: "image.generate",
+          model: "gpt-4o-mini",
+          inputTokens: dslUsage.inputTokens,
+          outputTokens: dslUsage.outputTokens,
+          cachedInputTokens: dslUsage.cachedInputTokens,
+          metadata: { step: "dsl", variantIndex, attempt },
         });
         raw = completion.choices[0]?.message?.content ?? null;
       } catch (err) {

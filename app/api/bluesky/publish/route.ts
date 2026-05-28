@@ -99,7 +99,10 @@ export async function POST(request: NextRequest) {
     }
 
     if (result.success && result.uri && result.cid) {
-      await Promise.all([
+      // Audit writes use allSettled: the Bluesky post already shipped, so a
+      // Firestore failure must NOT trigger a 500 (the client would retry and
+      // double-post on Bluesky). Log the failure, return success.
+      const auditResults = await Promise.allSettled([
         updateBlueskyLastUsedAdmin(userId),
         saveBlueskyPostAdmin(userId, {
           did: connection.did,
@@ -110,6 +113,11 @@ export async function POST(request: NextRequest) {
           success: true,
         }),
       ]);
+      for (const r of auditResults) {
+        if (r.status === "rejected") {
+          console.error("Bluesky audit write failed (post still published):", r.reason);
+        }
+      }
       return NextResponse.json(result);
     }
 

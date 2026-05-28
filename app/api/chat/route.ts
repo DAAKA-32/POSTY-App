@@ -15,6 +15,11 @@ import {
 import { isAdminInitialized } from "@/lib/db/firebase-admin";
 import { getPlanLimits, getMaxTokensForPlan, PlanType } from "@/lib/config/plans";
 import { verifyAuth } from "@/lib/auth";
+import {
+  trackAIUsage,
+  readUsageFromChunk,
+  emptyUsage,
+} from "@/lib/ai-cost/tracker";
 
 /**
  * POST /api/chat
@@ -229,16 +234,21 @@ export async function POST(request: NextRequest) {
             })),
           ];
 
-          // Stream the response
+          // Stream the response. include_usage emits a final chunk with the
+          // exact prompt/completion token counts, which the AI-cost tracker
+          // needs to attribute the spend to this user.
+          const modelUsed = openaiService["model"];
           const streamResponse = await openaiService["client"].chat.completions.create({
-            model: openaiService["model"],
+            model: modelUsed,
             messages: chatMessages,
             temperature: 0.7,
             max_tokens: maxTokens,
             stream: true,
+            stream_options: { include_usage: true },
           });
 
           let fullContent = "";
+          let usage = emptyUsage();
 
           for await (const chunk of streamResponse) {
             const content = chunk.choices[0]?.delta?.content || "";
@@ -246,6 +256,8 @@ export async function POST(request: NextRequest) {
               fullContent += content;
               sendEvent("chunk", { content });
             }
+            const captured = readUsageFromChunk(chunk);
+            if (captured) usage = captured;
           }
 
           // Increment quota after successful response
@@ -256,6 +268,17 @@ export async function POST(request: NextRequest) {
               console.error("Quota increment error:", incrementError);
             }
           }
+
+          // Fire-and-forget cost tracking — must never block the response.
+          void trackAIUsage({
+            userId,
+            route: "chat",
+            model: modelUsed,
+            inputTokens: usage.inputTokens,
+            outputTokens: usage.outputTokens,
+            cachedInputTokens: usage.cachedInputTokens,
+            metadata: { plan: userPlan ?? "unknown", language },
+          });
 
           sendEvent("done", { fullContent });
         } catch (error) {

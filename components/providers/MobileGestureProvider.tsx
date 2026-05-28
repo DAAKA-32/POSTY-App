@@ -1,7 +1,9 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, useRef, ReactNode } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useSidebar } from "@/contexts/SidebarContext";
+import { triggerHaptic } from "@/hooks/ui/useHapticFeedback";
 
 /**
  * MobileGestureProvider - Gestionnaire de gestes tactiles pour mobile
@@ -54,13 +56,17 @@ interface MobileGestureProviderProps {
 }
 
 // Edge zone width for starting swipe (in pixels)
-const SWIPE_EDGE_ZONE = 30;
+// Widened from 30 → 40 so the gesture catches even when the user's thumb
+// lands slightly inside the viewport — matches ChatGPT / Telegram tolerance.
+const SWIPE_EDGE_ZONE = 40;
 // Minimum swipe distance to trigger action
 const MIN_SWIPE_DISTANCE = 80;
 // Maximum swipe time (in ms)
 const MAX_SWIPE_TIME = 500;
 // Sidebar width for close detection
 const SIDEBAR_WIDTH = 320;
+// Distance after which we trigger a soft haptic to signal "tracking"
+const HAPTIC_START_THRESHOLD = 24;
 
 export default function MobileGestureProvider({ children }: MobileGestureProviderProps) {
   // Use the unified sidebar context instead of local state
@@ -102,6 +108,7 @@ export default function MobileGestureProvider({ children }: MobileGestureProvide
     let isTracking = false;
     let swipeType: "open" | "close" | null = null;
     let isSwipeGesture = false; // Flag to indicate we're handling a swipe
+    let hasHapticFired = false; // Soft haptic only once per gesture
 
     const handleTouchStart = (e: TouchEvent) => {
       const touch = e.touches[0];
@@ -133,6 +140,7 @@ export default function MobileGestureProvider({ children }: MobileGestureProvide
         startX = touch.clientX;
         startY = touch.clientY;
         startTime = Date.now();
+        hasHapticFired = false;
       }
     };
 
@@ -158,6 +166,14 @@ export default function MobileGestureProvider({ children }: MobileGestureProvide
       // This blocks browser back/forward gestures and pull-to-refresh
       e.preventDefault();
       e.stopPropagation();
+
+      // Fire a single soft haptic once the gesture is clearly horizontal —
+      // signals "tracking" to the user without waiting for commit.
+      const absDeltaX = Math.abs(deltaX);
+      if (!hasHapticFired && absDeltaX >= HAPTIC_START_THRESHOLD) {
+        triggerHaptic("light");
+        hasHapticFired = true;
+      }
 
       if (swipeType === "open" && deltaX > 0) {
         // Swiping right to open (only when sidebar is closed)
@@ -213,6 +229,7 @@ export default function MobileGestureProvider({ children }: MobileGestureProvide
       isTracking = false;
       swipeType = null;
       isSwipeGesture = false;
+      hasHapticFired = false;
       setSwipeProgress(0);
       setIsSwipingToOpen(false);
       setIsSwipingToClose(false);
@@ -301,8 +318,11 @@ export default function MobileGestureProvider({ children }: MobileGestureProvide
       }
 
       const touch = e.touches[0];
-      // Block swipes starting from the very edge (browser gesture zone)
-      if (touch.clientX <= 15 || touch.clientX >= window.innerWidth - 15) {
+      // Block swipes starting from the very edge (browser gesture zone).
+      // 20px — wider than the system swipe-back detection zone on iOS
+      // Safari (~12-16px) so we get the touchstart first and can call
+      // preventDefault before the OS-level back gesture fires.
+      if (touch.clientX <= 20 || touch.clientX >= window.innerWidth - 20) {
         // Only block if it's a horizontal movement
         if (e.touches.length === 1) {
           const target = e.target as HTMLElement;
@@ -356,42 +376,88 @@ export default function MobileGestureProvider({ children }: MobileGestureProvide
 }
 
 /**
- * SwipeIndicator - Visual feedback for swipe gesture
- * Shows a subtle indicator when user is swiping to open/close sidebar
+ * SwipeIndicator — Premium visual feedback for the swipe-to-open / swipe-to-close
+ * gesture. Mirrors the polish of SwipeBackIndicator: gradient peek bar at the
+ * tracked edge, animated chevron with backdrop-blur, and a soft viewport shade
+ * that ramps with progress. Pointer-events disabled so it never steals taps.
  */
 export function SwipeIndicator() {
   const { isSwipingToOpen, isSwipingToClose, swipeProgress } = useMobileGesture();
-
-  // Don't show indicator if not swiping
-  if (!isSwipingToOpen && !isSwipingToClose) return null;
+  const isActive = isSwipingToOpen || isSwipingToClose;
+  const fromLeft = isSwipingToOpen;
 
   return (
-    <div
-      className={`
-        fixed top-1/2 -translate-y-1/2 z-[100] pointer-events-none
-        transition-opacity duration-150
-        ${isSwipingToOpen ? "left-0" : "right-0"}
-      `}
-      style={{
-        opacity: swipeProgress * 0.8,
-        transform: `translateY(-50%) translateX(${isSwipingToOpen ? swipeProgress * 20 : -swipeProgress * 20}px)`,
-      }}
-    >
-      <div className="w-8 h-8 bg-dark-card border border-dark-border rounded-full flex items-center justify-center shadow-lg">
-        <svg
-          className="w-4 h-4 text-primary"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d={isSwipingToOpen ? "M9 5l7 7-7 7" : "M15 19l-7-7 7-7"}
+    <AnimatePresence>
+      {isActive && (
+        <>
+          {/* Peek gradient at the tracked edge — hints "sidebar is coming from here" */}
+          <motion.div
+            initial={{ opacity: 0, x: fromLeft ? -60 : 60 }}
+            animate={{
+              opacity: swipeProgress * 0.5,
+              x: fromLeft ? swipeProgress * 60 - 60 : 60 - swipeProgress * 60,
+            }}
+            exit={{ opacity: 0, x: fromLeft ? -60 : 60 }}
+            transition={{ duration: 0.1 }}
+            className={`fixed inset-y-0 ${fromLeft ? "left-0" : "right-0"} w-20 z-[9998] pointer-events-none`}
+            style={{
+              background: fromLeft
+                ? "linear-gradient(to right, rgba(139, 92, 246, 0.18), transparent)"
+                : "linear-gradient(to left, rgba(139, 92, 246, 0.18), transparent)",
+            }}
           />
-        </svg>
-      </div>
-    </div>
+
+          {/* Chevron capsule — direction reflects open vs close */}
+          <motion.div
+            initial={{ opacity: 0, x: fromLeft ? -20 : 20, scale: 0.85 }}
+            animate={{
+              opacity: Math.min(swipeProgress * 1.5, 1),
+              x: fromLeft ? swipeProgress * 28 : -swipeProgress * 28,
+              scale: 0.9 + swipeProgress * 0.1,
+            }}
+            exit={{ opacity: 0, x: fromLeft ? -20 : 20, scale: 0.85 }}
+            transition={{ type: "spring", stiffness: 320, damping: 28 }}
+            className={`fixed top-1/2 -translate-y-1/2 ${fromLeft ? "left-2" : "right-2"} z-[9999] pointer-events-none`}
+          >
+            <div
+              className="w-11 h-11 rounded-full flex items-center justify-center"
+              style={{
+                background: `linear-gradient(135deg,
+                  rgba(139, 92, 246, ${0.22 + swipeProgress * 0.55}),
+                  rgba(168, 85, 247, ${0.18 + swipeProgress * 0.5})
+                )`,
+                backdropFilter: "blur(10px)",
+                WebkitBackdropFilter: "blur(10px)",
+                border: `1px solid rgba(139, 92, 246, ${0.3 + swipeProgress * 0.4})`,
+                boxShadow: `0 6px 22px rgba(139, 92, 246, ${swipeProgress * 0.35})`,
+              }}
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                style={{ color: `rgba(255, 255, 255, ${0.85 + swipeProgress * 0.15})` }}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2.5}
+                  d={fromLeft ? "M9 5l7 7-7 7" : "M15 19l-7-7 7-7"}
+                />
+              </svg>
+            </div>
+          </motion.div>
+
+          {/* Subtle viewport shade — depth cue without blocking interaction */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: swipeProgress * 0.12 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[9997] pointer-events-none bg-black"
+          />
+        </>
+      )}
+    </AnimatePresence>
   );
 }

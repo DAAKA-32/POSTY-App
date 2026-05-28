@@ -9,6 +9,7 @@ import { isAdminInitialized } from "@/lib/db/firebase-admin";
 import { canAdaptToMultiPlatform } from "@/lib/config/plan-features";
 import { SubscriptionPlan, AdaptationPlatform, PlatformAdaptation } from "@/types";
 import { verifyAuth } from "@/lib/auth";
+import { trackAIUsage, readUsageFromResponse } from "@/lib/ai-cost/tracker";
 import { normalizeHashtagsInText, normalizeHashtagList } from "@/lib/hashtags/normalize";
 
 /**
@@ -121,14 +122,26 @@ export async function POST(request: NextRequest) {
     const platformPrompt = PLATFORM_PROMPTS[platform as AdaptationPlatform][lang];
 
     // Generate adaptation
+    const adaptModel = "gpt-4";
     const response = await openaiService["client"].chat.completions.create({
-      model: "gpt-4",
+      model: adaptModel,
       messages: [
         { role: "system", content: platformPrompt },
         { role: "user", content: postContent },
       ],
       temperature: 0.6,
       max_tokens: 600,
+    });
+
+    const adaptUsage = readUsageFromResponse(response);
+    void trackAIUsage({
+      userId,
+      route: "adapt",
+      model: adaptModel,
+      inputTokens: adaptUsage.inputTokens,
+      outputTokens: adaptUsage.outputTokens,
+      cachedInputTokens: adaptUsage.cachedInputTokens,
+      metadata: { platform: String(platform), language: lang },
     });
 
     const content = response.choices[0]?.message?.content;

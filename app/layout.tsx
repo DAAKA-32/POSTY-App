@@ -12,6 +12,7 @@ import { DiscordProvider } from "@/contexts/DiscordContext";
 import { SchedulingProvider } from "@/contexts/SchedulingContext";
 import { QuotaProvider } from "@/contexts/QuotaContext";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
+import { SidebarPostsProvider } from "@/contexts/SidebarPostsContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import AppProvider from "@/components/providers/AppProvider";
 import KeyboardNavigationProvider from "@/components/providers/KeyboardNavigationProvider";
@@ -58,11 +59,8 @@ export const metadata: Metadata = {
   // Base metadata
   metadataBase: new URL(siteConfig.url),
   title: {
-    // Brand-first: leads with the bare token "Posty" so brand-search
-    // ("Posty" alone) matches the title token directly. "Posty AI" is
-    // kept as the full brand right after for entity reinforcement.
-    default: "Posty — Posty AI · Turn LinkedIn posts into clients with AI",
-    template: "%s · Posty AI",
+    default: "Posty IA — Turn LinkedIn posts into clients with AI",
+    template: "%s · Posty IA",
   },
   description:
     "Posty (Posty AI, postyapp.ai) — Create high-performing LinkedIn posts in seconds with AI. Posty generates ready-to-publish content tailored to your audience. Start free today.",
@@ -353,6 +351,7 @@ export default function RootLayout({
         <KeyboardNavigationProvider>
         <AppProvider>
           <AuthProvider>
+            <SidebarPostsProvider>
             <SubscriptionProvider>
               <LanguageProvider>
                 <SkipLinks />
@@ -399,6 +398,7 @@ export default function RootLayout({
                 <LegalUpdateNotification />
               </LanguageProvider>
             </SubscriptionProvider>
+            </SidebarPostsProvider>
             <PremiumToaster />
           </AuthProvider>
         </AppProvider>

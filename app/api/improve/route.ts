@@ -15,6 +15,12 @@ import { canImprovePost } from "@/lib/config/plan-features";
 import { getPlanLimits, getMaxTokensForPlan, PlanType } from "@/lib/config/plans";
 import { SubscriptionPlan, PostInsights } from "@/types";
 import { verifyAuth } from "@/lib/auth";
+import {
+  trackAIUsage,
+  readUsageFromChunk,
+  readUsageFromResponse,
+  emptyUsage,
+} from "@/lib/ai-cost/tracker";
 
 /**
  * POST /api/improve
@@ -232,8 +238,9 @@ export async function POST(request: NextRequest) {
           });
 
           // Generate improved post with streaming
+          const improveModel = "gpt-4";
           const openaiStream = await openaiService["client"].chat.completions.create({
-            model: "gpt-4",
+            model: improveModel,
             messages: [
               { role: "system", content: systemPrompt },
               { role: "user", content: userMessage },
@@ -241,29 +248,55 @@ export async function POST(request: NextRequest) {
             temperature: 0.7,
             max_tokens: maxTokens,
             stream: true,
+            stream_options: { include_usage: true },
           });
 
           let fullContent = "";
+          let improveUsage = emptyUsage();
           for await (const chunk of openaiStream) {
             const content = chunk.choices[0]?.delta?.content || "";
             if (content) {
               fullContent += content;
               sendEvent("chunk", { content, type: "improved" });
             }
+            const captured = readUsageFromChunk(chunk);
+            if (captured) improveUsage = captured;
           }
+
+          void trackAIUsage({
+            userId,
+            route: "improve",
+            model: improveModel,
+            inputTokens: improveUsage.inputTokens,
+            outputTokens: improveUsage.outputTokens,
+            cachedInputTokens: improveUsage.cachedInputTokens,
+            metadata: { plan: userPlan ?? "unknown", language: lang, step: "improve" },
+          });
 
           sendEvent("done", { type: "improved" });
 
           // Generate insights for the improved post
           try {
+            const insightsModel = "gpt-3.5-turbo";
             const insightsResponse = await openaiService["client"].chat.completions.create({
-              model: "gpt-3.5-turbo",
+              model: insightsModel,
               messages: [
                 { role: "system", content: INSIGHTS_PROMPT[lang] },
                 { role: "user", content: fullContent },
               ],
               temperature: 0.5,
               max_tokens: 500,
+            });
+
+            const insightsUsage = readUsageFromResponse(insightsResponse);
+            void trackAIUsage({
+              userId,
+              route: "improve",
+              model: insightsModel,
+              inputTokens: insightsUsage.inputTokens,
+              outputTokens: insightsUsage.outputTokens,
+              cachedInputTokens: insightsUsage.cachedInputTokens,
+              metadata: { plan: userPlan ?? "unknown", language: lang, step: "insights" },
             });
 
             const insightsContent = insightsResponse.choices[0]?.message?.content;

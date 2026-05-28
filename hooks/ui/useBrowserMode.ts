@@ -114,30 +114,28 @@ export function useBrowserMode(): BrowserModeInfo {
     }
 
     if (isMobileBrowser) {
-      // Base values for different browsers
+      // Track an indicative UI height per browser for diagnostics, but DO NOT
+      // bake it into `inputBottomPadding`. Modern iOS 15+ Safari and Android
+      // Chrome anchor `position: fixed; bottom: 0` to the VISUAL viewport
+      // (above any bottom toolbar), so adding a 65–75px floor here was the
+      // root cause of the input bar "floating too high" — env(safe-area-inset-bottom)
+      // + the live visualViewport offset already cover every real case.
       if (isIOSSafari) {
-        // Safari has a bottom toolbar (~44-50px) plus home indicator area
         browserUIHeight = 50;
-        // Use visualViewport offset if available, otherwise use estimate
-        inputBottomPadding = Math.max(bottomOffset, 75); // Increased for Safari
       } else if (isIOSChrome) {
-        // Chrome on iOS has a similar bottom toolbar
         browserUIHeight = 44;
-        inputBottomPadding = Math.max(bottomOffset, 70);
       } else if (isAndroidChrome) {
-        // Android Chrome has variable bottom nav based on gesture vs button nav
         browserUIHeight = 36;
-        inputBottomPadding = Math.max(bottomOffset, 65);
       } else {
-        // Generic mobile browser fallback
         browserUIHeight = 40;
-        inputBottomPadding = Math.max(bottomOffset, 68);
       }
 
-      // If visualViewport detected a significant offset, use that
-      if (bottomOffset > 10) {
-        inputBottomPadding = bottomOffset + 20; // Add extra padding for safety
-      }
+      // Use the live visualViewport measurement as the SOLE driver. When no
+      // browser UI overlaps the layout viewport bottom, `bottomOffset` is 0
+      // and the bar sits flush against env(safe-area-inset-bottom). When a
+      // toolbar is actually visible (rare on modern iOS), we lift by exactly
+      // that amount plus a tiny 4px safety buffer.
+      inputBottomPadding = bottomOffset > 4 ? bottomOffset + 4 : 0;
     }
 
     // Detect if URL bar is visible (scrolled to top usually means URL bar is visible)

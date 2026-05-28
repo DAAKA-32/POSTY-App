@@ -25,8 +25,7 @@ import PricingCard from "@/components/pricing/PricingCard";
 import BusinessOffer from "@/components/pricing/BusinessOffer";
 import { useScrollLock } from "@/hooks/ui/useScrollLock";
 import AnimatedMacBook from "@/components/landing/AnimatedMacBook";
-import AuroraBackground from "@/components/landing/AuroraBackground";
-import LandingAmbientCanvas from "@/components/landing/LandingAmbientCanvas";
+import LandingSceneEngine from "@/components/landing/LandingSceneEngine";
 import { FaqJsonLd, postyFaqData } from "@/components/seo/JsonLd";
 
 /* Below-the-fold sections — each is a multi-hundred-line component that
@@ -708,8 +707,10 @@ function HeroSection() {
       ref={sectionRef}
       className="background-landing relative min-h-[100dvh] lg:min-h-screen flex items-start md:items-center overflow-hidden"
     >
-      {/* === AURORA STAR PARTICLES (hero only) === */}
-      <AuroraBackground />
+      {/* Ambient gradient + star canvas are now painted by the global
+          LandingSceneEngine mounted at the page root. The hero only keeps its
+          own cinematic mesh-gradient parallax overlays below — those are a
+          hero-specific FX, not part of the unified scene system. */}
 
       {/* === PREMIUM ANIMATED BACKGROUND === */}
       <div className="absolute inset-0 pointer-events-none">
@@ -1246,7 +1247,7 @@ function DemoSection() {
       <section
         ref={sectionRef}
         id="demo"
-        className="relative z-[6] min-h-[100dvh]"
+        className="relative z-[6]"
       >
         {/* Hero title — sticky: stays on screen while content scrolls over it, fades out via titleOpacity */}
         <motion.div ref={titleRef} style={{ opacity: titleOpacity }} className="sticky top-0 left-0 right-0 z-[1] pt-24 pb-6 md:pb-2 px-4 sm:px-6 lg:px-8">
@@ -3042,6 +3043,7 @@ interface FeatureConfig {
     badgeDot?: string;    // Optional override for the pulsing dot (defaults to iconBg)
     glow: string;         // Glow effect
     accent: string;       // Accent details
+    accentRgb: string;    // Accent as "R, G, B" for inline rgba() (cursor-tracked spotlight)
     titleGradient: string; // Title text gradient
   };
   badge: string;
@@ -3466,6 +3468,7 @@ function getFeatures(t: Translations): FeatureConfig[] {
       badgeDot: "bg-white",
       glow: "shadow-[#F8935D]/20",
       accent: "text-[#F76B54]",
+      accentRgb: "248, 147, 93",
       titleGradient: "from-[#F8935D] via-[#FBB9AD] to-slate-300",
     },
   },
@@ -3489,6 +3492,7 @@ function getFeatures(t: Translations): FeatureConfig[] {
       badgeText: "text-violet-700",
       glow: "shadow-violet-500/20",
       accent: "text-violet-600",
+      accentRgb: "139, 92, 246",
       titleGradient: "from-violet-600 via-purple-400 to-slate-300",
     },
   },
@@ -3512,6 +3516,7 @@ function getFeatures(t: Translations): FeatureConfig[] {
       badgeText: "text-emerald-700",
       glow: "shadow-emerald-500/20",
       accent: "text-emerald-600",
+      accentRgb: "16, 185, 129",
       titleGradient: "from-emerald-600 via-emerald-400 to-slate-300",
     },
   },
@@ -3535,6 +3540,7 @@ function getFeatures(t: Translations): FeatureConfig[] {
       badgeText: "text-amber-700",
       glow: "shadow-amber-500/20",
       accent: "text-amber-600",
+      accentRgb: "245, 158, 11",
       titleGradient: "from-amber-600 via-orange-400 to-slate-300",
     },
   },
@@ -3547,6 +3553,25 @@ function FeatureCard({ feature, index }: { feature: FeatureConfig; index: number
   const prefersReducedMotion = useReducedMotion();
   const isMobile = useIsMobile();
   const cardRef = useRef<HTMLDivElement>(null);
+
+  // Cursor-tracked spotlight — same vocabulary as ValueCard ("Pourquoi les
+  // indépendants choisissent Posty") so both sections feel like a single
+  // hover language. Radius is larger here (~460px) because feature cards
+  // are wider than value cards, so the highlight reads at the same density.
+  const mx = useMotionValue(0);
+  const my = useMotionValue(0);
+  const spotlight = useMotionTemplate`radial-gradient(460px circle at ${mx}px ${my}px, rgba(${feature.color.accentRgb}, 0.18), transparent 65%)`;
+
+  const onMove = useCallback(
+    (e: React.MouseEvent) => {
+      const el = cardRef.current;
+      if (!el || prefersReducedMotion || isMobile) return;
+      const rect = el.getBoundingClientRect();
+      mx.set(e.clientX - rect.left);
+      my.set(e.clientY - rect.top);
+    },
+    [mx, my, prefersReducedMotion, isMobile],
+  );
 
   // 3D perspective tilt — desktop only, driven by cursor position
   // DISABLED: kept for reference, re-enable by restoring handlers + style props below.
@@ -3580,6 +3605,7 @@ function FeatureCard({ feature, index }: { feature: FeatureConfig; index: number
   return (
     <motion.div
       ref={cardRef}
+      onMouseMove={isMobile ? undefined : onMove}
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "0px 0px 100px 0px" }}
@@ -3598,18 +3624,23 @@ function FeatureCard({ feature, index }: { feature: FeatureConfig; index: number
         //   transformStyle: "preserve-3d",
         // }}
         className={`
-          relative bg-gradient-to-br ${feature.color.bg}
+          relative isolate bg-gradient-to-br ${feature.color.bg}
           border ${borderClasses} rounded-[clamp(1rem,2vw,1.5rem)]
           px-[clamp(1.25rem,2.5vw,2rem)] py-[clamp(1rem,1.8vw,1.5rem)]
           shadow-sm ${isMobile ? '' : `hover:shadow-xl ${feature.color.glow}`}
           transition-shadow duration-300
         `}
       >
-        {/* Ambient hover glow — desktop only */}
-        {!isMobile && (
-          <div
-            className="absolute -inset-4 rounded-3xl opacity-0 group-hover/card:opacity-100 transition-opacity duration-500 blur-2xl pointer-events-none -z-10"
-            style={{ background: `radial-gradient(min(500px, 35vw) circle at 50% 30%, rgba(248, 147, 93, 0.12), transparent 60%)` }}
+        {/* Cursor-tracked spotlight — desktop only.
+            Clipped to the card's rounded corners via its own overflow-hidden
+            so the gradient stays inside the visible card outline; sits behind
+            content (-z-[1]) and is pointer-transparent so it never steals
+            hover. Re-uses the same vocabulary as ValueCard (Why-choose section). */}
+        {!isMobile && !prefersReducedMotion && (
+          <motion.div
+            aria-hidden
+            style={{ background: spotlight }}
+            className="pointer-events-none absolute inset-0 -z-[1] rounded-[clamp(1rem,2vw,1.5rem)] overflow-hidden opacity-0 group-hover/card:opacity-100 transition-opacity duration-500"
           />
         )}
 
@@ -3681,7 +3712,7 @@ function FeatureCard({ feature, index }: { feature: FeatureConfig; index: number
           </div>
 
           {/* Title */}
-          <h3 className={`text-[clamp(1.2rem,2.5vw,1.875rem)] font-bold mb-[clamp(0.5rem,1vw,0.75rem)] leading-tight text-transparent bg-clip-text bg-gradient-to-r ${feature.color.titleGradient}`}>
+          <h3 className={`text-[clamp(1.2rem,2.5vw,1.875rem)] font-bold mb-[clamp(0.5rem,1vw,0.75rem)] leading-[1.3] pb-[0.15em] text-transparent bg-clip-text bg-gradient-to-r ${feature.color.titleGradient}`}>
             {feature.title}
           </h3>
 
@@ -5435,58 +5466,42 @@ export default function LandingPage() {
   }
 
   return (
+    // Root wrapper stays neutral. The unified <LandingSceneEngine /> below
+    // paints the entire site-wide background: a single fixed layer with five
+    // signature ambients that crossfade as the viewport center moves between
+    // sections tagged with `data-scene`, plus a global silver-star canvas that
+    // travels across every scene (previously bounded to FAQ + Hero only).
     <div className="relative">
       {/* Site-wide FAQPage JSON-LD — scoped to the homepage only to avoid
           duplicating the schema on (seo) group pages that ship their own. */}
       <FaqJsonLd questions={postyFaqData.en} />
       {/* Top-of-page scroll progress bar — premium Linear/Stripe touch */}
       <ScrollProgressBar />
-      {/* Aurora background — fixed full viewport, stars stay in place on scroll.
-          Anchors the hero with silver particles + warm orange orbs. */}
-      <AuroraBackground />
-      {/* Landing ambient canvas — fixed full-viewport color wash that crossfades
-          through the 5 Posty signature gradients (welcome → posts → visuals →
-          schedule → optimize) as the user scrolls. Unifies the landing DA with
-          the per-route gradients used inside /app. Sits below cards/text but
-          above the AuroraBackground so each section feels its own color. */}
-      <LandingAmbientCanvas />
+      {/* Unified background: gradients + stars + dot grid, scroll-driven. */}
+      <LandingSceneEngine />
       <Navbar />
       <div key={currentLang} className="text-gray-900 relative">
-        {/* Hero Demo Section — opening with descent animation */}
-        <DemoSection />
-
-        {/* Sections below — semi-transparent warm wash (#FEF3EE @ 55%) so the
-            LandingAmbientCanvas color cycle bleeds through. White content cards
-            inside each section keep their own opaque surfaces, so legibility is
-            unchanged — the ambient only shows in section gutters and around card
-            edges, exactly like Linear / Arc / Vercel.
-            The absolutely-positioned overlay fades the DemoSection's transparent
-            bottom into the wash so the boundary reads as a gradient, not a line. */}
-        <div className="relative z-[5] bg-[#FEF3EE]/55 backdrop-blur-[2px]">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute left-0 right-0 bottom-full h-40 md:h-56 bg-gradient-to-b from-transparent to-[#FEF3EE]/55"
-          />
-          <FeaturesSection />
-          <ValueBlock />
+        {/* Hero — welcome ambient (orange/coral). Opens the chromatic
+            narrative, same palette as /app. */}
+        <div data-scene="welcome" className="relative z-[5]">
+          <DemoSection />
         </div>
 
-        {/* TargetAudience — visuals zone (fuchsia/rose) is at its peak here */}
-        <div className="relative z-[5] bg-[#FEF3EE]/50 backdrop-blur-[2px]">
+        {/* CREATION + IDENTITY chapter — visuals ambient (fuchsia + rose).
+            Same palette as /historique. Groups the feature/value showcase
+            and the audience marquee under one cohesive archive-y wash. */}
+        <div data-scene="visuals" className="relative z-[5]">
+          <FeaturesSection />
+          <ValueBlock />
           <TargetAudienceSection />
         </div>
 
-        {/* AI Copilot section — visuals → schedule transition. The funnel arc is:
-              hero → features → benefits → audience match → "but is it really
-              different?" → COPILOT SANS/AVEC answers it → testimonials confirm
-              → founder/ROI/pricing convert. */}
-        <div className="relative z-[5] bg-[#FEF3EE]/50 backdrop-blur-[2px]">
+        {/* PROOF + PLANNING chapter — schedule ambient (sky + violet).
+            Same palette as /programme. Wraps the copilot beat together with
+            the social-proof and conversion blocks under one cooler-air
+            wash that signals "method / how it works / what it returns". */}
+        <div data-scene="schedule" className="relative z-[5]">
           <CopilotSectionWrapper />
-        </div>
-
-        {/* Testimonials → Pricing — schedule (sky/violet) cross-fades into
-            optimize (emerald/orange) across this block */}
-        <div className="relative z-[5] bg-[#FEF3EE]/50 backdrop-blur-[2px]">
           <TestimonialsSection />
           <FounderSection />
           {/* ROI simulator — value-before-price anchor */}
@@ -5494,16 +5509,16 @@ export default function LandingPage() {
           <PricingSection />
         </div>
 
-        {/* FAQ — slightly heavier wash on mobile (cleaner reading background, no
-            star particles drifting through the accordion text) but lighter on
-            desktop so the optimize-zone ambient still shows through. */}
-        <div className="relative z-[5] bg-[#FEF3EE]/70 md:bg-[#FEF3EE]/45 backdrop-blur-[2px]">
+        {/* FAQ — loops back to welcome for narrative closure. The local
+            <AuroraBackground /> instance was removed: the global engine now
+            paints the warm gradient + silver stars, identical to the hero. */}
+        <div data-scene="welcome" className="relative z-[5] overflow-hidden">
           <FaqSection />
         </div>
 
-        {/* Footer — heavier wash so legal copy stays crisp; ambient still
-            subtly visible at the seam. */}
-        <div className="relative z-[5] bg-[#FEF3EE]/85 backdrop-blur-[2px]">
+        {/* Footer — slim white wash (no warm tint) so legal copy stays crisp
+            against the soft ambient halos. */}
+        <div className="relative z-[5] bg-white/60 backdrop-blur-[2px]">
           <Footer />
         </div>
       </div>

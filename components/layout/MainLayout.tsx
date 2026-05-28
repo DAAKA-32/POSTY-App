@@ -12,6 +12,7 @@ import { useScheduling } from "@/contexts/SchedulingContext";
 import { useLinkedIn } from "@/contexts/LinkedInContext";
 import { useFacebook } from "@/contexts/FacebookContext";
 import { useThreads } from "@/contexts/ThreadsContext";
+import { useSidebarPostsOptional } from "@/contexts/SidebarPostsContext";
 import SlideMenu from "./SlideMenu";
 import ChatHistoryModal from "./ChatHistoryModal";
 import SidebarSearchModal from "./SidebarSearchModal";
@@ -200,6 +201,15 @@ export default function MainLayout({
   // Calculate current sidebar width based on collapsed state
   const currentSidebarWidth = isCollapsed ? SIDEBAR_ICON_WIDTH : SIDEBAR_EXPANDED_WIDTH;
 
+  // Shared sidebar posts state — when /app/* group mounts its AppShell, the
+  // SidebarPostsProvider (root layout) is the single source of truth: a real
+  // remount of the MainLayout never refetches, and optimistic upserts done by
+  // child pages (e.g. /app after a generation) are reflected immediately.
+  // Falls back to local fetch + local state on routes that mount MainLayout
+  // outside a SidebarPostsProvider — but the provider sits in app/layout.tsx
+  // so this only matters if MainLayout is ever rendered outside the root
+  // tree (unit tests, storybook), which is a defensive fallback.
+  const sidebarCtx = useSidebarPostsOptional();
   const [searchQuery, setSearchQuery] = useState("");
   const [showChatList, setShowChatList] = useState(true);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
@@ -231,17 +241,17 @@ export default function MainLayout({
   const ENABLE_PAGE_TONE_BG = true;
   const toneBg = ENABLE_PAGE_TONE_BG ? (() => {
     const p = pathname || "";
-    // Each app page wears a distinct signature ambient so the user feels they
-    // move into a different "room" of the product on every navigation.
-    if (p.startsWith("/app/c/")) return "posty-soft-posts";        // writing room — violet + coral
-    if (p === "/app" || p.startsWith("/app/")) return "posty-soft-welcome"; // chat home — warm brand
+    // /app and /app/c/[id] share the SAME tone (welcome) — the conversation
+    // flow is one continuous experience, the brutal flip orange→violet that
+    // happened on router.replace('/app/c/<id>') after generation is gone.
+    if (p === "/app" || p.startsWith("/app/")) return "posty-soft-welcome"; // chat — warm brand, persists across /app and /app/c/*
     if (p.startsWith("/history")) return "posty-soft-visuals";     // archive — fuchsia + rose
     if (p.startsWith("/schedule")) return "posty-soft-schedule";   // planning — sky + violet
     if (p.startsWith("/analytics") || p.startsWith("/dashboard")) return "posty-soft-optimize"; // growth — emerald + orange
     if (p.startsWith("/settings")) return "posty-soft-welcome";    // home base — warm brand
     if (p.startsWith("/profile") || p.startsWith("/brand")) return "posty-soft-visuals"; // creative archive
     if (p.startsWith("/subscription") || p.startsWith("/pricing")) return "posty-soft-posts"; // VIP plans — violet + coral
-    if (p.startsWith("/chat")) return "posty-soft-posts";
+    if (p.startsWith("/chat")) return "posty-soft-welcome";        // legacy chat route — same warm brand as /app
     return "posty-soft-welcome";
   })() : "";
 
@@ -300,10 +310,12 @@ export default function MainLayout({
     }
   }, [posts.length, isSubscriptionPage]);
 
-  // Auto-load posts for sidebar when not provided and not on subscription page.
-  // setSidebarLoading(false) is called in finally so the empty state only appears
-  // after we have confirmed there are no conversations — never during the fetch.
+  // Auto-load posts for sidebar — ONLY when no shared context is available
+  // (the context handles the fetch itself when present, so we'd be double-
+  // fetching otherwise) AND the parent didn't pass a posts prop AND we're
+  // not on the subscription page.
   useEffect(() => {
+    if (sidebarCtx) return; // context is the source of truth, skip local fetch
     if (authLoading) return; // wait for Firebase auth to resolve before fetching
 
     const loadPosts = async () => {
@@ -322,13 +334,24 @@ export default function MainLayout({
       }
     };
     loadPosts();
-  }, [user, authLoading, posts.length, isSubscriptionPage]);
+  }, [user, authLoading, posts.length, isSubscriptionPage, sidebarCtx]);
 
-  // Use provided posts or auto-loaded posts (but not on subscription page)
+  // Use provided posts → context posts → auto-loaded posts (but not on subscription page).
+  // The context branch is what makes the sidebar list persistent across the
+  // /app ⇄ /app/c/[id] transition: same provider instance, same array, no
+  // empty-state flash, no skeleton flicker.
   const effectivePosts = useMemo(() => {
     if (isSubscriptionPage) return [];
-    return posts.length > 0 ? posts : autoLoadedPosts;
-  }, [posts, autoLoadedPosts, isSubscriptionPage]);
+    if (posts.length > 0) return posts;
+    if (sidebarCtx) return sidebarCtx.posts;
+    return autoLoadedPosts;
+  }, [posts, autoLoadedPosts, isSubscriptionPage, sidebarCtx]);
+
+  // When the context drives the data, mirror its loading flag so the skeleton
+  // logic stays correct during the very first hydration of the app shell.
+  useEffect(() => {
+    if (sidebarCtx) setSidebarLoading(sidebarCtx.loading);
+  }, [sidebarCtx]);
 
   // Sync local posts with effective posts for optimistic updates
   useEffect(() => {
@@ -337,10 +360,12 @@ export default function MainLayout({
 
   // Handle pin/unpin
   const handlePin = async (postId: string, isPinned: boolean) => {
-    // Optimistic update
+    // Optimistic update — keep local state in sync AND push through context
+    // (context wins for the rest of the route tree; local is fallback).
     setLocalPosts((prev) =>
       prev.map((p) => (p.id === postId ? { ...p, isPinned } : p))
     );
+    sidebarCtx?.updatePost(postId, { isPinned });
 
     try {
       await pinPost(postId, isPinned);
@@ -352,6 +377,7 @@ export default function MainLayout({
       setLocalPosts((prev) =>
         prev.map((p) => (p.id === postId ? { ...p, isPinned: !isPinned } : p))
       );
+      sidebarCtx?.updatePost(postId, { isPinned: !isPinned });
       toast.error(t.toasts.errorPinning);
     }
   };
@@ -370,6 +396,7 @@ export default function MainLayout({
     setLocalPosts((prev) =>
       prev.map((p) => (p.id === postId ? { ...p, title: newTitle } : p))
     );
+    sidebarCtx?.updatePost(postId, { title: newTitle });
 
     try {
       await renamePost(postId, newTitle);
@@ -396,6 +423,7 @@ export default function MainLayout({
 
     // Optimistic update
     setLocalPosts((prev) => prev.filter((p) => p.id !== postId));
+    sidebarCtx?.removePost(postId);
     invalidateCachedConversation(postId);
 
     try {
@@ -406,8 +434,9 @@ export default function MainLayout({
       await refreshScheduledPosts();
     } catch (error) {
       console.error("Error deleting post:", error);
-      // Revert - re-fetch posts
+      // Revert - re-fetch posts (both legacy + context paths)
       onPostUpdate?.();
+      sidebarCtx?.refresh();
       toast.error(t.toasts.errorDelete);
       return; // Don't redirect on failure
     }
@@ -1117,8 +1146,13 @@ export default function MainLayout({
         {/* Quota Usage Banner (Free + Pro plans) */}
         <UsageBanner className="px-3 sm:px-4 pt-2" />
 
-        {/* Page Content - No scroll on mobile (children handle scroll), scroll on desktop */}
-        <AnimatedPageWrapper delay={0.2} className="flex-1 overflow-hidden lg:overflow-y-auto lg:overflow-x-hidden lg:overscroll-contain">
+        {/* Page Content - No scroll on mobile (children handle scroll), scroll on desktop.
+            delay={0} so the shell's children appear in lockstep with the shell
+            itself — the old 0.2s delay (+ 0.4s duration) was responsible for
+            the ~600ms "empty screen" users perceived after AI generation when
+            the route swapped /app → /app/c/[id]. The shell is now persistent
+            across that swap and this wrapper only fires its entrance once. */}
+        <AnimatedPageWrapper delay={0} className="flex-1 overflow-hidden lg:overflow-y-auto lg:overflow-x-hidden lg:overscroll-contain">
           {children}
         </AnimatedPageWrapper>
 

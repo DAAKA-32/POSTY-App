@@ -1031,8 +1031,12 @@ function AnalyticsContent() {
       showMobileHeader={true}
       headerTitle="Analytics"
     >
-      {/* Desktop: render content inline inside MainLayout */}
-      <div className="hidden lg:flex h-full">{contentInner}</div>
+      {/* Desktop: render content inline inside MainLayout.
+          `lg:block w-full` (not `lg:flex`) — flex-row left contentInner
+          sized to its intrinsic content (~max-w-4xl) instead of filling
+          main, so `mx-auto` centered inside that intrinsic box instead of
+          the full ~1280px main area. Block + w-full restores real centering. */}
+      <div className="hidden lg:block h-full w-full">{contentInner}</div>
 
       {/* Mobile: render content through a React Portal so it bypasses
           MainLayout's containing block (no `lg:pl-[288px]` offset, no

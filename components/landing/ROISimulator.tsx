@@ -37,7 +37,6 @@ import {
 } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState, useMemo, memo, useCallback } from "react";
-import { AmbientDecorations } from "@/components/landing/AmbientDecorations";
 
 const ACCENT = "#F8935D";
 const ACCENT_DEEP = "#F76B54";
@@ -378,17 +377,12 @@ export default function ROISimulator() {
       aria-label="Simulateur ROI"
       className="relative py-16 md:py-24 lg:py-28 px-4 sm:px-6 lg:px-8 overflow-hidden"
     >
-      {/* Warm wash + paired soft halos — same ambient grammar as the rest of
-          the landing (CopilotSection, app sidebar). Brings the "financial
-          calculator" feel in line with the new Posty DA without competing
-          with the cards' content. */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#FEF6F0] via-white to-[#FEF6F0] pointer-events-none" />
-      <div className="absolute top-[8%] left-[6%] w-[460px] h-[460px] bg-[#F8935D]/[0.10] rounded-full blur-[140px] pointer-events-none" />
-      <div className="absolute bottom-[8%] right-[4%] w-[400px] h-[400px] bg-[#F76B54]/[0.08] rounded-full blur-[130px] pointer-events-none" />
-
-      {/* Ambient motion layer — orbs only here so the chart remains the focal
-          point and we don't add particle/arrow noise around active controls. */}
-      <AmbientDecorations variant="orbs" intensity={0.7} />
+      {/* All ambient layers removed — the global LandingSceneEngine on
+          app/page.tsx paints this section (schedule scene: sky + violet).
+          Previous local peach wash + 2 orange orbs + AmbientDecorations
+          (which renders 2 huge ~34rem/28rem orange/coral halos blurred at
+          ~80px) were each overpainting the engine and producing a peach
+          fond instead of the unified sky/violet ambient. */}
 
       <div className="relative max-w-6xl mx-auto">
         {/* Header — unified scale */}

@@ -19,7 +19,7 @@ import { db } from "@/lib/db/firebase";
 import Image from "next/image";
 import { Post, FileAttachment } from "@/types";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
-import MainLayout from "@/components/layout/MainLayout";
+import { useSidebarPostsOptional } from "@/contexts/SidebarPostsContext";
 import ChatMessage, { TypingIndicator } from "@/components/chat/ChatMessage";
 import ModernAIResponsePair from "@/components/chat/ModernAIResponsePair";
 import ModernResponseCard from "@/components/chat/ModernResponseCard";
@@ -114,6 +114,9 @@ function AppContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, userProfile } = useAuth();
+  // Shared sidebar posts — optimistic upserts here reflect immediately in
+  // the persistent MainLayout sidebar (no remount, no refetch).
+  const sidebarPosts = useSidebarPostsOptional();
   const { connection: linkedInConnection, publishToLinkedIn } = useLinkedIn();
   const { t, language } = useLanguage();
   const { canSendMessage } = useQuota();
@@ -453,6 +456,9 @@ function AppContent() {
 
     setCachedConversation(cachedPost);
     setPosts((prev) => [cachedPost, ...prev]);
+    // Push the optimistic post into the shared sidebar so the new entry
+    // appears in the persistent sidebar BEFORE the route swap — zero flash.
+    sidebarPosts?.upsertPost(cachedPost);
 
     router.replace(`/app/c/${postId}`);
 
@@ -462,10 +468,11 @@ function AppContent() {
         if (freshPost) {
           setCachedConversation(freshPost);
           setPosts((prev) => prev.map((p) => p.id === postId ? freshPost : p));
+          sidebarPosts?.upsertPost(freshPost);
         }
       }).catch(() => {});
     }, 2000);
-  }, [postId, isStreaming, imageEmbedPersisting, router]);
+  }, [postId, isStreaming, imageEmbedPersisting, router, sidebarPosts]);
 
   // Smart scroll: only auto-scroll when user is near bottom
   const {
@@ -818,6 +825,7 @@ function AppContent() {
             generatedImages: [record],
           };
           setPosts((prev) => [optimistic, ...prev]);
+          sidebarPosts?.upsertPost(optimistic);
           router.replace(`/app/c/${newPostId}`);
         } else {
           await appendGeneratedImage(existingPostId, record);
@@ -2278,18 +2286,18 @@ function AppContent() {
     </>
   );
 
-  return (
-    <MainLayout posts={posts} showMobileHeader={true}>
-      {isMobileViewport ? (
-        // Mobile: portal under <body> to bypass the sidebar-offset
-        // containing block. fixed-input-area inside still anchors to
-        // the viewport (no transform/filter on the portal root).
-        <MobileAppPortal>{contentInner}</MobileAppPortal>
-      ) : (
-        // Desktop: render content inline inside MainLayout.
-        <div className="flex flex-col h-full w-full">{contentInner}</div>
-      )}
-    </MainLayout>
+  // No <MainLayout> wrapper here — the shared shell is mounted ONCE by
+  // app/app/layout.tsx (see AppShell.tsx). The page returns only its own
+  // content, which keeps the sidebar + gradient ambient persistent when the
+  // user transitions /app → /app/c/<id> after generation.
+  return isMobileViewport ? (
+    // Mobile: portal under <body> to bypass the sidebar-offset
+    // containing block. fixed-input-area inside still anchors to
+    // the viewport (no transform/filter on the portal root).
+    <MobileAppPortal>{contentInner}</MobileAppPortal>
+  ) : (
+    // Desktop: render content inline inside the shared shell.
+    <div className="flex flex-col h-full w-full">{contentInner}</div>
   );
 }
 

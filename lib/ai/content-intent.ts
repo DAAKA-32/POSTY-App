@@ -167,10 +167,23 @@ Ne renvoie rien d'autre que l'objet JSON.`;
  * throws on missing key so the caller can surface a clean 503 — never a
  * silent fallback to the wrong pipeline.
  */
+/** Wire-level model used by the intent classifier (exported so the route can attribute cost). */
+export const INTENT_MODEL = "gpt-4o-mini";
+
+export interface ClassifyContentIntentResult {
+  intent: ContentIntent;
+  /** Raw token usage from the OpenAI response, used by the cost tracker. */
+  usage: {
+    inputTokens: number;
+    outputTokens: number;
+    cachedInputTokens: number;
+  };
+}
+
 export async function classifyContentIntent(
   prompt: string,
   hasPriorConversation: boolean = false
-): Promise<ContentIntent> {
+): Promise<ClassifyContentIntentResult> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     throw new Error("OPENAI_API_KEY missing");
@@ -187,7 +200,7 @@ export async function classifyContentIntent(
     : `Demande: """${prompt}"""`;
 
   const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: INTENT_MODEL,
     response_format: { type: "json_object" },
     temperature: 0,
     max_tokens: 250,
@@ -211,7 +224,16 @@ export async function classifyContentIntent(
   if (!check.success) {
     throw new Error("intent classifier response failed schema validation");
   }
-  return check.data;
+
+  const usage = completion.usage;
+  return {
+    intent: check.data,
+    usage: {
+      inputTokens: usage?.prompt_tokens ?? 0,
+      outputTokens: usage?.completion_tokens ?? 0,
+      cachedInputTokens: usage?.prompt_tokens_details?.cached_tokens ?? 0,
+    },
+  };
 }
 
 // ──────────────────────────────────────────────────────────────────────────

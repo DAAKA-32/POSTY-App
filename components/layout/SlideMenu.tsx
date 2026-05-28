@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, useRef, Fragment } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { usePathname, useRouter } from "next/navigation";
@@ -445,7 +446,27 @@ export default function SlideMenu({ isOpen, onClose, posts = [], onPostUpdate }:
     }
   };
 
-  return (
+  // SSR guard for the Portal. On the server `document` is undefined, so we
+  // skip rendering entirely; the drawer is mobile-only and the first paint
+  // never needs it. On client hydration the effect runs and the portal
+  // attaches to `document.body`.
+  const [portalReady, setPortalReady] = useState(false);
+  useEffect(() => {
+    setPortalReady(true);
+  }, []);
+
+  // The drawer + its backdrop MUST escape MainLayout's `isolate` stacking
+  // context. MainLayout's outer wrapper carries `isolation: isolate`, which
+  // creates a fresh stacking context that traps every internal z-index. The
+  // PersistentMobileHeader (z=40, rendered at root layout) would otherwise
+  // sit ABOVE the entire MainLayout subtree — including this drawer's
+  // z-[70] panel — because the MainLayout container itself reads as
+  // z-auto (=0) against root. Portaling overlay + aside into `document.body`
+  // restores the natural z-index arithmetic: overlay z=60 and panel z=70
+  // are now in the root stacking context, comfortably above the header.
+  if (!portalReady) return null;
+
+  return createPortal(
     <>
       {/* Overlay - blocks all touch gestures when open */}
       {/* Uses will-change and contain to prevent repaints on body during animation */}
@@ -997,6 +1018,7 @@ export default function SlideMenu({ isOpen, onClose, posts = [], onPostUpdate }:
         hasAnyPosts={localPosts.length > 0}
         onResultClick={onClose}
       />
-    </>
+    </>,
+    document.body
   );
 }

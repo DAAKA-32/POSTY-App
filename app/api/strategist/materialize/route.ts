@@ -31,6 +31,7 @@ import {
 import { isStrategistAllowedForEmail } from "@/lib/strategist/access";
 import { hasLinkedInConnected } from "@/lib/strategist/access-server";
 import { isOpenAIConfigured } from "@/lib/openai";
+import { trackAIUsage, readUsageFromResponse } from "@/lib/ai-cost/tracker";
 import type { PostBrief, MaterializedPost } from "@/types";
 
 export const runtime = "nodejs";
@@ -150,7 +151,8 @@ async function materializeOne(
   openai: OpenAI,
   brief: PostBrief,
   language: "fr" | "en",
-  systemPrompt: string
+  systemPrompt: string,
+  userId: string
 ): Promise<{ ok: true; post: MaterializedPost } | { ok: false; error: string }> {
   try {
     const completion = await openai.chat.completions.create({
@@ -166,6 +168,16 @@ async function materializeOne(
           content: buildMaterializeUserMessage({ language, brief }),
         },
       ],
+    });
+    const usage = readUsageFromResponse(completion);
+    void trackAIUsage({
+      userId,
+      route: "strategist.materialize",
+      model: MATERIALIZE_MODEL,
+      inputTokens: usage.inputTokens,
+      outputTokens: usage.outputTokens,
+      cachedInputTokens: usage.cachedInputTokens,
+      metadata: { briefId: brief.id, language },
     });
     const content = completion.choices[0]?.message?.content?.trim() ?? "";
     if (!content) return { ok: false, error: "empty_response" };
@@ -320,7 +332,7 @@ export async function POST(request: NextRequest) {
 
   // ── Materialize in parallel, bounded ─────────────────────────────────
   const results = await pMap(targets, CONCURRENCY, async (brief) => {
-    const r = await materializeOne(openai, brief, language, systemPrompt);
+    const r = await materializeOne(openai, brief, language, systemPrompt, userId);
     return { briefId: brief.id, result: r };
   });
 

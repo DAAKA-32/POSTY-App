@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import AppShell from "./AppShell";
 
 export const metadata: Metadata = {
   title: "Application",
@@ -9,5 +10,5 @@ export const metadata: Metadata = {
 };
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  return children;
+  return <AppShell>{children}</AppShell>;
 }
