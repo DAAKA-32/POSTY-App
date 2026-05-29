@@ -22,7 +22,22 @@ export interface OpenAIConfig {
   maxTokens?: number;
 }
 
-export type OpenAIModel = "gpt-4" | "gpt-4o" | "gpt-4-turbo" | "gpt-3.5-turbo";
+export type OpenAIModel = "gpt-4" | "gpt-4o" | "gpt-4o-mini" | "gpt-4-turbo" | "gpt-3.5-turbo";
+
+/**
+ * Centralized default models — single source of truth so cost never drifts.
+ *
+ * PRIMARY (gpt-4o): post generation, assistance, chat, improve, analyze, adapt.
+ *   ~7.5x cheaper than legacy gpt-4 ($2.5/$10 vs $30/$60 per 1M) AND higher
+ *   quality + faster. There is no reason to default to gpt-4 anymore.
+ * MINI (gpt-4o-mini): secondary tasks (titles, insights, memory extraction,
+ *   intent fallback, conversational). Cheaper AND smarter than gpt-3.5-turbo
+ *   ($0.15/$0.60 vs $0.50/$1.50 per 1M).
+ *
+ * Both are env-overridable so the model can be tuned without a code change.
+ */
+export const PRIMARY_MODEL: OpenAIModel = (process.env.OPENAI_MODEL as OpenAIModel) || "gpt-4o";
+export const MINI_MODEL: OpenAIModel = (process.env.OPENAI_MINI_MODEL as OpenAIModel) || "gpt-4o-mini";
 
 export interface GeneratePostOptions {
   prompt: string;
@@ -757,7 +772,7 @@ export class OpenAIService {
     this.client = new OpenAI({
       apiKey: config.apiKey,
     });
-    this.model = config.model || "gpt-4";
+    this.model = config.model || PRIMARY_MODEL;
     this.temperature = config.temperature ?? 0.7;
     this.maxTokens = config.maxTokens ?? 1000;
   }
@@ -1113,7 +1128,7 @@ export function createOpenAIService(
 
   return new OpenAIService({
     apiKey,
-    model: (overrideConfig?.model as OpenAIModel) || "gpt-4",
+    model: (overrideConfig?.model as OpenAIModel) || PRIMARY_MODEL,
     temperature: overrideConfig?.temperature,
     maxTokens: overrideConfig?.maxTokens,
   });
@@ -1128,7 +1143,7 @@ export function createUserOpenAIService(
 ): OpenAIService {
   return new OpenAIService({
     apiKey: userApiKey,
-    model: (config?.model as OpenAIModel) || "gpt-4",
+    model: (config?.model as OpenAIModel) || PRIMARY_MODEL,
     temperature: config?.temperature,
     maxTokens: config?.maxTokens,
   });
@@ -1160,19 +1175,14 @@ export function getAvailableModels(): {
 }[] {
   return [
     {
-      id: "gpt-4",
-      name: "GPT-4",
-      description: "Most capable, best quality",
+      id: "gpt-4o",
+      name: "GPT-4o",
+      description: "Best quality & speed — recommended",
     },
     {
-      id: "gpt-4-turbo",
-      name: "GPT-4 Turbo",
-      description: "Faster GPT-4 with latest knowledge",
-    },
-    {
-      id: "gpt-3.5-turbo",
-      name: "GPT-3.5 Turbo",
-      description: "Fast and cost-effective",
+      id: "gpt-4o-mini",
+      name: "GPT-4o mini",
+      description: "Cheapest, still high quality",
     },
   ];
 }

@@ -31,9 +31,8 @@ export default function OpenAISettings() {
   };
 
   const models = status?.models || [
-    { id: "gpt-4", name: "GPT-4", description: "Best quality" },
-    { id: "gpt-4-turbo", name: "GPT-4 Turbo", description: "Faster" },
-    { id: "gpt-3.5-turbo", name: "GPT-3.5", description: "Cost-effective" },
+    { id: "gpt-4o", name: "GPT-4o", description: "Best quality & speed (recommended)" },
+    { id: "gpt-4o-mini", name: "GPT-4o mini", description: "Cheapest, great quality" },
   ];
 
   return (

@@ -9,7 +9,7 @@
  *   - postContent: string         (required) The full text of the post
  *   - language?: "fr" | "en"      (default: "fr")
  *   - userApiKey?: string         (optional, BYOK)
- *   - model?: OpenAIModel         (default: "gpt-4")
+ *   - model?: OpenAIModel         (default: "gpt-4o")
  *   - userProfile?: UserProfile   (optional, voice tuning)
  *
  * Response (200):
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       postContent,
       language = "fr",
       userApiKey,
-      model = "gpt-4",
+      model = "gpt-4o",
       userProfile,
     }: {
       userId?: string;

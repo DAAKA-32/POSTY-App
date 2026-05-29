@@ -18,6 +18,8 @@ export {
   ASSISTANT_PROMPT,
   INTENT_CLASSIFICATION_PROMPT,
   FILLER_PATTERNS,
+  PRIMARY_MODEL,
+  MINI_MODEL,
 } from "./service";
 
 export type {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb, isAdminInitialized } from "@/lib/db/firebase-admin";
 import { verifyAuth } from "@/lib/auth";
+import { decryptToken } from "@/lib/crypto/token-cipher";
 
 /**
  * Refreshes the LinkedIn profile photo URL by re-fetching from LinkedIn API.
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest) {
 
     const profileResponse = await fetch("https://api.linkedin.com/v2/userinfo", {
       headers: {
-        Authorization: `Bearer ${connectionData.accessToken}`,
+        Authorization: `Bearer ${decryptToken(connectionData.accessToken)}`,
       },
     });
 

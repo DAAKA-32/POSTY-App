@@ -7,13 +7,14 @@ import {
   isOpenAIConfigured,
   isValidApiKeyFormat,
   OpenAIModel,
-  INSIGHTS_PROMPT,
   CONVERSATIONAL_PROMPT,
   ASSISTANT_PROMPT,
   INTENT_CLASSIFICATION_PROMPT,
   FILLER_PATTERNS,
+  PRIMARY_MODEL,
+  MINI_MODEL,
 } from "@/lib/openai";
-import { buildOptimizedPrompt, getGenerationTemperature, synthesizeProfile, estimateTokens, ProfileFields, PlanTier, buildAssistantPrompt, cleanFillerFromResponse } from "@/lib/services/prompt-builder";
+import { buildOptimizedPrompt, getGenerationTemperature, synthesizeProfile, estimateTokens, ProfileFields, PlanTier, buildAssistantPrompt, cleanFillerFromResponse, deriveTitleFromPrompt } from "@/lib/services/prompt-builder";
 import {
   checkHourlyQuotaAdmin,
   checkUserQuotaAdmin,
@@ -29,8 +30,9 @@ import { isAdminInitialized } from "@/lib/db/firebase-admin";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import { getPlanFeatures } from "@/lib/config/plan-features";
 import { planHasFeature, PlanType, getPlanLimits, getMaxTokensForPlan } from "@/lib/config/plans";
-import { SubscriptionPlan, PostInsights } from "@/types";
+import { SubscriptionPlan } from "@/types";
 import { detectUrl, removeUrlFromPrompt, extractUrlContent, ExtractedUrlContent } from "@/lib/utils/url-extract";
+import { isTopicTimeSensitive, fetchRealtimeContext, buildRealtimeContextBlock, RealtimeContext } from "@/lib/services/realtime-context";
 import { detectPromptLanguage } from "@/lib/utils/detect-language";
 import { normalizeHashtagsInText } from "@/lib/hashtags/normalize";
 import {
@@ -62,7 +64,7 @@ const MOCK_CHUNK_DELAY = 20;
  * - start: { type: "storytelling" | "business" } - Signals start of a response
  * - chunk: { content: string, type: "storytelling" | "business" } - Text chunk
  * - done: { type: "storytelling" | "business" } - Signals end of a response
- * - insights: { insights: PostInsights } - AI-generated insights about the post
+ * - title: { title: string } - short sidebar title derived locally from the prompt
  * - complete: {} - All responses finished
  * - quota_exceeded: { message: string, limit: number, used: number } - User exceeded quota
  * - error: { message: string } - Error occurred
@@ -79,7 +81,7 @@ export async function POST(request: NextRequest) {
       prompt,
       language: clientLanguage = "fr",
       userApiKey,
-      model = "gpt-4",
+      model = PRIMARY_MODEL,
       userProfile,
       selectedStyle = "business", // PRO users can choose style
       requestDualMode = false, // Client requests dual mode (Pro: limited, Max: unlimited)
@@ -597,6 +599,42 @@ export async function POST(request: NextRequest) {
               intent = classified;
             }
 
+            // ========== REAL-TIME CONTEXTUAL INTELLIGENCE (Pro+) ==========
+            // When the user wants a post AND the topic moves with the news
+            // (AI, markets, tech, crypto, "in 2026"…), run ONE native web
+            // search and inject a dated factual brief into generation. Bounded
+            // by: Pro+ plan, post intents only, first message only (follow-ups
+            // are surgical edits — adding facts would change the post), and not
+            // when a URL was already extracted (that's the grounding source).
+            let realtimeContext: RealtimeContext | null = null;
+            const wantsPost = intent === "PRODUCTION" || intent === "HYBRID";
+            const isFollowUpReq =
+              Array.isArray(conversationHistory) && conversationHistory.length > 0;
+            if (
+              wantsPost &&
+              !isFollowUpReq &&
+              !extractedUrlContent &&
+              !!userPlan &&
+              planHasFeature(userPlan, "hasRealtimeContext") &&
+              isTopicTimeSensitive(cleanedPrompt)
+            ) {
+              sendEvent("phase", {
+                phase: "searching",
+                message: language === "fr" ? "Recherche sur Internet…" : "Searching the web…",
+              });
+              realtimeContext = await fetchRealtimeContext(
+                openaiService["client"],
+                cleanedPrompt,
+                language as "fr" | "en",
+                userId,
+              );
+              if (realtimeContext && process.env.NODE_ENV !== "production") {
+                console.log(
+                  `[POSTY] Realtime context injected (${realtimeContext.sources.length} sources) for: ${cleanedPrompt.slice(0, 60)}`,
+                );
+              }
+            }
+
             if (intent === "SOCIAL") {
               // Social response — short, warm greeting
               isConversational = true;
@@ -653,7 +691,8 @@ export async function POST(request: NextRequest) {
                 conversationHistory as Array<{ role: "user" | "assistant"; content: string }> | undefined,
                 processedFileContent,
                 extractedUrlContent,
-                memoryContext
+                memoryContext,
+                realtimeContext
               );
 
               // generatedContent is used downstream for insights/memory/title extraction —
@@ -679,7 +718,8 @@ export async function POST(request: NextRequest) {
                 conversationHistory as Array<{ role: "user" | "assistant"; content: string }> | undefined,
                 processedFileContent,
                 extractedUrlContent,
-                memoryContext
+                memoryContext,
+                realtimeContext
               );
             }
           } else {
@@ -689,44 +729,23 @@ export async function POST(request: NextRequest) {
 
           generationSuccessful = true;
 
-          // ========== GENERATE INSIGHTS (PRODUCTION ONLY) ==========
-          // Only generate insights for actual LinkedIn posts
-          if (openaiService && generatedContent && !isConversational) {
-            try {
-              const insights = await generateInsights(
-                openaiService,
-                generatedContent,
-                language,
-                userId
-              );
-              if (insights) {
-                sendEvent("insights", { insights });
-              }
-            } catch (insightsError) {
-              console.error("Insights generation error:", insightsError);
-              // Continue without insights - not critical
-            }
-          }
+          // ========== INSIGHTS — CLIENT-SIDE, ON DEMAND ==========
+          // Insights are NOT generated here anymore. The post card computes
+          // them locally (generatePostInsights) only when the user opens the
+          // insights modal — a free, on-demand heuristic that fully replaces
+          // the old per-post LLM call (which was generated on every post yet
+          // never displayed). Saves one model call per generation.
 
-          // ========== GENERATE SMART TITLE ==========
-          // Extract a short 2-4 word topic from the prompt for the sidebar
-          if (generatedContent && !isConversational) {
-            try {
-              const titleService = createOpenAIService({ model: "gpt-3.5-turbo" as OpenAIModel, temperature: 0.3, maxTokens: 30 });
-              if (titleService) {
-                const titleResponse = await titleService.chat({
-                  systemPrompt: language === "fr"
-                    ? "Extrais le sujet principal en 2 à 4 mots maximum. Pas de verbe, pas de phrase. Juste le thème. Exemples: 'Sauce curry', 'Management remote', 'IA recrutement'. Réponds UNIQUEMENT avec le titre court."
-                    : "Extract the main topic in 2 to 4 words maximum. No verb, no sentence. Just the theme. Examples: 'Curry sauce', 'Remote management', 'AI recruitment'. Respond ONLY with the short title.",
-                  messages: [{ role: "user", content: prompt.slice(0, 200) }],
-                });
-                const smartTitle = titleResponse.trim().replace(/^["']|["']$/g, "").slice(0, 50);
-                if (smartTitle && smartTitle.length > 0) {
-                  sendEvent("title", { title: smartTitle });
-                }
-              }
-            } catch (titleError) {
-              console.error("Title generation error (non-blocking):", titleError);
+          // ========== SMART TITLE — DERIVED LOCALLY (no LLM call) ==========
+          // The sidebar title is extracted from the prompt with a local
+          // heuristic instead of a dedicated model round-trip. Only on the
+          // first message: follow-ups are edits ("change le hook") and must
+          // not overwrite the conversation's original topic title.
+          const isFirstMessage = !(Array.isArray(conversationHistory) && conversationHistory.length > 0);
+          if (generatedContent && !isConversational && isFirstMessage) {
+            const smartTitle = deriveTitleFromPrompt(cleanedPrompt, language);
+            if (smartTitle) {
+              sendEvent("title", { title: smartTitle });
             }
           }
 
@@ -740,7 +759,7 @@ export async function POST(request: NextRequest) {
                 if (!memData?.enabled) return;
 
                 // Use gpt-3.5-turbo for extraction (cheap & fast)
-                const memService = createOpenAIService({ model: "gpt-3.5-turbo" as OpenAIModel, temperature: 0.3, maxTokens: 300 });
+                const memService = createOpenAIService({ model: MINI_MODEL, temperature: 0.3, maxTokens: 300 });
                 if (!memService) return;
 
                 const extractionMsgs = buildExtractionMessages(prompt, generatedContent, language);
@@ -846,7 +865,8 @@ async function generateWithOpenAI(
   conversationHistory?: Array<{ role: "user" | "assistant"; content: string }>,
   fileContent?: { type: "image"; mimeType: string; base64: string } | { type: "pdf"; extractedText: string } | null,
   urlContent?: ExtractedUrlContent | null,
-  memoryContext?: string | null
+  memoryContext?: string | null,
+  realtimeContext?: RealtimeContext | null
 ): Promise<string> {
   let firstPostContent = "";
 
@@ -929,6 +949,12 @@ STRICT RULES:
         ? "\n\nL'utilisateur a partagé un lien. Utilise le contenu extrait de cette page comme contexte principal pour générer le post LinkedIn. Fais référence aux idées clés de l'article sans copier le texte mot pour mot."
         : "\n\nThe user shared a link. Use the extracted page content as the main context to generate the LinkedIn post. Reference key ideas from the article without copying text verbatim.";
       systemPrompt += urlContext;
+    }
+
+    // Inject real-time factual brief + current date (Pro+, time-sensitive topics).
+    // Facts are woven in naturally with no links; sources stay internal.
+    if (realtimeContext) {
+      systemPrompt += buildRealtimeContextBlock(realtimeContext, language);
     }
 
     // Build messages array
@@ -1087,65 +1113,10 @@ async function generateWithMock(
 
 // buildSystemPrompt and sanitizeUserInput moved to lib/prompt-builder.ts
 // Now using buildOptimizedPrompt() with synthesizeProfile() for token-efficient injection
-
-/**
- * Generate AI insights for a post
- * Uses GPT-3.5-turbo for cost efficiency (insights are secondary content)
- */
-async function generateInsights(
-  service: NonNullable<ReturnType<typeof createOpenAIService>>,
-  postContent: string,
-  language: "fr" | "en",
-  userId: string
-): Promise<PostInsights | null> {
-  try {
-    const insightsModel = "gpt-3.5-turbo";
-    const response = await service["client"].chat.completions.create({
-      model: insightsModel, // Use faster/cheaper model for insights
-      messages: [
-        { role: "system", content: INSIGHTS_PROMPT[language] },
-        { role: "user", content: postContent },
-      ],
-      temperature: 0.5,
-      max_tokens: 500,
-    });
-
-    const insightsUsage = readUsageFromResponse(response);
-    void trackAIUsage({
-      userId,
-      route: "generate.insights",
-      model: insightsModel,
-      inputTokens: insightsUsage.inputTokens,
-      outputTokens: insightsUsage.outputTokens,
-      cachedInputTokens: insightsUsage.cachedInputTokens,
-    });
-
-    const content = response.choices[0]?.message?.content;
-    if (!content) return null;
-
-    // Parse JSON response
-    try {
-      const insights = JSON.parse(content) as PostInsights;
-
-      // Validate required fields
-      if (
-        insights.whyEffective &&
-        insights.bestTimeToPost &&
-        insights.expectedEngagement &&
-        insights.keyTakeaway
-      ) {
-        return insights;
-      }
-    } catch {
-      console.error("Failed to parse insights JSON:", content);
-    }
-
-    return null;
-  } catch (error) {
-    console.error("Insights generation failed:", error);
-    return null;
-  }
-}
+//
+// NOTE: server-side LLM insights were removed — the client computes insights
+// locally and on demand (lib/services/generateInsights.ts → generatePostInsights),
+// so generating them here on every post was wasted spend.
 
 // ============== INTENT CLASSIFICATION ==============
 
@@ -1270,7 +1241,7 @@ async function classifyIntent(
 
   // Fall back to AI classification
   try {
-    const intentModel = "gpt-3.5-turbo";
+    const intentModel = MINI_MODEL;
     const response = await service["client"].chat.completions.create({
       model: intentModel,
       messages: [
@@ -1346,7 +1317,7 @@ async function generateConversational(
 
   messages.push({ role: "user", content: prompt });
 
-  const convModel = "gpt-3.5-turbo";
+  const convModel = MINI_MODEL;
   const stream = await service["client"].chat.completions.create({
     model: convModel, // Use faster model for conversation
     messages,
@@ -1429,7 +1400,7 @@ async function generateAssistance(
   messages.push({ role: "user", content: prompt });
 
   // Use GPT-4 for high-quality assistance (not 3.5-turbo)
-  const assistModel = service["model"] || "gpt-4";
+  const assistModel = service["model"] || PRIMARY_MODEL;
   const stream = await service["client"].chat.completions.create({
     model: assistModel,
     messages,

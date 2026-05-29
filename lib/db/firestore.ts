@@ -2832,3 +2832,86 @@ export async function deleteDiscordConnection(userId: string): Promise<void> {
   await deleteDoc(ref);
 }
 
+// ============== X / TWITTER (via Zernio aggregator) ==============
+// Collection: xConnections
+// Posty does not hold any OAuth token directly — Zernio does. We only store
+// the zernioAccountId we received from Zernio's listAccounts after OAuth.
+
+export interface XConnectionData {
+  userId: string;
+  zernioAccountId: string;
+  zernioProfileId: string;
+  username?: string;
+  profilePicture?: string;
+  connectedAt: Timestamp;
+  lastUsedAt?: Timestamp;
+}
+
+export async function getXConnection(
+  userId: string
+): Promise<XConnectionData | null> {
+  const ref = doc(db, "xConnections", userId);
+  const snap = await getDoc(ref);
+  if (snap.exists()) return snap.data() as XConnectionData;
+  return null;
+}
+
+export async function deleteXConnection(userId: string): Promise<void> {
+  const ref = doc(db, "xConnections", userId);
+  await deleteDoc(ref);
+}
+
+// ============== INSTAGRAM (via Zernio aggregator) ==============
+// Collection: instagramConnections
+
+export interface InstagramConnectionData {
+  userId: string;
+  zernioAccountId: string;
+  zernioProfileId: string;
+  username?: string;
+  profilePicture?: string;
+  connectedAt: Timestamp;
+  lastUsedAt?: Timestamp;
+}
+
+export async function getInstagramConnection(
+  userId: string
+): Promise<InstagramConnectionData | null> {
+  const ref = doc(db, "instagramConnections", userId);
+  const snap = await getDoc(ref);
+  if (snap.exists()) return snap.data() as InstagramConnectionData;
+  return null;
+}
+
+export async function deleteInstagramConnection(userId: string): Promise<void> {
+  const ref = doc(db, "instagramConnections", userId);
+  await deleteDoc(ref);
+}
+
+// ============== REDDIT (via Zernio aggregator) ==============
+// Collection: redditConnections
+
+export interface RedditConnectionData {
+  userId: string;
+  zernioAccountId: string;
+  zernioProfileId: string;
+  username?: string;
+  profilePicture?: string;
+  connectedAt: Timestamp;
+  lastUsedAt?: Timestamp;
+}
+
+export async function getRedditConnection(
+  userId: string
+): Promise<RedditConnectionData | null> {
+  const ref = doc(db, "redditConnections", userId);
+  const snap = await getDoc(ref);
+  if (snap.exists()) return snap.data() as RedditConnectionData;
+  return null;
+}
+
+export async function deleteRedditConnection(userId: string): Promise<void> {
+  const ref = doc(db, "redditConnections", userId);
+  await deleteDoc(ref);
+}
+

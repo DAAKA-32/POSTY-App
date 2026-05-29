@@ -115,7 +115,7 @@ Respond ONLY with a valid JSON object (no markdown, no backticks):
 }
 contentScore is 1-10. Be constructive and encouraging but honest.`;
 
-    const insightsModel = "gpt-4";
+    const insightsModel = "gpt-4o";
     const response = await service["client"].chat.completions.create({
       model: insightsModel,
       messages: [

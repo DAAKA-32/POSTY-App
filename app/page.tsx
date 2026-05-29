@@ -77,7 +77,7 @@ function ScrollProgressBar() {
     <motion.div
       style={{ scaleX }}
       aria-hidden="true"
-      className="fixed top-0 left-0 right-0 z-[60] h-[2px] origin-left bg-gradient-to-r from-[#F8935D] via-[#F76B54] to-[#FBB9AD] shadow-[0_0_12px_rgba(248,147,93,0.45)] pointer-events-none"
+      className="fixed top-0 left-0 right-0 z-[60] h-[2px] origin-left bg-gradient-to-r from-[#F8935D] via-[#F76B54] to-[#F8935D] pointer-events-none"
     />
   );
 }
@@ -295,7 +295,7 @@ function Navbar() {
             mx-auto transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]
             ${isScrolled && !isMenuOpen ? "max-w-[1100px] rounded-[20px]" : "max-w-full rounded-none"}
             ${isScrolled || isMenuOpen
-              ? "bg-white/85 backdrop-blur-xl shadow-md shadow-gray-900/[0.05] border border-gray-200/50"
+              ? "bg-white/25 backdrop-blur-xl shadow-md shadow-gray-900/[0.05] border border-white/40"
               : "bg-transparent border border-transparent"
             }
           `}
@@ -1604,11 +1604,18 @@ function DemoSection() {
             {viewMode === "preview" && (
               <motion.div
                 className="relative"
-                initial={alreadyPlayed ? undefined : { clipPath: "inset(50% 0 50% 0)" }}
+                // Reveal-from-center animation. End state intentionally uses
+                // *negative* insets: a plain `inset(0% 0 0% 0)` clip would
+                // chop the MacBook's drop shadow + the ground-shadow ellipse
+                // exactly at the bounding box, drawing a hard horizontal line
+                // right at the section boundary with the next "Tout ce qu'il
+                // vous faut…" block. Keeping consistent % units so framer
+                // interpolates cleanly between the two clip-path values.
+                initial={alreadyPlayed ? undefined : { clipPath: "inset(50% -20% 50% -20%)" }}
                 animate={
                   heroPhase === "init"
-                    ? { clipPath: "inset(50% 0 50% 0)" }
-                    : { clipPath: "inset(0% 0 0% 0)" }
+                    ? { clipPath: "inset(50% -20% 50% -20%)" }
+                    : { clipPath: "inset(-30% -20% -30% -20%)" }
                 }
                 transition={{ duration: 1, ease: cinematicEase }}
               >

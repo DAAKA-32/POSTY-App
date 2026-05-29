@@ -68,8 +68,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create OpenAI service with GPT-3.5 for demo (cost-effective)
-    const openaiService = createOpenAIService({ model: "gpt-3.5-turbo" as OpenAIModel });
+    // Create OpenAI service with gpt-4o-mini for demo (cheap AND better than 3.5)
+    const openaiService = createOpenAIService({ model: "gpt-4o-mini" as OpenAIModel });
 
     if (!openaiService) {
       return new Response(
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
 
           // Stream the response
           const streamResponse = await openaiService["client"].chat.completions.create({
-            model: "gpt-3.5-turbo",
+            model: "gpt-4o-mini",
             messages: [
               { role: "system", content: DEMO_SYSTEM_PROMPT },
               { role: "user", content: message },

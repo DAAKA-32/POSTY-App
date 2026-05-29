@@ -36,7 +36,7 @@ const STORAGE_KEYS = {
  */
 export function useOpenAIConfig() {
   const [apiKey, setApiKeyState] = useState<string>("");
-  const [model, setModelState] = useState<string>("gpt-4");
+  const [model, setModelState] = useState<string>("gpt-4o");
   const [isValidating, setIsValidating] = useState(false);
   const [isValid, setIsValid] = useState<boolean | null>(null);
   const [status, setStatus] = useState<OpenAIStatus | null>(null);
@@ -45,7 +45,14 @@ export function useOpenAIConfig() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const storedKey = localStorage.getItem(STORAGE_KEYS.API_KEY) || "";
-      const storedModel = localStorage.getItem(STORAGE_KEYS.MODEL) || "gpt-4";
+      // Forward-migrate the legacy default: gpt-4 / gpt-4-turbo are strictly
+      // worse AND pricier than gpt-4o, so upgrade them. A deliberate budget
+      // pick (gpt-3.5-turbo on a user's own key) is left untouched.
+      const rawModel = localStorage.getItem(STORAGE_KEYS.MODEL);
+      const storedModel =
+        !rawModel || rawModel === "gpt-4" || rawModel === "gpt-4-turbo"
+          ? "gpt-4o"
+          : rawModel;
       setApiKeyState(storedKey);
       setModelState(storedModel);
       if (storedKey) {

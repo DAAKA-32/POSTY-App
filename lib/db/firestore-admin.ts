@@ -7,6 +7,7 @@ import { adminDb } from "@/lib/db/firebase-admin";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { SubscriptionPlan } from "@/types";
 import { DAILY_MESSAGE_LIMITS, HOURLY_MESSAGE_LIMITS, HOURLY_WINDOW_MS, getFounderOverridePlan, PlanType, PLAN_CONFIGS, resolveFreeTrialEnd, isFreeTrialExpired } from "@/lib/config/plans";
+import { encryptToken, decryptToken } from "@/lib/crypto/token-cipher";
 
 // LinkedIn Connection Data type (matching the client-side type)
 export interface LinkedInOrganizationAdmin {
@@ -48,7 +49,8 @@ export async function getLinkedInConnectionAdmin(
   const connectionSnap = await connectionRef.get();
 
   if (connectionSnap.exists) {
-    return connectionSnap.data() as LinkedInConnectionData;
+    const data = connectionSnap.data() as LinkedInConnectionData;
+    return { ...data, accessToken: decryptToken(data.accessToken) };
   }
   return null;
 }
@@ -768,7 +770,7 @@ export async function saveLinkedInConnectionAdmin(
   await connectionRef.set({
     userId,
     linkedInId: data.linkedInId,
-    accessToken: data.accessToken,
+    accessToken: encryptToken(data.accessToken),
     expiresAt: Timestamp.fromDate(data.expiresAt),
     profileName: data.profileName,
     profilePicture: data.profilePicture || null,
@@ -817,7 +819,12 @@ export async function getFacebookConnectionAdmin(
   const connectionSnap = await connectionRef.get();
 
   if (connectionSnap.exists) {
-    return connectionSnap.data() as FacebookConnectionDataAdmin;
+    const data = connectionSnap.data() as FacebookConnectionDataAdmin;
+    return {
+      ...data,
+      accessToken: decryptToken(data.accessToken),
+      pages: (data.pages ?? []).map((p) => ({ ...p, accessToken: decryptToken(p.accessToken) })),
+    };
   }
   return null;
 }
@@ -850,12 +857,12 @@ export async function saveFacebookConnectionAdmin(
   await connectionRef.set({
     userId,
     facebookId: data.facebookId,
-    accessToken: data.accessToken,
+    accessToken: encryptToken(data.accessToken),
     expiresAt: Timestamp.fromDate(data.expiresAt),
     profileName: data.profileName,
     profilePicture: data.profilePicture || null,
     email: data.email || null,
-    pages: data.pages,
+    pages: data.pages.map((p) => ({ ...p, accessToken: encryptToken(p.accessToken) })),
     selectedPageId: data.selectedPageId || (data.pages.length > 0 ? data.pages[0].id : null),
     connectedAt: FieldValue.serverTimestamp(),
     lastUsedAt: null,
@@ -939,7 +946,8 @@ export async function getThreadsConnectionAdmin(
   const connectionSnap = await connectionRef.get();
 
   if (connectionSnap.exists) {
-    return connectionSnap.data() as ThreadsConnectionDataAdmin;
+    const data = connectionSnap.data() as ThreadsConnectionDataAdmin;
+    return { ...data, accessToken: decryptToken(data.accessToken) };
   }
   return null;
 }
@@ -967,7 +975,7 @@ export async function saveThreadsConnectionAdmin(
     userId,
     threadsId: data.threadsId,
     username: data.username,
-    accessToken: data.accessToken,
+    accessToken: encryptToken(data.accessToken),
     expiresAt: Timestamp.fromDate(data.expiresAt),
     profileName: data.profileName,
     profilePicture: data.profilePicture || null,
@@ -1078,7 +1086,14 @@ export async function getBlueskyConnectionAdmin(
   if (!adminDb) throw new Error("Firebase Admin not initialized");
   const ref = adminDb.collection("blueskyConnections").doc(userId);
   const snap = await ref.get();
-  if (snap.exists) return snap.data() as BlueskyConnectionDataAdmin;
+  if (snap.exists) {
+    const data = snap.data() as BlueskyConnectionDataAdmin;
+    return {
+      ...data,
+      accessJwt: decryptToken(data.accessJwt),
+      refreshJwt: decryptToken(data.refreshJwt),
+    };
+  }
   return null;
 }
 
@@ -1101,8 +1116,8 @@ export async function saveBlueskyConnectionAdmin(
     handle: data.handle,
     did: data.did,
     service: data.service,
-    accessJwt: data.accessJwt,
-    refreshJwt: data.refreshJwt,
+    accessJwt: encryptToken(data.accessJwt),
+    refreshJwt: encryptToken(data.refreshJwt),
     profileName: data.profileName || null,
     profilePicture: data.profilePicture || null,
     connectedAt: FieldValue.serverTimestamp(),
@@ -1118,8 +1133,8 @@ export async function updateBlueskySessionAdmin(
   if (!adminDb) throw new Error("Firebase Admin not initialized");
   const ref = adminDb.collection("blueskyConnections").doc(userId);
   const patch: Record<string, unknown> = {
-    accessJwt: data.accessJwt,
-    refreshJwt: data.refreshJwt,
+    accessJwt: encryptToken(data.accessJwt),
+    refreshJwt: encryptToken(data.refreshJwt),
     sessionRefreshedAt: FieldValue.serverTimestamp(),
   };
   if (data.handle) patch.handle = data.handle;
@@ -1181,7 +1196,10 @@ export async function getMastodonConnectionAdmin(
   if (!adminDb) throw new Error("Firebase Admin not initialized");
   const ref = adminDb.collection("mastodonConnections").doc(userId);
   const snap = await ref.get();
-  if (snap.exists) return snap.data() as MastodonConnectionDataAdmin;
+  if (snap.exists) {
+    const data = snap.data() as MastodonConnectionDataAdmin;
+    return { ...data, accessToken: decryptToken(data.accessToken) };
+  }
   return null;
 }
 
@@ -1205,7 +1223,7 @@ export async function saveMastodonConnectionAdmin(
     accountId: data.accountId,
     username: data.username,
     acct: data.acct,
-    accessToken: data.accessToken,
+    accessToken: encryptToken(data.accessToken),
     profileName: data.profileName || null,
     profilePicture: data.profilePicture || null,
     connectedAt: FieldValue.serverTimestamp(),
@@ -1263,7 +1281,10 @@ export async function getMastodonAppCredentialsAdmin(
   if (!adminDb) throw new Error("Firebase Admin not initialized");
   const ref = adminDb.collection("mastodonApps").doc(docId);
   const snap = await ref.get();
-  if (snap.exists) return snap.data() as MastodonAppCredentialsAdmin;
+  if (snap.exists) {
+    const data = snap.data() as MastodonAppCredentialsAdmin;
+    return { ...data, clientSecret: decryptToken(data.clientSecret) };
+  }
   return null;
 }
 
@@ -1276,7 +1297,7 @@ export async function saveMastodonAppCredentialsAdmin(
   await ref.set({
     instance: data.instance,
     clientId: data.clientId,
-    clientSecret: data.clientSecret,
+    clientSecret: encryptToken(data.clientSecret),
     redirectUri: data.redirectUri,
     registeredAt: FieldValue.serverTimestamp(),
   });
@@ -1303,7 +1324,10 @@ export async function getDiscordConnectionAdmin(
   if (!adminDb) throw new Error("Firebase Admin not initialized");
   const ref = adminDb.collection("discordConnections").doc(userId);
   const snap = await ref.get();
-  if (snap.exists) return snap.data() as DiscordConnectionDataAdmin;
+  if (snap.exists) {
+    const data = snap.data() as DiscordConnectionDataAdmin;
+    return { ...data, webhookUrl: decryptToken(data.webhookUrl) };
+  }
   return null;
 }
 
@@ -1323,7 +1347,7 @@ export async function saveDiscordConnectionAdmin(
   const ref = adminDb.collection("discordConnections").doc(userId);
   await ref.set({
     userId,
-    webhookUrl: data.webhookUrl,
+    webhookUrl: encryptToken(data.webhookUrl),
     webhookId: data.webhookId,
     guildName: data.guildName || null,
     channelId: data.channelId || null,
@@ -1357,6 +1381,261 @@ export async function saveDiscordPostAdmin(
     userId,
     webhookId: data.webhookId,
     messageId: data.messageId || null,
+    content: data.content,
+    postUrl: data.postUrl || null,
+    publishedAt: FieldValue.serverTimestamp(),
+    success: data.success,
+    error: data.error || null,
+  });
+  return ref.id;
+}
+
+// ============== ZERNIO PROFILE ==============
+// Maps 1 Posty user to 1 Zernio profile. Created lazily on first connect
+// attempt. The zernioProfileId is the bridge to all Zernio-managed accounts
+// (X, Instagram) belonging to that user.
+
+export async function getZernioProfileIdAdmin(userId: string): Promise<string | null> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
+  const snap = await adminDb.collection("zernioProfiles").doc(userId).get();
+  if (!snap.exists) return null;
+  const data = snap.data();
+  return data?.zernioProfileId ?? null;
+}
+
+export async function saveZernioProfileAdmin(
+  userId: string,
+  zernioProfileId: string,
+): Promise<void> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
+  await adminDb.collection("zernioProfiles").doc(userId).set({
+    userId,
+    zernioProfileId,
+    createdAt: FieldValue.serverTimestamp(),
+  });
+}
+
+// ============== X / TWITTER (via Zernio) ==============
+// Posty does not hold an X OAuth token directly. Zernio holds the token; we
+// only store the zernioAccountId we got back from Zernio's listAccounts after
+// the OAuth callback. No secrets in this collection — encryption from Phase 1
+// is not required here.
+
+export interface XConnectionDataAdmin {
+  userId: string;
+  zernioAccountId: string;
+  zernioProfileId: string;
+  username?: string;
+  profilePicture?: string;
+  connectedAt: Timestamp;
+  lastUsedAt?: Timestamp;
+}
+
+export async function getXConnectionAdmin(
+  userId: string,
+): Promise<XConnectionDataAdmin | null> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
+  const snap = await adminDb.collection("xConnections").doc(userId).get();
+  if (snap.exists) return snap.data() as XConnectionDataAdmin;
+  return null;
+}
+
+export async function saveXConnectionAdmin(
+  userId: string,
+  data: {
+    zernioAccountId: string;
+    zernioProfileId: string;
+    username?: string;
+    profilePicture?: string;
+  },
+): Promise<void> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
+  await adminDb.collection("xConnections").doc(userId).set({
+    userId,
+    zernioAccountId: data.zernioAccountId,
+    zernioProfileId: data.zernioProfileId,
+    username: data.username || null,
+    profilePicture: data.profilePicture || null,
+    connectedAt: FieldValue.serverTimestamp(),
+    lastUsedAt: null,
+  });
+}
+
+export async function updateXLastUsedAdmin(userId: string): Promise<void> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
+  await adminDb.collection("xConnections").doc(userId).update({
+    lastUsedAt: FieldValue.serverTimestamp(),
+  });
+}
+
+export async function saveXPostAdmin(
+  userId: string,
+  data: {
+    zernioAccountId: string;
+    zernioPostId: string;
+    content: string;
+    postUrl?: string;
+    success: boolean;
+    error?: string;
+  },
+): Promise<string> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
+  const ref = await adminDb.collection("xPosts").add({
+    userId,
+    zernioAccountId: data.zernioAccountId,
+    zernioPostId: data.zernioPostId,
+    content: data.content,
+    postUrl: data.postUrl || null,
+    publishedAt: FieldValue.serverTimestamp(),
+    success: data.success,
+    error: data.error || null,
+  });
+  return ref.id;
+}
+
+// ============== INSTAGRAM (via Zernio) ==============
+
+export interface InstagramConnectionDataAdmin {
+  userId: string;
+  zernioAccountId: string;
+  zernioProfileId: string;
+  username?: string;
+  profilePicture?: string;
+  connectedAt: Timestamp;
+  lastUsedAt?: Timestamp;
+}
+
+export async function getInstagramConnectionAdmin(
+  userId: string,
+): Promise<InstagramConnectionDataAdmin | null> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
+  const snap = await adminDb.collection("instagramConnections").doc(userId).get();
+  if (snap.exists) return snap.data() as InstagramConnectionDataAdmin;
+  return null;
+}
+
+export async function saveInstagramConnectionAdmin(
+  userId: string,
+  data: {
+    zernioAccountId: string;
+    zernioProfileId: string;
+    username?: string;
+    profilePicture?: string;
+  },
+): Promise<void> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
+  await adminDb.collection("instagramConnections").doc(userId).set({
+    userId,
+    zernioAccountId: data.zernioAccountId,
+    zernioProfileId: data.zernioProfileId,
+    username: data.username || null,
+    profilePicture: data.profilePicture || null,
+    connectedAt: FieldValue.serverTimestamp(),
+    lastUsedAt: null,
+  });
+}
+
+export async function updateInstagramLastUsedAdmin(userId: string): Promise<void> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
+  await adminDb.collection("instagramConnections").doc(userId).update({
+    lastUsedAt: FieldValue.serverTimestamp(),
+  });
+}
+
+export async function saveInstagramPostAdmin(
+  userId: string,
+  data: {
+    zernioAccountId: string;
+    zernioPostId: string;
+    content: string;
+    postUrl?: string;
+    success: boolean;
+    error?: string;
+  },
+): Promise<string> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
+  const ref = await adminDb.collection("instagramPosts").add({
+    userId,
+    zernioAccountId: data.zernioAccountId,
+    zernioPostId: data.zernioPostId,
+    content: data.content,
+    postUrl: data.postUrl || null,
+    publishedAt: FieldValue.serverTimestamp(),
+    success: data.success,
+    error: data.error || null,
+  });
+  return ref.id;
+}
+
+// ============== REDDIT (via Zernio) ==============
+
+export interface RedditConnectionDataAdmin {
+  userId: string;
+  zernioAccountId: string;
+  zernioProfileId: string;
+  username?: string;
+  profilePicture?: string;
+  connectedAt: Timestamp;
+  lastUsedAt?: Timestamp;
+}
+
+export async function getRedditConnectionAdmin(
+  userId: string,
+): Promise<RedditConnectionDataAdmin | null> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
+  const snap = await adminDb.collection("redditConnections").doc(userId).get();
+  if (snap.exists) return snap.data() as RedditConnectionDataAdmin;
+  return null;
+}
+
+export async function saveRedditConnectionAdmin(
+  userId: string,
+  data: {
+    zernioAccountId: string;
+    zernioProfileId: string;
+    username?: string;
+    profilePicture?: string;
+  },
+): Promise<void> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
+  await adminDb.collection("redditConnections").doc(userId).set({
+    userId,
+    zernioAccountId: data.zernioAccountId,
+    zernioProfileId: data.zernioProfileId,
+    username: data.username || null,
+    profilePicture: data.profilePicture || null,
+    connectedAt: FieldValue.serverTimestamp(),
+    lastUsedAt: null,
+  });
+}
+
+export async function updateRedditLastUsedAdmin(userId: string): Promise<void> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
+  await adminDb.collection("redditConnections").doc(userId).update({
+    lastUsedAt: FieldValue.serverTimestamp(),
+  });
+}
+
+export async function saveRedditPostAdmin(
+  userId: string,
+  data: {
+    zernioAccountId: string;
+    zernioPostId: string;
+    subreddit: string;
+    title: string;
+    content: string;
+    postUrl?: string;
+    success: boolean;
+    error?: string;
+  },
+): Promise<string> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
+  const ref = await adminDb.collection("redditPosts").add({
+    userId,
+    zernioAccountId: data.zernioAccountId,
+    zernioPostId: data.zernioPostId,
+    subreddit: data.subreddit,
+    title: data.title,
     content: data.content,
     postUrl: data.postUrl || null,
     publishedAt: FieldValue.serverTimestamp(),

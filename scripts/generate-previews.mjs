@@ -129,12 +129,37 @@ async function captureOne(page, { id, route, file }) {
   }
   await page.waitForTimeout(SETTLE_MS);
 
-  /* Hide scrollbars to match the existing screenshots' clean look. */
+  /* If the App Router error boundary fired (Firestore hiccup, hydration
+   * race, etc.), click "Try again" — usually one or two retries recover.
+   * We detect by text rather than selector because the fallback markup is
+   * shared across multiple `error.tsx` files in the route tree. */
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const tryAgain = page.getByRole("button", { name: /try again|réessayer/i }).first();
+    const isShown = await tryAgain.isVisible().catch(() => false);
+    if (!isShown) break;
+    process.stdout.write(`(retry${attempt + 1}) `);
+    await tryAgain.click().catch(() => {});
+    /* Generous settle on retry — the underlying cause is often a Firestore
+     * read still resolving when the first render lands. */
+    await page.waitForTimeout(SETTLE_MS * 2);
+  }
+
+  /* Hide scrollbars + the Next.js dev-mode "Issues" indicator that pops up
+   * in the bottom-left corner during dev builds and pollutes every capture.
+   * Note: we deliberately do NOT blanket-hide `[role="dialog"]` here — that
+   * selector matches legitimate inline UI (popovers, sheets) in some pages
+   * and removing them mid-render can put React into an error state. The
+   * `PREVENT_MODAL_ENTRIES` localStorage priming is the load-bearing
+   * suppression for the WhatsNewModal + tour carousel. */
   await page.addStyleTag({
     content: `
       ::-webkit-scrollbar { display: none !important; }
       * { scrollbar-width: none !important; }
       html, body { overflow: hidden !important; }
+      nextjs-portal,
+      [data-nextjs-toast],
+      [data-nextjs-dialog-overlay],
+      [data-nextjs-build-indicator] { display: none !important; }
     `,
   });
 
@@ -145,6 +170,39 @@ async function captureOne(page, { id, route, file }) {
   });
 
   console.log("✓");
+}
+
+/**
+ * Keys that gate dismissable overlays in the product. We pre-write them into
+ * localStorage so the modals never mount during a capture run — much cleaner
+ * than relying on CSS-hiding (which still leaves a darkened scrim flicker on
+ * the first frame after navigation).
+ *
+ * When you ship a new release that uses a fresh `RELEASE_KEY` in
+ * [WhatsNewModal.tsx](components/onboarding/WhatsNewModal.tsx), add the new
+ * key here too.
+ */
+/**
+ * Each entry is { key, value }. Values are not all dates — `posty_app_tour_seen`
+ * is checked with `=== "true"` in [useAppTour.ts](hooks/app/useAppTour.ts), so
+ * we must write the literal string "true" there, not an ISO timestamp.
+ */
+const PREVENT_MODAL_ENTRIES = [
+  { key: "posty-whatsnew-2026-05-25", value: () => new Date().toISOString() }, // WhatsNewModal
+  { key: "posty_app_tour_seen",       value: () => "true" },                   // 5-slide premium tour carousel
+];
+
+async function suppressOverlayModals(page) {
+  const payload = PREVENT_MODAL_ENTRIES.map((e) => ({ key: e.key, value: e.value() }));
+  await page.evaluate((entries) => {
+    try {
+      for (const { key, value } of entries) {
+        window.localStorage.setItem(key, value);
+      }
+    } catch {
+      /* localStorage unavailable — fine, the CSS net in captureOne handles it */
+    }
+  }, payload);
 }
 
 async function main() {
@@ -187,6 +245,15 @@ async function main() {
       process.exit(1);
     }
     await waitForManualLogin(page);
+  }
+
+  /* Prime localStorage so the WhatsNewModal + tour + help tooltips stay
+   * dormant for the entire capture run. Must run AFTER login (origin is now
+   * the dev server) and BEFORE any captured page mounts the modal effect. */
+  try {
+    await suppressOverlayModals(page);
+  } catch (err) {
+    console.warn(`  ! Modal-suppression priming failed: ${err.message}`);
   }
 
   /* Force the requested language before capturing — the Settings click also

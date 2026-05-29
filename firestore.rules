@@ -48,6 +48,13 @@ service cloud.firestore {
     match /blueskyConnections/{userId}     { allow read, write: if isOwner(userId); }
     match /mastodonConnections/{userId}    { allow read, write: if isOwner(userId); }
     match /discordConnections/{userId}     { allow read, write: if isOwner(userId); }
+    match /xConnections/{userId}           { allow read, write: if isOwner(userId); }
+    match /instagramConnections/{userId}   { allow read, write: if isOwner(userId); }
+    match /redditConnections/{userId}      { allow read, write: if isOwner(userId); }
+    // Zernio profile mapping: 1 Posty user → 1 Zernio profileId. Read-only
+    // client-side so the user can see whether they have a profile; writes
+    // happen server-side via Admin SDK during OAuth.
+    match /zernioProfiles/{userId}         { allow read: if isOwner(userId); allow write: if false; }
 
     // Server-only: contains client_secret. Explicit deny for defense-in-depth.
     match /mastodonApps/{docId}            { allow read, write: if false; }
@@ -89,6 +96,24 @@ service cloud.firestore {
     }
 
     match /discordPosts/{postId} {
+      allow read:   if isResourceOwner();
+      allow update, delete: if isResourceOwner();
+      allow create: if isAuthenticated() && isRequestOwner();
+    }
+
+    match /xPosts/{postId} {
+      allow read:   if isResourceOwner();
+      allow update, delete: if isResourceOwner();
+      allow create: if isAuthenticated() && isRequestOwner();
+    }
+
+    match /instagramPosts/{postId} {
+      allow read:   if isResourceOwner();
+      allow update, delete: if isResourceOwner();
+      allow create: if isAuthenticated() && isRequestOwner();
+    }
+
+    match /redditPosts/{postId} {
       allow read:   if isResourceOwner();
       allow update, delete: if isResourceOwner();
       allow create: if isAuthenticated() && isRequestOwner();

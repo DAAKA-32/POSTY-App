@@ -46,9 +46,23 @@ function groupPostsByDate(posts: Post[], labels: SidebarTranslations) {
   const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
   const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
 
+  // Defensive dedup-by-id — mirrors the desktop sidebar's groupPostsByDate
+  // logic. Optimistic upserts on both `localPosts` and `sidebarCtx` can
+  // briefly land the same id twice with different `isPinned` values, which
+  // would route the post into BOTH the pinned group and a date group and
+  // surface as a duplicated row in the slide menu. Keep first occurrence
+  // because upsertPost prepends fresh data.
+  const seen = new Set<string>();
+  const deduped: Post[] = [];
+  for (const p of posts) {
+    if (!p || !p.id || seen.has(p.id)) continue;
+    seen.add(p.id);
+    deduped.push(p);
+  }
+
   // Separate pinned and non-pinned posts
-  const pinnedPosts = posts.filter((post) => post.isPinned);
-  const nonPinnedPosts = posts.filter((post) => !post.isPinned);
+  const pinnedPosts = deduped.filter((post) => post.isPinned);
+  const nonPinnedPosts = deduped.filter((post) => !post.isPinned);
 
   // Sort pinned posts by pinnedAt (most recent first)
   pinnedPosts.sort((a, b) => {

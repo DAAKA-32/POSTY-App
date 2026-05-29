@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { adminDb, isAdminInitialized } from "@/lib/db/firebase-admin";
 import { verifyAuth } from "@/lib/auth";
 import { syncSingleLinkedInPostMetrics } from "@/lib/linkedin/metrics";
+import { decryptToken } from "@/lib/crypto/token-cipher";
 
 /**
  * Manual trigger: sync engagement metrics for the current user's LinkedIn
@@ -52,6 +53,7 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
+    const decryptedAccessToken = decryptToken(connection.accessToken);
     if (connection.expiresAt?.toMillis?.() <= Date.now()) {
       return NextResponse.json(
         { error: "token_expired", message: "LinkedIn session expired. Reconnect to continue." },
@@ -89,7 +91,7 @@ export async function POST(request: NextRequest) {
         try {
           const outcome = await syncSingleLinkedInPostMetrics({
             adminDb: adminDb!,
-            accessToken: connection.accessToken,
+            accessToken: decryptedAccessToken,
             post: {
               id: doc.id,
               userId: data.userId,

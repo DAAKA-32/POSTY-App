@@ -40,6 +40,15 @@ export interface PricingCardProps {
   compact?: boolean;
   /** Pass true for the Free plan when the 30-day trial has expired */
   isFreeTrialExpired?: boolean;
+  /**
+   * Pass true on the Free card when the authenticated user is currently on
+   * a paid plan (Pro / Max). Repaints the Free CTA as a subdued
+   * "downgrade" affordance instead of the green "Welcome to Free" path —
+   * parent handler should open the DowngradeConfirmModal on click and
+   * trigger Stripe `cancel_at_period_end` from there. Matches Stripe /
+   * Linear / Notion downgrade UX.
+   */
+  freeAsDowngrade?: boolean;
 }
 
 export default function PricingCard({
@@ -53,9 +62,15 @@ export default function PricingCard({
   ctaHref,
   compact = false,
   isFreeTrialExpired = false,
+  freeAsDowngrade = false,
 }: PricingCardProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const isFree = plan.id === "free";
+  // The Free card on a paid user becomes a downgrade affordance: parent opens
+  // a confirmation modal that schedules `cancel_at_period_end` rather than
+  // wiping the paid plan inline.
+  const isDowngradeFreeCta = freeAsDowngrade && isFree && !isCurrentPlan;
+  const downgradeLabel = language === "fr" ? "Rétrograder vers Free" : "Downgrade to Free";
   const isPopular = plan.highlight;
   const isPremium = plan.premium;
   const allFeaturesFull = getLocalizedPlanFeaturesUnified(plan, t);
@@ -259,23 +274,27 @@ export default function PricingCard({
               className={`
                 w-full text-center px-4 py-3 sm:py-3.5 md:py-4 rounded-xl font-semibold text-xs sm:text-sm md:text-base
                 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed
-                ${isCurrentPlan && isFree && !isFreeTrialExpired
-                  // Active free plan → green "Ouvrir l'app" button
-                  ? "bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white shadow-md shadow-emerald-500/20"
-                  : isCurrentPlan && isFree && isFreeTrialExpired
-                    // Expired free plan → muted disabled
-                    ? "bg-gray-100 dark:bg-dark-elevated text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-dark-border"
-                    : isCurrentPlan && isGoldCard
-                      // Max current → muted gold
-                      ? "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-500"
-                      : isCurrentPlan
-                        // Pro current → muted orange
-                        ? "bg-primary/10 text-primary dark:bg-primary/15 border border-primary/20"
-                        : isGoldCard
-                          ? "bg-gradient-to-r from-amber-400 to-yellow-500 text-gray-900 shadow-lg shadow-amber-500/20 hover:shadow-xl hover:shadow-amber-500/30"
-                          : isPopular
-                            ? "bg-gradient-to-r from-primary to-accent text-white shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/35"
-                            : "bg-gray-100 dark:bg-dark-elevated text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-dark-hover border border-gray-200 dark:border-dark-border"
+                ${isDowngradeFreeCta
+                  // Paid user looking at Free → muted slate (no Welcome-green
+                  // signal). Clickable so parent opens the downgrade modal.
+                  ? "bg-gray-50 dark:bg-dark-elevated text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-dark-border hover:bg-gray-100 hover:text-gray-800 dark:hover:bg-dark-hover"
+                  : isCurrentPlan && isFree && !isFreeTrialExpired
+                    // Active free plan → green "Ouvrir l'app" button
+                    ? "bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white shadow-md shadow-emerald-500/20"
+                    : isCurrentPlan && isFree && isFreeTrialExpired
+                      // Expired free plan → muted disabled
+                      ? "bg-gray-100 dark:bg-dark-elevated text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-dark-border"
+                      : isCurrentPlan && isGoldCard
+                        // Max current → muted gold
+                        ? "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-500"
+                        : isCurrentPlan
+                          // Pro current → muted orange
+                          ? "bg-primary/10 text-primary dark:bg-primary/15 border border-primary/20"
+                          : isGoldCard
+                            ? "bg-gradient-to-r from-amber-400 to-yellow-500 text-gray-900 shadow-lg shadow-amber-500/20 hover:shadow-xl hover:shadow-amber-500/30"
+                            : isPopular
+                              ? "bg-gradient-to-r from-primary to-accent text-white shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/35"
+                              : "bg-gray-100 dark:bg-dark-elevated text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-dark-hover border border-gray-200 dark:border-dark-border"
                 }
               `}
             >
@@ -287,6 +306,14 @@ export default function PricingCard({
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>
                     <span className="hidden sm:inline">{t.pricingCard.redirecting}</span>
+                  </>
+                ) : isDowngradeFreeCta ? (
+                  // Paid user on Free card → "Downgrade" with down-arrow icon
+                  <>
+                    <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                    </svg>
+                    <span>{downgradeLabel}</span>
                   </>
                 ) : isCurrentPlan && isFree && !isFreeTrialExpired ? (
                   // Active free → "Open app" with arrow

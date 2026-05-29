@@ -9,6 +9,9 @@ import { ThreadsProvider } from "@/contexts/ThreadsContext";
 import { BlueskyProvider } from "@/contexts/BlueskyContext";
 import { MastodonProvider } from "@/contexts/MastodonContext";
 import { DiscordProvider } from "@/contexts/DiscordContext";
+import { XProvider } from "@/contexts/XContext";
+import { InstagramProvider } from "@/contexts/InstagramContext";
+import { RedditProvider } from "@/contexts/RedditContext";
 import { SchedulingProvider } from "@/contexts/SchedulingContext";
 import { QuotaProvider } from "@/contexts/QuotaContext";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
@@ -371,11 +374,17 @@ export default function RootLayout({
                         <BlueskyProvider>
                           <MastodonProvider>
                             <DiscordProvider>
-                              <SchedulingProvider>
-                                {children}
-                                <AnalyticsTracker />
-                                <GlobalCommandPalette />
-                              </SchedulingProvider>
+                              <XProvider>
+                                <InstagramProvider>
+                                  <RedditProvider>
+                                    <SchedulingProvider>
+                                      {children}
+                                      <AnalyticsTracker />
+                                      <GlobalCommandPalette />
+                                    </SchedulingProvider>
+                                  </RedditProvider>
+                                </InstagramProvider>
+                              </XProvider>
                             </DiscordProvider>
                           </MastodonProvider>
                         </BlueskyProvider>

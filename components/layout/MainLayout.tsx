@@ -55,9 +55,26 @@ function groupPostsByDate(posts: Post[], labels: { pinned: string; today: string
   const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
   const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
 
+  // Defensive dedup-by-id. Multiple data sources (effectivePosts ← posts prop /
+  // sidebarCtx / autoLoadedPosts) plus optimistic updates done in both
+  // localPosts AND sidebarCtx can briefly let the same post appear twice in
+  // the array — once with isPinned:false (stale) and once with isPinned:true
+  // (just-pinned). The post would then land in BOTH the pinned group AND a
+  // date group, rendering twice in the sidebar (user reported "deux sidebar
+  // se sont mis" after adding a visual). Keeping the FIRST occurrence is
+  // correct because upsertPost prepends fresh data; the older copy sits
+  // further down the array.
+  const seen = new Set<string>();
+  const deduped: Post[] = [];
+  for (const p of posts) {
+    if (!p || !p.id || seen.has(p.id)) continue;
+    seen.add(p.id);
+    deduped.push(p);
+  }
+
   // Separate pinned posts (using isPinned field)
-  const pinnedPosts = posts.filter((post) => post.isPinned);
-  const unpinnedPosts = posts.filter((post) => !post.isPinned);
+  const pinnedPosts = deduped.filter((post) => post.isPinned);
+  const unpinnedPosts = deduped.filter((post) => !post.isPinned);
 
   const groups: { label: string; posts: Post[]; isPinned?: boolean }[] = [];
 

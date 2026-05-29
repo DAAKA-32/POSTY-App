@@ -38,6 +38,7 @@ const GIFT_RECIPIENTS: GiftRecipient[] = [
   { email: "zoulikha.sophrologie@gmail.com",   displayName: "Zoulikha" },
   { email: "aurelieanicet@gmail.com",          displayName: "Aurélie"  },
   { email: "bibi42@gmail.com",                 displayName: "Bibi"     },
+  { email: "contact@breque-ue-watchis.com",    displayName: "Contact",  skipPopup: true },
   // Founder — receives the popup once like real recipients (validated in prod)
   { email: "emilien.nepveu@gmail.com",         displayName: "Emilien"  },
 ];
@@ -272,7 +273,9 @@ export function isPlanTrialEligible(plan: PlanType): plan is PaidPlanType {
 }
 
 // Platform Types - All supported social platforms
-export type Platform = "linkedin" | "threads" | "facebook" | "bluesky" | "mastodon" | "discord";
+// `x`, `instagram` and `reddit` are published via Zernio aggregator; the 6
+// others are native Posty integrations (see lib/platforms/*.ts).
+export type Platform = "linkedin" | "threads" | "facebook" | "bluesky" | "mastodon" | "discord" | "x" | "instagram" | "reddit";
 
 // Platform display information
 export interface PlatformInfo {
@@ -333,6 +336,30 @@ export const PLATFORM_INFO: Record<Platform, PlatformInfo> = {
     description: "Communautés (webhook)",
     minPlan: "free",
   },
+  x: {
+    id: "x",
+    name: "X",
+    icon: "x",
+    color: "#000000",
+    description: "Micro-blogging temps réel (ex-Twitter)",
+    minPlan: "free",
+  },
+  instagram: {
+    id: "instagram",
+    name: "Instagram",
+    icon: "instagram",
+    color: "#E1306C",
+    description: "Visuels et stories (requiert un compte business)",
+    minPlan: "free",
+  },
+  reddit: {
+    id: "reddit",
+    name: "Reddit",
+    icon: "reddit",
+    color: "#FF4500",
+    description: "Communautés thématiques (subreddits)",
+    minPlan: "free",
+  },
 };
 
 // Get all platforms as array
@@ -389,6 +416,11 @@ export interface PlanLimits {
 
   // URL Analysis
   hasUrlAnalysis: boolean; // Analyze URL content for post generation (Pro+)
+
+  // Real-time contextual intelligence — auto web search to ground posts in
+  // current events/trends/data when the topic is time-sensitive (Pro+).
+  // Facts are woven into the post (no links); sources stay internal.
+  hasRealtimeContext: boolean;
 
   // Marketing Strategist — premium conversational advisor (Max-only).
   // Distinct from post generation: this is a multi-turn strategy/audit agent.
@@ -461,10 +493,12 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
       dualResponsesPerWeek: 0,
       weeklyPublishLimit: 3, // Free: max 3 publications per week
       hasUrlAnalysis: false,
+      hasRealtimeContext: false,
       hasMarketingStrategist: false,
-      // Free plan: LinkedIn + the 3 free-friendly providers (no paid OAuth app needed).
-      allowedPlatforms: ["linkedin", "bluesky", "mastodon", "discord"],
-      maxPlatformConnections: 5,
+      // Free plan: LinkedIn + free-friendly providers + X/Instagram/Reddit
+      // (via Zernio aggregator's free tier — no paid OAuth app needed).
+      allowedPlatforms: ["linkedin", "bluesky", "mastodon", "discord", "x", "instagram", "reddit"],
+      maxPlatformConnections: 7,
       canPublishSimultaneously: false, // Multi-publish is a Max-only feature
       quotaResetPeriod: "monthly",
       imagesPerDay: 0, // Locked on Free
@@ -503,11 +537,12 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
       weeklyPublishLimit: -1, // Pro: unlimited publications
       // URL Analysis
       hasUrlAnalysis: true,
+      hasRealtimeContext: true,
       // Marketing Strategist is reserved for Max — strong premium signal.
       hasMarketingStrategist: false,
-      // Multi-Platform: LinkedIn + the 3 free-friendly providers
-      allowedPlatforms: ["linkedin", "bluesky", "mastodon", "discord"],
-      maxPlatformConnections: 5,
+      // Multi-Platform: LinkedIn + free-friendly providers + X/Instagram/Reddit via Zernio
+      allowedPlatforms: ["linkedin", "bluesky", "mastodon", "discord", "x", "instagram", "reddit"],
+      maxPlatformConnections: 7,
       canPublishSimultaneously: false, // Multi-publish is a Max-only feature
       quotaResetPeriod: "daily",
       imagesPerDay: 3, // Pro: 3 visuals per day
@@ -547,11 +582,12 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
       weeklyPublishLimit: -1, // Max: unlimited publications
       // URL Analysis
       hasUrlAnalysis: true,
+      hasRealtimeContext: true,
       // Marketing Strategist — Max-exclusive
       hasMarketingStrategist: true,
-      // Multi-Platform: all 6 platforms + simultaneous publishing
-      allowedPlatforms: ["linkedin", "threads", "facebook", "bluesky", "mastodon", "discord"],
-      maxPlatformConnections: 6,
+      // Multi-Platform: 6 native + X + Instagram + Reddit (via Zernio aggregator), simultaneous publishing
+      allowedPlatforms: ["linkedin", "threads", "facebook", "bluesky", "mastodon", "discord", "x", "instagram", "reddit"],
+      maxPlatformConnections: 9,
       canPublishSimultaneously: true, // Publish to multiple platforms at once
       quotaResetPeriod: "monthly",
       imagesPerDay: 5, // Max: 5 visuals per day
@@ -613,6 +649,7 @@ export function planHasFeature(
     | "hasDualResponseMode"
     | "canPublishSimultaneously"
     | "hasUrlAnalysis"
+    | "hasRealtimeContext"
     | "hasMarketingStrategist"
   >
 ): boolean {

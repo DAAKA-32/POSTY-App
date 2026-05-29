@@ -25,7 +25,7 @@ export interface MockupScreen {
  * so browsers (and Next.js Image optimizer) fetch the fresh screenshots instead
  * of serving the previous cached optimization.
  */
-const PREVIEWS_VERSION = "4";
+const PREVIEWS_VERSION = "5";
 
 /** Build translated MockupScreen array from translation object */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

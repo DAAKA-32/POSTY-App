@@ -24,6 +24,7 @@
  */
 
 import * as admin from "firebase-admin";
+import { decryptToken } from "./crypto/token-cipher";
 
 type Db = admin.firestore.Firestore;
 
@@ -236,7 +237,8 @@ export async function syncSinglePost(
 async function loadConnection(db: Db, userId: string): Promise<LinkedInConnection | null> {
   const snap = await db.collection("linkedinConnections").doc(userId).get();
   if (!snap.exists) return null;
-  return snap.data() as LinkedInConnection;
+  const data = snap.data() as LinkedInConnection;
+  return { ...data, accessToken: decryptToken(data.accessToken) };
 }
 
 async function markFailed(db: Db, postId: string, error: string): Promise<void> {

@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
       messages,
       language = "fr",
       userApiKey,
-      model = "gpt-4",
+      model = "gpt-4o",
       context = "linkedin",
     } = body;
 

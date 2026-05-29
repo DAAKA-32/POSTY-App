@@ -1127,3 +1127,50 @@ export function cleanFillerFromResponse(text: string, patterns: RegExp[]): strin
   }
   return cleaned.trim();
 }
+
+// ============== SIDEBAR TITLE (local, no LLM call) ==============
+
+/**
+ * Derive a short sidebar title (≤5 words) from the user's prompt — LOCALLY,
+ * with no model round-trip. Replaces the old per-post gpt call that only
+ * produced a sidebar label.
+ *
+ * Heuristic: keep the topic after "post sur / about …", else strip the leading
+ * imperative request clause ("fais-moi un …", "write me a …"), then drop a
+ * leading article and trailing punctuation and keep the first few words.
+ * Best-effort — this is a sidebar label, not user-facing copy.
+ */
+export function deriveTitleFromPrompt(prompt: string, language: Language = "fr"): string {
+  const fallback = language === "fr" ? "Nouveau post" : "New post";
+  let t = (prompt || "").trim();
+  if (!t) return fallback;
+
+  // 1. "... post/article/… sur/about TOPIC" → keep TOPIC.
+  const topicMatch = t.match(
+    /\b(?:posts?|publications?|articles?|contenus?|textes?|carrousels?|story|stories)\s+(?:linkedin\s+)?(?:sur|à propos de|au sujet de|concernant|about|on|regarding|for)\s+(.+)$/i,
+  );
+  if (topicMatch && topicMatch[1]) {
+    t = topicMatch[1];
+  } else {
+    // 2. Else strip a leading imperative request clause.
+    t = t.replace(
+      /^\s*(?:peux-tu|pourrais-tu|tu peux|can you|could you|please|stp|s'il te pla[îi]t)?\s*(?:me\s+|m'|nous\s+)?(?:fais|fait|faire|écris|écrit|écrire|crée|créer|génère|générer|rédige|rédiger|compose|composer|prépare|préparer|propose|proposer|donne|donner|write|create|generate|make|draft|give|want|veux|voudrais)\s+(?:moi|me|nous|us)?\s*(?:un|une|des|le|la|les|a|an|the|some)?\s*(?:post|publication|article|contenu|texte|message|copy)?\s*(?:linkedin)?\s*(?:sur|about|on|de|du|des|d'|for)?\s*/i,
+      "",
+    );
+  }
+
+  // 3. Strip a leading article / determiner.
+  t = t.replace(/^(?:l'|le |la |les |un |une |des |de |du |d'|the |a |an |my |mon |ma |mes )/i, "");
+
+  // 4. Trim trailing punctuation, collapse whitespace.
+  t = t.replace(/[\s\p{P}]+$/u, "").replace(/\s+/g, " ").trim();
+
+  // 5. First 5 words, capped at 50 chars.
+  const words = t.split(" ").filter(Boolean).slice(0, 5);
+  let title = words.join(" ").slice(0, 50);
+  title = title.replace(/[\s\p{P}]+$/u, "").trim();
+  if (!title) return fallback;
+
+  // 6. Capitalize first letter.
+  return title.charAt(0).toUpperCase() + title.slice(1);
+}

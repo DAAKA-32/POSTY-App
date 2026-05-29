@@ -11,6 +11,9 @@ import { useThreads } from "@/contexts/ThreadsContext";
 import { useBluesky } from "@/contexts/BlueskyContext";
 import { useMastodon } from "@/contexts/MastodonContext";
 import { useDiscord } from "@/contexts/DiscordContext";
+import { useX } from "@/contexts/XContext";
+import { useInstagram } from "@/contexts/InstagramContext";
+import { useReddit } from "@/contexts/RedditContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import Button from "@/components/ui/Button";
 import { LinkedInIcon } from "@/components/linkedin/LinkedInConnectButton";
@@ -31,6 +34,9 @@ const platformColors: Record<Platform, { text: string; bg: string }> = {
   bluesky: { text: "text-[#0085FF]", bg: "bg-[#0085FF]/15" },
   mastodon: { text: "text-[#6364FF]", bg: "bg-[#6364FF]/15" },
   discord: { text: "text-[#5865F2]", bg: "bg-[#5865F2]/15" },
+  x: { text: "text-black dark:text-white", bg: "bg-black/10 dark:bg-white/15" },
+  instagram: { text: "text-[#E1306C]", bg: "bg-[#E1306C]/15" },
+  reddit: { text: "text-[#FF4500]", bg: "bg-[#FF4500]/15" },
 };
 
 // Platform icons
@@ -49,6 +55,21 @@ const PlatformIcons: Record<Platform, React.FC<{ className?: string }>> = {
   bluesky: BlueskyIcon,
   mastodon: MastodonIcon,
   discord: DiscordIcon,
+  x: ({ className }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+    </svg>
+  ),
+  instagram: ({ className }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zm0 10.162a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" />
+    </svg>
+  ),
+  reddit: ({ className }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 01-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 01.042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 014.028 12.5c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 01.14-.197.35.35 0 01.238-.042l2.906.617a1.214 1.214 0 011.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 00-.231.094.33.33 0 000 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 00.029-.463.33.33 0 00-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 00-.232-.095z" />
+    </svg>
+  ),
 };
 
 // Platform profile avatar with error fallback
@@ -243,6 +264,30 @@ export default function PlatformConnectionsSection() {
     disconnectDiscord,
     webhookName: discordWebhookName,
   } = useDiscord();
+  const {
+    connection: xConnection,
+    isLoading: xLoading,
+    connectX,
+    disconnectX,
+    username: xUsername,
+    profilePicture: xProfilePicture,
+  } = useX();
+  const {
+    connection: instagramConnection,
+    isLoading: instagramLoading,
+    connectInstagram,
+    disconnectInstagram,
+    username: instagramUsername,
+    profilePicture: instagramProfilePicture,
+  } = useInstagram();
+  const {
+    connection: redditConnection,
+    isLoading: redditLoading,
+    connectReddit,
+    disconnectReddit,
+    username: redditUsername,
+    profilePicture: redditProfilePicture,
+  } = useReddit();
 
   const [showLinkedInDisconnectModal, setShowLinkedInDisconnectModal] = useState(false);
   const [showFacebookDisconnectConfirm, setShowFacebookDisconnectConfirm] = useState(false);
@@ -252,12 +297,18 @@ export default function PlatformConnectionsSection() {
   const [showMastodonConnectModal, setShowMastodonConnectModal] = useState(false);
   const [showMastodonDisconnectConfirm, setShowMastodonDisconnectConfirm] = useState(false);
   const [showDiscordDisconnectConfirm, setShowDiscordDisconnectConfirm] = useState(false);
+  const [showXDisconnectConfirm, setShowXDisconnectConfirm] = useState(false);
+  const [showInstagramDisconnectConfirm, setShowInstagramDisconnectConfirm] = useState(false);
+  const [showRedditDisconnectConfirm, setShowRedditDisconnectConfirm] = useState(false);
   useScrollLock(
     showFacebookDisconnectConfirm ||
       showThreadsDisconnectConfirm ||
       showBlueskyDisconnectConfirm ||
       showMastodonDisconnectConfirm ||
-      showDiscordDisconnectConfirm
+      showDiscordDisconnectConfirm ||
+      showXDisconnectConfirm ||
+      showInstagramDisconnectConfirm ||
+      showRedditDisconnectConfirm
   );
 
   // Get all platforms access status
@@ -275,7 +326,10 @@ export default function PlatformConnectionsSection() {
     (threadsConnection ? 1 : 0) +
     (blueskyConnection ? 1 : 0) +
     (mastodonConnection ? 1 : 0) +
-    (discordConnection ? 1 : 0);
+    (discordConnection ? 1 : 0) +
+    (xConnection ? 1 : 0) +
+    (instagramConnection ? 1 : 0) +
+    (redditConnection ? 1 : 0);
 
   // Get max connections for current plan
   const connectionResult = canConnectPlatform(subscription, connectedCount);
@@ -310,6 +364,21 @@ export default function PlatformConnectionsSection() {
     setShowDiscordDisconnectConfirm(false);
   };
 
+  const handleXDisconnect = async () => {
+    await disconnectX();
+    setShowXDisconnectConfirm(false);
+  };
+
+  const handleInstagramDisconnect = async () => {
+    await disconnectInstagram();
+    setShowInstagramDisconnectConfirm(false);
+  };
+
+  const handleRedditDisconnect = async () => {
+    await disconnectReddit();
+    setShowRedditDisconnectConfirm(false);
+  };
+
   // Render platform card
   //
   // STABLE LAYOUT: every card uses a 3-zone flex column with a fixed
@@ -341,6 +410,9 @@ export default function PlatformConnectionsSection() {
       : platform === "bluesky" ? !!blueskyConnection
       : platform === "mastodon" ? !!mastodonConnection
       : platform === "discord" ? !!discordConnection
+      : platform === "x" ? !!xConnection
+      : platform === "instagram" ? !!instagramConnection
+      : platform === "reddit" ? !!redditConnection
       : false;
     // Bluesky, Mastodon and Discord have no UI-visible token expiration: their
     // publish routes either auto-refresh (Bluesky) or use long-lived tokens
@@ -352,6 +424,11 @@ export default function PlatformConnectionsSection() {
       : platform === "bluesky" ? true
       : platform === "mastodon" ? true
       : platform === "discord" ? true
+      // X + Instagram + Reddit routes go through Zernio — token lifecycle is
+      // managed server-side by Zernio, the local doc has no expiry to track.
+      : platform === "x" ? true
+      : platform === "instagram" ? true
+      : platform === "reddit" ? true
       : false;
     const connectionData =
       platform === "linkedin" ? linkedInConnection
@@ -381,6 +458,30 @@ export default function PlatformConnectionsSection() {
               username: discordConnection.channelId || undefined,
             }
           : null
+      : platform === "x"
+        ? xConnection
+          ? {
+              profileName: xUsername || "X",
+              profilePicture: xProfilePicture ?? undefined,
+              username: xUsername || undefined,
+            }
+          : null
+      : platform === "instagram"
+        ? instagramConnection
+          ? {
+              profileName: instagramUsername || "Instagram",
+              profilePicture: instagramProfilePicture ?? undefined,
+              username: instagramUsername || undefined,
+            }
+          : null
+      : platform === "reddit"
+        ? redditConnection
+          ? {
+              profileName: redditUsername || "Reddit",
+              profilePicture: redditProfilePicture ?? undefined,
+              username: redditUsername || undefined,
+            }
+          : null
       : null;
     const isLoading =
       platform === "linkedin" ? linkedInLoading
@@ -389,6 +490,9 @@ export default function PlatformConnectionsSection() {
       : platform === "bluesky" ? blueskyLoading
       : platform === "mastodon" ? mastodonLoading
       : platform === "discord" ? discordLoading
+      : platform === "x" ? xLoading
+      : platform === "instagram" ? instagramLoading
+      : platform === "reddit" ? redditLoading
       : false;
 
     // Threads and Facebook are positioned as enterprise-only offerings (not
@@ -404,6 +508,9 @@ export default function PlatformConnectionsSection() {
       else if (platform === "bluesky") setShowBlueskyConnectModal(true);
       else if (platform === "mastodon") setShowMastodonConnectModal(true);
       else if (platform === "discord") connectDiscord();
+      else if (platform === "x") connectX();
+      else if (platform === "instagram") connectInstagram();
+      else if (platform === "reddit") connectReddit();
     };
     const triggerDisconnect = () => {
       if (platform === "linkedin") setShowLinkedInDisconnectModal(true);
@@ -412,6 +519,9 @@ export default function PlatformConnectionsSection() {
       else if (platform === "bluesky") setShowBlueskyDisconnectConfirm(true);
       else if (platform === "mastodon") setShowMastodonDisconnectConfirm(true);
       else if (platform === "discord") setShowDiscordDisconnectConfirm(true);
+      else if (platform === "x") setShowXDisconnectConfirm(true);
+      else if (platform === "instagram") setShowInstagramDisconnectConfirm(true);
+      else if (platform === "reddit") setShowRedditDisconnectConfirm(true);
     };
     const connectLabel =
       platform === "linkedin" ? t.settings.connectLinkedIn
@@ -420,6 +530,9 @@ export default function PlatformConnectionsSection() {
       : platform === "bluesky" ? (t.settings as any).connectBluesky ?? "Connecter Bluesky"
       : platform === "mastodon" ? (t.settings as any).connectMastodon ?? "Connecter Mastodon"
       : platform === "discord" ? (t.settings as any).connectDiscord ?? "Connecter Discord"
+      : platform === "x" ? "Connecter X"
+      : platform === "instagram" ? "Connecter Instagram"
+      : platform === "reddit" ? "Connecter Reddit"
       : t.settings.comingSoonButton;
     const reconnectLabel =
       platform === "linkedin" ? (t.linkedinErrors?.sessionExpiredAction ?? t.settings.connectLinkedIn)
@@ -707,6 +820,14 @@ export default function PlatformConnectionsSection() {
 
         {/* Platform Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* Zernio-backed platforms (x, instagram, reddit) are intentionally
+              omitted from this list. Their full backend stack — contexts,
+              routes /api/auth/zernio/*, /api/{x,instagram,reddit}/publish,
+              Firestore collections, Cloud Function scheduler cases — is left
+              in place so they can be re-enabled by appending them back to
+              this array once a monetization decision is made (Zernio free
+              tier = 2 accounts/profile, beyond that a payment method is
+              required on the Zernio side). */}
           {(["linkedin", "threads", "facebook", "bluesky", "mastodon", "discord"] as Platform[]).map(renderPlatformCard)}
         </div>
 
@@ -915,6 +1036,117 @@ export default function PlatformConnectionsSection() {
                   {t.common.cancel}
                 </Button>
                 <Button variant="primary" size="sm" onClick={handleDiscordDisconnect} className="flex-1 !bg-error hover:!bg-error/80">
+                  {t.settings.disconnect}
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* X Disconnect Confirmation — routed through Zernio so disconnect
+          only removes the local mapping; the OAuth token on Zernio side
+          stays attached to the user's Zernio profile until they revoke it
+          from their X account settings or reconnect. */}
+      <AnimatePresence>
+        {showXDisconnectConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            onClick={() => setShowXDisconnectConfirm(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-6 max-w-sm w-full shadow-xl"
+            >
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                Déconnecter X
+              </h3>
+              <p className="text-sm text-text-muted mb-4">
+                Voulez-vous vraiment déconnecter {xUsername ? `@${xUsername}` : "X"} ?
+              </p>
+              <div className="flex gap-3">
+                <Button variant="ghost" size="sm" onClick={() => setShowXDisconnectConfirm(false)} className="flex-1">
+                  {t.common.cancel}
+                </Button>
+                <Button variant="primary" size="sm" onClick={handleXDisconnect} className="flex-1 !bg-error hover:!bg-error/80">
+                  {t.settings.disconnect}
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Instagram Disconnect Confirmation */}
+      <AnimatePresence>
+        {showInstagramDisconnectConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            onClick={() => setShowInstagramDisconnectConfirm(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-6 max-w-sm w-full shadow-xl"
+            >
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                Déconnecter Instagram
+              </h3>
+              <p className="text-sm text-text-muted mb-4">
+                Voulez-vous vraiment déconnecter {instagramUsername ? `@${instagramUsername}` : "Instagram"} ?
+              </p>
+              <div className="flex gap-3">
+                <Button variant="ghost" size="sm" onClick={() => setShowInstagramDisconnectConfirm(false)} className="flex-1">
+                  {t.common.cancel}
+                </Button>
+                <Button variant="primary" size="sm" onClick={handleInstagramDisconnect} className="flex-1 !bg-error hover:!bg-error/80">
+                  {t.settings.disconnect}
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Reddit Disconnect Confirmation */}
+      <AnimatePresence>
+        {showRedditDisconnectConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            onClick={() => setShowRedditDisconnectConfirm(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-6 max-w-sm w-full shadow-xl"
+            >
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                Déconnecter Reddit
+              </h3>
+              <p className="text-sm text-text-muted mb-4">
+                Voulez-vous vraiment déconnecter {redditUsername ? `u/${redditUsername}` : "Reddit"} ?
+              </p>
+              <div className="flex gap-3">
+                <Button variant="ghost" size="sm" onClick={() => setShowRedditDisconnectConfirm(false)} className="flex-1">
+                  {t.common.cancel}
+                </Button>
+                <Button variant="primary" size="sm" onClick={handleRedditDisconnect} className="flex-1 !bg-error hover:!bg-error/80">
                   {t.settings.disconnect}
                 </Button>
               </div>

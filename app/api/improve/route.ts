@@ -238,7 +238,7 @@ export async function POST(request: NextRequest) {
           });
 
           // Generate improved post with streaming
-          const improveModel = "gpt-4";
+          const improveModel = "gpt-4o";
           const openaiStream = await openaiService["client"].chat.completions.create({
             model: improveModel,
             messages: [
@@ -277,7 +277,7 @@ export async function POST(request: NextRequest) {
 
           // Generate insights for the improved post
           try {
-            const insightsModel = "gpt-3.5-turbo";
+            const insightsModel = "gpt-4o-mini";
             const insightsResponse = await openaiService["client"].chat.completions.create({
               model: insightsModel,
               messages: [

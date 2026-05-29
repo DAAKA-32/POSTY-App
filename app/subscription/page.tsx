@@ -12,6 +12,7 @@ import { activateFreePlan } from "@/lib/db/firestore";
 import BillingToggle from "@/components/ui/BillingToggle";
 import toast from "@/components/ui/Toast";
 import WelcomeModal from "@/components/ui/WelcomeModal";
+import DowngradeConfirmModal from "@/components/subscription/DowngradeConfirmModal";
 import PricingCard from "@/components/pricing/PricingCard";
 import PageHeader from "@/components/layout/PageHeader";
 import { usePageTitle } from "@/hooks/ui/usePageTitle";
@@ -40,6 +41,7 @@ function SubscriptionContent() {
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [welcomePlanName, setWelcomePlanName] = useState<string | undefined>();
+  const [showDowngradeModal, setShowDowngradeModal] = useState(false);
 
 
   // Detect first-time user: no active/trialing subscription (free plan with inactive status counts as first-time)
@@ -142,6 +144,16 @@ function SubscriptionContent() {
         } else {
           router.push("/app");
         }
+        return;
+      }
+
+      // Paid user (Pro / Max) tapped Free — premium SaaS pattern: never
+      // wipe the paid plan inline. Open the downgrade confirmation modal
+      // instead; on confirm it schedules `cancel_at_period_end` so the
+      // user keeps access until the billing period ends, then auto-drops
+      // to Free. This is what Stripe / Linear / Notion all do.
+      if (hasActiveSubscription) {
+        setShowDowngradeModal(true);
         return;
       }
 
@@ -366,6 +378,13 @@ function SubscriptionContent() {
                 isLoading={isLoading === plan.id}
                 onSelect={() => handleSelectPlan(plan)}
                 isFreeTrialExpired={plan.id === "free" ? freeTrialExpired : undefined}
+                // Free card only: when the authenticated user is on a paid
+                // plan, repaint the CTA as a downgrade affordance instead of
+                // the "Welcome to Free" path. Parent handler routes the
+                // click to the DowngradeConfirmModal.
+                freeAsDowngrade={
+                  plan.id === "free" && hasActiveSubscription && currentPlan !== "free"
+                }
               />
             ))}
           </div>
@@ -475,6 +494,19 @@ function SubscriptionContent() {
         isOpen={showWelcomeModal}
         planName={welcomePlanName}
         redirectTo={searchParams.get("redirect") || "/app"}
+      />
+
+      {/* Downgrade confirmation — opens when a paid user (Pro / Max) clicks
+          the Free card. Triggers Stripe `cancel_at_period_end` instead of
+          wiping the subscription inline. */}
+      <DowngradeConfirmModal
+        isOpen={showDowngradeModal}
+        onClose={() => setShowDowngradeModal(false)}
+        currentPlanName={currentPlan === "max" ? "Max" : "Pro"}
+        periodEnd={subscription.currentPeriodEnd}
+        onCanceled={() => {
+          refreshSubscription();
+        }}
       />
     </div>
   );

@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
 
     // Generate analysis
     const lang = language === "en" ? "en" : "fr";
-    const model = "gpt-4";
+    const model = "gpt-4o";
     const response = await openaiService["client"].chat.completions.create({
       model,
       messages: [

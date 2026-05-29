@@ -105,23 +105,27 @@ export async function POST(request: NextRequest) {
     if (auth.error) return auth.error;
 
     const body = await request.json();
-    const { subscriptionId, action } = body as {
-      subscriptionId: string;
+    const { subscriptionId: requestedId, action } = body as {
+      subscriptionId?: string;
       action: "cancel" | "reactivate";
     };
 
-    if (!subscriptionId) {
+    // Always derive the subscription ID from the authenticated user. If the
+    // caller supplies one (legacy clients), validate it matches — anything
+    // else is an IDOR attempt. When omitted (new clients like the in-app
+    // DowngradeConfirmModal), we use the owned ID directly so the client
+    // never needs to know its own Stripe subscriptionId.
+    const owned = await getOwnedStripeIds(auth.uid);
+    if (!owned.subscriptionId) {
       return NextResponse.json(
-        { error: "Missing subscriptionId" },
-        { status: 400 }
+        { error: "No subscription found for user" },
+        { status: 404 }
       );
     }
-
-    // IDOR guard for mutations: ensure the subscription belongs to the caller.
-    const owned = await getOwnedStripeIds(auth.uid);
-    if (owned.subscriptionId !== subscriptionId) {
+    if (requestedId && requestedId !== owned.subscriptionId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
+    const subscriptionId = owned.subscriptionId;
 
     const stripe = getStripeServer();
 

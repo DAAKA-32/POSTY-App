@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
     const platformPrompt = PLATFORM_PROMPTS[platform as AdaptationPlatform][lang];
 
     // Generate adaptation
-    const adaptModel = "gpt-4";
+    const adaptModel = "gpt-4o";
     const response = await openaiService["client"].chat.completions.create({
       model: adaptModel,
       messages: [

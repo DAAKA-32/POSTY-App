@@ -6,6 +6,8 @@ admin.initializeApp();
 const db = admin.firestore();
 
 import { syncDueLinkedInMetrics } from "./linkedin-metrics";
+import { decryptToken } from "./crypto/token-cipher";
+import { publishViaZernio } from "./zernio";
 
 // ============================================================
 // Platform API configurations
@@ -376,6 +378,7 @@ async function publishToLinkedIn(
   }
 
   const connection = connectionSnap.data()!;
+  const accessToken = decryptToken(connection.accessToken);
   const now = admin.firestore.Timestamp.now();
 
   if (connection.expiresAt.toMillis() <= now.toMillis()) {
@@ -409,18 +412,18 @@ async function publishToLinkedIn(
   let result;
   if (images && images.length > 0) {
     console.log(`[publishToLinkedIn] Attempting publish with ${images.length} image(s) for userId=${userId} visibility=${visibility} authorType=${authorType}`);
-    result = await postToLinkedInWithImages(connection.accessToken, connection.linkedInId, content, images, visibility, authorUrn);
+    result = await postToLinkedInWithImages(accessToken, connection.linkedInId, content, images, visibility, authorUrn);
 
     // Fallback: if image upload failed, publish text-only so the post isn't lost
     if (!result.success) {
       console.warn(`[publishToLinkedIn] Image flow failed (${result.error}), falling back to text-only for userId=${userId}`);
-      result = await postToLinkedIn(connection.accessToken, connection.linkedInId, content, visibility, authorUrn);
+      result = await postToLinkedIn(accessToken, connection.linkedInId, content, visibility, authorUrn);
       if (result.success) {
         console.log(`[publishToLinkedIn] Text-only fallback succeeded for userId=${userId}`);
       }
     }
   } else {
-    result = await postToLinkedIn(connection.accessToken, connection.linkedInId, content, visibility, authorUrn);
+    result = await postToLinkedIn(accessToken, connection.linkedInId, content, visibility, authorUrn);
   }
 
   if (!result.success) {
@@ -438,7 +441,7 @@ async function publishToLinkedIn(
   // These two calls re-create that minimal "author present" footprint with
   // negligible overhead and no risk of duplicate/visible action.
   if (result.id) {
-    void runSelfWarmupPings(connection.accessToken, result.id).catch((err) => {
+    void runSelfWarmupPings(accessToken, result.id).catch((err) => {
       console.warn("[publishToLinkedIn] Self-warmup ping failed (non-blocking):", err);
     });
   }
@@ -548,7 +551,7 @@ async function publishToFacebook(userId: string, content: string): Promise<Publi
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       message: content,
-      access_token: selectedPage.accessToken,
+      access_token: decryptToken(selectedPage.accessToken),
     }),
   });
 
@@ -591,6 +594,7 @@ async function publishToThreads(userId: string, content: string): Promise<Publis
   }
 
   const connection = connectionSnap.data()!;
+  const accessToken = decryptToken(connection.accessToken);
   const now = admin.firestore.Timestamp.now();
 
   if (connection.expiresAt.toMillis() <= now.toMillis()) {
@@ -601,7 +605,7 @@ async function publishToThreads(userId: string, content: string): Promise<Publis
   const containerParams = new URLSearchParams({
     media_type: "TEXT",
     text: content,
-    access_token: connection.accessToken,
+    access_token: accessToken,
   });
   const containerResponse = await fetch(
     `${THREADS_API_URL}/me/threads?${containerParams.toString()}`,
@@ -623,7 +627,7 @@ async function publishToThreads(userId: string, content: string): Promise<Publis
   // Step 2: Publish the container
   const publishParams = new URLSearchParams({
     creation_id: creationId,
-    access_token: connection.accessToken,
+    access_token: accessToken,
   });
   const publishResponse = await fetch(
     `${THREADS_API_URL}/me/threads_publish?${publishParams.toString()}`,
@@ -643,7 +647,7 @@ async function publishToThreads(userId: string, content: string): Promise<Publis
   let permalink: string | undefined;
   try {
     const infoResponse = await fetch(
-      `${THREADS_API_URL}/${threadId}?fields=permalink&access_token=${connection.accessToken}`
+      `${THREADS_API_URL}/${threadId}?fields=permalink&access_token=${accessToken}`
     );
     if (infoResponse.ok) {
       const infoData = await infoResponse.json();
@@ -674,6 +678,122 @@ async function publishToThreads(userId: string, content: string): Promise<Publis
   return { success: true, publishedUrl: permalink };
 }
 
+async function publishToX(userId: string, content: string, images?: ScheduledPostImage[]): Promise<PublishResult> {
+  const connectionSnap = await db.collection("xConnections").doc(userId).get();
+  if (!connectionSnap.exists) {
+    return { success: false, error: "Aucune connexion X trouvée" };
+  }
+  const connection = connectionSnap.data()!;
+  const result = await publishViaZernio({
+    platform: "twitter",
+    accountId: connection.zernioAccountId,
+    content,
+    mediaItems: images?.map((img) => ({ type: "image", url: img.downloadURL })),
+  });
+  if (!result.success) {
+    return { success: false, error: result.error };
+  }
+  try {
+    await db.collection("xPosts").add({
+      userId,
+      zernioAccountId: connection.zernioAccountId,
+      zernioPostId: result.postId || "",
+      content,
+      postUrl: result.publishedUrl || null,
+      publishedAt: admin.firestore.FieldValue.serverTimestamp(),
+      success: true,
+    });
+    await db.collection("xConnections").doc(userId).update({
+      lastUsedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  } catch (e) {
+    console.error("Failed to save X post record:", e);
+  }
+  return { success: true, publishedUrl: result.publishedUrl };
+}
+
+async function publishToReddit(
+  userId: string,
+  content: string,
+  subreddit?: string,
+  title?: string,
+): Promise<PublishResult> {
+  if (!subreddit || !title) {
+    return { success: false, error: "Reddit requiert un subreddit et un titre — manquants sur le post programmé." };
+  }
+  const connectionSnap = await db.collection("redditConnections").doc(userId).get();
+  if (!connectionSnap.exists) {
+    return { success: false, error: "Aucune connexion Reddit trouvée" };
+  }
+  const connection = connectionSnap.data()!;
+  const result = await publishViaZernio({
+    platform: "reddit",
+    accountId: connection.zernioAccountId,
+    content,
+    reddit: { subreddit, title },
+  });
+  if (!result.success) {
+    return { success: false, error: result.error };
+  }
+  try {
+    await db.collection("redditPosts").add({
+      userId,
+      zernioAccountId: connection.zernioAccountId,
+      zernioPostId: result.postId || "",
+      subreddit: subreddit.replace(/^r\//, "").trim(),
+      title,
+      content,
+      postUrl: result.publishedUrl || null,
+      publishedAt: admin.firestore.FieldValue.serverTimestamp(),
+      success: true,
+    });
+    await db.collection("redditConnections").doc(userId).update({
+      lastUsedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  } catch (e) {
+    console.error("Failed to save Reddit post record:", e);
+  }
+  return { success: true, publishedUrl: result.publishedUrl };
+}
+
+async function publishToInstagram(userId: string, content: string, images?: ScheduledPostImage[]): Promise<PublishResult> {
+  // Instagram has no text-only posts; reject early with a clear message.
+  if (!images || images.length === 0) {
+    return { success: false, error: "Instagram requiert une image — visuel manquant sur le post programmé." };
+  }
+  const connectionSnap = await db.collection("instagramConnections").doc(userId).get();
+  if (!connectionSnap.exists) {
+    return { success: false, error: "Aucune connexion Instagram trouvée" };
+  }
+  const connection = connectionSnap.data()!;
+  const result = await publishViaZernio({
+    platform: "instagram",
+    accountId: connection.zernioAccountId,
+    content,
+    mediaItems: images.map((img) => ({ type: "image", url: img.downloadURL })),
+  });
+  if (!result.success) {
+    return { success: false, error: result.error };
+  }
+  try {
+    await db.collection("instagramPosts").add({
+      userId,
+      zernioAccountId: connection.zernioAccountId,
+      zernioPostId: result.postId || "",
+      content,
+      postUrl: result.publishedUrl || null,
+      publishedAt: admin.firestore.FieldValue.serverTimestamp(),
+      success: true,
+    });
+    await db.collection("instagramConnections").doc(userId).update({
+      lastUsedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  } catch (e) {
+    console.error("Failed to save Instagram post record:", e);
+  }
+  return { success: true, publishedUrl: result.publishedUrl };
+}
+
 // ============================================================
 // Main dispatcher: route to correct platform
 // ============================================================
@@ -684,7 +804,9 @@ async function publishScheduledPost(
   content: string,
   images?: ScheduledPostImage[],
   visibility: "PUBLIC" | "CONNECTIONS" = "PUBLIC",
-  organizationUrn?: string
+  organizationUrn?: string,
+  redditSubreddit?: string,
+  redditTitle?: string,
 ): Promise<PublishResult> {
   switch (platform) {
     case "linkedin":
@@ -693,8 +815,15 @@ async function publishScheduledPost(
       return publishToFacebook(userId, content);
     case "threads":
       return publishToThreads(userId, content);
+    case "x":
+    case "twitter":
+      return publishToX(userId, content, images);
+    case "instagram":
+      return publishToInstagram(userId, content, images);
     case "reddit":
-      return { success: false, error: "Reddit n'est pas encore disponible pour la publication programmée." };
+      // Reddit needs subreddit + title — those are carried on the
+      // scheduledPosts doc and passed in by the caller.
+      return publishToReddit(userId, content, redditSubreddit, redditTitle);
     default:
       console.error(`Unsupported platform: ${platform}`);
       return { success: false, error: "Cette plateforme n'est pas encore disponible." };
@@ -836,7 +965,10 @@ export const executeScheduledPosts = functions
             post.content,
             postImages,
             docVisibility,
-            docOrgUrn
+            docOrgUrn,
+            // Reddit-only fields — read from the scheduled doc when present.
+            (post as { redditSubreddit?: string }).redditSubreddit,
+            (post as { redditTitle?: string }).redditTitle,
           );
 
           if (result.success) {
@@ -1073,7 +1205,7 @@ export const executePendingSeedComments = functions
           // the parent was deleted, which we surface as failureReason.
 
           const result = await postCommentOnLinkedIn(
-            conn.accessToken,
+            decryptToken(conn.accessToken),
             item.parentPostUrn,
             item.actorUrn,
             item.text,

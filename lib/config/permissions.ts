@@ -9,6 +9,7 @@ import {
   PlanType,
   PlanSource,
   Platform,
+  getAllPlatforms,
   getPlanLimits,
   getPlanConfig,
   isPlatformAllowed,
@@ -215,6 +216,9 @@ export function canUsePlatform(
       bluesky: "Bluesky",
       mastodon: "Mastodon",
       discord: "Discord",
+      x: "X",
+      instagram: "Instagram",
+      reddit: "Reddit",
     };
 
     return {
@@ -412,15 +416,28 @@ export function getAllPlatformsAccessStatus(subscription: UserSubscription): Arr
   hasAccess: boolean;
   minPlan: PlanType;
 }> {
-  const platforms: Platform[] = ["linkedin", "threads", "facebook", "bluesky", "mastodon", "discord"];
+  // Read the list from PLATFORM_INFO so new platforms (X, Instagram, …)
+  // pick up here automatically — the previous hardcoded array silently
+  // dropped them and left their cards locked.
+  const platforms = getAllPlatforms();
 
   return platforms.map(platform => {
     const info = PLATFORM_INFO[platform];
+    // Any platform marked `minPlan: "free"` is open to everyone, even
+    // accounts without a resolved subscription plan yet (fresh signups,
+    // pre-onboarding state). The plan-gated check still runs for `pro`/
+    // `max` platforms.
+    const hasAccess =
+      info.minPlan === "free"
+        ? true
+        : subscription.plan
+          ? isPlatformAllowed(subscription.plan, platform)
+          : false;
     return {
       platform,
       name: info.name,
       color: info.color,
-      hasAccess: subscription.plan ? isPlatformAllowed(subscription.plan, platform) : false,
+      hasAccess,
       minPlan: info.minPlan,
     };
   });
