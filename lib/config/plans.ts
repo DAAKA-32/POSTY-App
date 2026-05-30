@@ -38,7 +38,7 @@ const GIFT_RECIPIENTS: GiftRecipient[] = [
   { email: "zoulikha.sophrologie@gmail.com",   displayName: "Zoulikha" },
   { email: "aurelieanicet@gmail.com",          displayName: "Aurélie"  },
   { email: "bibi42@gmail.com",                 displayName: "Bibi"     },
-  { email: "contact@breque-ue-watchis.com",    displayName: "Contact",  skipPopup: true },
+  { email: "contact@breque-ue-watches.com",    displayName: "Contact",  skipPopup: true },
   // Founder — receives the popup once like real recipients (validated in prod)
   { email: "emilien.nepveu@gmail.com",         displayName: "Emilien"  },
 ];
