@@ -195,6 +195,11 @@ export interface UserProfile {
   /** Id of the latest auto-generated batch waiting for user review. Set by
    *  the cron, cleared by the UI once the user opens/dismisses the batch. */
   pendingAutoBatchId?: string;
+  /** Saved defaults for the Strategist advanced parameters panel. The drawer
+   *  panel hydrates from this; per-batch overrides are ephemeral unless the
+   *  user explicitly clicks "save as default". Read by the autonomous cron so
+   *  weekly batches honor the same steering. */
+  strategistParams?: StrategistAdvancedParams;
   createdAt: Timestamp;
 }
 
@@ -215,6 +220,43 @@ export interface AutonomousStrategistConfig {
   /** Last time the cron actually generated a batch for this user. Used by
    *  the cron itself as a dedup guard (no double-fire within 6 days). */
   lastTriggeredAt?: Timestamp;
+}
+
+/** Advanced steering for the Strategist batch planner. Every field is
+ *  optional on purpose: an unset field injects NOTHING into the prompt, so a
+ *  batch with no params set behaves byte-for-byte like the previous version
+ *  (backward compatible, cost-neutral). Set fields are translated into one
+ *  short instruction line each inside the prompt's "STRATEGIC DIRECTION"
+ *  block. Persisted on `UserProfile.strategistParams` as defaults. */
+export interface StrategistAdvancedParams {
+  /** Primary business objective the batch should serve. */
+  objective?:
+    | "authority"
+    | "engagement"
+    | "lead-gen"
+    | "conversion"
+    | "branding"
+    | "storytelling";
+  /** Editorial tone — a preset slug (direct/expert/inspiring/bold/warm). */
+  tone?: string;
+  /** Audience focus — overrides the profile target for this batch only. */
+  audience?: string;
+  /** Formality on a 1 (casual) … 5 (corporate) scale. */
+  formality?: 1 | 2 | 3 | 4 | 5;
+  /** How strong the call-to-action should be. */
+  ctaIntensity?: "none" | "soft" | "assertive";
+  /** Preferred hook angle. "auto" lets the model vary freely (no constraint). */
+  hookStyle?:
+    | "contrarian"
+    | "story"
+    | "data"
+    | "question"
+    | "confession"
+    | "auto";
+  /** First-person/personal vs analytical/professional lean. */
+  orientation?: "personal" | "professional" | "balanced";
+  /** Emotional charge on a 1 (factual) … 5 (vibrant) scale. */
+  emotion?: 1 | 2 | 3 | 4 | 5;
 }
 
 /** Per-model / per-route sub-aggregate written by the AI cost tracker. */

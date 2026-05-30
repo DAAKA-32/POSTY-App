@@ -22,10 +22,11 @@ import StrategistStarterCard from "./StrategistStarterCard";
 import StrategistAutonomousPanel from "./StrategistAutonomousPanel";
 import StrategistMessageBubble from "./StrategistMessageBubble";
 import StrategistComposer from "./StrategistComposer";
+import StrategistParamsPanel from "./StrategistParamsPanel";
 import BatchPlanCard from "./BatchPlanCard";
 import { detectBatchPlanIntent } from "@/lib/strategist/batch-intent";
 import { getStrategyBatch } from "@/lib/db/strategy-batches";
-import type { StrategyBatch } from "@/types";
+import type { StrategyBatch, StrategistAdvancedParams } from "@/types";
 
 /** A chat turn. Assistant turns can carry an inline `batch` instead of
  *  markdown prose — when set, the renderer shows a BatchPlanCard. */
@@ -78,6 +79,10 @@ export default function StrategistChatPanel() {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Advanced steering from the params panel — the ephemeral override applied
+  // to the next batch-plan request. Kept in a ref so `send` reads the latest
+  // value without being recreated on every keystroke in the panel.
+  const advancedParamsRef = useRef<StrategistAdvancedParams>({});
 
   const messagesRef = useRef<Msg[]>([]);
   useEffect(() => {
@@ -186,6 +191,11 @@ export default function StrategistChatPanel() {
               count: batchIntent.count,
               timezone,
               language: language === "fr" ? "fr" : "en",
+              // Ephemeral advanced override from the params panel. Omitted when
+              // empty so the API falls back to the user's saved defaults.
+              ...(Object.keys(advancedParamsRef.current).length
+                ? { advanced: advancedParamsRef.current }
+                : {}),
             }),
             signal: ctrl.signal,
           });
@@ -322,6 +332,12 @@ export default function StrategistChatPanel() {
   const stop = useCallback(() => {
     abortRef.current?.abort();
     setStreaming(false);
+  }, []);
+
+  // Stable handler for the params panel — writes the override into the ref
+  // `send` reads. Stable identity keeps the panel from re-hydrating.
+  const handleParamsChange = useCallback((p: StrategistAdvancedParams) => {
+    advancedParamsRef.current = p;
   }, []);
 
   const clear = useCallback(() => {
@@ -486,6 +502,8 @@ export default function StrategistChatPanel() {
           </motion.section>
         )}
       </AnimatePresence>
+
+      <StrategistParamsPanel onChange={handleParamsChange} />
 
       <StrategistComposer
         onSend={(text) => void send(text)}

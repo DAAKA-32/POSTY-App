@@ -23,9 +23,30 @@ import { isOpenAIConfigured } from "@/lib/openai";
 import { generateBatchPlan, tomorrowInTz } from "@/lib/strategist/generate-batch";
 import { isStrategistAllowedForEmail } from "@/lib/strategist/access";
 import { hasLinkedInConnected } from "@/lib/strategist/access-server";
+import type { StrategistAdvancedParams } from "@/types";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
+
+/** Advanced steering from the drawer panel. Strict + all-optional: an empty
+ *  object is valid and produces the legacy behavior. Mirrors
+ *  `StrategistAdvancedParams` in types/index.ts. */
+const AdvancedSchema = z
+  .object({
+    objective: z
+      .enum(["authority", "engagement", "lead-gen", "conversion", "branding", "storytelling"])
+      .optional(),
+    tone: z.string().max(60).optional(),
+    audience: z.string().max(200).optional(),
+    formality: z.number().int().min(1).max(5).optional(),
+    ctaIntensity: z.enum(["none", "soft", "assertive"]).optional(),
+    hookStyle: z
+      .enum(["contrarian", "story", "data", "question", "confession", "auto"])
+      .optional(),
+    orientation: z.enum(["personal", "professional", "balanced"]).optional(),
+    emotion: z.number().int().min(1).max(5).optional(),
+  })
+  .strict();
 
 const RequestSchema = z.object({
   /** Verbatim user prompt — stored for re-generation later. */
@@ -40,6 +61,9 @@ const RequestSchema = z.object({
   /** User timezone, e.g. "Europe/Paris". */
   timezone: z.string().min(1).max(64),
   language: z.enum(["fr", "en"]).default("fr"),
+  /** Optional advanced steering (drawer panel override). Omit → saved
+   *  profile defaults are used by the shared generator. */
+  advanced: AdvancedSchema.optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -65,7 +89,7 @@ export async function POST(request: NextRequest) {
       { status: 400 }
     );
   }
-  const { sourcePrompt, count, timezone, language } = parsed.data;
+  const { sourcePrompt, count, timezone, language, advanced } = parsed.data;
   const startDate = parsed.data.startDate ?? tomorrowInTz(timezone);
 
   // ── Access gate — enterprise email allowlist ─────────────────────────
@@ -134,6 +158,9 @@ export async function POST(request: NextRequest) {
       startDate,
       timezone,
       language,
+      // zod validated formality/emotion as 1..5 ints; cast narrows number →
+      // the literal union the type declares.
+      advanced: advanced as StrategistAdvancedParams | undefined,
     });
 
     // Best-effort quota increment (per call, not per brief).

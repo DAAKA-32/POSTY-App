@@ -15,7 +15,7 @@ import {
   buildBatchPlanPrompt,
   BatchPlanResponseSchema,
 } from "@/lib/ai/batch-plan-prompt";
-import type { PostBrief, StrategyBatch } from "@/types";
+import type { PostBrief, StrategyBatch, StrategistAdvancedParams } from "@/types";
 
 interface UserContext {
   name?: string;
@@ -34,6 +34,10 @@ export interface GenerateBatchInput {
   startDate: string;        // YYYY-MM-DD (user TZ)
   timezone: string;         // e.g. "Europe/Paris"
   language: "fr" | "en";
+  /** Per-batch advanced steering (drawer panel override). When omitted, the
+   *  user's saved `strategistParams` defaults are used instead — so the
+   *  autonomous cron honors the same direction without passing anything. */
+  advanced?: StrategistAdvancedParams;
 }
 
 export interface GenerateBatchOutput {
@@ -57,6 +61,7 @@ function normalizeField(v: unknown): string | undefined {
 export async function loadUserContextAndPosts(uid: string): Promise<{
   ctx: UserContext;
   snippets: string[];
+  savedParams?: StrategistAdvancedParams;
 }> {
   if (!adminDb) return { ctx: {}, snippets: [] };
   try {
@@ -89,7 +94,10 @@ export async function loadUserContextAndPosts(uid: string): Promise<{
         return text ? text.slice(0, 220).replace(/\s+/g, " ") : "";
       })
       .filter(Boolean);
-    return { ctx, snippets };
+    const savedParams = (data.strategistParams ?? undefined) as
+      | StrategistAdvancedParams
+      | undefined;
+    return { ctx, snippets, savedParams };
   } catch (err) {
     console.error("[generate-batch] loadUserContextAndPosts error:", err);
     return { ctx: {}, snippets: [] };
@@ -109,7 +117,10 @@ export async function generateBatchPlan(
 
   const { userId, sourcePrompt, count, startDate, timezone, language } = input;
 
-  const { ctx, snippets } = await loadUserContextAndPosts(userId);
+  const { ctx, snippets, savedParams } = await loadUserContextAndPosts(userId);
+  // Per-batch override wins; otherwise fall back to the user's saved defaults
+  // (this is what lets the autonomous cron honor the same steering for free).
+  const advanced = input.advanced ?? savedParams;
   const systemPrompt = buildBatchPlanPrompt({
     language,
     count,
@@ -117,6 +128,7 @@ export async function generateBatchPlan(
     timezone,
     userContext: ctx,
     recentPostSnippets: snippets,
+    advanced,
   });
 
   const openai = new OpenAI({

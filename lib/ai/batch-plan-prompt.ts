@@ -15,6 +15,7 @@
  */
 
 import { z } from "zod";
+import type { StrategistAdvancedParams } from "@/types";
 
 /** Zod mirror of types/index.ts `PostBrief`. Used to validate the LLM output
  *  before persisting / rendering — a malformed brief breaks the table. */
@@ -57,8 +58,11 @@ export function buildBatchPlanPrompt(opts: {
   };
   /** Last 3-5 post excerpts (first ~200 chars each) to anchor the style. */
   recentPostSnippets?: string[];
+  /** Advanced steering from the drawer panel / saved profile defaults. Only
+   *  the fields the user actually set are turned into instruction lines. */
+  advanced?: StrategistAdvancedParams;
 }): string {
-  const { language, count, startDate, timezone, userContext, recentPostSnippets } = opts;
+  const { language, count, startDate, timezone, userContext, recentPostSnippets, advanced } = opts;
 
   const profileBlock = [
     userContext.name && `- Name: ${userContext.name}`,
@@ -75,6 +79,7 @@ export function buildBatchPlanPrompt(opts: {
     : "(no prior posts on file)";
 
   const base = language === "fr" ? FR_PROMPT : EN_PROMPT;
+  const directionBlock = buildAdvancedDirectionBlock(advanced, language);
 
   return `${base}
 
@@ -94,6 +99,193 @@ BATCH PARAMETERS
 - Number of briefs to produce: ${count}
 - First eligible publication date: ${startDate}
 - User timezone (interpret suggestedTime in this TZ): ${timezone}
+${directionBlock}`;
+}
+
+/** Tone preset slug → human phrasing injected into the prompt. Falls back to
+ *  the raw slug for any free-text value the panel might pass in future. */
+const TONE_PHRASES: Record<string, { fr: string; en: string }> = {
+  direct: { fr: "direct et sans détour", en: "direct and to the point" },
+  expert: { fr: "expert et précis", en: "expert and precise" },
+  inspiring: { fr: "inspirant et mobilisateur", en: "inspiring and uplifting" },
+  bold: { fr: "provocateur, à contre-courant", en: "bold and contrarian" },
+  warm: { fr: "chaleureux et accessible", en: "warm and approachable" },
+};
+
+/**
+ * Translate the advanced params into a compact "STRATEGIC DIRECTION" block.
+ * Returns "" when nothing is set so the prompt (and its token cost) is
+ * identical to the no-params path. Each set field becomes one instruction
+ * line — terse on purpose to keep the call cheap.
+ */
+function buildAdvancedDirectionBlock(
+  advanced: StrategistAdvancedParams | undefined,
+  language: "fr" | "en"
+): string {
+  if (!advanced) return "";
+  const fr = language === "fr";
+  const lines: string[] = [];
+
+  // Objective
+  const objective = advanced.objective;
+  if (objective) {
+    const map: Record<string, { fr: string; en: string }> = {
+      authority: {
+        fr: "Objectif : asseoir l'autorité et l'expertise — chaque post renforce la crédibilité.",
+        en: "Objective: build authority and expertise — every post reinforces credibility.",
+      },
+      engagement: {
+        fr: "Objectif : maximiser l'engagement (commentaires, partages) — pousse au débat et à la réaction.",
+        en: "Objective: maximize engagement (comments, shares) — spark debate and reactions.",
+      },
+      "lead-gen": {
+        fr: "Objectif : générer des leads qualifiés — chaque post oriente vers une prochaine étape concrète.",
+        en: "Objective: generate qualified leads — each post nudges toward a concrete next step.",
+      },
+      conversion: {
+        fr: "Objectif : convertir (essai, démo, achat) — montre la valeur et lève les objections.",
+        en: "Objective: drive conversion (trial, demo, purchase) — show value and address objections.",
+      },
+      branding: {
+        fr: "Objectif : renforcer la marque personnelle et la mémorabilité — voix et point de vue marqués.",
+        en: "Objective: strengthen personal brand and memorability — distinct voice and point of view.",
+      },
+      storytelling: {
+        fr: "Objectif : privilégier le récit et l'émotion narrative plutôt que la liste de conseils.",
+        en: "Objective: favor narrative and emotional storytelling over tip-lists.",
+      },
+    };
+    const m = map[objective];
+    if (m) lines.push(`- ${fr ? m.fr : m.en}`);
+  }
+
+  // Tone
+  if (advanced.tone) {
+    const phrase = TONE_PHRASES[advanced.tone]
+      ? fr
+        ? TONE_PHRASES[advanced.tone].fr
+        : TONE_PHRASES[advanced.tone].en
+      : advanced.tone;
+    lines.push(`- ${fr ? `Ton à adopter : ${phrase}.` : `Tone to adopt: ${phrase}.`}`);
+  }
+
+  // Audience override
+  if (advanced.audience?.trim()) {
+    const a = advanced.audience.trim();
+    lines.push(
+      `- ${fr ? `Audience cible prioritaire pour ce batch : ${a}.` : `Priority target audience for this batch: ${a}.`}`
+    );
+  }
+
+  // Formality (1 casual … 5 corporate)
+  if (advanced.formality) {
+    const f = advanced.formality;
+    const phrase = fr
+      ? f <= 2
+        ? "Registre décontracté, tutoiement, langage parlé."
+        : f >= 4
+          ? "Registre soutenu et corporate, vouvoiement, vocabulaire professionnel."
+          : "Registre équilibré, ni trop familier ni trop formel."
+      : f <= 2
+        ? "Casual register, conversational and informal language."
+        : f >= 4
+          ? "Formal, corporate register with professional vocabulary."
+          : "Balanced register — neither too casual nor too formal.";
+    lines.push(`- ${phrase}`);
+  }
+
+  // CTA intensity
+  if (advanced.ctaIntensity) {
+    const map: Record<string, { fr: string; en: string }> = {
+      none: {
+        fr: "Pas de CTA explicite — laisse le post ouvert, sans appel à l'action.",
+        en: "No explicit CTA — leave the post open, no call to action.",
+      },
+      soft: {
+        fr: "CTA léger : une question ouverte ou une invitation douce en fin de post.",
+        en: "Soft CTA: an open question or gentle invitation at the end.",
+      },
+      assertive: {
+        fr: "Termine par un CTA clair et assertif (action précise attendue).",
+        en: "End with a clear, assertive CTA (a precise expected action).",
+      },
+    };
+    const m = map[advanced.ctaIntensity];
+    if (m) lines.push(`- ${fr ? m.fr : m.en}`);
+  }
+
+  // Hook style ("auto" = no constraint, skip)
+  if (advanced.hookStyle && advanced.hookStyle !== "auto") {
+    const map: Record<string, { fr: string; en: string }> = {
+      contrarian: {
+        fr: "Hooks contrariens / à contre-courant qui cassent une croyance répandue.",
+        en: "Contrarian hooks that break a widely-held belief.",
+      },
+      story: {
+        fr: "Ouvre par une amorce narrative (anecdote, scène, moment précis).",
+        en: "Open with a narrative cold-open (anecdote, scene, specific moment).",
+      },
+      data: {
+        fr: "Ouvre par un chiffre ou une donnée qui surprend.",
+        en: "Open with a surprising number or data point.",
+      },
+      question: {
+        fr: "Ouvre par une question forte qui interpelle l'audience.",
+        en: "Open with a strong, pointed question.",
+      },
+      confession: {
+        fr: "Ouvre par un aveu ou une vulnérabilité assumée.",
+        en: "Open with a confession or owned vulnerability.",
+      },
+    };
+    const m = map[advanced.hookStyle];
+    if (m) lines.push(`- ${fr ? m.fr : m.en}`);
+  }
+
+  // Orientation ("balanced" = no constraint, skip)
+  if (advanced.orientation && advanced.orientation !== "balanced") {
+    const map: Record<string, { fr: string; en: string }> = {
+      personal: {
+        fr: "Angle personnel à la première personne (je, mon expérience vécue).",
+        en: "Personal first-person angle (I, my lived experience).",
+      },
+      professional: {
+        fr: "Angle analytique et professionnel, centré sur le métier et les faits.",
+        en: "Analytical, professional angle centered on craft and facts.",
+      },
+    };
+    const m = map[advanced.orientation];
+    if (m) lines.push(`- ${fr ? m.fr : m.en}`);
+  }
+
+  // Emotion (1 factual … 5 vibrant)
+  if (advanced.emotion) {
+    const e = advanced.emotion;
+    const phrase = fr
+      ? e <= 2
+        ? "Reste factuel et sobre, peu de charge émotionnelle."
+        : e >= 4
+          ? "Forte charge émotionnelle, langage vivant et imagé."
+          : "Émotion mesurée, sans être plat ni excessif."
+      : e <= 2
+        ? "Stay factual and sober, low emotional charge."
+        : e >= 4
+          ? "High emotional charge, vivid and evocative language."
+          : "Measured emotion — neither flat nor over-the-top.";
+    lines.push(`- ${phrase}`);
+  }
+
+  if (lines.length === 0) return "";
+
+  const header = fr
+    ? "STRATEGIC DIRECTION (priorité haute — ces consignes priment sur les défauts)"
+    : "STRATEGIC DIRECTION (high priority — these override the defaults)";
+
+  return `
+═════════════════════════════════════
+${header}
+═════════════════════════════════════
+${lines.join("\n")}
 `;
 }
 
