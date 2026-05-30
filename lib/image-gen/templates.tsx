@@ -268,10 +268,90 @@ function AnnouncementCard(dsl: Extract<ImageDSL, { template: "announcement-card"
   );
 }
 
+// ─── Photo Clean ────────────────────────────────────────────────────────────
+// The premium DEFAULT. Full-bleed real photo, NO heavy text slab. At most a
+// discreet bottom-left caption + tiny eyebrow over a soft scrim. When both are
+// empty the photo stands completely alone — the most "real editorial" result.
+
+function PhotoClean(
+  dsl: Extract<ImageDSL, { template: "photo-clean" }>,
+  photoDataUri: string
+) {
+  const palette = ACCENT_PALETTE[dsl.accent];
+  const hasText = Boolean(dsl.caption || dsl.eyebrow);
+  return (
+    <div
+      style={{
+        width: CANVAS.width,
+        height: CANVAS.height,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "flex-end",
+        padding: PAD,
+        // Only a soft bottom scrim — just enough to keep an optional caption
+        // legible without darkening the photo like a poster. When there's no
+        // text the scrim is barely perceptible. This is the key difference
+        // from photo-hero, whose heavy top-to-bottom gradient screams "card".
+        backgroundImage: hasText
+          ? `linear-gradient(180deg, rgba(15,17,21,0) 55%, rgba(15,17,21,0.62) 100%), url(${photoDataUri})`
+          : `url(${photoDataUri})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        color: "#FFFFFF",
+        fontFamily: "Inter",
+        position: "relative",
+      }}
+    >
+      {hasText && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {dsl.eyebrow && (
+            <span
+              style={{
+                fontSize: 22,
+                fontWeight: 600,
+                letterSpacing: 2,
+                textTransform: "uppercase",
+                color: "rgba(255,255,255,0.82)",
+                textShadow: "0 1px 8px rgba(0,0,0,0.4)",
+              }}
+            >
+              {dsl.eyebrow}
+            </span>
+          )}
+          {dsl.caption && (
+            <span
+              style={{
+                fontSize: 38,
+                lineHeight: 1.25,
+                fontWeight: 500,
+                color: "#FFFFFF",
+                maxWidth: 880,
+                textShadow: "0 1px 10px rgba(0,0,0,0.35)",
+              }}
+            >
+              {dsl.caption}
+            </span>
+          )}
+          {/* Thin accent underline — a single subtle brand cue, no chrome. */}
+          <div
+            style={{
+              marginTop: 4,
+              width: 64,
+              height: 4,
+              borderRadius: 4,
+              backgroundColor: palette.hard,
+            }}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Photo Hero ─────────────────────────────────────────────────────────────
-// Full-bleed stock photo + dark gradient + bold headline overlay. The photo
-// is passed as a data: URI (pre-resized to 1080² JPEG by the asset pipeline)
-// — no external fetch happens at render time.
+// Full-bleed stock photo + dark gradient + editorial headline overlay. The
+// photo is passed as a data: URI (pre-resized to 1080² JPEG by the asset
+// pipeline) — no external fetch happens at render time.
 
 function PhotoHero(
   dsl: Extract<ImageDSL, { template: "photo-hero" }>,
@@ -317,12 +397,12 @@ function PhotoHero(
         />
         <span
           style={{
-            fontSize: 92,
-            lineHeight: 1.02,
-            fontWeight: 800,
-            letterSpacing: -2.5,
+            fontSize: 76,
+            lineHeight: 1.05,
+            fontWeight: 700,
+            letterSpacing: -1.5,
             color: "#FFFFFF",
-            maxWidth: 960,
+            maxWidth: 920,
             // Subtle text-shadow so headlines stay legible on photos that
             // sneak through the gradient (warm beige offices, snow, etc.).
             textShadow: "0 2px 16px rgba(0,0,0,0.35)",
@@ -366,6 +446,24 @@ export function renderTemplate(dsl: ImageDSL, extras: RenderExtras = {}): React.
       return QuoteCard(dsl);
     case "announcement-card":
       return AnnouncementCard(dsl);
+    case "photo-clean":
+      // No photo landed (rare: both providers missed). Degrade to an editorial
+      // quote-card built from whatever copy we have, rather than a broken
+      // render. We prefer quote-card over announcement here because photo-clean
+      // has no CTA — a quote reads cleaner with just a caption + brand.
+      if (!extras.photoDataUri) {
+        const text = (dsl.caption || dsl.eyebrow || "").trim();
+        const fallback = {
+          template: "quote-card" as const,
+          accent: dsl.accent,
+          brand: dsl.brand,
+          quote: text.length >= 8 ? text : (dsl.brand || "Posty"),
+          attribution: dsl.brand || "Posty",
+          eyebrow: dsl.eyebrow,
+        };
+        return QuoteCard(fallback);
+      }
+      return PhotoClean(dsl, extras.photoDataUri);
     case "photo-hero":
       // Fall back to AnnouncementCard if no photo was fetched — the AI's
       // copy is still good, we just lose the photo background. Better than

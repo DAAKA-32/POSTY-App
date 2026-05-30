@@ -129,12 +129,38 @@ export const AnnouncementCardSchema = z.object({
 });
 
 /**
+ * Photo-clean template — the PREMIUM DEFAULT. A real photo from Unsplash /
+ * Pexels fills the whole frame, with NO heavy text slab. At most a discreet
+ * one-line caption and/or a small uppercase eyebrow anchored bottom-left over
+ * a soft scrim. This is what makes a visual read as "real editorial content"
+ * instead of "AI/Canva card with text". Prefer this whenever the brief evokes
+ * any concrete subject (a person, place, object, scene). The post itself
+ * carries the message — the image carries credibility and emotion.
+ *
+ * `searchQuery` is 2-5 CONCRETE English keywords. English performs much better
+ * than French on both Unsplash and Pexels search.
+ */
+export const PhotoCleanSchema = z.object({
+  template: z.literal("photo-clean"),
+  ...baseFields,
+  /** 2-5 English keywords describing a REAL, concrete subject to photograph.
+   *  Name the actual thing ("french parliament chamber", "paris haussmann
+   *  street", "founder coworking laptop"), never an abstract concept. */
+  searchQuery: z.string().min(3).max(80),
+  /** Optional discreet caption — a SINGLE short line, rendered small + subtle.
+   *  Often best left empty so the photo stands alone. ≤ 70 chars. */
+  caption: z.string().max(70).optional(),
+  /** Optional tiny uppercase label above the caption (e.g. "PARIS 2026"). */
+  eyebrow: z.string().max(40).optional(),
+});
+
+/**
  * Photo-hero template — uses a real photo from Unsplash / Pexels as a
- * full-bleed background, overlaid with a dark gradient + bold headline.
- * The AI fills `searchQuery` with 2-5 evocative English keywords (e.g.
- * "modern startup office" or "team brainstorming whiteboard") which the
- * server passes verbatim to the stock-photo APIs. English performs much
- * better than French on both Unsplash and Pexels search.
+ * full-bleed background, overlaid with a dark gradient + editorial headline.
+ * Use this (over photo-clean) ONLY when the post genuinely needs a strong
+ * statement burned onto the image — a manifesto line, a launch claim. The
+ * headline stays editorial and refined, never a giant marketing slab.
+ * The AI fills `searchQuery` with 2-5 concrete English keywords.
  */
 export const PhotoHeroSchema = z.object({
   template: z.literal("photo-hero"),
@@ -142,7 +168,7 @@ export const PhotoHeroSchema = z.object({
   /** 2-5 English keywords used to find a matching photo. Concrete subjects
    *  beat abstract concepts ("laptop coffee desk" > "productivity"). */
   searchQuery: z.string().min(3).max(80),
-  /** Big headline overlaid on the photo, ≤ 60 chars. */
+  /** Editorial headline overlaid on the photo, ≤ 60 chars. Keep it tight. */
   headline: z.string().min(4).max(60),
   /** Optional supporting line under the headline, ≤ 120 chars. */
   body: z.string().max(140).optional(),
@@ -152,25 +178,48 @@ export const PhotoHeroSchema = z.object({
 
 // Discriminated union — `template` field steers Zod to the right schema.
 export const ImageDSLSchema = z.discriminatedUnion("template", [
+  PhotoCleanSchema,
+  PhotoHeroSchema,
   KpiCardSchema,
   QuoteCardSchema,
   AnnouncementCardSchema,
-  PhotoHeroSchema,
 ]);
 
 export type ImageDSL = z.infer<typeof ImageDSLSchema>;
 export type TemplateId = ImageDSL["template"];
 
-export const TEMPLATE_IDS = ["kpi-card", "quote-card", "announcement-card", "photo-hero"] as const;
+// Order matters: photo templates first so any "freshness" rotation defaults to
+// them — the system is photo-first, text cards are the minority fallback.
+export const TEMPLATE_IDS = [
+  "photo-clean",
+  "photo-hero",
+  "kpi-card",
+  "quote-card",
+  "announcement-card",
+] as const;
+
+/**
+ * Templates backed by a real stock photo. These are the DEFAULT. They are
+ * exempt from the anti-repetition penalty (their variety comes from the photo
+ * itself, not the layout) and may repeat across variants of a single call.
+ * Both require a configured stock-photo provider key to be offered to the AI.
+ */
+export const PHOTO_TEMPLATES = ["photo-clean", "photo-hero"] as const;
+
+export function isPhotoTemplate(t: TemplateId): boolean {
+  return (PHOTO_TEMPLATES as readonly string[]).includes(t);
+}
 
 /** Human-readable list of templates, used in the AI system prompt. */
 export const TEMPLATE_GUIDE: Record<TemplateId, string> = {
-  "kpi-card":
-    "Big-number visual. Use when the post hinges on a metric, growth %, or achievement. Stat goes huge, label explains it.",
-  "quote-card":
-    "Pull-quote / insight card. Use for thought-leadership, hot takes, philosophy. Single short sentence + attribution.",
-  "announcement-card":
-    "Launch / news visual. Use for product drops, milestones, events. Headline + body + CTA-style label.",
+  "photo-clean":
+    "DEFAULT. A real, credible photo filling the frame, with little or no text (an optional discreet caption). Use this whenever the brief evokes ANY concrete subject — a person, place, object, team, scene. This is what makes the visual look like real professional content, not an AI card. Provide a searchQuery in ENGLISH naming the concrete subject.",
   "photo-hero":
-    "Real-photo background + bold text overlay. Use when the brief evokes a CONCRETE SCENE (people, workplace, product, lifestyle) and a photo would carry more emotional weight than a typography card. Provide a searchQuery in ENGLISH with 2-5 concrete keywords.",
+    "Real-photo background + a single editorial headline burned on it. Use ONLY when the post needs a strong statement ON the image (a manifesto line, a launch claim). Otherwise prefer photo-clean. Provide a concrete ENGLISH searchQuery.",
+  "kpi-card":
+    "MINORITY. Typography-only big-number card. Use ONLY when the post genuinely hinges on a specific metric/percentage and no photo could convey it. Stat goes huge, label explains it.",
+  "quote-card":
+    "MINORITY. Typography-only pull-quote card. Use ONLY for a verbatim quote / sharp one-liner where the words ARE the visual. Single short sentence + attribution.",
+  "announcement-card":
+    "MINORITY. Typography-only launch card (headline + body + CTA label). Use ONLY for a formal product/event announcement where no real photo fits.",
 };

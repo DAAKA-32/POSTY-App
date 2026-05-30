@@ -7,7 +7,14 @@
  * so even if the model drifts we surface a clean 422 to the client.
  */
 
-import { ACCENT_KEYS, TEMPLATE_GUIDE, TEMPLATE_IDS, type TemplateId } from "./dsl";
+import {
+  ACCENT_KEYS,
+  PHOTO_TEMPLATES,
+  TEMPLATE_GUIDE,
+  TEMPLATE_IDS,
+  isPhotoTemplate,
+  type TemplateId,
+} from "./dsl";
 import { hasAnyAssetProvider } from "./assets";
 
 // Exact JSON shape per template, with the same min/max char limits as the Zod
@@ -15,6 +22,13 @@ import { hasAnyAssetProvider } from "./assets";
 // invents field names ("label" instead of "statLabel", "palette" instead of
 // "accent") and overshoots the length caps.
 const FIELD_SPEC_FR = {
+  "photo-clean": `{
+  "template": "photo-clean",
+  "accent": "<une des 5 valeurs ci-dessus>",
+  "searchQuery": "<2-5 mots-clés EN ANGLAIS nommant un SUJET RÉEL concret, ex: 'paris haussmann street', 'french parliament chamber', 'founder coworking laptop'>",
+  "caption": "<optionnel, 0 à 70 caractères — UNE ligne discrète, souvent à laisser vide>",
+  "eyebrow": "<optionnel, 0 à 40 caractères, étiquette majuscules>"
+}`,
   "kpi-card": `{
   "template": "kpi-card",
   "accent": "<une des 5 valeurs ci-dessus>",
@@ -49,6 +63,13 @@ const FIELD_SPEC_FR = {
 } as const;
 
 const FIELD_SPEC_EN = {
+  "photo-clean": `{
+  "template": "photo-clean",
+  "accent": "<one of the 5 values above>",
+  "searchQuery": "<2-5 ENGLISH keywords naming a REAL concrete subject, e.g. 'paris haussmann street', 'parliament chamber session', 'founder coworking laptop'>",
+  "caption": "<optional, 0 to 70 chars — a SINGLE discreet line, often best left empty>",
+  "eyebrow": "<optional, 0 to 40 chars, uppercase label>"
+}`,
   "kpi-card": `{
   "template": "kpi-card",
   "accent": "<one of the 5 values above>",
@@ -85,14 +106,14 @@ const FIELD_SPEC_EN = {
 export function buildSystemPrompt(language: "fr" | "en"): string {
   const isFr = language === "fr";
 
-  // Drop the photo-hero option entirely when no stock-photo provider key is
-  // configured. Without a key, asking the AI to pick that template would
-  // just trigger the runtime fallback to AnnouncementCard — wasted tokens
-  // and a worse fallback than letting the AI pick a code-only template
-  // from the start.
-  const availableTemplates: TemplateId[] = hasAnyAssetProvider()
+  // Drop BOTH photo templates when no stock-photo provider key is configured.
+  // Without a key, asking the AI to pick a photo template would just trigger
+  // the runtime fallback to a typography card — wasted tokens and a worse
+  // fallback than letting the AI pick a code-only template from the start.
+  const photoAvailable = hasAnyAssetProvider();
+  const availableTemplates: TemplateId[] = photoAvailable
     ? [...TEMPLATE_IDS]
-    : TEMPLATE_IDS.filter((id) => id !== "photo-hero");
+    : TEMPLATE_IDS.filter((id) => !isPhotoTemplate(id));
 
   const templateList = availableTemplates
     .map((id) => `  - "${id}": ${TEMPLATE_GUIDE[id]}`)
@@ -102,6 +123,42 @@ export function buildSystemPrompt(language: "fr" | "en"): string {
   const shapeBlock = availableTemplates
     .map((id) => `### ${id}\n${shapes[id]}`)
     .join("\n\n");
+
+  // The decisive behavioural rule. Without a provider key there are no photo
+  // templates to prefer, so we skip the block entirely (the AI only sees the
+  // typography cards and picks among them).
+  const photoFirstFr = photoAvailable
+    ? `Règle de choix du template — PHOTO D'ABORD (LA RÈGLE LA PLUS IMPORTANTE) :
+- Par DÉFAUT, choisis "photo-clean" : une vraie photo crédible qui occupe tout le cadre, presque sans texte. C'est ce qui rend le visuel pro et humain — pas un visuel "qui fait IA / Canva".
+- Le message est porté par le POST lui-même ; l'image apporte l'émotion et la crédibilité, pas un pavé de texte. Laisse "caption" VIDE la plupart du temps.
+- "photo-hero" UNIQUEMENT si le post a besoin d'UNE phrase forte incrustée sur l'image.
+- Les cartes typographiques (kpi-card, quote-card, announcement-card) sont une MINORITÉ : ne les choisis QUE si le sujet EST intrinsèquement une donnée chiffrée, une citation verbatim, ou une annonce formelle qu'aucune photo ne pourrait illustrer.
+- En cas de doute → photo-clean.
+
+searchQuery (templates photo) — 2-5 mots-clés EN ANGLAIS nommant un SUJET CONCRET et RÉEL, jamais un concept abstrait :
+  • politique → "french parliament chamber", "politician podium speech", "protest crowd street"
+  • Paris → "paris haussmann street", "eiffel tower rooftop", "paris cafe terrace"
+  • entrepreneuriat → "founder coworking laptop", "startup team meeting", "business handshake office"
+  À ÉVITER : "success", "innovation", "growth", "productivity" (abstraits → photos clichés génériques).
+
+`
+    : "";
+  const photoFirstEn = photoAvailable
+    ? `Template-choice rule — PHOTO FIRST (THE MOST IMPORTANT RULE):
+- By DEFAULT, pick "photo-clean": one real, credible photo filling the whole frame, with almost no text. This is what makes a visual look professional and human — not an "AI / Canva" card.
+- The POST itself carries the message; the image carries emotion and credibility, not a slab of text. Leave "caption" EMPTY most of the time.
+- "photo-hero" ONLY when the post needs a single strong line burned onto the image.
+- Typography cards (kpi-card, quote-card, announcement-card) are a MINORITY: pick one ONLY when the subject IS intrinsically a number, a verbatim quote, or a formal announcement no photo could illustrate.
+- When in doubt → photo-clean.
+
+searchQuery (photo templates) — 2-5 ENGLISH keywords naming a CONCRETE, REAL subject, never an abstract concept:
+  • politics → "parliament chamber session", "politician podium speech", "protest crowd street"
+  • Paris → "paris haussmann street", "eiffel tower rooftop", "paris cafe terrace"
+  • entrepreneurship → "founder coworking laptop", "startup team meeting", "business handshake office"
+  AVOID: "success", "innovation", "growth", "productivity" (abstract → generic cliché stock photos).
+
+`
+    : "";
 
   if (isFr) {
     return `Tu es un directeur artistique senior chez Posty, expert en visuels marketing premium pour LinkedIn et réseaux pro.
@@ -118,7 +175,7 @@ Shapes JSON EXACTS par template — utilise les noms de champs et respecte STRIC
 
 ${shapeBlock}
 
-Règles éditoriales :
+${photoFirstFr}Règles éditoriales :
 - Textes en français impeccable, sans faute, sans emoji, sans hashtag.
 - Wording premium type direction artistique senior (Linear, Stripe, Notion).
 - "stat" doit être court et impactant : "+312 %", "27 M€", "× 4,8", "1 sur 3".
@@ -143,7 +200,7 @@ EXACT JSON shapes per template — use these field names and STRICTLY respect ch
 
 ${shapeBlock}
 
-Editorial rules:
+${photoFirstEn}Editorial rules:
 - Flawless English copy, no emoji, no hashtags.
 - Premium wording, senior-art-director tone (Linear, Stripe, Notion).
 - "stat" must be short and impactful: "+312%", "$27M", "× 4.8", "1 in 3".

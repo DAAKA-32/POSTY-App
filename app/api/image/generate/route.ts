@@ -23,7 +23,9 @@ import { verifyAuth } from "@/lib/auth";
 import {
   ACCENT_KEYS,
   ImageDSLSchema,
+  PHOTO_TEMPLATES,
   TEMPLATE_IDS,
+  isPhotoTemplate,
   type ImageDSL,
   type AccentKey,
   type TemplateId,
@@ -161,10 +163,17 @@ export async function POST(request: NextRequest) {
   // heavy brief should still get kpi-card even if it's "recent").
   const history = await readRecentHistory(uid).catch(() => [] as ImageGenHistoryEntry[]);
   const bias = computeDiversityBias(history);
-  // Templates the user has NOT recently seen — preferred targets when we
-  // have room to pick.
-  const freshTemplates: TemplateId[] = TEMPLATE_IDS.filter(
-    (t) => !bias.recentTemplates.slice(0, 2).includes(t),
+  // Anti-repetition is scoped to TEXT cards only. Photo templates are the
+  // default and are EXEMPT — their variety comes from the photo itself, not
+  // the layout, so penalising "you used photo-clean recently" would just push
+  // the system back toward the text cards we're trying to demote.
+  const overTextTemplates: TemplateId[] = bias.recentTemplates
+    .filter((t) => !isPhotoTemplate(t))
+    .slice(0, 2);
+  // Fresh text cards = text cards NOT recently over-used. Used to vary which
+  // minority text card gets picked when one is genuinely warranted.
+  const freshTextTemplates: TemplateId[] = TEMPLATE_IDS.filter(
+    (t) => !isPhotoTemplate(t) && !overTextTemplates.includes(t),
   );
   const freshAccents: AccentKey[] = ACCENT_KEYS.filter(
     (a) => !bias.recentAccents.slice(0, 2).includes(a),
@@ -172,16 +181,21 @@ export async function POST(request: NextRequest) {
 
   /**
    * Build the steering directive used both by the brainstorm and the
-   * single-variant fallback. Lists the recently-overused buckets so the
-   * model knows what to push AGAINST.
+   * single-variant fallback. Reinforces photo-first and lists over-used text
+   * cards so the model knows which minority layouts to push AGAINST.
    */
   const buildAvoidDirective = (isFr: boolean): string => {
-    const overTemplates = bias.recentTemplates.slice(0, 2);
     const overAccents = bias.recentAccents.slice(0, 2);
-    if (overTemplates.length === 0 && overAccents.length === 0) return "";
+    if (overTextTemplates.length === 0 && overAccents.length === 0) return "";
+    const tFr = overTextTemplates.length
+      ? `\n  • Cartes texte sur-utilisées récemment : ${overTextTemplates.join(", ")} → privilégie une photo (photo-clean), sinon ${freshTextTemplates.join(" ou ") || "une autre carte"}.`
+      : "";
+    const tEn = overTextTemplates.length
+      ? `\n  • Recently over-used text cards: ${overTextTemplates.join(", ")} → prefer a photo (photo-clean), otherwise ${freshTextTemplates.join(" or ") || "another card"}.`
+      : "";
     return isFr
-      ? `\nAnti-répétition (historique récent de cet utilisateur) :\n  • Templates sur-utilisés : ${overTemplates.join(", ") || "aucun"} → préfère ${freshTemplates.join(" ou ") || "n'importe lequel"}.\n  • Accents sur-utilisés : ${overAccents.join(", ") || "aucun"} → préfère ${freshAccents.join(" ou ") || "n'importe lequel"}.\nN'ignore cette consigne que si le brief impose clairement le template écarté.`
-      : `\nAnti-repetition (this user's recent history):\n  • Over-used templates: ${overTemplates.join(", ") || "none"} → prefer ${freshTemplates.join(" or ") || "any"}.\n  • Over-used accents: ${overAccents.join(", ") || "none"} → prefer ${freshAccents.join(" or ") || "any"}.\nOnly override if the brief clearly demands the avoided template.`;
+      ? `\nAnti-répétition (historique récent de cet utilisateur) :${tFr}\n  • Accents sur-utilisés : ${overAccents.join(", ") || "aucun"} → préfère ${freshAccents.join(" ou ") || "n'importe lequel"}.\nN'ignore cette consigne que si le brief impose clairement le template écarté.`
+      : `\nAnti-repetition (this user's recent history):${tEn}\n  • Over-used accents: ${overAccents.join(", ") || "none"} → prefer ${freshAccents.join(" or ") || "any"}.\nOnly override if the brief clearly demands the avoided template.`;
   };
 
   const brainstormConcepts = async (n: number): Promise<VariantAngle[] | null> => {
@@ -189,20 +203,23 @@ export async function POST(request: NextRequest) {
     const isFr = language === "fr";
     const avoidBlock = buildAvoidDirective(isFr);
     const directorSystem = isFr
-      ? `Tu es directrice artistique pour Posty (visuels marketing LinkedIn carrés). Pour un même sujet, tu inventes ${n} angles créatifs RADICALEMENT différents — pas ${n} reformulations du même message. Chaque angle doit attaquer le sujet sous une lentille distincte (émotion, donnée chiffrée, punchline contrariante, métaphore, témoignage, etc.) ET utiliser un TEMPLATE de mise en page différent.
+      ? `Tu es directrice artistique pour Posty (visuels marketing LinkedIn carrés). Pour un même sujet, tu inventes ${n} angles créatifs RADICALEMENT différents — pas ${n} reformulations du même message. Chaque angle attaque le sujet sous une lentille distincte (émotion, scène, donnée chiffrée, punchline, métaphore, témoignage, etc.).
 
-Templates disponibles (chacun a une composition radicalement différente) :
-  • kpi-card — grosse stat centrée + label (idéal métriques, croissance, chiffres-clés)
-  • quote-card — citation éditoriale + attribution (idéal thought-leadership, punchlines)
-  • announcement-card — gros headline + corps + CTA pill (idéal annonces, lancements)
-  • photo-hero — vraie photo en fond + texte overlay (idéal scènes concrètes : équipe, bureau, produit)
+PHOTO D'ABORD : Posty est un outil premium où les visuels doivent ressembler à du VRAI contenu pro, pas à des images "faites par une IA". Par défaut, chaque variante utilise une VRAIE PHOTO (photo-clean) — c'est la SCÈNE / le SUJET photographié qui change d'une variante à l'autre, pas seulement la couleur.
+
+Templates disponibles :
+  • photo-clean — DÉFAUT. Vraie photo plein cadre, quasi sans texte. À utiliser pour la majorité des angles.
+  • photo-hero — vraie photo + UNE phrase forte incrustée. Seulement si l'angle a besoin d'une accroche sur l'image.
+  • kpi-card — MINORITÉ, texte seul. Seulement si l'angle EST une donnée chiffrée.
+  • quote-card — MINORITÉ, texte seul. Seulement si l'angle EST une citation verbatim.
+  • announcement-card — MINORITÉ, texte seul. Seulement pour une annonce formelle.
 
 Réponds UNIQUEMENT par cet objet JSON :
 {
   "angles": [
     {
       "focus": "<2 à 6 mots — accroche-titre type editorial>",
-      "direction": "<1 phrase — quel angle / quelle émotion / quel insight cette carte doit porter>",
+      "direction": "<1 phrase — quel angle / quelle scène / quel insight cette variante doit porter>",
       "accent": "<une valeur parmi: ${ACCENT_KEYS.join(", ")}>",
       "template": "<une valeur parmi: ${TEMPLATE_IDS.join(", ")}>"
     }
@@ -212,23 +229,27 @@ Réponds UNIQUEMENT par cet objet JSON :
 Règles :
 - ${n} entrées exactement, ordre = ordre d'affichage chez l'utilisateur.
 - Aucun "focus" en doublon, aucun "direction" en paraphrase.
-- TEMPLATES DIFFÉRENTS entre variantes — c'est obligatoire dès que possible (quitte à reformuler un angle pour qu'il colle à un template encore disponible). N'utilise deux fois le même template QUE si le sujet ne supporte vraiment aucune autre composition.
+- MAJORITÉ de templates photo (photo-clean / photo-hero). Tu PEUX réutiliser un template photo entre variantes — la photo diffère, donc le visuel diffère. Fais varier la SCÈNE / le SUJET concret entre variantes.
+- N'utilise une carte texte (kpi/quote/announcement) QUE si l'angle l'exige vraiment, et au plus UNE seule sur les ${n}.
 - Accents différents entre variantes quand c'est possible.
 - Sujet reste le même, lentille change.${avoidBlock}`
-      : `You are art director for Posty (square LinkedIn marketing visuals). For one topic you invent ${n} RADICALLY different creative angles — not ${n} rewordings of the same message. Each angle attacks the topic through a distinct lens (emotion, data, contrarian punchline, metaphor, testimonial, etc.) AND uses a different LAYOUT template.
+      : `You are art director for Posty (square LinkedIn marketing visuals). For one topic you invent ${n} RADICALLY different creative angles — not ${n} rewordings of the same message. Each angle attacks the topic through a distinct lens (emotion, scene, data, punchline, metaphor, testimonial, etc.).
 
-Available templates (each has a radically different composition):
-  • kpi-card — big centered stat + label (best for metrics, growth, headline numbers)
-  • quote-card — editorial pull-quote + attribution (best for thought-leadership, punchlines)
-  • announcement-card — big headline + body + CTA pill (best for launches, news)
-  • photo-hero — real photo background + text overlay (best for concrete scenes: team, office, product)
+PHOTO FIRST: Posty is a premium tool where visuals must look like REAL professional content, not "AI-made" images. By default, each variant uses a REAL PHOTO (photo-clean) — it's the photographed SCENE / SUBJECT that changes from one variant to the next, not just the color.
+
+Available templates:
+  • photo-clean — DEFAULT. Real photo filling the frame, almost no text. Use for most angles.
+  • photo-hero — real photo + ONE strong line burned on it. Only if the angle needs a hook on the image.
+  • kpi-card — MINORITY, text only. Only if the angle IS a number.
+  • quote-card — MINORITY, text only. Only if the angle IS a verbatim quote.
+  • announcement-card — MINORITY, text only. Only for a formal announcement.
 
 Reply with ONLY this JSON:
 {
   "angles": [
     {
       "focus": "<2 to 6 words — editorial headline hook>",
-      "direction": "<1 sentence — which angle / emotion / insight this card must carry>",
+      "direction": "<1 sentence — which angle / scene / insight this variant must carry>",
       "accent": "<one of: ${ACCENT_KEYS.join(", ")}>",
       "template": "<one of: ${TEMPLATE_IDS.join(", ")}>"
     }
@@ -238,7 +259,8 @@ Reply with ONLY this JSON:
 Rules:
 - Exactly ${n} entries, order = display order to the user.
 - No duplicate "focus", no paraphrased "direction".
-- DIFFERENT TEMPLATES across variants — mandatory whenever possible (reformulate an angle if needed so it fits a still-available template). Only reuse a template if the subject genuinely supports no other composition.
+- MAJORITY of photo templates (photo-clean / photo-hero). You MAY reuse a photo template across variants — the photo differs, so the visual differs. Vary the concrete SCENE / SUBJECT across variants.
+- Use a text card (kpi/quote/announcement) ONLY if the angle truly demands it, and at most ONE of the ${n}.
 - Different accents across variants when possible.
 - Topic stays the same, lens changes.${avoidBlock}`;
 
@@ -279,11 +301,17 @@ Rules:
       // duplicate templates across variants" client-side: if the model
       // returned two identical templates we override one with the next
       // unused template (cycling through TEMPLATE_IDS biased by freshness).
+      // Photo-first rotation: photo templates lead, then fresh text cards,
+      // then the rest. Uniqueness is enforced for TEXT cards only — photo
+      // templates may repeat across variants (the photo differs, so does the
+      // visual), which is exactly the photo-first behaviour we want.
       const templateRotation: TemplateId[] = [
-        ...freshTemplates,
-        ...TEMPLATE_IDS.filter((t) => !freshTemplates.includes(t)),
+        ...PHOTO_TEMPLATES,
+        ...freshTextTemplates,
+        ...TEMPLATE_IDS.filter((t) => !isPhotoTemplate(t) && !freshTextTemplates.includes(t)),
       ];
-      const usedTemplates = new Set<TemplateId>();
+      const usedTextTemplates = new Set<TemplateId>();
+      const canUse = (t: TemplateId): boolean => isPhotoTemplate(t) || !usedTextTemplates.has(t);
       const cleaned: VariantAngle[] = parsed.angles
         .slice(0, n)
         .filter((a): a is Partial<VariantAngle> => !!a && typeof a.focus === "string" && typeof a.direction === "string")
@@ -292,20 +320,19 @@ Rules:
           const accent: AccentKey = (ACCENT_KEYS as readonly string[]).includes(a.accent ?? "")
             ? (a.accent as AccentKey)
             : ROTATING_ACCENTS[i % ROTATING_ACCENTS.length];
-          // Pick template: model pick if valid AND not yet used in this batch,
-          // else the next unused template from the freshness-ordered rotation.
+          // Pick template: model pick if valid AND usable (photo always usable;
+          // a text card only if not already used in this batch), else the next
+          // usable template from the photo-first rotation.
           const modelTemplate = (TEMPLATE_IDS as readonly string[]).includes(a.template ?? "")
             ? (a.template as TemplateId)
             : null;
           let template: TemplateId;
-          if (modelTemplate && !usedTemplates.has(modelTemplate)) {
+          if (modelTemplate && canUse(modelTemplate)) {
             template = modelTemplate;
           } else {
-            template =
-              templateRotation.find((t) => !usedTemplates.has(t)) ??
-              templateRotation[i % templateRotation.length];
+            template = templateRotation.find(canUse) ?? PHOTO_TEMPLATES[0];
           }
-          usedTemplates.add(template);
+          if (!isPhotoTemplate(template)) usedTextTemplates.add(template);
           return {
             focus: a.focus!.slice(0, 80),
             direction: a.direction!.slice(0, 280),
@@ -341,16 +368,14 @@ Rules:
         ? `${userPrompt}\n\nVariante ${index + 1}/${variantCount} — directive artistique :\n  • Angle / accroche cible : ${a.focus}\n  • Message à porter : ${a.direction}\n  • Palette suggérée : ${a.accent}\n  • TEMPLATE OBLIGATOIRE : "${a.template}" — tu DOIS retourner un DSL dont le champ "template" vaut exactement "${a.template}". Reformule le contenu pour qu'il colle naturellement à ce template ; ne change PAS le template.\nLe sujet reste identique aux autres variantes, c'est la LENTILLE et la COMPOSITION qui changent. Évite toute formulation déjà vue dans une autre variante.`
         : `${userPrompt}\n\nVariant ${index + 1}/${variantCount} — art direction:\n  • Target angle / headline: ${a.focus}\n  • Message to carry: ${a.direction}\n  • Suggested palette: ${a.accent}\n  • REQUIRED TEMPLATE: "${a.template}" — you MUST return a DSL whose "template" field is exactly "${a.template}". Reshape the content to fit this template naturally; do NOT change the template.\nTopic stays identical across variants, the LENS and COMPOSITION change. Avoid any wording reused from another variant.`;
     }
-    // Fallback: accent + template rotation (used if brainstorm failed). Picks
-    // from `freshTemplates` first so even the fallback path benefits from
-    // history-based bias.
+    // Fallback: accent + template rotation (used if brainstorm failed).
+    // Photo-first — rotate over the photo templates so even the degraded path
+    // defaults to real photos rather than text cards.
     const accent = ROTATING_ACCENTS[index % ROTATING_ACCENTS.length];
-    const fallbackTemplatePool: TemplateId[] =
-      freshTemplates.length > 0 ? freshTemplates : [...TEMPLATE_IDS];
-    const fallbackTemplate = fallbackTemplatePool[index % fallbackTemplatePool.length];
+    const fallbackTemplate = PHOTO_TEMPLATES[index % PHOTO_TEMPLATES.length];
     return isFr
-      ? `${userPrompt}\n\nVariante ${index + 1}/${variantCount} — privilégie accent "${accent}" et utilise le template "${fallbackTemplate}" si le sujet le permet (différent des variantes précédentes obligatoirement).`
-      : `${userPrompt}\n\nVariant ${index + 1}/${variantCount} — prefer accent "${accent}" and use template "${fallbackTemplate}" if the subject allows (must differ from prior variants).`;
+      ? `${userPrompt}\n\nVariante ${index + 1}/${variantCount} — privilégie une VRAIE PHOTO (template "${fallbackTemplate}") avec un sujet concret distinct des autres variantes, accent "${accent}". N'utilise une carte texte que si le sujet l'exige absolument.`
+      : `${userPrompt}\n\nVariant ${index + 1}/${variantCount} — prefer a REAL PHOTO (template "${fallbackTemplate}") with a concrete subject distinct from the other variants, accent "${accent}". Only use a text card if the subject truly demands it.`;
   };
 
   /** Run one DSL generation round (with one repair retry on Zod failure). */

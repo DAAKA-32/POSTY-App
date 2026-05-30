@@ -94,12 +94,15 @@ export async function renderDSL(dsl: ImageDSL): Promise<RenderResult> {
   await ensureWasm();
   const fonts = loadFontsOnce();
 
-  // Photo-hero needs an actual asset before we touch Satori. Failures here
-  // are non-fatal — renderTemplate falls back to AnnouncementCard with the
-  // same copy when no photo lands, so the user always gets something.
+  // Photo templates (photo-clean, photo-hero) need an actual asset before we
+  // touch Satori. Failures here are non-fatal — renderTemplate falls back to a
+  // typography card with the same copy when no photo lands, so the user always
+  // gets something.
   let photoDataUri: string | undefined;
   let attribution: AssetPhoto["attribution"] | undefined;
-  if (dsl.template === "photo-hero") {
+  // Explicit member check (not isPhotoTemplate) so TS narrows the union to the
+  // two variants that actually carry `searchQuery`.
+  if (dsl.template === "photo-clean" || dsl.template === "photo-hero") {
     try {
       const photo = await findPhoto(dsl.searchQuery);
       if (photo) {
