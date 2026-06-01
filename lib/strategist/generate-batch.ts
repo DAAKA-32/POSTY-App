@@ -15,6 +15,11 @@ import {
   buildBatchPlanPrompt,
   BatchPlanResponseSchema,
 } from "@/lib/ai/batch-plan-prompt";
+import {
+  isTopicTimeSensitive,
+  buildRealtimeContextBlock,
+} from "@/lib/services/realtime-context";
+import { fetchRealtimeContextCached } from "@/lib/strategist/realtime-cache";
 import type { PostBrief, StrategyBatch, StrategistAdvancedParams } from "@/types";
 
 interface UserContext {
@@ -121,7 +126,7 @@ export async function generateBatchPlan(
   // Per-batch override wins; otherwise fall back to the user's saved defaults
   // (this is what lets the autonomous cron honor the same steering for free).
   const advanced = input.advanced ?? savedParams;
-  const systemPrompt = buildBatchPlanPrompt({
+  let systemPrompt = buildBatchPlanPrompt({
     language,
     count,
     startDate,
@@ -136,6 +141,15 @@ export async function generateBatchPlan(
     timeout: 50_000,
     maxRetries: 1,
   });
+
+  // ── Chantier 3: real-time web grounding ──────────────────────────────
+  // Only when the prompt is genuinely time-moving (zero-cost regex gate), and
+  // ONE cached search call for the whole batch (not per brief). Non-blocking:
+  // any failure leaves the prompt untouched and the plan is generated normally.
+  if (isTopicTimeSensitive(sourcePrompt)) {
+    const rt = await fetchRealtimeContextCached(openai, sourcePrompt, language, userId);
+    if (rt) systemPrompt += buildRealtimeContextBlock(rt, language);
+  }
 
   const completion = await openai.chat.completions.create({
     model: "gpt-4o",
