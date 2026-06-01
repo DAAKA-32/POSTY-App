@@ -38,7 +38,9 @@ import {
   deletePostBrief,
   setBatchStatus,
   patchMaterializedPost,
+  clearBatchScheduling,
 } from "@/lib/db/strategy-batches";
+import { cancelScheduledPost } from "@/lib/db/firestore";
 import { getAuthHeaders } from "@/lib/api/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import toast from "@/components/ui/Toast";
@@ -67,6 +69,10 @@ export default function BatchPlanCard({ batch, onApproved, onDiscarded }: Props)
   // accidentally fire posts into the publishing pipeline.
   const [scheduling, setScheduling] = useState(false);
   const [confirmSchedule, setConfirmSchedule] = useState(false);
+  // Cancellation state — un-schedule a batch already handed to the publishing
+  // cron. Same two-step confirm gate as scheduling so it isn't a one-tap regret.
+  const [cancelling, setCancelling] = useState(false);
+  const [confirmCancel, setConfirmCancel] = useState(false);
 
   // "Edit brief" is allowed only in draft. After approve, the briefs are
   // frozen and the row UI swaps to the materialized post preview.
@@ -283,6 +289,55 @@ export default function BatchPlanCard({ batch, onApproved, onDiscarded }: Props)
     }
   };
 
+  /** Cancel a scheduled batch: flip every still-pending scheduledPosts doc to
+   *  "cancelled" (the publishing cron only fires on status === "pending", so
+   *  this removes them from the queue) and roll the batch back to "materialized"
+   *  so the user can edit / reschedule. Two-step confirm like scheduling. */
+  const cancelScheduling = async () => {
+    if (!confirmCancel) {
+      setConfirmCancel(true);
+      setTimeout(() => setConfirmCancel(false), 6000);
+      return;
+    }
+    setConfirmCancel(false);
+    setCancelling(true);
+    try {
+      const ids = posts
+        .map((p) => p.scheduledPostId)
+        .filter((id): id is string => !!id);
+      const results = await Promise.allSettled(ids.map((id) => cancelScheduledPost(id)));
+      const failed = results.filter((r) => r.status === "rejected").length;
+
+      // Clean the batch doc (drop scheduling pointers, status → materialized).
+      await clearBatchScheduling(batch.id);
+
+      setPosts((prev) =>
+        prev.map((p) => {
+          const cleaned = { ...p };
+          delete cleaned.scheduledPostId;
+          delete cleaned.scheduledAt;
+          return cleaned;
+        })
+      );
+      setStatus("materialized");
+
+      if (failed > 0) {
+        toast.error(
+          `${failed} post${failed > 1 ? "s n'ont" : " n'a"} pas pu être annulé${failed > 1 ? "s" : ""}.`
+        );
+      } else {
+        toast.success(
+          `Programmation annulée — ${ids.length} post${ids.length > 1 ? "s retirés" : " retiré"} de la file de publication.`
+        );
+      }
+    } catch (err) {
+      console.error("[BatchPlanCard] cancelScheduling failed:", err);
+      toast.error("Annulation échouée. Réessaye.");
+    } finally {
+      setCancelling(false);
+    }
+  };
+
   return (
     <motion.section
       initial={{ opacity: 0, y: 8 }}
@@ -407,11 +462,23 @@ export default function BatchPlanCard({ batch, onApproved, onDiscarded }: Props)
       )}
 
       {status === "materialized" && (
-        <footer className="px-4 py-3 border-t border-gray-100 dark:border-dark-border/40 flex items-center justify-between gap-3 flex-wrap">
+        <footer className="px-4 py-3 border-t border-gray-100 dark:border-dark-border/40 flex flex-col gap-2.5">
           <p className="text-[12px] text-emerald-700 dark:text-emerald-400 font-medium">
-            ✓ Tous les posts sont prêts.
+            ✓ Tous les posts sont prêts. Relis-les ci-dessus avant de valider.
           </p>
-          <div className="flex items-center gap-2">
+          {/* Explicit consequence — what "valider" actually does, so the user
+              knows this step is the gate to publishing on LinkedIn. */}
+          <p className="text-[11.5px] text-text-muted leading-snug">
+            {confirmSchedule ? (
+              <span className="text-amber-700 dark:text-amber-400 font-medium">
+                Clique sur « Confirmer » : les {posts.filter((p) => p.materialized).length} posts seront
+                publiés automatiquement sur ton compte LinkedIn aux créneaux indiqués. Tu pourras annuler tant qu'ils ne sont pas publiés.
+              </span>
+            ) : (
+              <>Une fois validés, les posts sont programmés et publiés <span className="font-medium text-text-secondary">automatiquement sur ton LinkedIn</span> aux créneaux indiqués (annulable à tout moment avant publication).</>
+            )}
+          </p>
+          <div className="flex items-center justify-end gap-2">
             <button
               type="button"
               onClick={() => materialize(undefined, true)}
@@ -438,45 +505,76 @@ export default function BatchPlanCard({ batch, onApproved, onDiscarded }: Props)
                 text-white shadow-sm
                 transition-colors
                 ${confirmSchedule
-                  ? "bg-red-500 hover:bg-red-600"
+                  ? "bg-amber-500 hover:bg-amber-600"
                   : "bg-emerald-500 hover:bg-emerald-600"}
               `}
             >
               {scheduling ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
               ) : (
-                <CalendarClock className="w-3.5 h-3.5" />
+                <CheckCircle2 className="w-3.5 h-3.5" />
               )}
               {scheduling
                 ? "Programmation…"
                 : confirmSchedule
-                  ? `Confirmer (${posts.filter((p) => p.materialized).length} posts)`
-                  : "Programmer la publication"}
+                  ? `Confirmer · ${posts.filter((p) => p.materialized).length} post${posts.filter((p) => p.materialized).length > 1 ? "s" : ""} → LinkedIn`
+                  : "Valider et programmer"}
             </button>
           </div>
         </footer>
       )}
 
       {status === "scheduled" && (
-        <footer className="px-4 py-3 border-t border-gray-100 dark:border-dark-border/40 flex items-center justify-between gap-3 flex-wrap">
+        <footer className="px-4 py-3 border-t border-gray-100 dark:border-dark-border/40 flex flex-col gap-2.5">
           <p className="text-[12px] text-emerald-700 dark:text-emerald-400 font-medium">
             ✓ {posts.filter((p) => p.scheduledPostId).length} post
-            {posts.filter((p) => p.scheduledPostId).length > 1 ? "s programmés" : " programmé"}.
-            Publication automatique aux horaires prévus.
+            {posts.filter((p) => p.scheduledPostId).length > 1 ? "s programmés" : " programmé"} —
+            publication automatique sur LinkedIn aux horaires prévus.
           </p>
-          <a
-            href="/schedule"
-            className="
-              inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg
-              text-[12px] font-medium
-              text-emerald-700 dark:text-emerald-400
-              hover:bg-emerald-50 dark:hover:bg-emerald-500/10
-              transition-colors
-            "
-          >
-            <CalendarClock className="w-3.5 h-3.5" />
-            Voir le calendrier
-          </a>
+          {confirmCancel && (
+            <p className="text-[11.5px] text-amber-700 dark:text-amber-400 font-medium leading-snug">
+              Confirme : les posts seront retirés de la file et ne seront pas publiés. Ton plan reste éditable.
+            </p>
+          )}
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={cancelScheduling}
+              disabled={cancelling}
+              className={`
+                inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg
+                text-[12px] font-medium disabled:opacity-60 disabled:cursor-not-allowed
+                transition-colors
+                ${confirmCancel
+                  ? "bg-red-500 hover:bg-red-600 text-white shadow-sm"
+                  : "text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"}
+              `}
+            >
+              {cancelling ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <X className="w-3.5 h-3.5" />
+              )}
+              {cancelling
+                ? "Annulation…"
+                : confirmCancel
+                  ? "Confirmer l'annulation"
+                  : "Annuler la programmation"}
+            </button>
+            <a
+              href="/schedule"
+              className="
+                inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg
+                text-[12px] font-medium
+                text-emerald-700 dark:text-emerald-400
+                hover:bg-emerald-50 dark:hover:bg-emerald-500/10
+                transition-colors
+              "
+            >
+              <CalendarClock className="w-3.5 h-3.5" />
+              Voir le calendrier
+            </a>
+          </div>
         </footer>
       )}
     </motion.section>

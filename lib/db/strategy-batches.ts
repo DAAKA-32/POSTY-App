@@ -135,6 +135,30 @@ export async function deleteStrategyBatch(batchId: string): Promise<void> {
   await deleteDoc(doc(db, COLLECTION, batchId));
 }
 
+/** Roll a "scheduled" batch back to "materialized" after the user cancels the
+ *  publication. Strips the per-brief scheduling pointers (scheduledPostId /
+ *  scheduledAt) so the row UI drops the "Programmé pour…" line and re-offers
+ *  scheduling. The actual `scheduledPosts` docs are cancelled separately by the
+ *  caller via `cancelScheduledPost` — this only cleans the batch document. */
+export async function clearBatchScheduling(batchId: string): Promise<void> {
+  const ref = doc(db, COLLECTION, batchId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) throw new Error("batch_not_found");
+  const data = snap.data();
+  const posts: PostBrief[] = Array.isArray(data.posts) ? data.posts : [];
+  const next = posts.map((p) => {
+    const cleaned: PostBrief = { ...p };
+    delete cleaned.scheduledPostId;
+    delete cleaned.scheduledAt;
+    return cleaned;
+  });
+  await updateDoc(ref, {
+    posts: next,
+    status: "materialized" as StrategyBatch["status"],
+    updatedAt: serverTimestamp(),
+  });
+}
+
 /** Patch the materialized body of one brief — used when the user inline-edits
  *  the generated post copy without re-running the LLM. Distinct from
  *  patchPostBrief so we don't accidentally allow the brief fields (hook /
