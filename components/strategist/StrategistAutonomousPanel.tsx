@@ -18,9 +18,11 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, ChevronDown, Loader2 } from "lucide-react";
+import { Calendar, ChevronDown, Loader2, Sparkles } from "lucide-react";
 import StrategistMark from "./StrategistMark";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { getAuthHeaders } from "@/lib/api/client";
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/db/firebase";
 import toast from "@/components/ui/Toast";
@@ -42,6 +44,7 @@ const DEFAULT_COUNT = 5;
 
 export default function StrategistAutonomousPanel() {
   const { user } = useAuth();
+  const { language } = useLanguage();
 
   const [enabled, setEnabled] = useState(false);
   const [dayOfWeek, setDayOfWeek] = useState<0 | 1 | 2 | 3 | 4 | 5 | 6>(0);
@@ -51,6 +54,7 @@ export default function StrategistAutonomousPanel() {
 
   const [expanded, setExpanded] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -106,6 +110,64 @@ export default function StrategistAutonomousPanel() {
     setExpanded(next); // expand on ON, collapse on OFF
     void save({ enabled: next });
     toast.success(next ? "Mode autonome activé." : "Mode autonome désactivé.");
+  };
+
+  /**
+   * Generate a plan on demand RIGHT NOW (don't wait for the weekly cron).
+   * Uses the same config the cron would (count + custom prompt) and surfaces
+   * the resulting batch in the chat via the existing `strategist:open-batch`
+   * event — where the user reviews and validates it (approve → generate →
+   * schedule). This is what makes the panel actionable instead of "set & wait".
+   */
+  const generateNow = async () => {
+    if (!user?.uid || generating) return;
+    setGenerating(true);
+    try {
+      const headers = await getAuthHeaders();
+      const timezone =
+        (typeof Intl !== "undefined" &&
+          Intl.DateTimeFormat().resolvedOptions().timeZone) ||
+        "UTC";
+      const trimmed = customPrompt.trim();
+      const sourcePrompt =
+        trimmed ||
+        (language === "en"
+          ? `Prepare a coherent editorial plan of ${count} LinkedIn posts for the week ahead.`
+          : `Prépare un plan éditorial cohérent de ${count} posts LinkedIn pour la semaine à venir.`);
+
+      const res = await fetch("/api/strategist/batch-plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({
+          sourcePrompt,
+          count,
+          timezone,
+          language: language === "fr" ? "fr" : "en",
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err.message || "Génération échouée. Réessaye.");
+        return;
+      }
+      const data = await res.json();
+      const batchId = data?.batch?.id as string | undefined;
+      if (!batchId) {
+        toast.error("Génération échouée. Réessaye.");
+        return;
+      }
+      // Hand off to the chat panel, which fetches + renders the BatchPlanCard
+      // so the user can review and validate before anything is published.
+      window.dispatchEvent(
+        new CustomEvent("strategist:open-batch", { detail: { batchId } })
+      );
+      toast.success("Plan généré — relis-le et valide-le ci-dessous.");
+    } catch (err) {
+      console.error("[StrategistAutonomousPanel] generateNow failed:", err);
+      toast.error("Génération échouée. Vérifie ta connexion.");
+    } finally {
+      setGenerating(false);
+    }
   };
 
   if (loading) {
@@ -271,6 +333,35 @@ export default function StrategistAutonomousPanel() {
                     })}
                   </p>
                 )}
+
+                {/* On-demand generation — the panel above only schedules the
+                    weekly cron; this button makes the agent act NOW so the user
+                    gets a plan to review + validate without waiting for the
+                    chosen day. */}
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={generateNow}
+                    disabled={generating}
+                    className="
+                      w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg
+                      text-[12.5px] font-semibold
+                      bg-amber-500 hover:bg-amber-600 disabled:opacity-60 disabled:cursor-not-allowed
+                      text-white shadow-sm
+                      transition-colors
+                    "
+                  >
+                    {generating ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-3.5 h-3.5" />
+                    )}
+                    {generating ? "Génération du plan…" : "Générer un plan maintenant"}
+                  </button>
+                  <p className="mt-1.5 text-[10.5px] text-text-muted leading-snug text-center">
+                    Teste tout de suite : tu obtiens un plan à relire et valider, sans attendre {DAY_LABELS_FR[dayOfWeek].toLowerCase()}.
+                  </p>
+                </div>
               </div>
             </motion.div>
           )}
