@@ -71,6 +71,17 @@ service cloud.firestore {
       allow create: if isAuthenticated() && isRequestOwner();
     }
 
+    // Strategist editorial batches. Created server-side via Admin SDK, but the
+    // owner reads + mutates them client-side (review, inline edits, approve,
+    // schedule status, cancel). Without this rule the default-deny below blocks
+    // every client read/write — which silently breaks the whole approve →
+    // materialize → schedule validation flow.
+    match /strategyBatches/{batchId} {
+      allow read:   if isResourceOwner();
+      allow update, delete: if isResourceOwner();
+      allow create: if isAuthenticated() && isRequestOwner();
+    }
+
     match /sessions/{sessionId} {
       allow read:   if isResourceOwner();
       allow update, delete: if isResourceOwner();
