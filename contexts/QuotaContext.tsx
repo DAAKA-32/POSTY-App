@@ -10,6 +10,7 @@ import {
 } from "react";
 import { useAuth } from "./AuthContext";
 import { getUserQuota, incrementMessageCount, incrementWeeklyPublishCount, QuotaInfo } from "@/lib/db/firestore";
+import { readWithAuthRetry } from "@/lib/db/with-auth-retry";
 import { SubscriptionPlan } from "@/types";
 import { getPlanConfig } from "@/lib/config/plans";
 
@@ -125,7 +126,9 @@ export function QuotaProvider({ children }: { children: ReactNode }) {
 
     setIsLoading(true);
     try {
-      const userQuota = await getUserQuota(user.uid, user.email);
+      const userQuota = await readWithAuthRetry(() =>
+        getUserQuota(user.uid, user.email)
+      );
       setQuota(userQuota);
     } catch (error) {
       console.error("Error loading quota:", error);

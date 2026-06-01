@@ -11,6 +11,7 @@ import {
 import { Post } from "@/types";
 import { useAuth } from "./AuthContext";
 import { getUserPostsWithPinned } from "@/lib/db/firestore";
+import { readWithAuthRetry } from "@/lib/db/with-auth-retry";
 
 interface SidebarPostsContextValue {
   posts: Post[];
@@ -37,7 +38,11 @@ export function SidebarPostsProvider({ children }: { children: ReactNode }) {
       return;
     }
     try {
-      const fetched = await getUserPostsWithPinned(user.uid, PAGE_SIZE);
+      // Retry on stale-token permission-denied (post-login / post-reset window)
+      // so the conversation list doesn't render empty when data is intact.
+      const fetched = await readWithAuthRetry(() =>
+        getUserPostsWithPinned(user.uid, PAGE_SIZE)
+      );
       setPosts(fetched);
     } catch (err) {
       console.error("SidebarPostsContext.refresh failed:", err);

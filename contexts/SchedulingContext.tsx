@@ -30,7 +30,7 @@ import {
 } from "@/lib/db/firestore";
 import { deleteScheduledPostImages } from "@/lib/storage/storage";
 import { getAuthHeaders } from "@/lib/api/client";
-import { auth } from "@/lib/db/firebase";
+import { readWithAuthRetry } from "@/lib/db/with-auth-retry";
 import toast from "@/components/ui/Toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -50,8 +50,10 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
   // Load scheduled posts from Firestore.
   // `permission-denied` on first paint is almost always a stale auth token:
   // React already has `user`, but the Firestore SDK hasn't been re-attached
-  // to the refreshed ID token yet. We retry once after a forced token refresh
-  // before surfacing the alarming toast — silent recovery beats a false alert.
+  // to the refreshed ID token yet (also the case right after a password reset,
+  // which revokes prior tokens). readWithAuthRetry force-refreshes the token
+  // and retries once before we'd surface the alarming toast — silent recovery
+  // beats a false alert. See lib/db/with-auth-retry.ts.
   const loadScheduledPosts = useCallback(async () => {
     if (!user) {
       setScheduledPosts([]);
@@ -60,27 +62,13 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const fetchOnce = async () => {
-      const posts = await getScheduledPosts(user.uid);
-      const count = await getPendingScheduledPostsCount(user.uid);
-      return { posts, count };
-    };
-
     setIsLoading(true);
     try {
-      let result;
-      try {
-        result = await fetchOnce();
-      } catch (err) {
-        const code = (err as { code?: string })?.code;
-        if (code === "permission-denied" && auth?.currentUser) {
-          // Force-refresh the ID token so the next request carries fresh auth.
-          await auth.currentUser.getIdToken(true).catch(() => {});
-          result = await fetchOnce();
-        } else {
-          throw err;
-        }
-      }
+      const result = await readWithAuthRetry(async () => {
+        const posts = await getScheduledPosts(user.uid);
+        const count = await getPendingScheduledPostsCount(user.uid);
+        return { posts, count };
+      });
       setScheduledPosts(result.posts);
       setPendingCount(result.count);
     } catch (error) {

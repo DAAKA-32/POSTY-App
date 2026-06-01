@@ -9,6 +9,7 @@ import {
   ReactNode,
 } from "react";
 import { useAuth } from "./AuthContext";
+import { readWithAuthRetry } from "@/lib/db/with-auth-retry";
 import {
   getRedditConnection,
   deleteRedditConnection,
@@ -57,7 +58,7 @@ export function RedditProvider({ children }: { children: ReactNode }) {
     }
     setIsLoading(true);
     try {
-      const conn = await getRedditConnection(user.uid);
+      const conn = await readWithAuthRetry(() => getRedditConnection(user.uid));
       setConnection(conn);
     } catch (error) {
       console.error("Error loading Reddit connection:", error);

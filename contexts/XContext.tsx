@@ -9,6 +9,7 @@ import {
   ReactNode,
 } from "react";
 import { useAuth } from "./AuthContext";
+import { readWithAuthRetry } from "@/lib/db/with-auth-retry";
 import {
   getXConnection,
   deleteXConnection,
@@ -48,7 +49,7 @@ export function XProvider({ children }: { children: ReactNode }) {
     }
     setIsLoading(true);
     try {
-      const conn = await getXConnection(user.uid);
+      const conn = await readWithAuthRetry(() => getXConnection(user.uid));
       setConnection(conn);
     } catch (error) {
       console.error("Error loading X connection:", error);

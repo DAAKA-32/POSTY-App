@@ -9,6 +9,7 @@ import {
   ReactNode,
 } from "react";
 import { useAuth } from "./AuthContext";
+import { readWithAuthRetry } from "@/lib/db/with-auth-retry";
 import {
   getDiscordConnection,
   deleteDiscordConnection,
@@ -51,7 +52,7 @@ export function DiscordProvider({ children }: { children: ReactNode }) {
     }
     setIsLoading(true);
     try {
-      const conn = await getDiscordConnection(user.uid);
+      const conn = await readWithAuthRetry(() => getDiscordConnection(user.uid));
       setConnection(conn);
     } catch (error) {
       console.error("Error loading Discord connection:", error);

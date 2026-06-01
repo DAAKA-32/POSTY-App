@@ -25,6 +25,7 @@ import {
 } from "firebase/auth";
 import { auth, googleProvider } from "@/lib/db/firebase";
 import { createUserProfile, getUserProfile, deleteAllUserData, saveUserConsent } from "@/lib/db/firestore";
+import { readWithAuthRetry } from "@/lib/db/with-auth-retry";
 import { AuthContextType, UserProfile } from "@/types";
 import toast from "@/components/ui/Toast";
 import { translations } from "@/lib/i18n";
@@ -114,9 +115,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(firebaseUser);
         setLoading(true);
 
-        // Fetch user profile from Firestore
+        // Fetch user profile from Firestore.
+        // CRITICAL: wrap in readWithAuthRetry. Right after login — and
+        // especially after a password reset, which revokes prior tokens —
+        // the first read can hit `permission-denied` with a stale ID token.
+        // Without the retry this returns null and the app paints a blank,
+        // "brand-new account" (only the email is visible because it comes from
+        // the auth object, not Firestore) even though the data is intact. The
+        // retry force-refreshes the token and reads the real profile.
         try {
-          const profile = await getUserProfile(firebaseUser.uid);
+          const profile = await readWithAuthRetry(() =>
+            getUserProfile(firebaseUser.uid)
+          );
           setUserProfile(profile);
 
           // If user has completed onboarding, clear any stale localStorage flags
@@ -146,7 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Refresh user profile
   const refreshUserProfile = async () => {
     if (user) {
-      const profile = await getUserProfile(user.uid);
+      const profile = await readWithAuthRetry(() => getUserProfile(user.uid));
       setUserProfile(profile);
     }
   };

@@ -9,6 +9,7 @@ import {
   ReactNode,
 } from "react";
 import { useAuth } from "./AuthContext";
+import { readWithAuthRetry } from "@/lib/db/with-auth-retry";
 import {
   getMastodonConnection,
   deleteMastodonConnection,
@@ -56,7 +57,7 @@ export function MastodonProvider({ children }: { children: ReactNode }) {
     }
     setIsLoading(true);
     try {
-      const conn = await getMastodonConnection(user.uid);
+      const conn = await readWithAuthRetry(() => getMastodonConnection(user.uid));
       setConnection(conn);
     } catch (error) {
       console.error("Error loading Mastodon connection:", error);

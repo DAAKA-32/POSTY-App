@@ -10,6 +10,7 @@ import {
   useRef,
 } from "react";
 import { useAuth } from "./AuthContext";
+import { readWithAuthRetry } from "@/lib/db/with-auth-retry";
 import {
   getThreadsConnection,
   deleteThreadsConnection,
@@ -66,7 +67,7 @@ export function ThreadsProvider({ children }: { children: ReactNode }) {
 
     setIsLoading(true);
     try {
-      const conn = await getThreadsConnection(user.uid);
+      const conn = await readWithAuthRetry(() => getThreadsConnection(user.uid));
       setConnection(conn);
     } catch (error) {
       console.error("Error loading Threads connection:", error);

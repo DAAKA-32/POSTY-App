@@ -16,6 +16,7 @@ import {
 } from "@/lib/db/firestore";
 import { isTokenExpired, postToLinkedIn as postToLinkedInApi, getLinkedInAuthUrl } from "@/lib/platforms/linkedin";
 import { getAuthHeaders } from "@/lib/api/client";
+import { readWithAuthRetry } from "@/lib/db/with-auth-retry";
 import toast from "@/components/ui/Toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -66,7 +67,7 @@ export function LinkedInProvider({ children }: { children: ReactNode }) {
 
     setIsLoading(true);
     try {
-      const conn = await getLinkedInConnection(user.uid);
+      const conn = await readWithAuthRetry(() => getLinkedInConnection(user.uid));
       setConnection(conn);
 
       // Background: if the stored photo URL is stale, refresh it from LinkedIn

@@ -9,6 +9,7 @@ import {
   useCallback,
 } from "react";
 import { useAuth } from "./AuthContext";
+import { readWithAuthRetry } from "@/lib/db/with-auth-retry";
 import {
   getFacebookConnection,
   deleteFacebookConnection,
@@ -62,7 +63,7 @@ export function FacebookProvider({ children }: { children: ReactNode }) {
 
     setIsLoading(true);
     try {
-      const conn = await getFacebookConnection(user.uid);
+      const conn = await readWithAuthRetry(() => getFacebookConnection(user.uid));
       setConnection(conn);
     } catch (error) {
       console.error("Error loading Facebook connection:", error);

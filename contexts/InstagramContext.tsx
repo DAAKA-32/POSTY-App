@@ -9,6 +9,7 @@ import {
   ReactNode,
 } from "react";
 import { useAuth } from "./AuthContext";
+import { readWithAuthRetry } from "@/lib/db/with-auth-retry";
 import {
   getInstagramConnection,
   deleteInstagramConnection,
@@ -55,7 +56,7 @@ export function InstagramProvider({ children }: { children: ReactNode }) {
     }
     setIsLoading(true);
     try {
-      const conn = await getInstagramConnection(user.uid);
+      const conn = await readWithAuthRetry(() => getInstagramConnection(user.uid));
       setConnection(conn);
     } catch (error) {
       console.error("Error loading Instagram connection:", error);

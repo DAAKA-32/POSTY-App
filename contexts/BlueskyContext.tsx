@@ -9,6 +9,7 @@ import {
   ReactNode,
 } from "react";
 import { useAuth } from "./AuthContext";
+import { readWithAuthRetry } from "@/lib/db/with-auth-retry";
 import { authFetch } from "@/lib/api/client";
 import {
   getBlueskyConnection,
@@ -52,7 +53,7 @@ export function BlueskyProvider({ children }: { children: ReactNode }) {
     }
     setIsLoading(true);
     try {
-      const conn = await getBlueskyConnection(user.uid);
+      const conn = await readWithAuthRetry(() => getBlueskyConnection(user.uid));
       setConnection(conn);
     } catch (error) {
       console.error("Error loading Bluesky connection:", error);
