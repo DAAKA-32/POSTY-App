@@ -109,6 +109,32 @@ export async function loadUserContextAndPosts(uid: string): Promise<{
   }
 }
 
+/** Truncate per-brief string fields to their schema maxima so a slightly
+ *  over-length value (typically `format` or `id`) doesn't fail validation for
+ *  the entire batch. Length-only: structural errors (missing field, bad date)
+ *  still fail as before. Mirrors the limits in `PostBriefSchema`. */
+function clampBriefLengths(parsed: unknown): unknown {
+  if (!parsed || typeof parsed !== "object") return parsed;
+  const obj = parsed as Record<string, unknown>;
+  const clamp = (v: unknown, n: number) => (typeof v === "string" ? v.slice(0, n) : v);
+  if (typeof obj.theme === "string") obj.theme = obj.theme.slice(0, 160);
+  if (Array.isArray(obj.posts)) {
+    obj.posts = obj.posts.map((p) => {
+      if (!p || typeof p !== "object") return p;
+      const b = p as Record<string, unknown>;
+      return {
+        ...b,
+        id: clamp(b.id, 40),
+        hook: clamp(b.hook, 280),
+        angle: clamp(b.angle, 400),
+        format: clamp(b.format, 40),
+        rationale: clamp(b.rationale, 280),
+      };
+    });
+  }
+  return obj;
+}
+
 /**
  * Core: call gpt-4o, validate output, persist as a strategyBatches doc,
  * return the persisted shape. Throws on hard failures so callers (route or
@@ -170,7 +196,11 @@ export async function generateBatchPlan(
   } catch {
     throw new Error("invalid_json_from_llm");
   }
-  const check = BatchPlanResponseSchema.safeParse(parsedJson);
+  // Defensive clamp: the LLM occasionally returns a field slightly over its
+  // schema limit (most often a verbose `format` or an over-long `id` slug —
+  // more frequent now that the real-time block makes outputs richer). Truncate
+  // to the limits instead of 502-ing the whole batch over a few extra chars.
+  const check = BatchPlanResponseSchema.safeParse(clampBriefLengths(parsedJson));
   if (!check.success) {
     console.warn("[generate-batch] schema mismatch:", check.error.flatten());
     throw new Error("schema_mismatch");
