@@ -7,39 +7,213 @@
  * decorative effects. The header is a simple flex row with the agent name,
  * a tiny "Max" badge (single amber accent), and a close button.
  *
- *   - Desktop (lg+): right-anchored panel, 560px wide, full height
- *   - Mobile: bottom-sheet 92vh with a small drag handle (decorative)
+ *   - Desktop (lg+): right-anchored panel, 560px wide, full height. NO drag.
+ *   - Mobile: bottom-sheet 92vh, dismissible by swiping it down.
+ *
+ * ── Gesture dismiss (mobile only) ──────────────────────────────────────────
+ * The sheet follows the finger in real time and closes on a sufficient
+ * downward swipe (distance OR velocity), otherwise springs back. Implemented
+ * with framer-motion's drag system in manual mode (`dragListener={false}` +
+ * `useDragControls`) so we control exactly WHERE a drag may begin:
+ *
+ *   1. The header / grab-handle always starts a drag (the guaranteed path).
+ *   2. The scrollable body starts a drag ONLY when its inner scroll is at the
+ *      top and the gesture is downward — so scrolling the chat thread never
+ *      dismisses the sheet by accident.
+ *
+ * On desktop (`lg+`) and under reduced-motion the drag is disabled entirely,
+ * preserving the original slide animation with zero behavioural change.
  */
 
 import Link from "next/link";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  motion,
+  AnimatePresence,
+  useReducedMotion,
+  useMotionValue,
+  useTransform,
+  useDragControls,
+  type PanInfo,
+} from "framer-motion";
 import { useStrategistDrawer } from "@/contexts/StrategistDrawerContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useStrategistEligibility } from "@/hooks/strategist/useStrategistEligibility";
 import { useLinkedIn } from "@/contexts/LinkedInContext";
+import { useHapticFeedback } from "@/hooks/ui/useHapticFeedback";
 import StrategistChatPanel from "./StrategistChatPanel";
 import StrategistMark from "./StrategistMark";
 import StrategistActivePill from "./StrategistActivePill";
 
 const PREMIUM_EASE = [0.22, 1, 0.36, 1] as const;
 
+// ── Gesture thresholds (mirrors components/ui/BottomSheet.tsx) ──────────────
+/** Fast flick down → dismiss regardless of distance (px/s). */
+const VELOCITY_THRESHOLD = 750;
+/** Slow drag past this fraction of sheet height → dismiss. */
+const CLOSE_FRACTION = 0.22;
+/** Below this fraction, only a moderate downward velocity still dismisses. */
+const VELOCITY_ASSIST = 250;
+/** Mobile breakpoint — matches the `lg:` desktop layout switch (1024px). */
+const MOBILE_QUERY = "(max-width: 1023px)";
+/** Min downward travel (px) before the body decides to claim a drag. */
+const BODY_CLAIM_DELTA = 8;
+
+/**
+ * Walk up from `start` to `boundary` and return the first ancestor that is a
+ * live vertical scroller (overflow auto/scroll + actually overflowing). Lets
+ * the body-drag logic tell "user is mid-scroll" from "content is at the top".
+ */
+function getScrollableAncestor(
+  start: Element | null,
+  boundary: Element | null
+): HTMLElement | null {
+  let node = start as HTMLElement | null;
+  while (node && node !== boundary) {
+    const oy = getComputedStyle(node).overflowY;
+    if ((oy === "auto" || oy === "scroll") && node.scrollHeight > node.clientHeight + 1) {
+      return node;
+    }
+    node = node.parentElement;
+  }
+  return null;
+}
+
 export default function StrategistDrawer() {
   const { isOpen, close } = useStrategistDrawer();
   const eligibility = useStrategistEligibility();
   const { t } = useLanguage();
   const reduced = useReducedMotion();
+  const { trigger: haptic } = useHapticFeedback();
+
+  // Only wire the gesture on phone-sized viewports. Desktop keeps the original
+  // right-anchored slide with no drag affordances whatsoever.
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mq = window.matchMedia(MOBILE_QUERY);
+    const sync = () => setIsMobile(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+
+  const dragEnabled = isMobile && !reduced;
+
+  const dragControls = useDragControls();
+  const bodyRef = useRef<HTMLDivElement>(null);
+
+  // Live drag offset (px, downward-positive) used to fade the backdrop so the
+  // dismiss feels physically connected to the page behind it.
+  const dragY = useMotionValue(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [sheetH, setSheetH] = useState(800);
+  const backdropOpacity = useTransform(dragY, [0, sheetH * 0.6], [1, 0]);
+
+  // Capture viewport-derived sheet height (92vh) for threshold math + backdrop
+  // mapping. Recomputed on open and resize.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const measure = () => setSheetH(window.innerHeight * 0.92);
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [isOpen]);
+
+  // Per-gesture bookkeeping for the body-initiated drag.
+  const dragActiveRef = useRef(false);
+  const gestureRef = useRef<{ y: number; target: Element | null; decided: boolean }>({
+    y: 0,
+    target: null,
+    decided: false,
+  });
+
+  const startDragFromHeader = useCallback(
+    (e: React.PointerEvent) => {
+      if (!dragEnabled) return;
+      // Let the close button (and any future header control) receive its tap.
+      if ((e.target as Element).closest("button, a")) return;
+      dragControls.start(e);
+    },
+    [dragEnabled, dragControls]
+  );
+
+  const onBodyPointerDown = useCallback((e: React.PointerEvent) => {
+    gestureRef.current = { y: e.clientY, target: e.target as Element, decided: false };
+  }, []);
+
+  const onBodyPointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      if (!dragEnabled || dragActiveRef.current) return;
+      const g = gestureRef.current;
+      if (g.decided) return;
+      const dy = e.clientY - g.y;
+      if (dy < BODY_CLAIM_DELTA) return; // upward / not enough downward intent yet
+      g.decided = true; // decide once per gesture, in either direction
+      const scroller = getScrollableAncestor(g.target, bodyRef.current);
+      // Claim the drag only when there is nothing to scroll up into — i.e. the
+      // content is already at the very top. Otherwise it's a normal scroll.
+      if (!scroller || scroller.scrollTop <= 0) {
+        dragControls.start(e);
+      }
+    },
+    [dragEnabled, dragControls]
+  );
+
+  const resetGesture = useCallback(() => {
+    gestureRef.current.decided = false;
+  }, []);
+
+  const handleDragStart = useCallback(() => {
+    dragActiveRef.current = true;
+    dragY.set(0); // clear any stale offset from a prior gesture before tracking
+    setIsDragging(true);
+  }, [dragY]);
+
+  const handleDrag = useCallback(
+    (_e: PointerEvent, info: PanInfo) => {
+      dragY.set(Math.max(0, info.offset.y));
+    },
+    [dragY]
+  );
+
+  const handleDragEnd = useCallback(
+    (_e: PointerEvent, info: PanInfo) => {
+      dragActiveRef.current = false;
+      setIsDragging(false);
+      gestureRef.current.decided = false;
+
+      const offset = info.offset.y;
+      const velocity = info.velocity.y;
+      const shouldClose =
+        velocity > VELOCITY_THRESHOLD ||
+        offset > sheetH * CLOSE_FRACTION ||
+        (offset > sheetH * 0.12 && velocity > VELOCITY_ASSIST);
+
+      if (shouldClose) {
+        haptic("medium");
+        close(); // AnimatePresence plays the exit slide from the current offset
+      } else {
+        // Snap back: framer auto-springs to the {top:0,bottom:0} constraint.
+        // Reset the backdrop instantly via isDragging→false fallback.
+        dragY.set(0);
+      }
+    },
+    [sheetH, haptic, close, dragY]
+  );
 
   return (
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop — quiet dim, no blur */}
+          {/* Backdrop — quiet dim, no blur. Opacity tracks the live drag. */}
           <motion.div
             key="strategist-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
+            style={isDragging ? { opacity: backdropOpacity } : undefined}
             onClick={close}
             className="fixed inset-0 z-[100] bg-gray-900/30 dark:bg-black/55"
           />
@@ -50,12 +224,20 @@ export default function StrategistDrawer() {
             role="dialog"
             aria-modal="true"
             aria-label={t.strategist.pageTitle}
-            initial={
-              reduced ? { opacity: 0 } : { y: "100%", opacity: 0.6 }
-            }
+            initial={reduced ? { opacity: 0 } : { y: "100%", opacity: 0.6 }}
             animate={reduced ? { opacity: 1 } : { y: 0, opacity: 1 }}
             exit={reduced ? { opacity: 0 } : { y: "100%", opacity: 0.4 }}
             transition={{ duration: 0.4, ease: PREMIUM_EASE }}
+            drag={dragEnabled ? "y" : false}
+            dragControls={dragControls}
+            dragListener={false}
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={{ top: 0.04, bottom: 0.9 }}
+            dragMomentum={false}
+            dragTransition={{ bounceStiffness: 450, bounceDamping: 34 }}
+            onDragStart={handleDragStart}
+            onDrag={handleDrag}
+            onDragEnd={handleDragEnd}
             className="
               fixed z-[101]
               bg-white dark:bg-dark-card
@@ -77,9 +259,20 @@ export default function StrategistDrawer() {
               overflow-hidden
             "
           >
-            <DrawerHeader onClose={close} />
+            <DrawerHeader
+              onClose={close}
+              onGrabStart={startDragFromHeader}
+              draggable={dragEnabled}
+            />
 
-            <div className="flex-1 flex flex-col min-h-0">
+            <div
+              ref={bodyRef}
+              className="flex-1 flex flex-col min-h-0"
+              onPointerDown={dragEnabled ? onBodyPointerDown : undefined}
+              onPointerMove={dragEnabled ? onBodyPointerMove : undefined}
+              onPointerUp={dragEnabled ? resetGesture : undefined}
+              onPointerCancel={dragEnabled ? resetGesture : undefined}
+            >
               {eligibility.reason === "loading" ? (
                 <div className="flex-1 flex items-center justify-center">
                   <div className="w-5 h-5 border-2 border-gray-200 border-t-gray-600 dark:border-gray-700 dark:border-t-gray-300 rounded-full animate-spin" />
@@ -101,21 +294,32 @@ export default function StrategistDrawer() {
 
 // ── Header ────────────────────────────────────────────────────────────────
 
-function DrawerHeader({ onClose }: { onClose: () => void }) {
+function DrawerHeader({
+  onClose,
+  onGrabStart,
+  draggable,
+}: {
+  onClose: () => void;
+  onGrabStart: (e: React.PointerEvent) => void;
+  draggable: boolean;
+}) {
   const { t } = useLanguage();
 
   return (
     <header
-      className="
+      onPointerDown={draggable ? onGrabStart : undefined}
+      className={`
         relative flex items-center justify-between
         px-5 py-3.5
         border-b border-gray-200 dark:border-dark-border
-      "
+        ${draggable ? "lg:cursor-default cursor-grab active:cursor-grabbing touch-none select-none" : ""}
+      `}
     >
-      {/* Mobile drag handle (decorative — not draggable) */}
+      {/* Mobile grab handle — the drag affordance for swipe-to-dismiss.
+          Enlarged tap zone, subtly springs on press. Hidden on desktop. */}
       <span
         aria-hidden
-        className="lg:hidden absolute top-2 left-1/2 -translate-x-1/2 w-9 h-[3px] rounded-full bg-gray-200 dark:bg-gray-700"
+        className="lg:hidden absolute top-2 left-1/2 -translate-x-1/2 w-10 h-[4px] rounded-full bg-gray-300 dark:bg-gray-600 transition-transform duration-150 active:scale-x-90"
       />
 
       <div className="flex items-center gap-2 mt-1.5 lg:mt-0">

@@ -390,7 +390,7 @@ export default function StrategistChatPanel() {
             animate={{ opacity: 1 }}
             exit={reduced ? undefined : { opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="flex-1 overflow-y-auto"
+            className="flex-1 overflow-y-auto overscroll-contain"
           >
             <div className="px-5 pt-12 sm:pt-16 pb-8">
               {/* Eyebrow — amber, the brand signature on this empty state */}
@@ -460,7 +460,7 @@ export default function StrategistChatPanel() {
             transition={{ duration: 0.2 }}
             className="flex-1 flex flex-col min-h-0"
           >
-            <div ref={scrollRef} className="flex-1 overflow-y-auto py-6 space-y-5">
+            <div ref={scrollRef} className="flex-1 overflow-y-auto overscroll-contain py-6 space-y-5">
               {messages.map((m, i) => (
                 <div key={m.id}>
                   <StrategistMessageBubble
