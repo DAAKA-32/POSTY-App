@@ -241,6 +241,12 @@ export interface StrategistAdvancedParams {
   tone?: string;
   /** Audience focus — overrides the profile target for this batch only. */
   audience?: string;
+  /** Free-text description of the author's business/offer/product (e.g. what
+   *  Posty is, who it serves, the positioning). Onboarding only captures
+   *  categorical fields, so this is the single place the Strategist learns
+   *  WHAT the user actually does — the source of truth for grounded, on-brand
+   *  posts. Persisted as a default; the most impactful field of the panel. */
+  context?: string;
   /** Formality on a 1 (casual) … 5 (corporate) scale. */
   formality?: 1 | 2 | 3 | 4 | 5;
   /** How strong the call-to-action should be. */

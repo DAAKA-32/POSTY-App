@@ -56,6 +56,7 @@ const ORIENT_KEYS: OrientKey[] = ["personal", "professional", "balanced"];
 /** Strip undefined/empty fields so equality checks + persistence stay clean. */
 function clean(p: StrategistAdvancedParams): StrategistAdvancedParams {
   const out: StrategistAdvancedParams = {};
+  if (p.context?.trim()) out.context = p.context.trim();
   if (p.objective) out.objective = p.objective;
   if (p.tone) out.tone = p.tone;
   if (p.audience?.trim()) out.audience = p.audience.trim();
@@ -193,6 +194,31 @@ export default function StrategistParamsPanel({ onChange }: Props) {
             className="overflow-hidden"
           >
             <div className="mt-1.5 rounded-xl border border-gray-200 dark:border-dark-border bg-white/70 dark:bg-dark-card/70 backdrop-blur-xl p-3.5 space-y-3.5">
+              {/* Business context — the single most impactful field: it tells
+                  the Strategist WHAT the user does so posts are grounded and
+                  human instead of generic. Highlighted at the top. */}
+              <div className="rounded-lg border border-amber-300/50 dark:border-amber-400/25 bg-amber-50/40 dark:bg-amber-400/[0.06] p-2.5">
+                <FieldLabel>{P.context.label}</FieldLabel>
+                <textarea
+                  value={params.context ?? ""}
+                  onChange={(e) => update({ context: e.target.value })}
+                  rows={3}
+                  maxLength={800}
+                  placeholder={P.context.placeholder}
+                  className="
+                    w-full px-2.5 py-1.5 rounded-md resize-none
+                    bg-white dark:bg-dark-elevated
+                    border border-gray-200 dark:border-dark-border
+                    text-[12px] text-gray-900 dark:text-white leading-relaxed
+                    placeholder:text-text-muted/70
+                    focus:outline-none focus:ring-2 focus:ring-amber-400/50
+                  "
+                />
+                <p className="mt-1 text-[10.5px] text-text-muted leading-snug">
+                  {P.context.hint}
+                </p>
+              </div>
+
               <ChipGroup
                 label={P.objective.label}
                 options={OBJECTIVE_KEYS.map((k) => ({ value: k, label: P.objective[k] }))}

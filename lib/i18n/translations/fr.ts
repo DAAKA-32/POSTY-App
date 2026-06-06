@@ -3343,6 +3343,11 @@ export const fr = {
       reset: "Réinitialiser",
       saveDefault: "Définir par défaut",
       savedToast: "Préférences enregistrées comme défaut.",
+      context: {
+        label: "Ton activité",
+        placeholder: "Ex : Posty = SaaS qui génère des posts LinkedIn par IA pour fondateurs B2B. Les aide à publier régulièrement sans y passer des heures.",
+        hint: "Décris ce que tu fais / ton offre. Le Stratège s'en sert pour des posts ancrés et humains (recommandé : « Définir par défaut »).",
+      },
       objective: {
         label: "Objectif",
         authority: "Autorité",

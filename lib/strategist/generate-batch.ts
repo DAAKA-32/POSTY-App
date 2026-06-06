@@ -14,22 +14,32 @@ import { adminDb } from "@/lib/db/firebase-admin";
 import {
   buildBatchPlanPrompt,
   BatchPlanResponseSchema,
+  buildSourceAnalysisBlock,
 } from "@/lib/ai/batch-plan-prompt";
 import {
   isTopicTimeSensitive,
   buildRealtimeContextBlock,
 } from "@/lib/services/realtime-context";
 import { fetchRealtimeContextCached } from "@/lib/strategist/realtime-cache";
+import { detectUrl } from "@/lib/utils/url-extract";
+import { extractUrlContentCached } from "@/lib/strategist/url-cache";
 import type { PostBrief, StrategyBatch, StrategistAdvancedParams } from "@/types";
 
 interface UserContext {
   name?: string;
+  profileType?: string;
   sector?: string;
   role?: string;
   objective?: string;
   targetAudience?: string;
   communicationTone?: string;
   publishingFrequency?: string;
+  /** Short professional bio / tagline / website pulled from the profile +
+   *  branding so the Strategist knows more than the categorical onboarding
+   *  fields. */
+  bio?: string;
+  tagline?: string;
+  website?: string;
 }
 
 export interface GenerateBatchInput {
@@ -81,14 +91,22 @@ export async function loadUserContextAndPosts(uid: string): Promise<{
     ]);
     const data = userSnap.exists ? userSnap.data() ?? {} : {};
     const profile = data.profile ?? {};
+    const branding = data.branding ?? {};
     const ctx: UserContext = {
       name: data.name || data.displayName || undefined,
+      profileType: profile.profileType || undefined,
       sector: normalizeField(profile.sector ?? data.sector),
       role: profile.role || data.role || undefined,
       objective: normalizeField(profile.objective),
       targetAudience: normalizeField(profile.targetAudience),
       communicationTone: normalizeField(profile.communicationTone),
       publishingFrequency: profile.publishingFrequency || undefined,
+      bio: (typeof data.bio === "string" && data.bio.trim()) || undefined,
+      tagline: (typeof branding.tagline === "string" && branding.tagline.trim()) || undefined,
+      website:
+        (typeof branding.socialLinks?.website === "string" &&
+          branding.socialLinks.website.trim()) ||
+        undefined,
     };
     const snippets = postsSnap.docs
       .map((doc) => {
@@ -175,6 +193,16 @@ export async function generateBatchPlan(
   if (isTopicTimeSensitive(sourcePrompt)) {
     const rt = await fetchRealtimeContextCached(openai, sourcePrompt, language, userId);
     if (rt) systemPrompt += buildRealtimeContextBlock(rt, language);
+  }
+
+  // ── Chantier 2: URL / brand audit grounding ──────────────────────────
+  // When the prompt references a URL (the author's site, a brand, a competitor)
+  // fetch + parse it (SSRF-safe, cached) and inject it so the briefs are
+  // grounded in / analyze the real page. Non-blocking: failure → no source.
+  const sourceUrl = detectUrl(sourcePrompt);
+  if (sourceUrl) {
+    const extracted = await extractUrlContentCached(sourceUrl);
+    if (extracted) systemPrompt += buildSourceAnalysisBlock(extracted, language);
   }
 
   const completion = await openai.chat.completions.create({

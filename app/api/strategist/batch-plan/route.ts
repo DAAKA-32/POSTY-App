@@ -38,6 +38,7 @@ const AdvancedSchema = z
       .optional(),
     tone: z.string().max(60).optional(),
     audience: z.string().max(200).optional(),
+    context: z.string().max(800).optional(),
     formality: z.number().int().min(1).max(5).optional(),
     ctaIntensity: z.enum(["none", "soft", "assertive"]).optional(),
     hookStyle: z

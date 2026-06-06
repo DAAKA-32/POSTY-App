@@ -16,6 +16,7 @@
 
 import { z } from "zod";
 import type { StrategistAdvancedParams } from "@/types";
+import type { ExtractedUrlContent } from "@/lib/utils/url-extract";
 
 /** Zod mirror of types/index.ts `PostBrief`. Used to validate the LLM output
  *  before persisting / rendering — a malformed brief breaks the table. */
@@ -49,12 +50,16 @@ export function buildBatchPlanPrompt(opts: {
   timezone: string;           // e.g. "Europe/Paris"
   userContext: {
     name?: string;
+    profileType?: string;
     sector?: string;
     role?: string;
     objective?: string;
     targetAudience?: string;
     communicationTone?: string;
     publishingFrequency?: string;
+    bio?: string;
+    tagline?: string;
+    website?: string;
   };
   /** Last 3-5 post excerpts (first ~200 chars each) to anchor the style. */
   recentPostSnippets?: string[];
@@ -66,8 +71,12 @@ export function buildBatchPlanPrompt(opts: {
 
   const profileBlock = [
     userContext.name && `- Name: ${userContext.name}`,
+    userContext.profileType && `- Profile type: ${userContext.profileType}`,
     userContext.sector && `- Sector: ${userContext.sector}`,
     userContext.role && `- Role: ${userContext.role}`,
+    userContext.tagline && `- Tagline: ${userContext.tagline}`,
+    userContext.website && `- Website: ${userContext.website}`,
+    userContext.bio && `- Bio: ${userContext.bio.slice(0, 400)}`,
     userContext.objective && `- Business objective: ${userContext.objective}`,
     userContext.targetAudience && `- Target audience: ${userContext.targetAudience}`,
     userContext.communicationTone && `- Tone: ${userContext.communicationTone}`,
@@ -78,6 +87,22 @@ export function buildBatchPlanPrompt(opts: {
     ? recentPostSnippets.map((s, i) => `${i + 1}. ${s}`).join("\n")
     : "(no prior posts on file)";
 
+  // The author's own description of what they do / their offer — the source of
+  // truth when they ask for posts "about my product/brand". Without it the
+  // model has only categorical fields and drifts generic.
+  const ctxText = advanced?.context?.trim();
+  const activityBlock = ctxText
+    ? `
+═════════════════════════════════════
+${language === "fr" ? "ACTIVITÉ DE L'AUTEUR (source de vérité — utilise-la)" : "AUTHOR'S BUSINESS (source of truth — use it)"}
+═════════════════════════════════════
+${ctxText.slice(0, 800)}
+${language === "fr"
+        ? "→ Quand l'auteur demande des posts sur son produit / sa marque / son activité, ancre-toi ICI. N'invente RIEN au-delà de ces éléments."
+        : "→ When the author asks for posts about their product / brand / business, ground yourself HERE. Invent NOTHING beyond these elements."}
+`
+    : "";
+
   const base = language === "fr" ? FR_PROMPT : EN_PROMPT;
   const directionBlock = buildAdvancedDirectionBlock(advanced, language);
 
@@ -87,7 +112,7 @@ export function buildBatchPlanPrompt(opts: {
 USER PROFILE
 ═════════════════════════════════════
 ${profileBlock}
-
+${activityBlock}
 ═════════════════════════════════════
 RECENT POSTS (for style anchoring — do NOT copy)
 ═════════════════════════════════════
@@ -100,6 +125,45 @@ BATCH PARAMETERS
 - First eligible publication date: ${startDate}
 - User timezone (interpret suggestedTime in this TZ): ${timezone}
 ${directionBlock}`;
+}
+
+/**
+ * Chantier 2 — inject the content of a URL the author referenced (their own
+ * site, a brand, a competitor) so the briefs are grounded in / analyze the real
+ * page instead of guessing. Truncated for token cost; the extractor already
+ * capped the source at ~8KB, we inject the most relevant head of it.
+ */
+export function buildSourceAnalysisBlock(
+  src: Pick<ExtractedUrlContent, "url" | "title" | "description" | "textContent">,
+  language: "fr" | "en",
+): string {
+  const body = src.textContent.slice(0, 3500);
+  if (language === "fr") {
+    return `
+═════════════════════════════════════
+SOURCE ANALYSÉE (page web fournie par l'auteur)
+═════════════════════════════════════
+URL : ${src.url}
+${src.title ? `Titre : ${src.title}\n` : ""}${src.description ? `Description : ${src.description}\n` : ""}Contenu extrait :
+${body}
+
+COMMENT L'UTILISER :
+- Si c'est le site de L'AUTEUR : source de vérité sur son offre, son positionnement et son vocabulaire. Ancre les posts dessus, dans SA voix (première personne).
+- Si c'est une AUTRE marque / un concurrent : analyse son positionnement, sa promesse, ses angles, ses forces/faiblesses — et propose des angles ORIGINAUX et tranchants (réaction, contraste, leçon à en tirer). NE copie PAS et n'usurpe PAS son identité.
+- N'invente RIEN au-delà de ce que contient la page.`;
+  }
+  return `
+═════════════════════════════════════
+ANALYZED SOURCE (web page provided by the author)
+═════════════════════════════════════
+URL: ${src.url}
+${src.title ? `Title: ${src.title}\n` : ""}${src.description ? `Description: ${src.description}\n` : ""}Extracted content:
+${body}
+
+HOW TO USE IT:
+- If it's the AUTHOR's own site: source of truth on their offer, positioning and vocabulary. Ground the posts in it, in THEIR voice (first person).
+- If it's ANOTHER brand / competitor: analyze its positioning, promise, angles, strengths/weaknesses — and propose ORIGINAL, sharp angles (reaction, contrast, lesson to draw). Do NOT copy it and do NOT impersonate its identity.
+- Invent NOTHING beyond what the page contains.`;
 }
 
 /** Tone preset slug → human phrasing injected into the prompt. Falls back to
@@ -313,6 +377,7 @@ STYLE
 - Hooks are scroll-stoppers: a counter-intuitive claim, a number that surprises, a confession, a hard question. Avoid "Did you know" / "In today's world" / "X is more important than ever".
 - Angles must be SHARP. "Productivity tips" is too vague. "The 3-meeting rule I stole from Stripe" is sharp.
 - Respect the user's tone field from the profile block.
+- Ground every brief in the author's REAL profile + business above. When they ask for posts about their own product/brand/company, the AUTHOR'S BUSINESS block is the source of truth — write AS THE AUTHOR (first person, their voice), human and specific, never a generic outsider pitch and never invented facts.
 - All free-text fields (hook, angle, format, rationale, theme) MUST be written in the user's language: ${"<LANG>"}.
 
 ═════════════════════════════════════
@@ -347,6 +412,7 @@ STYLE
 - Les hooks doivent arrêter le scroll : affirmation contre-intuitive, chiffre qui surprend, aveu, question dure. Évite "Saviez-vous" / "Aujourd'hui plus que jamais" / "X est plus important que jamais".
 - Les angles doivent être TRANCHANTS. "Conseils productivité" est trop vague. "La règle des 3 réunions que j'ai volée chez Stripe" est tranchant.
 - Respecte le ton de l'utilisateur (champ du profil).
+- Ancre chaque brief dans le profil + l'activité RÉELS de l'auteur ci-dessus. Quand il demande des posts sur son propre produit/sa marque/son entreprise, le bloc ACTIVITÉ DE L'AUTEUR est la source de vérité — écris COMME L'AUTEUR (première personne, sa voix), humain et spécifique, jamais un pitch générique d'observateur extérieur et jamais de faits inventés.
 - Tous les champs texte (hook, angle, format, rationale, theme) DOIVENT être écrits dans la langue de l'utilisateur : français.
 
 ═════════════════════════════════════

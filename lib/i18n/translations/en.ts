@@ -3345,6 +3345,11 @@ export const en = {
       reset: "Reset",
       saveDefault: "Set as default",
       savedToast: "Preferences saved as default.",
+      context: {
+        label: "Your business",
+        placeholder: "e.g. Posty = an AI SaaS that generates LinkedIn posts for B2B founders. Helps them post consistently without spending hours.",
+        hint: "Describe what you do / your offer. The Strategist uses it for grounded, human posts (tip: hit “Set as default”).",
+      },
       objective: {
         label: "Objective",
         authority: "Authority",
