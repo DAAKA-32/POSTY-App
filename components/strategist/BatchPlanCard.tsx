@@ -841,9 +841,14 @@ function BriefRow({
               </div>
 
               {materializing && !hasPost && (
-                <div className="flex items-center gap-2 text-[12px] text-text-muted py-2">
-                  <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-600" />
-                  Génération du post…
+                <div className="py-1 space-y-1.5">
+                  <div className="flex items-center gap-1.5 text-[11px] text-text-muted mb-1.5">
+                    <Loader2 className="w-3 h-3 animate-spin text-emerald-600" />
+                    Rédaction du post…
+                  </div>
+                  <div className="h-2.5 w-[90%] rounded bg-emerald-200/40 dark:bg-emerald-500/15 animate-pulse" />
+                  <div className="h-2.5 w-[78%] rounded bg-emerald-200/40 dark:bg-emerald-500/15 animate-pulse" />
+                  <div className="h-2.5 w-[62%] rounded bg-emerald-200/40 dark:bg-emerald-500/15 animate-pulse" />
                 </div>
               )}
 
@@ -1114,16 +1119,17 @@ function TimeInput({
 }
 
 function StatusPill({ status }: { status: StrategyBatch["status"] }) {
-  const meta: Record<StrategyBatch["status"], { label: string; cls: string }> = {
-    draft: { label: "Brouillon", cls: "bg-gray-100 dark:bg-dark-elevated text-text-muted" },
-    approved: { label: "Approuvé", cls: "bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400" },
-    materialized: { label: "Posts prêts", cls: "bg-blue-50 dark:bg-blue-500/15 text-blue-700 dark:text-blue-400" },
-    scheduled: { label: "Programmé", cls: "bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400" },
-    discarded: { label: "Jeté", cls: "bg-red-50 dark:bg-red-500/15 text-red-700 dark:text-red-400" },
+  const meta: Record<StrategyBatch["status"], { label: string; cls: string; dot: string }> = {
+    draft: { label: "Brouillon", cls: "bg-gray-100 dark:bg-dark-elevated text-text-muted", dot: "bg-gray-400 dark:bg-gray-500" },
+    approved: { label: "Approuvé", cls: "bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400", dot: "bg-emerald-500" },
+    materialized: { label: "Posts prêts", cls: "bg-blue-50 dark:bg-blue-500/15 text-blue-700 dark:text-blue-400", dot: "bg-blue-500" },
+    scheduled: { label: "Programmé", cls: "bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400", dot: "bg-amber-500" },
+    discarded: { label: "Jeté", cls: "bg-red-50 dark:bg-red-500/15 text-red-700 dark:text-red-400", dot: "bg-red-500" },
   };
-  const { label, cls } = meta[status];
+  const { label, cls, dot } = meta[status];
   return (
-    <span className={`text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-md ${cls}`}>
+    <span className={`inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide pl-1.5 pr-2 py-0.5 rounded-full ${cls}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${dot}`} />
       {label}
     </span>
   );

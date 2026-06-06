@@ -243,8 +243,26 @@ export default function StrategistAutonomousPanel() {
               className="overflow-hidden"
             >
               <div className="px-3.5 pb-3.5 pt-1 space-y-3 border-t border-amber-200/50 dark:border-amber-400/20">
+                {/* Dashboard — next + last run at a glance */}
+                <div className="grid grid-cols-2 gap-2 pt-3">
+                  <div className="rounded-md bg-white/60 dark:bg-dark-elevated/60 border border-gray-200/70 dark:border-dark-border px-2.5 py-2">
+                    <p className="text-[9.5px] uppercase tracking-wide text-text-muted">Prochain plan</p>
+                    <p className="text-[11.5px] font-medium text-gray-900 dark:text-white mt-0.5 leading-snug capitalize">
+                      {nextRunLabel(dayOfWeek)}
+                    </p>
+                  </div>
+                  <div className="rounded-md bg-white/60 dark:bg-dark-elevated/60 border border-gray-200/70 dark:border-dark-border px-2.5 py-2">
+                    <p className="text-[9.5px] uppercase tracking-wide text-text-muted">Dernier plan</p>
+                    <p className="text-[11.5px] font-medium text-gray-900 dark:text-white mt-0.5 leading-snug">
+                      {lastTriggeredAt
+                        ? `${new Date(lastTriggeredAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })} · ${count} posts`
+                        : "Aucun encore"}
+                    </p>
+                  </div>
+                </div>
+
                 {/* Day + count, side by side on wider screens */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[11px] font-medium text-text-secondary mb-1">
                       <Calendar className="w-3 h-3 inline-block mr-1 -mt-0.5" />
@@ -320,19 +338,6 @@ export default function StrategistAutonomousPanel() {
                     "
                   />
                 </div>
-
-                {lastTriggeredAt && (
-                  <p className="text-[10.5px] text-text-muted">
-                    Dernier plan auto :{" "}
-                    {new Date(lastTriggeredAt).toLocaleDateString("fr-FR", {
-                      weekday: "short",
-                      day: "numeric",
-                      month: "short",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </p>
-                )}
 
                 {/* On-demand generation — the panel above only schedules the
                     weekly cron; this button makes the agent act NOW so the user
@@ -426,4 +431,17 @@ function Toggle({
 function clampCount(n: number): number {
   if (!Number.isFinite(n)) return DEFAULT_COUNT;
   return Math.max(MIN_COUNT, Math.min(MAX_COUNT, Math.round(n)));
+}
+
+/** Next occurrence of `dayOfWeek` at ~8h, short FR label ("vendredi 13 juin, 8h").
+ *  If today IS the day we show next week's — today's run has fired or is imminent. */
+function nextRunLabel(dayOfWeek: number): string {
+  const now = new Date();
+  const days = ((dayOfWeek - now.getDay() + 7) % 7) || 7;
+  const d = new Date(now);
+  d.setDate(now.getDate() + days);
+  return (
+    d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" }) +
+    ", 8h"
+  );
 }
