@@ -159,6 +159,28 @@ export async function clearBatchScheduling(batchId: string): Promise<void> {
   });
 }
 
+/** Attach a generated visual to one brief's materialized post (founder-gated
+ *  "posts with image" feature). Stored under `materialized.visual` — the slot
+ *  the type already reserves — so the schedule route can publish it. No-op if
+ *  the brief isn't materialized yet. */
+export async function patchBriefVisual(
+  batchId: string,
+  briefId: string,
+  visual: { variants: Array<{ url: string; imageId: string }>; generatedAt: number },
+): Promise<void> {
+  const ref = doc(db, COLLECTION, batchId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) throw new Error("batch_not_found");
+  const data = snap.data();
+  const posts: PostBrief[] = Array.isArray(data.posts) ? data.posts : [];
+  const next = posts.map((p) =>
+    p.id === briefId && p.materialized
+      ? { ...p, materialized: { ...p.materialized, visual } }
+      : p
+  );
+  await updateDoc(ref, { posts: next, updatedAt: serverTimestamp() });
+}
+
 /** Patch the materialized body of one brief — used when the user inline-edits
  *  the generated post copy without re-running the LLM. Distinct from
  *  patchPostBrief so we don't accidentally allow the brief fields (hook /

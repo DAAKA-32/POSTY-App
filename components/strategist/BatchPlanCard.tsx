@@ -30,6 +30,7 @@ import {
   Check,
   Loader2,
   CalendarClock,
+  Image as ImageIcon,
 } from "lucide-react";
 import StrategistMark from "./StrategistMark";
 import type { StrategyBatch, PostBrief } from "@/types";
@@ -39,10 +40,13 @@ import {
   setBatchStatus,
   patchMaterializedPost,
   clearBatchScheduling,
+  patchBriefVisual,
 } from "@/lib/db/strategy-batches";
 import { cancelScheduledPost } from "@/lib/db/firestore";
 import { getAuthHeaders } from "@/lib/api/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { isStrategistImagesAllowedForEmail } from "@/lib/strategist/images-access";
 import toast from "@/components/ui/Toast";
 
 interface Props {
@@ -55,6 +59,9 @@ interface Props {
 
 export default function BatchPlanCard({ batch, onApproved, onDiscarded }: Props) {
   const { language } = useLanguage();
+  const { user } = useAuth();
+  // Founder-gated "visuals on posts" feature (emilien for now).
+  const allowImages = isStrategistImagesAllowedForEmail(user?.email);
   // Local copy so edits feel instant — Firestore writes are fire-and-forget
   // with toast-on-error rather than blocking the UI.
   const [posts, setPosts] = useState<PostBrief[]>(batch.posts);
@@ -73,6 +80,8 @@ export default function BatchPlanCard({ batch, onApproved, onDiscarded }: Props)
   // cron. Same two-step confirm gate as scheduling so it isn't a one-tap regret.
   const [cancelling, setCancelling] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
+  // Visual generation — briefId currently generating an image (founder-gated).
+  const [visualizingId, setVisualizingId] = useState<string | null>(null);
 
   // "Edit brief" is allowed only in draft. After approve, the briefs are
   // frozen and the row UI swaps to the materialized post preview.
@@ -212,6 +221,66 @@ export default function BatchPlanCard({ batch, onApproved, onDiscarded }: Props)
       await patchMaterializedPost(batch.id, briefId, content);
     } catch {
       toast.error("Édition non sauvegardée.");
+    }
+  };
+
+  /** Generate a branded visual for one materialized post via the existing
+   *  image pipeline, store it on the brief, and render it under the post.
+   *  Founder-gated. One image credit per call (Pro=3/Max=5 per day). */
+  const generateVisual = async (briefId: string) => {
+    const brief = posts.find((p) => p.id === briefId);
+    if (!brief?.materialized?.content || visualizingId) return;
+    setVisualizingId(briefId);
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch("/api/image/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({
+          brief: brief.hook.slice(0, 800),
+          postContext: brief.materialized.content.slice(0, 2000),
+          language: language === "fr" ? "fr" : "en",
+          variantCount: 1,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        toast.error(
+          res.status === 403
+            ? "Visuels réservés au plan Max."
+            : err.message || "Visuel non généré. Réessaye."
+        );
+        return;
+      }
+      const data = await res.json();
+      const img =
+        data?.images?.[0] ?? (data?.url ? { url: data.url, imageId: data.imageId } : null);
+      if (!img?.url) {
+        toast.error("Visuel non généré. Réessaye.");
+        return;
+      }
+      const visual = {
+        variants: [{ url: img.url as string, imageId: (img.imageId as string) ?? "" }],
+        generatedAt: Date.now(),
+      };
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === briefId && p.materialized
+            ? { ...p, materialized: { ...p.materialized, visual } }
+            : p
+        )
+      );
+      try {
+        await patchBriefVisual(batch.id, briefId, visual);
+      } catch {
+        toast.error("Visuel généré mais non sauvegardé — régénère avant de programmer.");
+      }
+      toast.success("Visuel généré.");
+    } catch (err) {
+      console.error("[BatchPlanCard] generateVisual failed:", err);
+      toast.error("Visuel non généré. Vérifie ta connexion.");
+    } finally {
+      setVisualizingId(null);
     }
   };
 
@@ -385,6 +454,9 @@ export default function BatchPlanCard({ batch, onApproved, onDiscarded }: Props)
               onDelete={() => removeRow(p.id)}
               onRegenerate={() => materialize([p.id], true)}
               onEditPost={(content) => editMaterialized(p.id, content)}
+              allowImages={allowImages}
+              visualizing={visualizingId === p.id}
+              onGenerateVisual={() => generateVisual(p.id)}
             />
           ))}
         </AnimatePresence>
@@ -593,6 +665,9 @@ function BriefRow({
   onDelete,
   onRegenerate,
   onEditPost,
+  allowImages,
+  visualizing,
+  onGenerateVisual,
 }: {
   index: number;
   brief: PostBrief;
@@ -603,8 +678,12 @@ function BriefRow({
   onDelete: () => void;
   onRegenerate: () => void;
   onEditPost: (newContent: string) => void;
+  allowImages: boolean;
+  visualizing: boolean;
+  onGenerateVisual: () => void;
 }) {
   const hasPost = !!brief.materialized?.content;
+  const visualUrl = brief.materialized?.visual?.variants?.[0]?.url;
   const [copied, setCopied] = useState(false);
   const [editingPost, setEditingPost] = useState(false);
   const [postDraft, setPostDraft] = useState("");
@@ -772,6 +851,55 @@ function BriefRow({
                 <p className="text-[12.5px] leading-relaxed text-gray-800 dark:text-gray-100 whitespace-pre-wrap break-words">
                   {brief.materialized!.content}
                 </p>
+              )}
+
+              {/* Visual — founder-gated. Shows the generated image, or a
+                  "generate" button when none exists yet. Published with the
+                  post if present at schedule time. */}
+              {hasPost && !editingPost && allowImages && (
+                <div className="mt-2.5">
+                  {visualUrl ? (
+                    <div className="space-y-1.5">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={visualUrl}
+                        alt="Visuel du post"
+                        className="w-full rounded-lg border border-emerald-200 dark:border-emerald-500/30"
+                      />
+                      <button
+                        type="button"
+                        onClick={onGenerateVisual}
+                        disabled={visualizing}
+                        className="inline-flex items-center gap-1 text-[10.5px] font-medium text-emerald-700 dark:text-emerald-400 hover:underline disabled:opacity-50"
+                      >
+                        <RotateCw className={`w-3 h-3 ${visualizing ? "animate-spin" : ""}`} />
+                        {visualizing ? "Génération…" : "Régénérer le visuel"}
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={onGenerateVisual}
+                      disabled={visualizing}
+                      className="
+                        inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md
+                        text-[11.5px] font-medium
+                        border border-emerald-300 dark:border-emerald-500/40
+                        text-emerald-700 dark:text-emerald-400
+                        hover:bg-emerald-100/60 dark:hover:bg-emerald-500/15
+                        disabled:opacity-60 disabled:cursor-not-allowed
+                        transition-colors
+                      "
+                    >
+                      {visualizing ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <ImageIcon className="w-3.5 h-3.5" />
+                      )}
+                      {visualizing ? "Génération du visuel…" : "Générer un visuel"}
+                    </button>
+                  )}
+                </div>
               )}
 
               {brief.scheduledAt && (

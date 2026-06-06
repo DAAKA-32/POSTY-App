@@ -34,8 +34,9 @@ import { checkHourlyQuotaAdmin } from "@/lib/db/firestore-admin";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { computeScheduleSlots } from "@/lib/strategist/smart-scheduler";
 import { isStrategistAllowedForEmail } from "@/lib/strategist/access";
+import { isStrategistImagesAllowedForEmail } from "@/lib/strategist/images-access";
 import { hasLinkedInConnected } from "@/lib/strategist/access-server";
-import type { PostBrief } from "@/types";
+import type { PostBrief, ScheduledPostImage } from "@/types";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -120,6 +121,11 @@ export async function POST(request: NextRequest) {
 
   const allPosts: PostBrief[] = Array.isArray(batchData.posts) ? batchData.posts : [];
 
+  // Founder-gated: publish the per-brief generated visual with the post. Only
+  // briefs that actually carry a visual (generated via the gated UI) get one,
+  // and only for allowed emails — belt-and-suspenders with the UI gate.
+  const canAttachImages = isStrategistImagesAllowedForEmail(auth.email);
+
   // Only materialized briefs without an existing scheduledPostId are
   // candidates. Idempotent: re-running this endpoint on an already-scheduled
   // batch is a no-op.
@@ -171,6 +177,24 @@ export async function POST(request: NextRequest) {
       results.push({ briefId: slot.briefId, ok: false, error: "no_content" });
       continue;
     }
+    // Build the optional image payload from the brief's stored visual. The
+    // storagePath mirrors the convention in lib/image-gen/storage.ts
+    // (users/{uid}/generated-images/{imageId}.png) so the publishing cron can
+    // read the bytes back. `size` is informational (cron reads by path).
+    const visual = brief.materialized.visual?.variants?.[0];
+    const images: ScheduledPostImage[] | undefined =
+      canAttachImages && visual?.url && visual.imageId
+        ? [
+            {
+              storagePath: `users/${userId}/generated-images/${visual.imageId}.png`,
+              downloadURL: visual.url,
+              fileName: `${visual.imageId}.png`,
+              contentType: "image/png",
+              size: 0,
+            },
+          ]
+        : undefined;
+
     try {
       const docRef = await adminDb.collection("scheduledPosts").add({
         userId,
@@ -184,6 +208,7 @@ export async function POST(request: NextRequest) {
         postType: "feed",
         visibility,
         ...(organizationUrn ? { organizationUrn } : {}),
+        ...(images ? { images } : {}),
         // Provenance trail — useful for debugging, lets the schedule page
         // link back to the strategy batch that produced this scheduled post.
         sourceBatchId: batchId,
