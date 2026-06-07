@@ -21,7 +21,7 @@ import {
   buildRealtimeContextBlock,
 } from "@/lib/services/realtime-context";
 import { fetchRealtimeContextCached } from "@/lib/strategist/realtime-cache";
-import { detectUrl } from "@/lib/utils/url-extract";
+import { detectUrlLoose } from "@/lib/utils/url-extract";
 import { extractUrlContentCached } from "@/lib/strategist/url-cache";
 import type { PostBrief, StrategyBatch, StrategistAdvancedParams } from "@/types";
 
@@ -199,7 +199,7 @@ export async function generateBatchPlan(
   // When the prompt references a URL (the author's site, a brand, a competitor)
   // fetch + parse it (SSRF-safe, cached) and inject it so the briefs are
   // grounded in / analyze the real page. Non-blocking: failure → no source.
-  const sourceUrl = detectUrl(sourcePrompt);
+  const sourceUrl = detectUrlLoose(sourcePrompt);
   if (sourceUrl) {
     const extracted = await extractUrlContentCached(sourceUrl);
     if (extracted) systemPrompt += buildSourceAnalysisBlock(extracted, language);

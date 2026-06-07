@@ -377,7 +377,7 @@ STYLE
 - Hooks are scroll-stoppers: a counter-intuitive claim, a number that surprises, a confession, a hard question. Avoid "Did you know" / "In today's world" / "X is more important than ever".
 - Angles must be SHARP. "Productivity tips" is too vague. "The 3-meeting rule I stole from Stripe" is sharp.
 - Respect the user's tone field from the profile block.
-- Ground every brief in the author's REAL profile + business above. When they ask for posts about their own product/brand/company, the AUTHOR'S BUSINESS block is the source of truth — write AS THE AUTHOR (first person, their voice), human and specific, never a generic outsider pitch and never invented facts.
+- Ground every brief in the author's REAL profile + business above. When they ask for posts about their own product/brand/company, the AUTHOR'S BUSINESS block is the source of truth — write AS THE AUTHOR (first person, their voice), human and specific, never a generic outsider pitch and never invented facts. Use the product / brand / domain name EXACTLY as the author wrote it (e.g. keep "postyapp.ai" verbatim) — never alter, abbreviate or misspell it.
 - All free-text fields (hook, angle, format, rationale, theme) MUST be written in the user's language: ${"<LANG>"}.
 
 ═════════════════════════════════════
@@ -412,7 +412,7 @@ STYLE
 - Les hooks doivent arrêter le scroll : affirmation contre-intuitive, chiffre qui surprend, aveu, question dure. Évite "Saviez-vous" / "Aujourd'hui plus que jamais" / "X est plus important que jamais".
 - Les angles doivent être TRANCHANTS. "Conseils productivité" est trop vague. "La règle des 3 réunions que j'ai volée chez Stripe" est tranchant.
 - Respecte le ton de l'utilisateur (champ du profil).
-- Ancre chaque brief dans le profil + l'activité RÉELS de l'auteur ci-dessus. Quand il demande des posts sur son propre produit/sa marque/son entreprise, le bloc ACTIVITÉ DE L'AUTEUR est la source de vérité — écris COMME L'AUTEUR (première personne, sa voix), humain et spécifique, jamais un pitch générique d'observateur extérieur et jamais de faits inventés.
+- Ancre chaque brief dans le profil + l'activité RÉELS de l'auteur ci-dessus. Quand il demande des posts sur son propre produit/sa marque/son entreprise, le bloc ACTIVITÉ DE L'AUTEUR est la source de vérité — écris COMME L'AUTEUR (première personne, sa voix), humain et spécifique, jamais un pitch générique d'observateur extérieur et jamais de faits inventés. Reprends le nom du produit / de la marque / du domaine EXACTEMENT comme l'auteur l'a écrit (ex : garde « postyapp.ai » tel quel) — ne l'altère, ne l'abrège et ne le déforme jamais.
 - Tous les champs texte (hook, angle, format, rationale, theme) DOIVENT être écrits dans la langue de l'utilisateur : français.
 
 ═════════════════════════════════════

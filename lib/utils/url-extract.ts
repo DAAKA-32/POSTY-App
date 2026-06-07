@@ -89,6 +89,43 @@ export function detectUrl(text: string): string | null {
   }
 }
 
+/** Common TLDs we accept for a BARE domain (no scheme). Kept as an allowlist
+ *  so prose like "node.js", "v2.0" or "5.5x" never reads as a URL. */
+const BARE_TLDS =
+  "ai|com|io|co|app|dev|net|org|fr|me|xyz|so|tech|info|biz|eu|us|uk|ca|de|es|it|nl|be|ch|sh|gg|to|inc|studio|agency|store|shop";
+
+/**
+ * Looser URL detection for user-typed prompts: returns an explicit https URL if
+ * present, otherwise the first BARE domain (e.g. "postyapp.ai", "www.x.com/p")
+ * normalized to "https://…". Used by the Strategist so "fais des posts sur
+ * postyapp.ai" actually fetches the site instead of letting the model guess.
+ *
+ * Deliberately NOT wired into the general /generate pipeline — bare-domain
+ * matching is slightly looser and we don't want it firing there.
+ */
+export function detectUrlLoose(text: string): string | null {
+  const https = detectUrl(text);
+  if (https) return https;
+
+  // Bare domain: must start at a boundary that isn't part of an email
+  // (no leading "@") or a longer word, end on a known TLD, optional path.
+  const re = new RegExp(
+    `(?:^|[\\s(<"'])((?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+(?:${BARE_TLDS})(?:\\/[^\\s<>"'\`]*)?)`,
+    "i"
+  );
+  const m = text.match(re);
+  if (!m || !m[1]) return null;
+
+  const domain = m[1].replace(/[.,;:!?)'"]+$/, "");
+  try {
+    const u = new URL(`https://${domain}`);
+    if (!isHostnameSafe(u.hostname)) return null;
+    return u.toString().replace(/\/$/, "");
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Remove the detected URL from the prompt text.
  */
