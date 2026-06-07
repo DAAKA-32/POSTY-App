@@ -1628,22 +1628,25 @@ body.force-scroll-enabled * {
     padding-top: 0;
     padding-bottom: 0;
     /* Fill EXACTLY the visible band between the mobile header and the fixed
-       input bar, so flex centering lands on the true optical center. Every
-       term mirrors a reservation the layout already makes elsewhere — there
-       are no standalone magic numbers:
-         --stable-vh            → vh / dvh / -webkit-fill-available (SSoT above,
-                                  so no separate @supports override is needed)
-         --mobile-header-height → the fixed top header
-         --mobile-input-height  → the SAME value .content-with-fixed-input
-                                  reserves as padding-bottom (140px), so the
-                                  input area is counted once, not twice
-         --input-bottom-padding → live browser-chrome offset, kept symmetric
-                                  with the parent's mobile-browser-mode padding
-                                  (0 unless the viewport hook measures chrome)
-       This replaces the old hardcoded 200px estimate, which sat ~60px below
-       the real 140px reservation and pulled the whole block visibly upward. */
+       input bar, so flex centering lands on the true optical center. Each
+       subtracted term mirrors a reservation the layout already makes — no
+       standalone magic numbers:
+         --mobile-header-height → the fixed top header (incl. its safe-area top)
+         --mobile-input-height  → the SAME 140px .content-with-fixed-input
+                                  reserves as padding-bottom, so the input bar
+                                  is counted once, not twice (the old 200px sat
+                                  ~60px short of that and pulled the block up)
+         --input-bottom-padding → live browser-chrome offset, symmetric with the
+                                  parent's mobile-browser-mode padding (0 in PWA)
+       IMPORTANT: use a literal vh/dvh unit here, NOT var(--stable-vh). On iOS
+       (Safari AND standalone PWA) that variable resolves to the
+       `-webkit-fill-available` *keyword*, which is invalid inside calc() — the
+       whole declaration gets dropped and the block falls back to a stale
+       height. That is exactly why the PWA rode too high. Literal units keep
+       the calc valid on every engine; the @supports block below upgrades
+       vh→dvh wherever dvh exists (incl. iOS 15.4+ PWA, no browser chrome). */
     min-height: calc(
-      var(--stable-vh)
+      100vh
       - var(--mobile-header-height)
       - var(--mobile-input-height)
       - var(--input-bottom-padding, 0px)
@@ -1662,6 +1665,26 @@ body.force-scroll-enabled * {
       padding-top: 16px;
       margin-top: 0;
       min-height: auto;
+    }
+  }
+}
+
+/* Dynamic viewport height where supported (modern mobile Safari/Chrome and
+   iOS standalone PWA): identical band math, just an address-bar-stable unit.
+   This is the rule that now governs the PWA — its calc stays valid because the
+   unit is a literal `100dvh`, not the `-webkit-fill-available` keyword the old
+   standalone override fed into calc(). */
+@supports (height: 100dvh) {
+  @media (max-width: 1023px) {
+    .welcome-screen-container {
+      min-height: calc(
+        100dvh
+        - var(--mobile-header-height)
+        - var(--mobile-input-height)
+        - var(--input-bottom-padding, 0px)
+        - env(safe-area-inset-top, 0px)
+        - env(safe-area-inset-bottom, 0px)
+      );
     }
   }
 }
