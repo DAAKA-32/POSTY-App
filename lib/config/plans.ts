@@ -358,7 +358,7 @@ export const PLATFORM_INFO: Record<Platform, PlatformInfo> = {
     icon: "reddit",
     color: "#FF4500",
     description: "Communautés thématiques (subreddits)",
-    minPlan: "free",
+    minPlan: "max",
   },
 };
 
@@ -495,9 +495,9 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
       hasUrlAnalysis: false,
       hasRealtimeContext: false,
       hasMarketingStrategist: false,
-      // Free plan: LinkedIn + free-friendly providers + X/Instagram/Reddit
-      // (via Zernio aggregator's free tier — no paid OAuth app needed).
-      allowedPlatforms: ["linkedin", "bluesky", "mastodon", "discord", "x", "instagram", "reddit"],
+      // Free plan: LinkedIn + free-friendly providers + X/Instagram (via Zernio
+      // aggregator's free tier). Reddit is Max-only.
+      allowedPlatforms: ["linkedin", "bluesky", "mastodon", "discord", "x", "instagram"],
       maxPlatformConnections: 7,
       canPublishSimultaneously: false, // Multi-publish is a Max-only feature
       quotaResetPeriod: "monthly",
@@ -540,8 +540,9 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
       hasRealtimeContext: true,
       // Marketing Strategist is reserved for Max — strong premium signal.
       hasMarketingStrategist: false,
-      // Multi-Platform: LinkedIn + free-friendly providers + X/Instagram/Reddit via Zernio
-      allowedPlatforms: ["linkedin", "bluesky", "mastodon", "discord", "x", "instagram", "reddit"],
+      // Multi-Platform: LinkedIn + free-friendly providers + X/Instagram via Zernio.
+      // Reddit is Max-only.
+      allowedPlatforms: ["linkedin", "bluesky", "mastodon", "discord", "x", "instagram"],
       maxPlatformConnections: 7,
       canPublishSimultaneously: false, // Multi-publish is a Max-only feature
       quotaResetPeriod: "daily",

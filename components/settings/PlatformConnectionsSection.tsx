@@ -820,15 +820,13 @@ export default function PlatformConnectionsSection() {
 
         {/* Platform Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {/* Zernio-backed platforms (x, instagram, reddit) are intentionally
-              omitted from this list. Their full backend stack — contexts,
-              routes /api/auth/zernio/*, /api/{x,instagram,reddit}/publish,
-              Firestore collections, Cloud Function scheduler cases — is left
-              in place so they can be re-enabled by appending them back to
-              this array once a monetization decision is made (Zernio free
-              tier = 2 accounts/profile, beyond that a payment method is
-              required on the Zernio side). */}
-          {(["linkedin", "threads", "facebook", "bluesky", "mastodon", "discord"] as Platform[]).map(renderPlatformCard)}
+          {/* Reddit is enabled (Zernio-backed, Max-only — gated via
+              PLATFORM_INFO.reddit.minPlan + the plan allowedPlatforms arrays).
+              X and Instagram stay omitted for now: their Zernio backend is in
+              place (contexts, /api/auth/zernio/*, publish routes, scheduler
+              cases) and can be re-enabled by appending them here. Keep an eye
+              on Zernio's free tier (2 accounts/profile) as more get enabled. */}
+          {(["linkedin", "threads", "facebook", "bluesky", "mastodon", "discord", "reddit"] as Platform[]).map(renderPlatformCard)}
         </div>
 
         {/* Security Notice */}
