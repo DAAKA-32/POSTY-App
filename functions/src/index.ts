@@ -794,6 +794,40 @@ async function publishToInstagram(userId: string, content: string, images?: Sche
   return { success: true, publishedUrl: result.publishedUrl };
 }
 
+async function publishToThreadsz(userId: string, content: string): Promise<PublishResult> {
+  // Threads via Zernio (platform key "threadsz") — text-only status post.
+  const connectionSnap = await db.collection("threadszConnections").doc(userId).get();
+  if (!connectionSnap.exists) {
+    return { success: false, error: "Aucune connexion Threads trouvée" };
+  }
+  const connection = connectionSnap.data()!;
+  const result = await publishViaZernio({
+    platform: "threads",
+    accountId: connection.zernioAccountId,
+    content,
+  });
+  if (!result.success) {
+    return { success: false, error: result.error };
+  }
+  try {
+    await db.collection("threadszPosts").add({
+      userId,
+      zernioAccountId: connection.zernioAccountId,
+      zernioPostId: result.postId || "",
+      content,
+      postUrl: result.publishedUrl || null,
+      publishedAt: admin.firestore.FieldValue.serverTimestamp(),
+      success: true,
+    });
+    await db.collection("threadszConnections").doc(userId).update({
+      lastUsedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  } catch (e) {
+    console.error("Failed to save Threads (Zernio) post record:", e);
+  }
+  return { success: true, publishedUrl: result.publishedUrl };
+}
+
 // ============================================================
 // Main dispatcher: route to correct platform
 // ============================================================
@@ -824,6 +858,9 @@ async function publishScheduledPost(
       // Reddit needs subreddit + title — those are carried on the
       // scheduledPosts doc and passed in by the caller.
       return publishToReddit(userId, content, redditSubreddit, redditTitle);
+    case "threadsz":
+      // Threads via Zernio (distinct from native Meta "threads").
+      return publishToThreadsz(userId, content);
     default:
       console.error(`Unsupported platform: ${platform}`);
       return { success: false, error: "Cette plateforme n'est pas encore disponible." };

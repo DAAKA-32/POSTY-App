@@ -2915,3 +2915,28 @@ export async function deleteRedditConnection(userId: string): Promise<void> {
   await deleteDoc(ref);
 }
 
+// ── Threads via Zernio (distinct from the native Meta Threads) ──────────────
+export interface ThreadszConnectionData {
+  userId: string;
+  zernioAccountId: string;
+  zernioProfileId: string;
+  username?: string;
+  profilePicture?: string;
+  connectedAt: Timestamp;
+  lastUsedAt?: Timestamp;
+}
+
+export async function getThreadszConnection(
+  userId: string
+): Promise<ThreadszConnectionData | null> {
+  const ref = doc(db, "threadszConnections", userId);
+  const snap = await getDoc(ref);
+  if (snap.exists()) return snap.data() as ThreadszConnectionData;
+  return null;
+}
+
+export async function deleteThreadszConnection(userId: string): Promise<void> {
+  const ref = doc(db, "threadszConnections", userId);
+  await deleteDoc(ref);
+}
+

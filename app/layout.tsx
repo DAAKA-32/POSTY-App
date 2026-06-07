@@ -12,6 +12,7 @@ import { DiscordProvider } from "@/contexts/DiscordContext";
 import { XProvider } from "@/contexts/XContext";
 import { InstagramProvider } from "@/contexts/InstagramContext";
 import { RedditProvider } from "@/contexts/RedditContext";
+import { ThreadszProvider } from "@/contexts/ThreadszContext";
 import { SchedulingProvider } from "@/contexts/SchedulingContext";
 import { QuotaProvider } from "@/contexts/QuotaContext";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
@@ -377,11 +378,13 @@ export default function RootLayout({
                               <XProvider>
                                 <InstagramProvider>
                                   <RedditProvider>
-                                    <SchedulingProvider>
-                                      {children}
-                                      <AnalyticsTracker />
-                                      <GlobalCommandPalette />
-                                    </SchedulingProvider>
+                                    <ThreadszProvider>
+                                      <SchedulingProvider>
+                                        {children}
+                                        <AnalyticsTracker />
+                                        <GlobalCommandPalette />
+                                      </SchedulingProvider>
+                                    </ThreadszProvider>
                                   </RedditProvider>
                                 </InstagramProvider>
                               </XProvider>

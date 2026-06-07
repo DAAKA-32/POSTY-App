@@ -51,6 +51,7 @@ service cloud.firestore {
     match /xConnections/{userId}           { allow read, write: if isOwner(userId); }
     match /instagramConnections/{userId}   { allow read, write: if isOwner(userId); }
     match /redditConnections/{userId}      { allow read, write: if isOwner(userId); }
+    match /threadszConnections/{userId}    { allow read, write: if isOwner(userId); }
     // Zernio profile mapping: 1 Posty user → 1 Zernio profileId. Read-only
     // client-side so the user can see whether they have a profile; writes
     // happen server-side via Admin SDK during OAuth.
@@ -125,6 +126,12 @@ service cloud.firestore {
     }
 
     match /redditPosts/{postId} {
+      allow read:   if isResourceOwner();
+      allow update, delete: if isResourceOwner();
+      allow create: if isAuthenticated() && isRequestOwner();
+    }
+
+    match /threadszPosts/{postId} {
       allow read:   if isResourceOwner();
       allow update, delete: if isResourceOwner();
       allow create: if isAuthenticated() && isRequestOwner();

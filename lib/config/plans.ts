@@ -275,7 +275,7 @@ export function isPlanTrialEligible(plan: PlanType): plan is PaidPlanType {
 // Platform Types - All supported social platforms
 // `x`, `instagram` and `reddit` are published via Zernio aggregator; the 6
 // others are native Posty integrations (see lib/platforms/*.ts).
-export type Platform = "linkedin" | "threads" | "facebook" | "bluesky" | "mastodon" | "discord" | "x" | "instagram" | "reddit";
+export type Platform = "linkedin" | "threads" | "facebook" | "bluesky" | "mastodon" | "discord" | "x" | "instagram" | "reddit" | "threadsz";
 
 // Platform display information
 export interface PlatformInfo {
@@ -358,6 +358,16 @@ export const PLATFORM_INFO: Record<Platform, PlatformInfo> = {
     icon: "reddit",
     color: "#FF4500",
     description: "Communautés thématiques (subreddits)",
+    minPlan: "max",
+  },
+  // Threads via Zernio — distinct from `threads` (native Meta, Business-only).
+  // Zernio handles the OAuth + app review, so we can offer Threads on Max.
+  threadsz: {
+    id: "threadsz",
+    name: "Threads",
+    icon: "threads",
+    color: "#000000",
+    description: "Threads — connexion simplifiée via Zernio",
     minPlan: "max",
   },
 };
@@ -586,9 +596,9 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
       hasRealtimeContext: true,
       // Marketing Strategist — Max-exclusive
       hasMarketingStrategist: true,
-      // Multi-Platform: 6 native + X + Instagram + Reddit (via Zernio aggregator), simultaneous publishing
-      allowedPlatforms: ["linkedin", "threads", "facebook", "bluesky", "mastodon", "discord", "x", "instagram", "reddit"],
-      maxPlatformConnections: 9,
+      // Multi-Platform: 6 native + X + Instagram + Reddit + Threads-Zernio (via Zernio aggregator), simultaneous publishing
+      allowedPlatforms: ["linkedin", "threads", "facebook", "bluesky", "mastodon", "discord", "x", "instagram", "reddit", "threadsz"],
+      maxPlatformConnections: 10,
       canPublishSimultaneously: true, // Publish to multiple platforms at once
       quotaResetPeriod: "monthly",
       imagesPerDay: 5, // Max: 5 visuals per day

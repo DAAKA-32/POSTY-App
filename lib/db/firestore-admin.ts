@@ -1645,3 +1645,77 @@ export async function saveRedditPostAdmin(
   return ref.id;
 }
 
+// ============== THREADS via Zernio (distinct from native Meta Threads) ==============
+
+export interface ThreadszConnectionDataAdmin {
+  userId: string;
+  zernioAccountId: string;
+  zernioProfileId: string;
+  username?: string;
+  profilePicture?: string;
+  connectedAt: Timestamp;
+  lastUsedAt?: Timestamp;
+}
+
+export async function getThreadszConnectionAdmin(
+  userId: string,
+): Promise<ThreadszConnectionDataAdmin | null> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
+  const snap = await adminDb.collection("threadszConnections").doc(userId).get();
+  if (snap.exists) return snap.data() as ThreadszConnectionDataAdmin;
+  return null;
+}
+
+export async function saveThreadszConnectionAdmin(
+  userId: string,
+  data: {
+    zernioAccountId: string;
+    zernioProfileId: string;
+    username?: string;
+    profilePicture?: string;
+  },
+): Promise<void> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
+  await adminDb.collection("threadszConnections").doc(userId).set({
+    userId,
+    zernioAccountId: data.zernioAccountId,
+    zernioProfileId: data.zernioProfileId,
+    username: data.username || null,
+    profilePicture: data.profilePicture || null,
+    connectedAt: FieldValue.serverTimestamp(),
+    lastUsedAt: null,
+  });
+}
+
+export async function updateThreadszLastUsedAdmin(userId: string): Promise<void> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
+  await adminDb.collection("threadszConnections").doc(userId).update({
+    lastUsedAt: FieldValue.serverTimestamp(),
+  });
+}
+
+export async function saveThreadszPostAdmin(
+  userId: string,
+  data: {
+    zernioAccountId: string;
+    zernioPostId: string;
+    content: string;
+    postUrl?: string;
+    success: boolean;
+    error?: string;
+  },
+): Promise<string> {
+  if (!adminDb) throw new Error("Firebase Admin not initialized");
+  const ref = await adminDb.collection("threadszPosts").add({
+    userId,
+    zernioAccountId: data.zernioAccountId,
+    zernioPostId: data.zernioPostId,
+    content: data.content,
+    postUrl: data.postUrl || null,
+    publishedAt: FieldValue.serverTimestamp(),
+    success: data.success,
+    error: data.error || null,
+  });
+  return ref.id;
+}
+

@@ -4,9 +4,11 @@ import { verifyOAuthState } from "@/lib/oauth-state";
 import {
   getInstagramConnectionAdmin,
   getRedditConnectionAdmin,
+  getThreadszConnectionAdmin,
   getXConnectionAdmin,
   saveInstagramConnectionAdmin,
   saveRedditConnectionAdmin,
+  saveThreadszConnectionAdmin,
   saveXConnectionAdmin,
 } from "@/lib/db/firestore-admin";
 import { listZernioAccounts } from "@/lib/integrations/zernio";
@@ -132,6 +134,16 @@ export async function GET(request: NextRequest) {
     } else if (verified.zernioPlatform === "reddit") {
       const existing = await getRedditConnectionAdmin(verified.userId);
       await saveRedditConnectionAdmin(verified.userId, {
+        zernioAccountId: matching._id,
+        zernioProfileId: verified.zernioProfileId,
+        username: matching.username,
+        profilePicture: matching.profilePicture,
+      });
+      void existing;
+    } else if (verified.zernioPlatform === "threads") {
+      // Threads via Zernio (Posty key "threadsz") — distinct from native Meta.
+      const existing = await getThreadszConnectionAdmin(verified.userId);
+      await saveThreadszConnectionAdmin(verified.userId, {
         zernioAccountId: matching._id,
         zernioProfileId: verified.zernioProfileId,
         username: matching.username,

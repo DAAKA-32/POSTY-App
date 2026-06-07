@@ -82,7 +82,7 @@ export class ZernioApiError extends Error {
 
 // ─── Public surface used by Posty routes ──────────────────────────────────
 
-export type ZernioPlatform = "twitter" | "instagram" | "reddit";
+export type ZernioPlatform = "twitter" | "instagram" | "reddit" | "threads";
 
 export interface ZernioProfile {
   _id: string;

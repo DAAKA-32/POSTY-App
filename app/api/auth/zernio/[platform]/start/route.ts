@@ -5,6 +5,7 @@ import { signOAuthState } from "@/lib/oauth-state";
 import {
   getInstagramConnectionAdmin,
   getRedditConnectionAdmin,
+  getThreadszConnectionAdmin,
   getXConnectionAdmin,
   getZernioProfileIdAdmin,
   saveZernioProfileAdmin,
@@ -82,7 +83,9 @@ export async function POST(
         ? await getXConnectionAdmin(userId)
         : zernioPlatform === "instagram"
           ? await getInstagramConnectionAdmin(userId)
-          : await getRedditConnectionAdmin(userId);
+          : zernioPlatform === "threads"
+            ? await getThreadszConnectionAdmin(userId)
+            : await getRedditConnectionAdmin(userId);
     if (existing?.zernioAccountId) {
       return NextResponse.json(
         {

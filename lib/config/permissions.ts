@@ -219,6 +219,7 @@ export function canUsePlatform(
       x: "X",
       instagram: "Instagram",
       reddit: "Reddit",
+      threadsz: "Threads",
     };
 
     return {

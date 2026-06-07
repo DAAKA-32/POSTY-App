@@ -16,7 +16,7 @@ function getApiKey(): string {
   return key;
 }
 
-export type ZernioFunctionsPlatform = "twitter" | "instagram" | "reddit";
+export type ZernioFunctionsPlatform = "twitter" | "instagram" | "reddit" | "threads";
 
 export interface ZernioFunctionsPublishResult {
   success: boolean;
