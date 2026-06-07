@@ -186,30 +186,33 @@ export async function generateBatchPlan(
     maxRetries: 1,
   });
 
-  // ── Chantier 3: real-time web grounding ──────────────────────────────
-  // Only when the prompt is genuinely time-moving (zero-cost regex gate), and
-  // ONE cached search call for the whole batch (not per brief). Non-blocking:
-  // any failure leaves the prompt untouched and the plan is generated normally.
-  if (isTopicTimeSensitive(sourcePrompt)) {
-    const rt = await fetchRealtimeContextCached(openai, sourcePrompt, language, userId);
-    if (rt) systemPrompt += buildRealtimeContextBlock(rt, language);
-  }
-
-  // ── Chantier 2: URL / brand audit grounding ──────────────────────────
-  // When the prompt references a URL (the author's site, a brand, a competitor)
-  // fetch + parse it (SSRF-safe, cached) and inject it so the briefs are
-  // grounded in / analyze the real page. Non-blocking: failure → no source.
+  // ── Grounding: AT MOST ONE expensive op per batch (cost guard) ───────
+  // A referenced URL and a real-time web search are MUTUALLY EXCLUSIVE:
+  //   - URL present  → fetch + analyze the site (Chantier 2). The site is the
+  //     better, cheaper (no LLM) grounding, so we do NOT also web-search.
+  //   - no URL but a genuinely time-moving topic → ONE cached web search
+  //     (Chantier 3).
+  // This keeps a single batch request from firing both a fetch AND a search
+  // (which bloated the prompt enough to truncate the JSON → 502), and bounds
+  // API load to one grounding call. Both are non-blocking: any failure just
+  // leaves the prompt untouched and the plan generates normally.
   const sourceUrl = detectUrlLoose(sourcePrompt);
   if (sourceUrl) {
     const extracted = await extractUrlContentCached(sourceUrl);
     if (extracted) systemPrompt += buildSourceAnalysisBlock(extracted, language);
+  } else if (isTopicTimeSensitive(sourcePrompt)) {
+    const rt = await fetchRealtimeContextCached(openai, sourcePrompt, language, userId);
+    if (rt) systemPrompt += buildRealtimeContextBlock(rt, language);
   }
 
   const completion = await openai.chat.completions.create({
     model: "gpt-4o",
     response_format: { type: "json_object" },
     temperature: 0.7,
-    max_tokens: 1200,
+    // Headroom so a richly-grounded batch (site/web context injected) doesn't
+    // truncate the JSON mid-array → invalid_json → 502. Output tokens only
+    // bill when actually used, so this is near-free in the common case.
+    max_tokens: 2000,
     messages: [
       { role: "system", content: systemPrompt },
       { role: "user", content: sourcePrompt },
