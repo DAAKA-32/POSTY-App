@@ -29,6 +29,11 @@ yarn-error.log*
 .env*.local
 .env.vercel-final
 
+# Firebase Functions env (secrets — loaded by firebase-tools at deploy)
+functions/.env
+functions/.env.*
+!functions/.env.example
+
 # Firebase service account (sensitive!)
 service-account.json
 firebase-service-account.json
