@@ -98,30 +98,61 @@ export async function POST(
     }
 
     // ── Get or create Zernio profile for this Posty user ─────────────────
-    // Lazy creation: most users will never use Zernio (they only need the 6
+    // Lazy creation: most users will never use Zernio (they only need the
     // native networks). We only spin up a Zernio profile the first time a
-    // user tries to connect X or Instagram.
-    let zernioProfileId = await getZernioProfileIdAdmin(userId);
-    if (!zernioProfileId) {
+    // user connects a Zernio-backed network.
+    const createAndSaveProfile = async (): Promise<string | null> => {
       const profile = await createZernioProfile({
         name: `posty-user-${userId}`,
         description: "Auto-created by Posty for this user",
       });
-      if (!profile?._id) {
+      if (!profile?._id) return null;
+      // .set() overwrites any stale zernioProfiles doc.
+      await saveZernioProfileAdmin(userId, profile._id);
+      return profile._id;
+    };
+
+    let zernioProfileId = await getZernioProfileIdAdmin(userId);
+    if (!zernioProfileId) {
+      zernioProfileId = await createAndSaveProfile();
+      if (!zernioProfileId) {
         return NextResponse.json(
           { error: "Zernio refused to create profile" },
           { status: 502 },
         );
       }
-      zernioProfileId = profile._id;
-      await saveZernioProfileAdmin(userId, zernioProfileId);
     }
 
-    // ── Ask Zernio for the authUrl ───────────────────────────────────────
-    const { authUrl } = await getZernioConnectUrl({
-      platform: zernioPlatform,
-      profileId: zernioProfileId,
-    });
+    // ── Ask Zernio for the authUrl (self-healing on a stale profile) ─────
+    // A profileId minted under a PREVIOUS ZERNIO_API_KEY (a different Zernio
+    // org) 404s under the current key — Zernio replies "Profile not found".
+    // When that happens, recreate the profile (overwriting the stale
+    // zernioProfiles doc) and retry once, so a key rotation self-heals
+    // instead of permanently breaking every connect.
+    let authUrl: string | undefined;
+    try {
+      ({ authUrl } = await getZernioConnectUrl({
+        platform: zernioPlatform,
+        profileId: zernioProfileId,
+      }));
+    } catch (err) {
+      const staleProfile =
+        err instanceof ZernioApiError &&
+        (err.status === 404 || /profile not found/i.test(err.message));
+      if (!staleProfile) throw err;
+      const fresh = await createAndSaveProfile();
+      if (!fresh) {
+        return NextResponse.json(
+          { error: "Zernio refused to create profile" },
+          { status: 502 },
+        );
+      }
+      zernioProfileId = fresh;
+      ({ authUrl } = await getZernioConnectUrl({
+        platform: zernioPlatform,
+        profileId: zernioProfileId,
+      }));
+    }
     if (!authUrl) {
       return NextResponse.json(
         { error: "Zernio did not return an authUrl" },

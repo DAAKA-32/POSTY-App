@@ -29,7 +29,9 @@ type FetchInit = Omit<RequestInit, "headers" | "body"> & {
 };
 
 function getApiKey(): string {
-  const key = process.env[ZERNIO_API_KEY_ENV];
+  // Trim defensively: a stray BOM / newline / whitespace in the env value
+  // corrupts the "Authorization: Bearer <key>" header (ByteString error).
+  const key = process.env[ZERNIO_API_KEY_ENV]?.trim();
   if (!key) {
     throw new Error(
       `${ZERNIO_API_KEY_ENV} env var is missing. Set it to the Zernio API key (sk_...) before calling the Zernio client.`,

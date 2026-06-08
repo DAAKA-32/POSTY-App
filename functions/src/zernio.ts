@@ -7,7 +7,9 @@
 const ZERNIO_API_BASE = "https://zernio.com/api/v1";
 
 function getApiKey(): string {
-  const key = process.env.ZERNIO_API_KEY;
+  // Trim defensively: a stray BOM / newline / whitespace in the env value
+  // corrupts the "Authorization: Bearer <key>" header (ByteString error).
+  const key = process.env.ZERNIO_API_KEY?.trim();
   if (!key) {
     throw new Error(
       "ZERNIO_API_KEY env var is missing in Cloud Functions. Set it in the Functions runtime env and redeploy.",
