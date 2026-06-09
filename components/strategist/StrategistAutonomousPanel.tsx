@@ -23,6 +23,7 @@ import StrategistMark from "./StrategistMark";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getAuthHeaders } from "@/lib/api/client";
+import { nextRunLabel } from "@/lib/strategist/next-run";
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/db/firebase";
 import toast from "@/components/ui/Toast";
@@ -433,15 +434,3 @@ function clampCount(n: number): number {
   return Math.max(MIN_COUNT, Math.min(MAX_COUNT, Math.round(n)));
 }
 
-/** Next occurrence of `dayOfWeek` at ~8h, short FR label ("vendredi 13 juin, 8h").
- *  If today IS the day we show next week's — today's run has fired or is imminent. */
-function nextRunLabel(dayOfWeek: number): string {
-  const now = new Date();
-  const days = ((dayOfWeek - now.getDay() + 7) % 7) || 7;
-  const d = new Date(now);
-  d.setDate(now.getDate() + days);
-  return (
-    d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" }) +
-    ", 8h"
-  );
-}
