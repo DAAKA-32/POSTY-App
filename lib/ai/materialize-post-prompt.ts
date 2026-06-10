@@ -127,9 +127,9 @@ OUTPUT FORMAT (strict)
 - Plain text only. No markdown, no bullets with "*" or "-" syntax (use line breaks instead).
 - 6 to 14 short lines. LinkedIn truncates around line 3-4 in the feed, so the hook lines must earn the click.
 - Line breaks between thoughts, no walls of text.
-- 0-3 emojis MAX, only if the user's tone allows. Default: zero.
+- Emojis: 1-3 per post, placed at the END of a sentence or after a key paragraph (NEVER at the very start, never stacked like 🔥🔥🔥, never one-per-line). Use them to punctuate emotion or a result (💡 insight, 🎯 result, 🤔 reflection, 👉 call to action); the post must still read fine without them. Use 0 only if the author's tone is strictly formal.
 - End with one clear CTA OR one open question — never both, never none.
-- Hashtags: 0-3 tags max, on the LAST line, all-lowercase, no commas.
+- Hashtags: 3-5 on the LAST line. First letter ALWAYS lowercase, camelCase for multi-word tags (#personalBranding, #linkedinGrowth, #b2bMarketing). No accents, no commas. ALWAYS end the line with #posty.
 
 ═════════════════════════════════════
 WRITING RULES
@@ -177,9 +177,9 @@ FORMAT DE SORTIE (strict)
 - Texte brut uniquement. Pas de markdown, pas de bullets "*" ou "-" (utilise des sauts de ligne à la place).
 - 6 à 14 lignes courtes. LinkedIn coupe vers la ligne 3-4 dans le feed — les premières lignes doivent mériter le clic.
 - Sauts de ligne entre les idées, pas de blocs compacts.
-- 0-3 émojis MAX, seulement si le ton de l'utilisateur le permet. Par défaut : zéro.
+- Émojis : 1-3 par post, placés en FIN de phrase ou après un paragraphe clé (JAMAIS tout au début, jamais accumulés type 🔥🔥🔥, jamais un par ligne). Sers-t'en pour ponctuer une émotion ou un résultat (💡 insight, 🎯 résultat, 🤔 réflexion, 👉 appel à l'action) ; le post doit rester lisible sans eux. Mets-en 0 uniquement si le ton de l'auteur est strictement formel.
 - Termine par UN CTA clair OU UNE question ouverte — jamais les deux, jamais aucun.
-- Hashtags : 0-3 max, sur la DERNIÈRE ligne, tout en minuscules, sans virgules.
+- Hashtags : 3-5 sur la DERNIÈRE ligne. Première lettre TOUJOURS en minuscule, camelCase pour les tags composés (#personalBranding, #linkedinGrowth, #marketingB2b). Sans accents, sans virgules. Termine TOUJOURS la ligne par #posty.
 
 ═════════════════════════════════════
 RÈGLES D'ÉCRITURE
