@@ -28,6 +28,7 @@ import {
   buildMaterializeSystemPrompt,
   buildMaterializeUserMessage,
 } from "@/lib/ai/materialize-post-prompt";
+import type { ProfileFields } from "@/lib/services/prompt-builder";
 import { isStrategistAllowedForEmail } from "@/lib/strategist/access";
 import { hasLinkedInConnected } from "@/lib/strategist/access-server";
 import { isOpenAIConfigured } from "@/lib/openai";
@@ -53,27 +54,11 @@ const RequestSchema = z.object({
   language: z.enum(["fr", "en"]).default("fr"),
 });
 
-type UserContext = {
-  name?: string;
-  sector?: string;
-  role?: string;
-  objective?: string;
-  targetAudience?: string;
-  communicationTone?: string;
-};
-
-function normalizeField(v: unknown): string | undefined {
-  if (!v) return undefined;
-  if (Array.isArray(v)) return v.filter(Boolean).join(", ") || undefined;
-  if (typeof v === "string") return v.trim() || undefined;
-  return undefined;
-}
-
 async function loadUserContextAndPosts(uid: string): Promise<{
-  ctx: UserContext;
+  profile: ProfileFields;
   snippets: string[];
 }> {
-  if (!isAdminInitialized() || !adminDb) return { ctx: {}, snippets: [] };
+  if (!isAdminInitialized() || !adminDb) return { profile: {}, snippets: [] };
   try {
     const [userSnap, postsSnap] = await Promise.all([
       adminDb.collection("users").doc(uid).get(),
@@ -85,28 +70,31 @@ async function loadUserContextAndPosts(uid: string): Promise<{
         .get(),
     ]);
     const data = userSnap.exists ? userSnap.data() ?? {} : {};
-    const profile = data.profile ?? {};
-    const ctx: UserContext = {
-      name: data.name || data.displayName || undefined,
-      sector: normalizeField(profile.sector ?? data.sector),
-      role: profile.role || data.role || undefined,
-      objective: normalizeField(profile.objective),
-      targetAudience: normalizeField(profile.targetAudience),
-      communicationTone: normalizeField(profile.communicationTone),
+    const p = data.profile ?? {};
+    // Raw profile fields (arrays preserved so the voice engine's exact-key
+    // lookups — tone/sector/profileType maps — still match).
+    const profile: ProfileFields = {
+      displayName: data.displayName || data.name || undefined,
+      profileType: p.profileType,
+      sector: p.sector ?? data.sector,
+      role: p.role ?? data.role,
+      objective: p.objective,
+      targetAudience: p.targetAudience,
+      communicationTone: p.communicationTone,
     };
     const snippets = postsSnap.docs
       .map((d) => {
-        const p = d.data();
+        const post = d.data();
         const picked =
-          p.selectedVersion === "B" ? p.responseB : p.responseA || p.responseB;
+          post.selectedVersion === "B" ? post.responseB : post.responseA || post.responseB;
         const text = (picked ?? "").toString().trim();
         return text ? text.slice(0, 220).replace(/\s+/g, " ") : "";
       })
       .filter(Boolean);
-    return { ctx, snippets };
+    return { profile, snippets };
   } catch (err) {
     console.error("[materialize] loadUserContextAndPosts error:", err);
-    return { ctx: {}, snippets: [] };
+    return { profile: {}, snippets: [] };
   }
 }
 
@@ -311,16 +299,17 @@ export async function POST(request: NextRequest) {
   }
 
   // ── Load user context once, share across all calls ───────────────────
-  const { ctx, snippets } = await loadUserContextAndPosts(userId);
+  const { profile, snippets } = await loadUserContextAndPosts(userId);
 
   // Build the system prompt ONCE — identical bytes across the parallel
   // calls. This is what makes OpenAI's prompt cache kick in: from the 2nd
   // call onward, the (large) shared system prefix is billed at ~50% of
   // the normal input rate. For a batch of 5, that's a ~40% input-cost cut
-  // with zero behavioural change.
+  // with zero behavioural change. The Strategist is Max-tier → plan "max".
   const systemPrompt = buildMaterializeSystemPrompt({
     language,
-    userContext: ctx,
+    profile,
+    plan: "max",
     recentPostSnippets: snippets,
   });
 

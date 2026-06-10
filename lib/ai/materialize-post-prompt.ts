@@ -12,15 +12,11 @@
  */
 
 import type { PostBrief } from "@/types";
-
-interface UserContext {
-  name?: string;
-  sector?: string;
-  role?: string;
-  objective?: string;
-  targetAudience?: string;
-  communicationTone?: string;
-}
+import {
+  buildVoiceProfile,
+  type ProfileFields,
+  type PlanTier,
+} from "@/lib/services/prompt-builder";
 
 /**
  * Build the SYSTEM prompt — identical for every brief in the batch.
@@ -35,29 +31,32 @@ interface UserContext {
  * the remaining N-1 hit the cache and pay ~50% on the (large) shared
  * prefix. For a batch of 5, that's a ~40% drop in input cost without
  * touching the model.
+ *
+ * Voice parity: the author-voice block is built by `buildVoiceProfile` —
+ * the SAME personalization engine the main /api/generate pipeline uses — so
+ * Strategist posts read like the chat's posts (tone→style, role voice,
+ * sector vocabulary, profile-type context, Max signature) instead of the
+ * old generic-sounding output. Deterministic per (profile, plan, language),
+ * so the prompt stays byte-identical across the batch (caching intact).
  */
 export function buildMaterializeSystemPrompt(opts: {
   language: "fr" | "en";
-  userContext: UserContext;
+  /** Raw profile fields (arrays OK) — fed to the shared voice engine. */
+  profile: ProfileFields;
+  /** Plan tier — drives the Max-only "signature voice" directive. The
+   *  Strategist is Max-tier, so callers pass "max". */
+  plan: PlanTier;
   /** Optional recent post excerpts to anchor style (deduped from the batch
    *  endpoint — same source). Short, max 3-4 entries. */
   recentPostSnippets?: string[];
 }): string {
-  const { language, userContext, recentPostSnippets } = opts;
+  const { language, profile, plan, recentPostSnippets } = opts;
 
-  const profileLines = [
-    userContext.name && `- ${language === "fr" ? "Nom" : "Name"}: ${userContext.name}`,
-    userContext.sector && `- ${language === "fr" ? "Secteur" : "Sector"}: ${userContext.sector}`,
-    userContext.role && `- ${language === "fr" ? "Rôle" : "Role"}: ${userContext.role}`,
-    userContext.objective && `- ${language === "fr" ? "Objectif" : "Objective"}: ${userContext.objective}`,
-    userContext.targetAudience && `- ${language === "fr" ? "Audience" : "Audience"}: ${userContext.targetAudience}`,
-    userContext.communicationTone && `- ${language === "fr" ? "Ton" : "Tone"}: ${userContext.communicationTone}`,
-  ].filter(Boolean);
-  const profileBlock = profileLines.length
-    ? profileLines.join("\n")
-    : language === "fr"
-      ? "- (aucun champ profil capturé)"
-      : "- (no profile fields captured)";
+  const voiceBlock =
+    buildVoiceProfile(profile, language, plan) ||
+    (language === "fr"
+      ? "\n\nVOIX DE L'AUTEUR:\n(aucun champ profil capturé)"
+      : "\n\nAUTHOR VOICE:\n(no profile fields captured)");
 
   const styleBlock = recentPostSnippets?.length
     ? recentPostSnippets.map((s, i) => `${i + 1}. ${s}`).join("\n")
@@ -68,11 +67,7 @@ export function buildMaterializeSystemPrompt(opts: {
   const base = language === "fr" ? FR_PROMPT : EN_PROMPT;
 
   return `${base}
-
-═════════════════════════════════════
-USER PROFILE
-═════════════════════════════════════
-${profileBlock}
+${voiceBlock}
 
 ═════════════════════════════════════
 STYLE ANCHORS (recent posts — match the cadence, not the topic)
@@ -146,6 +141,32 @@ WRITING RULES
 5. Do not reference projects, clients, numbers, or events that were not in the brief, the user profile, or the user note.
 6. NO meta talk — never say "in this post I will...", never explain the post's structure.
 
+═════════════════════════════════════
+HUMANIZE — MUST NOT FEEL AI-GENERATED
+═════════════════════════════════════
+The reader must think "this person clearly wrote this themselves".
+- Concrete > abstract: numbers, field examples, specific situations. Never a hollow claim.
+- Emotion comes through the situation, never declared ("I was proud" → show the scene).
+- Varied rhythm: alternate short punchy lines and developed ones. No uniform blocks.
+- Expertise is shown through the precision of examples, not through adjectives or titles.
+- A clear, owned stance — one viewpoint, not "on one hand / on the other".
+- Seek the non-obvious angle, not the most direct one.
+
+ABSOLUTE PROHIBITIONS (AI tells):
+- "Here are X mistakes / lessons / secrets / keys / steps", "What nobody tells you about…"
+- "I realized that…", "That day I understood that…", "game-changer", "leverage", "synergies", "disruption", "pivot"
+- "Today more than ever", "in the era of", "in a world where", "In conclusion", "To go further"
+- "It's obvious that…", "Everyone knows that…", adjectives without proof, hollow corporate jargon
+- Exaggerated / off-topic analogies (sailors, warriors, storms, mountains, explorers…), literary metaphors
+- Moralizing conclusions or generic inspirational quotes
+- Automatic bullet lists as the main structure
+
+EXAMPLES OF EXPECTED TONE (to calibrate — do NOT copy):
+- "This morning when I opened my emails, I came across…"
+- "Yesterday a conversation with a client made me think."
+- "Something that took me a while to understand in my work…"
+- "A problem I often see with [audience]…"
+
 Return ONLY the post body. No preamble, no sign-off, no commentary.`;
 
 const FR_PROMPT = `Tu es POSTY POST WRITER — tu transformes un brief éditorial validé en un post LinkedIn publiable pour l'utilisateur décrit ci-dessous.
@@ -169,5 +190,31 @@ RÈGLES D'ÉCRITURE
 4. Voix = le ton de l'utilisateur dans le profil. Pas de remplissage corporate. Pas de "aujourd'hui plus que jamais", pas de "en conclusion".
 5. Ne référence pas de projets, clients, chiffres ou événements qui ne sont pas dans le brief, le profil utilisateur, ou la note utilisateur.
 6. PAS de méta — ne dis jamais "dans ce post je vais...", n'explique jamais la structure du post.
+
+═════════════════════════════════════
+HUMANISATION — NE DOIT PAS RESSEMBLER À UNE IA
+═════════════════════════════════════
+Le lecteur doit penser "cette personne a vraiment écrit ça elle-même".
+- Concret > abstrait : chiffres, exemples du terrain, situations précises. Jamais d'affirmation creuse.
+- L'émotion transparaît par la situation, jamais déclarée ("j'étais fier" → montre la scène).
+- Rythme varié : alterne phrases courtes percutantes et développements. Pas de blocs uniformes.
+- L'expertise se démontre par la précision des exemples, pas par les adjectifs ni les titres.
+- Une position claire et assumée — un point de vue, pas "d'un côté / de l'autre".
+- Cherche l'angle non-évident, pas le plus direct.
+
+INTERDICTIONS ABSOLUES (clichés IA) :
+- "Voici X erreurs / leçons / secrets / clés / étapes", "Ce que personne ne dit sur…"
+- "J'ai réalisé que…", "Ce jour-là j'ai compris que…", "game-changer", "levier", "synergies", "disruption", "pivoter"
+- "Aujourd'hui plus que jamais", "à l'ère de", "dans un monde où", "En conclusion", "Pour aller plus loin"
+- "C'est évident que…", "Tout le monde sait que…", adjectifs sans preuve, jargon corporate creux
+- Analogies exagérées/hors-sujet (marins, guerriers, tempêtes, montagnes, explorateurs…), métaphores littéraires
+- Conclusion moralisatrice ou citation inspirante générique
+- Listes à puces automatiques comme structure principale
+
+EXEMPLES DE TON ATTENDU (pour calibrer — NE PAS copier) :
+- "Ce matin en ouvrant mes mails, je suis tombé sur…"
+- "Hier, un échange avec un client m'a fait réfléchir."
+- "Un truc que j'ai mis du temps à comprendre dans mon métier…"
+- "Un problème que je vois souvent chez les [audience]…"
 
 Retourne UNIQUEMENT le corps du post. Pas de préambule, pas de signature, pas de commentaire.`;

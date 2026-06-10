@@ -751,7 +751,7 @@ export function synthesizeProfile(
  * Builds the voice profile block — translates profile metadata into
  * actionable writing style instructions (the core personalization engine).
  */
-function buildVoiceProfile(
+export function buildVoiceProfile(
   profile: ProfileFields,
   language: Language,
   plan: PlanTier
