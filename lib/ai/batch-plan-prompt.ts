@@ -105,6 +105,9 @@ ${language === "fr"
 
   const base = language === "fr" ? FR_PROMPT : EN_PROMPT;
   const directionBlock = buildAdvancedDirectionBlock(advanced, language);
+  // The count is "posts for the week" — all briefs MUST land inside a single
+  // 7-day editorial week, never spill into a second week.
+  const windowEnd = addDaysIso(startDate, 6);
 
   return `${base}
 
@@ -123,8 +126,18 @@ BATCH PARAMETERS
 ═════════════════════════════════════
 - Number of briefs to produce: ${count}
 - First eligible publication date: ${startDate}
+- Publication window — EVERY post MUST fall within these 7 days (one editorial week), never a second week: ${startDate} → ${windowEnd}
 - User timezone (interpret suggestedTime in this TZ): ${timezone}
 ${directionBlock}`;
+}
+
+/** Add `n` days to a YYYY-MM-DD string, returning YYYY-MM-DD. UTC math so it
+ *  never shifts a day across the server timezone. */
+function addDaysIso(iso: string, n: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + n);
+  return dt.toISOString().slice(0, 10);
 }
 
 /**
@@ -366,7 +379,7 @@ HARD RULES (all required)
 3. NEVER write the full post body. \`hook\` is the opening 1-2 sentences only. \`angle\` describes what the post will argue or show in 1-2 lines — not the post itself.
 4. \`format\` must vary across the batch. Pick from (or invent equivalents): "storytelling", "lesson-learned", "how-to", "opinion", "carrousel", "data-drop", "behind-the-scenes", "thread-of-thought", "case-study", "list", "contrarian-take". No batch should use the same format twice in a row. \`format\` MUST be a short slug — max 40 characters, no sentences.
 5. \`hook\` and \`angle\` must be SUBSTANTIALLY different from one post to the next. No "5 posts about X" cookie-cutter.
-6. \`suggestedDate\` must be ≥ the first eligible date provided. Spread the batch across days according to the user's preferred publishing frequency (daily / 3-4x week / 1-2x week). Never schedule 2 posts on the same day unless frequency = daily AND count > 5.
+6. \`suggestedDate\` MUST fall inside the publication window (the 7-day editorial week given in BATCH PARAMETERS). Distribute ALL the posts ACROSS that single week and NEVER spill into a second week. At most 1 post per day; only if the post count exceeds 7 may a day hold 2. Prefer business days for B2B, but always stay inside the window.
 7. \`suggestedTime\` should target LinkedIn peak windows for B2B audiences (typically 07:30-09:30 and 11:30-13:30 local time, with 17:00-18:30 as a secondary slot). Vary within these windows — do NOT propose 09:00 for every post.
 8. \`rationale\` is one sentence explaining why this angle on this day at this time fits the user's profile. Concrete, not generic.
 9. \`id\` is a short slug derived from the angle (e.g. "p1-friction-paradox") — must be unique within the batch.
@@ -401,7 +414,7 @@ RÈGLES STRICTES (toutes requises)
 3. JAMAIS écrire le corps complet du post. \`hook\` = les 1-2 premières phrases d'accroche seulement. \`angle\` = ce que le post va défendre ou montrer en 1-2 lignes — pas le post lui-même.
 4. \`format\` doit VARIER dans le batch. Choisis (ou invente des équivalents) : "storytelling", "lesson-learned", "how-to", "opinion", "carrousel", "data-drop", "behind-the-scenes", "thread-of-thought", "case-study", "list", "contrarian-take". Jamais le même format deux posts d'affilée. \`format\` DOIT être un slug court — 40 caractères max, pas de phrase.
 5. \`hook\` et \`angle\` doivent être TRÈS différents d'un post à l'autre. Pas de "5 posts sur X" en mode template.
-6. \`suggestedDate\` doit être ≥ à la première date éligible fournie. Répartis le batch sur les jours selon la fréquence de publication préférée de l'utilisateur (quotidien / 3-4x semaine / 1-2x semaine). Jamais 2 posts le même jour SAUF si fréquence = quotidien ET count > 5.
+6. \`suggestedDate\` DOIT être dans la fenêtre de publication (la semaine éditoriale de 7 jours donnée dans BATCH PARAMETERS). Répartis TOUS les posts SUR cette seule semaine et NE déborde JAMAIS sur une 2e semaine. Au maximum 1 post par jour ; seulement si le nombre de posts dépasse 7, un jour peut en contenir 2. Privilégie les jours ouvrés pour le B2B, mais reste toujours dans la fenêtre.
 7. \`suggestedTime\` cible les fenêtres de pointe LinkedIn pour audience B2B (typiquement 07:30-09:30 et 11:30-13:30 heure locale, avec 17:00-18:30 en créneau secondaire). Varie dans ces fenêtres — ne propose PAS 09:00 pour chaque post.
 8. \`rationale\` = une phrase qui explique pourquoi cet angle, ce jour, cette heure correspondent au profil utilisateur. Concret, pas générique.
 9. \`id\` = slug court dérivé de l'angle (ex : "p1-paradoxe-friction") — unique dans le batch.
