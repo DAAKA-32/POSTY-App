@@ -47,6 +47,13 @@ export default function StrategistAutonomousPanel() {
   const { user } = useAuth();
   const { language } = useLanguage();
 
+  // Founder-only tweak: a roomier custom-prompt limit + a live character
+  // counter so emilien can write detailed campaign prompts without silent
+  // truncation. Everyone else keeps the default 400 and sees no counter.
+  const isEmilien =
+    (user?.email || "").toLowerCase() === "emilien.nepveu@gmail.com";
+  const promptMax = isEmilien ? 2000 : 400;
+
   const [enabled, setEnabled] = useState(false);
   const [dayOfWeek, setDayOfWeek] = useState<0 | 1 | 2 | 3 | 4 | 5 | 6>(0);
   const [count, setCount] = useState(DEFAULT_COUNT);
@@ -327,7 +334,7 @@ export default function StrategistAutonomousPanel() {
                     onChange={(e) => setCustomPrompt(e.target.value)}
                     onBlur={() => save({ customPrompt: customPrompt.trim() })}
                     rows={2}
-                    maxLength={400}
+                    maxLength={promptMax}
                     placeholder="Ex: Focus sur cas clients SaaS B2B, ton direct."
                     className="
                       w-full px-2.5 py-1.5 rounded-md resize-none
@@ -338,6 +345,17 @@ export default function StrategistAutonomousPanel() {
                       focus:outline-none focus:ring-2 focus:ring-amber-400/50
                     "
                   />
+                  {isEmilien && (
+                    <p
+                      className={`mt-1 text-right text-[10px] tabular-nums ${
+                        customPrompt.length >= promptMax
+                          ? "text-amber-600 dark:text-amber-400 font-medium"
+                          : "text-text-muted"
+                      }`}
+                    >
+                      {customPrompt.length} / {promptMax}
+                    </p>
+                  )}
                 </div>
 
                 {/* On-demand generation — the panel above only schedules the
