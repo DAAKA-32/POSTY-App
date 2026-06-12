@@ -37,7 +37,7 @@ import {
 import { normalizeHashtagsInText } from "@/lib/hashtags/normalize";
 import { isStrategistAllowedForEmail } from "@/lib/strategist/access";
 import { hasLinkedInConnected } from "@/lib/strategist/access-server";
-import { isOpenAIConfigured, PRIMARY_MODEL } from "@/lib/openai";
+import { isOpenAIConfigured, MINI_MODEL } from "@/lib/openai";
 import { trackAIUsage, readUsageFromResponse } from "@/lib/ai-cost/tracker";
 import type { PostBrief, MaterializedPost } from "@/types";
 
@@ -125,19 +125,28 @@ async function pMap<T, R>(
 }
 
 /**
+ * Materialize model — gpt-4o-mini by default (Tier-2 cost optimization).
+ *
+ * A blind A/B (same brief, same full Plan-Max prompt, same temperature) showed
+ * gpt-4o-mini produces posts COMPARABLE to gpt-4o here — because Phase 1
+ * (batch-plan, still gpt-4o) already did the strategic reasoning, so Phase 2 is
+ * "just" prose expansion of a fixed brief, which mini handles well. At ~16.7×
+ * cheaper on the biggest per-action cost. Override with the
+ * STRATEGIST_MATERIALIZE_MODEL env var (e.g. set it to "gpt-4o" to revert
+ * instantly, no code change) if a quality drop is ever noticed.
+ */
+const MATERIALIZE_MODEL = process.env.STRATEGIST_MATERIALIZE_MODEL || MINI_MODEL;
+
+/**
  * One brief → one post LinkedIn call.
  *
- * QUALITY PARITY (2026-06): same model + plan-aware temperature as the main
- * /api/generate "Plan Max" pipeline (PRIMARY_MODEL = gpt-4o,
- * getGenerationTemperature), a system prompt assembled by buildOptimizedPrompt,
- * and the same hashtag-normalization final pass. The brief's format → PostType
- * drives both the base prompt and the temperature. max_tokens 900 gives
- * Max-length storytelling room without truncation.
- *
- * Cost note: gpt-4o (vs the previous gpt-4o-mini) is ~15× the input / ~16× the
- * output price per brief. The system prompt is still built ONCE per PostType
- * and reused across briefs of that type, so OpenAI prompt caching still cuts
- * the shared prefix ~50% from the 2nd same-type call onward.
+ * Uses the SAME system prompt (buildOptimizedPrompt via buildMaterializeSystemPrompt)
+ * + plan-aware temperature + hashtag-normalization final pass as the main chat.
+ * Only the MODEL differs (mini by default — see MATERIALIZE_MODEL). The brief's
+ * format → PostType drives the base prompt + temperature. max_tokens 900 gives
+ * Max-length storytelling room. System prompt is built ONCE per PostType and
+ * reused across briefs of that type → OpenAI prompt caching cuts the shared
+ * prefix ~50% from the 2nd same-type call onward.
  */
 async function materializeOne(
   openai: OpenAI,
@@ -149,7 +158,7 @@ async function materializeOne(
 ): Promise<{ ok: true; post: MaterializedPost } | { ok: false; error: string }> {
   try {
     const completion = await openai.chat.completions.create({
-      model: PRIMARY_MODEL,
+      model: MATERIALIZE_MODEL,
       temperature: getGenerationTemperature(postType, "max"),
       max_tokens: 900,
       messages: [
@@ -164,7 +173,7 @@ async function materializeOne(
     void trackAIUsage({
       userId,
       route: "strategist.materialize",
-      model: PRIMARY_MODEL,
+      model: MATERIALIZE_MODEL,
       inputTokens: usage.inputTokens,
       outputTokens: usage.outputTokens,
       cachedInputTokens: usage.cachedInputTokens,
@@ -180,7 +189,7 @@ async function materializeOne(
       post: {
         content,
         generatedAt: Date.now(),
-        model: PRIMARY_MODEL,
+        model: MATERIALIZE_MODEL,
       },
     };
   } catch (err) {

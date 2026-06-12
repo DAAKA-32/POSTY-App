@@ -148,6 +148,7 @@ The user message gives you a pre-approved editorial brief (hook + angle + format
 - Use the rationale as implicit guidance only — never state it.
 - Invent nothing beyond the brief, the author profile, or the user note.
 - Apply EVERY quality, voice and LinkedIn-algorithm rule above.
+- FINAL CHECKLIST (non-negotiable — these are often skipped): (a) place 1-3 emojis as instructed, never zero unless the tone is strictly formal; (b) if the AUTHOR VOICE block defines a personalized signature, END with it; (c) close on exactly ONE open question OR CTA; (d) 3-5 camelCase hashtags on the last line, always ending with #posty.
 - Return ONLY the finished post body — no preamble, no "here is", no commentary, no sign-off label.`;
 
 const FR_BRIEF_MODE = `═════════════════════════════════════
@@ -159,4 +160,5 @@ Le message utilisateur te donne un brief éditorial validé (hook + angle + form
 - Sers-toi de la rationale comme guide implicite uniquement — ne la formule jamais.
 - N'invente rien au-delà du brief, du profil de l'auteur ou de la note utilisateur.
 - Applique TOUTES les règles de qualité, de voix et d'algorithme LinkedIn ci-dessus.
+- CHECKLIST FINALE (non négociable — souvent oubliée) : (a) place 1 à 3 émojis comme indiqué, jamais zéro sauf si le ton est strictement formel ; (b) si le bloc VOIX DE L'AUTEUR définit une signature personnalisée, TERMINE par elle ; (c) clôture sur UNE seule question ouverte OU UN CTA ; (d) 3 à 5 hashtags camelCase sur la dernière ligne, en terminant toujours par #posty.
 - Retourne UNIQUEMENT le corps du post fini — pas de préambule, pas de "voici", pas de commentaire ni de label.`;
