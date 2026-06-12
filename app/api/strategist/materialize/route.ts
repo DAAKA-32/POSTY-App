@@ -27,11 +27,17 @@ import { checkHourlyQuotaAdmin, incrementUserQuotaAdmin } from "@/lib/db/firesto
 import {
   buildMaterializeSystemPrompt,
   buildMaterializeUserMessage,
+  mapFormatToPostType,
 } from "@/lib/ai/materialize-post-prompt";
-import type { ProfileFields } from "@/lib/services/prompt-builder";
+import {
+  getGenerationTemperature,
+  type ProfileFields,
+  type PostType,
+} from "@/lib/services/prompt-builder";
+import { normalizeHashtagsInText } from "@/lib/hashtags/normalize";
 import { isStrategistAllowedForEmail } from "@/lib/strategist/access";
 import { hasLinkedInConnected } from "@/lib/strategist/access-server";
-import { isOpenAIConfigured } from "@/lib/openai";
+import { isOpenAIConfigured, PRIMARY_MODEL } from "@/lib/openai";
 import { trackAIUsage, readUsageFromResponse } from "@/lib/ai-cost/tracker";
 import type { PostBrief, MaterializedPost } from "@/types";
 
@@ -121,34 +127,31 @@ async function pMap<T, R>(
 /**
  * One brief → one post LinkedIn call.
  *
- * Cost tuning notes (May 2026):
- *   - Model: gpt-4o-mini (×15 cheaper than gpt-4o on input, ×16 on output).
- *     The strategic thinking happens in P1 (batch plan) where we still run
- *     gpt-4o; here we only expand an already-cadred brief into prose — a
- *     task gpt-4o-mini handles fine.
- *   - System prompt is pre-built ONCE per request (shared across all the
- *     parallel briefs in the batch). Identical bytes → OpenAI prompt cache
- *     kicks in from the 2nd call onward (−50% on the cached input prefix).
- *   - max_tokens: 600 is comfortably above the typical 350-450 token post.
- *     Lower than the old 900 prevents the model from rambling into footers
- *     when it's bored.
+ * QUALITY PARITY (2026-06): same model + plan-aware temperature as the main
+ * /api/generate "Plan Max" pipeline (PRIMARY_MODEL = gpt-4o,
+ * getGenerationTemperature), a system prompt assembled by buildOptimizedPrompt,
+ * and the same hashtag-normalization final pass. The brief's format → PostType
+ * drives both the base prompt and the temperature. max_tokens 900 gives
+ * Max-length storytelling room without truncation.
+ *
+ * Cost note: gpt-4o (vs the previous gpt-4o-mini) is ~15× the input / ~16× the
+ * output price per brief. The system prompt is still built ONCE per PostType
+ * and reused across briefs of that type, so OpenAI prompt caching still cuts
+ * the shared prefix ~50% from the 2nd same-type call onward.
  */
-const MATERIALIZE_MODEL = "gpt-4o-mini";
-
 async function materializeOne(
   openai: OpenAI,
   brief: PostBrief,
   language: "fr" | "en",
   systemPrompt: string,
+  postType: PostType,
   userId: string
 ): Promise<{ ok: true; post: MaterializedPost } | { ok: false; error: string }> {
   try {
     const completion = await openai.chat.completions.create({
-      model: MATERIALIZE_MODEL,
-      // Slightly above 0.7 — post body benefits from voice variety, the
-      // brief already constrains structure so we can let the model breathe.
-      temperature: 0.75,
-      max_tokens: 600,
+      model: PRIMARY_MODEL,
+      temperature: getGenerationTemperature(postType, "max"),
+      max_tokens: 900,
       messages: [
         { role: "system", content: systemPrompt },
         {
@@ -161,20 +164,23 @@ async function materializeOne(
     void trackAIUsage({
       userId,
       route: "strategist.materialize",
-      model: MATERIALIZE_MODEL,
+      model: PRIMARY_MODEL,
       inputTokens: usage.inputTokens,
       outputTokens: usage.outputTokens,
       cachedInputTokens: usage.cachedInputTokens,
       metadata: { briefId: brief.id, language },
     });
-    const content = completion.choices[0]?.message?.content?.trim() ?? "";
-    if (!content) return { ok: false, error: "empty_response" };
+    const raw = completion.choices[0]?.message?.content?.trim() ?? "";
+    if (!raw) return { ok: false, error: "empty_response" };
+    // Same final pass as the chat: normalize hashtag casing (#POSTY → #posty,
+    // PascalCase → camelCase, brand tag → #posty).
+    const content = normalizeHashtagsInText(raw);
     return {
       ok: true,
       post: {
         content,
         generatedAt: Date.now(),
-        model: MATERIALIZE_MODEL,
+        model: PRIMARY_MODEL,
       },
     };
   } catch (err) {
@@ -301,17 +307,25 @@ export async function POST(request: NextRequest) {
   // ── Load user context once, share across all calls ───────────────────
   const { profile, snippets } = await loadUserContextAndPosts(userId);
 
-  // Build the system prompt ONCE — identical bytes across the parallel
-  // calls. This is what makes OpenAI's prompt cache kick in: from the 2nd
-  // call onward, the (large) shared system prefix is billed at ~50% of
-  // the normal input rate. For a batch of 5, that's a ~40% input-cost cut
-  // with zero behavioural change. The Strategist is Max-tier → plan "max".
-  const systemPrompt = buildMaterializeSystemPrompt({
-    language,
-    profile,
-    plan: "max",
-    recentPostSnippets: snippets,
-  });
+  // Build ONE Plan-Max system prompt per PostType present in the batch and
+  // reuse it across briefs of that type. buildOptimizedPrompt injects a random
+  // variation seed, so building per-type (not per-brief) is what keeps OpenAI's
+  // prompt cache alive: same-type briefs share identical bytes → the 2nd+ call
+  // of that type pays ~50% on the (large) shared prefix. The Strategist is
+  // Max-tier → plan "max".
+  const promptByType = new Map<PostType, string>();
+  for (const t of new Set(targets.map((b) => mapFormatToPostType(b.format)))) {
+    promptByType.set(
+      t,
+      buildMaterializeSystemPrompt({
+        language,
+        profile,
+        plan: "max",
+        postType: t,
+        recentPostSnippets: snippets,
+      })
+    );
+  }
 
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY!,
@@ -321,7 +335,9 @@ export async function POST(request: NextRequest) {
 
   // ── Materialize in parallel, bounded ─────────────────────────────────
   const results = await pMap(targets, CONCURRENCY, async (brief) => {
-    const r = await materializeOne(openai, brief, language, systemPrompt, userId);
+    const postType = mapFormatToPostType(brief.format);
+    const systemPrompt = promptByType.get(postType)!;
+    const r = await materializeOne(openai, brief, language, systemPrompt, postType, userId);
     return { briefId: brief.id, result: r };
   });
 
