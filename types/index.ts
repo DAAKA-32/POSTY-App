@@ -187,6 +187,19 @@ export interface UserProfile {
   giftPopupSeen?: boolean;
   // Premium feature tour (5-slide carousel shown on first /app visit)
   hasSeenAppTour?: boolean;
+  // Release-notes ("Nouveautés") modal: the last RELEASE_KEY the user
+  // acknowledged. Account-level so the modal is shown once per release across
+  // every browser/device, not once per localStorage.
+  whatsNewSeenRelease?: string;
+  // Legal documents the user has acknowledged, keyed by document → version.
+  // Account-level so a legal-update notice dismissed on one device does not
+  // re-nag on another.
+  legalVersionsSeen?: {
+    privacy?: string;
+    terms?: string;
+    notices?: string;
+    cookies?: string;
+  };
   // Strategist Phase 4 — autonomous weekly batch generation (Max only).
   // When `enabled`, a Cloud Function fires on `dayOfWeek` each week and
   // generates a fresh draft batch via the Strategist. The user reviews it

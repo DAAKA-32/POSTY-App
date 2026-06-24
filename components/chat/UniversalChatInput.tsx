@@ -202,7 +202,7 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
   const currentPlaceholder = isRecording
     ? (t.appPage.speakNow || "🎤 Parlez maintenant...")
     : isVoiceProcessing
-    ? (t.appPage.processingMessage || "Traitement de votre message...")
+    ? (t.appPage.transcribing || "Transcription en cours...")
     : quotaLimitReached
     ? (isFreePlanQuota ? (t.appPage.monthlyQuotaReached || "Quota mensuel atteint") : (t.appPage.dailyQuotaReached || "Quota quotidien atteint"))
     : trialLimitReached
@@ -701,7 +701,7 @@ const UniversalChatInput = forwardRef<UniversalChatInputRef, UniversalChatInputP
               {isVoiceProcessing && !isRecording && (
                 <>
                   <InlineVoiceWaveform isRecording={false} isProcessing={true} />
-                  <span className="text-sm text-primary font-medium">Traitement...</span>
+                  <span className="text-sm text-primary font-medium">{t.appPage.transcribing || "Transcription en cours..."}</span>
                 </>
               )}
               {autoSendCountdown > 0 && !isRecording && !isVoiceProcessing && (

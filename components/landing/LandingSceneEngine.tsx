@@ -41,15 +41,15 @@ import { usePerformance } from "@/lib/performance/PerformanceProvider";
 // previous `posts` and `optimize` palettes were removed at the user's
 // request — the analytics emerald in particular wasn't supposed to ship on
 // the marketing landing.
-const SCENES = ["welcome", "visuals", "schedule"] as const;
-type Scene = typeof SCENES[number];
+export const SCENES = ["welcome", "visuals", "schedule"] as const;
+export type Scene = typeof SCENES[number];
 
 /**
  * Light-mode gradients lifted verbatim from `globals.css` (.posty-soft-*).
  * The landing page force-locks light mode, so dark variants aren't shipped
  * here — keeps the engine lean.
  */
-const SCENE_GRADIENTS: Record<Scene, string> = {
+export const SCENE_GRADIENTS: Record<Scene, string> = {
   welcome: [
     "radial-gradient(ellipse 160% 50% at 60% 0%, rgba(241, 52, 82, 0.35), transparent 72%)",
     "radial-gradient(ellipse 80% 60% at 20% 5%, rgba(248, 147, 93, 0.58), transparent 62%)",
@@ -209,25 +209,13 @@ function drawStar(
 // ENGINE COMPONENT
 // =============================================================================
 
-export default function LandingSceneEngine() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const frameRef = useRef<number>(0);
-  const particlesRef = useRef<Particle[]>([]);
-  const sizeRef = useRef({ w: 0, h: 0 });
-  const isMobileRef = useRef(false);
-  const { mode, hydrated } = usePerformance();
-
+/**
+ * Shared scene detection. Exported so LandingTopMask can crossfade its clipped
+ * top strip in lockstep with this background — same active scene, same timing.
+ */
+export function useActiveScene(): Scene {
   const [activeScene, setActiveScene] = useState<Scene>("welcome");
 
-  // Stars are only painted on the welcome scene (Hero opening + FAQ loop) —
-  // the user wants the rest of the page to stay quiet. The rAF loop reads
-  // this ref so it can short-circuit drawing when the canvas isn't visible.
-  const starsVisibleRef = useRef(true);
-  starsVisibleRef.current = activeScene === "welcome";
-
-  // ---------------------------------------------------------------------------
-  // Scroll → active scene
-  // ---------------------------------------------------------------------------
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -286,6 +274,25 @@ export default function LandingSceneEngine() {
       window.removeEventListener("resize", refreshSections);
     };
   }, []);
+
+  return activeScene;
+}
+
+export default function LandingSceneEngine() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const frameRef = useRef<number>(0);
+  const particlesRef = useRef<Particle[]>([]);
+  const sizeRef = useRef({ w: 0, h: 0 });
+  const isMobileRef = useRef(false);
+  const { mode, hydrated } = usePerformance();
+
+  const activeScene = useActiveScene();
+
+  // Stars are only painted on the welcome scene (Hero opening + FAQ loop) —
+  // the user wants the rest of the page to stay quiet. The rAF loop reads
+  // this ref so it can short-circuit drawing when the canvas isn't visible.
+  const starsVisibleRef = useRef(true);
+  starsVisibleRef.current = activeScene === "welcome";
 
   // ---------------------------------------------------------------------------
   // Canvas star field

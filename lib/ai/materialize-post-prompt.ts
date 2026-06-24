@@ -70,11 +70,19 @@ export function buildMaterializeSystemPrompt(opts: {
   postType: PostType;
   /** Optional recent post excerpts to anchor style. Short, max 3-4 entries. */
   recentPostSnippets?: string[];
+  /** Optional business grounding (bio / tagline / website) — the SAME context
+   *  Phase-1 (batch-plan) was given. Restores parity: without it the prose step
+   *  is less grounded than the brief that shaped it. */
+  businessContext?: string;
 }): string {
-  const { language, profile, plan, postType, recentPostSnippets } = opts;
+  const { language, profile, plan, postType, recentPostSnippets, businessContext } = opts;
 
   // THE Plan Max engine — identical to what /api/generate uses for the chat.
   const base = buildOptimizedPrompt(postType, language, profile, plan);
+
+  const businessBlock = businessContext?.trim()
+    ? `\n\n${language === "fr" ? "CONTEXTE BUSINESS DE L'AUTEUR (à utiliser pour ancrer le post, sans le réciter)" : "AUTHOR'S BUSINESS CONTEXT (use to ground the post, do not recite it)"}:\n${businessContext.trim()}`
+    : "";
 
   const styleBlock = recentPostSnippets?.length
     ? recentPostSnippets.map((s, i) => `${i + 1}. ${s}`).join("\n")
@@ -84,7 +92,7 @@ export function buildMaterializeSystemPrompt(opts: {
 
   const briefMode = language === "fr" ? FR_BRIEF_MODE : EN_BRIEF_MODE;
 
-  return `${base}
+  return `${base}${businessBlock}
 
 ═════════════════════════════════════
 ${language === "fr"
@@ -148,7 +156,7 @@ The user message gives you a pre-approved editorial brief (hook + angle + format
 - Use the rationale as implicit guidance only — never state it.
 - Invent nothing beyond the brief, the author profile, or the user note.
 - Apply EVERY quality, voice and LinkedIn-algorithm rule above.
-- FINAL CHECKLIST (non-negotiable — these are often skipped): (a) place 1-3 emojis as instructed, never zero unless the tone is strictly formal; (b) if the AUTHOR VOICE block defines a personalized signature, END with it; (c) close on exactly ONE open question OR CTA; (d) 3-5 camelCase hashtags on the last line, always ending with #posty.
+- FINAL CHECKLIST (non-negotiable — these are often skipped): (a) place 1-3 emojis as instructed, never zero unless the tone is strictly formal; (b) if the AUTHOR VOICE block defines a personalized signature, END with it; (c) close on exactly ONE open question OR CTA; (d) 2-3 camelCase hashtags on the last line, always ending with #posty.
 - Return ONLY the finished post body — no preamble, no "here is", no commentary, no sign-off label.`;
 
 const FR_BRIEF_MODE = `═════════════════════════════════════
@@ -160,5 +168,5 @@ Le message utilisateur te donne un brief éditorial validé (hook + angle + form
 - Sers-toi de la rationale comme guide implicite uniquement — ne la formule jamais.
 - N'invente rien au-delà du brief, du profil de l'auteur ou de la note utilisateur.
 - Applique TOUTES les règles de qualité, de voix et d'algorithme LinkedIn ci-dessus.
-- CHECKLIST FINALE (non négociable — souvent oubliée) : (a) place 1 à 3 émojis comme indiqué, jamais zéro sauf si le ton est strictement formel ; (b) si le bloc VOIX DE L'AUTEUR définit une signature personnalisée, TERMINE par elle ; (c) clôture sur UNE seule question ouverte OU UN CTA ; (d) 3 à 5 hashtags camelCase sur la dernière ligne, en terminant toujours par #posty.
+- CHECKLIST FINALE (non négociable — souvent oubliée) : (a) place 1 à 3 émojis comme indiqué, jamais zéro sauf si le ton est strictement formel ; (b) si le bloc VOIX DE L'AUTEUR définit une signature personnalisée, TERMINE par elle ; (c) clôture sur UNE seule question ouverte OU UN CTA ; (d) 2 à 3 hashtags camelCase sur la dernière ligne, en terminant toujours par #posty.
 - Retourne UNIQUEMENT le corps du post fini — pas de préambule, pas de "voici", pas de commentaire ni de label.`;

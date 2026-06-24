@@ -35,7 +35,6 @@ import "./globals.css";
 import {
   StrategistDrawer,
   AutonomousBatchBanner,
-  WhatsNewModal,
   GlobalCommandPalette,
   CookieBanner,
   LegalUpdateNotification,
@@ -401,9 +400,6 @@ export default function RootLayout({
                         LinkedInProvider". */}
                     <StrategistDrawer />
                     <AutonomousBatchBanner />
-                    {/* Release notes popup — surfaces what's new for
-                        authenticated users once per RELEASE_KEY bump. */}
-                    <WhatsNewModal />
                   </LinkedInProvider>
                 </QuotaProvider>
                 <CookieBanner />

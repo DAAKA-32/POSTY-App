@@ -12,26 +12,18 @@ interface SplashScreenProps {
 /**
  * Simple splash screen - Logo + POSTY + discrete loader
  * Minimal, fast, professional
- * Adapts to light/dark mode
- * Note: Reads theme directly from DOM/localStorage to avoid race condition with ThemeContext
+ *
+ * Theme: driven entirely by CSS (Tailwind `dark:` variants) keyed off the
+ * `.light` / `.dark` class the inline boot script in app/layout.tsx puts on
+ * <html> BEFORE the first paint. There is deliberately NO JS theme state here:
+ * a useState default forces one theme on the first frame and flashes the wrong
+ * one (a light-mode user briefly saw this splash in dark). CSS-class theming
+ * paints the correct theme on the very first frame, server and client alike —
+ * exactly like the other loaders (FullScreenLoader, ConnectionLoader, …).
  */
 export default function SplashScreen({ isLoading, onComplete }: SplashScreenProps) {
   const [show, setShow] = useState(true);
   const prefersReducedMotion = useReducedMotion();
-
-  // Always start dark to match SSR (prevents hydration mismatch).
-  // useEffect corrects the theme after hydration — no flicker since the
-  // splash screen is already showing (loading state).
-  const [isDark, setIsDark] = useState(true);
-
-  useEffect(() => {
-    const storedTheme = localStorage.getItem("posty-theme");
-    if (storedTheme) {
-      setIsDark(storedTheme === "dark");
-    } else {
-      setIsDark(!document.documentElement.classList.contains("light"));
-    }
-  }, []);
 
   useEffect(() => {
     if (!isLoading) {
@@ -58,9 +50,9 @@ export default function SplashScreen({ isLoading, onComplete }: SplashScreenProp
               ease: "easeOut",
             },
           }}
-          className={`fixed inset-0 z-[9999] flex items-center justify-center ${
-            isDark ? "bg-[#0B0E11]" : "bg-gradient-to-br from-orange-50 via-white to-amber-50"
-          } ${!isLoading ? "pointer-events-none" : ""}`}
+          className={`fixed inset-0 z-[9999] flex items-center justify-center bg-gradient-to-br from-orange-50 via-white to-amber-50 dark:bg-[#0B0E11] dark:bg-none ${
+            !isLoading ? "pointer-events-none" : ""
+          }`}
         >
           <div className="flex flex-col items-center gap-6">
             {/* Logo */}
@@ -88,9 +80,7 @@ export default function SplashScreen({ isLoading, onComplete }: SplashScreenProp
                 duration: prefersReducedMotion ? 0 : 0.3,
                 delay: prefersReducedMotion ? 0 : 0.1,
               }}
-              className={`text-3xl lg:text-4xl font-bold tracking-tight ${
-                isDark ? "text-white" : "text-gray-800"
-              }`}
+              className="text-3xl lg:text-4xl font-bold tracking-tight text-gray-800 dark:text-white"
             >
               POSTY
             </motion.h1>

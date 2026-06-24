@@ -737,6 +737,7 @@ export const pt = {
     pricingHeadline2: "O retorno de um vendedor em tempo integral.",
     pricingDescription: "Um único cliente fechado via LinkedIn paga seu ano inteiro. Qual plano combina com suas ambições?",
     pricingSavingsLabel: "2 meses grátis",
+    pricingPlusLower: "+ tudo do {plan}",
     pricingTrialIncluded: "Teste grátis incluído · Sem compromisso",
 
     // Business offer (B2B card under the pricing grid — expandable)
@@ -883,6 +884,19 @@ export const pt = {
 
     // Value block after features
     valueBlockTitle: "Por que freelancers escolhem o Posty",
+    valueBlockSubtitle: "Exemplos de resultados obtidos pelos nossos utilizadores, em todas as suas redes.",
+    valueMetricLabel1: "Visibilidade",
+    valueMetricLabel2: "Engajamento",
+    valueMetricLabel3: "Seguidores",
+    valueMetricLabel4: "Novos contactos",
+    valueMetricLabel5: "por semana",
+    valueMetricLabel6: "Alcance das publicações",
+    valueMetricLabel7: "Leads qualificados",
+    valueMetricLabel8: "Taxa de resposta",
+    valueMetricLabel9: "Novos clientes",
+    valueMetricLabel10: "Impressões / publicação",
+    valueMetricLabel11: "Oportunidades",
+    valueMetricLabel12: "Notoriedade",
     valueBlockItem1Title: "Prospecção automatizada",
     valueBlockItem1Desc: "Chega de horas procurando prospects. O Posty gera conteúdo que atrai seus clientes ideais.",
     valueBlockItem2Title: "Posts que convertem",
@@ -1019,7 +1033,7 @@ export const pt = {
     mockupScheduleAlt: "Agendamento de posts no LinkedIn",
     mockupScheduleLabel: "Agendados",
     mockupAnalyticsAlt: "Painel e análises",
-    mockupAnalyticsLabel: "Análises",
+    mockupAnalyticsLabel: "Dashboard",
   },
 
   // Auth
@@ -2740,6 +2754,8 @@ export const pt = {
     placeholderGeneralFixed: "Faça sua pergunta aqui...",
     speakNow: "🎤 Fale agora...",
     processingMessage: "Processando sua mensagem...",
+    transcribing: "Transcrevendo...",
+    transcriptionFailed: "Falha na transcrição, usando o texto ao vivo",
     monthlyQuotaReached: "Cota mensal atingida",
     dailyQuotaReached: "Cota diária atingida",
     trialLimitReached: "Limite do teste atingido",

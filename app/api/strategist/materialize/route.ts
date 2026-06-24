@@ -2,8 +2,9 @@
  * POST /api/strategist/materialize
  *
  * Strategist Phase 2 — turns every brief in an approved batch into a finished
- * LinkedIn post. One gpt-4o call per brief, parallelized with a concurrency
- * cap so we don't fan-out 15 simultaneous OpenAI calls and trip a rate limit.
+ * LinkedIn post. One LLM call per brief (gpt-4o-mini by default — see
+ * MATERIALIZE_MODEL), parallelized with a concurrency cap so we don't fan-out
+ * 15 simultaneous OpenAI calls and trip a rate limit.
  *
  * Two modes:
  *   - All briefs (default): pass { batchId } only
@@ -31,6 +32,7 @@ import {
 } from "@/lib/ai/materialize-post-prompt";
 import {
   getGenerationTemperature,
+  sanitizeProfileField,
   type ProfileFields,
   type PostType,
 } from "@/lib/services/prompt-builder";
@@ -63,6 +65,7 @@ const RequestSchema = z.object({
 async function loadUserContextAndPosts(uid: string): Promise<{
   profile: ProfileFields;
   snippets: string[];
+  businessContext?: string;
 }> {
   if (!isAdminInitialized() || !adminDb) return { profile: {}, snippets: [] };
   try {
@@ -77,6 +80,7 @@ async function loadUserContextAndPosts(uid: string): Promise<{
     ]);
     const data = userSnap.exists ? userSnap.data() ?? {} : {};
     const p = data.profile ?? {};
+    const branding = data.branding ?? {};
     // Raw profile fields (arrays preserved so the voice engine's exact-key
     // lookups — tone/sector/profileType maps — still match).
     const profile: ProfileFields = {
@@ -87,7 +91,28 @@ async function loadUserContextAndPosts(uid: string): Promise<{
       objective: p.objective,
       targetAudience: p.targetAudience,
       communicationTone: p.communicationTone,
+      linkedinStyle: p.linkedinStyle,
     };
+    // Same business grounding Phase-1 (generate-batch) was given — restores
+    // parity so the prose step is as grounded as the brief that shaped it.
+    // Sanitized via sanitizeProfileField (free-text user input → strips
+    // prompt-injection phrases + zero-width/bidi chars and caps length, same
+    // contract as every other profile field).
+    const bio = typeof data.bio === "string" ? sanitizeProfileField(data.bio) : "";
+    const tagline =
+      typeof branding.tagline === "string" ? sanitizeProfileField(branding.tagline) : "";
+    const website =
+      typeof branding.socialLinks?.website === "string"
+        ? sanitizeProfileField(branding.socialLinks.website)
+        : "";
+    const businessContext =
+      [
+        bio && `${bio}`,
+        tagline && `Tagline: ${tagline}`,
+        website && `Site: ${website}`,
+      ]
+        .filter(Boolean)
+        .join("\n") || undefined;
     const snippets = postsSnap.docs
       .map((d) => {
         const post = d.data();
@@ -97,7 +122,7 @@ async function loadUserContextAndPosts(uid: string): Promise<{
         return text ? text.slice(0, 220).replace(/\s+/g, " ") : "";
       })
       .filter(Boolean);
-    return { profile, snippets };
+    return { profile, snippets, businessContext };
   } catch (err) {
     console.error("[materialize] loadUserContextAndPosts error:", err);
     return { profile: {}, snippets: [] };
@@ -143,10 +168,11 @@ const MATERIALIZE_MODEL = process.env.STRATEGIST_MATERIALIZE_MODEL || MINI_MODEL
  * Uses the SAME system prompt (buildOptimizedPrompt via buildMaterializeSystemPrompt)
  * + plan-aware temperature + hashtag-normalization final pass as the main chat.
  * Only the MODEL differs (mini by default — see MATERIALIZE_MODEL). The brief's
- * format → PostType drives the base prompt + temperature. max_tokens 900 gives
- * Max-length storytelling room. System prompt is built ONCE per PostType and
- * reused across briefs of that type → OpenAI prompt caching cuts the shared
- * prefix ~50% from the 2nd same-type call onward.
+ * format → PostType drives the base prompt + temperature. max_tokens 1800 (up
+ * from 900, which truncated long posts) gives the 1300-2000 char target + signature
+ * + hashtags ample room — ~500-650 tokens of prose, so no truncation. System
+ * prompt is built ONCE per PostType and reused across briefs of that type →
+ * OpenAI prompt caching cuts the shared prefix ~50% from the 2nd same-type call.
  */
 async function materializeOne(
   openai: OpenAI,
@@ -160,7 +186,9 @@ async function materializeOne(
     const completion = await openai.chat.completions.create({
       model: MATERIALIZE_MODEL,
       temperature: getGenerationTemperature(postType, "max"),
-      max_tokens: 900,
+      // Parity with the chat path: 900 truncated long posts mid-sentence (no
+      // repair pass here). 1800 gives the 1300-2000 char target full room.
+      max_tokens: 1800,
       messages: [
         { role: "system", content: systemPrompt },
         {
@@ -314,7 +342,7 @@ export async function POST(request: NextRequest) {
   }
 
   // ── Load user context once, share across all calls ───────────────────
-  const { profile, snippets } = await loadUserContextAndPosts(userId);
+  const { profile, snippets, businessContext } = await loadUserContextAndPosts(userId);
 
   // Build ONE Plan-Max system prompt per PostType present in the batch and
   // reuse it across briefs of that type. buildOptimizedPrompt injects a random
@@ -332,6 +360,7 @@ export async function POST(request: NextRequest) {
         plan: "max",
         postType: t,
         recentPostSnippets: snippets,
+        businessContext,
       })
     );
   }

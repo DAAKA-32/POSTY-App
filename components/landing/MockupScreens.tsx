@@ -25,7 +25,7 @@ export interface MockupScreen {
  * so browsers (and Next.js Image optimizer) fetch the fresh screenshots instead
  * of serving the previous cached optimization.
  */
-const PREVIEWS_VERSION = "5";
+const PREVIEWS_VERSION = "9";
 
 /** Build translated MockupScreen array from translation object */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -36,7 +36,6 @@ export function getMockupScreens(landing: any): MockupScreen[] {
     { id: "conversation", src: `/images/screenshots/chat.png${v}`, alt: landing.mockupConversationAlt, label: landing.mockupConversationLabel },
     { id: "history", src: `/images/screenshots/history.png${v}`, alt: landing.mockupHistoryAlt, label: landing.mockupHistoryLabel },
     { id: "schedule", src: `/images/screenshots/schedule.png${v}`, alt: landing.mockupScheduleAlt, label: landing.mockupScheduleLabel },
-    { id: "analytics", src: `/images/screenshots/dashboard.png${v}`, alt: landing.mockupAnalyticsAlt, label: landing.mockupAnalyticsLabel },
   ];
 }
 

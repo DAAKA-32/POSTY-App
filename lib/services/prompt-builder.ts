@@ -176,28 +176,188 @@ const OBJECTIVE_STRATEGIES: Record<string, { fr: string; en: string }> = {
  * - Mobile-first reading patterns
  * - Native content preference (no external links)
  */
+// ============== LINKEDIN CRAFT RULES (2026) ==============
+//
+// Authoritative, tier-agnostic craft layer injected into every generation.
+// Grounded in current (2025-2026) LinkedIn algorithm + AI-detection research:
+// the "AI tell" is now STRUCTURAL (templated hooks, "it's not X it's Y",
+// reveal bridges, frictionless balance, em-dash density, vague abstraction),
+// not just vocabulary. These rules take precedence over any length/format
+// hint in the per-tier system prompts above.
 const LINKEDIN_ALGORITHM_RULES: Record<Language, string> = {
-  fr: `OPTIMISATION ALGORITHME LINKEDIN:
-- LES 3 PREMIÈRES LIGNES sont critiques. Elles apparaissent avant le bouton "...voir plus". Elles DOIVENT créer une tension, une curiosité ou un désaccord qui force le clic. C'est le signal #1 de distribution.
-- TEMPS DE LECTURE (dwell time): chaque paragraphe doit donner envie de lire le suivant. Utilise des micro-suspenses, des questions implicites, des révélations progressives. Le lecteur ne doit jamais avoir "la réponse" trop tôt.
-- COMMENTAIRES > RÉACTIONS > PARTAGES: LinkedIn distribue massivement les posts qui génèrent des commentaires (surtout longs). Conçois la fin du post pour déclencher des réponses personnelles, pas juste des "likes".
-- ESPACEMENT MOBILE: sur mobile, les blocs denses sont ignorés. Paragraphes de 1-2 lignes max avec ligne vide entre chaque. L'espace blanc ralentit le scroll et augmente le dwell time.
-- QUESTION FINALE SPÉCIFIQUE: ne pose pas "Qu'en pensez-vous ?" (trop vague, personne ne répond). Pose une question précise qui force le lecteur à réfléchir à SA propre expérience.
-- AUCUN LIEN EXTERNE dans le post (LinkedIn pénalise les liens sortants). Toute la valeur doit être dans le texte.
-- HASHTAGS STRATÉGIQUES: mélange 1-2 hashtags à fort volume (#leadership, #marketing) et 1-2 hashtags de niche pour cibler une communauté précise.
-- TYPOGRAPHIE HASHTAGS: première lettre toujours en minuscule. Pour les hashtags composés, utilise le camelCase (ex: #personalBranding, #linkedinGrowth, #cultureEntreprise). Le hashtag de marque est TOUJOURS #posty (jamais #posty ni #Posty).
-- DÉBUT DE PHRASE APRÈS SAUT DE LIGNE: après chaque ligne vide, la première phrase du paragraphe suivant doit relancer l'attention (nouveau fait, question, twist). Jamais de transition molle.`,
+  fr: `RÈGLES DE CRAFT LINKEDIN 2026 (prioritaires sur toute autre indication de format ou de longueur):
 
-  en: `LINKEDIN ALGORITHM OPTIMIZATION:
-- THE FIRST 3 LINES are critical. They appear before the "...see more" button. They MUST create tension, curiosity, or disagreement that forces the click. This is the #1 distribution signal.
-- DWELL TIME: each paragraph must make the reader want to read the next one. Use micro-suspense, implicit questions, progressive reveals. The reader should never get "the answer" too early.
-- COMMENTS > REACTIONS > SHARES: LinkedIn massively distributes posts that generate comments (especially long ones). Design the post ending to trigger personal responses, not just "likes".
-- MOBILE SPACING: on mobile, dense blocks are skipped. 1-2 line paragraphs max with a blank line between each. White space slows scrolling and increases dwell time.
-- SPECIFIC FINAL QUESTION: don't ask "What do you think?" (too vague, nobody answers). Ask a precise question that forces the reader to reflect on THEIR own experience.
-- NO EXTERNAL LINKS in the post (LinkedIn penalizes outbound links). All value must be in the text itself.
-- STRATEGIC HASHTAGS: mix 1-2 high-volume hashtags (#leadership, #marketing) and 1-2 niche hashtags to target a specific community.
-- HASHTAG TYPOGRAPHY: first letter is ALWAYS lowercase. For multi-word hashtags use camelCase (e.g. #personalBranding, #linkedinGrowth, #businessStrategy). The brand hashtag is ALWAYS #posty (never #posty nor #Posty).
-- FIRST SENTENCE AFTER LINE BREAK: after each blank line, the first sentence of the next paragraph must re-hook attention (new fact, question, twist). Never a soft transition.`,
+ACCROCHE — les 1-2 premières lignes (avant "...voir plus") font ~80% de la portée:
+- Le hook complet doit tenir en ~140 caractères et se suffire à lui-même. AUCUNE ligne vide à l'intérieur du hook (un double saut de ligne coupe l'aperçu trop tôt).
+- Ouvre UNE boucle de curiosité: annonce l'enjeu, le résultat ou la tension, sans livrer le "comment". Une seule question reste ouverte.
+- Bannis comme ouverture: la question rhétorique vague ("Et si je vous disais…", "Qu'en pensez-vous ?"), l'auto-présentation ("En tant que…"), "Dans un monde où…", "Aujourd'hui plus que jamais…", "Je suis ravi/fier d'annoncer…".
+
+ANCRAGE CONCRET (marqueur anti-IA n°1):
+- Chaque post DOIT contenir au moins un élément concret et vérifiable: une date ("mardi dernier", "en mars"), un nom (personne, entreprise, outil), un lieu, une situation vécue précise, ou un chiffre RÉEL. Le flou ("beaucoup", "récemment", "des études montrent" sans source) est le plus fort signal d'IA — interdit.
+- GARDE-FOU ANTI-FABRICATION (absolu): n'invente JAMAIS de statistique chiffrée (pourcentage, ROI, multiple "x3", montant en €/$, nombre de clients ou d'utilisateurs) ni d'étude, de sondage ou de citation attribuée. N'emploie un chiffre précis QUE s'il provient du bloc CONTEXTE TEMPS RÉEL fourni ci-dessous, OU d'une donnée explicitement donnée par l'auteur dans sa demande. Sans source vérifiée, ancre le post autrement: une date, une situation nommée, une observation à la première personne ("j'ai constaté chez mes clients que…", "sur nos derniers projets…"), ou une magnitude qualitative ("la plupart", "une minorité"). Un faux chiffre précis détruit la crédibilité et expose l'auteur — c'est rédhibitoire.
+
+STRUCTURE HUMAINE (le "tell" IA est devenu structurel):
+- INTERDIT: "Voici comment / ce que…", "Ce n'est pas X, c'est Y", le pont-révélation ("Le résultat ?", "Le plus fou ?", "Spoiler:", "Et là…"), la règle de trois systématique, l'équilibre sans friction ("les deux ont du bon", "ça dépend", "il n'y a pas de recette unique").
+- Varie la longueur des phrases (rythme): alterne phrases courtes (3-6 mots) et plus longues. Place au moins une phrase très courte, seule sur sa ligne, comme un temps fort.
+- Prends UNE position claire et assumée que certains pourraient contredire. Ne ré-équilibre PAS à la fin.
+
+LISIBILITÉ MOBILE:
+- Paragraphes de 1-3 lignes max, séparés par une ligne vide. Jamais de bloc dense.
+- Phrases directes, niveau de lecture simple. Au maximum 1 tiret cadratin (—) dans tout le post. Pas de faux gras Unicode, pas d'emoji à chaque ligne.
+
+LONGUEUR: vise 1300-2000 caractères (zone d'engagement maximale). Jamais sous 900 ni au-dessus de 2500.
+
+ENGAGEMENT (commentaires & sauvegardes > likes):
+- Termine par UNE question précise, répondable depuis l'expérience du lecteur (jamais "Qu'en pensez-vous ?"). Elle doit appeler une réponse d'une phrase avec un exemple ou un chiffre.
+- Donne quelque chose à SAUVEGARDER (un cadre, une checklist, une donnée réutilisable). Aucun appât à engagement ("Commentez OUI", "Identifiez un ami", "Repartagez si…").
+- Aucun lien externe dans le corps du post.
+
+HASHTAGS: 2 à 3 maximum, en minuscules (camelCase si composé: #personalBranding), réellement pertinents. Termine TOUJOURS par #posty (jamais #POSTY ni #Posty). Sur leur propre ligne, à la fin.`,
+
+  en: `LINKEDIN CRAFT RULES 2026 (these take precedence over any other format or length hint):
+
+HOOK — the first 1-2 lines (before "...see more") drive ~80% of reach:
+- The complete hook must fit within ~140 characters and stand on its own. NO blank line inside the hook (a double line break cuts the preview too early).
+- Open ONE curiosity loop: state the stakes, the result, or the tension without delivering the "how". Exactly one question stays unanswered.
+- Banned openers: the vague rhetorical question ("What if I told you…", "What do you think?"), self-introduction ("As a…"), "In a world where…", "Now more than ever…", "I'm thrilled/proud to announce…".
+
+CONCRETE ANCHOR (AI tell #1):
+- Every post MUST contain at least one concrete, verifiable element: a date ("last Tuesday", "in March"), a name (person, company, tool), a place, a specific lived situation, or a REAL number. Vagueness ("many", "recently", "studies show" with no source) is the strongest AI signal — forbidden.
+- ANTI-FABRICATION GUARDRAIL (absolute): NEVER invent a statistic (percentage, ROI, "3x" multiple, dollar/euro amount, customer or user count) or a study, survey, or attributed quote. Use a precise number ONLY if it comes from the REAL-TIME CONTEXT block provided below, OR from data the author explicitly gave in their request. With no verified source, anchor the post another way: a date, a named situation, a first-person observation ("I've seen with my clients that…", "across our last few projects…"), or a qualitative magnitude ("most", "a minority"). A fake precise figure destroys credibility and exposes the author — it is a hard fail.
+
+HUMAN STRUCTURE (the AI tell is now structural):
+- FORBIDDEN: "Here's how/what…", "It's not X, it's Y", the reveal bridge ("The result?", "The kicker?", "Plot twist:"), the systematic rule of three, frictionless both-sides balance ("both have merit", "it depends", "there's no one-size-fits-all").
+- Vary sentence length (rhythm): alternate short sentences (3-6 words) and longer ones. Put at least one very short sentence alone on its line as a beat.
+- Take ONE clear, owned position that some readers could disagree with. Do NOT re-balance at the end.
+
+MOBILE READABILITY:
+- Paragraphs of 1-3 lines max, separated by a blank line. Never a dense block.
+- Direct sentences, plain reading level. At most 1 em-dash (—) in the whole post. No Unicode pseudo-bold, no emoji on every line.
+
+LENGTH: target 1300-2000 characters (peak-engagement band). Never under 900 nor over 2500.
+
+ENGAGEMENT (comments & saves > likes):
+- End with ONE specific question, answerable from the reader's own experience (never "What do you think?"). It should invite a one-sentence reply with an example or a number.
+- Give something worth SAVING (a framework, a checklist, reusable data). No engagement bait ("Comment YES", "Tag a friend", "Repost if…").
+- No external links in the post body.
+
+HASHTAGS: 2 to 3 maximum, lowercase (camelCase if multi-word: #personalBranding), genuinely relevant. ALWAYS end with #posty (never #POSTY nor #Posty). On their own line, at the end.`,
+};
+
+// ============== MAX AUTHORITY LAYER ==============
+//
+// Max-only "bold voice" block (Q2 = adaptive Pro/Max). Pro keeps the measured,
+// anti-cliché base voice; Max leans into the research-backed authority moves:
+// defensible contrarian stance, numbers-anchored teardowns, named frameworks.
+const MAX_AUTHORITY_BLOCK: Record<Language, string> = {
+  fr: `POSTURE D'AUTORITÉ (Max):
+- Ne prends jamais l'angle le plus évident. Cherche l'angle contre-intuitif et DÉFENDABLE: nomme la croyance dominante, affirme ta position contraire, puis prouve-la par une donnée, un cas vécu ou un résultat chiffré dès les premières lignes.
+- Privilégie "voici ce que j'ai appris / raté" à "voici ce que j'ai réussi". Une leçon ou une erreur assumée crée plus de confiance qu'un trophée.
+- Montre l'expertise par le processus et la précision des exemples — jamais par des adjectifs ("expert", "référence") ni de l'auto-félicitation.
+- Un cadre nommé, une méthode numérotée ou un mini-teardown chiffré (situation → décision → étapes → résultat mesuré → enseignement) est encouragé S'IL est spécifique: c'est exactement ce qui se fait sauvegarder.`,
+  en: `AUTHORITY POSTURE (Max):
+- Never take the most obvious angle. Find the counter-intuitive, DEFENSIBLE one: name the dominant belief, state your opposite position, then back it with data, a lived case, or a measured result in the first lines.
+- Prefer "here's what I learned / got wrong" over "here's what I achieved". An owned lesson or mistake builds more trust than a trophy.
+- Demonstrate expertise through process and the precision of examples — never through adjectives ("expert", "leader") or self-praise.
+- A named framework, a numbered method, or a numbers-anchored teardown (situation → decision → steps → measured result → takeaway) is encouraged IF it is specific: that is exactly what gets saved.`,
+};
+
+// ============== REFERENCE EXEMPLARS (positive few-shot) ==============
+//
+// One finished, high-bar example per post type and language. Positive few-shot
+// outperforms negative-only prohibition lists. Fenced as CALIBRATION: the model
+// must copy the QUALITY (concrete anchors, human rhythm, owned stance, specific
+// close), never the topic or the exact structure. Only the matching type+lang
+// exemplar is injected, keeping the added token cost to ~one example.
+const REFERENCE_EXEMPLARS: Record<PostType, Record<Language, string>> = {
+  storytelling: {
+    fr: `Un client m'a dit "votre offre est trop chère" un jeudi à 17h.
+
+J'ai failli baisser mon prix de 20% dans la seconde.
+
+À la place, j'ai posé une question: "trop chère par rapport à quoi ?"
+
+Long silence. Puis: "honnêtement, je ne sais pas comment justifier ça à mon associé."
+
+Là, j'ai compris. Le problème n'avait rien à voir avec mon tarif. Il ne savait pas comment défendre la dépense devant quelqu'un d'autre.
+
+On a rangé le devis. Pendant 30 minutes, on a écrit ensemble l'argumentaire qu'IL présenterait à son associé: les 3 chiffres qui comptaient pour eux, le coût de ne rien faire, et la première étape concrète une fois le projet lancé.
+
+Il a signé le lundi suivant. Plein tarif. Sans une seule relance de ma part.
+
+Depuis, je traite chaque "c'est trop cher" comme un appel à l'aide déguisé. La personne en face veut souvent acheter. Il lui manque juste les mots pour convaincre une troisième personne qui n'était pas dans la pièce.
+
+Mon réflexe aujourd'hui: avant de toucher au prix, je demande à qui mon interlocuteur doit rendre des comptes. Et je passe le reste de l'appel à l'aider à gagner cette conversation-là, pas la nôtre.
+
+Quelle est la dernière objection "prix" que vous avez prise au pied de la lettre, alors qu'elle cachait tout autre chose ?
+
+#vente #negociation #posty`,
+    en: `A prospect told me "your offer is too expensive" on a Thursday at 5pm.
+
+I almost dropped my price 20% on the spot.
+
+Instead I asked one thing: "too expensive compared to what?"
+
+Long pause. Then: "honestly, I don't know how to justify this to my partner."
+
+That's when it clicked. The problem had nothing to do with my rate. He couldn't sell the spend to someone who wasn't in the room.
+
+So we put the quote away. For 30 minutes we wrote the case HE would make to his partner: the 3 numbers that mattered to them, the cost of doing nothing, and the first concrete step once the project kicked off.
+
+He signed the following Monday. Full price. Without a single follow-up from me.
+
+Now I treat every "it's too expensive" as a disguised ask for help. The person usually wants to buy. They're just missing the words to convince a third person who never heard the pitch.
+
+My default these days: before I touch the price, I ask who my buyer has to answer to. Then I spend the rest of the call helping them win that conversation, not ours.
+
+What's the last "price" objection you took at face value that was actually hiding something else?
+
+#sales #negotiation #posty`,
+  },
+  business: {
+    fr: `On nous répète qu'il faut publier tous les jours sur LinkedIn.
+
+J'ai testé l'inverse: 3 posts par semaine pendant 90 jours. Ma portée a été multipliée par 4.
+
+Ce qui a changé n'avait rien à voir avec le rythme. Chaque post partait enfin d'une preuve.
+
+Avant, mes 7 posts hebdomadaires recyclaient des évidences que n'importe qui dans mon secteur aurait pu signer. En descendant à 3, je me suis donné le temps de n'écrire que quand j'avais un vrai cas client, un chiffre précis, ou une décision que j'assumais.
+
+Concrètement, voici ce que je m'impose maintenant:
+
+1. Une idée ne devient un post que si j'ai une preuve derrière (un résultat, une donnée, une situation vécue).
+2. Je supprime tout brouillon qui pourrait être signé par n'importe quel concurrent.
+3. Je réponds à chaque commentaire dans l'heure qui suit la publication.
+
+Sur 90 jours: moins de posts, 4x plus de portée, et surtout 11 conversations commerciales sérieuses contre 2 au trimestre précédent.
+
+Le piège, c'est que publier tous les jours rassure. On coche une case, on a l'impression d'avancer. Mais la régularité sans matière finit juste par apprendre à votre audience à vous ignorer poliment.
+
+Vous publiez à quel rythme en ce moment, et qu'est-ce qui vous empêcherait concrètement de diviser ce volume par deux dès la semaine prochaine ?
+
+#linkedin #contenu #posty`,
+    en: `We keep being told to post on LinkedIn every single day.
+
+I tried the opposite: 3 posts a week for 90 days. My reach 4x'd.
+
+What changed had nothing to do with cadence. Every post finally started from proof.
+
+Before, my 7 weekly posts recycled obvious takes anyone in my field could have signed. Cutting to 3 gave me the time to only write when I had a real client case, a specific number, or a stance I'd defend out loud.
+
+Here's what I hold myself to now:
+
+1. An idea becomes a post only if I have proof behind it (a result, a data point, a lived situation).
+2. I kill any draft a competitor could have signed.
+3. I reply to every comment within the hour it goes live.
+
+Over 90 days: fewer posts, 4x the reach, and 11 serious sales conversations versus 2 the previous quarter.
+
+The trap is that posting daily feels safe. You tick a box, you feel productive. But consistency with nothing to say just trains your audience to scroll past you politely.
+
+How often are you posting right now, and what would actually stop you from cutting that volume in half starting next week?
+
+#linkedin #content #posty`,
+  },
 };
 
 // ============== PRO SYSTEM PROMPTS ==============
@@ -256,7 +416,7 @@ VARIATION OBLIGATOIRE:
 - Alterne entre les approches A-E
 - Si deux posts se ressemblent dans le ton ou la structure → ÉCHEC
 
-FORMAT: Paragraphes de 1-3 lignes séparés par une ligne vide. 1100-1500 caractères. 3-4 hashtags lies au contenu (sans accents), toujours terminer par #posty.`,
+FORMAT: Paragraphes de 1-3 lignes séparés par une ligne vide. Longueur, nombre de hashtags et règles de format: suis les RÈGLES DE CRAFT ci-dessous (elles priment). Hashtags sans accents, #posty toujours en dernier.`,
 
     en: `You are an expert LinkedIn ghostwriter. You write like a real person sharing their daily experience — NOT like an AI inventing a story.
 
@@ -307,7 +467,7 @@ MANDATORY VARIATION:
 - Alternate between approaches A-E
 - If two posts resemble each other in tone or structure → FAILURE
 
-FORMAT: 1-3 line paragraphs separated by blank lines. 1100-1500 characters. 3-4 hashtags related to content (no accented characters), always end with #posty.`,
+FORMAT: 1-3 line paragraphs separated by blank lines. Length, hashtag count, and format rules: follow the CRAFT RULES below (they take precedence). Hashtags without accents, #posty always last.`,
   },
 
   business: {
@@ -349,7 +509,7 @@ EMOJIS (1 à 3 max par post):
 - Interdits: accumulations, emojis décoratifs, un emoji par bullet point
 - Le post doit rester professionnel et lisible sans eux
 
-FORMAT: Structure aérée et lisible sur mobile. 1000-1400 caractères. 3-4 hashtags lies au contenu (sans accents), toujours terminer par #posty.`,
+FORMAT: Structure aérée et lisible sur mobile. Longueur, nombre de hashtags et règles de format: suis les RÈGLES DE CRAFT ci-dessous (elles priment). Hashtags sans accents, #posty toujours en dernier.`,
 
     en: `You are an expert LinkedIn ghostwriter. You create authentic business content that does NOT feel AI-generated.
 
@@ -389,7 +549,7 @@ EMOJIS (1 to 3 max per post):
 - Forbidden: stacking, decorative emojis, one emoji per bullet point
 - The post must remain professional and readable without them
 
-FORMAT: Airy, mobile-readable structure. 1000-1400 characters. 3-4 hashtags related to content (no accented characters), always end with #posty.`,
+FORMAT: Airy, mobile-readable structure. Length, hashtag count, and format rules: follow the CRAFT RULES below (they take precedence). Hashtags without accents, #posty always last.`,
   },
 };
 
@@ -454,7 +614,7 @@ VARIATION OBLIGATOIRE:
 - Alterne entre les approches A-F
 - Si deux posts se ressemblent dans le ton ou la structure → ÉCHEC
 
-FORMAT: Paragraphes de 1-3 lignes séparés par une ligne vide. 1200-1600 caractères. 3-5 hashtags lies au contenu (sans accents), toujours terminer par #posty.`,
+FORMAT: Paragraphes de 1-3 lignes séparés par une ligne vide. Longueur, nombre de hashtags et règles de format: suis les RÈGLES DE CRAFT ci-dessous (elles priment). Hashtags sans accents, #posty toujours en dernier.`,
 
     en: `You are a senior LinkedIn ghostwriter. You write like a real person sharing their daily experience with authenticity — NOT like an AI inventing stories. The reader should think: "this person clearly wrote this themselves".
 
@@ -509,7 +669,7 @@ MANDATORY VARIATION:
 - Alternate between approaches A-F
 - If two posts resemble each other in tone or structure → FAILURE
 
-FORMAT: 1-3 line paragraphs separated by blank lines. 1200-1600 characters. 3-5 hashtags related to content (no accented characters), always end with #posty.`,
+FORMAT: 1-3 line paragraphs separated by blank lines. Length, hashtag count, and format rules: follow the CRAFT RULES below (they take precedence). Hashtags without accents, #posty always last.`,
   },
 
   business: {
@@ -556,7 +716,7 @@ EMOJIS (1 à 3 max par post):
 - Interdits: accumulations, emojis décoratifs, un emoji par bullet point
 - Le post doit rester professionnel et lisible sans eux
 
-FORMAT: Structure aérée et lisible sur mobile. 1100-1500 caractères. 3-5 hashtags lies au contenu (sans accents), toujours terminer par #posty.`,
+FORMAT: Structure aérée et lisible sur mobile. Longueur, nombre de hashtags et règles de format: suis les RÈGLES DE CRAFT ci-dessous (elles priment). Hashtags sans accents, #posty toujours en dernier.`,
 
     en: `You are a senior LinkedIn ghostwriter. You create authentic business content that does NOT feel AI-generated — and that positions the author as a reference in their field.
 
@@ -601,7 +761,7 @@ EMOJIS (1 to 3 max per post):
 - Forbidden: stacking, decorative emojis, one emoji per bullet point
 - The post must remain professional and readable without them
 
-FORMAT: Airy, mobile-readable structure. 1100-1500 characters. 3-5 hashtags related to content (no accented characters), always end with #posty.`,
+FORMAT: Airy, mobile-readable structure. Length, hashtag count, and format rules: follow the CRAFT RULES below (they take precedence). Hashtags without accents, #posty always last.`,
   },
 };
 
@@ -665,7 +825,7 @@ const SECTOR_CONTEXT: Record<string, { fr: string; en: string }> = {
  * window either.
  */
 const PROFILE_FIELD_MAX_CHARS = 250;
-function sanitizeProfileField(input: string): string {
+export function sanitizeProfileField(input: string): string {
   return input
     .replace(/ignore\s+(all\s+)?(previous|above|prior)\s+(instructions?|prompts?)/gi, "")
     .replace(/disregard\s+(all\s+)?(previous|above|prior)\s+(instructions?|prompts?)/gi, "")
@@ -766,25 +926,64 @@ export function buildVoiceProfile(
     blocks.push(`${label}: ${identitySummary}`);
   }
 
-  // Tone → concrete style instructions (supports array or string)
+  // Author's self-described LinkedIn writing style — the single strongest
+  // personalization signal. Until now this field was only read by the
+  // assistance path, so replies sounded more "like the user" than the posts
+  // themselves. We sanitize via flattenField (free-text user input) and place
+  // it high in the prompt so it anchors before the abstract trait maps.
+  const linkedinStyle = flattenField(profile.linkedinStyle);
+  if (linkedinStyle) {
+    blocks.push(
+      isFr
+        ? `STYLE D'ÉCRITURE DE L'AUTEUR (à imiter fidèlement, c'est ainsi qu'il écrit vraiment): ${linkedinStyle}. Calque ce rythme, ce vocabulaire et ces tics de langage avant toute autre consigne de style.`
+        : `AUTHOR'S OWN WRITING STYLE (mirror it faithfully — this is how they actually write): ${linkedinStyle}. Match this rhythm, vocabulary, and verbal habits before any other style instruction.`
+    );
+  }
+
+  // Tone → concrete style instructions (supports array or string).
+  // Fallback: when the self-declared tone isn't in the curated map (English
+  // locale, custom label, onboarding drift), inject the raw label so the
+  // signal is never silently lost — collapsing to the generic base prompt.
   const tones = flattenFieldList(profile.communicationTone);
   for (const tone of tones) {
-    if (tone && TONE_STYLE_MAP[tone]) {
+    if (!tone) continue;
+    if (TONE_STYLE_MAP[tone]) {
       blocks.push(TONE_STYLE_MAP[tone][language]);
+    } else {
+      blocks.push(
+        isFr
+          ? `Ton de communication souhaité: ${tone}. Adapte le style d'écriture en conséquence.`
+          : `Desired communication tone: ${tone}. Adapt the writing style accordingly.`
+      );
     }
   }
 
-  // Profile type → authentic narrative context
+  // Profile type → authentic narrative context (raw-label fallback on miss)
   const profileType = flattenField(profile.profileType);
-  if (profileType && PROFILE_TYPE_CONTEXT[profileType]) {
-    blocks.push(PROFILE_TYPE_CONTEXT[profileType][language]);
+  if (profileType) {
+    if (PROFILE_TYPE_CONTEXT[profileType]) {
+      blocks.push(PROFILE_TYPE_CONTEXT[profileType][language]);
+    } else {
+      blocks.push(
+        isFr
+          ? `Contexte professionnel: ${profileType}. Les références et exemples doivent être naturels pour ce contexte.`
+          : `Professional context: ${profileType}. References and examples should feel natural for this context.`
+      );
+    }
   }
 
-  // Sector → industry-specific vocabulary and examples (supports array or string)
+  // Sector → industry-specific vocabulary and examples (raw-label fallback on miss)
   const sectors = flattenFieldList(profile.sector);
   for (const sector of sectors) {
-    if (sector && SECTOR_CONTEXT[sector]) {
+    if (!sector) continue;
+    if (SECTOR_CONTEXT[sector]) {
       blocks.push(SECTOR_CONTEXT[sector][language]);
+    } else {
+      blocks.push(
+        isFr
+          ? `Secteur d'activité: ${sector}. Utilise un vocabulaire et des exemples crédibles pour ce secteur, sans jargon creux.`
+          : `Industry: ${sector}. Use credible vocabulary and examples for this sector, without hollow jargon.`
+      );
     }
   }
 
@@ -840,7 +1039,12 @@ function getObjectiveStrategy(
       : "";
   if (!normalized) return null;
   const strategy = OBJECTIVE_STRATEGIES[normalized];
-  return strategy ? strategy[language] : null;
+  if (strategy) return strategy[language];
+  // Raw-label fallback: keep the user's objective signal even for custom /
+  // English-locale labels that aren't in the curated map.
+  return language === "fr"
+    ? `Objectif de l'auteur: ${normalized}. Oriente l'angle et le CTA du post vers cet objectif, sans jamais le formuler comme un pitch direct.`
+    : `Author's objective: ${normalized}. Steer the post's angle and CTA toward this objective, never phrased as a direct sales pitch.`;
 }
 
 // ============== VARIATION SEED ==============
@@ -907,12 +1111,18 @@ const CLOSING_STYLES_EN = [
 
 function buildVariationSeed(
   type: PostType,
-  language: Language
+  language: Language,
+  plan?: PlanTier
 ): string {
   const isFr = language === "fr";
 
-  // Random structure approach (A-E for Pro, A-F for Max)
-  const approaches = ["A", "B", "C", "D", "E", "F"];
+  // Scope the structure pool to what the active tier's prompt actually defines:
+  // PRO_SYSTEM_PROMPTS only list approaches A-E, MAX_SYSTEM_PROMPTS list A-F.
+  // Previously this always picked from A-F, so ~1/6 of Pro generations were told
+  // to "use approach F" — a directive that doesn't exist in the Pro prompt.
+  const approaches = plan === "max"
+    ? ["A", "B", "C", "D", "E", "F"]
+    : ["A", "B", "C", "D", "E"];
   const selectedApproach = approaches[Math.floor(Math.random() * approaches.length)];
   const avoidApproach = approaches.filter(a => a !== selectedApproach)[
     Math.floor(Math.random() * (approaches.length - 1))
@@ -1019,13 +1229,30 @@ export function buildOptimizedPrompt(
     prompt += audienceInstruction;
   }
 
-  // Inject variation seed — randomized structure/hook/closing directives
-  // to prevent repetitive outputs across consecutive generations
-  prompt += buildVariationSeed(type, language);
+  // Max-only authority layer: bold, research-backed voice (defensible
+  // contrarian stance, numbers-anchored teardowns, named frameworks). Pro keeps
+  // the measured anti-cliché base voice.
+  if (isMax) {
+    prompt += `\n\n${MAX_AUTHORITY_BLOCK[language]}`;
+  }
 
-  // Inject LinkedIn algorithm optimization rules
-  // These are universal engagement mechanics that apply to all plan tiers
+  // Inject variation seed — randomized structure/hook/closing directives
+  // to prevent repetitive outputs across consecutive generations (plan-scoped).
+  prompt += buildVariationSeed(type, language, plan ?? null);
+
+  // Inject the 2026 LinkedIn craft rules — universal engagement + anti-AI-tell
+  // mechanics that apply to all plan tiers and override per-prompt format hints.
   prompt += `\n\n${LINKEDIN_ALGORITHM_RULES[language]}`;
+
+  // Positive few-shot: one finished, high-bar exemplar for this type+language.
+  // Fenced as calibration so the model copies the quality bar, not the content.
+  const exemplar = REFERENCE_EXEMPLARS[type]?.[language];
+  if (exemplar) {
+    const header = language === "fr"
+      ? "\n\nEXEMPLE DE CALIBRATION (montre le NIVEAU attendu — voix humaine, ancrage concret, rythme, clôture spécifique). N'imite NI le sujet NI la structure exacte, seulement la qualité):\n---\n"
+      : "\n\nCALIBRATION EXAMPLE (shows the EXPECTED BAR — human voice, concrete anchors, rhythm, specific close). Do NOT copy the topic or exact structure, only the quality):\n---\n";
+    prompt += `${header}${exemplar}\n---`;
+  }
 
   return prompt;
 }

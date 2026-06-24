@@ -737,6 +737,7 @@ export const ko = {
     pricingHeadline2: "풀타임 영업 사원의 성과.",
     pricingDescription: "LinkedIn을 통해 계약한 고객 한 명이 1년 구독료를 충당해요. 어떤 플랜이 당신의 목표에 맞나요?",
     pricingSavingsLabel: "2개월 무료",
+    pricingPlusLower: "+ {plan}의 모든 기능",
     pricingTrialIncluded: "무료 체험 포함 · 약정 없음",
 
     // Business offer (B2B card under the pricing grid — expandable)
@@ -883,6 +884,19 @@ export const ko = {
 
     // Value block after features
     valueBlockTitle: "프리랜서가 Posty를 선택하는 이유",
+    valueBlockSubtitle: "여러 소셜 네트워크에서 사용자들이 얻은 성과 예시입니다.",
+    valueMetricLabel1: "노출",
+    valueMetricLabel2: "참여",
+    valueMetricLabel3: "팔로워",
+    valueMetricLabel4: "새 연락처",
+    valueMetricLabel5: "주당",
+    valueMetricLabel6: "게시물 도달",
+    valueMetricLabel7: "잠재 고객",
+    valueMetricLabel8: "응답률",
+    valueMetricLabel9: "신규 고객",
+    valueMetricLabel10: "노출 / 게시물",
+    valueMetricLabel11: "기회",
+    valueMetricLabel12: "인지도",
     valueBlockItem1Title: "자동화된 영업 개발",
     valueBlockItem1Desc: "잠재 고객을 찾는 데 몇 시간을 쓸 필요가 없습니다. Posty가 이상적인 고객을 끌어오는 콘텐츠를 생성합니다.",
     valueBlockItem2Title: "전환되는 게시물",
@@ -1019,7 +1033,7 @@ export const ko = {
     mockupScheduleAlt: "LinkedIn 게시물 예약",
     mockupScheduleLabel: "예약됨",
     mockupAnalyticsAlt: "대시보드 및 분석",
-    mockupAnalyticsLabel: "분석",
+    mockupAnalyticsLabel: "대시보드",
   },
 
   // Auth
@@ -2740,6 +2754,8 @@ export const ko = {
     placeholderGeneralFixed: "여기에 질문하세요...",
     speakNow: "🎤 말씀하세요...",
     processingMessage: "메시지를 처리하고 있어요...",
+    transcribing: "받아쓰는 중...",
+    transcriptionFailed: "받아쓰기에 실패했어요. 실시간 텍스트를 사용해요",
     monthlyQuotaReached: "월간 한도에 도달했어요",
     dailyQuotaReached: "일일 한도에 도달했어요",
     trialLimitReached: "체험 한도에 도달했어요",

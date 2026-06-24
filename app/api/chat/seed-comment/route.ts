@@ -41,8 +41,19 @@ import {
 import { isAdminInitialized } from "@/lib/db/firebase-admin";
 import { PlanType } from "@/lib/config/plans";
 import { verifyAuth } from "@/lib/auth";
+import { trackAIUsage } from "@/lib/ai-cost/tracker";
 
 const MAX_POST_CHARS = 4000;
+
+/** Server-side model allowlist. The model arrives in the request body, so
+ *  without this clamp a caller could downgrade this high-visibility public
+ *  copy to a weak model — or pass an arbitrary model string. */
+const ALLOWED_MODELS: OpenAIModel[] = ["gpt-4o", "gpt-4o-mini"];
+function clampModel(requested: unknown): OpenAIModel {
+  return ALLOWED_MODELS.includes(requested as OpenAIModel)
+    ? (requested as OpenAIModel)
+    : "gpt-4o";
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -67,6 +78,7 @@ export async function POST(request: NextRequest) {
     } = body ?? {};
 
     const userId = auth.uid === "__dev_bypass__" ? bodyUserId : auth.uid;
+    const safeModel = clampModel(model);
 
     /* ── Validation ───────────────────────────────────────────── */
     if (!userId || typeof userId !== "string") {
@@ -125,18 +137,31 @@ export async function POST(request: NextRequest) {
       return jsonError(401, "No API key configured", "NO_API_KEY");
     }
     const openai = hasUserKey
-      ? createUserOpenAIService(userApiKey!, { model })
-      : createOpenAIService({ model });
+      ? createUserOpenAIService(userApiKey!, { model: safeModel })
+      : createOpenAIService({ model: safeModel });
     if (!openai) {
       return jsonError(500, "Failed to initialize OpenAI service");
     }
 
     /* ── Generate ─────────────────────────────────────────────── */
-    const comment = await openai.generateSeedComment({
+    const { comment, usage } = await openai.generateSeedComment({
       postContent,
       language,
       userProfile,
     });
+
+    // Track usage — only when on the global key (BYOK calls aren't billed to us).
+    if (!hasUserKey) {
+      void trackAIUsage({
+        userId,
+        route: "chat.seed-comment",
+        model: safeModel,
+        inputTokens: usage.inputTokens,
+        outputTokens: usage.outputTokens,
+        cachedInputTokens: usage.cachedInputTokens,
+        metadata: { language },
+      });
+    }
 
     if (!comment || comment.length < 10) {
       return jsonError(500, "AI returned an empty comment");

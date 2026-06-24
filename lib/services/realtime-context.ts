@@ -2,34 +2,35 @@
  * Real-Time Contextual Intelligence for POSTY
  *
  * Grounds generated posts in CURRENT events, trends and data so they read like
- * they were written by an expert who actually follows their industry — not by a
- * timeless content machine.
+ * they were written by an expert who actually follows their industry.
  *
- * Architecture: "search-first, generate-second".
- *   1. isTopicTimeSensitive() — cheap, zero-API heuristic: does this topic move
- *      with the news (AI, markets, tech, crypto, a named company, "in 2026"…)?
- *   2. fetchRealtimeContext() — ONE call to OpenAI's native web search model
- *      (gpt-4o-mini-search-preview via Chat Completions) that returns a compact,
- *      DATED factual brief. The brief is later injected verbatim into the existing
- *      buildOptimizedPrompt → gpt-4 generation pipeline (unchanged streaming,
- *      temperature, variation and humanization layers).
+ * Architecture (since 2026-06): the PRIMARY data source is the keyless
+ * multi-provider news engine (lib/services/news-engine — GDELT, Hacker News,
+ * curated RSS, Wikimedia, arXiv). OpenAI is no longer the collector; it is used
+ * only for an OPTIONAL gpt-4o-mini synthesis of the gathered headlines. The
+ * legacy gpt-4o-mini-search-preview path is kept as a fallback, selectable via
+ * the NEWS_ENGINE_PROVIDER env flag:
+ *   - "apis"   (default) → news engine only (cheapest, no OpenAI search)
+ *   - "hybrid"           → news engine first, OpenAI search if it returns null
+ *   - "openai"           → legacy OpenAI search-preview only (pre-2026-06)
+ *   - "off"              → no real-time grounding at all
  *
- * Why a separate call instead of letting the search model write the post:
- *   - gpt-4o-*-search-preview rejects `temperature` (400) — our variation/
- *     humanization engine depends on it. Decoupling preserves the full pipeline.
- *   - Keeps facts and voice as independent concerns: facts come from the web,
- *     voice comes from the user's profile + variation seed.
+ * The public surface is unchanged: same isTopicTimeSensitive(),
+ * fetchRealtimeContext(client, topic, language, userId) signature, RealtimeContext
+ * shape and buildRealtimeContextBlock() — so /api/generate, the strategist and
+ * the Firestore cache wrapper are untouched.
  *
  * Product decisions encoded here:
- *   - Sources stay INTERNAL (logged, used as an anti-hallucination guard) and are
- *     NOT surfaced to the user. Facts are woven into the post with NO links
- *     (LinkedIn penalizes outbound links).
+ *   - Sources stay INTERNAL (logged, anti-hallucination guard) — never surfaced.
+ *   - Facts are woven into the post with NO links (LinkedIn penalizes them).
  *   - Plan-gated to Pro+ at the call site (lib/config/plans → hasRealtimeContext).
  *   - Non-blocking: any failure returns null and generation proceeds normally.
  */
 
 import type OpenAI from "openai";
 import { trackAIUsage, readUsageFromResponse } from "@/lib/ai-cost/tracker";
+import { isTimeSensitive } from "@/lib/services/news-engine/keywords";
+import { fetchRealtimeContextFromAPIs } from "@/lib/services/news-engine";
 
 // ============================================
 // TYPES
@@ -54,60 +55,20 @@ export interface RealtimeContext {
 // ============================================
 
 /**
- * Domains whose "truth" shifts month to month. A post about any of these reads
- * as stale the moment it ignores what's happening right now. Matching one of
- * these is enough to justify a web search.
- */
-const TIME_SENSITIVE_DOMAINS: RegExp[] = [
-  // AI / tech
-  /\b(ia|a\.?i\.?|intelligence artificielle|machine learning|llm|gpt|chatgpt|claude|gemini|mistral|openai|anthropic|deep ?learning|generative|g[ée]n[ée]rative)\b/i,
-  /\b(tech|technologie|technology|logiciel|software|saas|startup|scale[- ]?up|no[- ]?code)\b/i,
-  // Markets / finance / economy
-  /\b(bourse|march[ée]s?|stock ?market|trading|investissement|investing|invest|action(s|naires)?|[ée]conomie|economy|economic|inflation|r[ée]cession|taux d'?int[ée]r[êe]t|interest rates?)\b/i,
-  /\b(crypto|bitcoin|btc|ethereum|eth|blockchain|web3|nft|d[ée]fi|token)\b/i,
-  // Business / strategy that tracks current events
-  /\b(lev[ée]e de fonds|fundraising|ipo|m&a|acquisition|valorisation|valuation|licenciements?|layoffs?)\b/i,
-  /\b(r[ée]glementation|regulation|loi|law|rgpd|gdpr|ai act|directive europ[ée]enne)\b/i,
-  // Marketing / social platforms (algorithms change constantly)
-  /\b(algorithme|algorithm|linkedin|tiktok|instagram|seo|reach|portée|growth hacking)\b/i,
-  // Named recency: any year 2023-2030 referenced explicitly
-  /\b(20(2[3-9]|30))\b/,
-];
-
-/**
- * Explicit recency markers — the user is asking about "what's new / latest /
- * right now". Even an otherwise-evergreen noun becomes time-sensitive.
- */
-const RECENCY_MARKERS: RegExp[] = [
-  /\b(actualit[ée]s?|news|r[ée]cent(e|es|s)?|recent(ly)?|derni[èe]res?|latest|nouveau(t[ée]s?|x)?|new(est)?)\b/i,
-  /\b(en ce moment|right now|aujourd'?hui|today|cette (semaine|ann[ée]e)|this (week|year)|ces derniers (jours|mois)|past (few )?(days|weeks|months))\b/i,
-  /\b(tendances?|trends?|trending|en vogue|hype|buzz|viral)\b/i,
-  /\b(mise[- ]?à[- ]?jour|update|annonce|announcement|sortie|release|lancement|launch)\b/i,
-];
-
-/**
- * Decide — with no API call — whether a topic warrants a real-time web search.
+ * Decide — with no API call — whether a topic warrants real-time grounding.
  *
- * Intentionally inclusive on genuinely-evolving domains, but deliberately does
- * NOT fire on evergreen subjects (leadership, productivity, mindset, recipes…)
- * so we don't pay for search when the present moment adds nothing. Cost is
- * further bounded upstream: Pro+ only, PRODUCTION intent only, first message only.
+ * Delegates to the shared keyword SSoT (news-engine/keywords) so this gate and
+ * the provider router use ONE definition and can never drift. Behavior is
+ * identical to the previous inline implementation (recency markers ∪ time-moving
+ * domains ∪ explicit year reference). Cost is further bounded upstream: Pro+
+ * only, PRODUCTION intent only, first message only.
  */
 export function isTopicTimeSensitive(prompt: string): boolean {
-  const text = prompt.trim();
-  if (text.length < 3) return false;
-
-  for (const re of RECENCY_MARKERS) {
-    if (re.test(text)) return true;
-  }
-  for (const re of TIME_SENSITIVE_DOMAINS) {
-    if (re.test(text)) return true;
-  }
-  return false;
+  return isTimeSensitive(prompt);
 }
 
 // ============================================
-// RESEARCH PROMPTS
+// LEGACY OPENAI WEB-SEARCH PATH (fallback)
 // ============================================
 
 const RESEARCH_SYSTEM_PROMPT: Record<"fr" | "en", string> = {
@@ -119,7 +80,7 @@ RÈGLES STRICTES:
 - N'invente RIEN. Pas de statistiques approximatives présentées comme exactes. Si un chiffre est une estimation, dis-le.
 - Aucun lien, aucune URL dans le texte des puces.
 - Reste neutre et factuel — pas d'opinion, pas de rédaction marketing.
-- Si la recherche ne remonte AUCUNE information récente pertinente, réponds EXACTEMENT: AUCUN_CONTEXTE
+- Si la recherche ne remonte AUCUN information récente pertinente, réponds EXACTEMENT: AUCUN_CONTEXTE
 
 Format: uniquement les puces (préfixe "- "), rien d'autre.`,
   en: `You are a research analyst. Given a topic, you run a web search and return a FACTUAL BRIEF of RECENT and VERIFIABLE information.
@@ -139,42 +100,27 @@ const NO_CONTEXT_SENTINEL = "AUCUN_CONTEXTE";
 
 /**
  * Strip inline source citations and bare URLs from the brief.
- *
- * The search-preview model inlines markdown citations like "([domain](url))"
- * regardless of instructions. We capture sources separately from `annotations`,
- * so the brief text itself must be link-free before it's injected into the
- * generation prompt — otherwise the writer model could leak a domain/URL into
- * the post (violates LinkedIn's no-outbound-links rule + "hidden sources").
+ * The search-preview model inlines markdown citations regardless of instructions.
  */
 function stripCitations(text: string): string {
   return text
-    // "([label](url))" — the parenthesized citation form the model emits
     .replace(/\s*\(\[[^\]]*\]\([^)]*\)\)/g, "")
-    // any remaining "[label](url)" markdown links → keep just the label
     .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
-    // bare URLs
     .replace(/https?:\/\/[^\s)]+/g, "")
-    // tidy leftover empty parens / double spaces / trailing spaces per line
     .replace(/\(\s*\)/g, "")
     .replace(/[ \t]{2,}/g, " ")
     .replace(/[ \t]+$/gm, "")
     .trim();
 }
 
-/** Search model — the "mini" search-preview is cheap and sufficient for fact-gathering. */
+/** Legacy search model. */
 const RESEARCH_MODEL = "gpt-4o-mini-search-preview";
-
 /** Hard ceiling so a slow search never hangs the generation stream. */
 const RESEARCH_TIMEOUT_MS = 12_000;
+/** OpenAI bills web_search as a fixed per-call tool fee on top of tokens
+ *  (~$0.025/call at medium context). Tracked explicitly so rentability is honest. */
+const WEB_SEARCH_SURCHARGE_USD = 0.025;
 
-// ============================================
-// MAIN: FETCH REAL-TIME CONTEXT
-// ============================================
-
-/**
- * Format today's date for prompt injection (server-side; `new Date()` is fine
- * in a Next.js route handler).
- */
 function formatCurrentDate(language: "fr" | "en"): string {
   return new Intl.DateTimeFormat(language === "fr" ? "fr-FR" : "en-US", {
     day: "numeric",
@@ -184,15 +130,10 @@ function formatCurrentDate(language: "fr" | "en"): string {
 }
 
 /**
- * Run ONE native web-search call and return a dated factual brief, or null.
- *
- * Never throws — on timeout, API error, empty result or the AUCUN_CONTEXTE
- * sentinel it resolves to null and the caller proceeds without real-time facts.
- *
- * @param client  An OpenAI client (pass `service["client"]` to honor user keys).
- * @param topic   The cleaned post topic (URL/markers already stripped upstream).
+ * LEGACY: one native OpenAI web-search call → dated factual brief, or null.
+ * Kept as a fallback (NEWS_ENGINE_PROVIDER="openai"|"hybrid"). Never throws.
  */
-export async function fetchRealtimeContext(
+async function fetchRealtimeContextOpenAI(
   client: OpenAI,
   topic: string,
   language: "fr" | "en",
@@ -213,7 +154,8 @@ export async function fetchRealtimeContext(
       { timeout: RESEARCH_TIMEOUT_MS },
     );
 
-    // Cost accounting — same shape as every other AI call in the app.
+    // Cost accounting — token cost + the fixed web_search surcharge (the
+    // dominant cost), so the rentability dashboard stops under-reporting it.
     const usage = readUsageFromResponse(response);
     void trackAIUsage({
       userId,
@@ -222,22 +164,20 @@ export async function fetchRealtimeContext(
       inputTokens: usage.inputTokens,
       outputTokens: usage.outputTokens,
       cachedInputTokens: usage.cachedInputTokens,
-      metadata: { language },
+      costUSD:
+        (usage.inputTokens / 1_000_000) * 0.15 +
+        (usage.outputTokens / 1_000_000) * 0.6 +
+        WEB_SEARCH_SURCHARGE_USD,
+      metadata: { language, websearch: true },
     });
 
     const message = response.choices[0]?.message;
     const raw = message?.content?.trim() ?? "";
+    if (!raw || raw.toUpperCase().includes(NO_CONTEXT_SENTINEL)) return null;
 
-    // No usable content, or the model explicitly signalled "nothing recent".
-    if (!raw || raw.toUpperCase().includes(NO_CONTEXT_SENTINEL)) {
-      return null;
-    }
-
-    // Remove inline citations/URLs — facts only, sources stay structured+internal.
     const brief = stripCitations(raw);
     if (!brief) return null;
 
-    // Collect citations for INTERNAL use only (never surfaced to the user).
     const sources: RealtimeSource[] = [];
     const annotations = message?.annotations ?? [];
     for (const a of annotations) {
@@ -249,16 +189,47 @@ export async function fetchRealtimeContext(
       }
     }
 
-    return {
-      brief,
-      sources,
-      currentDate: formatCurrentDate(language),
-    };
+    return { brief, sources, currentDate: formatCurrentDate(language) };
   } catch (error) {
-    // Non-blocking: log and let generation continue without real-time facts.
-    console.error("Realtime context fetch failed (non-blocking):", error);
+    console.error("Realtime context (OpenAI) fetch failed (non-blocking):", error);
     return null;
   }
+}
+
+// ============================================
+// MAIN: FETCH REAL-TIME CONTEXT (dispatcher)
+// ============================================
+
+type EngineMode = "apis" | "hybrid" | "openai" | "off";
+
+function engineMode(): EngineMode {
+  const m = (process.env.NEWS_ENGINE_PROVIDER || "apis").toLowerCase();
+  return m === "openai" || m === "hybrid" || m === "off" ? (m as EngineMode) : "apis";
+}
+
+/**
+ * Return a dated factual brief for `topic`, or null. Signature is UNCHANGED
+ * (client kept for the OpenAI synth/fallback steps) so all call sites and the
+ * Firestore cache wrapper are untouched. Never throws.
+ *
+ * @param client  An OpenAI client (honors user keys) — used only for synthesis
+ *                and the legacy fallback, never as the primary collector.
+ */
+export async function fetchRealtimeContext(
+  client: OpenAI,
+  topic: string,
+  language: "fr" | "en",
+  userId: string,
+): Promise<RealtimeContext | null> {
+  const mode = engineMode();
+  if (mode === "off") return null;
+  if (mode === "openai") return fetchRealtimeContextOpenAI(client, topic, language, userId);
+
+  // "apis" (default) and "hybrid": public-API engine first.
+  const fromApis = await fetchRealtimeContextFromAPIs(topic, language, userId, client);
+  if (fromApis) return fromApis;
+  if (mode === "hybrid") return fetchRealtimeContextOpenAI(client, topic, language, userId);
+  return null;
 }
 
 // ============================================
@@ -267,10 +238,7 @@ export async function fetchRealtimeContext(
 
 /**
  * Build the system-prompt block that injects the dated brief into generation.
- *
- * Designed to coexist with the existing anti-AI / no-external-links rules:
- * facts are to be WOVEN IN naturally, never listed, never linked, and only when
- * they genuinely strengthen the message.
+ * Facts are to be WOVEN IN naturally, never listed, never linked.
  */
 export function buildRealtimeContextBlock(
   ctx: RealtimeContext,

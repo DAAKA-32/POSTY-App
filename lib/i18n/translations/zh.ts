@@ -737,6 +737,7 @@ export const zh = {
     pricingHeadline2: "相当于一位全职销售的回报。",
     pricingDescription: "通过 LinkedIn 签下一个客户就能抵一整年的费用。哪个方案符合您的目标？",
     pricingSavingsLabel: "省 2 个月",
+    pricingPlusLower: "+ {plan} 的全部功能",
     pricingTrialIncluded: "含免费试用 · 无需承诺",
 
     // Business offer (B2B card under the pricing grid — expandable)
@@ -883,6 +884,19 @@ export const zh = {
 
     // Value block after features
     valueBlockTitle: "自由职业者为什么选择 Posty",
+    valueBlockSubtitle: "我们的用户在各大社交网络上取得的成果示例。",
+    valueMetricLabel1: "曝光量",
+    valueMetricLabel2: "互动",
+    valueMetricLabel3: "粉丝",
+    valueMetricLabel4: "新联系人",
+    valueMetricLabel5: "每周",
+    valueMetricLabel6: "帖子触达",
+    valueMetricLabel7: "优质线索",
+    valueMetricLabel8: "回复率",
+    valueMetricLabel9: "新客户",
+    valueMetricLabel10: "展示 / 帖",
+    valueMetricLabel11: "机会",
+    valueMetricLabel12: "知名度",
     valueBlockItem1Title: "自动化获客",
     valueBlockItem1Desc: "不再花数小时寻找潜在客户。Posty 生成吸引理想客户的内容。",
     valueBlockItem2Title: "能转化的帖子",
@@ -1019,7 +1033,7 @@ export const zh = {
     mockupScheduleAlt: "LinkedIn 帖子定时发布",
     mockupScheduleLabel: "定时",
     mockupAnalyticsAlt: "仪表盘与分析",
-    mockupAnalyticsLabel: "数据分析",
+    mockupAnalyticsLabel: "仪表盘",
   },
 
   // Auth
@@ -2740,6 +2754,8 @@ export const zh = {
     placeholderGeneralFixed: "在这里提问...",
     speakNow: "🎤 请开始说话...",
     processingMessage: "正在处理您的消息...",
+    transcribing: "正在转录...",
+    transcriptionFailed: "转录失败，使用实时文本",
     monthlyQuotaReached: "月度额度已用完",
     dailyQuotaReached: "每日额度已用完",
     trialLimitReached: "试用额度已用完",

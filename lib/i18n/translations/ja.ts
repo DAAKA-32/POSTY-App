@@ -737,6 +737,7 @@ export const ja = {
     pricingHeadline2: "フルタイム営業担当者のリターン。",
     pricingDescription: "LinkedIn経由で1件の契約が取れれば、1年分のコストを回収できます。あなたの目標に合うプランは？",
     pricingSavingsLabel: "2ヶ月分無料",
+    pricingPlusLower: "+ {plan} のすべて",
     pricingTrialIncluded: "無料トライアル付き · 縛りなし",
 
     // Business offer (B2B card under the pricing grid — expandable)
@@ -883,6 +884,19 @@ export const ja = {
 
     // Value block after features
     valueBlockTitle: "フリーランサーがPostyを選ぶ理由",
+    valueBlockSubtitle: "あらゆるSNSでユーザーが得た成果の一例です。",
+    valueMetricLabel1: "認知度",
+    valueMetricLabel2: "エンゲージメント",
+    valueMetricLabel3: "フォロワー",
+    valueMetricLabel4: "新規コンタクト",
+    valueMetricLabel5: "週あたり",
+    valueMetricLabel6: "投稿のリーチ",
+    valueMetricLabel7: "有望なリード",
+    valueMetricLabel8: "返信率",
+    valueMetricLabel9: "新規顧客",
+    valueMetricLabel10: "インプレッション / 投稿",
+    valueMetricLabel11: "商談機会",
+    valueMetricLabel12: "ブランド認知",
     valueBlockItem1Title: "営業の自動化",
     valueBlockItem1Desc: "見込み客探しに何時間も費やす必要はありません。Postyが理想の顧客を引きつけるコンテンツを生成します。",
     valueBlockItem2Title: "成果を出す投稿",
@@ -1019,7 +1033,7 @@ export const ja = {
     mockupScheduleAlt: "LinkedIn投稿の予約",
     mockupScheduleLabel: "予約済み",
     mockupAnalyticsAlt: "ダッシュボードとアナリティクス",
-    mockupAnalyticsLabel: "アナリティクス",
+    mockupAnalyticsLabel: "ダッシュボード",
   },
 
   // Auth
@@ -2740,6 +2754,8 @@ export const ja = {
     placeholderGeneralFixed: "こちらに質問を入力...",
     speakNow: "🎤 話してください...",
     processingMessage: "メッセージを処理中...",
+    transcribing: "文字起こし中...",
+    transcriptionFailed: "文字起こしに失敗しました。リアルタイムのテキストを使用します",
     monthlyQuotaReached: "月間クォータに達しました",
     dailyQuotaReached: "1日のクォータに達しました",
     trialLimitReached: "トライアルの上限に達しました",

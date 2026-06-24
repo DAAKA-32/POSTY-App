@@ -899,7 +899,12 @@ export class OpenAIService {
    */
   async generateSeedComment(
     options: GenerateSeedCommentOptions,
-  ): Promise<string> {
+  ): Promise<{
+    comment: string;
+    /** Token usage so the caller can trackAIUsage() — previously discarded,
+     *  which made this (on-every-post) call invisible in the rentability data. */
+    usage: { inputTokens: number; outputTokens: number; cachedInputTokens: number };
+  }> {
     const { postContent, language = "fr", userProfile } = options;
     const systemPrompt = this.buildSeedCommentSystemPrompt(language, userProfile);
     const userPrompt =
@@ -918,8 +923,16 @@ export class OpenAIService {
     });
 
     const raw = completion.choices[0]?.message?.content?.trim() ?? "";
-    // Strip surrounding quotes that some models add despite the instruction.
-    return raw.replace(/^["""'«»]+|["""'«»]+$/g, "").trim();
+    const u = completion.usage;
+    return {
+      // Strip surrounding quotes that some models add despite the instruction.
+      comment: raw.replace(/^["""'«»]+|["""'«»]+$/g, "").trim(),
+      usage: {
+        inputTokens: u?.prompt_tokens ?? 0,
+        outputTokens: u?.completion_tokens ?? 0,
+        cachedInputTokens: u?.prompt_tokens_details?.cached_tokens ?? 0,
+      },
+    };
   }
 
   private buildSeedCommentSystemPrompt(

@@ -129,13 +129,38 @@ export const AnnouncementCardSchema = z.object({
 });
 
 /**
- * Photo-clean template — the PREMIUM DEFAULT. A real photo from Unsplash /
- * Pexels fills the whole frame, with NO heavy text slab. At most a discreet
- * one-line caption and/or a small uppercase eyebrow anchored bottom-left over
- * a soft scrim. This is what makes a visual read as "real editorial content"
- * instead of "AI/Canva card with text". Prefer this whenever the brief evokes
- * any concrete subject (a person, place, object, scene). The post itself
- * carries the message — the image carries credibility and emotion.
+ * Photo-hero template — THE DEFAULT. A real photo from Unsplash / Pexels fills
+ * the frame as a BACKGROUND, and a BOLD headline carrying the post's core
+ * message is burned over it. Text is the foreground hero; the photo is the
+ * support. This is the format that reads as "high-performing LinkedIn content"
+ * — the key idea is legible in 2 seconds, even as a feed thumbnail on mobile.
+ * Prefer this for almost every post: the headline IS the message.
+ *
+ * `searchQuery` is 2-5 CONCRETE English keywords. English performs much better
+ * than French on both Unsplash and Pexels search.
+ */
+export const PhotoHeroSchema = z.object({
+  template: z.literal("photo-hero"),
+  ...baseFields,
+  /** 2-5 English keywords used to find a matching photo. Concrete subjects
+   *  beat abstract concepts ("laptop coffee desk" > "productivity"). */
+  searchQuery: z.string().min(3).max(80),
+  /** THE message. A bold, punchy headline burned over the photo. SHORTER is
+   *  stronger — it renders bigger and dominates the frame. Aim ≤ 45 chars. */
+  headline: z.string().min(4).max(70),
+  /** Optional supporting line under the headline, ≤ 120 chars. */
+  body: z.string().max(140).optional(),
+  /** Optional eyebrow above the headline — rendered as a brand-color chip
+   *  (uppercase label, e.g. "ÉTUDE 2026", "RETOUR D'EXPÉRIENCE"). */
+  eyebrow: z.string().max(40).optional(),
+});
+
+/**
+ * Photo-clean template — the RARE exception. A real photo fills the whole
+ * frame with little or no text — only for purely atmospheric posts that have
+ * no single message to assert (a mood, a moment). NOT the default: by default
+ * a visual must carry the message (use photo-hero). When a caption is present
+ * it is rendered large enough to be read, never as a tiny afterthought.
  *
  * `searchQuery` is 2-5 CONCRETE English keywords. English performs much better
  * than French on both Unsplash and Pexels search.
@@ -147,39 +172,17 @@ export const PhotoCleanSchema = z.object({
    *  Name the actual thing ("french parliament chamber", "paris haussmann
    *  street", "founder coworking laptop"), never an abstract concept. */
   searchQuery: z.string().min(3).max(80),
-  /** Optional discreet caption — a SINGLE short line, rendered small + subtle.
-   *  Often best left empty so the photo stands alone. ≤ 70 chars. */
+  /** Optional caption — a SINGLE short line, rendered bold and legible.
+   *  Leave empty only for a deliberately wordless, atmospheric visual. ≤ 70 chars. */
   caption: z.string().max(70).optional(),
-  /** Optional tiny uppercase label above the caption (e.g. "PARIS 2026"). */
-  eyebrow: z.string().max(40).optional(),
-});
-
-/**
- * Photo-hero template — uses a real photo from Unsplash / Pexels as a
- * full-bleed background, overlaid with a dark gradient + editorial headline.
- * Use this (over photo-clean) ONLY when the post genuinely needs a strong
- * statement burned onto the image — a manifesto line, a launch claim. The
- * headline stays editorial and refined, never a giant marketing slab.
- * The AI fills `searchQuery` with 2-5 concrete English keywords.
- */
-export const PhotoHeroSchema = z.object({
-  template: z.literal("photo-hero"),
-  ...baseFields,
-  /** 2-5 English keywords used to find a matching photo. Concrete subjects
-   *  beat abstract concepts ("laptop coffee desk" > "productivity"). */
-  searchQuery: z.string().min(3).max(80),
-  /** Editorial headline overlaid on the photo, ≤ 60 chars. Keep it tight. */
-  headline: z.string().min(4).max(60),
-  /** Optional supporting line under the headline, ≤ 120 chars. */
-  body: z.string().max(140).optional(),
-  /** Optional eyebrow above the headline (uppercase label). */
+  /** Optional uppercase label above the caption (e.g. "PARIS 2026"). */
   eyebrow: z.string().max(40).optional(),
 });
 
 // Discriminated union — `template` field steers Zod to the right schema.
 export const ImageDSLSchema = z.discriminatedUnion("template", [
-  PhotoCleanSchema,
   PhotoHeroSchema,
+  PhotoCleanSchema,
   KpiCardSchema,
   QuoteCardSchema,
   AnnouncementCardSchema,
@@ -188,23 +191,25 @@ export const ImageDSLSchema = z.discriminatedUnion("template", [
 export type ImageDSL = z.infer<typeof ImageDSLSchema>;
 export type TemplateId = ImageDSL["template"];
 
-// Order matters: photo templates first so any "freshness" rotation defaults to
-// them — the system is photo-first, text cards are the minority fallback.
+// Order matters: photo-hero (bold message over a real photo) leads so any
+// "freshness" rotation defaults to it — the system is MESSAGE-first. Text cards
+// follow for genuinely textual content; photo-clean is the rare wordless option.
 export const TEMPLATE_IDS = [
-  "photo-clean",
   "photo-hero",
   "kpi-card",
   "quote-card",
   "announcement-card",
+  "photo-clean",
 ] as const;
 
 /**
- * Templates backed by a real stock photo. These are the DEFAULT. They are
- * exempt from the anti-repetition penalty (their variety comes from the photo
- * itself, not the layout) and may repeat across variants of a single call.
- * Both require a configured stock-photo provider key to be offered to the AI.
+ * Templates backed by a real stock photo. They are exempt from the
+ * anti-repetition penalty (their variety comes from the photo itself, not the
+ * layout) and may repeat across variants of a single call. Both require a
+ * configured stock-photo provider key to be offered to the AI. `photo-hero`
+ * leads so any photo-template fallback rotation picks the message-carrying one.
  */
-export const PHOTO_TEMPLATES = ["photo-clean", "photo-hero"] as const;
+export const PHOTO_TEMPLATES = ["photo-hero", "photo-clean"] as const;
 
 export function isPhotoTemplate(t: TemplateId): boolean {
   return (PHOTO_TEMPLATES as readonly string[]).includes(t);
@@ -212,14 +217,14 @@ export function isPhotoTemplate(t: TemplateId): boolean {
 
 /** Human-readable list of templates, used in the AI system prompt. */
 export const TEMPLATE_GUIDE: Record<TemplateId, string> = {
-  "photo-clean":
-    "DEFAULT. A real, credible photo filling the frame, with little or no text (an optional discreet caption). Use this whenever the brief evokes ANY concrete subject — a person, place, object, team, scene. This is what makes the visual look like real professional content, not an AI card. Provide a searchQuery in ENGLISH naming the concrete subject.",
   "photo-hero":
-    "Real-photo background + a single editorial headline burned on it. Use ONLY when the post needs a strong statement ON the image (a manifesto line, a launch claim). Otherwise prefer photo-clean. Provide a concrete ENGLISH searchQuery.",
+    "DEFAULT. A real photo as the BACKGROUND with a BOLD headline carrying the post's core message burned over it. Text is the hero, the photo is support. This is what makes the visual read as high-performing LinkedIn content — the key idea is legible in 2 seconds, even on mobile. Use this for almost every post. Provide a concrete ENGLISH searchQuery AND a short punchy headline.",
   "kpi-card":
-    "MINORITY. Typography-only big-number card. Use ONLY when the post genuinely hinges on a specific metric/percentage and no photo could convey it. Stat goes huge, label explains it.",
+    "Typography-driven big-number card. Use when the post hinges on a specific metric/percentage and the NUMBER is the message. Stat goes huge, label explains it.",
   "quote-card":
-    "MINORITY. Typography-only pull-quote card. Use ONLY for a verbatim quote / sharp one-liner where the words ARE the visual. Single short sentence + attribution.",
+    "Typography-driven pull-quote card. Use for a verbatim quote / sharp one-liner where the words ARE the visual. Single short sentence + attribution.",
   "announcement-card":
-    "MINORITY. Typography-only launch card (headline + body + CTA label). Use ONLY for a formal product/event announcement where no real photo fits.",
+    "Typography-driven launch card (headline + body + CTA label). Use for a formal product/event announcement.",
+  "photo-clean":
+    "RARE. A real photo with little or no text — ONLY for a purely atmospheric post with no single message to assert. NOT the default: by default the visual must carry the message, so prefer photo-hero. Provide a searchQuery in ENGLISH naming the concrete subject.",
 };

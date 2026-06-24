@@ -10,6 +10,7 @@ import { useLinkedIn } from "@/contexts/LinkedInContext";
 import { useQuota } from "@/contexts/QuotaContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useChat } from "@/hooks/chat/useChat";
+import { useVoiceCapture } from "@/hooks/voice/useVoiceCapture";
 import { useSmartScroll } from "@/hooks/scroll/useSmartScroll";
 import { useKeyboardHeight } from "@/hooks/input/useKeyboardHeight";
 import { getUserPostsWithPinned, getDualModeUsageThisWeek, getPost, createImagePost, appendGeneratedImage, setGeneratedImageVariantSelections } from "@/lib/db/firestore";
@@ -287,12 +288,30 @@ function AppContent() {
     }
   }, [user?.uid, isProPlan, planLimits.dualResponsesPerWeek]);
 
-  // Voice recording state
-  const [isRecording, setIsRecording] = useState(false);
-  const [isProcessingVoice, setIsProcessingVoice] = useState(false);
-  const [speechSupported, setSpeechSupported] = useState(false);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
-  const isRecordingRef = useRef(false); // Mirror for callbacks
+  // Voice recording — hybrid Web Speech (live interim) + Whisper (authoritative
+  // transcript on stop). Encapsulated in a shared hook so /app and /app/c/[id]
+  // behave identically. The transcript is treated VERBATIM — never summarized.
+  const {
+    speechSupported,
+    isRecording,
+    isVoiceProcessing,
+    interimText,
+    toggleRecording,
+    cancelRecording,
+  } = useVoiceCapture({
+    inputRef: chatInputRef,
+    language,
+    onError: (kind) =>
+      toast.error(kind === "mic-denied" ? t.appPage.micNotAllowed : t.appPage.recordingError),
+    onTranscriptionFallback: () => toast.error(t.appPage.transcriptionFailed),
+  });
+
+  // Optimistic chat state — the user's exact message + a thinking indicator are
+  // shown the INSTANT they hit send, before the classifier round-trip, so the
+  // UI never feels frozen. `pendingUserMessage` is suppressed once the real
+  // bubble (post message or image entry) carries the same text.
+  const [pendingUserMessage, setPendingUserMessage] = useState<{ id: string; content: string; ts: number; baseLen: number } | null>(null);
+  const [isClassifying, setIsClassifying] = useState(false);
 
   // Derive effective dual mode and style from Max selector or Pro toggle
   const effectiveDualMode = isMaxPlan ? maxMode === "dual" : dualMode;
@@ -331,11 +350,28 @@ function AppContent() {
       // Reset state for the new conversation
       reset();
       setImageEntries([]);
+      setPendingUserMessage(null);
+      setIsClassifying(false);
       imagePostIdRef.current = null;
       // Allow redirect after next generation
       lastRedirectedPostIdRef.current = null;
     }
   }, [newParam, reset]);
+
+  // Drop the optimistic user bubble once the real one exists (a post user
+  // message OR a standalone image entry with the same text). Render already
+  // suppresses it in that case, so this just clears the state so it can't
+  // linger into the next turn.
+  useEffect(() => {
+    if (!pendingUserMessage) return;
+    const pendingText = pendingUserMessage.content.trim();
+    // Turn-scoped match (messages added after this submit, image entries created
+    // after it) so re-sending identical text isn't suppressed by an older turn.
+    const realExists =
+      messages.slice(pendingUserMessage.baseLen).some((m) => m.type === "user" && m.content.trim() === pendingText) ||
+      imageEntries.some((e) => !e.embed && e.prompt.trim() === pendingText && e.createdAt >= pendingUserMessage.ts);
+    if (realExists) setPendingUserMessage(null);
+  }, [messages, imageEntries, pendingUserMessage]);
 
   // Stable refs for values that change rapidly during streaming. Keeping them
   // out of the redirect effect's deps prevents the effect body from being
@@ -596,110 +632,8 @@ function AppContent() {
   }, [inputValue, resizeTextarea]);
 
 
-  // Force stop recording helper - cleans up all state
-  // IMPORTANT: Set ref to false BEFORE abort() so the onend handler doesn't auto-restart
-  const forceStopRecording = useCallback(() => {
-    isRecordingRef.current = false;
-    setIsRecording(false);
-    setIsProcessingVoice(false);
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.abort();
-      } catch {
-        // Ignore errors
-      }
-    }
-  }, []);
-
-  // Initialize speech recognition
-  useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      setSpeechSupported(true);
-      const recognition = new SpeechRecognition();
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.lang = "fr-FR";
-
-      recognition.onresult = (event: SpeechRecognitionEvent) => {
-        let finalTranscript = "";
-
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const transcript = event.results[i][0].transcript;
-          if (event.results[i].isFinal) {
-            finalTranscript += transcript;
-          }
-        }
-
-        if (finalTranscript) {
-          chatInputRef.current?.appendValue(finalTranscript);
-        }
-      };
-
-      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-        if (event.error === "not-allowed") {
-          isRecordingRef.current = false;
-          setIsRecording(false);
-          setIsProcessingVoice(false);
-          toast.error(t.appPage.micNotAllowed);
-        } else if (event.error === "no-speech") {
-          // Silently handle - expected when user pauses
-        } else if (event.error !== "aborted") {
-          console.warn("Speech recognition error:", event.error);
-        }
-      };
-
-      recognition.onend = () => {
-        // With continuous=true, the browser may still stop unexpectedly
-        // (e.g. prolonged silence, network issue). Auto-restart if user hasn't stopped manually.
-        if (isRecordingRef.current) {
-          try {
-            recognition.start();
-          } catch {
-            isRecordingRef.current = false;
-            setIsRecording(false);
-          }
-        }
-      };
-
-      recognitionRef.current = recognition;
-    }
-
-    return () => {
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.abort();
-        } catch {
-          // Ignore abort errors
-        }
-        recognitionRef.current = null;
-      }
-      isRecordingRef.current = false;
-      setIsRecording(false);
-      setIsProcessingVoice(false);
-    };
-  }, []);
-
-  // Toggle voice recording — user controls start/stop manually
-  const toggleRecording = useCallback(() => {
-    if (!recognitionRef.current) return;
-
-    if (isRecordingRef.current) {
-      forceStopRecording();
-    } else {
-      try {
-        setIsProcessingVoice(false);
-        recognitionRef.current.start();
-        isRecordingRef.current = true;
-        setIsRecording(true);
-      } catch (error) {
-        console.error("Failed to start recording:", error);
-        isRecordingRef.current = false;
-        setIsRecording(false);
-        toast.error(t.appPage.recordingError);
-      }
-    }
-  }, [forceStopRecording]);
+  // Voice recording (capture + live interim + Whisper transcription) is now
+  // owned by useVoiceCapture above — see hooks/voice/useVoiceCapture.ts.
 
   /**
    * Runs the image pipeline for a single brief: creates a loader entry,
@@ -957,6 +891,16 @@ function AppContent() {
   );
 
   const handleGenerate = async (prompt: string, file?: FileAttachment | null) => {
+    // Optimistic feedback: show the user's EXACT message + a thinking state the
+    // instant they submit, BEFORE any network round-trip. This is what makes a
+    // voice/text send feel instant (problem #3). The bubble is suppressed in
+    // render the moment the real message exists (see the elements builder).
+    const pendingId =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `pending-${Date.now()}`;
+    setPendingUserMessage({ id: pendingId, content: prompt, ts: Date.now(), baseLen: messages.length });
+
     // Support mode is an explicit user choice — never re-classify, just go
     // straight to the conversational pipeline. ASSISTANCE is the hint that
     // tells /api/generate to skip its classifier and use the assistant path.
@@ -967,10 +911,15 @@ function AppContent() {
     }
 
     // Posts mode: classify the user's prompt and route to the right
-    // pipeline(s). The classifier is fast (<300ms typical, 1.5s hard cap)
-    // and falls back to "post" if anything goes wrong, so the worst case
-    // is exactly the legacy behaviour.
-    const classification = await classifyIntent(prompt);
+    // pipeline(s). `isClassifying` keeps the thinking indicator visible during
+    // the classifier round-trip (up to ~3.5s) so the chat never looks frozen.
+    setIsClassifying(true);
+    let classification: Awaited<ReturnType<typeof classifyIntent>>;
+    try {
+      classification = await classifyIntent(prompt);
+    } finally {
+      setIsClassifying(false);
+    }
 
     if (classification.intent === "image") {
       await runImageGeneration(prompt, classification.imageBrief || prompt);
@@ -1007,7 +956,11 @@ function AppContent() {
       try {
         [postResult, imageResult] = await Promise.all([
           generate(
-            classification.postBrief || prompt,
+            // Pass the RAW user prompt as the generation content — NOT the
+            // classifier's paraphrased postBrief, which silently dropped the
+            // user's exact wording, tone notes, and constraints before gpt-4o
+            // ever saw them. The clean routing still flows via postType below.
+            prompt,
             file,
             classification.postType,
             { forceSingleStyle: "storytelling" }
@@ -1067,8 +1020,10 @@ function AppContent() {
     // intent === "post" OR "conversation" — both flow through the post
     // pipeline. "Conversation" is rendered as plain prose by the existing
     // ConversationalResponse component when no LinkedIn structure is detected.
-    // Pass `postType` so /api/generate skips its internal classifier.
-    await generate(classification.postBrief || prompt, file, classification.postType);
+    // Pass `postType` so /api/generate skips its internal classifier, and the
+    // RAW prompt (not the paraphrased postBrief) as the generation content so
+    // the user's exact wording and constraints reach gpt-4o intact.
+    await generate(prompt, file, classification.postType);
     trackPostGeneration();
     if (user?.uid && isProPlan && planLimits.dualResponsesPerWeek > 0) {
       getDualModeUsageThisWeek(user.uid).then(setDualUsedThisWeek).catch(() => {});
@@ -1120,10 +1075,8 @@ function AppContent() {
 
   const handleSubmit = async () => {
     if (!inputValue.trim() || isLoading || isStreaming) return;
-    // Stop recording if active - use forceStopRecording for reliable cleanup
-    if (isRecordingRef.current) {
-      forceStopRecording();
-    }
+    // Stop recording if active — cancel (no transcription) and send what's there.
+    cancelRecording();
     const prompt = inputValue.trim();
     setInputValue("");
     // Reset textarea height smoothly
@@ -1232,7 +1185,7 @@ function AppContent() {
   // Determine if scroll should be disabled (no messages AND no image entries
   // means the welcome screen is showing). Image-mode submissions push to
   // `imageEntries` rather than `messages`, so we need both checks here.
-  const hasChatContent = messages.length > 0 || imageEntries.length > 0;
+  const hasChatContent = messages.length > 0 || imageEntries.length > 0 || pendingUserMessage !== null;
   const shouldDisableScroll = !hasChatContent && !isLoading;
 
   // Mobile renders the entire content tree through a React Portal under
@@ -1806,6 +1759,32 @@ function AppContent() {
                       });
                     }
 
+                    // Optimistic user bubble — shown the instant the user hits
+                    // send, before the classifier/generation create the real
+                    // one. Suppressed as soon as the real message (a post user
+                    // bubble OR a standalone image entry) carries the same text,
+                    // so there is never a duplicate and never a one-frame gap.
+                    if (pendingUserMessage) {
+                      const pendingText = pendingUserMessage.content.trim();
+                      const realExists =
+                        messages.slice(pendingUserMessage.baseLen).some((m) => m.type === "user" && m.content.trim() === pendingText) ||
+                        standaloneImageEntries.some((e) => e.prompt.trim() === pendingText && e.createdAt >= pendingUserMessage.ts);
+                      if (!realExists) {
+                        elements.push({
+                          ts: new Date(pendingUserMessage.ts),
+                          node: (
+                            <ChatMessage
+                              key={`pending-${pendingUserMessage.id}`}
+                              type="user"
+                              content={pendingUserMessage.content}
+                              timestamp={new Date(pendingUserMessage.ts)}
+                              showActions={false}
+                            />
+                          ),
+                        });
+                      }
+                    }
+
                     // Stable chronological sort. Equal timestamps keep their
                     // insertion order (user-before-AI within a same-second
                     // exchange) — Array.prototype.sort is stable since ES2019,
@@ -1819,9 +1798,10 @@ function AppContent() {
                   })()}
                 </AnimatePresence>
 
-                {/* Typing indicator when loading (before streaming starts) */}
+                {/* Typing indicator — shown during classification too, so the
+                    "thinking" state appears instantly after send (problem #3). */}
                 <AnimatePresence>
-                  {isLoading && !isStreaming && <TypingIndicator />}
+                  {(isClassifying || (isLoading && !isStreaming)) && <TypingIndicator />}
                 </AnimatePresence>
 
               </div>
@@ -1961,7 +1941,9 @@ function AppContent() {
                   // by the new turn — the visible symptom of "messages
                   // duplicated / out of order".
                   if (isLoading || isStreaming || isGeneratingImage) return;
-                  if (isRecordingRef.current) forceStopRecording();
+                  // Sending uses whatever text is in the box — stop any active
+                  // recording without kicking off a transcription.
+                  cancelRecording();
                   await handleGenerate(message, file);
                 }}
                 onStop={stopGeneration}
@@ -1972,6 +1954,8 @@ function AppContent() {
                 onVoiceRecordingStart={toggleRecording}
                 onVoiceRecordingStop={toggleRecording}
                 isRecording={isRecording}
+                isVoiceProcessing={isVoiceProcessing}
+                interimText={interimText}
                 enableFileAttachment={true}
                 fileAttachmentAllowed={isMaxPlan}
                 showHelperText={true}

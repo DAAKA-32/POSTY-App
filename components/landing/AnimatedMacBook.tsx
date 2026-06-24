@@ -6,7 +6,6 @@ import Image from "next/image";
 import { getMockupScreens } from "./MockupScreens";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-const SLIDE_COUNT = 5;
 const CAROUSEL_INTERVAL = 5000;
 const SWIPE_THRESHOLD = 40;
 
@@ -38,6 +37,8 @@ export default function AnimatedMacBook({
 
   const MOCKUP_SCREENS = useMemo(() => getMockupScreens(t.landing), [t]);
   const LOOP_SLIDES = useMemo(() => [...MOCKUP_SCREENS, MOCKUP_SCREENS[0]], [MOCKUP_SCREENS]);
+  /* Derived from the screen list so adding/removing a slide needs no other edit. */
+  const SLIDE_COUNT = MOCKUP_SCREENS.length;
 
 
   // Carousel state

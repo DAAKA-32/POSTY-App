@@ -22,11 +22,19 @@ import { hasAnyAssetProvider } from "./assets";
 // invents field names ("label" instead of "statLabel", "palette" instead of
 // "accent") and overshoots the length caps.
 const FIELD_SPEC_FR = {
+  "photo-hero": `{
+  "template": "photo-hero",
+  "accent": "<une des 5 valeurs ci-dessus>",
+  "searchQuery": "<2-5 mots-clés EN ANGLAIS, concrets, ex: 'modern startup office laptop'>",
+  "headline": "<LE MESSAGE — 4 à 70 caractères, court et percutant, idéalement ≤ 45>",
+  "body": "<optionnel, 0 à 140 caractères>",
+  "eyebrow": "<optionnel, 0 à 40 caractères, étiquette majuscules>"
+}`,
   "photo-clean": `{
   "template": "photo-clean",
   "accent": "<une des 5 valeurs ci-dessus>",
   "searchQuery": "<2-5 mots-clés EN ANGLAIS nommant un SUJET RÉEL concret, ex: 'paris haussmann street', 'french parliament chamber', 'founder coworking laptop'>",
-  "caption": "<optionnel, 0 à 70 caractères — UNE ligne discrète, souvent à laisser vide>",
+  "caption": "<optionnel, 0 à 70 caractères — UNE ligne, à n'utiliser QUE pour un visuel volontairement sans message>",
   "eyebrow": "<optionnel, 0 à 40 caractères, étiquette majuscules>"
 }`,
   "kpi-card": `{
@@ -52,22 +60,22 @@ const FIELD_SPEC_FR = {
   "cta": "<2 à 40 caractères>",
   "eyebrow": "<optionnel, 0 à 40 caractères>"
 }`,
-  "photo-hero": `{
-  "template": "photo-hero",
-  "accent": "<une des 5 valeurs ci-dessus>",
-  "searchQuery": "<2-5 mots-clés EN ANGLAIS, concrets, ex: 'modern startup office laptop'>",
-  "headline": "<4 à 60 caractères>",
-  "body": "<optionnel, 0 à 140 caractères>",
-  "eyebrow": "<optionnel, 0 à 40 caractères>"
-}`,
 } as const;
 
 const FIELD_SPEC_EN = {
+  "photo-hero": `{
+  "template": "photo-hero",
+  "accent": "<one of the 5 values above>",
+  "searchQuery": "<2-5 ENGLISH keywords, concrete subjects, e.g. 'modern startup office laptop'>",
+  "headline": "<THE MESSAGE — 4 to 70 chars, short and punchy, ideally ≤ 45>",
+  "body": "<optional, 0 to 140 chars>",
+  "eyebrow": "<optional, 0 to 40 chars, uppercase label>"
+}`,
   "photo-clean": `{
   "template": "photo-clean",
   "accent": "<one of the 5 values above>",
   "searchQuery": "<2-5 ENGLISH keywords naming a REAL concrete subject, e.g. 'paris haussmann street', 'parliament chamber session', 'founder coworking laptop'>",
-  "caption": "<optional, 0 to 70 chars — a SINGLE discreet line, often best left empty>",
+  "caption": "<optional, 0 to 70 chars — a SINGLE line, use ONLY for a deliberately message-less visual>",
   "eyebrow": "<optional, 0 to 40 chars, uppercase label>"
 }`,
   "kpi-card": `{
@@ -91,14 +99,6 @@ const FIELD_SPEC_EN = {
   "headline": "<4 to 50 chars — STRICT>",
   "body": "<8 to 160 chars>",
   "cta": "<2 to 40 chars>",
-  "eyebrow": "<optional, 0 to 40 chars>"
-}`,
-  "photo-hero": `{
-  "template": "photo-hero",
-  "accent": "<one of the 5 values above>",
-  "searchQuery": "<2-5 ENGLISH keywords, concrete subjects, e.g. 'modern startup office laptop'>",
-  "headline": "<4 to 60 chars>",
-  "body": "<optional, 0 to 140 chars>",
   "eyebrow": "<optional, 0 to 40 chars>"
 }`,
 } as const;
@@ -128,12 +128,13 @@ export function buildSystemPrompt(language: "fr" | "en"): string {
   // templates to prefer, so we skip the block entirely (the AI only sees the
   // typography cards and picks among them).
   const photoFirstFr = photoAvailable
-    ? `Règle de choix du template — PHOTO D'ABORD (LA RÈGLE LA PLUS IMPORTANTE) :
-- Par DÉFAUT, choisis "photo-clean" : une vraie photo crédible qui occupe tout le cadre, presque sans texte. C'est ce qui rend le visuel pro et humain — pas un visuel "qui fait IA / Canva".
-- Le message est porté par le POST lui-même ; l'image apporte l'émotion et la crédibilité, pas un pavé de texte. Laisse "caption" VIDE la plupart du temps.
-- "photo-hero" UNIQUEMENT si le post a besoin d'UNE phrase forte incrustée sur l'image.
-- Les cartes typographiques (kpi-card, quote-card, announcement-card) sont une MINORITÉ : ne les choisis QUE si le sujet EST intrinsèquement une donnée chiffrée, une citation verbatim, ou une annonce formelle qu'aucune photo ne pourrait illustrer.
-- En cas de doute → photo-clean.
+    ? `Règle de choix du template — LE MESSAGE D'ABORD (LA RÈGLE LA PLUS IMPORTANTE) :
+- Un bon visuel LinkedIn fait COMPRENDRE l'idée clé du post en 2 secondes, même en miniature sur mobile. Le TEXTE est l'élément principal ; l'image n'est qu'un support.
+- Par DÉFAUT, choisis "photo-hero" : une vraie photo en ARRIÈRE-PLAN + un TITRE court et percutant incrusté qui porte le message du post. Le titre doit être gros, lisible, au premier plan.
+- "headline" = l'accroche la plus forte du post, reformulée en une phrase courte (idéalement ≤ 45 caractères). PLUS C'EST COURT, PLUS C'EST GROS et PERCUTANT.
+- Cartes typographiques quand le contenu EST le message : kpi-card si le cœur est une donnée chiffrée, quote-card pour une citation/punchline verbatim, announcement-card pour une annonce formelle. Elles sont les bienvenues, le texte y est déjà dominant.
+- "photo-clean" (photo quasi sans texte) : UNIQUEMENT pour un visuel volontairement atmosphérique, sans message à asséner. C'est l'exception RARE, jamais le défaut.
+- En cas de doute → photo-hero avec un titre fort.
 
 searchQuery (templates photo) — 2-5 mots-clés EN ANGLAIS nommant un SUJET CONCRET et RÉEL, jamais un concept abstrait :
   • politique → "french parliament chamber", "politician podium speech", "protest crowd street"
@@ -144,12 +145,13 @@ searchQuery (templates photo) — 2-5 mots-clés EN ANGLAIS nommant un SUJET CON
 `
     : "";
   const photoFirstEn = photoAvailable
-    ? `Template-choice rule — PHOTO FIRST (THE MOST IMPORTANT RULE):
-- By DEFAULT, pick "photo-clean": one real, credible photo filling the whole frame, with almost no text. This is what makes a visual look professional and human — not an "AI / Canva" card.
-- The POST itself carries the message; the image carries emotion and credibility, not a slab of text. Leave "caption" EMPTY most of the time.
-- "photo-hero" ONLY when the post needs a single strong line burned onto the image.
-- Typography cards (kpi-card, quote-card, announcement-card) are a MINORITY: pick one ONLY when the subject IS intrinsically a number, a verbatim quote, or a formal announcement no photo could illustrate.
-- When in doubt → photo-clean.
+    ? `Template-choice rule — MESSAGE FIRST (THE MOST IMPORTANT RULE):
+- A good LinkedIn visual makes the post's key idea understandable in 2 seconds, even as a mobile thumbnail. TEXT is the primary element; the image is only support.
+- By DEFAULT, pick "photo-hero": a real photo in the BACKGROUND + a short, punchy HEADLINE burned over it that carries the post's message. The headline must be big, legible, in the foreground.
+- "headline" = the post's strongest hook, reworded into one short line (ideally ≤ 45 chars). THE SHORTER IT IS, THE BIGGER AND PUNCHIER IT RENDERS.
+- Typography cards when the content IS the message: kpi-card if the core is a number, quote-card for a verbatim quote/one-liner, announcement-card for a formal announcement. They are welcome — text already dominates them.
+- "photo-clean" (photo with almost no text): ONLY for a deliberately atmospheric visual with no message to assert. This is the RARE exception, never the default.
+- When in doubt → photo-hero with a strong headline.
 
 searchQuery (photo templates) — 2-5 ENGLISH keywords naming a CONCRETE, REAL subject, never an abstract concept:
   • politics → "parliament chamber session", "politician podium speech", "protest crowd street"
@@ -179,7 +181,8 @@ ${photoFirstFr}Règles éditoriales :
 - Textes en français impeccable, sans faute, sans emoji, sans hashtag.
 - Wording premium type direction artistique senior (Linear, Stripe, Notion).
 - "stat" doit être court et impactant : "+312 %", "27 M€", "× 4,8", "1 sur 3".
-- "headline" et "quote" : phrases percutantes, pas de jargon vide.
+- "headline" (photo-hero) : c'est LE message du visuel. Une accroche qui se suffit à elle-même, compréhensible sans lire le post. Courte, concrète, percutante. Évite le jargon vide.
+- "quote" : phrase percutante, pas de jargon vide.
 - "eyebrow" : 2-4 mots en majuscules type étiquette (ex: "ROAS B2B", "LANCEMENT 2026").
 - Choisis l'accent en fonction du ton : coral=marketing chaleureux, midnight=tech sobre, moss=growth/résultats, amber=annonces/awards, iris=créativité/IA.
 
@@ -204,7 +207,8 @@ ${photoFirstEn}Editorial rules:
 - Flawless English copy, no emoji, no hashtags.
 - Premium wording, senior-art-director tone (Linear, Stripe, Notion).
 - "stat" must be short and impactful: "+312%", "$27M", "× 4.8", "1 in 3".
-- "headline" and "quote": punchy, no empty jargon.
+- "headline" (photo-hero): this IS the visual's message. A hook that stands on its own, understandable without reading the post. Short, concrete, punchy. No empty jargon.
+- "quote": punchy, no empty jargon.
 - "eyebrow": 2-4 word uppercase label (e.g. "B2B ROAS", "2026 LAUNCH").
 - Pick the accent by tone: coral=warm marketing, midnight=sober tech, moss=growth/results, amber=announcements/awards, iris=creativity/AI.
 

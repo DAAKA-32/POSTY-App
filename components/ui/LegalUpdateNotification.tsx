@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { LEGAL_VERSIONS } from "@/lib/i18n/legal";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { updateUserProfile } from "@/lib/db/firestore";
 
 const STORAGE_KEY = "posty_legal_versions_seen";
 
@@ -14,7 +16,19 @@ interface SeenVersions {
   cookies?: string;
 }
 
-function getSeenVersions(): SeenVersions {
+/** The versions currently shipped — what "fully acknowledged" looks like. */
+function currentVersions(): SeenVersions {
+  return {
+    privacy: LEGAL_VERSIONS.privacy.version,
+    terms: LEGAL_VERSIONS.terms.version,
+    notices: LEGAL_VERSIONS.notices.version,
+    cookies: LEGAL_VERSIONS.cookies.version,
+  };
+}
+
+/** localStorage cache — anti-flash before the profile loads, and the only
+ *  store for logged-out visitors (who have no account to sync to). */
+function getLocalSeenVersions(): SeenVersions {
   if (typeof window === "undefined") return {};
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -24,9 +38,13 @@ function getSeenVersions(): SeenVersions {
   }
 }
 
-function markVersionsSeen(versions: SeenVersions) {
+function writeLocalSeen(versions: SeenVersions) {
   if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(versions));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(versions));
+  } catch {
+    /* localStorage disabled — ignore */
+  }
 }
 
 /**
@@ -36,22 +54,48 @@ function markVersionsSeen(versions: SeenVersions) {
  */
 export default function LegalUpdateNotification() {
   const { t } = useLanguage();
+  const { user, userProfile, refreshUserProfile } = useAuth();
   const [updatedDocs, setUpdatedDocs] = useState<{ name: string; href: string }[]>([]);
   const [isVisible, setIsVisible] = useState(false);
+  // Guard so the silent first-visit baseline persists at most once per mount.
+  const baselinedRef = useRef(false);
+
+  // Persist acknowledged versions: account-level for logged-in users (so it
+  // syncs across every browser/device), localStorage always (anti-flash cache
+  // + the only store available to logged-out visitors).
+  const persistSeen = (versions: SeenVersions) => {
+    writeLocalSeen(versions);
+    if (user) {
+      updateUserProfile(user.uid, { legalVersionsSeen: versions })
+        .then(() => refreshUserProfile())
+        .catch((err) =>
+          console.warn("Failed to persist legal acknowledgement:", err)
+        );
+    }
+  };
 
   useEffect(() => {
-    const seen = getSeenVersions();
+    // For logged-in users, wait for the profile so the account record is the
+    // authoritative source before deciding whether to nag.
+    if (user && !userProfile) return;
 
-    // Only show if user has seen at least one version before (not first visit)
+    // Source of truth: the account field when present, else the localStorage
+    // cache (covers logged-out visitors and the pre-load / pre-migration window).
+    const accountSeen = user ? userProfile?.legalVersionsSeen : undefined;
+    const seen: SeenVersions =
+      accountSeen && Object.keys(accountSeen).length > 0
+        ? accountSeen
+        : getLocalSeenVersions();
+
+    // Only show if the user has acknowledged at least one version before
+    // (not a brand-new visitor).
     const hasSeenBefore = Object.keys(seen).length > 0;
     if (!hasSeenBefore) {
-      // First time: save current versions silently
-      markVersionsSeen({
-        privacy: LEGAL_VERSIONS.privacy.version,
-        terms: LEGAL_VERSIONS.terms.version,
-        notices: LEGAL_VERSIONS.notices.version,
-        cookies: LEGAL_VERSIONS.cookies.version,
-      });
+      // First time: baseline current versions silently (once per mount).
+      if (!baselinedRef.current) {
+        baselinedRef.current = true;
+        persistSeen(currentVersions());
+      }
       return;
     }
 
@@ -73,16 +117,16 @@ export default function LegalUpdateNotification() {
     if (docs.length > 0) {
       setUpdatedDocs(docs);
       setIsVisible(true);
+    } else {
+      // Acknowledged elsewhere (another device) → make sure we're hidden.
+      setIsVisible(false);
     }
-  }, [t]);
+    // persistSeen is a stable-enough closure; deps kept minimal on purpose.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [t, user, userProfile]);
 
   const handleDismiss = () => {
-    markVersionsSeen({
-      privacy: LEGAL_VERSIONS.privacy.version,
-      terms: LEGAL_VERSIONS.terms.version,
-      notices: LEGAL_VERSIONS.notices.version,
-      cookies: LEGAL_VERSIONS.cookies.version,
-    });
+    persistSeen(currentVersions());
     setIsVisible(false);
   };
 

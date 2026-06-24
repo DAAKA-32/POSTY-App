@@ -44,8 +44,11 @@ const arrowVariants: Variants = {
       ease: [0.34, 1.4, 0.64, 1],
     },
   },
+  // No hover movement on the arrow — on hover it simply settles at rest (the
+  // idle nudge loop stops and the arrow sits still). The disc invert + color
+  // swap below still fire so the CTA reacts; only the arrow slide is removed.
   hover: {
-    x: 8,
+    x: 0,
     transition: { type: "spring", stiffness: 460, damping: 22 },
   },
 };
