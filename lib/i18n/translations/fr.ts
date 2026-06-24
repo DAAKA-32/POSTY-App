@@ -669,7 +669,7 @@ export const fr = {
     beforeAfterCTAButton: "Commencer gratuitement",
 
     // Founders section
-    foundersQuote: "LinkedIn est le levier de croissance le plus sous-exploité du B2B. Nous avons créé Posty parce que chaque entrepreneur mérite de signer des clients grâce à ses posts — sans y passer des heures.",
+    foundersQuote: "LinkedIn est le levier de croissance le plus sous-exploité du B2B. Nous avons créé Posty parce que chaque entrepreneur mérite de signer des clients grâce à ses posts, sans y passer des heures.",
     foundersEmilienAlt: "Voir le profil LinkedIn d'Emilien Nepveu",
     foundersComeAlt: "Voir le profil de Côme Maubert",
     foundersRole: "Co-fondateurs & Co-CEO",
@@ -741,6 +741,7 @@ export const fr = {
     pricingHeadline2: "Le retour d'un commercial à plein temps.",
     pricingDescription: "Un seul client signé via LinkedIn rembourse votre année entière. Quel plan correspond à vos ambitions ?",
     pricingSavingsLabel: "2 mois offerts",
+    pricingPlusLower: "+ tout ce qu'offre {plan}",
     pricingTrialIncluded: "Plan Free inclus · Sans engagement",
 
     // Business offer (B2B card under the pricing grid — links to /business)
@@ -893,6 +894,19 @@ export const fr = {
 
     // Value block after features
     valueBlockTitle: "Pourquoi les indépendants choisissent Posty",
+    valueBlockSubtitle: "Exemples de résultats obtenus par nos utilisateurs, sur tous leurs réseaux.",
+    valueMetricLabel1: "Visibilité",
+    valueMetricLabel2: "Engagement",
+    valueMetricLabel3: "Abonnés",
+    valueMetricLabel4: "Prises de contact",
+    valueMetricLabel5: "par semaine",
+    valueMetricLabel6: "Portée des posts",
+    valueMetricLabel7: "Leads qualifiés",
+    valueMetricLabel8: "Taux de réponse",
+    valueMetricLabel9: "Nouveaux clients",
+    valueMetricLabel10: "Impressions / post",
+    valueMetricLabel11: "Opportunités",
+    valueMetricLabel12: "Notoriété",
     valueBlockItem1Title: "Prospection automatisée",
     valueBlockItem1Desc: "Fini les heures à chercher des prospects. Posty génère du contenu qui attire vos clients idéaux.",
     valueBlockItem2Title: "Posts qui convertissent",
@@ -1055,7 +1069,7 @@ export const fr = {
     mockupScheduleAlt: "Programmation des posts LinkedIn",
     mockupScheduleLabel: "Programmes",
     mockupAnalyticsAlt: "Tableau de bord et analytics",
-    mockupAnalyticsLabel: "Analytics",
+    mockupAnalyticsLabel: "Dashboard",
   },
 
   // Auth
@@ -2777,6 +2791,8 @@ export const fr = {
     placeholderGeneralFixed: "Posez votre question ici...",
     speakNow: "🎤 Parlez maintenant...",
     processingMessage: "Traitement de votre message...",
+    transcribing: "Transcription en cours...",
+    transcriptionFailed: "Transcription échouée, texte vocal conservé",
     monthlyQuotaReached: "Quota mensuel atteint",
     dailyQuotaReached: "Quota quotidien atteint",
     trialLimitReached: "Limite d'essai atteinte",

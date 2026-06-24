@@ -15,6 +15,7 @@ import {
   MINI_MODEL,
 } from "@/lib/openai";
 import { buildOptimizedPrompt, getGenerationTemperature, synthesizeProfile, estimateTokens, ProfileFields, PlanTier, buildAssistantPrompt, cleanFillerFromResponse, deriveTitleFromPrompt } from "@/lib/services/prompt-builder";
+import { lintPost, buildRepairMessages } from "@/lib/services/post-quality";
 import {
   checkHourlyQuotaAdmin,
   checkUserQuotaAdmin,
@@ -1057,14 +1058,65 @@ STRICT RULES:
     // Normalize hashtag casing on the final aggregated text. The streamed
     // chunks may contain raw LLM output (#POSTY, #PersonalBranding); the
     // client overwrites its accumulator with `content` from the done event.
-    const normalized = normalizeHashtagsInText(fullContent);
+    let finalContent = normalizeHashtagsInText(fullContent);
+
+    // ========== QUALITY GATE (deterministic lint + single mini repair) ==========
+    // Catch the 2026 structural AI-tells the model still slips through
+    // (templated openers, "it's not X it's Y", reveal bridges, frictionless
+    // balance, em-dash density, vague "what do you think?" close). Only a HARD
+    // issue triggers a repair, and only on first messages (follow-ups are
+    // surgical edits that must be preserved). Posts that pass pay nothing.
+    if (!isFollowUp) {
+      try {
+        const report = lintPost(finalContent, language);
+        if (report.needsRepair) {
+          sendEvent("phase", { phase: "polishing", message: language === "fr" ? "Relecture finale…" : "Final polish…" });
+          const { system, user } = buildRepairMessages(finalContent, report.issues, language);
+          const repair = await service["client"].chat.completions.create({
+            model: MINI_MODEL,
+            messages: [
+              { role: "system", content: system },
+              { role: "user", content: user },
+            ],
+            temperature: 0.4,
+            // The repair must re-emit the WHOLE post (and a 'too-short' soft
+            // issue may instruct it to EXPAND), so its budget must NOT be the
+            // plan's response cap — on free/pro that equals what the original
+            // already consumed and would truncate the repair. Give it enough
+            // headroom for the current text plus growth.
+            max_tokens: Math.min(2048, Math.max(maxTokens, estimateTokens(finalContent) * 2 + 256)),
+          });
+          const repairUsage = readUsageFromResponse(repair);
+          void trackAIUsage({
+            userId,
+            route: "generate.quality-repair",
+            model: MINI_MODEL,
+            inputTokens: repairUsage.inputTokens,
+            outputTokens: repairUsage.outputTokens,
+            cachedInputTokens: repairUsage.cachedInputTokens,
+            metadata: { type, issues: report.issues.map((i) => i.code).join(",") },
+          });
+          const repairChoice = repair.choices[0];
+          const repaired = repairChoice?.message?.content?.trim();
+          // Only accept a COMPLETE, non-trivial repair. A non-"stop" finish
+          // reason (esp. "length") means the repair was truncated mid-post —
+          // keep the original complete post rather than ship a chopped one.
+          if (repaired && repaired.length > 50 && repairChoice?.finish_reason === "stop") {
+            finalContent = normalizeHashtagsInText(repaired);
+          }
+        }
+      } catch (lintError) {
+        // Non-blocking: a lint/repair failure must never break generation.
+        console.error("Quality lint/repair error (non-blocking):", lintError);
+      }
+    }
 
     // Capture first post for insights generation
     if (!firstPostContent) {
-      firstPostContent = normalized;
+      firstPostContent = finalContent;
     }
 
-    sendEvent("done", { type, content: normalized });
+    sendEvent("done", { type, content: finalContent });
 
     // Small pause between responses
     await new Promise((resolve) => setTimeout(resolve, 300));

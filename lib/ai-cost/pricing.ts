@@ -68,6 +68,41 @@ export const MODEL_PRICING: Record<string, ModelPricing> = {
     outputPerMillion: 0.6,
     cachedInputPerMillion: 0.075,
   },
+  // Legacy web-search model (fallback path). Token rates match gpt-4o-mini; the
+  // fixed per-call web_search tool fee is added via the costUSD override at the
+  // call site (realtime-context.ts), so it's no longer billed as gpt-4o nor $0.
+  "gpt-4o-mini-search-preview": {
+    label: "GPT-4o mini (web search)",
+    provider: "openai",
+    inputPerMillion: 0.15,
+    outputPerMillion: 0.6,
+  },
+
+  // Audio transcription (Whisper / gpt-4o-transcribe family).
+  // gpt-4o-transcribe is billed per token (audio input + text output); the
+  // usage object returned by the API carries the token counts we log here.
+  // Prices per OpenAI's published rates — keep in sync when they change.
+  "gpt-4o-transcribe": {
+    label: "GPT-4o Transcribe",
+    provider: "openai",
+    inputPerMillion: 6.0, // audio input tokens
+    outputPerMillion: 10.0,
+  },
+  "gpt-4o-mini-transcribe": {
+    label: "GPT-4o mini Transcribe",
+    provider: "openai",
+    inputPerMillion: 3.0,
+    outputPerMillion: 5.0,
+  },
+  "whisper-1": {
+    // Whisper is billed per minute ($0.006/min), not per token. We log a
+    // synthetic token-equivalent cost via costUSD at the call site instead,
+    // but keep an entry so getPricing() never falls back to GPT-4o for it.
+    label: "Whisper",
+    provider: "openai",
+    inputPerMillion: 0,
+    outputPerMillion: 0,
+  },
 
   // GPT-3.5
   "gpt-3.5-turbo": {

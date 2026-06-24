@@ -56,7 +56,7 @@ interface UseChatOptions {
 }
 
 /** Generation phase reported by the server via SSE "phase" events */
-export type GenerationPhase = "idle" | "analyzing" | "searching" | "preparing" | "writing" | "complete";
+export type GenerationPhase = "idle" | "analyzing" | "searching" | "preparing" | "writing" | "polishing" | "complete";
 
 interface UseChatReturn {
   responses: MockResponse[];

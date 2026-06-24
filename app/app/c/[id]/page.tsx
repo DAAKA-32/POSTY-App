@@ -8,6 +8,7 @@ import { useLinkedIn } from "@/contexts/LinkedInContext";
 import { useQuota } from "@/contexts/QuotaContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useChat } from "@/hooks/chat/useChat";
+import { useVoiceCapture } from "@/hooks/voice/useVoiceCapture";
 import { useSmartScroll } from "@/hooks/scroll/useSmartScroll";
 import { useBrowserMode } from "@/hooks/ui/useBrowserMode";
 import { useKeyboardHeight } from "@/hooks/input/useKeyboardHeight";
@@ -54,7 +55,7 @@ function ConversationContent() {
   const params = useParams();
   const router = useRouter();
   const conversationId = params.id as string;
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   const { user, userProfile } = useAuth();
   // Shared sidebar posts — refresh through context so the persistent shell's
@@ -155,18 +156,31 @@ function ConversationContent() {
     []
   );
 
-  // Voice recording state
-  const [isRecording, setIsRecording] = useState(false);
-  const [speechSupported, setSpeechSupported] = useState(false);
-  const [interimText, setInterimText] = useState("");
-  const [isVoiceProcessing, setIsVoiceProcessing] = useState(false);
-  const [autoSendCountdown, setAutoSendCountdown] = useState(0);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  // Chat input handle (voice + programmatic value control).
   const chatInputRef = useRef<UniversalChatInputRef>(null);
-  const preRecordingTextRef = useRef("");
-  const accumulatedTranscriptRef = useRef("");
-  const autoSendTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Voice recording — hybrid Web Speech (live interim) + Whisper (authoritative
+  // transcript on stop). Shared with /app via useVoiceCapture. Transcript is
+  // treated VERBATIM — never summarized. (Auto-send was removed: it would fire
+  // before Whisper finished and send the lower-quality live text.)
+  const {
+    speechSupported,
+    isRecording,
+    isVoiceProcessing,
+    interimText,
+    toggleRecording,
+    cancelRecording,
+  } = useVoiceCapture({
+    inputRef: chatInputRef,
+    language,
+    onError: (kind) =>
+      toast.error(kind === "mic-denied" ? t.appPage.micNotAllowed : t.appPage.recordingError),
+    onTranscriptionFallback: () => toast.error(t.appPage.transcriptionFailed),
+  });
+
+  // Optimistic chat state (instant user bubble + thinking indicator on send).
+  const [pendingUserMessage, setPendingUserMessage] = useState<{ id: string; content: string; ts: number; baseLen: number } | null>(null);
+  const [isClassifying, setIsClassifying] = useState(false);
 
   // Derive effective dual mode and style from Max selector or Pro toggle
   const effectiveDualMode = isMaxPlan ? maxMode === "dual" : dualMode;
@@ -203,9 +217,27 @@ function ConversationContent() {
     aiMode,
   });
 
-  // Keep generate ref in sync for use in voice auto-send callbacks
-  const generateRef = useRef(generate);
-  useEffect(() => { generateRef.current = generate; }, [generate]);
+  // Drop the optimistic user bubble once the real one exists (a user message
+  // OR a standalone image entry with the same text). Render already suppresses
+  // it in that case; this clears the state so it can't linger into a new turn.
+  useEffect(() => {
+    if (!pendingUserMessage) return;
+    const pendingText = pendingUserMessage.content.trim();
+    // Turn-scoped: only match messages/entries created after this submit, so a
+    // re-sent identical message (common: "oui", "continue") still shows instantly.
+    const realExists =
+      messages.slice(pendingUserMessage.baseLen).some((m) => m.type === "user" && m.content.trim() === pendingText) ||
+      imageEntries.some((e) => !e.embed && e.prompt.trim() === pendingText && e.createdAt >= pendingUserMessage.ts);
+    if (realExists) setPendingUserMessage(null);
+  }, [messages, imageEntries, pendingUserMessage]);
+
+  // Switching conversations (the page component persists across [id] changes)
+  // must drop any optimistic state so a pending bubble can't bleed into another
+  // thread.
+  useEffect(() => {
+    setPendingUserMessage(null);
+    setIsClassifying(false);
+  }, [conversationId]);
   // Mirror the latest messages in a ref so async handlers can read fresh
   // state after an await without being trapped in the submit-time closure
   // (which is what made the inline intent=both flow pair the new image with
@@ -640,163 +672,8 @@ function ConversationContent() {
     return () => clearInterval(interval);
   }, [isFocused, inputValue]);
 
-  // Mirror ref for reliable state in callbacks
-  const isRecordingRef = useRef(false);
-
-  // Initialize speech recognition
-  useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      setSpeechSupported(true);
-      const recognition = new SpeechRecognition();
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.lang = "fr-FR";
-
-      recognition.onresult = (event: SpeechRecognitionEvent) => {
-        let newFinals = "";
-        let currentInterim = "";
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const transcript = event.results[i][0].transcript;
-          if (event.results[i].isFinal) {
-            newFinals += transcript;
-          } else {
-            currentInterim += transcript;
-          }
-        }
-        // Accumulate finalized transcripts
-        if (newFinals) {
-          accumulatedTranscriptRef.current += newFinals;
-        }
-        // Build full display: pre-recording text + voice text
-        const prefix = preRecordingTextRef.current;
-        const voiceText = accumulatedTranscriptRef.current + currentInterim;
-        const separator = prefix && voiceText ? " " : "";
-        const fullText = voiceText ? prefix + separator + voiceText : prefix;
-        chatInputRef.current?.setValue(fullText);
-        setInterimText(currentInterim);
-      };
-
-      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-        if (event.error === "not-allowed") {
-          isRecordingRef.current = false;
-          setIsRecording(false);
-          toast.error(t.appPage.micNotAllowed);
-        } else if (event.error === "no-speech") {
-          // Silently handle — expected during pauses
-        } else if (event.error !== "aborted") {
-          console.warn("Speech recognition error:", event.error);
-        }
-      };
-
-      recognition.onend = () => {
-        // Auto-restart if user hasn't stopped manually (browser may cut unexpectedly)
-        if (isRecordingRef.current) {
-          try {
-            recognition.start();
-          } catch {
-            isRecordingRef.current = false;
-            setIsRecording(false);
-          }
-        }
-      };
-
-      recognitionRef.current = recognition;
-    }
-    return () => {
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.abort();
-        } catch {
-          // Ignore abort errors
-        }
-        recognitionRef.current = null;
-      }
-      isRecordingRef.current = false;
-      setIsRecording(false);
-      // Clean up voice auto-send timers
-      if (autoSendTimerRef.current) clearTimeout(autoSendTimerRef.current);
-      if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
-    };
-  }, []);
-
-  // Cancel any pending auto-send countdown
-  const cancelAutoSend = useCallback(() => {
-    if (countdownIntervalRef.current) {
-      clearInterval(countdownIntervalRef.current);
-      countdownIntervalRef.current = null;
-    }
-    if (autoSendTimerRef.current) {
-      clearTimeout(autoSendTimerRef.current);
-      autoSendTimerRef.current = null;
-    }
-    setAutoSendCountdown(0);
-  }, []);
-
-  // Start 3-second auto-send countdown after voice processing
-  const startAutoSendCountdown = useCallback(() => {
-    cancelAutoSend();
-    setAutoSendCountdown(3);
-    countdownIntervalRef.current = setInterval(() => {
-      setAutoSendCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(countdownIntervalRef.current!);
-          countdownIntervalRef.current = null;
-          // Auto-send the message
-          const currentText = chatInputRef.current?.getValue() || "";
-          if (currentText.trim()) {
-            generateRef.current(currentText.trim());
-            chatInputRef.current?.setValue("");
-          }
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  }, [cancelAutoSend]);
-
-  // Toggle voice recording — user controls start/stop manually
-  const toggleRecording = useCallback(() => {
-    if (!recognitionRef.current) return;
-    if (isRecordingRef.current) {
-      // Graceful stop — keeps last words (unlike abort())
-      isRecordingRef.current = false;
-      setIsRecording(false);
-      setIsVoiceProcessing(true);
-      setInterimText("");
-      try {
-        recognitionRef.current.stop();
-      } catch {
-        // Ignore errors
-      }
-      // 800ms processing animation, then auto-send countdown
-      autoSendTimerRef.current = setTimeout(() => {
-        setIsVoiceProcessing(false);
-        const currentText = chatInputRef.current?.getValue() || "";
-        if (currentText.trim()) {
-          startAutoSendCountdown();
-        }
-      }, 800);
-    } else {
-      // Save pre-existing text and reset accumulated transcript
-      cancelAutoSend();
-      preRecordingTextRef.current = chatInputRef.current?.getValue() || "";
-      accumulatedTranscriptRef.current = "";
-      try {
-        recognitionRef.current.start();
-        isRecordingRef.current = true;
-        setIsRecording(true);
-        setInterimText("");
-        // Haptic feedback on mobile
-        if (navigator.vibrate) navigator.vibrate(50);
-      } catch (error) {
-        console.error("Failed to start recording:", error);
-        isRecordingRef.current = false;
-        setIsRecording(false);
-        toast.error(t.appPage.recordingError);
-      }
-    }
-  }, [cancelAutoSend, startAutoSendCountdown]);
+  // Voice recording (capture + live interim + Whisper transcription) is now
+  // owned by useVoiceCapture above — see hooks/voice/useVoiceCapture.ts.
 
   // Handle submit
   const handleSubmit = useCallback(async () => {
@@ -808,12 +685,8 @@ function ConversationContent() {
     // useChat sees messages.length === 0 and treats the turn as a NEW post —
     // forking the conversation under a fresh postId instead of appending here.
     if (loadedConversationRef.current !== conversationId) return;
-    // Stop recording if active — set ref BEFORE abort() to prevent onend auto-restart
-    if (isRecordingRef.current && recognitionRef.current) {
-      isRecordingRef.current = false;
-      setIsRecording(false);
-      try { recognitionRef.current.abort(); } catch { /* ignore */ }
-    }
+    // Stop recording if active — cancel (no transcription) and send current text.
+    cancelRecording();
 
     const prompt = inputValue.trim();
     setInputValue("");
@@ -823,7 +696,7 @@ function ConversationContent() {
     } catch (error) {
       console.error("Generation error:", error);
     }
-  }, [inputValue, isLoading, isStreaming, generate, conversationId]);
+  }, [inputValue, isLoading, isStreaming, generate, conversationId, cancelRecording]);
 
   // Handle keyboard submit
   const handleKeyDown = useCallback(
@@ -941,7 +814,7 @@ function ConversationContent() {
           >
             {/* Conversation messages — also opens for image-mode runs so
                 imageEntries below find a visible container. */}
-            {(messages.length > 0 || imageEntries.length > 0) && (
+            {(messages.length > 0 || imageEntries.length > 0 || pendingUserMessage !== null) && (
               <div className="space-y-6 mb-8">
                 <AnimatePresence mode="popLayout">
                   {(() => {
@@ -1381,6 +1254,31 @@ function ConversationContent() {
                       });
                     }
 
+                    // Optimistic user bubble — shown the instant the user hits
+                    // send, before generation creates the real one. Suppressed
+                    // as soon as the real message (a user bubble OR a standalone
+                    // image entry) carries the same text — no duplicate, no gap.
+                    if (pendingUserMessage) {
+                      const pendingText = pendingUserMessage.content.trim();
+                      const realExists =
+                        messages.slice(pendingUserMessage.baseLen).some((m) => m.type === "user" && m.content.trim() === pendingText) ||
+                        standaloneImageEntries.some((e) => e.prompt.trim() === pendingText && e.createdAt >= pendingUserMessage.ts);
+                      if (!realExists) {
+                        elements.push({
+                          ts: new Date(pendingUserMessage.ts),
+                          node: (
+                            <ChatMessage
+                              key={`pending-${pendingUserMessage.id}`}
+                              type="user"
+                              content={pendingUserMessage.content}
+                              timestamp={new Date(pendingUserMessage.ts)}
+                              showActions={false}
+                            />
+                          ),
+                        });
+                      }
+                    }
+
                     // Stable chronological sort — equal timestamps keep
                     // insertion order so user → assistant pairs stay correct.
                     const indexed = elements.map((el, idx) => ({ el, idx }));
@@ -1392,9 +1290,10 @@ function ConversationContent() {
                   })()}
                 </AnimatePresence>
 
-                {/* Generation phase loader / Typing indicator */}
+                {/* Generation phase loader / Typing indicator — shown during
+                    classification too so the thinking state appears instantly. */}
                 <AnimatePresence>
-                  {isLoading && !isStreaming && (
+                  {(isClassifying || (isLoading && !isStreaming)) && (
                     generationPhaseMessage
                       ? <GenerationLoader phase={generationPhase} message={generationPhaseMessage} />
                       : <TypingIndicator />
@@ -1538,20 +1437,25 @@ function ConversationContent() {
                 //   before loadOriginalPost has hydrated messages.
                 if (isLoading || isStreaming) return;
                 if (loadedConversationRef.current !== conversationId) return;
-                // Cancel voice auto-send and stop recording if active
-                cancelAutoSend();
-                setIsVoiceProcessing(false);
-                if (isRecordingRef.current && recognitionRef.current) {
-                  isRecordingRef.current = false;
-                  setIsRecording(false);
-                  try { recognitionRef.current.stop(); } catch { /* ignore */ }
-                }
+                // Sending uses whatever text is in the box — stop any active
+                // recording without kicking off a transcription.
+                cancelRecording();
+
+                // Optimistic feedback: show the user's EXACT message + a thinking
+                // state the instant they submit, before the classifier round-trip
+                // (problem #3). Suppressed in render once the real bubble exists.
+                const pendingId =
+                  typeof crypto !== "undefined" && "randomUUID" in crypto
+                    ? crypto.randomUUID()
+                    : `pending-${Date.now()}`;
+                setPendingUserMessage({ id: pendingId, content: message, ts: Date.now(), baseLen: messages.length });
                 requestAnimationFrame(() => scrollToBottom());
 
                 if (aiMode === "support") {
                   await generate(message, undefined, "ASSISTANCE");
                   return;
                 }
+                setIsClassifying(true);
 
                 // Posts mode: classify intent then route. Same robust pattern
                 // as /app — client fast-path runs first (deterministic regex
@@ -1564,7 +1468,8 @@ function ConversationContent() {
                 const local = clientFastIntent(message);
                 let intent: "post" | "image" | "both" | "conversation" =
                   local.intent === "unknown" ? "post" : local.intent;
-                let postBrief = local.postBrief ?? message;
+                // NB: post generation now uses the RAW `message`, not a
+                // paraphrased postBrief (kept the user's exact wording intact).
                 let imageBrief = local.imageBrief ?? message;
                 let postType: "PRODUCTION" | "HYBRID" | "ASSISTANCE" | "SOCIAL" | undefined =
                   local.intent === "both" || local.intent === "post" ? "PRODUCTION" : undefined;
@@ -1591,7 +1496,6 @@ function ConversationContent() {
                   if (res.ok) {
                     const data = await res.json();
                     intent = data.intent ?? intent;
-                    postBrief = data.postBrief ?? postBrief;
                     imageBrief = data.imageBrief ?? imageBrief;
                     postType = data.postType ?? postType;
                     if (process.env.NODE_ENV !== "production") {
@@ -1608,6 +1512,10 @@ function ConversationContent() {
                   }
                 } catch (err) {
                   console.warn("[intent] classifier unreachable, using local fallback", { fallback: intent, err: (err as Error)?.message });
+                } finally {
+                  // Classification done — the post/image pipeline takes over the
+                  // loading indicator from here (isLoading / ImageGenLoader).
+                  setIsClassifying(false);
                 }
 
                 // Mismatch detection: prompt asked for a visual deliverable
@@ -1625,7 +1533,7 @@ function ConversationContent() {
                   // complete.
                   const entriesBeforeCount = imageEntries.length;
                   await Promise.all([
-                    generate(postBrief, undefined, postType),
+                    generate(message, undefined, postType),
                     // embed:true keeps the entry out of the standalone list
                     // — the freshly-streamed AI message owns the visual.
                     handleImageGenerate(message, imageBrief, { embed: true }),
@@ -1665,7 +1573,7 @@ function ConversationContent() {
                     );
                   });
                 } else {
-                  await generate(postBrief, undefined, postType);
+                  await generate(message, undefined, postType);
                 }
 
                 // Recovery toast — user asked for visuals but the resolved
@@ -1688,8 +1596,6 @@ function ConversationContent() {
               isRecording={isRecording}
               interimText={interimText}
               isVoiceProcessing={isVoiceProcessing}
-              autoSendCountdown={autoSendCountdown}
-              onCancelAutoSend={cancelAutoSend}
               enableFileAttachment={true}
               fileAttachmentAllowed={isMaxPlan}
               showHelperText={true}

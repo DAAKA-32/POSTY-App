@@ -737,6 +737,7 @@ export const it = {
     pricingHeadline2: "Il ritorno di un commerciale a tempo pieno.",
     pricingDescription: "Un solo cliente acquisito via LinkedIn ripaga il tuo anno intero. Quale piano corrisponde alle tue ambizioni?",
     pricingSavingsLabel: "2 mesi gratis",
+    pricingPlusLower: "+ tutto ciò che offre {plan}",
     pricingTrialIncluded: "Prova gratuita inclusa · Senza impegno",
 
     // Business offer (B2B card under the pricing grid — expandable)
@@ -883,6 +884,19 @@ export const it = {
 
     // Value block after features
     valueBlockTitle: "Perché i freelancer scelgono Posty",
+    valueBlockSubtitle: "Esempi di risultati ottenuti dai nostri utenti, su tutti i loro social.",
+    valueMetricLabel1: "Visibilità",
+    valueMetricLabel2: "Engagement",
+    valueMetricLabel3: "Follower",
+    valueMetricLabel4: "Nuovi contatti",
+    valueMetricLabel5: "a settimana",
+    valueMetricLabel6: "Copertura dei post",
+    valueMetricLabel7: "Lead qualificati",
+    valueMetricLabel8: "Tasso di risposta",
+    valueMetricLabel9: "Nuovi clienti",
+    valueMetricLabel10: "Impressioni / post",
+    valueMetricLabel11: "Opportunità",
+    valueMetricLabel12: "Notorietà",
     valueBlockItem1Title: "Prospezione automatizzata",
     valueBlockItem1Desc: "Basta ore a cercare prospect. Posty genera contenuti che attraggono i tuoi clienti ideali.",
     valueBlockItem2Title: "Post che convertono",
@@ -1019,7 +1033,7 @@ export const it = {
     mockupScheduleAlt: "Programmazione post LinkedIn",
     mockupScheduleLabel: "Programmati",
     mockupAnalyticsAlt: "Dashboard e analisi",
-    mockupAnalyticsLabel: "Analisi",
+    mockupAnalyticsLabel: "Dashboard",
   },
 
   // Auth
@@ -2740,6 +2754,8 @@ export const it = {
     placeholderGeneralFixed: "Fai la tua domanda qui...",
     speakNow: "🎤 Parla ora...",
     processingMessage: "Elaborazione del tuo messaggio...",
+    transcribing: "Trascrizione in corso...",
+    transcriptionFailed: "Trascrizione non riuscita, si usa il testo dal vivo",
     monthlyQuotaReached: "Quota mensile raggiunta",
     dailyQuotaReached: "Quota giornaliera raggiunta",
     trialLimitReached: "Limite di prova raggiunto",

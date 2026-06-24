@@ -165,6 +165,7 @@ export async function POST(request: NextRequest) {
       startDate: tomorrowInTz(timezone),
       timezone,
       language,
+      source: "auto-batch",
     });
     batchId = result.batchId;
   } catch (err) {

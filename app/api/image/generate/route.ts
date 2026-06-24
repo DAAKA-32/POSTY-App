@@ -163,15 +163,15 @@ export async function POST(request: NextRequest) {
   // heavy brief should still get kpi-card even if it's "recent").
   const history = await readRecentHistory(uid).catch(() => [] as ImageGenHistoryEntry[]);
   const bias = computeDiversityBias(history);
-  // Anti-repetition is scoped to TEXT cards only. Photo templates are the
-  // default and are EXEMPT — their variety comes from the photo itself, not
-  // the layout, so penalising "you used photo-clean recently" would just push
-  // the system back toward the text cards we're trying to demote.
+  // Anti-repetition is scoped to TEXT cards only. Photo templates (photo-hero
+  // is the default) are EXEMPT — their variety comes from the photo + headline,
+  // not the layout, so penalising "you used photo-hero recently" would just
+  // push the system away from the message-over-photo default we want.
   const overTextTemplates: TemplateId[] = bias.recentTemplates
     .filter((t) => !isPhotoTemplate(t))
     .slice(0, 2);
   // Fresh text cards = text cards NOT recently over-used. Used to vary which
-  // minority text card gets picked when one is genuinely warranted.
+  // text card gets picked when one is genuinely warranted.
   const freshTextTemplates: TemplateId[] = TEMPLATE_IDS.filter(
     (t) => !isPhotoTemplate(t) && !overTextTemplates.includes(t),
   );
@@ -188,10 +188,10 @@ export async function POST(request: NextRequest) {
     const overAccents = bias.recentAccents.slice(0, 2);
     if (overTextTemplates.length === 0 && overAccents.length === 0) return "";
     const tFr = overTextTemplates.length
-      ? `\n  • Cartes texte sur-utilisées récemment : ${overTextTemplates.join(", ")} → privilégie une photo (photo-clean), sinon ${freshTextTemplates.join(" ou ") || "une autre carte"}.`
+      ? `\n  • Cartes texte sur-utilisées récemment : ${overTextTemplates.join(", ")} → privilégie photo-hero (titre fort sur une vraie photo), sinon ${freshTextTemplates.join(" ou ") || "une autre carte"}.`
       : "";
     const tEn = overTextTemplates.length
-      ? `\n  • Recently over-used text cards: ${overTextTemplates.join(", ")} → prefer a photo (photo-clean), otherwise ${freshTextTemplates.join(" or ") || "another card"}.`
+      ? `\n  • Recently over-used text cards: ${overTextTemplates.join(", ")} → prefer photo-hero (a strong headline over a real photo), otherwise ${freshTextTemplates.join(" or ") || "another card"}.`
       : "";
     return isFr
       ? `\nAnti-répétition (historique récent de cet utilisateur) :${tFr}\n  • Accents sur-utilisés : ${overAccents.join(", ") || "aucun"} → préfère ${freshAccents.join(" ou ") || "n'importe lequel"}.\nN'ignore cette consigne que si le brief impose clairement le template écarté.`
@@ -205,20 +205,20 @@ export async function POST(request: NextRequest) {
     const directorSystem = isFr
       ? `Tu es directrice artistique pour Posty (visuels marketing LinkedIn carrés). Pour un même sujet, tu inventes ${n} angles créatifs RADICALEMENT différents — pas ${n} reformulations du même message. Chaque angle attaque le sujet sous une lentille distincte (émotion, scène, donnée chiffrée, punchline, métaphore, témoignage, etc.).
 
-PHOTO D'ABORD : Posty est un outil premium où les visuels doivent ressembler à du VRAI contenu pro, pas à des images "faites par une IA". Par défaut, chaque variante utilise une VRAIE PHOTO (photo-clean) — c'est la SCÈNE / le SUJET photographié qui change d'une variante à l'autre, pas seulement la couleur.
+LE MESSAGE D'ABORD : un bon visuel LinkedIn fait comprendre l'idée clé en 2 secondes, même en miniature mobile. Le TEXTE est l'élément principal, l'image n'est qu'un support. Chaque variante doit porter une ACCROCHE forte et lisible. Évite l'effet "fait par une IA / Canva" : le défaut est une VRAIE PHOTO en arrière-plan avec un titre incrusté au premier plan (photo-hero).
 
 Templates disponibles :
-  • photo-clean — DÉFAUT. Vraie photo plein cadre, quasi sans texte. À utiliser pour la majorité des angles.
-  • photo-hero — vraie photo + UNE phrase forte incrustée. Seulement si l'angle a besoin d'une accroche sur l'image.
-  • kpi-card — MINORITÉ, texte seul. Seulement si l'angle EST une donnée chiffrée.
-  • quote-card — MINORITÉ, texte seul. Seulement si l'angle EST une citation verbatim.
-  • announcement-card — MINORITÉ, texte seul. Seulement pour une annonce formelle.
+  • photo-hero — DÉFAUT. Vraie photo en arrière-plan + TITRE court et percutant au premier plan. À utiliser pour la majorité des angles. Fais varier la SCÈNE photographiée ET l'accroche d'une variante à l'autre.
+  • kpi-card — texte seul. Si l'angle EST une donnée chiffrée (le nombre est le message).
+  • quote-card — texte seul. Si l'angle EST une citation / punchline verbatim.
+  • announcement-card — texte seul. Pour une annonce formelle.
+  • photo-clean — vraie photo quasi sans texte. RARE : seulement pour un angle volontairement atmosphérique, sans message à asséner.
 
 Réponds UNIQUEMENT par cet objet JSON :
 {
   "angles": [
     {
-      "focus": "<2 à 6 mots — accroche-titre type editorial>",
+      "focus": "<2 à 6 mots — l'accroche-titre qui sera INCRUSTÉE sur le visuel, courte et percutante>",
       "direction": "<1 phrase — quel angle / quelle scène / quel insight cette variante doit porter>",
       "accent": "<une valeur parmi: ${ACCENT_KEYS.join(", ")}>",
       "template": "<une valeur parmi: ${TEMPLATE_IDS.join(", ")}>"
@@ -229,26 +229,27 @@ Réponds UNIQUEMENT par cet objet JSON :
 Règles :
 - ${n} entrées exactement, ordre = ordre d'affichage chez l'utilisateur.
 - Aucun "focus" en doublon, aucun "direction" en paraphrase.
-- MAJORITÉ de templates photo (photo-clean / photo-hero). Tu PEUX réutiliser un template photo entre variantes — la photo diffère, donc le visuel diffère. Fais varier la SCÈNE / le SUJET concret entre variantes.
-- N'utilise une carte texte (kpi/quote/announcement) QUE si l'angle l'exige vraiment, et au plus UNE seule sur les ${n}.
+- MAJORITÉ de photo-hero. Tu PEUX réutiliser photo-hero entre variantes — la photo ET l'accroche diffèrent, donc le visuel diffère.
+- Utilise une carte texte (kpi/quote/announcement) quand l'angle est intrinsèquement un chiffre / une citation / une annonce.
+- N'utilise photo-clean (sans texte) que très rarement, au plus UNE fois sur les ${n}.
 - Accents différents entre variantes quand c'est possible.
 - Sujet reste le même, lentille change.${avoidBlock}`
       : `You are art director for Posty (square LinkedIn marketing visuals). For one topic you invent ${n} RADICALLY different creative angles — not ${n} rewordings of the same message. Each angle attacks the topic through a distinct lens (emotion, scene, data, punchline, metaphor, testimonial, etc.).
 
-PHOTO FIRST: Posty is a premium tool where visuals must look like REAL professional content, not "AI-made" images. By default, each variant uses a REAL PHOTO (photo-clean) — it's the photographed SCENE / SUBJECT that changes from one variant to the next, not just the color.
+MESSAGE FIRST: a good LinkedIn visual makes the key idea understandable in 2 seconds, even as a mobile thumbnail. TEXT is the primary element, the image is only support. Every variant must carry a strong, legible HOOK. Avoid the "AI-made / Canva" look: the default is a REAL PHOTO in the background with a headline burned over it in the foreground (photo-hero).
 
 Available templates:
-  • photo-clean — DEFAULT. Real photo filling the frame, almost no text. Use for most angles.
-  • photo-hero — real photo + ONE strong line burned on it. Only if the angle needs a hook on the image.
-  • kpi-card — MINORITY, text only. Only if the angle IS a number.
-  • quote-card — MINORITY, text only. Only if the angle IS a verbatim quote.
-  • announcement-card — MINORITY, text only. Only for a formal announcement.
+  • photo-hero — DEFAULT. Real photo in the background + a short, punchy HEADLINE in the foreground. Use for most angles. Vary the photographed SCENE AND the hook across variants.
+  • kpi-card — text only. If the angle IS a number (the number is the message).
+  • quote-card — text only. If the angle IS a verbatim quote / one-liner.
+  • announcement-card — text only. For a formal announcement.
+  • photo-clean — real photo with almost no text. RARE: only for a deliberately atmospheric angle with no message to assert.
 
 Reply with ONLY this JSON:
 {
   "angles": [
     {
-      "focus": "<2 to 6 words — editorial headline hook>",
+      "focus": "<2 to 6 words — the headline hook that will be BURNED on the visual, short and punchy>",
       "direction": "<1 sentence — which angle / scene / insight this variant must carry>",
       "accent": "<one of: ${ACCENT_KEYS.join(", ")}>",
       "template": "<one of: ${TEMPLATE_IDS.join(", ")}>"
@@ -259,8 +260,9 @@ Reply with ONLY this JSON:
 Rules:
 - Exactly ${n} entries, order = display order to the user.
 - No duplicate "focus", no paraphrased "direction".
-- MAJORITY of photo templates (photo-clean / photo-hero). You MAY reuse a photo template across variants — the photo differs, so the visual differs. Vary the concrete SCENE / SUBJECT across variants.
-- Use a text card (kpi/quote/announcement) ONLY if the angle truly demands it, and at most ONE of the ${n}.
+- MAJORITY of photo-hero. You MAY reuse photo-hero across variants — the photo AND the hook differ, so the visual differs.
+- Use a text card (kpi/quote/announcement) when the angle is intrinsically a number / quote / announcement.
+- Use photo-clean (no text) only very rarely, at most ONE of the ${n}.
 - Different accents across variants when possible.
 - Topic stays the same, lens changes.${avoidBlock}`;
 
@@ -301,10 +303,12 @@ Rules:
       // duplicate templates across variants" client-side: if the model
       // returned two identical templates we override one with the next
       // unused template (cycling through TEMPLATE_IDS biased by freshness).
-      // Photo-first rotation: photo templates lead, then fresh text cards,
-      // then the rest. Uniqueness is enforced for TEXT cards only — photo
-      // templates may repeat across variants (the photo differs, so does the
-      // visual), which is exactly the photo-first behaviour we want.
+      // Message-first rotation: photo-hero leads, then fresh text cards, then
+      // the rest. Uniqueness is enforced for TEXT cards only — photo templates
+      // may repeat across variants (the photo + headline differ, so does the
+      // visual), which is exactly the message-first behaviour we want.
+      // photo-clean sits last so it's never auto-injected as a fallback fill
+      // (photo-hero, always usable, is found first by `canUse`).
       const templateRotation: TemplateId[] = [
         ...PHOTO_TEMPLATES,
         ...freshTextTemplates,
@@ -368,14 +372,13 @@ Rules:
         ? `${userPrompt}\n\nVariante ${index + 1}/${variantCount} — directive artistique :\n  • Angle / accroche cible : ${a.focus}\n  • Message à porter : ${a.direction}\n  • Palette suggérée : ${a.accent}\n  • TEMPLATE OBLIGATOIRE : "${a.template}" — tu DOIS retourner un DSL dont le champ "template" vaut exactement "${a.template}". Reformule le contenu pour qu'il colle naturellement à ce template ; ne change PAS le template.\nLe sujet reste identique aux autres variantes, c'est la LENTILLE et la COMPOSITION qui changent. Évite toute formulation déjà vue dans une autre variante.`
         : `${userPrompt}\n\nVariant ${index + 1}/${variantCount} — art direction:\n  • Target angle / headline: ${a.focus}\n  • Message to carry: ${a.direction}\n  • Suggested palette: ${a.accent}\n  • REQUIRED TEMPLATE: "${a.template}" — you MUST return a DSL whose "template" field is exactly "${a.template}". Reshape the content to fit this template naturally; do NOT change the template.\nTopic stays identical across variants, the LENS and COMPOSITION change. Avoid any wording reused from another variant.`;
     }
-    // Fallback: accent + template rotation (used if brainstorm failed).
-    // Photo-first — rotate over the photo templates so even the degraded path
-    // defaults to real photos rather than text cards.
+    // Fallback: accent rotation (used if brainstorm failed). Message-first —
+    // default to photo-hero (a bold headline over a real photo) so even the
+    // degraded path carries the message instead of a wordless photo.
     const accent = ROTATING_ACCENTS[index % ROTATING_ACCENTS.length];
-    const fallbackTemplate = PHOTO_TEMPLATES[index % PHOTO_TEMPLATES.length];
     return isFr
-      ? `${userPrompt}\n\nVariante ${index + 1}/${variantCount} — privilégie une VRAIE PHOTO (template "${fallbackTemplate}") avec un sujet concret distinct des autres variantes, accent "${accent}". N'utilise une carte texte que si le sujet l'exige absolument.`
-      : `${userPrompt}\n\nVariant ${index + 1}/${variantCount} — prefer a REAL PHOTO (template "${fallbackTemplate}") with a concrete subject distinct from the other variants, accent "${accent}". Only use a text card if the subject truly demands it.`;
+      ? `${userPrompt}\n\nVariante ${index + 1}/${variantCount} — template "photo-hero" : une VRAIE PHOTO en arrière-plan (sujet concret distinct des autres variantes) + un TITRE court et percutant qui porte le message, accent "${accent}". Utilise une carte texte (kpi/quote/announcement) uniquement si le contenu est intrinsèquement un chiffre, une citation ou une annonce.`
+      : `${userPrompt}\n\nVariant ${index + 1}/${variantCount} — template "photo-hero": a REAL PHOTO in the background (concrete subject distinct from the other variants) + a short, punchy HEADLINE carrying the message, accent "${accent}". Use a text card (kpi/quote/announcement) only if the content is intrinsically a number, a quote, or an announcement.`;
   };
 
   /** Run one DSL generation round (with one repair retry on Zod failure). */

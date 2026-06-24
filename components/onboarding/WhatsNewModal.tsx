@@ -17,6 +17,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Sparkles, ImageIcon, Compass, Wand2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { updateUserProfile } from "@/lib/db/firestore";
 import StrategistMark from "@/components/strategist/StrategistMark";
 
 /** Bump this string when shipping a new release-notes round so users see
@@ -67,16 +68,24 @@ const FEATURES: Feature[] = [
 ];
 
 export default function WhatsNewModal() {
-  const { user, loading } = useAuth();
+  const { user, loading, userProfile, refreshUserProfile } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     if (loading || !user) return;
+    // Firestore is the source of truth so the modal shows once PER ACCOUNT,
+    // not once per localStorage. Wait for the profile to load before deciding
+    // — otherwise a user who already acknowledged this release on another
+    // device would briefly re-see it here.
+    if (!userProfile) return;
+    if (userProfile.whatsNewSeenRelease === RELEASE_KEY) return;
     // SSR guard — localStorage isn't available during prerender. We're in
     // a "use client" component but Next still renders this on the server
     // for hydration purposes.
     if (typeof window === "undefined") return;
     try {
+      // localStorage stays as an anti-flash / same-session fast path so the
+      // modal can't flicker back before the next profile refresh.
       const seen = window.localStorage.getItem(RELEASE_KEY);
       if (!seen) {
         // Small delay so the modal doesn't fight with auth loading state
@@ -87,14 +96,23 @@ export default function WhatsNewModal() {
     } catch {
       /* localStorage disabled — skip the modal silently */
     }
-  }, [user, loading]);
+  }, [user, loading, userProfile]);
 
   const close = () => {
     setIsOpen(false);
     try {
+      // Instant + cross-tab suppression while the Firestore write lands.
       window.localStorage.setItem(RELEASE_KEY, new Date().toISOString());
     } catch {
       /* ignore — modal won't reappear in-session anyway */
+    }
+    // Persist to the account so every other browser/device stays suppressed.
+    if (user) {
+      updateUserProfile(user.uid, { whatsNewSeenRelease: RELEASE_KEY })
+        .then(() => refreshUserProfile())
+        .catch((err) =>
+          console.warn("Failed to persist what's-new state:", err)
+        );
     }
   };
 

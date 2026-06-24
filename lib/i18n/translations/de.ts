@@ -737,6 +737,7 @@ export const de = {
     pricingHeadline2: "Der Ertrag eines Vollzeit-Vertrieblers.",
     pricingDescription: "Ein einziger Kunde, der über LinkedIn gewonnen wurde, bezahlt Ihr gesamtes Jahr. Welcher Plan passt zu Ihren Ambitionen?",
     pricingSavingsLabel: "2 Monate gratis",
+    pricingPlusLower: "+ alles aus {plan}",
     pricingTrialIncluded: "Kostenlose Testphase inklusive · Keine Bindung",
 
     // Business offer (B2B card under the pricing grid — expandable)
@@ -883,6 +884,19 @@ export const de = {
 
     // Value block after features
     valueBlockTitle: "Warum Freelancer Posty wählen",
+    valueBlockSubtitle: "Beispiele für Ergebnisse unserer Nutzer – auf all ihren Netzwerken.",
+    valueMetricLabel1: "Sichtbarkeit",
+    valueMetricLabel2: "Engagement",
+    valueMetricLabel3: "Follower",
+    valueMetricLabel4: "Neue Kontakte",
+    valueMetricLabel5: "pro Woche",
+    valueMetricLabel6: "Reichweite der Posts",
+    valueMetricLabel7: "Qualifizierte Leads",
+    valueMetricLabel8: "Antwortrate",
+    valueMetricLabel9: "Neue Kunden",
+    valueMetricLabel10: "Impressionen / Post",
+    valueMetricLabel11: "Chancen",
+    valueMetricLabel12: "Bekanntheit",
     valueBlockItem1Title: "Automatisierte Akquise",
     valueBlockItem1Desc: "Schluss mit stundenlanger Interessentensuche. Posty erstellt Inhalte, die Ihre idealen Kunden anziehen.",
     valueBlockItem2Title: "Posts die überzeugen",
@@ -1019,7 +1033,7 @@ export const de = {
     mockupScheduleAlt: "LinkedIn-Beitragsplanung",
     mockupScheduleLabel: "Geplant",
     mockupAnalyticsAlt: "Dashboard und Analysen",
-    mockupAnalyticsLabel: "Analysen",
+    mockupAnalyticsLabel: "Dashboard",
   },
 
   // Auth
@@ -2740,6 +2754,8 @@ export const de = {
     placeholderGeneralFixed: "Stellen Sie hier Ihre Frage...",
     speakNow: "Jetzt sprechen...",
     processingMessage: "Ihre Nachricht wird verarbeitet...",
+    transcribing: "Wird transkribiert...",
+    transcriptionFailed: "Transkription fehlgeschlagen, Live-Text wird verwendet",
     monthlyQuotaReached: "Monatliches Kontingent erreicht",
     dailyQuotaReached: "Tageskontingent erreicht",
     trialLimitReached: "Testlimit erreicht",

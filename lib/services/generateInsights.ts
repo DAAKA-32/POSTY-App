@@ -246,12 +246,12 @@ function generateImprovements(metrics: ContentMetrics, variant?: "storytelling" 
     improvements.push("📊 Intégrez des données chiffrées pour renforcer votre expertise. Les posts avec statistiques sont partagés 3x plus.");
   }
 
-  if (metrics.hashtagCount > 5) {
-    improvements.push(`#️⃣ Réduisez vos hashtags (${metrics.hashtagCount} → 3-5 max). Trop de hashtags dilue la portée et paraît spam.`);
+  if (metrics.hashtagCount > 3) {
+    improvements.push(`#️⃣ Réduisez vos hashtags (${metrics.hashtagCount} → 2-3 max). Au-delà de 3, la portée chute et le post paraît spam.`);
   }
 
   if (metrics.hashtagCount === 0) {
-    improvements.push("#️⃣ Ajoutez 3-5 hashtags ciblés à la fin de votre post pour améliorer la découvrabilité.");
+    improvements.push("#️⃣ Ajoutez 2-3 hashtags ciblés à la fin de votre post pour améliorer la découvrabilité.");
   }
 
   if (metrics.wordCount > 300) {

@@ -21,11 +21,12 @@ const LANG_SHORT: Record<Language, string> = {
   pt: "PT", nl: "NL", zh: "中文", ja: "日本", ko: "한국",
 };
 import BillingToggle from "@/components/ui/BillingToggle";
-import PricingCard from "@/components/pricing/PricingCard";
+import LandingPricingCard from "@/components/pricing/LandingPricingCard";
 import BusinessOffer from "@/components/pricing/BusinessOffer";
 import { useScrollLock } from "@/hooks/ui/useScrollLock";
 import AnimatedMacBook from "@/components/landing/AnimatedMacBook";
 import LandingSceneEngine from "@/components/landing/LandingSceneEngine";
+import LandingTopMask from "@/components/landing/LandingTopMask";
 import { FaqJsonLd, postyFaqData } from "@/components/seo/JsonLd";
 
 /* Below-the-fold sections — each is a multi-hundred-line component that
@@ -62,25 +63,6 @@ const colors = {
 // Premium animation easings - inspired by Linear, Notion
 const smoothEase = [0.25, 0.1, 0.25, 1] as const;
 const premiumEase = [0.22, 1, 0.36, 1] as const;
-
-// =============================================================================
-// SCROLL PROGRESS BAR — premium top-of-page indicator (Linear / Stripe style)
-// =============================================================================
-function ScrollProgressBar() {
-  const { scrollYProgress } = useScroll();
-  const scaleX = useSpring(scrollYProgress, {
-    stiffness: 120,
-    damping: 26,
-    restDelta: 0.001,
-  });
-  return (
-    <motion.div
-      style={{ scaleX }}
-      aria-hidden="true"
-      className="fixed top-0 left-0 right-0 z-[60] h-[2px] origin-left bg-gradient-to-r from-[#F8935D] via-[#F76B54] to-[#F8935D] pointer-events-none"
-    />
-  );
-}
 
 // Lightweight mobile detection — avoids heavy infinite animations on mobile
 function useIsMobile() {
@@ -275,15 +257,12 @@ function Navbar() {
 
   return (
     <>
+    {/* Top mask — hides content scrolling up into the navbar zone while
+        re-painting the identical page background (seamless). Only active once
+        scrolled. */}
+    <LandingTopMask visible={isScrolled && !isMenuOpen} />
     {/* Outer fixed container — always full width for positioning */}
     <div className="fixed top-0 left-0 right-0 z-50 pointer-events-none">
-      {/* Mask: solid cover above the floating navbar pill to prevent content bleed */}
-      <div
-        className={`absolute top-0 left-0 right-0 bg-[#FEF3EE] transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-          isScrolled && !isMenuOpen ? "h-3 opacity-100" : "h-0 opacity-0"
-        }`}
-        aria-hidden="true"
-      />
       {/* Dynamic container — always visible, border/bg on scroll */}
       <nav
         className={`w-full pointer-events-auto transition-[padding] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
@@ -295,8 +274,8 @@ function Navbar() {
             mx-auto transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]
             ${isScrolled && !isMenuOpen ? "max-w-[1100px] rounded-[20px]" : "max-w-full rounded-none"}
             ${isScrolled || isMenuOpen
-              ? "bg-white/25 backdrop-blur-xl shadow-md shadow-gray-900/[0.05] border border-white/40"
-              : "bg-transparent border border-transparent"
+              ? "bg-white shadow-md shadow-gray-900/[0.05] border border-white/40"
+              : "bg-transparent border-0"
             }
           `}
         >
@@ -1668,7 +1647,7 @@ function DemoSection() {
                             children mount and their effects run in parallel, which
                             collides with Suspense cleanup (React DevTools warning). */}
                         <video
-                          src="/videos/posty-demo.mp4"
+                          src="/videos/posty-demo.mp4?v=2"
                           autoPlay
                           loop
                           muted
@@ -2737,73 +2716,72 @@ function getAudienceProfiles(t: Translations) {
 }
 
 /**
- * Single shared card for the marquee. Framer Motion variants drive the
- * hover state: card lifts + border tints in the persona's warm hue, top
- * accent bar brightens, icon container scales subtly. The shadow on hover
- * also tints with the persona color — that's the signature detail.
+ * Single persona card in the "À qui s'adresse Posty" grid. Mirrors the
+ * reference layout: a bare outline accent icon up top, bold title, muted
+ * description. Entrance fades up on scroll (outer); hover lifts the inner
+ * surface with a shadow + border tinted in the persona's accent hue.
  */
-const AudienceMarqueeCard = memo(function AudienceMarqueeCard({
+const AudiencePersonaCard = memo(function AudiencePersonaCard({
   profile,
+  index = 0,
 }: {
   profile: ReturnType<typeof getAudienceProfiles>[number];
+  index?: number;
 }) {
   const accent = audienceAccents[profile.accent];
+  const reduced = useReducedMotion();
 
   return (
     <motion.div
-      className="group relative flex-shrink-0 w-[320px]"
-      style={{ transform: "translateZ(0)", backfaceVisibility: "hidden" }}
-      initial="rest"
-      whileHover="hover"
-      animate="rest"
+      className="group relative h-full"
+      initial={{ opacity: 0, y: reduced ? 0 : 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "0px 0px -60px 0px" }}
+      transition={{ duration: 0.5, delay: index * 0.1, ease: premiumEase }}
     >
       <motion.div
-        className="relative h-full rounded-2xl bg-white border overflow-hidden flex flex-col"
-        variants={{
-          rest: {
-            y: 0,
-            boxShadow: "0 1px 2px rgba(15, 23, 42, 0.04)",
-            borderColor: "rgba(15, 23, 42, 0.06)",
-          },
-          hover: {
-            y: -4,
-            boxShadow: `0 12px 32px -12px rgba(${accent.rgb}, 0.18), 0 4px 12px -6px rgba(15, 23, 42, 0.06)`,
-            borderColor: `rgba(${accent.rgb}, 0.30)`,
-          },
+        className="relative flex h-full flex-col rounded-2xl bg-white border p-7 md:p-8"
+        style={{
+          borderColor: "rgba(15, 23, 42, 0.08)",
+          boxShadow: "0 1px 2px rgba(15, 23, 42, 0.04)",
         }}
-        transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+        whileHover={
+          reduced
+            ? undefined
+            : {
+                y: -6,
+                borderColor: `rgba(${accent.rgb}, 0.35)`,
+                boxShadow: `0 24px 50px -20px rgba(${accent.rgb}, 0.28), 0 8px 20px -12px rgba(15, 23, 42, 0.10)`,
+              }
+        }
+        transition={{ duration: 0.3, ease: premiumEase }}
       >
-        {/* Top accent bar — 1px hairline that brightens on hover */}
-        <motion.div
-          className="h-[1px] flex-shrink-0 origin-left"
-          style={{ backgroundColor: accent.hex }}
-          variants={{ rest: { opacity: 0.6 }, hover: { opacity: 1 } }}
-          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-        />
+        {/* Bare outline accent icon — like the reference */}
+        <div
+          className="mb-6 [&>svg]:h-9 [&>svg]:w-9"
+          style={{ color: accent.hex }}
+        >
+          {profile.icon}
+        </div>
 
-        <div className="p-6 flex flex-col flex-1">
-          {/* Icon + Title row */}
-          <div className="flex items-center gap-3 mb-4">
-            <motion.div
-              className="w-10 h-10 rounded-[10px] flex items-center justify-center flex-shrink-0"
-              style={{ color: accent.hex }}
-              variants={{
-                rest: { scale: 1, backgroundColor: `rgba(${accent.rgb}, 0.08)` },
-                hover: { scale: 1.05, backgroundColor: `rgba(${accent.rgb}, 0.12)` },
-              }}
-              transition={{ duration: 0.18, ease: "easeOut" }}
-            >
-              {profile.icon}
-            </motion.div>
-            <h3 className="text-[15px] font-semibold text-gray-900 tracking-tight leading-snug">
-              {profile.title}
-            </h3>
-          </div>
+        <h3 className="text-[1.35rem] font-bold text-gray-900 tracking-tight leading-snug">
+          {profile.title}
+        </h3>
 
-          {/* Solution copy */}
-          <p className="text-[13.5px] text-gray-600 leading-[1.55] flex-1">
-            {profile.solution}
-          </p>
+        <p className="mt-3 text-[14.5px] text-gray-600 leading-[1.6]">
+          {profile.solution}
+        </p>
+
+        {/* Ce que ça apporte — the concrete benefit, anchored to the bottom
+            and kept deliberately understated. */}
+        <div
+          className="mt-6 flex items-center gap-2 border-t pt-4 text-[13px] font-semibold"
+          style={{ color: accent.text, borderColor: "rgba(15, 23, 42, 0.07)" }}
+        >
+          <svg className="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2.25} viewBox="0 0 24 24" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+          </svg>
+          <span>{profile.tag}</span>
         </div>
       </motion.div>
     </motion.div>
@@ -2813,16 +2791,15 @@ const AudienceMarqueeCard = memo(function AudienceMarqueeCard({
 function TargetAudienceSection() {
   const { t } = useLanguage();
   const AUDIENCE_PROFILES = getAudienceProfiles(t);
-  const reduced = useReducedMotion();
 
   return (
     <section
       id="audience"
       aria-label="Pour qui Posty"
-      className="py-12 md:py-16 lg:py-20 overflow-hidden"
+      className="py-12 md:py-16 lg:py-20"
     >
-      {/* Section header — single brand orange on the accent word, no gradient */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Section header — single brand orange on the accent word, no gradient */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -2835,41 +2812,14 @@ function TargetAudienceSection() {
             <span className="text-[#F8935D]">{t.landing.audienceTitle3}</span>
           </h2>
         </motion.div>
-      </div>
 
-      {/* Reduced-motion fallback: static 3-up grid (the marquee is purely
-          decorative motion — when users opt out, the same 3 cards still
-          tell the story, just without the horizontal scroll). */}
-      {reduced ? (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Static 3-card grid — one persona per card (icon · title · copy). */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
           {AUDIENCE_PROFILES.map((profile, i) => (
-            <AudienceMarqueeCard key={i} profile={profile} />
+            <AudiencePersonaCard key={i} profile={profile} index={i} />
           ))}
         </div>
-      ) : (
-        <div className="relative max-w-[1084px] mx-auto">
-          {/* Edge fade — tinted to the section wrapper so the marquee edges
-              dissolve into the ambient wash without producing a hard band. */}
-          <div className="absolute left-0 top-0 bottom-0 w-12 sm:w-20 bg-gradient-to-r from-[#FEF3EE]/85 via-[#FEF3EE]/55 to-transparent z-10 pointer-events-none" />
-          <div className="absolute right-0 top-0 bottom-0 w-12 sm:w-20 bg-gradient-to-l from-[#FEF3EE]/85 via-[#FEF3EE]/55 to-transparent z-10 pointer-events-none" />
-
-          <div className="overflow-hidden">
-            <div
-              className="flex items-stretch animate-marquee-value gap-4 w-max hover:[animation-play-state:paused]"
-              style={{
-                willChange: "transform",
-                backfaceVisibility: "hidden",
-                /* Slower marquee (60s) — premium pacing à la Stripe homepage. */
-                animationDuration: "60s",
-              }}
-            >
-              {[...AUDIENCE_PROFILES, ...AUDIENCE_PROFILES, ...AUDIENCE_PROFILES, ...AUDIENCE_PROFILES].map((profile, i) => (
-                <AudienceMarqueeCard key={i} profile={profile} />
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+      </div>
     </section>
   );
 }
@@ -4130,8 +4080,130 @@ function ZigzagConnector({
   );
 }
 
+// =============================================================================
+// VALUE METRICS MARQUEE — two-row infinite carousel of result cards (replaces
+// the static zigzag for motion-enabled users). Vivid brand-spectrum gradient
+// cards, each: big metric + label + platform + name. Reuses the proven
+// AudienceMarquee mechanics (marqueeValue keyframe, ×2 duplication for a
+// seamless −50% loop; row 2 runs in reverse).
+// NOTE: metrics + names are ILLUSTRATIVE examples — swap for real, verifiable
+// customer data before treating them as social proof.
+// =============================================================================
+
+type ValuePlatform = "linkedin" | "mastodon" | "threads" | "discord";
+
+const VALUE_PLATFORMS: Record<ValuePlatform, { color: string; glyph: React.ReactNode }> = {
+  linkedin: {
+    color: "#0A66C2",
+    glyph: (
+      <path d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.22.79 24 1.77 24h20.45c.98 0 1.78-.78 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z" />
+    ),
+  },
+  mastodon: {
+    color: "#6364FF",
+    glyph: (
+      <path d="M23.268 5.313c-.35-2.578-2.617-4.61-5.304-5.004C17.51.242 15.792 0 11.813 0h-.03c-3.98 0-4.835.242-5.288.309C3.882.692 1.496 2.518.917 5.127.64 6.412.61 7.837.661 9.143c.074 1.874.088 3.745.26 5.611.118 1.24.325 2.47.62 3.68.55 2.237 2.777 4.098 4.96 4.857 2.336.792 4.849.923 7.256.38.265-.061.527-.132.786-.213.585-.184 1.27-.39 1.774-.753a.057.057 0 0 0 .023-.043v-1.809a.052.052 0 0 0-.02-.041.053.053 0 0 0-.046-.01 20.282 20.282 0 0 1-4.709.545c-2.73 0-3.463-1.284-3.674-1.818a5.593 5.593 0 0 1-.319-1.433.053.053 0 0 1 .066-.054c1.517.363 3.072.546 4.632.546.376 0 .75 0 1.125-.01 1.57-.044 3.224-.124 4.768-.422.038-.008.077-.015.11-.024 2.435-.464 4.753-1.92 4.989-5.604.008-.145.03-1.52.03-1.67.002-.512.167-3.63-.024-5.545zm-3.748 9.195h-2.561V8.29c0-1.309-.55-1.976-1.67-1.976-1.23 0-1.846.79-1.846 2.35v3.403h-2.546V8.663c0-1.56-.617-2.35-1.848-2.35-1.112 0-1.668.668-1.67 1.977v6.218H4.822V8.102c0-1.31.337-2.35 1.011-3.12.696-.77 1.608-1.164 2.74-1.164 1.311 0 2.302.5 2.962 1.498l.638 1.06.638-1.06c.66-.999 1.65-1.498 2.96-1.498 1.13 0 2.043.395 2.74 1.164.675.77 1.012 1.81 1.012 3.12z" />
+    ),
+  },
+  threads: {
+    color: "#000000",
+    glyph: (
+      <path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.29 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.589 12c.027 3.086.718 5.496 2.057 7.164 1.43 1.781 3.631 2.695 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.751-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.801-1.063-.689-1.685-1.74-1.752-2.964-.065-1.19.408-2.285 1.33-3.082.88-.76 2.119-1.207 3.583-1.291a13.853 13.853 0 0 1 3.02.142c-.126-.742-.375-1.332-.75-1.757-.513-.586-1.308-.883-2.359-.89h-.029c-.844 0-1.992.232-2.721 1.32L7.475 7.825c.98-1.452 2.568-2.248 4.583-2.248h.043c3.357.024 5.36 2.082 5.694 5.84.191.082.376.169.557.262 1.886.93 3.266 2.272 3.953 3.872.83 1.93.96 4.85-1.357 7.16-1.77 1.766-3.92 2.563-6.762 2.583z" />
+    ),
+  },
+  discord: {
+    color: "#5865F2",
+    glyph: (
+      <path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z" />
+    ),
+  },
+};
+
+function ValuePlatformGlyph({ platform }: { platform: ValuePlatform }) {
+  const meta = VALUE_PLATFORMS[platform];
+  return (
+    <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill={meta.color} aria-hidden="true">
+      {meta.glyph}
+    </svg>
+  );
+}
+
+type ValueMetric = {
+  metric: string;
+  label: string;
+  name: string;
+  platform: ValuePlatform;
+  gradient: string;
+  rgb: string;
+};
+
+// Warm→cool brand spectrum (orange → coral → rose → fuchsia → violet → indigo),
+// echoing the reference carousel's blue→purple→magenta flow but on-brand.
+const VALUE_SPECTRUM: { gradient: string; rgb: string }[] = [
+  { gradient: "from-[#F8935D] to-[#F76B54]", rgb: "248,147,93" },
+  { gradient: "from-[#F76B54] to-[#F1456A]", rgb: "247,107,84" },
+  { gradient: "from-[#F1456A] to-[#D9268C]", rgb: "241,69,106" },
+  { gradient: "from-[#C42AC9] to-[#9333EA]", rgb: "168,45,200" },
+  { gradient: "from-[#8B3DEC] to-[#6366F1]", rgb: "124,58,237" },
+  { gradient: "from-[#5B61F1] to-[#3B82F6]", rgb: "79,70,229" },
+];
+
+function getValueMetrics(t: Translations): [ValueMetric[], ValueMetric[]] {
+  const s = VALUE_SPECTRUM;
+  const all: Omit<ValueMetric, "gradient" | "rgb">[] = [
+    { metric: "×4",    label: t.landing.valueMetricLabel1,  name: "Camille B.", platform: "linkedin" },
+    { metric: "+180%", label: t.landing.valueMetricLabel2,  name: "Thomas L.",  platform: "mastodon" },
+    { metric: "+3k",   label: t.landing.valueMetricLabel3,  name: "Sarah M.",   platform: "linkedin" },
+    { metric: "+50%",  label: t.landing.valueMetricLabel4,  name: "Julien R.",  platform: "threads" },
+    { metric: "−12h",  label: t.landing.valueMetricLabel5,  name: "Léa D.",     platform: "discord" },
+    { metric: "+220%", label: t.landing.valueMetricLabel6,  name: "Maxime P.",  platform: "mastodon" },
+    { metric: "+90",   label: t.landing.valueMetricLabel7,  name: "Inès K.",    platform: "linkedin" },
+    { metric: "×3",    label: t.landing.valueMetricLabel8,  name: "Antoine V.", platform: "threads" },
+    { metric: "+40%",  label: t.landing.valueMetricLabel9,  name: "Chloé F.",   platform: "discord" },
+    { metric: "+5k",   label: t.landing.valueMetricLabel10, name: "Raphaël T.", platform: "linkedin" },
+    { metric: "+30%",  label: t.landing.valueMetricLabel11, name: "Nadia S.",   platform: "mastodon" },
+    { metric: "×2",    label: t.landing.valueMetricLabel12, name: "Hugo M.",    platform: "discord" },
+  ];
+  const withColor: ValueMetric[] = all.map((m, i) => ({ ...m, ...s[i % s.length] }));
+  return [withColor.slice(0, 6), withColor.slice(6)];
+}
+
+const ValueMetricCard = memo(function ValueMetricCard({ item }: { item: ValueMetric }) {
+  return (
+    // CSS-only hover lift (no Framer transform — it would fight the marquee's
+    // CSS translateX on the parent track and make the card jump off-screen).
+    <div className="group relative w-[210px] flex-shrink-0 transition-transform duration-300 ease-out will-change-transform hover:-translate-y-1.5">
+      <div
+        className={`relative h-full overflow-hidden rounded-2xl p-5 bg-gradient-to-br ${item.gradient}`}
+        style={{ boxShadow: `0 14px 34px -16px rgba(${item.rgb}, 0.6)` }}
+      >
+        {/* Soft top sheen — premium gloss without washing out the gradient */}
+        <div aria-hidden className="pointer-events-none absolute -top-1/3 -right-1/4 h-2/3 w-2/3 rounded-full bg-white/15 blur-2xl" />
+
+        <div className="relative">
+          <p className="text-[2rem] font-extrabold leading-none tracking-tight text-white">
+            {item.metric}
+          </p>
+          <p className="mt-2 text-[13px] font-medium leading-snug text-white/90">
+            {item.label}
+          </p>
+        </div>
+
+        <div className="relative mt-5 flex items-center gap-2">
+          <span className="flex h-6 w-6 items-center justify-center rounded-md bg-white shadow-sm">
+            <ValuePlatformGlyph platform={item.platform} />
+          </span>
+          <span className="text-[12.5px] font-semibold text-white/95">{item.name}</span>
+        </div>
+      </div>
+    </div>
+  );
+});
+
 function ValueBlock() {
   const { t } = useLanguage();
+  const reduced = useReducedMotion();
+  const [metricsRow1, metricsRow2] = getValueMetrics(t);
 
   const items: ValueItem[] = [
     {
@@ -4212,37 +4284,84 @@ function ValueBlock() {
           <h2 className="text-[clamp(1.75rem,4vw,3.25rem)] font-bold leading-[1.08] tracking-[-0.015em]">
             <span className="text-silver-premium">{t.landing.valueBlockTitle}</span>
           </h2>
+          <p className="mt-4 text-[clamp(0.95rem,1.3vw,1.1rem)] text-gray-500 max-w-2xl mx-auto">
+            {t.landing.valueBlockSubtitle}
+          </p>
         </motion.div>
 
-        {/* Zigzag layout — cards alternate L/R with animated SVG S-curve
-            connectors. Mobile collapses to a centered single column with a
-            simple vertical hairline so the rhythm still reads. */}
-        <div className="relative">
-          {items.map((item, i) => {
-            const isLeft = i % 2 === 0;
-            const isLast = i === items.length - 1;
-            return (
-              <div key={i}>
-                <div
-                  className={`md:w-[52%] ${
-                    isLeft ? "md:mr-auto md:pr-4" : "md:ml-auto md:pl-4"
-                  }`}
-                >
-                  <ValueCard item={item} index={i} />
-                </div>
+        {/* Motion-enabled: two-row infinite results carousel (à la the
+            reference). Reduced-motion: the original zigzag value cards, which
+            carry the same "why" message without any horizontal scroll. */}
+        {reduced ? (
+          <div className="relative">
+            {items.map((item, i) => {
+              const isLeft = i % 2 === 0;
+              const isLast = i === items.length - 1;
+              return (
+                <div key={i}>
+                  <div
+                    className={`md:w-[52%] ${
+                      isLeft ? "md:mr-auto md:pr-4" : "md:ml-auto md:pl-4"
+                    }`}
+                  >
+                    <ValueCard item={item} index={i} />
+                  </div>
 
-                {!isLast && (
-                  <ZigzagConnector
-                    direction={isLeft ? "left-to-right" : "right-to-left"}
-                    accentColor={item.accentColor}
-                    accentRgb={item.accentRgb}
-                    nextAccentColor={items[i + 1].accentColor}
-                  />
-                )}
+                  {!isLast && (
+                    <ZigzagConnector
+                      direction={isLeft ? "left-to-right" : "right-to-left"}
+                      accentColor={item.accentColor}
+                      accentRgb={item.accentRgb}
+                      nextAccentColor={items[i + 1].accentColor}
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {/* Edge fade via mask-image — dissolves the cards into whatever is
+                behind them, so it stays clean on any background (a coloured
+                overlay looked dirty against the pink wash). py-3 gives the
+                hover lift room so it isn't clipped. */}
+            {/* Row 1 — drifts left */}
+            <div
+              className="overflow-hidden py-3"
+              style={{
+                maskImage: "linear-gradient(to right, transparent, #000 6%, #000 94%, transparent)",
+                WebkitMaskImage: "linear-gradient(to right, transparent, #000 6%, #000 94%, transparent)",
+              }}
+            >
+              <div
+                className="flex w-max gap-4 animate-marquee-value hover:[animation-play-state:paused]"
+                style={{ willChange: "transform", backfaceVisibility: "hidden", animationDuration: "44s" }}
+              >
+                {[...metricsRow1, ...metricsRow1].map((m, i) => (
+                  <ValueMetricCard key={i} item={m} />
+                ))}
               </div>
-            );
-          })}
-        </div>
+            </div>
+
+            {/* Row 2 — drifts right (reverse) */}
+            <div
+              className="overflow-hidden py-3"
+              style={{
+                maskImage: "linear-gradient(to right, transparent, #000 6%, #000 94%, transparent)",
+                WebkitMaskImage: "linear-gradient(to right, transparent, #000 6%, #000 94%, transparent)",
+              }}
+            >
+              <div
+                className="flex w-max gap-4 animate-marquee-value hover:[animation-play-state:paused]"
+                style={{ willChange: "transform", backfaceVisibility: "hidden", animationDuration: "52s", animationDirection: "reverse" }}
+              >
+                {[...metricsRow2, ...metricsRow2].map((m, i) => (
+                  <ValueMetricCard key={i} item={m} />
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* CTA — shimmer sweep + spring scale */}
         <motion.div
@@ -5048,14 +5167,17 @@ function PricingSection() {
           />
         </motion.div>
 
-        {/* Cards grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5 md:gap-6 lg:gap-8 max-w-5xl mx-auto items-start overflow-visible p-1">
+        {/* Cards grid — conversion-first landing cards (Pro = filled hero).
+            items-stretch so the three share one clean height; the hero lifts
+            itself via its own negative margin. */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 md:gap-6 lg:gap-7 max-w-5xl mx-auto items-stretch overflow-visible px-1 py-4">
           {PLANS.map((plan, index) => (
-            <PricingCard
+            <LandingPricingCard
               key={plan.id}
               plan={plan}
               billingPeriod={billingPeriod}
               index={index}
+              previousPlanName={index > 0 ? PLANS[index - 1].name : undefined}
               ctaHref="/signup"
             />
           ))}
@@ -5482,8 +5604,6 @@ export default function LandingPage() {
       {/* Site-wide FAQPage JSON-LD — scoped to the homepage only to avoid
           duplicating the schema on (seo) group pages that ship their own. */}
       <FaqJsonLd questions={postyFaqData.en} />
-      {/* Top-of-page scroll progress bar — premium Linear/Stripe touch */}
-      <ScrollProgressBar />
       {/* Unified background: gradients + stars + dot grid, scroll-driven. */}
       <LandingSceneEngine />
       <Navbar />

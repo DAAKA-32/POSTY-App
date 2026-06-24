@@ -740,6 +740,7 @@ export const en = {
     pricingHeadline2: "The return of a full-time sales rep.",
     pricingDescription: "A single client signed via LinkedIn pays for your entire year. Which plan matches your ambitions?",
     pricingSavingsLabel: "2 months free",
+    pricingPlusLower: "+ everything in {plan}",
     pricingTrialIncluded: "Free plan included · No commitment",
 
     // Business offer (B2B card under the pricing grid — links to /business)
@@ -892,6 +893,19 @@ export const en = {
 
     // Value block after features
     valueBlockTitle: "Why freelancers choose Posty",
+    valueBlockSubtitle: "Examples of results our users achieve, across all their networks.",
+    valueMetricLabel1: "Visibility",
+    valueMetricLabel2: "Engagement",
+    valueMetricLabel3: "Followers",
+    valueMetricLabel4: "New contacts",
+    valueMetricLabel5: "per week",
+    valueMetricLabel6: "Post reach",
+    valueMetricLabel7: "Qualified leads",
+    valueMetricLabel8: "Reply rate",
+    valueMetricLabel9: "New clients",
+    valueMetricLabel10: "Impressions / post",
+    valueMetricLabel11: "Opportunities",
+    valueMetricLabel12: "Brand awareness",
     valueBlockItem1Title: "Automated prospecting",
     valueBlockItem1Desc: "No more hours hunting for leads. Posty generates content that attracts your ideal clients.",
     valueBlockItem2Title: "Posts that convert",
@@ -1054,7 +1068,7 @@ export const en = {
     mockupScheduleAlt: "LinkedIn post scheduling",
     mockupScheduleLabel: "Scheduled",
     mockupAnalyticsAlt: "Dashboard and analytics",
-    mockupAnalyticsLabel: "Analytics",
+    mockupAnalyticsLabel: "Dashboard",
   },
 
   // Auth
@@ -2776,6 +2790,8 @@ export const en = {
     placeholderGeneralFixed: "Ask your question here...",
     speakNow: "🎤 Speak now...",
     processingMessage: "Processing your message...",
+    transcribing: "Transcribing...",
+    transcriptionFailed: "Transcription failed, using live text",
     monthlyQuotaReached: "Monthly quota reached",
     dailyQuotaReached: "Daily quota reached",
     trialLimitReached: "Trial limit reached",

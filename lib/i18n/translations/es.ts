@@ -737,6 +737,7 @@ export const es = {
     pricingHeadline2: "El retorno de un vendedor a tiempo completo.",
     pricingDescription: "Un solo cliente cerrado vía LinkedIn paga tu año completo. ¿Qué plan se ajusta a tus ambiciones?",
     pricingSavingsLabel: "2 meses gratis",
+    pricingPlusLower: "+ todo lo de {plan}",
     pricingTrialIncluded: "Prueba gratuita incluida · Sin compromiso",
 
     // Business offer (B2B card under the pricing grid — expandable)
@@ -883,6 +884,19 @@ export const es = {
 
     // Value block after features
     valueBlockTitle: "Por qué los freelancers eligen Posty",
+    valueBlockSubtitle: "Ejemplos de resultados obtenidos por nuestros usuarios, en todas sus redes.",
+    valueMetricLabel1: "Visibilidad",
+    valueMetricLabel2: "Interacción",
+    valueMetricLabel3: "Seguidores",
+    valueMetricLabel4: "Nuevos contactos",
+    valueMetricLabel5: "por semana",
+    valueMetricLabel6: "Alcance de las publicaciones",
+    valueMetricLabel7: "Leads cualificados",
+    valueMetricLabel8: "Tasa de respuesta",
+    valueMetricLabel9: "Nuevos clientes",
+    valueMetricLabel10: "Impresiones / publicación",
+    valueMetricLabel11: "Oportunidades",
+    valueMetricLabel12: "Notoriedad",
     valueBlockItem1Title: "Prospección automatizada",
     valueBlockItem1Desc: "Deja de pasar horas buscando prospectos. Posty genera contenido que atrae a tus clientes ideales.",
     valueBlockItem2Title: "Posts que convierten",
@@ -1019,7 +1033,7 @@ export const es = {
     mockupScheduleAlt: "Programación de publicaciones en LinkedIn",
     mockupScheduleLabel: "Programadas",
     mockupAnalyticsAlt: "Panel de control y estadísticas",
-    mockupAnalyticsLabel: "Estadísticas",
+    mockupAnalyticsLabel: "Dashboard",
   },
 
   // Auth
@@ -2740,6 +2754,8 @@ export const es = {
     placeholderGeneralFixed: "Haz tu pregunta aquí...",
     speakNow: "🎤 Habla ahora...",
     processingMessage: "Procesando tu mensaje...",
+    transcribing: "Transcribiendo...",
+    transcriptionFailed: "Transcripción fallida, se usa el texto en vivo",
     monthlyQuotaReached: "Cuota mensual alcanzada",
     dailyQuotaReached: "Cuota diaria alcanzada",
     trialLimitReached: "Límite de prueba alcanzado",

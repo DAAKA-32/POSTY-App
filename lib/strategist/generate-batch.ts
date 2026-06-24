@@ -23,6 +23,8 @@ import {
 import { fetchRealtimeContextCached } from "@/lib/strategist/realtime-cache";
 import { detectUrlLoose } from "@/lib/utils/url-extract";
 import { extractUrlContentCached } from "@/lib/strategist/url-cache";
+import { PRIMARY_MODEL } from "@/lib/openai";
+import { trackAIUsage, readUsageFromResponse } from "@/lib/ai-cost/tracker";
 import type { PostBrief, StrategyBatch, StrategistAdvancedParams } from "@/types";
 
 interface UserContext {
@@ -53,6 +55,10 @@ export interface GenerateBatchInput {
    *  user's saved `strategistParams` defaults are used instead — so the
    *  autonomous cron honors the same direction without passing anything. */
   advanced?: StrategistAdvancedParams;
+  /** Which surface triggered this — drives the cost-tracking route label so the
+   *  rentability dashboard can tell user-initiated plans apart from the
+   *  autonomous cron. Defaults to "batch-plan". */
+  source?: "batch-plan" | "auto-batch";
 }
 
 export interface GenerateBatchOutput {
@@ -205,8 +211,11 @@ export async function generateBatchPlan(
     if (rt) systemPrompt += buildRealtimeContextBlock(rt, language);
   }
 
+  // Phase-1 strategic reasoning (angle selection, editorial planning) — genuine
+  // complex analysis, so it stays on the strong model. Use the PRIMARY_MODEL
+  // constant (SSoT) instead of a hardcoded literal so it never drifts.
   const completion = await openai.chat.completions.create({
-    model: "gpt-4o",
+    model: PRIMARY_MODEL,
     response_format: { type: "json_object" },
     temperature: 0.7,
     // Headroom so a richly-grounded batch (site/web context injected) doesn't
@@ -218,6 +227,21 @@ export async function generateBatchPlan(
       { role: "user", content: sourcePrompt },
     ],
   });
+
+  // Cost tracking — this is the priciest single Strategist call and ran fully
+  // untracked (esp. the weekly unattended cron), so it silently understated
+  // rentability. Route label distinguishes user-initiated from cron.
+  const usage = readUsageFromResponse(completion);
+  void trackAIUsage({
+    userId,
+    route: `strategist.${input.source ?? "batch-plan"}`,
+    model: PRIMARY_MODEL,
+    inputTokens: usage.inputTokens,
+    outputTokens: usage.outputTokens,
+    cachedInputTokens: usage.cachedInputTokens,
+    metadata: { count, language },
+  });
+
   const raw = completion.choices[0]?.message?.content ?? "";
   if (!raw) throw new Error("empty_llm_response");
 

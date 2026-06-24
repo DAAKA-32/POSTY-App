@@ -737,6 +737,7 @@ export const nl = {
     pricingHeadline2: "Het rendement van een fulltime salesmedewerker.",
     pricingDescription: "Eén klant via LinkedIn betaalt je hele jaarabonnement. Welk abonnement past bij jouw ambities?",
     pricingSavingsLabel: "2 maanden gratis",
+    pricingPlusLower: "+ alles van {plan}",
     pricingTrialIncluded: "Gratis proefperiode inbegrepen · Zonder verplichtingen",
 
     // Business offer (B2B card under the pricing grid — expandable)
@@ -883,6 +884,19 @@ export const nl = {
 
     // Value block after features
     valueBlockTitle: "Waarom freelancers Posty kiezen",
+    valueBlockSubtitle: "Voorbeelden van resultaten van onze gebruikers, op al hun netwerken.",
+    valueMetricLabel1: "Zichtbaarheid",
+    valueMetricLabel2: "Betrokkenheid",
+    valueMetricLabel3: "Volgers",
+    valueMetricLabel4: "Nieuwe contacten",
+    valueMetricLabel5: "per week",
+    valueMetricLabel6: "Bereik van posts",
+    valueMetricLabel7: "Gekwalificeerde leads",
+    valueMetricLabel8: "Reactiepercentage",
+    valueMetricLabel9: "Nieuwe klanten",
+    valueMetricLabel10: "Weergaven / post",
+    valueMetricLabel11: "Kansen",
+    valueMetricLabel12: "Naamsbekendheid",
     valueBlockItem1Title: "Geautomatiseerde prospectie",
     valueBlockItem1Desc: "Geen uren meer besteden aan het zoeken naar leads. Posty genereert content die je ideale klanten aantrekt.",
     valueBlockItem2Title: "Posts die converteren",
@@ -1019,7 +1033,7 @@ export const nl = {
     mockupScheduleAlt: "LinkedIn-berichten inplannen",
     mockupScheduleLabel: "Gepland",
     mockupAnalyticsAlt: "Dashboard en analyses",
-    mockupAnalyticsLabel: "Analyses",
+    mockupAnalyticsLabel: "Dashboard",
   },
 
   // Auth
@@ -2740,6 +2754,8 @@ export const nl = {
     placeholderGeneralFixed: "Stel hier je vraag...",
     speakNow: "🎤 Spreek nu...",
     processingMessage: "Je bericht wordt verwerkt...",
+    transcribing: "Bezig met transcriberen...",
+    transcriptionFailed: "Transcriptie mislukt, live tekst wordt gebruikt",
     monthlyQuotaReached: "Maandelijks quotum bereikt",
     dailyQuotaReached: "Dagelijks quotum bereikt",
     trialLimitReached: "Proefperiode-limiet bereikt",

@@ -164,6 +164,12 @@ export async function getUserProfile(
       helpReadPages: data.helpReadPages || [],
       showWelcomeModal: data.showWelcomeModal,
       giftPopupSeen: data.giftPopupSeen,
+      // Account-level "seen once" flags. These MUST be hydrated here or the
+      // matching UI re-shows on every device: the field is written below in
+      // updateUserProfile but never reaches `userProfile` unless mapped back.
+      hasSeenAppTour: data.hasSeenAppTour,
+      whatsNewSeenRelease: data.whatsNewSeenRelease,
+      legalVersionsSeen: data.legalVersionsSeen,
       createdAt: data.createdAt,
     } as UserProfile;
   }
@@ -210,6 +216,12 @@ export async function updateUserProfile(
   }
   if (data.hasSeenAppTour !== undefined) {
     updateData.hasSeenAppTour = data.hasSeenAppTour;
+  }
+  if (data.whatsNewSeenRelease !== undefined) {
+    updateData.whatsNewSeenRelease = data.whatsNewSeenRelease;
+  }
+  if (data.legalVersionsSeen !== undefined) {
+    updateData.legalVersionsSeen = data.legalVersionsSeen;
   }
 
   await updateDoc(userRef, updateData);

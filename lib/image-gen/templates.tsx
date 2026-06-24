@@ -149,6 +149,9 @@ function KpiCard(dsl: Extract<ImageDSL, { template: "kpi-card" }>) {
 
 function QuoteCard(dsl: Extract<ImageDSL, { template: "quote-card" }>) {
   const palette = ACCENT_PALETTE[dsl.accent];
+  // Shorter quotes render bigger so the words truly dominate the card.
+  const n = dsl.quote.trim().length;
+  const quoteSize = n <= 70 ? 92 : n <= 130 ? 76 : 60;
   return (
     <Frame palette={palette}>
       {/* Top header row removed — no brand badge, no corner eyebrow tag. */}
@@ -174,7 +177,7 @@ function QuoteCard(dsl: Extract<ImageDSL, { template: "quote-card" }>) {
         </span>
         <span
           style={{
-            fontSize: 72,
+            fontSize: quoteSize,
             lineHeight: 1.1,
             fontWeight: 600,
             letterSpacing: -1.5,
@@ -293,7 +296,7 @@ function PhotoClean(
         // text the scrim is barely perceptible. This is the key difference
         // from photo-hero, whose heavy top-to-bottom gradient screams "card".
         backgroundImage: hasText
-          ? `linear-gradient(180deg, rgba(15,17,21,0) 55%, rgba(15,17,21,0.62) 100%), url(${photoDataUri})`
+          ? `linear-gradient(180deg, rgba(15,17,21,0) 45%, rgba(15,17,21,0.78) 100%), url(${photoDataUri})`
           : `url(${photoDataUri})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
@@ -303,16 +306,16 @@ function PhotoClean(
       }}
     >
       {hasText && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {dsl.eyebrow && (
             <span
               style={{
-                fontSize: 22,
-                fontWeight: 600,
+                fontSize: 24,
+                fontWeight: 800,
                 letterSpacing: 2,
                 textTransform: "uppercase",
-                color: "rgba(255,255,255,0.82)",
-                textShadow: "0 1px 8px rgba(0,0,0,0.4)",
+                color: "rgba(255,255,255,0.92)",
+                textShadow: "0 1px 8px rgba(0,0,0,0.5)",
               }}
             >
               {dsl.eyebrow}
@@ -321,12 +324,12 @@ function PhotoClean(
           {dsl.caption && (
             <span
               style={{
-                fontSize: 38,
-                lineHeight: 1.25,
-                fontWeight: 500,
+                fontSize: 52,
+                lineHeight: 1.18,
+                fontWeight: 700,
                 color: "#FFFFFF",
-                maxWidth: 880,
-                textShadow: "0 1px 10px rgba(0,0,0,0.35)",
+                maxWidth: 920,
+                textShadow: "0 2px 14px rgba(0,0,0,0.5)",
               }}
             >
               {dsl.caption}
@@ -353,11 +356,28 @@ function PhotoClean(
 // photo is passed as a data: URI (pre-resized to 1080² JPEG by the asset
 // pipeline) — no external fetch happens at render time.
 
+/**
+ * Dynamic headline sizing — the SHORTER the hook, the BIGGER it renders, so a
+ * punchy line truly dominates the frame (the whole point of a marketing
+ * visual). Longer headlines step down just enough to wrap to ~3 lines without
+ * overflowing the canvas. This is the core lever that turns the visual from
+ * "a photo with a caption" into "a message on a photo".
+ */
+function heroHeadlineSize(headline: string): number {
+  const n = headline.trim().length;
+  if (n <= 22) return 130;
+  if (n <= 38) return 104;
+  if (n <= 52) return 86;
+  return 74;
+}
+
 function PhotoHero(
   dsl: Extract<ImageDSL, { template: "photo-hero" }>,
   photoDataUri: string
 ) {
   const palette = ACCENT_PALETTE[dsl.accent];
+  const headline = dsl.headline.trim();
+  const headlineSize = heroHeadlineSize(headline);
   return (
     <div
       style={{
@@ -365,11 +385,15 @@ function PhotoHero(
         height: CANVAS.height,
         display: "flex",
         flexDirection: "column",
+        justifyContent: "flex-end",
         padding: PAD,
-        // Layer the photo + a bottom-up dark gradient on the same element so
-        // Satori treats them as a single render — easier than nesting and
-        // keeps text contrast guaranteed even on very bright photos.
-        backgroundImage: `linear-gradient(180deg, rgba(15,17,21,0.10) 0%, rgba(15,17,21,0.45) 55%, rgba(15,17,21,0.88) 100%), url(${photoDataUri})`,
+        // Layer the photo + a STRONG bottom-up dark scrim on the same element so
+        // Satori treats them as a single render. Much darker than before at the
+        // bottom (0.92) so the headline ALWAYS wins against the photo — even on
+        // bright/busy images — while a light top wash keeps the photo readable.
+        // Text legibility is non-negotiable; the photo is the support, not the
+        // hero.
+        backgroundImage: `linear-gradient(180deg, rgba(15,17,21,0.20) 0%, rgba(15,17,21,0.58) 52%, rgba(15,17,21,0.92) 100%), url(${photoDataUri})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         color: "#FFFFFF",
@@ -377,48 +401,66 @@ function PhotoHero(
         position: "relative",
       }}
     >
-      {/* No top chrome — brand mark and eyebrow stripped on purpose so the
-          photo carries the full visual weight. Headline anchors the bottom. */}
-
-      {/* Spacer pushes the headline to the bottom third — same layout rule
-          as a magazine cover. Photo gets the upper 2/3 of visual weight. */}
-      <div style={{ flex: 1, display: "flex" }} />
-
-      <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-        {/* Accent bar — a hard color slash that anchors the text block to the
-            brand palette. Without it the overlay feels generic. */}
-        <div
-          style={{
-            width: 80,
-            height: 6,
-            borderRadius: 6,
-            backgroundColor: palette.hard,
-          }}
-        />
+      {/* Bottom-anchored text block — magazine-cover rule: photo subject reads
+          up top, the message owns the bottom half. */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 26 }}>
+        {/* Brand-color anchor: a filled eyebrow chip when we have a label
+            (reads as a marketing tag), otherwise a simple accent slash. Either
+            way the brand color is present and the text block feels intentional. */}
+        {dsl.eyebrow ? (
+          <div
+            style={{
+              display: "flex",
+              alignSelf: "flex-start",
+              paddingTop: 12,
+              paddingBottom: 12,
+              paddingLeft: 24,
+              paddingRight: 24,
+              borderRadius: 999,
+              backgroundColor: palette.hard,
+              color: "#FFFFFF",
+              fontSize: 26,
+              fontWeight: 800,
+              letterSpacing: 1.5,
+              textTransform: "uppercase",
+            }}
+          >
+            {dsl.eyebrow}
+          </div>
+        ) : (
+          <div
+            style={{
+              width: 96,
+              height: 8,
+              borderRadius: 8,
+              backgroundColor: palette.hard,
+            }}
+          />
+        )}
         <span
           style={{
-            fontSize: 76,
-            lineHeight: 1.05,
-            fontWeight: 700,
-            letterSpacing: -1.5,
+            fontSize: headlineSize,
+            lineHeight: 1.02,
+            fontWeight: 800,
+            letterSpacing: -2,
             color: "#FFFFFF",
-            maxWidth: 920,
-            // Subtle text-shadow so headlines stay legible on photos that
-            // sneak through the gradient (warm beige offices, snow, etc.).
-            textShadow: "0 2px 16px rgba(0,0,0,0.35)",
+            maxWidth: 952,
+            // Strong shadow so the headline stays crisp even where a bright
+            // patch of photo bleeds through the scrim.
+            textShadow: "0 2px 24px rgba(0,0,0,0.55)",
           }}
         >
-          {dsl.headline}
+          {headline}
         </span>
         {dsl.body && (
           <span
             style={{
-              fontSize: 32,
-              lineHeight: 1.35,
-              fontWeight: 500,
-              color: "rgba(255,255,255,0.92)",
-              maxWidth: 900,
-              textShadow: "0 1px 8px rgba(0,0,0,0.28)",
+              fontSize: 38,
+              lineHeight: 1.3,
+              fontWeight: 600,
+              color: "rgba(255,255,255,0.94)",
+              maxWidth: 920,
+              textShadow: "0 1px 12px rgba(0,0,0,0.5)",
             }}
           >
             {dsl.body}
