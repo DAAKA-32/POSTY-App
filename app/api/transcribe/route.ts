@@ -20,9 +20,10 @@
  *         413 audio too large · 503 service unavailable · 500 internal
  *
  * Quota: transcription is cheap and is NOT counted against the post-generation
- *        quota (a user often re-records several times). We only require an
- *        active plan so anonymous/abandoned accounts can't run up API cost —
- *        the client falls back to the live Web-Speech text on any non-200.
+ *        quota (a user often re-records several times). We require an active
+ *        plan AND apply an independent per-user rate limit so an authenticated
+ *        account can't run up unbounded Whisper spend — the client falls back
+ *        to the live Web-Speech text on any non-200.
  */
 
 import { NextRequest } from "next/server";
@@ -32,6 +33,12 @@ import { trackAIUsage } from "@/lib/ai-cost/tracker";
 import { checkHourlyQuotaAdmin } from "@/lib/db/firestore-admin";
 import { isAdminInitialized } from "@/lib/db/firebase-admin";
 import { PlanType } from "@/lib/config/plans";
+import { rateLimit } from "@/lib/api/rate-limit";
+
+/** Per-user transcription cap. Generous for normal re-recording, but bounds
+ *  paid-Whisper abuse since transcription isn't tied to the generation quota. */
+const TRANSCRIBE_LIMIT = Number(process.env.TRANSCRIBE_HOURLY_LIMIT) || 40;
+const TRANSCRIBE_WINDOW_MS = 60 * 60 * 1000;
 
 // Audio decoding + the OpenAI SDK need the Node runtime (not edge).
 export const runtime = "nodejs";
@@ -101,6 +108,22 @@ export async function POST(request: NextRequest) {
     }
     if (!userPlan && process.env.NODE_ENV === "production") {
       return jsonError(403, "Active subscription required", "no_active_plan");
+    }
+
+    /* ── Per-user rate limit (independent cost/abuse guard) ───── */
+    // Whisper is paid and transcription is intentionally NOT charged against
+    // the post-generation quota, so without this an authenticated user could
+    // drive unbounded audio spend. Keyed by uid; in-memory per-instance, same
+    // primitive the other routes use.
+    if (userId) {
+      const rl = rateLimit(userId, {
+        namespace: "transcribe",
+        limit: TRANSCRIBE_LIMIT,
+        windowMs: TRANSCRIBE_WINDOW_MS,
+      });
+      if (!rl.allowed) {
+        return jsonError(429, "Too many transcriptions. Please wait a moment.", "rate_limited");
+      }
     }
 
     /* ── OpenAI ───────────────────────────────────────────────── */

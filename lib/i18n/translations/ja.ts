@@ -2,11 +2,167 @@ import { legalTranslations } from "../legal";
 
 // Japanese (日本語) translations - Natural, professional SaaS tone
 export const ja = {
+  strategist: {
+    "pageTitle": "ストラテジスト",
+    "headerEyebrow": "自律型マーケティングエージェント",
+    "headerTitle": "あなた専属のAIコミュニティマネージャーが24時間365日稼働。",
+    "headerSubtitle": "エージェントがあなたのLinkedInプロフィールを分析し、1週間の計画を立て、投稿を作成して公開まで予約します。あなたはワンクリックで承認するだけ。",
+    "inputPlaceholder": "監査、戦略プラン、フックの切り口…",
+    "sendButton": "送信",
+    "sending": "分析中…",
+    "starterTitle": "単発のリクエスト",
+    "starter1Title": "プレゼンスを監査",
+    "starter1Prompt": "私のプロフィールをもとにLinkedInでのプレゼンスを監査してください。うまくいっている点を3つ、今週直すべき点を3つ、そして未開拓のチャンスを1つ挙げてください。",
+    "starter2Title": "今週の計画を立てる",
+    "starter2Prompt": "今週分のLinkedIn投稿を5本、私の業界とオーディエンスに合わせて準備してください。フォーマットと切り口にバリエーションを持たせてください。",
+    "starter3Title": "ポジショニングを研ぎ澄ます",
+    "starter3Prompt": "LinkedInでのポジショニングを研ぎ澄ますのを手伝ってください。私が押さえるべきテーマを3つ、その理由、そして同業他者とどう差別化するかを教えてください。",
+    "starter4Title": "10個のフックの切り口を見つける",
+    "starter4Prompt": "オーディエンスが関心を持つことをもとに、次のLinkedIn投稿に向けて強力なフックの切り口を10個生成してください。それぞれがスクロールの手を止めさせるものにしてください。",
+    "errorGeneric": "ストラテジストでエラーが発生しました。しばらくしてからもう一度お試しください。",
+    "errorRateLimit": "レート制限に達しました。数分後にもう一度お試しください。",
+    "clearChat": "会話をクリア",
+    "clearChatConfirm": "この会話をクリアしますか？この操作は取り消せません。",
+    "params": {
+      "trigger": "詳細設定",
+      "summaryEmpty": "トーン、目的、オーディエンスを調整…",
+      "reset": "リセット",
+      "saveDefault": "デフォルトに設定",
+      "savedToast": "設定をデフォルトとして保存しました。",
+      "context": {
+        "label": "あなたのビジネス",
+        "placeholder": "例：Posty＝B2B創業者向けにLinkedIn投稿を生成するAI SaaS。何時間もかけずに継続的に投稿できるよう支援します。",
+        "hint": "あなたの事業内容やオファーを説明してください。ストラテジストはこれを使って、地に足のついた人間味のある投稿を作成します（ヒント：「デフォルトに設定」を押しましょう）。"
+      },
+      "objective": {
+        "label": "目的",
+        "authority": "権威性",
+        "engagement": "エンゲージメント",
+        "lead-gen": "リード獲得",
+        "conversion": "コンバージョン",
+        "branding": "ブランディング",
+        "storytelling": "ストーリーテリング"
+      },
+      "tone": {
+        "label": "トーン",
+        "direct": "ストレート",
+        "expert": "専門的",
+        "inspiring": "インスピレーショナル",
+        "bold": "大胆",
+        "warm": "温かみのある"
+      },
+      "audience": {
+        "label": "オーディエンス",
+        "placeholder": "例：SaaSスケールアップ企業のCTO"
+      },
+      "formality": {
+        "label": "フォーマルさ",
+        "low": "カジュアル",
+        "high": "ビジネスライク"
+      },
+      "cta": {
+        "label": "コール・トゥ・アクション",
+        "none": "なし",
+        "soft": "ソフト",
+        "assertive": "積極的"
+      },
+      "hook": {
+        "label": "フックのスタイル",
+        "auto": "自動",
+        "contrarian": "逆張り",
+        "story": "ストーリー",
+        "data": "データ",
+        "question": "質問",
+        "confession": "告白"
+      },
+      "orientation": {
+        "label": "方向性",
+        "personal": "パーソナル",
+        "professional": "プロフェッショナル",
+        "balanced": "バランス型"
+      },
+      "emotion": {
+        "label": "感情",
+        "low": "事実重視",
+        "high": "活き活き"
+      }
+    },
+    "locked": {
+      "eyebrow": "Max専用",
+      "title": "マーケティングストラテジストをアンロック",
+      "description": "Posty内に常駐する専属のシニアマーケティングアドバイザー。監査、コンテンツプラン、ポジショニング、オーディエンス分析——すべてを集中した1つの会話で。",
+      "benefit1": "あなたのプロフィールに基づくパーソナライズされた戦略",
+      "benefit2": "完全な記憶を備えたマルチターンの会話",
+      "benefit3": "コンテンツプラン、監査、ポジショニングのフレームワーク",
+      "benefit4": "新しいストラテジスト機能への優先アクセス",
+      "cta": "Maxにアップグレード",
+      "backToChat": "チャットを続ける"
+    }
+  },
+  linkedinErrors: {
+    "sessionExpired": "LinkedInのセッションが期限切れになりました——一度再接続すれば、すべて通常どおり動作します。",
+    "sessionExpiredAction": "LinkedInに再接続",
+    "publishFailed": "LinkedInへの投稿を公開できませんでした。アカウントを再接続すると、たいていの場合は解決します。",
+    "publishFailedAction": "再接続して再試行",
+    "notConnected": "LinkedInをPostyに接続して、ワンクリックで投稿を公開しましょう。",
+    "notConnectedAction": "LinkedInを接続",
+    "rateLimited": "LinkedInからペースを落とすよう求められています。数分後にもう一度お試しください。",
+    "invalidContent": "LinkedInがこの投稿を受け付けませんでした。内容をご確認ください（最大3,000文字、禁止用語は不可）。",
+    "mediaUploadFailed": "メディアをアップロードできませんでした。より小さいファイル、または別の形式（JPG、PNG、MP4）でお試しください。",
+    "serverError": "LinkedInが一時的に利用できません。投稿は安全に保存されています——しばらくしてからもう一度お試しください。",
+    "insufficientPermissions": "LinkedInの権限が不足しています。フルアクセスで再接続して続行してください。",
+    "generic": "LinkedInで問題が発生しました。アカウントを再接続すると、たいていの場合は解決します。",
+    "genericAction": "再接続",
+    "retryAction": "もう一度試す"
+  },
+  blueskyConnect: {
+    "title": "Blueskyを接続",
+    "subtitle": "PostyからワンクリックでBlueskyに投稿しましょう。",
+    "trustNote": "Postyがあなたの実際のパスワードを見ることはありません。専用のアプリパスワードを発行し、いつでも好きなときに無効化できます。",
+    "handleLabel": "Blueskyハンドル",
+    "handlePlaceholder": "alice.bsky.social",
+    "handleHint": "@は不要です。ユーザー名のみを入力した場合は、自動的に.bsky.socialを追加します。",
+    "appPasswordLabel": "アプリパスワード",
+    "appPasswordPlaceholder": "xxxx-xxxx-xxxx-xxxx",
+    "appPasswordHint": "Blueskyの設定で生成される16文字のコードです。",
+    "showPassword": "パスワードを表示",
+    "hidePassword": "パスワードを非表示",
+    "howToTitle": "アプリパスワードの取得方法",
+    "howToStep1": "<strong>bsky.app</strong> を開く → 設定 → アプリパスワード",
+    "howToStep2": "<strong>アプリパスワードを追加</strong> をクリックし、「Posty」と名前を付ける",
+    "howToStep3": "16文字のコードをコピーして、下に貼り付ける",
+    "openBlueskySettings": "Blueskyの設定を開く",
+    "submit": "Blueskyに接続",
+    "cancel": "キャンセル",
+    "successToast": "Blueskyを接続しました",
+    "errorMissingFields": "ハンドルとアプリパスワードを入力してください。",
+    "errorInvalidCredentials": "Blueskyがその認証情報を受け付けませんでした。ハンドルとアプリパスワードをもう一度ご確認ください。",
+    "errorGeneric": "Blueskyに接続できませんでした。しばらくしてからもう一度お試しください。"
+  },
+  mastodonConnect: {
+    "title": "Mastodonを接続",
+    "subtitle": "ホームインスタンスを選んでください——安全なサインインのため、そちらにリダイレクトします。",
+    "trustNote": "あなたのパスワードがインスタンスの外に出ることはありません。Postyが受け取るのは権限トークンのみで、Mastodonの設定からいつでも無効化できます。",
+    "instanceLabel": "あなたのインスタンス",
+    "instancePlaceholder": "mastodon.social",
+    "instanceHint": "インスタンスがわからない場合は、ハンドルを見てください：@you@<strong>これがそれです</strong>",
+    "popularInstancesTitle": "人気のインスタンス",
+    "customInstance": "別のインスタンスを使う",
+    "submit": "Mastodonに進む",
+    "submitting": "リダイレクト中…",
+    "cancel": "キャンセル",
+    "redirectNote": "Postyを承認するため、あなたのインスタンスにリダイレクトされます。承認後、すぐにここに戻ってきます。",
+    "errorMissingInstance": "Mastodonのインスタンスを入力してください。",
+    "errorInvalidInstance": "このインスタンスに接続できませんでした。スペルを確認して、もう一度お試しください。",
+    "errorGeneric": "Mastodonの接続を開始できませんでした。しばらくしてからもう一度お試しください。"
+  },
   // Legal pages (using French as the app is primarily in French)
   legal: legalTranslations,
 
   // Page titles (browser tab)
   pageTitles: {
+    strategist: "ストラテジスト",
+    business: "ビジネス — チーム＆エンタープライズ向け",
     settings: "設定",
     dashboard: "ダッシュボード",
     app: "アプリケーション",
@@ -100,6 +256,7 @@ export const ja = {
 
   // UI - Shared across components (buttons, labels, actions, navigation, modals, time, status)
   ui: {
+    later: "後で",
     // Buttons & Actions
     copy: "コピー",
     copied: "コピーしました！",
@@ -417,6 +574,33 @@ export const ja = {
 
   // Landing page - SEO Optimized Content
   landing: {
+    businessForTeams: "チーム、代理店、企業向け",
+    businessLearnMore: "詳しく見る",
+    businessHeroTitle: "意欲的なチームのためのビジネスソリューション",
+    businessHeroSubtitle: "あなたの組織に合わせたソリューションで、Postyを大規模に展開しましょう。",
+    businessBackToPricing: "料金プランに戻る",
+    businessBackToHome: "← ホームに戻る",
+    businessCapabilitiesEyebrow: "できること",
+    businessBenefitsTitle: "スケールに必要なすべてが揃う",
+    businessBenefit1Title: "チーム管理",
+    businessBenefit1Desc: "ロール、権限、統合された監査ログ。",
+    businessBenefit2Title: "高度な自動化",
+    businessBenefit2Desc: "カスタムワークフローとトリガー。",
+    businessBenefit3Title: "マルチアカウント",
+    businessBenefit3Desc: "複数のLinkedInプロフィールを並行して管理。",
+    businessBenefit4Title: "優先サポート",
+    businessBenefit4Desc: "専任のアカウントマネージャー、保証されたSLA。",
+    businessBenefit5Title: "カスタム連携",
+    businessBenefit5Desc: "API、SSO、カスタムコネクター。",
+    businessUseCasesEyebrow: "対象",
+    businessUseCasesTitle: "あなたの状況に合わせて設計",
+    businessUseCase1: "マーケティング代理店",
+    businessUseCase2: "急成長中のスタートアップ",
+    businessUseCase3: "グロースチーム",
+    businessUseCase4: "B2B企業",
+    businessUseCase5: "コンサルタント＆フリーランサー",
+    businessFinalCtaTitle: "あなたのニーズについてお聞かせください",
+    businessFinalCtaSubtitle: "24時間以内に返信、契約義務はありません。",
     // Header
     poweredByAI: "AI LinkedIn投稿ジェネレーター",
 

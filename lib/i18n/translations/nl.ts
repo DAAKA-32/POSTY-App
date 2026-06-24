@@ -2,11 +2,167 @@ import { legalTranslations } from "../legal";
 
 // Dutch (NL) translations - Natural, professional SaaS tone
 export const nl = {
+  strategist: {
+    "pageTitle": "Strateeg",
+    "headerEyebrow": "Autonome marketingagent",
+    "headerTitle": "Jouw AI-communitymanager, 24/7 in dienst.",
+    "headerSubtitle": "De agent analyseert je LinkedIn-profiel, plant je week, schrijft de posts en plant de publicatie in. Jij keurt goed met één klik.",
+    "inputPlaceholder": "Audit, strategisch plan, hook-invalshoeken…",
+    "sendButton": "Verzenden",
+    "sending": "Bezig met analyseren…",
+    "starterTitle": "Losse verzoeken",
+    "starter1Title": "Audit mijn aanwezigheid",
+    "starter1Prompt": "Voer een audit uit van mijn LinkedIn-aanwezigheid op basis van mijn profiel. Geef me 3 dingen die werken, 3 dingen om deze week aan te pakken, en 1 onbenutte kans.",
+    "starter2Title": "Plan mijn week",
+    "starter2Prompt": "Bereid 5 LinkedIn-posts voor deze week voor, afgestemd op mijn branche en doelgroep. Varieer de formats en invalshoeken.",
+    "starter3Title": "Scherp mijn positionering aan",
+    "starter3Prompt": "Help me mijn positionering op LinkedIn aan te scherpen. Welke 3 thema's zou ik moeten claimen, waarom, en hoe onderscheid ik me van vakgenoten in mijn vakgebied?",
+    "starter4Title": "Vind 10 hook-invalshoeken",
+    "starter4Prompt": "Genereer 10 sterke hook-invalshoeken voor mijn volgende LinkedIn-posts op basis van waar mijn doelgroep om geeft. Elke hook moet mensen laten stoppen met scrollen.",
+    "errorGeneric": "De Strateeg liep tegen een fout aan. Probeer het zo meteen opnieuw.",
+    "errorRateLimit": "Je hebt de limiet bereikt. Probeer het over een paar minuten opnieuw.",
+    "clearChat": "Gesprek wissen",
+    "clearChatConfirm": "Dit gesprek wissen? Dit kan niet ongedaan worden gemaakt.",
+    "params": {
+      "trigger": "Geavanceerde instellingen",
+      "summaryEmpty": "Stem toon, doel, doelgroep af…",
+      "reset": "Resetten",
+      "saveDefault": "Als standaard instellen",
+      "savedToast": "Voorkeuren opgeslagen als standaard.",
+      "context": {
+        "label": "Jouw bedrijf",
+        "placeholder": "bijv. Posty = een AI-SaaS die LinkedIn-posts genereert voor B2B-oprichters. Helpt hen consistent te posten zonder er uren aan kwijt te zijn.",
+        "hint": "Beschrijf wat je doet / je aanbod. De Strateeg gebruikt dit voor gefundeerde, menselijke posts (tip: klik op “Als standaard instellen”)."
+      },
+      "objective": {
+        "label": "Doel",
+        "authority": "Autoriteit",
+        "engagement": "Betrokkenheid",
+        "lead-gen": "Leadgeneratie",
+        "conversion": "Conversie",
+        "branding": "Branding",
+        "storytelling": "Storytelling"
+      },
+      "tone": {
+        "label": "Toon",
+        "direct": "Direct",
+        "expert": "Expert",
+        "inspiring": "Inspirerend",
+        "bold": "Gedurfd",
+        "warm": "Warm"
+      },
+      "audience": {
+        "label": "Doelgroep",
+        "placeholder": "bijv. CTO's bij SaaS-scale-ups"
+      },
+      "formality": {
+        "label": "Formaliteit",
+        "low": "Informeel",
+        "high": "Zakelijk"
+      },
+      "cta": {
+        "label": "Call-to-action",
+        "none": "Geen",
+        "soft": "Zacht",
+        "assertive": "Assertief"
+      },
+      "hook": {
+        "label": "Hook-stijl",
+        "auto": "Automatisch",
+        "contrarian": "Tegendraads",
+        "story": "Verhaal",
+        "data": "Data",
+        "question": "Vraag",
+        "confession": "Bekentenis"
+      },
+      "orientation": {
+        "label": "Oriëntatie",
+        "personal": "Persoonlijk",
+        "professional": "Professioneel",
+        "balanced": "Gebalanceerd"
+      },
+      "emotion": {
+        "label": "Emotie",
+        "low": "Feitelijk",
+        "high": "Levendig"
+      }
+    },
+    "locked": {
+      "eyebrow": "Voorbehouden aan Max",
+      "title": "Ontgrendel de Marketingstrateeg",
+      "description": "Een toegewijde senior marketingadviseur binnen Posty. Audits, contentplannen, positionering, doelgroepanalyse — alles in één gericht gesprek.",
+      "benefit1": "Gepersonaliseerde strategie op basis van je profiel",
+      "benefit2": "Gesprekken met meerdere beurten en volledig geheugen",
+      "benefit3": "Contentplannen, audits en positioneringskaders",
+      "benefit4": "Voorrang op nieuwe strateegfuncties",
+      "cta": "Upgraden naar Max",
+      "backToChat": "Doorgaan met Chat"
+    }
+  },
+  linkedinErrors: {
+    "sessionExpired": "Je LinkedIn-sessie is verlopen — verbind één keer opnieuw en alles werkt weer normaal.",
+    "sessionExpiredAction": "LinkedIn opnieuw verbinden",
+    "publishFailed": "We konden je post niet op LinkedIn publiceren. Je account opnieuw verbinden lost dit meestal op.",
+    "publishFailedAction": "Opnieuw verbinden en opnieuw proberen",
+    "notConnected": "Verbind LinkedIn met Posty om je posts met één klik te publiceren.",
+    "notConnectedAction": "LinkedIn verbinden",
+    "rateLimited": "LinkedIn vraagt ons om het rustiger aan te doen. Probeer het over een paar minuten opnieuw.",
+    "invalidContent": "LinkedIn heeft deze post niet geaccepteerd. Controleer de inhoud (max. 3.000 tekens, geen verboden termen).",
+    "mediaUploadFailed": "We konden je media niet uploaden. Probeer een kleiner bestand of een ander formaat (JPG, PNG, MP4).",
+    "serverError": "LinkedIn is even niet beschikbaar. Je post is veilig opgeslagen — probeer het zo meteen opnieuw.",
+    "insufficientPermissions": "Je LinkedIn-machtigingen ontbreken. Verbind opnieuw met volledige toegang om door te gaan.",
+    "generic": "We liepen tegen een probleem met LinkedIn aan. Je account opnieuw verbinden lost dit meestal op.",
+    "genericAction": "Opnieuw verbinden",
+    "retryAction": "Opnieuw proberen"
+  },
+  blueskyConnect: {
+    "title": "Bluesky verbinden",
+    "subtitle": "Post met één klik naar Bluesky vanuit Posty.",
+    "trustNote": "Posty ziet nooit je echte wachtwoord. Je genereert een speciaal app-wachtwoord en kunt het op elk moment intrekken.",
+    "handleLabel": "Bluesky-handle",
+    "handlePlaceholder": "alice.bsky.social",
+    "handleHint": "De @ is niet nodig. Als je alleen je gebruikersnaam invoert, voegen we automatisch .bsky.social toe.",
+    "appPasswordLabel": "App-wachtwoord",
+    "appPasswordPlaceholder": "xxxx-xxxx-xxxx-xxxx",
+    "appPasswordHint": "Code van 16 tekens die je in je Bluesky-instellingen genereert.",
+    "showPassword": "Wachtwoord tonen",
+    "hidePassword": "Wachtwoord verbergen",
+    "howToTitle": "Hoe je een app-wachtwoord aanmaakt",
+    "howToStep1": "Open <strong>bsky.app</strong> → Instellingen → App Passwords",
+    "howToStep2": "Klik op <strong>Add App Password</strong> en noem het \"Posty\"",
+    "howToStep3": "Kopieer de code van 16 tekens en plak hem hieronder",
+    "openBlueskySettings": "Bluesky-instellingen openen",
+    "submit": "Verbinden met Bluesky",
+    "cancel": "Annuleren",
+    "successToast": "Bluesky verbonden",
+    "errorMissingFields": "Voer je handle en app-wachtwoord in.",
+    "errorInvalidCredentials": "Bluesky heeft die gegevens niet geaccepteerd. Controleer je handle en app-wachtwoord nog eens.",
+    "errorGeneric": "We konden geen verbinding maken met Bluesky. Probeer het zo meteen opnieuw."
+  },
+  mastodonConnect: {
+    "title": "Mastodon verbinden",
+    "subtitle": "Kies je home-instance — we sturen je daarheen door voor een veilige aanmelding.",
+    "trustNote": "Je wachtwoord verlaat nooit je instance. Posty ontvangt alleen een machtigingstoken, dat je op elk moment kunt intrekken via je Mastodon-instellingen.",
+    "instanceLabel": "Jouw instance",
+    "instancePlaceholder": "mastodon.social",
+    "instanceHint": "Weet je je instance niet? Kijk naar je handle: @jij@<strong>dit-is-het</strong>",
+    "popularInstancesTitle": "Populaire instances",
+    "customInstance": "Een andere instance gebruiken",
+    "submit": "Doorgaan naar Mastodon",
+    "submitting": "Bezig met doorsturen…",
+    "cancel": "Annuleren",
+    "redirectNote": "Je wordt doorgestuurd naar je instance om Posty te autoriseren. Na goedkeuring kom je meteen hier terug.",
+    "errorMissingInstance": "Voer je Mastodon-instance in.",
+    "errorInvalidInstance": "We konden deze instance niet bereiken. Controleer de spelling en probeer het opnieuw.",
+    "errorGeneric": "We konden de Mastodon-verbinding niet starten. Probeer het zo meteen opnieuw."
+  },
   // Legal pages (using French as the app is primarily in French)
   legal: legalTranslations,
 
   // Page titles (browser tab)
   pageTitles: {
+    strategist: "Strateeg",
+    business: "Business — voor teams & ondernemingen",
     settings: "Instellingen",
     dashboard: "Dashboard",
     app: "Applicatie",
@@ -100,6 +256,7 @@ export const nl = {
 
   // UI - Shared across components (buttons, labels, actions, navigation, modals, time, status)
   ui: {
+    later: "Later",
     // Buttons & Actions
     copy: "Kopiëren",
     copied: "Gekopieerd!",
@@ -417,6 +574,33 @@ export const nl = {
 
   // Landing page - SEO Optimized Content (Native Dutch)
   landing: {
+    businessForTeams: "Voor teams, bureaus en bedrijven",
+    businessLearnMore: "Meer informatie",
+    businessHeroTitle: "Business-oplossing voor ambitieuze teams",
+    businessHeroSubtitle: "Zet Posty op schaal in met een oplossing die is afgestemd op jouw organisatie.",
+    businessBackToPricing: "Terug naar prijzen",
+    businessBackToHome: "← Terug naar home",
+    businessCapabilitiesEyebrow: "Mogelijkheden",
+    businessBenefitsTitle: "Alles wat je nodig hebt om op te schalen",
+    businessBenefit1Title: "Teambeheer",
+    businessBenefit1Desc: "Rollen, machtigingen, één gezamenlijk auditspoor.",
+    businessBenefit2Title: "Geavanceerde automatisering",
+    businessBenefit2Desc: "Aangepaste workflows en triggers.",
+    businessBenefit3Title: "Multi-account",
+    businessBenefit3Desc: "Beheer meerdere LinkedIn-profielen tegelijk.",
+    businessBenefit4Title: "Prioriteitsondersteuning",
+    businessBenefit4Desc: "Toegewijde accountmanager, gegarandeerde SLA.",
+    businessBenefit5Title: "Aangepaste integraties",
+    businessBenefit5Desc: "API, SSO, aangepaste connectoren.",
+    businessUseCasesEyebrow: "Gemaakt voor",
+    businessUseCasesTitle: "Ontworpen voor jouw context",
+    businessUseCase1: "Marketingbureaus",
+    businessUseCase2: "Snelgroeiende start-ups",
+    businessUseCase3: "Growth-teams",
+    businessUseCase4: "B2B-bedrijven",
+    businessUseCase5: "Consultants & freelancers",
+    businessFinalCtaTitle: "Laten we het over jouw behoeften hebben",
+    businessFinalCtaSubtitle: "Antwoord binnen 24 uur, geen verplichtingen.",
     // Header
     poweredByAI: "AI LinkedIn-berichtgenerator",
 

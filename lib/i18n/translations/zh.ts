@@ -2,11 +2,167 @@ import { legalTranslations } from "../legal";
 
 // English (US) translations - Natural, professional SaaS tone
 export const zh = {
+  strategist: {
+    "pageTitle": "策略师",
+    "headerEyebrow": "自主营销智能体",
+    "headerTitle": "你的 AI 社区运营，全天候 24/7 在岗。",
+    "headerSubtitle": "智能体会分析你的 LinkedIn 主页、规划你的一周、撰写帖子并安排发布。你只需一键确认。",
+    "inputPlaceholder": "审计、策略规划、开场钩子角度……",
+    "sendButton": "发送",
+    "sending": "分析中……",
+    "starterTitle": "单次请求",
+    "starter1Title": "审计我的影响力",
+    "starter1Prompt": "根据我的主页审计我的 LinkedIn 影响力。告诉我 3 个做得好的地方、3 个本周需要改进的地方，以及 1 个尚未发掘的机会。",
+    "starter2Title": "规划我的一周",
+    "starter2Prompt": "为本周准备 5 篇 LinkedIn 帖子，贴合我的行业和受众。变换不同的形式和角度。",
+    "starter3Title": "打磨我的定位",
+    "starter3Prompt": "帮我打磨在 LinkedIn 上的定位。我应该主打哪 3 个主题、为什么，以及如何与同领域的同行形成差异化？",
+    "starter4Title": "找出 10 个钩子角度",
+    "starter4Prompt": "基于我的受众所关心的内容，为我接下来的 LinkedIn 帖子生成 10 个有力的开场钩子角度。每个钩子都应让人停下滑动的手指。",
+    "errorGeneric": "策略师遇到了错误。请稍后再试。",
+    "errorRateLimit": "你已达到访问频率上限。请几分钟后再试。",
+    "clearChat": "清空对话",
+    "clearChatConfirm": "确定清空这段对话吗？此操作无法撤销。",
+    "params": {
+      "trigger": "高级设置",
+      "summaryEmpty": "调整语气、目标、受众……",
+      "reset": "重置",
+      "saveDefault": "设为默认",
+      "savedToast": "偏好已保存为默认设置。",
+      "context": {
+        "label": "你的业务",
+        "placeholder": "例如：Posty = 一款为 B2B 创始人生成 LinkedIn 帖子的 AI SaaS。帮助他们持续稳定地发帖，无需耗费数小时。",
+        "hint": "描述你做什么 / 你的产品。策略师会据此生成有依据、有人情味的帖子（提示：点击「设为默认」）。"
+      },
+      "objective": {
+        "label": "目标",
+        "authority": "权威感",
+        "engagement": "互动",
+        "lead-gen": "获取线索",
+        "conversion": "转化",
+        "branding": "品牌塑造",
+        "storytelling": "故事讲述"
+      },
+      "tone": {
+        "label": "语气",
+        "direct": "直接",
+        "expert": "专业",
+        "inspiring": "鼓舞人心",
+        "bold": "大胆",
+        "warm": "温暖"
+      },
+      "audience": {
+        "label": "受众",
+        "placeholder": "例如：SaaS 高速成长型企业的 CTO"
+      },
+      "formality": {
+        "label": "正式程度",
+        "low": "随意",
+        "high": "正式商务"
+      },
+      "cta": {
+        "label": "行动号召",
+        "none": "无",
+        "soft": "柔和",
+        "assertive": "强势"
+      },
+      "hook": {
+        "label": "钩子风格",
+        "auto": "自动",
+        "contrarian": "反常识",
+        "story": "故事",
+        "data": "数据",
+        "question": "提问",
+        "confession": "坦白"
+      },
+      "orientation": {
+        "label": "取向",
+        "personal": "个人",
+        "professional": "专业",
+        "balanced": "均衡"
+      },
+      "emotion": {
+        "label": "情感",
+        "low": "客观陈述",
+        "high": "充满活力"
+      }
+    },
+    "locked": {
+      "eyebrow": "Max 专享",
+      "title": "解锁营销策略师",
+      "description": "Posty 内置的专属资深营销顾问。审计、内容规划、定位、受众分析——全部在一段专注的对话中完成。",
+      "benefit1": "基于你主页的个性化策略",
+      "benefit2": "多轮对话，全程记忆上下文",
+      "benefit3": "内容规划、审计与定位框架",
+      "benefit4": "优先体验新的策略师功能",
+      "cta": "升级到 Max",
+      "backToChat": "继续使用聊天"
+    }
+  },
+  linkedinErrors: {
+    "sessionExpired": "你的 LinkedIn 会话已过期——重新连接一次，一切即可恢复正常。",
+    "sessionExpiredAction": "重新连接 LinkedIn",
+    "publishFailed": "我们无法将你的帖子发布到 LinkedIn。重新连接账号通常可以解决问题。",
+    "publishFailedAction": "重新连接并重试",
+    "notConnected": "将 LinkedIn 连接到 Posty，即可一键发布你的帖子。",
+    "notConnectedAction": "连接 LinkedIn",
+    "rateLimited": "LinkedIn 要求我们放慢速度。请几分钟后再试。",
+    "invalidContent": "LinkedIn 未接受这篇帖子。请检查内容（最多 3,000 个字符，不含违禁词）。",
+    "mediaUploadFailed": "我们无法上传你的媒体文件。请尝试更小的文件或其他格式（JPG、PNG、MP4）。",
+    "serverError": "LinkedIn 暂时无法访问。你的帖子已安全保存——请稍后再试。",
+    "insufficientPermissions": "你的 LinkedIn 权限缺失。请以完整访问权限重新连接以继续。",
+    "generic": "我们在使用 LinkedIn 时遇到了问题。重新连接账号通常可以解决。",
+    "genericAction": "重新连接",
+    "retryAction": "重试"
+  },
+  blueskyConnect: {
+    "title": "连接 Bluesky",
+    "subtitle": "从 Posty 一键发布到 Bluesky。",
+    "trustNote": "Posty 绝不会看到你的真实密码。你生成一个专用的应用密码，并可随时撤销。",
+    "handleLabel": "Bluesky 用户名",
+    "handlePlaceholder": "alice.bsky.social",
+    "handleHint": "无需输入 @。如果你只填写用户名，我们会自动补上 .bsky.social。",
+    "appPasswordLabel": "应用密码",
+    "appPasswordPlaceholder": "xxxx-xxxx-xxxx-xxxx",
+    "appPasswordHint": "在你的 Bluesky 设置中生成的 16 位代码。",
+    "showPassword": "显示密码",
+    "hidePassword": "隐藏密码",
+    "howToTitle": "如何获取应用密码",
+    "howToStep1": "打开 <strong>bsky.app</strong> → 设置 → App Passwords",
+    "howToStep2": "点击 <strong>Add App Password</strong>，并命名为 \"Posty\"",
+    "howToStep3": "复制这 16 位代码并粘贴到下方",
+    "openBlueskySettings": "打开 Bluesky 设置",
+    "submit": "连接到 Bluesky",
+    "cancel": "取消",
+    "successToast": "Bluesky 已连接",
+    "errorMissingFields": "请输入你的用户名和应用密码。",
+    "errorInvalidCredentials": "Bluesky 未接受这些凭据。请仔细检查你的用户名和应用密码。",
+    "errorGeneric": "我们无法连接到 Bluesky。请稍后再试。"
+  },
+  mastodonConnect: {
+    "title": "连接 Mastodon",
+    "subtitle": "选择你的主实例——我们会将你重定向到那里进行安全登录。",
+    "trustNote": "你的密码绝不会离开你的实例。Posty 仅接收一个权限令牌，你可随时在 Mastodon 设置中撤销它。",
+    "instanceLabel": "你的实例",
+    "instancePlaceholder": "mastodon.social",
+    "instanceHint": "不知道自己的实例？看看你的用户名：@you@<strong>这就是它</strong>",
+    "popularInstancesTitle": "热门实例",
+    "customInstance": "使用其他实例",
+    "submit": "继续前往 Mastodon",
+    "submitting": "重定向中……",
+    "cancel": "取消",
+    "redirectNote": "你将被重定向到你的实例以授权 Posty。批准后，你会立即返回此处。",
+    "errorMissingInstance": "请输入你的 Mastodon 实例。",
+    "errorInvalidInstance": "我们无法连接到此实例。请检查拼写后重试。",
+    "errorGeneric": "我们无法启动 Mastodon 连接。请稍后再试。"
+  },
   // Legal pages (using French as the app is primarily in French)
   legal: legalTranslations,
 
   // Page titles (browser tab)
   pageTitles: {
+    strategist: "策略师",
+    business: "企业版——面向团队与企业",
     settings: "设置",
     dashboard: "仪表盘",
     app: "应用",
@@ -100,6 +256,7 @@ export const zh = {
 
   // UI - Shared across components (buttons, labels, actions, navigation, modals, time, status)
   ui: {
+    later: "稍后",
     // Buttons & Actions
     copy: "复制",
     copied: "已复制！",
@@ -417,6 +574,33 @@ export const zh = {
 
   // Landing page - SEO Optimized Content (Native US English)
   landing: {
+    businessForTeams: "面向团队、代理机构和企业",
+    businessLearnMore: "了解更多",
+    businessHeroTitle: "为雄心勃勃的团队打造的企业解决方案",
+    businessHeroSubtitle: "通过为你的组织量身定制的解决方案，大规模部署 Posty。",
+    businessBackToPricing: "返回价格页",
+    businessBackToHome: "← 返回首页",
+    businessCapabilitiesEyebrow: "能力",
+    businessBenefitsTitle: "扩展规模所需的一切",
+    businessBenefit1Title: "团队管理",
+    businessBenefit1Desc: "角色、权限、统一的审计日志。",
+    businessBenefit2Title: "高级自动化",
+    businessBenefit2Desc: "自定义工作流与触发器。",
+    businessBenefit3Title: "多账号",
+    businessBenefit3Desc: "并行管理多个 LinkedIn 主页。",
+    businessBenefit4Title: "优先支持",
+    businessBenefit4Desc: "专属客户经理，SLA 保障。",
+    businessBenefit5Title: "定制集成",
+    businessBenefit5Desc: "API、SSO、自定义连接器。",
+    businessUseCasesEyebrow: "专为以下场景打造",
+    businessUseCasesTitle: "为你的场景而设计",
+    businessUseCase1: "营销代理机构",
+    businessUseCase2: "高速成长型初创公司",
+    businessUseCase3: "增长团队",
+    businessUseCase4: "B2B 企业",
+    businessUseCase5: "顾问与自由职业者",
+    businessFinalCtaTitle: "聊聊你的需求",
+    businessFinalCtaSubtitle: "24 小时内回复，无任何承诺。",
     // Header
     poweredByAI: "AI LinkedIn 帖子生成器",
 

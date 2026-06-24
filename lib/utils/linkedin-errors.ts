@@ -12,9 +12,9 @@
  * or falls back to pattern-matching the message.
  */
 
-import type { fr } from "@/lib/i18n/translations/fr";
-
-type Translations = typeof fr;
+// Use the shared, structurally-widened Translations type (string leaves) so any
+// locale's `t` is accepted — not fr's literal types.
+import type { Translations } from "@/lib/i18n";
 
 export type LinkedInErrorCode =
   | "session_expired"

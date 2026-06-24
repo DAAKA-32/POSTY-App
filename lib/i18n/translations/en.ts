@@ -102,6 +102,7 @@ export const en = {
 
   // UI - Shared across components (buttons, labels, actions, navigation, modals, time, status)
   ui: {
+    later: "Later",
     // Buttons & Actions
     copy: "Copy",
     copied: "Copied!",
