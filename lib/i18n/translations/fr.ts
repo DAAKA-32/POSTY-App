@@ -1686,7 +1686,6 @@ export const fr = {
     // Fields
     displayName: "Nom d'affichage",
     sector: "Secteur d'activité",
-    rôle: "Rôle / Métier",
     linkedinStyle: "Style LinkedIn préféré",
     objectives: "Objectifs",
 

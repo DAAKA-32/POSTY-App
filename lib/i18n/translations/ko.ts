@@ -2,11 +2,167 @@ import { legalTranslations } from "../legal";
 
 // English (US) translations - Natural, professional SaaS tone
 export const ko = {
+  strategist: {
+    "pageTitle": "전략가",
+    "headerEyebrow": "자율 마케팅 에이전트",
+    "headerTitle": "당신의 AI 커뮤니티 매니저, 연중무휴 24시간 대기합니다.",
+    "headerSubtitle": "에이전트가 당신의 LinkedIn 프로필을 분석하고, 한 주를 계획하고, 게시물을 작성하고, 발행 일정을 잡습니다. 당신은 클릭 한 번으로 승인하면 됩니다.",
+    "inputPlaceholder": "감사, 전략 계획, 후크 앵글…",
+    "sendButton": "보내기",
+    "sending": "분석 중…",
+    "starterTitle": "단발성 요청",
+    "starter1Title": "내 존재감 감사",
+    "starter1Prompt": "내 프로필을 바탕으로 LinkedIn에서의 존재감을 감사해 주세요. 잘되고 있는 점 3가지, 이번 주에 고칠 점 3가지, 아직 활용하지 못한 기회 1가지를 알려주세요.",
+    "starter2Title": "내 한 주 계획하기",
+    "starter2Prompt": "내 업계와 청중에 맞춘 이번 주 LinkedIn 게시물 5개를 준비해 주세요. 형식과 앵글을 다양하게 해주세요.",
+    "starter3Title": "내 포지셔닝 다듬기",
+    "starter3Prompt": "LinkedIn에서의 내 포지셔닝을 다듬는 데 도움을 주세요. 내가 선점해야 할 테마 3가지는 무엇이고, 그 이유는 무엇이며, 같은 분야의 동료들과 어떻게 차별화할 수 있나요?",
+    "starter4Title": "후크 앵글 10가지 찾기",
+    "starter4Prompt": "내 청중이 관심 있어 하는 것을 바탕으로 다음 LinkedIn 게시물을 위한 강력한 후크 앵글 10가지를 만들어 주세요. 각 후크는 사람들이 스크롤을 멈추게 만들어야 합니다.",
+    "errorGeneric": "전략가에서 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
+    "errorRateLimit": "요청 한도에 도달했습니다. 몇 분 후에 다시 시도해 주세요.",
+    "clearChat": "대화 지우기",
+    "clearChatConfirm": "이 대화를 지울까요? 이 작업은 되돌릴 수 없습니다.",
+    "params": {
+      "trigger": "고급 설정",
+      "summaryEmpty": "톤, 목표, 청중을 조정하세요…",
+      "reset": "초기화",
+      "saveDefault": "기본값으로 설정",
+      "savedToast": "환경설정이 기본값으로 저장되었습니다.",
+      "context": {
+        "label": "당신의 비즈니스",
+        "placeholder": "예: Posty = B2B 창업자를 위한 LinkedIn 게시물을 생성하는 AI SaaS. 오랜 시간을 들이지 않고도 꾸준히 게시할 수 있도록 돕습니다.",
+        "hint": "당신이 하는 일/제안을 설명하세요. 전략가는 이를 활용해 근거 있고 사람다운 게시물을 만듭니다(팁: \"기본값으로 설정\"을 누르세요)."
+      },
+      "objective": {
+        "label": "목표",
+        "authority": "권위",
+        "engagement": "참여",
+        "lead-gen": "리드 발굴",
+        "conversion": "전환",
+        "branding": "브랜딩",
+        "storytelling": "스토리텔링"
+      },
+      "tone": {
+        "label": "톤",
+        "direct": "직설적",
+        "expert": "전문적",
+        "inspiring": "영감을 주는",
+        "bold": "대담한",
+        "warm": "따뜻한"
+      },
+      "audience": {
+        "label": "청중",
+        "placeholder": "예: SaaS 스케일업의 CTO"
+      },
+      "formality": {
+        "label": "격식",
+        "low": "캐주얼",
+        "high": "기업체"
+      },
+      "cta": {
+        "label": "행동 유도",
+        "none": "없음",
+        "soft": "부드럽게",
+        "assertive": "단호하게"
+      },
+      "hook": {
+        "label": "후크 스타일",
+        "auto": "자동",
+        "contrarian": "역발상",
+        "story": "스토리",
+        "data": "데이터",
+        "question": "질문",
+        "confession": "고백"
+      },
+      "orientation": {
+        "label": "방향성",
+        "personal": "개인적",
+        "professional": "전문적",
+        "balanced": "균형"
+      },
+      "emotion": {
+        "label": "감정",
+        "low": "사실 위주",
+        "high": "생동감 있는"
+      }
+    },
+    "locked": {
+      "eyebrow": "Max 전용",
+      "title": "마케팅 전략가 잠금 해제",
+      "description": "Posty 안에 전담 시니어 마케팅 어드바이저가 있습니다. 감사, 콘텐츠 계획, 포지셔닝, 청중 분석 — 모두 하나의 집중된 대화 안에서 이루어집니다.",
+      "benefit1": "당신의 프로필을 기반으로 한 맞춤형 전략",
+      "benefit2": "전체 기억을 갖춘 멀티턴 대화",
+      "benefit3": "콘텐츠 계획, 감사, 포지셔닝 프레임워크",
+      "benefit4": "새로운 전략가 기능에 대한 우선 액세스",
+      "cta": "Max로 업그레이드",
+      "backToChat": "채팅 계속하기"
+    }
+  },
+  linkedinErrors: {
+    "sessionExpired": "LinkedIn 세션이 만료되었습니다 — 한 번만 다시 연결하면 모든 것이 정상적으로 작동합니다.",
+    "sessionExpiredAction": "LinkedIn 다시 연결",
+    "publishFailed": "LinkedIn에 게시물을 발행하지 못했습니다. 계정을 다시 연결하면 보통 해결됩니다.",
+    "publishFailedAction": "다시 연결 후 재시도",
+    "notConnected": "LinkedIn을 Posty에 연결하면 클릭 한 번으로 게시물을 발행할 수 있습니다.",
+    "notConnectedAction": "LinkedIn 연결",
+    "rateLimited": "LinkedIn에서 속도를 늦춰 달라고 요청하고 있습니다. 몇 분 후에 다시 시도해 주세요.",
+    "invalidContent": "LinkedIn이 이 게시물을 수락하지 않았습니다. 내용을 확인하세요(최대 3,000자, 금지 용어 없음).",
+    "mediaUploadFailed": "미디어를 업로드하지 못했습니다. 더 작은 파일이나 다른 형식(JPG, PNG, MP4)을 시도해 보세요.",
+    "serverError": "LinkedIn을 잠시 사용할 수 없습니다. 게시물은 안전하게 저장되었습니다 — 잠시 후 다시 시도해 주세요.",
+    "insufficientPermissions": "LinkedIn 권한이 누락되었습니다. 전체 액세스 권한으로 다시 연결하여 계속하세요.",
+    "generic": "LinkedIn에서 문제가 발생했습니다. 계정을 다시 연결하면 보통 해결됩니다.",
+    "genericAction": "다시 연결",
+    "retryAction": "다시 시도"
+  },
+  blueskyConnect: {
+    "title": "Bluesky 연결",
+    "subtitle": "Posty에서 클릭 한 번으로 Bluesky에 게시하세요.",
+    "trustNote": "Posty는 당신의 실제 비밀번호를 절대 보지 않습니다. 전용 앱 비밀번호를 생성하고 원할 때 언제든 취소할 수 있습니다.",
+    "handleLabel": "Bluesky 핸들",
+    "handlePlaceholder": "alice.bsky.social",
+    "handleHint": "@는 필요 없습니다. 사용자 이름만 입력하면 .bsky.social을 자동으로 추가합니다.",
+    "appPasswordLabel": "앱 비밀번호",
+    "appPasswordPlaceholder": "xxxx-xxxx-xxxx-xxxx",
+    "appPasswordHint": "Bluesky 설정에서 생성된 16자리 코드입니다.",
+    "showPassword": "비밀번호 표시",
+    "hidePassword": "비밀번호 숨기기",
+    "howToTitle": "앱 비밀번호 받는 방법",
+    "howToStep1": "<strong>bsky.app</strong> 열기 → 설정 → 앱 비밀번호",
+    "howToStep2": "<strong>앱 비밀번호 추가</strong>를 클릭하고 이름을 \"Posty\"로 지정하세요",
+    "howToStep3": "16자리 코드를 복사해 아래에 붙여넣으세요",
+    "openBlueskySettings": "Bluesky 설정 열기",
+    "submit": "Bluesky에 연결",
+    "cancel": "취소",
+    "successToast": "Bluesky 연결됨",
+    "errorMissingFields": "핸들과 앱 비밀번호를 입력해 주세요.",
+    "errorInvalidCredentials": "Bluesky가 해당 자격 증명을 수락하지 않았습니다. 핸들과 앱 비밀번호를 다시 확인하세요.",
+    "errorGeneric": "Bluesky에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  },
+  mastodonConnect: {
+    "title": "Mastodon 연결",
+    "subtitle": "홈 인스턴스를 선택하세요 — 안전한 로그인을 위해 그곳으로 리디렉션해 드립니다.",
+    "trustNote": "당신의 비밀번호는 인스턴스를 절대 벗어나지 않습니다. Posty는 권한 토큰만 받으며, 이는 Mastodon 설정에서 언제든 취소할 수 있습니다.",
+    "instanceLabel": "당신의 인스턴스",
+    "instancePlaceholder": "mastodon.social",
+    "instanceHint": "인스턴스를 모르시나요? 핸들을 보세요: @you@<strong>this-is-it</strong>",
+    "popularInstancesTitle": "인기 인스턴스",
+    "customInstance": "다른 인스턴스 사용",
+    "submit": "Mastodon으로 계속",
+    "submitting": "리디렉션 중…",
+    "cancel": "취소",
+    "redirectNote": "Posty를 승인하기 위해 당신의 인스턴스로 리디렉션됩니다. 승인 후 바로 이곳으로 돌아옵니다.",
+    "errorMissingInstance": "Mastodon 인스턴스를 입력해 주세요.",
+    "errorInvalidInstance": "이 인스턴스에 연결하지 못했습니다. 철자를 확인하고 다시 시도해 주세요.",
+    "errorGeneric": "Mastodon 연결을 시작하지 못했습니다. 잠시 후 다시 시도해 주세요."
+  },
   // Legal pages (using French as the app is primarily in French)
   legal: legalTranslations,
 
   // Page titles (browser tab)
   pageTitles: {
+    strategist: "전략가",
+    business: "비즈니스 — 팀 및 기업용",
     settings: "설정",
     dashboard: "대시보드",
     app: "애플리케이션",
@@ -100,6 +256,7 @@ export const ko = {
 
   // UI - Shared across components (buttons, labels, actions, navigation, modals, time, status)
   ui: {
+    later: "나중에",
     // Buttons & Actions
     copy: "복사",
     copied: "복사됨!",
@@ -417,6 +574,33 @@ export const ko = {
 
   // Landing page - SEO Optimized Content (Native US English)
   landing: {
+    businessForTeams: "팀, 에이전시, 기업을 위해",
+    businessLearnMore: "더 알아보기",
+    businessHeroTitle: "야심 찬 팀을 위한 비즈니스 솔루션",
+    businessHeroSubtitle: "조직에 맞춘 솔루션으로 Posty를 대규모로 도입하세요.",
+    businessBackToPricing: "요금제로 돌아가기",
+    businessBackToHome: "← 홈으로 돌아가기",
+    businessCapabilitiesEyebrow: "기능",
+    businessBenefitsTitle: "확장에 필요한 모든 것",
+    businessBenefit1Title: "팀 관리",
+    businessBenefit1Desc: "역할, 권한, 통합 감사 추적.",
+    businessBenefit2Title: "고급 자동화",
+    businessBenefit2Desc: "맞춤형 워크플로와 트리거.",
+    businessBenefit3Title: "다중 계정",
+    businessBenefit3Desc: "여러 LinkedIn 프로필을 동시에 관리하세요.",
+    businessBenefit4Title: "우선 지원",
+    businessBenefit4Desc: "전담 어카운트 매니저, 보장된 SLA.",
+    businessBenefit5Title: "맞춤형 통합",
+    businessBenefit5Desc: "API, SSO, 맞춤형 커넥터.",
+    businessUseCasesEyebrow: "이런 분들을 위해",
+    businessUseCasesTitle: "당신의 상황에 맞게 설계",
+    businessUseCase1: "마케팅 에이전시",
+    businessUseCase2: "고성장 스타트업",
+    businessUseCase3: "그로스 팀",
+    businessUseCase4: "B2B 기업",
+    businessUseCase5: "컨설턴트 및 프리랜서",
+    businessFinalCtaTitle: "당신의 니즈에 대해 이야기해요",
+    businessFinalCtaSubtitle: "24시간 이내 회신, 부담 없이.",
     // Header
     poweredByAI: "AI LinkedIn 게시물 생성기",
 

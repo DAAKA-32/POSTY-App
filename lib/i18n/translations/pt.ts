@@ -2,11 +2,167 @@ import { legalTranslations } from "../legal";
 
 // Portuguese (BR) translations - Natural, professional SaaS tone
 export const pt = {
+  strategist: {
+    "pageTitle": "Estrategista",
+    "headerEyebrow": "Agente de marketing autónomo",
+    "headerTitle": "O seu community manager com IA, ao serviço 24/7.",
+    "headerSubtitle": "O agente analisa o seu perfil do LinkedIn, planeia a sua semana, redige as publicações e agenda a publicação. Aprova com um clique.",
+    "inputPlaceholder": "Auditoria, plano estratégico, ângulos de gancho…",
+    "sendButton": "Enviar",
+    "sending": "A analisar…",
+    "starterTitle": "Pedidos pontuais",
+    "starter1Title": "Auditar a minha presença",
+    "starter1Prompt": "Audita a minha presença no LinkedIn com base no meu perfil. Indica-me 3 coisas que estão a funcionar, 3 coisas a corrigir esta semana e 1 oportunidade por explorar.",
+    "starter2Title": "Planear a minha semana",
+    "starter2Prompt": "Prepara 5 publicações do LinkedIn para esta semana, adaptadas ao meu setor e ao meu público. Varia os formatos e os ângulos.",
+    "starter3Title": "Afinar o meu posicionamento",
+    "starter3Prompt": "Ajuda-me a afinar o meu posicionamento no LinkedIn. Que 3 temas devo dominar, porquê, e como me diferencio dos pares no meu segmento?",
+    "starter4Title": "Encontrar 10 ângulos de gancho",
+    "starter4Prompt": "Gera 10 ângulos de gancho fortes para as minhas próximas publicações do LinkedIn com base no que interessa ao meu público. Cada gancho deve fazer as pessoas parar de fazer scroll.",
+    "errorGeneric": "O Estrategista encontrou um erro. Tenta novamente daqui a pouco.",
+    "errorRateLimit": "Atingiste o limite de utilização. Tenta novamente dentro de alguns minutos.",
+    "clearChat": "Limpar conversa",
+    "clearChatConfirm": "Limpar esta conversa? Esta ação não pode ser anulada.",
+    "params": {
+      "trigger": "Definições avançadas",
+      "summaryEmpty": "Ajusta o tom, o objetivo, o público…",
+      "reset": "Repor",
+      "saveDefault": "Definir como predefinição",
+      "savedToast": "Preferências guardadas como predefinição.",
+      "context": {
+        "label": "O seu negócio",
+        "placeholder": "ex.: Posty = um SaaS de IA que gera publicações do LinkedIn para fundadores B2B. Ajuda-os a publicar com consistência sem perder horas.",
+        "hint": "Descreve o que fazes / a tua oferta. O Estrategista usa-a para criar publicações fundamentadas e humanas (dica: clica em “Definir como predefinição”)."
+      },
+      "objective": {
+        "label": "Objetivo",
+        "authority": "Autoridade",
+        "engagement": "Interação",
+        "lead-gen": "Geração de leads",
+        "conversion": "Conversão",
+        "branding": "Branding",
+        "storytelling": "Storytelling"
+      },
+      "tone": {
+        "label": "Tom",
+        "direct": "Direto",
+        "expert": "Especialista",
+        "inspiring": "Inspirador",
+        "bold": "Ousado",
+        "warm": "Caloroso"
+      },
+      "audience": {
+        "label": "Público",
+        "placeholder": "ex.: CTOs em scale-ups de SaaS"
+      },
+      "formality": {
+        "label": "Formalidade",
+        "low": "Descontraído",
+        "high": "Corporativo"
+      },
+      "cta": {
+        "label": "Call-to-action",
+        "none": "Nenhuma",
+        "soft": "Suave",
+        "assertive": "Assertiva"
+      },
+      "hook": {
+        "label": "Estilo de gancho",
+        "auto": "Automático",
+        "contrarian": "Contracorrente",
+        "story": "História",
+        "data": "Dados",
+        "question": "Pergunta",
+        "confession": "Confissão"
+      },
+      "orientation": {
+        "label": "Orientação",
+        "personal": "Pessoal",
+        "professional": "Profissional",
+        "balanced": "Equilibrada"
+      },
+      "emotion": {
+        "label": "Emoção",
+        "low": "Factual",
+        "high": "Vibrante"
+      }
+    },
+    "locked": {
+      "eyebrow": "Reservado ao Max",
+      "title": "Desbloqueia o Estrategista de Marketing",
+      "description": "Um consultor de marketing sénior dedicado dentro do Posty. Auditorias, planos de conteúdo, posicionamento, análise de público — tudo numa única conversa focada.",
+      "benefit1": "Estratégia personalizada com base no teu perfil",
+      "benefit2": "Conversas com vários turnos e memória completa",
+      "benefit3": "Planos de conteúdo, auditorias e frameworks de posicionamento",
+      "benefit4": "Acesso prioritário às novas funcionalidades do estrategista",
+      "cta": "Mudar para o Max",
+      "backToChat": "Continuar com o Chat"
+    }
+  },
+  linkedinErrors: {
+    "sessionExpired": "A tua sessão do LinkedIn expirou — liga-te novamente uma vez e tudo voltará a funcionar normalmente.",
+    "sessionExpiredAction": "Voltar a ligar o LinkedIn",
+    "publishFailed": "Não conseguimos publicar a tua publicação no LinkedIn. Voltar a ligar a tua conta costuma resolver o problema.",
+    "publishFailedAction": "Voltar a ligar e tentar de novo",
+    "notConnected": "Liga o LinkedIn ao Posty para publicares com um clique.",
+    "notConnectedAction": "Ligar o LinkedIn",
+    "rateLimited": "O LinkedIn está a pedir-nos para abrandar. Tenta novamente dentro de alguns minutos.",
+    "invalidContent": "O LinkedIn não aceitou esta publicação. Verifica o conteúdo (máximo 3000 caracteres, sem termos proibidos).",
+    "mediaUploadFailed": "Não conseguimos carregar o teu ficheiro. Tenta um ficheiro mais pequeno ou um formato diferente (JPG, PNG, MP4).",
+    "serverError": "O LinkedIn está indisponível por breves instantes. A tua publicação está guardada em segurança — tenta novamente daqui a pouco.",
+    "insufficientPermissions": "Faltam permissões do teu LinkedIn. Volta a ligar com acesso total para continuar.",
+    "generic": "Tivemos um contratempo com o LinkedIn. Voltar a ligar a tua conta costuma resolver o problema.",
+    "genericAction": "Voltar a ligar",
+    "retryAction": "Tentar de novo"
+  },
+  blueskyConnect: {
+    "title": "Ligar o Bluesky",
+    "subtitle": "Publica no Bluesky a partir do Posty com um clique.",
+    "trustNote": "O Posty nunca vê a tua palavra-passe real. Geras uma palavra-passe de aplicação dedicada e revogá-la sempre que quiseres.",
+    "handleLabel": "Identificador do Bluesky",
+    "handlePlaceholder": "alice.bsky.social",
+    "handleHint": "Não precisas do @. Se introduzires apenas o teu nome de utilizador, adicionamos .bsky.social automaticamente.",
+    "appPasswordLabel": "Palavra-passe de aplicação",
+    "appPasswordPlaceholder": "xxxx-xxxx-xxxx-xxxx",
+    "appPasswordHint": "Código de 16 caracteres gerado nas definições do teu Bluesky.",
+    "showPassword": "Mostrar palavra-passe",
+    "hidePassword": "Ocultar palavra-passe",
+    "howToTitle": "Como obter uma palavra-passe de aplicação",
+    "howToStep1": "Abre <strong>bsky.app</strong> → Definições → Palavras-passe de aplicação",
+    "howToStep2": "Clica em <strong>Adicionar palavra-passe de aplicação</strong> e dá-lhe o nome \"Posty\"",
+    "howToStep3": "Copia o código de 16 caracteres e cola-o abaixo",
+    "openBlueskySettings": "Abrir as definições do Bluesky",
+    "submit": "Ligar ao Bluesky",
+    "cancel": "Cancelar",
+    "successToast": "Bluesky ligado",
+    "errorMissingFields": "Introduz o teu identificador e a palavra-passe de aplicação.",
+    "errorInvalidCredentials": "O Bluesky não aceitou essas credenciais. Verifica o teu identificador e a palavra-passe de aplicação.",
+    "errorGeneric": "Não conseguimos ligar ao Bluesky. Tenta novamente daqui a pouco."
+  },
+  mastodonConnect: {
+    "title": "Ligar o Mastodon",
+    "subtitle": "Escolhe a tua instância principal — redirecionamos-te para lá para um início de sessão seguro.",
+    "trustNote": "A tua palavra-passe nunca sai da tua instância. O Posty recebe apenas um token de permissão, que podes revogar a qualquer momento nas definições do teu Mastodon.",
+    "instanceLabel": "A tua instância",
+    "instancePlaceholder": "mastodon.social",
+    "instanceHint": "Não sabes qual é a tua instância? Olha para o teu identificador: @tu@<strong>é-esta</strong>",
+    "popularInstancesTitle": "Instâncias populares",
+    "customInstance": "Usar outra instância",
+    "submit": "Continuar para o Mastodon",
+    "submitting": "A redirecionar…",
+    "cancel": "Cancelar",
+    "redirectNote": "Serás redirecionado para a tua instância para autorizar o Posty. Após a aprovação, voltas logo para aqui.",
+    "errorMissingInstance": "Introduz a tua instância do Mastodon.",
+    "errorInvalidInstance": "Não conseguimos aceder a esta instância. Verifica a grafia e tenta de novo.",
+    "errorGeneric": "Não conseguimos iniciar a ligação ao Mastodon. Tenta novamente daqui a pouco."
+  },
   // Legal pages (using French as the app is primarily in French)
   legal: legalTranslations,
 
   // Page titles (browser tab)
   pageTitles: {
+    strategist: "Estrategista",
+    business: "Business — para equipas e empresas",
     settings: "Configurações",
     dashboard: "Painel",
     app: "Aplicativo",
@@ -100,6 +256,7 @@ export const pt = {
 
   // UI - Shared across components (buttons, labels, actions, navigation, modals, time, status)
   ui: {
+    later: "Mais tarde",
     // Buttons & Actions
     copy: "Copiar",
     copied: "Copiado!",
@@ -417,6 +574,33 @@ export const pt = {
 
   // Landing page - SEO Optimized Content (Brazilian Portuguese)
   landing: {
+    businessForTeams: "Para equipas, agências e empresas",
+    businessLearnMore: "Saber mais",
+    businessHeroTitle: "Solução Business para equipas ambiciosas",
+    businessHeroSubtitle: "Implementa o Posty à escala com uma solução adaptada à tua organização.",
+    businessBackToPricing: "Voltar aos preços",
+    businessBackToHome: "← Voltar ao início",
+    businessCapabilitiesEyebrow: "Capacidades",
+    businessBenefitsTitle: "Tudo o que precisas para crescer",
+    businessBenefit1Title: "Gestão de equipas",
+    businessBenefit1Desc: "Funções, permissões, registo de auditoria unificado.",
+    businessBenefit2Title: "Automação avançada",
+    businessBenefit2Desc: "Fluxos de trabalho e acionadores personalizados.",
+    businessBenefit3Title: "Multiconta",
+    businessBenefit3Desc: "Gere vários perfis do LinkedIn em paralelo.",
+    businessBenefit4Title: "Suporte prioritário",
+    businessBenefit4Desc: "Gestor de conta dedicado, SLA garantido.",
+    businessBenefit5Title: "Integrações personalizadas",
+    businessBenefit5Desc: "API, SSO, conectores personalizados.",
+    businessUseCasesEyebrow: "Concebido para",
+    businessUseCasesTitle: "Pensado para o teu contexto",
+    businessUseCase1: "Agências de marketing",
+    businessUseCase2: "Startups em forte crescimento",
+    businessUseCase3: "Equipas de growth",
+    businessUseCase4: "Empresas B2B",
+    businessUseCase5: "Consultores e freelancers",
+    businessFinalCtaTitle: "Vamos falar das tuas necessidades",
+    businessFinalCtaSubtitle: "Resposta em 24h, sem compromisso.",
     // Header
     poweredByAI: "Gerador de Posts para LinkedIn com IA",
 

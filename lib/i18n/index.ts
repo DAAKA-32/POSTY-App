@@ -3,17 +3,22 @@ import { fr } from "./translations/fr";
 
 export type Language = "fr" | "en" | "es" | "de" | "it" | "pt" | "nl" | "zh" | "ja" | "ko";
 
-// Exact type of the French translation file (canonical structure)
-export type Translations = typeof fr;
-
-// Recursive utility type: preserves key structure, widens all leaf values to string
+// Recursive utility type: preserves key STRUCTURE, widens all leaf values to
+// string. `fr` is declared `as const`, so `typeof fr` carries literal types
+// (e.g. "Paramètres"); a real translation ("Settings") is a different literal
+// and would never be assignable. Widening leaves to `string` makes `Translations`
+// a pure structural contract: every locale must have the SAME KEYS as `fr`, but
+// any string value is accepted — so each locale is type-checked WITHOUT a cast
+// (tsc now fails on a missing/renamed key while allowing the translated value).
 type DeepStringify<T> = T extends (infer U)[]
   ? DeepStringify<U>[]
   : T extends object
     ? { [K in keyof T]: DeepStringify<T[K]> }
     : string;
 
-export type TranslationKeys = DeepStringify<typeof fr>;
+// Canonical structure, derived from the French file (the reference locale).
+export type Translations = DeepStringify<typeof fr>;
+export type TranslationKeys = Translations;
 
 /* Eager bundle:
  * - `en`: server-render default and universal fallback
@@ -25,19 +30,19 @@ export type TranslationKeys = DeepStringify<typeof fr>;
  * server tax that Turbopack had to pay even on the public landing page.
  */
 const cache: Partial<Record<Language, Translations>> = {
-  en: en as unknown as Translations,
-  fr: fr as unknown as Translations,
+  en: en,
+  fr: fr,
 };
 
 const loaders: Record<Exclude<Language, "en" | "fr">, () => Promise<Translations>> = {
-  es: () => import("./translations/es").then((m) => m.es as unknown as Translations),
-  de: () => import("./translations/de").then((m) => m.de as unknown as Translations),
-  it: () => import("./translations/it").then((m) => m.it as unknown as Translations),
-  pt: () => import("./translations/pt").then((m) => m.pt as unknown as Translations),
-  nl: () => import("./translations/nl").then((m) => m.nl as unknown as Translations),
-  zh: () => import("./translations/zh").then((m) => m.zh as unknown as Translations),
-  ja: () => import("./translations/ja").then((m) => m.ja as unknown as Translations),
-  ko: () => import("./translations/ko").then((m) => m.ko as unknown as Translations),
+  es: () => import("./translations/es").then((m) => m.es),
+  de: () => import("./translations/de").then((m) => m.de),
+  it: () => import("./translations/it").then((m) => m.it),
+  pt: () => import("./translations/pt").then((m) => m.pt),
+  nl: () => import("./translations/nl").then((m) => m.nl),
+  zh: () => import("./translations/zh").then((m) => m.zh),
+  ja: () => import("./translations/ja").then((m) => m.ja),
+  ko: () => import("./translations/ko").then((m) => m.ko),
 };
 
 const inflight: Partial<Record<Language, Promise<Translations>>> = {};

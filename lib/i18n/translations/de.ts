@@ -2,11 +2,167 @@ import { legalTranslations } from "../legal";
 
 // English (US) translations - Natural, professional SaaS tone
 export const de = {
+  strategist: {
+    "pageTitle": "Stratege",
+    "headerEyebrow": "Autonomer Marketing-Agent",
+    "headerTitle": "Dein KI-Community-Manager, rund um die Uhr im Einsatz.",
+    "headerSubtitle": "Der Agent analysiert dein LinkedIn-Profil, plant deine Woche, verfasst die Beiträge und plant die Veröffentlichung. Du gibst mit einem Klick frei.",
+    "inputPlaceholder": "Audit, strategischer Plan, Hook-Ansätze…",
+    "sendButton": "Senden",
+    "sending": "Analysiere…",
+    "starterTitle": "Einzelne Anfragen",
+    "starter1Title": "Meine Präsenz auditieren",
+    "starter1Prompt": "Audiere meine LinkedIn-Präsenz auf Basis meines Profils. Nenne mir 3 Dinge, die funktionieren, 3 Dinge, die ich diese Woche verbessern sollte, und 1 ungenutzte Chance.",
+    "starter2Title": "Meine Woche planen",
+    "starter2Prompt": "Bereite 5 LinkedIn-Beiträge für diese Woche vor, zugeschnitten auf meine Branche und Zielgruppe. Variiere die Formate und Ansätze.",
+    "starter3Title": "Meine Positionierung schärfen",
+    "starter3Prompt": "Hilf mir, meine Positionierung auf LinkedIn zu schärfen. Welche 3 Themen sollte ich für mich beanspruchen, warum, und wie hebe ich mich von Mitbewerbern in meinem Bereich ab?",
+    "starter4Title": "10 Hook-Ansätze finden",
+    "starter4Prompt": "Generiere 10 starke Hook-Ansätze für meine nächsten LinkedIn-Beiträge, basierend darauf, was meiner Zielgruppe wichtig ist. Jeder Hook sollte Menschen zum Innehalten beim Scrollen bringen.",
+    "errorGeneric": "Beim Strategen ist ein Fehler aufgetreten. Versuche es gleich noch einmal.",
+    "errorRateLimit": "Du hast das Anfragelimit erreicht. Versuche es in einigen Minuten erneut.",
+    "clearChat": "Konversation löschen",
+    "clearChatConfirm": "Diese Konversation löschen? Das kann nicht rückgängig gemacht werden.",
+    "params": {
+      "trigger": "Erweiterte Einstellungen",
+      "summaryEmpty": "Tonalität, Ziel, Zielgruppe anpassen…",
+      "reset": "Zurücksetzen",
+      "saveDefault": "Als Standard festlegen",
+      "savedToast": "Einstellungen als Standard gespeichert.",
+      "context": {
+        "label": "Dein Unternehmen",
+        "placeholder": "z. B. Posty = ein KI-SaaS, das LinkedIn-Beiträge für B2B-Gründer generiert. Hilft ihnen, konstant zu posten, ohne Stunden dafür aufzuwenden.",
+        "hint": "Beschreibe, was du tust / dein Angebot. Der Stratege nutzt es für fundierte, menschliche Beiträge (Tipp: Tippe auf „Als Standard festlegen“)."
+      },
+      "objective": {
+        "label": "Ziel",
+        "authority": "Autorität",
+        "engagement": "Engagement",
+        "lead-gen": "Lead-Generierung",
+        "conversion": "Conversion",
+        "branding": "Branding",
+        "storytelling": "Storytelling"
+      },
+      "tone": {
+        "label": "Tonalität",
+        "direct": "Direkt",
+        "expert": "Expertenhaft",
+        "inspiring": "Inspirierend",
+        "bold": "Mutig",
+        "warm": "Herzlich"
+      },
+      "audience": {
+        "label": "Zielgruppe",
+        "placeholder": "z. B. CTOs bei SaaS-Scale-ups"
+      },
+      "formality": {
+        "label": "Förmlichkeit",
+        "low": "Locker",
+        "high": "Geschäftlich"
+      },
+      "cta": {
+        "label": "Handlungsaufforderung",
+        "none": "Keine",
+        "soft": "Dezent",
+        "assertive": "Bestimmt"
+      },
+      "hook": {
+        "label": "Hook-Stil",
+        "auto": "Automatisch",
+        "contrarian": "Gegen den Strom",
+        "story": "Story",
+        "data": "Daten",
+        "question": "Frage",
+        "confession": "Geständnis"
+      },
+      "orientation": {
+        "label": "Ausrichtung",
+        "personal": "Persönlich",
+        "professional": "Professionell",
+        "balanced": "Ausgewogen"
+      },
+      "emotion": {
+        "label": "Emotion",
+        "low": "Sachlich",
+        "high": "Lebendig"
+      }
+    },
+    "locked": {
+      "eyebrow": "Vorbehalten für Max",
+      "title": "Den Marketing-Strategen freischalten",
+      "description": "Ein dedizierter Senior-Marketing-Berater direkt in Posty. Audits, Content-Pläne, Positionierung, Zielgruppenanalyse — alles in einer fokussierten Konversation.",
+      "benefit1": "Personalisierte Strategie auf Basis deines Profils",
+      "benefit2": "Mehrteilige Konversationen mit vollständigem Gedächtnis",
+      "benefit3": "Content-Pläne, Audits und Positionierungs-Frameworks",
+      "benefit4": "Prioritärer Zugang zu neuen Strategen-Funktionen",
+      "cta": "Auf Max upgraden",
+      "backToChat": "Mit dem Chat fortfahren"
+    }
+  },
+  linkedinErrors: {
+    "sessionExpired": "Deine LinkedIn-Sitzung ist abgelaufen — verbinde dich einmal neu, und alles funktioniert wieder normal.",
+    "sessionExpiredAction": "LinkedIn neu verbinden",
+    "publishFailed": "Wir konnten deinen Beitrag nicht auf LinkedIn veröffentlichen. Ein erneutes Verbinden deines Kontos behebt das in der Regel.",
+    "publishFailedAction": "Neu verbinden & erneut versuchen",
+    "notConnected": "Verbinde LinkedIn mit Posty, um deine Beiträge mit einem Klick zu veröffentlichen.",
+    "notConnectedAction": "LinkedIn verbinden",
+    "rateLimited": "LinkedIn bittet uns, langsamer zu machen. Versuche es in einigen Minuten erneut.",
+    "invalidContent": "LinkedIn hat diesen Beitrag nicht akzeptiert. Prüfe den Inhalt (max. 3.000 Zeichen, keine unzulässigen Begriffe).",
+    "mediaUploadFailed": "Wir konnten dein Medium nicht hochladen. Versuche eine kleinere Datei oder ein anderes Format (JPG, PNG, MP4).",
+    "serverError": "LinkedIn ist kurzzeitig nicht verfügbar. Dein Beitrag ist sicher gespeichert — versuche es gleich noch einmal.",
+    "insufficientPermissions": "Deine LinkedIn-Berechtigungen fehlen. Verbinde dich mit vollem Zugriff neu, um fortzufahren.",
+    "generic": "Bei LinkedIn ist ein Problem aufgetreten. Ein erneutes Verbinden deines Kontos behebt das in der Regel.",
+    "genericAction": "Neu verbinden",
+    "retryAction": "Erneut versuchen"
+  },
+  blueskyConnect: {
+    "title": "Bluesky verbinden",
+    "subtitle": "Poste mit einem Klick aus Posty auf Bluesky.",
+    "trustNote": "Posty sieht niemals dein echtes Passwort. Du erstellst ein dediziertes App-Passwort und kannst es jederzeit widerrufen.",
+    "handleLabel": "Bluesky-Handle",
+    "handlePlaceholder": "alice.bsky.social",
+    "handleHint": "Das @ ist nicht nötig. Wenn du nur deinen Benutzernamen eingibst, ergänzen wir automatisch .bsky.social.",
+    "appPasswordLabel": "App-Passwort",
+    "appPasswordPlaceholder": "xxxx-xxxx-xxxx-xxxx",
+    "appPasswordHint": "16-stelliger Code, erstellt in deinen Bluesky-Einstellungen.",
+    "showPassword": "Passwort anzeigen",
+    "hidePassword": "Passwort verbergen",
+    "howToTitle": "So erhältst du ein App-Passwort",
+    "howToStep1": "Öffne <strong>bsky.app</strong> → Einstellungen → App-Passwörter",
+    "howToStep2": "Klicke auf <strong>App-Passwort hinzufügen</strong> und nenne es „Posty“",
+    "howToStep3": "Kopiere den 16-stelligen Code und füge ihn unten ein",
+    "openBlueskySettings": "Bluesky-Einstellungen öffnen",
+    "submit": "Mit Bluesky verbinden",
+    "cancel": "Abbrechen",
+    "successToast": "Bluesky verbunden",
+    "errorMissingFields": "Bitte gib deinen Handle und dein App-Passwort ein.",
+    "errorInvalidCredentials": "Bluesky hat diese Zugangsdaten nicht akzeptiert. Überprüfe deinen Handle und dein App-Passwort.",
+    "errorGeneric": "Wir konnten keine Verbindung zu Bluesky herstellen. Versuche es gleich noch einmal."
+  },
+  mastodonConnect: {
+    "title": "Mastodon verbinden",
+    "subtitle": "Wähle deine Heim-Instanz — wir leiten dich dorthin für eine sichere Anmeldung weiter.",
+    "trustNote": "Dein Passwort verlässt niemals deine Instanz. Posty erhält nur ein Berechtigungs-Token, das du jederzeit in deinen Mastodon-Einstellungen widerrufen kannst.",
+    "instanceLabel": "Deine Instanz",
+    "instancePlaceholder": "mastodon.social",
+    "instanceHint": "Du kennst deine Instanz nicht? Schau auf deinen Handle: @du@<strong>das-ist-es</strong>",
+    "popularInstancesTitle": "Beliebte Instanzen",
+    "customInstance": "Eine andere Instanz verwenden",
+    "submit": "Weiter zu Mastodon",
+    "submitting": "Weiterleitung…",
+    "cancel": "Abbrechen",
+    "redirectNote": "Du wirst zu deiner Instanz weitergeleitet, um Posty zu autorisieren. Nach der Bestätigung kommst du direkt hierher zurück.",
+    "errorMissingInstance": "Bitte gib deine Mastodon-Instanz ein.",
+    "errorInvalidInstance": "Wir konnten diese Instanz nicht erreichen. Prüfe die Schreibweise und versuche es erneut.",
+    "errorGeneric": "Wir konnten die Mastodon-Verbindung nicht starten. Versuche es gleich noch einmal."
+  },
   // Legal pages (using French as the app is primarily in French)
   legal: legalTranslations,
 
   // Page titles (browser tab)
   pageTitles: {
+    strategist: "Stratege",
+    business: "Business — für Teams & Unternehmen",
     settings: "Einstellungen",
     dashboard: "Dashboard",
     app: "Anwendung",
@@ -100,6 +256,7 @@ export const de = {
 
   // UI - Shared across components (buttons, labels, actions, navigation, modals, time, status)
   ui: {
+    later: "Später",
     // Buttons & Actions
     copy: "Kopieren",
     copied: "Kopiert!",
@@ -417,6 +574,33 @@ export const de = {
 
   // Landing page - SEO Optimized Content (Native German)
   landing: {
+    businessForTeams: "Für Teams, Agenturen und Unternehmen",
+    businessLearnMore: "Mehr erfahren",
+    businessHeroTitle: "Business-Lösung für ambitionierte Teams",
+    businessHeroSubtitle: "Setze Posty in großem Maßstab ein — mit einer Lösung, die auf deine Organisation zugeschnitten ist.",
+    businessBackToPricing: "Zurück zu den Preisen",
+    businessBackToHome: "← Zurück zur Startseite",
+    businessCapabilitiesEyebrow: "Funktionen",
+    businessBenefitsTitle: "Alles, was du zum Skalieren brauchst",
+    businessBenefit1Title: "Team-Verwaltung",
+    businessBenefit1Desc: "Rollen, Berechtigungen, einheitliches Audit-Protokoll.",
+    businessBenefit2Title: "Erweiterte Automatisierung",
+    businessBenefit2Desc: "Individuelle Workflows und Trigger.",
+    businessBenefit3Title: "Mehrere Konten",
+    businessBenefit3Desc: "Verwalte mehrere LinkedIn-Profile parallel.",
+    businessBenefit4Title: "Prioritärer Support",
+    businessBenefit4Desc: "Dedizierter Account Manager, garantiertes SLA.",
+    businessBenefit5Title: "Individuelle Integrationen",
+    businessBenefit5Desc: "API, SSO, individuelle Konnektoren.",
+    businessUseCasesEyebrow: "Entwickelt für",
+    businessUseCasesTitle: "Auf deinen Kontext zugeschnitten",
+    businessUseCase1: "Marketing-Agenturen",
+    businessUseCase2: "Wachstumsstarke Start-ups",
+    businessUseCase3: "Growth-Teams",
+    businessUseCase4: "B2B-Unternehmen",
+    businessUseCase5: "Berater & Freelancer",
+    businessFinalCtaTitle: "Lass uns über deine Bedürfnisse sprechen",
+    businessFinalCtaSubtitle: "Antwort innerhalb von 24 Stunden, unverbindlich.",
     // Header
     poweredByAI: "KI-LinkedIn-Beitragsgenerator",
 
