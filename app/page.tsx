@@ -1231,7 +1231,7 @@ function DemoSection() {
         {/* Hero title — sticky: stays on screen while content scrolls over it, fades out via titleOpacity */}
         <motion.div ref={titleRef} style={{ opacity: titleOpacity }} className="sticky top-0 left-0 right-0 z-[1] pt-24 pb-6 md:pb-2 px-4 sm:px-6 lg:px-8">
           <div className="relative text-center max-w-4xl mx-auto">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] 2xl:text-[4rem] font-bold tracking-tight flex flex-col items-center gap-0 [&>span]:-my-[0.2em]">
+            <h2 className="text-4xl sm:text-4xl md:text-5xl lg:text-[3.5rem] 2xl:text-[4rem] font-bold tracking-tight flex flex-col items-center gap-0 [&>span]:-my-[0.2em]">
               <span className="block">
                 {HERO_WORDS_L1.map((word, i) => (
                   <span
@@ -1327,7 +1327,7 @@ function DemoSection() {
         {/* Content — cinematic reveal: starts high + clipped, descends into place */}
         {/* z-[3] scrolls over the fixed title — transparent so aurora shows through */}
         <motion.div
-          className="relative z-[3] overflow-x-clip -mt-40 sm:-mt-48 md:-mt-56 lg:-mt-64"
+          className="relative z-[3] overflow-x-clip -mt-48 sm:-mt-48 md:-mt-56 lg:-mt-64"
           initial={alreadyPlayed ? undefined : { y: -180 }}
           animate={
             heroPhase === "init" || heroPhase === "opening"
@@ -4172,7 +4172,7 @@ const ValueMetricCard = memo(function ValueMetricCard({ item }: { item: ValueMet
   return (
     // CSS-only hover lift (no Framer transform — it would fight the marquee's
     // CSS translateX on the parent track and make the card jump off-screen).
-    <div className="group relative w-[210px] flex-shrink-0 transition-transform duration-300 ease-out will-change-transform hover:-translate-y-1.5">
+    <div className="group relative w-[210px] flex-shrink-0 transition-transform duration-300 ease-out will-change-transform [@media(hover:hover)]:hover:-translate-y-1.5">
       <div
         className={`relative h-full overflow-hidden rounded-2xl p-5 bg-gradient-to-br ${item.gradient}`}
         style={{ boxShadow: `0 14px 34px -16px rgba(${item.rgb}, 0.6)` }}
@@ -4334,7 +4334,7 @@ function ValueBlock() {
               }}
             >
               <div
-                className="flex w-max gap-4 animate-marquee-value hover:[animation-play-state:paused]"
+                className="flex w-max gap-4 animate-marquee-value [@media(hover:hover)]:hover:[animation-play-state:paused]"
                 style={{ willChange: "transform", backfaceVisibility: "hidden", animationDuration: "44s" }}
               >
                 {[...metricsRow1, ...metricsRow1].map((m, i) => (
@@ -4352,7 +4352,7 @@ function ValueBlock() {
               }}
             >
               <div
-                className="flex w-max gap-4 animate-marquee-value hover:[animation-play-state:paused]"
+                className="flex w-max gap-4 animate-marquee-value [@media(hover:hover)]:hover:[animation-play-state:paused]"
                 style={{ willChange: "transform", backfaceVisibility: "hidden", animationDuration: "52s", animationDirection: "reverse" }}
               >
                 {[...metricsRow2, ...metricsRow2].map((m, i) => (
