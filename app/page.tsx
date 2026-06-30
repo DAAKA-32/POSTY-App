@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback, memo, useMemo } from "react";
+import { useEffect, useState, useRef, useCallback, memo, useMemo, Fragment } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -1234,38 +1234,42 @@ function DemoSection() {
             <h2 className="text-[2.5rem] md:text-5xl lg:text-[3.5rem] 2xl:text-[4rem] font-bold tracking-tight flex flex-col items-center gap-0 [&>span]:-my-[0.2em]">
               <span className="block">
                 {HERO_WORDS_L1.map((word, i) => (
-                  <span
-                    key={word}
-                    className="text-silver-premium transition-all duration-500 ease-out"
-                    style={{
-                      display: "inline-block",
-                      padding: "0.3em 0",
-                      lineHeight: 1,
-                      opacity: revealedWords > i ? 1 : 0,
-                      transform: revealedWords > i ? "translateY(0)" : "translateY(8px)",
-                    }}
-                  >
-                    {word}{i < HERO_WORDS_L1.length - 1 ? " " : ""}
-                  </span>
+                  <Fragment key={word}>
+                    <span
+                      className="text-silver-premium transition-all duration-500 ease-out"
+                      style={{
+                        display: "inline-block",
+                        padding: "0.3em 0",
+                        lineHeight: 1,
+                        opacity: revealedWords > i ? 1 : 0,
+                        transform: revealedWords > i ? "translateY(0)" : "translateY(8px)",
+                      }}
+                    >
+                      {word}
+                    </span>
+                    {i < HERO_WORDS_L1.length - 1 ? " " : ""}
+                  </Fragment>
                 ))}
               </span>
               <span className="block">
                 {HERO_WORDS_L2.map((word, i) => {
                   const globalIndex = HERO_WORDS_L1.length + i;
                   return (
-                    <span
-                      key={word}
-                      className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] via-[#F76B54] to-[#F8935D] transition-all duration-500 ease-out"
-                      style={{
-                        display: "inline-block",
-                        padding: "0.3em 0",
-                        lineHeight: 1,
-                        opacity: revealedWords > globalIndex ? 1 : 0,
-                        transform: revealedWords > globalIndex ? "translateY(0)" : "translateY(8px)",
-                      }}
-                    >
-                      {word}{i < HERO_WORDS_L2.length - 1 ? " " : ""}
-                    </span>
+                    <Fragment key={word}>
+                      <span
+                        className="text-transparent bg-clip-text bg-gradient-to-r from-[#F8935D] via-[#F76B54] to-[#F8935D] transition-all duration-500 ease-out"
+                        style={{
+                          display: "inline-block",
+                          padding: "0.3em 0",
+                          lineHeight: 1,
+                          opacity: revealedWords > globalIndex ? 1 : 0,
+                          transform: revealedWords > globalIndex ? "translateY(0)" : "translateY(8px)",
+                        }}
+                      >
+                        {word}
+                      </span>
+                      {i < HERO_WORDS_L2.length - 1 ? " " : ""}
+                    </Fragment>
                   );
                 })}
               </span>
