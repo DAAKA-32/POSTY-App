@@ -1231,7 +1231,7 @@ function DemoSection() {
         {/* Hero title — sticky: stays on screen while content scrolls over it, fades out via titleOpacity */}
         <motion.div ref={titleRef} style={{ opacity: titleOpacity }} className="sticky top-0 left-0 right-0 z-[1] pt-24 pb-6 md:pb-2 px-4 sm:px-6 lg:px-8">
           <div className="relative text-center max-w-4xl mx-auto">
-            <h2 className="text-4xl sm:text-4xl md:text-5xl lg:text-[3.5rem] 2xl:text-[4rem] font-bold tracking-tight flex flex-col items-center gap-0 [&>span]:-my-[0.2em]">
+            <h2 className="text-[2.5rem] md:text-5xl lg:text-[3.5rem] 2xl:text-[4rem] font-bold tracking-tight flex flex-col items-center gap-0 [&>span]:-my-[0.2em]">
               <span className="block">
                 {HERO_WORDS_L1.map((word, i) => (
                   <span
@@ -1245,7 +1245,7 @@ function DemoSection() {
                       transform: revealedWords > i ? "translateY(0)" : "translateY(8px)",
                     }}
                   >
-                    {word}{i < HERO_WORDS_L1.length - 1 ? "\u00A0" : ""}
+                    {word}{i < HERO_WORDS_L1.length - 1 ? " " : ""}
                   </span>
                 ))}
               </span>
@@ -1264,7 +1264,7 @@ function DemoSection() {
                         transform: revealedWords > globalIndex ? "translateY(0)" : "translateY(8px)",
                       }}
                     >
-                      {word}{i < HERO_WORDS_L2.length - 1 ? "\u00A0" : ""}
+                      {word}{i < HERO_WORDS_L2.length - 1 ? " " : ""}
                     </span>
                   );
                 })}
