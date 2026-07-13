@@ -26,21 +26,22 @@ import { verifyAuth } from "@/lib/auth";
 import { isAdminInitialized, adminDb } from "@/lib/db/firebase-admin";
 import { checkHourlyQuotaAdmin, incrementUserQuotaAdmin } from "@/lib/db/firestore-admin";
 import {
-  buildMaterializeSystemPrompt,
+  buildMaterializeBlocks,
   buildMaterializeUserMessage,
   mapFormatToPostType,
 } from "@/lib/ai/materialize-post-prompt";
 import {
-  getGenerationTemperature,
   sanitizeProfileField,
   type ProfileFields,
   type PostType,
 } from "@/lib/services/prompt-builder";
-import { normalizeHashtagsInText } from "@/lib/hashtags/normalize";
+// THE single post-generation engine — the exact same one the chat calls.
+// Prompt, model, temperature, hashtag pass and quality gate all live there.
+import { generateLinkedInPost } from "@/lib/services/post-generator";
+import { getMaxTokensForPlan } from "@/lib/config/plans";
 import { isStrategistAllowedForEmail } from "@/lib/strategist/access";
 import { hasLinkedInConnected } from "@/lib/strategist/access-server";
-import { isOpenAIConfigured, MINI_MODEL } from "@/lib/openai";
-import { trackAIUsage, readUsageFromResponse } from "@/lib/ai-cost/tracker";
+import { isOpenAIConfigured } from "@/lib/openai";
 import type { PostBrief, MaterializedPost } from "@/types";
 
 export const runtime = "nodejs";
@@ -150,74 +151,61 @@ async function pMap<T, R>(
 }
 
 /**
- * Materialize model — gpt-4o-mini by default (Tier-2 cost optimization).
+ * Strategist model — NONE. It deliberately has no model of its own.
  *
- * A blind A/B (same brief, same full Plan-Max prompt, same temperature) showed
- * gpt-4o-mini produces posts COMPARABLE to gpt-4o here — because Phase 1
- * (batch-plan, still gpt-4o) already did the strategic reasoning, so Phase 2 is
- * "just" prose expansion of a fixed brief, which mini handles well. At ~16.7×
- * cheaper on the biggest per-action cost. Override with the
- * STRATEGIST_MATERIALIZE_MODEL env var (e.g. set it to "gpt-4o" to revert
- * instantly, no code change) if a quality drop is ever noticed.
+ * It used to default to gpt-4o-mini as a cost optimization. In practice that is
+ * exactly what made Strategist posts feel weaker than the same topic typed into
+ * the chat: mini follows the long instruction stack (emojis, hook, rhythm,
+ * craft rules) far less reliably, and the Strategist also skipped the quality
+ * gate. Leaving this undefined makes the shared engine use PRIMARY_MODEL —
+ * the SAME model as the chat. The env var stays only as an emergency cost lever;
+ * unset is the supported, quality-parity configuration.
  */
-const MATERIALIZE_MODEL = process.env.STRATEGIST_MATERIALIZE_MODEL || MINI_MODEL;
+const MATERIALIZE_MODEL = process.env.STRATEGIST_MATERIALIZE_MODEL || undefined;
+
+/** Same response budget as a Plan-Max chat generation (no more 1800 vs 2000). */
+const MATERIALIZE_MAX_TOKENS = getMaxTokensForPlan("max");
 
 /**
- * One brief → one post LinkedIn call.
+ * One brief → one finished post.
  *
- * Uses the SAME system prompt (buildOptimizedPrompt via buildMaterializeSystemPrompt)
- * + plan-aware temperature + hashtag-normalization final pass as the main chat.
- * Only the MODEL differs (mini by default — see MATERIALIZE_MODEL). The brief's
- * format → PostType drives the base prompt + temperature. max_tokens 1800 (up
- * from 900, which truncated long posts) gives the 1300-2000 char target + signature
- * + hashtags ample room — ~500-650 tokens of prose, so no truncation. System
- * prompt is built ONCE per PostType and reused across briefs of that type →
- * OpenAI prompt caching cuts the shared prefix ~50% from the 2nd same-type call.
+ * Delegates EVERYTHING that decides quality to the shared engine
+ * (lib/services/post-generator): the canonical prompt, gpt-4o, the plan-aware
+ * temperature, the hashtag pass AND the lint + repair quality gate. The
+ * Strategist only supplies INPUT — the approved brief as the user turn, plus its
+ * context blocks (business grounding, style anchors, brief mode).
  */
 async function materializeOne(
   openai: OpenAI,
   brief: PostBrief,
   language: "fr" | "en",
-  systemPrompt: string,
+  strategistBlocks: string,
+  profile: ProfileFields,
   postType: PostType,
   userId: string
 ): Promise<{ ok: true; post: MaterializedPost } | { ok: false; error: string }> {
   try {
-    const completion = await openai.chat.completions.create({
-      model: MATERIALIZE_MODEL,
-      temperature: getGenerationTemperature(postType, "max"),
-      // Parity with the chat path: 900 truncated long posts mid-sentence (no
-      // repair pass here). 1800 gives the 1300-2000 char target full room.
-      max_tokens: 1800,
-      messages: [
-        { role: "system", content: systemPrompt },
-        {
-          role: "user",
-          content: buildMaterializeUserMessage({ language, brief }),
-        },
-      ],
-    });
-    const usage = readUsageFromResponse(completion);
-    void trackAIUsage({
+    const { content, model } = await generateLinkedInPost({
+      client: openai,
+      type: postType,
+      language,
+      profile,
+      plan: "max", // the Strategist is a Max-tier feature
       userId,
       route: "strategist.materialize",
-      model: MATERIALIZE_MODEL,
-      inputTokens: usage.inputTokens,
-      outputTokens: usage.outputTokens,
-      cachedInputTokens: usage.cachedInputTokens,
-      metadata: { briefId: brief.id, language },
+      userMessage: buildMaterializeUserMessage({ language, brief }),
+      systemBlocks: [strategistBlocks],
+      maxTokens: MATERIALIZE_MAX_TOKENS,
+      model: MATERIALIZE_MODEL, // undefined → PRIMARY_MODEL, same as the chat
+      metadata: { briefId: brief.id },
     });
-    const raw = completion.choices[0]?.message?.content?.trim() ?? "";
-    if (!raw) return { ok: false, error: "empty_response" };
-    // Same final pass as the chat: normalize hashtag casing (#POSTY → #posty,
-    // PascalCase → camelCase, brand tag → #posty).
-    const content = normalizeHashtagsInText(raw);
+    if (!content) return { ok: false, error: "empty_response" };
     return {
       ok: true,
       post: {
         content,
         generatedAt: Date.now(),
-        model: MATERIALIZE_MODEL,
+        model,
       },
     };
   } catch (err) {
@@ -344,26 +332,15 @@ export async function POST(request: NextRequest) {
   // ── Load user context once, share across all calls ───────────────────
   const { profile, snippets, businessContext } = await loadUserContextAndPosts(userId);
 
-  // Build ONE Plan-Max system prompt per PostType present in the batch and
-  // reuse it across briefs of that type. buildOptimizedPrompt injects a random
-  // variation seed, so building per-type (not per-brief) is what keeps OpenAI's
-  // prompt cache alive: same-type briefs share identical bytes → the 2nd+ call
-  // of that type pays ~50% on the (large) shared prefix. The Strategist is
-  // Max-tier → plan "max".
-  const promptByType = new Map<PostType, string>();
-  for (const t of new Set(targets.map((b) => mapFormatToPostType(b.format)))) {
-    promptByType.set(
-      t,
-      buildMaterializeSystemPrompt({
-        language,
-        profile,
-        plan: "max",
-        postType: t,
-        recentPostSnippets: snippets,
-        businessContext,
-      })
-    );
-  }
+  // The Strategist's CONTEXT blocks only (business grounding + style anchors +
+  // brief mode). The canonical prompt is built inside the shared engine, per
+  // call — so every brief now gets its own variation seed and a 15-post batch
+  // no longer repeats the same structure/hook 15 times.
+  const strategistBlocks = buildMaterializeBlocks({
+    language,
+    recentPostSnippets: snippets,
+    businessContext,
+  });
 
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY!,
@@ -374,8 +351,7 @@ export async function POST(request: NextRequest) {
   // ── Materialize in parallel, bounded ─────────────────────────────────
   const results = await pMap(targets, CONCURRENCY, async (brief) => {
     const postType = mapFormatToPostType(brief.format);
-    const systemPrompt = promptByType.get(postType)!;
-    const r = await materializeOne(openai, brief, language, systemPrompt, postType, userId);
+    const r = await materializeOne(openai, brief, language, strategistBlocks, profile, postType, userId);
     return { briefId: brief.id, result: r };
   });
 

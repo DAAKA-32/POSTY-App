@@ -14,8 +14,10 @@ import {
   PRIMARY_MODEL,
   MINI_MODEL,
 } from "@/lib/openai";
-import { buildOptimizedPrompt, getGenerationTemperature, synthesizeProfile, estimateTokens, ProfileFields, PlanTier, buildAssistantPrompt, cleanFillerFromResponse, deriveTitleFromPrompt } from "@/lib/services/prompt-builder";
-import { lintPost, buildRepairMessages } from "@/lib/services/post-quality";
+import { ProfileFields, PlanTier, buildAssistantPrompt, cleanFillerFromResponse, deriveTitleFromPrompt } from "@/lib/services/prompt-builder";
+// THE single post-generation engine — shared with the Strategist. It owns the
+// canonical prompt, the model, the temperature and the quality gate.
+import { generateLinkedInPost } from "@/lib/services/post-generator";
 import {
   checkHourlyQuotaAdmin,
   checkUserQuotaAdmin,
@@ -28,7 +30,6 @@ import {
 } from "@/lib/db/firestore-admin";
 import { buildMemoryContext, buildExtractionMessages, parseExtractionResponse, mergeMemoryItems } from "@/lib/services/memory";
 import { isAdminInitialized } from "@/lib/db/firebase-admin";
-import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import { getPlanFeatures } from "@/lib/config/plan-features";
 import { planHasFeature, PlanType, getPlanLimits, getMaxTokensForPlan } from "@/lib/config/plans";
 import { SubscriptionPlan } from "@/types";
@@ -890,23 +891,12 @@ async function generateWithOpenAI(
     sendEvent("phase", { phase: "writing", message: language === "fr" ? "Écriture en cours…" : "Writing your post…" });
     sendEvent("start", { type, title });
 
-    // Build optimized system prompt with synthesized profile (plan-tier aware)
-    let systemPrompt = buildOptimizedPrompt(type, language, userProfile, plan);
-
-    // Enforce response language based on prompt detection
-    const langEnforcement = language === "fr"
-      ? "\n\nLANGUE: Réponds STRICTEMENT en français. Tout le contenu généré doit être en français."
-      : "\n\nLANGUAGE: Respond STRICTLY in English. All generated content must be in English.";
-    systemPrompt += langEnforcement;
-
-    // Inject contextual memory (retained facts from previous conversations)
-    if (memoryContext) {
-      systemPrompt += memoryContext;
-    }
-
-    if (isFollowUp) {
-      // Add context for follow-up conversations with strict preservation instructions
-      const followUpContext = language === "fr"
+    // ── CONTEXT BLOCKS ONLY ──────────────────────────────────────────────
+    // The canonical system prompt, the model, the temperature, the hashtag pass
+    // and the quality gate all live in the SHARED engine (post-generator) — the
+    // very same one the Strategist calls. The chat may only contribute CONTEXT.
+    const followUpBlock = isFollowUp
+      ? language === "fr"
         ? `\n\nIMPORTANT — MODIFICATION DE POST EXISTANT:
 Tu continues une conversation existante. L'utilisateur demande une modification ou un ajustement du post précédent.
 
@@ -928,188 +918,79 @@ STRICT RULES:
 4. DO NOT rewrite the entire post — make surgical edits only
 5. If the user asks to change a name, word, or info → change ONLY that element
 6. The result must be identical to the previous post EXCEPT for the explicitly requested modifications
-7. Respond ONLY with the modified post, no explanation or commentary`;
-      systemPrompt += followUpContext;
-    }
+7. Respond ONLY with the modified post, no explanation or commentary`
+      : null;
 
-    // If file is attached, add context to system prompt
-    if (fileContent) {
-      const fileContext = fileContent.type === "image"
+    const fileBlock = !fileContent
+      ? null
+      : fileContent.type === "image"
         ? (language === "fr"
           ? "\n\nL'utilisateur a joint une image. Analyse-la et utilise son contenu comme contexte pour générer le post LinkedIn. Décris ce que tu vois si pertinent."
           : "\n\nThe user attached an image. Analyze it and use its content as context to generate the LinkedIn post.")
         : (language === "fr"
           ? "\n\nL'utilisateur a joint un document PDF. Utilise le contenu extrait ci-dessous comme contexte pour générer le post LinkedIn."
           : "\n\nThe user attached a PDF document. Use the extracted content below as context to generate the LinkedIn post.");
-      systemPrompt += fileContext;
-    }
 
-    // If URL content was extracted, add context to system prompt
-    if (urlContent) {
-      const urlContext = language === "fr"
+    const urlBlock = !urlContent
+      ? null
+      : language === "fr"
         ? "\n\nL'utilisateur a partagé un lien. Utilise le contenu extrait de cette page comme contexte principal pour générer le post LinkedIn. Fais référence aux idées clés de l'article sans copier le texte mot pour mot."
         : "\n\nThe user shared a link. Use the extracted page content as the main context to generate the LinkedIn post. Reference key ideas from the article without copying text verbatim.";
-      systemPrompt += urlContext;
-    }
 
-    // Inject real-time factual brief + current date (Pro+, time-sensitive topics).
+    // Real-time factual brief + current date (Pro+, time-sensitive topics).
     // Facts are woven in naturally with no links; sources stay internal.
-    if (realtimeContext) {
-      systemPrompt += buildRealtimeContextBlock(realtimeContext, language);
-    }
+    const realtimeBlock = realtimeContext
+      ? buildRealtimeContextBlock(realtimeContext, language)
+      : null;
 
-    // Build messages array
-    const messages: ChatCompletionMessageParam[] = [
-      { role: "system", content: systemPrompt },
-    ];
-
-    // Add conversation history for context (if following up)
-    if (isFollowUp && conversationHistory) {
-      // Include previous messages for context (limit to last 6 for token efficiency)
-      const recentHistory = conversationHistory.slice(-6);
-      for (const msg of recentHistory) {
-        messages.push({
-          role: msg.role === "user" ? "user" : "assistant",
-          content: msg.content,
-        });
-      }
-    }
-
-    // Add current prompt with file content
-    const userContent = isFollowUp
+    // ── USER TURN ────────────────────────────────────────────────────────
+    // An attached IMAGE is passed to the engine as `imagePart` (multimodal);
+    // PDF / URL text is appended to the user message here.
+    let userMessage = isFollowUp
       ? prompt // For follow-ups, just send the refinement
       : language === "fr"
         ? `Crée un post LinkedIn sur le sujet suivant: ${prompt}`
         : `Create a LinkedIn post about the following topic: ${prompt}`;
 
-    if (fileContent?.type === "image") {
-      // Multimodal message with image for GPT-4o Vision
-      messages.push({
-        role: "user",
-        content: [
-          { type: "text", text: userContent },
-          {
-            type: "image_url",
-            image_url: {
-              url: `data:${fileContent.mimeType};base64,${fileContent.base64}`,
-              detail: "auto",
-            },
-          },
-        ],
-      });
-    } else if (fileContent?.type === "pdf") {
-      // PDF: inject extracted text into the prompt
-      const pdfContext = language === "fr"
+    if (fileContent?.type === "pdf") {
+      userMessage += language === "fr"
         ? `\n\n--- Contenu du document joint ---\n${fileContent.extractedText}\n--- Fin du document ---`
         : `\n\n--- Attached document content ---\n${fileContent.extractedText}\n--- End of document ---`;
-      messages.push({ role: "user", content: userContent + pdfContext });
     } else if (urlContent) {
-      // URL: inject extracted page content into the prompt
       const urlTitle = urlContent.title ? `\nTitre: ${urlContent.title}` : "";
       const urlDesc = urlContent.description ? `\nDescription: ${urlContent.description}` : "";
-      const urlInjection = language === "fr"
+      userMessage += language === "fr"
         ? `\n\n--- Contenu extrait de ${urlContent.url} ---${urlTitle}${urlDesc}\n\n${urlContent.textContent}\n--- Fin du contenu extrait ---`
         : `\n\n--- Extracted content from ${urlContent.url} ---${urlTitle}${urlDesc}\n\n${urlContent.textContent}\n--- End of extracted content ---`;
-      messages.push({ role: "user", content: userContent + urlInjection });
-    } else {
-      messages.push({ role: "user", content: userContent });
     }
 
-    // Log estimated token count for monitoring
-    const totalPromptText = messages.map((m) => typeof m.content === "string" ? m.content : "").join("");
-    if (process.env.NODE_ENV !== "production") {
-      console.log(`[POSTY] Prompt tokens (est.): ~${estimateTokens(totalPromptText)} | Type: ${type} | Profile: ${userProfile ? "yes" : "no"}`);
-    }
-
-    // Use GPT-4o for image vision, otherwise default model
-    const modelToUse = needsVision ? "gpt-4o" : service["model"];
-
-    const stream = await service["client"].chat.completions.create({
-      model: modelToUse,
-      messages,
-      temperature: getGenerationTemperature(type, plan),
-      max_tokens: maxTokens,
-      stream: true,
-      stream_options: { include_usage: true },
-    });
-
-    let fullContent = "";
-    let genUsage = emptyUsage();
-    for await (const chunk of stream) {
-      const content = chunk.choices[0]?.delta?.content || "";
-      if (content) {
-        fullContent += content;
-        sendEvent("chunk", { content, type });
-      }
-      const captured = readUsageFromChunk(chunk);
-      if (captured) genUsage = captured;
-    }
-
-    void trackAIUsage({
+    // ── ONE CALL TO THE SHARED ENGINE ────────────────────────────────────
+    // Byte-for-byte the same path the Strategist takes: same canonical prompt,
+    // same model (PRIMARY_MODEL / gpt-4o), same temperature, same hashtag pass,
+    // same lint + repair quality gate. ONLY the input differs.
+    const { content: finalContent } = await generateLinkedInPost({
+      client: service["client"],
+      type,
+      language,
+      profile: userProfile,
+      plan,
       userId,
       route: "generate",
-      model: modelToUse,
-      inputTokens: genUsage.inputTokens,
-      outputTokens: genUsage.outputTokens,
-      cachedInputTokens: genUsage.cachedInputTokens,
-      metadata: { type, plan: plan ?? "unknown", language },
+      userMessage,
+      systemBlocks: [memoryContext, followUpBlock, fileBlock, urlBlock, realtimeBlock],
+      imagePart:
+        fileContent?.type === "image"
+          ? { mimeType: fileContent.mimeType, base64: fileContent.base64 }
+          : null,
+      history: isFollowUp ? conversationHistory : undefined,
+      maxTokens,
+      // Honour a BYOK / explicit model choice; vision is forced to gpt-4o.
+      model: needsVision ? "gpt-4o" : service["model"],
+      onChunk: (chunk) => sendEvent("chunk", { content: chunk, type }),
+      onPhase: (phase, message) => sendEvent("phase", { phase, message }),
+      // Follow-ups are surgical edits — re-polishing them would undo the edit.
+      skipQualityGate: !!isFollowUp,
     });
-
-    // Normalize hashtag casing on the final aggregated text. The streamed
-    // chunks may contain raw LLM output (#POSTY, #PersonalBranding); the
-    // client overwrites its accumulator with `content` from the done event.
-    let finalContent = normalizeHashtagsInText(fullContent);
-
-    // ========== QUALITY GATE (deterministic lint + single mini repair) ==========
-    // Catch the 2026 structural AI-tells the model still slips through
-    // (templated openers, "it's not X it's Y", reveal bridges, frictionless
-    // balance, em-dash density, vague "what do you think?" close). Only a HARD
-    // issue triggers a repair, and only on first messages (follow-ups are
-    // surgical edits that must be preserved). Posts that pass pay nothing.
-    if (!isFollowUp) {
-      try {
-        const report = lintPost(finalContent, language);
-        if (report.needsRepair) {
-          sendEvent("phase", { phase: "polishing", message: language === "fr" ? "Relecture finale…" : "Final polish…" });
-          const { system, user } = buildRepairMessages(finalContent, report.issues, language);
-          const repair = await service["client"].chat.completions.create({
-            model: MINI_MODEL,
-            messages: [
-              { role: "system", content: system },
-              { role: "user", content: user },
-            ],
-            temperature: 0.4,
-            // The repair must re-emit the WHOLE post (and a 'too-short' soft
-            // issue may instruct it to EXPAND), so its budget must NOT be the
-            // plan's response cap — on free/pro that equals what the original
-            // already consumed and would truncate the repair. Give it enough
-            // headroom for the current text plus growth.
-            max_tokens: Math.min(2048, Math.max(maxTokens, estimateTokens(finalContent) * 2 + 256)),
-          });
-          const repairUsage = readUsageFromResponse(repair);
-          void trackAIUsage({
-            userId,
-            route: "generate.quality-repair",
-            model: MINI_MODEL,
-            inputTokens: repairUsage.inputTokens,
-            outputTokens: repairUsage.outputTokens,
-            cachedInputTokens: repairUsage.cachedInputTokens,
-            metadata: { type, issues: report.issues.map((i) => i.code).join(",") },
-          });
-          const repairChoice = repair.choices[0];
-          const repaired = repairChoice?.message?.content?.trim();
-          // Only accept a COMPLETE, non-trivial repair. A non-"stop" finish
-          // reason (esp. "length") means the repair was truncated mid-post —
-          // keep the original complete post rather than ship a chopped one.
-          if (repaired && repaired.length > 50 && repairChoice?.finish_reason === "stop") {
-            finalContent = normalizeHashtagsInText(repaired);
-          }
-        }
-      } catch (lintError) {
-        // Non-blocking: a lint/repair failure must never break generation.
-        console.error("Quality lint/repair error (non-blocking):", lintError);
-      }
-    }
 
     // Capture first post for insights generation
     if (!firstPostContent) {

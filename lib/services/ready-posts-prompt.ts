@@ -115,18 +115,20 @@ export interface BuildReadyPostPromptArgs {
 }
 
 export interface BuiltReadyPostPrompt {
-  systemPrompt: string;
+  /** Extra system blocks the SHARED engine appends AFTER the canonical prompt. */
+  systemBlocks: string[];
   userPrompt: string;
   postType: "storytelling" | "business";
-  temperature: number;
 }
 
 /**
- * Builds the full prompt pair for a personalized ready post.
+ * Builds the ready-post CONTEXT only.
  *
- * The system prompt = base Max-tier prompt (with rich voice profile) +
- * category angle directive + (optional) memory context. The user prompt is
- * a category-aligned topic seed; the heavy lifting happens in the system.
+ * The canonical prompt (Max-tier base, voice profile, craft rules, variation
+ * seed), the model, the temperature, the hashtag pass and the quality gate are
+ * ALL owned by the shared engine — lib/services/post-generator — the exact same
+ * one the chat and the Strategist use. This module may only add context:
+ * the category angle directive and (optionally) the user's memory.
  */
 export function buildReadyPostPrompt({
   category,
@@ -135,26 +137,22 @@ export function buildReadyPostPrompt({
   memoryItems,
 }: BuildReadyPostPromptArgs): BuiltReadyPostPrompt {
   const directive = CATEGORY_DIRECTIVES[category];
-  const plan: PlanTier = "max";
+  void profile; // profile is fed straight to the engine by the caller
 
-  // Base prompt = Max-tier voice + sector + role + tone + objective strategy + audience.
-  let systemPrompt = buildOptimizedPrompt(directive.postType, language, profile ?? null, plan);
+  const systemBlocks: string[] = [
+    // Hard category override — appended last so it wins over generic structure variations.
+    `\n\n${directive.angle[language]}`,
+  ];
 
-  // Hard category override appended LAST so it wins over generic structure variations.
-  systemPrompt += `\n\n${directive.angle[language]}`;
-
-  // Memory context (subtle injection — instructs the LLM to weave it in only when relevant).
+  // Memory context (subtle injection — woven in only when relevant).
   if (memoryItems && memoryItems.length > 0) {
     const memoryBlock = buildMemoryContext(memoryItems, directive.seed[language], language);
-    if (memoryBlock) {
-      systemPrompt += memoryBlock;
-    }
+    if (memoryBlock) systemBlocks.push(memoryBlock);
   }
 
   return {
-    systemPrompt,
+    systemBlocks,
     userPrompt: directive.seed[language],
     postType: directive.postType,
-    temperature: getGenerationTemperature(directive.postType, plan),
   };
 }

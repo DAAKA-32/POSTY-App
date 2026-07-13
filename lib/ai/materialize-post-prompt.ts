@@ -1,27 +1,21 @@
 /**
- * Brief → finished LinkedIn post — system prompt.
+ * Strategist brief → post: the Strategist-SPECIFIC prompt ADDENDA only.
  *
- * Phase 2 turns a Strategist `PostBrief` (hook + angle + format + rationale)
- * into a publishable LinkedIn post body.
+ * FULL PARITY (2026-07): this module no longer assembles a system prompt. The
+ * canonical prompt (base tier prompt, voice profile, objective, audience,
+ * variation seed, 2026 craft rules), the model, the temperature and the quality
+ * gate are ALL owned by the single shared engine — lib/services/post-generator.
  *
- * QUALITY PARITY (2026-06-12): the system prompt is now assembled by the SAME
- * engine as the main /api/generate "Plan Max" pipeline — `buildOptimizedPrompt`
- * (plan-tier base prompt per mode, voice profile, objective strategy, audience
- * targeting, structure-variation seed, LinkedIn algorithm rules). The brief's
- * free-text `format` is mapped to the engine's binary PostType. A short
- * BRIEF MODE addendum keeps the approved hook/angle and forces a body-only
- * output. The route also aligns the model (gpt-4o) and the plan-aware
- * temperature to Plan Max. Result: Strategist posts reach the same level as
- * posts generated one-by-one in the chat.
+ * The Strategist is only an orchestration layer, so all it may contribute is
+ * extra CONTEXT appended after the canonical prompt:
+ *   - the author's business grounding (same context Phase-1 received),
+ *   - style anchors (recent posts) so the cadence matches the author,
+ *   - a BRIEF MODE addendum: keep the approved hook/angle, output body only.
+ * It must never re-define the writing rules — that is what made its posts drift.
  */
 
 import type { PostBrief } from "@/types";
-import {
-  buildOptimizedPrompt,
-  type ProfileFields,
-  type PlanTier,
-  type PostType,
-} from "@/lib/services/prompt-builder";
+import type { PostType } from "@/lib/services/prompt-builder";
 
 /**
  * Map the brief's free-text `format` to the Plan Max engine's binary PostType.
@@ -52,33 +46,24 @@ export function mapFormatToPostType(format: string): PostType {
 }
 
 /**
- * Build the SYSTEM prompt for one PostType, reusing the full Plan Max engine.
+ * Build the Strategist's EXTRA system blocks, appended by the shared engine
+ * AFTER the canonical prompt. Contains context only — never writing rules.
  *
- * `buildOptimizedPrompt` injects a randomized variation seed, so it MUST be
- * built ONCE per PostType and reused across briefs of that type (the route
- * does exactly this — which also keeps OpenAI prompt caching alive for
- * same-type briefs).
+ * Note: this no longer needs to be memoized per PostType. The shared engine
+ * builds the canonical prompt per call, which means every brief in a batch now
+ * gets its OWN variation seed — so a 15-post batch no longer repeats the same
+ * structure/hook style 15 times. (Cost of the lost prompt-cache prefix is a few
+ * tenths of a cent per brief; the variety is worth far more.)
  */
-export function buildMaterializeSystemPrompt(opts: {
+export function buildMaterializeBlocks(opts: {
   language: "fr" | "en";
-  /** Raw profile fields (arrays OK) — fed straight to the engine. */
-  profile: ProfileFields;
-  /** Plan tier — drives the Max-tier base prompt + signature directive. The
-   *  Strategist is Max, so callers pass "max". */
-  plan: PlanTier;
-  /** Brief format already mapped to the engine's PostType by the caller. */
-  postType: PostType;
   /** Optional recent post excerpts to anchor style. Short, max 3-4 entries. */
   recentPostSnippets?: string[];
   /** Optional business grounding (bio / tagline / website) — the SAME context
-   *  Phase-1 (batch-plan) was given. Restores parity: without it the prose step
-   *  is less grounded than the brief that shaped it. */
+   *  Phase-1 (batch-plan) was given. */
   businessContext?: string;
 }): string {
-  const { language, profile, plan, postType, recentPostSnippets, businessContext } = opts;
-
-  // THE Plan Max engine — identical to what /api/generate uses for the chat.
-  const base = buildOptimizedPrompt(postType, language, profile, plan);
+  const { language, recentPostSnippets, businessContext } = opts;
 
   const businessBlock = businessContext?.trim()
     ? `\n\n${language === "fr" ? "CONTEXTE BUSINESS DE L'AUTEUR (à utiliser pour ancrer le post, sans le réciter)" : "AUTHOR'S BUSINESS CONTEXT (use to ground the post, do not recite it)"}:\n${businessContext.trim()}`
@@ -92,7 +77,7 @@ export function buildMaterializeSystemPrompt(opts: {
 
   const briefMode = language === "fr" ? FR_BRIEF_MODE : EN_BRIEF_MODE;
 
-  return `${base}${businessBlock}
+  return `${businessBlock}
 
 ═════════════════════════════════════
 ${language === "fr"

@@ -8,9 +8,10 @@ import {
 import { isAdminInitialized } from "@/lib/db/firebase-admin";
 import { isOpenAIConfigured } from "@/lib/openai";
 import { buildReadyPostPrompt } from "@/lib/services/ready-posts-prompt";
-import { getFounderOverridePlan } from "@/lib/config/plans";
+// THE single post-generation engine — shared with the chat and the Strategist.
+import { generateLinkedInPost } from "@/lib/services/post-generator";
+import { getFounderOverridePlan, getMaxTokensForPlan } from "@/lib/config/plans";
 import type { ReadyPostCategory } from "@/lib/data/ready-posts";
-import { trackAIUsage, readUsageFromResponse } from "@/lib/ai-cost/tracker";
 
 const VALID_CATEGORIES: ReadyPostCategory[] = [
   "storytelling",
@@ -116,40 +117,33 @@ export async function POST(request: NextRequest) {
     publishingFrequency: userRecord.profile?.publishingFrequency,
   };
 
-  const { systemPrompt, userPrompt, temperature } = buildReadyPostPrompt({
+  const { systemBlocks, userPrompt, postType } = buildReadyPostPrompt({
     category: category as ReadyPostCategory,
     profile: profileFields,
     language,
     memoryItems,
   });
 
-  // 8) Generate (single-shot, non-streaming — modal renders the full preview at once)
+  // 8) Generate through THE shared engine (same one the chat + Strategist use):
+  //    canonical prompt, gpt-4o, plan-aware temperature, hashtag pass and the
+  //    lint + repair quality gate — all identical. Single-shot (no streaming).
   const apiKey = process.env.OPENAI_API_KEY!;
   const client = new OpenAI({ apiKey });
 
   try {
-    const readyModel = process.env.OPENAI_MODEL || "gpt-4o";
-    const completion = await client.chat.completions.create({
-      model: readyModel,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      temperature,
-      max_tokens: 1000,
-    });
-
-    const readyUsage = readUsageFromResponse(completion);
-    void trackAIUsage({
+    const { content } = await generateLinkedInPost({
+      client,
+      type: postType,
+      language,
+      profile: profileFields,
+      plan: "max",
       userId,
       route: "ready-posts.generate",
-      model: readyModel,
-      inputTokens: readyUsage.inputTokens,
-      outputTokens: readyUsage.outputTokens,
-      cachedInputTokens: readyUsage.cachedInputTokens,
+      userMessage: userPrompt,
+      systemBlocks,
+      maxTokens: getMaxTokensForPlan("max"),
     });
 
-    const content = completion.choices[0]?.message?.content?.trim() ?? "";
     if (!content) {
       return NextResponse.json(
         { error: "empty_response", message: "Generation returned empty content" },
