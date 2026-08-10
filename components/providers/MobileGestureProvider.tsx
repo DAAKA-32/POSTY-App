@@ -141,6 +141,12 @@ export default function MobileGestureProvider({ children }: MobileGestureProvide
         startY = touch.clientY;
         startTime = Date.now();
         hasHapticFired = false;
+        // Attach the non-passive touchmove ONLY now that a real swipe gesture
+        // is being tracked (edge-open or sidebar-close). Keeping it off the
+        // document the rest of the time lets the browser scroll on the
+        // compositor thread — a permanent passive:false touchmove forces every
+        // scroll through the main thread (the #1 transversal mobile-jank source).
+        document.addEventListener("touchmove", handleTouchMove, { passive: false });
       }
     };
 
@@ -226,6 +232,9 @@ export default function MobileGestureProvider({ children }: MobileGestureProvide
     };
 
     const resetSwipeState = () => {
+      // Detach the on-demand touchmove listener so it never lingers between
+      // gestures (keeps normal scrolling on the compositor thread).
+      document.removeEventListener("touchmove", handleTouchMove);
       isTracking = false;
       swipeType = null;
       isSwipeGesture = false;
@@ -239,10 +248,13 @@ export default function MobileGestureProvider({ children }: MobileGestureProvide
       resetSwipeState();
     };
 
-    // Add event listeners
-    // Use passive: false for touchmove and touchend to allow preventDefault
+    // Add event listeners.
+    // touchmove is NOT registered globally — it's attached on demand inside
+    // handleTouchStart only while a swipe gesture is actually tracked, and
+    // detached in resetSwipeState. This restores compositor-thread scrolling for
+    // every normal scroll. touchend stays global (it never fires during a scroll)
+    // to reset state and cancel the post-swipe click.
     document.addEventListener("touchstart", handleTouchStart, { passive: true });
-    document.addEventListener("touchmove", handleTouchMove, { passive: false });
     document.addEventListener("touchend", handleTouchEnd, { passive: false });
     document.addEventListener("touchcancel", handleTouchCancel, { passive: true });
 

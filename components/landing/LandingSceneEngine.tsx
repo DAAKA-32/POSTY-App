@@ -49,27 +49,30 @@ export type Scene = typeof SCENES[number];
  * The landing page force-locks light mode, so dark variants aren't shipped
  * here — keeps the engine lean.
  */
+// Intensities dialed down ~×0.62 vs the original: the ambient still reads as a
+// premium coloured depth wash (same palettes, same positions), but it no longer
+// competes with the content. The background should be felt, not noticed.
 export const SCENE_GRADIENTS: Record<Scene, string> = {
   welcome: [
-    "radial-gradient(ellipse 160% 50% at 60% 0%, rgba(241, 52, 82, 0.35), transparent 72%)",
-    "radial-gradient(ellipse 80% 60% at 20% 5%, rgba(248, 147, 93, 0.58), transparent 62%)",
-    "radial-gradient(ellipse 70% 60% at 90% 95%, rgba(241, 52, 82, 0.50), transparent 60%)",
-    "radial-gradient(ellipse 45% 100% at -8% 50%, rgba(248, 147, 93, 0.32), transparent 65%)",
-    "radial-gradient(ellipse 110% 80% at 50% 50%, rgba(248, 147, 93, 0.14), transparent 78%)",
+    "radial-gradient(ellipse 160% 50% at 60% 0%, rgba(241, 52, 82, 0.22), transparent 72%)",
+    "radial-gradient(ellipse 80% 60% at 20% 5%, rgba(248, 147, 93, 0.34), transparent 62%)",
+    "radial-gradient(ellipse 70% 60% at 90% 95%, rgba(241, 52, 82, 0.30), transparent 60%)",
+    "radial-gradient(ellipse 45% 100% at -8% 50%, rgba(248, 147, 93, 0.20), transparent 65%)",
+    "radial-gradient(ellipse 110% 80% at 50% 50%, rgba(248, 147, 93, 0.08), transparent 78%)",
   ].join(", "),
   visuals: [
-    "radial-gradient(ellipse 130% 22% at 30% -8%, rgba(217, 70, 239, 0.30), transparent 72%)",
-    "radial-gradient(ellipse 75% 55% at 85% 8%, rgba(217, 70, 239, 0.55), transparent 62%)",
-    "radial-gradient(ellipse 65% 55% at 12% 95%, rgba(241, 52, 82, 0.48), transparent 60%)",
-    "radial-gradient(ellipse 45% 100% at -8% 45%, rgba(217, 70, 239, 0.28), transparent 65%)",
-    "radial-gradient(ellipse 110% 80% at 50% 50%, rgba(217, 70, 239, 0.12), transparent 78%)",
+    "radial-gradient(ellipse 130% 22% at 30% -8%, rgba(217, 70, 239, 0.18), transparent 72%)",
+    "radial-gradient(ellipse 75% 55% at 85% 8%, rgba(217, 70, 239, 0.34), transparent 62%)",
+    "radial-gradient(ellipse 65% 55% at 12% 95%, rgba(241, 52, 82, 0.30), transparent 60%)",
+    "radial-gradient(ellipse 45% 100% at -8% 45%, rgba(217, 70, 239, 0.17), transparent 65%)",
+    "radial-gradient(ellipse 110% 80% at 50% 50%, rgba(217, 70, 239, 0.07), transparent 78%)",
   ].join(", "),
   schedule: [
-    "radial-gradient(ellipse 130% 22% at 30% -8%, rgba(14, 165, 233, 0.30), transparent 72%)",
-    "radial-gradient(ellipse 75% 55% at 85% 10%, rgba(14, 165, 233, 0.55), transparent 62%)",
-    "radial-gradient(ellipse 65% 55% at 10% 95%, rgba(139, 92, 246, 0.48), transparent 60%)",
-    "radial-gradient(ellipse 45% 100% at -8% 45%, rgba(14, 165, 233, 0.30), transparent 65%)",
-    "radial-gradient(ellipse 110% 80% at 50% 50%, rgba(14, 165, 233, 0.12), transparent 78%)",
+    "radial-gradient(ellipse 130% 22% at 30% -8%, rgba(14, 165, 233, 0.18), transparent 72%)",
+    "radial-gradient(ellipse 75% 55% at 85% 10%, rgba(14, 165, 233, 0.34), transparent 62%)",
+    "radial-gradient(ellipse 65% 55% at 10% 95%, rgba(139, 92, 246, 0.30), transparent 60%)",
+    "radial-gradient(ellipse 45% 100% at -8% 45%, rgba(14, 165, 233, 0.18), transparent 65%)",
+    "radial-gradient(ellipse 110% 80% at 50% 50%, rgba(14, 165, 233, 0.07), transparent 78%)",
   ].join(", "),
 };
 
@@ -120,16 +123,18 @@ interface TierConfig {
  * proven stratified-grid algorithm but drop the column/row counts so the
  * frame budget on iOS Safari stays comfortable (≈30 particles vs ≈80).
  */
+// Tuned to read as tiny depth specks, never focal points: radii ~halved,
+// opacities ~×0.55, glows ~×0.55, density trimmed. The content must dominate.
 const TIER_CONFIGS_DESKTOP: TierConfig[] = [
-  { tier: 0, cols: 6, rows: 3, radiusMin: 2.2, radiusMax: 3.8, opMin: 0.55, opMax: 0.85, speed: 0.025, glowMin: 30, glowMax: 50, jitter: 0.35 },
-  { tier: 1, cols: 8, rows: 4, radiusMin: 1.2, radiusMax: 2.0, opMin: 0.35, opMax: 0.65, speed: 0.04, glowMin: 14, glowMax: 24, jitter: 0.4 },
-  { tier: 2, cols: 10, rows: 5, radiusMin: 0.5, radiusMax: 1.1, opMin: 0.2, opMax: 0.45, speed: 0.055, glowMin: 6, glowMax: 12, jitter: 0.45 },
+  { tier: 0, cols: 5, rows: 3, radiusMin: 1.1, radiusMax: 1.9, opMin: 0.28, opMax: 0.46, speed: 0.02, glowMin: 16, glowMax: 26, jitter: 0.4 },
+  { tier: 1, cols: 6, rows: 4, radiusMin: 0.7, radiusMax: 1.2, opMin: 0.18, opMax: 0.34, speed: 0.03, glowMin: 8, glowMax: 13, jitter: 0.45 },
+  { tier: 2, cols: 8, rows: 5, radiusMin: 0.4, radiusMax: 0.8, opMin: 0.11, opMax: 0.24, speed: 0.045, glowMin: 4, glowMax: 8, jitter: 0.5 },
 ];
 
 const TIER_CONFIGS_MOBILE: TierConfig[] = [
-  { tier: 0, cols: 3, rows: 4, radiusMin: 1.8, radiusMax: 3.0, opMin: 0.5, opMax: 0.8, speed: 0.02, glowMin: 22, glowMax: 36, jitter: 0.35 },
-  { tier: 1, cols: 4, rows: 5, radiusMin: 1.0, radiusMax: 1.7, opMin: 0.3, opMax: 0.6, speed: 0.03, glowMin: 10, glowMax: 18, jitter: 0.4 },
-  { tier: 2, cols: 5, rows: 7, radiusMin: 0.4, radiusMax: 0.9, opMin: 0.18, opMax: 0.42, speed: 0.04, glowMin: 5, glowMax: 10, jitter: 0.45 },
+  { tier: 0, cols: 3, rows: 4, radiusMin: 0.9, radiusMax: 1.5, opMin: 0.24, opMax: 0.4, speed: 0.018, glowMin: 12, glowMax: 20, jitter: 0.4 },
+  { tier: 1, cols: 3, rows: 5, radiusMin: 0.6, radiusMax: 1.0, opMin: 0.16, opMax: 0.3, speed: 0.026, glowMin: 6, glowMax: 11, jitter: 0.45 },
+  { tier: 2, cols: 4, rows: 6, radiusMin: 0.3, radiusMax: 0.65, opMin: 0.1, opMax: 0.22, speed: 0.036, glowMin: 3, glowMax: 6, jitter: 0.5 },
 ];
 
 function createParticles(w: number, h: number, isMobile: boolean): Particle[] {
@@ -150,8 +155,12 @@ function createParticles(w: number, h: number, isMobile: boolean): Particle[] {
         const dy = Math.abs(cy - h / 2) / (h / 2);
         const distFromCenter = Math.sqrt(dx * dx * 0.7 + dy * dy * 0.3);
 
-        if (cfg.tier === 0 && distFromCenter < 0.3 && rand() < 0.6) continue;
-        if (cfg.tier === 1 && distFromCenter < 0.2 && rand() < 0.3) continue;
+        // Keep a calm zone behind the Hero content (title / subtitle / CTA /
+        // product preview all live near the centre). Skip probabilities are
+        // raised and now cover tier 2 too so the middle stays quiet.
+        if (cfg.tier === 0 && distFromCenter < 0.42 && rand() < 0.82) continue;
+        if (cfg.tier === 1 && distFromCenter < 0.34 && rand() < 0.6) continue;
+        if (cfg.tier === 2 && distFromCenter < 0.24 && rand() < 0.35) continue;
 
         const jx = (rand() - 0.5) * cellW * cfg.jitter;
         const jy = (rand() - 0.5) * cellH * cfg.jitter;
@@ -286,13 +295,42 @@ export default function LandingSceneEngine() {
   const isMobileRef = useRef(false);
   const { mode, hydrated } = usePerformance();
 
-  const activeScene = useActiveScene();
+  const activeScene = useActiveScene(); // drives the gradient crossfade only
 
-  // Stars are only painted on the welcome scene (Hero opening + FAQ loop) —
-  // the user wants the rest of the page to stay quiet. The rAF loop reads
-  // this ref so it can short-circuit drawing when the canvas isn't visible.
+  // Stars are scoped to the HERO ONLY (the section tagged `data-stars`), not to
+  // every "welcome" scene — so the FAQ (which reuses the warm gradient) stays
+  // star-free. An IntersectionObserver watches the Hero: stars are on while it
+  // occupies the viewport centre and fade out as the user scrolls past it. The
+  // rAF loop reads `starsVisibleRef` to short-circuit drawing when hidden.
+  const [starsVisible, setStarsVisible] = useState(true);
   const starsVisibleRef = useRef(true);
-  starsVisibleRef.current = activeScene === "welcome";
+  starsVisibleRef.current = starsVisible;
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    let io: IntersectionObserver | null = null;
+    const attach = () => {
+      const hero = document.querySelector("[data-stars]");
+      if (!hero) return false;
+      // A ~10%-tall band at the viewport centre: `isIntersecting` is true only
+      // while the Hero crosses the centre line — same feel as the gradient's
+      // viewport-centre scene detection.
+      io = new IntersectionObserver(
+        ([entry]) => setStarsVisible(entry.isIntersecting),
+        { rootMargin: "-45% 0px -45% 0px", threshold: 0 },
+      );
+      io.observe(hero);
+      return true;
+    };
+    // The Hero is static (not dynamically imported), but retry once in case the
+    // first paint hasn't committed the node yet.
+    if (attach()) return () => io?.disconnect();
+    const t = setTimeout(attach, 250);
+    return () => {
+      clearTimeout(t);
+      io?.disconnect();
+    };
+  }, []);
 
   // ---------------------------------------------------------------------------
   // Canvas star field
@@ -372,12 +410,15 @@ export default function LandingSceneEngine() {
         if (p.y < -20) p.y = h + 20;
         if (p.y > h + 20) p.y = -20;
 
+        // Gentler pulse — less twinkle so the motion is felt, not noticed.
         const pulse =
           p.baseOpacity *
-          (0.6 + 0.4 * Math.sin(time * p.pulseSpeed + p.pulseOffset));
+          (0.8 + 0.2 * Math.sin(time * p.pulseSpeed + p.pulseOffset));
 
+        // Wider, deeper centre fade: stars within ~55% of the horizontal centre
+        // are strongly dimmed so the content sits on a visually calm field.
         const cx = Math.abs(p.x - w / 2) / (w / 2);
-        const centerFade = 0.3 + 0.7 * Math.min(1, cx / 0.4);
+        const centerFade = 0.12 + 0.88 * Math.min(1, cx / 0.55);
         p.opacity = pulse * centerFade;
 
         // Always-transparent palette: stars sit on light gradients (#FAFBFC
@@ -391,25 +432,26 @@ export default function LandingSceneEngine() {
         const b = Math.round(155 + warmth * 20 - 75);
 
         const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.glowRadius);
-        grad.addColorStop(0, `rgba(${r + 10}, ${g + 10}, ${b + 5}, ${p.opacity * 0.2})`);
-        grad.addColorStop(0.4, `rgba(${r}, ${g}, ${b}, ${p.opacity * 0.07})`);
+        grad.addColorStop(0, `rgba(${r + 10}, ${g + 10}, ${b + 5}, ${p.opacity * 0.13})`);
+        grad.addColorStop(0.4, `rgba(${r}, ${g}, ${b}, ${p.opacity * 0.045})`);
         grad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.glowRadius, 0, Math.PI * 2);
         ctx.fillStyle = grad;
         ctx.fill();
 
-        const armMult = p.tier === 0 ? 3.2 : p.tier === 1 ? 3.0 : 2.8;
+        // Slightly shorter arms so the specks read rounder/smaller, not spiky.
+        const armMult = p.tier === 0 ? 2.8 : p.tier === 1 ? 2.6 : 2.4;
         const widthMult = p.tier === 0 ? 0.4 : p.tier === 1 ? 0.38 : 0.35;
         const armLen = p.radius * armMult;
         const armWidth = p.radius * widthMult;
 
-        ctx.fillStyle = `rgba(${r - 10}, ${g - 10}, ${b - 5}, ${p.opacity * 0.65})`;
+        ctx.fillStyle = `rgba(${r - 10}, ${g - 10}, ${b - 5}, ${p.opacity * 0.5})`;
         drawStar(ctx, p.x, p.y, armLen, armWidth, p.rotation);
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.radius * 0.5, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${r + 25}, ${g + 25}, ${b + 15}, ${p.opacity * 0.85})`;
+        ctx.fillStyle = `rgba(${r + 25}, ${g + 25}, ${b + 15}, ${p.opacity * 0.7})`;
         ctx.fill();
       }
 
@@ -458,18 +500,17 @@ export default function LandingSceneEngine() {
         />
       ))}
 
-      {/* Star canvas — only painted on the welcome scene (Hero opening +
-          FAQ loop). The rest of the scroll story stays quiet to keep the
-          mid-page sections focused on their content. Same 900ms crossfade
-          curve as the gradients so the stars feel like part of the welcome
-          palette leaving / re-entering, not a separate layer toggling. */}
+      {/* Star canvas — painted for the HERO ONLY (the `data-stars` section).
+          Every section after it (features, proof, pricing, FAQ, footer) stays
+          star-free so the content leads. Same 900ms crossfade as the gradients
+          so the field feels like part of the opening leaving, not a hard cut. */}
       <canvas
         ref={canvasRef}
         className="absolute inset-0"
         style={{
           width: "100%",
           height: "100%",
-          opacity: activeScene === "welcome" ? 1 : 0,
+          opacity: starsVisible ? 1 : 0,
           transition: "opacity 900ms cubic-bezier(0.4, 0, 0.2, 1)",
           willChange: "opacity",
         }}
@@ -477,7 +518,7 @@ export default function LandingSceneEngine() {
 
       {/* Dot grid — final atmospheric layer, kept extremely subtle. */}
       <div
-        className="absolute inset-0 opacity-[0.04]"
+        className="absolute inset-0 opacity-[0.03]"
         style={{
           backgroundImage:
             "radial-gradient(circle at 1px 1px, #9ca3af 0.5px, transparent 0.5px)",

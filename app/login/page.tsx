@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
@@ -129,7 +129,24 @@ function RotatingHero({ messages }: { messages: readonly string[] }) {
   );
 }
 
+/**
+ * `useSearchParams()` must sit inside a Suspense boundary — without one, Next
+ * opts the whole route out of prerendering and the search-params read becomes a
+ * client-side-render bailout. Same pattern as /auth/action, /onboarding,
+ * /checkout/success and /subscription.
+ *
+ * `fallback={null}` deliberately matches this page's own loading branch below:
+ * an authenticated visitor must never see a flash of the login form.
+ */
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginPageContent />
+    </Suspense>
+  );
+}
+
+function LoginPageContent() {
   const { user, userProfile, loading, needsOnboarding } = useAuth();
   const { t } = useLanguage();
   usePageTitle("login");
@@ -238,12 +255,15 @@ export default function LoginPage() {
             </Link>
           </motion.div>
 
-          {/* Main content - grows but scrolls when needed */}
+          {/* Main content — vertically centred. The wrapper is `min-h-full`
+              (not `h-full`), so once the signup form outgrows the viewport the
+              container simply grows and `justify-center` becomes a no-op —
+              no unreachable overflow above the fold. */}
           <motion.div
             variants={itemVariants}
-            className="flex-1 flex flex-col justify-end pb-8"
+            className="flex-1 flex flex-col justify-center py-4"
           >
-            <div className="posty-landing-glass-card relative overflow-hidden rounded-3xl px-5 py-7 sm:px-6 sm:py-8">
+            <div className="posty-landing-glass-card relative overflow-hidden rounded-3xl px-5 py-8 sm:px-7 sm:py-9">
               <span aria-hidden className="posty-glass-sheen" />
               <span aria-hidden className="posty-glass-wash" />
               <AuthPanel initialMode={initialMode} onSuccess={() => {}} />
@@ -264,6 +284,12 @@ export default function LoginPage() {
 
       {/* Desktop Layout */}
       <div className="hidden md:block min-h-[100dvh] relative z-10">
+        {/* Hairline seam between the branding half and the form half — gives the
+            split composition an edge to sit on without drawing a hard border. */}
+        <div
+          aria-hidden
+          className="fixed top-0 left-1/2 h-[100dvh] w-px bg-gradient-to-b from-transparent via-white/70 to-transparent z-10"
+        />
         {/* Left: Premium Branding Area - Fixed so it never scrolls.
             Transparent now so the page-wide `posty-soft-welcome` ambient
             shows through uniformly across both halves, matching /app. */}
@@ -288,19 +314,19 @@ export default function LoginPage() {
             initial="hidden"
             animate="visible"
             variants={containerVariants}
-            className="flex flex-col items-center gap-6 relative z-10"
+            className="flex flex-col items-center gap-5 relative z-10"
           >
             {/* Logo with warm glow */}
             <motion.div
               variants={logoVariants}
-              whileHover={{ scale: 1.05, rotate: 3 }}
+              whileHover={{ scale: 1.04, rotate: 2 }}
               transition={{ type: "spring", stiffness: 300 }}
               className="relative"
             >
-              <div className="w-24 h-24 lg:w-32 lg:h-32 rounded-2xl overflow-hidden shadow-lg">
+              <div className="w-24 h-24 lg:w-28 lg:h-28 rounded-[26px] overflow-hidden shadow-[0_18px_44px_-16px_rgba(248,147,93,0.7)] ring-1 ring-white/70">
                 <img
-                  src="/og-image.jpg"
-                  alt="Posty Logo"
+                  src="/logo.png"
+                  alt="Posty"
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -309,9 +335,18 @@ export default function LoginPage() {
                 initial={{ opacity: 0, scale: 0.5 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5, delay: 0.15, ease: smoothEase }}
-                className="absolute -inset-4 bg-gradient-to-br from-warm-orange/30 to-warm-coral/30 rounded-3xl blur-2xl -z-10"
+                className="absolute -inset-5 bg-gradient-to-br from-warm-orange/30 to-warm-rose/25 rounded-[40px] blur-2xl -z-10"
               />
             </motion.div>
+
+            {/* Wordmark — completes the identity block (mark → name → promise)
+                so the branding half reads as a hierarchy, not a lone icon. */}
+            <motion.p
+              variants={itemVariants}
+              className="text-silver-solid text-[28px] lg:text-[32px] font-bold tracking-[-0.03em] leading-none"
+            >
+              Posty
+            </motion.p>
 
             {/* Rotating marketing taglines — fades through 6 messages.
                 No `w-full` wrapper: the parent flex-col is auto-width (sized
@@ -361,7 +396,7 @@ export default function LoginPage() {
                 transition={{ duration: 0.45, delay: 0.1, ease: smoothEase }}
                 className="w-full max-w-md py-8"
               >
-                <div className="posty-landing-glass-card relative overflow-hidden rounded-3xl px-6 py-10 sm:px-8 lg:px-10">
+                <div className="posty-landing-glass-card relative overflow-hidden rounded-3xl px-7 py-10 lg:px-9 lg:py-11">
                   <span aria-hidden className="posty-glass-sheen" />
                   <span aria-hidden className="posty-glass-wash" />
                   <AuthPanel initialMode={initialMode} onSuccess={() => {}} />

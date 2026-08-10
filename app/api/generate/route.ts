@@ -998,9 +998,6 @@ STRICT RULES:
     }
 
     sendEvent("done", { type, content: finalContent });
-
-    // Small pause between responses
-    await new Promise((resolve) => setTimeout(resolve, 300));
   }
 
   return firstPostContent;

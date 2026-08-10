@@ -20,6 +20,8 @@ import {
 import type { MemoryItem } from "@/types";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import PageHeader from "@/components/layout/PageHeader";
+import PageNavDropdown from "@/components/layout/PageNavDropdown";
+import LanguageSelector from "@/components/ui/LanguageSelector";
 import Button from "@/components/ui/Button";
 import { ToggleField } from "@/components/ui/Toggle";
 import DeleteAccountModal from "@/components/ui/DeleteAccountModal";
@@ -307,7 +309,7 @@ function SettingsContent() {
       }}
     >
       <PageHeader
-        title={t.settings.title}
+        title={<PageNavDropdown fallbackLabel={t.settings.title} />}
         onBack={handleBack}
         backLabel={t.common.back}
       />
@@ -444,53 +446,13 @@ function SettingsContent() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {([
-                  { code: "en" as Language, flag: "🇺🇸" },
-                  { code: "fr" as Language, flag: "🇫🇷" },
-                  { code: "es" as Language, flag: "🇪🇸" },
-                  { code: "de" as Language, flag: "🇩🇪" },
-                  { code: "it" as Language, flag: "🇮🇹" },
-                  { code: "pt" as Language, flag: "🇵🇹" },
-                  { code: "nl" as Language, flag: "🇳🇱" },
-                  { code: "zh" as Language, flag: "🇨🇳" },
-                  { code: "ja" as Language, flag: "🇯🇵" },
-                  { code: "ko" as Language, flag: "🇰🇷" },
-                ]).map((lang) => (
-                  <button
-                    key={lang.code}
-                    onClick={async () => {
-                      setLanguage(lang.code);
-                      if (user) {
-                        try {
-                          await updateUserProfile(user.uid, { language: lang.code });
-                        } catch (e) {
-                          console.error("Error saving language preference:", e);
-                        }
-                      }
-                      const newT = translations[lang.code];
-                      toast.success(newT.settings.languageChanged as string);
-                    }}
-                    className={`
-                      w-full flex items-center gap-3 p-3 lg:p-4 rounded-xl border transition-all duration-200
-                      ${language === lang.code
-                        ? "bg-[#F8935D]/5 dark:bg-primary/10 border-[#F8935D]/30 dark:border-primary/30"
-                        : "bg-white dark:bg-dark-bg border-gray-200 dark:border-dark-border hover:border-gray-300 dark:hover:border-dark-border-hover"
-                      }
-                    `}
-                  >
-                    <span className="text-xl">{lang.flag}</span>
-                    <span className={`font-medium text-sm lg:text-base ${language === lang.code ? "text-gray-900 dark:text-white" : "text-gray-600 dark:text-gray-400"}`}>
-                      {languageNames[lang.code]}
-                    </span>
-                    {language === lang.code && (
-                      <svg className="w-5 h-5 text-[#F8935D] ml-auto" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                    )}
-                  </button>
-                ))}
-              </div>
+              <LanguageSelector
+                variant="block"
+                onSelect={(code) => {
+                  const newT = translations[code];
+                  toast.success(newT.settings.languageChanged as string);
+                }}
+              />
             </motion.section>
 
             {/* Notifications Section */}

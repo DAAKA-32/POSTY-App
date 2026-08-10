@@ -83,21 +83,31 @@ export async function POST(request: NextRequest) {
     const deletedIds: string[] = [];
     const batch = adminDb.batch();
 
-    for (let i = 0; i < maxToCheck; i++) {
-      const postDoc = postsToVerify[i];
-      const linkedInShareId = postDoc.data().linkedInId;
-
-      const exists = await checkPostExistsOnLinkedIn(
-        linkedInShareId,
-        connection.accessToken
+    // Check posts with bounded parallelism instead of strictly serial: the
+    // LinkedIn existence checks are independent, so this turns up to 20
+    // sequential round-trips into a few parallel batches, while a small
+    // concurrency cap keeps us within LinkedIn's rate limits.
+    const CONCURRENCY = 5;
+    const toCheck = postsToVerify.slice(0, maxToCheck);
+    for (let start = 0; start < toCheck.length; start += CONCURRENCY) {
+      const chunk = toCheck.slice(start, start + CONCURRENCY);
+      const results = await Promise.all(
+        chunk.map(async (postDoc) => ({
+          postDoc,
+          exists: await checkPostExistsOnLinkedIn(
+            postDoc.data().linkedInId,
+            connection.accessToken
+          ),
+        }))
       );
-
-      if (!exists) {
-        deletedIds.push(postDoc.id);
-        batch.update(postDoc.ref, {
-          deletedFromPlatform: true,
-          deletedFromPlatformAt: FieldValue.serverTimestamp(),
-        });
+      for (const { postDoc, exists } of results) {
+        if (!exists) {
+          deletedIds.push(postDoc.id);
+          batch.update(postDoc.ref, {
+            deletedFromPlatform: true,
+            deletedFromPlatformAt: FieldValue.serverTimestamp(),
+          });
+        }
       }
     }
 

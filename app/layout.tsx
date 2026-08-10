@@ -3,25 +3,12 @@ import { Inter } from "next/font/google";
 import { PremiumToaster } from "@/components/ui/Toast";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
-import { LinkedInProvider } from "@/contexts/LinkedInContext";
-import { FacebookProvider } from "@/contexts/FacebookContext";
-import { ThreadsProvider } from "@/contexts/ThreadsContext";
-import { BlueskyProvider } from "@/contexts/BlueskyContext";
-import { MastodonProvider } from "@/contexts/MastodonContext";
-import { DiscordProvider } from "@/contexts/DiscordContext";
-import { XProvider } from "@/contexts/XContext";
-import { InstagramProvider } from "@/contexts/InstagramContext";
-import { RedditProvider } from "@/contexts/RedditContext";
-import { ThreadszProvider } from "@/contexts/ThreadszContext";
-import { SchedulingProvider } from "@/contexts/SchedulingContext";
-import { QuotaProvider } from "@/contexts/QuotaContext";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
-import { SidebarPostsProvider } from "@/contexts/SidebarPostsContext";
+import { AIModeProvider } from "@/contexts/AIModeContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import AppProvider from "@/components/providers/AppProvider";
 import KeyboardNavigationProvider from "@/components/providers/KeyboardNavigationProvider";
 import SkipLinks from "@/components/accessibility/SkipLinks";
-import PersistentMobileHeader from "@/components/layout/PersistentMobileHeader";
 import { HomepageJsonLd, HowToJsonLd, postyHowToData } from "@/components/seo/JsonLd";
 import HreflangTags from "@/components/seo/HreflangTags";
 import "./globals.css";
@@ -33,9 +20,6 @@ import "./globals.css";
 // `dynamic(..., { ssr: false })` from running inside Server Components, and
 // keeping this layout as a Server Component preserves SEO/metadata behavior.
 import {
-  StrategistDrawer,
-  AutonomousBatchBanner,
-  GlobalCommandPalette,
   CookieBanner,
   LegalUpdateNotification,
   LandscapeBlocker,
@@ -354,59 +338,28 @@ export default function RootLayout({
         <KeyboardNavigationProvider>
         <AppProvider>
           <AuthProvider>
-            <SidebarPostsProvider>
             <SubscriptionProvider>
               <LanguageProvider>
+                {/* AIModeProvider — single source of truth for the chat persona
+                    (Posts/Support) + post style. Inside SubscriptionProvider
+                    because it needs the plan to normalise the post style. */}
+                <AIModeProvider>
                 <SkipLinks />
-                {/* PersistentMobileHeader lives ABOVE every page's MainLayout
-                    so its DOM node is created exactly once per session and
-                    never gets torn down on route change. This kills the
-                    "flash square" that appeared when each page's inline
-                    `<header>` was unmounted and remounted on every
-                    navigation (the hamburger and logo image briefly went
-                    missing between routes). Reads SidebarContext (via
-                    AppProvider above) + LanguageContext (this provider). */}
-                <PersistentMobileHeader />
-                <QuotaProvider>
-                  <LinkedInProvider>
-                    <FacebookProvider>
-                      <ThreadsProvider>
-                        <BlueskyProvider>
-                          <MastodonProvider>
-                            <DiscordProvider>
-                              <XProvider>
-                                <InstagramProvider>
-                                  <RedditProvider>
-                                    <ThreadszProvider>
-                                      <SchedulingProvider>
-                                        {children}
-                                        <AnalyticsTracker />
-                                        <GlobalCommandPalette />
-                                      </SchedulingProvider>
-                                    </ThreadszProvider>
-                                  </RedditProvider>
-                                </InstagramProvider>
-                              </XProvider>
-                            </DiscordProvider>
-                          </MastodonProvider>
-                        </BlueskyProvider>
-                      </ThreadsProvider>
-                    </FacebookProvider>
-                    {/* Strategist drawer & autonomous banner MUST live inside
-                        LinkedInProvider — useStrategistEligibility calls
-                        useLinkedIn() to gate access on a connected LinkedIn
-                        account. Mounting them outside the provider crashes
-                        at runtime with "useLinkedIn must be used within a
-                        LinkedInProvider". */}
-                    <StrategistDrawer />
-                    <AutonomousBatchBanner />
-                  </LinkedInProvider>
-                </QuotaProvider>
+                {/* PERF (C3/I7): the heavy Firebase provider tree (Quota, the 10
+                    platform providers, Scheduling, SidebarPosts) and the app-only
+                    overlays (PersistentMobileHeader, StrategistDrawer,
+                    AutonomousBatchBanner, GlobalCommandPalette) now live in
+                    app/(app)/layout.tsx, so public pages never mount them or pay
+                    for their Firestore listeners on first load. AnalyticsTracker
+                    stays here so public pages are tracked too (it reads no moved
+                    context). */}
+                {children}
+                <AnalyticsTracker />
                 <CookieBanner />
                 <LegalUpdateNotification />
+                </AIModeProvider>
               </LanguageProvider>
             </SubscriptionProvider>
-            </SidebarPostsProvider>
             <PremiumToaster />
           </AuthProvider>
         </AppProvider>

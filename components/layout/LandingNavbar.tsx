@@ -15,6 +15,7 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { languageNames } from "@/lib/i18n";
+import LanguageSelector from "@/components/ui/LanguageSelector";
 import type { Language, Translations } from "@/lib/i18n";
 import { useScrollLock } from "@/hooks/ui/useScrollLock";
 
@@ -199,30 +200,7 @@ export default function LandingNavbar() {
 
                 {/* CTA Desktop */}
                 <div className="hidden md:flex items-center gap-2">
-                  <div ref={langRef} className="relative">
-                    <button
-                      onClick={() => setLangOpen(!langOpen)}
-                      className="px-3 py-2 text-[13px] font-medium text-gray-500 hover:text-gray-900 rounded-xl hover:bg-gray-100 transition-all duration-200 flex items-center gap-1.5"
-                    >
-                      <span className="text-base">{LANG_FLAGS[language]}</span>
-                      <span>{LANG_SHORT[language]}</span>
-                      <svg className={`w-3 h-3 transition-transform ${langOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                    </button>
-                    {langOpen && (
-                      <div className="absolute right-0 top-full mt-1 w-44 bg-white rounded-xl shadow-lg border border-gray-200 py-1 z-50 max-h-80 overflow-y-auto">
-                        {(Object.keys(languageNames) as Language[]).map((code) => (
-                          <button
-                            key={code}
-                            onClick={() => { setLanguage(code); setLangOpen(false); }}
-                            className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors ${language === code ? "bg-[#F8935D]/10 text-[#F8935D] font-medium" : "text-gray-700 hover:bg-gray-50"}`}
-                          >
-                            <span>{LANG_FLAGS[code]}</span>
-                            <span>{languageNames[code]}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  <LanguageSelector variant="compact" align="end" />
                   <Link
                     href="/login"
                     className="px-4 py-2 text-[13px] font-medium text-gray-600 hover:text-gray-900 rounded-xl hover:bg-gray-100 transition-all duration-200"
@@ -321,22 +299,7 @@ export default function LandingNavbar() {
 
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35, duration: 0.3 }} className="px-4 sm:px-6 pb-4">
                 <div className="mb-4">
-                  <div className="flex flex-wrap justify-center gap-1.5">
-                    {(Object.keys(languageNames) as Language[]).map((code) => (
-                      <button
-                        key={code}
-                        onClick={() => setLanguage(code)}
-                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 ${
-                          language === code
-                            ? "bg-[#F8935D]/10 text-[#F8935D] border border-[#F8935D]/25"
-                            : "text-gray-500 bg-white/60 border border-gray-200/60 active:bg-gray-100"
-                        }`}
-                      >
-                        <span className="text-sm">{LANG_FLAGS[code]}</span>
-                        <span>{LANG_SHORT[code]}</span>
-                      </button>
-                    ))}
-                  </div>
+                  <LanguageSelector variant="block" />
                 </div>
                 <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent mb-4" />
                 <div className="space-y-2.5">

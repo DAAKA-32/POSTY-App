@@ -64,13 +64,12 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
 
     setIsLoading(true);
     try {
-      const result = await readWithAuthRetry(async () => {
-        const posts = await getScheduledPosts(user.uid);
-        const count = await getPendingScheduledPostsCount(user.uid);
-        return { posts, count };
-      });
-      setScheduledPosts(result.posts);
-      setPendingCount(result.count);
+      const posts = await readWithAuthRetry(() => getScheduledPosts(user.uid));
+      setScheduledPosts(posts);
+      // Derive the pending count from the already-fetched list instead of
+      // firing a second Firestore query on the same collection (getScheduledPosts
+      // already returns every status).
+      setPendingCount(posts.filter((p) => p.status === "pending").length);
     } catch (error) {
       console.error("Error loading scheduled posts:", error);
       toast.error(t.toasts.scheduleLoadError);

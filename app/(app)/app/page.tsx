@@ -29,7 +29,9 @@ import ModernStyleSelector from "@/components/chat/ModernStyleSelector";
 import DualModeToggle from "@/components/chat/DualModeToggle";
 import MaxModeSelector from "@/components/chat/MaxModeSelector";
 import AIModeSwitch, { AIMode } from "@/components/chat/AIModeSwitch";
+import { useAIMode } from "@/contexts/AIModeContext";
 import InlineUpgradeBanner from "@/components/chat/InlineUpgradeBanner";
+import dynamic from "next/dynamic";
 import GeneratedImageVariants from "@/components/chat/GeneratedImageVariants";
 import ImageGenLoader from "@/components/chat/ImageGenLoader";
 import { useImageGeneration, type GeneratedImage } from "@/hooks/image/useImageGeneration";
@@ -38,8 +40,15 @@ import { clientFastIntent } from "@/lib/ai/client-intent";
 import { getAuthHeaders } from "@/lib/api/client";
 import { getPlanFeatures } from "@/lib/config/plan-features";
 import NewResponseIndicator from "@/components/chat/NewResponseIndicator";
-import PublishToLinkedInModal from "@/components/linkedin/PublishToLinkedInModal";
-import AppTourModal from "@/components/onboarding/AppTourModal";
+// PERF (O2): the publish modal (~2.3k lines) is action-gated — split it into an
+// async chunk so it no longer weighs on /app's initial JS parse.
+const PublishToLinkedInModal = dynamic(
+  () => import("@/components/linkedin/PublishToLinkedInModal"),
+  { ssr: false },
+);
+const AppTourModal = dynamic(() => import("@/components/onboarding/AppTourModal"), {
+  ssr: false,
+});
 import { useAppTour } from "@/hooks/app/useAppTour";
 import { AnimatedScaleFade } from "@/components/animations/AnimatedPageWrapper";
 import toast from "@/components/ui/Toast";
@@ -47,7 +56,9 @@ import toast from "@/components/ui/Toast";
 import ShimmeringName from "@/components/ui/ShimmeringName";
 import { useBrowserMode, setBrowserModeCSSVars } from "@/hooks/ui/useBrowserMode";
 import ReadyPostsCarousel from "@/components/ready-posts/ReadyPostsCarousel";
-import ReadyPostEditor from "@/components/ready-posts/ReadyPostEditor";
+const ReadyPostEditor = dynamic(() => import("@/components/ready-posts/ReadyPostEditor"), {
+  ssr: false,
+});
 import type { ReadyPostCategory } from "@/lib/data/ready-posts";
 import { isReadyPostsEnabled } from "@/lib/config/feature-flags";
 import { usePageTitle } from "@/hooks/ui/usePageTitle";
@@ -165,19 +176,23 @@ function AppContent() {
   const chatInputRef = useRef<UniversalChatInputRef>(null);
   const prefersReducedMotion = useReducedMotion();
 
-  // Style selection state (PRO plan feature)
-  const [selectedStyle, setSelectedStyle] = useState<"storytelling" | "business">("business");
+  // Chat persona (posts/support), the Pro post style and the Max style selector
+  // now live in AIModeContext — the shared source of truth the mobile navbar
+  // selector and this desktop toolbar both drive (no duplicated state, and the
+  // choice persists across in-app navigation).
+  const {
+    aiMode,
+    setAiMode,
+    selectedStyle,
+    setSelectedStyle,
+    maxMode,
+    setMaxMode,
+  } = useAIMode();
 
-  // Dual mode state (Pro: 3/week, Max: always on)
+  // Dual mode state (Pro: 3/week, Max: always on) — desktop-only advanced toggle,
+  // never surfaced in the mobile navbar, so it stays page-local.
   const [dualMode, setDualMode] = useState(false);
   const [dualUsedThisWeek, setDualUsedThisWeek] = useState(0);
-
-  // Max mode selector state (Max plan: choose between dual/storytelling/business)
-  const [maxMode, setMaxMode] = useState<"dual" | "storytelling" | "business">("dual");
-
-  // Top-level chat persona: post generation (default), Q&A support, or image
-  // generation. Defaults to "posts" so existing post-generation flow is unchanged.
-  const [aiMode, setAiMode] = useState<AIMode>("posts");
 
   // Image-gen entries — one per generation attempt so the chat surface shows
   // the user's prompt, the loader, and the final image (or inline error) in
@@ -1097,14 +1112,14 @@ function AppContent() {
     reset();
   };
 
-  const handleCopy = async (content: string) => {
+  const handleCopy = useCallback(async (content: string) => {
     try {
       await navigator.clipboard.writeText(content);
       toast.success(t.appPage.copied);
     } catch {
       toast.error(t.appPage.copyError);
     }
-  };
+  }, [t]);
 
   /**
    * Resolve the visual URL(s) that should be pre-attached to the publish
@@ -1150,12 +1165,12 @@ function AppContent() {
     [messages, messageImagePairs, imageEntries]
   );
 
-  const handlePublishToLinkedIn = (content: string) => {
+  const handlePublishToLinkedIn = useCallback((content: string) => {
     setPublishContent(content);
     setPublishPreloadedImageUrls(resolvePreloadedImagesFor(content));
     setPublishModalMode("now");
     setShowPublishModal(true);
-  };
+  }, [resolvePreloadedImagesFor]);
 
   const handleConfirmPublish = async (
     editedContent: string,
@@ -1165,12 +1180,12 @@ function AppContent() {
     return await publishToLinkedIn(editedContent, visibility, undefined, organizationUrn);
   };
 
-  const handleSchedulePost = (content: string) => {
+  const handleSchedulePost = useCallback((content: string) => {
     setPublishContent(content);
     setPublishPreloadedImageUrls(resolvePreloadedImagesFor(content));
     setPublishModalMode("schedule");
     setShowPublishModal(true);
-  };
+  }, [resolvePreloadedImagesFor]);
 
   const userFirstName = userProfile?.displayName?.split(" ")[0] || "";
 
@@ -1857,10 +1872,13 @@ function AppContent() {
                 the row's height collapse (2 lines → 1) is animated instead
                 of jumping the whole fixed input area down. */}
             <LayoutGroup id="ai-mode-toolbar">
+              {/* Desktop toolbar only — on mobile the persona + post style are
+                  driven from the in-navbar MobileModeSelector, so this row is
+                  hidden below `lg` (no duplicate selector above the input). */}
               <motion.div
                 layout
                 transition={{ layout: { type: "spring", stiffness: 380, damping: 32, mass: 0.7 } }}
-                className="mb-3 flex flex-wrap items-center justify-center gap-2"
+                className="mb-3 hidden lg:flex flex-wrap items-center justify-center gap-2"
               >
                 <motion.div layout="position">
                   <AIModeSwitch mode={aiMode} onModeChange={setAiMode} />

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "@/contexts/SidebarContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import MobileModeSelector from "@/components/layout/MobileModeSelector";
 
 // Routes where the mobile header should render — exactly the routes whose
 // `page.tsx` wraps in `<MainLayout>`. Outside this list, pages bring their
@@ -101,13 +102,19 @@ export default function PersistentMobileHeader() {
   const show = isAppRoute(pathname);
   const title = useMemo(() => deriveHeaderTitle(pathname, t), [pathname, t]);
 
+  // Chat routes (new post + a conversation) are the only ones that own an AI
+  // mode + post style. There, the static title becomes the in-navbar mode
+  // selector ("Posty Posts ⌄"). Everywhere else keeps the plain page title.
+  const isChatRoute =
+    pathname === "/app" || (pathname?.startsWith("/app/c/") ?? false);
+
   if (!show) return null;
 
   return (
     <header
       role="banner"
       aria-label="En-tête mobile"
-      className={`mobile-header lg:hidden fixed top-0 left-0 right-0 z-[40] transition-[background-color,border-color,box-shadow,backdrop-filter,filter,opacity] duration-300 ease-out ${
+      className={`mobile-header lg:hidden fixed top-0 left-0 right-0 z-[40] transition-[background-color,border-color,box-shadow,opacity] duration-300 ease-out ${
         isScrolled
           ? "backdrop-blur-xl backdrop-saturate-150 bg-white/60 dark:bg-black/40 border-b border-white/30 dark:border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.04)]"
           : "bg-transparent border-b border-transparent"
@@ -126,8 +133,8 @@ export default function PersistentMobileHeader() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
-        <div className="flex items-center gap-2.5">
-          <div className="relative">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="relative flex-shrink-0">
             <div className="absolute -inset-0.5 bg-gradient-to-br from-primary/20 to-accent/20 rounded-xl blur-sm" />
             <div className="relative w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-2xl overflow-hidden shadow-md ring-1 ring-white/50 dark:ring-dark-border/50 flex-shrink-0">
               <img
@@ -137,9 +144,13 @@ export default function PersistentMobileHeader() {
               />
             </div>
           </div>
-          <span className="font-bold text-gray-900 dark:text-white text-base sm:text-lg tracking-tight truncate max-w-[200px] sm:max-w-none">
-            {title}
-          </span>
+          {isChatRoute ? (
+            <MobileModeSelector />
+          ) : (
+            <span className="font-bold text-gray-900 dark:text-white text-base sm:text-lg tracking-tight truncate max-w-[200px] sm:max-w-none">
+              {title}
+            </span>
+          )}
         </div>
         <div className="w-10 flex-shrink-0" />
       </div>

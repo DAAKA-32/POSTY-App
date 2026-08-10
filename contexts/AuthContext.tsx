@@ -6,6 +6,7 @@ import {
   useEffect,
   useState,
   useCallback,
+  useMemo,
   ReactNode,
 } from "react";
 import {
@@ -154,15 +155,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [setShouldShowOnboarding]);
 
   // Refresh user profile
-  const refreshUserProfile = async () => {
+  const refreshUserProfile = useCallback(async () => {
     if (user) {
       const profile = await readWithAuthRetry(() => getUserProfile(user.uid));
       setUserProfile(profile);
     }
-  };
+  }, [user]);
 
   // Sign in with Google
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = useCallback(async () => {
     // Set onboarding flags BEFORE signInWithPopup.
     // onAuthStateChanged fires as soon as the popup resolves, before we can
     // check if the user is new. Setting flags optimistically ensures
@@ -256,10 +257,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       throw new Error(message);
     }
-  };
+  }, [setShouldShowOnboarding]);
 
   // Sign in with email and password
-  const signInWithEmail = async (email: string, password: string) => {
+  const signInWithEmail = useCallback(async (email: string, password: string) => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       setShouldShowOnboarding(false);
@@ -290,10 +291,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       throw new Error(message);
     }
-  };
+  }, [setShouldShowOnboarding]);
 
   // Sign up with email and password
-  const signUpWithEmail = async (
+  const signUpWithEmail = useCallback(async (
     email: string,
     password: string,
     displayName: string
@@ -360,10 +361,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       throw new Error(message);
     }
-  };
+  }, [setShouldShowOnboarding]);
 
   // Sign out
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     try {
       await firebaseSignOut(auth);
       setUserProfile(null);
@@ -376,15 +377,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error("Sign-out error:", error);
       throw error;
     }
-  };
+  }, [setShouldShowOnboarding]);
 
   // Legacy function - kept for backward compatibility
-  const clearNewUserFlag = () => {
+  const clearNewUserFlag = useCallback(() => {
     clearOnboardingFlag();
-  };
+  }, [clearOnboardingFlag]);
 
   // Delete user account with password verification
-  const deleteUserAccount = async (password: string): Promise<void> => {
+  const deleteUserAccount = useCallback(async (password: string): Promise<void> => {
     if (!user) {
       throw new Error("Aucun utilisateur connecté");
     }
@@ -440,10 +441,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       throw error;
     }
-  };
+  }, [user, setShouldShowOnboarding]);
 
   // Send password reset email
-  const resetPassword = async (email: string): Promise<void> => {
+  const resetPassword = useCallback(async (email: string): Promise<void> => {
     try {
       await sendPasswordResetEmail(auth, email, {
         url: `${window.location.origin}/auth/action`,
@@ -464,9 +465,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       throw new Error("L'envoi de l'e-mail n'a pas abouti. Veuillez réessayer.");
     }
-  };
+  }, []);
 
-  const value: AuthContextType = {
+  const value: AuthContextType = useMemo(() => ({
     user,
     userProfile,
     loading,
@@ -482,7 +483,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // New functions for robust onboarding
     needsOnboarding,
     clearOnboardingFlag,
-  };
+  }), [
+    user, userProfile, loading, isNewUser,
+    signInWithGoogle, signInWithEmail, signUpWithEmail, signOut,
+    refreshUserProfile, deleteUserAccount, clearNewUserFlag, resetPassword,
+    needsOnboarding, clearOnboardingFlag,
+  ]);
 
   return (
     <AuthContext.Provider value={value}>

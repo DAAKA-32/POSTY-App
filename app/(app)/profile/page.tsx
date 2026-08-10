@@ -8,10 +8,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLinkedIn } from "@/contexts/LinkedInContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import { updateUserProfile, getUserPosts, getUserSessions } from "@/lib/db/firestore";
+import { updateUserProfile, getUserPostsCount, getUserSessionsCount } from "@/lib/db/firestore";
 import { PlanType, DAILY_MESSAGE_LIMITS } from "@/lib/config/plans";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import PageHeader from "@/components/layout/PageHeader";
+import PageNavDropdown from "@/components/layout/PageNavDropdown";
 import {
   ProfileHeader,
   ProfilePlanCard,
@@ -51,12 +52,12 @@ function ProfileContent() {
     async function fetchStats() {
       if (user) {
         try {
-          const [posts, sessions] = await Promise.all([
-            getUserPosts(user.uid, 1000),
-            getUserSessions(user.uid, 1000),
+          const [pCount, sCount] = await Promise.all([
+            getUserPostsCount(user.uid),
+            getUserSessionsCount(user.uid),
           ]);
-          setPostsCount(posts.length);
-          setSessionsCount(sessions.length);
+          setPostsCount(pCount);
+          setSessionsCount(sCount);
         } catch (error) {
           console.error("Error fetching stats:", error);
         } finally {
@@ -124,9 +125,12 @@ function ProfileContent() {
           communicationTone: formData.communicationTone,
         },
       });
-      await refreshUserProfile();
+      // Optimistic UI: the write succeeded, so confirm + close the form
+      // immediately instead of blocking the button on a full profile re-read.
+      // The refresh runs in the background to reconcile server-derived fields.
       setIsEditing(false);
       toast.success(t.profile.profileUpdated);
+      void refreshUserProfile().catch(() => {});
     } catch (error) {
       console.error("Profile update error:", error);
       toast.error(t.profile.errorUpdating);
@@ -161,7 +165,7 @@ function ProfileContent() {
       }}
     >
       <PageHeader
-        title={t.profile.title}
+        title={<PageNavDropdown fallbackLabel={t.profile.title} />}
         onBack={() => router.back()}
         backLabel={t.common.back}
       />

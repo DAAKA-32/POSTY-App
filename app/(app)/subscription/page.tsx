@@ -15,6 +15,7 @@ import WelcomeModal from "@/components/ui/WelcomeModal";
 import DowngradeConfirmModal from "@/components/subscription/DowngradeConfirmModal";
 import PricingCard from "@/components/pricing/PricingCard";
 import PageHeader from "@/components/layout/PageHeader";
+import PageNavDropdown from "@/components/layout/PageNavDropdown";
 import { usePageTitle } from "@/hooks/ui/usePageTitle";
 
 // Get all plans (Free + Pro + Max) from lib/plans.ts (single source of truth)
@@ -241,7 +242,7 @@ function SubscriptionContent() {
       }}
     >
       <PageHeader
-        title={t.pricing.subscription}
+        title={<PageNavDropdown fallbackLabel={t.pricing.subscription} />}
         onBack={!subscriptionLoading && !isFirstTimeUser ? handleBack : undefined}
         backLabel={t.pricing.back}
         maxWidthClass="max-w-7xl"

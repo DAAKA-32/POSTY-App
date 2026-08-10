@@ -279,8 +279,9 @@ export default function MainLayout({
   const { connection: threadsConnection } = useThreads();
   const tokenWarningShown = useRef(false);
 
-  // Get nav items with translations
-  const navItems = getNavItems(t);
+  // Get nav items with translations — memoized so the array (and its icon
+  // nodes) isn't rebuilt on every re-render of this always-mounted shell.
+  const navItems = useMemo(() => getNavItems(t), [t]);
 
   // Pages where we should NOT load conversations (subscription page)
   const isSubscriptionPage = pathname === "/subscription" || pathname === "/pricing";

@@ -25,6 +25,7 @@ import ConversationalResponse from "@/components/chat/ConversationalResponse";
 import MaxModeSelector from "@/components/chat/MaxModeSelector";
 import DualModeToggle from "@/components/chat/DualModeToggle";
 import AIModeSwitch, { AIMode } from "@/components/chat/AIModeSwitch";
+import { useAIMode } from "@/contexts/AIModeContext";
 import InlineUpgradeBanner from "@/components/chat/InlineUpgradeBanner";
 import GeneratedImageVariants from "@/components/chat/GeneratedImageVariants";
 import ImageGenLoader from "@/components/chat/ImageGenLoader";
@@ -83,13 +84,20 @@ function ConversationContent() {
   const [isFocused, setIsFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Style selection state (restored from loaded post)
-  const [selectedStyle, setSelectedStyle] = useState<"storytelling" | "business">("business");
+  // Chat persona (posts/support), post style + Max style selector live in the
+  // shared AIModeContext — same state the mobile navbar selector and the
+  // desktop toolbar drive. The load-from-post logic below writes through these
+  // same setters, so a restored conversation still restores its style.
+  const {
+    aiMode,
+    setAiMode,
+    selectedStyle,
+    setSelectedStyle,
+    maxMode,
+    setMaxMode,
+  } = useAIMode();
   const [dualMode, setDualMode] = useState(false);
   const [dualUsedThisWeek, setDualUsedThisWeek] = useState(0);
-  const [maxMode, setMaxMode] = useState<"dual" | "storytelling" | "business">("dual");
-  // Top-level chat persona for follow-up messages in this conversation.
-  const [aiMode, setAiMode] = useState<AIMode>("posts");
   const [showUpgradeBanner, setShowUpgradeBanner] = useState(false);
   const [upgradeBannerReason, setUpgradeBannerReason] = useState<"dual-limit" | "max-feature">("max-feature");
 
@@ -1355,10 +1363,12 @@ function ConversationContent() {
                 LayoutGroup + `layout` keeps the chip's recentring smooth when
                 the neighbour selector swaps in/out (posts ↔ support). */}
             <LayoutGroup id="ai-mode-toolbar-conv">
+              {/* Desktop toolbar only — mobile drives persona + style from the
+                  in-navbar MobileModeSelector, so it's hidden below `lg`. */}
               <motion.div
                 layout
                 transition={{ layout: { type: "spring", stiffness: 380, damping: 32, mass: 0.7 } }}
-                className="mb-3 flex flex-wrap items-center justify-center gap-2"
+                className="mb-3 hidden lg:flex flex-wrap items-center justify-center gap-2"
               >
                 <motion.div layout="position">
                   <AIModeSwitch mode={aiMode} onModeChange={setAiMode} />

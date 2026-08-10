@@ -4,6 +4,7 @@ import {
   setDoc,
   getDoc,
   getDocs,
+  getCountFromServer,
   addDoc,
   updateDoc,
   deleteDoc,
@@ -2130,45 +2131,57 @@ export interface DashboardStats {
   recentActivity: { date: string; type: string; content: string }[];
 }
 
+/** Count-only helpers — 1 charged read via getCountFromServer instead of
+ *  downloading up to N documents just to read `.length`. */
+export async function getUserPostsCount(userId: string): Promise<number> {
+  const snap = await getCountFromServer(
+    query(collection(db, "posts"), where("userId", "==", userId))
+  );
+  return snap.data().count;
+}
+
+export async function getUserSessionsCount(userId: string): Promise<number> {
+  const snap = await getCountFromServer(
+    query(collection(db, "sessions"), where("userId", "==", userId))
+  );
+  return snap.data().count;
+}
+
 export async function getDashboardStats(userId: string): Promise<DashboardStats> {
   const now = new Date();
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-  // Get all posts for the user
-  const postsRef = collection(db, "posts");
+  // Posts need their full docs (the breakdowns below iterate them). The three
+  // other collections are only used for their COUNT, so use getCountFromServer
+  // (one charged read each) instead of downloading every document — and run all
+  // four queries in parallel instead of sequentially.
   const postsQuery = query(
-    postsRef,
+    collection(db, "posts"),
     where("userId", "==", userId),
     orderBy("createdAt", "desc")
   );
-  const postsSnapshot = await getDocs(postsQuery);
+  const linkedInQuery = query(
+    collection(db, "linkedinPosts"),
+    where("userId", "==", userId),
+    where("success", "==", true)
+  );
+  const sessionsQuery = query(collection(db, "sessions"), where("userId", "==", userId));
+  const scheduledQuery = query(collection(db, "scheduledPosts"), where("userId", "==", userId));
+
+  const [postsSnapshot, publishedAgg, sessionsAgg, scheduledAgg] = await Promise.all([
+    getDocs(postsQuery),
+    getCountFromServer(linkedInQuery),
+    getCountFromServer(sessionsQuery),
+    getCountFromServer(scheduledQuery),
+  ]);
   const posts = postsSnapshot.docs.map((docSnap) => ({
     id: docSnap.id,
     ...docSnap.data(),
   }));
-
-  // Get LinkedIn published posts
-  const linkedInPostsRef = collection(db, "linkedinPosts");
-  const linkedInQuery = query(
-    linkedInPostsRef,
-    where("userId", "==", userId),
-    where("success", "==", true)
-  );
-  const linkedInSnapshot = await getDocs(linkedInQuery);
-  const publishedPosts = linkedInSnapshot.size;
-
-  // Get sessions count
-  const sessionsRef = collection(db, "sessions");
-  const sessionsQuery = query(sessionsRef, where("userId", "==", userId));
-  const sessionsSnapshot = await getDocs(sessionsQuery);
-  const totalSessions = sessionsSnapshot.size;
-
-  // Get scheduled posts count
-  const scheduledRef = collection(db, "scheduledPosts");
-  const scheduledQuery = query(scheduledRef, where("userId", "==", userId));
-  const scheduledSnapshot = await getDocs(scheduledQuery);
-  const scheduledPostsCount = scheduledSnapshot.size;
+  const publishedPosts = publishedAgg.data().count;
+  const totalSessions = sessionsAgg.data().count;
+  const scheduledPostsCount = scheduledAgg.data().count;
 
   // Calculate posts in last 7 and 30 days
   let postsLast7Days = 0;

@@ -624,13 +624,14 @@ function AnalyticsContent() {
     if (!user) return;
     setLoading(true);
     try {
-      const [postsData, analyticsData, scheduledData] = await Promise.all([
+      // `getLinkedInAnalytics` was an UNBOUNDED query whose result (`analytics`
+      // state) is never read in the UI — every metric is derived from `posts`.
+      // Dropped to remove a growing, wasted Firestore read on each load.
+      const [postsData, scheduledData] = await Promise.all([
         getLinkedInPosts(user.uid, 100),
-        getLinkedInAnalytics(user.uid),
         getScheduledPosts(user.uid, "pending"),
       ]);
       setPosts(postsData);
-      setAnalytics(analyticsData);
       // Only count future scheduled posts — past-dated "pending" docs are
       // stuck retries and don't belong in the "à venir" counter.
       const nowMs = Date.now();

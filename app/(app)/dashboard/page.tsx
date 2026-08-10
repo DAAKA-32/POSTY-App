@@ -19,6 +19,7 @@ import DashboardOnboarding from "@/components/dashboard/DashboardOnboarding";
 import { AnimatedLogo } from "@/components/ui/Logo";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import PageHeader from "@/components/layout/PageHeader";
+import PageNavDropdown from "@/components/layout/PageNavDropdown";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { usePageTitle } from "@/hooks/ui/usePageTitle";
@@ -108,6 +109,97 @@ function DashboardContent() {
 
   const firstName = userProfile?.displayName?.split(" ")[0] || t.dashboard.user;
 
+  // The 6 KPIs, in scroll order, split across the two counter-drifting marquee
+  // rows below. Values, icons and semantic colours are exactly the ones the
+  // static grid used — only the layout (infinite scroll) changes.
+  const kpiCards = [
+    {
+      title: t.dashboard.postsGenerated,
+      value: stats.totalPosts,
+      subtitle: t.dashboard.sinceBeginning,
+      color: "primary" as const,
+      tooltip: t.dashboard.tooltipPostsGenerated,
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      ),
+    },
+    {
+      title: t.dashboard.postsPublished,
+      value: stats.publishedPosts,
+      subtitle: t.dashboard.onLinkedIn,
+      color: "accent" as const,
+      tooltip: t.dashboard.tooltipPostsPublished,
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+        </svg>
+      ),
+    },
+    {
+      title: t.dashboard.thisWeek,
+      value: stats.postsLast7Days,
+      subtitle: t.dashboard.last7Days,
+      color: "warning" as const,
+      tooltip: t.dashboard.tooltipThisWeek,
+      trend:
+        stats.postsLast7Days > 0
+          ? { value: Math.round((stats.postsLast7Days / 7) * 100), isPositive: true }
+          : undefined,
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+        </svg>
+      ),
+    },
+    {
+      title: t.dashboard.thisMonth,
+      value: stats.postsLast30Days,
+      subtitle: t.dashboard.last30Days,
+      color: "primary" as const,
+      tooltip: t.dashboard.tooltipThisMonth,
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      ),
+    },
+    {
+      title: t.dashboard.scheduled,
+      value: stats.scheduledPostsCount,
+      subtitle: t.dashboard.upcoming,
+      color: "warning" as const,
+      tooltip: t.dashboard.tooltipScheduled,
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+    },
+    {
+      title: t.dashboard.sessions,
+      value: stats.totalSessions,
+      subtitle: t.dashboard.conversations,
+      color: "success" as const,
+      tooltip: t.dashboard.tooltipSessions,
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        </svg>
+      ),
+    },
+  ];
+  // Both rows carry all 6 KPIs so a single loop-unit is always wider than the
+  // viewport (seamless, gap-free at every width). Row 2 is rotated by 3 and
+  // drifts the opposite way, so the two rows rarely show the same KPI stacked.
+  const kpiRow1 = kpiCards;
+  const kpiRow2 = [...kpiCards.slice(3), ...kpiCards.slice(0, 3)];
+  // Edge fade so cards dissolve into the background at both ends of each row —
+  // same recipe as the landing's value carousel.
+  const KPI_EDGE_FADE =
+    "linear-gradient(to right, transparent, #000 6%, #000 94%, transparent)";
+
   return (
     <div
       className="posty-soft-schedule"
@@ -127,7 +219,7 @@ function DashboardContent() {
 
 
       <PageHeader
-        title="Dashboard"
+        title={<PageNavDropdown fallbackLabel="Dashboard" />}
         onBack={() => router.back()}
         backLabel={t.dashboard.back}
         maxWidthClass="max-w-7xl"
@@ -194,91 +286,50 @@ function DashboardContent() {
           </div>
         </div>
 
-        {/* KPI Cards — 6 métriques clés : posts, publiés, semaine, mois, programmés, sessions */}
+        {/* KPI Cards — infinite marquee (same effect as the landing's value
+            carousel): two rows drifting in opposite directions, edge-faded and
+            pausing on hover. Values / icons / semantic colours are unchanged. */}
         <div
           className={`
-            grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 lg:gap-5 mb-10
-            transition-all duration-400 ease-out delay-75
+            mb-10 transition-all duration-400 ease-out delay-75
             ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}
           `}
         >
-          <KPICard
-            title={t.dashboard.postsGenerated}
-            value={stats.totalPosts}
-            subtitle={t.dashboard.sinceBeginning}
-            icon={
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            }
-            color="primary"
-            tooltip={t.dashboard.tooltipPostsGenerated}
-          />
-          <KPICard
-            title={t.dashboard.postsPublished}
-            value={stats.publishedPosts}
-            subtitle={t.dashboard.onLinkedIn}
-            icon={
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-              </svg>
-            }
-            color="accent"
-            tooltip={t.dashboard.tooltipPostsPublished}
-          />
-          <KPICard
-            title={t.dashboard.thisWeek}
-            value={stats.postsLast7Days}
-            subtitle={t.dashboard.last7Days}
-            trend={
-              stats.postsLast7Days > 0
-                ? { value: Math.round((stats.postsLast7Days / 7) * 100), isPositive: true }
-                : undefined
-            }
-            icon={
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-              </svg>
-            }
-            color="warning"
-            tooltip={t.dashboard.tooltipThisWeek}
-          />
-          <KPICard
-            title={t.dashboard.thisMonth}
-            value={stats.postsLast30Days}
-            subtitle={t.dashboard.last30Days}
-            icon={
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            }
-            color="primary"
-            tooltip={t.dashboard.tooltipThisMonth}
-          />
-          <KPICard
-            title={t.dashboard.scheduled}
-            value={stats.scheduledPostsCount}
-            subtitle={t.dashboard.upcoming}
-            icon={
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            }
-            color="warning"
-            tooltip={t.dashboard.tooltipScheduled}
-          />
-          <KPICard
-            title={t.dashboard.sessions}
-            value={stats.totalSessions}
-            subtitle={t.dashboard.conversations}
-            icon={
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-              </svg>
-            }
-            color="success"
-            tooltip={t.dashboard.tooltipSessions}
-          />
+          <div className="flex flex-col gap-3 sm:gap-4">
+            {/* Row 1 — drifts left */}
+            <div
+              className="overflow-hidden py-2"
+              style={{ maskImage: KPI_EDGE_FADE, WebkitMaskImage: KPI_EDGE_FADE }}
+            >
+              <div
+                className="flex w-max gap-3 sm:gap-4 animate-marquee-value [@media(hover:hover)]:hover:[animation-play-state:paused] motion-reduce:[animation-play-state:paused]"
+                style={{ willChange: "transform", backfaceVisibility: "hidden", animationDuration: "34s" }}
+              >
+                {[...kpiRow1, ...kpiRow1].map((c, i) => (
+                  <div key={i} className="w-[168px] sm:w-[210px] flex-shrink-0 [&>*]:w-full">
+                    <KPICard {...c} />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Row 2 — drifts right (reverse) */}
+            <div
+              className="overflow-hidden py-2"
+              style={{ maskImage: KPI_EDGE_FADE, WebkitMaskImage: KPI_EDGE_FADE }}
+            >
+              <div
+                className="flex w-max gap-3 sm:gap-4 animate-marquee-value [@media(hover:hover)]:hover:[animation-play-state:paused] motion-reduce:[animation-play-state:paused]"
+                style={{ willChange: "transform", backfaceVisibility: "hidden", animationDuration: "40s", animationDirection: "reverse" }}
+              >
+                {[...kpiRow2, ...kpiRow2].map((c, i) => (
+                  <div key={i} className="w-[168px] sm:w-[210px] flex-shrink-0 [&>*]:w-full">
+                    <KPICard {...c} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Activity chart — full width to highlight the daily trend */}

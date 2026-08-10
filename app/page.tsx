@@ -9,6 +9,7 @@ import { motion, AnimatePresence, useReducedMotion, useInView, useScroll, useTra
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { languageNames } from "@/lib/i18n";
+import LanguageSelector from "@/components/ui/LanguageSelector";
 import type { Language, Translations } from "@/lib/i18n";
 import { getAllPlans, getPaidPlans, PlanConfig, GUARANTEE_PERIOD_DAYS } from "@/lib/config/plans";
 
@@ -88,17 +89,17 @@ function HamburgerIcon({ isOpen }: { isOpen: boolean }) {
       <motion.span
         animate={isOpen ? { rotate: 45, y: 7.5 } : { rotate: 0, y: 0 }}
         transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-        className="block w-full h-[2px] bg-gray-900 rounded-full origin-center"
+        className="block w-full h-[2px] bg-current rounded-full origin-center"
       />
       <motion.span
         animate={isOpen ? { opacity: 0, x: 8 } : { opacity: 1, x: 0 }}
         transition={{ duration: 0.2 }}
-        className="block w-full h-[2px] bg-gray-900 rounded-full"
+        className="block w-full h-[2px] bg-current rounded-full"
       />
       <motion.span
         animate={isOpen ? { rotate: -45, y: -7.5 } : { rotate: 0, y: 0 }}
         transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-        className="block w-full h-[2px] bg-gray-900 rounded-full origin-center"
+        className="block w-full h-[2px] bg-current rounded-full origin-center"
       />
     </div>
   );
@@ -255,6 +256,12 @@ function Navbar() {
     }
   }, [isMenuOpen]);
 
+  // On the hero (top of page, mobile menu closed) the navbar is transparent, so
+  // its text goes white for contrast over the coloured hero. The moment it gets
+  // its solid background — on scroll, or when the mobile menu opens — the text
+  // switches back to the normal dark treatment.
+  const onHero = !isScrolled && !isMenuOpen;
+
   return (
     <>
     {/* Top mask — hides content scrolling up into the navbar zone while
@@ -286,7 +293,7 @@ function Navbar() {
                 <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl overflow-hidden shadow-md shadow-[#F8935D]/15 ring-1 ring-gray-100">
                   <Image src="/og-image.jpg" alt="Posty" width={40} height={40} className="w-full h-full object-cover" />
                 </div>
-                <span translate="no" className="notranslate text-lg md:text-xl font-bold text-gray-900 tracking-tight">Posty</span>
+                <span translate="no" className={`notranslate text-lg md:text-xl font-bold tracking-tight transition-colors duration-300 ${onHero ? "text-white/100 [text-shadow:0_1px_2px_rgba(0,0,0,0.35),0_2px_12px_rgba(0,0,0,0.22)]" : "text-gray-900"}`}>Posty</span>
               </Link>
 
               {/* Desktop Nav — pill bg on hover + active indicator */}
@@ -304,7 +311,9 @@ function Navbar() {
                         relative px-3.5 py-2 rounded-xl font-medium text-[13px] transition-all duration-300 group/navlink
                         ${isActive
                           ? "text-[#F76B54]"
-                          : "text-gray-500 hover:text-gray-900"
+                          : onHero
+                            ? "text-white/90 hover:text-white/100 [text-shadow:0_1px_2px_rgba(0,0,0,0.3),0_2px_10px_rgba(0,0,0,0.2)]"
+                            : "text-gray-500 hover:text-gray-900"
                         }
                       `}
                     >
@@ -329,34 +338,10 @@ function Navbar() {
               {/* CTA Desktop */}
               <div className="hidden md:flex items-center gap-2">
                 {/* Language Switcher Dropdown */}
-                <div ref={langRef} className="relative">
-                  <button
-                    onClick={() => setLangOpen(!langOpen)}
-                    className="px-3 py-2 text-[13px] font-medium text-gray-500 hover:text-gray-900 rounded-xl hover:bg-gray-100 transition-all duration-200 flex items-center gap-1.5"
-                    aria-label="Switch language"
-                  >
-                    <span className="text-base">{LANG_FLAGS[language]}</span>
-                    <span>{LANG_SHORT[language]}</span>
-                    <svg className={`w-3 h-3 transition-transform ${langOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                  </button>
-                  {langOpen && (
-                    <div className="absolute right-0 top-full mt-1 w-44 bg-white rounded-xl shadow-lg border border-gray-200 py-1 z-50 max-h-80 overflow-y-auto">
-                      {(Object.keys(languageNames) as Language[]).map((code) => (
-                        <button
-                          key={code}
-                          onClick={() => { setLanguage(code); setLangOpen(false); }}
-                          className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors ${language === code ? "bg-[#F8935D]/10 text-[#F8935D] font-medium" : "text-gray-700 hover:bg-gray-50"}`}
-                        >
-                          <span>{LANG_FLAGS[code]}</span>
-                          <span>{languageNames[code]}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <LanguageSelector variant="compact" align="end" />
                 <Link
                   href="/login"
-                  className="px-4 py-2 text-[13px] font-medium text-gray-600 hover:text-gray-900 rounded-xl hover:bg-gray-100 transition-all duration-200"
+                  className={`px-4 py-2 text-[13px] font-medium rounded-xl transition-all duration-200 ${onHero ? "text-white/90 hover:text-white/100 hover:bg-white/10 [text-shadow:0_1px_2px_rgba(0,0,0,0.3),0_2px_10px_rgba(0,0,0,0.2)]" : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"}`}
                 >
                   {t.landing.navLogin}
                 </Link>
@@ -376,7 +361,7 @@ function Navbar() {
               {/* Mobile Menu Button */}
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="md:hidden relative z-[60] flex items-center justify-center w-10 h-10 rounded-xl hover:bg-gray-100 active:bg-gray-200 transition-colors duration-200"
+                className={`md:hidden relative z-[60] flex items-center justify-center w-10 h-10 rounded-xl transition-colors duration-200 ${onHero ? "text-white/100 hover:bg-white/10 active:bg-white/20 drop-shadow-[0_1px_6px_rgba(0,0,0,0.25)]" : "text-gray-900 hover:bg-gray-100 active:bg-gray-200"}`}
                 aria-label={isMenuOpen ? t.landing.navCloseMenu : t.landing.navOpenMenu}
                 aria-expanded={isMenuOpen}
               >
@@ -551,62 +536,8 @@ function Navbar() {
                   toggle. This kills the iOS Safari layout-shift bug where
                   expanding the dropdown was bumping "Commencer gratuitement"
                   and "Se connecter" out of the viewport. */}
-              <div className="relative mb-4">
-                <button
-                  onClick={() => setMobileLangOpen((v) => !v)}
-                  aria-expanded={mobileLangOpen}
-                  aria-label="Language"
-                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-white/70 border border-gray-200/70 active:bg-white transition-colors"
-                >
-                  <span className="flex items-center gap-2.5 min-w-0">
-                    <span className="text-base leading-none">{LANG_FLAGS[language]}</span>
-                    <span className="text-[13px] font-medium text-gray-700 truncate">
-                      {languageNames[language]}
-                    </span>
-                  </span>
-                  <motion.svg
-                    animate={{ rotate: mobileLangOpen ? 180 : 0 }}
-                    transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                    className="w-3.5 h-3.5 text-gray-400 flex-shrink-0"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </motion.svg>
-                </button>
-                <AnimatePresence initial={false}>
-                  {mobileLangOpen && (
-                    <motion.div
-                      key="mobile-lang-dropdown"
-                      initial={{ opacity: 0, y: 8, scale: 0.98 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 8, scale: 0.98 }}
-                      transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-                      className="absolute left-0 right-0 bottom-full mb-2 z-50 origin-bottom"
-                    >
-                      <div className="grid grid-cols-2 gap-1 p-1.5 rounded-xl bg-white border border-gray-200 shadow-xl shadow-gray-900/10">
-                        {(Object.keys(languageNames) as Language[]).map((code) => {
-                          const isActive = language === code;
-                          return (
-                            <button
-                              key={code}
-                              onClick={() => { setLanguage(code); setMobileLangOpen(false); }}
-                              className={`flex items-center gap-2 px-2.5 py-2 rounded-lg text-[12px] font-medium transition-colors duration-150 ${
-                                isActive
-                                  ? "bg-[#F8935D]/10 text-[#F8935D]"
-                                  : "text-gray-600 active:bg-gray-100"
-                              }`}
-                            >
-                              <span className="text-sm leading-none flex-shrink-0">{LANG_FLAGS[code]}</span>
-                              <span className="truncate">{languageNames[code]}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+              <div className="mb-4">
+                <LanguageSelector variant="block" />
               </div>
 
               <div className="h-px bg-gradient-to-r from-transparent via-[#F8935D]/20 to-transparent mb-4" />
@@ -5613,8 +5544,11 @@ export default function LandingPage() {
       <Navbar />
       <div key={currentLang} className="text-gray-900 relative">
         {/* Hero — welcome ambient (orange/coral). Opens the chromatic
-            narrative, same palette as /app. */}
-        <div data-scene="welcome" className="relative z-[5]">
+            narrative, same palette as /app. `data-stars` scopes the star field
+            to THIS section only: the stars belong to the Hero opening, not to
+            every "welcome" scene (the FAQ reuses the warm gradient but stays
+            star-free). */}
+        <div data-scene="welcome" data-stars="hero" className="relative z-[5]">
           <DemoSection />
         </div>
 

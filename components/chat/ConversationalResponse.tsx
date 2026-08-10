@@ -15,6 +15,7 @@
  * drawer for a coherent "AI talking to me" register across the app.
  */
 
+import { memo } from "react";
 import { motion } from "framer-motion";
 import StrategistMarkdown from "@/components/strategist/StrategistMarkdown";
 
@@ -23,7 +24,13 @@ interface Props {
   isStreaming?: boolean;
 }
 
-export default function ConversationalResponse({ content, isStreaming }: Props) {
+// PERF (I5): memoized so already-finished Support replies don't re-render on
+// every stream chunk of a newer message. Props are primitives (content +
+// isStreaming), so referential equality is enough — no custom comparator.
+const ConversationalResponse = memo(function ConversationalResponse({
+  content,
+  isStreaming,
+}: Props) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 4 }}
@@ -54,4 +61,6 @@ export default function ConversationalResponse({ content, isStreaming }: Props) 
       </div>
     </motion.div>
   );
-}
+});
+
+export default ConversationalResponse;

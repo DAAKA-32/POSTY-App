@@ -122,7 +122,8 @@ function groupPostsByDate(posts: Post[], labels: SidebarTranslations) {
  * Nav data — mirrors the desktop sidebar's getNavItems shape so that mobile
  * and desktop render identical rows. Icons sized at w-5 h-5 / strokeWidth=2
  * to match the desktop's optical weight (do NOT shrink for mobile — the
- * drawer is 85vw wide and matches the desktop sidebar's spacing).
+ * drawer is full-width on phones, 85vw on tablet, and matches the desktop
+ * sidebar's spacing).
  */
 const menuItems: {
   nameKey: "chat" | "history" | "schedule" | "analytics";
@@ -509,12 +510,14 @@ export default function SlideMenu({ isOpen, onClose, posts = [], onPostUpdate }:
           reads as the same UI element across breakpoints. */}
       <aside
         className={`
-          fixed top-0 left-0 z-[70] w-[85vw] max-w-80
+          fixed top-0 left-0 z-[70]
+          w-screen max-w-none
+          md:w-[85vw] md:max-w-80
           ${toneBg}
           bg-white/15 dark:bg-white/[0.04]
           border-r border-white/50 dark:border-white/15
           ring-1 ring-inset ring-white/40 dark:ring-white/10
-          backdrop-blur-2xl backdrop-saturate-200
+          backdrop-blur-xl md:backdrop-blur-2xl backdrop-saturate-200
           shadow-[0_12px_40px_rgba(15,17,21,0.10),0_2px_10px_rgba(15,17,21,0.06)]
           dark:shadow-[0_12px_40px_rgba(0,0,0,0.45),0_2px_10px_rgba(0,0,0,0.30)]
           flex flex-col

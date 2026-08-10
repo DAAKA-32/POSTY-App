@@ -11,15 +11,21 @@
  * ordered lists, and paragraph breaks. No external dependencies.
  */
 
-import { Fragment, ReactNode } from "react";
+import { Fragment, ReactNode, useMemo, memo } from "react";
 
-export default function StrategistMarkdown({ content }: { content: string }) {
+function StrategistMarkdown({ content }: { content: string }) {
+  // Parse once per distinct `content`, and `memo` the component so unrelated
+  // parent re-renders don't re-run the parser (it re-parsed the whole markdown
+  // on every render, including on each streaming chunk).
+  const blocks = useMemo(() => parseBlocks(content), [content]);
   return (
     <div className="space-y-3 text-[14px] leading-[1.65] text-gray-700 dark:text-gray-200">
-      {parseBlocks(content)}
+      {blocks}
     </div>
   );
 }
+
+export default memo(StrategistMarkdown);
 
 // ── Block-level parsing ────────────────────────────────────────────────────
 

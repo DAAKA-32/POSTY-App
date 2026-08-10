@@ -48,29 +48,29 @@ export default function GoogleButton({ onSuccess, onError, onStartAuth, label = 
     <button
       onClick={handleClick}
       disabled={isLoading || needsConsent}
+      aria-busy={isLoading}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className="
-        relative w-full flex items-center justify-center gap-2.5 sm:gap-3
-        px-4 py-3 sm:py-3.5
-        bg-white border border-gray-200
-        text-gray-700 font-medium
-        rounded-xl sm:rounded-2xl
-        shadow-sm hover:shadow-md
-        overflow-hidden
-        focus:outline-none focus:ring-2 focus:ring-warm-orange/20 focus:ring-offset-2 focus:ring-offset-white
-        transition-all duration-300
-        disabled:opacity-50 disabled:cursor-not-allowed
-        hover:bg-gray-50/80 hover:border-gray-300
-        active:scale-[0.98]
-        group
+        group relative flex h-[52px] w-full items-center justify-center gap-3
+        overflow-hidden rounded-xl
+        border border-gray-200/90 bg-white/90
+        px-4 text-[15px] font-medium text-gray-700
+        shadow-[0_1px_2px_rgba(15,17,21,0.04)]
+        transition-[background-color,border-color,box-shadow] duration-200
+        hover:border-gray-300 hover:bg-white hover:shadow-[0_2px_8px_-2px_rgba(15,17,21,0.10)]
+        focus:outline-none focus-visible:ring-2 focus-visible:ring-warm-orange/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white
+        active:scale-[0.99]
+        disabled:cursor-not-allowed disabled:opacity-50
       "
     >
-      {/* Shine effect on hover */}
+      {/* Hover sheen — a slow, low-opacity pass. Deliberately quieter than a
+          "shine": on a login card it should read as material, not as an effect. */}
       <div
+        aria-hidden
         className={`
-          absolute inset-0 bg-gradient-to-r from-transparent via-gray-100/80 to-transparent
-          transition-transform duration-500 ease-out
+          pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-gray-100/50 to-transparent
+          transition-transform duration-700 ease-out
           ${isHovered ? "translate-x-full" : "-translate-x-full"}
         `}
       />
@@ -99,8 +99,8 @@ export default function GoogleButton({ onSuccess, onError, onStartAuth, label = 
       ) : (
         <>
           {/* Google Icon with subtle background */}
-          <div className="relative w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center">
-            <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24">
+          <div className="relative flex h-5 w-5 shrink-0 items-center justify-center">
+            <svg className="h-5 w-5" viewBox="0 0 24 24">
               <path
                 fill="#4285F4"
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -119,7 +119,7 @@ export default function GoogleButton({ onSuccess, onError, onStartAuth, label = 
               />
             </svg>
           </div>
-          <span className="relative text-sm sm:text-base font-medium">{label}</span>
+          <span className="relative font-medium">{label}</span>
         </>
       )}
     </button>

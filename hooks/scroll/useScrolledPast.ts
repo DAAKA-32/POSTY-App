@@ -38,13 +38,27 @@ export function useScrolledPast(threshold = 8): {
       setIsScrolled(Math.max(wrapperTop, windowTop) > threshold);
     };
 
+    // Coalesce scroll events into at most one computation per frame (rAF).
+    // Without this, every scroll event runs a layout read (scrollTop/scrollY)
+    // on the main thread, competing with the scroll itself and adding jank on
+    // long lists / mobile. This header hook is mounted on many pages.
+    let rafId = 0;
+    const onScroll = () => {
+      if (rafId) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = 0;
+        compute();
+      });
+    };
+
     compute();
-    scrollParent?.addEventListener("scroll", compute, { passive: true });
-    window.addEventListener("scroll", compute, { passive: true });
+    scrollParent?.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("scroll", onScroll, { passive: true });
 
     return () => {
-      scrollParent?.removeEventListener("scroll", compute);
-      window.removeEventListener("scroll", compute);
+      if (rafId) cancelAnimationFrame(rafId);
+      scrollParent?.removeEventListener("scroll", onScroll);
+      window.removeEventListener("scroll", onScroll);
     };
   }, [threshold]);
 

@@ -94,6 +94,43 @@ const StreamingSkeleton = memo(function StreamingSkeleton({
  * - Subtle variant indicators
  * - Skeleton placeholder for pending responses
  */
+/**
+ * PERF (I5): the call site rebuilds fresh {content,variant,...} objects for
+ * both responses on every parent render, so the default referential memo never
+ * held for already-finished pairs while a NEWER message was streaming. Compare
+ * by VALUE instead — a finished pair whose text / streaming / seed state is
+ * unchanged now skips re-render, while the actively streaming pair still
+ * updates. All props are covered, so no stale render. (Language switches still
+ * propagate: useLanguage() consumers re-render on context change regardless of
+ * this comparator, which only gates parent-driven re-renders.)
+ */
+function responseDataEqual(a: ResponseData, b: ResponseData): boolean {
+  return (
+    a.content === b.content &&
+    a.variant === b.variant &&
+    a.isStreaming === b.isStreaming &&
+    a.timestamp === b.timestamp &&
+    a.seedComment?.text === b.seedComment?.text &&
+    a.seedComment?.loading === b.seedComment?.loading &&
+    a.seedComment?.error === b.seedComment?.error
+  );
+}
+
+function arePairPropsEqual(
+  prev: ModernAIResponsePairProps,
+  next: ModernAIResponsePairProps,
+): boolean {
+  return (
+    prev.userPlan === next.userPlan &&
+    prev.isLastMessage === next.isLastMessage &&
+    prev.onPublishToLinkedIn === next.onPublishToLinkedIn &&
+    prev.onSchedule === next.onSchedule &&
+    prev.onRegenerateSeedComment === next.onRegenerateSeedComment &&
+    responseDataEqual(prev.storytellingResponse, next.storytellingResponse) &&
+    responseDataEqual(prev.businessResponse, next.businessResponse)
+  );
+}
+
 export const ModernAIResponsePair = memo(function ModernAIResponsePair({
   storytellingResponse,
   businessResponse,
@@ -391,6 +428,6 @@ export const ModernAIResponsePair = memo(function ModernAIResponsePair({
       </div>
     </div>
   );
-});
+}, arePairPropsEqual);
 
 export default ModernAIResponsePair;

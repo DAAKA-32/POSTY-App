@@ -186,12 +186,16 @@ function PlanBadge({ plan, className = "" }: { plan: PlanType; className?: strin
   );
 }
 
-// Connection status indicator
+// Connection status indicator — rendered as a solid pill so the state reads
+// at a glance: GREEN "Connected", RED "Not connected", AMBER "Session expired".
 function ConnectionStatus({ connected, tokenValid, t }: { connected: boolean; tokenValid: boolean; t: any }) {
+  const pill =
+    "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border whitespace-nowrap";
+
   if (!connected) {
     return (
-      <span className="flex items-center gap-1.5 text-xs text-text-muted">
-        <span className="w-2 h-2 rounded-full bg-text-muted/40" />
+      <span className={`${pill} bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20`}>
+        <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
         {t.settings.notConnected}
       </span>
     );
@@ -199,8 +203,8 @@ function ConnectionStatus({ connected, tokenValid, t }: { connected: boolean; to
 
   if (!tokenValid) {
     return (
-      <span className="flex items-center gap-1.5 text-xs text-warning">
-        <span className="w-2 h-2 rounded-full bg-warning animate-pulse" />
+      <span className={`${pill} bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20`}>
+        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
         {t.settings.sessionExpired}
       </span>
     );
@@ -208,14 +212,14 @@ function ConnectionStatus({ connected, tokenValid, t }: { connected: boolean; to
 
   return (
     <motion.span
-      initial={{ scale: 0 }}
-      animate={{ scale: 1 }}
-      className="flex items-center gap-1.5 text-xs text-accent"
+      initial={{ scale: 0.85, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      className={`${pill} bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20`}
     >
       <motion.span
-        animate={{ scale: [1, 1.2, 1] }}
+        animate={{ scale: [1, 1.25, 1], opacity: [1, 0.65, 1] }}
         transition={{ duration: 2, repeat: Infinity }}
-        className="w-2 h-2 rounded-full bg-accent"
+        className="w-1.5 h-1.5 rounded-full bg-emerald-500"
       />
       {t.settings.connected}
     </motion.span>
@@ -316,6 +320,8 @@ export default function PlatformConnectionsSection() {
   const [showInstagramDisconnectConfirm, setShowInstagramDisconnectConfirm] = useState(false);
   const [showRedditDisconnectConfirm, setShowRedditDisconnectConfirm] = useState(false);
   const [showThreadszDisconnectConfirm, setShowThreadszDisconnectConfirm] = useState(false);
+  // Accordion: which platform row is expanded (single-open). null = all collapsed.
+  const [expandedPlatform, setExpandedPlatform] = useState<Platform | null>(null);
   useScrollLock(
     showFacebookDisconnectConfirm ||
       showThreadsDisconnectConfirm ||
@@ -577,188 +583,212 @@ export default function PlatformConnectionsSection() {
       : platform === "threads" ? t.settings.reconnectThreads
       : connectLabel;
 
+    const isExpanded = expandedPlatform === platform;
+
+    // Left rail color = connection state at a glance.
+    const railColor = !hasAccess
+      ? "bg-gray-300/60 dark:bg-dark-border"
+      : !isConnected
+      ? "bg-red-500/60"
+      : !isTokenValid
+      ? "bg-amber-500/70"
+      : "bg-emerald-500/70";
+
+    // Reconnect label when the session is still healthy (generic, i18n-safe).
+    const healthyReconnectLabel = (t.settings as any).reconnect ?? reconnectLabel;
+
     return (
       <motion.div
         key={platform}
         variants={itemVariants}
         className={`
-          relative overflow-hidden p-4 rounded-xl border transition-all duration-200
-          flex flex-col h-full min-h-[200px]
-          bg-gray-50 dark:bg-dark-bg border-gray-200 dark:border-dark-border
-          ${hasAccess ? "hover:border-primary/20" : ""}
+          relative overflow-hidden rounded-xl border transition-all duration-200
+          bg-gray-50 dark:bg-dark-bg
+          ${isExpanded
+            ? "border-primary/30 shadow-[0_2px_20px_rgba(232,147,77,0.08)]"
+            : "border-gray-200 dark:border-dark-border hover:border-primary/30"}
         `}
       >
-        {/* Locked overlay — platform icon stays visible underneath */}
-        {!hasAccess && (
-          <div className="absolute inset-0 z-10 rounded-xl overflow-hidden">
-            <div className="absolute inset-0 bg-white/60 dark:bg-dark-bg/65 backdrop-blur-[1px]" />
-            <div className="relative h-full flex flex-col items-center justify-center px-4 py-3">
-              <div className="w-8 h-8 mb-2 rounded-full bg-gray-100/90 dark:bg-dark-hover/90 border border-gray-200 dark:border-dark-border flex items-center justify-center shadow-sm">
-                <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        {/* Left status accent rail — GREEN live · AMBER expired · RED off · GREY locked */}
+        <span className={`absolute left-0 top-0 bottom-0 w-[3px] transition-colors duration-300 ${railColor}`} />
+
+        {/* ── Collapsed header (click to toggle the dropdown) ───────────── */}
+        <button
+          type="button"
+          onClick={() => setExpandedPlatform(isExpanded ? null : platform)}
+          aria-expanded={isExpanded}
+          className="w-full flex items-center gap-3 sm:gap-4 p-3.5 sm:p-4 pl-4 sm:pl-5 text-left"
+        >
+          {/* Icon / profile avatar */}
+          <div className="shrink-0">
+            {hasAccess && isConnected && connectionData ? (
+              <PlatformProfileAvatar
+                src={connectionData.profilePicture}
+                name={connectionData.profileName}
+                platform={platform}
+                userPhotoURL={user?.photoURL}
+                onRefresh={platform === "linkedin" ? refreshLinkedInPhoto : undefined}
+              />
+            ) : (
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${colors.bg} ${!hasAccess ? "opacity-70" : ""}`}>
+                <Icon className={`w-5 h-5 ${colors.text}`} />
+              </div>
+            )}
+          </div>
+
+          {/* Name + plan badge (+ handle when connected) */}
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 min-w-0">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white truncate">{info.name}</h3>
+              {isBusinessOnlyPlatform ? (
+                <span className="shrink-0 px-2 py-0.5 text-[10px] font-medium rounded-md border bg-gradient-to-r from-amber-500/10 to-yellow-500/10 text-amber-700 dark:text-amber-400 border-amber-500/25">
+                  {t.settings.businessBadge}
+                </span>
+              ) : requiredPlan ? (
+                <PlanBadge plan={requiredPlan} />
+              ) : null}
+            </div>
+            {hasAccess && isConnected && connectionData && (
+              <p className="text-xs text-text-muted truncate mt-0.5">
+                {"username" in connectionData && (connectionData as any).username
+                  ? `@${(connectionData as any).username}`
+                  : connectionData.profileName}
+              </p>
+            )}
+          </div>
+
+          {/* Status pill + chevron */}
+          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+            {isLoading ? (
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                className={`w-4 h-4 border-2 border-t-transparent rounded-full ${colors.text}`}
+              />
+            ) : !hasAccess ? (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border bg-gray-500/10 text-gray-500 dark:text-gray-400 border-gray-500/20 whitespace-nowrap">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
-              </div>
-              {isBusinessOnlyPlatform ? (
-                <>
-                  <p className="text-[11px] font-medium text-gray-600 dark:text-gray-300 mb-1.5 text-center leading-tight max-w-[200px]">
-                    {t.settings.businessOnlyPlatform}
-                  </p>
-                  <Link
-                    href="/business"
-                    className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-primary hover:text-white bg-primary/10 hover:bg-primary border border-primary/20 hover:border-primary rounded-full transition-all duration-200"
-                  >
-                    {t.settings.discoverBusinessOffer}
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <p className="text-[11px] font-medium text-gray-600 dark:text-gray-300 mb-1.5 text-center leading-tight max-w-[180px]">
-                    {t.settings.upgradeToUnlockPlatform} <PlanBadge plan={requiredPlan} className="ml-0.5" />
-                  </p>
-                  <Link
-                    href="/subscription"
-                    className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-primary hover:text-white bg-primary/10 hover:bg-primary border border-primary/20 hover:border-primary rounded-full transition-all duration-200"
-                  >
-                    {t.ui.viewPlans}
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ──────────────────────────────────────────────────────────
-            Zone 1 — Header (fixed)
-            Icon + name + truncated description + plan badge.
-            min-h keeps the row identical even if the description wraps to two
-            lines on one card and one line on another.
-           ────────────────────────────────────────────────────────── */}
-        <div className="flex items-start justify-between gap-2 min-h-[44px]">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className={`w-10 h-10 shrink-0 rounded-lg flex items-center justify-center ${colors.bg}`}>
-              <Icon className={`w-5 h-5 ${colors.text}`} />
-            </div>
-            <div className="min-w-0">
-              <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate">{info.name}</h3>
-              <p className="text-xs text-text-muted line-clamp-1">{
-                platform === "linkedin" ? t.settings.platformLinkedinDesc
-                : platform === "threads" ? t.settings.platformThreadsDesc
-                : platform === "facebook" ? t.settings.platformFacebookDesc
-                : info.description
-              }</p>
-            </div>
-          </div>
-          <div className="shrink-0">
-            {isBusinessOnlyPlatform ? (
-              <span className="px-2 py-0.5 text-xs font-medium rounded-md border bg-gradient-to-r from-amber-500/10 to-yellow-500/10 text-amber-700 dark:text-amber-400 border-amber-500/25">
-                {t.settings.businessBadge}
+                <span className="hidden sm:inline">{(t.settings as any).locked ?? "Verrouillé"}</span>
               </span>
-            ) : requiredPlan ? (
-              <PlanBadge plan={requiredPlan} />
-            ) : null}
+            ) : (
+              <ConnectionStatus connected={isConnected} tokenValid={isTokenValid} t={t} />
+            )}
+            <svg
+              className={`w-4 h-4 text-text-muted transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`}
+              fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
           </div>
-        </div>
+        </button>
 
-        {hasAccess && (
-          <>
-            {/* ──────────────────────────────────────────────────────
-                Zone 2 — Body (flex-1, vertically centered)
-                Absorbs all height variance from the grid stretch so that
-                the footer button never moves. Shows either the status pill
-                (not connected) or the profile row (connected).
-               ────────────────────────────────────────────────────── */}
-            <div className="flex-1 flex flex-col justify-center pt-3 mt-3 border-t border-gray-200 dark:border-dark-border min-h-[56px]">
-              {isLoading ? (
-                <div className="flex items-center gap-2">
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    className={`w-4 h-4 border-2 border-t-transparent rounded-full ${colors.text}`}
-                  />
-                  <span className="text-xs text-text-muted">{t.common.loading}</span>
-                </div>
-              ) : isConnected && connectionData ? (
-                <div className="flex items-center gap-3 min-w-0">
-                  <PlatformProfileAvatar
-                    src={connectionData.profilePicture}
-                    name={connectionData.profileName}
-                    platform={platform}
-                    userPhotoURL={user?.photoURL}
-                    onRefresh={platform === "linkedin" ? refreshLinkedInPhoto : undefined}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-900 dark:text-white font-medium truncate">
-                      {connectionData.profileName}
+        {/* ── Expanded panel: details + actions ─────────────────────────── */}
+        <AnimatePresence initial={false}>
+          {isExpanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25, ease: smoothEase }}
+              className="overflow-hidden"
+            >
+              <div className="px-4 sm:px-5 pb-4 pt-3 ml-[3px] border-t border-gray-200 dark:border-dark-border">
+                {!hasAccess ? (
+                  /* Locked → explanation + upgrade CTA */
+                  <div className="flex flex-col gap-3 pt-2">
+                    <p className="text-xs text-text-muted leading-relaxed">
+                      {isBusinessOnlyPlatform ? t.settings.businessOnlyPlatform : t.settings.upgradeToUnlockPlatform}
                     </p>
-                    {"username" in connectionData && (connectionData as any).username && (
-                      <p className="text-xs text-text-muted truncate">@{(connectionData as any).username}</p>
-                    )}
-                    <ConnectionStatus connected={true} tokenValid={isTokenValid} t={t} />
+                    <Link
+                      href={isBusinessOnlyPlatform ? "/business" : "/subscription"}
+                      className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary/90 rounded-lg transition-colors"
+                    >
+                      {isBusinessOnlyPlatform ? t.settings.discoverBusinessOffer : t.ui.viewPlans}
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </Link>
                   </div>
-                </div>
-              ) : (
-                <ConnectionStatus connected={false} tokenValid={false} t={t} />
-              )}
-            </div>
-
-            {/* ──────────────────────────────────────────────────────
-                Zone 3 — Action footer (always present)
-                ONE full-width button per state. Same vertical position on
-                every card, on every row, regardless of session expiry or
-                connection status.
-               ────────────────────────────────────────────────────── */}
-            <div className="mt-3 min-h-[36px]">
-              {!isLoading && (
-                isConnected ? (
-                  !isTokenValid ? (
-                    /* Session expired → discreet warning-toned Reconnect */
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={triggerConnect}
-                      className="w-full !border-warning/40 !text-warning hover:!bg-warning/10"
-                    >
-                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                      </svg>
-                      {reconnectLabel}
-                    </Button>
-                  ) : (
-                    /* Connected & healthy → subtle Disconnect */
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={triggerDisconnect}
-                      className="w-full text-text-muted hover:text-error hover:bg-error/5"
-                    >
-                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                      </svg>
-                      {t.settings.disconnect}
-                    </Button>
-                  )
                 ) : (
-                  /* Not connected → primary platform-tinted Connect */
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={triggerConnect}
-                    className="w-full"
-                  >
-                    <Icon className={`w-4 h-4 mr-2 ${colors.text}`} />
-                    {connectLabel}
-                  </Button>
-                )
-              )}
-            </div>
-          </>
-        )}
+                  <div className="flex flex-col gap-3 pt-2">
+                    {/* Description */}
+                    <p className="text-xs text-text-muted leading-relaxed">
+                      {platform === "linkedin" ? t.settings.platformLinkedinDesc
+                        : platform === "threads" ? t.settings.platformThreadsDesc
+                        : platform === "facebook" ? t.settings.platformFacebookDesc
+                        : info.description}
+                    </p>
+
+                    {/* Connected profile detail card */}
+                    {isConnected && connectionData && (
+                      <div className="flex items-center gap-3 p-2.5 rounded-lg bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border">
+                        <PlatformProfileAvatar
+                          src={connectionData.profilePicture}
+                          name={connectionData.profileName}
+                          platform={platform}
+                          userPhotoURL={user?.photoURL}
+                          onRefresh={platform === "linkedin" ? refreshLinkedInPhoto : undefined}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{connectionData.profileName}</p>
+                          {"username" in connectionData && (connectionData as any).username && (
+                            <p className="text-xs text-text-muted truncate">@{(connectionData as any).username}</p>
+                          )}
+                          <div className="mt-1">
+                            <ConnectionStatus connected={isConnected} tokenValid={isTokenValid} t={t} />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Actions */}
+                    {isLoading ? (
+                      <div className="flex items-center gap-2">
+                        <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} className={`w-4 h-4 border-2 border-t-transparent rounded-full ${colors.text}`} />
+                        <span className="text-xs text-text-muted">{t.common.loading}</span>
+                      </div>
+                    ) : isConnected ? (
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        {/* Reconnect (amber-toned only when the session is expired) */}
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={triggerConnect}
+                          className={`flex-1 ${!isTokenValid ? "!border-warning/40 !text-warning hover:!bg-warning/10" : ""}`}
+                        >
+                          <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                          </svg>
+                          {!isTokenValid ? reconnectLabel : healthyReconnectLabel}
+                        </Button>
+                        {/* Disconnect */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={triggerDisconnect}
+                          className="flex-1 text-text-muted hover:text-error hover:bg-error/5"
+                        >
+                          <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                          </svg>
+                          {t.settings.disconnect}
+                        </Button>
+                      </div>
+                    ) : (
+                      /* Not connected → primary Connect */
+                      <Button variant="secondary" size="sm" onClick={triggerConnect} className="w-full">
+                        <Icon className={`w-4 h-4 mr-2 ${colors.text}`} />
+                        {connectLabel}
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
     );
   };
@@ -855,8 +885,8 @@ export default function PlatformConnectionsSection() {
           </motion.div>
         )}
 
-        {/* Platform Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {/* Platform list — stacked one under another for at-a-glance status */}
+        <div className="flex flex-col gap-2.5">
           {/* Reddit is enabled (Zernio-backed, Max-only — gated via
               PLATFORM_INFO.reddit.minPlan + the plan allowedPlatforms arrays).
               X and Instagram stay omitted for now: their Zernio backend is in

@@ -154,6 +154,18 @@ html.dark .posty-card-glass-hover:hover {
   border-color: rgba(255, 255, 255, 0.16);
 }
 
+/* PERF (C2): backdrop-filter is the single biggest mobile GPU cost — it
+   re-samples everything painted behind it whenever the area changes. Keep the
+   premium 28px frost on desktop, but drop the radius sharply on phones (weaker
+   GPUs, and these glass cards are stacked 6-11× on Settings/Dashboard). The
+   surface stays frosted — just far cheaper to composite while scrolling. */
+@media (max-width: 768px) {
+  .posty-card-glass {
+    -webkit-backdrop-filter: blur(10px) saturate(150%);
+    backdrop-filter: blur(10px) saturate(150%);
+  }
+}
+
 /* ============================================================================
    POSTY PAGE TONES — Per-route signature gradient backgrounds
    ============================================================================

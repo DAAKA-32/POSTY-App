@@ -102,6 +102,34 @@ export const languageNames: Record<Language, string> = {
   ko: "한국어",
 };
 
+/** Flag emoji per language — single source shared by every language selector. */
+export const languageFlags: Record<Language, string> = {
+  en: "🇬🇧",
+  fr: "🇫🇷",
+  es: "🇪🇸",
+  de: "🇩🇪",
+  it: "🇮🇹",
+  pt: "🇵🇹",
+  nl: "🇳🇱",
+  zh: "🇨🇳",
+  ja: "🇯🇵",
+  ko: "🇰🇷",
+};
+
+/** Short uppercase codes (for compact triggers, e.g. navbars). */
+export const languageShort: Record<Language, string> = {
+  en: "EN",
+  fr: "FR",
+  es: "ES",
+  de: "DE",
+  it: "IT",
+  pt: "PT",
+  nl: "NL",
+  zh: "ZH",
+  ja: "JA",
+  ko: "KO",
+};
+
 export const defaultLanguage: Language = "en";
 
 // Re-export the eagerly-loaded translations only — non-eager languages must
