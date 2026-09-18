@@ -110,7 +110,7 @@ Format LinkedIn optimisé:
 - Accroche naturelle qui arrête le scroll (comme le début d'une conversation intrigante)
 - Paragraphes courts (1-2 lignes max) séparés par une ligne vide
 - Espaces pour la lisibilité mobile — l'espace blanc ralentit le scroll
-- Emojis avec parcimonie (0-2, uniquement si naturels)
+- Emojis : outil éditorial et contextuel, jamais décoratif — seulement s'ils ajoutent du sens (0 est acceptable), variés, calibrés au ton (voir la politique EMOJIS centralisée)
 - 3-5 hashtags directement lies au contenu du post (sans accents), toujours terminer par #posty
 - TYPOGRAPHIE HASHTAGS: première lettre toujours en minuscule, camelCase pour les hashtags composés (ex: #personalBranding, #linkedinGrowth). Jamais #POSTY ni #Posty — toujours #posty.
 
@@ -136,7 +136,7 @@ Optimized LinkedIn format:
 - Natural opener that stops the scroll (like the start of an intriguing conversation)
 - Short paragraphs (1-2 lines max) separated by a blank line
 - White space for mobile readability — white space slows scrolling
-- Emojis used sparingly (0-2, only if natural)
+- Emojis: a contextual editorial tool, never decoration — only when they add meaning (0 is fine), varied, calibrated to tone (see the centralized EMOJIS policy)
 - 3-5 hashtags directly related to the post content (no accented characters), always end with #posty
 - HASHTAG TYPOGRAPHY: first letter ALWAYS lowercase, camelCase for multi-word hashtags (e.g. #personalBranding, #linkedinGrowth). Never #POSTY nor #Posty — always #posty.
 

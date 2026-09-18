@@ -5,6 +5,7 @@ import {
   IMPROVE_PROMPT,
   INSIGHTS_PROMPT,
 } from "@/lib/openai";
+import { emojiImproveDirective } from "@/lib/ai/emoji-policy";
 import {
   checkHourlyQuotaAdmin,
   checkUserQuotaAdmin,
@@ -212,7 +213,9 @@ export async function POST(request: NextRequest) {
 
     // Build the improvement prompt
     const lang = language === "en" ? "en" : "fr";
-    const systemPrompt = IMPROVE_PROMPT[lang];
+    // Emoji policy for the improve/rewrite flow: preserve the text, only
+    // add/remove RELEVANT emojis (centralized in lib/ai/emoji-policy).
+    const systemPrompt = IMPROVE_PROMPT[lang] + emojiImproveDirective(lang);
     let userMessage = existingPost;
     if (instructions) {
       const instructionLabel =

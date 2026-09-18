@@ -18,6 +18,8 @@
  * - Max: deeper strategy, non-obvious angles, emotional sophistication, signature voice
  */
 
+import { emojiDirective } from "@/lib/ai/emoji-policy";
+
 // ============== TYPES ==============
 
 export interface ProfileFields {
@@ -405,12 +407,6 @@ EXEMPLES DE TON ATTENDU (pour calibrer):
 - Transitions naturelles, comme dans une conversation
 - Pas de vocabulaire trop soutenu ou littéraire
 
-EMOJIS (1 à 3 max par post):
-- Placer en fin de phrase ou après un paragraphe clé, jamais en début de post
-- Utiliser pour ponctuer une émotion (💡 insight, 🎯 résultat, 🤔 réflexion) ou un résultat concret
-- Interdits: accumulations (🔥🔥🔥), emojis décoratifs sans lien, listes à puces avec emoji par ligne
-- Le post doit rester lisible sans les emojis — ils accentuent, ils ne remplacent pas le sens
-
 VARIATION OBLIGATOIRE:
 - Hook unique à chaque post — ne JAMAIS réutiliser la même ouverture
 - Alterne entre les approches A-E
@@ -456,12 +452,6 @@ NATURAL WRITING:
 - Natural transitions, like in a conversation
 - No overly formal or literary vocabulary
 
-EMOJIS (1 to 3 max per post):
-- Place at end of a sentence or after a key paragraph, never at the start of the post
-- Use to punctuate an emotion (💡 insight, 🎯 result, 🤔 reflection) or a concrete result
-- Forbidden: stacking (🔥🔥🔥), decorative emojis unrelated to text, bullet lists with one emoji per line
-- The post must remain readable without emojis — they accentuate, they don't replace meaning
-
 MANDATORY VARIATION:
 - Unique hook for each post — NEVER reuse the same opening
 - Alternate between approaches A-E
@@ -503,12 +493,6 @@ VARIATION OBLIGATOIRE:
 - Alterne entre les schémas A-E — ne répète JAMAIS le même deux fois de suite.
 - Si deux posts se ressemblent dans le ton, la structure ou le hook → ÉCHEC.
 
-EMOJIS (1 à 3 max par post):
-- Placer en fin de phrase ou après un paragraphe clé pour ponctuer un point fort
-- Exemples pertinents: 📊 données, 🎯 objectif atteint, ⚡ insight clé, 👉 appel à l'action
-- Interdits: accumulations, emojis décoratifs, un emoji par bullet point
-- Le post doit rester professionnel et lisible sans eux
-
 FORMAT: Structure aérée et lisible sur mobile. Longueur, nombre de hashtags et règles de format: suis les RÈGLES DE CRAFT ci-dessous (elles priment). Hashtags sans accents, #posty toujours en dernier.`,
 
     en: `You are an expert LinkedIn ghostwriter. You create authentic business content that does NOT feel AI-generated.
@@ -542,12 +526,6 @@ MANDATORY VARIATION:
 - Unique hook for each post — NEVER reuse the same opening.
 - Alternate between patterns A-E — NEVER repeat the same one twice in a row.
 - If two posts resemble each other in tone, structure, or hook → FAILURE.
-
-EMOJIS (1 to 3 max per post):
-- Place at end of a sentence or after a key paragraph to punctuate a strong point
-- Relevant examples: 📊 data, 🎯 goal reached, ⚡ key insight, 👉 call to action
-- Forbidden: stacking, decorative emojis, one emoji per bullet point
-- The post must remain professional and readable without them
 
 FORMAT: Airy, mobile-readable structure. Length, hashtag count, and format rules: follow the CRAFT RULES below (they take precedence). Hashtags without accents, #posty always last.`,
   },
@@ -603,12 +581,6 @@ EXEMPLES DE TON ATTENDU (pour calibrer le niveau):
 - La voix doit refléter la personnalité de l'auteur, pas un template d'IA
 - L'émotion doit transparaître naturellement à travers la situation, pas être déclarée
 
-EMOJIS (1 à 3 max par post):
-- Placer en fin de phrase ou après un paragraphe clé, jamais en début de post
-- Utiliser pour ponctuer une émotion (💡 insight, 🎯 résultat, 🤔 réflexion) ou un résultat concret
-- Interdits: accumulations (🔥🔥🔥), emojis décoratifs sans lien, listes à puces avec emoji par ligne
-- Le post doit rester lisible sans les emojis — ils accentuent, ils ne remplacent pas le sens
-
 VARIATION OBLIGATOIRE:
 - Hook unique à chaque post — ne JAMAIS réutiliser la même ouverture
 - Alterne entre les approches A-F
@@ -658,12 +630,6 @@ NATURAL AND SINGULAR WRITING:
 - The voice should reflect the author's personality, not an AI template
 - Emotion should come through naturally via the situation, not be declared
 
-EMOJIS (1 to 3 max per post):
-- Place at end of a sentence or after a key paragraph, never at the start of the post
-- Use to punctuate an emotion (💡 insight, 🎯 result, 🤔 reflection) or a concrete result
-- Forbidden: stacking (🔥🔥🔥), decorative emojis unrelated to text, bullet lists with one emoji per line
-- The post must remain readable without emojis — they accentuate, they don't replace meaning
-
 MANDATORY VARIATION:
 - Unique hook for each post — NEVER reuse the same opening
 - Alternate between approaches A-F
@@ -710,12 +676,6 @@ VARIATION OBLIGATOIRE:
 - Signature toujours différente.
 - Si deux posts se ressemblent dans le ton, la structure ou le hook → ÉCHEC.
 
-EMOJIS (1 à 3 max par post):
-- Placer en fin de phrase ou après un paragraphe clé pour ponctuer un point fort
-- Exemples pertinents: 📊 données, 🎯 objectif atteint, ⚡ insight clé, 👉 appel à l'action
-- Interdits: accumulations, emojis décoratifs, un emoji par bullet point
-- Le post doit rester professionnel et lisible sans eux
-
 FORMAT: Structure aérée et lisible sur mobile. Longueur, nombre de hashtags et règles de format: suis les RÈGLES DE CRAFT ci-dessous (elles priment). Hashtags sans accents, #posty toujours en dernier.`,
 
     en: `You are a senior LinkedIn ghostwriter. You create authentic business content that does NOT feel AI-generated — and that positions the author as a reference in their field.
@@ -754,12 +714,6 @@ MANDATORY VARIATION:
 - Alternate between patterns A-F — NEVER repeat the same one twice in a row.
 - Signature always different.
 - If two posts resemble each other in tone, structure, or hook → FAILURE.
-
-EMOJIS (1 to 3 max per post):
-- Place at end of a sentence or after a key paragraph to punctuate a strong point
-- Relevant examples: 📊 data, 🎯 goal reached, ⚡ key insight, 👉 call to action
-- Forbidden: stacking, decorative emojis, one emoji per bullet point
-- The post must remain professional and readable without them
 
 FORMAT: Airy, mobile-readable structure. Length, hashtag count, and format rules: follow the CRAFT RULES below (they take precedence). Hashtags without accents, #posty always last.`,
   },
@@ -1201,6 +1155,12 @@ export function buildOptimizedPrompt(
   const promptSet = isMax ? MAX_SYSTEM_PROMPTS : PRO_SYSTEM_PROMPTS;
   let prompt = promptSet[type][language];
 
+  // Central emoji policy — single source of truth, applied to EVERY plan/type/
+  // language (see lib/ai/emoji-policy.ts). Injected here (before the no-profile
+  // early return) so profile-less generations get it too. Wording is
+  // position-agnostic, so it holds wherever it lands in the assembled prompt.
+  prompt += emojiDirective(language);
+
   if (!profile) return prompt;
 
   // Build voice profile block (tone + context + identity + optional signature)
@@ -1302,7 +1262,7 @@ export function buildAssistantPrompt(
     const noProfileNote = language === "fr"
       ? "Aucun profil utilisateur disponible. Réponds de façon générique mais utile."
       : "No user profile available. Respond generically but usefully.";
-    return basePrompt.replace("{{PROFILE_CONTEXT}}", noProfileNote);
+    return basePrompt.replace("{{PROFILE_CONTEXT}}", noProfileNote) + emojiDirective(language);
   }
 
   // Build rich profile context block
@@ -1338,7 +1298,7 @@ export function buildAssistantPrompt(
     ? parts.join("\n")
     : (isFr ? "Profil minimal — adapte quand même au mieux." : "Minimal profile — adapt as best you can.");
 
-  return basePrompt.replace("{{PROFILE_CONTEXT}}", profileBlock);
+  return basePrompt.replace("{{PROFILE_CONTEXT}}", profileBlock) + emojiDirective(language);
 }
 
 /**
