@@ -2331,6 +2331,7 @@ import {
   ScheduleStatus,
   SchedulePlatform,
 } from "@/types";
+import { isSchedulablePlatform } from "@/lib/scheduling/platforms";
 
 /**
  * Generate a Firestore document ID for a scheduled post BEFORE upload.
@@ -2352,6 +2353,11 @@ export async function createScheduledPost(
   images?: ScheduledPostImage[],
   preGeneratedId?: string
 ): Promise<string> {
+  // Only platforms with a scheduled publisher (see lib/scheduling/platforms.ts);
+  // firestore.rules enforces the same list server-side.
+  if (!isSchedulablePlatform(data.platform)) {
+    throw new Error(`La programmation n'est pas disponible pour ${data.platform}.`);
+  }
   const scheduledPostsRef = collection(db, "scheduledPosts");
 
   const postData: Record<string, unknown> = {
@@ -2504,39 +2510,13 @@ export async function getScheduledPost(
   return null;
 }
 
-/**
- * Update scheduled post status
- */
-export async function updateScheduledPostStatus(
-  scheduledPostId: string,
-  status: ScheduleStatus,
-  additionalData?: {
-    publishedAt?: Date;
-    publishedUrl?: string;
-    failureReason?: string;
-  }
-): Promise<void> {
-  const postRef = doc(db, "scheduledPosts", scheduledPostId);
-  const updateData: Record<string, unknown> = {
-    status,
-    updatedAt: serverTimestamp(),
-  };
-
-  if (additionalData?.publishedAt) {
-    updateData.publishedAt = Timestamp.fromDate(additionalData.publishedAt);
-  }
-  if (additionalData?.publishedUrl) {
-    updateData.publishedUrl = additionalData.publishedUrl;
-  }
-  if (additionalData?.failureReason) {
-    updateData.failureReason = additionalData.failureReason;
-  }
-
-  await updateDoc(postRef, updateData);
-}
+// Status transitions (processing / retrying / published / failed) are owned
+// by the scheduler Cloud Function. The client only creates, cancels,
+// reschedules and deletes — exactly what firestore.rules allows.
 
 /**
- * Reschedule a post to a new date/time
+ * Reschedule a post to a new date/time with a fresh attempt budget.
+ * Allowed from pending / retrying / failed / cancelled.
  */
 export async function reschedulePost(
   scheduledPostId: string,
@@ -2548,8 +2528,12 @@ export async function reschedulePost(
   if (!postSnap.exists()) {
     throw new Error("Post programmé non trouvé");
   }
-  if (postSnap.data().status === "published") {
+  const status = postSnap.data().status as ScheduleStatus;
+  if (status === "published") {
     throw new Error("Un post publié ne peut pas être reprogrammé.");
+  }
+  if (status === "processing") {
+    throw new Error("Ce post est en cours de publication et ne peut pas être reprogrammé.");
   }
 
   await updateDoc(postRef, {
@@ -2558,23 +2542,36 @@ export async function reschedulePost(
     updatedAt: serverTimestamp(),
     failureReason: null,
     attemptCount: 0,
+    // Clear the previous run's retry / error state.
+    nextAttemptAt: null,
+    lastError: null,
+    priorSendUncertain: false,
+    resumeState: {},
   });
 }
 
 /**
- * Cancel a scheduled post (only pending posts can be cancelled)
+ * Cancel a scheduled post. Allowed from pending / retrying / failed; a post
+ * being published (or already published) can no longer be cancelled.
  */
 export async function cancelScheduledPost(
   scheduledPostId: string
 ): Promise<void> {
   const postRef = doc(db, "scheduledPosts", scheduledPostId);
   const postSnap = await getDoc(postRef);
-  if (postSnap.exists() && postSnap.data().status === "published") {
+  if (!postSnap.exists()) return;
+  const status = postSnap.data().status as ScheduleStatus;
+  if (status === "cancelled") return;
+  if (status === "published") {
     throw new Error("Un post publié ne peut pas être annulé.");
+  }
+  if (status === "processing") {
+    throw new Error("Ce post est en cours de publication et ne peut plus être annulé.");
   }
   await updateDoc(postRef, {
     status: "cancelled" as ScheduleStatus,
     updatedAt: serverTimestamp(),
+    nextAttemptAt: null,
   });
 }
 
@@ -2590,25 +2587,6 @@ export async function deleteScheduledPost(
     throw new Error("Un post publié ne peut pas être supprimé.");
   }
   await deleteDoc(postRef);
-}
-
-/**
- * Increment attempt count for a scheduled post (for retry logic)
- */
-export async function incrementScheduledPostAttempt(
-  scheduledPostId: string
-): Promise<void> {
-  const postRef = doc(db, "scheduledPosts", scheduledPostId);
-  const postSnap = await getDoc(postRef);
-
-  if (postSnap.exists()) {
-    const currentAttempts = postSnap.data().attemptCount || 0;
-    await updateDoc(postRef, {
-      attemptCount: currentAttempts + 1,
-      lastAttemptAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
-  }
 }
 
 /**

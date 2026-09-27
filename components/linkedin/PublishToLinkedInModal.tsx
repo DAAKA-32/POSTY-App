@@ -17,7 +17,8 @@ import { useScheduling } from "@/contexts/SchedulingContext";
 import toast from "@/components/ui/Toast";
 import { useLinkedInErrorToast } from "@/components/linkedin/useLinkedInErrorToast";
 import PlatformSelector from "@/components/publish/PlatformSelector";
-import { Platform, SchedulePlatform } from "@/types";
+import { Platform } from "@/types";
+import { isSchedulablePlatform, platformDisplayName } from "@/lib/scheduling/platforms";
 import { usePlatformSelection } from "@/hooks/gesture/usePlatformSelection";
 import { triggerHaptic } from "@/hooks/ui/useHapticFeedback";
 import { useFacebook } from "@/contexts/FacebookContext";
@@ -146,7 +147,7 @@ export default function PublishToLinkedInModal({
   const { isConnected: blueskyConnected, publishToBluesky } = useBluesky();
   const { isConnected: mastodonConnected, publishToMastodon } = useMastodon();
   const { isConnected: discordConnected, publishToDiscord, connectDiscord } = useDiscord();
-  const { schedulePost, isUploading } = useScheduling();
+  const { schedulePostOnPlatforms, isUploading } = useScheduling();
   const router = useRouter();
   const [step, setStep] = useState<PublishStep>("preview");
   const [editedContent, setEditedContent] = useState(initialContent);
@@ -644,6 +645,18 @@ export default function PublishToLinkedInModal({
         setShowUpgradeModal(true);
         return;
       }
+      // Bluesky / Mastodon / Discord have no scheduled publisher — refuse up
+      // front instead of creating posts that could only fail at publish time.
+      const unsupported = selectedPlatforms.filter((p) => !isSchedulablePlatform(p));
+      if (unsupported.length > 0) {
+        triggerHaptic("error");
+        toast.error(
+          t.scheduledPublish.unsupportedPlatforms
+            .split("{platforms}")
+            .join(unsupported.map(platformDisplayName).join(", "))
+        );
+        return;
+      }
     } else {
       // Max plan = unlimited, never block. Pro = check daily quota.
       if (!isMaxPlan && !canPublish) {
@@ -860,39 +873,50 @@ export default function PublishToLinkedInModal({
     }, 150);
 
     try {
-      // Map first selected platform to schedule platform
-      const schedulePlatform = (selectedPlatforms[0] || "linkedin") as SchedulePlatform;
+      // Every selected platform gets its own scheduled post (previously only
+      // the first one was scheduled and the others were silently dropped).
+      const targets = selectedPlatforms.filter(isSchedulablePlatform);
+      const unsupported = selectedPlatforms.filter((p) => !isSchedulablePlatform(p));
+      if (targets.length === 0 || unsupported.length > 0) {
+        throw new Error(
+          t.scheduledPublish.unsupportedPlatforms
+            .split("{platforms}")
+            .join((unsupported.length > 0 ? unsupported : selectedPlatforms).map(platformDisplayName).join(", "))
+        );
+      }
 
-      // Race the schedule call against a timeout to prevent infinite hang on mobile/PWA
-      const SCHEDULE_TIMEOUT_MS = 30_000;
-      const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("TIMEOUT")), SCHEDULE_TIMEOUT_MS)
-      );
+      // Race the schedule calls against a timeout to prevent infinite hang on
+      // mobile/PWA (30 s per platform — each may upload images).
+      const SCHEDULE_TIMEOUT_MS = 30_000 * targets.length;
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(() => reject(new Error("TIMEOUT")), SCHEDULE_TIMEOUT_MS);
+      });
 
-      // Propagate audience + org target to the scheduled doc so the cron
+      // Audience + org target propagate to the LinkedIn post so the cron
       // publishes with the same author/visibility the user picked here.
-      // Without this the scheduler silently downgraded to personal + PUBLIC.
-      const isLinkedIn = schedulePlatform === "linkedin";
-      const scheduleOrgUrn = isLinkedIn ? (authorTargetUrn || undefined) : undefined;
-      const scheduleVisibility = isLinkedIn ? visibility : undefined;
-
-      const result = await Promise.race([
-        schedulePost({
-          content: editedContent,
-          postId,
-          title,
-          scheduledAt,
-          timezone,
-          platform: schedulePlatform,
-          postType: "feed",
-          visibility: scheduleVisibility,
-          organizationUrn: scheduleOrgUrn,
-          imageFiles: images.length > 0 ? images : undefined,
-        }),
+      const results = await Promise.race([
+        schedulePostOnPlatforms(
+          {
+            content: editedContent,
+            postId,
+            title,
+            scheduledAt,
+            timezone,
+            postType: "feed",
+            visibility,
+            organizationUrn: authorTargetUrn || undefined,
+            imageFiles: images.length > 0 ? images : undefined,
+          },
+          targets
+        ),
         timeoutPromise,
-      ]);
+      ]).finally(() => clearTimeout(timeoutId));
 
-      if (result.success && result.scheduledPostId) {
+      const succeeded = results.filter((r) => r.success && r.scheduledPostId);
+      const failed = results.filter((r) => !r.success);
+
+      if (failed.length === 0 && succeeded.length > 0) {
         // Clear interval before setting 100% so UI is clean
         if (progressIntervalRef.current) {
           clearInterval(progressIntervalRef.current);
@@ -903,10 +927,18 @@ export default function PublishToLinkedInModal({
         triggerHaptic("success");
         setStep("success");
         toast.success(t.publish.postScheduled);
-        onScheduleSuccess?.(result.scheduledPostId);
+        onScheduleSuccess?.(succeeded[0].scheduledPostId!);
       } else {
         triggerHaptic("error");
-        setError(result.error || t.publish.genericError);
+        setError(
+          succeeded.length > 0
+            ? t.scheduledPublish.partialScheduleFailure
+                .split("{succeeded}")
+                .join(succeeded.map((r) => platformDisplayName(r.platform)).join(", "))
+                .split("{failed}")
+                .join(failed.map((r) => platformDisplayName(r.platform)).join(", "))
+            : failed[0]?.error || t.publish.genericError
+        );
         setStep("error");
         setProgress(0);
       }

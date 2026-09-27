@@ -39,6 +39,17 @@ function getKey(): Buffer {
   return buf;
 }
 
+/**
+ * Functions-only diagnostic (no Next.js counterpart needed): lets the
+ * scheduler report WHY a decryption failed — missing/invalid key is a server
+ * misconfiguration, anything else is a wrong key or a corrupted token.
+ */
+export function tokenKeyStatus(): "ok" | "missing" | "invalid" {
+  const raw = process.env.TOKEN_ENCRYPTION_KEY;
+  if (!raw || !raw.trim()) return "missing";
+  return Buffer.from(raw.trim(), "base64").length === KEY_LENGTH ? "ok" : "invalid";
+}
+
 export function isEncrypted(value: string | null | undefined): boolean {
   if (!value || typeof value !== "string") return false;
   return value.startsWith(MARKER);

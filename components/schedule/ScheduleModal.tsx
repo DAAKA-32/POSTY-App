@@ -20,6 +20,8 @@ import { useRouter } from "next/navigation";
 import { useHapticFeedback } from "@/hooks/ui/useHapticFeedback";
 import toast from "@/components/ui/Toast";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { isSchedulablePlatform, platformDisplayName } from "@/lib/scheduling/platforms";
+import { toDate } from "@/lib/utils/timestamp";
 
 // Minimum scheduling buffer in minutes (prevent scheduling too close to now)
 const MIN_SCHEDULE_BUFFER_MINUTES = 5;
@@ -66,7 +68,7 @@ export default function ScheduleModal({
 }: ScheduleModalProps) {
   const { schedulePost, isUploading } = useScheduling();
   const { canSchedulePosts, currentPlan, subscription } = useSubscription();
-  const { isConnected: linkedInConnected } = useLinkedIn();
+  const { isConnected: linkedInConnected, connection: linkedInConnection } = useLinkedIn();
   const { isConnected: facebookConnected } = useFacebook();
   const { isConnected: threadsConnected } = useThreads();
   const router = useRouter();
@@ -472,6 +474,19 @@ export default function ScheduleModal({
     return `${dayName} ${day} ${month}`;
   }, [selectedDate, t]);
 
+  // LinkedIn access tokens last 60 days and cannot be refreshed server-side:
+  // warn when the post would fire after the current token expires.
+  const linkedInExpiryWarning = useMemo(() => {
+    if (platform !== "linkedin" || !linkedInConnection?.expiresAt) return null;
+    const scheduledAt = new Date(selectedDate);
+    scheduledAt.setHours(selectedTime.hour, selectedTime.minute, 0, 0);
+    const expiresAt = toDate(linkedInConnection.expiresAt);
+    if (scheduledAt < expiresAt) return null;
+    return t.scheduledPublish.tokenExpiresBeforeSchedule
+      .split("{date}")
+      .join(expiresAt.toLocaleDateString(t.ui.timeLocale, { day: "numeric", month: "long" }));
+  }, [platform, linkedInConnection, selectedDate, selectedTime, t]);
+
   // Handle submit with final validation
   const handleSubmit = async () => {
     // Final validation: check if the selected time is still valid
@@ -503,6 +518,14 @@ export default function ScheduleModal({
           toast.error(t.scheduler.noSlotsToday);
         }
       }
+      return;
+    }
+
+    // Only platforms with a scheduled publisher (Bluesky / Mastodon / Discord
+    // are publish-now only) — never create a post that can only fail.
+    if (!isSchedulablePlatform(platform)) {
+      triggerHaptic("error");
+      toast.error(t.scheduledPublish.unsupportedPlatforms.split("{platforms}").join(platformDisplayName(platform)));
       return;
     }
 
@@ -1004,6 +1027,12 @@ export default function ScheduleModal({
                 </div>
               )}
             </div>
+
+            {linkedInExpiryWarning && (
+              <div role="alert" className="mb-4 p-3 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20">
+                <p className="text-xs text-amber-800 dark:text-amber-300">{linkedInExpiryWarning}</p>
+              </div>
+            )}
 
             {/* Type selection - LinkedIn only */}
             {platform === "linkedin" && (

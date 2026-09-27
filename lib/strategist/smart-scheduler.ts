@@ -73,12 +73,21 @@ export function localToUtc(dateIso: string, timeHM: string, timezone: string): D
   if (!y || !mo || !d || h === undefined || mi === undefined) {
     return new Date(NaN);
   }
-  // Start from a guess: treat the local components as if they were UTC.
+  // Start from a guess: treat the local components as if they were UTC,
+  // then subtract the tz offset observed at that instant.
   const guessUtc = Date.UTC(y, mo - 1, d, h, mi, 0);
-  // Then ask: what does that UTC instant look like in the target TZ?
-  // The diff between what it "looks like" and what we wanted gives the
-  // offset to subtract.
-  const guessDate = new Date(guessUtc);
+  const firstOffset = tzOffsetMs(guessUtc, timezone);
+  let result = guessUtc - firstOffset;
+  // On DST-transition days the guess and the real instant can sit on
+  // opposite sides of the change (e.g. 01:30 Paris on spring-forward day):
+  // re-measure the offset at the candidate instant and correct once more.
+  const secondOffset = tzOffsetMs(result, timezone);
+  if (secondOffset !== firstOffset) result = guessUtc - secondOffset;
+  return new Date(result);
+}
+
+/** Offset (ms) of `timezone` at a UTC instant: wall-clock-as-UTC minus the instant. */
+function tzOffsetMs(instantMs: number, timezone: string): number {
   const fmt = new Intl.DateTimeFormat("en-CA", {
     timeZone: timezone,
     year: "numeric",
@@ -88,17 +97,11 @@ export function localToUtc(dateIso: string, timeHM: string, timezone: string): D
     minute: "2-digit",
     hour12: false,
   });
-  const parts = fmt.formatToParts(guessDate);
+  const parts = fmt.formatToParts(new Date(instantMs));
   const get = (t: string) => Number(parts.find((p) => p.type === t)?.value ?? NaN);
-  const seenY = get("year"),
-    seenMo = get("month"),
-    seenD = get("day"),
-    seenH = get("hour") === 24 ? 0 : get("hour"),
-    seenMi = get("minute");
-  const seenUtcMs = Date.UTC(seenY, seenMo - 1, seenD, seenH, seenMi, 0);
-  // Offset (ms) between "what tz shows" and "what we wanted":
-  const offset = seenUtcMs - guessUtc;
-  return new Date(guessUtc - offset);
+  const seenUtcMs = Date.UTC(get("year"), get("month") - 1, get("day"), get("hour") === 24 ? 0 : get("hour"), get("minute"), 0);
+  // Seconds are not rendered; drop them from the instant so they don't leak into the offset.
+  return seenUtcMs - Math.floor(instantMs / 60_000) * 60_000;
 }
 
 /** Inverse of localToUtc — given a UTC instant and a tz, returns minutes-of-day

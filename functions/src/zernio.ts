@@ -1,39 +1,27 @@
 // Cloud Functions copy of the publish-side of lib/integrations/zernio.ts.
 //
-// We only port `publishViaZernio` here — the OAuth / profile / accounts
-// management all lives in Next.js routes (Cloud Functions never run those).
-// Keep the request shape in sync with the Next.js version.
+// Only the publish request is ported — OAuth / profile / account management
+// lives in Next.js routes (Cloud Functions never run those). Keep the request
+// shape in sync with the Next.js version. HTTP + error classification live in
+// `scheduler/publishers/zernio.ts`.
 
-const ZERNIO_API_BASE = "https://zernio.com/api/v1";
+export const ZERNIO_API_BASE = "https://zernio.com/api/v1";
 
-function getApiKey(): string {
-  // Trim defensively: a stray BOM / newline / whitespace in the env value
-  // corrupts the "Authorization: Bearer <key>" header (ByteString error).
+/** Trimmed defensively: a stray BOM / newline corrupts the Bearer header. */
+export function getZernioApiKey(): string | null {
   const key = process.env.ZERNIO_API_KEY?.trim();
-  if (!key) {
-    throw new Error(
-      "ZERNIO_API_KEY env var is missing in Cloud Functions. Set it in the Functions runtime env and redeploy.",
-    );
-  }
-  return key;
+  return key ? key : null;
 }
 
 export type ZernioFunctionsPlatform = "twitter" | "instagram" | "reddit" | "threads";
 
-export interface ZernioFunctionsPublishResult {
-  success: boolean;
-  postId?: string;
-  publishedUrl?: string;
-  error?: string;
-}
-
-export async function publishViaZernio(params: {
+export function buildZernioPostBody(params: {
   content: string;
   platform: ZernioFunctionsPlatform;
   accountId: string;
   mediaItems?: Array<{ type: "image" | "video"; url: string }>;
   reddit?: { subreddit: string; title: string };
-}): Promise<ZernioFunctionsPublishResult> {
+}): Record<string, unknown> {
   const body: Record<string, unknown> = {
     content: params.content,
     publishNow: true,
@@ -50,48 +38,5 @@ export async function publishViaZernio(params: {
       },
     };
   }
-
-  try {
-    const res = await fetch(`${ZERNIO_API_BASE}/posts`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${getApiKey()}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
-
-    if (!res.ok) {
-      const text = await res.text().catch(() => "");
-      let message = `Zernio API error ${res.status}`;
-      try {
-        const json = JSON.parse(text) as { message?: string; error?: string };
-        if (json.message) message = json.message;
-        else if (json.error) message = json.error;
-      } catch {
-        if (text) message = `${message}: ${text.slice(0, 200)}`;
-      }
-      return { success: false, error: message };
-    }
-
-    const data = (await res.json()) as {
-      post?: {
-        _id?: string;
-        status?: string;
-        platforms?: Array<{ platform: string; postUrl?: string; platformPostUrl?: string }>;
-      };
-    };
-    const post = data.post ?? {};
-    const platformResult = post.platforms?.find((p) => p.platform === params.platform);
-    return {
-      success: true,
-      postId: post._id ?? "",
-      publishedUrl: platformResult?.platformPostUrl ?? platformResult?.postUrl,
-    };
-  } catch (err) {
-    return {
-      success: false,
-      error: err instanceof Error ? err.message : "Zernio publish failed",
-    };
-  }
+  return body;
 }

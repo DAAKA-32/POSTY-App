@@ -2838,6 +2838,52 @@ export const ja = {
     guaranteeDaysLeft: "残り{n}日",
   },
 
+  // Scheduled publishing — statuses + recovery messages, localized by the
+  // scheduler's error code (lib/scheduling/publish-status.ts).
+  scheduledPublish: {
+    status: {
+      pending: "予約済み",
+      processing: "投稿中",
+      retrying: "再試行中",
+      published: "投稿済み",
+      failed: "失敗",
+      cancelled: "キャンセル済み",
+    },
+    processingHint: "{platform} に投稿しています…",
+    nextAttempt: "{time} に自動で再試行します",
+    lastAttempt: "前回の試行：{reason}",
+    reconnectCta: "{platform} を再接続",
+    technicalDetail: "技術的な詳細",
+    publishedWithoutImage: "画像なしで投稿しました：画像を {platform} に送信できませんでした。",
+    publishedOnPersonalProfile: "個人プロフィールに投稿しました：選択した会社ページの管理権限がなくなっています。",
+    unsupportedPlatforms: "次のプラットフォームはまだ予約投稿に対応していません：{platforms}。選択を外すか、今すぐ投稿してください。",
+    partialScheduleFailure: "{succeeded} には予約しましたが、{failed} の予約に失敗しました。",
+    tokenExpiresBeforeSchedule: "LinkedIn の接続は {date} に期限切れになり、この投稿日時より前です。投稿されるよう、それまでに LinkedIn を再接続してください。",
+    errors: {
+      reconnect: "{platform} の接続が期限切れか取り消されています。設定でアカウントを再接続してから、この投稿を予約し直してください。",
+      notConnected: "{platform} アカウントが接続されていません。設定で接続してから、この投稿を予約し直してください。",
+      permission: "{platform} が投稿を拒否しました：権限が不足しています。すべての権限を許可してアカウントを再接続してください。",
+      contentRejected: "{platform} がこのコンテンツを拒否しました。投稿を編集してから予約し直してください。",
+      duplicate: "{platform} がこの投稿を拒否しました：同じ内容がすでにプロフィールに投稿されています。",
+      mediaRequired: "{platform} では画像が必要です。画像を追加してから、この投稿を予約し直してください。",
+      mediaMissing: "添付画像が見つからないか、拒否されました。画像を追加し直してから、この投稿を予約し直してください。",
+      invalidPost: "この投稿には {platform} が必要とする情報が不足しています。編集してから予約し直してください。",
+      unsupportedPlatform: "{platform} は予約投稿に対応していません。",
+      temporary: "何度か試行しましたが、{platform} に接続できませんでした。この投稿を予約し直してください。",
+      outcomeUnknown: "{platform} に投稿されたかどうか確認できませんでした。重複を避けるため、予約し直す前にプロフィールを確認してください。",
+      missedWindow: "投稿されませんでした：予定時刻から 24 時間以上経過しています。この投稿を予約し直してください。",
+      serviceError: "Posty 側の技術的な問題により投稿できませんでした。この投稿を予約し直してください。問題が続く場合はサポートにお問い合わせください。",
+      generic: "投稿に失敗しました。この投稿を予約し直してください。",
+    },
+    retryReasons: {
+      temporary: "{platform} が応答しませんでした",
+      serviceError: "Posty 側の技術的な問題",
+      unreadableConnection: "{platform} の接続を読み取れません",
+      confirming: "投稿結果を確認中",
+      generic: "一時的なエラー",
+    },
+  },
+
   // Schedule Page
   schedulePage: {
     title: "予約投稿",

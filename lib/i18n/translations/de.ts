@@ -2838,6 +2838,52 @@ export const de = {
     guaranteeDaysLeft: "noch {n} T.",
   },
 
+  // Scheduled publishing — statuses + recovery messages, localized by the
+  // scheduler's error code (lib/scheduling/publish-status.ts).
+  scheduledPublish: {
+    status: {
+      pending: "Geplant",
+      processing: "Wird veröffentlicht",
+      retrying: "Neuer Versuch",
+      published: "Veröffentlicht",
+      failed: "Fehlgeschlagen",
+      cancelled: "Abgebrochen",
+    },
+    processingHint: "Wird auf {platform} veröffentlicht…",
+    nextAttempt: "Automatischer neuer Versuch um {time}",
+    lastAttempt: "Letzter Versuch: {reason}",
+    reconnectCta: "{platform} neu verbinden",
+    technicalDetail: "Technisches Detail",
+    publishedWithoutImage: "Ohne Bild veröffentlicht: Es konnte nicht an {platform} gesendet werden.",
+    publishedOnPersonalProfile: "Auf deinem persönlichen Profil veröffentlicht: Du verwaltest die gewählte Unternehmensseite nicht mehr.",
+    unsupportedPlatforms: "Planen ist noch nicht verfügbar für: {platforms}. Wähle sie ab oder veröffentliche jetzt.",
+    partialScheduleFailure: "Geplant auf {succeeded}, aber das Planen ist auf {failed} fehlgeschlagen.",
+    tokenExpiresBeforeSchedule: "Deine LinkedIn-Verbindung läuft am {date} ab, vor dieser Veröffentlichung. Verbinde LinkedIn bis dahin neu, damit sie erscheint.",
+    errors: {
+      reconnect: "Deine {platform}-Verbindung ist abgelaufen oder wurde widerrufen. Verbinde dein Konto in den Einstellungen neu und plane diesen Beitrag erneut.",
+      notConnected: "Kein {platform}-Konto verbunden. Verbinde es in den Einstellungen und plane diesen Beitrag erneut.",
+      permission: "{platform} hat die Veröffentlichung abgelehnt: unzureichende Berechtigungen. Verbinde dein Konto neu und akzeptiere alle Berechtigungen.",
+      contentRejected: "{platform} hat diesen Inhalt abgelehnt. Bearbeite den Beitrag und plane ihn erneut.",
+      duplicate: "{platform} hat diesen Beitrag abgelehnt: Ein identischer Inhalt wurde bereits auf deinem Profil veröffentlicht.",
+      mediaRequired: "{platform} verlangt ein Bild: Füge ein Visual hinzu und plane diesen Beitrag erneut.",
+      mediaMissing: "Das angehängte Bild fehlt oder wurde abgelehnt. Füge es erneut hinzu und plane diesen Beitrag erneut.",
+      invalidPost: "Diesem Beitrag fehlen Angaben, die {platform} verlangt. Bearbeite ihn und plane ihn erneut.",
+      unsupportedPlatform: "Planen ist für {platform} nicht verfügbar.",
+      temporary: "{platform} war nach mehreren Versuchen weiterhin nicht erreichbar. Plane diesen Beitrag erneut.",
+      outcomeUnknown: "Wir konnten nicht bestätigen, ob der Beitrag auf {platform} veröffentlicht wurde. Prüfe dein Profil, bevor du ihn erneut planst, um ein Duplikat zu vermeiden.",
+      missedWindow: "Nicht veröffentlicht: Der geplante Zeitpunkt liegt mehr als 24 Stunden zurück. Plane diesen Beitrag erneut.",
+      serviceError: "Ein technisches Problem bei Posty hat die Veröffentlichung verhindert. Plane den Beitrag erneut; wenn das Problem bleibt, kontaktiere den Support.",
+      generic: "Die Veröffentlichung ist fehlgeschlagen. Plane diesen Beitrag erneut.",
+    },
+    retryReasons: {
+      temporary: "{platform} hat nicht geantwortet",
+      serviceError: "technisches Problem bei Posty",
+      unreadableConnection: "{platform}-Verbindung nicht lesbar",
+      confirming: "Veröffentlichung wird überprüft",
+      generic: "vorübergehender Fehler",
+    },
+  },
+
   // Schedule Page
   schedulePage: {
     title: "Geplante Beiträge",

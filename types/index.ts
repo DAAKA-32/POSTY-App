@@ -938,9 +938,70 @@ export interface DetectedAIAction {
 
 // ============== SCHEDULING TYPES ==============
 
-export type ScheduleStatus = "pending" | "published" | "failed" | "cancelled";
+/**
+ * Lifecycle of a scheduled post. Only `pending` (create / reschedule) and
+ * `cancelled` are ever written by the app; every other transition belongs to
+ * the scheduler Cloud Function (enforced by firestore.rules).
+ *   pending → processing → published
+ *                        → retrying → processing …   (transient error)
+ *                        → failed                     (permanent / exhausted)
+ * KEEP IN SYNC with functions/src/scheduler/types.ts.
+ */
+export type ScheduleStatus = "pending" | "processing" | "retrying" | "published" | "failed" | "cancelled";
 
+/** Display union — legacy docs may reference platforms that can no longer be scheduled. */
 export type SchedulePlatform = "linkedin" | "threads" | "facebook" | "bluesky" | "mastodon" | "discord";
+
+/** Platforms the app lets users schedule (a subset of what the scheduler supports). */
+export type SchedulablePlatform = "linkedin" | "facebook" | "threads";
+
+/**
+ * Machine-readable failure code set by the scheduler on `lastError.code`.
+ * KEEP IN SYNC with `PublishErrorCode` in functions/src/scheduler/types.ts.
+ */
+export type ScheduledPublishErrorCode =
+  | "CONFIG_ENCRYPTION_KEY_MISSING"
+  | "CONFIG_ENCRYPTION_KEY_INVALID"
+  | "CONFIG_ZERNIO_KEY_MISSING"
+  | "CONFIG_ZERNIO_KEY_INVALID"
+  | "CONNECTION_NOT_FOUND"
+  | "TOKEN_DECRYPT_FAILED"
+  | "TOKEN_EXPIRED"
+  | "AUTH_REJECTED"
+  | "PERMISSION_DENIED"
+  | "CONTENT_REJECTED"
+  | "DUPLICATE_CONTENT"
+  | "MEDIA_REQUIRED"
+  | "MEDIA_UNAVAILABLE"
+  | "INVALID_POST_DATA"
+  | "UNSUPPORTED_PLATFORM"
+  | "RATE_LIMITED"
+  | "PLATFORM_UNAVAILABLE"
+  | "NETWORK_ERROR"
+  | "TIMEOUT"
+  | "OUTCOME_UNKNOWN"
+  | "MISSED_PUBLISH_WINDOW"
+  | "WORKER_TIMEOUT"
+  | "DEADLINE_EXCEEDED"
+  | "INTERNAL_ERROR";
+
+/** Last error recorded by the scheduler (on `retrying` and `failed` posts). */
+export interface ScheduledPublishError {
+  code: ScheduledPublishErrorCode;
+  /** French fallback message — the UI localizes by `code`. */
+  message: string;
+  /** Sanitized platform detail (never contains a token). */
+  detail: string | null;
+  platform: string;
+  httpStatus: number | null;
+  retryable: boolean;
+  /** The request may have reached the platform (outcome unknown). */
+  ambiguous: boolean;
+  attempt: number;
+  at: Timestamp;
+}
+
+export type ScheduledPublishWarningCode = "IMAGE_DROPPED" | "ORGANIZATION_FALLBACK_PERSONAL";
 
 export type LinkedInPostType = "feed" | "article";
 
@@ -999,13 +1060,23 @@ export interface ScheduledPost {
   // Tracking
   createdAt: Timestamp;
   updatedAt: Timestamp;
-  // Publishing results
+  // Publishing results (scheduler-owned)
   publishedAt?: Timestamp;
   publishedUrl?: string;
-  // Error handling
+  /** Platform id of the published post (e.g. "urn:li:share:…"). */
+  externalPostId?: string | null;
+  /** True when the publication was confirmed from an earlier, interrupted attempt. */
+  reconciled?: boolean;
+  /** Non-fatal degradations (e.g. image dropped, published on personal profile). */
+  warnings?: Array<{ code: ScheduledPublishWarningCode; detail?: string }>;
+  // Error handling (scheduler-owned)
   attemptCount: number;
   lastAttemptAt?: Timestamp;
-  failureReason?: string;
+  /** When the next automatic attempt runs (status `retrying`). */
+  nextAttemptAt?: Timestamp | null;
+  lastError?: ScheduledPublishError | null;
+  /** Legacy/French fallback of `lastError.message` on `failed` posts. */
+  failureReason?: string | null;
 }
 
 // For creating a new scheduled post
@@ -1015,7 +1086,7 @@ export interface CreateScheduledPostData {
   title?: string;
   scheduledAt: Date;
   timezone: string;
-  platform: SchedulePlatform;
+  platform: SchedulablePlatform;
   postType?: LinkedInPostType;
   /** LinkedIn audience for the published post — parity with direct flow. */
   visibility?: LinkedInVisibility;
@@ -1034,9 +1105,11 @@ export interface CreateScheduledPostData {
  */
 export type PendingSeedCommentStatus =
   | "pending"
+  | "posting"
   | "posted"
   | "failed"
   | "skipped_flag_off"
+  | "skipped_stale"
   | "skipped_post_missing";
 
 export interface PendingSeedComment {
@@ -1068,6 +1141,11 @@ export interface SchedulingContextType {
   pendingCount: number; // Count of pending scheduled posts (for badge display)
   // Actions
   schedulePost: (data: CreateScheduledPostData) => Promise<{ success: boolean; scheduledPostId?: string; error?: string }>;
+  /** One scheduled post per platform; LinkedIn-only options are applied to LinkedIn only. */
+  schedulePostOnPlatforms: (
+    data: Omit<CreateScheduledPostData, "platform">,
+    platforms: SchedulablePlatform[]
+  ) => Promise<Array<{ platform: SchedulablePlatform; success: boolean; scheduledPostId?: string; error?: string }>>;
   cancelSchedule: (scheduledPostId: string) => Promise<{ success: boolean; error?: string }>;
   deleteSchedule: (scheduledPostId: string) => Promise<{ success: boolean; error?: string }>;
   reschedulePost: (scheduledPostId: string, newDate: Date) => Promise<{ success: boolean; error?: string }>;

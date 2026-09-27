@@ -2838,6 +2838,52 @@ export const it = {
     guaranteeDaysLeft: "{n}g rimanenti",
   },
 
+  // Scheduled publishing — statuses + recovery messages, localized by the
+  // scheduler's error code (lib/scheduling/publish-status.ts).
+  scheduledPublish: {
+    status: {
+      pending: "Programmato",
+      processing: "Pubblicazione in corso",
+      retrying: "Nuovo tentativo",
+      published: "Pubblicato",
+      failed: "Non riuscito",
+      cancelled: "Annullato",
+    },
+    processingHint: "Pubblicazione in corso su {platform}…",
+    nextAttempt: "Nuovo tentativo automatico alle {time}",
+    lastAttempt: "Ultimo tentativo: {reason}",
+    reconnectCta: "Ricollega {platform}",
+    technicalDetail: "Dettaglio tecnico",
+    publishedWithoutImage: "Pubblicato senza l'immagine: non è stato possibile inviarla a {platform}.",
+    publishedOnPersonalProfile: "Pubblicato sul tuo profilo personale: non gestisci più la pagina aziendale scelta.",
+    unsupportedPlatforms: "La programmazione non è ancora disponibile per: {platforms}. Deselezionale o pubblica ora.",
+    partialScheduleFailure: "Programmato su {succeeded}, ma la programmazione non è riuscita su {failed}.",
+    tokenExpiresBeforeSchedule: "La tua connessione LinkedIn scade il {date}, prima di questa pubblicazione. Ricollega LinkedIn entro quella data perché venga pubblicata.",
+    errors: {
+      reconnect: "La tua connessione {platform} è scaduta o è stata revocata. Ricollega il tuo account nelle Impostazioni, poi riprogramma questo post.",
+      notConnected: "Nessun account {platform} collegato. Collegalo nelle Impostazioni, poi riprogramma questo post.",
+      permission: "{platform} ha rifiutato la pubblicazione: autorizzazioni insufficienti. Ricollega il tuo account accettando tutte le autorizzazioni.",
+      contentRejected: "{platform} ha rifiutato questo contenuto. Modifica il post, poi riprogrammalo.",
+      duplicate: "{platform} ha rifiutato questo post: un contenuto identico è già stato pubblicato sul tuo profilo.",
+      mediaRequired: "{platform} richiede un'immagine: aggiungi un visual, poi riprogramma questo post.",
+      mediaMissing: "L'immagine allegata non è stata trovata o è stata rifiutata. Aggiungila di nuovo, poi riprogramma questo post.",
+      invalidPost: "Mancano informazioni richieste da {platform} in questo post. Modificalo, poi riprogrammalo.",
+      unsupportedPlatform: "La programmazione non è disponibile per {platform}.",
+      temporary: "{platform} è rimasto non disponibile dopo diversi tentativi. Riprogramma questo post.",
+      outcomeUnknown: "Impossibile confermare se il post è stato pubblicato su {platform}. Controlla il tuo profilo prima di riprogrammarlo, per evitare un duplicato.",
+      missedWindow: "Non pubblicato: l'orario previsto è passato da più di 24 ore. Riprogramma questo post.",
+      serviceError: "Un problema tecnico di Posty ha impedito la pubblicazione. Riprogramma questo post; se il problema persiste, contatta l'assistenza.",
+      generic: "La pubblicazione non è riuscita. Riprogramma questo post.",
+    },
+    retryReasons: {
+      temporary: "{platform} non ha risposto",
+      serviceError: "problema tecnico di Posty",
+      unreadableConnection: "connessione {platform} illeggibile",
+      confirming: "verifica della pubblicazione in corso",
+      generic: "errore temporaneo",
+    },
+  },
+
   // Schedule Page
   schedulePage: {
     title: "Post programmati",

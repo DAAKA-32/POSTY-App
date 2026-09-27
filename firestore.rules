@@ -143,10 +143,78 @@ service cloud.firestore {
       allow create: if isAuthenticated() && isRequestOwner();
     }
 
+    // ───────────────────────── Scheduled posts ─────────────────────────
+    // The scheduler (Cloud Function, Admin SDK) owns every publishing field:
+    // status transitions, attempts, lease, results, errors. Owners may only
+    // create a fresh pending post, cancel, reschedule or delete. `userId` is
+    // immutable — it selects whose OAuth token the scheduler publishes with,
+    // so rewriting it would publish on someone else's account. Nothing can be
+    // edited while a post is being published ("processing") or once it is.
+
+    // Keep in sync with SCHEDULER_PLATFORMS (functions/src/scheduler/types.ts).
+    function isSchedulerPlatform(platform) {
+      return platform in ['linkedin', 'facebook', 'threads', 'x', 'twitter', 'instagram', 'reddit', 'threadsz'];
+    }
+
+    function nullOrAbsent(data, field) {
+      return !(field in data) || data[field] == null;
+    }
+
+    function isValidScheduledPostCreate() {
+      let d = request.resource.data;
+      return d.keys().hasOnly([
+          'userId', 'content', 'postId', 'title', 'scheduledAt', 'timezone', 'status',
+          'platform', 'postType', 'createdAt', 'updatedAt', 'attemptCount', 'publishedAt',
+          'publishedUrl', 'lastAttemptAt', 'failureReason', 'images', 'visibility',
+          'organizationUrn', 'seedComment', 'redditSubreddit', 'redditTitle'])
+        && d.status == 'pending'
+        && d.attemptCount == 0
+        && d.scheduledAt is timestamp
+        && d.content is string && d.content.size() > 0 && d.content.size() <= 10000
+        && isSchedulerPlatform(d.platform)
+        && nullOrAbsent(d, 'publishedAt')
+        && nullOrAbsent(d, 'publishedUrl')
+        && nullOrAbsent(d, 'lastAttemptAt')
+        && nullOrAbsent(d, 'failureReason')
+        && (!('images' in d) || (d.images is list && d.images.size() <= 9));
+    }
+
+    // pending / retrying / failed → cancelled
+    function isOwnerCancel() {
+      let d = request.resource.data;
+      return resource.data.status in ['pending', 'retrying', 'failed']
+        && d.status == 'cancelled'
+        && d.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'nextAttemptAt'])
+        && nullOrAbsent(d, 'nextAttemptAt');
+    }
+
+    // pending / retrying / failed / cancelled → pending at a new time, with a
+    // fresh attempt budget and no leftover error / retry state.
+    function isOwnerReschedule() {
+      let d = request.resource.data;
+      return resource.data.status in ['pending', 'retrying', 'failed', 'cancelled']
+        && d.status == 'pending'
+        && d.scheduledAt is timestamp
+        && d.attemptCount == 0
+        && d.diff(resource.data).affectedKeys().hasOnly([
+            'scheduledAt', 'timezone', 'status', 'updatedAt', 'attemptCount', 'failureReason',
+            'lastError', 'nextAttemptAt', 'priorSendUncertain', 'resumeState'])
+        && nullOrAbsent(d, 'failureReason')
+        && nullOrAbsent(d, 'lastError')
+        && nullOrAbsent(d, 'nextAttemptAt')
+        && (!('priorSendUncertain' in d) || d.priorSendUncertain == false);
+    }
+
     match /scheduledPosts/{postId} {
       allow read:   if isResourceOwner();
-      allow update, delete: if isResourceOwner();
-      allow create: if isAuthenticated() && isRequestOwner() && canSchedulePosts();
+      allow create: if isAuthenticated() && isRequestOwner() && canSchedulePosts()
+                    && isValidScheduledPostCreate();
+      allow update: if isResourceOwner()
+                    && request.resource.data.userId == resource.data.userId
+                    && (isOwnerCancel() || isOwnerReschedule());
+      // Unrestricted for the owner: account / conversation deletion cascades
+      // remove every scheduled post regardless of status.
+      allow delete: if isResourceOwner();
     }
 
     match /payments/{paymentId} {

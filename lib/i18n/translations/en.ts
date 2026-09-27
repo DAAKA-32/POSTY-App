@@ -2691,6 +2691,52 @@ export const en = {
     guaranteeDaysLeft: "{n}d remaining",
   },
 
+  // Scheduled publishing — statuses + recovery messages, localized by the
+  // scheduler's error code (lib/scheduling/publish-status.ts).
+  scheduledPublish: {
+    status: {
+      pending: "Scheduled",
+      processing: "Publishing",
+      retrying: "Retrying",
+      published: "Published",
+      failed: "Failed",
+      cancelled: "Cancelled",
+    },
+    processingHint: "Publishing to {platform}…",
+    nextAttempt: "Automatic retry at {time}",
+    lastAttempt: "Last attempt: {reason}",
+    reconnectCta: "Reconnect {platform}",
+    technicalDetail: "Technical detail",
+    publishedWithoutImage: "Published without the image: it could not be sent to {platform}.",
+    publishedOnPersonalProfile: "Published on your personal profile: you no longer manage the selected company page.",
+    unsupportedPlatforms: "Scheduling isn't available yet for: {platforms}. Deselect them or publish now.",
+    partialScheduleFailure: "Scheduled on {succeeded}, but scheduling failed on {failed}.",
+    tokenExpiresBeforeSchedule: "Your LinkedIn connection expires on {date}, before this post goes out. Reconnect LinkedIn before then so it gets published.",
+    errors: {
+      reconnect: "Your {platform} connection expired or was revoked. Reconnect your account in Settings, then reschedule this post.",
+      notConnected: "No {platform} account is connected. Connect it in Settings, then reschedule this post.",
+      permission: "{platform} refused to publish: insufficient permissions. Reconnect your account and accept all permissions.",
+      contentRejected: "{platform} rejected this content. Edit the post, then reschedule it.",
+      duplicate: "{platform} rejected this post: identical content was already published on your profile.",
+      mediaRequired: "{platform} requires an image: add a visual, then reschedule this post.",
+      mediaMissing: "The attached image is missing or was rejected. Add it again, then reschedule this post.",
+      invalidPost: "This post is missing information required by {platform}. Edit it, then reschedule it.",
+      unsupportedPlatform: "Scheduling isn't available for {platform}.",
+      temporary: "{platform} stayed unavailable after several attempts. Reschedule this post.",
+      outcomeUnknown: "We couldn't confirm whether the post was published on {platform}. Check your profile before rescheduling to avoid a duplicate.",
+      missedWindow: "Not published: the scheduled time passed more than 24 hours ago. Reschedule this post.",
+      serviceError: "A technical issue on Posty's side prevented publishing. Reschedule this post; if it keeps happening, contact support.",
+      generic: "Publishing failed. Reschedule this post.",
+    },
+    retryReasons: {
+      temporary: "{platform} didn't respond",
+      serviceError: "technical issue on Posty's side",
+      unreadableConnection: "{platform} connection unreadable",
+      confirming: "confirming the publication",
+      generic: "temporary error",
+    },
+  },
+
   // Schedule Page
   schedulePage: {
     title: "Scheduled posts",

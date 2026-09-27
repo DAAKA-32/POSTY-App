@@ -1,16 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { ScheduledPost, ScheduleStatus } from "@/types";
 import { toDate } from "@/lib/utils/timestamp";
-import Button from "@/components/ui/Button";
 import { ConfirmModal } from "@/components/ui/Modal";
 import { triggerHaptic } from "@/hooks/ui/useHapticFeedback";
 import { LinkedInIcon } from "@/components/linkedin/LinkedInConnectButton";
 import { ThreadsIcon, FacebookIcon, BlueskyIcon, MastodonIcon, DiscordIcon } from "@/components/publish/platform-icons";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { formatTimeLocale } from "@/components/ui/IOSTimePicker";
+import { platformDisplayName } from "@/lib/scheduling/platforms";
+import { describeRetryReason, describeScheduledFailure } from "@/lib/scheduling/publish-status";
 
 interface ScheduledPostCardProps {
   post: ScheduledPost;
@@ -41,44 +43,41 @@ const getMonthsShort = (t: any) => {
   });
 };
 
-// Map raw failureReason to a user-friendly message (safety net for legacy data in Firestore)
-const DEFAULT_FAILURE_MSG = "Une erreur est survenue lors de la publication. Vous pouvez reprogrammer ce post.";
-function getUserFriendlyError(reason: string): string {
-  // Catch raw API error patterns (e.g. "LinkedIn API error: 422", "Erreur Facebook: 400")
-  if (/api\s*error|status\s*\d{3}|\d{3}\s*error/i.test(reason)) return DEFAULT_FAILURE_MSG;
-  if (/^erreur (facebook|threads)\s*(\(|:)/i.test(reason)) return DEFAULT_FAILURE_MSG;
-  if (/plateforme non support/i.test(reason)) return "Cette plateforme n'est pas encore disponible.";
-  // Already user-friendly — pass through
-  return reason;
-}
+/** A pending post is only "late" once the scheduler (every minute) should have taken it. */
+const LATE_AFTER_MS = 5 * 60_000;
 
-// Status config - Clean professional styling
+// Status config - Clean professional styling (labels come from i18n)
 const STATUS_CONFIG: Record<ScheduleStatus, {
-  label: string;
   color: string;
   bgColor: string;
   borderColor: string;
 }> = {
   pending: {
-    label: "Programmé",
     color: "text-primary",
     bgColor: "bg-primary/10",
     borderColor: "border-primary/20",
   },
+  processing: {
+    color: "text-primary",
+    bgColor: "bg-primary/15",
+    borderColor: "border-primary/30",
+  },
+  retrying: {
+    color: "text-amber-700 dark:text-amber-400",
+    bgColor: "bg-amber-500/10",
+    borderColor: "border-amber-500/20",
+  },
   published: {
-    label: "Publié",
     color: "text-emerald-600 dark:text-emerald-400",
     bgColor: "bg-emerald-500/10",
     borderColor: "border-emerald-500/20",
   },
   failed: {
-    label: "Échec",
     color: "text-red-600 dark:text-red-400",
     bgColor: "bg-red-500/10",
     borderColor: "border-red-500/20",
   },
   cancelled: {
-    label: "Annulé",
     color: "text-gray-500 dark:text-text-muted",
     bgColor: "bg-gray-100 dark:bg-dark-hover",
     borderColor: "border-gray-200 dark:border-dark-border",
@@ -158,10 +157,17 @@ export default function ScheduledPostCard({
   const month = getMonthsShort(t)[scheduledDate.getMonth()];
   const time = formatTimeLocale(scheduledDate.getHours(), scheduledDate.getMinutes(), t.ui.timeLocale);
 
-  const statusConfig = STATUS_CONFIG[post.status];
+  // Unknown statuses (future server values) fall back to the pending style.
+  const statusConfig = STATUS_CONFIG[post.status] ?? STATUS_CONFIG.pending;
+  const statusLabel = t.scheduledPublish.status[post.status] ?? post.status;
+  const platformName = platformDisplayName(post.platform);
 
-  // Check if the post is in the past and still pending (should have been published)
-  const isPastDue = post.status === "pending" && scheduledDate < new Date();
+  // Still pending well after its time → the scheduler should have taken it.
+  const isPastDue = post.status === "pending" && Date.now() - scheduledDate.getTime() > LATE_AFTER_MS;
+
+  const failure = post.status === "failed" ? describeScheduledFailure(post, t) : null;
+  const nextAttemptDate = post.status === "retrying" && post.nextAttemptAt ? toDate(post.nextAttemptAt) : null;
+  const warnings = post.status === "published" ? post.warnings ?? [] : [];
 
   // Handle cancel (pending → cancelled)
   const handleCancel = async () => {
@@ -263,7 +269,10 @@ export default function ScheduledPostCard({
               ${statusConfig.bgColor} ${statusConfig.color}
             `}
           >
-            {statusConfig.label}
+            {post.status === "processing" && (
+              <span className="w-2.5 h-2.5 mr-1.5 rounded-full border-2 border-current border-t-transparent animate-spin" aria-hidden="true" />
+            )}
+            {statusLabel}
           </span>
         </div>
 
@@ -320,8 +329,31 @@ export default function ScheduledPostCard({
           </div>
         )}
 
-        {/* Error message if failed - Premium alert style */}
-        {post.status === "failed" && post.failureReason && (
+        {/* Publishing right now */}
+        {post.status === "processing" && (
+          <p className="relative mb-4 text-xs text-primary">
+            {t.scheduledPublish.processingHint.split("{platform}").join(platformName)}
+          </p>
+        )}
+
+        {/* Waiting for an automatic retry */}
+        {post.status === "retrying" && (
+          <div className="relative mb-4 p-3 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl">
+            {nextAttemptDate && (
+              <p className="text-xs font-medium text-amber-800 dark:text-amber-300">
+                {t.scheduledPublish.nextAttempt.split("{time}").join(
+                  formatTimeLocale(nextAttemptDate.getHours(), nextAttemptDate.getMinutes(), t.ui.timeLocale)
+                )}
+              </p>
+            )}
+            <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
+              {t.scheduledPublish.lastAttempt.split("{reason}").join(describeRetryReason(post, t))}
+            </p>
+          </div>
+        )}
+
+        {/* Error message if failed — code-specific, actionable */}
+        {failure && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -332,9 +364,42 @@ export default function ScheduledPostCard({
               <svg className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <p className="text-xs text-red-700 dark:text-red-400">{getUserFriendlyError(post.failureReason)}</p>
+              <div className="min-w-0">
+                <p className="text-xs text-red-700 dark:text-red-400">{failure.message}</p>
+                {failure.action === "reconnect" && (
+                  <Link
+                    href="/settings"
+                    className="inline-flex mt-2 text-xs font-semibold text-red-700 dark:text-red-300 underline underline-offset-2 hover:text-red-800 dark:hover:text-red-200"
+                  >
+                    {t.scheduledPublish.reconnectCta.split("{platform}").join(platformName)}
+                  </Link>
+                )}
+                {failure.detail && (
+                  <details className="mt-2">
+                    <summary className="text-[11px] text-red-600/70 dark:text-red-400/70 cursor-pointer">
+                      {t.scheduledPublish.technicalDetail}
+                    </summary>
+                    <p className="mt-1 text-[11px] text-red-600/80 dark:text-red-400/80 break-words">
+                      {post.lastError?.code} · {failure.detail}
+                    </p>
+                  </details>
+                )}
+              </div>
             </div>
           </motion.div>
+        )}
+
+        {/* Published, but degraded (image dropped / personal-profile fallback) */}
+        {warnings.length > 0 && (
+          <div className="relative mb-3 p-2.5 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-lg">
+            {warnings.map((w) => (
+              <p key={w.code} className="text-xs text-amber-800 dark:text-amber-300">
+                {w.code === "IMAGE_DROPPED"
+                  ? t.scheduledPublish.publishedWithoutImage.split("{platform}").join(platformName)
+                  : t.scheduledPublish.publishedOnPersonalProfile}
+              </p>
+            ))}
+          </div>
         )}
 
         {/* Published URL if available - Premium link style */}
@@ -358,8 +423,8 @@ export default function ScheduledPostCard({
           </motion.a>
         )}
 
-        {/* Actions - Clean design, responsive for mobile */}
-        {post.status === "pending" && (
+        {/* Actions - Clean design, responsive for mobile (none while publishing) */}
+        {(post.status === "pending" || post.status === "retrying") && (
           <div className="relative flex gap-1 sm:gap-2 pt-3 sm:pt-4 mt-1 border-t border-gray-200 dark:border-dark-border">
             <button
               onClick={() => {

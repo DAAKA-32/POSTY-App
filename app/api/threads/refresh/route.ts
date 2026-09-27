@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     });
 
     const refreshResponse = await fetch(
-      `${THREADS_CONFIG.longLivedTokenUrl}?${refreshParams.toString()}`
+      `${THREADS_CONFIG.refreshTokenUrl}?${refreshParams.toString()}`
     );
 
     const refreshText = await refreshResponse.text();

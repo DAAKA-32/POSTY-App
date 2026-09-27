@@ -2838,6 +2838,52 @@ export const ko = {
     guaranteeDaysLeft: "{n}일 남음",
   },
 
+  // Scheduled publishing — statuses + recovery messages, localized by the
+  // scheduler's error code (lib/scheduling/publish-status.ts).
+  scheduledPublish: {
+    status: {
+      pending: "예약됨",
+      processing: "게시 중",
+      retrying: "재시도 중",
+      published: "게시됨",
+      failed: "실패",
+      cancelled: "취소됨",
+    },
+    processingHint: "{platform}에 게시하는 중…",
+    nextAttempt: "{time}에 자동으로 다시 시도합니다",
+    lastAttempt: "마지막 시도: {reason}",
+    reconnectCta: "{platform} 다시 연결",
+    technicalDetail: "기술 세부 정보",
+    publishedWithoutImage: "이미지 없이 게시되었습니다: 이미지를 {platform}에 보낼 수 없었습니다.",
+    publishedOnPersonalProfile: "개인 프로필에 게시되었습니다: 선택한 회사 페이지를 더 이상 관리하지 않습니다.",
+    unsupportedPlatforms: "다음 플랫폼은 아직 예약 게시를 지원하지 않습니다: {platforms}. 선택을 해제하거나 지금 게시하세요.",
+    partialScheduleFailure: "{succeeded}에는 예약했지만 {failed}에서는 예약에 실패했습니다.",
+    tokenExpiresBeforeSchedule: "LinkedIn 연결이 이 게시 시간보다 이른 {date}에 만료됩니다. 게시되도록 그 전에 LinkedIn을 다시 연결하세요.",
+    errors: {
+      reconnect: "{platform} 연결이 만료되었거나 취소되었습니다. 설정에서 계정을 다시 연결한 뒤 이 게시물을 다시 예약하세요.",
+      notConnected: "연결된 {platform} 계정이 없습니다. 설정에서 연결한 뒤 이 게시물을 다시 예약하세요.",
+      permission: "{platform}이(가) 게시를 거부했습니다: 권한이 부족합니다. 모든 권한을 허용하여 계정을 다시 연결하세요.",
+      contentRejected: "{platform}이(가) 이 콘텐츠를 거부했습니다. 게시물을 수정한 뒤 다시 예약하세요.",
+      duplicate: "{platform}이(가) 이 게시물을 거부했습니다: 동일한 콘텐츠가 이미 프로필에 게시되어 있습니다.",
+      mediaRequired: "{platform}에는 이미지가 필요합니다. 이미지를 추가한 뒤 이 게시물을 다시 예약하세요.",
+      mediaMissing: "첨부 이미지를 찾을 수 없거나 거부되었습니다. 다시 추가한 뒤 이 게시물을 다시 예약하세요.",
+      invalidPost: "이 게시물에 {platform}에서 요구하는 정보가 없습니다. 수정한 뒤 다시 예약하세요.",
+      unsupportedPlatform: "{platform}은(는) 예약 게시를 지원하지 않습니다.",
+      temporary: "여러 번 시도했지만 {platform}에 연결할 수 없었습니다. 이 게시물을 다시 예약하세요.",
+      outcomeUnknown: "{platform}에 게시되었는지 확인할 수 없습니다. 중복 게시를 피하려면 다시 예약하기 전에 프로필을 확인하세요.",
+      missedWindow: "게시되지 않음: 예약 시간이 24시간 이상 지났습니다. 이 게시물을 다시 예약하세요.",
+      serviceError: "Posty 측 기술 문제로 게시하지 못했습니다. 이 게시물을 다시 예약하고, 문제가 계속되면 지원팀에 문의하세요.",
+      generic: "게시에 실패했습니다. 이 게시물을 다시 예약하세요.",
+    },
+    retryReasons: {
+      temporary: "{platform}이(가) 응답하지 않음",
+      serviceError: "Posty 측 기술 문제",
+      unreadableConnection: "{platform} 연결을 읽을 수 없음",
+      confirming: "게시 결과 확인 중",
+      generic: "일시적인 오류",
+    },
+  },
+
   // Schedule Page
   schedulePage: {
     title: "예약된 게시물",

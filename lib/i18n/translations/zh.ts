@@ -2838,6 +2838,52 @@ export const zh = {
     guaranteeDaysLeft: "剩余{n}天",
   },
 
+  // Scheduled publishing — statuses + recovery messages, localized by the
+  // scheduler's error code (lib/scheduling/publish-status.ts).
+  scheduledPublish: {
+    status: {
+      pending: "已排期",
+      processing: "发布中",
+      retrying: "重试中",
+      published: "已发布",
+      failed: "失败",
+      cancelled: "已取消",
+    },
+    processingHint: "正在发布到 {platform}…",
+    nextAttempt: "将于 {time} 自动重试",
+    lastAttempt: "上次尝试：{reason}",
+    reconnectCta: "重新连接 {platform}",
+    technicalDetail: "技术详情",
+    publishedWithoutImage: "已发布，但未包含图片：无法将图片发送到 {platform}。",
+    publishedOnPersonalProfile: "已发布到你的个人主页：你已不再管理所选的公司主页。",
+    unsupportedPlatforms: "以下平台暂不支持排期：{platforms}。请取消选择或立即发布。",
+    partialScheduleFailure: "已在 {succeeded} 排期，但在 {failed} 排期失败。",
+    tokenExpiresBeforeSchedule: "你的 LinkedIn 连接将于 {date} 过期，早于本次发布时间。请在此之前重新连接 LinkedIn，以确保按时发布。",
+    errors: {
+      reconnect: "你的 {platform} 连接已过期或被撤销。请在设置中重新连接账号，然后重新排期此帖子。",
+      notConnected: "尚未连接 {platform} 账号。请在设置中连接，然后重新排期此帖子。",
+      permission: "{platform} 拒绝了发布：权限不足。请重新连接账号并接受所有权限。",
+      contentRejected: "{platform} 拒绝了此内容。请修改帖子后重新排期。",
+      duplicate: "{platform} 拒绝了此帖子：你的主页上已发布过相同的内容。",
+      mediaRequired: "{platform} 需要图片：请添加配图后重新排期此帖子。",
+      mediaMissing: "附加的图片不存在或被拒绝。请重新添加后重新排期此帖子。",
+      invalidPost: "此帖子缺少 {platform} 要求的信息。请修改后重新排期。",
+      unsupportedPlatform: "{platform} 不支持排期发布。",
+      temporary: "多次尝试后 {platform} 仍无法访问。请重新排期此帖子。",
+      outcomeUnknown: "无法确认帖子是否已发布到 {platform}。重新排期前请先检查你的主页，以免重复发布。",
+      missedWindow: "未发布：已超过预定时间 24 小时以上。请重新排期此帖子。",
+      serviceError: "Posty 的技术问题导致发布失败。请重新排期此帖子；如问题持续，请联系客服。",
+      generic: "发布失败。请重新排期此帖子。",
+    },
+    retryReasons: {
+      temporary: "{platform} 未响应",
+      serviceError: "Posty 技术问题",
+      unreadableConnection: "{platform} 连接无法读取",
+      confirming: "正在确认发布结果",
+      generic: "临时错误",
+    },
+  },
+
   // Schedule Page
   schedulePage: {
     title: "定时帖子",

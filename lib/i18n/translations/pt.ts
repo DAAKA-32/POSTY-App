@@ -2838,6 +2838,52 @@ export const pt = {
     guaranteeDaysLeft: "{n}d restantes",
   },
 
+  // Scheduled publishing — statuses + recovery messages, localized by the
+  // scheduler's error code (lib/scheduling/publish-status.ts).
+  scheduledPublish: {
+    status: {
+      pending: "Agendado",
+      processing: "Publicando",
+      retrying: "Nova tentativa",
+      published: "Publicado",
+      failed: "Falhou",
+      cancelled: "Cancelado",
+    },
+    processingHint: "Publicando no {platform}…",
+    nextAttempt: "Nova tentativa automática às {time}",
+    lastAttempt: "Última tentativa: {reason}",
+    reconnectCta: "Reconectar {platform}",
+    technicalDetail: "Detalhe técnico",
+    publishedWithoutImage: "Publicado sem a imagem: não foi possível enviá-la ao {platform}.",
+    publishedOnPersonalProfile: "Publicado no seu perfil pessoal: você não administra mais a página da empresa escolhida.",
+    unsupportedPlatforms: "O agendamento ainda não está disponível para: {platforms}. Desmarque-as ou publique agora.",
+    partialScheduleFailure: "Agendado no {succeeded}, mas o agendamento falhou no {failed}.",
+    tokenExpiresBeforeSchedule: "Sua conexão com o LinkedIn expira em {date}, antes desta publicação. Reconecte o LinkedIn até lá para que ela seja publicada.",
+    errors: {
+      reconnect: "Sua conexão com o {platform} expirou ou foi revogada. Reconecte sua conta em Configurações e reagende este post.",
+      notConnected: "Nenhuma conta do {platform} está conectada. Conecte-a em Configurações e reagende este post.",
+      permission: "O {platform} recusou a publicação: permissões insuficientes. Reconecte sua conta aceitando todas as permissões.",
+      contentRejected: "O {platform} recusou este conteúdo. Edite o post e reagende-o.",
+      duplicate: "O {platform} recusou este post: um conteúdo idêntico já foi publicado no seu perfil.",
+      mediaRequired: "O {platform} exige uma imagem: adicione um visual e reagende este post.",
+      mediaMissing: "A imagem anexada não foi encontrada ou foi recusada. Adicione-a novamente e reagende este post.",
+      invalidPost: "Faltam informações exigidas pelo {platform} neste post. Edite-o e reagende-o.",
+      unsupportedPlatform: "O agendamento não está disponível para o {platform}.",
+      temporary: "O {platform} continuou indisponível após várias tentativas. Reagende este post.",
+      outcomeUnknown: "Não foi possível confirmar se o post foi publicado no {platform}. Verifique seu perfil antes de reagendá-lo para evitar duplicidade.",
+      missedWindow: "Não publicado: o horário previsto passou há mais de 24 h. Reagende este post.",
+      serviceError: "Um problema técnico da Posty impediu a publicação. Reagende este post; se o problema persistir, fale com o suporte.",
+      generic: "A publicação falhou. Reagende este post.",
+    },
+    retryReasons: {
+      temporary: "o {platform} não respondeu",
+      serviceError: "problema técnico da Posty",
+      unreadableConnection: "conexão com o {platform} ilegível",
+      confirming: "confirmando a publicação",
+      generic: "erro temporário",
+    },
+  },
+
   // Schedule Page
   schedulePage: {
     title: "Posts agendados",

@@ -3,6 +3,12 @@ import { z } from "zod";
 import { adminDb } from "@/lib/db/firebase-admin";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { verifyAuth } from "@/lib/auth";
+import { checkUserQuotaAdmin } from "@/lib/db/firestore-admin";
+import {
+  SCHEDULABLE_CONNECTION_COLLECTION,
+  isSchedulablePlatform,
+  platformDisplayName,
+} from "@/lib/scheduling/platforms";
 
 /**
  * Schema-validated body for /api/ai/action.
@@ -75,12 +81,43 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: "Plateforme manquante" }, { status: 400 });
         }
 
+        // Only platforms with a scheduled publisher — anything else could
+        // only ever end as a failed post.
+        if (!isSchedulablePlatform(platform)) {
+          return NextResponse.json(
+            { error: `La programmation n'est pas disponible pour ${platformDisplayName(platform)}.` },
+            { status: 400 }
+          );
+        }
+
         const scheduledDate = new Date(scheduledAt);
         if (isNaN(scheduledDate.getTime())) {
           return NextResponse.json({ error: "Date invalide" }, { status: 400 });
         }
         if (scheduledDate <= new Date()) {
           return NextResponse.json({ error: "La date doit être dans le futur" }, { status: 400 });
+        }
+
+        // Same gate as firestore.rules `canSchedulePosts()` — the Admin SDK
+        // bypasses the rules, so this route must enforce the plan itself.
+        const quota = await checkUserQuotaAdmin(uid, auth.email);
+        if (quota.plan !== "pro" && quota.plan !== "max") {
+          return NextResponse.json(
+            { error: "La programmation est réservée aux plans Pro et Max." },
+            { status: 403 }
+          );
+        }
+
+        // Fail fast instead of letting the scheduler fail later.
+        const connection = await adminDb
+          .collection(SCHEDULABLE_CONNECTION_COLLECTION[platform])
+          .doc(uid)
+          .get();
+        if (!connection.exists) {
+          return NextResponse.json(
+            { error: `Connectez votre compte ${platformDisplayName(platform)} pour programmer ce post.` },
+            { status: 428 }
+          );
         }
 
         const docRef = await adminDb.collection("scheduledPosts").add({

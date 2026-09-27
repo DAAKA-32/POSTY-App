@@ -15,6 +15,7 @@ import { useSubscription } from "./SubscriptionContext";
 import {
   ScheduledPost,
   CreateScheduledPostData,
+  SchedulablePlatform,
   SchedulingContextType,
   ScheduleStatus,
 } from "@/types";
@@ -31,8 +32,22 @@ import {
 import { deleteScheduledPostImages } from "@/lib/storage/storage";
 import { getAuthHeaders } from "@/lib/api/client";
 import { readWithAuthRetry } from "@/lib/db/with-auth-retry";
+import { isSchedulablePlatform } from "@/lib/scheduling/platforms";
+import {
+  canCancelScheduledPost,
+  canDeleteScheduledPost,
+  canRescheduleScheduledPost,
+  isUpcomingStatus,
+} from "@/lib/scheduling/publish-status";
 import toast from "@/components/ui/Toast";
 import { useLanguage } from "@/contexts/LanguageContext";
+
+/** While a post is due / publishing / retrying, poll so its status updates live. */
+const ACTIVE_REFRESH_MS = 20_000;
+/** A pending post counts as "active" this long before its scheduled time… */
+const ACTIVE_LOOKAHEAD_MS = 2 * 60_000;
+/** …and until this long after it (then it is overdue, not in flight). */
+const ACTIVE_OVERDUE_MS = 30 * 60_000;
 
 const SchedulingContext = createContext<SchedulingContextType | undefined>(
   undefined
@@ -66,10 +81,10 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
     try {
       const posts = await readWithAuthRetry(() => getScheduledPosts(user.uid));
       setScheduledPosts(posts);
-      // Derive the pending count from the already-fetched list instead of
+      // Derive the upcoming count from the already-fetched list instead of
       // firing a second Firestore query on the same collection (getScheduledPosts
-      // already returns every status).
-      setPendingCount(posts.filter((p) => p.status === "pending").length);
+      // already returns every status). Publishing / retrying posts are not done yet.
+      setPendingCount(posts.filter((p) => isUpcomingStatus(p.status)).length);
     } catch (error) {
       console.error("Error loading scheduled posts:", error);
       toast.error(t.toasts.scheduleLoadError);
@@ -82,6 +97,53 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     loadScheduledPosts();
   }, [loadScheduledPosts]);
+
+  // Live status: while a post is about to fire, publishing or waiting for a
+  // retry, silently re-read the list so the card moves pending → processing →
+  // published/failed without a manual refresh. Idle otherwise (no polling).
+  const [activityClock, setActivityClock] = useState(() => Date.now());
+
+  // Wake up when the next pending post enters the look-ahead window.
+  useEffect(() => {
+    const nowMs = Date.now();
+    const nextDueMs = scheduledPosts
+      .filter((p) => p.status === "pending")
+      .map((p) => toDate(p.scheduledAt).getTime())
+      .filter((ms) => ms - ACTIVE_LOOKAHEAD_MS > nowMs)
+      .reduce((min, ms) => Math.min(min, ms), Infinity);
+    if (!Number.isFinite(nextDueMs)) return;
+    // setTimeout overflows past ~24.8 days — clamp.
+    const delay = Math.min(nextDueMs - ACTIVE_LOOKAHEAD_MS - nowMs, 2_147_000_000);
+    const timer = setTimeout(() => setActivityClock(Date.now()), delay);
+    return () => clearTimeout(timer);
+  }, [scheduledPosts, activityClock]);
+
+  const hasActivePosts = useMemo(() => {
+    const horizon = activityClock + ACTIVE_LOOKAHEAD_MS;
+    // A pending post long overdue (scheduler outage) must not keep every open
+    // tab polling forever — only the ones that just became due count.
+    const floor = activityClock - ACTIVE_OVERDUE_MS;
+    return scheduledPosts.some((p) => {
+      if (p.status === "processing" || p.status === "retrying") return true;
+      if (p.status !== "pending") return false;
+      const dueMs = toDate(p.scheduledAt).getTime();
+      return dueMs <= horizon && dueMs >= floor;
+    });
+  }, [scheduledPosts, activityClock]);
+
+  useEffect(() => {
+    if (!user || !hasActivePosts) return;
+    const interval = setInterval(() => {
+      if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+      readWithAuthRetry(() => getScheduledPosts(user.uid))
+        .then((posts) => {
+          setScheduledPosts(posts);
+          setPendingCount(posts.filter((p) => isUpcomingStatus(p.status)).length);
+        })
+        .catch((err) => console.warn("[SchedulingContext] Live refresh failed:", err));
+    }, ACTIVE_REFRESH_MS);
+    return () => clearInterval(interval);
+  }, [user, hasActivePosts]);
 
   // Schedule a new post
   const schedulePost = useCallback(
@@ -113,6 +175,14 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
         return {
           success: false,
           error: "La date de publication doit être dans le futur",
+        };
+      }
+
+      // Only platforms the scheduler can actually publish to.
+      if (!isSchedulablePlatform(data.platform)) {
+        return {
+          success: false,
+          error: `La programmation n'est pas disponible pour ${data.platform}.`,
         };
       }
 
@@ -182,14 +252,42 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
     [user, loadScheduledPosts, currentPlan, isTestMode]
   );
 
-  // Cancel a scheduled post (pending → cancelled)
+  // Schedule the same content on several platforms — one scheduled post per
+  // platform (the scheduler publishes each independently). Images, audience,
+  // Company Page and seed comment are LinkedIn features: the Facebook /
+  // Threads scheduled publishers are text-only, so they are not attached there.
+  const schedulePostOnPlatforms = useCallback(
+    async (
+      data: Omit<CreateScheduledPostData, "platform">,
+      platforms: SchedulablePlatform[]
+    ) => {
+      const results: Array<{ platform: SchedulablePlatform; success: boolean; scheduledPostId?: string; error?: string }> = [];
+      for (const platform of platforms) {
+        const isLinkedIn = platform === "linkedin";
+        const result = await schedulePost({
+          ...data,
+          platform,
+          visibility: isLinkedIn ? data.visibility : undefined,
+          organizationUrn: isLinkedIn ? data.organizationUrn : undefined,
+          imageFiles: isLinkedIn ? data.imageFiles : undefined,
+          seedComment: isLinkedIn ? data.seedComment : undefined,
+        });
+        results.push({ platform, ...result });
+      }
+      return results;
+    },
+    [schedulePost]
+  );
+
+  // Cancel a scheduled post (pending / retrying / failed → cancelled)
   const cancelSchedule = useCallback(
     async (
       scheduledPostId: string
     ): Promise<{ success: boolean; error?: string }> => {
-      // Status validation: only pending posts can be cancelled
+      // Status validation mirrors firestore.rules: a post being published or
+      // already published can no longer be cancelled.
       const post = scheduledPosts.find((p) => p.id === scheduledPostId);
-      if (post && post.status !== "pending") {
+      if (post && !canCancelScheduledPost(post.status)) {
         const msg = "Ce post ne peut plus etre annule car il a deja ete traite.";
         toast.error(msg);
         return { success: false, error: msg };
@@ -202,11 +300,13 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
         setScheduledPosts((prev) =>
           prev.map((p) =>
             p.id === scheduledPostId
-              ? { ...p, status: "cancelled" as ScheduleStatus }
+              ? { ...p, status: "cancelled" as ScheduleStatus, nextAttemptAt: null }
               : p
           )
         );
-        setPendingCount((prev) => Math.max(0, prev - 1));
+        if (post && isUpcomingStatus(post.status)) {
+          setPendingCount((prev) => Math.max(0, prev - 1));
+        }
 
         toast.success(t.scheduler.scheduleCancelled);
         return { success: true };
@@ -220,15 +320,17 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
     [scheduledPosts]
   );
 
-  // Delete a scheduled post permanently (failed or cancelled only)
+  // Delete a scheduled post permanently (never while publishing / published)
   const deleteSchedule = useCallback(
     async (
       scheduledPostId: string
     ): Promise<{ success: boolean; error?: string }> => {
-      // Status validation: only failed or cancelled posts can be deleted
       const post = scheduledPosts.find((p) => p.id === scheduledPostId);
-      if (post && post.status === "published") {
-        const msg = "Ce post a deja ete publie et ne peut pas etre supprime.";
+      if (post && !canDeleteScheduledPost(post.status)) {
+        const msg =
+          post.status === "processing"
+            ? "Ce post est en cours de publication et ne peut pas etre supprime."
+            : "Ce post a deja ete publie et ne peut pas etre supprime.";
         toast.error(msg);
         return { success: false, error: msg };
       }
@@ -238,7 +340,7 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
 
         // Optimistic update: remove from list
         setScheduledPosts((prev) => prev.filter((p) => p.id !== scheduledPostId));
-        if (post?.status === "pending") {
+        if (post && isUpcomingStatus(post.status)) {
           setPendingCount((prev) => Math.max(0, prev - 1));
         }
 
@@ -260,10 +362,13 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
       scheduledPostId: string,
       newDate: Date
     ): Promise<{ success: boolean; error?: string }> => {
-      // Status validation: published posts cannot be rescheduled
+      // Status validation mirrors firestore.rules (never while publishing / published)
       const post = scheduledPosts.find((p) => p.id === scheduledPostId);
-      if (post && post.status === "published") {
-        const msg = "Ce post a deja ete publie et ne peut pas etre reprogramme.";
+      if (post && !canRescheduleScheduledPost(post.status)) {
+        const msg =
+          post.status === "processing"
+            ? "Ce post est en cours de publication et ne peut pas etre reprogramme."
+            : "Ce post a deja ete publie et ne peut pas etre reprogramme.";
         toast.error(msg);
         return { success: false, error: msg };
       }
@@ -301,9 +406,9 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
     await loadScheduledPosts();
   }, [loadScheduledPosts]);
 
-  // Helper: Get pending posts
+  // Helper: Get upcoming posts (waiting, publishing or retrying)
   const getPendingPosts = useCallback(() => {
-    return scheduledPosts.filter((post) => post.status === "pending");
+    return scheduledPosts.filter((post) => isUpcomingStatus(post.status));
   }, [scheduledPosts]);
 
   // Helper: Get published posts
@@ -335,6 +440,7 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
       isUploading,
       pendingCount,
       schedulePost,
+      schedulePostOnPlatforms,
       cancelSchedule,
       deleteSchedule,
       reschedulePost,
@@ -349,6 +455,7 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
       isUploading,
       pendingCount,
       schedulePost,
+      schedulePostOnPlatforms,
       cancelSchedule,
       deleteSchedule,
       reschedulePost,
@@ -387,6 +494,8 @@ export function useSchedulingPendingCount() {
 
     const loadCount = async () => {
       try {
+        // Badge = posts still waiting for their slot (processing / retrying
+        // are transient and already surfaced on the schedule page).
         const pendingCount = await getPendingScheduledPostsCount(user.uid);
         setCount(pendingCount);
       } catch (error) {

@@ -2838,6 +2838,52 @@ export const nl = {
     guaranteeDaysLeft: "nog {n}d",
   },
 
+  // Scheduled publishing — statuses + recovery messages, localized by the
+  // scheduler's error code (lib/scheduling/publish-status.ts).
+  scheduledPublish: {
+    status: {
+      pending: "Gepland",
+      processing: "Wordt gepubliceerd",
+      retrying: "Nieuwe poging",
+      published: "Gepubliceerd",
+      failed: "Mislukt",
+      cancelled: "Geannuleerd",
+    },
+    processingHint: "Wordt gepubliceerd op {platform}…",
+    nextAttempt: "Automatische nieuwe poging om {time}",
+    lastAttempt: "Laatste poging: {reason}",
+    reconnectCta: "{platform} opnieuw koppelen",
+    technicalDetail: "Technisch detail",
+    publishedWithoutImage: "Gepubliceerd zonder de afbeelding: die kon niet naar {platform} worden verzonden.",
+    publishedOnPersonalProfile: "Gepubliceerd op je persoonlijke profiel: je beheert de gekozen bedrijfspagina niet meer.",
+    unsupportedPlatforms: "Inplannen is nog niet beschikbaar voor: {platforms}. Deselecteer ze of publiceer nu.",
+    partialScheduleFailure: "Ingepland op {succeeded}, maar inplannen is mislukt op {failed}.",
+    tokenExpiresBeforeSchedule: "Je LinkedIn-koppeling verloopt op {date}, vóór deze publicatie. Koppel LinkedIn vóór die datum opnieuw zodat hij wordt gepubliceerd.",
+    errors: {
+      reconnect: "Je {platform}-koppeling is verlopen of ingetrokken. Koppel je account opnieuw in Instellingen en plan dit bericht opnieuw in.",
+      notConnected: "Er is geen {platform}-account gekoppeld. Koppel het in Instellingen en plan dit bericht opnieuw in.",
+      permission: "{platform} weigerde de publicatie: onvoldoende rechten. Koppel je account opnieuw en accepteer alle rechten.",
+      contentRejected: "{platform} heeft deze inhoud geweigerd. Pas het bericht aan en plan het opnieuw in.",
+      duplicate: "{platform} heeft dit bericht geweigerd: identieke inhoud is al op je profiel gepubliceerd.",
+      mediaRequired: "{platform} vereist een afbeelding: voeg een visual toe en plan dit bericht opnieuw in.",
+      mediaMissing: "De bijgevoegde afbeelding ontbreekt of is geweigerd. Voeg haar opnieuw toe en plan dit bericht opnieuw in.",
+      invalidPost: "Dit bericht mist gegevens die {platform} vereist. Pas het aan en plan het opnieuw in.",
+      unsupportedPlatform: "Inplannen is niet beschikbaar voor {platform}.",
+      temporary: "{platform} bleef na meerdere pogingen onbereikbaar. Plan dit bericht opnieuw in.",
+      outcomeUnknown: "We konden niet bevestigen of het bericht op {platform} is gepubliceerd. Controleer je profiel voordat je het opnieuw inplant, om een dubbel bericht te voorkomen.",
+      missedWindow: "Niet gepubliceerd: het geplande tijdstip ligt meer dan 24 uur terug. Plan dit bericht opnieuw in.",
+      serviceError: "Een technisch probleem bij Posty verhinderde de publicatie. Plan dit bericht opnieuw in; neem contact op met support als het probleem blijft.",
+      generic: "Publiceren is mislukt. Plan dit bericht opnieuw in.",
+    },
+    retryReasons: {
+      temporary: "{platform} reageerde niet",
+      serviceError: "technisch probleem bij Posty",
+      unreadableConnection: "{platform}-koppeling onleesbaar",
+      confirming: "publicatie wordt gecontroleerd",
+      generic: "tijdelijke fout",
+    },
+  },
+
   // Schedule Page
   schedulePage: {
     title: "Ingeplande berichten",

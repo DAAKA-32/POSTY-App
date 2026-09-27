@@ -31,7 +31,11 @@ export const FACEBOOK_CONFIG = {
 export const THREADS_CONFIG = {
   authorizationUrl: "https://threads.net/oauth/authorize",
   tokenUrl: "https://graph.threads.net/oauth/access_token",
+  // Short-lived → long-lived exchange (grant_type=th_exchange_token).
   longLivedTokenUrl: "https://graph.threads.net/access_token",
+  // Long-lived token refresh (grant_type=th_refresh_token) is a DIFFERENT
+  // endpoint: https://developers.facebook.com/docs/threads/get-started/long-lived-tokens
+  refreshTokenUrl: "https://graph.threads.net/refresh_access_token",
   apiUrl: "https://graph.threads.net/v1.0",
   redirectUri: `${baseUrl}/api/auth/threads/callback`,
   scope: "threads_basic,threads_content_publish",

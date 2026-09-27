@@ -454,8 +454,16 @@ export default function AdminPage() {
               Console interne
             </h1>
           </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">
-            {user?.email}
+          <div className="flex items-center gap-4">
+            <Link
+              href="/admin/outreach"
+              className="text-xs font-medium text-primary hover:underline"
+            >
+              Prospection
+            </Link>
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              {user?.email}
+            </div>
           </div>
         </div>
       </header>

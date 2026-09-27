@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useScheduling } from "@/contexts/SchedulingContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { ScheduledPost, ScheduleStatus } from "@/types";
+import { isUpcomingStatus } from "@/lib/scheduling/publish-status";
 import { toDate } from "@/lib/utils/timestamp";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import MainLayout from "@/components/layout/MainLayout";
@@ -70,9 +71,11 @@ function ScheduleContent() {
   // Paywall modal for Free users
   const [showPaywall, setShowPaywall] = useState(false);
 
-  // Filter posts
+  // Filter posts — "Programmés" covers everything not finished yet
+  // (waiting, publishing right now, or waiting for an automatic retry).
   const filteredPosts = useMemo(() => {
     if (filter === "all") return scheduledPosts;
+    if (filter === "pending") return scheduledPosts.filter((post) => isUpcomingStatus(post.status));
     return scheduledPosts.filter((post) => post.status === filter);
   }, [scheduledPosts, filter]);
 
@@ -179,7 +182,7 @@ function ScheduleContent() {
   };
 
   // Count by status for badges
-  const pendingCount = scheduledPosts.filter((p) => p.status === "pending").length;
+  const pendingCount = scheduledPosts.filter((p) => isUpcomingStatus(p.status)).length;
   const failedCount = scheduledPosts.filter((p) => p.status === "failed").length;
 
   // Mobile renders the entire content through a React Portal under <body>
@@ -503,8 +506,10 @@ function ScheduleContent() {
                                   className={`
                                     text-[9px] sm:text-[10px] md:text-xs px-1 sm:px-1 md:px-1.5 py-px sm:py-0.5 md:py-1 rounded-sm sm:rounded-md truncate font-medium leading-tight
                                     ${postIdx > 0 ? "hidden sm:block" : ""}
-                                    ${post.status === "pending"
+                                    ${post.status === "pending" || post.status === "processing"
                                       ? "bg-primary/10 text-primary"
+                                      : post.status === "retrying"
+                                        ? "bg-amber-500/10 text-amber-700 dark:text-amber-400"
                                       : post.status === "published"
                                         ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                                         : post.status === "failed"
