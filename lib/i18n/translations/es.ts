@@ -2859,6 +2859,9 @@ export const es = {
     unsupportedPlatforms: "La programación aún no está disponible para: {platforms}. Deselecciónalas o publica ahora.",
     partialScheduleFailure: "Programado en {succeeded}, pero la programación falló en {failed}.",
     tokenExpiresBeforeSchedule: "Tu conexión de LinkedIn caduca el {date}, antes de esta publicación. Vuelve a conectar LinkedIn antes de esa fecha para que se publique.",
+    rescheduleTitle: "Reprogramar la publicación",
+    rescheduleConfirm: "Reprogramar",
+    rescheduleKeepsSettings: "Solo cambia la fecha: se conservan el contenido, las imágenes, la audiencia y el comentario de impulso de esta publicación.",
     errors: {
       reconnect: "Tu conexión de {platform} caducó o fue revocada. Vuelve a conectar tu cuenta en Ajustes y reprograma esta publicación.",
       notConnected: "No hay ninguna cuenta de {platform} conectada. Conéctala en Ajustes y reprograma esta publicación.",

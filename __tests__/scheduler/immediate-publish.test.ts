@@ -82,10 +82,13 @@ describe("immediate publication (POST /api/linkedin/publish)", () => {
 });
 
 describe("scheduled ↔ direct parity", () => {
+  // The first import of the functions publisher is cold (transform of the
+  // whole scheduler module graph); under a parallel full-suite run it can
+  // exceed the 5s default, so give it room instead of flaking.
   it("both paths send the same LinkedIn fingerprint (UA + JSON headers)", async () => {
     const direct = await import("@/lib/linkedin/signals");
     const scheduled = await import("../../functions/src/scheduler/publishers/linkedin");
     expect(scheduled.POSTY_LINKEDIN_UA).toBe(direct.POSTY_LINKEDIN_UA);
     expect(scheduled.linkedInJsonHeaders("tok")).toEqual(direct.linkedInJsonHeaders("tok"));
-  });
+  }, 30_000);
 });

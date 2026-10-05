@@ -10,14 +10,14 @@ import { LinkedInIcon } from "./LinkedInConnectButton";
 import ConnectPlatformPopup from "@/components/publish/ConnectPlatformPopup";
 import { PLATFORMS as ALL_PLATFORMS } from "@/components/publish/platforms-config";
 import { useLinkedIn } from "@/contexts/LinkedInContext";
-import { LinkedInConnectionData } from "@/lib/db/firestore";
+import { LinkedInConnectionData, generateScheduledPostId } from "@/lib/db/firestore";
 import { useQuota } from "@/contexts/QuotaContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useScheduling } from "@/contexts/SchedulingContext";
 import toast from "@/components/ui/Toast";
 import { useLinkedInErrorToast } from "@/components/linkedin/useLinkedInErrorToast";
 import PlatformSelector from "@/components/publish/PlatformSelector";
-import { Platform } from "@/types";
+import { Platform, SchedulablePlatform } from "@/types";
 import { isSchedulablePlatform, platformDisplayName } from "@/lib/scheduling/platforms";
 import { usePlatformSelection } from "@/hooks/gesture/usePlatformSelection";
 import { triggerHaptic } from "@/hooks/ui/useHapticFeedback";
@@ -444,6 +444,7 @@ export default function PublishToLinkedInModal({
       setVideoPreview(null);
       setVideoDuration(null);
       // Reset scheduling state
+      scheduleAttemptRef.current = null;
       setPublishMode(initialMode);
       setShowSchedulePicker(false);
       setScheduleConfirmed(false);
@@ -841,6 +842,15 @@ export default function PublishToLinkedInModal({
     setProgress(0);
   };
 
+  // Idempotency keys for scheduling: one document id per platform, kept while
+  // the user retries the SAME post (after a partial failure or a timeout whose
+  // write may still land), so a platform that already got its scheduled post
+  // is recognised instead of being scheduled — and published — twice.
+  const scheduleAttemptRef = useRef<{
+    fingerprint: string;
+    ids: Partial<Record<SchedulablePlatform, string>>;
+  } | null>(null);
+
   // Handle schedule submission
   const handleScheduleSubmit = async () => {
     if (!scheduleConfirmed) return;
@@ -885,6 +895,19 @@ export default function PublishToLinkedInModal({
         );
       }
 
+      const fingerprint = JSON.stringify([
+        editedContent,
+        scheduledAt.getTime(),
+        visibility,
+        authorTargetUrn,
+        images.map((f) => `${f.name}:${f.size}`),
+      ]);
+      if (scheduleAttemptRef.current?.fingerprint !== fingerprint) {
+        scheduleAttemptRef.current = { fingerprint, ids: {} };
+      }
+      const scheduledPostIds = scheduleAttemptRef.current.ids;
+      for (const p of targets) scheduledPostIds[p] ??= generateScheduledPostId();
+
       // Race the schedule calls against a timeout to prevent infinite hang on
       // mobile/PWA (30 s per platform — each may upload images).
       const SCHEDULE_TIMEOUT_MS = 30_000 * targets.length;
@@ -908,7 +931,8 @@ export default function PublishToLinkedInModal({
             organizationUrn: authorTargetUrn || undefined,
             imageFiles: images.length > 0 ? images : undefined,
           },
-          targets
+          targets,
+          scheduledPostIds
         ),
         timeoutPromise,
       ]).finally(() => clearTimeout(timeoutId));
@@ -923,6 +947,8 @@ export default function PublishToLinkedInModal({
           progressIntervalRef.current = null;
         }
         setProgress(100);
+        // Done: a later submission is a new post, not a retry of this one.
+        scheduleAttemptRef.current = null;
         await new Promise((resolve) => setTimeout(resolve, 600));
         triggerHaptic("success");
         setStep("success");

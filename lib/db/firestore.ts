@@ -2528,13 +2528,21 @@ export async function reschedulePost(
   if (!postSnap.exists()) {
     throw new Error("Post programmé non trouvé");
   }
-  const status = postSnap.data().status as ScheduleStatus;
+  const current = postSnap.data();
+  const status = current.status as ScheduleStatus;
   if (status === "published") {
     throw new Error("Un post publié ne peut pas être reprogrammé.");
   }
   if (status === "processing") {
     throw new Error("Ce post est en cours de publication et ne peut pas être reprogrammé.");
   }
+
+  // An earlier attempt may already have reached the platform (outcome
+  // unknown): keep that reconciliation state so the next attempt re-detects
+  // the earlier publication (LinkedIn duplicate / Threads container) instead
+  // of publishing the post a second time. firestore.rules only lets the
+  // owner keep it untouched or clear it — never forge it.
+  const keepReconciliation = current.priorSendUncertain === true;
 
   await updateDoc(postRef, {
     scheduledAt: Timestamp.fromDate(newScheduledAt),
@@ -2545,8 +2553,7 @@ export async function reschedulePost(
     // Clear the previous run's retry / error state.
     nextAttemptAt: null,
     lastError: null,
-    priorSendUncertain: false,
-    resumeState: {},
+    ...(keepReconciliation ? {} : { priorSendUncertain: false, resumeState: {} }),
   });
 }
 

@@ -1,0 +1,6 @@
+# The Vercel CLI does NOT honor .gitignore: without this file a CLI deploy
+# (`vercel --prod --archive=tgz`) uploads every local file, secrets included.
+# Vercel injects the app's env vars itself, so no .env file is needed there.
+.env*
+*.pem
+firestore-debug.log

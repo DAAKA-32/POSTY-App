@@ -2711,6 +2711,9 @@ export const fr = {
     unsupportedPlatforms: "La programmation n'est pas encore disponible pour : {platforms}. Désélectionnez-les ou publiez maintenant.",
     partialScheduleFailure: "Programmé sur {succeeded}, mais la programmation a échoué sur {failed}.",
     tokenExpiresBeforeSchedule: "Votre connexion LinkedIn expire le {date}, avant cette publication. Reconnectez LinkedIn d'ici là pour qu'elle soit publiée.",
+    rescheduleTitle: "Reprogrammer le post",
+    rescheduleConfirm: "Reprogrammer",
+    rescheduleKeepsSettings: "Seule la date change : le contenu, les images, l'audience et le commentaire boost de ce post sont conservés.",
     errors: {
       reconnect: "Votre connexion {platform} a expiré ou a été révoquée. Reconnectez votre compte dans Paramètres, puis reprogrammez ce post.",
       notConnected: "Aucun compte {platform} n'est connecté. Connectez-le dans Paramètres, puis reprogrammez ce post.",

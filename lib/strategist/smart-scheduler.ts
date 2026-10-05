@@ -145,6 +145,21 @@ function addMinutes(d: Date, deltaMin: number): Date {
   return new Date(d.getTime() + deltaMin * 60_000);
 }
 
+/** YYYY-MM-DD of a UTC instant in the user's timezone. */
+function dateInTz(date: Date, timezone: string): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+}
+
+/** Minutes-of-day → "HH:MM". */
+function hhmm(minOfDay: number): string {
+  return `${String(Math.floor(minOfDay / 60)).padStart(2, "0")}:${String(minOfDay % 60).padStart(2, "0")}`;
+}
+
 /**
  * Main entry point — takes briefs in chronological order (already sorted by
  * the table the user reviewed) and returns one ResolvedSlot per brief.
@@ -193,8 +208,12 @@ export function computeScheduleSlots(opts: {
     const minOfDay = minutesOfDayInTz(fireAt, timezone);
     if (!isInPeak(minOfDay) && !adjusted) {
       const snapped = snapToNearestPeakCenter(minOfDay);
-      const deltaMin = snapped - minOfDay;
-      fireAt = addMinutes(fireAt, deltaMin);
+      // Rebuilt from the local wall-clock (not by adding minutes) so a DST
+      // change between the two times cannot shift the slot by an hour.
+      fireAt = localToUtc(dateInTz(fireAt, timezone), hhmm(snapped), timezone);
+      // The nearest peak can be EARLIER the same day — possibly already past,
+      // which the cron would publish immediately: never go below `earliest`.
+      if (fireAt < earliest) fireAt = nextPeakAfter(earliest, timezone);
       adjusted = true;
       reason = "snapped-to-peak";
     }

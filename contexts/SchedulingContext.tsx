@@ -22,6 +22,7 @@ import {
 import {
   createScheduledPost,
   generateScheduledPostId,
+  getScheduledPost,
   getScheduledPosts,
   cancelScheduledPost as cancelScheduledPostFirestore,
   reschedulePost as reschedulePostFirestore,
@@ -139,6 +140,10 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
         .then((posts) => {
           setScheduledPosts(posts);
           setPendingCount(posts.filter((p) => isUpcomingStatus(p.status)).length);
+          // Re-evaluate "active" with a fresh clock: a pending post that went
+          // past its overdue window must stop the polling (it no longer
+          // counts once activityClock moves past it).
+          setActivityClock(Date.now());
         })
         .catch((err) => console.warn("[SchedulingContext] Live refresh failed:", err));
     }, ACTIVE_REFRESH_MS);
@@ -186,13 +191,27 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
         };
       }
 
+      // Idempotent retries: with a caller-chosen id, an earlier attempt (one
+      // that "timed out" on our side, or a platform that already succeeded)
+      // may have created the post already — never create it a second time.
+      // A read of a missing doc is denied by the rules, hence the catch.
+      const idempotencyId = data.scheduledPostId;
+      const alreadyCreated = async (): Promise<boolean> =>
+        !!idempotencyId && !!(await getScheduledPost(idempotencyId).catch(() => null));
+      if (await alreadyCreated()) {
+        loadScheduledPosts().catch((err) =>
+          console.warn("[SchedulingContext] Background refresh failed:", err)
+        );
+        return { success: true, scheduledPostId: idempotencyId };
+      }
+
       try {
         const hasImages = data.imageFiles && data.imageFiles.length > 0;
         let scheduledPostId: string;
 
         if (hasImages) {
           // Pre-generate ID so images are stored under it
-          scheduledPostId = generateScheduledPostId();
+          scheduledPostId = idempotencyId ?? generateScheduledPostId();
           setIsUploading(true);
 
           try {
@@ -221,17 +240,20 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
             // Create Firestore doc with image metadata
             await createScheduledPost(user.uid, data, uploadedImages, scheduledPostId);
           } catch (uploadError) {
-            // Clean up any partially uploaded images
-            try {
-              await deleteScheduledPostImages(user.uid, scheduledPostId);
-            } catch { /* ignore cleanup errors */ }
+            // Clean up any partially uploaded images — unless a concurrent
+            // attempt with the same id created the post (they are its images).
+            if (!(await alreadyCreated())) {
+              try {
+                await deleteScheduledPostImages(user.uid, scheduledPostId);
+              } catch { /* ignore cleanup errors */ }
+            }
             throw uploadError;
           } finally {
             setIsUploading(false);
           }
         } else {
           // Text-only post (existing flow)
-          scheduledPostId = await createScheduledPost(user.uid, data);
+          scheduledPostId = await createScheduledPost(user.uid, data, undefined, idempotencyId);
         }
 
         // Refresh the list in background — don't block the success response
@@ -242,6 +264,15 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
 
         return { success: true, scheduledPostId };
       } catch (error) {
+        // Lost a race against an earlier attempt with the same id: the post
+        // exists (our write was refused as an update), which is a success.
+        if (await alreadyCreated()) {
+          setIsUploading(false);
+          loadScheduledPosts().catch((err) =>
+            console.warn("[SchedulingContext] Background refresh failed:", err)
+          );
+          return { success: true, scheduledPostId: idempotencyId };
+        }
         console.error("Error scheduling post:", error);
         setIsUploading(false);
         const errorMessage = "La programmation n'a pas abouti. Verifiez votre connexion et reessayez.";
@@ -258,8 +289,9 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
   // Threads scheduled publishers are text-only, so they are not attached there.
   const schedulePostOnPlatforms = useCallback(
     async (
-      data: Omit<CreateScheduledPostData, "platform">,
-      platforms: SchedulablePlatform[]
+      data: Omit<CreateScheduledPostData, "platform" | "scheduledPostId">,
+      platforms: SchedulablePlatform[],
+      scheduledPostIds?: Partial<Record<SchedulablePlatform, string>>
     ) => {
       const results: Array<{ platform: SchedulablePlatform; success: boolean; scheduledPostId?: string; error?: string }> = [];
       for (const platform of platforms) {
@@ -271,6 +303,7 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
           organizationUrn: isLinkedIn ? data.organizationUrn : undefined,
           imageFiles: isLinkedIn ? data.imageFiles : undefined,
           seedComment: isLinkedIn ? data.seedComment : undefined,
+          scheduledPostId: scheduledPostIds?.[platform],
         });
         results.push({ platform, ...result });
       }

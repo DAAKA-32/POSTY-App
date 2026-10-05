@@ -20,6 +20,15 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { usePageTitle } from "@/hooks/ui/usePageTitle";
 import { formatTimeLocale } from "@/components/ui/IOSTimePicker";
 
+/**
+ * YYYY-MM-DD in the viewer's local timezone. `toISOString()` is UTC: in
+ * Europe/Paris a calendar cell's local midnight is the previous UTC day, so
+ * every post landed one cell late (and 00:00–02:00 posts one group early).
+ */
+function localDateKey(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 function ScheduleContent() {
   const { user } = useAuth();
   const { t, language } = useLanguage();
@@ -87,7 +96,7 @@ function ScheduleContent() {
     filteredPosts.forEach((post) => {
       const scheduledDate = toDate(post.scheduledAt);
 
-      const dateKey = scheduledDate.toISOString().split("T")[0];
+      const dateKey = localDateKey(scheduledDate);
 
       if (!dateMap.has(dateKey)) {
         dateMap.set(dateKey, []);
@@ -99,7 +108,9 @@ function ScheduleContent() {
     const sortedKeys = Array.from(dateMap.keys()).sort();
 
     sortedKeys.forEach((key) => {
-      const date = new Date(key);
+      // Local midnight of that day (new Date("YYYY-MM-DD") would be UTC).
+      const [y, m, d] = key.split("-").map(Number);
+      const date = new Date(y, m - 1, d);
       const dayName = t.schedulePage.daysShort[date.getDay()];
       const day = date.getDate();
       const month = t.schedulePage.monthNames[date.getMonth()];
@@ -134,10 +145,10 @@ function ScheduleContent() {
     // Add all days of the month
     for (let day = 1; day <= lastDay.getDate(); day++) {
       const date = new Date(year, month, day);
-      const dateKey = date.toISOString().split("T")[0];
+      const dateKey = localDateKey(date);
 
       const postsForDay = scheduledPosts.filter((post) => {
-        return toDate(post.scheduledAt).toISOString().split("T")[0] === dateKey;
+        return localDateKey(toDate(post.scheduledAt)) === dateKey;
       });
 
       days.push({ date, posts: postsForDay });
@@ -579,6 +590,7 @@ function ScheduleContent() {
           content={selectedPost.content}
           postId={selectedPost.postId}
           title={selectedPost.title}
+          reschedule={{ scheduledPostId: selectedPost.id, platform: selectedPost.platform }}
           onSuccess={() => {
             refreshScheduledPosts();
           }}

@@ -2859,6 +2859,9 @@ export const nl = {
     unsupportedPlatforms: "Inplannen is nog niet beschikbaar voor: {platforms}. Deselecteer ze of publiceer nu.",
     partialScheduleFailure: "Ingepland op {succeeded}, maar inplannen is mislukt op {failed}.",
     tokenExpiresBeforeSchedule: "Je LinkedIn-koppeling verloopt op {date}, vóór deze publicatie. Koppel LinkedIn vóór die datum opnieuw zodat hij wordt gepubliceerd.",
+    rescheduleTitle: "Bericht opnieuw inplannen",
+    rescheduleConfirm: "Opnieuw inplannen",
+    rescheduleKeepsSettings: "Alleen de datum verandert: de inhoud, afbeeldingen, doelgroep en boostreactie van dit bericht blijven behouden.",
     errors: {
       reconnect: "Je {platform}-koppeling is verlopen of ingetrokken. Koppel je account opnieuw in Instellingen en plan dit bericht opnieuw in.",
       notConnected: "Er is geen {platform}-account gekoppeld. Koppel het in Instellingen en plan dit bericht opnieuw in.",

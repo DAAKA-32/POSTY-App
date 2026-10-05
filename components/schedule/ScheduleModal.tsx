@@ -45,6 +45,13 @@ interface ScheduleModalProps {
    * publish (server-side jitter handled by Cloud Function).
    */
   seedCommentText?: string;
+  /**
+   * Move an EXISTING scheduled post instead of creating a new one. Only its
+   * date changes: content, images, audience, Company Page and seed comment
+   * stay on the original document. Creating a copy here would leave the
+   * original live and publish the post twice.
+   */
+  reschedule?: { scheduledPostId: string; platform: SchedulePlatform };
 }
 
 // Get user's timezone
@@ -65,8 +72,9 @@ export default function ScheduleModal({
   title,
   onSuccess,
   seedCommentText,
+  reschedule,
 }: ScheduleModalProps) {
-  const { schedulePost, isUploading } = useScheduling();
+  const { schedulePost, reschedulePost, isUploading } = useScheduling();
   const { canSchedulePosts, currentPlan, subscription } = useSubscription();
   const { isConnected: linkedInConnected, connection: linkedInConnection } = useLinkedIn();
   const { isConnected: facebookConnected } = useFacebook();
@@ -316,30 +324,12 @@ export default function ScheduleModal({
   // Get the first available time slot for today
   const getFirstAvailableTimeForToday = useCallback(() => {
     const now = currentTimeRef.current;
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
-
-    // Round up to next 30-minute slot + buffer
-    let nextHour = currentHour;
-    let nextMinute = currentMinute < 30 ? 30 : 0;
-    if (currentMinute >= 30) {
-      nextHour++;
-    }
-
-    // Add buffer
-    nextMinute += MIN_SCHEDULE_BUFFER_MINUTES;
-    if (nextMinute >= 60) {
-      nextHour++;
-      nextMinute -= 60;
-    }
-
-    // Round to nearest 30 min slot
-    nextMinute = nextMinute < 30 ? 30 : 0;
-    if (nextMinute === 0 && currentMinute >= 30) {
-      nextHour++;
-    }
-
-    return { hour: Math.min(nextHour, 23), minute: nextMinute };
+    // First 30-min slot strictly after now + buffer — the same boundary as
+    // isTimeDisabled (a slot <= now + buffer is disabled). The previous
+    // rounding returned 14:00 at 14:10, a past slot the submit check rejected.
+    const bufferEnd = now.getHours() * 60 + now.getMinutes() + MIN_SCHEDULE_BUFFER_MINUTES;
+    const slot = Math.min((Math.floor(bufferEnd / 30) + 1) * 30, 23 * 60 + 30);
+    return { hour: Math.floor(slot / 60), minute: slot % 60 };
   }, []);
 
   // Check if today has any valid time slots remaining
@@ -441,7 +431,9 @@ export default function ScheduleModal({
   };
 
   // Whether image picker should be shown (LinkedIn only, feed post type)
-  const showImagePicker = platform === "linkedin" && postType === "feed";
+  const showImagePicker = !reschedule && platform === "linkedin" && postType === "feed";
+  // A reschedule keeps the original post's platform (no platform picker).
+  const effectivePlatform: SchedulePlatform = reschedule ? reschedule.platform : platform;
 
   // Navigate months
   const goToPreviousMonth = () => {
@@ -477,7 +469,7 @@ export default function ScheduleModal({
   // LinkedIn access tokens last 60 days and cannot be refreshed server-side:
   // warn when the post would fire after the current token expires.
   const linkedInExpiryWarning = useMemo(() => {
-    if (platform !== "linkedin" || !linkedInConnection?.expiresAt) return null;
+    if (effectivePlatform !== "linkedin" || !linkedInConnection?.expiresAt) return null;
     const scheduledAt = new Date(selectedDate);
     scheduledAt.setHours(selectedTime.hour, selectedTime.minute, 0, 0);
     const expiresAt = toDate(linkedInConnection.expiresAt);
@@ -485,7 +477,7 @@ export default function ScheduleModal({
     return t.scheduledPublish.tokenExpiresBeforeSchedule
       .split("{date}")
       .join(expiresAt.toLocaleDateString(t.ui.timeLocale, { day: "numeric", month: "long" }));
-  }, [platform, linkedInConnection, selectedDate, selectedTime, t]);
+  }, [effectivePlatform, linkedInConnection, selectedDate, selectedTime, t]);
 
   // Handle submit with final validation
   const handleSubmit = async () => {
@@ -517,6 +509,26 @@ export default function ScheduleModal({
           setStep("date");
           toast.error(t.scheduler.noSlotsToday);
         }
+      }
+      return;
+    }
+
+    if (reschedule) {
+      // Move the existing document (status checks + toasts live in the
+      // context); never create a second post next to it.
+      setIsSubmitting(true);
+      triggerHaptic("medium");
+      try {
+        const result = await reschedulePost(reschedule.scheduledPostId, scheduledAt);
+        if (result.success) {
+          triggerHaptic("success");
+          onSuccess?.(reschedule.scheduledPostId);
+          onClose();
+        } else {
+          triggerHaptic("error");
+        }
+      } finally {
+        setIsSubmitting(false);
       }
       return;
     }
@@ -927,7 +939,7 @@ export default function ScheduleModal({
             </div>
 
             {/* Platform selector - single select */}
-            {availablePlatforms.length > 1 && (
+            {!reschedule && availablePlatforms.length > 1 && (
               <div className="mb-4">
                 <p className="text-xs text-text-muted mb-2 uppercase tracking-wide">
                   {t.scheduler.publishPlatform}
@@ -989,7 +1001,7 @@ export default function ScheduleModal({
             <div className="bg-gray-50 dark:bg-dark-elevated rounded-xl p-4 mb-4 border border-gray-200 dark:border-dark-border">
               <div className="flex items-center gap-2 mb-3">
                 {(() => {
-                  const selectedP = PLATFORMS.find((p) => p.id === platform) || PLATFORMS[0];
+                  const selectedP = PLATFORMS.find((p) => p.id === effectivePlatform) || PLATFORMS[0];
                   const bgColors: Record<string, string> = {
                     linkedin: "#0A66C2",
                     facebook: "#1877F2",
@@ -1002,7 +1014,7 @@ export default function ScheduleModal({
                     <>
                       <div
                         className="w-8 h-8 rounded-full flex items-center justify-center text-white"
-                        style={{ backgroundColor: bgColors[platform] || "#0A66C2" }}
+                        style={{ backgroundColor: bgColors[effectivePlatform] || "#0A66C2" }}
                       >
                         <div className="w-4 h-4">{selectedP.icon}</div>
                       </div>
@@ -1010,7 +1022,7 @@ export default function ScheduleModal({
                     </>
                   );
                 })()}
-                {platform === "linkedin" && postType && (
+                {!reschedule && platform === "linkedin" && postType && (
                   <span className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-dark-card rounded-full text-text-muted border border-gray-200 dark:border-dark-border">
                     {postType === "feed" ? "Post" : "Article"}
                   </span>
@@ -1028,6 +1040,10 @@ export default function ScheduleModal({
               )}
             </div>
 
+            {reschedule && (
+              <p className="mb-4 text-xs text-text-muted">{t.scheduledPublish.rescheduleKeepsSettings}</p>
+            )}
+
             {linkedInExpiryWarning && (
               <div role="alert" className="mb-4 p-3 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20">
                 <p className="text-xs text-amber-800 dark:text-amber-300">{linkedInExpiryWarning}</p>
@@ -1035,7 +1051,7 @@ export default function ScheduleModal({
             )}
 
             {/* Type selection - LinkedIn only */}
-            {platform === "linkedin" && (
+            {!reschedule && platform === "linkedin" && (
               <div className="mb-5">
                 <p className="text-xs text-text-muted mb-2 uppercase tracking-wide">{t.scheduler.publicationType}</p>
                 <div className="flex gap-2">
@@ -1130,7 +1146,7 @@ export default function ScheduleModal({
             )}
 
             {/* Visibility selector (LinkedIn only) — parity with direct flow */}
-            {platform === "linkedin" && (
+            {!reschedule && platform === "linkedin" && (
               <div className="mb-3">
                 <p className="text-xs text-text-muted font-medium uppercase tracking-wide mb-2">
                   Audience
@@ -1163,7 +1179,7 @@ export default function ScheduleModal({
             )}
 
             {/* Seed comment block — algo boost (LinkedIn only) */}
-            {platform === "linkedin" && (
+            {!reschedule && platform === "linkedin" && (
               <div
                 className="rounded-xl ring-1 overflow-hidden"
                 style={{
@@ -1263,7 +1279,7 @@ export default function ScheduleModal({
                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    {t.scheduler.scheduleBtn}
+                    {reschedule ? t.scheduledPublish.rescheduleConfirm : t.scheduler.scheduleBtn}
                   </>
                 )}
               </Button>
@@ -1298,11 +1314,12 @@ export default function ScheduleModal({
   }
 
   // Pro/Max users see scheduling interface
+  const schedulingTitle = reschedule ? t.scheduledPublish.rescheduleTitle : t.ui.schedulePost;
   return isMobile ? (
     <BottomSheet
       isOpen={isOpen}
       onClose={onClose}
-      title={t.ui.schedulePost}
+      title={schedulingTitle}
       height="auto"
       swipeToDismiss={step === "date"}
     >
@@ -1312,7 +1329,7 @@ export default function ScheduleModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={t.ui.schedulePost}
+      title={schedulingTitle}
       size="md"
       description={t.scheduler.scheduleDescription}
     >

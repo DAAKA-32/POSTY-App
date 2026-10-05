@@ -13,21 +13,27 @@ const http = (status: number, stage: "prepare" | "send" = "send", body = "") =>
 
 describe("classifyHttpStatus — permanent vs temporary", () => {
   it.each([
-    [401, "AUTH_REJECTED", false],
-    [403, "PERMISSION_DENIED", false],
-    [400, "CONTENT_REJECTED", false],
-    [422, "CONTENT_REJECTED", false],
-    [429, "RATE_LIMITED", true],
-    [500, "PLATFORM_UNAVAILABLE", true],
-    [502, "PLATFORM_UNAVAILABLE", true],
-    [503, "PLATFORM_UNAVAILABLE", true],
-    [504, "PLATFORM_UNAVAILABLE", true],
-  ])("HTTP %i → %s (retryable=%s)", (status, code, retryable) => {
+    [401, "AUTH_REJECTED", false, false],
+    [403, "PERMISSION_DENIED", false, false],
+    [400, "CONTENT_REJECTED", false, false],
+    [422, "CONTENT_REJECTED", false, false],
+    [429, "RATE_LIMITED", true, false],
+    // A 5xx on the create call can follow a committed post (gateway timeout):
+    // outcome unknown → reconciled retry, never a blind re-send.
+    [500, "PLATFORM_UNAVAILABLE", true, true],
+    [502, "PLATFORM_UNAVAILABLE", true, true],
+    [503, "PLATFORM_UNAVAILABLE", true, true],
+    [504, "PLATFORM_UNAVAILABLE", true, true],
+  ])("HTTP %i on the create call → %s (retryable=%s, ambiguous=%s)", (status, code, retryable, ambiguous) => {
     const e = http(status);
     expect(e.code).toBe(code);
     expect(e.retryable).toBe(retryable);
     expect(e.httpStatus).toBe(status);
-    expect(e.ambiguous).toBe(false);
+    expect(e.ambiguous).toBe(ambiguous);
+  });
+
+  it("a 5xx while preparing (upload, token check) is a plain retryable failure", () => {
+    expect(http(503, "prepare")).toMatchObject({ code: "PLATFORM_UNAVAILABLE", retryable: true, ambiguous: false });
   });
 
   it("keeps the platform's own message in the detail", () => {
@@ -89,6 +95,7 @@ describe("classifyGraphFailure — Meta error codes (Facebook, Threads)", () => 
     [200, "PERMISSION_DENIED"],
     [4, "RATE_LIMITED"],
     [32, "RATE_LIMITED"],
+    [341, "RATE_LIMITED"],
     [613, "RATE_LIMITED"],
     [506, "DUPLICATE_CONTENT"],
     [368, "CONTENT_REJECTED"],
@@ -98,8 +105,9 @@ describe("classifyGraphFailure — Meta error codes (Facebook, Threads)", () => 
     expect(graph(code).code).toBe(expected);
   });
 
-  it("is_transient → retryable", () => {
-    expect(graph(9999, { is_transient: true })).toMatchObject({ code: "PLATFORM_UNAVAILABLE", retryable: true });
+  it("is_transient → retryable, but ambiguous on the create call (it may have been applied)", () => {
+    expect(graph(9999, { is_transient: true })).toMatchObject({ code: "PLATFORM_UNAVAILABLE", retryable: true, ambiguous: true });
+    expect(graph(2)).toMatchObject({ code: "PLATFORM_UNAVAILABLE", ambiguous: true });
   });
 
   it("falls back to the HTTP status when the body is not a Graph error", () => {

@@ -2859,6 +2859,9 @@ export const ja = {
     unsupportedPlatforms: "次のプラットフォームはまだ予約投稿に対応していません：{platforms}。選択を外すか、今すぐ投稿してください。",
     partialScheduleFailure: "{succeeded} には予約しましたが、{failed} の予約に失敗しました。",
     tokenExpiresBeforeSchedule: "LinkedIn の接続は {date} に期限切れになり、この投稿日時より前です。投稿されるよう、それまでに LinkedIn を再接続してください。",
+    rescheduleTitle: "投稿を再スケジュール",
+    rescheduleConfirm: "再スケジュール",
+    rescheduleKeepsSettings: "変更されるのは日時のみです。この投稿の内容、画像、公開範囲、ブーストコメントはそのまま保持されます。",
     errors: {
       reconnect: "{platform} の接続が期限切れか取り消されています。設定でアカウントを再接続してから、この投稿を予約し直してください。",
       notConnected: "{platform} アカウントが接続されていません。設定で接続してから、この投稿を予約し直してください。",

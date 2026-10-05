@@ -139,14 +139,23 @@ export async function deleteStrategyBatch(batchId: string): Promise<void> {
  *  publication. Strips the per-brief scheduling pointers (scheduledPostId /
  *  scheduledAt) so the row UI drops the "Programmé pour…" line and re-offers
  *  scheduling. The actual `scheduledPosts` docs are cancelled separately by the
- *  caller via `cancelScheduledPost` — this only cleans the batch document. */
-export async function clearBatchScheduling(batchId: string): Promise<void> {
+ *  caller via `cancelScheduledPost` — this only cleans the batch document.
+ *
+ *  Only the pointers listed in `cancelledIds` are dropped: a brief whose post
+ *  could not be cancelled (already published, or being published) keeps its
+ *  pointer, so scheduling the batch again — which skips briefs that have one —
+ *  can never publish it a second time. */
+export async function clearBatchScheduling(
+  batchId: string,
+  cancelledIds: ReadonlySet<string>
+): Promise<void> {
   const ref = doc(db, COLLECTION, batchId);
   const snap = await getDoc(ref);
   if (!snap.exists()) throw new Error("batch_not_found");
   const data = snap.data();
   const posts: PostBrief[] = Array.isArray(data.posts) ? data.posts : [];
   const next = posts.map((p) => {
+    if (p.scheduledPostId && !cancelledIds.has(p.scheduledPostId)) return p;
     const cleaned: PostBrief = { ...p };
     delete cleaned.scheduledPostId;
     delete cleaned.scheduledAt;

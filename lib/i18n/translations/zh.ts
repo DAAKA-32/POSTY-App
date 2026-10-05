@@ -2859,6 +2859,9 @@ export const zh = {
     unsupportedPlatforms: "以下平台暂不支持排期：{platforms}。请取消选择或立即发布。",
     partialScheduleFailure: "已在 {succeeded} 排期，但在 {failed} 排期失败。",
     tokenExpiresBeforeSchedule: "你的 LinkedIn 连接将于 {date} 过期，早于本次发布时间。请在此之前重新连接 LinkedIn，以确保按时发布。",
+    rescheduleTitle: "重新排期帖子",
+    rescheduleConfirm: "重新排期",
+    rescheduleKeepsSettings: "只会更改日期：此帖子的内容、图片、受众和助推评论都会保留。",
     errors: {
       reconnect: "你的 {platform} 连接已过期或被撤销。请在设置中重新连接账号，然后重新排期此帖子。",
       notConnected: "尚未连接 {platform} 账号。请在设置中连接，然后重新排期此帖子。",

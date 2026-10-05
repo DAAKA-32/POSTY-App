@@ -2712,6 +2712,9 @@ export const en = {
     unsupportedPlatforms: "Scheduling isn't available yet for: {platforms}. Deselect them or publish now.",
     partialScheduleFailure: "Scheduled on {succeeded}, but scheduling failed on {failed}.",
     tokenExpiresBeforeSchedule: "Your LinkedIn connection expires on {date}, before this post goes out. Reconnect LinkedIn before then so it gets published.",
+    rescheduleTitle: "Reschedule post",
+    rescheduleConfirm: "Reschedule",
+    rescheduleKeepsSettings: "Only the date changes: this post's content, images, audience and boost comment are kept.",
     errors: {
       reconnect: "Your {platform} connection expired or was revoked. Reconnect your account in Settings, then reschedule this post.",
       notConnected: "No {platform} account is connected. Connect it in Settings, then reschedule this post.",

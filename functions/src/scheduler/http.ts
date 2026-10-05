@@ -120,9 +120,11 @@ export function classifyHttpStatus(input: HttpFailureInput): PublishError {
     return new PublishError({ ...base, code: "RATE_LIMITED", retryAfterMs: input.retryAfterMs });
   }
   if (status >= 500) {
-    // A 5xx is the platform explicitly reporting its own failure — standard
-    // practice (and LinkedIn/Meta behaviour) is that nothing was created.
-    return new PublishError({ ...base, code: "PLATFORM_UNAVAILABLE" });
+    // A 5xx on the create call does NOT prove nothing was created: gateways
+    // (502/504) and LinkedIn itself can fail after the post was committed.
+    // Ambiguous → LinkedIn/Threads retry with reconciliation (duplicate /
+    // container check); other platforms end OUTCOME_UNKNOWN, never re-sent.
+    return new PublishError({ ...base, code: "PLATFORM_UNAVAILABLE", ambiguous: stage === "send" });
   }
   return new PublishError({ ...base, code: "CONTENT_REJECTED" });
 }
@@ -145,7 +147,8 @@ export function parseGraphError(body: string): GraphErrorBody | null {
   }
 }
 
-const GRAPH_RATE_LIMIT_CODES = new Set([4, 17, 32, 613]);
+// 341 = "Application limit reached" — a throttle, not a content rejection.
+const GRAPH_RATE_LIMIT_CODES = new Set([4, 17, 32, 341, 613]);
 
 /**
  * Meta Graph API errors carry a numeric `code` that is far more precise than
@@ -170,10 +173,12 @@ export function classifyGraphFailure(input: HttpFailureInput): PublishError {
   }
   if (code === 506) return new PublishError({ ...base, code: "DUPLICATE_CONTENT" });
   if (code === 368) return new PublishError({ ...base, code: "CONTENT_REJECTED" });
+  // "Temporary" Graph errors (and any 5xx) say nothing about whether the
+  // create call was applied before the failure — ambiguous during `send`.
   if (code === 1 || code === 2 || graph.is_transient === true) {
-    return new PublishError({ ...base, code: "PLATFORM_UNAVAILABLE", ambiguous: false, retryable: true });
+    return new PublishError({ ...base, code: "PLATFORM_UNAVAILABLE", ambiguous: stage === "send", retryable: true });
   }
-  if (status >= 500) return new PublishError({ ...base, code: "PLATFORM_UNAVAILABLE" });
+  if (status >= 500) return new PublishError({ ...base, code: "PLATFORM_UNAVAILABLE", ambiguous: stage === "send" });
   if (status === 408) return new PublishError({ ...base, code: "TIMEOUT", ambiguous: stage === "send" });
   return new PublishError({ ...base, code: "CONTENT_REJECTED" });
 }

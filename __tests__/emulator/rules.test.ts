@@ -200,6 +200,28 @@ describe.skipIf(!HOST)("firestore.rules — scheduledPosts", () => {
       await expect(updateDoc(doc(alice, "scheduledPosts/p"), reschedulePayload())).rejects.toMatchObject(denied);
     });
 
+    it("reschedule after an unconfirmed send keeps the reconciliation state (what reschedulePost writes then)", async () => {
+      const resumeState = { linkedinAssets: "urn:li:digitalmediaAsset:1" };
+      await seedPost("p", "retrying", { priorSendUncertain: true, resumeState });
+      const keeping: Record<string, unknown> = reschedulePayload();
+      delete keeping.priorSendUncertain;
+      delete keeping.resumeState;
+      await expect(updateDoc(doc(alice, "scheduledPosts/p"), keeping)).resolves.toBeUndefined();
+      const after = (await getDoc(doc(alice, "scheduledPosts/p"))).data()!;
+      expect(after).toMatchObject({ status: "pending", attemptCount: 0, priorSendUncertain: true, resumeState });
+    });
+
+    it("rescheduling cannot forge the reconciliation state", async () => {
+      await seedPost("p", "failed");
+      await expect(
+        updateDoc(doc(alice, "scheduledPosts/p"), { ...reschedulePayload(), priorSendUncertain: true }),
+      ).rejects.toMatchObject(denied);
+      await seedPost("q", "retrying", { priorSendUncertain: true, resumeState: { linkedinAssets: "urn:li:digitalmediaAsset:1" } });
+      const forged: Record<string, unknown> = { ...reschedulePayload(), resumeState: { linkedinAssets: "urn:li:digitalmediaAsset:666" } };
+      delete forged.priorSendUncertain;
+      await expect(updateDoc(doc(alice, "scheduledPosts/q"), forged)).rejects.toMatchObject(denied);
+    });
+
     it("rescheduling cannot smuggle a retry budget or clear an error partially", async () => {
       await seedPost("p", "failed");
       await expect(updateDoc(doc(alice, "scheduledPosts/p"), { ...reschedulePayload(), attemptCount: 1 })).rejects.toMatchObject(denied);

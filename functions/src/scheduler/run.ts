@@ -316,6 +316,7 @@ export async function runSchedulerTick(deps: SchedulerDeps): Promise<TickStats> 
           code: decision.code,
           httpStatus: result.kind === "error" ? result.error.httpStatus : null,
           detail: result.kind === "error" ? result.error.detail : null,
+          retryable: true,
           ambiguous: result.kind === "error" ? result.error.ambiguous : false,
           nextAttemptAt: iso(decision.nextAttemptAtMs),
         });
@@ -329,6 +330,9 @@ export async function runSchedulerTick(deps: SchedulerDeps): Promise<TickStats> 
           rawCode: result.kind === "error" ? result.error.code : null,
           httpStatus: result.kind === "error" ? result.error.httpStatus : null,
           detail: result.kind === "error" ? result.error.detail : null,
+          // Temporary (retries exhausted) vs permanent (never retried).
+          retryable: result.kind === "error" ? result.error.retryable : null,
+          ambiguous: result.kind === "error" ? result.error.ambiguous : false,
         });
         break;
       case "noop":

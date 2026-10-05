@@ -49,7 +49,8 @@ function classifyZernioFailure(platform: string, status: number, body: string, r
   if (status === 403) return new PublishError({ ...base, code: "PERMISSION_DENIED" });
   if (status === 404) return new PublishError({ ...base, code: "CONNECTION_NOT_FOUND" });
   if (status === 429) return new PublishError({ ...base, code: "RATE_LIMITED", retryAfterMs });
-  if (status >= 500) return new PublishError({ ...base, code: "PLATFORM_UNAVAILABLE" });
+  // Only used for the create call: a 5xx may come after the post was made.
+  if (status >= 500) return new PublishError({ ...base, code: "PLATFORM_UNAVAILABLE", ambiguous: true });
   return new PublishError({ ...base, code: "CONTENT_REJECTED" });
 }
 

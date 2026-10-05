@@ -189,7 +189,10 @@ service cloud.firestore {
     }
 
     // pending / retrying / failed / cancelled → pending at a new time, with a
-    // fresh attempt budget and no leftover error / retry state.
+    // fresh attempt budget and no leftover error / retry state. The
+    // reconciliation state (an earlier send may have reached the platform) is
+    // either kept untouched — so the next attempt re-detects that publication
+    // instead of posting twice — or cleared; the owner can never forge it.
     function isOwnerReschedule() {
       let d = request.resource.data;
       return resource.data.status in ['pending', 'retrying', 'failed', 'cancelled']
@@ -202,7 +205,8 @@ service cloud.firestore {
         && nullOrAbsent(d, 'failureReason')
         && nullOrAbsent(d, 'lastError')
         && nullOrAbsent(d, 'nextAttemptAt')
-        && (!('priorSendUncertain' in d) || d.priorSendUncertain == false);
+        && (!d.diff(resource.data).affectedKeys().hasAny(['priorSendUncertain', 'resumeState'])
+            || !('priorSendUncertain' in d) || d.priorSendUncertain == false);
     }
 
     match /scheduledPosts/{postId} {

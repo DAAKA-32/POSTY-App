@@ -2859,6 +2859,9 @@ export const de = {
     unsupportedPlatforms: "Planen ist noch nicht verfügbar für: {platforms}. Wähle sie ab oder veröffentliche jetzt.",
     partialScheduleFailure: "Geplant auf {succeeded}, aber das Planen ist auf {failed} fehlgeschlagen.",
     tokenExpiresBeforeSchedule: "Deine LinkedIn-Verbindung läuft am {date} ab, vor dieser Veröffentlichung. Verbinde LinkedIn bis dahin neu, damit sie erscheint.",
+    rescheduleTitle: "Beitrag neu planen",
+    rescheduleConfirm: "Neu planen",
+    rescheduleKeepsSettings: "Nur das Datum ändert sich: Inhalt, Bilder, Zielgruppe und Boost-Kommentar dieses Beitrags bleiben erhalten.",
     errors: {
       reconnect: "Deine {platform}-Verbindung ist abgelaufen oder wurde widerrufen. Verbinde dein Konto in den Einstellungen neu und plane diesen Beitrag erneut.",
       notConnected: "Kein {platform}-Konto verbunden. Verbinde es in den Einstellungen und plane diesen Beitrag erneut.",

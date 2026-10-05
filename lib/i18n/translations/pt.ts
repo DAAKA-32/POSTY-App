@@ -2859,6 +2859,9 @@ export const pt = {
     unsupportedPlatforms: "O agendamento ainda não está disponível para: {platforms}. Desmarque-as ou publique agora.",
     partialScheduleFailure: "Agendado no {succeeded}, mas o agendamento falhou no {failed}.",
     tokenExpiresBeforeSchedule: "Sua conexão com o LinkedIn expira em {date}, antes desta publicação. Reconecte o LinkedIn até lá para que ela seja publicada.",
+    rescheduleTitle: "Reagendar a publicação",
+    rescheduleConfirm: "Reagendar",
+    rescheduleKeepsSettings: "Só a data muda: o conteúdo, as imagens, o público e o comentário de impulso desta publicação são mantidos.",
     errors: {
       reconnect: "Sua conexão com o {platform} expirou ou foi revogada. Reconecte sua conta em Configurações e reagende este post.",
       notConnected: "Nenhuma conta do {platform} está conectada. Conecte-a em Configurações e reagende este post.",

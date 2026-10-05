@@ -2859,6 +2859,9 @@ export const ko = {
     unsupportedPlatforms: "다음 플랫폼은 아직 예약 게시를 지원하지 않습니다: {platforms}. 선택을 해제하거나 지금 게시하세요.",
     partialScheduleFailure: "{succeeded}에는 예약했지만 {failed}에서는 예약에 실패했습니다.",
     tokenExpiresBeforeSchedule: "LinkedIn 연결이 이 게시 시간보다 이른 {date}에 만료됩니다. 게시되도록 그 전에 LinkedIn을 다시 연결하세요.",
+    rescheduleTitle: "게시물 일정 변경",
+    rescheduleConfirm: "일정 변경",
+    rescheduleKeepsSettings: "날짜만 변경됩니다. 이 게시물의 내용, 이미지, 공개 범위, 부스트 댓글은 그대로 유지됩니다.",
     errors: {
       reconnect: "{platform} 연결이 만료되었거나 취소되었습니다. 설정에서 계정을 다시 연결한 뒤 이 게시물을 다시 예약하세요.",
       notConnected: "연결된 {platform} 계정이 없습니다. 설정에서 연결한 뒤 이 게시물을 다시 예약하세요.",

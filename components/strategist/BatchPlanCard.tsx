@@ -375,13 +375,18 @@ export default function BatchPlanCard({ batch, onApproved, onDiscarded }: Props)
         .map((p) => p.scheduledPostId)
         .filter((id): id is string => !!id);
       const results = await Promise.allSettled(ids.map((id) => cancelScheduledPost(id)));
-      const failed = results.filter((r) => r.status === "rejected").length;
+      const cancelledIds = new Set(ids.filter((_, i) => results[i].status === "fulfilled"));
+      const failed = ids.length - cancelledIds.size;
 
-      // Clean the batch doc (drop scheduling pointers, status → materialized).
-      await clearBatchScheduling(batch.id);
+      // Clean the batch doc (status → materialized). Only the pointers of
+      // posts actually removed from the queue are dropped: a published or
+      // in-flight post keeps its pointer, so re-scheduling the batch can never
+      // publish it twice.
+      await clearBatchScheduling(batch.id, cancelledIds);
 
       setPosts((prev) =>
         prev.map((p) => {
+          if (p.scheduledPostId && !cancelledIds.has(p.scheduledPostId)) return p;
           const cleaned = { ...p };
           delete cleaned.scheduledPostId;
           delete cleaned.scheduledAt;

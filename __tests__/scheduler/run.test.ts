@@ -213,6 +213,18 @@ describe("temporary errors → retry with backoff", () => {
 
   it("gives up after 5 attempts with the last real error", async () => {
     h.store.docs.set("p1", scheduledPostDoc());
+    for (let i = 0; i < 5; i++) h.linkedin.ugcScript.push({ status: 429 });
+    for (let i = 0; i < 5; i++) {
+      await runSchedulerTick(h.deps(`run-${i}`));
+      h.clock.advance(31 * 60_000);
+    }
+    expect(statusOf("p1")).toBe("failed");
+    expect(h.store.get("p1").attemptCount).toBe(5);
+    expect(lastError("p1")).toMatchObject({ code: "RATE_LIMITED", httpStatus: 429 });
+  });
+
+  it("5 ambiguous 5xx on the create call end OUTCOME_UNKNOWN (the last one may have been published)", async () => {
+    h.store.docs.set("p1", scheduledPostDoc());
     for (let i = 0; i < 5; i++) h.linkedin.ugcScript.push({ status: 502 });
     for (let i = 0; i < 5; i++) {
       await runSchedulerTick(h.deps(`run-${i}`));
@@ -220,7 +232,20 @@ describe("temporary errors → retry with backoff", () => {
     }
     expect(statusOf("p1")).toBe("failed");
     expect(h.store.get("p1").attemptCount).toBe(5);
-    expect(lastError("p1")).toMatchObject({ code: "PLATFORM_UNAVAILABLE", httpStatus: 502 });
+    expect(lastError("p1")).toMatchObject({ code: "OUTCOME_UNKNOWN", httpStatus: 502 });
+    expect(String(lastError("p1")?.detail)).toContain("PLATFORM_UNAVAILABLE");
+  });
+
+  it("a 5xx on the create call after LinkedIn committed the post → reconciled on retry, not failed", async () => {
+    h.store.docs.set("p1", scheduledPostDoc());
+    h.linkedin.ugcScript.push({ status: 504 });
+    h.linkedin.ugcScript.push({ status: 422, body: '{"message":"Content is a duplicate of urn:li:share:7001"}' });
+    await runSchedulerTick(h.deps("run-1"));
+    expect(statusOf("p1")).toBe("retrying");
+    h.clock.advance(2 * 60_000);
+    await runSchedulerTick(h.deps("run-2"));
+    expect(statusOf("p1")).toBe("published");
+    expect(h.store.get("p1")).toMatchObject({ externalPostId: "urn:li:share:7001", reconciled: true });
   });
 
   it("a post cancelled while waiting for its retry is never published", async () => {

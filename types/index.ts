@@ -1096,6 +1096,13 @@ export interface CreateScheduledPostData {
   imageFiles?: File[];
   /** Optional algo-boost seed comment dropped X minutes after publish */
   seedComment?: SeedCommentConfig;
+  /**
+   * Caller-chosen document id (idempotency key). Retrying with the same id
+   * never creates a second post: if an earlier attempt already created the
+   * document — e.g. a write that finished after a client-side timeout — the
+   * call succeeds without writing again.
+   */
+  scheduledPostId?: string;
 }
 
 /**
@@ -1143,8 +1150,10 @@ export interface SchedulingContextType {
   schedulePost: (data: CreateScheduledPostData) => Promise<{ success: boolean; scheduledPostId?: string; error?: string }>;
   /** One scheduled post per platform; LinkedIn-only options are applied to LinkedIn only. */
   schedulePostOnPlatforms: (
-    data: Omit<CreateScheduledPostData, "platform">,
-    platforms: SchedulablePlatform[]
+    data: Omit<CreateScheduledPostData, "platform" | "scheduledPostId">,
+    platforms: SchedulablePlatform[],
+    /** Per-platform idempotency keys (see CreateScheduledPostData.scheduledPostId). */
+    scheduledPostIds?: Partial<Record<SchedulablePlatform, string>>
   ) => Promise<Array<{ platform: SchedulablePlatform; success: boolean; scheduledPostId?: string; error?: string }>>;
   cancelSchedule: (scheduledPostId: string) => Promise<{ success: boolean; error?: string }>;
   deleteSchedule: (scheduledPostId: string) => Promise<{ success: boolean; error?: string }>;
