@@ -34,11 +34,13 @@ const GIFT_RECIPIENTS: GiftRecipient[] = [
   { email: "sexotherapiebychris@gmail.com",    displayName: "Chris"    },
   { email: "sandrarobidet@gmail.com",          displayName: "Sandra"   },
   { email: "cynthiabordy@gmail.com",           displayName: "Cynthia"  },
-  { email: "marie.sarria77@gmail.com",         displayName: "Marie"    },
-  { email: "zoulikha.sophrologie@gmail.com",   displayName: "Zoulikha" },
-  { email: "aurelieanicet@gmail.com",          displayName: "Aurélie"  },
   { email: "bibi42@gmail.com",                 displayName: "Bibi"     },
-  { email: "contact@breque-ue-watches.com",    displayName: "Contact",  skipPopup: true },
+  // Removed 2026-10-06: marie.sarria77, zoulikha.sophrologie, aurelieanicet,
+  // contact@breque-ue-watches.com — never claimed, and this list ships in the
+  // client bundle while the server grants Max on an UNVERIFIED email: anyone
+  // could sign up with one of them and get Max for free. Re-add a recipient
+  // only once their account exists (or after the server requires a verified
+  // email for this override).
   // Founder — receives the popup once like real recipients (validated in prod)
   { email: "emilien.nepveu@gmail.com",         displayName: "Emilien"  },
 ];

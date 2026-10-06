@@ -145,12 +145,23 @@ describe.skipIf(!HOST)("firestore.rules — scheduledPosts", () => {
       ).resolves.toBeUndefined();
     });
 
-    it("allows Facebook and Threads", async () => {
+    it("allows Facebook and Threads on Max only (Pro's allowedPlatforms exclude them)", async () => {
       // The app only writes `visibility` for LinkedIn.
-      const noVisibility: Record<string, unknown> = createPayload("alice");
-      delete noVisibility.visibility;
-      await expect(setDoc(doc(alice, "scheduledPosts/f1"), { ...noVisibility, platform: "facebook" })).resolves.toBeUndefined();
-      await expect(setDoc(doc(alice, "scheduledPosts/t1"), { ...noVisibility, platform: "threads" })).resolves.toBeUndefined();
+      const forMallory: Record<string, unknown> = createPayload("mallory");
+      delete forMallory.visibility;
+      await expect(setDoc(doc(mallory, "scheduledPosts/f1"), { ...forMallory, platform: "facebook" })).resolves.toBeUndefined();
+      await expect(setDoc(doc(mallory, "scheduledPosts/t1"), { ...forMallory, platform: "threads" })).resolves.toBeUndefined();
+      const forAlice: Record<string, unknown> = createPayload("alice");
+      delete forAlice.visibility;
+      for (const platform of ["facebook", "threads", "reddit", "threadsz"]) {
+        await expect(setDoc(doc(alice, `scheduledPosts/pro-${platform}`), { ...forAlice, platform }), platform).rejects.toMatchObject(denied);
+      }
+    });
+
+    it("refuses a publication date more than 400 days ahead", async () => {
+      await expect(
+        setDoc(doc(alice, "scheduledPosts/far"), createPayload("alice", { scheduledAt: Timestamp.fromDate(new Date(Date.now() + 5 * 365 * 86_400_000)) })),
+      ).rejects.toMatchObject(denied);
     });
 
     it("refuses platforms without a scheduled publisher", async () => {
@@ -220,6 +231,13 @@ describe.skipIf(!HOST)("firestore.rules — scheduledPosts", () => {
       const forged: Record<string, unknown> = { ...reschedulePayload(), resumeState: { linkedinAssets: "urn:li:digitalmediaAsset:666" } };
       delete forged.priorSendUncertain;
       await expect(updateDoc(doc(alice, "scheduledPosts/q"), forged)).rejects.toMatchObject(denied);
+    });
+
+    it("after a downgrade / refund: cancel still works, rescheduling does not", async () => {
+      await seedPost("p", "failed");
+      await adminDb().doc("users/alice").set({ subscription: { plan: "free", status: "canceled" } });
+      await expect(updateDoc(doc(alice, "scheduledPosts/p"), reschedulePayload())).rejects.toMatchObject(denied);
+      await expect(updateDoc(doc(alice, "scheduledPosts/p"), cancelPayload())).resolves.toBeUndefined();
     });
 
     it("rescheduling cannot smuggle a retry budget or clear an error partially", async () => {

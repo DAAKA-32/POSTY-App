@@ -116,4 +116,26 @@ describe("scheduler ↔ app contract", () => {
     expect(rules).toMatch(/isOwnerCancel\(\) \{[\s\S]*?resource\.data\.status in \['pending', 'retrying', 'failed'\]/);
     expect(rules).toMatch(/isOwnerReschedule\(\) \{[\s\S]*?resource\.data\.status in \['pending', 'retrying', 'failed', 'cancelled'\]/);
   });
+
+  it("firestore.rules founder/gift list = lib/config/plans.ts FOUNDER_EMAILS + GIFT_RECIPIENTS", () => {
+    const rules = readFileSync(path.resolve(__dirname, "../../firestore.rules"), "utf8");
+    const plans = readFileSync(path.resolve(__dirname, "../../lib/config/plans.ts"), "utf8");
+    const ruleList = rules.match(/function founderGiftEmails\(\) \{\s*return \[([^\]]+)\]/);
+    expect(ruleList).not.toBeNull();
+    const inRules = new Set(ruleList![1].split(",").map((s) => s.trim().replace(/'/g, "")).filter(Boolean));
+    const founders = plans.match(/const FOUNDER_EMAILS: string\[\] = \[([^\]]+)\]/)![1];
+    const gifts = plans.match(/const GIFT_RECIPIENTS: GiftRecipient\[\] = \[([\s\S]*?)\n\];/)![1];
+    const inPlans = new Set(
+      [...founders.matchAll(/"([^"]+@[^"]+)"/g), ...gifts.matchAll(/email:\s*"([^"]+)"/g)].map((m) => m[1].toLowerCase()),
+    );
+    expect(inPlans.size).toBeGreaterThan(0);
+    expect([...inRules].sort()).toEqual([...inPlans].sort());
+  });
+
+  it("firestore.rules Free-trial window = FREE_TRIAL_DURATION_DAYS", () => {
+    const rules = readFileSync(path.resolve(__dirname, "../../firestore.rules"), "utf8");
+    const plans = readFileSync(path.resolve(__dirname, "../../lib/config/plans.ts"), "utf8");
+    const days = Number(plans.match(/export const FREE_TRIAL_DURATION_DAYS = (\d+);/)![1]);
+    expect(rules).toContain(`s.freeTrialEndsAt == s.freeTrialStartedAt + duration.value(${days}, 'd')`);
+  });
 });

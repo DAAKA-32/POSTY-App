@@ -21,37 +21,306 @@ service cloud.firestore {
       return isAuthenticated() && request.resource.data.userId == request.auth.uid;
     }
 
-    // Scheduling guard — Pro or Max plan (regular subscription OR test mode)
-    function canSchedulePosts() {
-      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
-      let hasUser = userDoc != null && userDoc.data != null;
-      let hasRegularPlan = hasUser
-        && userDoc.data.subscription != null
-        && (userDoc.data.subscription.plan == 'pro' || userDoc.data.subscription.plan == 'max');
-      let hasTestModePlan = hasUser
-        && userDoc.data.testMode != null
-        && userDoc.data.testMode.active == true
-        && (userDoc.data.testMode.plan == 'pro' || userDoc.data.testMode.plan == 'max');
-      return hasRegularPlan || hasTestModePlan;
+    // Owner update that keeps the doc in the owner's account: rewriting userId
+    // would plant it in a victim's account (e.g. a post the Strategist injects
+    // into the victim's prompts, or a batch they could publish).
+    function isResourceOwnerUpdate() {
+      return isResourceOwner() && request.resource.data.get('userId', null) == resource.data.userId;
+    }
+
+    // Founder / gift accounts get Max through their VERIFIED login email (the
+    // same lists as lib/config/plans.ts FOUNDER_EMAILS + GIFT_RECIPIENTS —
+    // __tests__/scheduler/consistency.test.ts keeps them in sync). Their
+    // Firestore plan stays null by design, so the token is the only signal a
+    // client cannot forge. email_verified: an unclaimed gift address cannot be
+    // claimed by signing up with it.
+    function founderGiftEmails() {
+      return ['emilien.nepveu@gmail.com', 'maubertcome27@gmail.com',
+              'cerisecottier@gmail.com', '2jsh.immo@gmail.com', 'sexotherapiebychris@gmail.com',
+              'sandrarobidet@gmail.com', 'cynthiabordy@gmail.com', 'bibi42@gmail.com'];
+    }
+
+    function isFounderOrGiftToken() {
+      return request.auth.token.get('email_verified', false) == true
+        && request.auth.token.get('email', null) is string
+        && request.auth.token.email.lower() in founderGiftEmails();
+    }
+
+    // Pro may schedule its own platforms; facebook / threads / reddit /
+    // threadsz are Max-only (lib/config/plans.ts allowedPlatforms — the direct
+    // publish routes enforce the same split).
+    function planMaySchedule(plan, platform) {
+      return plan == 'max'
+        || (plan == 'pro' && !(platform in ['facebook', 'threads', 'reddit', 'threadsz']));
+    }
+
+    // Scheduling guard. subscription.plan is server-owned (Stripe webhook /
+    // refund route, Admin SDK): see match /users/{userId}. Founder / gift
+    // accounts count as Max. The former testMode branch is gone: test mode is
+    // permanently disabled and stale flags (expired since Feb 2026) must not
+    // keep granting scheduling.
+    function canSchedulePosts(platform) {
+      return isFounderOrGiftToken()
+        || planMaySchedule(
+             get(/databases/$(database)/documents/users/$(request.auth.uid))
+               .data.get('subscription', {}).get('plan', null),
+             platform);
+    }
+
+    // ───────────────────────── users/{userId} ─────────────────────────
+    // The owner reads, creates (signup), edits their profile / preferences and
+    // deletes (RGPD erasure) their own document — but never what the server
+    // trusts for entitlements: plan / Stripe / refund state, the Free-trial
+    // window, quota and usage counters, email, createdAt, testMode, the cron's
+    // dedup guard. The server writes those through the Admin SDK (Stripe
+    // webhook, refund route, quota helpers, auto-batch), which bypasses rules.
+    //
+    // ALLOWLIST: a client update may only touch the keys below. A new
+    // client-written field must be added here (and to the emulator tests),
+    // otherwise its write is refused — fail closed.
+    function userClientKeys() {
+      return ['uid', 'name', 'bio', 'photoURL', 'profileType', 'sector', 'role', 'objective',
+              'targetAudience', 'communicationTone', 'publishingFrequency', 'profile',
+              'onboardingComplete', 'linkedinStyle', 'branding', 'language', 'helpReadPages',
+              'hasSeenAppTour', 'whatsNewSeenRelease', 'legalVersionsSeen', 'giftPopupSeen',
+              'showWelcomeModal', 'dashboardVisited', 'memory', 'strategistParams',
+              'autonomousMode', 'updatedAt', 'pendingAutoBatchId', 'subscription', 'quota'];
+    }
+
+    // The caller's own Firebase Auth email. createUserProfile stores the signup
+    // form value as typed, so compare case- and space-insensitively.
+    function isAuthEmail(email) {
+      return email is string
+        && request.auth.token.get('email', null) is string
+        && email.trim().lower() == request.auth.token.email.lower();
+    }
+
+    // Free-plan window: exactly FREE_TRIAL_DURATION_DAYS (lib/config/plans.ts,
+    // kept in sync by the consistency test) from a start that is not in the
+    // future (1-day tolerance for device clocks; an earlier start only
+    // shortens the user's own trial).
+    function isFreeTrialWindow(s) {
+      return s.get('freeTrialStartedAt', null) is timestamp
+        && s.get('freeTrialEndsAt', null) is timestamp
+        && s.freeTrialEndsAt == s.freeTrialStartedAt + duration.value(30, 'd')
+        && s.freeTrialStartedAt <= request.time + duration.value(1, 'd');
+    }
+
+    // subscription exactly as createUserProfile writes it: no plan (Stripe sets
+    // it), 'inactive' — or 'active' only for a (verified) gift/founder account,
+    // which also carries giftedAt — and a fresh Free window.
+    function isInitialSubscription(s) {
+      return s is map
+        && s.keys().hasOnly(['plan', 'status', 'freeTrialStartedAt', 'freeTrialEndsAt', 'giftedAt'])
+        && s.get('plan', null) == null
+        && (s.get('status', 'inactive') == 'inactive'
+            || (s.get('status', null) == 'active' && s.get('giftedAt', null) == request.time))
+        && (!('giftedAt' in s) || (s.giftedAt == request.time && isFounderOrGiftToken()))
+        && ((!('freeTrialStartedAt' in s) && !('freeTrialEndsAt' in s)) || isFreeTrialWindow(s));
+    }
+
+    // The server derives the founder / gift Max override from the stored email:
+    // storing a listed address requires a VERIFIED token for it.
+    function isStorableEmail(email) {
+      return email == ''
+        || (isAuthEmail(email)
+            && (!(email.trim().lower() in founderGiftEmails()) || isFounderOrGiftToken()));
+    }
+
+    function isZeroQuota(q) {
+      return q is map
+        && q.keys().hasOnly(['dailyMessageCount', 'lastMessageDate', 'messageTimestamps'])
+        && q.get('dailyMessageCount', 0) == 0
+        && q.get('lastMessageDate', null) == null
+        && q.get('messageTimestamps', []) is list
+        && q.get('messageTimestamps', []).size() == 0;
+    }
+
+    function isZeroUsage(u) {
+      return u is map
+        && u.keys().hasOnly(['conversationsThisMonth', 'monthStartDate'])
+        && u.get('conversationsThisMonth', 0) == 0;
+    }
+
+    // Document creation: createUserProfile (signup, setDoc without merge) or
+    // completeOnboarding (setDoc merge, creates the doc when signup's write
+    // failed — no subscription / email / createdAt in that case).
+    function isValidUserCreate(userId) {
+      let d = request.resource.data;
+      return d.keys().hasOnly([
+          'uid', 'email', 'name', 'sector', 'role', 'linkedinStyle', 'onboardingComplete',
+          'subscription', 'quota', 'usage', 'createdAt',
+          'profileType', 'objective', 'targetAudience', 'communicationTone',
+          'publishingFrequency', 'profile'])
+        && d.get('uid', userId) == userId
+        && (!('email' in d) || isStorableEmail(d.email))
+        && (!('createdAt' in d) || d.createdAt == request.time)
+        && (!('subscription' in d) || isInitialSubscription(d.subscription))
+        && (!('quota' in d) || isZeroQuota(d.quota))
+        && (!('usage' in d) || isZeroUsage(d.usage));
+    }
+
+    // createUserProfile landing on a doc that incrementUserQuotaAdmin seeded
+    // first ({uid, quota, createdAt}) or that completeOnboarding created: the
+    // non-merge setDoc is then evaluated as an update. One-shot: only while the
+    // doc has neither email nor subscription, and only with the FULL signup
+    // shape, which leaves both behind and closes this branch.
+    function isProfileInitOverSeed(userId) {
+      let d = request.resource.data;
+      return !('email' in resource.data)
+        && !('subscription' in resource.data)
+        && ('email' in d) && ('subscription' in d) && ('quota' in d) && ('createdAt' in d)
+        && isValidUserCreate(userId);
+    }
+
+    // activateFreePlan: plan -> 'free', status -> 'active'. A Free window must
+    // exist afterwards: either the existing one, untouched, or — only when none
+    // was ever set — one seeded now, anchored to createdAt when present (the
+    // client sends createdAt.toDate(), i.e. truncated to the ms).
+    function isActivateFreePlan(ns, os, sd) {
+      let created = resource.data.get('createdAt', null);
+      let hadWindow = os.get('freeTrialStartedAt', null) != null;
+      return sd.hasOnly(['plan', 'status', 'freeTrialStartedAt', 'freeTrialEndsAt'])
+        && ns.get('plan', null) == 'free'
+        && ns.get('status', null) == 'active'
+        && ((hadWindow && !sd.hasAny(['freeTrialStartedAt', 'freeTrialEndsAt']))
+            || (!hadWindow
+                && isFreeTrialWindow(ns)
+                && (!(created is timestamp)
+                    || (ns.freeTrialStartedAt >= created - duration.value(1, 's')
+                        && ns.freeTrialStartedAt <= created + duration.value(1, 's')))));
+    }
+
+    // SubscriptionContext gift/founder heal: stale status -> 'active' + giftedAt.
+    // Only for a verified gift/founder token, so a past_due / canceled payer
+    // can never flip itself back to 'active'.
+    function isGiftStatusHeal(ns, os, sd) {
+      return isFounderOrGiftToken()
+        && sd.hasOnly(['status', 'giftedAt'])
+        && ns.get('status', null) == 'active'
+        && ns.get('giftedAt', null) == request.time
+        && os.get('status', null) in ['inactive', 'canceled', 'past_due', 'unpaid'];
+    }
+
+    function isClientSubscriptionUpdate() {
+      let ns = request.resource.data.subscription;
+      let os = resource.data.get('subscription', {});
+      let sd = ns.diff(os).affectedKeys();
+      return ns is map && (isActivateFreePlan(ns, os, sd) || isGiftStatusHeal(ns, os, sd));
+    }
+
+    // QuotaContext.recordPublish counters (shared with the server): +1 only, or
+    // a restart at 1 once the window has really rolled over — never lowered.
+    // Day / week anchors are UTC, like lib/db/firestore.ts and the server.
+    function isDailyCountIncrement(nq, oq) {
+      let today = request.time.date();
+      return (nq.get('lastMessageDate', null) == oq.get('lastMessageDate', null)
+              && nq.dailyMessageCount == oq.get('dailyMessageCount', 0) + 1)
+          || (nq.dailyMessageCount == 1
+              && nq.lastMessageDate == today
+              && (oq.get('lastMessageDate', null) == null || oq.lastMessageDate < today));
+    }
+
+    // Restart only on the current Monday 00:00 UTC (1970-01-05 was a Monday).
+    function isWeeklyCountIncrement(nq, oq) {
+      let weekAgo = request.time - duration.value(7, 'd');
+      return (nq.get('publishWeekStart', null) == oq.get('publishWeekStart', null)
+              && nq.weeklyPublishCount == oq.get('weeklyPublishCount', 0) + 1)
+          || (nq.weeklyPublishCount == 1
+              && nq.publishWeekStart is timestamp
+              && (nq.publishWeekStart.toMillis() - 345600000) % 604800000 == 0
+              && nq.publishWeekStart <= request.time
+              && nq.publishWeekStart > weekAgo
+              && (oq.get('publishWeekStart', null) == null || oq.publishWeekStart <= weekAgo));
+    }
+
+    // Only the recordPublish shapes; messageTimestamps and dualMode* stay
+    // server-only.
+    function isClientQuotaUpdate() {
+      let nq = request.resource.data.quota;
+      let oq = resource.data.get('quota', {});
+      let qd = nq.diff(oq).affectedKeys();
+      return nq is map
+        && ((qd.hasOnly(['dailyMessageCount', 'lastMessageDate']) && isDailyCountIncrement(nq, oq))
+            || (qd.hasOnly(['weeklyPublishCount', 'publishWeekStart']) && isWeeklyCountIncrement(nq, oq)));
+    }
+
+    // Strategist autonomous-mode settings (dotted-path patches). lastTriggeredAt,
+    // the cron's 6-day dedup guard, stays server-owned.
+    // Values are typed and bounded like the UI / auto-batch route (count is
+    // clamped 1..15 server-side, custom prompt <= 2000 chars for founders).
+    function isClientAutonomousUpdate() {
+      let na = request.resource.data.autonomousMode;
+      let ad = na.diff(resource.data.get('autonomousMode', {})).affectedKeys();
+      return na is map
+        && ad.hasOnly(['enabled', 'dayOfWeek', 'count', 'customPrompt'])
+        && (!ad.hasAny(['enabled']) || na.enabled is bool)
+        && (!ad.hasAny(['dayOfWeek']) || (na.dayOfWeek is int && na.dayOfWeek >= 0 && na.dayOfWeek <= 6))
+        && (!ad.hasAny(['count']) || (na.count is int && na.count >= 1 && na.count <= 15))
+        && (!ad.hasAny(['customPrompt']) || na.customPrompt == null
+            || (na.customPrompt is string && na.customPrompt.size() <= 2000));
+    }
+
+    // Long-term memory is injected into every generation prompt: the client
+    // may toggle it and REMOVE items (Settings), never add or edit them.
+    function isClientMemoryUpdate() {
+      let nm = request.resource.data.memory;
+      let om = resource.data.get('memory', {});
+      let md = nm.diff(om).affectedKeys();
+      return nm is map
+        && md.hasOnly(['enabled', 'items', 'lastUpdated'])
+        && (!md.hasAny(['enabled']) || nm.enabled is bool)
+        && (!md.hasAny(['items']) || (nm.items is list && om.get('items', []).hasAll(nm.items)))
+        && (!md.hasAny(['lastUpdated']) || nm.lastUpdated == request.time);
+    }
+
+    // pendingAutoBatchId: set by auto-batch, the client may only clear it.
+    // showWelcomeModal: set to true by the Stripe webhook, the client may only
+    // dismiss it.
+    function isValidUserUpdate(userId) {
+      let d = request.resource.data;
+      let changed = d.diff(resource.data).affectedKeys();
+      return changed.hasOnly(userClientKeys())
+        && (!changed.hasAny(['uid']) || d.uid == userId)
+        && (!changed.hasAny(['subscription']) || isClientSubscriptionUpdate())
+        && (!changed.hasAny(['quota']) || isClientQuotaUpdate())
+        && (!changed.hasAny(['autonomousMode']) || isClientAutonomousUpdate())
+        && (!changed.hasAny(['memory']) || isClientMemoryUpdate())
+        && (!changed.hasAny(['pendingAutoBatchId']) || !('pendingAutoBatchId' in d))
+        && (!changed.hasAny(['showWelcomeModal']) || d.showWelcomeModal == false);
+    }
+
+    match /users/{userId} {
+      allow read:   if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUserCreate(userId);
+      allow update: if isOwner(userId)
+                    && (isValidUserUpdate(userId) || isProfileInitOverSeed(userId));
+      // RGPD erasure (lib/db/firestore.ts deleteAllUserData) runs client-side
+      // before deleteUser(); keep owner delete.
+      allow delete: if isOwner(userId);
     }
 
     // ───────────────────────── OWNED-BY-PATH collections ─────────────────────────
     // These collections use the user's uid as the document ID, so isOwner(userId)
     // is sufficient and there is no way one user can read another user's row.
 
-    match /users/{userId}                  { allow read, write: if isOwner(userId); }
     match /consents/{userId}               { allow read, write: if isOwner(userId); }
-    match /linkedinConnections/{userId}    { allow read, write: if isOwner(userId); }
-    match /facebookConnections/{userId}    { allow read, write: if isOwner(userId); }
-    match /threadsConnections/{userId}     { allow read, write: if isOwner(userId); }
-    match /mediumConnections/{userId}      { allow read, write: if isOwner(userId); }
-    match /blueskyConnections/{userId}     { allow read, write: if isOwner(userId); }
-    match /mastodonConnections/{userId}    { allow read, write: if isOwner(userId); }
-    match /discordConnections/{userId}     { allow read, write: if isOwner(userId); }
-    match /xConnections/{userId}           { allow read, write: if isOwner(userId); }
-    match /instagramConnections/{userId}   { allow read, write: if isOwner(userId); }
-    match /redditConnections/{userId}      { allow read, write: if isOwner(userId); }
-    match /threadszConnections/{userId}    { allow read, write: if isOwner(userId); }
+
+    // OAuth connections: written only by the server (OAuth callbacks, Admin
+    // SDK). The server trusts them (tokens, Zernio account ids, connected-
+    // account checks), so a client may read and disconnect (delete) its own,
+    // never forge one.
+    match /linkedinConnections/{userId}    { allow read, delete: if isOwner(userId); }
+    match /facebookConnections/{userId}    { allow read, delete: if isOwner(userId); }
+    match /threadsConnections/{userId}     { allow read, delete: if isOwner(userId); }
+    match /mediumConnections/{userId}      { allow read, delete: if isOwner(userId); }
+    match /blueskyConnections/{userId}     { allow read, delete: if isOwner(userId); }
+    match /mastodonConnections/{userId}    { allow read, delete: if isOwner(userId); }
+    match /discordConnections/{userId}     { allow read, delete: if isOwner(userId); }
+    match /xConnections/{userId}           { allow read, delete: if isOwner(userId); }
+    match /instagramConnections/{userId}   { allow read, delete: if isOwner(userId); }
+    match /redditConnections/{userId}      { allow read, delete: if isOwner(userId); }
+    match /threadszConnections/{userId}    { allow read, delete: if isOwner(userId); }
     // Zernio profile mapping: 1 Posty user → 1 Zernio profileId. Read-only
     // client-side so the user can see whether they have a profile; writes
     // happen server-side via Admin SDK during OAuth.
@@ -68,7 +337,8 @@ service cloud.firestore {
 
     match /posts/{postId} {
       allow read:   if isResourceOwner();
-      allow update, delete: if isResourceOwner();
+      allow update: if isResourceOwnerUpdate();
+      allow delete: if isResourceOwner();
       allow create: if isAuthenticated() && isRequestOwner();
     }
 
@@ -79,67 +349,79 @@ service cloud.firestore {
     // materialize → schedule validation flow.
     match /strategyBatches/{batchId} {
       allow read:   if isResourceOwner();
-      allow update, delete: if isResourceOwner();
-      allow create: if isAuthenticated() && isRequestOwner();
+      allow update: if isResourceOwnerUpdate();
+      allow delete: if isResourceOwner();
+      // Batches are created server-side only (Strategist routes, Admin SDK).
+      allow create: if false;
     }
 
     match /sessions/{sessionId} {
       allow read:   if isResourceOwner();
-      allow update, delete: if isResourceOwner();
+      allow update: if isResourceOwnerUpdate();
+      allow delete: if isResourceOwner();
       allow create: if isAuthenticated() && isRequestOwner();
     }
 
     match /linkedinPosts/{postId} {
       allow read:   if isResourceOwner();
-      allow update, delete: if isResourceOwner();
+      allow update: if isResourceOwnerUpdate();
+      allow delete: if isResourceOwner();
       allow create: if isAuthenticated() && isRequestOwner();
     }
 
     match /blueskyPosts/{postId} {
       allow read:   if isResourceOwner();
-      allow update, delete: if isResourceOwner();
+      allow update: if isResourceOwnerUpdate();
+      allow delete: if isResourceOwner();
       allow create: if isAuthenticated() && isRequestOwner();
     }
 
     match /mastodonPosts/{postId} {
       allow read:   if isResourceOwner();
-      allow update, delete: if isResourceOwner();
+      allow update: if isResourceOwnerUpdate();
+      allow delete: if isResourceOwner();
       allow create: if isAuthenticated() && isRequestOwner();
     }
 
     match /discordPosts/{postId} {
       allow read:   if isResourceOwner();
-      allow update, delete: if isResourceOwner();
+      allow update: if isResourceOwnerUpdate();
+      allow delete: if isResourceOwner();
       allow create: if isAuthenticated() && isRequestOwner();
     }
 
     match /xPosts/{postId} {
       allow read:   if isResourceOwner();
-      allow update, delete: if isResourceOwner();
+      allow update: if isResourceOwnerUpdate();
+      allow delete: if isResourceOwner();
       allow create: if isAuthenticated() && isRequestOwner();
     }
 
     match /instagramPosts/{postId} {
       allow read:   if isResourceOwner();
-      allow update, delete: if isResourceOwner();
+      allow update: if isResourceOwnerUpdate();
+      allow delete: if isResourceOwner();
       allow create: if isAuthenticated() && isRequestOwner();
     }
 
     match /redditPosts/{postId} {
       allow read:   if isResourceOwner();
-      allow update, delete: if isResourceOwner();
+      allow update: if isResourceOwnerUpdate();
+      allow delete: if isResourceOwner();
       allow create: if isAuthenticated() && isRequestOwner();
     }
 
     match /threadszPosts/{postId} {
       allow read:   if isResourceOwner();
-      allow update, delete: if isResourceOwner();
+      allow update: if isResourceOwnerUpdate();
+      allow delete: if isResourceOwner();
       allow create: if isAuthenticated() && isRequestOwner();
     }
 
     match /mediumPosts/{postId} {
       allow read:   if isResourceOwner();
-      allow update, delete: if isResourceOwner();
+      allow update: if isResourceOwnerUpdate();
+      allow delete: if isResourceOwner();
       allow create: if isAuthenticated() && isRequestOwner();
     }
 
@@ -170,6 +452,7 @@ service cloud.firestore {
         && d.status == 'pending'
         && d.attemptCount == 0
         && d.scheduledAt is timestamp
+        && d.scheduledAt <= request.time + duration.value(400, 'd')
         && d.content is string && d.content.size() > 0 && d.content.size() <= 10000
         && isSchedulerPlatform(d.platform)
         && nullOrAbsent(d, 'publishedAt')
@@ -198,6 +481,7 @@ service cloud.firestore {
       return resource.data.status in ['pending', 'retrying', 'failed', 'cancelled']
         && d.status == 'pending'
         && d.scheduledAt is timestamp
+        && d.scheduledAt <= request.time + duration.value(400, 'd')
         && d.attemptCount == 0
         && d.diff(resource.data).affectedKeys().hasOnly([
             'scheduledAt', 'timezone', 'status', 'updatedAt', 'attemptCount', 'failureReason',
@@ -211,11 +495,15 @@ service cloud.firestore {
 
     match /scheduledPosts/{postId} {
       allow read:   if isResourceOwner();
-      allow create: if isAuthenticated() && isRequestOwner() && canSchedulePosts()
+      allow create: if isAuthenticated() && isRequestOwner()
+                    && canSchedulePosts(request.resource.data.platform)
                     && isValidScheduledPostCreate();
       allow update: if isResourceOwner()
                     && request.resource.data.userId == resource.data.userId
-                    && (isOwnerCancel() || isOwnerReschedule());
+                    // Rescheduling re-checks the entitlement: a downgraded / refunded
+                    // account cannot keep re-queueing posts. Cancel stays free.
+                    && (isOwnerCancel()
+                        || (isOwnerReschedule() && canSchedulePosts(resource.data.platform)));
       // Unrestricted for the owner: account / conversation deletion cascades
       // remove every scheduled post regardless of status.
       allow delete: if isResourceOwner();
