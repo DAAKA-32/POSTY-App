@@ -62,6 +62,8 @@ const RequestSchema = z.object({
   /** User timezone, e.g. "Europe/Paris". */
   timezone: z.string().min(1).max(64),
   language: z.enum(["fr", "en"]).default("fr"),
+  /** Period the user asked for — "month" widens the publication window. */
+  period: z.enum(["day", "week", "month", "none"]).optional(),
   /** Optional advanced steering (drawer panel override). Omit → saved
    *  profile defaults are used by the shared generator. */
   advanced: AdvancedSchema.optional(),
@@ -90,7 +92,7 @@ export async function POST(request: NextRequest) {
       { status: 400 }
     );
   }
-  const { sourcePrompt, count, timezone, language, advanced } = parsed.data;
+  const { sourcePrompt, count, timezone, language, advanced, period } = parsed.data;
   const startDate = parsed.data.startDate ?? tomorrowInTz(timezone);
 
   // ── Access gate — enterprise email allowlist ─────────────────────────
@@ -159,6 +161,7 @@ export async function POST(request: NextRequest) {
       startDate,
       timezone,
       language,
+      period,
       // zod validated formality/emotion as 1..5 ints; cast narrows number →
       // the literal union the type declares.
       advanced: advanced as StrategistAdvancedParams | undefined,

@@ -19,6 +19,8 @@
  * the codebase.
  */
 
+import { findUnverifiedStats } from "@/lib/ai/plan-quality";
+
 export type QualitySeverity = "hard" | "soft";
 
 export interface QualityIssue {
@@ -120,11 +122,65 @@ const DATE_WORDS: Record<Lang, RegExp> = {
   en: /\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday|january|february|march|april|may|june|july|august|september|october|november|december|yesterday|today|last (week|month|year|quarter))\b/i,
 };
 
+export interface LintOptions {
+  /** Expected length band (Strategist brief mode). Replaces the default
+   *  700 / 2600 soft thresholds so a deliberately short post is not "repaired"
+   *  toward 1300+ characters. */
+  lengthBand?: { min: number; max: number };
+  /** Run the vague-closer check against the body without the trailing hashtag
+   *  line. The default (end of the whole text) never matches a post that ends
+   *  with hashtags — kept as-is for the chat, opt-in for the Strategist. */
+  endCheckOnBody?: boolean;
+  /** Extra AI-tell checks seen in real Strategist generations (article-less
+   *  reveal bridges, stock clichés, "Et si… ?" closers). Opt-in. */
+  strict?: boolean;
+  /** What the author actually provided. When set, any percentage / amount /
+   *  multiple in the post that isn't in here is a HARD issue (invented stat). */
+  knownFacts?: string;
+  /** Strategist house style: fewer emojis than this is a HARD issue. */
+  minEmojis?: number;
+  /** Strategist house style: the post must contain a scannable block (≥ 2
+   *  bulleted / numbered / emoji-led lines). HARD issue when missing. */
+  requireVisualBlock?: boolean;
+}
+
+const EMOJI = /\p{Extended_Pictographic}/gu;
+/** A list-like line: dash / arrow / bullet / "1." / keycap 1️⃣ / leading emoji. */
+const LIST_LINE = /^\s*(?:[-–•→>]\s|\d+[.)]\s|\d️?⃣|\p{Extended_Pictographic})/u;
+
+const FILLER: Record<Lang, RegExp> = {
+  fr: /\b(font face [àa]|faire face [àa]|la m[êe]me probl[ée]matique|une probl[ée]matique|consid[ée]rablement|de pr[ée]cieuses? (?:ressources|heures|minutes)|d'autres aspects critiques|aspects? critiques?|il suffit de faire un petit ajustement|chaque heure compte)\b/i,
+  en: /\b(face the same (?:problem|challenge|issue)|considerably|valuable resources|other critical aspects|every hour counts|a small adjustment is all it takes)\b/i,
+};
+
+const STRICT_BRIDGES: Record<Lang, RegExp> = {
+  // At a line start or right after a sentence: "…lancé. Résultat ? Du temps perdu"
+  fr: /(?:^|\n|[.!…]\s+)(?:r[ée]sultat|la v[ée]rit[ée]|la (?:vraie |grande )?le[çc]on|la raison|le (?:vrai )?secret|la cl[ée]|le d[ée]clic|la morale|la suite|la solution|l'erreur(?: [àa] [ée]viter)?|le pi[èe]ge)\s*\?/i,
+  en: /(?:^|\n|[.!…]\s+)(?:the\s+)?(?:result|lesson|reason|secret|key|twist|takeaway|solution|trap|mistake to avoid)\s*\?/i,
+};
+
+const STRICT_CLICHES: Record<Lang, RegExp> = {
+  fr: /\b(sortir des sentiers battus|plong(?:er|[ée]e?) dans l'inconnu|prendre son destin en main|(?:fai[a-z]*|font|fera|a fait) (?:toute |vraiment )?la diff[ée]rence|la cl[ée] du succ[èe]s|dans un monde en (?:constante|perp[ée]tuelle) [ée]volution|un v[ée]ritable (?:d[ée]fi|tournant|game[- ]changer)|game over|en constante [ée]volution|les r[ée]sultats parlent d'eux-m[êe]mes|faire mouche|changement de paradigme|grimper en fl[èe]che|saut(?:er)? dans le vide|main dans la main|sortir de (?:ma|ta|sa|votre|notre) zone de confort|une histoire en devenir|et si je (?:te|vous) disais|sans boussole|crier dans le d[ée]sert|c'est tout un art|ce jour-l[àa],? j'ai compris|une le[çc]on pr[ée]cieuse|des heures pr[ée]cieuses|crucial(?:e|es|s)?)\b/i,
+  en: /\b(think outside the box|game[- ]changer|at the end of the day|make all the difference|the key to success|in today'?s fast[- ]paced world|let'?s (?:dig|dive) in|a whole new level|in the ever[- ]evolving|the results speak for themselves|the backbone of|crucial(?:ly)?)\b/i,
+};
+
+const STRICT_WHAT_IF_CLOSE: Record<Lang, RegExp> = {
+  fr: /^(?:et si|imaginez|imagine)\b[^\n]*\?\s*$/i,
+  en: /^(?:what if|imagine)\b[^\n]*\?\s*$/i,
+};
+
+/** Last non-hashtag line block of a post (where the real closing sentence lives). */
+function bodyEnd(text: string): string {
+  const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
+  while (lines.length && /^(#\w[\w-]*\s*)+$/.test(lines[lines.length - 1])) lines.pop();
+  return lines.join("\n");
+}
+
 /**
  * Lint a finished post. The `text` should be the post AS RETURNED to the user
  * (after hashtag normalization). `language` is the generation language.
  */
-export function lintPost(rawText: string, language: Lang): QualityReport {
+export function lintPost(rawText: string, language: Lang, options?: LintOptions): QualityReport {
   const issues: QualityIssue[] = [];
   const isFr = language === "fr";
   const text = normalizeQuotes(rawText).trim();
@@ -164,10 +220,67 @@ export function lintPost(rawText: string, language: Lang): QualityReport {
              : `Remove the ${label}: LinkedIn down-ranks these. Replace with a genuine experience question.`);
     }
   }
-  if (VAGUE_CLOSERS[language].test(text)) {
+  if (VAGUE_CLOSERS[language].test(options?.endCheckOnBody ? bodyEnd(text) : text)) {
     push("vague-close", "hard",
       isFr ? `Remplace la question de fin vague ("Qu'en pensez-vous ?") par UNE question précise, répondable depuis l'expérience du lecteur.`
            : `Replace the vague closing question ("What do you think?") with ONE specific question answerable from the reader's experience.`);
+  }
+  if (options?.knownFacts !== undefined) {
+    const invented = findUnverifiedStats(body, options.knownFacts);
+    if (invented.length) {
+      const list = invented.map((f) => `"${f}"`).join(", ");
+      push("unverified-figure", "hard",
+        isFr ? `Retire ${list} : ce chiffre n'a pas été fourni par l'auteur. Remplace-le par une formulation qualitative ("nettement moins", "la plupart") sans inventer d'autre chiffre ni de cas nommé.`
+             : `Remove ${list}: the author never provided this figure. Replace it with qualitative wording ("far fewer", "most") without inventing another number or named case.`);
+    }
+  }
+  if (options?.minEmojis !== undefined) {
+    const n = (body.match(EMOJI) ?? []).length;
+    if (n < options.minEmojis) {
+      push("too-few-emojis", "hard",
+        isFr ? `Le post n'a que ${n} emoji(s). Ajoute-en ${options.minEmojis} à 4 qui servent la lecture : repères de liste (👉 ✅ 📌 1️⃣), idée forte (💡 ⚡ 🎯), émotion juste sur un temps fort. Jamais deux fois le même, jamais en fin de chaque phrase.`
+             : `The post has only ${n} emoji(s). Add ${options.minEmojis} to 4 that help reading: list markers (👉 ✅ 📌 1️⃣), a strong idea (💡 ⚡ 🎯), the right emotion on a strong beat. Never the same one twice, never at the end of every sentence.`);
+    }
+  }
+  if (options?.requireVisualBlock) {
+    const listLines = body.split("\n").filter((l) => l.trim() && !l.trim().startsWith("#") && LIST_LINE.test(l)).length;
+    if (listLines < 2) {
+      push("no-visual-block", "hard",
+        isFr ? `Le post n'a aucun bloc visuel. Transforme le passage central en mini-liste de 3 à 5 lignes courtes à puces (👉 ✅ ❌ 📌 → ou 1️⃣ 2️⃣ 3️⃣) ou en avant/après — une idée par ligne.`
+             : `The post has no visual block. Turn the central passage into a mini-list of 3 to 5 short bulleted lines (👉 ✅ ❌ 📌 → or 1️⃣ 2️⃣ 3️⃣) or a before/after — one idea per line.`);
+    }
+  }
+  if (options?.strict) {
+    const dense = body.split(/\n\s*\n/).find((p) => p.replace(/\s+/g, " ").trim().length > 240 && !p.split("\n").some((l) => LIST_LINE.test(l)));
+    if (dense) {
+      push("dense-paragraph", "hard",
+        isFr ? `Un paragraphe est trop dense ("${dense.trim().slice(0, 50)}…"). Coupe-le en lignes courtes : une idée par ligne, 2 lignes maximum par bloc.`
+             : `A paragraph is too dense ("${dense.trim().slice(0, 50)}…"). Break it into short lines: one idea per line, 2 lines max per block.`);
+    }
+    const filler = text.match(FILLER[language]);
+    if (filler) {
+      push("filler", "hard",
+        isFr ? `Supprime la phrase de remplissage "${filler[0]}" : remplace-la par un détail concret ou coupe-la.`
+             : `Remove the filler "${filler[0]}": replace it with a concrete detail or cut it.`);
+    }
+    const m = text.match(STRICT_BRIDGES[language]);
+    if (m) {
+      push("reveal-bridge", "hard",
+        isFr ? `Supprime le pont-révélation "${m[0].trim()}" : dis directement l'idée, sans fausse question.`
+             : `Remove the reveal bridge "${m[0].trim()}": state the point directly, no fake question.`);
+    }
+    const c = text.match(STRICT_CLICHES[language]);
+    if (c) {
+      push("cliche", "hard",
+        isFr ? `Remplace le cliché "${c[0]}" par une formulation concrète et propre à l'auteur.`
+             : `Replace the cliché "${c[0]}" with concrete wording specific to the author.`);
+    }
+    const lastLine = bodyEnd(text).split("\n").pop() ?? "";
+    if (STRICT_WHAT_IF_CLOSE[language].test(lastLine.trim())) {
+      push("vague-close", "hard",
+        isFr ? `La dernière ligne est une question rhétorique vague ("Et si…?") : termine sur une phrase nette ou une question précise.`
+             : `The last line is a vague rhetorical question ("What if…?"): end on a crisp line or a precise question.`);
+    }
   }
   if (countEmDashes(text) > 2) {
     push("em-dash-density", "hard",
@@ -177,7 +290,22 @@ export function lintPost(rawText: string, language: Lang): QualityReport {
 
   // --- SOFT: reported, included in a repair only if a HARD issue triggers it -
   const bodyLen = body.length;
-  if (bodyLen > 0 && bodyLen < 700) {
+  const band = options?.lengthBand;
+  if (band) {
+    // Brief mode: tolerate ~30% around the requested band before flagging.
+    const tooShortAt = Math.round(band.min * 0.7);
+    const tooLongAt = Math.round(band.max * 1.3);
+    const target = `${band.min}-${band.max}`;
+    if (bodyLen > 0 && bodyLen < tooShortAt) {
+      push("too-short", "soft",
+        isFr ? `Le corps est trop court (${bodyLen} car.) pour ce format : étoffe avec un exemple concret, vise ${target} car.`
+             : `Body is too short (${bodyLen} chars) for this format: add a concrete example, aim for ${target} chars.`);
+    } else if (bodyLen > tooLongAt) {
+      push("too-long", "soft",
+        isFr ? `Le corps est trop long (${bodyLen} car.) pour ce format : resserre vers ${target} car. en coupant le superflu.`
+             : `Body is too long (${bodyLen} chars) for this format: tighten toward ${target} chars by cutting filler.`);
+    }
+  } else if (bodyLen > 0 && bodyLen < 700) {
     push("too-short", "soft",
       isFr ? `Le corps est court (${bodyLen} car.): étoffe avec un exemple concret ou une étape, vise 1300-2000 car.`
            : `Body is short (${bodyLen} chars): add a concrete example or step, aim for 1300-2000 chars.`);
@@ -246,5 +374,14 @@ STRICT RULES:
     ? `CORRECTIONS À APPLIQUER:\n${list}\n\n— POST À CORRIGER —\n${post}\n— FIN —`
     : `FIXES TO APPLY:\n${list}\n\n— POST TO FIX —\n${post}\n— END —`;
 
+  // "Preserve the numbers" would keep exactly the invented figures we ask to
+  // remove. Only reachable from the Strategist (knownFacts lint option), so the
+  // chat's repair prompt is unchanged.
+  if (issues.some((i) => i.code === "unverified-figure")) {
+    const exception = isFr
+      ? "\n- EXCEPTION: retire les chiffres signalés comme non vérifiés (et la phrase qui les porte si besoin), sans en inventer d'autres."
+      : "\n- EXCEPTION: remove the figures flagged as unverified (and the sentence carrying them if needed), without inventing others.";
+    return { system: system + exception, user };
+  }
   return { system, user };
 }

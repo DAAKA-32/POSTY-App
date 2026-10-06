@@ -1,38 +1,42 @@
 "use client";
 
 /**
- * BatchPlanCard — renders a Strategist-generated editorial batch inside the
- * Strategist drawer.
+ * BatchPlanCard — a Strategist plan (or a single post) inside the conversation.
  *
- * Phase 1 deliverable: read-only-ish table of briefs (hook + angle + format +
- * date + time + rationale). Lets the user:
- *   - Inline-edit hook / angle / date / time
- *   - Delete a row
- *   - Approve the batch (status → "approved", surfaces a follow-up CTA that
- *     Phase 2 will pick up to materialize each brief into a real post)
- *   - Discard the batch
+ * One clear next action per state:
+ *   draft         → "Write the N posts" (approves + writes in one step)
+ *   writing       → honest progress line + per-row skeletons
+ *   written       → "Schedule on LinkedIn" (inline confirmation, no timer)
+ *   scheduled     → summary + calendar + "Cancel scheduling" (inline confirm)
+ *   discarded     → collapsed line with "Restore"
  *
- * Intentionally NOT a fancy table component (no virtualization, no DnD). N is
- * always ≤ 15 briefs — the simplest list of motion cards is the right tool.
+ * Each brief shows day · format · length, the hook, the main idea, and a
+ * "Why this post" disclosure (works on touch — no hover-only tooltip).
+ * "Edit" opens hook / idea / date / time / format / length and a
+ * "Note for the writing" (userNote, read by the writer). Written posts show a
+ * LinkedIn-like preview folded where "…see more" would cut, a character count,
+ * and "Rewrite" with quick instructions.
+ *
+ * Cancellation keeps the scheduler's rule (commit d46358f): only pointers of
+ * posts actually removed from the queue are dropped, so a published or
+ * in-flight post can never be scheduled twice.
  */
 
-import { useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Calendar as CalendarIcon,
-  Clock,
-  Trash2,
-  CheckCircle2,
-  X,
-  Wand2,
-  RotateCw,
-  Copy,
-  Check,
-  Loader2,
   CalendarClock,
+  Check,
+  ChevronDown,
+  Copy,
   Image as ImageIcon,
+  Loader2,
+  Pencil,
+  RotateCw,
+  Trash2,
+  Wand2,
 } from "lucide-react";
-import StrategistMark from "./StrategistMark";
 import type { StrategyBatch, PostBrief } from "@/types";
 import {
   patchPostBrief,
@@ -45,52 +49,79 @@ import {
 import { cancelScheduledPost } from "@/lib/db/firestore";
 import { getAuthHeaders } from "@/lib/api/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { useStrategistDrawer } from "@/contexts/StrategistDrawerContext";
 import { isStrategistImagesAllowedForEmail } from "@/lib/strategist/images-access";
+import {
+  FORMATS,
+  FORMAT_SLUGS,
+  GOAL_LABELS,
+  LENGTH_BANDS,
+  normalizeFormat,
+  normalizeGoal,
+  normalizeLength,
+  type FormatSlug,
+  type LengthBand,
+} from "@/lib/ai/post-formats";
+import {
+  formatDateTime,
+  formatDay,
+  formatRange,
+  useStrategistCopy,
+  type StrategistCopy,
+  type StrategistLang,
+} from "@/lib/strategist/copy";
 import toast from "@/components/ui/Toast";
+import StrategistMark from "./StrategistMark";
+import { Button, focusRing } from "./ui";
 
 interface Props {
   batch: StrategyBatch;
-  /** Notify parent the batch was approved / discarded so it can advance the
-   *  chat state (Phase 2 hook plugs in here). */
-  onApproved?: (batch: StrategyBatch) => void;
-  onDiscarded?: (batchId: string) => void;
+  /** Called after every change so the session (history, latest plan) stays in sync. */
+  onChange?: (batch: StrategyBatch) => void;
 }
 
-export default function BatchPlanCard({ batch, onApproved, onDiscarded }: Props) {
-  const { language } = useLanguage();
+type Confirming = "schedule" | "cancel" | null;
+const STORY_FORMATS: FormatSlug[] = ["storytelling", "lesson", "case-study", "behind-the-scenes"];
+
+export default function BatchPlanCard({ batch, onChange }: Props) {
+  const { c, lang } = useStrategistCopy();
   const { user } = useAuth();
-  // Founder-gated "visuals on posts" feature (emilien for now).
+  const { close } = useStrategistDrawer();
   const allowImages = isStrategistImagesAllowedForEmail(user?.email);
-  // Local copy so edits feel instant — Firestore writes are fire-and-forget
-  // with toast-on-error rather than blocking the UI.
+  const titleId = useId();
+
   const [posts, setPosts] = useState<PostBrief[]>(batch.posts);
   const [status, setStatus] = useState<StrategyBatch["status"]>(batch.status);
   const [savingId, setSavingId] = useState<string | null>(null);
-  // Materialization state — Set of briefIds currently being regenerated,
-  // plus a top-level boolean for "generate all" in progress.
-  const [materializingIds, setMaterializingIds] = useState<Set<string>>(new Set());
-  const [materializingAll, setMaterializingAll] = useState(false);
-  // Scheduling state — a single in-flight boolean (we schedule the whole
-  // batch in one shot, not per-row) plus a confirm gate so the user doesn't
-  // accidentally fire posts into the publishing pipeline.
-  const [scheduling, setScheduling] = useState(false);
-  const [confirmSchedule, setConfirmSchedule] = useState(false);
-  // Cancellation state — un-schedule a batch already handed to the publishing
-  // cron. Same two-step confirm gate as scheduling so it isn't a one-tap regret.
-  const [cancelling, setCancelling] = useState(false);
-  const [confirmCancel, setConfirmCancel] = useState(false);
-  // Visual generation — briefId currently generating an image (founder-gated).
+  const [writingIds, setWritingIds] = useState<Set<string>>(new Set());
+  const [writingAll, setWritingAll] = useState(false);
+  const [busy, setBusy] = useState<"schedule" | "cancel" | null>(null);
+  const [confirming, setConfirming] = useState<Confirming>(null);
   const [visualizingId, setVisualizingId] = useState<string | null>(null);
 
-  // "Edit brief" is allowed only in draft. After approve, the briefs are
-  // frozen and the row UI swaps to the materialized post preview.
-  const isLocked = status !== "draft";
-  const isApprovedOrLater =
-    status === "approved" || status === "materialized" || status === "scheduled";
-  const allMaterialized =
-    posts.length > 0 && posts.every((p) => p.materialized?.content);
-  const someMaterialized = posts.some((p) => p.materialized?.content);
+  // Keep the session in sync (skip the initial render).
+  const firstRef = useRef(true);
+  useEffect(() => {
+    if (firstRef.current) {
+      firstRef.current = false;
+      return;
+    }
+    onChange?.({ ...batch, posts, status });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [posts, status]);
+
+  const isDraft = status === "draft";
+  const written = posts.filter((p) => p.materialized?.content).length;
+  const allWritten = posts.length > 0 && written === posts.length;
+  const scheduledCount = posts.filter((p) => p.scheduledPostId).length;
+  const step = status === "scheduled" ? 3 : allWritten ? 2 : isDraft ? 0 : 1;
+
+  const dateRange = useMemo(() => {
+    const dates = posts.map((p) => p.suggestedDate).filter(Boolean).sort();
+    return dates.length ? formatRange(dates[0], dates[dates.length - 1], lang) : "";
+  }, [posts, lang]);
+
+  // ── Mutations ──────────────────────────────────────────────────────────
 
   const patchRow = async (id: string, patch: Partial<Omit<PostBrief, "id">>) => {
     setPosts((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)));
@@ -98,135 +129,97 @@ export default function BatchPlanCard({ batch, onApproved, onDiscarded }: Props)
     try {
       await patchPostBrief(batch.id, id, patch);
     } catch (err) {
-      toast.error("Échec de la sauvegarde — réessaye.");
       console.warn("[BatchPlanCard] patchRow failed:", err);
+      toast.error(c.card.toast.saveFail);
     } finally {
       setSavingId(null);
     }
   };
 
   const removeRow = async (id: string) => {
+    const before = posts;
     setPosts((prev) => prev.filter((p) => p.id !== id));
     try {
       await deletePostBrief(batch.id, id);
     } catch {
-      toast.error("Impossible de supprimer ce brief.");
+      setPosts(before);
+      toast.error(c.card.toast.deleteFail);
     }
   };
 
-  const approve = async () => {
-    setStatus("approved");
+  const setLifecycle = async (next: StrategyBatch["status"]) => {
+    const prev = status;
+    setStatus(next);
     try {
-      await setBatchStatus(batch.id, "approved");
-      onApproved?.({ ...batch, posts, status: "approved" });
-      toast.success("Plan approuvé. Clique sur \"Générer les posts\" pour matérialiser le contenu.");
+      await setBatchStatus(batch.id, next);
+      return true;
     } catch {
-      setStatus("draft");
-      toast.error("Approbation échouée. Réessaye.");
+      setStatus(prev);
+      toast.error(c.card.toast.saveFail);
+      return false;
     }
   };
 
-  const discard = async () => {
-    setStatus("discarded");
-    try {
-      await setBatchStatus(batch.id, "discarded");
-      onDiscarded?.(batch.id);
-    } catch {
-      setStatus("draft");
-    }
-  };
-
-  /** Call the materialize endpoint, optionally for a subset of briefIds.
-   *  Patches local state with the returned post bodies and updates the
-   *  batch status when every brief is materialized. */
-  const materialize = async (briefIds?: string[], force = false) => {
-    if (briefIds && briefIds.length > 0) {
-      setMaterializingIds(new Set(briefIds));
-    } else {
-      setMaterializingAll(true);
-    }
+  const materialize = async (opts: { briefIds?: string[]; force?: boolean; instruction?: string } = {}) => {
+    const { briefIds, force = false, instruction } = opts;
+    if (briefIds?.length) setWritingIds(new Set(briefIds));
+    else setWritingAll(true);
     try {
       const headers = await getAuthHeaders();
       const res = await fetch("/api/strategist/materialize", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...headers },
-        body: JSON.stringify({
-          batchId: batch.id,
-          briefIds,
-          force,
-          language: language === "fr" ? "fr" : "en",
-        }),
+        body: JSON.stringify({ batchId: batch.id, briefIds, force, language: lang, instruction }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        toast.error(err.message || "Génération des posts échouée.");
+        toast.error(err.message || c.card.toast.writeFail);
         return;
       }
       const data = (await res.json()) as {
         status: StrategyBatch["status"];
-        results: Array<{ briefId: string; ok: boolean; content?: string; error?: string }>;
+        results: Array<{ briefId: string; ok: boolean; content?: string }>;
       };
-
-      // Patch local state for each successful brief.
       setPosts((prev) =>
         prev.map((p) => {
           const r = data.results.find((x) => x.briefId === p.id);
-          if (r && r.ok && r.content) {
-            return {
-              ...p,
-              materialized: {
-                content: r.content,
-                generatedAt: Date.now(),
-                model: "gpt-4o",
-              },
-            };
+          if (r?.ok && r.content) {
+            return { ...p, materialized: { ...(p.materialized ?? {}), content: r.content, generatedAt: Date.now() } };
           }
           return p;
         })
       );
-      setStatus(data.status);
-
-      const failed = data.results.filter((r) => !r.ok);
-      if (failed.length > 0) {
-        toast.error(
-          `${failed.length} post${failed.length > 1 ? "s n'ont" : " n'a"} pas pu être généré${failed.length > 1 ? "s" : ""}. Réessaye.`
-        );
-      } else if (data.results.length > 0) {
-        toast.success(
-          data.results.length === 1
-            ? "Post régénéré."
-            : `${data.results.length} posts générés.`
-        );
-      }
+      if (data.status) setStatus(data.status);
+      const failed = data.results.filter((r) => !r.ok).length;
+      if (failed > 0) toast.error(c.card.toast.writeSomeFail(failed));
+      else if (instruction) toast.success(c.card.toast.rewritten);
+      else if (data.results.length > 0) toast.success(c.card.toast.written(data.results.length));
     } catch (err) {
       console.error("[BatchPlanCard] materialize failed:", err);
-      toast.error("Génération échouée. Vérifie ta connexion.");
+      toast.error(c.card.toast.network);
     } finally {
-      setMaterializingIds(new Set());
-      setMaterializingAll(false);
+      setWritingIds(new Set());
+      setWritingAll(false);
     }
   };
 
-  /** Inline-edit of the materialized post body (after generation, before
-   *  scheduling). Optimistic local patch, async Firestore write. */
-  const editMaterialized = async (briefId: string, content: string) => {
+  /** Draft → approve and write in one step (was two separate clicks). */
+  const writeAll = async () => {
+    if (isDraft && !(await setLifecycle("approved"))) return;
+    await materialize();
+  };
+
+  const editPost = async (briefId: string, content: string) => {
     setPosts((prev) =>
-      prev.map((p) =>
-        p.id === briefId && p.materialized
-          ? { ...p, materialized: { ...p.materialized, content } }
-          : p
-      )
+      prev.map((p) => (p.id === briefId && p.materialized ? { ...p, materialized: { ...p.materialized, content } } : p))
     );
     try {
       await patchMaterializedPost(batch.id, briefId, content);
     } catch {
-      toast.error("Édition non sauvegardée.");
+      toast.error(c.card.toast.editFail);
     }
   };
 
-  /** Generate a branded visual for one materialized post via the existing
-   *  image pipeline, store it on the brief, and render it under the post.
-   *  Founder-gated. One image credit per call (Pro=3/Max=5 per day). */
   const generateVisual = async (briefId: string) => {
     const brief = posts.find((p) => p.id === briefId);
     if (!brief?.materialized?.content || visualizingId) return;
@@ -239,24 +232,19 @@ export default function BatchPlanCard({ batch, onApproved, onDiscarded }: Props)
         body: JSON.stringify({
           brief: brief.hook.slice(0, 800),
           postContext: brief.materialized.content.slice(0, 2000),
-          language: language === "fr" ? "fr" : "en",
+          language: lang,
           variantCount: 1,
         }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        toast.error(
-          res.status === 403
-            ? "Visuels réservés au plan Max."
-            : err.message || "Visuel non généré. Réessaye."
-        );
+        toast.error(res.status === 403 ? c.card.toast.visualMaxOnly : err.message || c.card.toast.visualFail);
         return;
       }
       const data = await res.json();
-      const img =
-        data?.images?.[0] ?? (data?.url ? { url: data.url, imageId: data.imageId } : null);
+      const img = data?.images?.[0] ?? (data?.url ? { url: data.url, imageId: data.imageId } : null);
       if (!img?.url) {
-        toast.error("Visuel non généré. Réessaye.");
+        toast.error(c.card.toast.visualFail);
         return;
       }
       const visual = {
@@ -264,124 +252,75 @@ export default function BatchPlanCard({ batch, onApproved, onDiscarded }: Props)
         generatedAt: Date.now(),
       };
       setPosts((prev) =>
-        prev.map((p) =>
-          p.id === briefId && p.materialized
-            ? { ...p, materialized: { ...p.materialized, visual } }
-            : p
-        )
+        prev.map((p) => (p.id === briefId && p.materialized ? { ...p, materialized: { ...p.materialized, visual } } : p))
       );
       try {
         await patchBriefVisual(batch.id, briefId, visual);
+        toast.success(c.card.toast.visualDone);
       } catch {
-        toast.error("Visuel généré mais non sauvegardé — régénère avant de programmer.");
+        toast.error(c.card.toast.visualSavedFail);
       }
-      toast.success("Visuel généré.");
     } catch (err) {
       console.error("[BatchPlanCard] generateVisual failed:", err);
-      toast.error("Visuel non généré. Vérifie ta connexion.");
+      toast.error(c.card.toast.network);
     } finally {
       setVisualizingId(null);
     }
   };
 
-  /** Phase 3 — hand every materialized brief off to the publishing cron via
-   *  `scheduledPosts`. Two-step confirmation: first click sets a confirm gate,
-   *  second click fires. The server resolves smart slots (peak windows, past
-   *  rescue, conflict spread) so the UI doesn't need to think about timing. */
   const schedule = async () => {
-    if (!confirmSchedule) {
-      setConfirmSchedule(true);
-      // Auto-reset the confirm gate after 6s so the button doesn't stay armed.
-      setTimeout(() => setConfirmSchedule(false), 6000);
-      return;
-    }
-    setConfirmSchedule(false);
-    setScheduling(true);
+    setConfirming(null);
+    setBusy("schedule");
     try {
       const headers = await getAuthHeaders();
       const res = await fetch("/api/strategist/schedule", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...headers },
-        body: JSON.stringify({
-          batchId: batch.id,
-          platform: "linkedin",
-          visibility: "PUBLIC",
-          language: language === "fr" ? "fr" : "en",
-        }),
+        body: JSON.stringify({ batchId: batch.id, platform: "linkedin", visibility: "PUBLIC", language: lang }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        toast.error(err.message || "Programmation échouée.");
+        toast.error(err.message || c.card.toast.scheduleFail);
         return;
       }
       const data = (await res.json()) as {
         status: StrategyBatch["status"];
-        results: Array<{
-          briefId: string;
-          ok: boolean;
-          scheduledPostId?: string;
-          fireAtMs?: number;
-          adjusted?: boolean;
-        }>;
+        results: Array<{ briefId: string; ok: boolean; scheduledPostId?: string; fireAtMs?: number; adjusted?: boolean }>;
       };
-
-      // Patch local state with the scheduled timestamps.
       setPosts((prev) =>
         prev.map((p) => {
           const r = data.results.find((x) => x.briefId === p.id && x.ok);
-          if (!r) return p;
-          return {
-            ...p,
-            scheduledPostId: r.scheduledPostId,
-            scheduledAt: r.fireAtMs,
-          };
+          return r ? { ...p, scheduledPostId: r.scheduledPostId, scheduledAt: r.fireAtMs } : p;
         })
       );
       setStatus(data.status);
-
-      const success = data.results.filter((r) => r.ok).length;
+      const ok = data.results.filter((r) => r.ok).length;
       const adjusted = data.results.filter((r) => r.ok && r.adjusted).length;
       const failed = data.results.filter((r) => !r.ok).length;
-
-      if (success > 0) {
-        const adjNote = adjusted > 0 ? ` (${adjusted} créneau${adjusted > 1 ? "x" : ""} ajusté${adjusted > 1 ? "s" : ""})` : "";
-        toast.success(`${success} post${success > 1 ? "s programmés" : " programmé"}${adjNote}.`);
-      }
-      if (failed > 0) {
-        toast.error(`${failed} post${failed > 1 ? "s n'ont" : " n'a"} pas pu être programmé${failed > 1 ? "s" : ""}.`);
-      }
+      if (ok > 0) toast.success(c.card.toast.scheduled(ok, adjusted));
+      if (failed > 0) toast.error(c.card.toast.scheduleSomeFail(failed));
     } catch (err) {
       console.error("[BatchPlanCard] schedule failed:", err);
-      toast.error("Programmation échouée. Vérifie ta connexion.");
+      toast.error(c.card.toast.network);
     } finally {
-      setScheduling(false);
+      setBusy(null);
     }
   };
 
   /** Cancel a scheduled batch: flip every still-pending scheduledPosts doc to
-   *  "cancelled" (the publishing cron only fires on status === "pending", so
-   *  this removes them from the queue) and roll the batch back to "materialized"
-   *  so the user can edit / reschedule. Two-step confirm like scheduling. */
+   *  "cancelled" (the cron only fires on "pending") and roll the batch back to
+   *  "materialized". Only pointers of posts actually removed from the queue are
+   *  dropped: a published or in-flight post keeps its pointer, so re-scheduling
+   *  the batch can never publish it twice. */
   const cancelScheduling = async () => {
-    if (!confirmCancel) {
-      setConfirmCancel(true);
-      setTimeout(() => setConfirmCancel(false), 6000);
-      return;
-    }
-    setConfirmCancel(false);
-    setCancelling(true);
+    setConfirming(null);
+    setBusy("cancel");
     try {
-      const ids = posts
-        .map((p) => p.scheduledPostId)
-        .filter((id): id is string => !!id);
+      const ids = posts.map((p) => p.scheduledPostId).filter((id): id is string => !!id);
       const results = await Promise.allSettled(ids.map((id) => cancelScheduledPost(id)));
       const cancelledIds = new Set(ids.filter((_, i) => results[i].status === "fulfilled"));
       const failed = ids.length - cancelledIds.size;
 
-      // Clean the batch doc (status → materialized). Only the pointers of
-      // posts actually removed from the queue are dropped: a published or
-      // in-flight post keeps its pointer, so re-scheduling the batch can never
-      // publish it twice.
       await clearBatchScheduling(batch.id, cancelledIds);
 
       setPosts((prev) =>
@@ -394,783 +333,849 @@ export default function BatchPlanCard({ batch, onApproved, onDiscarded }: Props)
         })
       );
       setStatus("materialized");
-
-      if (failed > 0) {
-        toast.error(
-          `${failed} post${failed > 1 ? "s n'ont" : " n'a"} pas pu être annulé${failed > 1 ? "s" : ""}.`
-        );
-      } else {
-        toast.success(
-          `Programmation annulée — ${ids.length} post${ids.length > 1 ? "s retirés" : " retiré"} de la file de publication.`
-        );
-      }
+      if (failed > 0) toast.error(c.card.toast.cancelSomeFail(failed));
+      else toast.success(c.card.toast.cancelled(ids.length));
     } catch (err) {
       console.error("[BatchPlanCard] cancelScheduling failed:", err);
-      toast.error("Annulation échouée. Réessaye.");
+      toast.error(c.card.toast.cancelFail);
     } finally {
-      setCancelling(false);
+      setBusy(null);
     }
   };
 
+  // ── Discarded: collapsed ───────────────────────────────────────────────
+  if (status === "discarded") {
+    return (
+      <div className="flex items-center gap-3 px-4 min-h-[52px] rounded-2xl border border-dashed border-gray-300 dark:border-dark-border text-[14px] text-gray-600 dark:text-gray-300">
+        <span className="flex-1 min-w-0 truncate">
+          {c.card.discarded} · {batch.theme}
+        </span>
+        <Button variant="ghost" size="sm" onClick={() => void setLifecycle("draft")}>
+          {c.card.restore}
+        </Button>
+      </div>
+    );
+  }
+
+  const strategy = batch.strategy;
+  const objective = strategy?.objective
+    ? (normalizeGoal(strategy.objective) ? GOAL_LABELS[normalizeGoal(strategy.objective)!][lang] : capitalize(strategy.objective))
+    : null;
+
   return (
-    <motion.section
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-      className="
-        my-3 rounded-2xl
-        bg-white dark:bg-dark-card
-        border border-amber-300/50 dark:border-amber-400/30
-        shadow-[0_8px_30px_-12px_rgba(245,158,11,0.15)]
-        overflow-hidden
-      "
+    <section
+      aria-labelledby={titleId}
+      className="rounded-2xl bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border shadow-sm overflow-hidden"
     >
-      {/* Header — theme + count + status pill */}
-      <header className="px-4 py-3 border-b border-gray-100 dark:border-dark-border/40 flex items-start gap-3">
-        <div className="mt-0.5 flex items-center justify-center w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-400/15 text-amber-600 dark:text-amber-400 flex-shrink-0">
-          <StrategistMark className="w-4 h-4" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="text-[14px] font-semibold text-gray-900 dark:text-white">
+      {/* Header */}
+      <header className="px-4 pt-4 pb-3 border-b border-gray-100 dark:border-dark-border/60">
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 flex items-center justify-center w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-400/15 text-amber-700 dark:text-amber-400 flex-shrink-0">
+            <StrategistMark className="w-4 h-4" />
+          </span>
+          <div className="flex-1 min-w-0">
+            <h3 id={titleId} className="text-[16px] font-semibold leading-snug text-gray-900 dark:text-white break-words">
               {batch.theme}
             </h3>
-            <StatusPill status={status} />
+            <p className="mt-0.5 text-[13px] text-gray-600 dark:text-gray-400">
+              {c.card.posts(posts.length)}
+              {dateRange ? ` · ${dateRange}` : ""}
+            </p>
           </div>
-          <p className="text-[12px] text-text-muted mt-0.5">
-            {posts.length} brief{posts.length > 1 ? "s" : ""} ·{" "}
-            {batch.timezone}
-          </p>
         </div>
+        {strategy?.summary && (
+          <p className="mt-3 text-[14px] leading-relaxed text-gray-700 dark:text-gray-200">{strategy.summary}</p>
+        )}
+        {(strategy?.audience || objective || strategy?.tone) && (
+          <dl className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[13px]">
+            {strategy?.audience && <Fact label={c.card.audience} value={strategy.audience} />}
+            {objective && <Fact label={c.card.objective} value={objective} />}
+            {strategy?.tone && <Fact label={c.card.tone} value={capitalize(strategy.tone)} />}
+          </dl>
+        )}
+        <Steps steps={c.card.steps} current={step} />
       </header>
 
-      {/* Briefs list */}
-      <ul className="divide-y divide-gray-100 dark:divide-dark-border/40">
+      {/* Briefs */}
+      <ul className="divide-y divide-gray-100 dark:divide-dark-border/60">
         <AnimatePresence initial={false}>
           {posts.map((p, idx) => (
             <BriefRow
               key={p.id}
               index={idx + 1}
               brief={p}
-              locked={isLocked}
+              c={c}
+              lang={lang}
+              editable={isDraft}
               saving={savingId === p.id}
-              materializing={materializingIds.has(p.id) || (materializingAll && !p.materialized)}
+              writing={writingIds.has(p.id) || (writingAll && !p.materialized)}
+              canRemove={isDraft && posts.length > 1}
               onPatch={(patch) => patchRow(p.id, patch)}
-              onDelete={() => removeRow(p.id)}
-              onRegenerate={() => materialize([p.id], true)}
-              onEditPost={(content) => editMaterialized(p.id, content)}
+              onRemove={() => removeRow(p.id)}
+              onRewrite={(instruction) => materialize({ briefIds: [p.id], force: true, instruction })}
+              onEditPost={(content) => editPost(p.id, content)}
               allowImages={allowImages}
               visualizing={visualizingId === p.id}
               onGenerateVisual={() => generateVisual(p.id)}
+              locked={status === "scheduled"}
             />
           ))}
         </AnimatePresence>
       </ul>
 
-      {/* Footer actions — three states:
-            1. draft       → Jeter / Approuver
-            2. approved    → Générer les posts (Phase 2 entry point)
-            3. materialized → Tout régénérer (Phase 3 hook will plug in here:
-               "Programmer ce batch") */}
-      {!isLocked && posts.length > 0 && (
-        <footer className="px-4 py-3 border-t border-gray-100 dark:border-dark-border/40 flex items-center justify-end gap-2">
-          <button
-            type="button"
-            onClick={discard}
-            className="
-              inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg
-              text-[12px] font-medium
-              text-text-secondary hover:text-gray-900 dark:hover:text-white
-              hover:bg-gray-100 dark:hover:bg-dark-hover
-              transition-colors
-            "
-          >
-            <X className="w-3.5 h-3.5" />
-            Jeter
-          </button>
-          <button
-            type="button"
-            onClick={approve}
-            className="
-              inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg
-              text-[12px] font-semibold
-              bg-amber-500 hover:bg-amber-600
-              text-white
-              transition-colors shadow-sm
-            "
-          >
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            Approuver le plan
-          </button>
-        </footer>
-      )}
-
-      {isApprovedOrLater && !allMaterialized && (
-        <footer className="px-4 py-3 border-t border-gray-100 dark:border-dark-border/40 flex items-center justify-between gap-3">
-          <p className="text-[12px] text-text-muted">
-            {someMaterialized
-              ? `${posts.filter((p) => p.materialized).length}/${posts.length} posts générés.`
-              : "Plan approuvé — prêt à générer les posts complets."}
-          </p>
-          <button
-            type="button"
-            onClick={() => materialize()}
-            disabled={materializingAll}
-            className="
-              inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg
-              text-[12px] font-semibold
-              bg-amber-500 hover:bg-amber-600 disabled:opacity-60 disabled:cursor-not-allowed
-              text-white
-              transition-colors shadow-sm
-            "
-          >
-            {materializingAll ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : (
-              <Wand2 className="w-3.5 h-3.5" />
-            )}
-            {materializingAll
-              ? "Génération…"
-              : someMaterialized
-                ? "Générer les manquants"
-                : "Générer les posts"}
-          </button>
-        </footer>
-      )}
-
-      {status === "materialized" && (
-        <footer className="px-4 py-3 border-t border-gray-100 dark:border-dark-border/40 flex flex-col gap-2.5">
-          <p className="text-[12px] text-emerald-700 dark:text-emerald-400 font-medium">
-            ✓ Tous les posts sont prêts. Relis-les ci-dessus avant de valider.
-          </p>
-          {/* Explicit consequence — what "valider" actually does, so the user
-              knows this step is the gate to publishing on LinkedIn. */}
-          <p className="text-[11.5px] text-text-muted leading-snug">
-            {confirmSchedule ? (
-              <span className="text-amber-700 dark:text-amber-400 font-medium">
-                Clique sur « Confirmer » : les {posts.filter((p) => p.materialized).length} posts seront
-                publiés automatiquement sur ton compte LinkedIn aux créneaux indiqués. Tu pourras annuler tant qu'ils ne sont pas publiés.
-              </span>
-            ) : (
-              <>Une fois validés, les posts sont programmés et publiés <span className="font-medium text-text-secondary">automatiquement sur ton LinkedIn</span> aux créneaux indiqués (annulable à tout moment avant publication).</>
-            )}
-          </p>
-          <div className="flex items-center justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => materialize(undefined, true)}
-              disabled={materializingAll || scheduling}
-              className="
-                inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg
-                text-[12px] font-medium
-                text-text-secondary hover:text-gray-900 dark:hover:text-white
-                hover:bg-gray-100 dark:hover:bg-dark-hover disabled:opacity-50
-                transition-colors
-              "
-            >
-              <RotateCw className={`w-3.5 h-3.5 ${materializingAll ? "animate-spin" : ""}`} />
-              Tout régénérer
-            </button>
-            <button
-              type="button"
-              onClick={schedule}
-              disabled={scheduling || materializingAll}
-              className={`
-                inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg
-                text-[12px] font-semibold
-                disabled:opacity-60 disabled:cursor-not-allowed
-                text-white shadow-sm
-                transition-colors
-                ${confirmSchedule
-                  ? "bg-amber-500 hover:bg-amber-600"
-                  : "bg-emerald-500 hover:bg-emerald-600"}
-              `}
-            >
-              {scheduling ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <CheckCircle2 className="w-3.5 h-3.5" />
-              )}
-              {scheduling
-                ? "Programmation…"
-                : confirmSchedule
-                  ? `Confirmer · ${posts.filter((p) => p.materialized).length} post${posts.filter((p) => p.materialized).length > 1 ? "s" : ""} → LinkedIn`
-                  : "Valider et programmer"}
-            </button>
-          </div>
-        </footer>
-      )}
-
-      {status === "scheduled" && (
-        <footer className="px-4 py-3 border-t border-gray-100 dark:border-dark-border/40 flex flex-col gap-2.5">
-          <p className="text-[12px] text-emerald-700 dark:text-emerald-400 font-medium">
-            ✓ {posts.filter((p) => p.scheduledPostId).length} post
-            {posts.filter((p) => p.scheduledPostId).length > 1 ? "s programmés" : " programmé"} —
-            publication automatique sur LinkedIn aux horaires prévus.
-          </p>
-          {confirmCancel && (
-            <p className="text-[11.5px] text-amber-700 dark:text-amber-400 font-medium leading-snug">
-              Confirme : les posts seront retirés de la file et ne seront pas publiés. Ton plan reste éditable.
-            </p>
+      {/* Footer — one primary action per state */}
+      {posts.length > 0 && (
+        <footer className="px-4 py-3 border-t border-gray-100 dark:border-dark-border/60 bg-gray-50/60 dark:bg-white/[0.02]">
+          {isDraft && (
+            <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2">
+              <Button variant="ghost" onClick={() => void setLifecycle("discarded")}>
+                {c.card.discard}
+              </Button>
+              <Button variant="primary" onClick={writeAll} icon={<Wand2 aria-hidden className="w-4 h-4" />}>
+                {c.card.writeAll(posts.length)}
+              </Button>
+            </div>
           )}
-          <div className="flex items-center justify-between gap-2 flex-wrap">
-            <button
-              type="button"
-              onClick={cancelScheduling}
-              disabled={cancelling}
-              className={`
-                inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg
-                text-[12px] font-medium disabled:opacity-60 disabled:cursor-not-allowed
-                transition-colors
-                ${confirmCancel
-                  ? "bg-red-500 hover:bg-red-600 text-white shadow-sm"
-                  : "text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"}
-              `}
-            >
-              {cancelling ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <X className="w-3.5 h-3.5" />
-              )}
-              {cancelling
-                ? "Annulation…"
-                : confirmCancel
-                  ? "Confirmer l'annulation"
-                  : "Annuler la programmation"}
-            </button>
-            <a
-              href="/schedule"
-              className="
-                inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg
-                text-[12px] font-medium
-                text-emerald-700 dark:text-emerald-400
-                hover:bg-emerald-50 dark:hover:bg-emerald-500/10
-                transition-colors
-              "
-            >
-              <CalendarClock className="w-3.5 h-3.5" />
-              Voir le calendrier
-            </a>
-          </div>
+
+          {!isDraft && status !== "scheduled" && !allWritten && (
+            writingAll ? (
+              <p role="status" className="flex items-center gap-2 min-h-[44px] text-[14px] text-gray-700 dark:text-gray-200">
+                <Loader2 aria-hidden className="w-4 h-4 animate-spin motion-reduce:animate-none text-amber-600" />
+                {c.card.writing(posts.length - written)}
+              </p>
+            ) : (
+              <div className="flex justify-end">
+                <Button variant="primary" onClick={() => materialize()} icon={<Wand2 aria-hidden className="w-4 h-4" />}>
+                  {written > 0 ? c.card.writeMissing : c.card.writeAll(posts.length)}
+                </Button>
+              </div>
+            )
+          )}
+
+          {status !== "scheduled" && allWritten && (
+            confirming === "schedule" ? (
+              <ConfirmBar
+                text={c.card.scheduleConfirm(posts.length)}
+                confirmLabel={c.card.confirm}
+                cancelLabel={c.card.cancel}
+                onConfirm={schedule}
+                onCancel={() => setConfirming(null)}
+              />
+            ) : (
+              <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2">
+                <Button
+                  variant="ghost"
+                  onClick={() => materialize({ force: true })}
+                  disabled={writingAll || busy !== null}
+                  icon={<RotateCw aria-hidden className={`w-4 h-4 ${writingAll ? "animate-spin motion-reduce:animate-none" : ""}`} />}
+                >
+                  {c.card.rewriteAll}
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={() => setConfirming("schedule")}
+                  disabled={busy !== null || writingAll}
+                  icon={busy === "schedule" ? <Loader2 aria-hidden className="w-4 h-4 animate-spin" /> : <CalendarClock aria-hidden className="w-4 h-4" />}
+                >
+                  {busy === "schedule" ? c.card.scheduling : c.card.schedule(posts.length)}
+                </Button>
+              </div>
+            )
+          )}
+
+          {status === "scheduled" && (
+            confirming === "cancel" ? (
+              <ConfirmBar
+                text={c.card.cancelConfirm}
+                confirmLabel={c.card.confirm}
+                cancelLabel={c.card.cancel}
+                onConfirm={cancelScheduling}
+                onCancel={() => setConfirming(null)}
+                danger
+              />
+            ) : (
+              <div className="space-y-2">
+                <p className="flex items-start gap-2 text-[14px] text-emerald-800 dark:text-emerald-300">
+                  <Check aria-hidden className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  {c.card.scheduledSummary(scheduledCount)}
+                </p>
+                <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <Button variant="danger" onClick={() => setConfirming("cancel")} disabled={busy !== null}>
+                    {busy === "cancel" ? c.card.cancelling : c.card.cancelScheduling}
+                  </Button>
+                  <Link
+                    href="/schedule"
+                    onClick={close}
+                    className={`inline-flex items-center justify-center gap-2 h-11 px-4 rounded-xl border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-card hover:bg-gray-50 dark:hover:bg-dark-hover text-[14px] font-medium text-gray-800 dark:text-gray-100 ${focusRing}`}
+                  >
+                    <CalendarClock aria-hidden className="w-4 h-4" />
+                    {c.card.viewCalendar}
+                  </Link>
+                </div>
+              </div>
+            )
+          )}
         </footer>
       )}
-    </motion.section>
+    </section>
   );
 }
 
-// ─── Rows ───────────────────────────────────────────────────────────────────
+// ─── Header atoms ───────────────────────────────────────────────────────────
+
+function Fact({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex gap-1 min-w-0">
+      <dt className="text-gray-500 dark:text-gray-400">{label}</dt>
+      <dd className="text-gray-800 dark:text-gray-100 font-medium break-words">{value}</dd>
+    </div>
+  );
+}
+
+/** Plan → Writing → Scheduling. `current` = index of the active step (3 = all done). */
+function Steps({ steps, current }: { steps: string[]; current: number }) {
+  return (
+    <ol className="mt-3 flex flex-wrap items-center gap-x-1.5 gap-y-1.5 text-[12px] font-medium">
+      {steps.map((label, i) => {
+        const done = i < current;
+        const active = i === current;
+        return (
+          <li key={label} className="flex items-center gap-2" aria-current={active ? "step" : undefined}>
+            <span
+              className={`inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full ${
+                done
+                  ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-800 dark:text-emerald-300"
+                  : active
+                    ? "bg-amber-100 dark:bg-amber-400/15 text-amber-900 dark:text-amber-200"
+                    : "bg-gray-100 dark:bg-dark-elevated text-gray-600 dark:text-gray-400"
+              }`}
+            >
+              {done ? <Check aria-hidden className="w-3.5 h-3.5" /> : <span aria-hidden className="tabular-nums">{i + 1}</span>}
+              {label}
+            </span>
+            {i < steps.length - 1 && <span aria-hidden className="w-3 h-px bg-gray-300 dark:bg-gray-600" />}
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+function ConfirmBar({
+  text,
+  confirmLabel,
+  cancelLabel,
+  onConfirm,
+  onCancel,
+  danger,
+}: {
+  text: string;
+  confirmLabel: string;
+  cancelLabel: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+  danger?: boolean;
+}) {
+  const confirmRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => confirmRef.current?.focus(), []);
+  return (
+    <div role="group" aria-label={text} className="space-y-3">
+      <p className="text-[14px] leading-relaxed text-gray-800 dark:text-gray-100">{text}</p>
+      <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+        <Button variant="ghost" onClick={onCancel}>
+          {cancelLabel}
+        </Button>
+        <Button ref={confirmRef} variant={danger ? "dangerSolid" : "primary"} onClick={onConfirm}>
+          {confirmLabel}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Brief row ──────────────────────────────────────────────────────────────
 
 function BriefRow({
   index,
   brief,
-  locked,
+  c,
+  lang,
+  editable,
   saving,
-  materializing,
+  writing,
+  canRemove,
   onPatch,
-  onDelete,
-  onRegenerate,
+  onRemove,
+  onRewrite,
+  onEditPost,
+  allowImages,
+  visualizing,
+  onGenerateVisual,
+  locked,
+}: {
+  index: number;
+  brief: PostBrief;
+  c: StrategistCopy;
+  lang: StrategistLang;
+  editable: boolean;
+  saving: boolean;
+  writing: boolean;
+  canRemove: boolean;
+  onPatch: (patch: Partial<Omit<PostBrief, "id">>) => void;
+  onRemove: () => void;
+  onRewrite: (instruction?: string) => void;
+  onEditPost: (content: string) => void;
+  allowImages: boolean;
+  visualizing: boolean;
+  onGenerateVisual: () => void;
+  locked: boolean;
+}) {
+  const [whyOpen, setWhyOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const whyId = useId();
+  const format = normalizeFormat(brief.format);
+  const length = normalizeLength(brief.length, format);
+  const goal = normalizeGoal(brief.goal);
+  const hasPost = !!brief.materialized?.content;
+
+  return (
+    <motion.li
+      layout="position"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.18 }}
+      className="px-4 py-4"
+    >
+      {/* Meta: day · time · format · length */}
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px]">
+        <span className="font-semibold text-gray-900 dark:text-white tabular-nums">
+          {index}. {formatDay(brief.suggestedDate, lang)}
+          <span className="font-normal text-gray-600 dark:text-gray-400"> · {brief.suggestedTime}</span>
+        </span>
+        <span className="inline-flex items-center h-6 px-2 rounded-md bg-gray-100 dark:bg-dark-elevated text-gray-800 dark:text-gray-200 font-medium">
+          {FORMATS[format].label[lang]}
+        </span>
+        <span className="inline-flex items-center h-6 px-2 rounded-md border border-gray-200 dark:border-dark-border text-gray-700 dark:text-gray-300">
+          {LENGTH_BANDS[length].label[lang]}
+        </span>
+        {saving && <span className="text-gray-500 dark:text-gray-400">{c.card.saving}</span>}
+      </div>
+
+      {editing ? (
+        <BriefEditor
+          brief={brief}
+          c={c}
+          lang={lang}
+          canRemove={canRemove}
+          onPatch={onPatch}
+          onRemove={onRemove}
+          onDone={() => setEditing(false)}
+        />
+      ) : (
+        <>
+          {!hasPost && (
+            <>
+              <p className="mt-2 text-[15px] font-semibold leading-snug text-gray-900 dark:text-white break-words">{brief.hook}</p>
+              <p className="mt-1.5 text-[14px] leading-relaxed text-gray-700 dark:text-gray-300 break-words">
+                <span className="font-medium text-gray-900 dark:text-white">{c.card.idea} : </span>
+                {brief.angle}
+              </p>
+            </>
+          )}
+
+          <div className="mt-2 flex flex-wrap items-center gap-1 -ml-2">
+            <button
+              type="button"
+              aria-expanded={whyOpen}
+              aria-controls={whyId}
+              onClick={() => setWhyOpen((v) => !v)}
+              className={`inline-flex items-center gap-1 h-10 px-2 rounded-lg text-[13px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-hover ${focusRing}`}
+            >
+              {c.card.why}
+              <ChevronDown aria-hidden className={`w-4 h-4 transition-transform ${whyOpen ? "rotate-180" : ""}`} />
+            </button>
+            {editable && !hasPost && (
+              <button
+                type="button"
+                onClick={() => setEditing(true)}
+                className={`inline-flex items-center gap-1.5 h-10 px-2 rounded-lg text-[13px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-hover ${focusRing}`}
+              >
+                <Pencil aria-hidden className="w-3.5 h-3.5" />
+                {c.card.edit}
+              </button>
+            )}
+          </div>
+
+          {whyOpen && (
+            <div id={whyId} className="mt-1 rounded-xl bg-gray-50 dark:bg-white/[0.03] px-3 py-2.5 text-[13px] leading-relaxed text-gray-700 dark:text-gray-300 space-y-1">
+              <p>{brief.rationale}</p>
+              {goal && (
+                <p>
+                  <span className="text-gray-500 dark:text-gray-400">{c.card.objective} : </span>
+                  {GOAL_LABELS[goal][lang]}
+                </p>
+              )}
+              {brief.audience && (
+                <p>
+                  <span className="text-gray-500 dark:text-gray-400">{c.card.audience} : </span>
+                  {brief.audience}
+                </p>
+              )}
+              {brief.tone && (
+                <p>
+                  <span className="text-gray-500 dark:text-gray-400">{c.card.tone} : </span>
+                  {brief.tone}
+                </p>
+              )}
+              {brief.userNote && (
+                <p>
+                  <span className="text-gray-500 dark:text-gray-400">{c.card.noteLabel} : </span>
+                  {brief.userNote}
+                </p>
+              )}
+            </div>
+          )}
+        </>
+      )}
+
+      {(hasPost || writing) && (
+        <PostPreview
+          brief={brief}
+          c={c}
+          lang={lang}
+          writing={writing}
+          locked={locked}
+          onRewrite={onRewrite}
+          onEditPost={onEditPost}
+          allowImages={allowImages}
+          visualizing={visualizing}
+          onGenerateVisual={onGenerateVisual}
+        />
+      )}
+    </motion.li>
+  );
+}
+
+function BriefEditor({
+  brief,
+  c,
+  lang,
+  canRemove,
+  onPatch,
+  onRemove,
+  onDone,
+}: {
+  brief: PostBrief;
+  c: StrategistCopy;
+  lang: StrategistLang;
+  canRemove: boolean;
+  onPatch: (patch: Partial<Omit<PostBrief, "id">>) => void;
+  onRemove: () => void;
+  onDone: () => void;
+}) {
+  const [hook, setHook] = useState(brief.hook);
+  const [angle, setAngle] = useState(brief.angle);
+  const [note, setNote] = useState(brief.userNote ?? "");
+  const format = normalizeFormat(brief.format);
+  const length = normalizeLength(brief.length, format);
+  const ids = { hook: useId(), angle: useId(), date: useId(), time: useId(), format: useId(), length: useId(), note: useId() };
+
+  const commitText = (field: "hook" | "angle", value: string) => {
+    const v = value.trim();
+    if (v && v !== brief[field]) onPatch({ [field]: v });
+  };
+  const commitNote = () => {
+    const v = note.trim();
+    if (v !== (brief.userNote ?? "")) onPatch({ userNote: v || undefined });
+  };
+  // Esc inside a field cancels that field's edit — the drawer ignores it.
+  const onEsc = (reset: () => void) => (e: React.KeyboardEvent) => {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      reset();
+      (e.target as HTMLElement).blur();
+    }
+  };
+
+  const field =
+    "w-full rounded-xl border border-gray-300 dark:border-dark-border bg-white dark:bg-dark-elevated px-3 py-2.5 text-gray-900 dark:text-white focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/25";
+  const label = "block text-[13px] font-medium text-gray-800 dark:text-gray-200 mb-1";
+
+  return (
+    <div className="mt-3 space-y-3" data-no-drag>
+      <div>
+        <label htmlFor={ids.hook} className={label}>{c.card.hookLabel}</label>
+        <textarea
+          id={ids.hook}
+          value={hook}
+          onChange={(e) => setHook(e.target.value)}
+          onBlur={() => commitText("hook", hook)}
+          onKeyDown={onEsc(() => setHook(brief.hook))}
+          rows={2}
+          maxLength={300}
+          className={`${field} resize-y`}
+          style={{ fontSize: "max(16px, 1rem)" }}
+        />
+      </div>
+      <div>
+        <label htmlFor={ids.angle} className={label}>{c.card.angleLabel}</label>
+        <textarea
+          id={ids.angle}
+          value={angle}
+          onChange={(e) => setAngle(e.target.value)}
+          onBlur={() => commitText("angle", angle)}
+          onKeyDown={onEsc(() => setAngle(brief.angle))}
+          rows={3}
+          maxLength={400}
+          className={`${field} resize-y`}
+          style={{ fontSize: "max(16px, 1rem)" }}
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label htmlFor={ids.date} className={label}>{c.card.dateLabel}</label>
+          <input
+            id={ids.date}
+            type="date"
+            value={brief.suggestedDate}
+            onChange={(e) => e.target.value && onPatch({ suggestedDate: e.target.value })}
+            className={field}
+            style={{ fontSize: "max(16px, 1rem)" }}
+          />
+        </div>
+        <div>
+          <label htmlFor={ids.time} className={label}>{c.card.timeLabel}</label>
+          <input
+            id={ids.time}
+            type="time"
+            value={brief.suggestedTime}
+            onChange={(e) => e.target.value && onPatch({ suggestedTime: e.target.value })}
+            className={field}
+            style={{ fontSize: "max(16px, 1rem)" }}
+          />
+        </div>
+        <div>
+          <label htmlFor={ids.format} className={label}>{c.card.formatLabel}</label>
+          <select
+            id={ids.format}
+            value={format}
+            onChange={(e) => onPatch({ format: e.target.value })}
+            className={field}
+            style={{ fontSize: "max(16px, 1rem)" }}
+          >
+            {FORMAT_SLUGS.map((s) => (
+              <option key={s} value={s}>
+                {FORMATS[s].label[lang]}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label htmlFor={ids.length} className={label}>{c.card.lengthLabel}</label>
+          <select
+            id={ids.length}
+            value={length}
+            onChange={(e) => onPatch({ length: e.target.value as LengthBand })}
+            className={field}
+            style={{ fontSize: "max(16px, 1rem)" }}
+          >
+            {(["short", "medium", "long"] as LengthBand[]).map((l) => (
+              <option key={l} value={l}>
+                {LENGTH_BANDS[l].label[lang]}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+      <div>
+        <label htmlFor={ids.note} className={label}>{c.card.noteLabel}</label>
+        <textarea
+          id={ids.note}
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          onBlur={commitNote}
+          onKeyDown={onEsc(() => setNote(brief.userNote ?? ""))}
+          rows={2}
+          maxLength={500}
+          placeholder={c.card.notePlaceholder}
+          className={`${field} resize-y placeholder:text-gray-500`}
+          style={{ fontSize: "max(16px, 1rem)" }}
+        />
+        {STORY_FORMATS.includes(format) && (
+          <p className="mt-1 text-[13px] text-gray-600 dark:text-gray-400">{c.card.noteHintStory}</p>
+        )}
+      </div>
+      <div className="flex items-center justify-between gap-2">
+        {canRemove ? (
+          <Button variant="danger" size="sm" onClick={onRemove} icon={<Trash2 aria-hidden className="w-4 h-4" />}>
+            {c.card.deletePost}
+          </Button>
+        ) : (
+          <span />
+        )}
+        <Button variant="secondary" size="sm" onClick={onDone} icon={<Check aria-hidden className="w-4 h-4" />}>
+          {c.card.done}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Written post ───────────────────────────────────────────────────────────
+
+/** Where LinkedIn would fold the post: ~3 lines or ~210 characters. */
+function foldIndex(text: string): number | null {
+  if (text.length <= 300) return null;
+  let lines = 0;
+  let i = 0;
+  while (i < text.length && i < 210) {
+    const nl = text.indexOf("\n", i);
+    const end = nl === -1 ? text.length : nl;
+    if (text.slice(i, end).trim()) lines++;
+    if (lines >= 3) return Math.min(end, 210);
+    i = end + 1;
+  }
+  const cut = text.lastIndexOf(" ", 210);
+  return cut > 120 ? cut : 210;
+}
+
+function PostPreview({
+  brief,
+  c,
+  lang,
+  writing,
+  locked,
+  onRewrite,
   onEditPost,
   allowImages,
   visualizing,
   onGenerateVisual,
 }: {
-  index: number;
   brief: PostBrief;
+  c: StrategistCopy;
+  lang: StrategistLang;
+  writing: boolean;
   locked: boolean;
-  saving: boolean;
-  materializing: boolean;
-  onPatch: (patch: Partial<Omit<PostBrief, "id">>) => void;
-  onDelete: () => void;
-  onRegenerate: () => void;
-  onEditPost: (newContent: string) => void;
+  onRewrite: (instruction?: string) => void;
+  onEditPost: (content: string) => void;
   allowImages: boolean;
   visualizing: boolean;
   onGenerateVisual: () => void;
 }) {
-  const hasPost = !!brief.materialized?.content;
-  const visualUrl = brief.materialized?.visual?.variants?.[0]?.url;
+  const content = brief.materialized?.content ?? "";
+  const [expanded, setExpanded] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [rewriteOpen, setRewriteOpen] = useState(false);
+  const [instruction, setInstruction] = useState("");
   const [copied, setCopied] = useState(false);
-  const [editingPost, setEditingPost] = useState(false);
-  const [postDraft, setPostDraft] = useState("");
+  const visualUrl = brief.materialized?.visual?.variants?.[0]?.url;
+  const fold = foldIndex(content);
+  const shown = !expanded && fold ? content.slice(0, fold).trimEnd() : content;
 
-  const copyPost = async () => {
-    if (!brief.materialized?.content) return;
+  const copy = async () => {
     try {
-      await navigator.clipboard.writeText(brief.materialized.content);
+      await navigator.clipboard.writeText(content);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      toast.error("Copie impossible.");
+      toast.error(c.card.toast.copyFail);
     }
   };
 
-  const startEditPost = () => {
-    setPostDraft(brief.materialized?.content ?? "");
-    setEditingPost(true);
+  const runRewrite = (text?: string) => {
+    setRewriteOpen(false);
+    setInstruction("");
+    onRewrite(text?.trim() || undefined);
   };
 
-  const commitEditPost = () => {
-    setEditingPost(false);
-    const next = postDraft.trim();
-    if (next && next !== brief.materialized?.content) onEditPost(next);
-  };
+  if (writing && !content) {
+    return (
+      <div className="mt-3 rounded-xl border border-gray-200 dark:border-dark-border p-4 space-y-2" role="status">
+        <p className="flex items-center gap-2 text-[13px] text-gray-600 dark:text-gray-400">
+          <Loader2 aria-hidden className="w-4 h-4 animate-spin motion-reduce:animate-none text-amber-600" />
+          {c.card.writing(1)}
+        </p>
+        {[90, 75, 60].map((w) => (
+          <div key={w} aria-hidden className="h-3 rounded bg-gray-100 dark:bg-dark-elevated animate-pulse motion-reduce:animate-none" style={{ width: `${w}%` }} />
+        ))}
+      </div>
+    );
+  }
+
   return (
-    <motion.li
-      layout
-      initial={{ opacity: 0, y: 4 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, x: -8 }}
-      transition={{ duration: 0.18 }}
-      className="px-4 py-3 group/row"
-    >
-      <div className="flex items-start gap-3">
-        {/* Index */}
-        <span
-          className="
-            mt-0.5 flex items-center justify-center w-6 h-6 rounded-full
-            text-[11px] font-semibold flex-shrink-0
-            bg-amber-50 dark:bg-amber-400/10
-            text-amber-700 dark:text-amber-400
-          "
-        >
-          {index}
-        </span>
-
-        <div className="flex-1 min-w-0">
-          {/* Hook (editable) */}
-          <EditableText
-            value={brief.hook}
-            onChange={(v) => onPatch({ hook: v })}
-            locked={locked}
-            placeholder="Hook"
-            className="text-[13.5px] font-medium text-gray-900 dark:text-white leading-snug"
-            multiline
+    <div className="mt-3 rounded-xl border border-gray-200 dark:border-dark-border overflow-hidden">
+      {editing ? (
+        <div className="p-3" data-no-drag>
+          <label className="sr-only" htmlFor={`edit-${brief.id}`}>{c.card.editPost}</label>
+          <textarea
+            id={`edit-${brief.id}`}
+            autoFocus
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                e.preventDefault();
+                setEditing(false);
+              }
+            }}
+            rows={Math.max(8, Math.min(22, draft.split("\n").length + 2))}
+            className="w-full rounded-lg border border-gray-300 dark:border-dark-border bg-white dark:bg-dark-elevated p-3 leading-relaxed text-gray-900 dark:text-white focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/25 resize-y"
+            style={{ fontSize: "max(16px, 1rem)" }}
           />
-
-          {/* Angle (editable) */}
-          <EditableText
-            value={brief.angle}
-            onChange={(v) => onPatch({ angle: v })}
-            locked={locked}
-            placeholder="Angle"
-            className="mt-1 text-[12px] text-text-secondary leading-snug"
-            multiline
-          />
-
-          {/* Format + slot row */}
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
-            <span
-              className="
-                inline-flex items-center px-1.5 py-0.5 rounded-md
-                bg-gray-100 dark:bg-dark-elevated
-                text-text-muted font-medium uppercase tracking-wide
-              "
+          <div className="mt-2 flex justify-end gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setEditing(false)}>
+              {c.card.cancelEdit}
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => {
+                setEditing(false);
+                const next = draft.trim();
+                if (next && next !== content) onEditPost(next);
+              }}
             >
-              {brief.format}
-            </span>
-
-            <DateInput
-              value={brief.suggestedDate}
-              onChange={(v) => onPatch({ suggestedDate: v })}
-              locked={locked}
-            />
-
-            <TimeInput
-              value={brief.suggestedTime}
-              onChange={(v) => onPatch({ suggestedTime: v })}
-              locked={locked}
-            />
-
-            {saving && (
-              <span className="text-text-muted text-[10.5px] italic">
-                sauvegarde…
-              </span>
-            )}
+              {c.card.saveEdit}
+            </Button>
           </div>
-
-          {/* Rationale — read-only, tooltip-style on a single line */}
-          {brief.rationale && !hasPost && (
-            <p
-              className="
-                mt-1.5 text-[11px] text-text-muted italic leading-snug
-                line-clamp-2
-              "
-              title={brief.rationale}
+        </div>
+      ) : (
+        <div className={`px-4 pt-3.5 pb-3 ${writing ? "opacity-50" : ""}`} aria-busy={writing}>
+          <p className="text-[14px] leading-[1.6] text-gray-900 dark:text-gray-100 whitespace-pre-wrap break-words">
+            {shown}
+            {!expanded && fold && (
+              <>
+                {" "}
+                <button
+                  type="button"
+                  onClick={() => setExpanded(true)}
+                  aria-expanded={false}
+                  className={`font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded ${focusRing}`}
+                >
+                  {c.card.seeMore}
+                </button>
+              </>
+            )}
+          </p>
+          {expanded && fold && (
+            <button
+              type="button"
+              onClick={() => setExpanded(false)}
+              aria-expanded
+              className={`mt-1 h-9 text-[13px] font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded ${focusRing}`}
             >
-              💡 {brief.rationale}
-            </p>
+              {c.card.seeLess}
+            </button>
           )}
+          <p className="mt-2 text-[12px] text-gray-500 dark:text-gray-400 tabular-nums">{c.card.chars(content.length)}</p>
+        </div>
+      )}
 
-          {/* ─── Materialized post block ─────────────────────────────────
-              Appears once Phase 2 has generated the full post copy for this
-              brief. Replaces the rationale (the brief context is implicit
-              now — what matters is the publishable copy). */}
-          {(hasPost || materializing) && (
-            <div className="mt-3 rounded-lg border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50/40 dark:bg-emerald-500/5 p-3">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] uppercase tracking-wider text-emerald-700 dark:text-emerald-400 font-semibold">
-                  Post prêt à publier
-                </span>
-                <div className="flex items-center gap-0.5">
-                  {hasPost && !editingPost && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={copyPost}
-                        className="p-1 rounded hover:bg-emerald-100 dark:hover:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 transition-colors"
-                        aria-label="Copier le post"
-                        title="Copier"
-                      >
-                        {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={startEditPost}
-                        className="px-1.5 py-0.5 rounded text-[10.5px] font-medium text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-500/15 transition-colors"
-                      >
-                        Éditer
-                      </button>
-                      <button
-                        type="button"
-                        onClick={onRegenerate}
-                        disabled={materializing}
-                        className="p-1 rounded hover:bg-emerald-100 dark:hover:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 transition-colors disabled:opacity-50"
-                        aria-label="Régénérer ce post"
-                        title="Régénérer"
-                      >
-                        <RotateCw className={`w-3 h-3 ${materializing ? "animate-spin" : ""}`} />
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {materializing && !hasPost && (
-                <div className="py-1 space-y-1.5">
-                  <div className="flex items-center gap-1.5 text-[11px] text-text-muted mb-1.5">
-                    <Loader2 className="w-3 h-3 animate-spin text-emerald-600" />
-                    Rédaction du post…
-                  </div>
-                  <div className="h-2.5 w-[90%] rounded bg-emerald-200/40 dark:bg-emerald-500/15 animate-pulse" />
-                  <div className="h-2.5 w-[78%] rounded bg-emerald-200/40 dark:bg-emerald-500/15 animate-pulse" />
-                  <div className="h-2.5 w-[62%] rounded bg-emerald-200/40 dark:bg-emerald-500/15 animate-pulse" />
-                </div>
-              )}
-
-              {hasPost && !editingPost && (
-                <p className="text-[12.5px] leading-relaxed text-gray-800 dark:text-gray-100 whitespace-pre-wrap break-words">
-                  {brief.materialized!.content}
-                </p>
-              )}
-
-              {/* Visual — founder-gated. Shows the generated image, or a
-                  "generate" button when none exists yet. Published with the
-                  post if present at schedule time. */}
-              {hasPost && !editingPost && allowImages && (
-                <div className="mt-2.5">
-                  {visualUrl ? (
-                    <div className="space-y-1.5">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={visualUrl}
-                        alt="Visuel du post"
-                        className="w-full rounded-lg border border-emerald-200 dark:border-emerald-500/30"
-                      />
-                      <button
-                        type="button"
-                        onClick={onGenerateVisual}
-                        disabled={visualizing}
-                        className="inline-flex items-center gap-1 text-[10.5px] font-medium text-emerald-700 dark:text-emerald-400 hover:underline disabled:opacity-50"
-                      >
-                        <RotateCw className={`w-3 h-3 ${visualizing ? "animate-spin" : ""}`} />
-                        {visualizing ? "Génération…" : "Régénérer le visuel"}
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={onGenerateVisual}
-                      disabled={visualizing}
-                      className="
-                        inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md
-                        text-[11.5px] font-medium
-                        border border-emerald-300 dark:border-emerald-500/40
-                        text-emerald-700 dark:text-emerald-400
-                        hover:bg-emerald-100/60 dark:hover:bg-emerald-500/15
-                        disabled:opacity-60 disabled:cursor-not-allowed
-                        transition-colors
-                      "
-                    >
-                      {visualizing ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        <ImageIcon className="w-3.5 h-3.5" />
-                      )}
-                      {visualizing ? "Génération du visuel…" : "Générer un visuel"}
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {brief.scheduledAt && (
-                <p className="mt-2 text-[10.5px] text-emerald-700 dark:text-emerald-400 font-medium flex items-center gap-1">
-                  <CalendarClock className="w-3 h-3" />
-                  Programmé pour {formatDateTimeShort(brief.scheduledAt)}
-                </p>
-              )}
-
-              {hasPost && editingPost && (
-                <div>
-                  <textarea
-                    autoFocus
-                    value={postDraft}
-                    onChange={(e) => setPostDraft(e.target.value)}
-                    rows={Math.max(6, Math.min(20, postDraft.split("\n").length + 2))}
-                    className="
-                      w-full bg-white dark:bg-dark-card
-                      border border-emerald-300 dark:border-emerald-500/40
-                      rounded-md p-2 text-[12.5px] leading-relaxed
-                      text-gray-800 dark:text-gray-100
-                      outline-none focus:ring-1 focus:ring-emerald-400
-                      resize-y
-                    "
-                  />
-                  <div className="flex items-center justify-end gap-2 mt-2">
-                    <button
-                      type="button"
-                      onClick={() => setEditingPost(false)}
-                      className="text-[11px] text-text-muted hover:text-gray-900 dark:hover:text-white"
-                    >
-                      Annuler
-                    </button>
-                    <button
-                      type="button"
-                      onClick={commitEditPost}
-                      className="px-2 py-1 rounded text-[11px] font-semibold bg-emerald-500 hover:bg-emerald-600 text-white"
-                    >
-                      Sauvegarder
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+      {allowImages && !editing && content && (
+        <div className="px-4 pb-3">
+          {visualUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={visualUrl} alt={c.card.visualAlt} className="w-full rounded-lg border border-gray-200 dark:border-dark-border" />
+          ) : null}
+          {!locked && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mt-2 -ml-3"
+              onClick={onGenerateVisual}
+              disabled={visualizing}
+              icon={visualizing ? <Loader2 aria-hidden className="w-4 h-4 animate-spin" /> : visualUrl ? <RotateCw aria-hidden className="w-4 h-4" /> : <ImageIcon aria-hidden className="w-4 h-4" />}
+            >
+              {visualizing ? c.card.visualGenerating : visualUrl ? c.card.visualRegenerate : c.card.visualGenerate}
+            </Button>
           )}
         </div>
+      )}
 
-        {/* Delete — hover-revealed, hidden when locked or post is materialized
-            (deleting a materialized post should happen via batch-level action,
-            not silently from a row hover). */}
-        {!locked && !hasPost && (
-          <button
-            type="button"
-            onClick={onDelete}
-            aria-label="Supprimer ce brief"
-            className="
-              opacity-0 group-hover/row:opacity-100
-              p-1.5 rounded-md
-              text-text-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10
-              transition-all
-            "
+      {brief.scheduledAt && (
+        <p className="px-4 pb-3 flex items-center gap-1.5 text-[13px] font-medium text-emerald-800 dark:text-emerald-300">
+          <CalendarClock aria-hidden className="w-4 h-4" />
+          {c.card.scheduledFor(formatDateTime(brief.scheduledAt, lang))}
+        </p>
+      )}
+
+      {!editing && content && (
+        <div className="flex flex-wrap items-center gap-1 px-2 py-1.5 border-t border-gray-100 dark:border-dark-border/60 bg-gray-50/60 dark:bg-white/[0.02]">
+          <Button variant="ghost" size="sm" onClick={copy} icon={copied ? <Check aria-hidden className="w-4 h-4" /> : <Copy aria-hidden className="w-4 h-4" />}>
+            {copied ? c.card.copied : c.card.copyPost}
+          </Button>
+          {!locked && (
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setDraft(content);
+                  setEditing(true);
+                }}
+                icon={<Pencil aria-hidden className="w-4 h-4" />}
+              >
+                {c.card.editPost}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                aria-expanded={rewriteOpen}
+                onClick={() => setRewriteOpen((v) => !v)}
+                disabled={writing}
+                icon={<RotateCw aria-hidden className={`w-4 h-4 ${writing ? "animate-spin motion-reduce:animate-none" : ""}`} />}
+              >
+                {writing ? c.card.rewriting : c.card.rewrite}
+              </Button>
+            </>
+          )}
+        </div>
+      )}
+
+      {rewriteOpen && !locked && (
+        <div className="px-4 py-3 border-t border-gray-100 dark:border-dark-border/60 space-y-2" data-no-drag>
+          <p className="text-[13px] font-medium text-gray-800 dark:text-gray-200">{c.card.rewriteTitle}</p>
+          <div className="flex flex-wrap gap-1.5">
+            {c.card.rewriteChips.map((chip) => (
+              <button
+                key={chip}
+                type="button"
+                onClick={() => runRewrite(chip)}
+                className={`h-9 px-3 rounded-full border border-gray-200 dark:border-dark-border text-[13px] text-gray-800 dark:text-gray-200 hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-400/10 ${focusRing}`}
+              >
+                {chip}
+              </button>
+            ))}
+          </div>
+          <form
+            className="flex gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              runRewrite(instruction);
+            }}
           >
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
-        )}
-      </div>
-    </motion.li>
+            <label className="sr-only" htmlFor={`rw-${brief.id}`}>{c.card.rewritePlaceholder}</label>
+            <input
+              id={`rw-${brief.id}`}
+              value={instruction}
+              onChange={(e) => setInstruction(e.target.value)}
+              maxLength={300}
+              placeholder={c.card.rewritePlaceholder}
+              className="flex-1 min-w-0 h-10 rounded-xl border border-gray-300 dark:border-dark-border bg-white dark:bg-dark-elevated px-3 text-gray-900 dark:text-white placeholder:text-gray-500 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/25"
+              style={{ fontSize: "max(16px, 1rem)" }}
+            />
+            <Button type="submit" variant="secondary" size="sm">
+              {c.card.rewriteGo}
+            </Button>
+          </form>
+        </div>
+      )}
+    </div>
   );
 }
 
-// ─── Atoms ──────────────────────────────────────────────────────────────────
-
-function EditableText({
-  value,
-  onChange,
-  locked,
-  placeholder,
-  className,
-  multiline,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  locked: boolean;
-  placeholder: string;
-  className?: string;
-  multiline?: boolean;
-}) {
-  const [draft, setDraft] = useState(value);
-  const [editing, setEditing] = useState(false);
-
-  if (locked) {
-    return <p className={className}>{value}</p>;
-  }
-
-  if (!editing) {
-    return (
-      <p
-        className={`${className} cursor-text hover:bg-amber-50/40 dark:hover:bg-amber-400/5 rounded px-0.5 -mx-0.5 transition-colors`}
-        onClick={() => {
-          setDraft(value);
-          setEditing(true);
-        }}
-        title="Cliquer pour éditer"
-      >
-        {value || <span className="text-text-muted italic">{placeholder}</span>}
-      </p>
-    );
-  }
-
-  const commit = () => {
-    setEditing(false);
-    const next = draft.trim();
-    if (next && next !== value) onChange(next);
-  };
-
-  if (multiline) {
-    return (
-      <textarea
-        autoFocus
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={commit}
-        onKeyDown={(e) => {
-          if (e.key === "Escape") {
-            setEditing(false);
-            setDraft(value);
-          }
-          if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) commit();
-        }}
-        rows={Math.max(2, Math.ceil(draft.length / 50))}
-        className={`${className} w-full resize-none bg-amber-50/50 dark:bg-amber-400/10 border border-amber-300 dark:border-amber-400/40 rounded px-1 py-0.5 outline-none`}
-      />
-    );
-  }
-
-  return (
-    <input
-      autoFocus
-      value={draft}
-      onChange={(e) => setDraft(e.target.value)}
-      onBlur={commit}
-      onKeyDown={(e) => {
-        if (e.key === "Escape") {
-          setEditing(false);
-          setDraft(value);
-        }
-        if (e.key === "Enter") commit();
-      }}
-      className={`${className} w-full bg-amber-50/50 dark:bg-amber-400/10 border border-amber-300 dark:border-amber-400/40 rounded px-1 py-0.5 outline-none`}
-    />
-  );
-}
-
-function DateInput({
-  value,
-  onChange,
-  locked,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  locked: boolean;
-}) {
-  if (locked) {
-    return (
-      <span className="inline-flex items-center gap-1 text-text-muted">
-        <CalendarIcon className="w-3 h-3" />
-        {formatDateShort(value)}
-      </span>
-    );
-  }
-  return (
-    <label className="inline-flex items-center gap-1 cursor-pointer hover:text-amber-600 dark:hover:text-amber-400 text-text-muted transition-colors">
-      <CalendarIcon className="w-3 h-3" />
-      <input
-        type="date"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="bg-transparent border-none outline-none text-[11px] cursor-pointer"
-      />
-    </label>
-  );
-}
-
-function TimeInput({
-  value,
-  onChange,
-  locked,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  locked: boolean;
-}) {
-  if (locked) {
-    return (
-      <span className="inline-flex items-center gap-1 text-text-muted">
-        <Clock className="w-3 h-3" />
-        {value}
-      </span>
-    );
-  }
-  return (
-    <label className="inline-flex items-center gap-1 cursor-pointer hover:text-amber-600 dark:hover:text-amber-400 text-text-muted transition-colors">
-      <Clock className="w-3 h-3" />
-      <input
-        type="time"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="bg-transparent border-none outline-none text-[11px] cursor-pointer"
-      />
-    </label>
-  );
-}
-
-function StatusPill({ status }: { status: StrategyBatch["status"] }) {
-  const meta: Record<StrategyBatch["status"], { label: string; cls: string; dot: string }> = {
-    draft: { label: "Brouillon", cls: "bg-gray-100 dark:bg-dark-elevated text-text-muted", dot: "bg-gray-400 dark:bg-gray-500" },
-    approved: { label: "Approuvé", cls: "bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400", dot: "bg-emerald-500" },
-    materialized: { label: "Posts prêts", cls: "bg-blue-50 dark:bg-blue-500/15 text-blue-700 dark:text-blue-400", dot: "bg-blue-500" },
-    scheduled: { label: "Programmé", cls: "bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400", dot: "bg-amber-500" },
-    discarded: { label: "Jeté", cls: "bg-red-50 dark:bg-red-500/15 text-red-700 dark:text-red-400", dot: "bg-red-500" },
-  };
-  const { label, cls, dot } = meta[status];
-  return (
-    <span className={`inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide pl-1.5 pr-2 py-0.5 rounded-full ${cls}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${dot}`} />
-      {label}
-    </span>
-  );
-}
-
-/** "2026-05-26" → "lun. 26 mai" — short, easy to scan. */
-function formatDateShort(iso: string): string {
-  try {
-    const [y, m, d] = iso.split("-").map(Number);
-    if (!y || !m || !d) return iso;
-    const date = new Date(y, m - 1, d);
-    return date.toLocaleDateString("fr-FR", {
-      weekday: "short",
-      day: "numeric",
-      month: "short",
-    });
-  } catch {
-    return iso;
-  }
-}
-
-/** UTC millis → "lun. 26 mai à 09:30" — surfaced under a scheduled post. */
-function formatDateTimeShort(ms: number): string {
-  try {
-    const d = new Date(ms);
-    const datePart = d.toLocaleDateString("fr-FR", {
-      weekday: "short",
-      day: "numeric",
-      month: "short",
-    });
-    const timePart = d.toLocaleTimeString("fr-FR", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-    return `${datePart} à ${timePart}`;
-  } catch {
-    return new Date(ms).toISOString();
-  }
+function capitalize(s: string): string {
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 }

@@ -1,21 +1,19 @@
 "use client";
 
 /**
- * StrategistDrawerContext — global state for the inline Strategist assistant.
- *
- * The Strategist used to live on a dedicated /strategist route. We replaced
- * the navigation with a slide-in drawer so the user can consult the agent
- * without losing context of the page they were on (post draft, history, etc.).
+ * StrategistDrawerContext — global open/close state for the Strategist drawer.
  *
  * API:
- *   - open()  → reveals the drawer
- *   - close() → hides it
- *   - toggle()
- *   - isOpen  → boolean
+ *   - open() / close() / toggle() / isOpen
+ *   - openBatch(batchId) → opens the drawer AND queues a batch to show in the
+ *     conversation (used by the "your weekly plan is ready" banner). The
+ *     session inside the drawer consumes it with takePendingBatch(), so the
+ *     batch is never lost even though the drawer content mounts after the click.
  *
- * Mounted once at AppProvider level. The drawer UI itself
- * (<StrategistDrawer>) is also rendered there so any consumer (FAB, sidebar,
- * keyboard shortcut, deep-link redirect) can call open() and see it appear.
+ * Mounted once at AppProvider level (no dependency on other contexts) so any
+ * consumer can open the drawer. The conversation state itself lives in the
+ * drawer's session provider (components/strategist/StrategistSession.tsx) and
+ * survives open/close.
  */
 
 import {
@@ -24,6 +22,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   ReactNode,
 } from "react";
@@ -33,22 +32,53 @@ interface StrategistDrawerContextValue {
   open: () => void;
   close: () => void;
   toggle: () => void;
+  /** Open the drawer and show this batch in the conversation. */
+  openBatch: (batchId: string) => void;
+  /** Batch queued by openBatch, if any. */
+  pendingBatchId: string | null;
+  /** Read and clear the queued batch. */
+  takePendingBatch: () => string | null;
 }
 
 const StrategistDrawerContext = createContext<StrategistDrawerContextValue | null>(null);
 
+/** Esc inside a field cancels the edit — it must not also close the drawer
+ *  (that used to wipe the whole conversation mid-edit). */
+function isEditableTarget(target: EventTarget | null): boolean {
+  const el = target as HTMLElement | null;
+  if (!el || typeof el.closest !== "function") return false;
+  return !!el.closest("input, textarea, select, [contenteditable='true']");
+}
+
 export function StrategistDrawerProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [pendingBatchId, setPendingBatchId] = useState<string | null>(null);
+  const pendingRef = useRef<string | null>(null);
 
   const open = useCallback(() => setIsOpen(true), []);
   const close = useCallback(() => setIsOpen(false), []);
   const toggle = useCallback(() => setIsOpen((v) => !v), []);
 
-  // Global ESC-to-close — only attached while open to avoid noise.
+  const openBatch = useCallback((batchId: string) => {
+    pendingRef.current = batchId;
+    setPendingBatchId(batchId);
+    setIsOpen(true);
+  }, []);
+
+  const takePendingBatch = useCallback(() => {
+    const id = pendingRef.current;
+    pendingRef.current = null;
+    setPendingBatchId(null);
+    return id;
+  }, []);
+
+  // Global ESC-to-close — only attached while open, and ignored when the key
+  // is meant for a field or was already handled (e.g. cancelling an edit).
   useEffect(() => {
     if (!isOpen) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") close();
+      if (e.key !== "Escape" || e.defaultPrevented || isEditableTarget(e.target)) return;
+      close();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -65,8 +95,8 @@ export function StrategistDrawerProvider({ children }: { children: ReactNode }) 
   }, [isOpen]);
 
   const value = useMemo(
-    () => ({ isOpen, open, close, toggle }),
-    [isOpen, open, close, toggle]
+    () => ({ isOpen, open, close, toggle, openBatch, pendingBatchId, takePendingBatch }),
+    [isOpen, open, close, toggle, openBatch, pendingBatchId, takePendingBatch]
   );
 
   return (
@@ -91,6 +121,9 @@ export function useStrategistDrawer(): StrategistDrawerContextValue {
       open: () => {},
       close: () => {},
       toggle: () => {},
+      openBatch: () => {},
+      pendingBatchId: null,
+      takePendingBatch: () => null,
     };
   }
   return ctx;

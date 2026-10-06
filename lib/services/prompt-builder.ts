@@ -246,6 +246,56 @@ ENGAGEMENT (comments & saves > likes):
 HASHTAGS: 2 to 3 maximum, lowercase (camelCase if multi-word: #personalBranding), genuinely relevant. ALWAYS end with #posty (never #POSTY nor #Posty). On their own line, at the end.`,
 };
 
+// Exact sub-strings of LINKEDIN_ALGORITHM_RULES that the Strategist's brief
+// mode swaps for format-aware versions (a "quick take" is not 1300-2000 chars,
+// a story does not have to end on a question). The chat never passes overrides
+// and keeps the rules byte-for-byte.
+const CRAFT_LENGTH_LINE: Record<Language, string> = {
+  fr: "LONGUEUR: vise 1300-2000 caractères (zone d'engagement maximale). Jamais sous 900 ni au-dessus de 2500.",
+  en: "LENGTH: target 1300-2000 characters (peak-engagement band). Never under 900 nor over 2500.",
+};
+const CRAFT_ENGAGEMENT_HEADER: Record<Language, string> = {
+  fr: "ENGAGEMENT (commentaires & sauvegardes > likes):",
+  en: "ENGAGEMENT (comments & saves > likes):",
+};
+const CRAFT_HASHTAGS_HEADER = "\n\nHASHTAGS:";
+
+export interface CraftRuleOverrides {
+  /** Replaces the LENGTH line. */
+  lengthRule?: string;
+  /** Replaces the whole ENGAGEMENT section (header included). */
+  engagementRule?: string;
+}
+
+/** Strategist brief mode: craft overrides + optional replacement of the base
+ *  ghostwriter prompt and of the central emoji directive. */
+export interface BriefPromptOverrides extends CraftRuleOverrides {
+  /** Replaces the tier/type base prompt (MAX_SYSTEM_PROMPTS…). */
+  basePrompt?: string;
+  /** Replaces emojiDirective(language). */
+  emojiRule?: string;
+}
+
+/**
+ * The 2026 craft rules, optionally with the LENGTH line and the ENGAGEMENT
+ * section replaced. No overrides → returns LINKEDIN_ALGORITHM_RULES unchanged.
+ */
+export function buildCraftRules(language: Language, overrides?: CraftRuleOverrides): string {
+  let rules = LINKEDIN_ALGORITHM_RULES[language];
+  if (!overrides) return rules;
+  if (overrides.lengthRule) {
+    rules = rules.replace(CRAFT_LENGTH_LINE[language], overrides.lengthRule);
+  }
+  if (overrides.engagementRule) {
+    const start = rules.indexOf(CRAFT_ENGAGEMENT_HEADER[language]);
+    const end = rules.indexOf(CRAFT_HASHTAGS_HEADER, start);
+    if (start >= 0 && end > start) {
+      rules = rules.slice(0, start) + overrides.engagementRule + rules.slice(end);
+    }
+  }
+  return rules;
+}
+
 // ============== MAX AUTHORITY LAYER ==============
 //
 // Max-only "bold voice" block (Q2 = adaptive Pro/Max). Pro keeps the measured,
@@ -779,7 +829,7 @@ const SECTOR_CONTEXT: Record<string, { fr: string; en: string }> = {
  * window either.
  */
 const PROFILE_FIELD_MAX_CHARS = 250;
-export function sanitizeProfileField(input: string): string {
+export function sanitizeProfileField(input: string, maxChars: number = PROFILE_FIELD_MAX_CHARS): string {
   return input
     .replace(/ignore\s+(all\s+)?(previous|above|prior)\s+(instructions?|prompts?)/gi, "")
     .replace(/disregard\s+(all\s+)?(previous|above|prior)\s+(instructions?|prompts?)/gi, "")
@@ -795,7 +845,7 @@ export function sanitizeProfileField(input: string): string {
     // Collapse any whitespace (incl. newlines) into single spaces
     .replace(/\s+/g, " ")
     .trim()
-    .slice(0, PROFILE_FIELD_MAX_CHARS);
+    .slice(0, maxChars);
 }
 
 /** Normalize a profile field (unknown shape) to a single trimmed, sanitized string. */
@@ -868,7 +918,12 @@ export function synthesizeProfile(
 export function buildVoiceProfile(
   profile: ProfileFields,
   language: Language,
-  plan: PlanTier
+  plan: PlanTier,
+  /** Strategist brief mode: the post is published under the author's own name,
+   *  so a sign-off with their first name reads as an AI tell. `softStyle`: the
+   *  declared style (often an onboarding category like "Business / Corporate")
+   *  steers the register instead of overriding the Strategist's house style. */
+  opts?: { omitSignature?: boolean; softStyle?: boolean }
 ): string {
   const blocks: string[] = [];
   const isFr = language === "fr";
@@ -886,7 +941,13 @@ export function buildVoiceProfile(
   // themselves. We sanitize via flattenField (free-text user input) and place
   // it high in the prompt so it anchors before the abstract trait maps.
   const linkedinStyle = flattenField(profile.linkedinStyle);
-  if (linkedinStyle) {
+  if (linkedinStyle && opts?.softStyle) {
+    blocks.push(
+      isFr
+        ? `Style déclaré par l'auteur : ${linkedinStyle}. Sers-t'en pour régler le registre et le vocabulaire, sans renoncer au style vivant et facile à parcourir demandé plus haut.`
+        : `Author's declared style: ${linkedinStyle}. Use it to set the register and vocabulary, without giving up the lively, scannable style required above.`
+    );
+  } else if (linkedinStyle) {
     blocks.push(
       isFr
         ? `STYLE D'ÉCRITURE DE L'AUTEUR (à imiter fidèlement, c'est ainsi qu'il écrit vraiment): ${linkedinStyle}. Calque ce rythme, ce vocabulaire et ces tics de langage avant toute autre consigne de style.`
@@ -959,7 +1020,7 @@ export function buildVoiceProfile(
 
   // Personalized signature with displayName (Pro+)
   const displayName = flattenField(profile.displayName);
-  if (displayName) {
+  if (displayName && !opts?.omitSignature) {
     const signatureBlock = isFr
       ? `SIGNATURE PERSONNALISÉE: Termine le post par une signature avec "${displayName}". Varie le format à chaque post: parfois juste le prénom, parfois "— ${displayName}", parfois "${displayName}, ${role || 'expert'}", parfois une formule naturelle comme "À bientôt". JAMAIS "Cordialement" ni formule robotique. Chaque post = signature différente.`
       : `PERSONALIZED SIGNATURE: End the post with a sign-off using "${displayName}". Vary the format each time: sometimes just the first name, sometimes "— ${displayName}", sometimes "${displayName}, ${role || 'expert'}", sometimes a natural phrase like "See you around". NEVER "Best regards" or robotic formulas. Each post = different signature.`;
@@ -968,9 +1029,12 @@ export function buildVoiceProfile(
 
   // Max-only: signature voice directive
   if (plan === "max" && identitySummary) {
+    // Same directive; in brief mode it is labelled "Ancrage" so it can't be
+    // mistaken for a sign-off instruction once the signature block is gone.
+    const label = opts?.omitSignature ? (isFr ? "Ancrage" : "Rootedness") : "Signature";
     const signatureDirective = isFr
-      ? "Signature: Ce post doit être tellement ancré dans ce profil spécifique qu'aucun autre auteur ne pourrait l'avoir écrit. Si on remplaçait le nom, le post sonnerait faux."
-      : "Signature: This post must be so rooted in this specific profile that no other author could have written it. If you replaced the name, the post would ring false.";
+      ? `${label}: Ce post doit être tellement ancré dans ce profil spécifique qu'aucun autre auteur ne pourrait l'avoir écrit. Si on remplaçait le nom, le post sonnerait faux.`
+      : `${label}: This post must be so rooted in this specific profile that no other author could have written it. If you replaced the name, the post would ring false.`;
     blocks.push(signatureDirective);
   }
 
@@ -1144,36 +1208,58 @@ function sanitizeInput(input: string): string {
  * - Strategy + targeting: ~40-60 tokens
  * - Total: ~450-510 tokens (Pro) | ~550-610 tokens (Max)
  */
+export interface OptimizedPromptOptions {
+  /**
+   * Strategist brief mode. The approved brief and its format playbook already
+   * own the hook, the structure, the length and the close, so every layer that
+   * would fight them is left out: the random variation seed (random hook /
+   * structure / closing), the Max authority posture (contrarian + numbers on
+   * every post), the objective funnel, the fixed calibration exemplar and the
+   * first-name signature. LENGTH and ENGAGEMENT craft sections are replaced by
+   * the format-aware versions. The chat never passes this.
+   */
+  brief?: BriefPromptOverrides;
+}
+
 export function buildOptimizedPrompt(
   type: PostType,
   language: Language,
   profile?: ProfileFields | null,
-  plan?: PlanTier
+  plan?: PlanTier,
+  options?: OptimizedPromptOptions
 ): string {
+  const briefMode = !!options?.brief;
   // Select prompt tier based on plan
   const isMax = plan === "max";
   const promptSet = isMax ? MAX_SYSTEM_PROMPTS : PRO_SYSTEM_PROMPTS;
-  let prompt = promptSet[type][language];
+  let prompt = (briefMode && options!.brief!.basePrompt) || promptSet[type][language];
 
   // Central emoji policy — single source of truth, applied to EVERY plan/type/
   // language (see lib/ai/emoji-policy.ts). Injected here (before the no-profile
   // early return) so profile-less generations get it too. Wording is
   // position-agnostic, so it holds wherever it lands in the assembled prompt.
-  prompt += emojiDirective(language);
+  prompt += (briefMode && options!.brief!.emojiRule) || emojiDirective(language);
 
-  if (!profile) return prompt;
+  if (!profile) {
+    return briefMode
+      ? `${prompt}\n\n${buildCraftRules(language, options!.brief)}`
+      : prompt;
+  }
 
   // Build voice profile block (tone + context + identity + optional signature)
   // Note: voiceProfile is system-generated from validated profile fields,
   // not raw user input — sanitizeInput() must NOT be applied here as it
   // truncates at 600 chars and destroys personalization.
-  const voiceProfile = buildVoiceProfile(profile, language, plan ?? null);
+  const voiceProfile = buildVoiceProfile(profile, language, plan ?? null, {
+    omitSignature: briefMode,
+    softStyle: briefMode,
+  });
   if (voiceProfile) {
     prompt += voiceProfile;
   }
 
-  // Inject objective-specific strategy
-  const strategy = getObjectiveStrategy(profile.objective, language);
+  // Inject objective-specific strategy (brief mode: each brief carries its own goal)
+  const strategy = briefMode ? null : getObjectiveStrategy(profile.objective, language);
   if (strategy) {
     const header = language === "fr" ? "\nFINALITÉ" : "\nGOAL";
     prompt += `${header}: ${strategy}`;
@@ -1187,6 +1273,12 @@ export function buildOptimizedPrompt(
         ? `\nCIBLAGE: Adapte le vocabulaire, les exemples et les références pour résonner avec ${audience}. Le lecteur doit se reconnaître immédiatement.`
         : `\nTARGETING: Adapt vocabulary, examples, and references to resonate with ${audience}. The reader must immediately see themselves in it.`;
     prompt += audienceInstruction;
+  }
+
+  if (briefMode) {
+    // Brief mode stops here: the format playbook + brief are appended by the
+    // Strategist after this prompt and take over hook, structure and close.
+    return `${prompt}\n\n${buildCraftRules(language, options!.brief)}`;
   }
 
   // Max-only authority layer: bold, research-backed voice (defensible

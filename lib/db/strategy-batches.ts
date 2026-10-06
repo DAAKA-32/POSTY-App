@@ -30,23 +30,30 @@ import type { StrategyBatch, PostBrief } from "@/types";
 
 const COLLECTION = "strategyBatches";
 
+/** Firestore doc → StrategyBatch (shared by every reader so new fields such as
+ *  `strategy` / `direction` are never silently dropped). */
+function batchFromDoc(id: string, data: Record<string, unknown>): StrategyBatch {
+  return {
+    id,
+    userId: data.userId as string,
+    sourcePrompt: data.sourcePrompt as string,
+    theme: data.theme as string,
+    posts: (data.posts as PostBrief[] | undefined) ?? [],
+    status: data.status as StrategyBatch["status"],
+    timezone: data.timezone as string,
+    strategy: (data.strategy as StrategyBatch["strategy"]) ?? undefined,
+    direction: (data.direction as StrategyBatch["direction"]) ?? undefined,
+    createdAt: data.createdAt as Timestamp,
+    updatedAt: data.updatedAt as Timestamp | undefined,
+  };
+}
+
 /** Read a single batch by id. Returns null if not found or denied by rules. */
 export async function getStrategyBatch(batchId: string): Promise<StrategyBatch | null> {
   try {
     const snap = await getDoc(doc(db, COLLECTION, batchId));
     if (!snap.exists()) return null;
-    const data = snap.data();
-    return {
-      id: snap.id,
-      userId: data.userId,
-      sourcePrompt: data.sourcePrompt,
-      theme: data.theme,
-      posts: data.posts ?? [],
-      status: data.status,
-      timezone: data.timezone,
-      createdAt: data.createdAt as Timestamp,
-      updatedAt: data.updatedAt as Timestamp | undefined,
-    };
+    return batchFromDoc(snap.id, snap.data());
   } catch (err) {
     console.warn("[strategy-batches] getStrategyBatch failed:", err);
     return null;
@@ -67,21 +74,24 @@ export async function listStrategyBatches(
       fsLimit(max)
     );
     const snap = await getDocs(q);
-    return snap.docs.map((d) => {
-      const data = d.data();
-      return {
-        id: d.id,
-        userId: data.userId,
-        sourcePrompt: data.sourcePrompt,
-        theme: data.theme,
-        posts: data.posts ?? [],
-        status: data.status,
-        timezone: data.timezone,
-        createdAt: data.createdAt as Timestamp,
-        updatedAt: data.updatedAt as Timestamp | undefined,
-      };
-    });
+    return snap.docs.map((d) => batchFromDoc(d.id, d.data()));
   } catch (err) {
+    // The (userId, createdAt desc) composite index is declared in
+    // firestore.indexes.json but may not be deployed yet ("failed-precondition").
+    // Fall back to the equality-only query and sort in memory — a user has a
+    // few dozen batches at most.
+    if ((err as { code?: string })?.code === "failed-precondition") {
+      try {
+        const snap = await getDocs(query(collection(db, COLLECTION), where("userId", "==", userId)));
+        return snap.docs
+          .map((d) => batchFromDoc(d.id, d.data()))
+          .sort((a, b) => (b.createdAt?.toMillis?.() ?? 0) - (a.createdAt?.toMillis?.() ?? 0))
+          .slice(0, max);
+      } catch (fallbackErr) {
+        console.warn("[strategy-batches] listStrategyBatches fallback failed:", fallbackErr);
+        return [];
+      }
+    }
     console.warn("[strategy-batches] listStrategyBatches failed:", err);
     return [];
   }

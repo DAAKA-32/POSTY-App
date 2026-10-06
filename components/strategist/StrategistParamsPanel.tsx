@@ -1,329 +1,195 @@
 "use client";
 
 /**
- * StrategistParamsPanel — progressive-disclosure "advanced settings" for the
- * Strategist batch planner. Rendered just above the composer (visible in both
- * the hero and the conversation), so the user can steer the next batch request
- * without leaving the drawer.
+ * StrategistParamsPanel — "Your editorial line", inside the Settings view.
  *
- * Behavior (matches the product decision "profile defaults + ephemeral override"):
- *   - Hydrates from `users/{uid}.strategistParams` (saved defaults) on mount.
- *   - Any change is held in local state and pushed up via `onChange` — it is
- *     the *override* applied to the next /api/strategist/batch-plan call. It is
- *     ephemeral: it does NOT touch the profile.
- *   - A discreet "Set as default" link appears only when the local params
- *     differ from the saved defaults; clicking it persists them to the profile.
+ * Was a 10-control panel glued above the composer (it pushed the input off
+ * screen on mobile and only steered plans without saying so). It now lives in
+ * the drawer's Settings view, with the essentials first (business, audience,
+ * goal, tone) and the fine-tuning behind "Fine-tune".
  *
- * Cost note: these params add ≤8 short lines to the existing single batch-plan
- * LLM call. No extra API call. Unset fields inject nothing.
+ * Behaviour kept: edits are the working copy for this session's next plans;
+ * "Save" persists them to the profile (also used by the weekly autonomous
+ * run). The session (StrategistSession) owns both copies.
  */
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { SlidersHorizontal, ChevronDown, RotateCcw, Check } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { en } from "@/lib/i18n";
-import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "@/lib/db/firebase";
+import { useId, useState, type ReactNode } from "react";
+import { ChevronDown, RotateCcw } from "lucide-react";
+import { useStrategistCopy } from "@/lib/strategist/copy";
 import toast from "@/components/ui/Toast";
 import type { StrategistAdvancedParams } from "@/types";
+import { useStrategistSession } from "./StrategistSession";
+import { Button, focusRing } from "./ui";
 
-interface Props {
-  /** Notifies the host of the current override (passed to the batch-plan body). */
-  onChange: (params: StrategistAdvancedParams) => void;
-}
+type Objective = NonNullable<StrategistAdvancedParams["objective"]>;
+type Cta = NonNullable<StrategistAdvancedParams["ctaIntensity"]>;
+type Hook = NonNullable<StrategistAdvancedParams["hookStyle"]>;
+type Orientation = NonNullable<StrategistAdvancedParams["orientation"]>;
 
-type ObjectiveKey = NonNullable<StrategistAdvancedParams["objective"]>;
-type ToneKey = "direct" | "expert" | "inspiring" | "bold" | "warm";
-type CtaKey = NonNullable<StrategistAdvancedParams["ctaIntensity"]>;
-type HookKey = NonNullable<StrategistAdvancedParams["hookStyle"]>;
-type OrientKey = NonNullable<StrategistAdvancedParams["orientation"]>;
+const OBJECTIVES: Objective[] = ["authority", "engagement", "lead-gen", "conversion", "branding", "storytelling"];
+const TONES = ["direct", "expert", "inspiring", "bold", "warm"] as const;
+const CTAS: Cta[] = ["none", "soft", "assertive"];
+const HOOKS: Hook[] = ["auto", "contrarian", "story", "data", "question", "confession"];
+const ORIENTATIONS: Orientation[] = ["personal", "professional", "balanced"];
 
-const OBJECTIVE_KEYS: ObjectiveKey[] = [
-  "authority",
-  "engagement",
-  "lead-gen",
-  "conversion",
-  "branding",
-  "storytelling",
-];
-const TONE_KEYS: ToneKey[] = ["direct", "expert", "inspiring", "bold", "warm"];
-const CTA_KEYS: CtaKey[] = ["none", "soft", "assertive"];
-const HOOK_KEYS: HookKey[] = ["auto", "contrarian", "story", "data", "question", "confession"];
-const ORIENT_KEYS: OrientKey[] = ["personal", "professional", "balanced"];
+export default function StrategistParamsPanel() {
+  const { c } = useStrategistCopy();
+  const S = c.settings;
+  const { params, setParams, saveParams, unsavedCount, savedParams } = useStrategistSession();
+  const [refineOpen, setRefineOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const ids = { context: useId(), audience: useId(), refine: useId() };
 
-/** Strip undefined/empty fields so equality checks + persistence stay clean. */
-function clean(p: StrategistAdvancedParams): StrategistAdvancedParams {
-  const out: StrategistAdvancedParams = {};
-  if (p.context?.trim()) out.context = p.context.trim();
-  if (p.objective) out.objective = p.objective;
-  if (p.tone) out.tone = p.tone;
-  if (p.audience?.trim()) out.audience = p.audience.trim();
-  if (p.formality) out.formality = p.formality;
-  if (p.ctaIntensity) out.ctaIntensity = p.ctaIntensity;
-  if (p.hookStyle) out.hookStyle = p.hookStyle;
-  if (p.orientation) out.orientation = p.orientation;
-  if (p.emotion) out.emotion = p.emotion;
-  return out;
-}
-
-function countActive(p: StrategistAdvancedParams): number {
-  return Object.keys(clean(p)).length;
-}
-
-export default function StrategistParamsPanel({ onChange }: Props) {
-  const { t } = useLanguage();
-  const { user } = useAuth();
-  // Defensive fallback: non-FR/EN locales don't ship this sub-tree yet.
-  const P = t.strategist?.params ?? en.strategist.params;
-
-  const [params, setParams] = useState<StrategistAdvancedParams>({});
-  const [expanded, setExpanded] = useState(false);
-  const [savingDefault, setSavingDefault] = useState(false);
-  const savedRef = useRef<StrategistAdvancedParams>({});
-
-  // Hydrate saved defaults from the profile.
-  useEffect(() => {
-    if (!user?.uid) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const snap = await getDoc(doc(db, "users", user.uid));
-        const saved = snap.exists()
-          ? ((snap.data().strategistParams ?? {}) as StrategistAdvancedParams)
-          : {};
-        if (cancelled) return;
-        const cleaned = clean(saved);
-        savedRef.current = cleaned;
-        setParams(cleaned);
-        onChange(cleaned);
-      } catch (err) {
-        console.warn("[StrategistParamsPanel] hydrate failed:", err);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-    // onChange is stable from the host (useCallback); user.uid is the trigger.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.uid]);
-
-  const update = (patch: Partial<StrategistAdvancedParams>) => {
-    setParams((prev) => {
-      const next = clean({ ...prev, ...patch });
-      onChange(next);
-      return next;
-    });
-  };
-
-  /** Single-select toggle: re-selecting the active value clears the field. */
-  const toggle = <K extends keyof StrategistAdvancedParams>(
-    key: K,
-    value: StrategistAdvancedParams[K]
-  ) => {
+  const update = (patch: Partial<StrategistAdvancedParams>) => setParams({ ...params, ...patch });
+  const toggle = <K extends keyof StrategistAdvancedParams>(key: K, value: StrategistAdvancedParams[K]) =>
     update({ [key]: params[key] === value ? undefined : value } as Partial<StrategistAdvancedParams>);
+
+  const save = async () => {
+    setSaving(true);
+    const ok = await saveParams();
+    setSaving(false);
+    if (ok) toast.success(S.saved);
+    else toast.error(S.saveFail);
   };
 
-  const activeCount = countActive(params);
-  const isDirty =
-    JSON.stringify(clean(params)) !== JSON.stringify(savedRef.current);
-
-  const saveAsDefault = async () => {
-    if (!user?.uid || savingDefault) return;
-    setSavingDefault(true);
-    try {
-      const cleaned = clean(params);
-      await updateDoc(doc(db, "users", user.uid), {
-        strategistParams: cleaned,
-        updatedAt: serverTimestamp(),
-      });
-      savedRef.current = cleaned;
-      toast.success(P.savedToast);
-    } catch (err) {
-      console.error("[StrategistParamsPanel] save default failed:", err);
-      toast.error(t.strategist.errorGeneric);
-    } finally {
-      setSavingDefault(false);
-    }
-  };
-
-  const reset = () => update(Object.fromEntries(
-    Object.keys(params).map((k) => [k, undefined])
-  ) as Partial<StrategistAdvancedParams>);
+  const field =
+    "w-full rounded-xl border border-gray-300 dark:border-dark-border bg-white dark:bg-dark-elevated px-3 py-2.5 text-gray-900 dark:text-white placeholder:text-gray-500 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/25";
 
   return (
-    <div className="px-5 pt-2">
-      {/* Trigger row */}
-      <button
-        type="button"
-        onClick={() => setExpanded((e) => !e)}
-        aria-expanded={expanded}
-        className="
-          w-full flex items-center gap-2 px-3 py-2 rounded-xl
-          text-[12px] text-text-secondary
-          hover:bg-gray-50/70 dark:hover:bg-white/[0.03]
-          transition-colors
-        "
-      >
-        <SlidersHorizontal className="w-3.5 h-3.5 text-amber-500" />
-        <span className="font-medium text-gray-700 dark:text-gray-200">
-          {P.trigger}
-        </span>
-        {activeCount > 0 ? (
-          <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-amber-100 dark:bg-amber-400/20 text-amber-700 dark:text-amber-300 text-[10px] font-semibold">
-            {activeCount}
-          </span>
-        ) : (
-          <span className="text-text-muted truncate hidden sm:inline">
-            · {P.summaryEmpty}
-          </span>
-        )}
-        <ChevronDown
-          className={`w-3.5 h-3.5 ml-auto text-text-muted transition-transform ${expanded ? "rotate-180" : ""}`}
+    <section aria-labelledby="strategist-editorial" className="space-y-5">
+      <div>
+        <h3 id="strategist-editorial" className="text-[16px] font-semibold text-gray-900 dark:text-white">
+          {S.editorialTitle}
+        </h3>
+        <p className="mt-1 text-[14px] text-gray-600 dark:text-gray-300">{S.editorialDesc}</p>
+      </div>
+
+      <div>
+        <label htmlFor={ids.context} className="block text-[14px] font-medium text-gray-900 dark:text-white">
+          {S.context.label}
+        </label>
+        <p id={`${ids.context}-hint`} className="mt-0.5 mb-1.5 text-[13px] text-gray-600 dark:text-gray-400">
+          {S.context.hint}
+        </p>
+        <textarea
+          id={ids.context}
+          aria-describedby={`${ids.context}-hint`}
+          value={params.context ?? ""}
+          onChange={(e) => update({ context: e.target.value })}
+          rows={4}
+          maxLength={800}
+          placeholder={S.context.placeholder}
+          className={`${field} resize-y leading-relaxed`}
+          style={{ fontSize: "max(16px, 1rem)" }}
         />
-      </button>
+      </div>
 
-      <AnimatePresence initial={false}>
-        {expanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-            className="overflow-hidden"
-          >
-            <div className="mt-1.5 rounded-xl border border-gray-200 dark:border-dark-border bg-white/70 dark:bg-dark-card/70 backdrop-blur-xl p-3.5 space-y-3.5">
-              {/* Business context — the single most impactful field: it tells
-                  the Strategist WHAT the user does so posts are grounded and
-                  human instead of generic. Highlighted at the top. */}
-              <div className="rounded-lg border border-amber-300/50 dark:border-amber-400/25 bg-amber-50/40 dark:bg-amber-400/[0.06] p-2.5">
-                <FieldLabel>{P.context.label}</FieldLabel>
-                <textarea
-                  value={params.context ?? ""}
-                  onChange={(e) => update({ context: e.target.value })}
-                  rows={3}
-                  maxLength={800}
-                  placeholder={P.context.placeholder}
-                  className="
-                    w-full px-2.5 py-1.5 rounded-md resize-none
-                    bg-white dark:bg-dark-elevated
-                    border border-gray-200 dark:border-dark-border
-                    text-[12px] text-gray-900 dark:text-white leading-relaxed
-                    placeholder:text-text-muted/70
-                    focus:outline-none focus:ring-2 focus:ring-amber-400/50
-                  "
-                />
-                <p className="mt-1 text-[10.5px] text-text-muted leading-snug">
-                  {P.context.hint}
-                </p>
-              </div>
+      <div>
+        <label htmlFor={ids.audience} className="block mb-1.5 text-[14px] font-medium text-gray-900 dark:text-white">
+          {S.audience.label}
+        </label>
+        <input
+          id={ids.audience}
+          type="text"
+          value={params.audience ?? ""}
+          onChange={(e) => update({ audience: e.target.value })}
+          maxLength={200}
+          placeholder={S.audience.placeholder}
+          className={field}
+          style={{ fontSize: "max(16px, 1rem)" }}
+        />
+      </div>
 
-              <ChipGroup
-                label={P.objective.label}
-                options={OBJECTIVE_KEYS.map((k) => ({ value: k, label: P.objective[k] }))}
-                value={params.objective}
-                onSelect={(v) => toggle("objective", v as ObjectiveKey)}
-              />
-              <ChipGroup
-                label={P.tone.label}
-                options={TONE_KEYS.map((k) => ({ value: k, label: P.tone[k] }))}
-                value={params.tone}
-                onSelect={(v) => toggle("tone", v)}
-              />
-              <ChipGroup
-                label={P.hook.label}
-                options={HOOK_KEYS.map((k) => ({ value: k, label: P.hook[k] }))}
-                value={params.hookStyle}
-                onSelect={(v) => toggle("hookStyle", v as HookKey)}
-              />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <ChipGroup
-                  label={P.orientation.label}
-                  options={ORIENT_KEYS.map((k) => ({ value: k, label: P.orientation[k] }))}
-                  value={params.orientation}
-                  onSelect={(v) => toggle("orientation", v as OrientKey)}
-                />
-                <ChipGroup
-                  label={P.cta.label}
-                  options={CTA_KEYS.map((k) => ({ value: k, label: P.cta[k] }))}
-                  value={params.ctaIntensity}
-                  onSelect={(v) => toggle("ctaIntensity", v as CtaKey)}
-                />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <Scale
-                  label={P.formality.label}
-                  lowLabel={P.formality.low}
-                  highLabel={P.formality.high}
-                  value={params.formality}
-                  onSelect={(v) => update({ formality: v })}
-                />
-                <Scale
-                  label={P.emotion.label}
-                  lowLabel={P.emotion.low}
-                  highLabel={P.emotion.high}
-                  value={params.emotion}
-                  onSelect={(v) => update({ emotion: v })}
-                />
-              </div>
-              <div>
-                <FieldLabel>{P.audience.label}</FieldLabel>
-                <input
-                  type="text"
-                  value={params.audience ?? ""}
-                  onChange={(e) => update({ audience: e.target.value })}
-                  maxLength={200}
-                  placeholder={P.audience.placeholder}
-                  className="
-                    w-full px-2.5 py-1.5 rounded-md
-                    bg-white dark:bg-dark-elevated
-                    border border-gray-200 dark:border-dark-border
-                    text-[12px] text-gray-900 dark:text-white
-                    placeholder:text-text-muted/70
-                    focus:outline-none focus:ring-2 focus:ring-amber-400/50
-                  "
-                />
-              </div>
+      <ChipGroup
+        label={S.objective.label}
+        options={OBJECTIVES.map((k) => ({ value: k, label: S.objective[k] }))}
+        value={params.objective}
+        onSelect={(v) => toggle("objective", v as Objective)}
+      />
+      <ChipGroup
+        label={S.tone.label}
+        options={TONES.map((k) => ({ value: k, label: S.tone[k] }))}
+        value={params.tone}
+        onSelect={(v) => toggle("tone", v)}
+      />
 
-              {/* Footer actions */}
-              {(activeCount > 0 || isDirty) && (
-                <div className="flex items-center justify-between pt-0.5">
-                  <button
-                    type="button"
-                    onClick={reset}
-                    disabled={activeCount === 0}
-                    className="inline-flex items-center gap-1 text-[11px] text-text-muted hover:text-text-secondary disabled:opacity-40 transition-colors"
-                  >
-                    <RotateCcw className="w-3 h-3" />
-                    {P.reset}
-                  </button>
-                  {isDirty && (
-                    <button
-                      type="button"
-                      onClick={saveAsDefault}
-                      disabled={savingDefault}
-                      className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 disabled:opacity-50 transition-colors"
-                    >
-                      <Check className="w-3 h-3" />
-                      {P.saveDefault}
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          </motion.div>
+      <div className="rounded-2xl border border-gray-200 dark:border-dark-border">
+        <button
+          type="button"
+          aria-expanded={refineOpen}
+          aria-controls={ids.refine}
+          onClick={() => setRefineOpen((v) => !v)}
+          className={`w-full flex items-center justify-between px-4 min-h-[48px] text-[14px] font-medium text-gray-900 dark:text-white rounded-2xl ${focusRing}`}
+        >
+          {S.refine}
+          <ChevronDown aria-hidden className={`w-4 h-4 transition-transform ${refineOpen ? "rotate-180" : ""}`} />
+        </button>
+        {refineOpen && (
+          <div id={ids.refine} className="px-4 pb-4 space-y-5">
+            <Scale
+              label={S.formality.label}
+              low={S.formality.low}
+              high={S.formality.high}
+              value={params.formality}
+              onSelect={(v) => update({ formality: v })}
+              aria={S.scaleAria}
+            />
+            <Scale
+              label={S.emotion.label}
+              low={S.emotion.low}
+              high={S.emotion.high}
+              value={params.emotion}
+              onSelect={(v) => update({ emotion: v })}
+              aria={S.scaleAria}
+            />
+            <ChipGroup
+              label={S.cta.label}
+              options={CTAS.map((k) => ({ value: k, label: S.cta[k] }))}
+              value={params.ctaIntensity}
+              onSelect={(v) => toggle("ctaIntensity", v as Cta)}
+            />
+            <ChipGroup
+              label={S.hook.label}
+              options={HOOKS.map((k) => ({ value: k, label: S.hook[k] }))}
+              value={params.hookStyle}
+              onSelect={(v) => toggle("hookStyle", v as Hook)}
+            />
+            <ChipGroup
+              label={S.orientation.label}
+              options={ORIENTATIONS.map((k) => ({ value: k, label: S.orientation[k] }))}
+              value={params.orientation}
+              onSelect={(v) => toggle("orientation", v as Orientation)}
+            />
+          </div>
         )}
-      </AnimatePresence>
-    </div>
+      </div>
+
+      <div className="rounded-2xl bg-gray-50 dark:bg-white/[0.03] p-4 space-y-3">
+        <p className="text-[13px] text-gray-700 dark:text-gray-300">{S.sessionNote}</p>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setParams(savedParams)}
+            disabled={unsavedCount === 0}
+            icon={<RotateCcw aria-hidden className="w-4 h-4" />}
+          >
+            {S.reset}
+          </Button>
+          <Button variant="primary" size="sm" onClick={save} disabled={saving || unsavedCount === 0}>
+            {S.saveDefault}
+          </Button>
+        </div>
+      </div>
+    </section>
   );
 }
 
 // ─── Atoms ──────────────────────────────────────────────────────────────────
 
-function FieldLabel({ children }: { children: ReactNode }) {
+function GroupLabel({ id, children }: { id: string; children: ReactNode }) {
   return (
-    <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted mb-1.5">
+    <p id={id} className="mb-2 text-[14px] font-medium text-gray-900 dark:text-white">
       {children}
     </p>
   );
@@ -340,10 +206,11 @@ function ChipGroup({
   value?: string;
   onSelect: (value: string) => void;
 }) {
+  const id = useId();
   return (
-    <div>
-      <FieldLabel>{label}</FieldLabel>
-      <div className="flex flex-wrap gap-1.5">
+    <div role="group" aria-labelledby={id}>
+      <GroupLabel id={id}>{label}</GroupLabel>
+      <div className="flex flex-wrap gap-2">
         {options.map((opt) => {
           const active = value === opt.value;
           return (
@@ -352,12 +219,11 @@ function ChipGroup({
               type="button"
               aria-pressed={active}
               onClick={() => onSelect(opt.value)}
-              className={`
-                px-2.5 py-1 rounded-full text-[11.5px] font-medium border transition-colors
-                ${active
-                  ? "bg-amber-500 border-amber-500 text-white"
-                  : "bg-white dark:bg-dark-elevated border-gray-200 dark:border-dark-border text-text-secondary hover:border-amber-300 dark:hover:border-amber-400/40"}
-              `}
+              className={`h-10 px-3.5 rounded-full border text-[14px] transition-colors ${focusRing} ${
+                active
+                  ? "bg-amber-100 dark:bg-amber-400/20 border-amber-500 text-amber-950 dark:text-amber-100 font-medium"
+                  : "bg-white dark:bg-dark-elevated border-gray-300 dark:border-dark-border text-gray-800 dark:text-gray-200 hover:border-gray-400"
+              }`}
             >
               {opt.label}
             </button>
@@ -368,49 +234,52 @@ function ChipGroup({
   );
 }
 
-/** 5-segment selector with an "off" state — clicking the active segment clears
- *  it (returns the field to unset/Auto). Labeled endpoints give it meaning. */
+/** 1-5 selector; tapping the active value clears it (back to "not set"). */
 function Scale({
   label,
-  lowLabel,
-  highLabel,
+  low,
+  high,
   value,
   onSelect,
+  aria,
 }: {
   label: string;
-  lowLabel: string;
-  highLabel: string;
+  low: string;
+  high: string;
   value?: 1 | 2 | 3 | 4 | 5;
   onSelect: (v: 1 | 2 | 3 | 4 | 5 | undefined) => void;
+  aria: (label: string, n: number) => string;
 }) {
+  const id = useId();
   return (
-    <div>
-      <FieldLabel>{label}</FieldLabel>
-      <div className="flex items-center gap-1">
+    <div role="group" aria-labelledby={id}>
+      <GroupLabel id={id}>{label}</GroupLabel>
+      <div className="flex items-center gap-1.5">
         {([1, 2, 3, 4, 5] as const).map((n) => {
           const active = value === n;
           return (
             <button
               key={n}
               type="button"
-              aria-label={`${label} ${n}/5`}
+              aria-label={aria(label, n)}
               aria-pressed={active}
               onClick={() => onSelect(active ? undefined : n)}
-              className={`
-                flex-1 h-6 rounded-md border transition-colors
-                ${active
-                  ? "bg-amber-500 border-amber-500"
+              className={`flex-1 h-10 rounded-lg border text-[13px] font-medium tabular-nums transition-colors ${focusRing} ${
+                active
+                  ? "bg-amber-100 dark:bg-amber-400/20 border-amber-500 text-amber-950 dark:text-amber-100"
                   : value !== undefined && n < value
-                    ? "bg-amber-200/70 dark:bg-amber-400/30 border-amber-200 dark:border-amber-400/30"
-                    : "bg-white dark:bg-dark-elevated border-gray-200 dark:border-dark-border hover:border-amber-300 dark:hover:border-amber-400/40"}
-              `}
-            />
+                    ? "bg-amber-50 dark:bg-amber-400/10 border-amber-200 dark:border-amber-400/30 text-amber-900 dark:text-amber-200"
+                    : "bg-white dark:bg-dark-elevated border-gray-300 dark:border-dark-border text-gray-700 dark:text-gray-300"
+              }`}
+            >
+              {n}
+            </button>
           );
         })}
       </div>
-      <div className="flex items-center justify-between mt-1">
-        <span className="text-[10px] text-text-muted">{lowLabel}</span>
-        <span className="text-[10px] text-text-muted">{highLabel}</span>
+      <div className="mt-1 flex justify-between text-[12px] text-gray-600 dark:text-gray-400">
+        <span>{low}</span>
+        <span>{high}</span>
       </div>
     </div>
   );

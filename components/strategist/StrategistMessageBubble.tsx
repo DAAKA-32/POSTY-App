@@ -1,28 +1,29 @@
 "use client";
 
 /**
- * StrategistMessageBubble — minimal Notion-style message rendering.
+ * StrategistMessageBubble — one conversation turn.
  *
- *   - User: gray bubble right-aligned (no gradient, no avatar)
- *   - Assistant: bare markdown content in the column (no bubble, no border,
- *     no avatar). The conversation reads like a document, not a chat app.
- *   - Streaming: 3 quiet gray dots
- *   - Actions: tiny gray text buttons (Copy + Regenerate), only on the last
- *     completed assistant message
+ *   - User: neutral bubble, right-aligned.
+ *   - Assistant: bare markdown in the column (reads like a document).
+ *   - Waiting: three dots (static under reduced motion) + sr-only label.
+ *   - Actions on the latest answer: Copy, Regenerate and "Turn into a plan"
+ *     (the bridge from advice to an actual plan) — 40px targets, translated.
  */
 
 import { motion, useReducedMotion } from "framer-motion";
 import { useState } from "react";
+import { Check, Copy, RotateCw, CalendarPlus } from "lucide-react";
+import { useStrategistCopy } from "@/lib/strategist/copy";
 import StrategistMarkdown from "./StrategistMarkdown";
-
-export type Role = "user" | "assistant";
+import { Button } from "./ui";
 
 interface Props {
-  role: Role;
+  role: "user" | "assistant";
   content: string;
   isStreaming?: boolean;
   showActions?: boolean;
   onRegenerate?: () => void;
+  onTurnIntoPlan?: () => void;
 }
 
 export default function StrategistMessageBubble({
@@ -31,8 +32,10 @@ export default function StrategistMessageBubble({
   isStreaming = false,
   showActions = false,
   onRegenerate,
+  onTurnIntoPlan,
 }: Props) {
   const reduced = useReducedMotion();
+  const { c } = useStrategistCopy();
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -45,123 +48,62 @@ export default function StrategistMessageBubble({
     }
   };
 
-  // ── User bubble ──
   if (role === "user") {
     return (
-      <motion.div
-        initial={reduced ? false : { opacity: 0, y: 4 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.2 }}
-        className="flex justify-end px-5"
-      >
-        <div
-          className="
-            max-w-[85%]
-            rounded-2xl rounded-tr-sm
-            bg-gray-100 dark:bg-gray-800
-            text-gray-900 dark:text-gray-100
-            px-3.5 py-2.5
-            text-[14px] leading-[1.55]
-            whitespace-pre-wrap break-words
-          "
-        >
+      <div className="flex justify-end px-5">
+        <div className="max-w-[85%] rounded-2xl rounded-tr-md bg-gray-100 dark:bg-dark-elevated text-gray-900 dark:text-gray-100 px-4 py-2.5 text-[14px] leading-[1.55] whitespace-pre-wrap break-words">
           {content}
         </div>
-      </motion.div>
+      </div>
     );
   }
 
-  // ── Assistant — no bubble, just markdown content in the column ──
   return (
-    <motion.div
-      initial={reduced ? false : { opacity: 0, y: 4 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2 }}
-      className="px-5"
-    >
+    <div className="px-5">
       {isStreaming && content.length === 0 ? (
-        <span className="inline-flex gap-1 items-center py-2">
-          <motion.span
-            className="w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-500"
-            animate={{ opacity: [0.3, 1, 0.3] }}
-            transition={{ duration: 1.1, repeat: Infinity, ease: "easeInOut", delay: 0 }}
-          />
-          <motion.span
-            className="w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-500"
-            animate={{ opacity: [0.3, 1, 0.3] }}
-            transition={{ duration: 1.1, repeat: Infinity, ease: "easeInOut", delay: 0.2 }}
-          />
-          <motion.span
-            className="w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-500"
-            animate={{ opacity: [0.3, 1, 0.3] }}
-            transition={{ duration: 1.1, repeat: Infinity, ease: "easeInOut", delay: 0.4 }}
-          />
+        <span className="inline-flex gap-1 items-center py-2" role="status">
+          <span className="sr-only">…</span>
+          {[0, 0.2, 0.4].map((delay) => (
+            <motion.span
+              key={delay}
+              aria-hidden
+              className="w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-500"
+              animate={reduced ? undefined : { opacity: [0.3, 1, 0.3] }}
+              transition={{ duration: 1.1, repeat: Infinity, ease: "easeInOut", delay }}
+            />
+          ))}
         </span>
       ) : (
         <StrategistMarkdown content={content} />
       )}
 
-      {/* Action row — quiet text buttons */}
       {showActions && content.length > 0 && (
-        <motion.div
-          initial={reduced ? false : { opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.2, delay: 0.1 }}
-          className="mt-3 flex items-center gap-3"
-        >
-          <button
-            type="button"
+        <div className="mt-3 flex flex-wrap items-center gap-1 -ml-3">
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={handleCopy}
-            className="
-              inline-flex items-center gap-1
-              text-[11.5px] text-gray-400 dark:text-gray-500
-              hover:text-gray-700 dark:hover:text-gray-200
-              transition-colors
-            "
+            icon={copied ? <Check aria-hidden className="w-4 h-4" /> : <Copy aria-hidden className="w-4 h-4" />}
           >
-            {copied ? (
-              <>
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-                Copied
-              </>
-            ) : (
-              <>
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.6}>
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                  />
-                </svg>
-                Copy
-              </>
-            )}
-          </button>
+            {copied ? c.thread.copied : c.thread.copy}
+          </Button>
           {onRegenerate && (
-            <button
-              type="button"
-              onClick={onRegenerate}
-              className="
-                inline-flex items-center gap-1
-                text-[11.5px] text-gray-400 dark:text-gray-500
-                hover:text-gray-700 dark:hover:text-gray-200
-                transition-colors
-              "
-            >
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.6}>
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                />
-              </svg>
-              Regenerate
-            </button>
+            <Button variant="ghost" size="sm" onClick={onRegenerate} icon={<RotateCw aria-hidden className="w-4 h-4" />}>
+              {c.thread.regenerate}
+            </Button>
           )}
-        </motion.div>
+          {onTurnIntoPlan && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={onTurnIntoPlan}
+              icon={<CalendarPlus aria-hidden className="w-4 h-4 text-amber-700 dark:text-amber-400" />}
+            >
+              {c.thread.turnIntoPlan}
+            </Button>
+          )}
+        </div>
       )}
-    </motion.div>
+    </div>
   );
 }

@@ -1,454 +1,214 @@
 "use client";
 
 /**
- * StrategistAutonomousPanel — compact opt-in card for the weekly autonomous
- * batch generator, rendered inside the Strategist drawer hero (below the
- * starter cards). Replaces the deprecated AutonomousStrategistSection that
- * used to live in /settings.
+ * StrategistAutonomousPanel — "Autonomous mode", inside the Settings view.
  *
- * Two display states:
- *   - Collapsed (default): one-liner with toggle. Saves vertical space in
- *     the hero so the starter cards stay the focal point.
- *   - Expanded: reveals day picker + count slider + custom prompt. Click
- *     the toggle to switch ON ⇒ expanded, click to switch OFF ⇒ collapsed.
- *
- * Persists into `users/{uid}.autonomousMode` via dot-notation patches so
- * sibling fields (lastTriggeredAt, set by the cron) survive.
+ * The weekly job used to switch ON with a single tap of the whole row (and
+ * "generate now" only existed once it was on). Now: pick the day and the
+ * number of posts, then an explicit "Turn on" button. "Generate the plan now"
+ * is always available and lands in the conversation. Posts-per-week is a
+ * −/+ stepper (one save per step, 44px targets) instead of a slider that wrote
+ * to Firestore on every tick. Dates follow the UI language.
  */
 
-import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, ChevronDown, Loader2, Sparkles } from "lucide-react";
-import StrategistMark from "./StrategistMark";
+import { useEffect, useId, useState } from "react";
+import { Minus, Plus, Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { getAuthHeaders } from "@/lib/api/client";
-import { nextRunLabel } from "@/lib/strategist/next-run";
-import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "@/lib/db/firebase";
+import { useStrategistCopy } from "@/lib/strategist/copy";
+import { nextRunDate } from "@/lib/strategist/next-run";
 import toast from "@/components/ui/Toast";
 import type { AutonomousStrategistConfig } from "@/types";
-
-const DAY_LABELS_FR = [
-  "Dimanche",
-  "Lundi",
-  "Mardi",
-  "Mercredi",
-  "Jeudi",
-  "Vendredi",
-  "Samedi",
-];
+import { useStrategistSession } from "./StrategistSession";
+import { Button, focusRing } from "./ui";
 
 const MIN_COUNT = 3;
 const MAX_COUNT = 10;
-const DEFAULT_COUNT = 5;
+type Day = AutonomousStrategistConfig["dayOfWeek"];
 
 export default function StrategistAutonomousPanel() {
+  const { c, lang } = useStrategistCopy();
+  const S = c.settings;
   const { user } = useAuth();
-  const { language } = useLanguage();
+  const { autonomous, patchAutonomous, send, setView, busy } = useStrategistSession();
+  const ids = { day: useId(), count: useId(), prompt: useId() };
 
-  // Founder-only tweak: a roomier custom-prompt limit + a live character
-  // counter so emilien can write detailed campaign prompts without silent
-  // truncation. Everyone else keeps the default 400 and sees no counter.
-  const isEmilien =
-    (user?.email || "").toLowerCase() === "emilien.nepveu@gmail.com";
-  const promptMax = isEmilien ? 2000 : 400;
+  // Founder-only: roomier custom prompt with a live counter (kept as before).
+  const isFounder = (user?.email || "").toLowerCase() === "emilien.nepveu@gmail.com";
+  const promptMax = isFounder ? 2000 : 400;
 
-  const [enabled, setEnabled] = useState(false);
-  const [dayOfWeek, setDayOfWeek] = useState<0 | 1 | 2 | 3 | 4 | 5 | 6>(0);
-  const [count, setCount] = useState(DEFAULT_COUNT);
-  const [customPrompt, setCustomPrompt] = useState("");
-  const [lastTriggeredAt, setLastTriggeredAt] = useState<number | null>(null);
-
-  const [expanded, setExpanded] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [generating, setGenerating] = useState(false);
-  const [saving, setSaving] = useState(false);
-
+  const enabled = !!autonomous?.enabled;
+  const [day, setDay] = useState<Day>((autonomous?.dayOfWeek ?? 1) as Day);
+  const [count, setCount] = useState(autonomous?.count ?? 5);
+  const [prompt, setPrompt] = useState(autonomous?.customPrompt ?? "");
   useEffect(() => {
-    if (!user?.uid) return;
-    (async () => {
-      try {
-        const snap = await getDoc(doc(db, "users", user.uid));
-        const cfg = snap.exists()
-          ? (snap.data().autonomousMode as AutonomousStrategistConfig | undefined)
-          : undefined;
-        if (cfg) {
-          setEnabled(!!cfg.enabled);
-          setDayOfWeek((cfg.dayOfWeek ?? 0) as 0 | 1 | 2 | 3 | 4 | 5 | 6);
-          setCount(clampCount(cfg.count ?? DEFAULT_COUNT));
-          setCustomPrompt(cfg.customPrompt ?? "");
-          // When already enabled on mount, open the panel so the user lands
-          // on their full config without an extra click.
-          if (cfg.enabled) setExpanded(true);
-          const last = (cfg.lastTriggeredAt as { toMillis?: () => number } | undefined)?.toMillis?.();
-          if (typeof last === "number") setLastTriggeredAt(last);
-        }
-      } catch (err) {
-        console.warn("[StrategistAutonomousPanel] hydrate failed:", err);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [user?.uid]);
+    if (!autonomous) return;
+    setDay((autonomous.dayOfWeek ?? 1) as Day);
+    setCount(autonomous.count ?? 5);
+    setPrompt(autonomous.customPrompt ?? "");
+  }, [autonomous]);
 
-  const save = async (next: Partial<AutonomousStrategistConfig>) => {
-    if (!user?.uid) return;
-    setSaving(true);
-    try {
-      const patch: Record<string, unknown> = {};
-      if (next.enabled !== undefined) patch["autonomousMode.enabled"] = next.enabled;
-      if (next.dayOfWeek !== undefined) patch["autonomousMode.dayOfWeek"] = next.dayOfWeek;
-      if (next.count !== undefined) patch["autonomousMode.count"] = next.count;
-      if (next.customPrompt !== undefined) {
-        patch["autonomousMode.customPrompt"] = next.customPrompt || null;
-      }
-      patch["updatedAt"] = serverTimestamp();
-      await updateDoc(doc(db, "users", user.uid), patch);
-    } catch (err) {
-      console.error("[StrategistAutonomousPanel] save failed:", err);
-      toast.error("Échec de la sauvegarde.");
-    } finally {
-      setSaving(false);
-    }
+  const persist = async (patch: Partial<AutonomousStrategistConfig>) => {
+    if (!enabled) return true; // not on yet: kept locally until "Turn on"
+    const ok = await patchAutonomous(patch);
+    if (!ok) toast.error(S.saveFail);
+    return ok;
   };
 
-  const onToggleEnabled = (next: boolean) => {
-    setEnabled(next);
-    setExpanded(next); // expand on ON, collapse on OFF
-    void save({ enabled: next });
-    toast.success(next ? "Mode autonome activé." : "Mode autonome désactivé.");
+  const turnOn = async () => {
+    const ok = await patchAutonomous({ enabled: true, dayOfWeek: day, count, customPrompt: prompt.trim() });
+    if (ok) toast.success(S.activated);
+    else toast.error(S.saveFail);
+  };
+  const turnOff = async () => {
+    const ok = await patchAutonomous({ enabled: false });
+    if (ok) toast.success(S.deactivated);
+    else toast.error(S.saveFail);
   };
 
-  /**
-   * Generate a plan on demand RIGHT NOW (don't wait for the weekly cron).
-   * Uses the same config the cron would (count + custom prompt) and surfaces
-   * the resulting batch in the chat via the existing `strategist:open-batch`
-   * event — where the user reviews and validates it (approve → generate →
-   * schedule). This is what makes the panel actionable instead of "set & wait".
-   */
-  const generateNow = async () => {
-    if (!user?.uid || generating) return;
-    setGenerating(true);
-    try {
-      const headers = await getAuthHeaders();
-      const timezone =
-        (typeof Intl !== "undefined" &&
-          Intl.DateTimeFormat().resolvedOptions().timeZone) ||
-        "UTC";
-      const trimmed = customPrompt.trim();
-      const sourcePrompt =
-        trimmed ||
-        (language === "en"
-          ? `Prepare a coherent editorial plan of ${count} LinkedIn posts for the week ahead.`
-          : `Prépare un plan éditorial cohérent de ${count} posts LinkedIn pour la semaine à venir.`);
-
-      const res = await fetch("/api/strategist/batch-plan", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...headers },
-        body: JSON.stringify({
-          sourcePrompt,
-          count,
-          timezone,
-          language: language === "fr" ? "fr" : "en",
-        }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        toast.error(err.message || "Génération échouée. Réessaye.");
-        return;
-      }
-      const data = await res.json();
-      const batchId = data?.batch?.id as string | undefined;
-      if (!batchId) {
-        toast.error("Génération échouée. Réessaye.");
-        return;
-      }
-      // Hand off to the chat panel, which fetches + renders the BatchPlanCard
-      // so the user can review and validate before anything is published.
-      window.dispatchEvent(
-        new CustomEvent("strategist:open-batch", { detail: { batchId } })
-      );
-      toast.success("Plan généré — relis-le et valide-le ci-dessous.");
-    } catch (err) {
-      console.error("[StrategistAutonomousPanel] generateNow failed:", err);
-      toast.error("Génération échouée. Vérifie ta connexion.");
-    } finally {
-      setGenerating(false);
-    }
+  const generateNow = () => {
+    const sourcePrompt =
+      prompt.trim() ||
+      (lang === "fr"
+        ? `Prépare un plan éditorial cohérent de ${count} posts LinkedIn pour la semaine à venir.`
+        : `Prepare a coherent editorial plan of ${count} LinkedIn posts for the week ahead.`);
+    setView("chat");
+    send(sourcePrompt, { intent: { kind: "plan", count, period: "week" }, display: S.generateNow });
   };
 
-  if (loading) {
-    return (
-      <div className="mt-6 flex items-center gap-2 text-text-muted text-[12px]">
-        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-        Mode autonome…
-      </div>
-    );
-  }
+  const locale = lang === "fr" ? "fr-FR" : "en-US";
+  const nextRun = nextRunDate(day).toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long" });
+  const lastMs = (autonomous?.lastTriggeredAt as { toMillis?: () => number } | undefined)?.toMillis?.();
+  const lastRun = typeof lastMs === "number"
+    ? new Date(lastMs).toLocaleDateString(locale, { day: "numeric", month: "long" })
+    : S.none;
+
+  const field =
+    "w-full rounded-xl border border-gray-300 dark:border-dark-border bg-white dark:bg-dark-elevated px-3 py-2.5 text-gray-900 dark:text-white placeholder:text-gray-500 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/25";
 
   return (
-    <section className="mt-6">
-      {/* Section label — mirrors the "COMMENCER PAR" eyebrow style. */}
-      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-text-muted mb-2.5">
-        Agent autonome
-      </p>
+    <section aria-labelledby="strategist-autonomous" className="space-y-4">
+      <div>
+        <h3 id="strategist-autonomous" className="text-[16px] font-semibold text-gray-900 dark:text-white">
+          {S.autonomousTitle}
+        </h3>
+        <p className="mt-1 text-[14px] text-gray-600 dark:text-gray-300">{S.autonomousDesc}</p>
+      </div>
 
-      <div
-        className={`
-          rounded-xl border transition-colors
-          ${enabled
-            ? "bg-amber-50/60 dark:bg-amber-400/8 border-amber-300/60 dark:border-amber-400/30"
-            : "bg-white dark:bg-dark-card border-gray-200 dark:border-dark-border"}
-        `}
-      >
-        {/* Compact header — the WHOLE row toggles the agent on/off. The
-            visual <Toggle> on the right mirrors the state but doesn't own
-            the click — that lets the user tap anywhere on the card,
-            including the title/description, which is what most users
-            instinctively try. We use a <button> for proper a11y semantics
-            (Space/Enter activates, role announced as switch via aria). */}
-        <button
-          type="button"
-          role="switch"
-          aria-checked={enabled}
-          onClick={() => onToggleEnabled(!enabled)}
-          disabled={saving}
-          className="w-full flex items-center gap-3 px-3.5 py-3 text-left transition-colors hover:bg-gray-50/60 dark:hover:bg-white/[0.03] disabled:cursor-not-allowed"
-        >
-          <div
-            className={`
-              w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0
-              ${enabled
-                ? "bg-amber-100 dark:bg-amber-400/20 text-amber-600 dark:text-amber-400"
-                : "bg-gray-100 dark:bg-dark-elevated text-text-muted"}
-            `}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label htmlFor={ids.day} className="block mb-1.5 text-[14px] font-medium text-gray-900 dark:text-white">
+            {S.day}
+          </label>
+          <select
+            id={ids.day}
+            value={day}
+            onChange={(e) => {
+              const d = Number(e.target.value) as Day;
+              setDay(d);
+              void persist({ dayOfWeek: d });
+            }}
+            className={`${field} capitalize`}
+            style={{ fontSize: "max(16px, 1rem)" }}
           >
-            <StrategistMark className="w-3.5 h-3.5" withSecondarySparkle={false} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[12.5px] font-medium text-gray-900 dark:text-white leading-tight">
-              Déléguer ma présence LinkedIn
-            </p>
-            <p className="text-[11px] text-text-muted mt-0.5 leading-snug">
-              {enabled
-                ? `Plan généré chaque ${DAY_LABELS_FR[dayOfWeek].toLowerCase()} matin — ${count} posts.`
-                : "Le Stratège prépare un plan automatiquement, tu valides."}
-            </p>
-          </div>
-          {/* Decorative — real toggle handled by the parent button click */}
-          <Toggle checked={enabled} disabled={saving} />
-        </button>
-
-        {/* Expanded config — only when enabled. */}
-        <AnimatePresence initial={false}>
-          {enabled && expanded && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-              className="overflow-hidden"
+            {[1, 2, 3, 4, 5, 6, 0].map((d) => (
+              <option key={d} value={d}>
+                {S.days[d].charAt(0).toUpperCase() + S.days[d].slice(1)}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <p id={ids.count} className="mb-1.5 text-[14px] font-medium text-gray-900 dark:text-white">
+            {S.count}
+          </p>
+          <div role="group" aria-labelledby={ids.count} className="flex items-center gap-2">
+            <button
+              type="button"
+              aria-label="−"
+              disabled={count <= MIN_COUNT}
+              onClick={() => {
+                const n = Math.max(MIN_COUNT, count - 1);
+                setCount(n);
+                void persist({ count: n });
+              }}
+              className={`w-11 h-11 inline-flex items-center justify-center rounded-xl border border-gray-300 dark:border-dark-border text-gray-800 dark:text-gray-100 disabled:opacity-40 ${focusRing}`}
             >
-              <div className="px-3.5 pb-3.5 pt-1 space-y-3 border-t border-amber-200/50 dark:border-amber-400/20">
-                {/* Dashboard — next + last run at a glance */}
-                <div className="grid grid-cols-2 gap-2 pt-3">
-                  <div className="rounded-md bg-white/60 dark:bg-dark-elevated/60 border border-gray-200/70 dark:border-dark-border px-2.5 py-2">
-                    <p className="text-[9.5px] uppercase tracking-wide text-text-muted">Prochain plan</p>
-                    <p className="text-[11.5px] font-medium text-gray-900 dark:text-white mt-0.5 leading-snug capitalize">
-                      {nextRunLabel(dayOfWeek)}
-                    </p>
-                  </div>
-                  <div className="rounded-md bg-white/60 dark:bg-dark-elevated/60 border border-gray-200/70 dark:border-dark-border px-2.5 py-2">
-                    <p className="text-[9.5px] uppercase tracking-wide text-text-muted">Dernier plan</p>
-                    <p className="text-[11.5px] font-medium text-gray-900 dark:text-white mt-0.5 leading-snug">
-                      {lastTriggeredAt
-                        ? `${new Date(lastTriggeredAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })} · ${count} posts`
-                        : "Aucun encore"}
-                    </p>
-                  </div>
-                </div>
+              <Minus aria-hidden className="w-4 h-4" />
+            </button>
+            <output aria-live="polite" className="w-10 text-center text-[17px] font-semibold tabular-nums text-gray-900 dark:text-white">
+              {count}
+            </output>
+            <button
+              type="button"
+              aria-label="+"
+              disabled={count >= MAX_COUNT}
+              onClick={() => {
+                const n = Math.min(MAX_COUNT, count + 1);
+                setCount(n);
+                void persist({ count: n });
+              }}
+              className={`w-11 h-11 inline-flex items-center justify-center rounded-xl border border-gray-300 dark:border-dark-border text-gray-800 dark:text-gray-100 disabled:opacity-40 ${focusRing}`}
+            >
+              <Plus aria-hidden className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
 
-                {/* Day + count, side by side on wider screens */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[11px] font-medium text-text-secondary mb-1">
-                      <Calendar className="w-3 h-3 inline-block mr-1 -mt-0.5" />
-                      Jour
-                    </label>
-                    <select
-                      value={dayOfWeek}
-                      onChange={(e) => {
-                        const d = Number(e.target.value) as 0 | 1 | 2 | 3 | 4 | 5 | 6;
-                        setDayOfWeek(d);
-                        void save({ dayOfWeek: d });
-                      }}
-                      className="
-                        w-full px-2.5 py-1.5 rounded-md
-                        bg-white dark:bg-dark-elevated
-                        border border-gray-200 dark:border-dark-border
-                        text-[12px] text-gray-900 dark:text-white
-                        focus:outline-none focus:ring-2 focus:ring-amber-400/50
-                      "
-                    >
-                      {DAY_LABELS_FR.map((label, idx) => (
-                        <option key={idx} value={idx}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="text-[11px] font-medium text-text-secondary">
-                        Posts / semaine
-                      </label>
-                      <span className="text-[12px] font-semibold text-amber-600 dark:text-amber-400">
-                        {count}
-                      </span>
-                    </div>
-                    <input
-                      type="range"
-                      min={MIN_COUNT}
-                      max={MAX_COUNT}
-                      step={1}
-                      value={count}
-                      onChange={(e) => {
-                        const next = clampCount(Number(e.target.value));
-                        setCount(next);
-                        void save({ count: next });
-                      }}
-                      className="w-full accent-amber-500 cursor-pointer"
-                    />
-                  </div>
-                </div>
-
-                {/* Custom prompt */}
-                <div>
-                  <label className="block text-[11px] font-medium text-text-secondary mb-1">
-                    Prompt personnalisé{" "}
-                    <span className="text-text-muted font-normal">(optionnel)</span>
-                  </label>
-                  <textarea
-                    value={customPrompt}
-                    onChange={(e) => setCustomPrompt(e.target.value)}
-                    onBlur={() => save({ customPrompt: customPrompt.trim() })}
-                    rows={2}
-                    maxLength={promptMax}
-                    placeholder="Ex: Focus sur cas clients SaaS B2B, ton direct."
-                    className="
-                      w-full px-2.5 py-1.5 rounded-md resize-none
-                      bg-white dark:bg-dark-elevated
-                      border border-gray-200 dark:border-dark-border
-                      text-[12px] text-gray-900 dark:text-white
-                      placeholder:text-text-muted/70
-                      focus:outline-none focus:ring-2 focus:ring-amber-400/50
-                    "
-                  />
-                  {isEmilien && (
-                    <p
-                      className={`mt-1 text-right text-[10px] tabular-nums ${
-                        customPrompt.length >= promptMax
-                          ? "text-amber-600 dark:text-amber-400 font-medium"
-                          : "text-text-muted"
-                      }`}
-                    >
-                      {customPrompt.length} / {promptMax}
-                    </p>
-                  )}
-                </div>
-
-                {/* On-demand generation — the panel above only schedules the
-                    weekly cron; this button makes the agent act NOW so the user
-                    gets a plan to review + validate without waiting for the
-                    chosen day. */}
-                <div className="pt-1">
-                  <button
-                    type="button"
-                    onClick={generateNow}
-                    disabled={generating}
-                    className="
-                      w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg
-                      text-[12.5px] font-semibold
-                      bg-amber-500 hover:bg-amber-600 disabled:opacity-60 disabled:cursor-not-allowed
-                      text-white shadow-sm
-                      transition-colors
-                    "
-                  >
-                    {generating ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Sparkles className="w-3.5 h-3.5" />
-                    )}
-                    {generating ? "Génération du plan…" : "Générer un plan maintenant"}
-                  </button>
-                  <p className="mt-1.5 text-[10.5px] text-text-muted leading-snug text-center">
-                    Teste tout de suite : tu obtiens un plan à relire et valider, sans attendre {DAY_LABELS_FR[dayOfWeek].toLowerCase()}.
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Show "configure" toggle button only when enabled AND collapsed */}
-        {enabled && !expanded && (
-          <button
-            type="button"
-            onClick={() => setExpanded(true)}
-            className="
-              w-full px-3.5 py-2 border-t border-amber-200/50 dark:border-amber-400/20
-              text-[11.5px] font-medium text-amber-700 dark:text-amber-400
-              hover:bg-amber-100/50 dark:hover:bg-amber-400/10
-              flex items-center justify-center gap-1
-              transition-colors
-            "
-          >
-            Configurer
-            <ChevronDown className="w-3 h-3" />
-          </button>
+      <div>
+        <label htmlFor={ids.prompt} className="block mb-1.5 text-[14px] font-medium text-gray-900 dark:text-white">
+          {S.prompt}
+        </label>
+        <textarea
+          id={ids.prompt}
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          onBlur={() => void persist({ customPrompt: prompt.trim() })}
+          rows={2}
+          maxLength={promptMax}
+          placeholder={S.promptPlaceholder}
+          className={`${field} resize-y`}
+          style={{ fontSize: "max(16px, 1rem)" }}
+        />
+        {isFounder && (
+          <p className="mt-1 text-right text-[12px] tabular-nums text-gray-600 dark:text-gray-400">
+            {prompt.length} / {promptMax}
+          </p>
         )}
+      </div>
+
+      {enabled && (
+        <dl className="grid grid-cols-2 gap-3">
+          <div className="rounded-xl border border-gray-200 dark:border-dark-border px-3 py-2.5">
+            <dt className="text-[12px] text-gray-600 dark:text-gray-400">{S.nextPlan}</dt>
+            <dd className="mt-0.5 text-[14px] font-medium text-gray-900 dark:text-white first-letter:uppercase">{nextRun}</dd>
+          </div>
+          <div className="rounded-xl border border-gray-200 dark:border-dark-border px-3 py-2.5">
+            <dt className="text-[12px] text-gray-600 dark:text-gray-400">{S.lastPlan}</dt>
+            <dd className="mt-0.5 text-[14px] font-medium text-gray-900 dark:text-white">{lastRun}</dd>
+          </div>
+        </dl>
+      )}
+
+      <div className="flex flex-col sm:flex-row gap-2">
+        {enabled ? (
+          <Button variant="ghost" onClick={turnOff}>
+            {S.deactivate}
+          </Button>
+        ) : (
+          <Button variant="primary" onClick={turnOn}>
+            {S.activate}
+          </Button>
+        )}
+        <Button
+          variant="secondary"
+          onClick={generateNow}
+          disabled={busy}
+          icon={<Sparkles aria-hidden className="w-4 h-4 text-amber-700 dark:text-amber-400" />}
+        >
+          {busy ? S.generating : S.generateNow}
+        </Button>
       </div>
     </section>
   );
 }
-
-// ─── Atoms ──────────────────────────────────────────────────────────────────
-
-/** Purely decorative toggle visual. The click is owned by the parent
- *  button (the whole card is tappable) — wrapping a button inside another
- *  button is invalid HTML and breaks screen reader navigation. */
-function Toggle({
-  checked,
-  disabled,
-}: {
-  checked: boolean;
-  disabled?: boolean;
-}) {
-  return (
-    <span
-      aria-hidden
-      className={`
-        relative inline-flex flex-shrink-0 h-5 w-9 rounded-full border transition-colors
-        ${disabled ? "opacity-50" : ""}
-        ${checked
-          ? "bg-amber-500 border-amber-600"
-          : "bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600"}
-      `}
-    >
-      <span
-        className={`
-          inline-block h-[14px] w-[14px] transform rounded-full bg-white shadow-sm transition-transform
-          mt-[2px]
-          ${checked ? "translate-x-[1.125rem]" : "translate-x-[2px]"}
-        `}
-      />
-    </span>
-  );
-}
-
-function clampCount(n: number): number {
-  if (!Number.isFinite(n)) return DEFAULT_COUNT;
-  return Math.max(MIN_COUNT, Math.min(MAX_COUNT, Math.round(n)));
-}
-

@@ -22,12 +22,16 @@
  * blocked by the allowlist (set the env var only in prod / staging).
  */
 
-const ENV_KEY = "NEXT_PUBLIC_STRATEGIST_ALLOWED_EMAILS";
-
 /** Parse the env var once at module load. Lowercased + trimmed for
- *  case-insensitive matching. */
+ *  case-insensitive matching.
+ *
+ *  MUST be a literal `process.env.NEXT_PUBLIC_…` member access: Next.js only
+ *  inlines NEXT_PUBLIC_ vars into the client bundle for static lookups. The
+ *  previous `process.env[ENV_KEY]` came out empty in the browser under webpack,
+ *  so every user got the "reserved for companies" toast (API routes, which run
+ *  on the server, were unaffected). */
 function loadAllowedEmails(): Set<string> {
-  const raw = process.env[ENV_KEY] ?? "";
+  const raw = process.env.NEXT_PUBLIC_STRATEGIST_ALLOWED_EMAILS ?? "";
   if (!raw) return new Set();
   return new Set(
     raw

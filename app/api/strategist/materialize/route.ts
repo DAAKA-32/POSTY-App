@@ -2,9 +2,10 @@
  * POST /api/strategist/materialize
  *
  * Strategist Phase 2 — turns every brief in an approved batch into a finished
- * LinkedIn post. One LLM call per brief (gpt-4o-mini by default — see
- * MATERIALIZE_MODEL), parallelized with a concurrency cap so we don't fan-out
- * 15 simultaneous OpenAI calls and trip a rate limit.
+ * LinkedIn post. One call per brief through the shared engine in BRIEF MODE
+ * (format-aware structure / length / closing — see lib/ai/materialize-post-prompt),
+ * parallelized with a concurrency cap so we don't fan-out 15 simultaneous
+ * OpenAI calls and trip a rate limit.
  *
  * Two modes:
  *   - All briefs (default): pass { batchId } only
@@ -26,23 +27,27 @@ import { verifyAuth } from "@/lib/auth";
 import { isAdminInitialized, adminDb } from "@/lib/db/firebase-admin";
 import { checkHourlyQuotaAdmin, incrementUserQuotaAdmin } from "@/lib/db/firestore-admin";
 import {
-  buildMaterializeBlocks,
-  buildMaterializeUserMessage,
-  mapFormatToPostType,
+  buildBriefGeneration,
+  type BriefSeriesContext,
 } from "@/lib/ai/materialize-post-prompt";
 import {
   sanitizeProfileField,
   type ProfileFields,
-  type PostType,
 } from "@/lib/services/prompt-builder";
 // THE single post-generation engine — the exact same one the chat calls.
 // Prompt, model, temperature, hashtag pass and quality gate all live there.
 import { generateLinkedInPost } from "@/lib/services/post-generator";
+import { polishStrategistPost } from "@/lib/strategist/post-polish";
 import { getMaxTokensForPlan } from "@/lib/config/plans";
 import { isStrategistAllowedForEmail } from "@/lib/strategist/access";
 import { hasLinkedInConnected } from "@/lib/strategist/access-server";
 import { isOpenAIConfigured } from "@/lib/openai";
-import type { PostBrief, MaterializedPost } from "@/types";
+import type {
+  PostBrief,
+  MaterializedPost,
+  StrategistAdvancedParams,
+  StrategyBatchStrategy,
+} from "@/types";
 
 export const runtime = "nodejs";
 export const maxDuration = 300; // 5 min — 15 briefs * ~5s headroom
@@ -61,12 +66,16 @@ const RequestSchema = z.object({
    *  button). Without this flag, already-materialized rows are skipped. */
   force: z.boolean().optional().default(false),
   language: z.enum(["fr", "en"]).default("fr"),
+  /** One-off rewrite instruction for a single-brief regen ("Plus court"…).
+   *  Applied to the previous version, never stored on the brief. */
+  instruction: z.string().trim().min(2).max(300).optional(),
 });
 
 async function loadUserContextAndPosts(uid: string): Promise<{
   profile: ProfileFields;
   snippets: string[];
   businessContext?: string;
+  savedParams?: StrategistAdvancedParams;
 }> {
   if (!isAdminInitialized() || !adminDb) return { profile: {}, snippets: [] };
   try {
@@ -120,10 +129,13 @@ async function loadUserContextAndPosts(uid: string): Promise<{
         const picked =
           post.selectedVersion === "B" ? post.responseB : post.responseA || post.responseB;
         const text = (picked ?? "").toString().trim();
-        return text ? text.slice(0, 220).replace(/\s+/g, " ") : "";
+        return text ? text.slice(0, 160).replace(/\s+/g, " ") : "";
       })
       .filter(Boolean);
-    return { profile, snippets, businessContext };
+    const savedParams = (data.strategistParams ?? undefined) as
+      | StrategistAdvancedParams
+      | undefined;
+    return { profile, snippets, businessContext, savedParams };
   } catch (err) {
     console.error("[materialize] loadUserContextAndPosts error:", err);
     return { profile: {}, snippets: [] };
@@ -179,31 +191,54 @@ async function materializeOne(
   openai: OpenAI,
   brief: PostBrief,
   language: "fr" | "en",
-  strategistBlocks: string,
   profile: ProfileFields,
-  postType: PostType,
-  userId: string
+  userId: string,
+  ctx: {
+    direction?: StrategistAdvancedParams;
+    businessContext?: string;
+    snippets: string[];
+    series: BriefSeriesContext;
+    /** What the author actually wrote (request + business) — figures in the
+     *  brief that aren't in here are flagged to the writer as unverified. */
+    knownFacts: string;
+    instruction?: string;
+  }
 ): Promise<{ ok: true; post: MaterializedPost } | { ok: false; error: string }> {
   try {
+    const gen = buildBriefGeneration({
+      language,
+      brief,
+      direction: ctx.direction,
+      businessContext: ctx.businessContext,
+      recentPostSnippets: ctx.snippets,
+      series: ctx.series,
+      knownFacts: `${ctx.knownFacts}\n${brief.userNote ?? ""}`,
+      rewrite: ctx.instruction
+        ? { instruction: ctx.instruction, previous: brief.materialized?.content }
+        : undefined,
+    });
     const { content, model } = await generateLinkedInPost({
       client: openai,
-      type: postType,
+      type: gen.postType,
       language,
       profile,
       plan: "max", // the Strategist is a Max-tier feature
       userId,
       route: "strategist.materialize",
-      userMessage: buildMaterializeUserMessage({ language, brief }),
-      systemBlocks: [strategistBlocks],
+      userMessage: gen.userMessage,
+      systemBlocks: gen.systemBlocks,
+      promptOptions: gen.promptOptions,
+      lintOptions: gen.lintOptions,
       maxTokens: MATERIALIZE_MAX_TOKENS,
       model: MATERIALIZE_MODEL, // undefined → PRIMARY_MODEL, same as the chat
-      metadata: { briefId: brief.id },
+      metadata: { briefId: brief.id, format: gen.format, length: gen.length },
     });
     if (!content) return { ok: false, error: "empty_response" };
     return {
       ok: true,
       post: {
-        content,
+        // Deterministic last pass: no markdown, hashtags on their own line…
+        content: polishStrategistPost(content),
         generatedAt: Date.now(),
         model,
       },
@@ -239,7 +274,7 @@ export async function POST(request: NextRequest) {
       { status: 400 }
     );
   }
-  const { batchId, briefIds, force, language } = parsed.data;
+  const { batchId, briefIds, force, language, instruction } = parsed.data;
 
   // ── Access gate — enterprise email allowlist ─────────────────────────
   if (!isStrategistAllowedForEmail(auth.email)) {
@@ -330,28 +365,49 @@ export async function POST(request: NextRequest) {
   }
 
   // ── Load user context once, share across all calls ───────────────────
-  const { profile, snippets, businessContext } = await loadUserContextAndPosts(userId);
+  const { profile, snippets, businessContext, savedParams } = await loadUserContextAndPosts(userId);
 
-  // The Strategist's CONTEXT blocks only (business grounding + style anchors +
-  // brief mode). The canonical prompt is built inside the shared engine, per
-  // call — so every brief now gets its own variation seed and a 15-post batch
-  // no longer repeats the same structure/hook 15 times.
-  const strategistBlocks = buildMaterializeBlocks({
-    language,
-    recentPostSnippets: snippets,
-    businessContext,
-  });
+  // The steering the plan was built with (persisted on the batch since 2026-10);
+  // older batches fall back to the saved defaults. Activity text is free user
+  // input → sanitized like every other profile field.
+  const rawDirection = (batchData.direction ?? savedParams) as StrategistAdvancedParams | undefined;
+  const direction: StrategistAdvancedParams | undefined = rawDirection
+    ? {
+        ...rawDirection,
+        context: rawDirection.context ? sanitizeProfileField(rawDirection.context, 800) : undefined,
+        audience: rawDirection.audience ? sanitizeProfileField(rawDirection.audience) : undefined,
+      }
+    : undefined;
+  const series: BriefSeriesContext = {
+    theme: typeof batchData.theme === "string" ? batchData.theme : undefined,
+    strategy: (batchData.strategy ?? undefined) as StrategyBatchStrategy | undefined,
+    siblings: allPosts.map((p) => ({ id: p.id, hook: p.hook, format: p.format })),
+  };
 
+  // maxRetries 4: the SDK honours `retry-after` on 429s. With a tier-1 key
+  // (30k TPM on gpt-4o) a 5+ brief batch at concurrency 4 reliably hits the
+  // per-minute token cap — 1 retry was not enough (measured in the eval).
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY!,
     timeout: 60_000,
-    maxRetries: 1,
+    maxRetries: 4,
   });
 
   // ── Materialize in parallel, bounded ─────────────────────────────────
   const results = await pMap(targets, CONCURRENCY, async (brief) => {
-    const postType = mapFormatToPostType(brief.format);
-    const r = await materializeOne(openai, brief, language, strategistBlocks, profile, postType, userId);
+    const r = await materializeOne(openai, brief, language, profile, userId, {
+      direction,
+      businessContext,
+      snippets,
+      series,
+      // A rewrite instruction only ever targets an explicit single-brief regen.
+      instruction: briefIds?.length === 1 ? instruction : undefined,
+      knownFacts: [
+        typeof batchData.sourcePrompt === "string" ? batchData.sourcePrompt : "",
+        rawDirection?.context ?? "",
+        businessContext ?? "",
+      ].join("\n"),
+    });
     return { briefId: brief.id, result: r };
   });
 

@@ -33,11 +33,12 @@ import {
   buildOptimizedPrompt,
   getGenerationTemperature,
   estimateTokens,
+  type OptimizedPromptOptions,
   type ProfileFields,
   type PlanTier,
   type PostType,
 } from "@/lib/services/prompt-builder";
-import { lintPost, buildRepairMessages } from "@/lib/services/post-quality";
+import { lintPost, buildRepairMessages, type LintOptions } from "@/lib/services/post-quality";
 import { normalizeHashtagsInText } from "@/lib/hashtags/normalize";
 import { PRIMARY_MODEL, MINI_MODEL } from "@/lib/openai";
 import {
@@ -74,6 +75,11 @@ export interface GenerateLinkedInPostOptions {
   onPhase?: (phase: string, message: string) => void;
   /** Follow-up edits are surgical — re-polishing them would undo the edit. */
   skipQualityGate?: boolean;
+  /** Strategist brief mode (format-aware craft rules, no random seed). The
+   *  chat leaves this unset and gets the canonical prompt unchanged. */
+  promptOptions?: OptimizedPromptOptions;
+  /** Format-aware quality-gate thresholds (Strategist). Unset for the chat. */
+  lintOptions?: LintOptions;
   metadata?: Record<string, string | number | boolean | null>;
 }
 
@@ -88,11 +94,11 @@ export async function generateLinkedInPost(
   const {
     client, type, language, profile, plan, userId, route, userMessage,
     systemBlocks = [], imagePart, history, maxTokens,
-    onChunk, onPhase, skipQualityGate = false, metadata = {},
+    onChunk, onPhase, skipQualityGate = false, promptOptions, lintOptions, metadata = {},
   } = opts;
 
   // ── 1. The canonical system prompt (SINGLE call site of buildOptimizedPrompt)
-  let systemPrompt = buildOptimizedPrompt(type, language, profile ?? undefined, plan);
+  let systemPrompt = buildOptimizedPrompt(type, language, profile ?? undefined, plan, promptOptions);
   systemPrompt +=
     language === "fr"
       ? "\n\nLANGUE: Réponds STRICTEMENT en français. Tout le contenu généré doit être en français."
@@ -183,7 +189,7 @@ export async function generateLinkedInPost(
   // Only a HARD issue triggers a repair; a truncated repair is discarded.
   if (!skipQualityGate) {
     try {
-      const report = lintPost(content, language);
+      const report = lintPost(content, language, lintOptions);
       if (report.needsRepair) {
         onPhase?.("polishing", language === "fr" ? "Relecture finale…" : "Final polish…");
         const { system, user } = buildRepairMessages(content, report.issues, language);

@@ -2,35 +2,60 @@
  * Strategist Batch Plan — system prompt + Zod schema.
  *
  * Phase 1 deliverable: from a single user ask ("prépare-moi 5 posts cette
- * semaine"), produce a structured editorial plan of N briefs (hook + angle +
- * format + suggested slot). NOT full post copy — Phase 2 materializes each
- * brief via the existing /api/generate pipeline.
+ * semaine"), produce a structured editorial plan of N briefs. NOT full post
+ * copy — Phase 2 materializes each brief through the shared post engine.
  *
- * Why a dedicated prompt (separate from the conversational Strategist):
- *   - JSON-mode call, gpt-4o, temperature 0.7 to encourage angle variety
- *   - Refuses to write post body (same boundary as the chat persona) — only
- *     briefs, so the output stays cheap and re-generable per row
- *   - Embeds an explicit anti-repetition rule on hooks/angles/formats —
- *     batches that read like the same post 5 times are the #1 risk
+ * What makes a plan feel "made for me" rather than "10 generic ideas":
+ *   - the model states the series STRATEGY first (JSON field order = reasoning
+ *     order), then derives the briefs from it
+ *   - a substitution test kills interchangeable angles
+ *   - the format/length MIX is decided in code (lib/ai/post-formats) so a batch
+ *     can't silently collapse into five variations of the same post
+ *   - a strict truth rule: no invented figures, clients or results
  */
 
 import { z } from "zod";
 import type { StrategistAdvancedParams } from "@/types";
 import type { ExtractedUrlContent } from "@/lib/utils/url-extract";
+import {
+  FORMATS,
+  FORMAT_SLUGS,
+  LENGTH_BANDS,
+  formatCatalogueForPlanner,
+  type PlannedSlot,
+} from "@/lib/ai/post-formats";
 
 /** Zod mirror of types/index.ts `PostBrief`. Used to validate the LLM output
- *  before persisting / rendering — a malformed brief breaks the table. */
+ *  before persisting / rendering. The new descriptive fields are optional and
+ *  lenient (`catch`) so one odd value never fails a whole batch. */
 export const PostBriefSchema = z.object({
   id: z.string().min(1).max(40),
-  hook: z.string().min(8).max(280),
+  hook: z.string().min(8).max(300),
   angle: z.string().min(8).max(400),
   format: z.string().min(2).max(40),
   suggestedDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "YYYY-MM-DD"),
   suggestedTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "HH:MM"),
-  rationale: z.string().min(8).max(280),
+  rationale: z.string().min(8).max(300),
+  length: z.enum(["short", "medium", "long"]).optional().catch(undefined),
+  goal: z.string().max(40).optional().catch(undefined),
+  audience: z.string().max(160).optional().catch(undefined),
+  tone: z.string().max(120).optional().catch(undefined),
 });
 
+const StrategySchema = z
+  .object({
+    summary: z.string().max(400).optional().catch(undefined),
+    audience: z.string().max(200).optional().catch(undefined),
+    objective: z.string().max(200).optional().catch(undefined),
+    tone: z.string().max(160).optional().catch(undefined),
+    edge: z.string().max(400).optional().catch(undefined),
+    pains: z.array(z.string().max(200)).max(5).optional().catch(undefined),
+  })
+  .optional()
+  .catch(undefined);
+
 export const BatchPlanResponseSchema = z.object({
+  strategy: StrategySchema,
   theme: z.string().min(4).max(160),
   posts: z.array(PostBriefSchema).min(1).max(15),
 });
@@ -39,15 +64,16 @@ export type BatchPlanResponse = z.infer<typeof BatchPlanResponseSchema>;
 
 /**
  * Build the LLM system prompt. We inline the user profile + the requested
- * batch parameters (count, period, start date, timezone) so the model has
- * everything it needs in one pass — no multi-turn back-and-forth (the user
- * already committed to the batch when they pressed enter).
+ * batch parameters (count, window, timezone) + the planned format mix so the
+ * model has everything it needs in one pass.
  */
 export function buildBatchPlanPrompt(opts: {
   language: "fr" | "en";
   count: number;
   startDate: string;          // YYYY-MM-DD
   timezone: string;           // e.g. "Europe/Paris"
+  /** Publication window length in days (7 = one editorial week, 28 = a month). */
+  windowDays?: number;
   userContext: {
     name?: string;
     profileType?: string;
@@ -61,31 +87,35 @@ export function buildBatchPlanPrompt(opts: {
     tagline?: string;
     website?: string;
   };
-  /** Last 3-5 post excerpts (first ~200 chars each) to anchor the style. */
+  /** Last 3-5 post excerpts — used to AVOID repeating recent topics/openings. */
   recentPostSnippets?: string[];
   /** Advanced steering from the drawer panel / saved profile defaults. Only
    *  the fields the user actually set are turned into instruction lines. */
   advanced?: StrategistAdvancedParams;
+  /** Format + length mix decided in code (pickFormatMix). Empty → free choice. */
+  formatMix?: PlannedSlot[];
 }): string {
-  const { language, count, startDate, timezone, userContext, recentPostSnippets, advanced } = opts;
+  const { language, count, startDate, timezone, userContext, recentPostSnippets, advanced, formatMix } = opts;
+  const fr = language === "fr";
+  const windowDays = Math.max(1, opts.windowDays ?? 7);
 
   const profileBlock = [
-    userContext.name && `- Name: ${userContext.name}`,
-    userContext.profileType && `- Profile type: ${userContext.profileType}`,
-    userContext.sector && `- Sector: ${userContext.sector}`,
-    userContext.role && `- Role: ${userContext.role}`,
+    userContext.name && `- ${fr ? "Nom" : "Name"}: ${userContext.name}`,
+    userContext.profileType && `- ${fr ? "Type de profil" : "Profile type"}: ${userContext.profileType}`,
+    userContext.sector && `- ${fr ? "Secteur" : "Sector"}: ${userContext.sector}`,
+    userContext.role && `- ${fr ? "Rôle" : "Role"}: ${userContext.role}`,
     userContext.tagline && `- Tagline: ${userContext.tagline}`,
-    userContext.website && `- Website: ${userContext.website}`,
+    userContext.website && `- ${fr ? "Site" : "Website"}: ${userContext.website}`,
     userContext.bio && `- Bio: ${userContext.bio.slice(0, 400)}`,
-    userContext.objective && `- Business objective: ${userContext.objective}`,
-    userContext.targetAudience && `- Target audience: ${userContext.targetAudience}`,
-    userContext.communicationTone && `- Tone: ${userContext.communicationTone}`,
-    userContext.publishingFrequency && `- Preferred frequency: ${userContext.publishingFrequency}`,
-  ].filter(Boolean).join("\n") || "- (no profile fields captured yet)";
+    userContext.objective && `- ${fr ? "Objectif business" : "Business objective"}: ${userContext.objective}`,
+    userContext.targetAudience && `- ${fr ? "Audience cible" : "Target audience"}: ${userContext.targetAudience}`,
+    userContext.communicationTone && `- ${fr ? "Ton" : "Tone"}: ${userContext.communicationTone}`,
+    userContext.publishingFrequency && `- ${fr ? "Fréquence souhaitée" : "Preferred frequency"}: ${userContext.publishingFrequency}`,
+  ].filter(Boolean).join("\n") || (fr ? "- (aucun champ de profil renseigné)" : "- (no profile fields captured yet)");
 
   const recentBlock = recentPostSnippets?.length
     ? recentPostSnippets.map((s, i) => `${i + 1}. ${s}`).join("\n")
-    : "(no prior posts on file)";
+    : fr ? "(aucun post récent)" : "(no recent posts)";
 
   // The author's own description of what they do / their offer — the source of
   // truth when they ask for posts "about my product/brand". Without it the
@@ -94,41 +124,67 @@ export function buildBatchPlanPrompt(opts: {
   const activityBlock = ctxText
     ? `
 ═════════════════════════════════════
-${language === "fr" ? "ACTIVITÉ DE L'AUTEUR (source de vérité — utilise-la)" : "AUTHOR'S BUSINESS (source of truth — use it)"}
+${fr ? "ACTIVITÉ DE L'AUTEUR (source de vérité — utilise-la)" : "AUTHOR'S BUSINESS (source of truth — use it)"}
 ═════════════════════════════════════
 ${ctxText.slice(0, 800)}
-${language === "fr"
-        ? "→ Quand l'auteur demande des posts sur son produit / sa marque / son activité, ancre-toi ICI. N'invente RIEN au-delà de ces éléments."
-        : "→ When the author asks for posts about their product / brand / business, ground yourself HERE. Invent NOTHING beyond these elements."}
+${fr
+        ? "→ Ancre les angles ICI : son offre, ses clients, son quotidien. N'invente RIEN au-delà de ces éléments."
+        : "→ Anchor the angles HERE: their offer, their clients, their day-to-day. Invent NOTHING beyond these elements."}
 `
     : "";
 
-  const base = language === "fr" ? FR_PROMPT : EN_PROMPT;
+  const base = fr ? buildFrPrompt(count) : buildEnPrompt(count);
   const directionBlock = buildAdvancedDirectionBlock(advanced, language);
-  // The count is "posts for the week" — all briefs MUST land inside a single
-  // 7-day editorial week, never spill into a second week.
-  const windowEnd = addDaysIso(startDate, 6);
+  const windowEnd = addDaysIso(startDate, windowDays - 1);
+  const mixBlock = buildMixBlock(formatMix, language);
 
   return `${base}
 
 ═════════════════════════════════════
-USER PROFILE
+FORMATS
+═════════════════════════════════════
+${formatCatalogueForPlanner(language)}
+${mixBlock}
+═════════════════════════════════════
+${fr ? "PROFIL DE L'AUTEUR" : "AUTHOR PROFILE"}
 ═════════════════════════════════════
 ${profileBlock}
 ${activityBlock}
 ═════════════════════════════════════
-RECENT POSTS (for style anchoring — do NOT copy)
+${fr ? "POSTS RÉCENTS (ne répète ni ces sujets ni ces ouvertures)" : "RECENT POSTS (do not repeat these topics or openings)"}
 ═════════════════════════════════════
 ${recentBlock}
 
 ═════════════════════════════════════
-BATCH PARAMETERS
+${fr ? "PARAMÈTRES DU PLAN" : "PLAN PARAMETERS"}
 ═════════════════════════════════════
-- Number of briefs to produce: ${count}
-- First eligible publication date: ${startDate}
-- Publication window — EVERY post MUST fall within these 7 days (one editorial week), never a second week: ${startDate} → ${windowEnd}
-- User timezone (interpret suggestedTime in this TZ): ${timezone}
+- ${fr ? "Nombre de briefs" : "Number of briefs"}: ${count}
+- ${fr ? "Première date possible" : "First eligible date"}: ${startDate}
+- ${fr ? "Fenêtre de publication — CHAQUE post doit tomber dans ces dates" : "Publication window — EVERY post must fall within these dates"}: ${startDate} → ${windowEnd}
+- ${fr ? "Fuseau horaire (suggestedTime s'entend dans ce fuseau)" : "Timezone (suggestedTime is in this timezone)"}: ${timezone}
 ${directionBlock}`;
+}
+
+function buildMixBlock(mix: PlannedSlot[] | undefined, language: "fr" | "en"): string {
+  if (!mix || mix.length === 0) {
+    return language === "fr"
+      ? "\nChoisis pour chaque post le format et la longueur qui servent le mieux son sujet.\n"
+      : "\nFor each post, choose the format and length that best serve its topic.\n";
+  }
+  const lines = mix
+    .map((s, i) => `${i + 1}. ${s.format} (${FORMATS[s.format].label[language]}) — ${LENGTH_BANDS[s.length].label[language].toLowerCase()}`)
+    .join("\n");
+  return language === "fr"
+    ? `
+MIX PRÉVU POUR CETTE SÉRIE (un emplacement par post ; tu choisis quel angle va dans quel format et l'ordre de publication) :
+${lines}
+→ Respecte ce mix SAUF si l'auteur demande explicitement un format, une longueur ou un type de contenu : sa demande prime.
+`
+    : `
+PLANNED MIX FOR THIS SERIES (one slot per post; you decide which angle goes in which format and the publishing order):
+${lines}
+→ Follow this mix UNLESS the author explicitly asks for a format, a length or a content type: their request wins.
+`;
 }
 
 /** Add `n` days to a YYYY-MM-DD string, returning YYYY-MM-DD. UTC math so it
@@ -179,9 +235,20 @@ HOW TO USE IT:
 - Invent NOTHING beyond what the page contains.`;
 }
 
+/** Wraps the real-time facts block for the PLANNER: the facts feed a few angles,
+ *  they must not turn the whole series into a news digest. */
+export function wrapRealtimeBlockForPlanner(block: string, language: "fr" | "en"): string {
+  if (!block.trim()) return "";
+  return `${block}
+${language === "fr"
+    ? "→ POUR CE PLAN : ces faits peuvent nourrir au plus 1 ou 2 briefs, seulement s'ils servent vraiment l'auteur et son audience. Si un brief s'appuie sur un fait, écris le fait (et sa source) dans l'angle pour que la rédaction puisse l'utiliser. Le reste de la série reste ancré dans le métier de l'auteur."
+    : "→ FOR THIS PLAN: these facts may feed at most 1 or 2 briefs, only if they genuinely serve the author and their audience. If a brief relies on a fact, write the fact (and its source) in the angle so the writer can use it. The rest of the series stays anchored in the author's craft."}
+`;
+}
+
 /** Tone preset slug → human phrasing injected into the prompt. Falls back to
  *  the raw slug for any free-text value the panel might pass in future. */
-const TONE_PHRASES: Record<string, { fr: string; en: string }> = {
+export const TONE_PHRASES: Record<string, { fr: string; en: string }> = {
   direct: { fr: "direct et sans détour", en: "direct and to the point" },
   expert: { fr: "expert et précis", en: "expert and precise" },
   inspiring: { fr: "inspirant et mobilisateur", en: "inspiring and uplifting" },
@@ -189,11 +256,53 @@ const TONE_PHRASES: Record<string, { fr: string; en: string }> = {
   warm: { fr: "chaleureux et accessible", en: "warm and approachable" },
 };
 
+function tonePhrase(tone: string, fr: boolean): string {
+  return TONE_PHRASES[tone] ? (fr ? TONE_PHRASES[tone].fr : TONE_PHRASES[tone].en) : tone;
+}
+
+function formalityLine(f: number, fr: boolean): string {
+  return fr
+    ? f <= 2
+      ? "Registre décontracté, tutoiement, langage parlé."
+      : f >= 4
+        ? "Registre soutenu et corporate, vouvoiement, vocabulaire professionnel."
+        : "Registre équilibré, ni trop familier ni trop formel."
+    : f <= 2
+      ? "Casual register, conversational and informal language."
+      : f >= 4
+        ? "Formal, corporate register with professional vocabulary."
+        : "Balanced register — neither too casual nor too formal.";
+}
+
+function emotionLine(e: number, fr: boolean): string {
+  return fr
+    ? e <= 2
+      ? "Reste factuel et sobre, peu de charge émotionnelle."
+      : e >= 4
+        ? "Forte charge émotionnelle, langage vivant et imagé."
+        : "Émotion mesurée, sans être plat ni excessif."
+    : e <= 2
+      ? "Stay factual and sober, low emotional charge."
+      : e >= 4
+        ? "High emotional charge, vivid and evocative language."
+        : "Measured emotion — neither flat nor over-the-top.";
+}
+
+const ORIENTATION_LINES: Record<string, { fr: string; en: string }> = {
+  personal: {
+    fr: "Angle personnel à la première personne (je, mon expérience vécue).",
+    en: "Personal first-person angle (I, my lived experience).",
+  },
+  professional: {
+    fr: "Angle analytique et professionnel, centré sur le métier et les faits.",
+    en: "Analytical, professional angle centered on craft and facts.",
+  },
+};
+
 /**
- * Translate the advanced params into a compact "STRATEGIC DIRECTION" block.
- * Returns "" when nothing is set so the prompt (and its token cost) is
- * identical to the no-params path. Each set field becomes one instruction
- * line — terse on purpose to keep the call cheap.
+ * Translate the advanced params into a compact "STRATEGIC DIRECTION" block for
+ * the PLANNER. Returns "" when nothing is set so the prompt (and its token cost)
+ * is identical to the no-params path.
  */
 function buildAdvancedDirectionBlock(
   advanced: StrategistAdvancedParams | undefined,
@@ -203,7 +312,6 @@ function buildAdvancedDirectionBlock(
   const fr = language === "fr";
   const lines: string[] = [];
 
-  // Objective
   const objective = advanced.objective;
   if (objective) {
     const map: Record<string, { fr: string; en: string }> = {
@@ -236,62 +344,39 @@ function buildAdvancedDirectionBlock(
     if (m) lines.push(`- ${fr ? m.fr : m.en}`);
   }
 
-  // Tone
   if (advanced.tone) {
-    const phrase = TONE_PHRASES[advanced.tone]
-      ? fr
-        ? TONE_PHRASES[advanced.tone].fr
-        : TONE_PHRASES[advanced.tone].en
-      : advanced.tone;
+    const phrase = tonePhrase(advanced.tone, fr);
     lines.push(`- ${fr ? `Ton à adopter : ${phrase}.` : `Tone to adopt: ${phrase}.`}`);
   }
 
-  // Audience override
   if (advanced.audience?.trim()) {
     const a = advanced.audience.trim();
     lines.push(
-      `- ${fr ? `Audience cible prioritaire pour ce batch : ${a}.` : `Priority target audience for this batch: ${a}.`}`
+      `- ${fr ? `Audience cible prioritaire pour ce plan : ${a}.` : `Priority target audience for this plan: ${a}.`}`
     );
   }
 
-  // Formality (1 casual … 5 corporate)
-  if (advanced.formality) {
-    const f = advanced.formality;
-    const phrase = fr
-      ? f <= 2
-        ? "Registre décontracté, tutoiement, langage parlé."
-        : f >= 4
-          ? "Registre soutenu et corporate, vouvoiement, vocabulaire professionnel."
-          : "Registre équilibré, ni trop familier ni trop formel."
-      : f <= 2
-        ? "Casual register, conversational and informal language."
-        : f >= 4
-          ? "Formal, corporate register with professional vocabulary."
-          : "Balanced register — neither too casual nor too formal.";
-    lines.push(`- ${phrase}`);
-  }
+  if (advanced.formality) lines.push(`- ${formalityLine(advanced.formality, fr)}`);
 
-  // CTA intensity
   if (advanced.ctaIntensity) {
     const map: Record<string, { fr: string; en: string }> = {
       none: {
-        fr: "Pas de CTA explicite — laisse le post ouvert, sans appel à l'action.",
-        en: "No explicit CTA — leave the post open, no call to action.",
+        fr: "Pas de CTA explicite — les posts se terminent sans appel à l'action.",
+        en: "No explicit CTA — posts end without a call to action.",
       },
       soft: {
         fr: "CTA léger : une question ouverte ou une invitation douce en fin de post.",
         en: "Soft CTA: an open question or gentle invitation at the end.",
       },
       assertive: {
-        fr: "Termine par un CTA clair et assertif (action précise attendue).",
-        en: "End with a clear, assertive CTA (a precise expected action).",
+        fr: "CTA clair et assertif en fin de post (action précise attendue).",
+        en: "Clear, assertive CTA at the end (a precise expected action).",
       },
     };
     const m = map[advanced.ctaIntensity];
     if (m) lines.push(`- ${fr ? m.fr : m.en}`);
   }
 
-  // Hook style ("auto" = no constraint, skip)
   if (advanced.hookStyle && advanced.hookStyle !== "auto") {
     const map: Record<string, { fr: string; en: string }> = {
       contrarian: {
@@ -299,63 +384,37 @@ function buildAdvancedDirectionBlock(
         en: "Contrarian hooks that break a widely-held belief.",
       },
       story: {
-        fr: "Ouvre par une amorce narrative (anecdote, scène, moment précis).",
-        en: "Open with a narrative cold-open (anecdote, scene, specific moment).",
+        fr: "Hooks en amorce narrative (anecdote, scène, moment précis).",
+        en: "Narrative cold-open hooks (anecdote, scene, specific moment).",
       },
       data: {
-        fr: "Ouvre par un chiffre ou une donnée qui surprend.",
-        en: "Open with a surprising number or data point.",
+        fr: "Hooks appuyés sur un fait ou une donnée — UNIQUEMENT si elle est fournie par l'auteur ou le contexte.",
+        en: "Hooks built on a fact or data point — ONLY if provided by the author or the context.",
       },
       question: {
-        fr: "Ouvre par une question forte qui interpelle l'audience.",
-        en: "Open with a strong, pointed question.",
+        fr: "Hooks en question forte qui interpelle l'audience.",
+        en: "Hooks as a strong, pointed question.",
       },
       confession: {
-        fr: "Ouvre par un aveu ou une vulnérabilité assumée.",
-        en: "Open with a confession or owned vulnerability.",
+        fr: "Hooks en aveu ou vulnérabilité assumée.",
+        en: "Hooks as a confession or owned vulnerability.",
       },
     };
     const m = map[advanced.hookStyle];
     if (m) lines.push(`- ${fr ? m.fr : m.en}`);
   }
 
-  // Orientation ("balanced" = no constraint, skip)
   if (advanced.orientation && advanced.orientation !== "balanced") {
-    const map: Record<string, { fr: string; en: string }> = {
-      personal: {
-        fr: "Angle personnel à la première personne (je, mon expérience vécue).",
-        en: "Personal first-person angle (I, my lived experience).",
-      },
-      professional: {
-        fr: "Angle analytique et professionnel, centré sur le métier et les faits.",
-        en: "Analytical, professional angle centered on craft and facts.",
-      },
-    };
-    const m = map[advanced.orientation];
+    const m = ORIENTATION_LINES[advanced.orientation];
     if (m) lines.push(`- ${fr ? m.fr : m.en}`);
   }
 
-  // Emotion (1 factual … 5 vibrant)
-  if (advanced.emotion) {
-    const e = advanced.emotion;
-    const phrase = fr
-      ? e <= 2
-        ? "Reste factuel et sobre, peu de charge émotionnelle."
-        : e >= 4
-          ? "Forte charge émotionnelle, langage vivant et imagé."
-          : "Émotion mesurée, sans être plat ni excessif."
-      : e <= 2
-        ? "Stay factual and sober, low emotional charge."
-        : e >= 4
-          ? "High emotional charge, vivid and evocative language."
-          : "Measured emotion — neither flat nor over-the-top.";
-    lines.push(`- ${phrase}`);
-  }
+  if (advanced.emotion) lines.push(`- ${emotionLine(advanced.emotion, fr)}`);
 
   if (lines.length === 0) return "";
 
   const header = fr
-    ? "STRATEGIC DIRECTION (priorité haute — ces consignes priment sur les défauts)"
+    ? "DIRECTION STRATÉGIQUE (priorité haute — ces consignes priment sur les défauts)"
     : "STRATEGIC DIRECTION (high priority — these override the defaults)";
 
   return `
@@ -366,72 +425,132 @@ ${lines.join("\n")}
 `;
 }
 
-const EN_PROMPT = `You are POSTY STRATEGIST — a senior B2B LinkedIn growth advisor producing an editorial batch plan for a single user.
-
-Your job for this call: produce a JSON object describing ${"<N>"} post BRIEFS (NOT full post copy) that the user can review, edit, and later materialize through the regular post pipeline.
-
-═════════════════════════════════════
-HARD RULES (all required)
-═════════════════════════════════════
-1. JSON ONLY. No prose around the object. No code fences. Output must parse with JSON.parse.
-2. Shape exactly:
-   { "theme": string, "posts": Array<{ id, hook, angle, format, suggestedDate, suggestedTime, rationale }> }
-3. NEVER write the full post body. \`hook\` is the opening 1-2 sentences only. \`angle\` describes what the post will argue or show in 1-2 lines — not the post itself.
-4. \`format\` must vary across the batch. Pick from (or invent equivalents): "storytelling", "lesson-learned", "how-to", "opinion", "carrousel", "data-drop", "behind-the-scenes", "thread-of-thought", "case-study", "list", "contrarian-take". No batch should use the same format twice in a row. \`format\` MUST be a short slug — max 40 characters, no sentences.
-5. \`hook\` and \`angle\` must be SUBSTANTIALLY different from one post to the next. No "5 posts about X" cookie-cutter.
-6. \`suggestedDate\` MUST fall inside the publication window (the 7-day editorial week given in BATCH PARAMETERS). Distribute ALL the posts ACROSS that single week and NEVER spill into a second week. At most 1 post per day; only if the post count exceeds 7 may a day hold 2. Prefer business days for B2B, but always stay inside the window.
-7. \`suggestedTime\` should target LinkedIn peak windows for B2B audiences (typically 07:30-09:30 and 11:30-13:30 local time, with 17:00-18:30 as a secondary slot). Vary within these windows — do NOT propose 09:00 for every post.
-8. \`rationale\` is one sentence explaining why this angle on this day at this time fits the user's profile. Concrete, not generic.
-9. \`id\` is a short slug derived from the angle (e.g. "p1-friction-paradox") — must be unique within the batch.
-
-═════════════════════════════════════
-STYLE
-═════════════════════════════════════
-- Hooks are scroll-stoppers: a counter-intuitive claim, a number that surprises, a confession, a hard question. Avoid "Did you know" / "In today's world" / "X is more important than ever".
-- Angles must be SHARP. "Productivity tips" is too vague. "The 3-meeting rule I stole from Stripe" is sharp.
-- Respect the user's tone field from the profile block.
-- Ground every brief in the author's REAL profile + business above. When they ask for posts about their own product/brand/company, the AUTHOR'S BUSINESS block is the source of truth — write AS THE AUTHOR (first person, their voice), human and specific, never a generic outsider pitch and never invented facts. Use the product / brand / domain name EXACTLY as the author wrote it (e.g. keep "postyapp.ai" verbatim) — never alter, abbreviate or misspell it.
-- All free-text fields (hook, angle, format, rationale, theme) MUST be written in the user's language: ${"<LANG>"}.
-
-═════════════════════════════════════
-WHAT YOU REFUSE
-═════════════════════════════════════
-- Writing the actual post copy.
-- Generic motivational content.
-- Inventing user data (don't reference projects, clients, or numbers the user didn't provide).
-- Suggesting more or fewer briefs than requested.`;
-
-const FR_PROMPT = `Tu es POSTY STRATEGIST — un conseiller senior en croissance LinkedIn B2B qui produit un PLAN éditorial pour un seul utilisateur.
-
-Ton job pour cet appel : produire un objet JSON décrivant N BRIEFS de posts (PAS le texte complet) que l'utilisateur pourra relire, éditer, puis matérialiser via le pipeline post normal.
+/**
+ * The same steering, phrased for the WRITER (Phase 2). The hook and the angle
+ * are already decided by the brief and the CTA is folded into the format's
+ * closing rule, so only voice-level levers remain here.
+ */
+export function buildWriterDirectionBlock(
+  advanced: StrategistAdvancedParams | undefined,
+  language: "fr" | "en",
+): string {
+  if (!advanced) return "";
+  const fr = language === "fr";
+  const lines: string[] = [];
+  if (advanced.tone) {
+    lines.push(`- ${fr ? `Ton : ${tonePhrase(advanced.tone, fr)}.` : `Tone: ${tonePhrase(advanced.tone, fr)}.`}`);
+  }
+  if (advanced.formality) lines.push(`- ${formalityLine(advanced.formality, fr)}`);
+  if (advanced.emotion) lines.push(`- ${emotionLine(advanced.emotion, fr)}`);
+  if (advanced.orientation && advanced.orientation !== "balanced") {
+    const m = ORIENTATION_LINES[advanced.orientation];
+    if (m) lines.push(`- ${fr ? m.fr : m.en}`);
+  }
+  if (advanced.audience?.trim()) {
+    lines.push(`- ${fr ? `Lecteur visé : ${advanced.audience.trim()}.` : `Intended reader: ${advanced.audience.trim()}.`}`);
+  }
+  if (lines.length === 0) return "";
+  return `
 
 ═════════════════════════════════════
-RÈGLES STRICTES (toutes requises)
+${fr ? "DIRECTION DE L'AUTEUR (prime sur le style déclaré au profil)" : "AUTHOR'S DIRECTION (overrides the style declared in the profile)"}
 ═════════════════════════════════════
-1. JSON UNIQUEMENT. Pas de prose autour. Pas de fences markdown. La sortie doit passer JSON.parse.
-2. Forme exacte :
-   { "theme": string, "posts": Array<{ id, hook, angle, format, suggestedDate, suggestedTime, rationale }> }
-3. JAMAIS écrire le corps complet du post. \`hook\` = les 1-2 premières phrases d'accroche seulement. \`angle\` = ce que le post va défendre ou montrer en 1-2 lignes — pas le post lui-même.
-4. \`format\` doit VARIER dans le batch. Choisis (ou invente des équivalents) : "storytelling", "lesson-learned", "how-to", "opinion", "carrousel", "data-drop", "behind-the-scenes", "thread-of-thought", "case-study", "list", "contrarian-take". Jamais le même format deux posts d'affilée. \`format\` DOIT être un slug court — 40 caractères max, pas de phrase.
-5. \`hook\` et \`angle\` doivent être TRÈS différents d'un post à l'autre. Pas de "5 posts sur X" en mode template.
-6. \`suggestedDate\` DOIT être dans la fenêtre de publication (la semaine éditoriale de 7 jours donnée dans BATCH PARAMETERS). Répartis TOUS les posts SUR cette seule semaine et NE déborde JAMAIS sur une 2e semaine. Au maximum 1 post par jour ; seulement si le nombre de posts dépasse 7, un jour peut en contenir 2. Privilégie les jours ouvrés pour le B2B, mais reste toujours dans la fenêtre.
-7. \`suggestedTime\` cible les fenêtres de pointe LinkedIn pour audience B2B (typiquement 07:30-09:30 et 11:30-13:30 heure locale, avec 17:00-18:30 en créneau secondaire). Varie dans ces fenêtres — ne propose PAS 09:00 pour chaque post.
-8. \`rationale\` = une phrase qui explique pourquoi cet angle, ce jour, cette heure correspondent au profil utilisateur. Concret, pas générique.
-9. \`id\` = slug court dérivé de l'angle (ex : "p1-paradoxe-friction") — unique dans le batch.
+${lines.join("\n")}`;
+}
+
+const GOAL_SLUGS = `"authority" | "engagement" | "lead-gen" | "conversion" | "branding"`;
+const FORMAT_LIST = FORMAT_SLUGS.map((s) => `"${s}"`).join(" | ");
+
+function buildFrPrompt(count: number): string {
+  return `Tu es POSTY STRATEGIST — un stratège éditorial LinkedIn senior. Tu construis un plan de posts pour UN auteur précis, à partir de sa demande, de son profil et de son activité.
+
+Ton livrable : un objet JSON décrivant ${count} brief${count > 1 ? "s" : ""} de post${count > 1 ? "s" : ""} (PAS le texte des posts). L'auteur va relire le plan, l'ajuster, puis chaque brief sera rédigé.
 
 ═════════════════════════════════════
-STYLE
+MÉTHODE (dans cet ordre)
 ═════════════════════════════════════
-- Les hooks doivent arrêter le scroll : affirmation contre-intuitive, chiffre qui surprend, aveu, question dure. Évite "Saviez-vous" / "Aujourd'hui plus que jamais" / "X est plus important que jamais".
-- Les angles doivent être TRANCHANTS. "Conseils productivité" est trop vague. "La règle des 3 réunions que j'ai volée chez Stripe" est tranchant.
-- Respecte le ton de l'utilisateur (champ du profil).
-- Ancre chaque brief dans le profil + l'activité RÉELS de l'auteur ci-dessus. Quand il demande des posts sur son propre produit/sa marque/son entreprise, le bloc ACTIVITÉ DE L'AUTEUR est la source de vérité — écris COMME L'AUTEUR (première personne, sa voix), humain et spécifique, jamais un pitch générique d'observateur extérieur et jamais de faits inventés. Reprends le nom du produit / de la marque / du domaine EXACTEMENT comme l'auteur l'a écrit (ex : garde « postyapp.ai » tel quel) — ne l'altère, ne l'abrège et ne le déforme jamais.
-- Tous les champs texte (hook, angle, format, rationale, theme) DOIVENT être écrits dans la langue de l'utilisateur : français.
+1. Comprends l'auteur : ce qu'il vend ou défend, à qui il parle, ce que son audience vit au quotidien. La demande de l'auteur prime sur tout le reste.
+2. Pose la stratégie dans "strategy", AVANT les posts :
+   - "edge" : ce que l'auteur sait ou a vécu que son audience n'a pas (tiré du profil et de l'activité) — c'est la matière première des angles ;
+   - "pains" : 2 ou 3 frictions concrètes que son audience vit (des situations, pas des catégories : « le no-show de 9h qui décale toute la matinée », pas « la gestion du temps ») ;
+   - "summary" : le fil rouge en 1-2 phrases, ce que la série doit faire penser de l'auteur — spécifique, jamais « X est un expert en Y » ;
+   - "audience", "objective", "tone".
+3. Chaque angle croise "edge" et une "pain". TEST DE SUBSTITUTION : si un autre professionnel, dans un autre secteur, pouvait publier le brief tel quel, il est trop générique → rends-le spécifique (une situation de son métier, une objection de ses clients, une décision qu'il a prise, un outil qu'il utilise).
+4. Évite l'angle le plus évident. Cherche la tension : une croyance répandue que l'auteur conteste, un coût caché, une erreur fréquente, un arbitrage difficile.
+5. Construis une progression : les posts se complètent (poser un problème → montrer une méthode → prouver par un cas → ouvrir le débat…), sans jamais se répéter.
 
 ═════════════════════════════════════
-CE QUE TU REFUSES
+RÈGLES DU JSON (toutes obligatoires)
 ═════════════════════════════════════
-- Écrire le texte complet du post.
-- Du contenu motivationnel générique.
-- Inventer des données utilisateur (ne référence pas de projets, clients, chiffres que l'utilisateur n'a pas donnés).
-- Proposer plus ou moins de briefs que demandé.`;
+1. JSON UNIQUEMENT, qui passe JSON.parse. Pas de texte autour, pas de balises markdown.
+2. Forme exacte, dans cet ordre :
+   { "strategy": { "edge", "pains", "summary", "audience", "objective", "tone" }, "theme": string, "posts": [ { "id", "format", "length", "goal", "hook", "angle", "rationale", "suggestedDate", "suggestedTime" } ] }
+   "pains" est un tableau de chaînes. Optionnel par post : "audience" et "tone", UNIQUEMENT s'ils diffèrent de la stratégie.
+   "theme" = titre court et spécifique de la série (pas une catégorie générique du type « Optimisation de la gestion »).
+3. "format" ∈ ${FORMAT_LIST}. "length" ∈ "short" | "medium" | "long". "goal" ∈ ${GOAL_SLUGS}.
+4. "hook" = la première ligne du post, telle que l'auteur la DIRAIT à voix haute, PAS un titre d'article (140 caractères max). Elle porte un élément concret (un moment, une décision, une phrase entendue, un détail du métier, un chiffre FOURNI) ou une prise de position nette.
+   ✗ Formes interdites : « Comment X a… », « N conseils pour… », « X : par où commencer ? », « Pourquoi X… », « Le secret de… », « … plus que jamais », « Voici ma checklist », « Retour sur… », les questions fermées génériques (« X est-il inévitable ? »), « Saviez-vous », « Et si je vous disais », « Dans un monde où ».
+   ✓ Exemples de FORME (ne reprends pas les sujets) : « Mardi, une cliente m'a demandé de retirer la moitié des fonctionnalités de son appli. Elle avait raison. » · « J'ai arrêté d'envoyer mes devis en PDF. » · « Mon pire recrutement avait le meilleur CV de la pile. » · « Un agenda rempli à 100 % est un agenda mal construit. »
+5. "angle" = l'idée principale que le post défend ou démontre, en 1-2 phrases, avec LE détail qui la rend propre à l'auteur. Pas le post lui-même.
+6. "rationale" = une phrase : pourquoi CE post, pour CETTE audience, à ce moment de la série.
+7. Hooks et angles TRÈS différents d'un post à l'autre : jamais deux hooks qui commencent de la même façon, jamais deux posts sur la même idée.
+8. "suggestedDate" dans la fenêtre de publication donnée plus bas, posts répartis sur toute la fenêtre. Au plus 1 post par jour (2 seulement s'il y a plus de posts que de jours). Jours ouvrés de préférence pour une audience B2B.
+9. "suggestedTime" dans les créneaux de pointe LinkedIn (07:30-09:30, 11:30-13:30 ; secondaire 17:00-18:30), variés — pas la même heure partout.
+10. "id" = slug court et unique (ex. "p1-objection-prix").
+11. Exactement ${count} post${count > 1 ? "s" : ""}. Tous les textes en français.
+
+═════════════════════════════════════
+VÉRITÉ
+═════════════════════════════════════
+- N'invente aucun fait vérifiable sur l'auteur : pas de client nommé, de résultat chiffré, de pourcentage, de montant ou d'étude qu'il n'a pas fournis. Dans "hook" et "angle", AUCUN pourcentage, montant, multiple (« x3 ») ou résultat chiffré qui n'apparaît pas mot pour mot dans le profil, l'activité, la demande ou un bloc de contexte fourni. Un cas client sans données fournies se raconte de façon qualitative.
+- Les situations vécues restent plausibles et typiques de son métier (l'auteur relira et complétera).
+- Reprends les noms de produit, de marque ou de domaine EXACTEMENT comme l'auteur les écrit (ex. « postyapp.ai » tel quel).
+- Refuse le contenu motivationnel générique.`;
+}
+
+function buildEnPrompt(count: number): string {
+  return `You are POSTY STRATEGIST — a senior LinkedIn editorial strategist. You build a post plan for ONE specific author, from their request, their profile and their business.
+
+Your deliverable: a JSON object describing ${count} post brief${count > 1 ? "s" : ""} (NOT the post copy). The author will review the plan, adjust it, then each brief will be written.
+
+═════════════════════════════════════
+METHOD (in this order)
+═════════════════════════════════════
+1. Understand the author: what they sell or stand for, who they talk to, what their audience lives day to day. The author's request overrides everything else.
+2. Set the strategy in "strategy", BEFORE the posts:
+   - "edge": what the author knows or has lived that their audience hasn't (from the profile and business block) — the raw material of the angles;
+   - "pains": 2 or 3 concrete frictions the audience lives with (situations, not categories: "the 9am no-show that shifts the whole morning", not "time management");
+   - "summary": the through-line in 1-2 sentences, what the series should make readers think of the author — specific, never "X is an expert in Y";
+   - "audience", "objective", "tone".
+3. Each angle crosses the "edge" with a "pain". SUBSTITUTION TEST: if another professional in another field could publish the brief unchanged, it is too generic → make it specific (a situation from their craft, an objection their clients raise, a decision they made, a tool they use).
+4. Avoid the most obvious angle. Look for tension: a common belief the author disputes, a hidden cost, a frequent mistake, a hard trade-off.
+5. Build a progression: posts complement each other (frame a problem → show a method → prove with a case → open the debate…), never repeating.
+
+═════════════════════════════════════
+JSON RULES (all required)
+═════════════════════════════════════
+1. JSON ONLY, parseable by JSON.parse. No text around it, no markdown fences.
+2. Exact shape, in this order:
+   { "strategy": { "edge", "pains", "summary", "audience", "objective", "tone" }, "theme": string, "posts": [ { "id", "format", "length", "goal", "hook", "angle", "rationale", "suggestedDate", "suggestedTime" } ] }
+   "pains" is an array of strings. Optional per post: "audience" and "tone", ONLY when they differ from the strategy.
+   "theme" = a short, specific title for the series (not a generic category like "Optimizing operations").
+3. "format" ∈ ${FORMAT_LIST}. "length" ∈ "short" | "medium" | "long". "goal" ∈ ${GOAL_SLUGS}.
+4. "hook" = the first line of the post, as the author would SAY it out loud, NOT an article title (max 140 characters). It carries something concrete (a moment, a decision, a sentence someone said, a detail of the craft, a PROVIDED number) or a clear stance.
+   ✗ Forbidden shapes: "How X did…", "N tips to…", "X: where to start?", "Why X…", "The secret to…", "…more than ever", "Here's my checklist", generic yes/no questions ("Is X inevitable?"), "Did you know", "What if I told you", "In a world where".
+   ✓ SHAPE examples (don't reuse the topics): "On Tuesday a client asked me to cut half the features from her app. She was right." · "I stopped sending quotes as PDFs." · "My worst hire had the best résumé in the pile." · "A calendar booked at 100% is a badly built calendar."
+5. "angle" = the main idea the post argues or demonstrates, in 1-2 sentences, with THE detail that makes it the author's own. Not the post itself.
+6. "rationale" = one sentence: why THIS post, for THIS audience, at this point in the series.
+7. Hooks and angles VERY different from one post to the next: never two hooks opening the same way, never two posts on the same idea.
+8. "suggestedDate" inside the publication window given below, spread across the whole window. At most 1 post per day (2 only if there are more posts than days). Business days preferred for a B2B audience.
+9. "suggestedTime" in LinkedIn peak windows (07:30-09:30, 11:30-13:30; secondary 17:00-18:30), varied — not the same time everywhere.
+10. "id" = short unique slug (e.g. "p1-price-objection").
+11. Exactly ${count} post${count > 1 ? "s" : ""}. All text in English.
+
+═════════════════════════════════════
+TRUTH
+═════════════════════════════════════
+- Invent no verifiable fact about the author: no named client, measured result, percentage, amount or study they did not provide. In "hook" and "angle", NO percentage, amount, multiple ("3x") or measured result that doesn't appear verbatim in the profile, the business block, the request or a provided context block. A client case without provided data is told qualitatively.
+- Lived situations stay plausible and typical of their craft (the author will review and complete them).
+- Keep product, brand or domain names EXACTLY as the author writes them (e.g. keep "postyapp.ai" verbatim).
+- Refuse generic motivational content.`;
+}

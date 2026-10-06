@@ -19,7 +19,7 @@ function StrategistMarkdown({ content }: { content: string }) {
   // on every render, including on each streaming chunk).
   const blocks = useMemo(() => parseBlocks(content), [content]);
   return (
-    <div className="space-y-3 text-[14px] leading-[1.65] text-gray-700 dark:text-gray-200">
+    <div className="space-y-3 text-[14px] leading-[1.65] text-gray-700 dark:text-gray-200 break-words [overflow-wrap:anywhere]">
       {blocks}
     </div>
   );
@@ -38,13 +38,22 @@ function parseBlocks(content: string): ReactNode[] {
   while (i < lines.length) {
     const line = lines[i];
 
-    if (line.startsWith("## ")) {
+    // Horizontal rule
+    if (/^\s*(?:-{3,}|\*{3,}|_{3,})\s*$/.test(line)) {
+      out.push(<hr key={key++} className="border-gray-200 dark:border-dark-border" />);
+      i++;
+      continue;
+    }
+
+    // ## / ### / #### headings (### used to render literally)
+    const h = line.match(/^(#{2,6})\s+(.*)$/);
+    if (h) {
       out.push(
         <h3
           key={key++}
-          className="text-[14px] font-semibold text-gray-900 dark:text-white tracking-tight pt-1 first:pt-0"
+          className={`${h[1].length === 2 ? "text-[15px]" : "text-[14px]"} font-semibold text-gray-900 dark:text-white tracking-tight pt-1 first:pt-0`}
         >
-          {renderInline(line.slice(3))}
+          {renderInline(h[2])}
         </h3>
       );
       i++;
@@ -65,10 +74,10 @@ function parseBlocks(content: string): ReactNode[] {
     }
 
     // Unordered list
-    if (/^[-*•]\s/.test(line)) {
+    if (/^\s*[-*•]\s/.test(line)) {
       const items: string[] = [];
-      while (i < lines.length && /^[-*•]\s/.test(lines[i])) {
-        items.push(lines[i].replace(/^[-*•]\s+/, ""));
+      while (i < lines.length && /^\s*[-*•]\s/.test(lines[i])) {
+        items.push(lines[i].replace(/^\s*[-*•]\s+/, ""));
         i++;
       }
       out.push(
@@ -85,10 +94,10 @@ function parseBlocks(content: string): ReactNode[] {
     }
 
     // Ordered list — quiet gray numerals
-    if (/^\d+\.\s/.test(line)) {
+    if (/^\s*\d+[.)]\s/.test(line)) {
       const items: string[] = [];
-      while (i < lines.length && /^\d+\.\s/.test(lines[i])) {
-        items.push(lines[i].replace(/^\d+\.\s+/, ""));
+      while (i < lines.length && /^\s*\d+[.)]\s/.test(lines[i])) {
+        items.push(lines[i].replace(/^\s*\d+[.)]\s+/, ""));
         i++;
       }
       out.push(
@@ -115,7 +124,7 @@ function parseBlocks(content: string): ReactNode[] {
     while (
       i < lines.length &&
       lines[i].trim() !== "" &&
-      !/^(##\s|#\s|[-*•]\s|\d+\.\s)/.test(lines[i])
+      !/^(#{1,6}\s|\s*[-*•]\s|\s*\d+[.)]\s|\s*(?:-{3,}|\*{3,}|_{3,})\s*$)/.test(lines[i])
     ) {
       para.push(lines[i]);
       i++;

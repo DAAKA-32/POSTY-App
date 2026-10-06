@@ -1,303 +1,152 @@
 "use client";
 
 /**
- * StrategistComposer — sticky bottom composer for the Strategist drawer.
+ * StrategistComposer — the input at the bottom of the drawer.
  *
- * Visually mirrors the regular UniversalChatInput so users get one mental
- * model for "talking to AI in Posty", but reskinned with the amber/gold
- * Strategist palette. Same shape (rounded-3xl), same round 44px send button
- * inside the wrapper, same focus glow — just gold instead of primary orange.
- *
- *   - Auto-grow textarea (56px → 200px)
- *   - Premium focus glow (amber ring + outer glow shadow)
- *   - Send button (rounded-full, amber gradient) lives INSIDE the wrapper
- *     bottom-right, like the regular chat
- *   - Streaming: send button morphs into a stop square with a breathing ring
- *   - Clear button (left, inside): visible only when there's at least one msg
- *   - Error alert: rendered above the composer, dismissible
- *   - Cmd+Enter / Enter to submit (Shift+Enter for newline)
- *   - font-size: 16px on textarea to prevent iOS zoom on focus
+ *   - Auto-grow textarea (16px font: no iOS zoom), Enter sends, Shift+Enter
+ *     adds a line. Typing stays possible while an answer streams (the field
+ *     is no longer disabled, so the mobile keyboard doesn't drop).
+ *   - Solid amber send button with dark ink; Stop while a request runs.
+ *   - Errors are announced (role="alert") with a real "Retry".
+ *   - A chip shows when this session's settings differ from the saved ones.
+ *   - Bottom safe-area padding (iPhone home indicator).
  */
 
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
+import { AlertCircle, ArrowUp, Square, SlidersHorizontal, X } from "lucide-react";
+import { useStrategistCopy } from "@/lib/strategist/copy";
+import { useStrategistSession } from "./StrategistSession";
+import { focusRing } from "./ui";
 
-interface Props {
-  onSend: (text: string) => void;
-  onStop: () => void;
-  onClear: () => void;
-  hasMessages: boolean;
-  streaming: boolean;
-  placeholder: string;
-  clearLabel: string;
-  sendLabel: string;
-  error: string | null;
-  onDismissError: () => void;
-}
-
-export default function StrategistComposer({
-  onSend,
-  onStop,
-  onClear,
-  hasMessages,
-  streaming,
-  placeholder,
-  clearLabel,
-  sendLabel,
-  error,
-  onDismissError,
-}: Props) {
+export default function StrategistComposer() {
+  const { c } = useStrategistCopy();
+  const {
+    send, stop, busy, error, retry, dismissError, prefill, unsavedCount, setView,
+  } = useStrategistSession();
   const [value, setValue] = useState("");
-  const [focused, setFocused] = useState(false);
   const taRef = useRef<HTMLTextAreaElement>(null);
-  const reduced = useReducedMotion();
 
   // Auto-grow
   useEffect(() => {
     const ta = taRef.current;
     if (!ta) return;
     ta.style.height = "auto";
-    ta.style.height = Math.min(200, Math.max(56, ta.scrollHeight)) + "px";
+    ta.style.height = Math.min(180, Math.max(48, ta.scrollHeight)) + "px";
   }, [value]);
 
+  // Prefill requests ("Write a post about ") → fill, focus, caret at the end.
+  useEffect(() => {
+    if (!prefill) return;
+    setValue(prefill.text);
+    requestAnimationFrame(() => {
+      const ta = taRef.current;
+      if (!ta) return;
+      ta.focus();
+      ta.setSelectionRange(prefill.text.length, prefill.text.length);
+    });
+  }, [prefill]);
+
+  // An untouched prefill ("Rédige un post sur ") is not a request — sending it
+  // used to produce a post about nothing.
+  const isBarePrefill = !!prefill && value.trim() === prefill.text.trim();
+  const canSend = value.trim().length > 0 && !busy && !isBarePrefill;
   const submit = () => {
-    const t = value.trim();
-    if (!t || streaming) return;
-    onSend(t);
+    if (!canSend) return;
+    send(value);
     setValue("");
   };
 
-  const onKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      submit();
-    }
-  };
-
-  // Premium effect = focused OR streaming (mirrors UniversalChatInput logic)
-  const showGlow = focused || streaming;
-  const canSend = value.trim().length > 0 && !streaming;
-  const leftPadding = hasMessages ? "pl-14" : "pl-5";
-
   return (
-    <div
-      className="
-        bg-background-warm/85 dark:bg-background/85
-        backdrop-blur-xl
-        border-t border-gray-200/70 dark:border-dark-border/60
-      "
-    >
-      {/* ─── Error alert ─── */}
-      <AnimatePresence>
-        {error && (
-          <motion.div
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 6 }}
-            transition={{ duration: 0.22 }}
-            className="px-4 sm:px-5 pt-3"
-          >
-            <div
-              className="
-                flex items-start gap-2.5 px-3.5 py-2.5
-                rounded-xl
-                bg-red-50/90 dark:bg-red-500/10
-                border border-red-200/80 dark:border-red-500/30
-                text-[13px] text-red-700 dark:text-red-300
-              "
-            >
-              <svg
-                className="flex-shrink-0 w-4 h-4 mt-0.5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                />
-              </svg>
-              <span className="flex-1">{error}</span>
+    <div className="border-t border-gray-200 dark:border-dark-border bg-white dark:bg-dark-card pb-[max(env(safe-area-inset-bottom),0px)]">
+      {error && (
+        <div className="px-4 pt-3" role="alert">
+          <div className="flex items-start gap-2.5 px-3.5 py-3 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-[14px] text-red-800 dark:text-red-200">
+            <AlertCircle aria-hidden className="w-[18px] h-[18px] mt-0.5 flex-shrink-0" />
+            <span className="flex-1 leading-snug">{error.message}</span>
+            {error.canRetry && (
               <button
-                onClick={onDismissError}
-                aria-label="Dismiss"
-                className="flex-shrink-0 text-red-400 hover:text-red-600 dark:hover:text-red-200 transition-colors"
+                type="button"
+                onClick={retry}
+                className={`-my-1.5 h-9 px-3 rounded-lg font-semibold text-red-800 dark:text-red-200 hover:bg-red-100 dark:hover:bg-red-500/20 ${focusRing}`}
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                {c.composer.retry}
               </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            )}
+            <button
+              type="button"
+              onClick={dismissError}
+              aria-label={c.composer.dismiss}
+              className={`-my-1.5 -mr-1.5 w-9 h-9 inline-flex items-center justify-center rounded-lg text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-500/20 ${focusRing}`}
+            >
+              <X aria-hidden className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
-      <div className="px-4 sm:px-5 py-3">
-        {/* ─── Input wrapper (matches UniversalChatInput shape) ─── */}
-        <div
-          className={`
-            relative
-            bg-white dark:bg-dark-card
-            backdrop-blur-sm
-            transition-all duration-300 ease-out
-            overflow-hidden
-            ${showGlow
-              ? "border border-amber-400/30 dark:border-amber-400/40"
-              : "border border-gray-200 dark:border-dark-border"
-            }
-          `}
-          style={{
-            borderRadius: "24px",
-            boxShadow: showGlow
-              ? "0 0 20px rgba(245, 158, 11, 0.22), 0 0 40px rgba(245, 158, 11, 0.08)"
-              : undefined,
-          }}
-        >
-          {/* Textarea */}
+      <div className="px-4 pt-3 pb-3">
+        {unsavedCount > 0 && (
+          <button
+            type="button"
+            onClick={() => setView("settings")}
+            className={`mb-2 inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-amber-50 dark:bg-amber-400/10 text-[13px] font-medium text-amber-900 dark:text-amber-200 ${focusRing}`}
+          >
+            <SlidersHorizontal aria-hidden className="w-3.5 h-3.5" />
+            {c.composer.customSettings(unsavedCount)}
+          </button>
+        )}
+        <div className="relative flex items-end gap-2 rounded-2xl border border-gray-300 dark:border-dark-border bg-white dark:bg-dark-elevated focus-within:border-amber-500 focus-within:ring-2 focus-within:ring-amber-500/25 transition-colors">
+          <label htmlFor="strategist-input" className="sr-only">
+            {c.composer.inputLabel}
+          </label>
           <textarea
+            id="strategist-input"
             ref={taRef}
             value={value}
             onChange={(e) => setValue(e.target.value)}
-            onKeyDown={onKeyDown}
-            onFocus={() => setFocused(true)}
-            onBlur={() => setFocused(false)}
-            placeholder={placeholder}
-            disabled={streaming}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+                e.preventDefault();
+                submit();
+              }
+            }}
+            placeholder={c.composer.placeholder}
             rows={1}
-            aria-label="Message Strategist"
             enterKeyHint="send"
             autoComplete="off"
             autoCorrect="on"
             autoCapitalize="sentences"
-            spellCheck="true"
-            className={`
-              w-full resize-none bg-transparent
-              text-gray-900 dark:text-white
-              placeholder-gray-500 dark:placeholder-gray-400
-              focus:outline-none disabled:opacity-50
-              py-4 pr-16 ${leftPadding}
-              scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent
-            `}
-            style={{
-              minHeight: 56,
-              maxHeight: 200,
-              overflowY: "auto",
-              lineHeight: 1.5,
-              boxSizing: "border-box",
-              // 16px min font-size prevents iOS Safari from zooming on focus
-              fontSize: "max(16px, 1rem)",
-              WebkitAppearance: "none",
-              appearance: "none",
-              WebkitTapHighlightColor: "transparent",
-              WebkitOverflowScrolling: "touch",
-            }}
+            spellCheck
+            className="flex-1 resize-none bg-transparent pl-4 py-3 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:outline-none"
+            style={{ fontSize: "max(16px, 1rem)", lineHeight: 1.5, minHeight: 48, maxHeight: 180 }}
           />
-
-          {/* ─── Clear button (inside, left) — only when there's history ─── */}
-          {hasMessages && (
-            <div className="absolute left-3 bottom-3 z-10">
-              <motion.button
+          <div className="p-1.5">
+            {busy ? (
+              <button
                 type="button"
-                initial={reduced ? false : { opacity: 0, scale: 0.85 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.2 }}
-                onClick={onClear}
-                disabled={streaming}
-                title={clearLabel}
-                aria-label={clearLabel}
-                whileTap={{ scale: 0.92 }}
-                className="
-                  w-11 h-11 rounded-full flex items-center justify-center
-                  bg-gray-100 dark:bg-dark-elevated
-                  text-gray-500 dark:text-gray-400
-                  hover:bg-gray-200 dark:hover:bg-gray-600
-                  hover:text-gray-700 dark:hover:text-gray-300
-                  disabled:opacity-40 disabled:cursor-not-allowed
-                  transition-all duration-300
-                "
+                onClick={stop}
+                aria-label={c.composer.stop}
+                title={c.composer.stop}
+                className={`w-10 h-10 rounded-xl inline-flex items-center justify-center bg-gray-900 dark:bg-white text-white/100 dark:text-gray-900 ${focusRing}`}
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M9 7V4a2 2 0 012-2h2a2 2 0 012 2v3"
-                  />
-                </svg>
-              </motion.button>
-            </div>
-          )}
-
-          {/* ─── Send / Stop button (inside, right) ─── */}
-          <div className="absolute flex items-center right-3 bottom-3 gap-2">
-            <AnimatePresence mode="wait" initial={false}>
-              {streaming ? (
-                <motion.button
-                  key="stop-button"
-                  type="button"
-                  onClick={onStop}
-                  aria-label="Stop"
-                  title="Stop"
-                  initial={reduced ? false : { opacity: 0, scale: 0.85 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.85 }}
-                  whileTap={{ scale: 0.92 }}
-                  className="
-                    w-11 h-11 rounded-full flex items-center justify-center
-                    bg-gray-900 dark:bg-white text-white dark:text-gray-900
-                    shadow-[0_0_0_4px_rgba(245,158,11,0.16)]
-                    transition-all duration-200
-                    hover:bg-black dark:hover:bg-gray-100
-                  "
-                >
-                  {/* Stop square + breathing amber ring */}
-                  <span className="relative inline-flex">
-                    <span
-                      aria-hidden
-                      className="absolute -inset-2 rounded-full border border-amber-400/40 animate-ping"
-                      style={{ animationDuration: "1.6s" }}
-                    />
-                    <svg className="w-4 h-4 relative" viewBox="0 0 20 20" fill="currentColor">
-                      <rect x="5" y="5" width="10" height="10" rx="2" />
-                    </svg>
-                  </span>
-                </motion.button>
-              ) : (
-                <motion.button
-                  key="send-button"
-                  type="button"
-                  onClick={submit}
-                  disabled={!canSend}
-                  aria-label={sendLabel}
-                  title={sendLabel}
-                  initial={reduced ? false : { opacity: 0, scale: 0.85 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  whileTap={canSend ? { scale: 0.92 } : undefined}
-                  className={`
-                    w-11 h-11 rounded-full flex items-center justify-center
-                    transition-all duration-200 ease-out
-                    ${canSend
-                      ? "bg-gradient-to-br from-amber-400 to-yellow-500 text-gray-900 shadow-[0_4px_14px_rgba(245,158,11,0.4)] hover:shadow-[0_6px_18px_rgba(245,158,11,0.55)] hover:brightness-[1.05]"
-                      : "bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed"
-                    }
-                  `}
-                >
-                  <svg
-                    className="w-5 h-5 translate-x-[1px] -translate-y-[0.5px]"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={2.2}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M5 12h14" />
-                    <path d="M13 6l6 6-6 6" />
-                  </svg>
-                </motion.button>
-              )}
-            </AnimatePresence>
+                <Square aria-hidden className="w-3.5 h-3.5 fill-current" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={submit}
+                disabled={!canSend}
+                aria-label={c.composer.send}
+                title={c.composer.send}
+                className={`w-10 h-10 rounded-xl inline-flex items-center justify-center transition-colors ${focusRing} ${
+                  canSend
+                    ? "bg-amber-400 hover:bg-amber-300 text-gray-900"
+                    : "bg-gray-100 dark:bg-dark-hover text-gray-400 dark:text-gray-500 cursor-not-allowed"
+                }`}
+              >
+                <ArrowUp aria-hidden className="w-5 h-5" />
+              </button>
+            )}
           </div>
         </div>
       </div>

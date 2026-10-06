@@ -1207,6 +1207,16 @@ export interface PostBrief {
   rationale: string;
   /** Optional one-line note attached during user review (manual edit). */
   userNote?: string;
+  /** Target length band (lib/ai/post-formats LENGTH_BANDS). Optional — batches
+   *  generated before 2026-10 don't have it; the format's default applies. */
+  length?: "short" | "medium" | "long";
+  /** What this post is for (authority | engagement | lead-gen | conversion |
+   *  branding). Optional, see `length`. */
+  goal?: string;
+  /** Only set when this post targets a narrower audience than the batch. */
+  audience?: string;
+  /** Only set when this post needs a different tone than the batch. */
+  tone?: string;
   /** Phase 2 — the finished post copy materialized from this brief. When
    *  present, the row swaps from "brief preview" to "post preview" UI and
    *  the row offers regen/edit/copy actions instead of brief-level edits. */
@@ -1268,8 +1278,28 @@ export interface StrategyBatch {
   /** User timezone at generation time — captured so Phase 3 scheduling
    *  honors the slots the user saw in the UI, not the server TZ. */
   timezone: string;
+  /** The series' strategy ("fil rouge"), produced by the planner before the
+   *  briefs. Optional — absent on batches generated before 2026-10. */
+  strategy?: StrategyBatchStrategy;
+  /** The steering actually used to plan this batch (per-batch override or the
+   *  saved defaults). Re-used at write time so tone / CTA / emotion survive
+   *  from the plan to the posts. */
+  direction?: StrategistAdvancedParams;
   createdAt: Timestamp;
   updatedAt?: Timestamp;
+}
+
+export interface StrategyBatchStrategy {
+  /** One or two sentences: what the series should make readers think of the author. */
+  summary?: string;
+  audience?: string;
+  objective?: string;
+  tone?: string;
+  /** What the author knows or has lived that their audience hasn't — the raw
+   *  material that makes the angles theirs. Also fed to the writer. */
+  edge?: string;
+  /** 2-3 concrete frictions the audience lives with. */
+  pains?: string[];
 }
 
 // ============== WEB SPEECH API TYPES ==============
