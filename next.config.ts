@@ -106,7 +106,10 @@ const nextConfig: NextConfig = {
 
     return [
       {
-        source: "/(.*)",
+        // Everything except the proxied Firebase Auth helpers (/__/auth,
+        // /__/firebase): the auth iframe must be frameable by our own pages
+        // and keeps the headers Firebase Hosting serves it with.
+        source: "/((?!__/).*)",
         headers: [
           {
             key: "Content-Security-Policy",
@@ -174,6 +177,19 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+    ];
+  },
+
+  // Firebase Auth helper pages served from our own domain, so the Google
+  // sign-in popup shows postyapp.ai instead of <project>.firebaseapp.com once
+  // NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=postyapp.ai. Requires
+  // https://postyapp.ai/__/auth/handler in the Google OAuth client's
+  // authorized redirect URIs. Firebase "redirect best practices", option 3.
+  async rewrites() {
+    const firebaseHost = `https://${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "tink-dc3d4"}.firebaseapp.com`;
+    return [
+      { source: "/__/auth/:path*", destination: `${firebaseHost}/__/auth/:path*` },
+      { source: "/__/firebase/:path*", destination: `${firebaseHost}/__/firebase/:path*` },
     ];
   },
 
