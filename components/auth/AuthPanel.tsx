@@ -203,7 +203,7 @@ const AuthField = ({
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? errorId : undefined}
           className={`
-            relative h-[52px] w-full rounded-xl pl-11
+            relative h-[clamp(44px,6.3dvh,52px)] w-full rounded-xl pl-11
             border bg-white/80 text-[16px] text-gray-900 placeholder:text-gray-400
             transition-[border-color,box-shadow,background-color] duration-200 ease-out
             focus:outline-none
@@ -482,7 +482,7 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
         initial={{ opacity: 0, scale: 0.92 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: prefersReducedMotion ? 0 : dur.heavy, ease: ease.enter }}
-        className="mb-5 flex justify-center md:hidden"
+        className={`mb-4 justify-center md:hidden ${mode === "signup" ? "hidden" : "flex"} [@media(max-height:720px)]:hidden`}
       >
         <div className="relative">
           <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl shadow-[0_6px_20px_-6px_rgba(248,147,93,0.55)]">
@@ -500,7 +500,7 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: prefersReducedMotion ? 0 : dur.slow, ease: ease.enter, delay: 0.05 }}
-        className="mb-6 min-h-[74px] text-center sm:min-h-[80px]"
+        className="mb-[clamp(12px,2.6dvh,24px)] min-h-[58px] text-center sm:min-h-[64px] [@media(max-height:760px)]:min-h-0"
       >
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
@@ -510,10 +510,10 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
             exit={{ opacity: 0, y: -5 }}
             transition={{ duration: prefersReducedMotion ? 0 : dur.fast, ease: ease.enter }}
           >
-            <h1 className="text-silver-solid mb-1.5 text-[26px] font-bold leading-tight tracking-[-0.02em] sm:text-[30px]">
+            <h1 className="text-silver-solid mb-1 text-[24px] font-bold leading-tight tracking-[-0.02em] sm:text-[28px]">
               {mode === "login" ? t.auth.welcomeBack : t.auth.createAccount}
             </h1>
-            <p className="mx-auto max-w-[300px] text-[13.5px] leading-relaxed text-gray-500">
+            <p className="mx-auto max-w-[300px] text-[13.5px] leading-snug text-gray-500 [@media(max-height:760px)]:hidden">
               {mode === "login" ? t.auth.loginSubtitle : t.auth.signupSubtitle}
             </p>
           </motion.div>
@@ -572,7 +572,7 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
             )}
           </AnimatePresence>
 
-          <form onSubmit={handleSubmit} className="space-y-4" noValidate={false}>
+          <form onSubmit={handleSubmit} className="space-y-[clamp(10px,1.9dvh,16px)]" noValidate={false}>
             {/* Name field - Signup only */}
             {mode === "signup" && (
               <AuthField
@@ -784,7 +784,7 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
               disabled={submitDisabled}
               aria-busy={isLoading}
               className="
-                group relative mt-1 h-[52px] w-full overflow-hidden rounded-xl
+                group relative mt-1 h-[clamp(44px,6.3dvh,52px)] w-full overflow-hidden rounded-xl
                 bg-gradient-to-r from-warm-orange to-warm-coral
                 text-[15px] font-semibold tracking-[0.01em]
                 shadow-[0_1px_2px_rgba(15,17,21,0.06),0_10px_24px_-10px_rgba(248,147,93,0.75)]
@@ -832,7 +832,7 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
           </form>
 
           {/* Divider — hairlines fading into the card, not hard rules */}
-          <div className="my-6 flex items-center gap-3">
+          <div className="my-[clamp(10px,2.2dvh,24px)] flex items-center gap-3">
             <span aria-hidden className="h-px flex-1 bg-gradient-to-r from-transparent to-gray-200" />
             <span className="shrink-0 text-[10.5px] font-medium uppercase tracking-[0.14em] text-gray-400">
               {t.auth.orContinueWith}
@@ -851,7 +851,7 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
           />
 
           {/* Toggle mode */}
-          <div className="mt-6 text-center">
+          <div className="mt-[clamp(6px,1.6dvh,20px)] text-center">
             <p className="text-[13px] text-gray-500">
               {mode === "login" ? t.auth.noAccount : t.auth.haveAccount}{" "}
               <button
@@ -865,7 +865,7 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
           </div>
 
           {/* Trust line */}
-          <div className="mt-5 flex items-center justify-center gap-1.5 text-[11px] text-gray-400">
+          <div className={`mt-[clamp(8px,1.6dvh,20px)] items-center justify-center gap-1.5 text-[11px] text-gray-400 ${mode === "signup" ? "hidden" : "flex"} [@media(max-height:700px)]:hidden`}>
             <ShieldIcon className="h-3.5 w-3.5" />
             <span>{t.auth.securedSSL}</span>
           </div>

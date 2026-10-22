@@ -52,7 +52,7 @@ export default function GoogleButton({ onSuccess, onError, onStartAuth, label = 
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className="
-        group relative flex h-[52px] w-full items-center justify-center gap-3
+        group relative flex h-[clamp(44px,6.3dvh,52px)] w-full items-center justify-center gap-3
         overflow-hidden rounded-xl
         border border-gray-200/90 bg-white/90
         px-4 text-[15px] font-medium text-gray-700

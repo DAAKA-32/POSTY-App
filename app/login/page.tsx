@@ -242,7 +242,7 @@ function LoginPageContent() {
           {/* Mobile Header - Back */}
           <motion.div
             variants={itemVariants}
-            className="flex items-center py-3 shrink-0"
+            className="flex items-center py-2 shrink-0"
           >
             <Link
               href="/"
@@ -261,9 +261,9 @@ function LoginPageContent() {
               no unreachable overflow above the fold. */}
           <motion.div
             variants={itemVariants}
-            className="flex-1 flex flex-col justify-center py-4"
+            className="flex-1 flex flex-col justify-center py-2"
           >
-            <div className="posty-landing-glass-card relative overflow-hidden rounded-3xl px-5 py-8 sm:px-7 sm:py-9">
+            <div className="posty-landing-glass-card relative overflow-hidden rounded-3xl px-5 py-[clamp(16px,3.2dvh,32px)] sm:px-7">
               <span aria-hidden className="posty-glass-sheen" />
               <span aria-hidden className="posty-glass-wash" />
               <AuthPanel initialMode={initialMode} onSuccess={() => {}} />
@@ -273,7 +273,7 @@ function LoginPageContent() {
           {/* Footer links */}
           <motion.div
             variants={itemVariants}
-            className="py-4 flex flex-wrap justify-center gap-4 text-xs text-text-muted shrink-0"
+            className="py-2 flex flex-wrap justify-center gap-4 text-xs text-text-muted shrink-0 [@media(max-height:640px)]:hidden"
           >
             <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="hover:text-warm-orange transition-colors">{t.common.privacy}</a>
             <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="hover:text-warm-orange transition-colors">{t.common.terms}</a>
@@ -382,7 +382,7 @@ function LoginPageContent() {
             `posty-soft-welcome` ambient covers this half uniformly with
             the left, matching /app. */}
         <div className="fixed top-0 right-0 w-1/2 h-[100dvh] overflow-y-auto overflow-x-hidden overscroll-contain" data-allow-scroll>
-          <div className="min-h-full flex flex-col px-6 lg:px-10 xl:px-14 py-6">
+          <div className="min-h-full flex flex-col px-6 lg:px-10 xl:px-14 py-3">
             {/* Form — flex-1 centered with mt-auto/mb-auto on child */}
             <motion.div
               initial="hidden"
@@ -394,9 +394,9 @@ function LoginPageContent() {
                 initial={{ opacity: 0, y: 30, scale: 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 transition={{ duration: 0.45, delay: 0.1, ease: smoothEase }}
-                className="w-full max-w-md py-8"
+                className="w-full max-w-md py-2"
               >
-                <div className="posty-landing-glass-card relative overflow-hidden rounded-3xl px-7 py-10 lg:px-9 lg:py-11">
+                <div className="posty-landing-glass-card relative overflow-hidden rounded-3xl px-7 py-[clamp(20px,4dvh,40px)] lg:px-9">
                   <span aria-hidden className="posty-glass-sheen" />
                   <span aria-hidden className="posty-glass-wash" />
                   <AuthPanel initialMode={initialMode} onSuccess={() => {}} />
@@ -409,7 +409,7 @@ function LoginPageContent() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.25, ease: smoothEase }}
-              className="shrink-0 pt-4"
+              className="shrink-0 pt-2"
             >
               <div className="flex gap-4 text-xs text-text-muted justify-center">
                 <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="hover:text-warm-orange transition-colors duration-200">{t.common.privacy}</a>

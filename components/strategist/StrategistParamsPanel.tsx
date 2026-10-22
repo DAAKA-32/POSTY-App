@@ -56,7 +56,7 @@ export default function StrategistParamsPanel() {
     "w-full rounded-xl border border-gray-300 dark:border-dark-border bg-white dark:bg-dark-elevated px-3 py-2.5 text-gray-900 dark:text-white placeholder:text-gray-500 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/25";
 
   return (
-    <section aria-labelledby="strategist-editorial" className="space-y-5">
+    <section aria-labelledby="strategist-editorial" className="space-y-5 lg:space-y-4">
       <div>
         <h3 id="strategist-editorial" className="text-[16px] font-semibold text-gray-900 dark:text-white">
           {S.editorialTitle}
@@ -76,7 +76,7 @@ export default function StrategistParamsPanel() {
           aria-describedby={`${ids.context}-hint`}
           value={params.context ?? ""}
           onChange={(e) => update({ context: e.target.value })}
-          rows={4}
+          rows={3}
           maxLength={800}
           placeholder={S.context.placeholder}
           className={`${field} resize-y leading-relaxed`}
@@ -164,9 +164,9 @@ export default function StrategistParamsPanel() {
         )}
       </div>
 
-      <div className="rounded-2xl bg-gray-50 dark:bg-white/[0.03] p-4 space-y-3">
+      <div className="rounded-2xl bg-gray-50 dark:bg-white/[0.03] p-4 space-y-3 lg:space-y-0 lg:flex lg:items-center lg:justify-between lg:gap-4">
         <p className="text-[13px] text-gray-700 dark:text-gray-300">{S.sessionNote}</p>
-        <div className="flex flex-wrap items-center justify-end gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2 lg:shrink-0">
           <Button
             variant="ghost"
             size="sm"

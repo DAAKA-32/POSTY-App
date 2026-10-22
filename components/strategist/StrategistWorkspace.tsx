@@ -44,13 +44,13 @@ export default function StrategistWorkspace() {
       initial={reduced ? false : { opacity: 0.6, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-      className="
-        mx-auto flex h-full min-h-0 w-full max-w-3xl flex-col
+      className={`
+        mx-auto flex h-full min-h-0 w-full ${view === "settings" ? "max-w-5xl" : "max-w-3xl"} flex-col
         bg-white dark:bg-dark-card
         lg:my-3 lg:h-[calc(100%-1.5rem)] lg:rounded-2xl lg:border lg:border-gray-200 lg:dark:border-dark-border
         lg:shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_40px_-24px_rgba(15,23,42,0.18)]
         overflow-hidden
-      "
+      `}
     >
       <WorkspaceHeader showActions={eligibility.reason === "ok"} />
       <div className="flex-1 flex flex-col min-h-0">
