@@ -5,7 +5,10 @@
 // ============================================================
 
 export interface FriendlyError {
+  /** French wording (existing users keep it). */
   message: string;
+  /** English wording — the default for anyone who hasn't chosen French. */
+  messageEn?: string;
   /** Optional action button label */
   actionLabel?: string;
   /** Optional action callback description (for context) */
@@ -22,6 +25,7 @@ const ERROR_PATTERNS: Array<{
     pattern: /fetch|network|ERR_INTERNET|ECONNREFUSED|ENOTFOUND|offline/i,
     friendly: {
       message: "Connexion perdue. Verifiez votre connexion internet et reessayez.",
+      messageEn: "Connection lost. Check your internet connection and try again.",
       actionLabel: "Reessayer",
       actionType: "retry",
     },
@@ -30,6 +34,7 @@ const ERROR_PATTERNS: Array<{
     pattern: /timeout|ETIMEDOUT|took too long/i,
     friendly: {
       message: "Le serveur met plus de temps que prevu. Reessayez dans quelques instants.",
+      messageEn: "The server is taking longer than expected. Please try again in a moment.",
       actionLabel: "Reessayer",
       actionType: "retry",
     },
@@ -40,6 +45,7 @@ const ERROR_PATTERNS: Array<{
     pattern: /auth\/.*expired|token.*expired|session.*expired/i,
     friendly: {
       message: "Votre session a expire. Reconnectez-vous pour continuer.",
+      messageEn: "Your session has expired. Sign in again to continue.",
       actionLabel: "Se reconnecter",
       actionType: "reconnect",
     },
@@ -48,18 +54,21 @@ const ERROR_PATTERNS: Array<{
     pattern: /auth\/wrong-password|invalid.*password|mot de passe/i,
     friendly: {
       message: "Mot de passe incorrect. Verifiez et reessayez.",
+      messageEn: "Incorrect password. Check it and try again.",
     },
   },
   {
     pattern: /auth\/user-not-found|utilisateur.*introuvable/i,
     friendly: {
       message: "Aucun compte associe a cet email. Verifiez votre adresse ou creez un compte.",
+      messageEn: "No account is linked to this email. Check the address or create an account.",
     },
   },
   {
     pattern: /auth\/too-many-requests|rate.?limit|429/i,
     friendly: {
       message: "Trop de tentatives. Patientez quelques minutes avant de reessayer.",
+      messageEn: "Too many attempts. Wait a few minutes before trying again.",
     },
   },
 
@@ -68,6 +77,7 @@ const ERROR_PATTERNS: Array<{
     pattern: /quota_exceeded|limit.*reached|limite.*atteinte/i,
     friendly: {
       message: "Vous avez atteint votre limite. Reessayez dans quelques minutes ou passez au plan superieur.",
+      messageEn: "You have reached your limit. Try again in a few minutes or move to a higher plan.",
       actionLabel: "Voir les plans",
       actionType: "upgrade",
     },
@@ -76,6 +86,7 @@ const ERROR_PATTERNS: Array<{
     pattern: /generation.*failed|openai|GPT|AI.*error/i,
     friendly: {
       message: "L'IA rencontre un souci temporaire. Reessayez dans quelques secondes.",
+      messageEn: "The AI is having a temporary issue. Try again in a few seconds.",
       actionLabel: "Reessayer",
       actionType: "retry",
     },
@@ -84,6 +95,7 @@ const ERROR_PATTERNS: Array<{
     pattern: /No response body|stream|SSE/i,
     friendly: {
       message: "La generation a ete interrompue. Reessayez votre demande.",
+      messageEn: "The generation was interrupted. Please send your request again.",
       actionLabel: "Reessayer",
       actionType: "retry",
     },
@@ -94,6 +106,7 @@ const ERROR_PATTERNS: Array<{
     pattern: /firestore|firebase.*error|permission.?denied|PERMISSION_DENIED/i,
     friendly: {
       message: "Impossible d'acceder a vos donnees. Rafraichissez la page.",
+      messageEn: "We can't reach your data. Refresh the page.",
       actionLabel: "Rafraichir",
       actionType: "refresh",
     },
@@ -102,6 +115,7 @@ const ERROR_PATTERNS: Array<{
     pattern: /not.?found|introuvable|404|does not exist/i,
     friendly: {
       message: "Ce contenu n'est plus disponible. Il a peut-etre ete supprime.",
+      messageEn: "This content is no longer available. It may have been deleted.",
     },
   },
 
@@ -110,6 +124,7 @@ const ERROR_PATTERNS: Array<{
     pattern: /payment.*failed|card.*declined|carte.*refusee|stripe/i,
     friendly: {
       message: "Le paiement n'a pas abouti. Verifiez vos informations de paiement.",
+      messageEn: "The payment didn't go through. Check your payment details.",
       actionLabel: "Gerer le paiement",
       actionType: "settings",
     },
@@ -120,6 +135,7 @@ const ERROR_PATTERNS: Array<{
     pattern: /linkedin.*error|publication.*failed|echec.*publication/i,
     friendly: {
       message: "La publication a echoue. Verifiez votre connexion LinkedIn et reessayez.",
+      messageEn: "Publishing failed. Check your LinkedIn connection and try again.",
       actionLabel: "Reconnecter",
       actionType: "reconnect",
     },
@@ -128,6 +144,7 @@ const ERROR_PATTERNS: Array<{
     pattern: /linkedin.*token|linkedin.*expire|reconnect.*linkedin/i,
     friendly: {
       message: "Votre connexion LinkedIn a expire. Reconnectez votre compte.",
+      messageEn: "Your LinkedIn connection has expired. Reconnect your account.",
       actionLabel: "Reconnecter",
       actionType: "reconnect",
     },
@@ -138,12 +155,14 @@ const ERROR_PATTERNS: Array<{
     pattern: /file.*too.*large|trop.*lourde?|max.*size|upload.*fail/i,
     friendly: {
       message: "Le fichier est trop volumineux. Reduisez sa taille et reessayez.",
+      messageEn: "The file is too large. Reduce its size and try again.",
     },
   },
   {
     pattern: /format.*non.*support|unsupported.*format|type.*invalide/i,
     friendly: {
       message: "Ce format de fichier n'est pas pris en charge. Essayez un autre format.",
+      messageEn: "This file format isn't supported. Try another format.",
     },
   },
 
@@ -152,6 +171,7 @@ const ERROR_PATTERNS: Array<{
     pattern: /copie|clipboard|copy/i,
     friendly: {
       message: "Impossible de copier. Selectionnez le texte manuellement.",
+      messageEn: "Couldn't copy. Select the text manually.",
     },
   },
 
@@ -160,6 +180,7 @@ const ERROR_PATTERNS: Array<{
     pattern: /date.*futur|past.*date|date.*passee/i,
     friendly: {
       message: "Choisissez une date future pour programmer votre publication.",
+      messageEn: "Pick a future date to schedule your post.",
     },
   },
 
@@ -168,6 +189,7 @@ const ERROR_PATTERNS: Array<{
     pattern: /500|internal.*server|server.*error/i,
     friendly: {
       message: "Nos serveurs rencontrent un probleme. L'equipe est prevenue. Reessayez bientot.",
+      messageEn: "Our servers are having a problem. The team has been notified. Please try again soon.",
       actionLabel: "Reessayer",
       actionType: "retry",
     },
@@ -176,6 +198,7 @@ const ERROR_PATTERNS: Array<{
     pattern: /503|service.*unavailable|maintenance/i,
     friendly: {
       message: "Le service est temporairement indisponible. Reessayez dans quelques minutes.",
+      messageEn: "The service is temporarily unavailable. Try again in a few minutes.",
       actionLabel: "Reessayer",
       actionType: "retry",
     },
@@ -185,6 +208,7 @@ const ERROR_PATTERNS: Array<{
 // Default fallback for unmatched errors
 const DEFAULT_ERROR: FriendlyError = {
   message: "Quelque chose n'a pas fonctionne. Reessayez ou contactez le support si le probleme persiste.",
+  messageEn: "Something went wrong. Try again or contact support if the problem persists.",
   actionLabel: "Reessayer",
   actionType: "retry",
 };
@@ -206,10 +230,30 @@ export function getFriendlyError(error: unknown): FriendlyError {
 }
 
 /**
+ * Language of the interface for messages raised OUTSIDE React (hooks, utils):
+ * French only when the user chose it (posty-language), English otherwise —
+ * English-first is the product default, and a missing value must not show
+ * French to a new English-speaking user.
+ */
+export function uiLanguage(): "fr" | "en" {
+  try {
+    return typeof window !== "undefined" && window.localStorage.getItem("posty-language") === "fr" ? "fr" : "en";
+  } catch {
+    return "en";
+  }
+}
+
+/** Pick the French or English variant of a message for the current UI language. */
+export function localized(fr: string, en: string): string {
+  return uiLanguage() === "fr" ? fr : en;
+}
+
+/**
  * Get just the user-friendly message string (shorthand for simple toast usage).
  */
 export function getFriendlyMessage(error: unknown): string {
-  return getFriendlyError(error).message;
+  const friendly = getFriendlyError(error);
+  return uiLanguage() === "fr" ? friendly.message : (friendly.messageEn ?? friendly.message);
 }
 
 /**

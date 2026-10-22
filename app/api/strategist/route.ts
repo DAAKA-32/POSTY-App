@@ -118,6 +118,10 @@ function buildContextPreamble(ctx: StrategistContext | null, language: "fr" | "e
   return `\n\n${header}\n${lines.join("\n")}`;
 }
 
+// Same reasoning as /api/generate: give the stream an explicit time budget so it
+// is never cut off by the platform default before `done` / `error` is sent.
+export const maxDuration = 300;
+
 export async function POST(request: NextRequest) {
   try {
     const auth = await verifyAuth(request);

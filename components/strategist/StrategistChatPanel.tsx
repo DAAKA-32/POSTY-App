@@ -215,7 +215,7 @@ function Thread() {
   if (!busy) {
     for (let i = messages.length - 1; i >= 0; i--) {
       const m = messages[i];
-      if (m.role === "assistant" && !m.batch && !m.pending && m.content) {
+      if (m.role === "assistant" && !m.batch && !m.pending && !m.streaming && m.content) {
         lastAnswerId = m.id;
         break;
       }
@@ -284,7 +284,7 @@ function MessageRow({
     <StrategistMessageBubble
       role={m.role}
       content={m.content}
-      isStreaming={m.pending === "chat"}
+      isStreaming={m.pending === "chat" || !!m.streaming}
       showActions={isLastAnswer}
       onRegenerate={onRegenerate}
       onTurnIntoPlan={onTurnIntoPlan}

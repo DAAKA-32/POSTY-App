@@ -74,7 +74,16 @@ export default function StrategistMessageBubble({
           ))}
         </span>
       ) : (
-        <StrategistMarkdown content={content} />
+        <>
+          <StrategistMarkdown content={content} />
+          {/* Still receiving: a soft caret says the answer is not finished. */}
+          {isStreaming && (
+            <span
+              aria-hidden
+              className={`inline-block align-middle ml-0.5 w-[2px] h-4 rounded-full bg-gray-400 dark:bg-gray-500 ${reduced ? "" : "animate-pulse"}`}
+            />
+          )}
+        </>
       )}
 
       {showActions && content.length > 0 && (

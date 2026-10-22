@@ -106,7 +106,9 @@ export default function PersistentMobileHeader() {
   // mode + post style. There, the static title becomes the in-navbar mode
   // selector ("Posty Posts ⌄"). Everywhere else keeps the plain page title.
   const isChatRoute =
-    pathname === "/app" || (pathname?.startsWith("/app/c/") ?? false);
+    pathname === "/app" ||
+    pathname === "/app/strategist" ||
+    (pathname?.startsWith("/app/c/") ?? false);
 
   if (!show) return null;
 

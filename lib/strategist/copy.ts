@@ -12,6 +12,8 @@ const plural = (n: number, one: string, many: string) => (n > 1 ? many : one);
 
 const fr = {
   title: "Stratège",
+  postStudio: "Posty Post",
+  backToPostAria: "Revenir à Posty Post",
   active: "Actif",
   activeAria: "Mode autonome actif",
   newChat: "Nouvelle conversation",
@@ -77,6 +79,7 @@ const fr = {
     errorGeneric: "Le Stratège n'a pas pu répondre. Réessaie dans un instant.",
     errorRateLimit: "Tu as atteint la limite pour le moment. Réessaie dans quelques minutes.",
     errorNetwork: "Connexion interrompue. Vérifie ta connexion et réessaie.",
+    errorInterrupted: "La réponse s'est arrêtée avant la fin. Ce qui est arrivé reste affiché : relance pour la terminer.",
   },
 
   card: {
@@ -240,6 +243,8 @@ export type StrategistCopy = typeof fr;
 
 const en: StrategistCopy = {
   title: "Strategist",
+  postStudio: "Posty Post",
+  backToPostAria: "Back to Posty Post",
   active: "Active",
   activeAria: "Autonomous mode on",
   newChat: "New conversation",
@@ -305,6 +310,7 @@ const en: StrategistCopy = {
     errorGeneric: "The Strategist couldn't answer. Try again in a moment.",
     errorRateLimit: "You've hit the limit for now. Try again in a few minutes.",
     errorNetwork: "Connection lost. Check your connection and try again.",
+    errorInterrupted: "The answer stopped before it finished. What arrived stays on screen: send it again to complete it.",
   },
 
   card: {

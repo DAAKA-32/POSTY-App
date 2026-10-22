@@ -23,6 +23,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { PenLine, HelpCircle, ChevronDown, Check } from "lucide-react";
 import StrategistMark from "@/components/strategist/StrategistMark";
 import { useStrategistDrawer } from "@/contexts/StrategistDrawerContext";
+import { localized } from "@/lib/utils/error-messages";
 import { isStrategistEnabled } from "@/lib/config/feature-flags";
 import { useStrategistEligibility } from "@/hooks/strategist/useStrategistEligibility";
 import toast from "@/components/ui/Toast";
@@ -73,9 +74,9 @@ export default function AIModeSwitch({
 }: Props) {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
-  // Strategist drawer is launched from this dropdown as a third row. It's NOT
-  // a chat mode — selecting it opens the slide-in drawer without changing
-  // `aiMode`, then closes the menu.
+  // The Strategist is reached from this dropdown as a third row. It's NOT a
+  // chat mode — selecting it navigates to the /app/strategist workspace without
+  // changing `aiMode`, then closes the menu.
   //
   // Visibility vs clickability are decoupled now: the row is VISIBLE as soon
   // as the feature flag is on, but clicking it is GATED by eligibility:
@@ -239,23 +240,26 @@ export default function AIModeSwitch({
                   activeBg: "bg-amber-500/15",
                   halo: "bg-amber-500/20",
                 }}
-                active={false}
+                active={strategist.isOpen}
                 onClick={() => {
                   setOpen(false);
                   if (strategistEligibility.reason === "no-access") {
                     toast.info(
-                      "Le Stratège est réservé aux entreprises. Contacte-nous pour activer ton compte.",
+                      localized(
+                        "Le Stratège est réservé aux entreprises. Contacte-nous pour activer ton compte.",
+                        "The Strategist is reserved for businesses. Contact us to activate your account."
+                      ),
                       { duration: 5000 }
                     );
                     return;
                   }
                   if (strategistEligibility.reason === "loading") {
-                    // Transient — silently bail rather than opening a drawer
+                    // Transient — silently bail rather than opening a workspace
                     // that would just show a spinner.
                     return;
                   }
-                  // ok OR no-linkedin → open the drawer; in the no-linkedin
-                  // case the drawer renders the Connect-LinkedIn screen
+                  // ok OR no-linkedin → go to the Strategist workspace; in the
+                  // no-linkedin case it renders the Connect-LinkedIn screen
                   // (recoverable in one click).
                   strategist.open();
                 }}

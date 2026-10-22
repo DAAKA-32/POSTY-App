@@ -39,8 +39,18 @@ export type GenerationResult =
   | { ok: true; image: GeneratedImage; images: GeneratedImage[] }
   | { ok: false; error: GenerationError };
 
+/** The route's maxDuration is 45 s; the client gives up a little later so a
+ *  platform 504 (non-JSON) is normally what it sees first, and a hung socket
+ *  can never leave the loader up forever. */
+const CLIENT_TIMEOUT_MS = 55_000;
+
 export function useImageGeneration() {
-  const [isLoading, setIsLoading] = useState(false);
+  // A COUNT of requests in flight, not a boolean: with two generations running
+  // (post + visual in parallel, or a retry overlapping another) the first one
+  // to finish used to switch the shared flag off while the second was still
+  // working.
+  const [inFlight, setInFlight] = useState(0);
+  const isLoading = inFlight > 0;
   const [result, setResult] = useState<GeneratedImage | null>(null);
   const [quota, setQuota] = useState<QuotaInfo | null>(null);
   const [error, setError] = useState<GenerationError | null>(null);
@@ -62,8 +72,14 @@ export function useImageGeneration() {
       // toast because they imply a side-action (upgrade) the inline card
       // alone can't carry.
       const silent = opts?.silent === true;
-      setIsLoading(true);
+      setInFlight((n) => n + 1);
       setError(null);
+      const controller = new AbortController();
+      let timedOut = false;
+      const timer = setTimeout(() => {
+        timedOut = true;
+        controller.abort();
+      }, CLIENT_TIMEOUT_MS);
       try {
         // Defensive clipping — `/api/image/generate` enforces brief ≤ 800
         // and postContext ≤ 2000 (Zod schema). LinkedIn posts routinely
@@ -100,6 +116,7 @@ export function useImageGeneration() {
             method: "POST",
             headers: { "Content-Type": "application/json", ...headers },
             body,
+            signal: controller.signal,
           });
           const json = await response.json().catch(() => ({}));
           return { ok: response.ok, status: response.status, data: json } as const;
@@ -223,13 +240,20 @@ export function useImageGeneration() {
         if (data.quota) setQuota(data.quota);
         return { ok: true, image: images[0], images };
       } catch (e) {
+        if (timedOut) {
+          const err: GenerationError = { code: "timeout", message: "La génération a pris trop de temps." };
+          setError(err);
+          if (!silent) toast.error(err.message + " Réessaie.");
+          return { ok: false, error: err };
+        }
         const message = e instanceof Error ? e.message : "Réseau indisponible.";
         const err: GenerationError = { code: "network", message };
         setError(err);
         if (!silent) toast.error("Connexion impossible. Vérifie ton réseau.");
         return { ok: false, error: err };
       } finally {
-        setIsLoading(false);
+        clearTimeout(timer);
+        setInFlight((n) => Math.max(0, n - 1));
       }
     },
     []

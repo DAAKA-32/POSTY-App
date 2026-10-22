@@ -131,6 +131,24 @@ export const settleVariants: Variants = {
   },
 };
 
+// ─── Step swap — views inside a modal / bottom sheet ──────────────────────
+
+/**
+ * Props for the views of a multi-step modal or sheet (compose ⇄ schedule,
+ * date ⇄ time…), used inside <AnimatePresence mode="wait">.
+ *
+ * The old swaps faded each view to opacity 0 before the next one faded in, so
+ * the panel (a big white surface) showed EMPTY for a beat — read by users as a
+ * white flash. Here a view only dims to 40% while it slides a few pixels, so
+ * the panel always holds content. `side` is the direction the view enters
+ * from and leaves toward (-1 left, 1 right, 0 = no slide).
+ */
+export const stepSwap = (side: -1 | 0 | 1 = 0) => ({
+  initial: { x: 14 * side, opacity: 0.4 },
+  animate: { x: 0, opacity: 1, transition: { duration: dur.fast, ease: ease.enter } },
+  exit: { x: 14 * side, opacity: 0.4, transition: { duration: dur.instant, ease: ease.exit } },
+});
+
 // ─── Variants — icon crossfade ─────────────────────────────────────────────
 
 /**

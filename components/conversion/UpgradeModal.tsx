@@ -168,7 +168,7 @@ export default function UpgradeModal({ isOpen, onClose, trigger = "quota" }: Upg
                 {/* Secondary action or info */}
                 {currentContent.secondary && (
                   <Link
-                    href="/pricing"
+                    href="/subscription"
                     className="block w-full py-3 bg-dark-elevated hover:bg-dark-hover text-text-secondary hover:text-white font-medium rounded-xl text-center transition-colors border border-dark-border"
                   >
                     {currentContent.secondary}

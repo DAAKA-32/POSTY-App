@@ -13,8 +13,8 @@ import { RedditProvider } from "@/contexts/RedditContext";
 import { ThreadszProvider } from "@/contexts/ThreadszContext";
 import { SchedulingProvider } from "@/contexts/SchedulingContext";
 import PersistentMobileHeader from "@/components/layout/PersistentMobileHeader";
+import { StrategistSessionProvider } from "@/components/strategist/StrategistSession";
 import {
-  StrategistDrawer,
   AutonomousBatchBanner,
   GlobalCommandPalette,
 } from "@/components/providers/DeferredLayoutWidgets";
@@ -24,7 +24,7 @@ import {
  *
  * PERF (C3/I7): the heavy, Firebase-backed providers — Quota, the 10 platform
  * connection providers, Scheduling, SidebarPosts — plus the app-only overlays
- * (mobile header, Strategist drawer, command palette) live HERE, not in the
+ * (mobile header, Strategist session, command palette) live HERE, not in the
  * root layout. Public pages (landing, login, signup, pricing, business, legal,
  * SEO) no longer mount this provider tree, so they no longer pay for its module
  * graph or its Firestore listeners on first load.
@@ -35,9 +35,11 @@ import {
  * (route groups are URL-transparent) and provider instances persist across
  * navigation WITHIN the group (dashboard → profile does not remount them).
  *
- * Nesting mirrors the previous root layout exactly (StrategistDrawer +
- * AutonomousBatchBanner stay inside LinkedInProvider — useStrategistEligibility
- * calls useLinkedIn(); GlobalCommandPalette stays innermost with the page).
+ * The Strategist CONVERSATION (StrategistSessionProvider) is mounted here, around
+ * the pages, so it survives Posty Post ⇄ Posty Stratège switches AND visits to
+ * other pages (e.g. a plan's "view calendar" link). Only the workspace UI is
+ * loaded on demand (app/(app)/app/strategist/page.tsx). AutonomousBatchBanner
+ * stays inside LinkedInProvider; GlobalCommandPalette stays innermost.
  */
 export default function AuthenticatedLayout({
   children,
@@ -59,8 +61,10 @@ export default function AuthenticatedLayout({
                         <RedditProvider>
                           <ThreadszProvider>
                             <SchedulingProvider>
-                              {children}
-                              <GlobalCommandPalette />
+                              <StrategistSessionProvider>
+                                {children}
+                                <GlobalCommandPalette />
+                              </StrategistSessionProvider>
                             </SchedulingProvider>
                           </ThreadszProvider>
                         </RedditProvider>
@@ -71,7 +75,6 @@ export default function AuthenticatedLayout({
               </BlueskyProvider>
             </ThreadsProvider>
           </FacebookProvider>
-          <StrategistDrawer />
           <AutonomousBatchBanner />
         </LinkedInProvider>
       </QuotaProvider>

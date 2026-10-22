@@ -63,16 +63,20 @@ export async function findPhoto(query: string): Promise<AssetPhoto | null> {
  */
 export async function fetchPhotoBytes(photo: AssetPhoto): Promise<Buffer | null> {
   let res: Response;
+  let buf: Buffer;
   try {
     res = await fetch(photo.url, {
       headers: { Accept: "image/*" },
       next: { revalidate: 86400 }, // 24h CDN cache — same photo URL = same bytes
+      // Bounded (headers AND body): a stalled download must not eat the route's
+      // 45 s budget. The body read sits inside the same try for that reason.
+      signal: AbortSignal.timeout(8_000),
     });
+    if (!res.ok) return null;
+    buf = Buffer.from(await res.arrayBuffer());
   } catch {
     return null;
   }
-  if (!res.ok) return null;
-  const buf = Buffer.from(await res.arrayBuffer());
 
   try {
     return await sharp(buf)

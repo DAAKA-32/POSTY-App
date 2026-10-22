@@ -5,10 +5,10 @@
  *
  * The weekly Cloud Function sets `users/{uid}.pendingAutoBatchId`; a snapshot
  * listener shows this banner while the app is open. "View the plan" calls
- * openBatch(id): the drawer opens AND the plan is queued in the drawer context,
- * where the conversation picks it up once mounted. (It used to fire a window
- * event before the panel existed, so the plan was lost and the drawer opened
- * empty.) The pending field is cleared on open or dismiss.
+ * openBatch(id): the Strategist workspace opens AND the plan is queued in the
+ * context, where the conversation picks it up once mounted. The pending field
+ * is cleared on open or dismiss. While the user is already ON the workspace the
+ * banner would cover its composer, so the plan is opened directly instead.
  */
 
 import { useEffect, useState } from "react";
@@ -25,7 +25,7 @@ import { focusRing } from "./ui";
 
 export default function AutonomousBatchBanner() {
   const { user } = useAuth();
-  const { openBatch } = useStrategistDrawer();
+  const { openBatch, isOpen } = useStrategistDrawer();
   const { c } = useStrategistCopy();
   const [pendingBatchId, setPendingBatchId] = useState<string | null>(null);
   const [hidden, setHidden] = useState(false);
@@ -65,7 +65,16 @@ export default function AutonomousBatchBanner() {
     void clearPending();
   };
 
-  const visible = !!pendingBatchId && !hidden;
+  // Already in the workspace: show the plan in the conversation right away.
+  useEffect(() => {
+    if (!isOpen || !pendingBatchId || hidden) return;
+    openBatch(pendingBatchId);
+    setHidden(true);
+    void clearPending();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, pendingBatchId, hidden]);
+
+  const visible = !!pendingBatchId && !hidden && !isOpen;
 
   return (
     <AnimatePresence>

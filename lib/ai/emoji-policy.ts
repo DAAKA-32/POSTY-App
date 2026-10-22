@@ -2,19 +2,32 @@
  * Emoji policy — the ONE source of truth for how Posty uses emojis in every
  * piece of generated / improved content.
  *
- * Why centralized: the emoji rules used to live copy-pasted (and contradictory)
- * inside each system prompt in prompt-builder.ts (8 blocks), in openai/service.ts,
- * and in the Strategist brief. They were timid ("1 à 3 max", "sparingly") which
- * pushed the model toward 0–1 emoji. This module replaces all of them with a
- * single, richer, CONTEXTUAL directive: emojis as an editorial tool (like line
- * breaks or bold), calibrated to tone / content-type / the author's own habits,
- * with a real anti-"AI slop" guardrail.
+ * Two voices, one module:
+ *   - `emojiDirective`              → POSTS the author publishes under their own
+ *                                      name (lively, but calibrated to their voice
+ *                                      and guarded against "AI slop").
+ *   - `conversationalEmojiDirective` → Posty's OWN replies in the chat (assistant,
+ *                                      social, Strategist advice): the product's
+ *                                      signature — visibly warmer and more
+ *                                      structured, with emojis on titles, list
+ *                                      items and the call to action.
  *
- * Consumed by (all LIVE post-writing paths):
+ * History: the rules used to live copy-pasted (and contradictory) inside each
+ * system prompt, then a first centralisation kept them timid ("0 is a good
+ * choice", 1–2 / 2–4 / 3–6) which pushed the model to 0–1 emoji — replies read
+ * flat and impersonal on every plan. Density is raised on purpose (2026-10-22);
+ * the anti-slop guardrails stay (no emoji on every line, no stacking, no
+ * reflex 🚀), because a post full of decoration reads as machine-written.
+ *
+ * Every plan (Free / Pro / Max) gets the same directive: plans differ in what
+ * they can DO, not in how alive the replies are.
+ *
+ * Consumed by (all LIVE paths):
  *   - buildOptimizedPrompt (prompt-builder.ts) → chat post-gen + Strategist +
  *     ready-posts (the single shared engine, post-generator.ts)
- *   - buildAssistantPrompt (prompt-builder.ts) → the conversational assistant /
- *     "améliore ce texte" path (/api/generate → generateAssistance)
+ *   - buildAssistantPrompt (prompt-builder.ts) → the conversational assistant
+ *   - /api/generate generateConversational (SOCIAL replies)
+ *   - lib/ai/strategist-prompt.ts → the Strategist advisor chat
  *   - /api/improve (IMPROVE_PROMPT) → the dedicated rewrite route, via
  *     emojiImproveDirective (preserve-the-text variant)
  *
@@ -23,36 +36,64 @@
  *     Bluesky / … — short microblog posts with their own emoji culture and hard
  *     length caps; the LinkedIn-calibrated density here would be wrong.
  *   - generateSeedComment: a short first-comment algo booster; its deliberate
- *     "at most 1 subtle emoji" already matches the parsimonious philosophy.
+ *     "at most 1 subtle emoji" fits a comment.
  *
- * The directive is written to be position-agnostic ("selon le ton de l'auteur
- * précisé dans ce prompt") so it can be appended anywhere in the system prompt
+ * The directives are written to be position-agnostic ("selon le ton de l'auteur
+ * précisé dans ce prompt") so they can be appended anywhere in the system prompt
  * without depending on where the voice profile sits.
  */
 
 export type EmojiLang = "fr" | "en";
 
 /**
- * The canonical emoji directive, injected into the system prompt of every
- * generator. Kept tight on purpose — the surrounding prompt is already large.
+ * The canonical emoji directive for POSTS, injected into the system prompt of
+ * every post generator. Kept tight on purpose — the surrounding prompt is
+ * already large.
  */
 export function emojiDirective(language: EmojiLang): string {
   if (language === "fr") {
-    return `\n\nEMOJIS — outil éditorial, jamais décoratif :
-- Un emoji ne se met que s'il AJOUTE quelque chose (attention, structure, émotion juste), au même titre qu'un retour à la ligne ou du gras. Le post doit rester parfait sans eux — ils accentuent, ils ne remplacent jamais le sens. 0 emoji est un bon choix si aucun ne s'impose ; n'en ajoute JAMAIS pour "faire plus engageant" ni pour atteindre un nombre.
-- Dosage indicatif (pas un quota) : post court 1–2 · moyen 2–4 · long 3–6 max.
-- Calibre selon le ton et le style de l'auteur précisés dans ce prompt : formel / institutionnel / très technique → très peu ou aucun ; accessible / personnel / storytelling / pédagogique → quelques-uns, naturels. Si la voix de l'auteur en utilise peu, reste sobre — respecte sa signature plutôt que d'imposer la tienne.
-- Rôle possible (choisis l'emoji qui colle VRAIMENT au sens, jamais une liste figée) : ouvrir une idée 👉, point clé 💡/⚡, résultat 📈, problème/risque ⚠️, objectif ou conclusion 🎯, étapes 1️⃣ 2️⃣ 3️⃣, question 👀/❓, action/CTA 👇/💬, réflexion 🧠. Varie le vocabulaire (💡 🧠 🎯 ⚡ 👉 📌 🔎 📈 ⚠️ ✅ ❓ 👀 🌱 🏆 ⏱️ 🤝 …) — n'utilise pas toujours 🚀 🔥 💡.
-- Placement : en début de ligne pour introduire une idée/une puce, OU en fin d'une phrase forte, OU sur un CTA. Jamais au milieu d'une proposition, jamais un emoji à la fin de chaque phrase.
-- INTERDIT (marqueurs "AI slop") : un emoji sur chaque ligne ; empilements (🔥🔥🔥) ; répéter le même emoji dans le post ; mettre 🚀 juste parce que c'est un post business ; 🔥 sur chaque affirmation ; transformer chaque puce en liste d'emojis ; modifier une formulation uniquement pour caser un emoji.`;
+    return `\n\nEMOJIS — ils donnent de la vie au post et guident l'œil (comme un retour à la ligne ou du gras) :
+- Utilise-les vraiment : un post sans emoji paraît froid et mécanique. Dosage visé : post court 2–4 · moyen 5–8 · long 6–10. Mets-en un dans l'accroche ou la toute première ligne.
+- Calibre selon le ton et le style de l'auteur précisés dans ce prompt : formel / institutionnel / très technique → bas de la fourchette (2–4 au total) ; accessible / personnel / storytelling / pédagogique → milieu à haut de la fourchette. Si la voix de l'auteur en utilise nettement moins, reste dans le bas — respecte sa signature plutôt que d'imposer la tienne.
+- Rôle possible (choisis l'emoji qui colle VRAIMENT au sens) : ouvrir une idée 👉, point clé 💡/⚡, résultat 📈, problème/risque ⚠️, objectif ou conclusion 🎯, étapes 1️⃣ 2️⃣ 3️⃣, question 👀/❓, action/CTA 👇/💬, réflexion 🧠, lancement/croissance 🚀, validation ✅. Varie le vocabulaire (💡 🧠 🎯 ⚡ 👉 📌 🔎 📈 ⚠️ ✅ ❓ 👀 🌱 🏆 ⏱️ 🤝 🛠️ …).
+- Listes : un repère par item est bienvenu, avec un style cohérent par liste (1️⃣ 2️⃣ 3️⃣, ou des emojis variés qui collent à chaque item) — mais pas le même emoji répété sur toutes les puces.
+- Placement : en début de ligne pour introduire une idée/une puce, OU en fin d'une phrase forte, OU sur un CTA. Jamais au milieu d'une proposition.
+- INTERDIT (marqueurs "AI slop") : un emoji à la fin de chaque phrase ou sur chaque ligne de texte ; empilements (🔥🔥🔥) ; mettre 🚀 ou 🔥 par réflexe ; modifier une formulation uniquement pour caser un emoji. Le post doit rester parfaitement lisible sans eux.`;
   }
-  return `\n\nEMOJIS — an editorial tool, never decoration:
-- Use an emoji only when it ADDS something (attention, structure, the right emotion), exactly like a line break or bold. The post must read perfectly without them — they accentuate, they never replace meaning. 0 emojis is a good choice when none earns its place; NEVER add them "to feel more engaging" or to hit a count.
-- Rough dosage (not a quota): short post 1–2 · medium 2–4 · long 3–6 max.
-- Calibrate to the author's tone and style defined in this prompt: formal / institutional / highly technical → very few or none; approachable / personal / storytelling / educational → a few, natural ones. If the author's voice uses few emojis, stay sober — match their signature rather than imposing one.
-- Possible roles (pick the emoji that TRULY fits the meaning, never a fixed list): open an idea 👉, key point 💡/⚡, result 📈, problem/risk ⚠️, goal or conclusion 🎯, steps 1️⃣ 2️⃣ 3️⃣, question 👀/❓, action/CTA 👇/💬, reflection 🧠. Vary the vocabulary (💡 🧠 🎯 ⚡ 👉 📌 🔎 📈 ⚠️ ✅ ❓ 👀 🌱 🏆 ⏱️ 🤝 …) — don't always reach for 🚀 🔥 💡.
-- Placement: at the start of a line to introduce an idea/bullet, OR at the end of a strong sentence, OR on a CTA. Never mid-clause, never one at the end of every sentence.
-- FORBIDDEN ("AI slop" tells): an emoji on every line; stacking (🔥🔥🔥); repeating the same emoji across the post; adding 🚀 just because it's a business post; 🔥 on every claim; turning every bullet into an emoji list; changing wording only to fit an emoji.`;
+  return `\n\nEMOJIS — they bring the post to life and guide the eye (like a line break or bold):
+- Use them for real: a post with no emoji reads cold and mechanical. Target density: short post 2–4 · medium 5–8 · long 6–10. Put one in the hook or the very first line.
+- Calibrate to the author's tone and style defined in this prompt: formal / institutional / highly technical → low end (2–4 in total); approachable / personal / storytelling / educational → middle to high end. If the author's voice clearly uses fewer, stay at the low end — match their signature rather than imposing one.
+- Possible roles (pick the emoji that TRULY fits the meaning): open an idea 👉, key point 💡/⚡, result 📈, problem/risk ⚠️, goal or conclusion 🎯, steps 1️⃣ 2️⃣ 3️⃣, question 👀/❓, action/CTA 👇/💬, reflection 🧠, launch/growth 🚀, validation ✅. Vary the vocabulary (💡 🧠 🎯 ⚡ 👉 📌 🔎 📈 ⚠️ ✅ ❓ 👀 🌱 🏆 ⏱️ 🤝 🛠️ …).
+- Lists: one marker per item is welcome, with one consistent style per list (1️⃣ 2️⃣ 3️⃣, or varied emojis that fit each item) — but not the same emoji repeated on every bullet.
+- Placement: at the start of a line to introduce an idea/bullet, OR at the end of a strong sentence, OR on a CTA. Never mid-clause.
+- FORBIDDEN ("AI slop" tells): an emoji at the end of every sentence or on every line of text; stacking (🔥🔥🔥); reaching for 🚀 or 🔥 by reflex; changing wording only to fit an emoji. The post must stay perfectly readable without them.`;
+}
+
+/**
+ * Directive for Posty's OWN conversational replies (assistant, social small
+ * talk, Strategist advice). This is where the product's personality lives, so
+ * the density is visibly higher than in a post and the formatting is part of
+ * the instruction: short titled sections, short paragraphs, emoji'd list items.
+ */
+export function conversationalEmojiDirective(language: EmojiLang): string {
+  if (language === "fr") {
+    return `\n\nSTYLE VIVANT — la signature de Posty : des réponses chaleureuses, structurées, jamais froides :
+- Emojis visibles et réguliers : une réponse moyenne en contient AU MINIMUM 5 (idéalement 6 à 9), une réponse longue jusqu'à 12, une réponse très courte 1 à 3. Compte-les avant de répondre.
+- Structure type, à suivre : ① une phrase d'accroche avec un emoji (jamais de réponse qui démarre à froid) ; ② chaque titre de section précédé d'un emoji ; ③ un emoji sur les puces / étapes importantes ; ④ une phrase de conclusion ou une question d'appel à l'action avec un emoji (👉, ✅, 💬…).
+- Mise en forme : titres courts précédés d'un emoji, paragraphes de 1 à 3 phrases, listes à puces ou numérotées pour les conseils et les étapes, **gras** sur l'idée clé.
+- Choisis l'emoji qui colle au sens : 🚀 croissance / lancement · 🎯 objectif / ciblage · 💡 idée / conseil · ✍️ rédaction · 📈 performance · 🔥 idée forte / opportunité · ✅ validation / action terminée · 🧠 réflexion stratégique · ⚡ action rapide / optimisation · 📣 visibilité · 🤝 relations / prospection · 📊 analyse / résultats · 💬 conversation / message · 🛠️ amélioration concrète. Varie-les : pas le même emoji sur toutes les puces d'une liste.
+- Ton : dynamique, encourageant, concret, orienté action. Pas d'introduction qui se répète d'une réponse à l'autre, pas d'encouragement artificiel.
+- Reste sobre (0 à 2 emojis, ton posé) pour un sujet juridique, médical, financier sensible ou très technique, pour un message d'erreur ou de refus, ou si l'utilisateur demande un ton formel.
+- Pas d'emoji à chaque phrase, jamais d'empilement (🔥🔥🔥) : la réponse doit rester parfaitement lisible sans les emojis.`;
+  }
+  return `\n\nLIVELY STYLE — Posty's signature: warm, structured replies, never cold:
+- Visible, regular emojis: a medium reply contains AT LEAST 5 (ideally 6 to 9), a long one up to 12, a very short one 1 to 3. Count them before you answer.
+- Default structure, follow it: ① one hook sentence with an emoji (never a cold open); ② every section title led by an emoji; ③ an emoji on key bullets / steps; ④ a closing sentence or a call-to-action question with an emoji (👉, ✅, 💬…).
+- Formatting: short titles led by an emoji, paragraphs of 1 to 3 sentences, bulleted or numbered lists for advice and steps, **bold** on the key idea.
+- Pick the emoji that fits the meaning: 🚀 growth / launch · 🎯 goal / targeting · 💡 idea / tip · ✍️ writing · 📈 performance · 🔥 strong idea / opportunity · ✅ validation / done · 🧠 strategic thinking · ⚡ quick action / optimization · 📣 visibility · 🤝 relationships / outreach · 📊 analysis / results · 💬 conversation / message · 🛠️ concrete improvement. Vary them: not the same emoji on every bullet of a list.
+- Tone: dynamic, encouraging, concrete, action-oriented. No intro that repeats from one reply to the next, no artificial cheerleading.
+- Stay sober (0 to 2 emojis, calm tone) for legal, medical, sensitive financial or highly technical topics, for an error or refusal message, or when the user asks for a formal tone.
+- No emoji on every sentence, never stacked (🔥🔥🔥): the reply must stay perfectly readable without them.`;
 }
 
 /**

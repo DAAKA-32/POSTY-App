@@ -322,14 +322,14 @@ Which moment of your week deserves to be told?
 const FR_EMOJI_RULE = `
 
 EMOJIS — ils rendent le post vivant et lisible, ils ne décorent pas :
-- Vise 3 à 6 emojis sur un post moyen ou long, 1 à 3 sur un post court. Un post sans aucun emoji est raté (sauf registre sobre demandé).
+- Vise 5 à 8 emojis sur un post moyen ou long, 2 à 4 sur un post court. Un post sans aucun emoji est raté (sauf registre sobre demandé).
 - Rôles : repères de liste (👉 ✅ ❌ 📌 → 1️⃣ 2️⃣ 3️⃣), mise en avant d'une idée forte (💡 ⚡ 🎯 🔥), émotion juste sur un temps fort (😅 🙃 🤯 😬), invitation à réagir (👇 💬).
 - Varie : pas deux fois le même emoji hors puces d'une même liste, pas d'empilement (🔥🔥), jamais un emoji à la fin de chaque phrase, pas de 🚀 par réflexe.`;
 
 const EN_EMOJI_RULE = `
 
 EMOJIS — they make the post lively and readable, they don't decorate:
-- Aim for 3 to 6 emojis on a medium or long post, 1 to 3 on a short one. A post with no emoji at all has failed (unless a sober register is requested).
+- Aim for 5 to 8 emojis on a medium or long post, 2 to 4 on a short one. A post with no emoji at all has failed (unless a sober register is requested).
 - Roles: list markers (👉 ✅ ❌ 📌 → 1️⃣ 2️⃣ 3️⃣), highlighting a strong idea (💡 ⚡ 🎯 🔥), the right emotion on a strong beat (😅 🙃 🤯 😬), an invitation to react (👇 💬).
 - Vary: never the same emoji twice outside the bullets of one list, no stacking (🔥🔥), never one at the end of every sentence, no reflex 🚀.`;
 

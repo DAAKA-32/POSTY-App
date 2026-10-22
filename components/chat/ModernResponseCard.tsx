@@ -13,6 +13,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { getAuthHeaders } from "@/lib/api/client";
 import { PlanType } from "@/lib/config/plans";
 import PostInsightsModal from "./PostInsightsModal";
+import AttachedVisualPlaceholder from "./AttachedVisualPlaceholder";
 import { generatePostInsights } from "@/lib/services/generateInsights";
 
 /**
@@ -629,34 +630,7 @@ export const ModernResponseCard = memo(function ModernResponseCard({
         {/* Visual-still-generating skeleton — capped to the same max-w-md
             rhythm as the final hero so layout doesn't snap when the image
             lands. A short shimmer band; the full hero reveals on resolve. */}
-        {!effectiveVisual && attachedImageLoading && (
-          <div className="px-4 pt-3 pb-1 border-t border-gray-100 dark:border-dark-border/30">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.25 }}
-              className="
-                relative max-w-md mx-auto w-full aspect-square overflow-hidden
-                rounded-xl
-                bg-gradient-to-br from-gray-100 to-gray-200
-                dark:from-dark-elevated dark:to-dark-border
-                border border-gray-200 dark:border-dark-border
-              "
-              aria-label={t.chat.visualGenerating}
-            >
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 dark:via-white/10 to-transparent"
-                animate={{ x: ["-100%", "100%"] }}
-                transition={{ duration: 1.6, repeat: Infinity, ease: "linear" }}
-              />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-[11px] uppercase tracking-wider text-text-secondary/80 font-medium">
-                  {t.chat.visualInProgress}
-                </span>
-              </div>
-            </motion.div>
-          </div>
-        )}
+        {!effectiveVisual && attachedImageLoading && <AttachedVisualPlaceholder />}
 
         {/* Attached visual(s) — LinkedIn-style media attachment, capped to
             max-w-md (~448px) so it matches the standalone <GeneratedImageVariants>
@@ -1285,7 +1259,7 @@ function AddVisualPicker({ onPick }: { onPick: (count: 1 | 2 | 3) => void }) {
             onClick={() => onPick(n)}
             whileHover={{ y: -1 }}
             whileTap={{ scale: 0.96 }}
-            aria-label={`Générer ${n} visuel${n > 1 ? "s" : ""}`}
+            aria-label={t.chat.generateVisualsAria.replace("{n}", String(n))}
             className="
               flex-1 flex items-center justify-center
               py-2 rounded-lg
@@ -1304,7 +1278,7 @@ function AddVisualPicker({ onPick }: { onPick: (count: 1 | 2 | 3) => void }) {
         ))}
       </div>
       <p className="mt-1.5 text-[10.5px] text-text-muted px-1">
-        Choisis le nombre de variantes à générer · 1 crédit visuel.
+        {t.chat.pickVariantCountHint}
       </p>
     </motion.div>
   );

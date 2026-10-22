@@ -16,7 +16,7 @@
  */
 
 /**
- * Marketing Strategist drawer + FAB + /strategist route.
+ * Marketing Strategist workspace (/app/strategist) + FAB + /strategist redirect.
  *
  * Why gated: feature is shipped in the codebase but not yet announced; we
  * don't want production users to discover it via the bottom-right FAB before

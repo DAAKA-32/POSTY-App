@@ -1,15 +1,7 @@
 "use client";
 
 import { toDate } from "@/lib/utils/timestamp";
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  ReactNode,
-  useCallback,
-  useMemo,
-} from "react";
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback, useMemo, useRef } from "react";
 import { useAuth } from "./AuthContext";
 import { useSubscription } from "./SubscriptionContext";
 import {
@@ -61,6 +53,8 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
   const { canSchedulePosts, currentPlan, isTestMode } = useSubscription();
   const [scheduledPosts, setScheduledPosts] = useState<ScheduledPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  // True once the list has been read at least once (see loadScheduledPosts).
+  const hasLoadedRef = useRef(false);
   const [isUploading, setIsUploading] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
 
@@ -76,12 +70,17 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
       setScheduledPosts([]);
       setPendingCount(0);
       setIsLoading(false);
+      hasLoadedRef.current = false;
       return;
     }
 
-    setIsLoading(true);
+    // Only the FIRST load shows the full-page spinner. Later refreshes (after
+    // scheduling, rescheduling, a live status change) are silent: swapping a
+    // list that is already on screen for a spinner and back was a visible flash.
+    if (!hasLoadedRef.current) setIsLoading(true);
     try {
       const posts = await readWithAuthRetry(() => getScheduledPosts(user.uid));
+      hasLoadedRef.current = true;
       setScheduledPosts(posts);
       // Derive the upcoming count from the already-fetched list instead of
       // firing a second Firestore query on the same collection (getScheduledPosts

@@ -50,6 +50,8 @@ export async function searchPexels(
     res = await fetch(`https://api.pexels.com/v1/search?${params.toString()}`, {
       headers: { Authorization: key },
       next: { revalidate: 3600 },
+      // See unsplash.ts: bounded so a slow provider can't exhaust the route budget.
+      signal: AbortSignal.timeout(6_000),
     });
   } catch {
     return null;

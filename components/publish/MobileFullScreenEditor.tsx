@@ -113,13 +113,21 @@ export default function MobileFullScreenEditor({
     };
   }, [isOpen]);
 
+  // Latest cancel handler, read through a ref. The parent passes an inline
+  // `onClose`, so `handleCancel` changes identity on every parent render. As an
+  // effect dependency that re-ran the history effect below: its cleanup called
+  // history.back(), whose popstate hit the NEW listener and closed the editor
+  // by itself (and flashed the sheet underneath).
+  const handleCancelRef = useRef(handleCancel);
+  handleCancelRef.current = handleCancel;
+
   // Handle back button / gesture on mobile
   useEffect(() => {
     if (!isOpen) return;
 
     const handlePopState = (e: PopStateEvent) => {
       e.preventDefault();
-      handleCancel();
+      handleCancelRef.current();
     };
 
     // Push a dummy state so back button closes editor instead of navigating
@@ -133,7 +141,7 @@ export default function MobileFullScreenEditor({
         window.history.back();
       }
     };
-  }, [isOpen, handleCancel]);
+  }, [isOpen]);
 
   const charCount = localContent.length;
   const isModified = localContent !== content;

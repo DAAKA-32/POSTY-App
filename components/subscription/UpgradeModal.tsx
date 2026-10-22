@@ -36,7 +36,7 @@ export default function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
 
   const handleUpgrade = () => {
     onClose();
-    router.push("/pricing");
+    router.push("/subscription");
   };
 
   return (

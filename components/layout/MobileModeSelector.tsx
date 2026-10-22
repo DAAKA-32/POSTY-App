@@ -12,7 +12,7 @@
  *   MODE  → Posts (→ Business / Storytelling) · Support · Strategist
  *
  * The trigger reads "Posty Posts ⌄" / "Posty Support ⌄", and "Posty Strategist"
- * while the Strategist drawer is open. Tapping opens a premium popover; picking
+ * while the Strategist workspace is open. Tapping opens a premium popover; picking
  * a mode closes it, picking a post style keeps it open (it's a refinement of
  * the already-selected Posts mode).
  */
@@ -62,8 +62,9 @@ export default function MobileModeSelector() {
 
   const copy = COPY[language === "fr" ? "fr" : "en"];
 
-  // The Strategist is a drawer, not a persona — but while it's open we surface
-  // it as the active mode so the navbar honestly reflects what the user sees.
+  // The Strategist is its own workspace (/app/strategist), not a chat persona:
+  // while the user is on it we surface it as the active mode so the navbar
+  // honestly reflects what they see.
   const activeMode: ActiveMode = strategist.isOpen ? "strategist" : aiMode;
   const modeLabel =
     activeMode === "strategist" ? "Strategist" : activeMode === "support" ? "Support" : "Posts";
@@ -98,8 +99,8 @@ export default function MobileModeSelector() {
   const selectMode = (next: "posts" | "support") => {
     const changed = next !== aiMode || strategist.isOpen;
     setAiMode(next);
-    // If the Strategist drawer was open, picking a chat persona means the user
-    // wants the chat back — close the drawer so it doesn't stay over the page.
+    // On the Strategist workspace, picking a chat persona means the user wants
+    // the studio back — close() navigates to /app.
     if (strategist.isOpen) strategist.close();
     // Only close on a real switch. Re-tapping the already-active Posts row keeps
     // the popover open so the user can reach its inline format toggle.
@@ -108,7 +109,7 @@ export default function MobileModeSelector() {
 
   const openStrategist = () => {
     setOpen(false);
-    // The drawer owns its own access / connect-LinkedIn gating screens.
+    // The workspace owns its own access / connect-LinkedIn gating screens.
     strategist.open();
   };
 

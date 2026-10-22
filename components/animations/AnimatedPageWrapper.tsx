@@ -8,6 +8,10 @@ interface AnimatedPageWrapperProps {
   children: ReactNode;
   delay?: number;
   className?: string;
+  /** Slide in WITHOUT fading from transparent. A page-level fade from opacity 0
+   *  leaves the shell's bare gradient on screen for the whole animation, which
+   *  reads as a white flash on every navigation. */
+  soft?: boolean;
 }
 
 /**
@@ -18,19 +22,20 @@ export function AnimatedPageWrapper({
   children,
   delay = 0,
   className = "",
+  soft = false,
 }: AnimatedPageWrapperProps) {
   const prefersReducedMotion = useReducedMotion();
 
   const variants: Variants = {
     hidden: {
-      opacity: 0,
-      y: prefersReducedMotion ? 0 : 20,
+      opacity: soft ? 1 : 0,
+      y: prefersReducedMotion ? 0 : soft ? 8 : 20,
     },
     visible: {
       opacity: 1,
       y: 0,
       transition: {
-        duration: prefersReducedMotion ? 0 : 0.4,
+        duration: prefersReducedMotion ? 0 : soft ? 0.25 : 0.4,
         delay: prefersReducedMotion ? 0 : delay,
         ease: [0.25, 0.1, 0.25, 1], // Custom easeOut curve
       },

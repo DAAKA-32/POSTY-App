@@ -29,6 +29,7 @@ import { useAIMode } from "@/contexts/AIModeContext";
 import InlineUpgradeBanner from "@/components/chat/InlineUpgradeBanner";
 import GeneratedImageVariants from "@/components/chat/GeneratedImageVariants";
 import ImageGenLoader from "@/components/chat/ImageGenLoader";
+import ImageGenError from "@/components/chat/ImageGenError";
 import { useImageGeneration, type GeneratedImage } from "@/hooks/image/useImageGeneration";
 import { resolveImageBrief } from "@/lib/ai/brief-resolver";
 import { clientFastIntent } from "@/lib/ai/client-intent";
@@ -125,6 +126,9 @@ function ConversationContent() {
      *  keeps the entry out of the standalone-image list. */
     embed?: boolean;
     errorMessage?: string;
+    /** Machine code of the failure (timeout, network, render_failed…) — the card
+     *  translates it; the message above is French-only. */
+    errorCode?: string;
   }
   const [imageEntries, setImageEntries] = useState<ImageEntry[]>([]);
   const VARIANT_COUNT_PER_REQUEST = 3;
@@ -260,7 +264,7 @@ function ConversationContent() {
    *  version we pass to the image pipeline. When omitted, both are the same.
    *  Persists to the current `posts/{id}` doc on success so the visual
    *  survives a reload. */
-  const handleImageGenerate = useCallback(
+  const handleImageGenerateUnlocked = useCallback(
     async (
       displayPrompt: string,
       brief: string = displayPrompt,
@@ -336,45 +340,79 @@ function ConversationContent() {
       }
       upsertImageEntry(entryId, {
         status: "error",
-        errorMessage: result.error.message,
+        errorMessage: result.error.message, errorCode: result.error.code,
       });
       return { entryId, ok: false };
     },
     [messages, generateImage, t, upsertImageEntry, conversationId]
   );
 
+  // One image pipeline at a time. A double tap on "add visuals" or "retry" used to
+  // start two paid generations; the second call is now ignored.
+  const imageGenLockRef = useRef(false);
+  const handleImageGenerate = useCallback(
+    async (...args: Parameters<typeof handleImageGenerateUnlocked>) => {
+      if (imageGenLockRef.current) return { entryId: "", ok: false };
+      imageGenLockRef.current = true;
+      try {
+        return await handleImageGenerateUnlocked(...args);
+      } finally {
+        imageGenLockRef.current = false;
+      }
+    },
+    [handleImageGenerateUnlocked]
+  );
+
   const handleRegenerateImage = useCallback(
     async (entryId: string) => {
       const entry = imageEntries.find((e) => e.id === entryId);
-      if (!entry) return;
-      upsertImageEntry(entryId, {
-        status: "generating",
-        image: undefined,
-        images: undefined,
-        errorMessage: undefined,
-      });
-      const result = await generateImage(entry.prompt, {
-        language: (t as { meta?: { lang?: "fr" | "en" } })?.meta?.lang ?? "fr",
-        silent: true,
-        variantCount: VARIANT_COUNT_PER_REQUEST,
-      });
-      if (result.ok) {
+      if (!entry || imageGenLockRef.current) return;
+      imageGenLockRef.current = true;
+      try {
         upsertImageEntry(entryId, {
-          status: "done",
-          image: result.image,
-          images: result.images,
-          // Regen replaces variants → previous selection no longer maps;
-          // reset to the first variant pre-picked.
-          selectedVariantIndices: [0],
+          status: "generating",
+          image: undefined,
+          images: undefined,
+          errorMessage: undefined,
+          errorCode: undefined,
         });
-      } else {
-        upsertImageEntry(entryId, {
-          status: "error",
-          errorMessage: result.error.message,
+        // Same brief / context resolution as the first run: a bare "Visuel pour
+        // ce post" entry would otherwise regenerate a visual unrelated to the post.
+        const lastAssistantPost = [...messages]
+          .reverse()
+          .find((m) => m.type === "ai" && m.variant !== undefined);
+        const lastAssistantAnything = [...messages].reverse().find((m) => m.type === "ai");
+        const resolved = resolveImageBrief({
+          rawBrief: entry.prompt,
+          postContent: lastAssistantPost?.content ?? null,
         });
+        const result = await generateImage(resolved.brief, {
+          postContext: lastAssistantPost?.content ?? lastAssistantAnything?.content,
+          language: (t as { meta?: { lang?: "fr" | "en" } })?.meta?.lang ?? "fr",
+          silent: true,
+          variantCount: VARIANT_COUNT_PER_REQUEST,
+        });
+        if (result.ok) {
+          upsertImageEntry(entryId, {
+            status: "done",
+            image: result.image,
+            images: result.images,
+            // Regen replaces variants → previous selection no longer maps;
+            // reset to the first variant pre-picked.
+            selectedVariantIndices: [0],
+          });
+        } else {
+          upsertImageEntry(entryId, {
+            status: "error",
+            errorMessage: result.error.message,
+            errorCode: result.error.code,
+          });
+        }
+      } finally {
+        imageGenLockRef.current = false;
       }
     },
-    [imageEntries, generateImage, t, upsertImageEntry]
+    [imageEntries, messages, generateImage, t, upsertImageEntry]
   );
 
   // Smart scroll
@@ -689,7 +727,7 @@ function ConversationContent() {
     // Block submit during streaming too — otherwise a second generate() aborts
     // the first via abortControllerRef and the UI sees a half-finished reply
     // followed by the new turn, which reads as "duplication / reordering".
-    if (!inputValue.trim() || isLoading || isStreaming) return;
+    if (!inputValue.trim() || isLoading || isStreaming || isClassifying) return;
     // Block submit until the conversation has been hydrated. Without this guard,
     // useChat sees messages.length === 0 and treats the turn as a NEW post —
     // forking the conversation under a fresh postId instead of appending here.
@@ -1068,7 +1106,8 @@ function ConversationContent() {
                                     if (!message.id) return false;
                                     if (messageImagePairs[message.id]) return false;
                                     const pairedEntryIds = new Set(Object.values(messageImagePairs));
-                                    const ATTACHMENT_LOADER_MAX_AGE_MS = 60_000;
+                                    // Above the client timeout (55 s): the request always resolves before this.
+    const ATTACHMENT_LOADER_MAX_AGE_MS = 70_000;
                                     const now = Date.now();
                                     return imageEntries.some(
                                       (e) =>
@@ -1217,45 +1256,12 @@ function ConversationContent() {
                               )}
 
                               {entry.status === "error" && (
-                                <motion.div
+                                <ImageGenError
                                   key="error"
-                                  initial={{ opacity: 0, y: 6 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  exit={{ opacity: 0 }}
-                                  transition={{ duration: 0.2 }}
-                                  className="
-                                    w-full max-w-2xl
-                                    rounded-2xl rounded-bl-md
-                                    border border-error/30 bg-error/5
-                                    px-4 py-3
-                                    flex items-start gap-3
-                                  "
-                                >
-                                  <div className="mt-0.5 w-6 h-6 shrink-0 rounded-full bg-error/15 text-error flex items-center justify-center text-[13px]">
-                                    !
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-[13px] text-text-primary font-medium">
-                                      Le visuel n&apos;a pas pu être généré.
-                                    </p>
-                                    <p className="text-[12px] text-text-secondary mt-0.5">
-                                      {entry.errorMessage || "Réessaye dans un instant."}
-                                    </p>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleRegenerateImage(entry.id)}
-                                      className="
-                                        mt-2 inline-flex items-center justify-center gap-1.5
-                                        min-h-[36px] px-3 py-1.5 rounded-lg
-                                        bg-error/10 hover:bg-error/15 active:bg-error/20
-                                        text-error text-[12px] font-medium
-                                        transition-colors
-                                      "
-                                    >
-                                      Réessayer
-                                    </button>
-                                  </div>
-                                </motion.div>
+                                  code={entry.errorCode}
+                                  message={entry.errorMessage}
+                                  onRetry={() => handleRegenerateImage(entry.id)}
+                                />
                               )}
                             </AnimatePresence>
                           </div>
@@ -1446,7 +1452,7 @@ function ConversationContent() {
                 // - loadedConversationRef guard prevents useChat from forking
                 //   the conversation under a fresh postId when the user types
                 //   before loadOriginalPost has hydrated messages.
-                if (isLoading || isStreaming) return;
+                if (isLoading || isStreaming || isClassifying) return;
                 if (loadedConversationRef.current !== conversationId) return;
                 // Sending uses whatever text is in the box — stop any active
                 // recording without kicking off a transcription.
@@ -1600,7 +1606,7 @@ function ConversationContent() {
               onStop={stopGeneration}
               placeholder={placeholderExamples}
               disabled={false}
-              isLoading={isLoading || isGeneratingImage}
+              isLoading={isLoading || isStreaming || isGeneratingImage || isClassifying}
               enableVoiceRecording={speechSupported}
               onVoiceRecordingStart={toggleRecording}
               onVoiceRecordingStop={toggleRecording}

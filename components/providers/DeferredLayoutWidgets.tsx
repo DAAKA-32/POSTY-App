@@ -14,11 +14,6 @@
  */
 import dynamic from "next/dynamic";
 
-export const StrategistDrawer = dynamic(
-  () => import("@/components/strategist/StrategistDrawer"),
-  { ssr: false },
-);
-
 export const AutonomousBatchBanner = dynamic(
   () => import("@/components/strategist/AutonomousBatchBanner"),
   { ssr: false },

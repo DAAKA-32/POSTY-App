@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { stepSwap } from "@/lib/motion";
 import Modal from "@/components/ui/Modal";
 import BottomSheet from "@/components/ui/BottomSheet";
 import Button from "@/components/ui/Button";
@@ -590,7 +591,7 @@ export default function ScheduleModal({
   // Handle upgrade navigation
   const handleUpgrade = () => {
     onClose();
-    router.push("/pricing");
+    router.push("/subscription");
   };
 
   // Render upgrade prompt for users without active scheduling access
@@ -719,10 +720,7 @@ export default function ScheduleModal({
         {step === "date" && (
           <motion.div
             key="date"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            transition={{ duration: 0.2 }}
+            {...stepSwap(-1)}
           >
             {/* Header — left aligned, title + subtitle */}
             <div className="mb-5">
@@ -868,10 +866,7 @@ export default function ScheduleModal({
         {step === "time" && (
           <motion.div
             key="time"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            transition={{ duration: 0.2 }}
+            {...stepSwap(-1)}
           >
             {/* Header — left aligned with selected date as subtitle */}
             <div className="mb-5 flex items-start justify-between gap-3">
@@ -917,10 +912,7 @@ export default function ScheduleModal({
         {step === "confirm" && (
           <motion.div
             key="confirm"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            transition={{ duration: 0.2 }}
+            {...stepSwap(-1)}
           >
             <div className="text-center mb-5">
               <motion.div

@@ -40,13 +40,13 @@ MANDATORY VARIATION:
 
 FORMAT: Airy, mobile-readable structure. Length, hashtag count, and format rules: follow the CRAFT RULES below (they take precedence). Hashtags without accents, #posty always last.
 
-EMOJIS — an editorial tool, never decoration:
-- Use an emoji only when it ADDS something (attention, structure, the right emotion), exactly like a line break or bold. The post must read perfectly without them — they accentuate, they never replace meaning. 0 emojis is a good choice when none earns its place; NEVER add them "to feel more engaging" or to hit a count.
-- Rough dosage (not a quota): short post 1–2 · medium 2–4 · long 3–6 max.
-- Calibrate to the author's tone and style defined in this prompt: formal / institutional / highly technical → very few or none; approachable / personal / storytelling / educational → a few, natural ones. If the author's voice uses few emojis, stay sober — match their signature rather than imposing one.
-- Possible roles (pick the emoji that TRULY fits the meaning, never a fixed list): open an idea 👉, key point 💡/⚡, result 📈, problem/risk ⚠️, goal or conclusion 🎯, steps 1️⃣ 2️⃣ 3️⃣, question 👀/❓, action/CTA 👇/💬, reflection 🧠. Vary the vocabulary (💡 🧠 🎯 ⚡ 👉 📌 🔎 📈 ⚠️ ✅ ❓ 👀 🌱 🏆 ⏱️ 🤝 …) — don't always reach for 🚀 🔥 💡.
-- Placement: at the start of a line to introduce an idea/bullet, OR at the end of a strong sentence, OR on a CTA. Never mid-clause, never one at the end of every sentence.
-- FORBIDDEN ("AI slop" tells): an emoji on every line; stacking (🔥🔥🔥); repeating the same emoji across the post; adding 🚀 just because it's a business post; 🔥 on every claim; turning every bullet into an emoji list; changing wording only to fit an emoji.
+EMOJIS — they bring the post to life and guide the eye (like a line break or bold):
+- Use them for real: a post with no emoji reads cold and mechanical. Target density: short post 2–4 · medium 5–8 · long 6–10. Put one in the hook or the very first line.
+- Calibrate to the author's tone and style defined in this prompt: formal / institutional / highly technical → low end (2–4 in total); approachable / personal / storytelling / educational → middle to high end. If the author's voice clearly uses fewer, stay at the low end — match their signature rather than imposing one.
+- Possible roles (pick the emoji that TRULY fits the meaning): open an idea 👉, key point 💡/⚡, result 📈, problem/risk ⚠️, goal or conclusion 🎯, steps 1️⃣ 2️⃣ 3️⃣, question 👀/❓, action/CTA 👇/💬, reflection 🧠, launch/growth 🚀, validation ✅. Vary the vocabulary (💡 🧠 🎯 ⚡ 👉 📌 🔎 📈 ⚠️ ✅ ❓ 👀 🌱 🏆 ⏱️ 🤝 🛠️ …).
+- Lists: one marker per item is welcome, with one consistent style per list (1️⃣ 2️⃣ 3️⃣, or varied emojis that fit each item) — but not the same emoji repeated on every bullet.
+- Placement: at the start of a line to introduce an idea/bullet, OR at the end of a strong sentence, OR on a CTA. Never mid-clause.
+- FORBIDDEN ("AI slop" tells): an emoji at the end of every sentence or on every line of text; stacking (🔥🔥🔥); reaching for 🚀 or 🔥 by reflex; changing wording only to fit an emoji. The post must stay perfectly readable without them.
 
 AUTHOR VOICE:
 Who: Fondateur (Tech / IT), targets: CTO de scale-ups SaaS, goal: Générer des leads qualifiés.
@@ -167,13 +167,13 @@ MANDATORY VARIATION:
 
 FORMAT: Airy, mobile-readable structure. Length, hashtag count, and format rules: follow the CRAFT RULES below (they take precedence). Hashtags without accents, #posty always last.
 
-EMOJIS — an editorial tool, never decoration:
-- Use an emoji only when it ADDS something (attention, structure, the right emotion), exactly like a line break or bold. The post must read perfectly without them — they accentuate, they never replace meaning. 0 emojis is a good choice when none earns its place; NEVER add them "to feel more engaging" or to hit a count.
-- Rough dosage (not a quota): short post 1–2 · medium 2–4 · long 3–6 max.
-- Calibrate to the author's tone and style defined in this prompt: formal / institutional / highly technical → very few or none; approachable / personal / storytelling / educational → a few, natural ones. If the author's voice uses few emojis, stay sober — match their signature rather than imposing one.
-- Possible roles (pick the emoji that TRULY fits the meaning, never a fixed list): open an idea 👉, key point 💡/⚡, result 📈, problem/risk ⚠️, goal or conclusion 🎯, steps 1️⃣ 2️⃣ 3️⃣, question 👀/❓, action/CTA 👇/💬, reflection 🧠. Vary the vocabulary (💡 🧠 🎯 ⚡ 👉 📌 🔎 📈 ⚠️ ✅ ❓ 👀 🌱 🏆 ⏱️ 🤝 …) — don't always reach for 🚀 🔥 💡.
-- Placement: at the start of a line to introduce an idea/bullet, OR at the end of a strong sentence, OR on a CTA. Never mid-clause, never one at the end of every sentence.
-- FORBIDDEN ("AI slop" tells): an emoji on every line; stacking (🔥🔥🔥); repeating the same emoji across the post; adding 🚀 just because it's a business post; 🔥 on every claim; turning every bullet into an emoji list; changing wording only to fit an emoji."
+EMOJIS — they bring the post to life and guide the eye (like a line break or bold):
+- Use them for real: a post with no emoji reads cold and mechanical. Target density: short post 2–4 · medium 5–8 · long 6–10. Put one in the hook or the very first line.
+- Calibrate to the author's tone and style defined in this prompt: formal / institutional / highly technical → low end (2–4 in total); approachable / personal / storytelling / educational → middle to high end. If the author's voice clearly uses fewer, stay at the low end — match their signature rather than imposing one.
+- Possible roles (pick the emoji that TRULY fits the meaning): open an idea 👉, key point 💡/⚡, result 📈, problem/risk ⚠️, goal or conclusion 🎯, steps 1️⃣ 2️⃣ 3️⃣, question 👀/❓, action/CTA 👇/💬, reflection 🧠, launch/growth 🚀, validation ✅. Vary the vocabulary (💡 🧠 🎯 ⚡ 👉 📌 🔎 📈 ⚠️ ✅ ❓ 👀 🌱 🏆 ⏱️ 🤝 🛠️ …).
+- Lists: one marker per item is welcome, with one consistent style per list (1️⃣ 2️⃣ 3️⃣, or varied emojis that fit each item) — but not the same emoji repeated on every bullet.
+- Placement: at the start of a line to introduce an idea/bullet, OR at the end of a strong sentence, OR on a CTA. Never mid-clause.
+- FORBIDDEN ("AI slop" tells): an emoji at the end of every sentence or on every line of text; stacking (🔥🔥🔥); reaching for 🚀 or 🔥 by reflex; changing wording only to fit an emoji. The post must stay perfectly readable without them."
 `;
 
 exports[`buildOptimizedPrompt — chat path is unchanged > business · en · pro · with profile 1`] = `
@@ -211,13 +211,13 @@ MANDATORY VARIATION:
 
 FORMAT: Airy, mobile-readable structure. Length, hashtag count, and format rules: follow the CRAFT RULES below (they take precedence). Hashtags without accents, #posty always last.
 
-EMOJIS — an editorial tool, never decoration:
-- Use an emoji only when it ADDS something (attention, structure, the right emotion), exactly like a line break or bold. The post must read perfectly without them — they accentuate, they never replace meaning. 0 emojis is a good choice when none earns its place; NEVER add them "to feel more engaging" or to hit a count.
-- Rough dosage (not a quota): short post 1–2 · medium 2–4 · long 3–6 max.
-- Calibrate to the author's tone and style defined in this prompt: formal / institutional / highly technical → very few or none; approachable / personal / storytelling / educational → a few, natural ones. If the author's voice uses few emojis, stay sober — match their signature rather than imposing one.
-- Possible roles (pick the emoji that TRULY fits the meaning, never a fixed list): open an idea 👉, key point 💡/⚡, result 📈, problem/risk ⚠️, goal or conclusion 🎯, steps 1️⃣ 2️⃣ 3️⃣, question 👀/❓, action/CTA 👇/💬, reflection 🧠. Vary the vocabulary (💡 🧠 🎯 ⚡ 👉 📌 🔎 📈 ⚠️ ✅ ❓ 👀 🌱 🏆 ⏱️ 🤝 …) — don't always reach for 🚀 🔥 💡.
-- Placement: at the start of a line to introduce an idea/bullet, OR at the end of a strong sentence, OR on a CTA. Never mid-clause, never one at the end of every sentence.
-- FORBIDDEN ("AI slop" tells): an emoji on every line; stacking (🔥🔥🔥); repeating the same emoji across the post; adding 🚀 just because it's a business post; 🔥 on every claim; turning every bullet into an emoji list; changing wording only to fit an emoji.
+EMOJIS — they bring the post to life and guide the eye (like a line break or bold):
+- Use them for real: a post with no emoji reads cold and mechanical. Target density: short post 2–4 · medium 5–8 · long 6–10. Put one in the hook or the very first line.
+- Calibrate to the author's tone and style defined in this prompt: formal / institutional / highly technical → low end (2–4 in total); approachable / personal / storytelling / educational → middle to high end. If the author's voice clearly uses fewer, stay at the low end — match their signature rather than imposing one.
+- Possible roles (pick the emoji that TRULY fits the meaning): open an idea 👉, key point 💡/⚡, result 📈, problem/risk ⚠️, goal or conclusion 🎯, steps 1️⃣ 2️⃣ 3️⃣, question 👀/❓, action/CTA 👇/💬, reflection 🧠, launch/growth 🚀, validation ✅. Vary the vocabulary (💡 🧠 🎯 ⚡ 👉 📌 🔎 📈 ⚠️ ✅ ❓ 👀 🌱 🏆 ⏱️ 🤝 🛠️ …).
+- Lists: one marker per item is welcome, with one consistent style per list (1️⃣ 2️⃣ 3️⃣, or varied emojis that fit each item) — but not the same emoji repeated on every bullet.
+- Placement: at the start of a line to introduce an idea/bullet, OR at the end of a strong sentence, OR on a CTA. Never mid-clause.
+- FORBIDDEN ("AI slop" tells): an emoji at the end of every sentence or on every line of text; stacking (🔥🔥🔥); reaching for 🚀 or 🔥 by reflex; changing wording only to fit an emoji. The post must stay perfectly readable without them.
 
 AUTHOR VOICE:
 Who: Fondateur (Tech / IT), targets: CTO de scale-ups SaaS, goal: Générer des leads qualifiés.
@@ -331,13 +331,13 @@ VARIATION OBLIGATOIRE:
 
 FORMAT: Structure aérée et lisible sur mobile. Longueur, nombre de hashtags et règles de format: suis les RÈGLES DE CRAFT ci-dessous (elles priment). Hashtags sans accents, #posty toujours en dernier.
 
-EMOJIS — outil éditorial, jamais décoratif :
-- Un emoji ne se met que s'il AJOUTE quelque chose (attention, structure, émotion juste), au même titre qu'un retour à la ligne ou du gras. Le post doit rester parfait sans eux — ils accentuent, ils ne remplacent jamais le sens. 0 emoji est un bon choix si aucun ne s'impose ; n'en ajoute JAMAIS pour "faire plus engageant" ni pour atteindre un nombre.
-- Dosage indicatif (pas un quota) : post court 1–2 · moyen 2–4 · long 3–6 max.
-- Calibre selon le ton et le style de l'auteur précisés dans ce prompt : formel / institutionnel / très technique → très peu ou aucun ; accessible / personnel / storytelling / pédagogique → quelques-uns, naturels. Si la voix de l'auteur en utilise peu, reste sobre — respecte sa signature plutôt que d'imposer la tienne.
-- Rôle possible (choisis l'emoji qui colle VRAIMENT au sens, jamais une liste figée) : ouvrir une idée 👉, point clé 💡/⚡, résultat 📈, problème/risque ⚠️, objectif ou conclusion 🎯, étapes 1️⃣ 2️⃣ 3️⃣, question 👀/❓, action/CTA 👇/💬, réflexion 🧠. Varie le vocabulaire (💡 🧠 🎯 ⚡ 👉 📌 🔎 📈 ⚠️ ✅ ❓ 👀 🌱 🏆 ⏱️ 🤝 …) — n'utilise pas toujours 🚀 🔥 💡.
-- Placement : en début de ligne pour introduire une idée/une puce, OU en fin d'une phrase forte, OU sur un CTA. Jamais au milieu d'une proposition, jamais un emoji à la fin de chaque phrase.
-- INTERDIT (marqueurs "AI slop") : un emoji sur chaque ligne ; empilements (🔥🔥🔥) ; répéter le même emoji dans le post ; mettre 🚀 juste parce que c'est un post business ; 🔥 sur chaque affirmation ; transformer chaque puce en liste d'emojis ; modifier une formulation uniquement pour caser un emoji.
+EMOJIS — ils donnent de la vie au post et guident l'œil (comme un retour à la ligne ou du gras) :
+- Utilise-les vraiment : un post sans emoji paraît froid et mécanique. Dosage visé : post court 2–4 · moyen 5–8 · long 6–10. Mets-en un dans l'accroche ou la toute première ligne.
+- Calibre selon le ton et le style de l'auteur précisés dans ce prompt : formel / institutionnel / très technique → bas de la fourchette (2–4 au total) ; accessible / personnel / storytelling / pédagogique → milieu à haut de la fourchette. Si la voix de l'auteur en utilise nettement moins, reste dans le bas — respecte sa signature plutôt que d'imposer la tienne.
+- Rôle possible (choisis l'emoji qui colle VRAIMENT au sens) : ouvrir une idée 👉, point clé 💡/⚡, résultat 📈, problème/risque ⚠️, objectif ou conclusion 🎯, étapes 1️⃣ 2️⃣ 3️⃣, question 👀/❓, action/CTA 👇/💬, réflexion 🧠, lancement/croissance 🚀, validation ✅. Varie le vocabulaire (💡 🧠 🎯 ⚡ 👉 📌 🔎 📈 ⚠️ ✅ ❓ 👀 🌱 🏆 ⏱️ 🤝 🛠️ …).
+- Listes : un repère par item est bienvenu, avec un style cohérent par liste (1️⃣ 2️⃣ 3️⃣, ou des emojis variés qui collent à chaque item) — mais pas le même emoji répété sur toutes les puces.
+- Placement : en début de ligne pour introduire une idée/une puce, OU en fin d'une phrase forte, OU sur un CTA. Jamais au milieu d'une proposition.
+- INTERDIT (marqueurs "AI slop") : un emoji à la fin de chaque phrase ou sur chaque ligne de texte ; empilements (🔥🔥🔥) ; mettre 🚀 ou 🔥 par réflexe ; modifier une formulation uniquement pour caser un emoji. Le post doit rester parfaitement lisible sans eux.
 
 VOIX DE L'AUTEUR:
 Qui: Fondateur (Tech / IT), cible: CTO de scale-ups SaaS, objectif: Générer des leads qualifiés.
@@ -458,13 +458,13 @@ VARIATION OBLIGATOIRE:
 
 FORMAT: Structure aérée et lisible sur mobile. Longueur, nombre de hashtags et règles de format: suis les RÈGLES DE CRAFT ci-dessous (elles priment). Hashtags sans accents, #posty toujours en dernier.
 
-EMOJIS — outil éditorial, jamais décoratif :
-- Un emoji ne se met que s'il AJOUTE quelque chose (attention, structure, émotion juste), au même titre qu'un retour à la ligne ou du gras. Le post doit rester parfait sans eux — ils accentuent, ils ne remplacent jamais le sens. 0 emoji est un bon choix si aucun ne s'impose ; n'en ajoute JAMAIS pour "faire plus engageant" ni pour atteindre un nombre.
-- Dosage indicatif (pas un quota) : post court 1–2 · moyen 2–4 · long 3–6 max.
-- Calibre selon le ton et le style de l'auteur précisés dans ce prompt : formel / institutionnel / très technique → très peu ou aucun ; accessible / personnel / storytelling / pédagogique → quelques-uns, naturels. Si la voix de l'auteur en utilise peu, reste sobre — respecte sa signature plutôt que d'imposer la tienne.
-- Rôle possible (choisis l'emoji qui colle VRAIMENT au sens, jamais une liste figée) : ouvrir une idée 👉, point clé 💡/⚡, résultat 📈, problème/risque ⚠️, objectif ou conclusion 🎯, étapes 1️⃣ 2️⃣ 3️⃣, question 👀/❓, action/CTA 👇/💬, réflexion 🧠. Varie le vocabulaire (💡 🧠 🎯 ⚡ 👉 📌 🔎 📈 ⚠️ ✅ ❓ 👀 🌱 🏆 ⏱️ 🤝 …) — n'utilise pas toujours 🚀 🔥 💡.
-- Placement : en début de ligne pour introduire une idée/une puce, OU en fin d'une phrase forte, OU sur un CTA. Jamais au milieu d'une proposition, jamais un emoji à la fin de chaque phrase.
-- INTERDIT (marqueurs "AI slop") : un emoji sur chaque ligne ; empilements (🔥🔥🔥) ; répéter le même emoji dans le post ; mettre 🚀 juste parce que c'est un post business ; 🔥 sur chaque affirmation ; transformer chaque puce en liste d'emojis ; modifier une formulation uniquement pour caser un emoji."
+EMOJIS — ils donnent de la vie au post et guident l'œil (comme un retour à la ligne ou du gras) :
+- Utilise-les vraiment : un post sans emoji paraît froid et mécanique. Dosage visé : post court 2–4 · moyen 5–8 · long 6–10. Mets-en un dans l'accroche ou la toute première ligne.
+- Calibre selon le ton et le style de l'auteur précisés dans ce prompt : formel / institutionnel / très technique → bas de la fourchette (2–4 au total) ; accessible / personnel / storytelling / pédagogique → milieu à haut de la fourchette. Si la voix de l'auteur en utilise nettement moins, reste dans le bas — respecte sa signature plutôt que d'imposer la tienne.
+- Rôle possible (choisis l'emoji qui colle VRAIMENT au sens) : ouvrir une idée 👉, point clé 💡/⚡, résultat 📈, problème/risque ⚠️, objectif ou conclusion 🎯, étapes 1️⃣ 2️⃣ 3️⃣, question 👀/❓, action/CTA 👇/💬, réflexion 🧠, lancement/croissance 🚀, validation ✅. Varie le vocabulaire (💡 🧠 🎯 ⚡ 👉 📌 🔎 📈 ⚠️ ✅ ❓ 👀 🌱 🏆 ⏱️ 🤝 🛠️ …).
+- Listes : un repère par item est bienvenu, avec un style cohérent par liste (1️⃣ 2️⃣ 3️⃣, ou des emojis variés qui collent à chaque item) — mais pas le même emoji répété sur toutes les puces.
+- Placement : en début de ligne pour introduire une idée/une puce, OU en fin d'une phrase forte, OU sur un CTA. Jamais au milieu d'une proposition.
+- INTERDIT (marqueurs "AI slop") : un emoji à la fin de chaque phrase ou sur chaque ligne de texte ; empilements (🔥🔥🔥) ; mettre 🚀 ou 🔥 par réflexe ; modifier une formulation uniquement pour caser un emoji. Le post doit rester parfaitement lisible sans eux."
 `;
 
 exports[`buildOptimizedPrompt — chat path is unchanged > business · fr · pro · with profile 1`] = `
@@ -502,13 +502,13 @@ VARIATION OBLIGATOIRE:
 
 FORMAT: Structure aérée et lisible sur mobile. Longueur, nombre de hashtags et règles de format: suis les RÈGLES DE CRAFT ci-dessous (elles priment). Hashtags sans accents, #posty toujours en dernier.
 
-EMOJIS — outil éditorial, jamais décoratif :
-- Un emoji ne se met que s'il AJOUTE quelque chose (attention, structure, émotion juste), au même titre qu'un retour à la ligne ou du gras. Le post doit rester parfait sans eux — ils accentuent, ils ne remplacent jamais le sens. 0 emoji est un bon choix si aucun ne s'impose ; n'en ajoute JAMAIS pour "faire plus engageant" ni pour atteindre un nombre.
-- Dosage indicatif (pas un quota) : post court 1–2 · moyen 2–4 · long 3–6 max.
-- Calibre selon le ton et le style de l'auteur précisés dans ce prompt : formel / institutionnel / très technique → très peu ou aucun ; accessible / personnel / storytelling / pédagogique → quelques-uns, naturels. Si la voix de l'auteur en utilise peu, reste sobre — respecte sa signature plutôt que d'imposer la tienne.
-- Rôle possible (choisis l'emoji qui colle VRAIMENT au sens, jamais une liste figée) : ouvrir une idée 👉, point clé 💡/⚡, résultat 📈, problème/risque ⚠️, objectif ou conclusion 🎯, étapes 1️⃣ 2️⃣ 3️⃣, question 👀/❓, action/CTA 👇/💬, réflexion 🧠. Varie le vocabulaire (💡 🧠 🎯 ⚡ 👉 📌 🔎 📈 ⚠️ ✅ ❓ 👀 🌱 🏆 ⏱️ 🤝 …) — n'utilise pas toujours 🚀 🔥 💡.
-- Placement : en début de ligne pour introduire une idée/une puce, OU en fin d'une phrase forte, OU sur un CTA. Jamais au milieu d'une proposition, jamais un emoji à la fin de chaque phrase.
-- INTERDIT (marqueurs "AI slop") : un emoji sur chaque ligne ; empilements (🔥🔥🔥) ; répéter le même emoji dans le post ; mettre 🚀 juste parce que c'est un post business ; 🔥 sur chaque affirmation ; transformer chaque puce en liste d'emojis ; modifier une formulation uniquement pour caser un emoji.
+EMOJIS — ils donnent de la vie au post et guident l'œil (comme un retour à la ligne ou du gras) :
+- Utilise-les vraiment : un post sans emoji paraît froid et mécanique. Dosage visé : post court 2–4 · moyen 5–8 · long 6–10. Mets-en un dans l'accroche ou la toute première ligne.
+- Calibre selon le ton et le style de l'auteur précisés dans ce prompt : formel / institutionnel / très technique → bas de la fourchette (2–4 au total) ; accessible / personnel / storytelling / pédagogique → milieu à haut de la fourchette. Si la voix de l'auteur en utilise nettement moins, reste dans le bas — respecte sa signature plutôt que d'imposer la tienne.
+- Rôle possible (choisis l'emoji qui colle VRAIMENT au sens) : ouvrir une idée 👉, point clé 💡/⚡, résultat 📈, problème/risque ⚠️, objectif ou conclusion 🎯, étapes 1️⃣ 2️⃣ 3️⃣, question 👀/❓, action/CTA 👇/💬, réflexion 🧠, lancement/croissance 🚀, validation ✅. Varie le vocabulaire (💡 🧠 🎯 ⚡ 👉 📌 🔎 📈 ⚠️ ✅ ❓ 👀 🌱 🏆 ⏱️ 🤝 🛠️ …).
+- Listes : un repère par item est bienvenu, avec un style cohérent par liste (1️⃣ 2️⃣ 3️⃣, ou des emojis variés qui collent à chaque item) — mais pas le même emoji répété sur toutes les puces.
+- Placement : en début de ligne pour introduire une idée/une puce, OU en fin d'une phrase forte, OU sur un CTA. Jamais au milieu d'une proposition.
+- INTERDIT (marqueurs "AI slop") : un emoji à la fin de chaque phrase ou sur chaque ligne de texte ; empilements (🔥🔥🔥) ; mettre 🚀 ou 🔥 par réflexe ; modifier une formulation uniquement pour caser un emoji. Le post doit rester parfaitement lisible sans eux.
 
 VOIX DE L'AUTEUR:
 Qui: Fondateur (Tech / IT), cible: CTO de scale-ups SaaS, objectif: Générer des leads qualifiés.
@@ -632,13 +632,13 @@ MANDATORY VARIATION:
 
 FORMAT: 1-3 line paragraphs separated by blank lines. Length, hashtag count, and format rules: follow the CRAFT RULES below (they take precedence). Hashtags without accents, #posty always last.
 
-EMOJIS — an editorial tool, never decoration:
-- Use an emoji only when it ADDS something (attention, structure, the right emotion), exactly like a line break or bold. The post must read perfectly without them — they accentuate, they never replace meaning. 0 emojis is a good choice when none earns its place; NEVER add them "to feel more engaging" or to hit a count.
-- Rough dosage (not a quota): short post 1–2 · medium 2–4 · long 3–6 max.
-- Calibrate to the author's tone and style defined in this prompt: formal / institutional / highly technical → very few or none; approachable / personal / storytelling / educational → a few, natural ones. If the author's voice uses few emojis, stay sober — match their signature rather than imposing one.
-- Possible roles (pick the emoji that TRULY fits the meaning, never a fixed list): open an idea 👉, key point 💡/⚡, result 📈, problem/risk ⚠️, goal or conclusion 🎯, steps 1️⃣ 2️⃣ 3️⃣, question 👀/❓, action/CTA 👇/💬, reflection 🧠. Vary the vocabulary (💡 🧠 🎯 ⚡ 👉 📌 🔎 📈 ⚠️ ✅ ❓ 👀 🌱 🏆 ⏱️ 🤝 …) — don't always reach for 🚀 🔥 💡.
-- Placement: at the start of a line to introduce an idea/bullet, OR at the end of a strong sentence, OR on a CTA. Never mid-clause, never one at the end of every sentence.
-- FORBIDDEN ("AI slop" tells): an emoji on every line; stacking (🔥🔥🔥); repeating the same emoji across the post; adding 🚀 just because it's a business post; 🔥 on every claim; turning every bullet into an emoji list; changing wording only to fit an emoji.
+EMOJIS — they bring the post to life and guide the eye (like a line break or bold):
+- Use them for real: a post with no emoji reads cold and mechanical. Target density: short post 2–4 · medium 5–8 · long 6–10. Put one in the hook or the very first line.
+- Calibrate to the author's tone and style defined in this prompt: formal / institutional / highly technical → low end (2–4 in total); approachable / personal / storytelling / educational → middle to high end. If the author's voice clearly uses fewer, stay at the low end — match their signature rather than imposing one.
+- Possible roles (pick the emoji that TRULY fits the meaning): open an idea 👉, key point 💡/⚡, result 📈, problem/risk ⚠️, goal or conclusion 🎯, steps 1️⃣ 2️⃣ 3️⃣, question 👀/❓, action/CTA 👇/💬, reflection 🧠, launch/growth 🚀, validation ✅. Vary the vocabulary (💡 🧠 🎯 ⚡ 👉 📌 🔎 📈 ⚠️ ✅ ❓ 👀 🌱 🏆 ⏱️ 🤝 🛠️ …).
+- Lists: one marker per item is welcome, with one consistent style per list (1️⃣ 2️⃣ 3️⃣, or varied emojis that fit each item) — but not the same emoji repeated on every bullet.
+- Placement: at the start of a line to introduce an idea/bullet, OR at the end of a strong sentence, OR on a CTA. Never mid-clause.
+- FORBIDDEN ("AI slop" tells): an emoji at the end of every sentence or on every line of text; stacking (🔥🔥🔥); reaching for 🚀 or 🔥 by reflex; changing wording only to fit an emoji. The post must stay perfectly readable without them.
 
 AUTHOR VOICE:
 Who: Fondateur (Tech / IT), targets: CTO de scale-ups SaaS, goal: Générer des leads qualifiés.
@@ -769,13 +769,13 @@ MANDATORY VARIATION:
 
 FORMAT: 1-3 line paragraphs separated by blank lines. Length, hashtag count, and format rules: follow the CRAFT RULES below (they take precedence). Hashtags without accents, #posty always last.
 
-EMOJIS — an editorial tool, never decoration:
-- Use an emoji only when it ADDS something (attention, structure, the right emotion), exactly like a line break or bold. The post must read perfectly without them — they accentuate, they never replace meaning. 0 emojis is a good choice when none earns its place; NEVER add them "to feel more engaging" or to hit a count.
-- Rough dosage (not a quota): short post 1–2 · medium 2–4 · long 3–6 max.
-- Calibrate to the author's tone and style defined in this prompt: formal / institutional / highly technical → very few or none; approachable / personal / storytelling / educational → a few, natural ones. If the author's voice uses few emojis, stay sober — match their signature rather than imposing one.
-- Possible roles (pick the emoji that TRULY fits the meaning, never a fixed list): open an idea 👉, key point 💡/⚡, result 📈, problem/risk ⚠️, goal or conclusion 🎯, steps 1️⃣ 2️⃣ 3️⃣, question 👀/❓, action/CTA 👇/💬, reflection 🧠. Vary the vocabulary (💡 🧠 🎯 ⚡ 👉 📌 🔎 📈 ⚠️ ✅ ❓ 👀 🌱 🏆 ⏱️ 🤝 …) — don't always reach for 🚀 🔥 💡.
-- Placement: at the start of a line to introduce an idea/bullet, OR at the end of a strong sentence, OR on a CTA. Never mid-clause, never one at the end of every sentence.
-- FORBIDDEN ("AI slop" tells): an emoji on every line; stacking (🔥🔥🔥); repeating the same emoji across the post; adding 🚀 just because it's a business post; 🔥 on every claim; turning every bullet into an emoji list; changing wording only to fit an emoji."
+EMOJIS — they bring the post to life and guide the eye (like a line break or bold):
+- Use them for real: a post with no emoji reads cold and mechanical. Target density: short post 2–4 · medium 5–8 · long 6–10. Put one in the hook or the very first line.
+- Calibrate to the author's tone and style defined in this prompt: formal / institutional / highly technical → low end (2–4 in total); approachable / personal / storytelling / educational → middle to high end. If the author's voice clearly uses fewer, stay at the low end — match their signature rather than imposing one.
+- Possible roles (pick the emoji that TRULY fits the meaning): open an idea 👉, key point 💡/⚡, result 📈, problem/risk ⚠️, goal or conclusion 🎯, steps 1️⃣ 2️⃣ 3️⃣, question 👀/❓, action/CTA 👇/💬, reflection 🧠, launch/growth 🚀, validation ✅. Vary the vocabulary (💡 🧠 🎯 ⚡ 👉 📌 🔎 📈 ⚠️ ✅ ❓ 👀 🌱 🏆 ⏱️ 🤝 🛠️ …).
+- Lists: one marker per item is welcome, with one consistent style per list (1️⃣ 2️⃣ 3️⃣, or varied emojis that fit each item) — but not the same emoji repeated on every bullet.
+- Placement: at the start of a line to introduce an idea/bullet, OR at the end of a strong sentence, OR on a CTA. Never mid-clause.
+- FORBIDDEN ("AI slop" tells): an emoji at the end of every sentence or on every line of text; stacking (🔥🔥🔥); reaching for 🚀 or 🔥 by reflex; changing wording only to fit an emoji. The post must stay perfectly readable without them."
 `;
 
 exports[`buildOptimizedPrompt — chat path is unchanged > storytelling · en · pro · with profile 1`] = `
@@ -824,13 +824,13 @@ MANDATORY VARIATION:
 
 FORMAT: 1-3 line paragraphs separated by blank lines. Length, hashtag count, and format rules: follow the CRAFT RULES below (they take precedence). Hashtags without accents, #posty always last.
 
-EMOJIS — an editorial tool, never decoration:
-- Use an emoji only when it ADDS something (attention, structure, the right emotion), exactly like a line break or bold. The post must read perfectly without them — they accentuate, they never replace meaning. 0 emojis is a good choice when none earns its place; NEVER add them "to feel more engaging" or to hit a count.
-- Rough dosage (not a quota): short post 1–2 · medium 2–4 · long 3–6 max.
-- Calibrate to the author's tone and style defined in this prompt: formal / institutional / highly technical → very few or none; approachable / personal / storytelling / educational → a few, natural ones. If the author's voice uses few emojis, stay sober — match their signature rather than imposing one.
-- Possible roles (pick the emoji that TRULY fits the meaning, never a fixed list): open an idea 👉, key point 💡/⚡, result 📈, problem/risk ⚠️, goal or conclusion 🎯, steps 1️⃣ 2️⃣ 3️⃣, question 👀/❓, action/CTA 👇/💬, reflection 🧠. Vary the vocabulary (💡 🧠 🎯 ⚡ 👉 📌 🔎 📈 ⚠️ ✅ ❓ 👀 🌱 🏆 ⏱️ 🤝 …) — don't always reach for 🚀 🔥 💡.
-- Placement: at the start of a line to introduce an idea/bullet, OR at the end of a strong sentence, OR on a CTA. Never mid-clause, never one at the end of every sentence.
-- FORBIDDEN ("AI slop" tells): an emoji on every line; stacking (🔥🔥🔥); repeating the same emoji across the post; adding 🚀 just because it's a business post; 🔥 on every claim; turning every bullet into an emoji list; changing wording only to fit an emoji.
+EMOJIS — they bring the post to life and guide the eye (like a line break or bold):
+- Use them for real: a post with no emoji reads cold and mechanical. Target density: short post 2–4 · medium 5–8 · long 6–10. Put one in the hook or the very first line.
+- Calibrate to the author's tone and style defined in this prompt: formal / institutional / highly technical → low end (2–4 in total); approachable / personal / storytelling / educational → middle to high end. If the author's voice clearly uses fewer, stay at the low end — match their signature rather than imposing one.
+- Possible roles (pick the emoji that TRULY fits the meaning): open an idea 👉, key point 💡/⚡, result 📈, problem/risk ⚠️, goal or conclusion 🎯, steps 1️⃣ 2️⃣ 3️⃣, question 👀/❓, action/CTA 👇/💬, reflection 🧠, launch/growth 🚀, validation ✅. Vary the vocabulary (💡 🧠 🎯 ⚡ 👉 📌 🔎 📈 ⚠️ ✅ ❓ 👀 🌱 🏆 ⏱️ 🤝 🛠️ …).
+- Lists: one marker per item is welcome, with one consistent style per list (1️⃣ 2️⃣ 3️⃣, or varied emojis that fit each item) — but not the same emoji repeated on every bullet.
+- Placement: at the start of a line to introduce an idea/bullet, OR at the end of a strong sentence, OR on a CTA. Never mid-clause.
+- FORBIDDEN ("AI slop" tells): an emoji at the end of every sentence or on every line of text; stacking (🔥🔥🔥); reaching for 🚀 or 🔥 by reflex; changing wording only to fit an emoji. The post must stay perfectly readable without them.
 
 AUTHOR VOICE:
 Who: Fondateur (Tech / IT), targets: CTO de scale-ups SaaS, goal: Générer des leads qualifiés.
@@ -954,13 +954,13 @@ VARIATION OBLIGATOIRE:
 
 FORMAT: Paragraphes de 1-3 lignes séparés par une ligne vide. Longueur, nombre de hashtags et règles de format: suis les RÈGLES DE CRAFT ci-dessous (elles priment). Hashtags sans accents, #posty toujours en dernier.
 
-EMOJIS — outil éditorial, jamais décoratif :
-- Un emoji ne se met que s'il AJOUTE quelque chose (attention, structure, émotion juste), au même titre qu'un retour à la ligne ou du gras. Le post doit rester parfait sans eux — ils accentuent, ils ne remplacent jamais le sens. 0 emoji est un bon choix si aucun ne s'impose ; n'en ajoute JAMAIS pour "faire plus engageant" ni pour atteindre un nombre.
-- Dosage indicatif (pas un quota) : post court 1–2 · moyen 2–4 · long 3–6 max.
-- Calibre selon le ton et le style de l'auteur précisés dans ce prompt : formel / institutionnel / très technique → très peu ou aucun ; accessible / personnel / storytelling / pédagogique → quelques-uns, naturels. Si la voix de l'auteur en utilise peu, reste sobre — respecte sa signature plutôt que d'imposer la tienne.
-- Rôle possible (choisis l'emoji qui colle VRAIMENT au sens, jamais une liste figée) : ouvrir une idée 👉, point clé 💡/⚡, résultat 📈, problème/risque ⚠️, objectif ou conclusion 🎯, étapes 1️⃣ 2️⃣ 3️⃣, question 👀/❓, action/CTA 👇/💬, réflexion 🧠. Varie le vocabulaire (💡 🧠 🎯 ⚡ 👉 📌 🔎 📈 ⚠️ ✅ ❓ 👀 🌱 🏆 ⏱️ 🤝 …) — n'utilise pas toujours 🚀 🔥 💡.
-- Placement : en début de ligne pour introduire une idée/une puce, OU en fin d'une phrase forte, OU sur un CTA. Jamais au milieu d'une proposition, jamais un emoji à la fin de chaque phrase.
-- INTERDIT (marqueurs "AI slop") : un emoji sur chaque ligne ; empilements (🔥🔥🔥) ; répéter le même emoji dans le post ; mettre 🚀 juste parce que c'est un post business ; 🔥 sur chaque affirmation ; transformer chaque puce en liste d'emojis ; modifier une formulation uniquement pour caser un emoji.
+EMOJIS — ils donnent de la vie au post et guident l'œil (comme un retour à la ligne ou du gras) :
+- Utilise-les vraiment : un post sans emoji paraît froid et mécanique. Dosage visé : post court 2–4 · moyen 5–8 · long 6–10. Mets-en un dans l'accroche ou la toute première ligne.
+- Calibre selon le ton et le style de l'auteur précisés dans ce prompt : formel / institutionnel / très technique → bas de la fourchette (2–4 au total) ; accessible / personnel / storytelling / pédagogique → milieu à haut de la fourchette. Si la voix de l'auteur en utilise nettement moins, reste dans le bas — respecte sa signature plutôt que d'imposer la tienne.
+- Rôle possible (choisis l'emoji qui colle VRAIMENT au sens) : ouvrir une idée 👉, point clé 💡/⚡, résultat 📈, problème/risque ⚠️, objectif ou conclusion 🎯, étapes 1️⃣ 2️⃣ 3️⃣, question 👀/❓, action/CTA 👇/💬, réflexion 🧠, lancement/croissance 🚀, validation ✅. Varie le vocabulaire (💡 🧠 🎯 ⚡ 👉 📌 🔎 📈 ⚠️ ✅ ❓ 👀 🌱 🏆 ⏱️ 🤝 🛠️ …).
+- Listes : un repère par item est bienvenu, avec un style cohérent par liste (1️⃣ 2️⃣ 3️⃣, ou des emojis variés qui collent à chaque item) — mais pas le même emoji répété sur toutes les puces.
+- Placement : en début de ligne pour introduire une idée/une puce, OU en fin d'une phrase forte, OU sur un CTA. Jamais au milieu d'une proposition.
+- INTERDIT (marqueurs "AI slop") : un emoji à la fin de chaque phrase ou sur chaque ligne de texte ; empilements (🔥🔥🔥) ; mettre 🚀 ou 🔥 par réflexe ; modifier une formulation uniquement pour caser un emoji. Le post doit rester parfaitement lisible sans eux.
 
 VOIX DE L'AUTEUR:
 Qui: Fondateur (Tech / IT), cible: CTO de scale-ups SaaS, objectif: Générer des leads qualifiés.
@@ -1091,13 +1091,13 @@ VARIATION OBLIGATOIRE:
 
 FORMAT: Paragraphes de 1-3 lignes séparés par une ligne vide. Longueur, nombre de hashtags et règles de format: suis les RÈGLES DE CRAFT ci-dessous (elles priment). Hashtags sans accents, #posty toujours en dernier.
 
-EMOJIS — outil éditorial, jamais décoratif :
-- Un emoji ne se met que s'il AJOUTE quelque chose (attention, structure, émotion juste), au même titre qu'un retour à la ligne ou du gras. Le post doit rester parfait sans eux — ils accentuent, ils ne remplacent jamais le sens. 0 emoji est un bon choix si aucun ne s'impose ; n'en ajoute JAMAIS pour "faire plus engageant" ni pour atteindre un nombre.
-- Dosage indicatif (pas un quota) : post court 1–2 · moyen 2–4 · long 3–6 max.
-- Calibre selon le ton et le style de l'auteur précisés dans ce prompt : formel / institutionnel / très technique → très peu ou aucun ; accessible / personnel / storytelling / pédagogique → quelques-uns, naturels. Si la voix de l'auteur en utilise peu, reste sobre — respecte sa signature plutôt que d'imposer la tienne.
-- Rôle possible (choisis l'emoji qui colle VRAIMENT au sens, jamais une liste figée) : ouvrir une idée 👉, point clé 💡/⚡, résultat 📈, problème/risque ⚠️, objectif ou conclusion 🎯, étapes 1️⃣ 2️⃣ 3️⃣, question 👀/❓, action/CTA 👇/💬, réflexion 🧠. Varie le vocabulaire (💡 🧠 🎯 ⚡ 👉 📌 🔎 📈 ⚠️ ✅ ❓ 👀 🌱 🏆 ⏱️ 🤝 …) — n'utilise pas toujours 🚀 🔥 💡.
-- Placement : en début de ligne pour introduire une idée/une puce, OU en fin d'une phrase forte, OU sur un CTA. Jamais au milieu d'une proposition, jamais un emoji à la fin de chaque phrase.
-- INTERDIT (marqueurs "AI slop") : un emoji sur chaque ligne ; empilements (🔥🔥🔥) ; répéter le même emoji dans le post ; mettre 🚀 juste parce que c'est un post business ; 🔥 sur chaque affirmation ; transformer chaque puce en liste d'emojis ; modifier une formulation uniquement pour caser un emoji."
+EMOJIS — ils donnent de la vie au post et guident l'œil (comme un retour à la ligne ou du gras) :
+- Utilise-les vraiment : un post sans emoji paraît froid et mécanique. Dosage visé : post court 2–4 · moyen 5–8 · long 6–10. Mets-en un dans l'accroche ou la toute première ligne.
+- Calibre selon le ton et le style de l'auteur précisés dans ce prompt : formel / institutionnel / très technique → bas de la fourchette (2–4 au total) ; accessible / personnel / storytelling / pédagogique → milieu à haut de la fourchette. Si la voix de l'auteur en utilise nettement moins, reste dans le bas — respecte sa signature plutôt que d'imposer la tienne.
+- Rôle possible (choisis l'emoji qui colle VRAIMENT au sens) : ouvrir une idée 👉, point clé 💡/⚡, résultat 📈, problème/risque ⚠️, objectif ou conclusion 🎯, étapes 1️⃣ 2️⃣ 3️⃣, question 👀/❓, action/CTA 👇/💬, réflexion 🧠, lancement/croissance 🚀, validation ✅. Varie le vocabulaire (💡 🧠 🎯 ⚡ 👉 📌 🔎 📈 ⚠️ ✅ ❓ 👀 🌱 🏆 ⏱️ 🤝 🛠️ …).
+- Listes : un repère par item est bienvenu, avec un style cohérent par liste (1️⃣ 2️⃣ 3️⃣, ou des emojis variés qui collent à chaque item) — mais pas le même emoji répété sur toutes les puces.
+- Placement : en début de ligne pour introduire une idée/une puce, OU en fin d'une phrase forte, OU sur un CTA. Jamais au milieu d'une proposition.
+- INTERDIT (marqueurs "AI slop") : un emoji à la fin de chaque phrase ou sur chaque ligne de texte ; empilements (🔥🔥🔥) ; mettre 🚀 ou 🔥 par réflexe ; modifier une formulation uniquement pour caser un emoji. Le post doit rester parfaitement lisible sans eux."
 `;
 
 exports[`buildOptimizedPrompt — chat path is unchanged > storytelling · fr · pro · with profile 1`] = `
@@ -1146,13 +1146,13 @@ VARIATION OBLIGATOIRE:
 
 FORMAT: Paragraphes de 1-3 lignes séparés par une ligne vide. Longueur, nombre de hashtags et règles de format: suis les RÈGLES DE CRAFT ci-dessous (elles priment). Hashtags sans accents, #posty toujours en dernier.
 
-EMOJIS — outil éditorial, jamais décoratif :
-- Un emoji ne se met que s'il AJOUTE quelque chose (attention, structure, émotion juste), au même titre qu'un retour à la ligne ou du gras. Le post doit rester parfait sans eux — ils accentuent, ils ne remplacent jamais le sens. 0 emoji est un bon choix si aucun ne s'impose ; n'en ajoute JAMAIS pour "faire plus engageant" ni pour atteindre un nombre.
-- Dosage indicatif (pas un quota) : post court 1–2 · moyen 2–4 · long 3–6 max.
-- Calibre selon le ton et le style de l'auteur précisés dans ce prompt : formel / institutionnel / très technique → très peu ou aucun ; accessible / personnel / storytelling / pédagogique → quelques-uns, naturels. Si la voix de l'auteur en utilise peu, reste sobre — respecte sa signature plutôt que d'imposer la tienne.
-- Rôle possible (choisis l'emoji qui colle VRAIMENT au sens, jamais une liste figée) : ouvrir une idée 👉, point clé 💡/⚡, résultat 📈, problème/risque ⚠️, objectif ou conclusion 🎯, étapes 1️⃣ 2️⃣ 3️⃣, question 👀/❓, action/CTA 👇/💬, réflexion 🧠. Varie le vocabulaire (💡 🧠 🎯 ⚡ 👉 📌 🔎 📈 ⚠️ ✅ ❓ 👀 🌱 🏆 ⏱️ 🤝 …) — n'utilise pas toujours 🚀 🔥 💡.
-- Placement : en début de ligne pour introduire une idée/une puce, OU en fin d'une phrase forte, OU sur un CTA. Jamais au milieu d'une proposition, jamais un emoji à la fin de chaque phrase.
-- INTERDIT (marqueurs "AI slop") : un emoji sur chaque ligne ; empilements (🔥🔥🔥) ; répéter le même emoji dans le post ; mettre 🚀 juste parce que c'est un post business ; 🔥 sur chaque affirmation ; transformer chaque puce en liste d'emojis ; modifier une formulation uniquement pour caser un emoji.
+EMOJIS — ils donnent de la vie au post et guident l'œil (comme un retour à la ligne ou du gras) :
+- Utilise-les vraiment : un post sans emoji paraît froid et mécanique. Dosage visé : post court 2–4 · moyen 5–8 · long 6–10. Mets-en un dans l'accroche ou la toute première ligne.
+- Calibre selon le ton et le style de l'auteur précisés dans ce prompt : formel / institutionnel / très technique → bas de la fourchette (2–4 au total) ; accessible / personnel / storytelling / pédagogique → milieu à haut de la fourchette. Si la voix de l'auteur en utilise nettement moins, reste dans le bas — respecte sa signature plutôt que d'imposer la tienne.
+- Rôle possible (choisis l'emoji qui colle VRAIMENT au sens) : ouvrir une idée 👉, point clé 💡/⚡, résultat 📈, problème/risque ⚠️, objectif ou conclusion 🎯, étapes 1️⃣ 2️⃣ 3️⃣, question 👀/❓, action/CTA 👇/💬, réflexion 🧠, lancement/croissance 🚀, validation ✅. Varie le vocabulaire (💡 🧠 🎯 ⚡ 👉 📌 🔎 📈 ⚠️ ✅ ❓ 👀 🌱 🏆 ⏱️ 🤝 🛠️ …).
+- Listes : un repère par item est bienvenu, avec un style cohérent par liste (1️⃣ 2️⃣ 3️⃣, ou des emojis variés qui collent à chaque item) — mais pas le même emoji répété sur toutes les puces.
+- Placement : en début de ligne pour introduire une idée/une puce, OU en fin d'une phrase forte, OU sur un CTA. Jamais au milieu d'une proposition.
+- INTERDIT (marqueurs "AI slop") : un emoji à la fin de chaque phrase ou sur chaque ligne de texte ; empilements (🔥🔥🔥) ; mettre 🚀 ou 🔥 par réflexe ; modifier une formulation uniquement pour caser un emoji. Le post doit rester parfaitement lisible sans eux.
 
 VOIX DE L'AUTEUR:
 Qui: Fondateur (Tech / IT), cible: CTO de scale-ups SaaS, objectif: Générer des leads qualifiés.

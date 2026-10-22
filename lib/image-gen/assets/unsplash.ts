@@ -83,6 +83,9 @@ export async function searchUnsplash(
       // Cache for an hour — repeat searches for "startup office" don't need
       // a fresh API call every time and the Unsplash content barely changes.
       next: { revalidate: 3600 },
+      // A slow provider must not eat the route's whole 45 s budget: on timeout
+      // we return null and the caller falls back to a photo-less layout.
+      signal: AbortSignal.timeout(6_000),
     });
   } catch {
     return null;

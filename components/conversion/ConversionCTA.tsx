@@ -131,7 +131,7 @@ export function CreatePostCTA({ onClick, className = "" }: { onClick?: () => voi
 export function ViewPlansCTA({ className = "" }: { className?: string }) {
   const { t } = useLanguage();
   return (
-    <ConversionCTA href="/pricing" variant="ghost" size="md" className={className}>
+    <ConversionCTA href="/subscription" variant="ghost" size="md" className={className}>
       {t.conversion?.ctaViewPlans || "Voir les offres"}
     </ConversionCTA>
   );

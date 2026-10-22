@@ -472,7 +472,7 @@ export default function MainLayout({
   // Prefetch critical routes for faster navigation
   useEffect(() => {
     // Prefetch routes that user is likely to navigate to
-    const routesToPrefetch = ["/app", "/history", "/profile", "/pricing", "/settings", "/schedule", "/analytics"];
+    const routesToPrefetch = ["/app", "/history", "/profile", "/subscription", "/settings", "/schedule", "/analytics"];
     routesToPrefetch.forEach((route) => {
       router.prefetch(route);
     });
@@ -1170,7 +1170,7 @@ export default function MainLayout({
             the ~600ms "empty screen" users perceived after AI generation when
             the route swapped /app → /app/c/[id]. The shell is now persistent
             across that swap and this wrapper only fires its entrance once. */}
-        <AnimatedPageWrapper delay={0} className="flex-1 overflow-hidden lg:overflow-y-auto lg:overflow-x-hidden lg:overscroll-contain">
+        <AnimatedPageWrapper soft delay={0} className="flex-1 overflow-hidden lg:overflow-y-auto lg:overflow-x-hidden lg:overscroll-contain">
           {children}
         </AnimatedPageWrapper>
 
@@ -1244,7 +1244,7 @@ function QuotaBadgeCollapsed() {
 
   return (
     <Link
-      href="/pricing"
+      href="/subscription"
       className={`
         w-full h-11 rounded-xl flex items-center justify-center
         ${isPremium
@@ -1301,7 +1301,7 @@ function QuotaBadgeExpanded() {
   return (
     <div className="px-3 pb-3">
       <Link
-        href="/pricing"
+        href="/subscription"
         className={`
           block p-3 rounded-xl
           ${isPremium

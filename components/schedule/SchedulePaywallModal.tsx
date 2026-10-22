@@ -30,7 +30,7 @@ export default function SchedulePaywallModal({
 
   const handleUpgrade = () => {
     onClose();
-    router.push("/pricing");
+    router.push("/subscription");
   };
 
   const content = (

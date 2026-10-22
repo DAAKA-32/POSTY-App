@@ -337,7 +337,7 @@ export default function RootLayout({
                 <SkipLinks />
                 {/* PERF (C3/I7): the heavy Firebase provider tree (Quota, the 10
                     platform providers, Scheduling, SidebarPosts) and the app-only
-                    overlays (PersistentMobileHeader, StrategistDrawer,
+                    overlays (PersistentMobileHeader, StrategistSession,
                     AutonomousBatchBanner, GlobalCommandPalette) now live in
                     app/(app)/layout.tsx, so public pages never mount them or pay
                     for their Firestore listeners on first load. AnalyticsTracker

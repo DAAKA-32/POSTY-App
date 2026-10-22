@@ -37,12 +37,24 @@ import { detectUrl, removeUrlFromPrompt, extractUrlContent, ExtractedUrlContent 
 import { isTopicTimeSensitive, fetchRealtimeContext, buildRealtimeContextBlock, RealtimeContext } from "@/lib/services/realtime-context";
 import { detectPromptLanguage } from "@/lib/utils/detect-language";
 import { normalizeHashtagsInText } from "@/lib/hashtags/normalize";
+import { conversationalEmojiDirective } from "@/lib/ai/emoji-policy";
 import {
   trackAIUsage,
   readUsageFromChunk,
   readUsageFromResponse,
   emptyUsage,
 } from "@/lib/ai-cost/tracker";
+
+// A generation is classify + (web search up to 12 s) + a streamed gpt-4o answer
+// + a quality repair + quota writes. Without an explicit budget Vercel's default
+// function limit could cut the stream before `complete`/`error` was sent, which
+// the client can only report as an interrupted reply. 300 s matches the other
+// long-running routes (strategist/materialize).
+export const maxDuration = 300;
+
+/** An error whose message is already written for the end user (sent with
+ *  `userFacing: true` so the client shows it as-is). */
+class UserFacingGenerationError extends Error {}
 
 // Streaming configuration for mock responses
 const MOCK_CHUNK_SIZE = 3;
@@ -822,7 +834,7 @@ export async function POST(request: NextRequest) {
             console.error("Generation error:", error);
             const message =
               error instanceof Error ? error.message : "Generation failed";
-            sendEvent("error", { message });
+            sendEvent("error", { message, userFacing: error instanceof UserFacingGenerationError });
           }
         } finally {
           if (!streamClosed) {
@@ -992,6 +1004,16 @@ STRICT RULES:
       // Follow-ups are surgical edits — re-polishing them would undo the edit.
       skipQualityGate: !!isFollowUp,
     });
+
+    // An empty result must never look like a success: the user would get a
+    // blank card and a blank post saved to their history.
+    if (!finalContent.trim()) {
+      throw new UserFacingGenerationError(
+        language === "fr"
+          ? "Posty n'a pas réussi à rédiger ce contenu. Réessayez dans un instant."
+          : "Posty couldn't write this content. Please try again in a moment."
+      );
+    }
 
     // Capture first post for insights generation
     if (!firstPostContent) {
@@ -1232,7 +1254,7 @@ async function generateConversational(
     ? "\n\nLANGUE: Réponds STRICTEMENT en français."
     : "\n\nLANGUAGE: Respond STRICTLY in English.";
   const messages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
-    { role: "system", content: CONVERSATIONAL_PROMPT[language] + langEnforcement },
+    { role: "system", content: CONVERSATIONAL_PROMPT[language] + conversationalEmojiDirective(language) + langEnforcement },
   ];
 
   // Add conversation history if available

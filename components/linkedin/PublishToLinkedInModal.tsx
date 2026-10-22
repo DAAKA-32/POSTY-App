@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { stepSwap } from "@/lib/motion";
 import Modal from "@/components/ui/Modal";
 import BottomSheet from "@/components/ui/BottomSheet";
 import Button from "@/components/ui/Button";
@@ -1020,10 +1021,7 @@ export default function PublishToLinkedInModal({
           {composeView === "compose" && (
           <motion.div
             key="compose-view"
-            initial={{ x: -16, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -16, opacity: 0 }}
-            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            {...stepSwap(-1)}
             className="space-y-4"
           >
             {/* LinkedIn Profile — only shown when LinkedIn is connected.
@@ -1218,7 +1216,7 @@ export default function PublishToLinkedInModal({
                     <p className="text-sm font-medium text-gray-900 dark:text-white">{t.publish.mediaMaxOnly}</p>
                     <button
                       type="button"
-                      onClick={() => { onClose(); router.push("/pricing"); }}
+                      onClick={() => { onClose(); router.push("/subscription"); }}
                       className="text-xs text-primary font-medium mt-0.5 hover:underline"
                     >
                       {t.publish.upgradeToMax}
@@ -1553,7 +1551,7 @@ export default function PublishToLinkedInModal({
                   <div className="flex-1">
                     <p className="text-sm font-medium text-gray-900 dark:text-white">{t.publish.proRequiredForSchedule}</p>
                     <button
-                      onClick={() => { onClose(); router.push("/pricing"); }}
+                      onClick={() => { onClose(); router.push("/subscription"); }}
                       className="text-xs text-primary font-medium mt-1 hover:underline"
                     >
                       {t.publish.upgradeToSchedule}
@@ -1580,9 +1578,7 @@ export default function PublishToLinkedInModal({
                         {scheduleStep === "date" && (
                           <motion.div
                             key="schedule-date"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
+                            {...stepSwap()}
                           >
                             {/* Step header — left aligned, title + subtitle */}
                             <div className="mb-4">
@@ -1709,9 +1705,7 @@ export default function PublishToLinkedInModal({
                         {scheduleStep === "time" && (
                           <motion.div
                             key="schedule-time"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
+                            {...stepSwap()}
                           >
                             {/* Step header — left aligned with selected date subtitle */}
                             <div className="mb-4 flex items-start justify-between gap-3">
@@ -1826,10 +1820,7 @@ export default function PublishToLinkedInModal({
           {composeView === "schedule" && (
           <motion.div
             key="schedule-view"
-            initial={{ x: 16, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: 16, opacity: 0 }}
-            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            {...stepSwap(1)}
           >
             {/* Back arrow header */}
             <div className="flex items-center gap-2 mb-4 -mt-1">
@@ -1860,9 +1851,7 @@ export default function PublishToLinkedInModal({
                 {scheduleStep === "date" && (
                   <motion.div
                     key="schedule-date"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
+                    {...stepSwap()}
                   >
                     <div className="mb-4">
                       <h4 className="text-base font-semibold text-gray-900 dark:text-white tracking-tight">
@@ -1986,9 +1975,7 @@ export default function PublishToLinkedInModal({
                 {scheduleStep === "time" && (
                   <motion.div
                     key="schedule-time"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
+                    {...stepSwap()}
                   >
                     <div className="mb-4 flex items-start justify-between gap-3">
                       <div className="min-w-0">

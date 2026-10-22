@@ -965,13 +965,22 @@ function DemoSection() {
     }
   }, [heroPhase, alreadyPlayed, prefersReducedMotion]);
 
-  // Measure title height for the spacer (fixed positioning removes it from flow)
+  // Measure the sticky title block for the md+ spacer. Its height changes with
+  // text wrapping and the web-font swap (and with the URL bar on iOS), so it is
+  // observed rather than only measured on mount / window resize — a stale value
+  // moved the whole content block.
   useEffect(() => {
-    if (!titleRef.current) return;
-    const measure = () => setTitleHeight(titleRef.current?.offsetHeight ?? 0);
+    const el = titleRef.current;
+    if (!el) return;
+    const measure = () => setTitleHeight(el.offsetHeight);
     measure();
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
+    if (typeof ResizeObserver === "undefined") {
+      window.addEventListener("resize", measure);
+      return () => window.removeEventListener("resize", measure);
+    }
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
   }, []);
 
   // Scroll-based title fade — title disappears before content overlaps it
@@ -1260,13 +1269,18 @@ function DemoSection() {
           </div>
         </motion.div>
 
-        {/* Spacer: compensates for the sticky title */}
-        <div style={{ height: titleHeight }} />
+        {/* Spacer: only from md up. The title is `sticky`, so it already occupies
+            its own height in the flow; on desktop this spacer plus the negative
+            margin below pull the content up over it. On mobile the fixed negative
+            margin could not offset a title that is taller there (2-line headline,
+            4-line description), which left ~180px of empty space between the
+            description and the tabs and pushed the mockup down. */}
+        <div className="hidden md:block" style={{ height: titleHeight }} />
 
         {/* Content — cinematic reveal: starts high + clipped, descends into place */}
         {/* z-[3] scrolls over the fixed title — transparent so aurora shows through */}
         <motion.div
-          className="relative z-[3] overflow-x-clip -mt-48 sm:-mt-48 md:-mt-56 lg:-mt-64"
+          className="relative z-[3] overflow-x-clip mt-3 md:-mt-56 lg:-mt-64"
           initial={alreadyPlayed ? undefined : { y: -180 }}
           animate={
             heroPhase === "init" || heroPhase === "opening"

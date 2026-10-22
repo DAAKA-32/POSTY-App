@@ -1,38 +1,46 @@
 "use client";
 
 /**
- * StrategistDrawerContext — global open/close state for the Strategist drawer.
+ * StrategistDrawerContext — navigation state for the Strategist workspace.
  *
- * API:
- *   - open() / close() / toggle() / isOpen
- *   - openBatch(batchId) → opens the drawer AND queues a batch to show in the
+ * The Strategist used to be a drawer laid OVER the studio. It is now its own
+ * workspace at /app/strategist, rendered by the shared app shell instead of a
+ * panel on top of it (components/strategist/StrategistWorkspace.tsx). The name
+ * of this context and its API are unchanged on purpose, so every existing
+ * caller keeps working:
+ *
+ *   - isOpen   → true while the user is ON the workspace route.
+ *   - open()   → go to the workspace.   close() → back to the post studio.
+ *   - openBatch(batchId) → open the workspace AND queue a batch to show in the
  *     conversation (used by the "your weekly plan is ready" banner). The
- *     session inside the drawer consumes it with takePendingBatch(), so the
- *     batch is never lost even though the drawer content mounts after the click.
+ *     session consumes it with takePendingBatch(), so the batch is never lost
+ *     even though the workspace content mounts after the navigation.
  *
- * Mounted once at AppProvider level (no dependency on other contexts) so any
- * consumer can open the drawer. The conversation state itself lives in the
- * drawer's session provider (components/strategist/StrategistSession.tsx) and
- * survives open/close.
+ * Because the state is the URL, back / forward / reload / deep links behave like
+ * any page. No Esc handler and no body scroll lock any more: a page is not a
+ * modal. Mounted once at AppProvider level.
  */
 
 import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useRef,
   useState,
   ReactNode,
 } from "react";
+import { usePathname, useRouter } from "next/navigation";
+
+export const STRATEGIST_PATH = "/app/strategist";
+const POST_STUDIO_PATH = "/app";
 
 interface StrategistDrawerContextValue {
   isOpen: boolean;
   open: () => void;
   close: () => void;
   toggle: () => void;
-  /** Open the drawer and show this batch in the conversation. */
+  /** Open the workspace and show this batch in the conversation. */
   openBatch: (batchId: string) => void;
   /** Batch queued by openBatch, if any. */
   pendingBatchId: string | null;
@@ -42,28 +50,34 @@ interface StrategistDrawerContextValue {
 
 const StrategistDrawerContext = createContext<StrategistDrawerContextValue | null>(null);
 
-/** Esc inside a field cancels the edit — it must not also close the drawer
- *  (that used to wipe the whole conversation mid-edit). */
-function isEditableTarget(target: EventTarget | null): boolean {
-  const el = target as HTMLElement | null;
-  if (!el || typeof el.closest !== "function") return false;
-  return !!el.closest("input, textarea, select, [contenteditable='true']");
-}
-
 export function StrategistDrawerProvider({ children }: { children: ReactNode }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
+  const isOpen = pathname === STRATEGIST_PATH;
+
   const [pendingBatchId, setPendingBatchId] = useState<string | null>(null);
   const pendingRef = useRef<string | null>(null);
 
-  const open = useCallback(() => setIsOpen(true), []);
-  const close = useCallback(() => setIsOpen(false), []);
-  const toggle = useCallback(() => setIsOpen((v) => !v), []);
+  const open = useCallback(() => {
+    if (pathname !== STRATEGIST_PATH) router.push(STRATEGIST_PATH);
+  }, [pathname, router]);
 
-  const openBatch = useCallback((batchId: string) => {
-    pendingRef.current = batchId;
-    setPendingBatchId(batchId);
-    setIsOpen(true);
-  }, []);
+  const close = useCallback(() => {
+    if (pathname === STRATEGIST_PATH) router.push(POST_STUDIO_PATH);
+  }, [pathname, router]);
+
+  const toggle = useCallback(() => {
+    router.push(pathname === STRATEGIST_PATH ? POST_STUDIO_PATH : STRATEGIST_PATH);
+  }, [pathname, router]);
+
+  const openBatch = useCallback(
+    (batchId: string) => {
+      pendingRef.current = batchId;
+      setPendingBatchId(batchId);
+      open();
+    },
+    [open]
+  );
 
   const takePendingBatch = useCallback(() => {
     const id = pendingRef.current;
@@ -71,28 +85,6 @@ export function StrategistDrawerProvider({ children }: { children: ReactNode }) 
     setPendingBatchId(null);
     return id;
   }, []);
-
-  // Global ESC-to-close — only attached while open, and ignored when the key
-  // is meant for a field or was already handled (e.g. cancelling an edit).
-  useEffect(() => {
-    if (!isOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "Escape" || e.defaultPrevented || isEditableTarget(e.target)) return;
-      close();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [isOpen, close]);
-
-  // Lock body scroll while drawer is open so the page underneath stays put.
-  useEffect(() => {
-    if (!isOpen) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [isOpen]);
 
   const value = useMemo(
     () => ({ isOpen, open, close, toggle, openBatch, pendingBatchId, takePendingBatch }),

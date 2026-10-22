@@ -117,7 +117,7 @@ export async function proxy(request: NextRequest) {
     // If no active subscription, redirect to pricing
     if (!hasActiveSubscription) {
       console.warn(`[Middleware] Blocking access to ${pathname} - No active subscription`);
-      const pricingUrl = new URL("/pricing", request.url);
+      const pricingUrl = new URL("/subscription", request.url);
       pricingUrl.searchParams.set("redirect", pathname);
       pricingUrl.searchParams.set("reason", "subscription_required");
       return NextResponse.redirect(pricingUrl);
@@ -131,7 +131,7 @@ export async function proxy(request: NextRequest) {
     const planIsValid = !!subscriptionPlan && VALID_PLANS.has(subscriptionPlan);
     if (!planIsValid && pathname !== "/profile") {
       console.warn(`[Middleware] Blocking user without resolved plan from ${pathname}`);
-      const pricingUrl = new URL("/pricing", request.url);
+      const pricingUrl = new URL("/subscription", request.url);
       pricingUrl.searchParams.set("reason", "upgrade_required");
       return NextResponse.redirect(pricingUrl);
     }

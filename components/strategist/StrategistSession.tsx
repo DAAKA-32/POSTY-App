@@ -1,13 +1,13 @@
 "use client";
 
 /**
- * StrategistSession — the conversation state of the Strategist drawer.
+ * StrategistSession — the conversation state of the Strategist workspace.
  *
- * Lives ABOVE the drawer's animated content (mounted by StrategistDrawer, which
- * stays mounted for the whole authenticated session), so closing the drawer —
- * backdrop tap, Esc, swipe — no longer wipes the conversation or the plans in
- * it, and a request in flight keeps running and lands in the thread. Only
- * "Stop" and "New conversation" abort.
+ * Lives ABOVE the workspace, mounted by app/(app)/layout.tsx for the whole
+ * authenticated session, so switching to Posty Post (or visiting another page)
+ * no longer wipes the conversation or the plans in it, and a request in flight
+ * keeps running and lands in the thread. Only "Stop" and "New conversation"
+ * abort.
  *
  * Owns:
  *   - messages + routing (plan / single post / advisor) + SSE parsing
@@ -55,6 +55,8 @@ export type StrategistMsg = {
   batch?: StrategyBatch;
   /** Assistant placeholder while waiting — what we are waiting for. */
   pending?: "chat" | "plan" | "post";
+  /** Receiving a streamed answer: keeps the typing cursor up until `done`. */
+  streaming?: boolean;
 };
 
 export type StrategistView = "chat" | "settings";
@@ -188,7 +190,7 @@ export function StrategistSessionProvider({ children }: { children: ReactNode })
   const hydratedRef = useRef(false);
 
   // Hydrate settings + autonomous config + latest plan the first time the
-  // drawer opens (not on every app load — most users never open it).
+  // workspace is visited (not on every app load — most users never open it).
   useEffect(() => {
     if (!isOpen || !user?.uid || hydratedRef.current) return;
     hydratedRef.current = true;
@@ -330,6 +332,17 @@ export function StrategistSessionProvider({ children }: { children: ReactNode })
       // ── Advisor (SSE stream) ───────────────────────────────────────────
       void (async () => {
         let received = false;
+        let finished = false;
+        // Whatever already streamed in stays on screen (only an empty bubble is
+        // removed): a late error must not erase an answer the user was reading.
+        const stopWith = (message: string) => {
+          commit((prev) =>
+            prev
+              .filter((m) => !(m.id === placeholderId && !m.content))
+              .map((m) => (m.id === placeholderId ? { ...m, pending: undefined, streaming: false } : m)),
+          );
+          setError({ message, canRetry: true });
+        };
         try {
           const headers = await getAuthHeaders();
           const history = historyBefore
@@ -376,16 +389,24 @@ export function StrategistSessionProvider({ children }: { children: ReactNode })
                 const chunk = data.content;
                 commit((prev) =>
                   prev.map((m) =>
-                    m.id === placeholderId ? { ...m, pending: undefined, content: m.content + chunk } : m,
+                    m.id === placeholderId ? { ...m, pending: undefined, streaming: true, content: m.content + chunk } : m,
                   ),
                 );
+              } else if (evt === "done") {
+                finished = true;
               } else if (evt === "error") {
                 // Provider errors are raw English — show our own message.
-                return failWith(placeholderId, c.thread.errorGeneric);
+                return received ? stopWith(c.thread.errorGeneric) : failWith(placeholderId, c.thread.errorGeneric);
               }
             }
           }
           if (!received) return failWith(placeholderId, c.thread.errorGeneric);
+          // The server always ends with `done` or `error`: a stream that just
+          // closes was cut off, which is a failure, not a finished answer.
+          if (!finished) return stopWith(c.thread.errorInterrupted);
+          commit((prev) =>
+            prev.map((m) => (m.id === placeholderId ? { ...m, pending: undefined, streaming: false } : m)),
+          );
           setAnnouncement(c.thread.answerReady);
         } catch (err) {
           if ((err as Error).name === "AbortError") {
@@ -393,12 +414,12 @@ export function StrategistSessionProvider({ children }: { children: ReactNode })
             commit((prev) =>
               prev
                 .filter((m) => !(m.id === placeholderId && !m.content))
-                .map((m) => (m.id === placeholderId ? { ...m, pending: undefined } : m)),
+                .map((m) => (m.id === placeholderId ? { ...m, pending: undefined, streaming: false } : m)),
             );
             return;
           }
           console.error("[strategist] send error:", err);
-          failWith(placeholderId, c.thread.errorNetwork);
+          stopWith(c.thread.errorNetwork);
         } finally {
           finish();
         }

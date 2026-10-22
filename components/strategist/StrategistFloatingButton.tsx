@@ -7,7 +7,7 @@
  * Sits bottom-right on every authenticated app page (mounted in MainLayout).
  *
  * Behaviour:
- *   - Click → opens the inline <StrategistDrawer> (no navigation)
+ *   - Click → goes to the /app/strategist workspace (open())
  *   - Hidden on the landing/auth/subscription/onboarding flows
  *   - Hover → tooltip "Strategist"
  *   - For Max users: shiny amber gradient

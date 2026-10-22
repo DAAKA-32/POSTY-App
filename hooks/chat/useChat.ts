@@ -5,13 +5,30 @@ import { savePost, addMessagesToConversation, getConversationHistory, renamePost
 import { MockResponse, PostInsights, ConversationTurn, FileAttachment, Post, DetectedAIAction } from "@/types";
 import { getAuthHeaders } from "@/lib/api/client";
 import { triggerHaptic } from "@/lib/ui/haptic";
-import { getFriendlyMessage } from "@/lib/utils/error-messages";
+import { getFriendlyMessage, localized } from "@/lib/utils/error-messages";
 import { setCachedConversation, updateCachedConversation, getCachedConversation } from "@/lib/storage/conversation-cache";
 import { detectIntent } from "@/lib/ai/intent-detection";
 import { trackEvent } from "@/lib/analytics/tracker";
+import { createSSEParser } from "@/lib/chat/sse";
 
 const GUEST_GENERATION_LIMIT = 2;
 const GUEST_STORAGE_KEY = "posty_guest_generations";
+
+/** An error whose text is already written for the user (server `message`,
+ *  interrupted stream) — shown as-is instead of the generic friendly fallback. */
+class UserFacingError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "UserFacingError";
+  }
+}
+
+function interruptedMessage(): string {
+  return localized(
+    "La réponse s'est interrompue avant la fin. Ce qui a été reçu reste affiché : relancez la demande pour la terminer.",
+    "The response was interrupted before it finished. What was received stays on screen: send the request again to complete it."
+  );
+}
 
 // Message types for conversational display
 export interface ConversationMessage {
@@ -144,6 +161,10 @@ export function useChat({
   const responsesRef = useRef<MockResponse[]>(responses);
   // Generation counter — incremented on reset() to discard stale async saves
   const generationRef = useRef(0);
+  // Request counter — each generate() takes a number; only the CURRENT request
+  // may flip the shared loading flags. Without it, the cleanup of an aborted
+  // request landed after the next one started and hid its loader.
+  const requestIdRef = useRef(0);
 
   // Keep refs in sync with state
   postIdRef.current = postId;
@@ -339,6 +360,8 @@ export function useChat({
       const controller = new AbortController();
       abortControllerRef.current = controller;
       smartTitleRef.current = null;
+      const requestId = ++requestIdRef.current;
+      const isCurrent = () => requestIdRef.current === requestId;
 
       // Capture generation ID to discard results if reset() is called mid-save
       const currentGeneration = generationRef.current;
@@ -380,6 +403,33 @@ export function useChat({
       let savedPostId: string | null = null;
       let savedContent = "";
       let savedIsConversational = false;
+
+      // Ids of the bubbles THIS request may create, and which already exist.
+      const ownIds = new Set(Object.values(messageIds));
+      const created = new Set<string>();
+      let streamingStarted = false;
+      let receivedTerminal = false;
+
+      // The loader stays up until the first visible content: the server still
+      // classifies / searches / explains for seconds after the headers arrive.
+      const markStreaming = () => {
+        if (streamingStarted) return;
+        streamingStarted = true;
+        if (isCurrent()) {
+          setIsStreaming(true);
+          setIsLoading(false);
+        }
+      };
+
+      // Whatever way the request ends, its bubbles must stop looking "live":
+      // stop the cursor and drop placeholders that never received content
+      // (e.g. the second dual-mode bubble when the server answered with one).
+      const finalizeMessages = () =>
+        setMessages((prev) =>
+          prev
+            .filter((m) => !(ownIds.has(m.id) && m.isStreaming && !m.content))
+            .map((m) => (ownIds.has(m.id) && m.isStreaming ? { ...m, isStreaming: false } : m))
+        );
 
       try {
         // Get conversation history if continuing existing conversation
@@ -435,9 +485,15 @@ export function useChat({
 
             let content: string;
             if (plan === "pro") {
-              content = `Vous avez utilisé vos ${hourlyLimit} messages cette heure. Réessayez dans ${resetMinutes} min, ou passez au plan Max pour un accès quasi illimité.`;
+              content = localized(
+                `⏳ Vous avez utilisé vos ${hourlyLimit} messages cette heure. Réessayez dans ${resetMinutes} min, ou passez au plan Max pour un accès quasi illimité 🚀`,
+                `⏳ You've used your ${hourlyLimit} messages this hour. Try again in ${resetMinutes} min, or move to the Max plan for near-unlimited access 🚀`
+              );
             } else {
-              content = `Pause automatique — réessayez dans ${resetMinutes} min.`;
+              content = localized(
+                `⏳ Pause automatique — réessayez dans ${resetMinutes} min, je reste là !`,
+                `⏳ Automatic pause — try again in ${resetMinutes} min, I'll be right here!`
+              );
             }
 
             const limitMessage: ConversationMessage = {
@@ -452,6 +508,9 @@ export function useChat({
             setIsStreaming(false);
             return emptyResult; // Exit gracefully without error
           }
+          if (typeof errorData.message === "string" && errorData.message) {
+            throw new UserFacingError(errorData.message);
+          }
           throw new Error(errorData.error || "Generation failed");
         }
 
@@ -461,326 +520,342 @@ export function useChat({
         }
 
         const decoder = new TextDecoder();
-        let buffer = "";
+        const parser = createSSEParser();
 
-        setIsStreaming(true);
-        setIsLoading(false);
-
+        // Events are only emitted once their whole block has arrived, so one
+        // split across two network reads is no longer lost.
         while (true) {
           const { done, value } = await reader.read();
-          if (done) break;
+          const events = done ? parser.flush() : parser.push(decoder.decode(value, { stream: true }));
 
-          buffer += decoder.decode(value, { stream: true });
+          for (const { event: eventType, data: rawData } of events) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const data: any = rawData;
 
-          // Parse SSE events from buffer
-          const lines = buffer.split("\n");
-          buffer = lines.pop() || "";
+            switch (eventType) {
+              case "phase": {
+                const phase = data.phase as GenerationPhase;
+                const message = data.message as string;
+                setGenerationPhase(phase);
+                setGenerationPhaseMessage(message || "");
+                break;
+              }
 
-          for (let i = 0; i < lines.length; i++) {
-            const line = lines[i].trim();
+              case "start": {
+                markStreaming();
+                const variantType = data.type as string;
+                const newMessage: ConversationMessage = {
+                  id: messageIds[variantType],
+                  type: "ai",
+                  content: "",
+                  timestamp: new Date(),
+                  variant: variantType === "conversational" ? undefined : variantType as "storytelling" | "business",
+                  isStreaming: true,
+                };
 
-            if (line.startsWith("event:")) {
-              const eventType = line.slice(6).trim();
-              const dataLine = lines[i + 1];
+                if (variantType === "conversational") {
+                  // Conversational response (SOCIAL/EXPLORATORY) — single message, no dual layout
+                  setMessages((prev) => [...prev, newMessage]);
+                } else if (callDualMode && variantType === "storytelling") {
+                  // Pre-create business placeholder for stable dual layout
+                  const businessPlaceholder: ConversationMessage = {
+                    id: messageIds.business,
+                    type: "ai",
+                    content: "",
+                    timestamp: new Date(),
+                    variant: "business",
+                    isStreaming: true,
+                  };
+                  setMessages((prev) => [...prev, newMessage, businessPlaceholder]);
+                } else if (created.has(messageIds[variantType])) {
+                  // Placeholder already created (dual mode: business after storytelling) — skip
+                } else {
+                  // Includes dual mode where the server fell back to ONE style
+                  // (weekly dual limit used up while the toggle stays on): no
+                  // placeholder exists, the bubble must be created here.
+                  setMessages((prev) => [...prev, newMessage]);
+                }
+                created.add(messageIds[variantType]);
+                if (callDualMode && variantType === "storytelling") created.add(messageIds.business);
+                break;
+              }
 
-              if (dataLine && dataLine.startsWith("data:")) {
-                let data;
-                try {
-                  data = JSON.parse(dataLine.slice(5).trim());
-                } catch (parseError) {
-                  console.error("Failed to parse SSE data:", parseError, dataLine);
-                  continue;
+              case "chunk": {
+                markStreaming();
+                const type = data.type as "storytelling" | "business";
+                accumulatedContent[type] += data.content;
+
+                setStreamingContent((prev) => ({
+                  ...prev,
+                  [type]: accumulatedContent[type],
+                }));
+
+                setMessages((prev) =>
+                  prev.map((msg) =>
+                    msg.id === messageIds[type]
+                      ? { ...msg, content: accumulatedContent[type] }
+                      : msg
+                  )
+                );
+                break;
+              }
+
+              case "done": {
+                const type = data.type as "storytelling" | "business";
+                // Server sends the normalized final text (hashtag casing
+                // fixed) in `content`. Overwrite the accumulator so the
+                // saved post and the rendered message both use it.
+                const normalized = typeof data.content === "string" ? data.content : null;
+                if (normalized !== null) {
+                  accumulatedContent[type] = normalized;
+                  setStreamingContent((prev) => ({ ...prev, [type]: normalized }));
+                }
+                setMessages((prev) =>
+                  prev.map((msg) =>
+                    msg.id === messageIds[type]
+                      ? { ...msg, isStreaming: false, content: normalized ?? msg.content }
+                      : msg
+                  )
+                );
+                break;
+              }
+
+              case "insights": {
+                if (data.insights) {
+                  setInsights(data.insights);
+                }
+                break;
+              }
+
+              case "title": {
+                // Smart title from GPT — update post when saved
+                if (data.title) {
+                  smartTitleRef.current = data.title as string;
+                }
+                break;
+              }
+
+              case "complete": {
+                receivedTerminal = true;
+                setIsStreaming(false);
+                finalizeMessages();
+                setGenerationPhase("complete");
+                triggerHaptic();
+
+                if (data.quota) {
+                  console.log("Quota updated:", data.quota);
                 }
 
-                switch (eventType) {
-                  case "phase": {
-                    const phase = data.phase as GenerationPhase;
-                    const message = data.message as string;
-                    setGenerationPhase(phase);
-                    setGenerationPhaseMessage(message || "");
-                    break;
-                  }
+                // Determine if this was a conversational response (SOCIAL/EXPLORATORY)
+                // HYBRID streams an explanation AND a post: the post is the
+                // deliverable, so it wins (the explanation alone used to be saved
+                // and the post lost after a reload).
+                const hasPostContent = !!(accumulatedContent.storytelling || accumulatedContent.business);
+                const isConversational = !!accumulatedContent.conversational && !hasPostContent;
+                // The server falls back to a single style when the weekly dual
+                // limit is used up while the client toggle is still on: decide
+                // from what actually arrived, not from the toggle.
+                const effectiveDual = callDualMode && !!accumulatedContent.storytelling && !!accumulatedContent.business;
+                const singleStyle: "storytelling" | "business" = accumulatedContent[callStyle]
+                  ? callStyle
+                  : accumulatedContent.storytelling
+                    ? "storytelling"
+                    : "business";
+                savedIsConversational = isConversational;
 
-                  case "start": {
-                    const variantType = data.type as string;
-                    const newMessage: ConversationMessage = {
-                      id: messageIds[variantType],
-                      type: "ai",
-                      content: "",
-                      timestamp: new Date(),
-                      variant: variantType === "conversational" ? undefined : variantType as "storytelling" | "business",
-                      isStreaming: true,
-                    };
+                // Set final responses based on mode
+                if (isConversational) {
+                  // Conversational responses are not "posts" — store for display only
+                  setResponses([{
+                    title: "POSTY",
+                    content: accumulatedContent.conversational,
+                    type: "business", // fallback type for compatibility
+                  }]);
+                } else if (effectiveDual) {
+                  // Seed comment is NOT auto-generated — explicit user
+                  // action only. The "Ajouter un 1er commentaire (boost
+                  // algo)" button in ModernResponseCard fires it on
+                  // click via `regenerateSeedComment(index)`. Reasons:
+                  //   1. Saves an LLM call per post for users who never
+                  //      use the seed comment.
+                  //   2. Avoids a shimmer placeholder for a feature
+                  //      that's a power-user nicety, not a default.
+                  setResponses([
+                    {
+                      title: "Version Storytelling",
+                      content: accumulatedContent.storytelling,
+                      type: "storytelling",
+                    },
+                    {
+                      title: "Version Business",
+                      content: accumulatedContent.business,
+                      type: "business",
+                    },
+                  ]);
+                } else {
+                  const onlyContent = accumulatedContent[singleStyle] || "";
+                  setResponses([
+                    {
+                      title: singleStyle === "storytelling"
+                        ? "Version Storytelling"
+                        : "Version Business",
+                      content: onlyContent,
+                      type: singleStyle,
+                    },
+                  ]);
+                }
 
-                    if (variantType === "conversational") {
-                      // Conversational response (SOCIAL/EXPLORATORY) — single message, no dual layout
-                      setMessages((prev) => [...prev, newMessage]);
-                    } else if (callDualMode && variantType === "storytelling") {
-                      // Pre-create business placeholder for stable dual layout
-                      const businessPlaceholder: ConversationMessage = {
-                        id: messageIds.business,
-                        type: "ai",
-                        content: "",
-                        timestamp: new Date(),
-                        variant: "business",
-                        isStreaming: true,
-                      };
-                      setMessages((prev) => [...prev, newMessage, businessPlaceholder]);
-                    } else if (callDualMode && variantType === "business") {
-                      // Business placeholder already exists from storytelling start — skip
-                    } else {
-                      setMessages((prev) => [...prev, newMessage]);
-                    }
-                    break;
-                  }
+                if (isGuest) {
+                  incrementGuestCount();
+                }
 
-                  case "chunk": {
-                    const type = data.type as "storytelling" | "business";
-                    accumulatedContent[type] += data.content;
+                // CRITICAL: Save to Firestore based on conversation state
+                if (userId && !isGuest) {
+                  // Get the actual content to save (conversational or post content)
+                  const primaryContent = isConversational
+                    ? accumulatedContent.conversational
+                    : effectiveDual
+                      ? accumulatedContent.storytelling
+                      : accumulatedContent[singleStyle] || "";
+                  savedContent = primaryContent;
 
-                    setStreamingContent((prev) => ({
-                      ...prev,
-                      [type]: accumulatedContent[type],
-                    }));
+                  try {
+                    if (isExistingConversation && currentPostId) {
+                      // Follow-up: the post id is the existing conversation.
+                      savedPostId = currentPostId;
+                      // Resolve the id+variant of the PRIMARY assistant turn.
+                      // In dual mode primaryContent is the storytelling
+                      // content, so it must carry the storytelling id (not
+                      // business). The previous swap corrupted Firestore
+                      // pairings between messages and embedded images.
+                      const primaryAssistantId = isConversational
+                        ? messageIds.conversational
+                        : effectiveDual
+                          ? messageIds.storytelling
+                          : messageIds[singleStyle];
+                      const primaryVariant: "storytelling" | "business" | undefined =
+                        isConversational
+                          ? undefined
+                          : effectiveDual
+                            ? "storytelling"
+                            : singleStyle;
 
-                    setMessages((prev) =>
-                      prev.map((msg) =>
-                        msg.id === messageIds[type]
-                          ? { ...msg, content: accumulatedContent[type] }
-                          : msg
-                      )
-                    );
-                    break;
-                  }
-
-                  case "done": {
-                    const type = data.type as "storytelling" | "business";
-                    // Server sends the normalized final text (hashtag casing
-                    // fixed) in `content`. Overwrite the accumulator so the
-                    // saved post and the rendered message both use it.
-                    const normalized = typeof data.content === "string" ? data.content : null;
-                    if (normalized !== null) {
-                      accumulatedContent[type] = normalized;
-                      setStreamingContent((prev) => ({ ...prev, [type]: normalized }));
-                    }
-                    setMessages((prev) =>
-                      prev.map((msg) =>
-                        msg.id === messageIds[type]
-                          ? { ...msg, isStreaming: false, content: normalized ?? msg.content }
-                          : msg
-                      )
-                    );
-                    break;
-                  }
-
-                  case "insights": {
-                    if (data.insights) {
-                      setInsights(data.insights);
-                    }
-                    break;
-                  }
-
-                  case "title": {
-                    // Smart title from GPT — update post when saved
-                    if (data.title) {
-                      smartTitleRef.current = data.title as string;
-                    }
-                    break;
-                  }
-
-                  case "complete": {
-                    setIsStreaming(false);
-                    setGenerationPhase("complete");
-                    triggerHaptic();
-
-                    if (data.quota) {
-                      console.log("Quota updated:", data.quota);
-                    }
-
-                    // Determine if this was a conversational response (SOCIAL/EXPLORATORY)
-                    const isConversational = !!accumulatedContent.conversational;
-                    savedIsConversational = isConversational;
-
-                    // Set final responses based on mode
-                    if (isConversational) {
-                      // Conversational responses are not "posts" — store for display only
-                      setResponses([{
-                        title: "POSTY",
-                        content: accumulatedContent.conversational,
-                        type: "business", // fallback type for compatibility
-                      }]);
-                    } else if (callDualMode) {
-                      // Seed comment is NOT auto-generated — explicit user
-                      // action only. The "Ajouter un 1er commentaire (boost
-                      // algo)" button in ModernResponseCard fires it on
-                      // click via `regenerateSeedComment(index)`. Reasons:
-                      //   1. Saves an LLM call per post for users who never
-                      //      use the seed comment.
-                      //   2. Avoids a shimmer placeholder for a feature
-                      //      that's a power-user nicety, not a default.
-                      setResponses([
+                      // FOLLOW-UP: Add messages to existing conversation
+                      const newMessages: ConversationTurn[] = [
                         {
-                          title: "Version Storytelling",
-                          content: accumulatedContent.storytelling,
-                          type: "storytelling",
+                          id: userMessage.id,
+                          role: "user",
+                          content: prompt,
+                          timestamp: userMessage.timestamp,
                         },
                         {
-                          title: "Version Business",
+                          id: primaryAssistantId,
+                          role: "assistant",
+                          content: primaryContent,
+                          variant: primaryVariant,
+                          timestamp: new Date(),
+                        },
+                      ];
+
+                      // Add business response if dual mode (not conversational).
+                      // Its id MUST be messageIds.business so the persisted
+                      // record stays consistent with what was rendered live.
+                      if (!isConversational && effectiveDual && accumulatedContent.business) {
+                        newMessages.push({
+                          id: messageIds.business,
+                          role: "assistant",
                           content: accumulatedContent.business,
-                          type: "business",
-                        },
-                      ]);
+                          variant: "business",
+                          timestamp: new Date(),
+                        });
+                      }
+
+                      await addMessagesToConversation(currentPostId, newMessages);
+                      // Update cache so background refreshes find fresh data
+                      const existing = getCachedConversation(currentPostId);
+                      if (existing) {
+                        updateCachedConversation(currentPostId, {
+                          messages: [...(existing.messages || []), ...newMessages],
+                        });
+                      }
                     } else {
-                      const onlyContent = accumulatedContent[callStyle] || "";
-                      setResponses([
+                      // NEW CONVERSATION: Create new post
+                      const newPostId = await savePost(
+                        userId,
+                        prompt,
+                        primaryContent,
+                        (!isConversational && effectiveDual) ? accumulatedContent.business : "",
                         {
-                          title: callStyle === "storytelling"
-                            ? "Version Storytelling"
-                            : "Version Business",
-                          content: onlyContent,
-                          type: callStyle,
-                        },
-                      ]);
-                    }
-
-                    if (isGuest) {
-                      incrementGuestCount();
-                    }
-
-                    // CRITICAL: Save to Firestore based on conversation state
-                    if (userId && !isGuest) {
-                      // Get the actual content to save (conversational or post content)
-                      const primaryContent = isConversational
-                        ? accumulatedContent.conversational
-                        : callDualMode
-                          ? accumulatedContent.storytelling
-                          : accumulatedContent[callStyle] || "";
-                      savedContent = primaryContent;
-
-                      try {
-                        if (isExistingConversation && currentPostId) {
-                          // Follow-up: the post id is the existing conversation.
-                          savedPostId = currentPostId;
-                          // Resolve the id+variant of the PRIMARY assistant turn.
-                          // In dual mode primaryContent is the storytelling
-                          // content, so it must carry the storytelling id (not
-                          // business). The previous swap corrupted Firestore
-                          // pairings between messages and embedded images.
-                          const primaryAssistantId = isConversational
-                            ? messageIds.conversational
-                            : callDualMode
-                              ? messageIds.storytelling
-                              : messageIds[callStyle];
-                          const primaryVariant: "storytelling" | "business" | undefined =
-                            isConversational
-                              ? undefined
-                              : callDualMode
-                                ? "storytelling"
-                                : callStyle;
-
-                          // FOLLOW-UP: Add messages to existing conversation
-                          const newMessages: ConversationTurn[] = [
-                            {
-                              id: userMessage.id,
-                              role: "user",
-                              content: prompt,
-                              timestamp: userMessage.timestamp,
-                            },
-                            {
-                              id: primaryAssistantId,
-                              role: "assistant",
-                              content: primaryContent,
-                              variant: primaryVariant,
-                              timestamp: new Date(),
-                            },
-                          ];
-
-                          // Add business response if dual mode (not conversational).
-                          // Its id MUST be messageIds.business so the persisted
-                          // record stays consistent with what was rendered live.
-                          if (!isConversational && callDualMode && accumulatedContent.business) {
-                            newMessages.push({
-                              id: messageIds.business,
-                              role: "assistant",
-                              content: accumulatedContent.business,
-                              variant: "business",
-                              timestamp: new Date(),
-                            });
-                          }
-
-                          await addMessagesToConversation(currentPostId, newMessages);
-                          // Update cache so background refreshes find fresh data
-                          const existing = getCachedConversation(currentPostId);
-                          if (existing) {
-                            updateCachedConversation(currentPostId, {
-                              messages: [...(existing.messages || []), ...newMessages],
-                            });
-                          }
-                        } else {
-                          // NEW CONVERSATION: Create new post
-                          const newPostId = await savePost(
-                            userId,
-                            prompt,
-                            primaryContent,
-                            (!isConversational && callDualMode) ? accumulatedContent.business : "",
-                            {
-                              responseMode: isConversational ? "conversational" : (callDualMode ? "dual" : "single-choice"),
-                              selectedStyle: (isConversational || callDualMode) ? undefined : callStyle,
-                            }
-                          );
-                          void trackEvent("post_created");
-                          // Update with smart title if available (GPT-generated topic)
-                          if (smartTitleRef.current) {
-                            renamePost(newPostId, smartTitleRef.current).catch(() => {});
-                            smartTitleRef.current = null;
-                          }
-                          // Only set postId if this generation is still current
-                          // (user may have clicked "New Post" during the save)
-                          if (generationRef.current === currentGeneration) {
-                            savedPostId = newPostId;
-                            setPostIdWithRef(newPostId);
-                            // Update cache so background refreshes find fresh data
-                            setCachedConversation({
-                              id: newPostId,
-                              userId: userId!,
-                              prompt,
-                              responseA: primaryContent,
-                              responseB: (!isConversational && callDualMode) ? accumulatedContent.business : "",
-                              selectedVersion: null,
-                              createdAt: { toDate: () => new Date() } as Post["createdAt"],
-                              responseMode: isConversational ? "conversational" : (callDualMode ? "dual" : "single-choice"),
-                              selectedStyle: (isConversational || callDualMode) ? undefined : callStyle,
-                              title: smartTitleRef.current || prompt.slice(0, 40),
-                            } as Post);
-                          }
+                          responseMode: isConversational ? "conversational" : (effectiveDual ? "dual" : "single-choice"),
+                          selectedStyle: (isConversational || effectiveDual) ? undefined : singleStyle,
                         }
-                      } catch (saveError) {
-                        console.error("Failed to save:", saveError);
-                        setError("Post genere mais non sauvegarde. Verifiez votre connexion internet.");
+                      );
+                      void trackEvent("post_created");
+                      // Update with smart title if available (GPT-generated topic)
+                      if (smartTitleRef.current) {
+                        renamePost(newPostId, smartTitleRef.current).catch(() => {});
+                        smartTitleRef.current = null;
+                      }
+                      // Only set postId if this generation is still current
+                      // (user may have clicked "New Post" during the save)
+                      if (generationRef.current === currentGeneration) {
+                        savedPostId = newPostId;
+                        setPostIdWithRef(newPostId);
+                        // Update cache so background refreshes find fresh data
+                        setCachedConversation({
+                          id: newPostId,
+                          userId: userId!,
+                          prompt,
+                          responseA: primaryContent,
+                          responseB: (!isConversational && effectiveDual) ? accumulatedContent.business : "",
+                          selectedVersion: null,
+                          createdAt: { toDate: () => new Date() } as Post["createdAt"],
+                          responseMode: isConversational ? "conversational" : (effectiveDual ? "dual" : "single-choice"),
+                          selectedStyle: (isConversational || effectiveDual) ? undefined : singleStyle,
+                          title: smartTitleRef.current || prompt.slice(0, 40),
+                        } as Post);
                       }
                     }
-                    break;
-                  }
-
-                  case "error": {
-                    throw new Error(data.message || "Generation failed");
+                  } catch (saveError) {
+                    console.error("Failed to save:", saveError);
+                    setError(localized("Post généré mais non sauvegardé. Vérifiez votre connexion internet.", "Post generated but not saved. Check your internet connection."));
                   }
                 }
+                break;
+              }
 
-                i++;
+              case "error": {
+                receivedTerminal = true;
+                if (data.userFacing && typeof data.message === "string") {
+                  throw new UserFacingError(data.message);
+                }
+                throw new Error(data.message || "Generation failed");
               }
             }
           }
+
+          if (done) break;
+        }
+
+        // The server always ends with `complete` or `error`. A stream that just
+        // closes was cut off (function timeout, dropped connection): that is a
+        // failure to report, never a silent success.
+        if (!receivedTerminal) {
+          throw new UserFacingError(interruptedMessage());
         }
       } catch (err) {
         if (err instanceof Error && err.name === "AbortError") {
+          finalizeMessages();
           return { postId: savedPostId, content: savedContent, isConversational: savedIsConversational };
         }
         console.error("Generation error:", err);
-        setError(getFriendlyMessage(err));
-        setIsStreaming(false);
+        finalizeMessages();
+        if (isCurrent()) {
+          setError(err instanceof UserFacingError ? err.message : getFriendlyMessage(err));
+          setIsStreaming(false);
+        }
       } finally {
-        setIsLoading(false);
+        if (isCurrent()) setIsLoading(false);
         // Only clear the ref if it still points to OUR controller — guards
         // against a concurrent generate() call having already replaced it.
         if (abortControllerRef.current === controller) {

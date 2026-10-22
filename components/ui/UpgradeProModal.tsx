@@ -75,7 +75,7 @@ export default function UpgradeProModal({
 
   const handleUpgrade = () => {
     onClose();
-    router.push("/pricing");
+    router.push("/subscription");
   };
 
   // Don't render for Max users

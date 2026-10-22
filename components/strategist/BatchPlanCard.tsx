@@ -50,7 +50,6 @@ import {
 import { cancelScheduledPost } from "@/lib/db/firestore";
 import { getAuthHeaders } from "@/lib/api/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useStrategistDrawer } from "@/contexts/StrategistDrawerContext";
 import { isStrategistImagesAllowedForEmail } from "@/lib/strategist/images-access";
 import {
   FORMATS,
@@ -87,7 +86,6 @@ const STORY_FORMATS: FormatSlug[] = ["storytelling", "lesson", "case-study", "be
 export default function BatchPlanCard({ batch, onChange }: Props) {
   const { c, lang } = useStrategistCopy();
   const { user } = useAuth();
-  const { close } = useStrategistDrawer();
   const allowImages = isStrategistImagesAllowedForEmail(user?.email);
   const titleId = useId();
 
@@ -509,7 +507,6 @@ export default function BatchPlanCard({ batch, onChange }: Props) {
                   </Button>
                   <Link
                     href="/schedule"
-                    onClick={close}
                     className={`inline-flex items-center justify-center gap-2 h-11 px-4 rounded-xl border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-card hover:bg-gray-50 dark:hover:bg-dark-hover text-[14px] font-medium text-gray-800 dark:text-gray-100 ${focusRing}`}
                   >
                     <CalendarClock aria-hidden className="w-4 h-4" />

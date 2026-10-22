@@ -93,21 +93,28 @@ function parseBlocks(content: string): ReactNode[] {
       continue;
     }
 
-    // Ordered list — quiet gray numerals
+    // Ordered list — quiet gray numerals. The numeral comes from the SOURCE
+    // ("3." shows 3), not from the position in the run: a numbered item that is
+    // followed by its own sub-bullets splits into several runs, and counting
+    // from 1 in each one rendered "1 1 1 1" instead of "1 2 3 4".
     if (/^\s*\d+[.)]\s/.test(line)) {
-      const items: string[] = [];
+      const items: { n: number; text: string }[] = [];
       while (i < lines.length && /^\s*\d+[.)]\s/.test(lines[i])) {
-        items.push(lines[i].replace(/^\s*\d+[.)]\s+/, ""));
+        const m = lines[i].match(/^\s*(\d+)[.)]\s+(.*)$/);
+        items.push({ n: m ? parseInt(m[1], 10) : items.length + 1, text: m ? m[2] : lines[i] });
         i++;
       }
+      // A run whose items all carry the same number ("1." repeated, lazy
+      // markdown numbering) is a plain sequence: count it from the first number.
+      const lazy = items.length > 1 && items.every((it) => it.n === items[0].n);
       out.push(
         <ol key={key++} className="space-y-2 pl-0.5">
           {items.map((it, j) => (
             <li key={j} className="flex gap-2.5">
               <span className="flex-shrink-0 inline-flex items-center justify-center w-[18px] h-[18px] mt-[3px] rounded-full bg-gray-100 dark:bg-gray-800 text-[10px] font-medium text-gray-600 dark:text-gray-400 tabular-nums">
-                {j + 1}
+                {lazy ? items[0].n + j : it.n}
               </span>
-              <span className="flex-1">{renderInline(it)}</span>
+              <span className="flex-1">{renderInline(it.text)}</span>
             </li>
           ))}
         </ol>

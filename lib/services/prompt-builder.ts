@@ -18,7 +18,7 @@
  * - Max: deeper strategy, non-obvious angles, emotional sophistication, signature voice
  */
 
-import { emojiDirective } from "@/lib/ai/emoji-policy";
+import { emojiDirective, conversationalEmojiDirective } from "@/lib/ai/emoji-policy";
 import { sanitizeProfileField } from "@/lib/ai/sanitize-profile";
 import { renderBusinessBlock } from "@/lib/business/render";
 
@@ -1334,7 +1334,7 @@ export function buildAssistantPrompt(
     const noProfileNote = language === "fr"
       ? "Aucun profil utilisateur disponible. Réponds de façon générique mais utile."
       : "No user profile available. Respond generically but usefully.";
-    return basePrompt.replace("{{PROFILE_CONTEXT}}", noProfileNote) + emojiDirective(language);
+    return basePrompt.replace("{{PROFILE_CONTEXT}}", noProfileNote) + conversationalEmojiDirective(language);
   }
 
   // Build rich profile context block
@@ -1373,7 +1373,7 @@ export function buildAssistantPrompt(
     ? parts.join("\n")
     : (isFr ? "Profil minimal — adapte quand même au mieux." : "Minimal profile — adapt as best you can.");
 
-  return basePrompt.replace("{{PROFILE_CONTEXT}}", profileBlock) + emojiDirective(language);
+  return basePrompt.replace("{{PROFILE_CONTEXT}}", profileBlock) + conversationalEmojiDirective(language);
 }
 
 /**

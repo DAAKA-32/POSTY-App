@@ -143,8 +143,8 @@ export const FORMATS: Record<FormatSlug, FormatSpec> = {
       en: "End on a strong line that lets the story resonate, OR on a question inviting the reader to share theirs. Never a tacked-on moral.",
     },
     emoji: {
-      fr: "2 à 4 : sur les temps forts, sur la liste d'enseignements et sur la chute — pas dans chaque phrase du récit.",
-      en: "2 to 4: on the strong beats, on the list of takeaways and on the ending — not in every sentence of the story.",
+      fr: "4 à 6 : sur les temps forts, sur la liste d'enseignements et sur la chute — pas dans chaque phrase du récit.",
+      en: "4 to 6: on the strong beats, on the list of takeaways and on the ending — not in every sentence of the story.",
     },
     aliases: ["story", "storytelling", "récit", "recit", "anecdote", "narratif", "narrative", "personal-story", "histoire"],
   },
@@ -175,8 +175,8 @@ export const FORMATS: Record<FormatSlug, FormatSpec> = {
       en: "End with what the author would do again (or never again), or with a precise question about the reader's experience.",
     },
     emoji: {
-      fr: "3 à 5 : ❌ / ✅ pour l'avant/après, des repères sur la liste de leçons, un emoji juste sur l'aveu.",
-      en: "3 to 5: ❌ / ✅ for the before/after, markers on the list of lessons, one fitting emoji on the confession.",
+      fr: "5 à 7 : ❌ / ✅ pour l'avant/après, des repères sur la liste de leçons, un emoji juste sur l'aveu.",
+      en: "5 to 7: ❌ / ✅ for the before/after, markers on the list of lessons, one fitting emoji on the confession.",
     },
     aliases: ["lesson", "lesson-learned", "lessons", "leçon", "lecon", "retour-experience", "retour d'expérience", "rex", "learning", "confession", "aveu"],
   },
@@ -205,8 +205,8 @@ export const FORMATS: Record<FormatSlug, FormatSpec> = {
       en: "End on the stance restated in one line, or a challenge to the reader (\"tell me where I'm wrong\"). No final re-balancing.",
     },
     emoji: {
-      fr: "2 à 3 : en repères d'arguments et pour souligner la position (⚡ 🎯). Pas d'emoji d'émotion gratuit.",
-      en: "2 to 3: as argument markers and to underline the stance (⚡ 🎯). No gratuitous emotion emoji.",
+      fr: "3 à 5 : en repères d'arguments et pour souligner la position (⚡ 🎯). Pas d'emoji d'émotion gratuit.",
+      en: "3 to 5: as argument markers and to underline the stance (⚡ 🎯). No gratuitous emotion emoji.",
     },
     aliases: ["opinion", "contrarian", "contrarian-take", "take", "hot-take", "prise-de-position", "tribune", "thread-of-thought", "point-de-vue"],
   },
@@ -235,8 +235,8 @@ export const FORMATS: Record<FormatSlug, FormatSpec> = {
       en: "End with the simplest step to try today, or a question about how the reader handles this problem.",
     },
     emoji: {
-      fr: "3 à 6 : numéros ou puces pour les étapes, ⚠️ pour le piège, 👇 ou 💬 pour inviter à réagir.",
-      en: "3 to 6: numbers or bullets for the steps, ⚠️ for the trap, 👇 or 💬 to invite a reply.",
+      fr: "5 à 8 : numéros ou puces pour les étapes, ⚠️ pour le piège, 👇 ou 💬 pour inviter à réagir.",
+      en: "5 to 8: numbers or bullets for the steps, ⚠️ for the trap, 👇 or 💬 to invite a reply.",
     },
     note: {
       fr: "Ici, des étapes numérotées sont voulues : c'est la structure du format.",
@@ -269,8 +269,8 @@ export const FORMATS: Record<FormatSlug, FormatSpec> = {
       en: "End by asking which item is missing, or which one the reader already applies — a single question.",
     },
     emoji: {
-      fr: "Un repère emoji par item (un seul style par liste : 1️⃣ 2️⃣ 3️⃣, ✅, ❌ ou 👉) + 1 ou 2 ailleurs (💡 sur l'item clé, 👇 sur la question).",
-      en: "One emoji marker per item (one style per list: 1️⃣ 2️⃣ 3️⃣, ✅, ❌ or 👉) + 1 or 2 elsewhere (💡 on the key item, 👇 on the question).",
+      fr: "Un repère emoji par item (un seul style par liste : 1️⃣ 2️⃣ 3️⃣, ✅, ❌ ou 👉) + 2 ou 3 ailleurs (💡 sur l'item clé, 👇 sur la question).",
+      en: "One emoji marker per item (one style per list: 1️⃣ 2️⃣ 3️⃣, ✅, ❌ or 👉) + 2 or 3 elsewhere (💡 on the key item, 👇 on the question).",
     },
     note: {
       fr: "Ici, la liste EST la structure (cela prime sur la règle générale contre les listes). Chaque item doit être spécifique au métier de l'auteur — pas de « soyez régulier ». Pas de règle de trois : 4 à 7 items. N'ouvre pas par « Voici X… ».",
@@ -303,8 +303,8 @@ export const FORMATS: Record<FormatSlug, FormatSpec> = {
       en: "End with the concrete application for the reader, or a question checking whether they recognise the initial confusion.",
     },
     emoji: {
-      fr: "3 à 5 pour structurer (📌 🔎 ⚠️ 💡 1️⃣) ; sur un sujet très technique, garde-les en repères de structure seulement.",
-      en: "3 to 5 to structure (📌 🔎 ⚠️ 💡 1️⃣); on a very technical topic, keep them as structure markers only.",
+      fr: "4 à 6 pour structurer (📌 🔎 ⚠️ 💡 1️⃣) ; sur un sujet très technique, garde-les en repères de structure seulement.",
+      en: "4 to 6 to structure (📌 🔎 ⚠️ 💡 1️⃣); on a very technical topic, keep them as structure markers only.",
     },
     aliases: ["educational", "education", "éducatif", "educatif", "pédagogie", "pedagogie", "pédagogique", "explainer", "expertise", "décryptage-notion", "concept"],
   },
@@ -333,8 +333,8 @@ export const FORMATS: Record<FormatSlug, FormatSpec> = {
       en: "End with an owned prediction or a question about how the reader is preparing for it.",
     },
     emoji: {
-      fr: "2 à 4, en repères (→ ✅ ❌ 📌) et sur la conclusion (🎯).",
-      en: "2 to 4, as markers (→ ✅ ❌ 📌) and on the conclusion (🎯).",
+      fr: "3 à 5, en repères (→ ✅ ❌ 📌) et sur la conclusion (🎯).",
+      en: "3 to 5, as markers (→ ✅ ❌ 📌) and on the conclusion (🎯).",
     },
     aliases: ["analysis", "analyse", "décryptage", "decryptage", "data-drop", "data", "trend", "tendance", "insight", "veille", "news"],
   },
@@ -363,8 +363,8 @@ export const FORMATS: Record<FormatSlug, FormatSpec> = {
       en: "End on the reusable lesson, or a question about a similar case on the reader's side.",
     },
     emoji: {
-      fr: "3 à 5 : repères d'étapes, 💡 sur l'enseignement (📈 seulement si un vrai résultat chiffré est fourni).",
-      en: "3 to 5: step markers, 💡 on the lesson (📈 only if a real measured result is provided).",
+      fr: "4 à 6 : repères d'étapes, 💡 sur l'enseignement (📈 seulement si un vrai résultat chiffré est fourni).",
+      en: "4 to 6: step markers, 💡 on the lesson (📈 only if a real measured result is provided).",
     },
     note: {
       fr: "N'invente ni nom de client ni chiffre : sans données fournies, reste qualitatif (« un client dans la logistique », « le délai a fondu »).",
@@ -397,8 +397,8 @@ export const FORMATS: Record<FormatSlug, FormatSpec> = {
       en: "End on a simple, sincere line, or a question inviting the reader to share their own backstage.",
     },
     emoji: {
-      fr: "3 à 5, naturels et personnels (☕ 😅 🛠️ 👀…) — c'est le format le plus humain.",
-      en: "3 to 5, natural and personal (☕ 😅 🛠️ 👀…) — this is the most human format.",
+      fr: "4 à 7, naturels et personnels (☕ 😅 🛠️ 👀…) — c'est le format le plus humain.",
+      en: "4 to 7, natural and personal (☕ 😅 🛠️ 👀…) — this is the most human format.",
     },
     aliases: ["behind-the-scenes", "behind the scenes", "bts", "coulisses", "coulisse", "making-of", "envers du décor", "quotidien"],
   },
@@ -427,8 +427,8 @@ export const FORMATS: Record<FormatSlug, FormatSpec> = {
       en: "The final question IS the heart of the post: precise, answerable in one sentence, never \"what do you think?\".",
     },
     emoji: {
-      fr: "2 à 4 : ✅ / ❌ pour les deux camps, 🤔 ou 👇 sur la question.",
-      en: "2 to 4: ✅ / ❌ for the two sides, 🤔 or 👇 on the question.",
+      fr: "3 à 5 : ✅ / ❌ pour les deux camps, 🤔 ou 👇 sur la question.",
+      en: "3 to 5: ✅ / ❌ for the two sides, 🤔 or 👇 on the question.",
     },
     note: {
       fr: "Présenter les deux camps est voulu ici, à condition que l'auteur dise clairement où il penche.",
@@ -461,8 +461,8 @@ export const FORMATS: Record<FormatSlug, FormatSpec> = {
       en: "A one-line punchline. No question required.",
     },
     emoji: {
-      fr: "1 à 2, sur l'idée clé ou la chute.",
-      en: "1 to 2, on the key idea or the punchline.",
+      fr: "2 à 3, sur l'idée clé ou la chute.",
+      en: "2 to 3, on the key idea or the punchline.",
     },
     aliases: ["quick-take", "quick take", "short", "court", "post court", "punchline", "one-liner", "pensée", "pensee", "réflexion courte"],
   },
