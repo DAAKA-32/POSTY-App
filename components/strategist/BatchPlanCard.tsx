@@ -24,6 +24,7 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { trackEvent } from "@/lib/analytics/tracker";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   CalendarClock,
@@ -152,6 +153,9 @@ export default function BatchPlanCard({ batch, onChange }: Props) {
     setStatus(next);
     try {
       await setBatchStatus(batch.id, next);
+      // Analytics: the user approved a Strategist plan (the product's real
+      // "approval" step — it is a plan, not an individual post).
+      if (next === "approved") void trackEvent("strategy_plan_approved");
       return true;
     } catch {
       setStatus(prev);

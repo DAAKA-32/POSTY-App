@@ -41,6 +41,7 @@ import {
   isUpcomingStatus,
 } from "@/lib/scheduling/publish-status";
 import toast from "@/components/ui/Toast";
+import { trackEvent } from "@/lib/analytics/tracker";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 /** While a post is due / publishing / retrying, poll so its status updates live. */
@@ -255,6 +256,8 @@ export function SchedulingProvider({ children }: { children: ReactNode }) {
           // Text-only post (existing flow)
           scheduledPostId = await createScheduledPost(user.uid, data, undefined, idempotencyId);
         }
+
+        void trackEvent("post_scheduled", { props: { platform: data.platform } });
 
         // Refresh the list in background — don't block the success response
         // This prevents mobile/PWA hangs when Firestore re-fetch is slow

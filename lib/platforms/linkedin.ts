@@ -1,5 +1,6 @@
 import { getAuthHeaders } from "@/lib/api/client";
 import { TOKEN_EXPIRY_BUFFER_MS } from "@/lib/config/platform-constants";
+import { trackEvent } from "@/lib/analytics/tracker";
 
 // LinkedIn OAuth 2.0 Configuration and API utilities
 
@@ -119,7 +120,7 @@ export interface LinkedInPostRecord {
  * @param postId - ID du post POSTY (optionnel)
  * @returns Résultat de la publication
  */
-export async function postToLinkedIn(
+async function postToLinkedInUntracked(
   userId: string,
   content: string,
   visibility: "PUBLIC" | "CONNECTIONS" = "PUBLIC",
@@ -172,7 +173,7 @@ export async function postToLinkedIn(
  *
  * Les images sont streamées vers LinkedIn puis détruites — aucun stockage permanent.
  */
-export async function postToLinkedInWithMedia(
+async function postToLinkedInWithMediaUntracked(
   userId: string,
   content: string,
   visibility: "PUBLIC" | "CONNECTIONS" = "PUBLIC",
@@ -227,7 +228,7 @@ export async function postToLinkedInWithMedia(
  *
  * La vidéo est streamée vers LinkedIn puis détruite — aucun stockage permanent.
  */
-export async function postToLinkedInWithVideo(
+async function postToLinkedInWithVideoUntracked(
   userId: string,
   content: string,
   visibility: "PUBLIC" | "CONNECTIONS" = "PUBLIC",
@@ -288,3 +289,17 @@ export function generateOAuthState(): string {
   crypto.getRandomValues(array);
   return Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
+
+/** Publish milestones: one event per attempt, success or failure. The server
+ *  derives "first_post_published" from the first success on its own. */
+function withPublishTracking<A extends unknown[]>(fn: (...args: A) => Promise<LinkedInPostResult>) {
+  return async (...args: A): Promise<LinkedInPostResult> => {
+    const result = await fn(...args);
+    void trackEvent(result.success ? "post_published" : "post_publish_failed");
+    return result;
+  };
+}
+
+export const postToLinkedIn = withPublishTracking(postToLinkedInUntracked);
+export const postToLinkedInWithMedia = withPublishTracking(postToLinkedInWithMediaUntracked);
+export const postToLinkedInWithVideo = withPublishTracking(postToLinkedInWithVideoUntracked);

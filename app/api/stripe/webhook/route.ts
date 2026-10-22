@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import Stripe from "stripe";
 import { getStripeServer, STRIPE_WEBHOOK_EVENTS } from "@/lib/config/stripe";
 import { SubscriptionPlan } from "@/types";
+import { recordServerEvent } from "@/lib/analytics/ingest";
 
 // Import Firebase Admin for server-side operations
 import { initializeApp, getApps, cert } from "firebase-admin/app";
@@ -149,6 +150,15 @@ async function savePaymentHistory(
   });
 }
 
+/** Analytics event ids: bounded, id-safe, deterministic per Stripe object. */
+function analyticsId(prefix: string, stripeId: string): string {
+  return `${prefix}_${stripeId}`.replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 64);
+}
+
+function analyticsPlan(plan: string | null): "pro" | "max" | undefined {
+  return plan === "pro" || plan === "max" ? plan : undefined;
+}
+
 export async function POST(request: NextRequest) {
   const body = await request.text();
   const headersList = await headers();
@@ -227,6 +237,15 @@ export async function POST(request: NextRequest) {
           trialEnd,
         });
 
+        if (isTrialing) {
+          await recordServerEvent(getFirebaseAdmin(), {
+            eventId: analyticsId("trial", subscription.id),
+            name: "trial_started",
+            uid: userId,
+            plan: analyticsPlan(plan),
+          });
+        }
+
         console.log(`Checkout completed: plan=${plan}${isTrialing ? " (TRIAL)" : ""}`);
         break;
       }
@@ -266,6 +285,13 @@ export async function POST(request: NextRequest) {
           console.error("No userId found in subscription metadata");
           break;
         }
+
+        await recordServerEvent(getFirebaseAdmin(), {
+          eventId: analyticsId("cancel", subscription.id),
+          name: "subscription_cancelled",
+          uid: userId,
+          plan: analyticsPlan(getPlanFromPriceId(subscription.items?.data?.[0]?.price?.id || "")),
+        });
 
         // Downgrade to free plan: subscription is permanently canceled
         await updateUserSubscription(userId, {
@@ -317,6 +343,22 @@ export async function POST(request: NextRequest) {
             console.log("First payment tracked - guarantee period started");
           }
 
+          // Analytics: verified payment (Stripe-signed webhook, amount_paid > 0).
+          // Deduped on the invoice id, so Stripe retries never double-count.
+          await recordServerEvent(getFirebaseAdmin(), {
+            eventId: analyticsId("invoice", invoice.id),
+            name:
+              invoice.billing_reason === "subscription_create"
+                ? "subscription_created"
+                : "subscription_renewed",
+            uid: userId,
+            plan: analyticsPlan(
+              getPlanFromPriceId(subscription.items?.data?.[0]?.price?.id || "")
+            ),
+            amount: amountPaid,
+            currency: invoice.currency || "eur",
+          });
+
           // Update status to active (trial → active transition)
           await updateUserSubscription(userId, {
             status: subscription.status,
@@ -364,6 +406,15 @@ export async function POST(request: NextRequest) {
           currency: invoice.currency || "eur",
           status: "failed",
           description: `Payment failed: ${invoice.description || "Subscription payment"}`,
+        });
+
+        await recordServerEvent(getFirebaseAdmin(), {
+          eventId: analyticsId("failed", `${invoice.id}_${invoice.attempt_count ?? 0}`),
+          name: "payment_failed",
+          uid: userId,
+          plan: analyticsPlan(
+            getPlanFromPriceId(subscription.items?.data?.[0]?.price?.id || "")
+          ),
         });
 
         console.log("Invoice payment failed");

@@ -9,6 +9,7 @@ import { useReducedMotion } from "@/hooks/ui/useReducedMotion";
 import { useScrollLock } from "@/hooks/ui/useScrollLock";
 import { ease, dur } from "@/lib/motion";
 import GoogleButton from "./GoogleButton";
+import { trackEvent } from "@/lib/analytics/tracker";
 
 type AuthMode = "login" | "signup";
 
@@ -338,6 +339,11 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
   const consentId = `${uid}-consent`;
   const resetEmailId = `${uid}-reset-email`;
   const resetTitleId = `${uid}-reset-title`;
+
+  // Analytics: the visitor is looking at the signup form.
+  useEffect(() => {
+    if (mode === "signup") void trackEvent("signup_started");
+  }, [mode]);
 
   // Reset form on mode change
   useEffect(() => {

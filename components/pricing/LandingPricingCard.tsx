@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -12,6 +13,7 @@ import {
   GUARANTEE_PERIOD_DAYS,
 } from "@/lib/config/plans";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { trackPlanClick, trackPlanView } from "@/lib/analytics/tracker";
 
 // =============================================================================
 // LANDING PRICING CARD — conversion-first, marketing-only.
@@ -53,6 +55,24 @@ export default function LandingPricingCard({
   const isPro = plan.highlight; // hero / recommended
   const isMax = plan.premium; // premium tier
   const tier: "free" | "pro" | "max" = isPro ? "pro" : isMax ? "max" : "free";
+
+  // Analytics: one plan_view per plan when its CTA scrolls into view.
+  const ctaRef = useRef<HTMLAnchorElement>(null);
+  useEffect(() => {
+    const el = ctaRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          trackPlanView(plan.id, "landing");
+          io.disconnect();
+        }
+      },
+      { threshold: 0.6 }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [plan.id]);
 
   const taglines = getLocalizedPlanTaglines(t);
   const tagline = (taglines[plan.id] || { tagline: plan.description }).tagline;
@@ -201,7 +221,9 @@ export default function LandingPricingCard({
 
         {/* ── CTA ── */}
         <Link
+          ref={ctaRef}
           href={ctaHref}
+          onClick={() => trackPlanClick(plan.id, "landing", billingPeriod)}
           className={`group relative mt-5 flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl px-4 py-3.5 text-[15px] font-semibold transition-all duration-200 ${
             tier === "pro"
               ? "bg-white text-[#E8783C] shadow-lg shadow-black/5 hover:shadow-xl hover:brightness-[1.02]"

@@ -8,6 +8,7 @@ import { triggerHaptic } from "@/lib/ui/haptic";
 import { getFriendlyMessage } from "@/lib/utils/error-messages";
 import { setCachedConversation, updateCachedConversation, getCachedConversation } from "@/lib/storage/conversation-cache";
 import { detectIntent } from "@/lib/ai/intent-detection";
+import { trackEvent } from "@/lib/analytics/tracker";
 
 const GUEST_GENERATION_LIMIT = 2;
 const GUEST_STORAGE_KEY = "posty_guest_generations";
@@ -727,6 +728,7 @@ export function useChat({
                               selectedStyle: (isConversational || callDualMode) ? undefined : callStyle,
                             }
                           );
+                          void trackEvent("post_created");
                           // Update with smart title if available (GPT-generated topic)
                           if (smartTitleRef.current) {
                             renamePost(newPostId, smartTitleRef.current).catch(() => {});

@@ -14,6 +14,7 @@ import {
 } from "@/lib/config/plans";
 import { useLanguage } from "@/contexts/LanguageContext";
 import PricingFeatureItem from "./PricingFeatureItem";
+import { trackPlanClick } from "@/lib/analytics/tracker";
 
 // ============================================================
 // SHARED PRICING CARD — Single source of truth
@@ -265,7 +266,10 @@ export default function PricingCard({
         <div className="px-3 sm:px-5 md:px-6 pb-4 sm:pb-5 md:pb-6">
           {isAuthenticated && onSelect ? (
             <motion.button
-              onClick={onSelect}
+              onClick={() => {
+                trackPlanClick(plan.id, "subscription", billingPeriod);
+                onSelect?.();
+              }}
               disabled={
                 isLoading ||
                 (isCurrentPlan && !isFree) ||        // paid plan already active
@@ -346,6 +350,7 @@ export default function PricingCard({
             <div>
               <Link
                 href={ctaHref || "/login?mode=signup"}
+                onClick={() => trackPlanClick(plan.id, "subscription", billingPeriod)}
                 className={`
                   block w-full text-center px-4 py-3 sm:py-3.5 md:py-4 rounded-xl font-semibold text-xs sm:text-sm md:text-base
                   transition-all duration-200

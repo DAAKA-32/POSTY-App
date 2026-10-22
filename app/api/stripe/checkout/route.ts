@@ -3,6 +3,7 @@ import { verifyAuth } from "@/lib/auth";
 import { getStripeServer, getPriceId, getAppUrl, BillingInterval } from "@/lib/config/stripe";
 import { SubscriptionPlan } from "@/types";
 import { adminDb, isAdminInitialized } from "@/lib/db/firebase-admin";
+import { recordServerEvent } from "@/lib/analytics/ingest";
 import { PLAN_CONFIGS, TRIAL_PERIOD_DAYS, checkTrialEligibility, isPlanTrialEligible } from "@/lib/config/plans";
 
 export async function POST(request: NextRequest) {
@@ -171,6 +172,17 @@ export async function POST(request: NextRequest) {
         },
       },
       locale: "fr",
+    });
+
+    // Analytics: a Stripe Checkout session was actually created for this
+    // verified user. Distinct from a plan click and from a paid subscription.
+    // Never throws; deduped on the Checkout session id.
+    await recordServerEvent(adminDb, {
+      eventId: `checkout_${session.id}`.slice(0, 64).replace(/[^A-Za-z0-9_-]/g, "_"),
+      name: "checkout_started",
+      uid: userId,
+      plan,
+      interval,
     });
 
     return NextResponse.json({

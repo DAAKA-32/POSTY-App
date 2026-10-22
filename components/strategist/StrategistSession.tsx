@@ -33,6 +33,7 @@ import { db } from "@/lib/db/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStrategistDrawer } from "@/contexts/StrategistDrawerContext";
 import { getAuthHeaders } from "@/lib/api/client";
+import { trackEvent } from "@/lib/analytics/tracker";
 import {
   detectStrategistIntent,
   type StrategistIntent,
@@ -311,6 +312,7 @@ export function StrategistSessionProvider({ children }: { children: ReactNode })
             );
             setLastPlan(batch);
             setAnnouncement(c.thread.planReady);
+            void trackEvent("marketing_strategy_created", { props: { posts: batch.posts.length } });
           } catch (err) {
             if ((err as Error).name === "AbortError") {
               commit((prev) => prev.filter((m) => m.id !== placeholderId));
