@@ -231,8 +231,8 @@ describe.skipIf(!HOST)("firestore.rules — users/{uid}", () => {
     });
 
     it("gift/founder status heal (verified gift token)", async () => {
-      await seedUser("gift", { email: "bibi42@gmail.com", subscription: { plan: null, status: "inactive" } });
-      const gift = client("gift", "bibi42@gmail.com", true);
+      await seedUser("gift", { email: "cerisecottier@gmail.com", subscription: { plan: null, status: "inactive" } });
+      const gift = client("gift", "cerisecottier@gmail.com", true);
       await expect(updateDoc(doc(gift, "users/gift"), { "subscription.status": "active", "subscription.giftedAt": serverTimestamp() })).resolves.toBeUndefined();
     });
 
@@ -409,9 +409,9 @@ describe.skipIf(!HOST)("firestore.rules — users/{uid}", () => {
     });
 
     it("a listed founder/gift address can only be stored with a VERIFIED email", async () => {
-      const squatter = client("squatter", "bibi42@gmail.com", false);
-      await expect(setDoc(doc(squatter, "users/squatter"), signupPayload("squatter", "bibi42@gmail.com"))).rejects.toMatchObject(denied);
-      await expect(setDoc(doc(squatter, "users/squatter"), signupPayload("squatter", "bibi42@gmail.com", true))).rejects.toMatchObject(denied);
+      const squatter = client("squatter", "cerisecottier@gmail.com", false);
+      await expect(setDoc(doc(squatter, "users/squatter"), signupPayload("squatter", "cerisecottier@gmail.com"))).rejects.toMatchObject(denied);
+      await expect(setDoc(doc(squatter, "users/squatter"), signupPayload("squatter", "cerisecottier@gmail.com", true))).rejects.toMatchObject(denied);
       // A normal account cannot mark itself gifted either.
       const m = client("mallory", "mallory@example.com");
       await expect(setDoc(doc(m, "users/mallory"), signupPayload("mallory", "mallory@example.com", true))).rejects.toMatchObject(denied);
@@ -510,7 +510,7 @@ describe.skipIf(!HOST)("firestore.rules — users/{uid}", () => {
 
     it("a listed gift address with an UNVERIFIED email cannot", async () => {
       await adminDb().doc("users/squatter").set({ uid: "squatter", subscription: { plan: null, status: "inactive" } });
-      const squatter = client("squatter", "bibi42@gmail.com", false);
+      const squatter = client("squatter", "cerisecottier@gmail.com", false);
       await expect(setDoc(doc(squatter, "scheduledPosts/s1"), post("squatter"))).rejects.toMatchObject(denied);
     });
 

@@ -36,8 +36,7 @@ service cloud.firestore {
     // claimed by signing up with it.
     function founderGiftEmails() {
       return ['emilien.nepveu@gmail.com', 'maubertcome27@gmail.com',
-              'cerisecottier@gmail.com', '2jsh.immo@gmail.com', 'sexotherapiebychris@gmail.com',
-              'sandrarobidet@gmail.com', 'cynthiabordy@gmail.com', 'bibi42@gmail.com'];
+              'cerisecottier@gmail.com'];
     }
 
     function isFounderOrGiftToken() {

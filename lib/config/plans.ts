@@ -29,12 +29,8 @@ interface GiftRecipient {
 const GIFT_RECIPIENTS: GiftRecipient[] = [
   // Pre-existing gift — Max access kept, no popup (predates the 2-week trial campaign)
   { email: "cerisecottier@gmail.com",          displayName: "Cerise",   skipPopup: true },
-  // Beta / invited users — 2-week Max trial campaign
-  { email: "2jsh.immo@gmail.com",              displayName: "Julien"   },
-  { email: "sexotherapiebychris@gmail.com",    displayName: "Chris"    },
-  { email: "sandrarobidet@gmail.com",          displayName: "Sandra"   },
-  { email: "cynthiabordy@gmail.com",           displayName: "Cynthia"  },
-  { email: "bibi42@gmail.com",                 displayName: "Bibi"     },
+  // Removed 2026-10-22 (Max gift revoked): 2jsh.immo, sexotherapiebychris,
+  // sandrarobidet, cynthiabordy, bibi42 — end of the 2-week Max trial campaign.
   // Removed 2026-10-06: marie.sarria77, zoulikha.sophrologie, aurelieanicet,
   // contact@breque-ue-watches.com — never claimed, and this list ships in the
   // client bundle while the server grants Max on an UNVERIFIED email: anyone
