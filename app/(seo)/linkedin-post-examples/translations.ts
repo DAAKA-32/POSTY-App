@@ -1,9 +1,9 @@
 export const translations = {
   en: {
     meta: {
-      title: "LinkedIn Post Templates & Examples — Formats That Drive Engagement | Posty",
+      title: "LinkedIn Post Templates & Examples — Formats That Work | Posty",
       description:
-        "Proven LinkedIn post templates with real examples. Storytelling, data-driven, question-based, lists, and hot takes — ready to adapt and publish.",
+        "Proven LinkedIn post templates with examples: storytelling, data-driven, question-based, lists and hot takes. Adapt them yourself, or let Posty write them around your business.",
     },
     badge: "Templates & Frameworks",
     heroTitle: "Steal these LinkedIn post",
@@ -33,7 +33,7 @@ export const translations = {
           template:
             "[Surprising statistic as the hook]\n\nMost people assume [common belief].\n\nThe data says otherwise:\n\n\u{1F4CA} [Stat 1 + what it means]\n\u{1F4CA} [Stat 2 + what it means]\n\u{1F4CA} [Stat 3 + what it means]\n\nWhat this means for [your industry]:\n\n[Your analysis — 2-3 sentences]\n\nHere's what I'm doing differently:\n\n1. [Action 1]\n2. [Action 2]\n3. [Action 3]\n\n[Ask readers for their take]",
           example:
-            "91% of B2B buyers are influenced by content before speaking to sales. Yet only 3% of companies have a LinkedIn content strategy. That gap is a massive opportunity. The companies investing in thought leadership today will own the conversations tomorrow.",
+            "Buyers research long before they talk to sales. If your LinkedIn content answers their questions, you become part of that research. The companies investing in useful content today will own the conversations tomorrow.",
         },
         {
           category: "The Conversation Starter",
@@ -90,7 +90,7 @@ export const translations = {
     generateOwn: {
       title: "Templates are a starting point. AI takes you further.",
       paragraphs: [
-        "Filling in a template still requires creative energy and time. Posty applies these exact patterns automatically — enter your topic, get two polished posts in seconds.",
+        "Filling in a template still takes creative energy and time. Posty applies these patterns for you, starting from what it knows about your business — your offer, your audience and your angle.",
         "Same proven structures. None of the staring-at-a-blank-screen part.",
       ],
       button: "Try Posty AI Free",
@@ -137,15 +137,15 @@ export const translations = {
     finalCta: {
       title: "Move faster than templates allow",
       subtitle:
-        "These frameworks are powerful. Posty AI applies them automatically — generating personalized, ready-to-publish posts from any topic in seconds.",
+        "These frameworks are powerful. Posty applies them to your own topics and business context — drafts you can edit, schedule and publish.",
       button: "Generate your first post free",
     },
   },
   fr: {
     meta: {
-      title: "Templates et Exemples de Posts LinkedIn — Formats qui Performent | Posty",
+      title: "Templates et exemples de posts LinkedIn — Les formats qui fonctionnent | Posty",
       description:
-        "Des templates de posts LinkedIn eprouves avec des exemples concrets. Storytelling, donnees, questions, listes et prises de position — prets a adapter et publier.",
+        "Des templates de posts LinkedIn éprouvés, avec exemples : storytelling, données, questions, listes et prises de position. Adaptez-les vous-même, ou laissez Posty les écrire autour de votre activité.",
     },
     badge: "Templates & Frameworks",
     heroTitle: "Piquez ces templates de posts",
@@ -175,7 +175,7 @@ export const translations = {
           template:
             "[Statistique surprenante en accroche]\n\nLa plupart des gens pensent que [idee recue].\n\nLes donnees disent le contraire :\n\n\u{1F4CA} [Stat 1 + ce que ca signifie]\n\u{1F4CA} [Stat 2 + ce que ca signifie]\n\u{1F4CA} [Stat 3 + ce que ca signifie]\n\nCe que ca implique pour [votre secteur] :\n\n[Votre analyse — 2-3 phrases]\n\nVoici ce que je fais differemment :\n\n1. [Action 1]\n2. [Action 2]\n3. [Action 3]\n\n[Demandez l'avis des lecteurs]",
           example:
-            "91 % des acheteurs B2B sont influences par du contenu avant de parler a un commercial. Pourtant, seules 3 % des entreprises ont une strategie LinkedIn. Cet ecart est une opportunite massive. Les entreprises qui investissent dans le thought leadership aujourd'hui domineront les conversations demain.",
+            "Les acheteurs se renseignent bien avant de parler à un commercial. Si votre contenu LinkedIn répond à leurs questions, vous faites partie de cette recherche. Les entreprises qui investissent dans un contenu utile aujourd'hui animeront les conversations de demain.",
         },
         {
           category: "Le lanceur de conversation",
@@ -232,7 +232,7 @@ export const translations = {
     generateOwn: {
       title: "Les templates sont un point de depart. L'IA va plus loin.",
       paragraphs: [
-        "Remplir un template demande encore de l'energie creative et du temps. Posty applique automatiquement ces patterns — entrez votre sujet, obtenez deux posts aboutis en quelques secondes.",
+        "Remplir un template demande encore de l'énergie créative et du temps. Posty applique ces schémas pour vous, en partant de ce qu'il sait de votre activité : votre offre, votre audience et votre angle.",
         "Les memes structures eprouvees. Sans la partie « fixer un ecran vide ».",
       ],
       button: "Essayer Posty AI gratuitement",
@@ -279,15 +279,15 @@ export const translations = {
     finalCta: {
       title: "Allez plus vite que les templates",
       subtitle:
-        "Ces frameworks sont puissants. Posty AI les applique automatiquement — en generant des posts personnalises et prets a publier a partir de n'importe quel sujet, en quelques secondes.",
+        "Ces cadres sont efficaces. Posty les applique à vos propres sujets et au contexte de votre entreprise : des brouillons que vous pouvez modifier, planifier et publier.",
       button: "Generez votre premier post gratuitement",
     },
   },
   es: {
     meta: {
-      title: "Plantillas y Ejemplos de Posts en LinkedIn — Formatos que Generan Engagement | Posty",
+      title: "Plantillas y ejemplos de posts de LinkedIn — Formatos que funcionan | Posty",
       description:
-        "Plantillas de posts en LinkedIn probadas con ejemplos reales. Storytelling, datos, preguntas, listas y opiniones fuertes — listos para adaptar y publicar.",
+        "Plantillas de posts de LinkedIn probadas, con ejemplos: storytelling, datos, preguntas, listas y opiniones fuertes. Adáptalas tú mismo o deja que Posty las escriba en torno a tu negocio.",
     },
     badge: "Plantillas & Frameworks",
     heroTitle: "Roba estas plantillas de posts",
@@ -317,7 +317,7 @@ export const translations = {
           template:
             "[Estadistica sorprendente como gancho]\n\nLa mayoria asume que [creencia comun].\n\nLos datos dicen lo contrario:\n\n\u{1F4CA} [Dato 1 + que significa]\n\u{1F4CA} [Dato 2 + que significa]\n\u{1F4CA} [Dato 3 + que significa]\n\nQue significa esto para [tu industria]:\n\n[Tu analisis — 2-3 frases]\n\nEsto es lo que estoy haciendo diferente:\n\n1. [Accion 1]\n2. [Accion 2]\n3. [Accion 3]\n\n[Pide su opinion a los lectores]",
           example:
-            "El 91% de los compradores B2B se ven influenciados por contenido antes de hablar con ventas. Sin embargo, solo el 3% de las empresas tienen una estrategia de contenido en LinkedIn. Esa brecha es una oportunidad enorme. Las empresas que invierten en thought leadership hoy dominaran las conversaciones de manana.",
+            "Los compradores investigan mucho antes de hablar con ventas. Si tu contenido de LinkedIn responde a sus preguntas, formas parte de esa investigación. Las empresas que invierten hoy en contenido útil liderarán las conversaciones de mañana.",
         },
         {
           category: "El Iniciador de Conversacion",
@@ -374,7 +374,7 @@ export const translations = {
     generateOwn: {
       title: "Las plantillas son un punto de partida. La IA te lleva mas lejos.",
       paragraphs: [
-        "Rellenar una plantilla todavia requiere energia creativa y tiempo. Posty aplica estos patrones automaticamente — introduce tu tema, obtiene dos posts pulidos en segundos.",
+        "Rellenar una plantilla sigue requiriendo energía creativa y tiempo. Posty aplica estos patrones por ti, partiendo de lo que sabe de tu negocio: tu oferta, tu audiencia y tu enfoque.",
         "Las mismas estructuras probadas. Sin la parte de quedarte mirando una pantalla en blanco.",
       ],
       button: "Prueba Posty AI Gratis",
@@ -421,15 +421,15 @@ export const translations = {
     finalCta: {
       title: "Ve mas rapido de lo que las plantillas permiten",
       subtitle:
-        "Estos frameworks son poderosos. Posty AI los aplica automaticamente — generando posts personalizados y listos para publicar a partir de cualquier tema, en segundos.",
+        "Estos marcos son potentes. Posty los aplica a tus propios temas y al contexto de tu negocio: borradores que puedes editar, programar y publicar.",
       button: "Genera tu primer post gratis",
     },
   },
   pt: {
     meta: {
-      title: "Templates e Exemplos de Posts no LinkedIn — Formatos que Geram Engagement | Posty",
+      title: "Modelos e exemplos de posts do LinkedIn — Formatos que funcionam | Posty",
       description:
-        "Templates de posts no LinkedIn comprovados com exemplos reais. Storytelling, dados, perguntas, listas e opinioes fortes — prontos para adaptar e publicar.",
+        "Modelos de posts do LinkedIn comprovados, com exemplos: storytelling, dados, perguntas, listas e opiniões fortes. Adapte-os você mesmo ou deixe o Posty escrevê-los em torno do seu negócio.",
     },
     badge: "Templates & Frameworks",
     heroTitle: "Roube estes templates de posts",
@@ -459,7 +459,7 @@ export const translations = {
           template:
             "[Estatistica surpreendente como gancho]\n\nA maioria assume que [crenca comum].\n\nOs dados dizem o contrario:\n\n\u{1F4CA} [Dado 1 + o que significa]\n\u{1F4CA} [Dado 2 + o que significa]\n\u{1F4CA} [Dado 3 + o que significa]\n\nO que isso significa para [sua industria]:\n\n[Sua analise — 2-3 frases]\n\nVeja o que estou fazendo diferente:\n\n1. [Acao 1]\n2. [Acao 2]\n3. [Acao 3]\n\n[Peca a opiniao dos leitores]",
           example:
-            "91% dos compradores B2B sao influenciados por conteudo antes de falar com vendas. No entanto, apenas 3% das empresas tem uma estrategia de conteudo no LinkedIn. Essa lacuna e uma oportunidade enorme. As empresas que investem em thought leadership hoje vao dominar as conversas de amanha.",
+            "Os compradores pesquisam muito antes de falar com vendas. Se o seu conteúdo no LinkedIn responde às perguntas deles, passa a fazer parte dessa pesquisa. As empresas que investem hoje em conteúdo útil vão liderar as conversas de amanhã.",
         },
         {
           category: "O Iniciador de Conversa",
@@ -516,7 +516,7 @@ export const translations = {
     generateOwn: {
       title: "Templates sao um ponto de partida. A IA te leva mais longe.",
       paragraphs: [
-        "Preencher um template ainda exige energia criativa e tempo. Posty aplica esses padroes automaticamente — insira seu tema, receba dois posts polidos em segundos.",
+        "Preencher um modelo continua a exigir energia criativa e tempo. O Posty aplica estes padrões por si, partindo do que sabe sobre o seu negócio: a sua oferta, o seu público e o seu ângulo.",
         "As mesmas estruturas comprovadas. Sem a parte de ficar encarando uma tela em branco.",
       ],
       button: "Experimente Posty AI Gratis",
@@ -563,15 +563,15 @@ export const translations = {
     finalCta: {
       title: "Va mais rapido do que os templates permitem",
       subtitle:
-        "Esses frameworks sao poderosos. Posty AI os aplica automaticamente — gerando posts personalizados e prontos para publicar a partir de qualquer tema, em segundos.",
+        "Estas estruturas são poderosas. O Posty aplica-as aos seus próprios temas e ao contexto do seu negócio: rascunhos que pode editar, agendar e publicar.",
       button: "Gere seu primeiro post gratis",
     },
   },
   de: {
     meta: {
-      title: "LinkedIn Post Templates & Beispiele — Formate die Engagement erzeugen | Posty",
+      title: "LinkedIn-Post-Vorlagen & Beispiele – Formate, die funktionieren | Posty",
       description:
-        "Bewaehrte LinkedIn Post Templates mit echten Beispielen. Storytelling, datengetrieben, Fragen, Listen und starke Meinungen — bereit zum Anpassen und Veroeffentlichen.",
+        "Bewährte LinkedIn-Post-Vorlagen mit Beispielen: Storytelling, datenbasiert, Fragen, Listen und pointierte Meinungen. Passe sie selbst an oder lass Posty sie rund um dein Unternehmen schreiben.",
     },
     badge: "Templates & Frameworks",
     heroTitle: "Klaue diese LinkedIn Post",
@@ -597,7 +597,7 @@ export const translations = {
           emoji: "\u{1F4CA}",
           why: "Zahlen schaffen Glaubwuerdigkeit. Wenn du eine ueberraschende Statistik mit deiner eigenen Analyse paarst, positionierst du dich als jemand, der Beweise mitbringt — nicht nur Meinungen. Diese Posts werden gespeichert und geteilt, weil sie referenzwuerdige Informationen enthalten.",
           template: "[Ueberraschende Statistik als Aufhaenger]\n\nDie meisten Menschen nehmen an [verbreitete Annahme].\n\nDie Daten sagen etwas anderes:\n\n\u{1F4CA} [Stat 1 + was es bedeutet]\n\u{1F4CA} [Stat 2 + was es bedeutet]\n\u{1F4CA} [Stat 3 + was es bedeutet]\n\nWas das fuer [deine Branche] bedeutet:\n\n[Deine Analyse — 2-3 Saetze]\n\nHier ist, was ich anders mache:\n\n1. [Aktion 1]\n2. [Aktion 2]\n3. [Aktion 3]\n\n[Frage die Leser nach ihrer Einschaetzung]",
-          example: "91% der B2B Kaeufer werden von Content beeinflusst, bevor sie mit dem Vertrieb sprechen. Dennoch haben nur 3% der Unternehmen eine LinkedIn Content Strategie. Diese Luecke ist eine massive Chance. Die Unternehmen, die heute in Thought Leadership investieren, werden morgen die Gespraeche dominieren.",
+          example: "Käufer recherchieren lange, bevor sie mit dem Vertrieb sprechen. Wenn dein LinkedIn-Content ihre Fragen beantwortet, wirst du Teil dieser Recherche. Die Unternehmen, die heute in nützliche Inhalte investieren, bestimmen morgen die Gespräche.",
         },
         {
           category: "Der Gespraechsstarter",
@@ -648,7 +648,7 @@ export const translations = {
     generateOwn: {
       title: "Templates sind ein Startpunkt. KI bringt dich weiter.",
       paragraphs: [
-        "Ein Template auszufuellen erfordert immer noch kreative Energie und Zeit. Posty wendet diese Muster automatisch an — gib dein Thema ein und erhalte zwei ausgefeilte Posts in Sekunden.",
+        "Eine Vorlage auszufüllen kostet weiterhin kreative Energie und Zeit. Posty wendet diese Muster für dich an und geht dabei von dem aus, was es über dein Unternehmen weiß: dein Angebot, deine Zielgruppe und dein Blickwinkel.",
         "Dieselben bewaehrten Strukturen. Ohne das Auf-den-leeren-Bildschirm-Starren.",
       ],
       button: "Posty KI kostenlos testen",
@@ -690,15 +690,15 @@ export const translations = {
     finalCta: {
       title: "Schneller als Templates es erlauben",
       subtitle:
-        "Diese Frameworks sind maechtig. Posty KI wendet sie automatisch an — und generiert personalisierte, veroeffentlichungsfertige Posts aus jedem Thema in Sekunden.",
+        "Diese Frameworks sind wirkungsvoll. Posty wendet sie auf deine eigenen Themen und den Kontext deines Unternehmens an – Entwürfe, die du bearbeiten, planen und veröffentlichen kannst.",
       button: "Generiere deinen ersten Post kostenlos",
     },
   },
   it: {
     meta: {
-      title: "Template ed Esempi di Post LinkedIn — Formati che Generano Engagement | Posty",
+      title: "Template ed esempi di post LinkedIn — I formati che funzionano | Posty",
       description:
-        "Template di post LinkedIn comprovati con esempi reali. Storytelling, dati, domande, liste e opinioni forti — pronti da adattare e pubblicare.",
+        "Template di post LinkedIn collaudati, con esempi: storytelling, dati, domande, elenchi e opinioni forti. Adattali tu stesso o lascia che Posty li scriva attorno alla tua attività.",
     },
     badge: "Template & Framework",
     heroTitle: "Ruba questi template per post",
@@ -724,7 +724,7 @@ export const translations = {
           emoji: "\u{1F4CA}",
           why: "I numeri costruiscono credibilita. Quando abbini una statistica sorprendente alla tua analisi personale, ti posizioni come qualcuno che porta prove — non solo opinioni. Questi post vengono salvati e condivisi perche contengono informazioni di riferimento.",
           template: "[Statistica sorprendente come gancio]\n\nLa maggior parte delle persone assume [credenza comune].\n\nI dati dicono il contrario:\n\n\u{1F4CA} [Stat 1 + cosa significa]\n\u{1F4CA} [Stat 2 + cosa significa]\n\u{1F4CA} [Stat 3 + cosa significa]\n\nCosa significa per [il tuo settore]:\n\n[La tua analisi — 2-3 frasi]\n\nEcco cosa sto facendo diversamente:\n\n1. [Azione 1]\n2. [Azione 2]\n3. [Azione 3]\n\n[Chiedi ai lettori la loro opinione]",
-          example: "Il 91% degli acquirenti B2B e influenzato dai contenuti prima di parlare con il commerciale. Eppure solo il 3% delle aziende ha una strategia di contenuti LinkedIn. Quel divario e un'opportunita enorme. Le aziende che investono nel thought leadership oggi domineranno le conversazioni domani.",
+          example: "Gli acquirenti si informano molto prima di parlare con le vendite. Se i tuoi contenuti LinkedIn rispondono alle loro domande, entri a far parte di quella ricerca. Le aziende che investono oggi in contenuti utili guideranno le conversazioni di domani.",
         },
         {
           category: "Lo starter di conversazione",
@@ -775,7 +775,7 @@ export const translations = {
     generateOwn: {
       title: "I template sono un punto di partenza. L'IA ti porta oltre.",
       paragraphs: [
-        "Compilare un template richiede ancora energia creativa e tempo. Posty applica automaticamente questi pattern — inserisci il tuo argomento e ottieni due post rifiniti in pochi secondi.",
+        "Compilare un template richiede comunque energia creativa e tempo. Posty applica questi schemi per te, partendo da ciò che sa della tua attività: la tua offerta, il tuo pubblico e il tuo punto di vista.",
         "Le stesse strutture comprovate. Senza la parte dello fissare lo schermo vuoto.",
       ],
       button: "Prova Posty AI gratis",
@@ -817,15 +817,15 @@ export const translations = {
     finalCta: {
       title: "Vai piu veloce di quanto i template permettano",
       subtitle:
-        "Questi framework sono potenti. Posty AI li applica automaticamente — generando post personalizzati e pronti da pubblicare da qualsiasi argomento in secondi.",
+        "Questi schemi sono efficaci. Posty li applica ai tuoi argomenti e al contesto della tua attività: bozze che puoi modificare, programmare e pubblicare.",
       button: "Genera il tuo primo post gratis",
     },
   },
   nl: {
     meta: {
-      title: "LinkedIn Post Templates & Voorbeelden — Formats die Engagement Opleveren | Posty",
+      title: "LinkedIn-posttemplates & voorbeelden — Formats die werken | Posty",
       description:
-        "Bewezen LinkedIn post templates met echte voorbeelden. Storytelling, data, vragen, lijsten en sterke meningen — klaar om aan te passen en te publiceren.",
+        "Beproefde LinkedIn-posttemplates met voorbeelden: storytelling, datagedreven, vraaggericht, lijsten en stevige meningen. Pas ze zelf aan, of laat Posty ze rond jouw bedrijf schrijven.",
     },
     badge: "Templates & Frameworks",
     heroTitle: "Steel deze LinkedIn post",
@@ -851,7 +851,7 @@ export const translations = {
           emoji: "\u{1F4CA}",
           why: "Cijfers bouwen geloofwaardigheid. Wanneer je een verrassende statistiek koppelt aan je eigen analyse, positioneer je jezelf als iemand die bewijs brengt — niet alleen meningen. Deze posts worden opgeslagen en gedeeld omdat ze referentiewaardige informatie bevatten.",
           template: "[Verrassende statistiek als haak]\n\nDe meeste mensen nemen aan [gangbare overtuiging].\n\nDe data zegt iets anders:\n\n\u{1F4CA} [Stat 1 + wat het betekent]\n\u{1F4CA} [Stat 2 + wat het betekent]\n\u{1F4CA} [Stat 3 + wat het betekent]\n\nWat dit betekent voor [jouw sector]:\n\n[Jouw analyse — 2-3 zinnen]\n\nDit doe ik anders:\n\n1. [Actie 1]\n2. [Actie 2]\n3. [Actie 3]\n\n[Vraag lezers naar hun kijk]",
-          example: "91% van B2B kopers wordt beinvloed door content voordat ze met sales praten. Toch heeft slechts 3% van de bedrijven een LinkedIn contentstrategie. Die kloof is een enorme kans. De bedrijven die vandaag investeren in thought leadership zullen morgen de gesprekken domineren.",
+          example: "Kopers zoeken uit lang voordat ze met sales praten. Als je LinkedIn-content hun vragen beantwoordt, maak je deel uit van dat onderzoek. De bedrijven die vandaag investeren in nuttige content, bepalen morgen de gesprekken.",
         },
         {
           category: "De gespreksstarter",
@@ -902,7 +902,7 @@ export const translations = {
     generateOwn: {
       title: "Templates zijn een startpunt. AI brengt je verder.",
       paragraphs: [
-        "Een template invullen kost nog steeds creatieve energie en tijd. Posty past deze patronen automatisch toe — voer je onderwerp in en krijg twee gepolijste posts in seconden.",
+        "Een template invullen kost nog steeds creatieve energie en tijd. Posty past deze patronen voor je toe, uitgaand van wat het over je bedrijf weet: je aanbod, je doelgroep en je invalshoek.",
         "Dezelfde bewezen structuren. Zonder het naar-een-leeg-scherm-staren-gedeelte.",
       ],
       button: "Probeer Posty AI gratis",
@@ -944,15 +944,15 @@ export const translations = {
     finalCta: {
       title: "Ga sneller dan templates toelaten",
       subtitle:
-        "Deze frameworks zijn krachtig. Posty AI past ze automatisch toe — en genereert gepersonaliseerde, publicatieklare posts van elk onderwerp in seconden.",
+        "Deze frameworks zijn krachtig. Posty past ze toe op je eigen onderwerpen en bedrijfscontext: concepten die je kunt bewerken, inplannen en publiceren.",
       button: "Genereer je eerste post gratis",
     },
   },
   zh: {
     meta: {
-      title: "LinkedIn帖子模板和示例 — 提升互动的格式 | Posty",
+      title: "LinkedIn 帖子模板与示例——真正有效的格式 | Posty",
       description:
-        "经过验证的LinkedIn帖子模板，附带真实示例。叙事型、数据型、提问型、列表型和观点型 — 随时可以调整发布。",
+        "经过验证的 LinkedIn 帖子模板及示例：故事型、数据型、提问型、清单型和鲜明观点。你可以自行套用，也可以让 Posty 围绕你的业务来撰写。",
     },
     badge: "模板与框架",
     heroTitle: "拿走这些LinkedIn帖子",
@@ -978,7 +978,7 @@ export const translations = {
           emoji: "\u{1F4CA}",
           why: "数字建立可信度。当你将一个令人惊讶的统计数据与自己的分析结合时，你就把自己定位为带来证据的人——而不仅仅是观点。这类帖子经常被收藏和分享，因为它们包含值得参考的信息。",
           template: "[令人惊讶的统计数据作为开头]\n\n大多数人认为[常见观念]。\n\n数据说的是另一回事：\n\n📊 [数据1 + 含义]\n📊 [数据2 + 含义]\n📊 [数据3 + 含义]\n\n这对[你的行业]意味着什么：\n\n[你的分析——2-3句]\n\n我正在做出的改变：\n\n1. [行动1]\n2. [行动2]\n3. [行动3]\n\n[询问读者的看法]",
-          example: "91%的B2B买家在与销售交谈之前会受到内容的影响。然而只有3%的公司有LinkedIn内容策略。这个差距是一个巨大的机会。今天投资思想领导力的公司将主导明天的对话。",
+          example: "买家在联系销售之前，早已做过大量调研。如果你的 LinkedIn 内容能回答他们的问题，你就成为了这份调研的一部分。今天投入有价值内容的企业，明天将主导相关讨论。",
         },
         {
           category: "对话启动器",
@@ -1029,7 +1029,7 @@ export const translations = {
     generateOwn: {
       title: "模板只是起点。AI带你走得更远。",
       paragraphs: [
-        "填写模板仍然需要创造力和时间。Posty自动应用这些模式——输入你的主题，几秒钟内获得两篇精心打磨的帖子。",
+        "填写模板仍然需要创意和时间。Posty 会基于对你业务的了解——你的产品或服务、受众和切入角度——为你套用这些模式。",
         "同样经过验证的结构。没有盯着空白屏幕的环节。",
       ],
       button: "免费试用Posty AI",
@@ -1071,15 +1071,15 @@ export const translations = {
     finalCta: {
       title: "比模板更快",
       subtitle:
-        "这些框架很强大。Posty AI自动应用它们——从任何主题在几秒内生成个性化的、即可发布的帖子。",
+        "这些框架很有效。Posty 会把它们应用到你自己的主题和业务背景上，生成可供你编辑、排期和发布的草稿。",
       button: "免费生成你的第一篇帖子",
     },
   },
   ja: {
     meta: {
-      title: "LinkedInの投稿テンプレートと例 — エンゲージメントを高めるフォーマット | Posty",
+      title: "LinkedIn 投稿テンプレートと実例——成果につながる型 | Posty",
       description:
-        "実例付きの実証済みLinkedIn投稿テンプレート。ストーリーテリング、データ型、質問型、リスト型、意見型 — すぐに使えるフォーマット。",
+        "実績のある LinkedIn 投稿テンプレートを実例付きで紹介。ストーリー型、データ型、問いかけ型、リスト型、持論型。自分で使うことも、Posty にビジネスに合わせて書かせることもできます。",
     },
     badge: "テンプレート＆フレームワーク",
     heroTitle: "このLinkedIn投稿テンプレートを",
@@ -1105,7 +1105,7 @@ export const translations = {
           emoji: "\u{1F4CA}",
           why: "数字は信頼性を構築します。驚くべき統計と自分の分析を組み合わせると、意見だけでなく証拠を持ってくる人として位置づけられます。これらの投稿は参照価値のある情報を含むため、保存・共有されやすいです。",
           template: "[驚くべき統計データをフックに]\n\nほとんどの人は[一般的な考え]だと思っています。\n\nデータは違うことを示しています：\n\n📊 [統計1 + その意味]\n📊 [統計2 + その意味]\n📊 [統計3 + その意味]\n\nこれが[あなたの業界]にとって意味すること：\n\n[あなたの分析 — 2-3文]\n\n私が変えていること：\n\n1. [アクション1]\n2. [アクション2]\n3. [アクション3]\n\n[読者に見解を求める]",
-          example: "B2Bバイヤーの91%がセールスと話す前にコンテンツの影響を受けています。しかしLinkedInのコンテンツ戦略を持つ企業はわずか3%。このギャップは巨大なチャンスです。今日ソートリーダーシップに投資する企業が、明日の会話を支配します。",
+          example: "購入を検討する人は、営業と話す前にじっくり情報収集をしています。あなたの LinkedIn 投稿がその疑問に答えれば、あなたも情報収集の一部になります。役立つコンテンツに今投資する企業が、明日の会話をリードします。",
         },
         {
           category: "会話のきっかけ",
@@ -1156,7 +1156,7 @@ export const translations = {
     generateOwn: {
       title: "テンプレートは出発点。AIがその先へ。",
       paragraphs: [
-        "テンプレートを埋めるには創造的エネルギーと時間が必要です。Postyはこれらのパターンを自動的に適用します。トピックを入力するだけで、数秒で2つの洗練された投稿が得られます。",
+        "テンプレートを埋めるにも、創造力と時間が必要です。Posty はあなたのビジネス（提供内容、オーディエンス、切り口）を踏まえて、これらの型を代わりに適用します。",
         "同じ実証済みの構造。空白の画面を見つめる部分はありません。",
       ],
       button: "Posty AIを無料で試す",
@@ -1198,15 +1198,15 @@ export const translations = {
     finalCta: {
       title: "テンプレート以上のスピードで",
       subtitle:
-        "これらのフレームワークは強力です。Posty AIが自動的に適用し、どんなトピックからでも数秒でパーソナライズされた公開準備完了の投稿を生成します。",
+        "これらのフレームワークは強力です。Posty はそれをあなた自身のテーマとビジネスの背景に当てはめ、編集・予約・公開できる下書きを作成します。",
       button: "最初の投稿を無料で生成",
     },
   },
   ko: {
     meta: {
-      title: "LinkedIn 게시물 템플릿과 예시 — 참여를 이끄는 포맷 | Posty",
+      title: "링크드인 게시물 템플릿과 예시 — 효과 있는 포맷 | Posty",
       description:
-        "실제 예시가 포함된 검증된 LinkedIn 게시물 템플릿. 스토리텔링, 데이터 기반, 질문형, 리스트형, 의견형 — 바로 적용 가능한 포맷.",
+        "검증된 링크드인 게시물 템플릿과 예시: 스토리텔링, 데이터 기반, 질문형, 리스트, 소신 발언. 직접 응용하거나 Posty가 내 비즈니스에 맞춰 작성하게 하세요.",
     },
     badge: "템플릿 & 프레임워크",
     heroTitle: "이 LinkedIn 게시물 템플릿을",
@@ -1232,7 +1232,7 @@ export const translations = {
           emoji: "\u{1F4CA}",
           why: "숫자는 신뢰를 구축합니다. 놀라운 통계를 자신의 분석과 결합하면 의견이 아닌 증거를 가져오는 사람으로 포지셔닝됩니다. 이런 게시물은 참조할 만한 정보를 담고 있어 저장되고 공유됩니다.",
           template: "[놀라운 통계를 후크로]\n\n대부분의 사람들은 [일반적인 믿음]이라고 가정합니다.\n\n데이터는 다른 이야기를 합니다:\n\n📊 [통계 1 + 의미]\n📊 [통계 2 + 의미]\n📊 [통계 3 + 의미]\n\n이것이 [당신의 업계]에 의미하는 것:\n\n[분석 — 2-3문장]\n\n제가 다르게 하고 있는 것:\n\n1. [행동 1]\n2. [행동 2]\n3. [행동 3]\n\n[독자에게 견해를 물어보기]",
-          example: "B2B 구매자의 91%가 영업과 대화하기 전에 콘텐츠의 영향을 받습니다. 그런데 LinkedIn 콘텐츠 전략을 가진 기업은 3%에 불과합니다. 이 격차는 엄청난 기회입니다. 오늘 사고 리더십에 투자하는 기업이 내일의 대화를 주도할 것입니다.",
+          example: "구매 담당자는 영업팀과 이야기하기 훨씬 전에 먼저 조사합니다. 링크드인 콘텐츠가 그들의 질문에 답한다면 그 조사 과정의 일부가 됩니다. 오늘 유용한 콘텐츠에 투자하는 기업이 내일의 대화를 이끌게 됩니다.",
         },
         {
           category: "대화 시작하기",
@@ -1283,7 +1283,7 @@ export const translations = {
     generateOwn: {
       title: "템플릿은 시작점. AI가 그 다음으로.",
       paragraphs: [
-        "템플릿을 채우는 데는 여전히 창의적 에너지와 시간이 필요합니다. Posty는 이 패턴을 자동으로 적용합니다. 주제를 입력하면 몇 초 만에 두 개의 완성된 게시물을 받습니다.",
+        "템플릿을 채우는 일에도 창의적인 에너지와 시간이 필요합니다. Posty는 비즈니스(제공하는 상품, 오디언스, 관점)에 대한 이해를 바탕으로 이런 패턴을 대신 적용합니다.",
         "같은 검증된 구조. 빈 화면을 바라보는 과정은 없습니다.",
       ],
       button: "Posty AI 무료 체험",
@@ -1325,7 +1325,7 @@ export const translations = {
     finalCta: {
       title: "템플릿보다 빠르게",
       subtitle:
-        "이 프레임워크는 강력합니다. Posty AI가 자동으로 적용하여 어떤 주제에서든 몇 초 만에 개인화된 게시 가능한 게시물을 생성합니다.",
+        "이 프레임워크는 강력합니다. Posty는 이를 내 주제와 비즈니스 맥락에 적용해, 편집·예약·게시할 수 있는 초안을 만들어 드립니다.",
       button: "첫 번째 게시물 무료 생성",
     },
   },

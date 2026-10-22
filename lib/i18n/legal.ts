@@ -9,10 +9,10 @@
 
 // Legal document versions - update when content changes
 export const LEGAL_VERSIONS = {
-  privacy: { version: "2.0", date: "2026-02-13" },
+  privacy: { version: "2.1", date: "2026-10-22" },
   terms: { version: "2.0", date: "2026-02-13" },
   notices: { version: "1.1", date: "2026-02-13" },
-  cookies: { version: "2.0", date: "2026-02-13" },
+  cookies: { version: "2.1", date: "2026-10-22" },
 } as const;
 
 export const legalTranslations = {
@@ -54,11 +54,21 @@ export const legalTranslations = {
       },
       usage: {
         title: "3.3 Usage Data",
-        items: ["Post generation history", "Prompts entered", "Content preferences"],
+        items: [
+          "Post generation history",
+          "Prompts entered",
+          "Content preferences",
+          "Audience-measurement events (pages viewed, plan viewed or clicked, sign-up and subscription milestones), only with your analytics consent",
+        ],
       },
       technical: {
         title: "3.4 Technical Data",
-        items: ["IP address", "Browser type", "Connection data"],
+        items: [
+          "IP address",
+          "Browser type",
+          "Connection data",
+          "Pseudonymous visitor and session identifiers, acquisition source (origin of the referring site, campaign tags such as utm_source) and country-level location, only with your analytics consent. Your IP address is not stored in analytics records",
+        ],
       },
       payment: {
         title: "3.5 Payment Data",
@@ -72,7 +82,7 @@ export const legalTranslations = {
       purposes: [
         { label: "Service delivery:", desc: "Generation of personalized LinkedIn posts" },
         { label: "Personalization:", desc: "Adapting content to your profile and preferences" },
-        { label: "Service improvement:", desc: "Analyzing usage to improve the experience" },
+        { label: "Service improvement:", desc: "Analyzing usage to improve the experience and, with your consent, measuring which channels bring visitors and how they move from our website to sign-up and subscription (audience measurement)" },
         { label: "Communication:", desc: "Informing you of important updates" },
         { label: "Security:", desc: "Protecting your account and preventing fraud" },
       ],
@@ -82,7 +92,7 @@ export const legalTranslations = {
       title: "5. Legal Basis for Processing",
       intro: "We process your data on the following legal bases:",
       bases: [
-        { label: "Consent:", desc: "For collecting profile data and sending marketing communications" },
+        { label: "Consent:", desc: "For collecting profile data, sending marketing communications, and optional audience-measurement (analytics) identifiers" },
         { label: "Performance of contract:", desc: "For providing content generation services" },
         { label: "Legitimate interest:", desc: "For improving our services and ensuring security" },
         { label: "Legal obligation:", desc: "For meeting our regulatory obligations" },
@@ -108,6 +118,7 @@ export const legalTranslations = {
         { label: "Account data:", duration: "Until account deletion + 30 days" },
         { label: "Post history:", duration: "2 years after last activity" },
         { label: "Technical data:", duration: "12 months" },
+        { label: "Audience-measurement data (identifiers, sessions, events):", duration: "13 months maximum, and erased when you delete your account. Aggregated statistics that contain no personal data may be kept longer" },
         { label: "Billing data:", duration: "10 years (legal requirement)" },
       ],
     },
@@ -124,7 +135,7 @@ export const legalTranslations = {
         { title: "Right to restriction", desc: "Restrict the processing of your data" },
         { title: "Right to withdraw consent", desc: "Withdraw your consent at any time, without affecting the lawfulness of processing carried out before withdrawal" },
       ],
-      exercise: "To exercise these rights or withdraw your consent, go to the Privacy Settings in the application or contact us at: postygroup@gmail.com",
+      exercise: "To exercise these rights or withdraw your consent, go to the Privacy Settings in the application or contact us at: postygroup@gmail.com. Deleting your account also erases the audience-measurement records linked to it.",
     },
 
     section9: {
@@ -141,7 +152,7 @@ export const legalTranslations = {
 
     section10: {
       title: "10. Cookies and Trackers",
-      content: "Our application uses essential cookies for the operation of the service. For non-essential cookies (analytics), we request your explicit consent. For more details, please refer to our Cookie Policy.",
+      content: "Our application uses essential cookies for the operation of the service. For non-essential storage (audience measurement / analytics), we request your explicit consent: nothing is stored or sent before you accept, and it stays disabled if your browser sends a Global Privacy Control signal. You can withdraw your consent at any time, in which case the identifiers are erased from your browser. For more details, please refer to our Cookie Policy.",
       cookiesPolicyLink: "/legal/cookies",
     },
 
@@ -508,11 +519,12 @@ export const legalTranslations = {
       },
       analytics: {
         title: "2.3 Analytics Cookies (optional)",
-        description: "These cookies help us understand how you use the application to improve it. They are only activated with your explicit consent.",
+        description: "These identifiers measure how visitors reach and use Posty (traffic source, pages viewed, plan clicks, sign-up) so that we can improve the service. They are set only with your explicit consent, and never if your browser sends a Global Privacy Control signal. Withdrawing your consent erases them from your browser.",
         items: [
-          { name: "Internal analytics", purpose: "Anonymized usage metrics (number of posts, sessions)", duration: "12 months", provider: "Posty" },
+          { name: "posty_vid (local storage)", purpose: "Random visitor identifier, used to count visits and link them to their acquisition source", duration: "Until you withdraw consent or clear your browser data; server-side records are kept 13 months at most", provider: "Posty" },
+          { name: "posty_sid (session storage)", purpose: "Random session identifier (a session ends after 30 minutes of inactivity)", duration: "Browser session", provider: "Posty" },
         ],
-        noThirdParty: "Posty does not use third-party analytics services (no Google Analytics, Facebook Pixel, etc.). All measurements are performed internally and data remains on our servers.",
+        noThirdParty: "Posty does not use third-party analytics services (no Google Analytics, Facebook Pixel, etc.). All measurements are performed on our own infrastructure. Analytics records contain no IP address and no browser fingerprint, only a country-level location provided by our hosting provider. If you create an account, your visitor identifier may be linked to it so that your sign-up can be attributed to its acquisition source; this link is deleted with your account.",
       },
       thirdParty: {
         title: "2.4 Third-Party Cookies",

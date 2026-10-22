@@ -1,31 +1,31 @@
 export const translations = {
   en: {
     meta: {
-      title: "AI LinkedIn Post Generator — Write Better Posts, Faster | Posty",
+      title: "AI LinkedIn Post Generator That Knows Your Business | Posty",
       description:
-        "Turn any idea into a polished LinkedIn post in seconds. Two writing styles, direct publishing, and a tone that sounds like you — not a robot.",
+        "Posty is an AI marketing agent for LinkedIn. It learns your business, writes posts for your audience, and helps you edit, schedule and publish — all in one place.",
     },
-    badge: "LinkedIn Writing Assistant",
-    heroTitle: "Your next great LinkedIn post",
-    heroTitleHighlight: "starts here",
+    badge: "AI Marketing Agent for LinkedIn",
+    heroTitle: "An AI LinkedIn post generator",
+    heroTitleHighlight: "that knows your business",
     heroSubtitle:
-      "Describe what you want to say. Posty writes two ready-to-publish versions — one story-driven, one business-focused — in the time it takes to sip your coffee.",
+      "Posty learns what you sell and who you serve, then writes LinkedIn posts that fit your business — in a story-driven or a business-focused style, your choice. Edit, schedule and publish from the same place.",
     ctaPrimary: "Write Your First Post",
-    ctaSecondary: "See How It Works",
+    ctaSecondary: "See Pricing",
     howItWorks: {
-      title: "From rough idea to published post",
+      title: "From your business to a published post",
       subtitle:
-        "No blank-page anxiety. No 45-minute drafting sessions. Just three steps.",
+        "Posty starts from what you do, not from a blank page.",
       steps: [
         {
           icon: "\u{1F4AC}",
-          title: "Tell Posty your idea",
-          desc: "A career insight, an industry take, a client win, a lesson learned. Even a few rough keywords are enough. You don't need a polished draft — just a direction.",
+          title: "Tell Posty about your business",
+          desc: "Add your offer, your ideal customer and the problems you solve once. Then give Posty an idea — even a few rough keywords are enough.",
         },
         {
           icon: "\u270D\uFE0F",
-          title: "Get two versions instantly",
-          desc: "Posty creates a Storytelling post — personal, narrative-driven — and a Business post — data-backed, authoritative. Each one is structured to earn the \"See more\" click on LinkedIn.",
+          title: "Pick your angle",
+          desc: "Choose a Storytelling style — personal, narrative-driven — or a Business style — insight-led and professional. On Max, Posty writes both side by side; on Pro you can request both on demand. Each is structured to earn the \"See more\" click on LinkedIn.",
         },
         {
           icon: "\u{1F680}",
@@ -47,7 +47,7 @@ export const translations = {
         {
           icon: "\u{1F9E9}",
           title: "Built for how LinkedIn actually works",
-          desc: "Strong hooks, scannable formatting, engagement triggers at the end. Every post follows the patterns that earn reach — because the algorithm rewards structure.",
+          desc: "Strong hooks, scannable formatting, a clear closing question. Posty applies proven LinkedIn writing patterns to every draft.",
         },
         {
           icon: "\u{1F3A4}",
@@ -56,26 +56,19 @@ export const translations = {
         },
         {
           icon: "\u{1F500}",
-          title: "Two angles for every idea",
-          desc: "Storytelling for emotional connection. Business for professional credibility. Pick one, combine both, or use them as a starting point for something entirely different.",
+          title: "Two angles to choose from",
+          desc: "Storytelling for emotional connection. Business for professional credibility. Pick one, or compare both side by side with dual mode (always on with Max, on demand with Pro).",
         },
         {
           icon: "\u{1F4F2}",
           title: "Publish without leaving Posty",
-          desc: "Connect your LinkedIn account and post with one click. No tab-switching, no copy-paste formatting issues. Schedule posts for when your audience is most active.",
+          desc: "Connect your LinkedIn account and publish with one click, or schedule posts on Pro and Max. No tab-switching, no copy-paste formatting issues.",
         },
         {
           icon: "\u{1F4CA}",
-          title: "See what's actually working",
-          desc: "Track impressions and engagement across your posts. Learn which content types resonate with your audience — then do more of what works.",
+          title: "A strategy behind every post",
+          desc: "On Max, the Marketing Strategist reviews your LinkedIn presence, plans your week around your goals and drafts the posts for you to approve.",
         },
-      ],
-    },
-    socialProof: {
-      items: [
-        { stat: "2,000+", label: "Professionals using Posty" },
-        { stat: "< 30s", label: "Per post, on average" },
-        { stat: "4.8/5", label: "User satisfaction" },
       ],
     },
     useCases: {
@@ -88,12 +81,12 @@ export const translations = {
           desc: "Share your journey without losing your morning to a LinkedIn draft. Stay visible to investors, partners, and future hires — with posts that actually capture your voice.",
         },
         {
-          title: "Sales teams selling through content",
-          desc: "Warm up prospects before the first call. Regular, valuable posts build the kind of trust that cold outreach never will.",
+          title: "Business development teams",
+          desc: "Stay visible to the people you want to work with. Regular, useful posts help your name and your expertise become familiar before the first conversation.",
         },
         {
           title: "Coaches and consultants",
-          desc: "Your expertise is your product. Package it into content that positions you as the go-to in your niche — and fills your calendar with inbound leads.",
+          desc: "Your expertise is your product. Turn it into consistent, useful content that shows what you know and who you help — so the right people can find you.",
         },
         {
           title: "Professionals in career transition",
@@ -105,12 +98,12 @@ export const translations = {
       {
         question: "What does Posty actually generate?",
         answer:
-          "You enter a topic or rough idea, and Posty writes two complete LinkedIn posts: a Storytelling version (personal, narrative-driven) and a Business version (insight-focused, professional). Both are structured for LinkedIn's format and ready to edit or publish as-is.",
+          "Posty is an AI marketing agent for LinkedIn. You enter a topic or rough idea, and it writes a complete post using what it knows about your business, in a Storytelling style (personal, narrative-driven) or a Business style (insight-focused, professional). On Max both versions are written side by side; Pro can request both on demand. Everything is ready to edit or publish.",
       },
       {
         question: "Will the posts sound like me?",
         answer:
-          "Posty writes in a professional, human tone — not robotic corporate-speak. You can edit every word before publishing to add your personal anecdotes and voice. The more you use it, the better it gets at matching your style.",
+          "Posty writes in a professional, human tone — not robotic corporate-speak — and draws on your business context and style preferences. You can edit every word before publishing to add your own anecdotes and voice.",
       },
       {
         question: "Can I edit the posts after generation?",
@@ -120,12 +113,12 @@ export const translations = {
       {
         question: "Do I need to connect my LinkedIn account?",
         answer:
-          "Not required. You can generate posts and copy them manually. Connecting your account unlocks one-click publishing and scheduling, so you can plan a week of content in one sitting.",
+          "Not required. You can generate posts and copy them manually. Connecting your account unlocks one-click publishing, and scheduling on Pro and Max, so you can plan a week of content in one sitting.",
       },
       {
         question: "What's included in the free plan?",
         answer:
-          "Generate up to 3 posts per week, free, with no time limit and no credit card required. Pro and Max plans unlock unlimited posts, direct publishing, scheduling, analytics, and AI memory that learns your style.",
+          "You can start free, with no credit card required, and try Posty's core writing features. Pro and Max unlock scheduling, higher limits, URL analysis and real-time context for your posts, and Max adds the Marketing Strategist.",
       },
     ],
     howTo: {
@@ -139,7 +132,7 @@ export const translations = {
         },
         {
           name: "Let AI write your posts",
-          text: "Posty generates two optimized versions in seconds: a Storytelling post and a Business post, each with a compelling hook and closing CTA.",
+          text: "Posty writes a post in seconds, in a Storytelling or Business style, with a compelling hook and closing CTA. On Max both versions are written side by side.",
         },
         {
           name: "Edit, personalize, and publish",
@@ -160,37 +153,37 @@ export const translations = {
     finalCta: {
       title: "Your audience is already on LinkedIn",
       subtitle:
-        "The only question is whether they're reading your posts — or someone else's. Start writing content that earns attention.",
-      button: "Write your first post free",
+        "Let Posty learn your business and help you show up on LinkedIn with useful content, consistently.",
+      button: "Start free with Posty",
     },
   },
   fr: {
     meta: {
-      title: "Generateur de Posts LinkedIn IA — Ecrivez mieux, plus vite | Posty",
+      title: "Générateur de posts LinkedIn IA qui connaît votre entreprise | Posty",
       description:
-        "Transformez n'importe quelle idee en post LinkedIn abouti en quelques secondes. Deux styles, publication directe, et un ton qui vous ressemble.",
+        "Posty est un agent marketing IA pour LinkedIn : il apprend votre activité, rédige des posts adaptés à votre audience et vous aide à les modifier, planifier et publier au même endroit.",
     },
-    badge: "Assistant de redaction LinkedIn",
-    heroTitle: "Votre prochain post LinkedIn reussi",
-    heroTitleHighlight: "commence ici",
+    badge: "Agent marketing IA pour LinkedIn",
+    heroTitle: "Un générateur de posts LinkedIn IA",
+    heroTitleHighlight: "qui connaît votre entreprise",
     heroSubtitle:
-      "Decrivez ce que vous voulez dire. Posty redige deux versions pretes a publier — l'une narrative, l'autre orientee business — le temps de boire votre cafe.",
+      "Posty apprend ce que vous vendez et à qui vous vous adressez, puis rédige des posts LinkedIn à l'image de votre activité — dans un style narratif ou orienté business, à vous de choisir. Modifiez, planifiez et publiez au même endroit.",
     ctaPrimary: "Ecrire votre premier post",
-    ctaSecondary: "Voir comment ca marche",
+    ctaSecondary: "Voir les tarifs",
     howItWorks: {
-      title: "De l'idee brute au post publie",
+      title: "De votre activité au post publié",
       subtitle:
-        "Pas d'angoisse de la page blanche. Pas de session de redaction de 45 minutes. Trois etapes.",
+        "Posty part de ce que vous faites, pas d'une page blanche.",
       steps: [
         {
           icon: "\u{1F4AC}",
-          title: "Partagez votre idee a Posty",
-          desc: "Un retour d'experience, une analyse sectorielle, une victoire client, une lecon apprise. Meme quelques mots-cles suffisent. Pas besoin d'un brouillon abouti — juste une direction.",
+          title: "Présentez votre activité à Posty",
+          desc: "Indiquez une fois votre offre, votre client idéal et les problèmes que vous résolvez. Donnez ensuite une idée à Posty — quelques mots-clés suffisent.",
         },
         {
           icon: "\u270D\uFE0F",
-          title: "Recevez deux versions instantanement",
-          desc: "Posty cree un post Storytelling — personnel et narratif — et un post Business — factuel et credible. Chacun est structure pour decrocher le clic « Voir plus » sur LinkedIn.",
+          title: "Choisissez votre angle",
+          desc: "Choisissez un style Storytelling — personnel et narratif — ou un style Business — factuel et professionnel. Avec Max, Posty rédige les deux côte à côte ; avec Pro, vous pouvez demander les deux à la demande. Chacun est structuré pour décrocher le clic « Voir plus » sur LinkedIn.",
         },
         {
           icon: "\u{1F680}",
@@ -212,7 +205,7 @@ export const translations = {
         {
           icon: "\u{1F9E9}",
           title: "Concu pour l'algorithme LinkedIn",
-          desc: "Accroches percutantes, mise en forme scannable, declencheurs d'engagement en fin de post. Chaque publication suit les patterns qui maximisent la portee.",
+          desc: "Accroches fortes, mise en forme aérée, question finale claire. Posty applique des schémas d'écriture LinkedIn éprouvés à chaque brouillon.",
         },
         {
           icon: "\u{1F3A4}",
@@ -221,26 +214,19 @@ export const translations = {
         },
         {
           icon: "\u{1F500}",
-          title: "Deux angles pour chaque idee",
-          desc: "Storytelling pour la connexion emotionnelle. Business pour la credibilite professionnelle. Choisissez l'un, combinez les deux, ou utilisez-les comme point de depart.",
+          title: "Deux angles au choix",
+          desc: "Storytelling pour la connexion émotionnelle. Business pour la crédibilité professionnelle. Choisissez l'un, ou comparez les deux côte à côte avec le mode double (toujours actif avec Max, à la demande avec Pro).",
         },
         {
           icon: "\u{1F4F2}",
           title: "Publiez sans quitter Posty",
-          desc: "Connectez votre compte LinkedIn et publiez en un clic. Plus de copier-coller, plus de problemes de mise en forme. Planifiez vos posts aux heures de pointe.",
+          desc: "Connectez votre compte LinkedIn et publiez en un clic, ou planifiez vos posts avec Pro et Max. Plus de changement d'onglet, plus de problèmes de mise en forme au copier-coller.",
         },
         {
           icon: "\u{1F4CA}",
-          title: "Voyez ce qui fonctionne vraiment",
-          desc: "Suivez les impressions et l'engagement de vos posts. Identifiez quels types de contenu resonnent avec votre audience — puis faites-en davantage.",
+          title: "Une stratégie derrière chaque post",
+          desc: "Avec Max, le Marketing Strategist analyse votre présence LinkedIn, planifie votre semaine selon vos objectifs et rédige les posts que vous validez.",
         },
-      ],
-    },
-    socialProof: {
-      items: [
-        { stat: "2 000+", label: "Professionnels sur Posty" },
-        { stat: "< 30s", label: "Par post, en moyenne" },
-        { stat: "4.8/5", label: "Satisfaction utilisateurs" },
       ],
     },
     useCases: {
@@ -253,12 +239,12 @@ export const translations = {
           desc: "Racontez votre aventure sans y passer la matinee. Restez visible aupres des investisseurs, partenaires et futurs talents — avec des posts qui captent vraiment votre voix.",
         },
         {
-          title: "Commerciaux qui vendent par le contenu",
-          desc: "Rechauffez vos prospects avant le premier appel. Des posts reguliers et a forte valeur ajoutee construisent une confiance que la prospection a froid n'atteindra jamais.",
+          title: "Équipes de développement commercial",
+          desc: "Restez visible auprès des personnes avec qui vous voulez travailler. Des posts réguliers et utiles font connaître votre nom et votre expertise avant même la première conversation.",
         },
         {
           title: "Coachs et consultants",
-          desc: "Votre expertise est votre produit. Transformez-la en contenu qui vous positionne comme la reference de votre niche — et remplit votre agenda de leads entrants.",
+          desc: "Votre expertise est votre produit. Transformez-la en contenu régulier et utile qui montre ce que vous savez et qui vous aidez — pour que les bonnes personnes puissent vous trouver.",
         },
         {
           title: "Professionnels en transition de carriere",
@@ -270,12 +256,12 @@ export const translations = {
       {
         question: "Que genere Posty exactement ?",
         answer:
-          "Vous entrez un sujet ou une ebauche d'idee, et Posty redige deux posts LinkedIn complets : une version Storytelling (personnelle, narrative) et une version Business (factuelle, professionnelle). Les deux sont structurees pour le format LinkedIn et pretes a modifier ou publier telles quelles.",
+          "Posty est un agent marketing IA pour LinkedIn. Vous entrez un sujet ou une ébauche d'idée, et il rédige un post complet en s'appuyant sur ce qu'il sait de votre activité, dans un style Storytelling (personnel, narratif) ou Business (factuel, professionnel). Avec Max, les deux versions sont rédigées côte à côte ; Pro peut demander les deux à la demande. Tout est prêt à modifier ou à publier.",
       },
       {
         question: "Est-ce que les posts auront l'air authentiques ?",
         answer:
-          "Posty ecrit dans un ton professionnel et humain — pas du langage robotique. Vous pouvez modifier chaque mot avant de publier pour ajouter vos anecdotes et votre touche personnelle. Plus vous l'utilisez, mieux il s'adapte a votre style.",
+          "Posty écrit dans un ton professionnel et humain, en s'appuyant sur votre contexte d'entreprise et vos préférences de style. Vous pouvez modifier chaque mot avant de publier pour ajouter vos anecdotes et votre voix.",
       },
       {
         question: "Puis-je modifier les posts apres generation ?",
@@ -285,12 +271,12 @@ export const translations = {
       {
         question: "Dois-je connecter mon compte LinkedIn ?",
         answer:
-          "Ce n'est pas obligatoire. Vous pouvez generer des posts et les copier manuellement. Connecter votre compte debloque la publication en un clic et la planification, pour preparer une semaine entiere de contenu en une seule session.",
+          "Ce n'est pas obligatoire. Vous pouvez générer des posts et les copier manuellement. Connecter votre compte débloque la publication en un clic, et la planification avec Pro et Max, pour préparer une semaine de contenu en une seule session.",
       },
       {
         question: "Que comprend le plan gratuit ?",
         answer:
-          "Generez jusqu'a 3 posts par semaine, gratuitement, sans limite de duree et sans carte bancaire. Les plans Pro et Max debloquent les posts illimites, la publication directe, la planification, les statistiques et la memoire IA qui apprend votre style.",
+          "Vous pouvez démarrer gratuitement, sans carte bancaire, et tester les fonctions d'écriture de Posty. Les plans Pro et Max débloquent la planification, des limites plus élevées, l'analyse d'URL et le contexte en temps réel pour vos posts ; Max ajoute le Marketing Strategist.",
       },
     ],
     howTo: {
@@ -304,7 +290,7 @@ export const translations = {
         },
         {
           name: "Laissez l'IA ecrire vos posts",
-          text: "Posty genere deux versions optimisees en quelques secondes : un post Storytelling et un post Business, chacun avec une accroche engageante et un appel a l'action.",
+          text: "Posty rédige un post en quelques secondes, en style Storytelling ou Business, avec une accroche engageante et un appel à l'action. Avec Max, les deux versions sont rédigées côte à côte.",
         },
         {
           name: "Modifiez, personnalisez et publiez",
@@ -325,23 +311,23 @@ export const translations = {
     finalCta: {
       title: "Votre audience est deja sur LinkedIn",
       subtitle:
-        "La seule question est de savoir si elle lit vos posts — ou ceux de quelqu'un d'autre. Commencez a ecrire du contenu qui capte l'attention.",
-      button: "Ecrire votre premier post gratuitement",
+        "Laissez Posty apprendre votre activité et vous aider à publier du contenu utile, avec régularité.",
+      button: "Commencer gratuitement avec Posty",
     },
   },
   es: {
     meta: {
-      title: "Generador de Posts LinkedIn con IA — Escribe mejor, mas rapido | Posty",
+      title: "Generador de posts de LinkedIn con IA que conoce tu negocio | Posty",
       description:
-        "Convierte cualquier idea en un post de LinkedIn pulido en segundos. Dos estilos de escritura, publicacion directa y un tono que suena como tu.",
+        "Posty es un agente de marketing con IA para LinkedIn: aprende tu negocio, escribe posts para tu audiencia y te ayuda a editarlos, programarlos y publicarlos en un solo lugar.",
     },
-    badge: "Asistente de escritura LinkedIn",
-    heroTitle: "Tu proximo gran post de LinkedIn",
-    heroTitleHighlight: "empieza aqui",
+    badge: "Agente de marketing con IA para LinkedIn",
+    heroTitle: "Un generador de posts de LinkedIn con IA",
+    heroTitleHighlight: "que conoce tu negocio",
     heroSubtitle:
-      "Describe lo que quieres decir. Posty escribe dos versiones listas para publicar — una narrativa y otra enfocada en negocios — en lo que tardas en tomar un sorbo de cafe.",
+      "Posty aprende qué vendes y a quién te diriges, y escribe posts de LinkedIn acordes a tu negocio, en un estilo narrativo o enfocado en negocio, tú eliges. Edita, programa y publica desde el mismo lugar.",
     ctaPrimary: "Escribe tu primer post",
-    ctaSecondary: "Ver como funciona",
+    ctaSecondary: "Ver precios",
     howItWorks: {
       title: "De idea en bruto a post publicado",
       subtitle:
@@ -392,20 +378,13 @@ export const translations = {
         {
           icon: "\u{1F4F2}",
           title: "Publica sin salir de Posty",
-          desc: "Conecta tu cuenta de LinkedIn y publica con un clic. Sin cambiar de pestana, sin problemas de formato al copiar y pegar. Programa posts para cuando tu audiencia este mas activa.",
+          desc: "Conecta tu cuenta de LinkedIn y publica con un clic, o programa tus posts con Pro y Max. Sin cambiar de pestaña ni problemas de formato al copiar y pegar.",
         },
         {
           icon: "\u{1F4CA}",
-          title: "Ve que esta funcionando realmente",
-          desc: "Rastrea impresiones y engagement en tus posts. Aprende que tipos de contenido resuenan con tu audiencia — y haz mas de lo que funciona.",
+          title: "Una estrategia detrás de cada post",
+          desc: "Con Max, el Marketing Strategist analiza tu presencia en LinkedIn, planifica tu semana según tus objetivos y redacta los posts para que los apruebes.",
         },
-      ],
-    },
-    socialProof: {
-      items: [
-        { stat: "2.000+", label: "Profesionales usando Posty" },
-        { stat: "< 30s", label: "Por post, en promedio" },
-        { stat: "4.8/5", label: "Satisfaccion de usuarios" },
       ],
     },
     useCases: {
@@ -418,12 +397,12 @@ export const translations = {
           desc: "Comparte tu camino sin perder la manana en un borrador de LinkedIn. Mantente visible para inversores, socios y futuros empleados — con posts que realmente capturen tu voz.",
         },
         {
-          title: "Equipos de ventas que venden con contenido",
-          desc: "Calienta prospectos antes de la primera llamada. Posts regulares y valiosos construyen el tipo de confianza que el outreach en frio nunca lograra.",
+          title: "Equipos de desarrollo de negocio",
+          desc: "Mantente visible ante las personas con las que quieres trabajar. Posts útiles y regulares hacen que tu nombre y tu experiencia resulten familiares antes de la primera conversación.",
         },
         {
           title: "Coaches y consultores",
-          desc: "Tu experiencia es tu producto. Empaquetala en contenido que te posicione como la referencia en tu nicho — y llene tu agenda con leads entrantes.",
+          desc: "Tu experiencia es tu producto. Conviértela en contenido útil y constante que muestre lo que sabes y a quién ayudas, para que las personas adecuadas puedan encontrarte.",
         },
         {
           title: "Profesionales en transicion de carrera",
@@ -455,7 +434,7 @@ export const translations = {
       {
         question: "Que incluye el plan gratuito?",
         answer:
-          "Genera hasta 3 posts por semana, gratis, sin limite de tiempo y sin tarjeta de credito. Los planes Pro y Max desbloquean posts ilimitados, publicacion directa, programacion, analiticas y memoria IA que aprende tu estilo.",
+          "Puedes empezar gratis, sin tarjeta de crédito, y probar las funciones de escritura de Posty. Pro y Max desbloquean la programación, límites más altos, análisis de URL y contexto en tiempo real para tus posts; Max añade el Marketing Strategist.",
       },
     ],
     howTo: {
@@ -490,23 +469,23 @@ export const translations = {
     finalCta: {
       title: "Tu audiencia ya esta en LinkedIn",
       subtitle:
-        "La unica pregunta es si estan leyendo tus posts — o los de alguien mas. Empieza a escribir contenido que capte la atencion.",
+        "Deja que Posty aprenda tu negocio y te ayude a mostrarte en LinkedIn con contenido útil, de forma constante.",
       button: "Escribe tu primer post gratis",
     },
   },
   pt: {
     meta: {
-      title: "Gerador de Posts LinkedIn com IA — Escreva melhor, mais rapido | Posty",
+      title: "Gerador de posts do LinkedIn com IA que conhece o seu negócio | Posty",
       description:
-        "Transforme qualquer ideia num post de LinkedIn polido em segundos. Dois estilos de escrita, publicacao direta e um tom que parece seu.",
+        "O Posty é um agente de marketing com IA para o LinkedIn: aprende o seu negócio, escreve posts para o seu público e ajuda-o a editá-los, agendá-los e publicá-los num só lugar.",
     },
-    badge: "Assistente de escrita LinkedIn",
-    heroTitle: "O seu proximo grande post LinkedIn",
-    heroTitleHighlight: "comeca aqui",
+    badge: "Agente de marketing com IA para o LinkedIn",
+    heroTitle: "Um gerador de posts do LinkedIn com IA",
+    heroTitleHighlight: "que conhece o seu negócio",
     heroSubtitle:
-      "Descreva o que quer dizer. O Posty escreve duas versoes prontas a publicar — uma narrativa e outra focada em negocios — no tempo de beber um cafe.",
+      "O Posty aprende o que vende e a quem se dirige, e escreve posts do LinkedIn à medida do seu negócio, num estilo narrativo ou focado no negócio, à sua escolha. Edite, agende e publique no mesmo lugar.",
     ctaPrimary: "Escreva o seu primeiro post",
-    ctaSecondary: "Veja como funciona",
+    ctaSecondary: "Ver preços",
     howItWorks: {
       title: "Da ideia bruta ao post publicado",
       subtitle:
@@ -557,20 +536,13 @@ export const translations = {
         {
           icon: "\u{1F4F2}",
           title: "Publique sem sair do Posty",
-          desc: "Conecte a sua conta LinkedIn e publique com um clique. Sem trocar de separador, sem problemas de formatacao ao copiar e colar. Agende posts para quando a sua audiencia estiver mais ativa.",
+          desc: "Ligue a sua conta do LinkedIn e publique com um clique, ou agende os posts com Pro e Max. Sem trocar de separador nem problemas de formatação ao copiar e colar.",
         },
         {
           icon: "\u{1F4CA}",
-          title: "Veja o que esta realmente a funcionar",
-          desc: "Acompanhe impressoes e engagement nos seus posts. Descubra que tipos de conteudo ressoam com a sua audiencia — e faca mais do que funciona.",
+          title: "Uma estratégia por trás de cada post",
+          desc: "Com o Max, o Marketing Strategist analisa a sua presença no LinkedIn, planeia a sua semana em função dos seus objetivos e redige os posts para si aprovar.",
         },
-      ],
-    },
-    socialProof: {
-      items: [
-        { stat: "2.000+", label: "Profissionais a usar o Posty" },
-        { stat: "< 30s", label: "Por post, em media" },
-        { stat: "4.8/5", label: "Satisfacao dos utilizadores" },
       ],
     },
     useCases: {
@@ -583,12 +555,12 @@ export const translations = {
           desc: "Partilhe a sua jornada sem perder a manha num rascunho de LinkedIn. Mantenha-se visivel para investidores, parceiros e futuros colaboradores — com posts que realmente capturam a sua voz.",
         },
         {
-          title: "Equipas de vendas que vendem com conteudo",
-          desc: "Aqueca prospects antes da primeira chamada. Posts regulares e valiosos constroem o tipo de confianca que o outreach a frio nunca conseguira.",
+          title: "Equipas de desenvolvimento de negócio",
+          desc: "Mantenha-se visível para as pessoas com quem quer trabalhar. Posts úteis e regulares tornam o seu nome e a sua experiência familiares antes da primeira conversa.",
         },
         {
           title: "Coaches e consultores",
-          desc: "A sua experiencia e o seu produto. Transforme-a em conteudo que o posicione como a referencia no seu nicho — e encha a sua agenda com leads inbound.",
+          desc: "A sua experiência é o seu produto. Transforme-a em conteúdo útil e consistente que mostre o que sabe e quem ajuda, para que as pessoas certas o possam encontrar.",
         },
         {
           title: "Profissionais em transicao de carreira",
@@ -620,7 +592,7 @@ export const translations = {
       {
         question: "O que inclui o plano gratuito?",
         answer:
-          "Gere ate 3 posts por semana, gratis, sem limite de tempo e sem cartao de credito. Os planos Pro e Max desbloqueiam posts ilimitados, publicacao direta, agendamento, analiticas e memoria IA que aprende o seu estilo.",
+          "Pode começar gratuitamente, sem cartão de crédito, e experimentar as funções de escrita do Posty. Os planos Pro e Max desbloqueiam o agendamento, limites mais altos, análise de URL e contexto em tempo real para os seus posts; o Max acrescenta o Marketing Strategist.",
       },
     ],
     howTo: {
@@ -655,23 +627,23 @@ export const translations = {
     finalCta: {
       title: "A sua audiencia ja esta no LinkedIn",
       subtitle:
-        "A unica questao e se estao a ler os seus posts — ou os de outra pessoa. Comece a escrever conteudo que capte a atencao.",
+        "Deixe o Posty aprender o seu negócio e ajudá-lo a marcar presença no LinkedIn com conteúdo útil, de forma consistente.",
       button: "Escreva o seu primeiro post gratis",
     },
   },
   de: {
     meta: {
-      title: "KI LinkedIn-Post-Generator — Bessere Posts, schneller schreiben | Posty",
+      title: "KI-LinkedIn-Post-Generator, der dein Unternehmen kennt | Posty",
       description:
-        "Verwandle jede Idee in Sekunden in einen professionellen LinkedIn-Post. Zwei Schreibstile, direkte Veroffentlichung und ein Ton, der nach dir klingt.",
+        "Posty ist ein KI-Marketing-Agent für LinkedIn: Er lernt dein Unternehmen kennen, schreibt Beiträge für deine Zielgruppe und hilft dir, sie zu bearbeiten, zu planen und zu veröffentlichen – alles an einem Ort.",
     },
-    badge: "LinkedIn-Schreibassistent",
-    heroTitle: "Dein nachster starker LinkedIn-Post",
-    heroTitleHighlight: "beginnt hier",
+    badge: "KI-Marketing-Agent für LinkedIn",
+    heroTitle: "Ein KI-LinkedIn-Post-Generator,",
+    heroTitleHighlight: "der dein Unternehmen kennt",
     heroSubtitle:
-      "Beschreibe, was du sagen mochtest. Posty schreibt zwei veroffentlichungsfertige Versionen — eine erzahlerisch, eine business-orientiert — in der Zeit, die du fur einen Schluck Kaffee brauchst.",
+      "Posty lernt, was du anbietest und wen du ansprichst, und schreibt LinkedIn-Beiträge, die zu deinem Unternehmen passen – im erzählerischen oder geschäftsorientierten Stil, ganz nach deiner Wahl. Bearbeiten, planen und veröffentlichen an einem Ort.",
     ctaPrimary: "Schreibe deinen ersten Post",
-    ctaSecondary: "So funktioniert es",
+    ctaSecondary: "Preise ansehen",
     howItWorks: {
       title: "Von der Rohidee zum fertigen Post",
       subtitle:
@@ -722,20 +694,13 @@ export const translations = {
         {
           icon: "\u{1F4F2}",
           title: "Veroffentliche ohne Posty zu verlassen",
-          desc: "Verbinde dein LinkedIn-Konto und poste mit einem Klick. Kein Tab-Wechsel, keine Formatierungsprobleme beim Kopieren. Plane Posts fur die Zeiten, in denen dein Publikum am aktivsten ist.",
+          desc: "Verbinde dein LinkedIn-Konto und veröffentliche mit einem Klick oder plane Beiträge mit Pro und Max. Kein Tab-Wechsel, keine Formatierungsprobleme beim Kopieren.",
         },
         {
           icon: "\u{1F4CA}",
-          title: "Sieh, was wirklich funktioniert",
-          desc: "Verfolge Impressionen und Engagement deiner Posts. Erkenne, welche Inhaltstypen bei deinem Publikum ankommen — und mach mehr davon.",
+          title: "Eine Strategie hinter jedem Beitrag",
+          desc: "Mit Max analysiert der Marketing Strategist deine LinkedIn-Präsenz, plant deine Woche entlang deiner Ziele und entwirft die Beiträge, die du freigibst.",
         },
-      ],
-    },
-    socialProof: {
-      items: [
-        { stat: "2.000+", label: "Profis nutzen Posty" },
-        { stat: "< 30s", label: "Pro Post, im Durchschnitt" },
-        { stat: "4.8/5", label: "Nutzerzufriedenheit" },
       ],
     },
     useCases: {
@@ -748,12 +713,12 @@ export const translations = {
           desc: "Teile deine Reise, ohne den ganzen Morgen an einem LinkedIn-Entwurf zu sitzen. Bleib sichtbar fur Investoren, Partner und zukunftige Mitarbeiter — mit Posts, die deine Stimme wirklich einfangen.",
         },
         {
-          title: "Vertriebsteams, die uber Content verkaufen",
-          desc: "Warme Prospects auf, bevor das erste Gesprach stattfindet. Regelmaessige, wertvolle Posts bauen Vertrauen auf, das Kaltakquise nie erreichen wird.",
+          title: "Vertriebs- und Business-Development-Teams",
+          desc: "Bleibe für die Menschen sichtbar, mit denen du arbeiten möchtest. Regelmäßige, nützliche Beiträge machen deinen Namen und deine Expertise schon vor dem ersten Gespräch vertraut.",
         },
         {
           title: "Coaches und Berater",
-          desc: "Deine Expertise ist dein Produkt. Verpacke sie in Content, der dich als Referenz in deiner Nische positioniert — und deinen Kalender mit Inbound-Leads fullt.",
+          desc: "Deine Expertise ist dein Produkt. Mach daraus konsistente, nützliche Inhalte, die zeigen, was du kannst und wem du hilfst – damit die richtigen Menschen dich finden können.",
         },
         {
           title: "Fachkrafte im Karrierewechsel",
@@ -785,7 +750,7 @@ export const translations = {
       {
         question: "Was ist im kostenlosen Plan enthalten?",
         answer:
-          "Generiere bis zu 3 Posts pro Woche, kostenlos, ohne Zeitlimit und ohne Kreditkarte. Die Pro- und Max-Plane schalten unbegrenzte Posts, direkte Veroffentlichung, Planung, Analysen und KI-Gedachtnis frei, das deinen Stil lernt.",
+          "Du kannst kostenlos und ohne Kreditkarte starten und die Schreibfunktionen von Posty testen. Pro und Max schalten Planung, höhere Limits, URL-Analyse und Echtzeit-Kontext für deine Beiträge frei; Max ergänzt den Marketing Strategist.",
       },
     ],
     howTo: {
@@ -820,23 +785,23 @@ export const translations = {
     finalCta: {
       title: "Dein Publikum ist bereits auf LinkedIn",
       subtitle:
-        "Die einzige Frage ist, ob sie deine Posts lesen — oder die von jemand anderem. Beginne, Content zu schreiben, der Aufmerksamkeit verdient.",
+        "Lass Posty dein Unternehmen kennenlernen und dich dabei unterstützen, mit nützlichen Inhalten regelmäßig auf LinkedIn präsent zu sein.",
       button: "Schreibe deinen ersten Post kostenlos",
     },
   },
   it: {
     meta: {
-      title: "Generatore di Post LinkedIn con IA — Scrivi meglio, piu veloce | Posty",
+      title: "Generatore di post LinkedIn con IA che conosce la tua attività | Posty",
       description:
-        "Trasforma qualsiasi idea in un post LinkedIn professionale in pochi secondi. Due stili di scrittura, pubblicazione diretta e un tono che sembra il tuo.",
+        "Posty è un agente di marketing con IA per LinkedIn: impara la tua attività, scrive post per il tuo pubblico e ti aiuta a modificarli, programmarli e pubblicarli in un unico posto.",
     },
-    badge: "Assistente di scrittura LinkedIn",
-    heroTitle: "Il tuo prossimo grande post LinkedIn",
-    heroTitleHighlight: "inizia qui",
+    badge: "Agente di marketing con IA per LinkedIn",
+    heroTitle: "Un generatore di post LinkedIn con IA",
+    heroTitleHighlight: "che conosce la tua attività",
     heroSubtitle:
-      "Descrivi cosa vuoi dire. Posty scrive due versioni pronte da pubblicare — una narrativa, una orientata al business — nel tempo di un sorso di caffe.",
+      "Posty impara cosa vendi e a chi ti rivolgi, poi scrive post LinkedIn su misura per la tua attività, in stile narrativo o orientato al business, a tua scelta. Modifica, programma e pubblica nello stesso posto.",
     ctaPrimary: "Scrivi il tuo primo post",
-    ctaSecondary: "Scopri come funziona",
+    ctaSecondary: "Vedi i prezzi",
     howItWorks: {
       title: "Dall'idea grezza al post pubblicato",
       subtitle:
@@ -887,20 +852,13 @@ export const translations = {
         {
           icon: "\u{1F4F2}",
           title: "Pubblica senza uscire da Posty",
-          desc: "Collega il tuo account LinkedIn e pubblica con un clic. Niente cambio di scheda, niente problemi di formattazione nel copia e incolla. Programma i post per quando il tuo pubblico e piu attivo.",
+          desc: "Collega il tuo account LinkedIn e pubblica con un clic, oppure programma i post con Pro e Max. Niente cambi di scheda, niente problemi di formattazione con il copia e incolla.",
         },
         {
           icon: "\u{1F4CA}",
-          title: "Scopri cosa funziona davvero",
-          desc: "Monitora impressioni ed engagement dei tuoi post. Scopri quali tipi di contenuto risuonano con il tuo pubblico — poi fai di piu di cio che funziona.",
+          title: "Una strategia dietro ogni post",
+          desc: "Con Max, il Marketing Strategist analizza la tua presenza su LinkedIn, pianifica la tua settimana in base ai tuoi obiettivi e prepara i post da approvare.",
         },
-      ],
-    },
-    socialProof: {
-      items: [
-        { stat: "2.000+", label: "Professionisti usano Posty" },
-        { stat: "< 30s", label: "Per post, in media" },
-        { stat: "4.8/5", label: "Soddisfazione utenti" },
       ],
     },
     useCases: {
@@ -913,12 +871,12 @@ export const translations = {
           desc: "Condividi il tuo percorso senza perdere la mattinata su una bozza LinkedIn. Resta visibile per investitori, partner e futuri collaboratori — con post che catturano davvero la tua voce.",
         },
         {
-          title: "Team di vendita che vendono con i contenuti",
-          desc: "Riscalda i prospect prima della prima chiamata. Post regolari e di valore costruiscono il tipo di fiducia che il contatto a freddo non raggiungera mai.",
+          title: "Team di sviluppo commerciale",
+          desc: "Resta visibile alle persone con cui vuoi lavorare. Post utili e regolari rendono familiari il tuo nome e la tua competenza prima ancora della prima conversazione.",
         },
         {
           title: "Coach e consulenti",
-          desc: "La tua competenza e il tuo prodotto. Trasformala in contenuti che ti posizionano come il riferimento nella tua nicchia — e riempiono la tua agenda di lead in entrata.",
+          desc: "La tua competenza è il tuo prodotto. Trasformala in contenuti utili e costanti che mostrino cosa sai fare e chi aiuti, così le persone giuste possono trovarti.",
         },
         {
           title: "Professionisti in transizione di carriera",
@@ -950,7 +908,7 @@ export const translations = {
       {
         question: "Cosa include il piano gratuito?",
         answer:
-          "Genera fino a 3 post a settimana, gratis, senza limiti di tempo e senza carta di credito. I piani Pro e Max sbloccano post illimitati, pubblicazione diretta, programmazione, analitiche e memoria IA che impara il tuo stile.",
+          "Puoi iniziare gratis, senza carta di credito, e provare le funzioni di scrittura di Posty. Pro e Max sbloccano la programmazione, limiti più alti, analisi degli URL e contesto in tempo reale per i tuoi post; Max aggiunge il Marketing Strategist.",
       },
     ],
     howTo: {
@@ -985,23 +943,23 @@ export const translations = {
     finalCta: {
       title: "Il tuo pubblico e gia su LinkedIn",
       subtitle:
-        "L'unica domanda e se stanno leggendo i tuoi post — o quelli di qualcun altro. Inizia a scrivere contenuti che catturano l'attenzione.",
+        "Lascia che Posty impari la tua attività e ti aiuti a essere presente su LinkedIn con contenuti utili, con costanza.",
       button: "Scrivi il tuo primo post gratis",
     },
   },
   nl: {
     meta: {
-      title: "AI LinkedIn-Post Generator — Schrijf betere posts, sneller | Posty",
+      title: "AI LinkedIn-postgenerator die jouw bedrijf kent | Posty",
       description:
-        "Verander elk idee in een professionele LinkedIn-post in seconden. Twee schrijfstijlen, directe publicatie en een toon die klinkt als jij.",
+        "Posty is een AI-marketingagent voor LinkedIn: hij leert je bedrijf kennen, schrijft posts voor je doelgroep en helpt je ze te bewerken, in te plannen en te publiceren, allemaal op één plek.",
     },
-    badge: "LinkedIn Schrijfassistent",
-    heroTitle: "Je volgende sterke LinkedIn-post",
-    heroTitleHighlight: "begint hier",
+    badge: "AI-marketingagent voor LinkedIn",
+    heroTitle: "Een AI LinkedIn-postgenerator",
+    heroTitleHighlight: "die jouw bedrijf kent",
     heroSubtitle:
-      "Beschrijf wat je wilt zeggen. Posty schrijft twee publicatieklare versies — een verhalend, een zakelijk — in de tijd die je nodig hebt voor een slok koffie.",
+      "Posty leert wat je verkoopt en voor wie je werkt, en schrijft LinkedIn-posts die bij je bedrijf passen, in een verhalende of zakelijke stijl, jij kiest. Bewerk, plan en publiceer op dezelfde plek.",
     ctaPrimary: "Schrijf je eerste post",
-    ctaSecondary: "Bekijk hoe het werkt",
+    ctaSecondary: "Bekijk prijzen",
     howItWorks: {
       title: "Van ruw idee tot gepubliceerde post",
       subtitle:
@@ -1052,20 +1010,13 @@ export const translations = {
         {
           icon: "\u{1F4F2}",
           title: "Publiceer zonder Posty te verlaten",
-          desc: "Koppel je LinkedIn-account en publiceer met een klik. Geen tabwisseling, geen opmaakproblemen bij kopieren en plakken. Plan posts voor wanneer je publiek het meest actief is.",
+          desc: "Koppel je LinkedIn-account en publiceer met één klik, of plan posts in met Pro en Max. Geen tabbladen wisselen, geen opmaakproblemen door kopiëren en plakken.",
         },
         {
           icon: "\u{1F4CA}",
-          title: "Zie wat echt werkt",
-          desc: "Volg impressies en engagement van je posts. Ontdek welke contenttypes aanslaan bij je publiek — en doe meer van wat werkt.",
+          title: "Een strategie achter elke post",
+          desc: "Met Max analyseert de Marketing Strategist je LinkedIn-aanwezigheid, plant hij je week rond je doelen en schrijft hij de posts die jij goedkeurt.",
         },
-      ],
-    },
-    socialProof: {
-      items: [
-        { stat: "2.000+", label: "Professionals gebruiken Posty" },
-        { stat: "< 30s", label: "Per post, gemiddeld" },
-        { stat: "4.8/5", label: "Gebruikerstevredenheid" },
       ],
     },
     useCases: {
@@ -1078,12 +1029,12 @@ export const translations = {
           desc: "Deel je reis zonder je hele ochtend kwijt te zijn aan een LinkedIn-concept. Blijf zichtbaar voor investeerders, partners en toekomstige medewerkers — met posts die je stem echt vastleggen.",
         },
         {
-          title: "Salesteams die verkopen via content",
-          desc: "Warm prospects op voor het eerste gesprek. Regelmatige, waardevolle posts bouwen het soort vertrouwen op dat koude acquisitie nooit zal bereiken.",
+          title: "Business development-teams",
+          desc: "Blijf zichtbaar voor de mensen met wie je wilt samenwerken. Regelmatige, nuttige posts maken je naam en expertise vertrouwd nog vóór het eerste gesprek.",
         },
         {
           title: "Coaches en consultants",
-          desc: "Je expertise is je product. Verpak het in content die je positioneert als de referentie in je niche — en je agenda vult met inbound leads.",
+          desc: "Je expertise is je product. Maak er consistente, nuttige content van die laat zien wat je weet en wie je helpt, zodat de juiste mensen je kunnen vinden.",
         },
         {
           title: "Professionals in carrieretransitie",
@@ -1115,7 +1066,7 @@ export const translations = {
       {
         question: "Wat zit er in het gratis plan?",
         answer:
-          "Genereer tot 3 posts per week, gratis, zonder tijdslimiet en zonder creditcard. De Pro- en Max-plannen ontgrendelen onbeperkte posts, directe publicatie, planning, analytics en AI-geheugen dat je stijl leert.",
+          "Je kunt gratis starten, zonder creditcard, en de schrijffuncties van Posty uitproberen. Pro en Max ontgrendelen inplannen, hogere limieten, URL-analyse en realtime context voor je posts; Max voegt de Marketing Strategist toe.",
       },
     ],
     howTo: {
@@ -1150,23 +1101,23 @@ export const translations = {
     finalCta: {
       title: "Je publiek is al op LinkedIn",
       subtitle:
-        "De enige vraag is of ze jouw posts lezen — of die van iemand anders. Begin met het schrijven van content die aandacht verdient.",
+        "Laat Posty je bedrijf leren kennen en je helpen om met nuttige content consequent aanwezig te zijn op LinkedIn.",
       button: "Schrijf je eerste post gratis",
     },
   },
   zh: {
     meta: {
-      title: "AI LinkedIn帖子生成器 — 更快写出更好的帖子 | Posty",
+      title: "了解你业务的 AI LinkedIn 帖子生成器 | Posty",
       description:
-        "几秒钟内将任何想法转化为精致的LinkedIn帖子。两种写作风格、直接发布，以及听起来像你本人的语气。",
+        "Posty 是面向 LinkedIn 的 AI 营销助手：它了解你的业务，为你的受众撰写帖子，并帮助你在同一个地方编辑、排期和发布。",
     },
-    badge: "LinkedIn写作助手",
-    heroTitle: "你的下一篇优质LinkedIn帖子",
-    heroTitleHighlight: "从这里开始",
+    badge: "面向 LinkedIn 的 AI 营销助手",
+    heroTitle: "一款 AI LinkedIn 帖子生成器，",
+    heroTitleHighlight: "了解你的业务",
     heroSubtitle:
-      "描述你想表达的内容。Posty会撰写两个可直接发布的版本——一个故事驱动，一个商务聚焦——只需喝一口咖啡的时间。",
+      "Posty 会了解你的产品或服务和目标客户，再撰写贴合你业务的 LinkedIn 帖子——叙事风格或商务风格，由你选择。在同一个地方完成编辑、排期与发布。",
     ctaPrimary: "撰写你的第一篇帖子",
-    ctaSecondary: "了解工作原理",
+    ctaSecondary: "查看价格",
     howItWorks: {
       title: "从粗略想法到发布帖子",
       subtitle:
@@ -1217,20 +1168,13 @@ export const translations = {
         {
           icon: "\u{1F4F2}",
           title: "无需离开Posty即可发布",
-          desc: "连接你的LinkedIn账户，一键发布。无需切换标签页，无需担心复制粘贴的格式问题。安排在受众最活跃的时间发布。",
+          desc: "连接你的 LinkedIn 账号即可一键发布，或使用 Pro 和 Max 为帖子排期。无需来回切换标签页，也没有复制粘贴带来的格式问题。",
         },
         {
           icon: "\u{1F4CA}",
-          title: "查看真正有效的内容",
-          desc: "追踪帖子的展示量和互动数据。了解哪类内容与你的受众产生共鸣——然后加大有效内容的产出。",
+          title: "每篇帖子背后都有策略",
+          desc: "使用 Max 时，Marketing Strategist 会分析你的 LinkedIn 现状，围绕你的目标规划一周内容，并起草帖子供你确认。",
         },
-      ],
-    },
-    socialProof: {
-      items: [
-        { stat: "2,000+", label: "专业人士正在使用Posty" },
-        { stat: "< 30秒", label: "平均每篇帖子用时" },
-        { stat: "4.8/5", label: "用户满意度" },
       ],
     },
     useCases: {
@@ -1243,12 +1187,12 @@ export const translations = {
           desc: "分享你的创业历程，而不用把整个早上花在LinkedIn草稿上。对投资人、合作伙伴和未来员工保持可见——用真正能展现你声音的帖子。",
         },
         {
-          title: "通过内容销售的销售团队",
-          desc: "在第一次通话之前预热潜在客户。定期发布有价值的内容，建立冷触达永远无法实现的信任。",
+          title: "业务拓展团队",
+          desc: "让你想合作的人持续看到你。定期发布有价值的帖子，能让对方在第一次交流之前就熟悉你的名字和专业能力。",
         },
         {
           title: "教练和顾问",
-          desc: "你的专业知识就是你的产品。将其包装成内容，将你定位为细分领域的首选——并用自然流入的客户线索填满你的日程。",
+          desc: "你的专业能力就是你的产品。把它转化为持续、有用的内容，展示你擅长什么、帮助谁，让合适的人能够找到你。",
         },
         {
           title: "职业转型中的专业人士",
@@ -1280,7 +1224,7 @@ export const translations = {
       {
         question: "免费计划包含什么？",
         answer:
-          "每周免费生成最多3篇帖子，无时间限制，无需信用卡。Pro和Max计划解锁无限帖子、直接发布、定时发布、数据分析以及能学习你风格的AI记忆功能。",
+          "你可以免费开始，无需信用卡，并体验 Posty 的核心写作功能。Pro 和 Max 解锁排期、更高的使用上限、网址分析和帖子的实时背景信息；Max 另含 Marketing Strategist。",
       },
     ],
     howTo: {
@@ -1315,23 +1259,23 @@ export const translations = {
     finalCta: {
       title: "你的受众已经在LinkedIn上了",
       subtitle:
-        "唯一的问题是，他们在读你的帖子——还是别人的。开始撰写能赢得关注的内容吧。",
+        "让 Posty 了解你的业务，帮助你持续用有价值的内容在 LinkedIn 上保持曝光。",
       button: "免费撰写你的第一篇帖子",
     },
   },
   ja: {
     meta: {
-      title: "AI LinkedInポスト生成ツール — より良い投稿を、より速く | Posty",
+      title: "あなたのビジネスを理解する AI LinkedIn 投稿ジェネレーター | Posty",
       description:
-        "あらゆるアイデアを数秒でプロフェッショナルなLinkedIn投稿に変換。2つのライティングスタイル、直接公開、そしてあなたらしいトーン。",
+        "Posty は LinkedIn 向けの AI マーケティングエージェントです。あなたのビジネスを学習し、オーディエンスに向けた投稿を作成。編集・予約・公開まで一か所で行えます。",
     },
-    badge: "LinkedInライティングアシスタント",
-    heroTitle: "次の優れたLinkedIn投稿は",
-    heroTitleHighlight: "ここから始まる",
+    badge: "LinkedIn 向け AI マーケティングエージェント",
+    heroTitle: "あなたのビジネスを理解する",
+    heroTitleHighlight: "AI LinkedIn 投稿ジェネレーター",
     heroSubtitle:
-      "伝えたいことを説明するだけ。Postyがすぐに公開できる2つのバージョンを作成します — ストーリー型とビジネス型 — コーヒーを一口飲む間に。",
+      "Posty はあなたの商品・サービスと届けたい相手を学習し、ビジネスに合った LinkedIn 投稿を作成します。ストーリー調かビジネス調か、スタイルはあなたが選べます。編集、予約、公開まで同じ場所で完結します。",
     ctaPrimary: "最初の投稿を作成する",
-    ctaSecondary: "使い方を見る",
+    ctaSecondary: "料金を見る",
     howItWorks: {
       title: "アイデアから公開まで",
       subtitle:
@@ -1382,20 +1326,13 @@ export const translations = {
         {
           icon: "\u{1F4F2}",
           title: "Postyを離れずに公開",
-          desc: "LinkedInアカウントを接続して、ワンクリックで公開。タブの切り替え不要、コピー&ペーストのフォーマット崩れなし。オーディエンスが最もアクティブな時間に投稿を予約。",
+          desc: "LinkedIn アカウントを連携すればワンクリックで公開でき、Pro と Max では投稿の予約も可能です。タブの切り替えも、コピー＆ペーストの書式崩れもありません。",
         },
         {
           icon: "\u{1F4CA}",
-          title: "何が効果的かを確認",
-          desc: "投稿のインプレッションとエンゲージメントを追跡。どのコンテンツタイプがオーディエンスに響いているかを把握し、効果的なものをさらに増やしましょう。",
+          title: "すべての投稿に戦略を",
+          desc: "Max では Marketing Strategist があなたの LinkedIn の状況を分析し、目標に沿って 1 週間の計画を立て、承認用の投稿案を作成します。",
         },
-      ],
-    },
-    socialProof: {
-      items: [
-        { stat: "2,000+", label: "プロフェッショナルがPostyを利用中" },
-        { stat: "< 30秒", label: "1投稿あたりの平均時間" },
-        { stat: "4.8/5", label: "ユーザー満足度" },
       ],
     },
     useCases: {
@@ -1408,12 +1345,12 @@ export const translations = {
           desc: "LinkedInの下書きに朝を費やすことなく、あなたの旅を共有。投資家、パートナー、将来の採用候補者に対して可視性を維持 — あなたの声を本当に捉えた投稿で。",
         },
         {
-          title: "コンテンツで販売する営業チーム",
-          desc: "最初の電話の前に見込み客を温める。定期的で価値のある投稿は、コールドアウトリーチでは決して築けない信頼を構築します。",
+          title: "事業開発チーム",
+          desc: "一緒に働きたい相手に見える存在でいましょう。役立つ投稿を定期的に発信すれば、最初の会話の前からあなたの名前と専門性が知られていきます。",
         },
         {
           title: "コーチ・コンサルタント",
-          desc: "あなたの専門知識が商品です。ニッチ分野の第一人者としてポジショニングするコンテンツに変換し、インバウンドリードでスケジュールを埋めましょう。",
+          desc: "あなたの専門性が商品です。何ができて誰を支援しているのかが伝わる、継続的で役立つコンテンツに変え、ふさわしい人に見つけてもらいましょう。",
         },
         {
           title: "キャリア転換中のプロフェッショナル",
@@ -1445,7 +1382,7 @@ export const translations = {
       {
         question: "無料プランには何が含まれますか？",
         answer:
-          "週3投稿まで無料で生成可能。時間制限なし、クレジットカード不要。ProプランとMaxプランでは、無制限の投稿、直接公開、スケジュール、分析、そしてあなたのスタイルを学ぶAIメモリーが解除されます。",
+          "クレジットカード不要で無料で始められ、Posty の基本的な執筆機能をお試しいただけます。Pro と Max では予約投稿、より高い利用上限、URL 分析、投稿用のリアルタイム情報が使え、Max には Marketing Strategist も含まれます。",
       },
     ],
     howTo: {
@@ -1480,23 +1417,23 @@ export const translations = {
     finalCta: {
       title: "あなたのオーディエンスはすでにLinkedInにいます",
       subtitle:
-        "唯一の問いは、彼らがあなたの投稿を読んでいるか — それとも他の誰かの投稿を読んでいるか。注目を集めるコンテンツを書き始めましょう。",
+        "Posty にあなたのビジネスを学習させ、役立つコンテンツで LinkedIn に継続的に発信しましょう。",
       button: "最初の投稿を無料で作成",
     },
   },
   ko: {
     meta: {
-      title: "AI LinkedIn 게시물 생성기 — 더 좋은 글을, 더 빠르게 | Posty",
+      title: "내 비즈니스를 이해하는 AI 링크드인 게시물 생성기 | Posty",
       description:
-        "어떤 아이디어든 몇 초 만에 세련된 LinkedIn 게시물로 변환하세요. 두 가지 글쓰기 스타일, 직접 게시, 그리고 당신처럼 들리는 톤.",
+        "Posty는 링크드인을 위한 AI 마케팅 에이전트입니다. 비즈니스를 학습하고 타깃 오디언스를 위한 게시물을 작성하며, 편집·예약·게시를 한곳에서 도와드립니다.",
     },
-    badge: "LinkedIn 글쓰기 어시스턴트",
-    heroTitle: "당신의 다음 훌륭한 LinkedIn 게시물",
-    heroTitleHighlight: "여기서 시작됩니다",
+    badge: "링크드인용 AI 마케팅 에이전트",
+    heroTitle: "내 비즈니스를 이해하는",
+    heroTitleHighlight: "AI 링크드인 게시물 생성기",
     heroSubtitle:
-      "전하고 싶은 내용을 설명하세요. Posty가 바로 게시할 수 있는 두 가지 버전을 작성합니다 — 하나는 스토리 중심, 하나는 비즈니스 중심 — 커피 한 모금 마시는 시간이면 충분합니다.",
+      "Posty는 무엇을 판매하고 누구를 대상으로 하는지 학습한 뒤, 비즈니스에 맞는 링크드인 게시물을 작성합니다. 스토리텔링형이든 비즈니스형이든 스타일은 직접 고르세요. 편집, 예약, 게시까지 한곳에서 하세요.",
     ctaPrimary: "첫 게시물 작성하기",
-    ctaSecondary: "작동 방식 보기",
+    ctaSecondary: "요금 보기",
     howItWorks: {
       title: "거친 아이디어에서 게시된 포스트까지",
       subtitle:
@@ -1547,20 +1484,13 @@ export const translations = {
         {
           icon: "\u{1F4F2}",
           title: "Posty를 떠나지 않고 게시",
-          desc: "LinkedIn 계정을 연결하고 원클릭으로 게시하세요. 탭 전환 없이, 복사 붙여넣기 포맷 문제 없이. 오디언스가 가장 활발한 시간에 게시물을 예약하세요.",
+          desc: "링크드인 계정을 연결하면 한 번의 클릭으로 게시할 수 있고, Pro와 Max에서는 예약 게시도 가능합니다. 탭을 오갈 필요도, 복사·붙여넣기 서식 문제도 없습니다.",
         },
         {
           icon: "\u{1F4CA}",
-          title: "실제로 효과 있는 것을 확인하세요",
-          desc: "게시물의 노출수와 참여도를 추적하세요. 어떤 콘텐츠 유형이 오디언스에게 공감을 얻는지 파악하고 효과적인 것을 더 많이 만드세요.",
+          title: "모든 게시물 뒤에 전략이 있습니다",
+          desc: "Max에서는 Marketing Strategist가 링크드인 현황을 분석하고, 목표에 맞춰 한 주를 계획하며, 승인할 게시물 초안을 작성합니다.",
         },
-      ],
-    },
-    socialProof: {
-      items: [
-        { stat: "2,000+", label: "전문가가 Posty를 사용 중" },
-        { stat: "< 30초", label: "게시물당 평균 소요 시간" },
-        { stat: "4.8/5", label: "사용자 만족도" },
       ],
     },
     useCases: {
@@ -1573,12 +1503,12 @@ export const translations = {
           desc: "LinkedIn 초안에 아침을 빼앗기지 않고 여정을 공유하세요. 투자자, 파트너, 미래 채용 후보에게 가시성을 유지하세요 — 당신의 목소리를 진정으로 담은 게시물로.",
         },
         {
-          title: "콘텐츠로 판매하는 영업팀",
-          desc: "첫 통화 전에 잠재 고객을 워밍업하세요. 정기적이고 가치 있는 게시물은 콜드 아웃리치로는 절대 쌓을 수 없는 신뢰를 구축합니다.",
+          title: "사업 개발 팀",
+          desc: "함께 일하고 싶은 사람들에게 꾸준히 보이세요. 유용한 게시물을 정기적으로 올리면 첫 대화 전에 이미 이름과 전문성이 익숙해집니다.",
         },
         {
           title: "코치와 컨설턴트",
-          desc: "당신의 전문성이 곧 상품입니다. 니치 분야의 최고 전문가로 포지셔닝하는 콘텐츠로 만들어 인바운드 리드로 일정을 채우세요.",
+          desc: "전문성이 곧 상품입니다. 무엇을 알고 누구를 돕는지 보여 주는 꾸준하고 유용한 콘텐츠로 만들어, 적합한 사람들이 찾아올 수 있게 하세요.",
         },
         {
           title: "커리어 전환 중인 전문가",
@@ -1610,7 +1540,7 @@ export const translations = {
       {
         question: "무료 플랜에는 무엇이 포함되나요?",
         answer:
-          "주당 최대 3개 게시물을 무료로 생성할 수 있으며, 시간 제한 없이, 신용카드 없이 이용 가능합니다. Pro 및 Max 플랜은 무제한 게시물, 직접 게시, 예약, 분석, 그리고 당신의 스타일을 학습하는 AI 메모리를 제공합니다.",
+          "신용카드 없이 무료로 시작해 Posty의 핵심 작성 기능을 체험할 수 있습니다. Pro와 Max에서는 예약 게시, 더 높은 사용 한도, URL 분석, 게시물용 실시간 컨텍스트를 사용할 수 있으며, Max에는 Marketing Strategist가 추가됩니다.",
       },
     ],
     howTo: {
@@ -1645,7 +1575,7 @@ export const translations = {
     finalCta: {
       title: "당신의 오디언스는 이미 LinkedIn에 있습니다",
       subtitle:
-        "유일한 질문은 그들이 당신의 게시물을 읽고 있느냐 — 아니면 다른 사람의 것을 읽고 있느냐입니다. 관심을 끄는 콘텐츠를 작성하기 시작하세요.",
+        "Posty가 비즈니스를 학습하고, 유용한 콘텐츠로 링크드인에서 꾸준히 존재감을 유지하도록 도와드립니다.",
       button: "첫 게시물 무료로 작성하기",
     },
   },

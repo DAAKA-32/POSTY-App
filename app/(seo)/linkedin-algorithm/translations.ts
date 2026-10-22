@@ -128,7 +128,7 @@ export const translations = {
     tipsSection: {
       title: "7 tactics that still work in 2026",
       subtitle:
-        "These aren't hacks. They're the patterns that correlate with reach across thousands of posts analyzed in 2025 and 2026.",
+        "These aren't hacks. They're the writing patterns most often associated with reach on LinkedIn.",
       tips: [
         {
           title: "Win the first 60 minutes",
@@ -202,9 +202,9 @@ export const translations = {
       ],
     },
     aiCta: {
-      title: "Skip the guesswork. Write posts the algorithm actually rewards.",
+      title: "Skip the guesswork. Write with the signals in mind.",
       subtitle:
-        "Posty is trained on thousands of posts that went viral in 2025 and 2026. It generates hooks, structure, and CTAs calibrated for the signals above — in seconds.",
+        "Posty writes hooks, structure and CTAs built around the signals above, and fits them to your business and audience. You edit, schedule and publish — consistently.",
       button: "Try Posty free",
     },
     faqTitle: "LinkedIn algorithm FAQ",
@@ -262,7 +262,7 @@ export const translations = {
     finalCta: {
       title: "Understand the algorithm. Outsource the writing.",
       subtitle:
-        "Posty drafts posts calibrated for the exact signals on this page — hooks for dwell time, structure for comments, tone for your niche. Generate your first post free.",
+        "Posty drafts posts around the signals on this page — hooks for dwell time, structure for comments, tone for your niche — and helps you schedule and publish them as part of a steady LinkedIn content strategy.",
       button: "Start writing better posts",
     },
   },
@@ -396,7 +396,7 @@ export const translations = {
     tipsSection: {
       title: "7 tactiques qui fonctionnent en 2026",
       subtitle:
-        "Pas des hacks. Les patterns qui corrèlent avec la portée sur des milliers de posts analysés en 2025 et 2026.",
+        "Pas des hacks. Les schémas d'écriture le plus souvent associés à la portée sur LinkedIn.",
       tips: [
         {
           title: "Gagne les 60 premières minutes",
@@ -470,9 +470,9 @@ export const translations = {
       ],
     },
     aiCta: {
-      title: "Arrête de deviner. Écris des posts que l'algo récompense vraiment.",
+      title: "Fini les approximations. Écris en tenant compte des signaux.",
       subtitle:
-        "Posty est entraîné sur des milliers de posts qui ont cartonné en 2025 et 2026. Il génère hook, structure et CTA calibrés pour les signaux ci-dessus — en secondes.",
+        "Posty rédige des accroches, une structure et des CTA construits autour des signaux ci-dessus, et les adapte à ton activité et à ton audience. Tu modifies, planifies et publies — avec régularité.",
       button: "Essayer Posty gratuitement",
     },
     faqTitle: "FAQ algorithme LinkedIn",
@@ -530,7 +530,7 @@ export const translations = {
     finalCta: {
       title: "Comprends l'algo. Délègue l'écriture.",
       subtitle:
-        "Posty rédige des posts calibrés pour les signaux exacts de cette page — hooks pour le dwell time, structure pour les commentaires, ton pour ta niche. Génère ton premier post gratuitement.",
+        "Posty rédige des posts autour des signaux de cette page — hooks pour le dwell time, structure pour les commentaires, ton pour ta niche — et t'aide à les planifier et les publier dans le cadre d'une stratégie de contenu LinkedIn régulière.",
       button: "Commencer à écrire mieux",
     },
   },
@@ -665,7 +665,7 @@ export const translations = {
       tipsSection: {
         title: "7 Taktiken, die 2026 funktionieren",
         subtitle: 
-          "Keine Hacks. Die Muster, die mit Reichweite korrelieren über Tausende von Beiträgen aus 2025 und 2026 analysiert.",
+          "Das sind keine Hacks. Es sind die Schreibmuster, die am häufigsten mit Reichweite auf LinkedIn in Verbindung gebracht werden.",
         tips: [
           {
             title: "Gewinne die ersten 60 Minuten",
@@ -738,9 +738,9 @@ export const translations = {
         ],
       },
       aiCta: {
-        title: "Hör auf zu raten. Schreib Beiträge, die der Algo wirklich belohnt.",
+        title: "Schluss mit Rätselraten. Schreibe mit Blick auf die Signale.",
         subtitle: 
-          "Posty ist trainiert auf Tausenden von Beiträgen, die 2025 und 2026 viral gingen. Er generiert Hook, Struktur und CTA kalibriert für die obigen Signale — in Sekunden.",
+          "Posty schreibt Hooks, Struktur und CTAs rund um die obigen Signale und passt sie an dein Unternehmen und deine Zielgruppe an. Du bearbeitest, planst und veröffentlichst – konsequent.",
         button: "Posty kostenlos testen",
       },
       faqTitle: "LinkedIn-Algorithmus FAQ",
@@ -813,7 +813,7 @@ export const translations = {
       finalCta: {
         title: "Verstehe den Algo. Delegiere das Schreiben.",
         subtitle: 
-          "Posty entwirft Beiträge kalibriert für die exakten Signale auf dieser Seite — Hooks für Dwell Time, Struktur für Kommentare, Ton für deine Nische. Generiere deinen ersten Beitrag kostenlos.",
+          "Posty entwirft Beiträge rund um die Signale auf dieser Seite – Hooks für Dwell Time, Struktur für Kommentare, Ton für deine Nische – und hilft dir, sie im Rahmen einer stetigen LinkedIn-Content-Strategie zu planen und zu veröffentlichen.",
         button: "Besser schreiben starten",
       },
     },
@@ -948,7 +948,7 @@ export const translations = {
       tipsSection: {
         title: "7 tácticas que aún funcionan en 2026",
         subtitle: 
-          "No son hacks. Los patrones que correlacionan con alcance en miles de posts analizados en 2025 y 2026.",
+          "No son trucos. Son los patrones de escritura más asociados con el alcance en LinkedIn.",
         tips: [
           {
             title: "Gana los primeros 60 minutos",
@@ -1021,9 +1021,9 @@ export const translations = {
         ],
       },
       aiCta: {
-        title: "Deja de adivinar. Escribe posts que el algoritmo realmente recompensa.",
+        title: "Deja de adivinar. Escribe pensando en las señales.",
         subtitle: 
-          "Posty está entrenado con miles de posts que se volvieron virales en 2025 y 2026. Genera hook, estructura y CTA calibrados para las señales anteriores — en segundos.",
+          "Posty escribe ganchos, estructura y CTAs construidos en torno a las señales anteriores y los adapta a tu negocio y tu audiencia. Tú editas, programas y publicas, con constancia.",
         button: "Probar Posty gratis",
       },
       faqTitle: "FAQ del algoritmo de LinkedIn",
@@ -1096,7 +1096,7 @@ export const translations = {
       finalCta: {
         title: "Entiende el algoritmo. Delega la escritura.",
         subtitle: 
-          "Posty redacta posts calibrados para las señales exactas de esta página — hooks para dwell time, estructura para comentarios, tono para tu nicho. Genera tu primer post gratis.",
+          "Posty redacta posts en torno a las señales de esta página (ganchos para el dwell time, estructura para los comentarios, tono para tu nicho) y te ayuda a programarlos y publicarlos dentro de una estrategia de contenido constante en LinkedIn.",
         button: "Empezar a escribir mejor",
       },
     },
@@ -1230,7 +1230,7 @@ export const translations = {
       },
       tipsSection: {
         title: "7 tattiche che funzionano ancora nel 2026",
-        subtitle: "Non sono hack. I pattern che correlano con il reach su migliaia di post analizzati nel 2025 e 2026.",
+        subtitle: "Non sono trucchi. Sono gli schemi di scrittura più spesso associati alla portata su LinkedIn.",
         tips: [
           {
             title: "Vinci i primi 60 minuti",
@@ -1303,9 +1303,9 @@ export const translations = {
         ],
       },
       aiCta: {
-        title: "Smetti di indovinare. Scrivi post che l'algoritmo premia davvero.",
+        title: "Basta tirare a indovinare. Scrivi pensando ai segnali.",
         subtitle: 
-          "Posty è addestrato su migliaia di post diventati virali nel 2025 e 2026. Genera hook, struttura e CTA calibrati per i segnali sopra — in secondi.",
+          "Posty scrive hook, struttura e CTA costruiti attorno ai segnali qui sopra e li adatta alla tua attività e al tuo pubblico. Tu modifichi, programmi e pubblichi, con costanza.",
         button: "Prova Posty gratis",
       },
       faqTitle: "FAQ algoritmo LinkedIn",
@@ -1378,7 +1378,7 @@ export const translations = {
       finalCta: {
         title: "Capisci l'algoritmo. Delega la scrittura.",
         subtitle: 
-          "Posty redige post calibrati per i segnali esatti di questa pagina — hook per il dwell time, struttura per i commenti, tono per la tua nicchia. Genera il tuo primo post gratis.",
+          "Posty prepara post attorno ai segnali di questa pagina (hook per il dwell time, struttura per i commenti, tono per la tua nicchia) e ti aiuta a programmarli e pubblicarli all'interno di una strategia di contenuti LinkedIn costante.",
         button: "Inizia a scrivere meglio",
       },
     },
@@ -1513,7 +1513,7 @@ export const translations = {
       tipsSection: {
         title: "7 táticas que ainda funcionam em 2026",
         subtitle: 
-          "Não são hacks. Os padrões que correlacionam com alcance em milhares de posts analisados em 2025 e 2026.",
+          "Não são truques. São os padrões de escrita mais associados ao alcance no LinkedIn.",
         tips: [
           {
             title: "Ganhe os primeiros 60 minutos",
@@ -1586,9 +1586,9 @@ export const translations = {
         ],
       },
       aiCta: {
-        title: "Pare de adivinhar. Escreva posts que o algoritmo realmente recompensa.",
+        title: "Deixe de adivinhar. Escreva a pensar nos sinais.",
         subtitle: 
-          "Posty é treinado em milhares de posts que viralizaram em 2025 e 2026. Gera hook, estrutura e CTA calibrados para os sinais acima — em segundos.",
+          "O Posty escreve ganchos, estrutura e CTAs construídos em torno dos sinais acima e adapta-os ao seu negócio e ao seu público. Você edita, agenda e publica, com consistência.",
         button: "Experimentar Posty grátis",
       },
       faqTitle: "FAQ algoritmo do LinkedIn",
@@ -1661,7 +1661,7 @@ export const translations = {
       finalCta: {
         title: "Entenda o algoritmo. Delegue a escrita.",
         subtitle: 
-          "Posty redige posts calibrados para os sinais exatos desta página — hooks para dwell time, estrutura para comentários, tom para seu nicho. Gere seu primeiro post grátis.",
+          "O Posty redige posts em torno dos sinais desta página (ganchos para o dwell time, estrutura para os comentários, tom para o seu nicho) e ajuda-o a agendá-los e publicá-los no âmbito de uma estratégia de conteúdo constante no LinkedIn.",
         button: "Começar a escrever melhor",
       },
     },
@@ -1795,7 +1795,7 @@ export const translations = {
       },
       tipsSection: {
         title: "7 tactieken die nog werken in 2026",
-        subtitle: "Geen hacks. De patronen die correleren met bereik over duizenden posts geanalyseerd in 2025 en 2026.",
+        subtitle: "Dit zijn geen hacks. Het zijn de schrijfpatronen die het vaakst met bereik op LinkedIn worden geassocieerd.",
         tips: [
           {
             title: "Win de eerste 60 minuten",
@@ -1868,9 +1868,9 @@ export const translations = {
         ],
       },
       aiCta: {
-        title: "Stop met gokken. Schrijf posts die het algoritme echt beloont.",
+        title: "Stop met gokken. Schrijf met de signalen in gedachten.",
         subtitle: 
-          "Posty is getraind op duizenden posts die in 2025 en 2026 viraal gingen. Genereert hook, structuur en CTA gekalibreerd voor de bovengenoemde signalen — in seconden.",
+          "Posty schrijft hooks, structuur en CTA's rond de signalen hierboven en stemt ze af op je bedrijf en je doelgroep. Jij bewerkt, plant en publiceert, consequent.",
         button: "Posty gratis proberen",
       },
       faqTitle: "LinkedIn-algoritme FAQ",
@@ -1943,7 +1943,7 @@ export const translations = {
       finalCta: {
         title: "Begrijp het algoritme. Delegeer het schrijven.",
         subtitle: 
-          "Posty schrijft posts gekalibreerd voor de exacte signalen op deze pagina — hooks voor dwell time, structuur voor reacties, toon voor je niche. Genereer je eerste post gratis.",
+          "Posty schrijft posts rond de signalen op deze pagina (hooks voor verblijftijd, structuur voor reacties, toon voor je niche) en helpt je ze in te plannen en te publiceren als onderdeel van een stabiele LinkedIn-contentstrategie.",
         button: "Beter schrijven starten",
       },
     },
@@ -2060,7 +2060,7 @@ export const translations = {
       },
       tipsSection: {
         title: "2026 年仍然有效的 7 种策略",
-        subtitle: "这些不是黑客。这些是在 2025 年和 2026 年分析的数千个帖子中与覆盖率相关的模式。",
+        subtitle: "这些不是投机取巧的技巧，而是最常与 LinkedIn 触达量相关联的写作模式。",
         tips: [
           {
             title: "赢得前 60 分钟",
@@ -2121,8 +2121,8 @@ export const translations = {
         ],
       },
       aiCta: {
-        title: "停止猜测。写出算法真正奖励的帖子。",
-        subtitle: "Posty 是在 2025 年和 2026 年数千个病毒式帖子上训练的。它生成针对上述信号校准的钩子、结构和 CTA —— 只需几秒钟。",
+        title: "别再凭感觉猜测。写作时把这些信号放在心上。",
+        subtitle: "Posty 会围绕上述信号撰写开头钩子、结构和行动号召，并结合你的业务与受众进行调整。由你编辑、排期并持续发布。",
         button: "免费试用 Posty",
       },
       faqTitle: "LinkedIn 算法常见问题",
@@ -2187,7 +2187,7 @@ export const translations = {
       exploreMore: "更多资源",
       finalCta: {
         title: "理解算法。委派写作。",
-        subtitle: "Posty 撰写针对此页面上确切信号校准的帖子 —— 用于停留时间的钩子、用于评论的结构、用于您细分领域的语气。免费生成您的第一个帖子。",
+        subtitle: "Posty 围绕本页的信号起草帖子——为停留时长设计开头、为评论设计结构、为你的细分领域设定语气——并帮助你在稳定的 LinkedIn 内容策略中完成排期和发布。",
         button: "开始更好地写作",
       },
     },
@@ -2309,7 +2309,7 @@ export const translations = {
       },
       tipsSection: {
         title: "2026 年でも機能する 7 つの戦術",
-        subtitle: "ハックではありません。2025 年と 2026 年に分析された何千もの投稿でリーチと相関するパターンです。",
+        subtitle: "これらは小手先のテクニックではありません。LinkedIn でのリーチと最も関連づけられることの多い書き方のパターンです。",
         tips: [
           {
             title: "最初の 60 分を制す",
@@ -2374,8 +2374,8 @@ export const translations = {
         ],
       },
       aiCta: {
-        title: "推測をやめて、アルゴリズムが実際に報酬する投稿を書きましょう。",
-        subtitle: "Posty は 2025 年と 2026 年にバイラルになった何千もの投稿でトレーニングされています。上記のシグナル用に調整されたフック、構造、CTA を生成します — 数秒で。",
+        title: "憶測はやめて、シグナルを意識して書きましょう。",
+        subtitle: "Posty は上記のシグナルを踏まえたフック、構成、CTA を作成し、あなたのビジネスとオーディエンスに合わせて調整します。編集、予約、公開はあなたが、継続的に。",
         button: "Posty を無料で試す",
       },
       faqTitle: "LinkedIn アルゴリズム FAQ",
@@ -2445,7 +2445,7 @@ export const translations = {
       exploreMore: "その他のリソース",
       finalCta: {
         title: "アルゴリズムを理解。執筆を委託。",
-        subtitle: "Posty はこのページの正確なシグナル用に調整された投稿を起草します — ドウェルタイム用のフック、コメント用の構造、ニッチ用のトーン。最初の投稿を無料で生成。",
+        subtitle: "Posty はこのページのシグナル——滞在時間のためのフック、コメントのための構成、ニッチに合ったトーン——を踏まえて投稿を下書きし、安定した LinkedIn コンテンツ戦略の一環として予約・公開できるようサポートします。",
         button: "より良い投稿を書き始める",
       },
     },
@@ -2567,7 +2567,7 @@ export const translations = {
       },
       tipsSection: {
         title: "2026년에도 여전히 효과적인 7가지 전술",
-        subtitle: "해킹이 아닙니다. 2025년과 2026년에 분석된 수천 개의 게시물에서 도달과 상관관계를 보이는 패턴입니다.",
+        subtitle: "이것은 꼼수가 아닙니다. 링크드인에서 도달 범위와 가장 자주 연관되는 글쓰기 패턴입니다.",
         tips: [
           {
             title: "처음 60분을 확보",
@@ -2628,8 +2628,8 @@ export const translations = {
         ],
       },
       aiCta: {
-        title: "추측을 멈추세요. 알고리즘이 실제로 보상하는 게시물을 작성하세요.",
-        subtitle: "Posty는 2025년과 2026년에 바이럴이 된 수천 개의 게시물로 훈련되었습니다. 위의 신호에 맞춰 조정된 훅, 구조, CTA를 몇 초 만에 생성합니다.",
+        title: "추측은 그만. 알고리즘 신호를 염두에 두고 쓰세요.",
+        subtitle: "Posty는 위의 신호를 바탕으로 훅, 구조, CTA를 작성하고 비즈니스와 오디언스에 맞게 조정합니다. 편집, 예약, 게시는 직접, 꾸준하게 하세요.",
         button: "Posty 무료로 시도",
       },
       faqTitle: "LinkedIn 알고리즘 FAQ",
@@ -2699,7 +2699,7 @@ export const translations = {
       exploreMore: "추가 리소스",
       finalCta: {
         title: "알고리즘을 이해하세요. 작성은 위임하세요.",
-        subtitle: "Posty는 이 페이지의 정확한 신호에 맞춰 조정된 게시물을 작성합니다 — 체류 시간을 위한 훅, 댓글을 위한 구조, 틈새를 위한 톤. 첫 게시물을 무료로 생성하세요.",
+        subtitle: "Posty는 이 페이지의 신호(체류 시간을 위한 훅, 댓글을 위한 구조, 니치에 맞는 톤)를 바탕으로 게시물을 초안하고, 꾸준한 링크드인 콘텐츠 전략의 일부로 예약·게시하도록 돕습니다.",
         button: "더 나은 게시물 작성 시작",
       },
     },

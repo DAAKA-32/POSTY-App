@@ -3,7 +3,7 @@ export const translations = {
     meta: {
       title: "How to Write a LinkedIn Post That Gets Engagement — The Playbook | Posty",
       description:
-        "The four-part structure behind every high-performing LinkedIn post. Learn hooks, storytelling, value delivery, and CTAs — then let AI handle the execution.",
+        "The four-part structure behind high-performing LinkedIn posts: hooks, storytelling, value and CTAs. Then let Posty, your AI marketing assistant, handle the execution.",
     },
     badge: "The Writing Playbook",
     heroTitle: "Write LinkedIn Posts That ",
@@ -60,7 +60,7 @@ export const translations = {
         },
         {
           mistake: "Staying vague when you could be specific",
-          fix: "'Hard work pays off' teaches nothing. 'I cold-emailed 200 prospects in 30 days. 12 replied. 3 became clients worth $45K total' — that's memorable. Specific numbers and real details are what make your post stand out in a sea of motivational noise.",
+          fix: "'Hard work pays off' teaches nothing. 'I interviewed 20 customers in 30 days. The same three problems came up every time — and one of them changed how we explain our offer' — that's memorable. Specific details are what make your post stand out in a sea of motivational noise.",
         },
         {
           mistake: "Only posting about yourself or your company",
@@ -76,7 +76,7 @@ export const translations = {
       title: "You know the formula. Let AI execute it.",
       paragraphs: [
         "Understanding post structure is one thing. Doing it consistently — three to five times a week — is another. Writing a single strong post manually takes 30-60 minutes of brainstorming, drafting, editing, and second-guessing.",
-        "Posty applies every principle from this guide automatically. Compelling hooks, clear narratives, specific value, and engagement-driving CTAs — in under 30 seconds. Two versions for every idea. You edit and publish what resonates.",
+        "Posty applies the principles from this guide to every draft — compelling hooks, clear narratives, specific value and engagement-driving CTAs — and writes them around your business, so each post is about what you actually do. Two versions for every idea; you edit and publish what resonates.",
       ],
       ctaPrimary: "Try Posty Free",
       ctaSecondary: "Learn about the AI generator",
@@ -129,7 +129,7 @@ export const translations = {
     meta: {
       title: "Comment Ecrire un Post LinkedIn qui Genere de l'Engagement — Le Guide | Posty",
       description:
-        "La structure en 4 parties derriere chaque post LinkedIn performant. Accroches, storytelling, valeur et CTA — puis laissez l'IA s'occuper de l'execution.",
+        "La structure en quatre parties derrière les posts LinkedIn performants : accroche, storytelling, valeur et appel à l'action. Laissez ensuite Posty, votre assistant marketing IA, s'occuper de l'exécution.",
     },
     badge: "Le guide de redaction",
     heroTitle: "Redigez des Posts LinkedIn que ",
@@ -186,7 +186,7 @@ export const translations = {
         },
         {
           mistake: "Rester vague alors qu'on peut etre precis",
-          fix: "« Le travail finit par payer » n'enseigne rien. « J'ai envoye 200 emails de prospection en 30 jours. 12 reponses. 3 sont devenus des clients pour 45 000 euros » — ca, c'est memorable. Les chiffres concrets et les vrais details font la difference dans un ocean de contenu motivationnel.",
+          fix: "« Le travail finit par payer » n'apprend rien. « J'ai interrogé 20 clients en 30 jours. Les mêmes trois problèmes revenaient à chaque fois — et l'un d'eux a changé la façon dont nous présentons notre offre » — voilà qui reste en tête. Ce sont les détails concrets qui font ressortir votre post dans un océan de contenu motivationnel.",
         },
         {
           mistake: "Ne publier qu'a propos de soi ou de son entreprise",
@@ -202,7 +202,7 @@ export const translations = {
       title: "Vous connaissez la formule. Laissez l'IA l'executer.",
       paragraphs: [
         "Comprendre la structure d'un post, c'est une chose. Le faire de maniere constante — trois a cinq fois par semaine — c'en est une autre. Rediger un seul bon post manuellement prend 30 a 60 minutes de brainstorming, redaction, relecture et hesitations.",
-        "Posty applique automatiquement chaque principe de ce guide. Accroches captivantes, recits clairs, valeur concrete et CTA qui generent de l'engagement — en moins de 30 secondes. Deux versions pour chaque idee. Vous modifiez et publiez ce qui vous parle.",
+        "Posty applique les principes de ce guide à chaque brouillon — accroches percutantes, récits clairs, valeur concrète et appels à l'action qui invitent à échanger — et les écrit autour de votre activité, pour que chaque post parle de ce que vous faites réellement. Deux versions pour chaque idée ; vous modifiez et publiez ce qui vous correspond.",
       ],
       ctaPrimary: "Essayer Posty gratuitement",
       ctaSecondary: "Decouvrir le generateur IA",
@@ -255,7 +255,7 @@ export const translations = {
     meta: {
       title: "Como Escribir un Post en LinkedIn que Genere Engagement — La Guia | Posty",
       description:
-        "La estructura en cuatro partes detras de cada post de LinkedIn exitoso. Aprende ganchos, storytelling, aporte de valor y CTAs — y deja que la IA se encargue de la ejecucion.",
+        "La estructura en cuatro partes detrás de los posts de LinkedIn que funcionan: ganchos, storytelling, valor y llamadas a la acción. Luego deja que Posty, tu asistente de marketing con IA, se encargue de la ejecución.",
     },
     badge: "La guia de redaccion",
     heroTitle: "Escribe Posts en LinkedIn que ",
@@ -312,7 +312,7 @@ export const translations = {
         },
         {
           mistake: "Ser vago cuando podrias ser concreto",
-          fix: "'El esfuerzo siempre da frutos' no ensena nada. 'Envie 200 emails de prospeccion en 30 dias. 12 respondieron. 3 se convirtieron en clientes por un total de 45.000 euros' — eso si es memorable. Los numeros concretos y los detalles reales son lo que hacen que tu post destaque en un mar de ruido motivacional.",
+          fix: "'El esfuerzo siempre da frutos' no enseña nada. 'Entrevisté a 20 clientes en 30 días. Los mismos tres problemas aparecían siempre, y uno cambió la forma en que explicamos nuestra oferta': eso sí es memorable. Los detalles concretos hacen que tu post destaque en un mar de ruido motivacional.",
         },
         {
           mistake: "Solo publicar sobre ti o tu empresa",
@@ -328,7 +328,7 @@ export const translations = {
       title: "Ya conoces la formula. Deja que la IA la ejecute.",
       paragraphs: [
         "Entender la estructura de un post es una cosa. Hacerlo de forma constante — tres a cinco veces por semana — es otra. Redactar un solo post solido de forma manual toma de 30 a 60 minutos entre brainstorming, escritura, edicion y dudas.",
-        "Posty aplica automaticamente cada principio de esta guia. Ganchos atractivos, narrativas claras, valor concreto y CTAs que generan interaccion — en menos de 30 segundos. Dos versiones para cada idea. Tu editas y publicas lo que te convence.",
+        "Posty aplica los principios de esta guía a cada borrador (ganchos convincentes, relatos claros, valor concreto y llamadas a la acción que invitan a participar) y los escribe en torno a tu negocio, para que cada post trate de lo que realmente haces. Dos versiones por idea; tú editas y publicas lo que te represente.",
       ],
       ctaPrimary: "Probar Posty gratis",
       ctaSecondary: "Conocer el generador con IA",
@@ -381,7 +381,7 @@ export const translations = {
     meta: {
       title: "Como Escrever um Post no LinkedIn que Gere Engagement — O Guia | Posty",
       description:
-        "A estrutura em quatro partes por tras de cada post de LinkedIn de alto desempenho. Aprenda ganchos, storytelling, entrega de valor e CTAs — e deixe a IA cuidar da execucao.",
+        "A estrutura em quatro partes por trás dos posts de LinkedIn de bom desempenho: ganchos, storytelling, valor e chamadas à ação. Depois deixe o Posty, o seu assistente de marketing com IA, tratar da execução.",
     },
     badge: "O guia de redacao",
     heroTitle: "Escreva Posts no LinkedIn que ",
@@ -438,7 +438,7 @@ export const translations = {
         },
         {
           mistake: "Ser vago quando voce poderia ser especifico",
-          fix: "'Trabalho duro compensa' nao ensina nada. 'Enviei 200 emails de prospeccao em 30 dias. 12 responderam. 3 se tornaram clientes valendo 45 mil euros no total' — isso sim e memoravel. Numeros concretos e detalhes reais sao o que fazem seu post se destacar em um mar de ruido motivacional.",
+          fix: "'O esforço compensa' não ensina nada. 'Entrevistei 20 clientes em 30 dias. Os mesmos três problemas surgiam sempre, e um deles mudou a forma como explicamos a nossa oferta': isso sim é memorável. Os detalhes concretos fazem o seu post destacar-se num mar de ruído motivacional.",
         },
         {
           mistake: "So postar sobre voce ou sua empresa",
@@ -454,7 +454,7 @@ export const translations = {
       title: "Voce conhece a formula. Deixe a IA executar.",
       paragraphs: [
         "Entender a estrutura de um post e uma coisa. Fazer isso de forma consistente — tres a cinco vezes por semana — e outra. Escrever um unico post forte manualmente leva de 30 a 60 minutos entre brainstorming, redacao, edicao e indecisao.",
-        "O Posty aplica automaticamente cada principio deste guia. Ganchos envolventes, narrativas claras, valor concreto e CTAs que geram interacao — em menos de 30 segundos. Duas versoes para cada ideia. Voce edita e publica o que funciona.",
+        "O Posty aplica os princípios deste guia a cada rascunho (ganchos convincentes, narrativas claras, valor concreto e chamadas à ação que convidam à participação) e escreve-os em torno do seu negócio, para que cada post fale do que realmente faz. Duas versões por ideia; você edita e publica o que o representa.",
       ],
       ctaPrimary: "Experimentar Posty gratis",
       ctaSecondary: "Conhecer o gerador com IA",
@@ -507,7 +507,7 @@ export const translations = {
     meta: {
       title: "Wie man einen LinkedIn-Post schreibt, der Engagement erzeugt — Der Leitfaden | Posty",
       description:
-        "Die vierteilige Struktur hinter jedem erfolgreichen LinkedIn-Post. Lerne Hooks, Storytelling, Mehrwert und CTAs — dann lass die KI die Umsetzung uebernehmen.",
+        "Die vierteilige Struktur hinter erfolgreichen LinkedIn-Beiträgen: Hook, Storytelling, Mehrwert und CTA. Danach übernimmt Posty, dein KI-Marketing-Assistent, die Umsetzung.",
     },
     badge: "Der Schreib-Leitfaden",
     heroTitle: "Schreibe LinkedIn-Posts, die ",
@@ -564,7 +564,7 @@ export const translations = {
         },
         {
           mistake: "Vage bleiben, wenn du konkret sein koenntest",
-          fix: "'Harte Arbeit zahlt sich aus' lehrt nichts. 'Ich habe 200 Kaltakquise-Mails in 30 Tagen geschickt. 12 haben geantwortet. 3 wurden Kunden im Wert von insgesamt 45.000 Euro' — das ist einpraegsam. Konkrete Zahlen und echte Details sind es, die deinen Post in einem Meer aus Motivationsrauschen hervorheben.",
+          fix: "„Harte Arbeit zahlt sich aus“ lehrt nichts. „Ich habe in 30 Tagen 20 Kunden interviewt. Dieselben drei Probleme kamen jedes Mal auf – und eines davon hat verändert, wie wir unser Angebot erklären“ – das bleibt hängen. Konkrete Details lassen deinen Beitrag aus dem Meer motivierender Floskeln herausstechen.",
         },
         {
           mistake: "Nur ueber dich oder dein Unternehmen posten",
@@ -580,7 +580,7 @@ export const translations = {
       title: "Du kennst die Formel. Lass die KI sie umsetzen.",
       paragraphs: [
         "Die Struktur eines Posts zu verstehen ist eine Sache. Es konsistent zu tun — drei- bis fuenfmal pro Woche — ist eine andere. Einen einzigen starken Post manuell zu schreiben dauert 30 bis 60 Minuten Brainstorming, Entwurf, Ueberarbeitung und Zweifel.",
-        "Posty wendet automatisch jedes Prinzip aus diesem Leitfaden an. Ueberzeugende Hooks, klare Erzaehlungen, konkreter Mehrwert und Engagement-foerdernde CTAs — in unter 30 Sekunden. Zwei Versionen fuer jede Idee. Du bearbeitest und veroeffentlichst, was passt.",
+        "Posty wendet die Prinzipien dieses Leitfadens auf jeden Entwurf an – packende Hooks, klare Erzählungen, konkreten Mehrwert und CTAs, die zum Dialog einladen – und schreibt sie rund um dein Unternehmen, sodass jeder Beitrag von dem handelt, was du tatsächlich tust. Zwei Versionen pro Idee; du bearbeitest und veröffentlichst, was zu dir passt.",
       ],
       ctaPrimary: "Posty kostenlos testen",
       ctaSecondary: "Mehr ueber den KI-Generator erfahren",
@@ -633,7 +633,7 @@ export const translations = {
     meta: {
       title: "Come Scrivere un Post su LinkedIn che Genera Engagement — La Guida | Posty",
       description:
-        "La struttura in quattro parti dietro ogni post LinkedIn ad alte prestazioni. Impara hook, storytelling, valore e CTA — poi lascia che l'IA gestisca l'esecuzione.",
+        "La struttura in quattro parti dietro i post LinkedIn che funzionano: hook, storytelling, valore e call to action. Poi lascia che Posty, il tuo assistente di marketing con IA, si occupi dell'esecuzione.",
     },
     badge: "La guida alla scrittura",
     heroTitle: "Scrivi Post su LinkedIn che ",
@@ -690,7 +690,7 @@ export const translations = {
         },
         {
           mistake: "Restare vaghi quando si potrebbe essere specifici",
-          fix: "'Il duro lavoro paga' non insegna nulla. 'Ho inviato 200 email a freddo in 30 giorni. 12 hanno risposto. 3 sono diventati clienti per un totale di 45.000 euro' — questo e memorabile. Numeri concreti e dettagli reali sono cio che fa risaltare il tuo post in un mare di rumore motivazionale.",
+          fix: "«Il duro lavoro paga» non insegna nulla. «Ho intervistato 20 clienti in 30 giorni. Gli stessi tre problemi emergevano ogni volta, e uno ha cambiato il modo in cui spieghiamo la nostra offerta»: questo è memorabile. I dettagli concreti fanno distinguere il tuo post in un mare di rumore motivazionale.",
         },
         {
           mistake: "Pubblicare solo su di te o sulla tua azienda",
@@ -706,7 +706,7 @@ export const translations = {
       title: "Conosci la formula. Lascia che l'IA la esegua.",
       paragraphs: [
         "Capire la struttura di un post e una cosa. Farlo in modo costante — da tre a cinque volte a settimana — e un'altra. Scrivere un singolo post forte manualmente richiede dai 30 ai 60 minuti tra brainstorming, stesura, revisione e ripensamenti.",
-        "Posty applica automaticamente ogni principio di questa guida. Hook convincenti, narrazioni chiare, valore concreto e CTA che generano engagement — in meno di 30 secondi. Due versioni per ogni idea. Tu modifichi e pubblichi cio che funziona.",
+        "Posty applica i principi di questa guida a ogni bozza (hook efficaci, narrazioni chiare, valore concreto e call to action che invitano al dialogo) e li scrive attorno alla tua attività, così ogni post parla di ciò che fai davvero. Due versioni per ogni idea; tu modifichi e pubblichi ciò che ti rappresenta.",
       ],
       ctaPrimary: "Prova Posty gratis",
       ctaSecondary: "Scopri il generatore IA",
@@ -759,7 +759,7 @@ export const translations = {
     meta: {
       title: "Hoe Schrijf Je een LinkedIn-Post die Engagement Oplevert — De Handleiding | Posty",
       description:
-        "De vierdelige structuur achter elke goed presterende LinkedIn-post. Leer hooks, storytelling, waarde en CTA's — en laat AI de uitvoering doen.",
+        "De vierdelige structuur achter goed presterende LinkedIn-posts: hooks, storytelling, waarde en CTA's. Laat Posty, je AI-marketingassistent, daarna de uitvoering doen.",
     },
     badge: "De schrijfhandleiding",
     heroTitle: "Schrijf LinkedIn-posts die ",
@@ -816,7 +816,7 @@ export const translations = {
         },
         {
           mistake: "Vaag blijven als je specifiek kunt zijn",
-          fix: "'Hard werken loont' leert niets. 'Ik heb 200 koude e-mails gestuurd in 30 dagen. 12 reageerden. 3 werden klanten ter waarde van in totaal 45.000 euro' — dat is onvergetelijk. Concrete cijfers en echte details zijn wat je post laten opvallen in een zee van motivationeel lawaai.",
+          fix: "‘Hard werken loont’ leert niets. ‘Ik interviewde in 30 dagen 20 klanten. Steeds kwamen dezelfde drie problemen terug — en één ervan veranderde hoe we ons aanbod uitleggen’ — dat blijft hangen. Concrete details laten je post opvallen in een zee van motiverend geruis.",
         },
         {
           mistake: "Alleen over jezelf of je bedrijf posten",
@@ -832,7 +832,7 @@ export const translations = {
       title: "Je kent de formule. Laat AI het uitvoeren.",
       paragraphs: [
         "De structuur van een post begrijpen is een ding. Het consistent doen — drie tot vijf keer per week — is iets anders. Het handmatig schrijven van een enkele sterke post kost 30 tot 60 minuten brainstormen, schrijven, bewerken en twijfelen.",
-        "Posty past automatisch elk principe uit deze gids toe. Overtuigende hooks, heldere verhalen, concrete waarde en engagement-stimulerende CTA's — in minder dan 30 seconden. Twee versies voor elk idee. Jij bewerkt en publiceert wat resoneert.",
+        "Posty past de principes uit deze gids toe op elk concept — pakkende hooks, heldere verhalen, concrete waarde en CTA's die uitnodigen tot gesprek — en schrijft ze rond je bedrijf, zodat elke post gaat over wat je echt doet. Twee versies per idee; jij bewerkt en publiceert wat bij je past.",
       ],
       ctaPrimary: "Probeer Posty gratis",
       ctaSecondary: "Lees meer over de AI-generator",
@@ -885,7 +885,7 @@ export const translations = {
     meta: {
       title: "如何撰写获得高互动的LinkedIn帖子 — 完整指南 | Posty",
       description:
-        "每篇高效LinkedIn帖子背后的四部分结构。学习钩子、故事叙述、价值传递和行动号召 — 然后让AI处理执行。",
+        "高表现 LinkedIn 帖子背后的四段式结构：开头钩子、故事、价值与行动号召。然后让你的 AI 营销助手 Posty 负责执行。",
     },
     badge: "写作指南",
     heroTitle: "撰写人们",
@@ -942,7 +942,7 @@ export const translations = {
         },
         {
           mistake: "能具体的时候却保持模糊",
-          fix: "'努力工作会有回报'什么也没教。'我在30天内发送了200封冷邮件。12个回复了。3个成为了总价值45,000欧元的客户' — 这才令人印象深刻。具体的数字和真实的细节是让你的帖子在一片激励噪音中脱颖而出的关键。",
+          fix: "“努力终有回报”并不能让人学到什么。“我在 30 天里访谈了 20 位客户，每次都会冒出同样的三个问题，其中一个改变了我们介绍产品的方式”——这样的表述才令人印象深刻。具体的细节才能让你的帖子在满屏的励志套话中脱颖而出。",
         },
         {
           mistake: "只发关于自己或公司的内容",
@@ -958,7 +958,7 @@ export const translations = {
       title: "你知道公式了。让AI来执行。",
       paragraphs: [
         "理解帖子结构是一回事。持续做到 — 每周三到五次 — 是另一回事。手动撰写一篇优质帖子需要30到60分钟的头脑风暴、起草、编辑和犹豫。",
-        "Posty自动应用本指南的每一个原则。引人注目的钩子、清晰的叙事、具体的价值和促进互动的行动号召 — 不到30秒。每个想法两个版本。你编辑并发布最合适的那个。",
+        "Posty 会把本指南中的原则应用到每一份草稿——有吸引力的开头、清晰的叙事、具体的价值，以及能引发交流的行动号召——并围绕你的业务来写，让每篇帖子都紧扣你真正在做的事。每个想法提供两个版本，由你编辑并发布最合适的那个。",
       ],
       ctaPrimary: "免费试用Posty",
       ctaSecondary: "了解AI生成器",
@@ -1011,7 +1011,7 @@ export const translations = {
     meta: {
       title: "エンゲージメントを獲得するLinkedIn投稿の書き方 — 完全ガイド | Posty",
       description:
-        "高パフォーマンスLinkedIn投稿の背後にある4部構成。フック、ストーリーテリング、価値提供、CTAを学び、AIに実行を任せましょう。",
+        "成果を出す LinkedIn 投稿に共通する 4 部構成：フック、ストーリー、価値、CTA。実行は AI マーケティングアシスタントの Posty にお任せください。",
     },
     badge: "ライティングガイド",
     heroTitle: "人々が",
@@ -1068,7 +1068,7 @@ export const translations = {
         },
         {
           mistake: "具体的にできるのに曖昧なままにする",
-          fix: "「努力は報われる」は何も教えません。「30日間で200通のコールドメールを送りました。12人が返信。3人が合計45,000ユーロの顧客になりました」 — これは記憶に残ります。具体的な数字とリアルな詳細が、モチベーション系のノイズの中であなたの投稿を際立たせます。",
+          fix: "「努力は報われる」では何も伝わりません。「30 日間で 20 人の顧客にインタビューした。毎回同じ 3 つの課題が出てきて、そのうち 1 つが私たちの提案の伝え方を変えた」——こちらは記憶に残ります。具体的なディテールが、励ましの言葉があふれる中であなたの投稿を際立たせます。",
         },
         {
           mistake: "自分や自社のことだけを投稿する",
@@ -1084,7 +1084,7 @@ export const translations = {
       title: "公式は分かった。あとはAIに実行させよう。",
       paragraphs: [
         "投稿の構造を理解することと、それを一貫して実行すること — 週3〜5回 — は別物です。1つの優れた投稿を手動で書くには、ブレインストーミング、下書き、編集、迷いに30〜60分かかります。",
-        "Postyはこのガイドのすべての原則を自動的に適用します。説得力のあるフック、明確なストーリー、具体的な価値、エンゲージメントを促すCTA — 30秒以内で。各アイデアに2つのバージョン。あなたは編集して、響くものを公開するだけです。",
+        "Posty はこのガイドの原則を、すべての下書きに適用します。引きのあるフック、明快なストーリー、具体的な価値、対話を促す CTA を、あなたのビジネスに合わせて書くので、各投稿があなたの実際の活動に根ざしたものになります。アイデアごとに 2 パターン。あなたが編集し、納得したものを公開できます。",
       ],
       ctaPrimary: "Postyを無料で試す",
       ctaSecondary: "AIジェネレーターについて",
@@ -1137,7 +1137,7 @@ export const translations = {
     meta: {
       title: "참여를 이끌어내는 LinkedIn 게시물 작성법 — 완벽 가이드 | Posty",
       description:
-        "모든 고성과 LinkedIn 게시물 뒤에 있는 4단계 구조. 후크, 스토리텔링, 가치 전달, CTA를 배우고 AI가 실행을 맡기세요.",
+        "성과를 내는 링크드인 게시물의 4단계 구조: 훅, 스토리, 가치, CTA. 실행은 AI 마케팅 어시스턴트 Posty에 맡기세요.",
     },
     badge: "작성 가이드",
     heroTitle: "사람들이 ",
@@ -1194,7 +1194,7 @@ export const translations = {
         },
         {
           mistake: "구체적일 수 있는데 모호하게 남기기",
-          fix: "'열심히 하면 성과가 나온다'는 아무것도 가르치지 않습니다. '30일 동안 200개의 콜드 이메일을 보냈습니다. 12명이 답장했습니다. 3명이 총 45,000유로 가치의 고객이 되었습니다' — 이것이 기억에 남습니다. 구체적인 숫자와 실제 디테일이 동기부여 노이즈의 바다에서 당신의 게시물을 돋보이게 합니다.",
+          fix: "‘노력은 보상받는다’는 말은 아무것도 알려 주지 않습니다. ‘30일 동안 고객 20명을 인터뷰했다. 매번 같은 세 가지 문제가 나왔고, 그중 하나가 우리가 상품을 설명하는 방식을 바꿨다’ — 이런 표현이 기억에 남습니다. 구체적인 디테일이 동기부여성 문구가 넘치는 피드에서 내 게시물을 돋보이게 합니다.",
         },
         {
           mistake: "자신이나 회사에 대해서만 게시하기",
@@ -1210,7 +1210,7 @@ export const translations = {
       title: "공식을 알았으니, AI가 실행하게 하세요.",
       paragraphs: [
         "게시물 구조를 이해하는 것은 한 가지입니다. 이를 꾸준히 실행하는 것 — 주 3~5회 — 은 또 다른 문제입니다. 하나의 강력한 게시물을 수동으로 작성하려면 브레인스토밍, 초안 작성, 편집, 고민에 30~60분이 걸립니다.",
-        "Posty는 이 가이드의 모든 원칙을 자동으로 적용합니다. 설득력 있는 후크, 명확한 서사, 구체적인 가치, 참여를 유도하는 CTA — 30초 이내에. 각 아이디어에 두 가지 버전. 편집하고 공감되는 것을 게시하기만 하면 됩니다.",
+        "Posty는 이 가이드의 원칙을 모든 초안에 적용합니다. 시선을 끄는 훅, 명확한 서사, 구체적인 가치, 대화를 이끄는 CTA를 비즈니스에 맞춰 작성하므로, 각 게시물이 실제로 하는 일을 다룹니다. 아이디어마다 두 가지 버전을 제공하며, 마음에 드는 것을 편집해 게시하면 됩니다.",
       ],
       ctaPrimary: "Posty 무료 체험",
       ctaSecondary: "AI 생성기 알아보기",

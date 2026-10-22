@@ -114,20 +114,6 @@ export default function PageContent({ lang: initialLang = "en" }: { lang?: strin
           </div>
         </section>
 
-        {/* Social Proof Stats */}
-        <section className="py-16 sm:py-20 bg-gradient-to-r from-[#F8935D] to-[#F76B54]">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6">
-            <div className="grid sm:grid-cols-3 gap-8 text-center text-white">
-              {t.socialProof.items.map((item, index) => (
-                <div key={index}>
-                  <div className="text-4xl sm:text-5xl font-bold mb-2">{item.stat}</div>
-                  <div className="text-white/80 text-lg">{item.label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* Use Cases */}
         <section className="py-16 sm:py-24 bg-[#FAFBFC]">
           <div className="max-w-5xl mx-auto px-4 sm:px-6">

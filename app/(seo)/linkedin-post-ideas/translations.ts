@@ -1,15 +1,15 @@
 export const translations = {
   en: {
     meta: {
-      title: "50+ LinkedIn Post Ideas by Category — What to Post in 2025 | Posty",
+      title: "50+ LinkedIn Post Ideas by Category — What to Post on LinkedIn | Posty",
       description:
-        "Not sure what to post on LinkedIn? Browse 50+ proven post ideas sorted by category — personal stories, industry takes, career advice, how-tos, and bold opinions.",
+        "Not sure what to post on LinkedIn? Browse 50+ post ideas by category — personal stories, industry takes, career advice, how-tos and bold opinions — and turn them into a content plan for your business.",
     },
-    badge: "Content Inspiration",
+    badge: "LinkedIn Content Ideas",
     heroTitle: "What should I post on",
     heroTitleHighlight: "LinkedIn",
     heroSubtitle:
-      "That question kills more LinkedIn habits than anything else. Here are 50+ ideas — organized by category, ready to use — so you never have to start from zero.",
+      "That question kills more LinkedIn habits than anything else. Here are 50+ ideas, organized by category and ready to use. The best ideas come from your own business — your customers' questions, your lessons, your point of view — so treat each one as a prompt.",
     ctaPrimary: "Generate Ideas with AI",
     ctaSecondary: "Browse Ideas",
     heroAfter: "?",
@@ -123,7 +123,7 @@ export const translations = {
     aiCta: {
       title: "Or skip the brainstorming entirely",
       subtitle:
-        "Tell Posty your role and industry. Get unlimited post ideas with fully written drafts — ready to edit and publish. No staring at a blank screen required.",
+        "Tell Posty about your business and your audience. It suggests post ideas and writes full drafts that fit your offer — ready to edit and publish. No staring at a blank screen required.",
       button: "Try AI idea generation free",
     },
     faq: [
@@ -166,21 +166,21 @@ export const translations = {
     finalCta: {
       title: "Ideas are easy. Execution is everything.",
       subtitle:
-        "You've got the inspiration. Now let Posty turn any idea into a polished, ready-to-publish LinkedIn post — in seconds.",
+        "You've got the inspiration. Now let Posty, your AI marketing agent, turn ideas into ready-to-publish LinkedIn posts that fit your business.",
       button: "Start creating content",
     },
   },
   fr: {
     meta: {
-      title: "50+ Idees de Posts LinkedIn par Categorie — Quoi Publier en 2025 | Posty",
+      title: "50+ idées de posts LinkedIn par catégorie — Quoi publier sur LinkedIn | Posty",
       description:
-        "Vous ne savez pas quoi publier sur LinkedIn ? Plus de 50 idees de posts classees par categorie — histoires, tendances, conseils, guides et prises de position.",
+        "Vous ne savez pas quoi publier sur LinkedIn ? Parcourez plus de 50 idées de posts par catégorie — récits personnels, analyses sectorielles, conseils de carrière, tutoriels et opinions tranchées — et transformez-les en plan de contenu pour votre activité.",
     },
-    badge: "Inspiration contenu",
+    badge: "Idées de contenu LinkedIn",
     heroTitle: "Qu'est-ce que je poste sur",
     heroTitleHighlight: "LinkedIn",
     heroSubtitle:
-      "Cette question tue plus d'habitudes LinkedIn que tout le reste. Voici plus de 50 idees — classees par categorie, pretes a utiliser — pour ne plus jamais repartir de zero.",
+      "Cette question tue plus d'habitudes LinkedIn que n'importe quoi d'autre. Voici plus de 50 idées, classées par catégorie et prêtes à l'emploi. Les meilleures idées viennent de votre propre activité — les questions de vos clients, vos leçons, votre point de vue — alors prenez chacune comme une piste de départ.",
     ctaPrimary: "Generer des idees avec l'IA",
     ctaSecondary: "Parcourir les idees",
     heroAfter: " ?",
@@ -294,7 +294,7 @@ export const translations = {
     aiCta: {
       title: "Ou passez directement le brainstorming",
       subtitle:
-        "Indiquez a Posty votre poste et votre secteur. Obtenez des idees de posts illimitees avec des brouillons complets — prets a modifier et publier. Plus besoin de fixer un ecran vide.",
+        "Parlez de votre activité et de votre audience à Posty. Il propose des idées de posts et rédige des brouillons complets adaptés à votre offre, prêts à modifier et à publier. Plus besoin de fixer une page blanche.",
       button: "Essayer la generation d'idees IA gratuitement",
     },
     faq: [
@@ -337,21 +337,21 @@ export const translations = {
     finalCta: {
       title: "Les idees, c'est facile. L'execution fait la difference.",
       subtitle:
-        "Vous avez l'inspiration. Laissez Posty transformer n'importe quelle idee en post LinkedIn abouti et pret a publier — en quelques secondes.",
+        "Vous avez l'inspiration. Laissez maintenant Posty, votre agent marketing IA, transformer vos idées en posts LinkedIn prêts à publier et adaptés à votre activité.",
       button: "Commencer a creer du contenu",
     },
   },
   es: {
     meta: {
-      title: "50+ Ideas de Posts para LinkedIn por Categoria — Que Publicar en 2025 | Posty",
+      title: "50+ ideas de posts para LinkedIn por categoría — Qué publicar en LinkedIn | Posty",
       description:
-        "No sabes que publicar en LinkedIn? Mas de 50 ideas de posts organizadas por categoria — historias personales, tendencias, consejos, guias y opiniones con caracter.",
+        "¿No sabes qué publicar en LinkedIn? Explora más de 50 ideas de posts por categoría (historias personales, análisis del sector, consejos de carrera, tutoriales y opiniones atrevidas) y conviértelas en un plan de contenido para tu negocio.",
     },
-    badge: "Inspiracion de contenido",
+    badge: "Ideas de contenido para LinkedIn",
     heroTitle: "Que deberia publicar en",
     heroTitleHighlight: "LinkedIn",
     heroSubtitle:
-      "Esa pregunta mata mas habitos en LinkedIn que cualquier otra cosa. Aqui tienes mas de 50 ideas — organizadas por categoria, listas para usar — para que nunca tengas que empezar desde cero.",
+      "Esa pregunta acaba con más hábitos en LinkedIn que cualquier otra cosa. Aquí tienes más de 50 ideas, organizadas por categoría y listas para usar. Las mejores ideas salen de tu propio negocio (las preguntas de tus clientes, tus lecciones, tu punto de vista), así que toma cada una como punto de partida.",
     ctaPrimary: "Generar ideas con IA",
     ctaSecondary: "Explorar ideas",
     heroAfter: "?",
@@ -465,7 +465,7 @@ export const translations = {
     aiCta: {
       title: "O saltate el brainstorming por completo",
       subtitle:
-        "Dile a Posty tu puesto y tu sector. Obtendras ideas de posts ilimitadas con borradores completos — listos para editar y publicar. Sin quedarte mirando una pantalla en blanco.",
+        "Cuéntale a Posty sobre tu negocio y tu audiencia. Sugiere ideas de posts y redacta borradores completos acordes a tu oferta, listos para editar y publicar. Sin quedarte mirando una pantalla en blanco.",
       button: "Probar la generacion de ideas con IA gratis",
     },
     faq: [
@@ -508,21 +508,21 @@ export const translations = {
     finalCta: {
       title: "Las ideas son faciles. La ejecucion lo es todo.",
       subtitle:
-        "Ya tienes la inspiracion. Deja que Posty convierta cualquier idea en un post de LinkedIn pulido y listo para publicar — en segundos.",
+        "Ya tienes la inspiración. Ahora deja que Posty, tu agente de marketing con IA, convierta tus ideas en posts de LinkedIn listos para publicar y acordes a tu negocio.",
       button: "Empezar a crear contenido",
     },
   },
   pt: {
     meta: {
-      title: "50+ Ideias de Posts para LinkedIn por Categoria — O que Publicar em 2025 | Posty",
+      title: "50+ ideias de posts para o LinkedIn por categoria — O que publicar no LinkedIn | Posty",
       description:
-        "Nao sabe o que publicar no LinkedIn? Mais de 50 ideias de posts organizadas por categoria — historias pessoais, tendencias, conselhos, guias e opinioes fortes.",
+        "Não sabe o que publicar no LinkedIn? Explore mais de 50 ideias de posts por categoria (histórias pessoais, análises do setor, conselhos de carreira, tutoriais e opiniões fortes) e transforme-as num plano de conteúdo para o seu negócio.",
     },
-    badge: "Inspiracao de conteudo",
+    badge: "Ideias de conteúdo para o LinkedIn",
     heroTitle: "O que devo publicar no",
     heroTitleHighlight: "LinkedIn",
     heroSubtitle:
-      "Essa pergunta acaba com mais habitos no LinkedIn do que qualquer outra coisa. Aqui estao mais de 50 ideias — organizadas por categoria, prontas para usar — para que voce nunca precise comecar do zero.",
+      "Essa pergunta acaba com mais hábitos no LinkedIn do que qualquer outra coisa. Aqui ficam mais de 50 ideias, organizadas por categoria e prontas a usar. As melhores ideias vêm do seu próprio negócio (as perguntas dos seus clientes, as suas lições, o seu ponto de vista), por isso encare cada uma como um ponto de partida.",
     ctaPrimary: "Gerar ideias com IA",
     ctaSecondary: "Explorar ideias",
     heroAfter: "?",
@@ -636,7 +636,7 @@ export const translations = {
     aiCta: {
       title: "Ou pule o brainstorming por completo",
       subtitle:
-        "Diga ao Posty seu cargo e setor. Receba ideias de posts ilimitadas com rascunhos completos — prontos para editar e publicar. Sem ficar encarando uma tela em branco.",
+        "Conte ao Posty sobre o seu negócio e o seu público. Ele sugere ideias de posts e escreve rascunhos completos adequados à sua oferta, prontos a editar e publicar. Sem ficar a olhar para um ecrã em branco.",
       button: "Experimentar geracao de ideias com IA gratis",
     },
     faq: [
@@ -679,21 +679,21 @@ export const translations = {
     finalCta: {
       title: "Ideias sao faceis. A execucao e tudo.",
       subtitle:
-        "Voce ja tem a inspiracao. Deixe o Posty transformar qualquer ideia em um post de LinkedIn polido e pronto para publicar — em segundos.",
+        "Já tem a inspiração. Agora deixe o Posty, o seu agente de marketing com IA, transformar as ideias em posts do LinkedIn prontos a publicar e adequados ao seu negócio.",
       button: "Comecar a criar conteudo",
     },
   },
   de: {
     meta: {
-      title: "50+ LinkedIn-Post-Ideen nach Kategorie — Was 2025 posten | Posty",
+      title: "50+ LinkedIn-Post-Ideen nach Kategorie – Was auf LinkedIn posten | Posty",
       description:
-        "Nicht sicher, was du auf LinkedIn posten sollst? Ueber 50 bewaeaehrte Post-Ideen nach Kategorie — persoenliche Geschichten, Brancheneinblicke, Karrieretipps, Anleitungen und starke Meinungen.",
+        "Du weißt nicht, was du auf LinkedIn posten sollst? Stöbere durch 50+ Post-Ideen nach Kategorie – persönliche Geschichten, Brancheneinblicke, Karrieretipps, Anleitungen und mutige Meinungen – und mach daraus einen Content-Plan für dein Unternehmen.",
     },
-    badge: "Content-Inspiration",
+    badge: "LinkedIn-Content-Ideen",
     heroTitle: "Was soll ich auf",
     heroTitleHighlight: "LinkedIn",
     heroSubtitle:
-      "Diese Frage toetet mehr LinkedIn-Gewohnheiten als alles andere. Hier sind ueber 50 Ideen — nach Kategorie sortiert, sofort einsetzbar — damit du nie wieder bei null anfangen musst.",
+      "Diese Frage beendet mehr LinkedIn-Gewohnheiten als alles andere. Hier sind 50+ Ideen, nach Kategorie geordnet und sofort einsetzbar. Die besten Ideen kommen aus deinem eigenen Unternehmen – den Fragen deiner Kunden, deinen Erfahrungen, deiner Sichtweise –, sieh jede deshalb als Anstoß.",
     ctaPrimary: "Ideen mit KI generieren",
     ctaSecondary: "Ideen durchsuchen",
     heroAfter: " posten?",
@@ -807,7 +807,7 @@ export const translations = {
     aiCta: {
       title: "Oder ueberspringe das Brainstorming komplett",
       subtitle:
-        "Sag Posty deine Rolle und Branche. Erhalte unbegrenzt Post-Ideen mit fertig geschriebenen Entwuerfen — bereit zum Bearbeiten und Veroeffentlichen. Kein Starren auf einen leeren Bildschirm mehr.",
+        "Erzähle Posty von deinem Unternehmen und deiner Zielgruppe. Es schlägt Post-Ideen vor und schreibt vollständige Entwürfe, die zu deinem Angebot passen – bereit zum Bearbeiten und Veröffentlichen. Kein Anstarren eines leeren Bildschirms.",
       button: "KI-Ideengenerierung kostenlos testen",
     },
     faq: [
@@ -850,21 +850,21 @@ export const translations = {
     finalCta: {
       title: "Ideen sind einfach. Die Umsetzung ist alles.",
       subtitle:
-        "Du hast die Inspiration. Lass Posty jede Idee in einen ausgefeilten, veroeffentlichungsfertigen LinkedIn-Post verwandeln — in Sekunden.",
+        "Die Inspiration hast du. Lass jetzt Posty, deinen KI-Marketing-Agenten, aus Ideen veröffentlichungsreife LinkedIn-Beiträge machen, die zu deinem Unternehmen passen.",
       button: "Jetzt Content erstellen",
     },
   },
   it: {
     meta: {
-      title: "50+ Idee per Post LinkedIn per Categoria — Cosa Pubblicare nel 2025 | Posty",
+      title: "50+ idee di post LinkedIn per categoria — Cosa pubblicare su LinkedIn | Posty",
       description:
-        "Non sai cosa pubblicare su LinkedIn? Oltre 50 idee per post organizzate per categoria — storie personali, trend di settore, consigli di carriera, guide pratiche e opinioni forti.",
+        "Non sai cosa pubblicare su LinkedIn? Sfoglia oltre 50 idee di post per categoria (storie personali, analisi di settore, consigli di carriera, guide pratiche e opinioni forti) e trasformale in un piano di contenuti per la tua attività.",
     },
-    badge: "Ispirazione contenuti",
+    badge: "Idee di contenuto per LinkedIn",
     heroTitle: "Cosa dovrei pubblicare su",
     heroTitleHighlight: "LinkedIn",
     heroSubtitle:
-      "Questa domanda uccide piu abitudini su LinkedIn di qualsiasi altra cosa. Ecco oltre 50 idee — organizzate per categoria, pronte all'uso — per non dover mai piu partire da zero.",
+      "Questa domanda ammazza più abitudini su LinkedIn di qualsiasi altra cosa. Ecco oltre 50 idee, organizzate per categoria e pronte all'uso. Le idee migliori nascono dalla tua attività (le domande dei clienti, le tue lezioni, il tuo punto di vista), quindi considera ognuna uno spunto di partenza.",
     ctaPrimary: "Genera idee con l'IA",
     ctaSecondary: "Esplora le idee",
     heroAfter: "?",
@@ -978,7 +978,7 @@ export const translations = {
     aiCta: {
       title: "Oppure salta completamente il brainstorming",
       subtitle:
-        "Indica a Posty il tuo ruolo e il tuo settore. Ottieni idee per post illimitate con bozze complete — pronte da modificare e pubblicare. Niente piu schermo bianco da fissare.",
+        "Racconta a Posty la tua attività e il tuo pubblico. Suggerisce idee di post e scrive bozze complete in linea con la tua offerta, pronte da modificare e pubblicare. Niente più schermo bianco da fissare.",
       button: "Prova la generazione di idee IA gratis",
     },
     faq: [
@@ -1021,21 +1021,21 @@ export const translations = {
     finalCta: {
       title: "Le idee sono facili. L'esecuzione e tutto.",
       subtitle:
-        "Hai gia l'ispirazione. Lascia che Posty trasformi qualsiasi idea in un post LinkedIn curato e pronto per la pubblicazione — in pochi secondi.",
+        "L'ispirazione ce l'hai. Ora lascia che Posty, il tuo agente di marketing con IA, trasformi le idee in post LinkedIn pronti da pubblicare e adatti alla tua attività.",
       button: "Inizia a creare contenuti",
     },
   },
   nl: {
     meta: {
-      title: "50+ LinkedIn-Post-Ideeen per Categorie — Wat Plaatsen in 2025 | Posty",
+      title: "50+ LinkedIn-postideeën per categorie — Wat post je op LinkedIn | Posty",
       description:
-        "Niet zeker wat je op LinkedIn moet posten? Meer dan 50 bewezen post-ideeen gesorteerd per categorie — persoonlijke verhalen, branche-inzichten, carrieretips, handleidingen en uitgesproken meningen.",
+        "Weet je niet wat je op LinkedIn moet posten? Bekijk 50+ postideeën per categorie — persoonlijke verhalen, brancheinzichten, loopbaanadvies, how-to's en gedurfde meningen — en maak er een contentplan voor je bedrijf van.",
     },
-    badge: "Content-inspiratie",
+    badge: "LinkedIn-contentideeën",
     heroTitle: "Wat moet ik plaatsen op",
     heroTitleHighlight: "LinkedIn",
     heroSubtitle:
-      "Die vraag doodt meer LinkedIn-gewoontes dan wat dan ook. Hier zijn meer dan 50 ideeen — geordend per categorie, klaar voor gebruik — zodat je nooit meer vanaf nul hoeft te beginnen.",
+      "Die vraag maakt meer LinkedIn-gewoontes kapot dan wat dan ook. Hier staan 50+ ideeën, geordend per categorie en direct bruikbaar. De beste ideeën komen uit je eigen bedrijf — de vragen van je klanten, je lessen, je visie — dus zie elk idee als een startpunt.",
     ctaPrimary: "Ideeen genereren met AI",
     ctaSecondary: "Ideeen bekijken",
     heroAfter: "?",
@@ -1149,7 +1149,7 @@ export const translations = {
     aiCta: {
       title: "Of sla het brainstormen helemaal over",
       subtitle:
-        "Vertel Posty je rol en branche. Krijg onbeperkt post-ideeen met volledig uitgeschreven concepten — klaar om te bewerken en te publiceren. Geen leeg scherm meer.",
+        "Vertel Posty over je bedrijf en je doelgroep. Het stelt postideeën voor en schrijft complete concepten die bij je aanbod passen, klaar om te bewerken en te publiceren. Geen leeg scherm meer.",
       button: "Probeer AI-ideegeneratie gratis",
     },
     faq: [
@@ -1192,21 +1192,21 @@ export const translations = {
     finalCta: {
       title: "Ideeen zijn makkelijk. Uitvoering is alles.",
       subtitle:
-        "Je hebt de inspiratie. Laat Posty elk idee omzetten in een gepolijste, publicatieklare LinkedIn-post — in seconden.",
+        "Inspiratie heb je. Laat Posty, je AI-marketingagent, je ideeën nu omzetten in LinkedIn-posts die klaar zijn om te publiceren en bij je bedrijf passen.",
       button: "Begin met content maken",
     },
   },
   zh: {
     meta: {
-      title: "50+ LinkedIn\u5E16\u5B50\u521B\u610F\u6309\u7C7B\u522B\u5206\u7EC4 \u2014 2025\u5E74\u53D1\u4EC0\u4E48\u5185\u5BB9 | Posty",
+      title: "50+ 个 LinkedIn 帖子灵感（按类别）——LinkedIn 上该发什么 | Posty",
       description:
-        "\u4E0D\u786E\u5B9A\u5728LinkedIn\u4E0A\u53D1\u4EC0\u4E48\uFF1F\u8D85\u8FC750\u4E2A\u7ECF\u8FC7\u9A8C\u8BC1\u7684\u5E16\u5B50\u521B\u610F\u6309\u7C7B\u522B\u5206\u7EC4 \u2014 \u4E2A\u4EBA\u6545\u4E8B\u3001\u884C\u4E1A\u89C1\u89E3\u3001\u804C\u4E1A\u5EFA\u8BAE\u3001\u5B9E\u64CD\u6307\u5357\u548C\u72EC\u7279\u89C2\u70B9\u3002",
+        "不知道在 LinkedIn 上发什么？按类别浏览 50 多个帖子灵感——个人故事、行业观点、职业建议、实用教程和大胆观点——再把它们变成适合你业务的内容计划。",
     },
-    badge: "\u5185\u5BB9\u7075\u611F",
+    badge: "LinkedIn 内容灵感",
     heroTitle: "\u6211\u5E94\u8BE5\u5728",
     heroTitleHighlight: "LinkedIn",
     heroSubtitle:
-      "\u8FD9\u4E2A\u95EE\u9898\u6BD4\u4EFB\u4F55\u4E8B\u60C5\u90FD\u66F4\u80FD\u6740\u6B7BLinkedIn\u53D1\u5E03\u4E60\u60EF\u3002\u8FD9\u91CC\u6709\u8D85\u8FC750\u4E2A\u521B\u610F \u2014 \u6309\u7C7B\u522B\u7EC4\u7EC7\uFF0C\u968F\u65F6\u53EF\u7528 \u2014 \u8BA9\u4F60\u518D\u4E5F\u4E0D\u7528\u4ECE\u96F6\u5F00\u59CB\u3002",
+      "这个问题扼杀的 LinkedIn 发帖习惯比任何事情都多。这里有 50 多个按类别整理、可直接使用的灵感。最好的灵感来自你自己的业务——客户的提问、你的心得、你的观点——所以请把每一条当作起点。",
     ctaPrimary: "\u7528AI\u751F\u6210\u521B\u610F",
     ctaSecondary: "\u6D4F\u89C8\u521B\u610F",
     heroAfter: "\u4E0A\u53D1\u4EC0\u4E48\uFF1F",
@@ -1320,7 +1320,7 @@ export const translations = {
     aiCta: {
       title: "\u6216\u8005\u76F4\u63A5\u8DF3\u8FC7\u5934\u8111\u98CE\u66B4",
       subtitle:
-        "\u544A\u8BC9Posty\u4F60\u7684\u804C\u4F4D\u548C\u884C\u4E1A\u3002\u83B7\u53D6\u65E0\u9650\u7684\u5E16\u5B50\u521B\u610F\u548C\u5B8C\u6574\u7684\u8349\u7A3F \u2014 \u51C6\u5907\u597D\u7F16\u8F91\u548C\u53D1\u5E03\u3002\u4E0D\u518D\u76EF\u7740\u7A7A\u767D\u5C4F\u5E55\u53D1\u5446\u3002",
+        "告诉 Posty 你的业务和受众。它会推荐帖子灵感，并撰写贴合你产品或服务的完整草稿，随时可编辑和发布。再也不用对着空白屏幕发呆。",
       button: "\u514D\u8D39\u8BD5\u7528AI\u521B\u610F\u751F\u6210",
     },
     faq: [
@@ -1363,21 +1363,21 @@ export const translations = {
     finalCta: {
       title: "\u521B\u610F\u5F88\u5BB9\u6613\u3002\u6267\u884C\u624D\u662F\u4E00\u5207\u3002",
       subtitle:
-        "\u4F60\u5DF2\u7ECF\u6709\u4E86\u7075\u611F\u3002\u8BA9Posty\u628A\u4EFB\u4F55\u521B\u610F\u53D8\u6210\u7CBE\u5FC3\u6253\u78E8\u3001\u968F\u65F6\u53EF\u53D1\u5E03\u7684LinkedIn\u5E16\u5B50 \u2014 \u53EA\u9700\u51E0\u79D2\u3002",
+        "灵感已经有了。现在让你的 AI 营销助手 Posty，把这些想法变成贴合你业务、可直接发布的 LinkedIn 帖子。",
       button: "\u5F00\u59CB\u521B\u4F5C\u5185\u5BB9",
     },
   },
   ja: {
     meta: {
-      title: "50\u4EE5\u4E0A\u306ELinkedIn\u6295\u7A3F\u30A2\u30A4\u30C7\u30A2\u3092\u30AB\u30C6\u30B4\u30EA\u30FC\u5225\u306B\u7D39\u4ECB \u2014 2025\u5E74\u306B\u4F55\u3092\u6295\u7A3F\u3059\u308B\u304B | Posty",
+      title: "LinkedIn 投稿アイデア 50 選（カテゴリ別）——何を投稿するか | Posty",
       description:
-        "LinkedIn\u3067\u4F55\u3092\u6295\u7A3F\u3059\u308C\u3070\u3044\u3044\u304B\u5206\u304B\u3089\u306A\u3044\uFF1F50\u4EE5\u4E0A\u306E\u5B9F\u8A3C\u6E08\u307F\u6295\u7A3F\u30A2\u30A4\u30C7\u30A2\u3092\u30AB\u30C6\u30B4\u30EA\u30FC\u5225\u306B\u7D39\u4ECB \u2014 \u500B\u4EBA\u7684\u306A\u30B9\u30C8\u30FC\u30EA\u30FC\u3001\u696D\u754C\u306E\u6D1E\u5BDF\u3001\u30AD\u30E3\u30EA\u30A2\u30A2\u30C9\u30D0\u30A4\u30B9\u3001\u5B9F\u8DF5\u30AC\u30A4\u30C9\u3001\u5927\u80C6\u306A\u610F\u898B\u3002",
+        "LinkedIn に何を投稿すればいいか迷っていませんか？個人的な体験談、業界の視点、キャリアのヒント、ハウツー、大胆な意見など、50 以上のアイデアをカテゴリ別に紹介。ビジネスに合ったコンテンツ計画に落とし込めます。",
     },
-    badge: "\u30B3\u30F3\u30C6\u30F3\u30C4\u306E\u30A4\u30F3\u30B9\u30D4\u30EC\u30FC\u30B7\u30E7\u30F3",
+    badge: "LinkedIn コンテンツのアイデア",
     heroTitle: "\u4F55\u3092\u6295\u7A3F\u3059\u308C\u3070\u3044\u3044\uFF1F",
     heroTitleHighlight: "LinkedIn",
     heroSubtitle:
-      "\u3053\u306E\u554F\u3044\u304C\u3001\u4ED6\u306E\u4F55\u3088\u308A\u3082LinkedIn\u306E\u6295\u7A3F\u7FD2\u6163\u3092\u6BBA\u3057\u3066\u3044\u307E\u3059\u300250\u4EE5\u4E0A\u306E\u30A2\u30A4\u30C7\u30A2 \u2014 \u30AB\u30C6\u30B4\u30EA\u30FC\u5225\u306B\u6574\u7406\u3001\u3059\u3050\u306B\u4F7F\u3048\u308B \u2014 \u3082\u3046\u30BC\u30ED\u304B\u3089\u59CB\u3081\u308B\u5FC5\u8981\u306F\u3042\u308A\u307E\u305B\u3093\u3002",
+      "この疑問が、LinkedIn 投稿が続かない最大の原因です。カテゴリ別に整理した 50 以上のアイデアをすぐに使えます。最良のアイデアはあなた自身のビジネスから生まれます——顧客の質問、得た教訓、あなたの視点。ひとつひとつを出発点として使ってください。",
     ctaPrimary: "AI\u3067\u30A2\u30A4\u30C7\u30A2\u3092\u751F\u6210",
     ctaSecondary: "\u30A2\u30A4\u30C7\u30A2\u3092\u898B\u308B",
     heroAfter: "",
@@ -1491,7 +1491,7 @@ export const translations = {
     aiCta: {
       title: "\u307E\u305F\u306F\u30D6\u30EC\u30A4\u30F3\u30B9\u30C8\u30FC\u30DF\u30F3\u30B0\u3092\u30B9\u30AD\u30C3\u30D7",
       subtitle:
-        "Posty\u306B\u3042\u306A\u305F\u306E\u5F79\u8077\u3068\u696D\u754C\u3092\u4F1D\u3048\u3066\u304F\u3060\u3055\u3044\u3002\u7121\u5236\u9650\u306E\u6295\u7A3F\u30A2\u30A4\u30C7\u30A2\u3068\u5B8C\u6210\u3055\u308C\u305F\u4E0B\u66F8\u304D \u2014 \u7DE8\u96C6\u3057\u3066\u3059\u3050\u516C\u958B\u3067\u304D\u307E\u3059\u3002\u7A7A\u767D\u306E\u753B\u9762\u3092\u898B\u3064\u3081\u308B\u5FC5\u8981\u306F\u3082\u3046\u3042\u308A\u307E\u305B\u3093\u3002",
+        "あなたのビジネスとオーディエンスを Posty に伝えてください。提供内容に合った投稿アイデアを提案し、編集してすぐ公開できる完成度の下書きまで作成します。白い画面を前に悩む必要はありません。",
       button: "AI\u30A2\u30A4\u30C7\u30A2\u751F\u6210\u3092\u7121\u6599\u3067\u8A66\u3059",
     },
     faq: [
@@ -1534,21 +1534,21 @@ export const translations = {
     finalCta: {
       title: "\u30A2\u30A4\u30C7\u30A2\u306F\u7C21\u5358\u3002\u5B9F\u884C\u304C\u3059\u3079\u3066\u3002",
       subtitle:
-        "\u30A4\u30F3\u30B9\u30D4\u30EC\u30FC\u30B7\u30E7\u30F3\u306F\u3082\u3046\u3042\u308A\u307E\u3059\u3002Posty\u304C\u3069\u3093\u306A\u30A2\u30A4\u30C7\u30A2\u3082\u6D17\u7DF4\u3055\u308C\u305F\u3001\u3059\u3050\u306B\u516C\u958B\u3067\u304D\u308BLinkedIn\u6295\u7A3F\u306B\u5909\u3048\u307E\u3059 \u2014 \u6570\u79D2\u3067\u3002",
+        "インスピレーションは手に入りました。次は AI マーケティングエージェントの Posty が、アイデアをビジネスに合った公開可能な LinkedIn 投稿に変えます。",
       button: "\u30B3\u30F3\u30C6\u30F3\u30C4\u4F5C\u6210\u3092\u59CB\u3081\u308B",
     },
   },
   ko: {
     meta: {
-      title: "50\uAC1C \uC774\uC0C1\uC758 LinkedIn \uAC8C\uC2DC\uBB3C \uC544\uC774\uB514\uC5B4 \uCE74\uD14C\uACE0\uB9AC\uBCC4 \u2014 2025\uB144 \uBB34\uC5C7\uC744 \uD3EC\uC2A4\uD305\uD560\uAE4C | Posty",
+      title: "링크드인 게시물 아이디어 50+ (카테고리별) — 링크드인에 무엇을 올릴까 | Posty",
       description:
-        "LinkedIn\uC5D0 \uBB34\uC5C7\uC744 \uD3EC\uC2A4\uD305\uD574\uC57C \uD560\uC9C0 \uBAA8\uB974\uACA0\uB098\uC694? 50\uAC1C \uC774\uC0C1\uC758 \uAC80\uC99D\uB41C \uAC8C\uC2DC\uBB3C \uC544\uC774\uB514\uC5B4\uB97C \uCE74\uD14C\uACE0\uB9AC\uBCC4\uB85C \uC815\uB9AC \u2014 \uAC1C\uC778 \uC774\uC57C\uAE30, \uC5C5\uACC4 \uC778\uC0AC\uC774\uD2B8, \uCEE4\uB9AC\uC5B4 \uC870\uC5B8, \uC2E4\uC6A9 \uAC00\uC774\uB4DC, \uB300\uB2F4\uD55C \uC758\uACAC.",
+        "링크드인에 무엇을 올려야 할지 막막하신가요? 개인 스토리, 업계 인사이트, 커리어 조언, 하우투, 과감한 의견 등 50개 이상의 아이디어를 카테고리별로 살펴보고, 비즈니스에 맞는 콘텐츠 계획으로 발전시켜 보세요.",
     },
-    badge: "\uCF58\uD150\uCE20 \uC601\uAC10",
+    badge: "링크드인 콘텐츠 아이디어",
     heroTitle: "\uBB34\uC5C7\uC744 \uD3EC\uC2A4\uD305\uD574\uC57C \uD560\uAE4C?",
     heroTitleHighlight: "LinkedIn",
     heroSubtitle:
-      "\uC774 \uC9C8\uBB38\uC774 \uADF8 \uC5B4\uB5A4 \uAC83\uBCF4\uB2E4 \uB9CE\uC740 LinkedIn \uD3EC\uC2A4\uD305 \uC2B5\uAD00\uC744 \uC8FD\uC785\uB2C8\uB2E4. \uC5EC\uAE30 50\uAC1C \uC774\uC0C1\uC758 \uC544\uC774\uB514\uC5B4\uAC00 \uC788\uC2B5\uB2C8\uB2E4 \u2014 \uCE74\uD14C\uACE0\uB9AC\uBCC4\uB85C \uC815\uB9AC\uB418\uC5B4 \uC788\uACE0, \uBC14\uB85C \uC0AC\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4 \u2014 \uB2E4\uC2DC\uB294 \uC81C\uB85C\uBD80\uD130 \uC2DC\uC791\uD560 \uD544\uC694\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.",
+      "이 질문이 링크드인 습관을 무너뜨리는 가장 큰 이유입니다. 카테고리별로 정리된 50개 이상의 아이디어를 바로 활용하세요. 가장 좋은 아이디어는 내 비즈니스에서 나옵니다. 고객의 질문, 내가 얻은 교훈, 나만의 관점. 각 아이디어를 출발점으로 삼아 보세요.",
     ctaPrimary: "AI\uB85C \uC544\uC774\uB514\uC5B4 \uC0DD\uC131",
     ctaSecondary: "\uC544\uC774\uB514\uC5B4 \uB458\uB7EC\uBCF4\uAE30",
     heroAfter: "",
@@ -1662,7 +1662,7 @@ export const translations = {
     aiCta: {
       title: "\uB610\uB294 \uBE0C\uB808\uC778\uC2A4\uD1A0\uBC0D\uC744 \uC644\uC804\uD788 \uAC74\uB108\uB6F0\uC138\uC694",
       subtitle:
-        "Posty\uC5D0\uAC8C \uC5ED\uD560\uACFC \uC5C5\uACC4\uB97C \uC54C\uB824\uC8FC\uC138\uC694. \uBB34\uC81C\uD55C \uAC8C\uC2DC\uBB3C \uC544\uC774\uB514\uC5B4\uC640 \uC644\uC131\uB41C \uCD08\uC548 \u2014 \uD3B8\uC9D1\uD558\uACE0 \uBC14\uB85C \uBC1C\uD589\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4. \uBE48 \uD654\uBA74\uC744 \uCB3D\uC544\uBCF4\uB294 \uAC74 \uC774\uC81C \uB05D\uC785\uB2C8\uB2E4.",
+        "Posty에 비즈니스와 오디언스를 알려 주세요. 제공하는 상품에 맞는 게시물 아이디어를 제안하고, 바로 편집·게시할 수 있는 완성형 초안까지 작성해 드립니다. 빈 화면 앞에서 고민할 필요가 없습니다.",
       button: "AI \uC544\uC774\uB514\uC5B4 \uC0DD\uC131 \uBB34\uB8CC \uCCB4\uD5D8",
     },
     faq: [
@@ -1705,7 +1705,7 @@ export const translations = {
     finalCta: {
       title: "\uC544\uC774\uB514\uC5B4\uB294 \uC27D\uB2E4. \uC2E4\uD589\uC774 \uC804\uBD80\uB2E4.",
       subtitle:
-        "\uC601\uAC10\uC740 \uC774\uBBF8 \uC788\uC2B5\uB2C8\uB2E4. Posty\uAC00 \uC5B4\uB5A4 \uC544\uC774\uB514\uC5B4\uB4E0 \uC138\uB828\uB418\uACE0 \uBC14\uB85C \uBC1C\uD589\uD560 \uC218 \uC788\uB294 LinkedIn \uAC8C\uC2DC\uBB3C\uB85C \uBC14\uAFD4\uB4DC\uB9BD\uB2C8\uB2E4 \u2014 \uBA87 \uCD08 \uB9CC\uC5D0.",
+        "영감은 충분합니다. 이제 AI 마케팅 에이전트 Posty가 아이디어를 비즈니스에 맞는 게시 가능한 링크드인 게시물로 바꿔 드립니다.",
       button: "\uCF58\uD150\uCE20 \uB9CC\uB4E4\uAE30 \uC2DC\uC791",
     },
   },

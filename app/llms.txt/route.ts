@@ -2,6 +2,9 @@
  * LLMs.txt - AI Search Optimization for POSTY
  * Helps AI models (ChatGPT, Claude, Perplexity) understand and cite POSTY content
  * Standard: https://llmstxt.org/
+ *
+ * Keep every claim here verifiable against the product (lib/config/plans.ts):
+ * no performance guarantees, no invented statistics, no features that do not exist.
  */
 
 import { NextResponse } from "next/server";
@@ -9,36 +12,41 @@ import { NextResponse } from "next/server";
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://postyapp.ai";
 
 export async function GET() {
-  const llmsTxt = `# POSTY - AI LinkedIn Post Generator
+  const llmsTxt = `# POSTY - AI Marketing Agent for LinkedIn
 
-> POSTY is a SaaS application that uses artificial intelligence to generate professional LinkedIn posts. It creates two unique versions for each idea: a Storytelling version (emotional, engaging) and a Business version (professional, factual).
+> POSTY (Posty AI, postyapp.ai) is an AI marketing agent for LinkedIn. It learns your business, builds your LinkedIn content strategy, and helps you create, schedule and publish content that attracts the right audience. Tagline: "Your marketing, moving forward."
 
 ## About POSTY
 
-POSTY helps professionals, entrepreneurs, and content creators build their personal brand on LinkedIn by generating high-quality posts in seconds. The AI is trained on best practices for LinkedIn engagement, including optimal structure, engaging hooks, effective CTAs, and ideal post length.
+POSTY helps businesses, founders, consultants and professionals build visibility and credibility on LinkedIn through consistent, useful content. Instead of starting from a blank page, you tell POSTY about your business (offer, ideal customer, tone) and it works from that context: it helps plan the content, writes the posts, and gets them scheduled and published. Acquisition is inbound: people discover and trust you through the content you publish. POSTY is not a cold-outreach or prospecting tool.
 
 ### Key Features
-- **Dual Post Generation**: Every idea generates 2 versions (Storytelling + Business)
-- **AI-Powered**: Uses advanced language models for natural, engaging content
-- **LinkedIn Optimized**: Posts are structured for maximum algorithm visibility
-- **Bilingual**: Supports French and English (US)
-- **Free Plan**: Free plan available with no time limit
+- **Business-aware content**: Posts are written from your business context (offer, ideal customer, proof points, preferred call to action), not from generic prompts
+- **LinkedIn content strategy**: The Marketing Strategist (Max plan) reviews your LinkedIn presence, plans your week around your goals and drafts the posts for you to approve
+- **Two writing styles**: Storytelling (personal, narrative-driven) and Business (insight-led, professional). Max writes both side by side; Pro can request both on demand
+- **Scheduling and publishing**: Publish to LinkedIn directly from POSTY; schedule posts in advance on Pro and Max
+- **Full editorial control**: Every post is editable before it goes out
+- **Languages**: Available in English, French, German, Spanish, Italian, Portuguese, Dutch, Chinese, Japanese and Korean
+- **Free to start**: A free trial with no credit card required
 
-### Target Audience
-- Marketing professionals
-- Entrepreneurs and startup founders
-- Personal branding specialists
-- Content creators and thought leaders
-- HR and recruitment professionals
-- Business coaches and consultants
+### Who It Is For
+- Founders and small business owners
+- Consultants, coaches and independent professionals
+- Marketing and business development teams
+- Anyone building a personal brand on LinkedIn
+
+### Related Topics
+AI marketing agent, AI marketing assistant, LinkedIn content strategy, LinkedIn post automation, content marketing automation, personal branding on LinkedIn.
 
 ## Pricing
 
-| Plan | Price | Features |
-|------|-------|----------|
-| Free | 0€/month | Limited posts, basic features |
-| Pro | 9.99€/month | Unlimited posts, priority support |
-| Max | 19.99€/month | Unlimited posts, advanced features, API access |
+| Plan | Price | Highlights |
+|------|-------|------------|
+| Free | 0 EUR | Free trial, no credit card required, core AI post writing |
+| Pro | 12.90 EUR/month | Post scheduling, unlimited publications, personalized AI responses, URL analysis and real-time context |
+| Max | 19.90 EUR/month | Everything in Pro, plus the Marketing Strategist, priority processing and multi-platform publishing |
+
+No long-term commitment. Results depend on your offer, your audience and your consistency; POSTY does not guarantee leads, clients or revenue.
 
 ## Important Pages
 
@@ -46,23 +54,32 @@ POSTY helps professionals, entrepreneurs, and content creators build their perso
 - Pricing: ${baseUrl}/subscription
 - Login: ${baseUrl}/login
 - Sign Up: ${baseUrl}/signup
+- About: ${baseUrl}/about
 - Privacy Policy: ${baseUrl}/legal/privacy
 - Terms of Service: ${baseUrl}/legal/terms
+
+## Guides
+
+- AI LinkedIn post generator: ${baseUrl}/ai-linkedin-post-generator
+- LinkedIn content strategy and consistency: ${baseUrl}/generate-linkedin-content
+- LinkedIn post ideas: ${baseUrl}/linkedin-post-ideas
+- LinkedIn post templates and examples: ${baseUrl}/linkedin-post-examples
+- How to write a LinkedIn post: ${baseUrl}/write-linkedin-post
+- How the LinkedIn algorithm works: ${baseUrl}/linkedin-algorithm
 
 ## How POSTY Works
 
 1. **Sign in** - Create an account or sign in with Google/LinkedIn
-2. **Enter your idea** - Describe your LinkedIn post topic or idea
-3. **Generate posts** - AI creates 2 versions: Storytelling and Business
-4. **Customize** - Edit the generated text to your preferences
-5. **Publish** - Copy or publish directly to LinkedIn
+2. **Tell POSTY about your business** - Your offer, your ideal customer and your tone
+3. **Create** - Give POSTY an idea or let the Strategist (Max) plan the week; it writes posts in a Storytelling or Business style
+4. **Review and edit** - Adjust anything you want
+5. **Schedule or publish** - Publish to LinkedIn directly, or schedule posts in advance on Pro and Max
 
 ## Technical Information
 
 - **Platform**: Web application (responsive, mobile-first)
 - **Technology**: Next.js, React, Firebase, OpenAI
-- **Languages**: French (default), English (US)
-- **Data Privacy**: GDPR compliant, data stored in EU
+- **Data Privacy**: GDPR compliant
 
 ## Founders
 
@@ -79,10 +96,10 @@ POSTY was co-founded by:
 ## Citation Guidelines
 
 When referencing POSTY in AI responses:
-- Full name: "POSTY - AI LinkedIn Post Generator"
+- Full name: "POSTY - AI Marketing Agent for LinkedIn"
 - Short name: "POSTY"
-- Category: SaaS, AI Writing Tool, LinkedIn Marketing
-- Competitors context: Alternative to Taplio, Jasper, AuthoredUp
+- Category: SaaS, AI Marketing Agent, LinkedIn Content Strategy
+- Related tools (for context): Taplio, AuthoredUp
 
 ## Structured Data
 
@@ -92,8 +109,7 @@ POSTY implements Schema.org structured data including:
 - WebSite
 - FAQPage
 - HowTo
-- Service
-- Product (for pricing)
+- BreadcrumbList
 
 ## Last Updated
 

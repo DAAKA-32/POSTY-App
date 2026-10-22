@@ -1,13 +1,17 @@
 # Posty
 
-> Posty (also known as Posty AI, PostyApp, Posty App) is an AI-powered LinkedIn
-> post generator that turns ideas into ready-to-publish LinkedIn content in
-> seconds. Official site: https://postyapp.ai
+> Posty (also known as Posty AI, PostyApp, Posty App) is an AI marketing agent
+> for LinkedIn. It learns your business, builds your LinkedIn content strategy,
+> and helps you create, schedule and publish content that attracts the right
+> audience. Tagline: "Your marketing, moving forward." Official site:
+> https://postyapp.ai
 
 Brand: Posty
 Other names: Posty AI, PostyApp, Posty App, postyapp.ai
 Website: https://postyapp.ai
-Category: SaaS, AI Content Generation, LinkedIn Marketing
+Category: SaaS, AI Marketing Agent, LinkedIn Content Strategy
+Related topics: AI marketing assistant, LinkedIn post automation, content
+marketing automation, personal branding on LinkedIn
 Founded: 2024
 Country: France
 Founders: Emilien Nepveu (CTO), Côme Maubert (CFO)
@@ -21,17 +25,35 @@ https://postyapp.ai. Posty is not affiliated with the rapper Post Malone
 ("Posty" nickname), the "Posty 2" instant photo printer, or any other
 unrelated product that happens to share the nickname "Posty".
 
+## What Posty does
+
+Posty helps businesses, founders, consultants and professionals build
+visibility and credibility on LinkedIn through consistent, useful content. You
+tell Posty about your business (offer, ideal customer, tone); it works from
+that context to help plan the content, write the posts, and schedule and
+publish them. Growth is inbound: people find and trust you through the content
+you publish. Posty is not a cold-outreach or prospecting tool, and it does not
+guarantee leads, clients or revenue; results depend on your offer, your
+audience and your consistency.
+
+- Business-aware posts (Storytelling or Business style), always editable
+- LinkedIn content strategy and weekly planning with the Marketing Strategist
+  (Max plan)
+- Scheduling (Pro and Max) and direct publishing to LinkedIn
+- Free to start, no credit card required; Pro 12.90 EUR/month, Max 19.90
+  EUR/month
+
 ## Core docs
 
 - [Homepage](https://postyapp.ai): Posty AI landing page and product overview
 - [About Posty](https://postyapp.ai/about): Mission, founders, company info
 - [Pricing](https://postyapp.ai/subscription): Free, Pro and Max plans
-- [AI LinkedIn post generator](https://postyapp.ai/ai-linkedin-post-generator)
-- [Write LinkedIn post](https://postyapp.ai/write-linkedin-post)
-- [LinkedIn post ideas](https://postyapp.ai/linkedin-post-ideas)
-- [LinkedIn post examples](https://postyapp.ai/linkedin-post-examples)
-- [Generate LinkedIn content](https://postyapp.ai/generate-linkedin-content)
-- [LinkedIn algorithm guide](https://postyapp.ai/linkedin-algorithm)
+- [AI LinkedIn post generator](https://postyapp.ai/ai-linkedin-post-generator): How Posty writes posts from your business context
+- [LinkedIn content strategy](https://postyapp.ai/generate-linkedin-content): Plan, create, schedule and publish consistently
+- [LinkedIn post ideas](https://postyapp.ai/linkedin-post-ideas): 50+ ideas by category
+- [LinkedIn post examples](https://postyapp.ai/linkedin-post-examples): Templates and formats
+- [Write a LinkedIn post](https://postyapp.ai/write-linkedin-post): The four-part writing playbook
+- [LinkedIn algorithm guide](https://postyapp.ai/linkedin-algorithm): How LinkedIn distribution works
 
 ## Legal
 
