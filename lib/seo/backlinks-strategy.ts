@@ -28,7 +28,7 @@ export const backlinkCategories = {
       {
         type: "Comparison Articles",
         examples: [
-          "Best LinkedIn Post Generators 2024",
+          "Best LinkedIn Post Generators",
           "AI Writing Tools Comparison",
           "Taplio vs Alternatives",
         ],
@@ -230,12 +230,12 @@ Cordialement,
 
 J'ai lu votre excellent article "{ArticleTitle}" et je pense qu'il pourrait bénéficier d'une mention de POSTY dans la section {Section}.
 
-POSTY est un générateur de posts LinkedIn par IA qui crée 2 versions (Storytelling & Business) en quelques secondes. Il pourrait être utile à vos lecteurs car {Reason}.
+POSTY est un agent marketing IA pour LinkedIn : il apprend l'activité de l'utilisateur, l'aide à construire sa stratégie de contenu et à rédiger, planifier et publier ses posts. Il pourrait être utile à vos lecteurs car {Reason}.
 
 Voici quelques infos :
 - Site : postyapp.ai
-- Prix : Gratuit (3 posts/semaine) ou Pro 9,99€/mois
-- Différence : Double version unique (narratif + factuel)
+- Prix : démarrage gratuit, puis Pro 12,90€/mois ou Max 19,90€/mois
+- Différence : des posts écrits à partir du contexte de l'entreprise (style narratif ou factuel)
 
 Je serais ravi de répondre à vos questions.
 

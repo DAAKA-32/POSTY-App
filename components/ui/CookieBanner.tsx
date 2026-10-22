@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { STORAGE_KEYS } from "@/hooks/data/useLocalStorage";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { CONSENT_CHANGED_EVENT } from "@/lib/analytics/consent";
 
 export interface CookieConsent {
   essential: boolean; // Always true
@@ -126,6 +127,8 @@ export default function CookieBanner() {
       version: CONSENT_VERSION,
     };
     storeConsent(consent);
+    // Let the analytics layer react immediately (start or stop tracking).
+    window.dispatchEvent(new Event(CONSENT_CHANGED_EVENT));
     dismissBanner();
   }, [dismissBanner]);
 

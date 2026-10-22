@@ -11,7 +11,9 @@ export const longTailKeywordsFR = {
   // Intent: Informational (Comment faire)
   informational: [
     "comment écrire un post linkedin qui génère de l'engagement",
-    "comment augmenter sa visibilité sur linkedin en 2024",
+    "comment augmenter sa visibilité sur linkedin",
+    "comment construire une stratégie de contenu linkedin",
+    "qu'est-ce qu'un agent marketing ia",
     "comment créer du contenu linkedin professionnel",
     "comment utiliser l'ia pour rédiger des posts linkedin",
     "comment améliorer son personal branding linkedin",
@@ -33,6 +35,11 @@ export const longTailKeywordsFR = {
     "comparatif outils ia linkedin",
     "posty vs taplio vs authory",
     "meilleure app création contenu linkedin",
+    "agent marketing ia pour linkedin",
+    "assistant marketing ia",
+    "outil de stratégie de contenu linkedin",
+    "automatisation des posts linkedin",
+    "automatisation du marketing de contenu",
     "outil storytelling linkedin professionnel",
   ],
 
@@ -41,11 +48,9 @@ export const longTailKeywordsFR = {
     "générateur posts linkedin gratuit",
     "essayer posty gratuitement",
     "créer un post linkedin en 30 secondes",
-    "générer post linkedin ia sans inscription",
     "outil linkedin ia prix",
     "abonnement générateur linkedin pas cher",
     "posty pro tarif mensuel",
-    "générateur linkedin illimité",
   ],
 
   // Intent: Navigational (Recherche de marque)
@@ -54,7 +59,6 @@ export const longTailKeywordsFR = {
     "posty ia",
     "posty générateur",
     "posty app",
-    "posty avis",
     "posty connexion",
     "posty inscription",
   ],
@@ -68,7 +72,9 @@ export const longTailKeywordsEN = {
   // Intent: Informational (How to)
   informational: [
     "how to write a linkedin post that gets engagement",
-    "how to increase linkedin visibility in 2024",
+    "how to increase linkedin visibility",
+    "how to build a linkedin content strategy",
+    "what is an ai marketing agent",
     "how to create professional linkedin content",
     "how to use ai to write linkedin posts",
     "how to improve personal branding on linkedin",
@@ -90,6 +96,11 @@ export const longTailKeywordsEN = {
     "linkedin ai tools comparison",
     "posty vs taplio vs authory",
     "best linkedin content creation app",
+    "ai marketing agent for linkedin",
+    "ai marketing assistant",
+    "linkedin content strategy tool",
+    "linkedin post automation",
+    "content marketing automation tool",
     "professional linkedin storytelling tool",
   ],
 
@@ -98,11 +109,9 @@ export const longTailKeywordsEN = {
     "free linkedin post generator",
     "try posty for free",
     "create linkedin post in 30 seconds",
-    "generate linkedin post ai no signup",
     "linkedin ai tool pricing",
     "cheap linkedin generator subscription",
     "posty pro monthly price",
-    "unlimited linkedin generator",
   ],
 
   // Intent: Navigational (Brand search)
@@ -111,7 +120,6 @@ export const longTailKeywordsEN = {
     "posty ai",
     "posty generator",
     "posty app",
-    "posty reviews",
     "posty login",
     "posty signup",
   ],
@@ -159,6 +167,26 @@ export const keywordClusters = {
       "content automation",
       "ai-assisted writing",
       "artificial intelligence marketing",
+    ],
+  },
+
+  // Cluster 2b: AI Marketing Agent
+  aiMarketingAgent: {
+    pillar: "agent marketing ia",
+    pillarEN: "ai marketing agent",
+    related: [
+      "assistant marketing ia",
+      "stratégie de contenu linkedin",
+      "automatisation des posts linkedin",
+      "automatisation du marketing de contenu",
+      "marketing de contenu linkedin",
+    ],
+    relatedEN: [
+      "ai marketing assistant",
+      "linkedin content strategy",
+      "linkedin post automation",
+      "content marketing automation",
+      "linkedin content marketing",
     ],
   },
 
@@ -210,16 +238,16 @@ export const keywordClusters = {
 export const metaTemplates = {
   home: {
     fr: {
-      title: "POSTY - Générateur de Posts LinkedIn IA | {keyword}",
+      title: "Posty - Votre agent marketing IA pour LinkedIn | {keyword}",
       description:
-        "{keyword} en quelques secondes. POSTY crée 2 versions uniques (Storytelling & Business) pour chaque idée. Plan gratuit disponible.",
-      keywords: ["Créez des posts LinkedIn percutants", "Générez du contenu LinkedIn professionnel"],
+        "{keyword} avec Posty : il apprend votre activité, construit votre stratégie de contenu LinkedIn et vous aide à créer, planifier et publier. Démarrez gratuitement.",
+      keywords: ["Agent marketing IA pour LinkedIn", "Stratégie de contenu LinkedIn"],
     },
     en: {
-      title: "POSTY - AI LinkedIn Post Generator | {keyword}",
+      title: "Posty - Your AI Marketing Agent for LinkedIn | {keyword}",
       description:
-        "{keyword} in seconds. POSTY creates 2 unique versions (Storytelling & Business) for every idea. Start free today.",
-      keywords: ["Create high-performing LinkedIn posts", "Generate professional LinkedIn content"],
+        "{keyword} with Posty: it learns your business, builds your LinkedIn content strategy, and helps you create, schedule and publish. Start free.",
+      keywords: ["AI marketing agent for LinkedIn", "LinkedIn content strategy"],
     },
   },
 };
@@ -232,26 +260,26 @@ export const headingVariations = {
   home: {
     h1: {
       fr: [
-        "Générez des posts LinkedIn percutants avec l'IA",
-        "Créez du contenu LinkedIn professionnel en quelques secondes",
-        "L'IA qui rédige vos posts LinkedIn à votre place",
+        "Votre marketing, toujours en avant",
+        "Votre agent marketing IA pour LinkedIn",
+        "Une stratégie de contenu LinkedIn qui se déroule sans vous épuiser",
       ],
       en: [
-        "Generate high-performing LinkedIn posts with AI",
-        "Create professional LinkedIn content in seconds",
-        "The AI that writes your LinkedIn posts for you",
+        "Your marketing, moving forward",
+        "Your AI marketing agent for LinkedIn",
+        "A LinkedIn content strategy that runs without the burnout",
       ],
     },
     h2: {
       fr: [
-        "Comment fonctionne le générateur de posts LinkedIn ?",
-        "Pourquoi choisir POSTY pour vos posts LinkedIn ?",
-        "2 versions pour chaque idée : Storytelling & Business",
+        "Comment fonctionne votre agent marketing IA ?",
+        "Pourquoi choisir Posty pour votre contenu LinkedIn ?",
+        "De votre activité au post publié : stratégie, création, publication",
       ],
       en: [
-        "How does the LinkedIn post generator work?",
-        "Why choose POSTY for your LinkedIn posts?",
-        "2 versions for every idea: Storytelling & Business",
+        "How does your AI marketing agent work?",
+        "Why choose Posty for your LinkedIn content?",
+        "From your business to a published post: strategy, creation, publishing",
       ],
     },
   },

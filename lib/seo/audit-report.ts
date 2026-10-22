@@ -102,7 +102,6 @@ export const seoAuditReport = {
           "BreadcrumbList",
           "Article",
           "VideoObject",
-          "Review/AggregateRating",
         ],
       },
       hreflang: {

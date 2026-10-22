@@ -1,133 +1,273 @@
 /**
- * Lightweight, privacy-safe pageview tracker.
+ * First-party analytics tracker (browser side).
  *
- * Stores only an opaque random `vid` in localStorage — no IP, no UA, no
- * fingerprinting. Server-side aggregation is done by daily counters
- * (analytics_daily collection) using atomic increments — there is NO event
- * log of individual visits.
+ * Privacy contract
+ *  - NOTHING is stored or sent until the visitor has accepted the "analytics"
+ *    category in the cookie banner (and no Global Privacy Control signal is
+ *    present). Before that, landing signals (referrer / UTM) are held in
+ *    memory only so the first page is still attributed once consent arrives
+ *    in the same visit.
+ *  - Identifiers: a random visitor id and a random session id. No IP, no
+ *    user-agent, no fingerprinting. Referrer is reduced to its origin; click
+ *    ids are reduced to a present/absent flag.
+ *  - Withdrawing consent erases the stored ids.
+ *  - Best-effort: every failure is swallowed, the page is never affected.
+ *
+ * What the browser sends is RAW signals. The server classifies the source
+ * (lib/analytics/attribution.ts) and decides what counts as a conversion.
  */
 
 import { getAuth } from "firebase/auth";
+import {
+  CONSENT_CHANGED_EVENT,
+  hasAnalyticsConsent,
+} from "./consent";
+import {
+  isPricingPath,
+  normalizePath,
+  type AnalyticsEventName,
+  type BillingIntervalId,
+  type PlanId,
+  type RawTouch,
+} from "./events";
 
 const VID_KEY = "posty_vid";
-const LAST_DAY_KEY = "posty_vid_last_day";
-const LAST_PATH_KEY = "posty_vid_last_path"; // throttle dedupe per session
+const SID_KEY = "posty_sid";
+/** Legacy keys from the previous counter-only tracker. */
+const LEGACY_KEYS = ["posty_vid_last_day", "posty_vid_last_path"];
+const SESSION_IDLE_MS = 30 * 60 * 1000;
+const DEDUPE_MS = 1500;
 
-function todayKey(): string {
-  const d = new Date();
-  const y = d.getUTCFullYear();
-  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(d.getUTCDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+let landingTouch: RawTouch | null = null;
+let landingConsumed = false;
+const recent = new Map<string, number>();
+
+function uuid(): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
 }
 
-function readVid(): { vid: string; isFirstEver: boolean } {
-  if (typeof window === "undefined") {
-    return { vid: "", isFirstEver: false };
-  }
-  const existing = window.localStorage.getItem(VID_KEY);
-  if (existing) return { vid: existing, isFirstEver: false };
+// ───────────────────────── Landing capture ─────────────────────────
 
-  // crypto.randomUUID is available in all evergreen browsers + iOS 14.6+
-  const vid =
-    typeof crypto !== "undefined" && "randomUUID" in crypto
-      ? crypto.randomUUID()
-      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+function safeReferrer(ref: string): string | undefined {
+  if (!ref) return undefined;
   try {
-    window.localStorage.setItem(VID_KEY, vid);
+    const url = new URL(ref);
+    if (url.protocol === "android-app:") return `android-app://${url.host}`;
+    if (url.protocol === "http:" || url.protocol === "https:") return url.origin;
   } catch {
-    // localStorage might be disabled (private mode) — track as anon, no persistence
+    // ignore
   }
-  return { vid, isFirstEver: true };
-}
-
-function checkFirstOfDay(): boolean {
-  if (typeof window === "undefined") return false;
-  const today = todayKey();
-  try {
-    const last = window.localStorage.getItem(LAST_DAY_KEY);
-    if (last === today) return false;
-    window.localStorage.setItem(LAST_DAY_KEY, today);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function checkPathDedupe(path: string): boolean {
-  if (typeof window === "undefined") return true;
-  try {
-    const stamp = `${todayKey()}|${path}`;
-    const last = window.sessionStorage.getItem(LAST_PATH_KEY);
-    if (last === stamp) return false;
-    window.sessionStorage.setItem(LAST_PATH_KEY, stamp);
-    return true;
-  } catch {
-    return true;
-  }
+  return undefined;
 }
 
 /**
- * Top-level slug only (e.g. "/", "/app", "/login"). We deliberately strip
- * everything past the first segment to avoid leaking IDs, search queries, or
- * deep PII-bearing paths into the analytics store.
+ * Snapshot the landing referrer + campaign parameters (memory only). Called
+ * once per document load, before consent is known.
  */
-function topSlug(path: string): string {
-  if (!path) return "/";
-  const trimmed = path.split("?")[0].split("#")[0];
-  if (trimmed === "/" || trimmed === "") return "/";
-  const seg = trimmed.split("/").filter(Boolean)[0];
-  return seg ? `/${seg}` : "/";
+export function captureLanding(): void {
+  if (typeof window === "undefined" || landingTouch) return;
+  const touch: RawTouch = {};
+  const referrer = safeReferrer(document.referrer);
+  if (referrer) touch.referrer = referrer;
+  try {
+    const p = new URLSearchParams(window.location.search);
+    for (const k of [
+      "utm_source",
+      "utm_medium",
+      "utm_campaign",
+      "utm_content",
+      "utm_term",
+    ] as const) {
+      const v = p.get(k);
+      if (v) touch[k] = v.slice(0, 100);
+    }
+    if (p.has("gclid")) touch.gclid = true;
+    if (p.has("fbclid")) touch.fbclid = true;
+    if (p.has("ttclid")) touch.ttclid = true;
+    if (p.has("msclkid")) touch.msclkid = true;
+  } catch {
+    // malformed query string → no campaign data, visit still counted
+  }
+  landingTouch = touch;
 }
 
-export async function trackPageview(rawPath: string): Promise<void> {
-  if (typeof window === "undefined") return;
+// ───────────────────────── Ids ─────────────────────────
 
-  const path = topSlug(rawPath);
+function readVid(): string | null {
+  try {
+    let vid = window.localStorage.getItem(VID_KEY);
+    if (!vid || !/^[A-Za-z0-9_-]{8,64}$/.test(vid)) {
+      vid = uuid();
+      window.localStorage.setItem(VID_KEY, vid);
+    }
+    return vid;
+  } catch {
+    return null;
+  }
+}
 
-  // Don't track admin or api paths from the client
-  if (path.startsWith("/admin") || path.startsWith("/api")) return;
+/** Current session id + the raw touch to attach (only for a fresh session). */
+function readSession(now: number): { sid: string; touch?: RawTouch } | null {
+  try {
+    const raw = window.sessionStorage.getItem(SID_KEY);
+    if (raw) {
+      const s = JSON.parse(raw) as { sid: string; last: number };
+      if (s?.sid && now - s.last < SESSION_IDLE_MS) {
+        window.sessionStorage.setItem(SID_KEY, JSON.stringify({ sid: s.sid, last: now }));
+        return { sid: s.sid };
+      }
+    }
+    const sid = uuid();
+    window.sessionStorage.setItem(SID_KEY, JSON.stringify({ sid, last: now }));
+    // The landing referrer/UTM belong to the FIRST session of this document
+    // only. A session that restarts after idling is a new, direct visit.
+    let touch: RawTouch | undefined;
+    if (!landingConsumed) {
+      touch = landingTouch ?? undefined;
+      landingConsumed = true;
+    }
+    return { sid, touch: touch ?? {} };
+  } catch {
+    return null;
+  }
+}
 
-  // Per-session per-path dedupe (avoid double-fire on fast remounts/HMR)
-  if (!checkPathDedupe(path)) return;
+function purgeIds(): void {
+  try {
+    window.localStorage.removeItem(VID_KEY);
+    for (const k of LEGACY_KEYS) window.localStorage.removeItem(k);
+    window.sessionStorage.removeItem(SID_KEY);
+  } catch {
+    // nothing to purge
+  }
+}
 
-  const { vid, isFirstEver } = readVid();
-  if (!vid) return;
-  const isFirstOfDay = checkFirstOfDay();
+// ───────────────────────── Sending ─────────────────────────
 
-  // Best-effort auth detection: attach Firebase ID token if a session exists.
-  // Server is the authority — it verifies the token before crediting the
-  // visit as authed.
-  let idToken: string | null = null;
+async function authHeader(): Promise<Record<string, string>> {
   try {
     const user = getAuth().currentUser;
-    if (user) idToken = await user.getIdToken();
+    if (user) return { Authorization: `Bearer ${await user.getIdToken()}` };
   } catch {
-    // ignore — tracked as anonymous
+    // anonymous
   }
+  return {};
+}
 
-  const body = JSON.stringify({
-    vid,
-    path,
-    isFirstEver,
-    isFirstOfDay,
-  });
+function throttled(key: string): boolean {
+  const now = Date.now();
+  const last = recent.get(key);
+  if (last && now - last < DEDUPE_MS) return true;
+  recent.set(key, now);
+  if (recent.size > 50) recent.clear();
+  return false;
+}
 
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-  };
-  if (idToken) headers.Authorization = `Bearer ${idToken}`;
+export interface TrackOptions {
+  plan?: PlanId;
+  interval?: BillingIntervalId;
+  path?: string;
+  props?: Record<string, string | number | boolean>;
+}
 
+export async function trackEvent(
+  name: AnalyticsEventName,
+  opts: TrackOptions = {}
+): Promise<void> {
+  if (typeof window === "undefined") return;
   try {
-    // Prefer fetch keepalive so we can attach Authorization header
-    // (sendBeacon doesn't allow custom headers).
-    await fetch("/api/analytics/track", {
+    if (!hasAnalyticsConsent()) {
+      purgeIds();
+      return;
+    }
+    captureLanding();
+
+    const path = normalizePath(opts.path ?? window.location.pathname);
+    if (path.startsWith("/admin") || path.startsWith("/api")) return;
+    if (throttled(`${name}|${opts.plan ?? ""}|${path}`)) return;
+
+    const vid = readVid();
+    const session = readSession(Date.now());
+    if (!vid || !session) return;
+
+    const body = JSON.stringify({
+      eventId: uuid(),
+      name,
+      vid,
+      sid: session.sid,
+      path,
+      ...(opts.plan ? { plan: opts.plan } : {}),
+      ...(opts.interval ? { interval: opts.interval } : {}),
+      ...(opts.props ? { props: opts.props } : {}),
+      ...(session.touch ? { touch: { ...session.touch } } : {}),
+    });
+
+    await fetch("/api/analytics/event", {
       method: "POST",
-      headers,
+      headers: { "Content-Type": "application/json", ...(await authHeader()) },
       body,
       keepalive: true,
     });
   } catch {
-    // analytics is best-effort — never throw to the page
+    // analytics must never throw into the page
   }
+}
+
+export async function trackPageview(rawPath: string): Promise<void> {
+  const path = normalizePath(rawPath);
+  await trackEvent("page_view", { path });
+  if (isPricingPath(path)) await trackEvent("pricing_page_view", { path });
+}
+
+const planViewSeen = new Set<string>();
+/** A plan card became visible. Once per plan per surface per page load. */
+export function trackPlanView(plan: PlanId, surface: string): void {
+  const k = `${plan}|${surface}`;
+  if (planViewSeen.has(k)) return;
+  planViewSeen.add(k);
+  void trackEvent("plan_view", { plan, props: { surface } });
+}
+
+export function trackPlanClick(
+  plan: PlanId,
+  surface: string,
+  interval?: BillingIntervalId
+): void {
+  void trackEvent("plan_click", { plan, interval, props: { surface } });
+}
+
+/**
+ * Tell the server an account was just created so it can verify the signup
+ * and link it to this visitor's first-touch attribution. Safe to call
+ * without consent: then it sends no visitor id and the signup is counted as
+ * an unattributed account creation.
+ */
+export async function reportSignup(): Promise<void> {
+  if (typeof window === "undefined") return;
+  try {
+    const consented = hasAnalyticsConsent();
+    const vid = consented ? window.localStorage.getItem(VID_KEY) : null;
+    await fetch("/api/analytics/identify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...(await authHeader()) },
+      body: JSON.stringify(vid ? { vid } : {}),
+      keepalive: true,
+    });
+  } catch {
+    // best-effort
+  }
+}
+
+/** Subscribe to consent changes; returns an unsubscribe function. */
+export function onConsentChange(cb: () => void): () => void {
+  if (typeof window === "undefined") return () => {};
+  const handler = () => {
+    if (!hasAnalyticsConsent()) purgeIds();
+    cb();
+  };
+  window.addEventListener(CONSENT_CHANGED_EVENT, handler);
+  return () => window.removeEventListener(CONSENT_CHANGED_EVENT, handler);
 }

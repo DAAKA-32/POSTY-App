@@ -514,6 +514,21 @@ service cloud.firestore {
       allow create, update, delete: if false; // Server-only via Admin SDK
     }
 
+    // ───────────────────────── Analytics (server-only) ─────────────────────────
+    // Written exclusively by the Admin SDK (lib/analytics/ingest.ts) and read
+    // exclusively through /api/admin/analytics/*, which verifies the admin
+    // allowlist. No client — signed in or not, admin or not — may read or
+    // write these directly: they hold pseudonymous visitor ids, attribution
+    // and per-account funnel state. (Also covered by the default deny below;
+    // listed explicitly so the intent is reviewable and testable.)
+    match /analytics_events/{id}       { allow read, write: if false; }
+    match /analytics_visitors/{id}     { allow read, write: if false; }
+    match /analytics_sessions/{id}     { allow read, write: if false; }
+    match /analytics_users/{id}        { allow read, write: if false; }
+    match /analytics_daily/{id}        { allow read, write: if false; }
+    match /analytics_dims/{id}         { allow read, write: if false; }
+    match /analytics_admin_audit/{id}  { allow read, write: if false; }
+
     // ───────────────────────── Default deny ─────────────────────────
     match /{document=**} {
       allow read, write: if false;
