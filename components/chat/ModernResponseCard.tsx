@@ -642,7 +642,7 @@ export const ModernResponseCard = memo(function ModernResponseCard({
                 dark:from-dark-elevated dark:to-dark-border
                 border border-gray-200 dark:border-dark-border
               "
-              aria-label="Visuel en cours de génération"
+              aria-label={t.chat.visualGenerating}
             >
               <motion.div
                 className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 dark:via-white/10 to-transparent"
@@ -651,7 +651,7 @@ export const ModernResponseCard = memo(function ModernResponseCard({
               />
               <div className="absolute inset-0 flex items-center justify-center">
                 <span className="text-[11px] uppercase tracking-wider text-text-secondary/80 font-medium">
-                  Visuel en cours…
+                  {t.chat.visualInProgress}
                 </span>
               </div>
             </motion.div>
@@ -689,8 +689,8 @@ export const ModernResponseCard = memo(function ModernResponseCard({
                 "
                 aria-label={
                   selectedVariants.length === 0
-                    ? "Aucun visuel sélectionné"
-                    : `${selectedVariants.length} visuel${selectedVariants.length > 1 ? "s" : ""} sélectionné${selectedVariants.length > 1 ? "s" : ""}`
+                    ? t.chat.noVisualSelected
+                    : t.chat.visualsSelected.replace("{n}", String(selectedVariants.length))
                 }
               >
                 <AttachedHeroLayout
@@ -742,8 +742,8 @@ export const ModernResponseCard = memo(function ModernResponseCard({
                           disabled:opacity-40 disabled:cursor-not-allowed
                           transition-colors
                         "
-                        aria-label="Régénérer les variantes"
-                        title="Régénérer 3 nouvelles variantes"
+                        aria-label={t.chat.regenerateVariants}
+                        title={t.chat.regenerateVariantsTitle}
                       >
                         <svg
                           className={`w-3 h-3 ${effectiveVisual.isRegenerating ? "animate-spin" : ""}`}
@@ -754,7 +754,7 @@ export const ModernResponseCard = memo(function ModernResponseCard({
                         >
                           <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
-                        Régénérer
+                        {t.chat.regenerateComment}
                       </button>
                     )}
                   </div>
@@ -770,8 +770,8 @@ export const ModernResponseCard = memo(function ModernResponseCard({
                           aria-pressed={isSelected}
                           aria-label={
                             isSelected
-                              ? `Variante ${i + 1} — sélectionnée en position ${order + 1}. Cliquer pour retirer.`
-                              : `Variante ${i + 1} — cliquer pour ajouter.`
+                              ? t.chat.variantSelected.replace("{i}", String(i + 1)).replace("{p}", String(order + 1))
+                              : t.chat.variantUnselected.replace("{i}", String(i + 1))
                           }
                           className={`
                             group/thumb relative aspect-square rounded-lg overflow-hidden
@@ -875,27 +875,27 @@ export const ModernResponseCard = memo(function ModernResponseCard({
             ) : effectiveSeed?.error ? (
               <div className="flex items-center gap-2">
                 <span className="text-[11.5px] text-gray-500 dark:text-text-muted">
-                  Erreur de génération.
+                  {t.chat.generationError}
                 </span>
                 <button
                   onClick={handleRegenerate}
                   className="text-[11.5px] font-medium text-[#F8935D] hover:underline"
                 >
-                  Réessayer
+                  {t.chat.retry}
                 </button>
               </div>
             ) : effectiveSeed?.text ? (
               <div className="group/seed">
                 <div className="flex items-center justify-between gap-2 mb-0.5">
                   <span className="text-[10px] uppercase tracking-wider text-gray-400 dark:text-text-muted/70 font-medium">
-                    1er commentaire
+                    {t.chat.firstComment}
                   </span>
                   <div className="flex items-center gap-0.5 opacity-0 group-hover/seed:opacity-100 transition-opacity">
                     <button
                       onClick={handleRegenerate}
                       className="p-1 rounded text-gray-400 hover:text-[#F8935D] transition-colors"
-                      aria-label="Régénérer"
-                      title="Régénérer"
+                      aria-label={t.chat.regenerateComment}
+                      title={t.chat.regenerateComment}
                     >
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -942,7 +942,7 @@ export const ModernResponseCard = memo(function ModernResponseCard({
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                 </svg>
-                Ajouter un 1er commentaire (boost algo)
+                {t.chat.addFirstComment}
               </button>
             )}
           </div>
@@ -1116,6 +1116,7 @@ function AttachedHeroLayout({
   selectedIndices: number[];
   onToggle: (index: number) => void;
 }) {
+  const { t } = useLanguage();
   // No selection: render the hero as a muted backdrop. Click reactivates it.
   if (selectedVariants.length === 0) {
     return (
@@ -1123,7 +1124,7 @@ function AttachedHeroLayout({
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={heroVariant.url}
-          alt={heroVariant.alt || "Visuel non sélectionné"}
+          alt={heroVariant.alt || t.chat.visualNotSelected}
           className="w-full h-full object-cover grayscale opacity-50"
           loading="lazy"
           draggable={false}
@@ -1200,12 +1201,14 @@ function HeroCell({
   onRemove: () => void;
   roundedClass: string;
 }) {
+  const { t } = useLanguage();
+  const position = String(sourceIndex + 1);
   return (
     <div className={`group/hero relative w-full h-full overflow-hidden ${roundedClass}`}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={variant.url}
-        alt={variant.alt || `Visuel sélectionné (variante ${sourceIndex + 1})`}
+        alt={variant.alt || t.chat.selectedVisualNumbered.replace("{n}", position)}
         className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover/hero:scale-[1.02]"
         loading="lazy"
         draggable={false}
@@ -1216,8 +1219,8 @@ function HeroCell({
           e.stopPropagation();
           onRemove();
         }}
-        aria-label={`Retirer le visuel ${sourceIndex + 1}`}
-        title="Retirer ce visuel"
+        aria-label={t.chat.removeVisualNumbered.replace("{n}", position)}
+        title={t.chat.removeVisual}
         className="
           absolute top-2 right-2
           w-7 h-7 rounded-full
@@ -1246,6 +1249,7 @@ function HeroCell({
  * the same affordance as the previous full-width CTA.
  */
 function AddVisualPicker({ onPick }: { onPick: (count: 1 | 2 | 3) => void }) {
+  const { t } = useLanguage();
   return (
     <motion.div
       initial={{ opacity: 0, y: 4 }}
@@ -1272,7 +1276,7 @@ function AddVisualPicker({ onPick }: { onPick: (count: 1 | 2 | 3) => void }) {
           >
             <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
-          Visuels
+          {t.chat.visuals}
         </div>
         {([1, 2, 3] as const).map((n) => (
           <motion.button

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
@@ -43,11 +43,6 @@ import UniversalChatInput, { UniversalChatInputRef } from "@/components/chat/Uni
 import { useLanguage } from "@/contexts/LanguageContext";
 import ActionConfirmCard from "@/components/ai-actions/ActionConfirmCard";
 
-// Dynamic placeholder examples that rotate
-const PLACEHOLDER_EXAMPLES = [
-  "Continuez la conversation...",
-  "Affinez le message...",
-];
 
 // Animation easing
 const smoothEase = [0.25, 0.1, 0.25, 1] as const;
@@ -57,6 +52,12 @@ function ConversationContent() {
   const router = useRouter();
   const conversationId = params.id as string;
   const { t, language } = useLanguage();
+
+  // Rotating composer placeholders — translated, so they follow the UI language.
+  const placeholderExamples = useMemo(
+    () => [t.chat.continueConversation, t.chat.refineMessage],
+    [t],
+  );
 
   const { user, userProfile } = useAuth();
   // Shared sidebar posts — refresh through context so the persistent shell's
@@ -675,7 +676,7 @@ function ConversationContent() {
   useEffect(() => {
     if (isFocused || inputValue) return;
     const interval = setInterval(() => {
-      setPlaceholderIndex((prev) => (prev + 1) % PLACEHOLDER_EXAMPLES.length);
+      setPlaceholderIndex((prev) => (prev + 1) % placeholderExamples.length);
     }, 3000);
     return () => clearInterval(interval);
   }, [isFocused, inputValue]);
@@ -1597,7 +1598,7 @@ function ConversationContent() {
                 }
               }}
               onStop={stopGeneration}
-              placeholder={PLACEHOLDER_EXAMPLES}
+              placeholder={placeholderExamples}
               disabled={false}
               isLoading={isLoading || isGeneratingImage}
               enableVoiceRecording={speechSupported}
