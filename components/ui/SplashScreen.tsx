@@ -73,7 +73,7 @@ export default function SplashScreen({ isLoading, onComplete }: SplashScreenProp
             </motion.div>
 
             {/* Brand Name */}
-            <motion.h1
+            <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{
@@ -83,7 +83,7 @@ export default function SplashScreen({ isLoading, onComplete }: SplashScreenProp
               className="text-3xl lg:text-4xl font-bold tracking-tight text-gray-800 dark:text-white"
             >
               POSTY
-            </motion.h1>
+            </motion.p>
 
             {/* Premium gradient loader dots */}
             <motion.div

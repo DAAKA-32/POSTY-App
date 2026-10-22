@@ -75,14 +75,14 @@ export default function LoadingScreen({
         </motion.div>
 
         {/* Brand name */}
-        <motion.h1
+        <motion.p
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
           className="text-2xl md:text-3xl font-bold text-text-primary tracking-tight"
         >
           POSTY
-        </motion.h1>
+        </motion.p>
 
         {/* Progress bar section */}
         <motion.div

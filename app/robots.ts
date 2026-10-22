@@ -4,17 +4,18 @@ const baseUrl =
   (process.env.NEXT_PUBLIC_BASE_URL || "https://postyapp.ai").trim();
 
 /**
- * Robots.txt Configuration for POSTY
- * Optimized for search engines and AI crawlers (2025)
+ * robots.txt for POSTY
  *
- * Public pages: /, /pricing, /subscription, /login, /signup, /legal/*
- * Protected pages: /app/*, /chat/*, /history/*, /profile/*, /settings/*
- *
- * AI Crawlers: Allowed to access public pages + llms.txt for context
+ * - Search engines: everything public is crawlable. /_next/ and /static/ are
+ *   NOT blocked: crawlers need those scripts, styles and images to render pages.
+ * - /login and /signup stay crawlable on purpose: they carry `noindex`, and a
+ *   crawler must be able to fetch them to see it.
+ * - Private app areas are disallowed (crawl only — indexing is handled by
+ *   authentication and per-page metadata).
+ * - AI crawlers: public marketing pages + llms.txt, no auth pages.
  */
 export default function robots(): MetadataRoute.Robots {
-  // Common disallowed paths for all crawlers
-  const protectedPaths = [
+  const privatePaths = [
     "/app/",
     "/chat/",
     "/history/",
@@ -25,100 +26,30 @@ export default function robots(): MetadataRoute.Robots {
     "/api/",
   ];
 
+  const aiCrawlerRule = (userAgent: string) => ({
+    userAgent,
+    allow: ["/", "/llms.txt"],
+    disallow: [...privatePaths, "/login", "/signup"],
+  });
+
   return {
     rules: [
-      // Default rule for all crawlers
+      // Search engines (Googlebot, Bingbot, …) follow this group.
       {
         userAgent: "*",
-        allow: [
-          "/",
-          "/about",
-          "/pricing",
-          "/subscription",
-          "/login",
-          "/signup",
-          "/legal/",
-          "/llms.txt",
-          "/ai-linkedin-post-generator",
-          "/write-linkedin-post",
-          "/linkedin-post-ideas",
-          "/generate-linkedin-content",
-          "/linkedin-post-examples",
-        ],
-        disallow: [...protectedPaths, "/_next/", "/static/"],
+        allow: "/",
+        disallow: privatePaths,
       },
-      // Google - primary search engine
-      {
-        userAgent: "Googlebot",
-        allow: [
-          "/",
-          "/about",
-          "/pricing",
-          "/subscription",
-          "/login",
-          "/signup",
-          "/legal/",
-          "/llms.txt",
-          "/ai-linkedin-post-generator",
-          "/write-linkedin-post",
-          "/linkedin-post-ideas",
-          "/generate-linkedin-content",
-          "/linkedin-post-examples",
-        ],
-        disallow: protectedPaths,
-      },
-      // Bing - secondary search engine
-      {
-        userAgent: "Bingbot",
-        allow: [
-          "/",
-          "/about",
-          "/pricing",
-          "/subscription",
-          "/login",
-          "/signup",
-          "/legal/",
-          "/llms.txt",
-          "/ai-linkedin-post-generator",
-          "/write-linkedin-post",
-          "/linkedin-post-ideas",
-          "/generate-linkedin-content",
-          "/linkedin-post-examples",
-        ],
-        disallow: protectedPaths,
-      },
-      // ChatGPT/OpenAI crawler - AI search
-      {
-        userAgent: "GPTBot",
-        allow: ["/", "/about", "/pricing", "/subscription", "/llms.txt"],
-        disallow: [...protectedPaths, "/login", "/signup"],
-      },
-      // Claude/Anthropic crawler - AI search
-      {
-        userAgent: "ClaudeBot",
-        allow: ["/", "/about", "/pricing", "/subscription", "/llms.txt"],
-        disallow: [...protectedPaths, "/login", "/signup"],
-      },
-      // Perplexity AI crawler
-      {
-        userAgent: "PerplexityBot",
-        allow: ["/", "/about", "/pricing", "/subscription", "/llms.txt"],
-        disallow: [...protectedPaths, "/login", "/signup"],
-      },
-      // Google AI crawler (Gemini)
-      {
-        userAgent: "Google-Extended",
-        allow: ["/", "/about", "/pricing", "/subscription", "/llms.txt"],
-        disallow: [...protectedPaths, "/login", "/signup"],
-      },
-      // Common AI training bots - allow limited access
+      aiCrawlerRule("GPTBot"),
+      aiCrawlerRule("ClaudeBot"),
+      aiCrawlerRule("PerplexityBot"),
+      aiCrawlerRule("Google-Extended"),
       {
         userAgent: "CCBot",
         allow: ["/", "/llms.txt"],
-        disallow: [...protectedPaths, "/login", "/signup", "/legal/"],
+        disallow: [...privatePaths, "/login", "/signup", "/legal/"],
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
-    host: baseUrl,
   };
 }

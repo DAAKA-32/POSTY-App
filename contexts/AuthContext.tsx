@@ -27,16 +27,38 @@ import {
 import { auth, googleProvider } from "@/lib/db/firebase";
 import { createUserProfile, getUserProfile, deleteAllUserData, saveUserConsent } from "@/lib/db/firestore";
 import { readWithAuthRetry } from "@/lib/db/with-auth-retry";
+import { reportSignup, trackEvent } from "@/lib/analytics/tracker";
 import { AuthContextType, UserProfile } from "@/types";
 import toast from "@/components/ui/Toast";
 import { translations } from "@/lib/i18n";
 import type { Language } from "@/lib/i18n";
+import { setAuthHint } from "@/lib/auth/auth-hint";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 function getT() {
   const lang = (typeof window !== "undefined" ? localStorage.getItem("posty-language") : "en") as Language || "en";
   return translations[lang];
+}
+
+/**
+ * Ask the server to erase the analytics records tied to this account
+ * (visitor, sessions, events, funnel link). One retry, never throws.
+ */
+async function eraseAnalytics(user: { getIdToken: () => Promise<string> }): Promise<void> {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch("/api/analytics/delete", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) return;
+    } catch {
+      // retry once, then give up
+    }
+  }
+  console.warn("Analytics erasure did not complete; records are purged after 13 months.");
 }
 
 // LocalStorage key for onboarding persistence (survives page refresh)
@@ -115,6 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // which caused premature redirects (onboarding flash for existing users).
         setUser(firebaseUser);
         setLoading(true);
+        setAuthHint(true);
 
         // Fetch user profile from Firestore.
         // CRITICAL: wrap in readWithAuthRetry. Right after login — and
@@ -144,6 +167,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setUser(null);
         setUserProfile(null);
+        setAuthHint(false);
         // Clear onboarding flags when user logs out
         setShouldShowOnboarding(false);
         setIsNewUser(false);
@@ -190,6 +214,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Log but don't fail - profile will be created during onboarding
           console.warn("Profile creation deferred to onboarding:", profileError);
         }
+        // Analytics: server verifies the new account and links attribution.
+        void reportSignup();
         // Persist RGPD consent to Firestore (Art. 7.1 - proof of consent)
         try {
           await saveUserConsent(googleUser.uid, {
@@ -207,6 +233,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Clear the optimistic onboarding flags.
         setIsNewUser(false);
         setShouldShowOnboarding(false);
+        void trackEvent("login_completed");
         toast.success(getT().toasts.loginSuccess);
       }
       // Profile will be loaded by onAuthStateChanged listener - no extra read needed
@@ -264,6 +291,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       setShouldShowOnboarding(false);
+      void trackEvent("login_completed");
       toast.success(getT().toasts.loginSuccess);
     } catch (error: unknown) {
       const firebaseError = error as { code?: string };
@@ -319,6 +347,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         displayName,
         photoURL: null,
       });
+
+      // Analytics: server verifies the new account and links attribution.
+      void reportSignup();
 
       // Persist RGPD consent to Firestore (Art. 7.1 - proof of consent)
       try {
@@ -410,6 +441,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const credential = EmailAuthProvider.credential(user.email, password);
         await reauthenticateWithCredential(user, credential);
       }
+
+      // Erase the server-side analytics records tied to this account
+      // (RGPD art. 17). Needs the still-valid ID token, so it runs BEFORE the
+      // Auth account is deleted. Best effort: a failure here must not trap
+      // the user in an account they asked to delete — the records also expire
+      // on their own after 13 months (daily retention purge).
+      await eraseAnalytics(user);
 
       // Delete all user data from Firestore
       await deleteAllUserData(user.uid);

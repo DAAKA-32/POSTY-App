@@ -202,6 +202,14 @@ const nextConfig: NextConfig = {
         destination: "/:path+",
         permanent: true,
       },
+      // /pricing was a client-side JS redirect (noindex, canonical to the
+      // homepage). A server 308 is clearer for crawlers; the query string
+      // (redirect, reason) is forwarded as the old page did.
+      {
+        source: "/pricing",
+        destination: "/subscription",
+        permanent: true,
+      },
     ];
   },
 };

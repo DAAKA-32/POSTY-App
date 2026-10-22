@@ -4,26 +4,28 @@ const baseUrl =
   process.env.NEXT_PUBLIC_BASE_URL || "https://postyapp.ai";
 
 export const metadata: Metadata = {
-  title: "Sign Up Free | Posty AI",
+  title: "Create your account",
   description:
-    "Create your free Posty account. Generate high-converting LinkedIn posts with AI and turn your content into clients. Free plan available.",
+    "Create your Posty AI account and start with a 30-day free trial of your AI marketing agent.",
+  // Utility page: kept out of the index so it never competes with the homepage
+  // on brand searches; still crawlable (robots.txt) so Google sees this noindex.
   robots: {
-    index: true,
+    index: false,
     follow: true,
   },
   openGraph: {
-    title: "Sign Up Free — Posty AI LinkedIn Post Generator",
+    title: "Create your account · Posty AI",
     description:
-      "Create your free Posty account. Generate LinkedIn posts with AI that attract qualified leads.",
+      "Create your Posty AI account and start with a 30-day free trial of your AI marketing agent.",
     url: `${baseUrl}/signup`,
     type: "website",
     siteName: "Posty AI",
   },
   twitter: {
     card: "summary",
-    title: "Sign Up Free — Posty AI",
+    title: "Create your account · Posty AI",
     description:
-      "Create your free Posty account and start generating AI-powered LinkedIn posts.",
+      "Create your Posty AI account and start with a 30-day free trial of your AI marketing agent.",
   },
   alternates: {
     canonical: `${baseUrl}/signup`,

@@ -401,6 +401,14 @@ function ResultsGlyph() {
 }
 
 /* ───────────────────────── Main page ─────────────────────────────── */
+/** Hero title split for the gradient accent: last two words highlighted
+ *  (whole title when it has no spaces, e.g. CJK). */
+function splitAccent(title: string): { lead: string; accent: string } {
+  const words = title.trim().split(/\s+/);
+  if (words.length < 3) return { lead: "", accent: title };
+  return { lead: words.slice(0, -2).join(" "), accent: words.slice(-2).join(" ") };
+}
+
 export default function BusinessPage() {
   const { t } = useLanguage();
   usePageTitle("business");
@@ -540,7 +548,7 @@ export default function BusinessPage() {
                 letterSpacing: "-0.022em",
               }}
             >
-              {t.landing.businessHeroTitle ?? "Solution Business pour"}
+              {splitAccent(t.landing.businessHeroTitle).lead}
               <br />
               <span
                 className="text-transparent bg-clip-text"
@@ -548,7 +556,7 @@ export default function BusinessPage() {
                   backgroundImage: "linear-gradient(110deg, #F8935D 0%, #F76B54 60%, #F8935D 100%)",
                 }}
               >
-                équipes ambitieuses
+                {splitAccent(t.landing.businessHeroTitle).accent}
               </span>
             </h1>
           </Reveal>

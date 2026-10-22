@@ -7910,3 +7910,9 @@ vercel-live-feedback {
   position: absolute !important;
   z-index: -1 !important;
 }
+
+/* Landing auth hint (lib/auth/auth-hint.ts): the landing is server-rendered for
+   everyone; a probably-signed-in visitor sees a spinner instead of a flash of
+   marketing content while Firebase restores the session. */
+.posty-auth-overlay { display: none; }
+html.posty-auth-hint .posty-auth-overlay { display: flex; }

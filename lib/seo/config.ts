@@ -12,7 +12,7 @@ export const seoConfig = {
 
   // Branding
   brandName: "Posty AI",
-  tagline: "Générez plus de prospects LinkedIn avec l'IA",
+  tagline: "Your marketing, moving forward",
 
   // Social
   twitterHandle: "@posty_app",
@@ -44,7 +44,8 @@ export const seoConfig = {
   },
 
   // Mission - E-E-A-T: Expertise
-  mission: "Démocratiser le contenu professionnel et automatiser le personal branding pour tous.",
+  mission:
+    "Posty is an AI marketing agent for LinkedIn: it learns your business, builds your content strategy, and helps you create, schedule and publish content that attracts the right audience.",
 };
 
 /**
@@ -92,18 +93,15 @@ export const i18nSeoConfig = {
     return `${seoConfig.siteUrl}${basePath}`;
   },
 
-  // Generate alternates object for metadata
+  // Generate alternates object for metadata: canonical only. No hreflang
+  // languages: `?lang=xx` is a client-side switch, not a localized page
+  // (see getAlternateLanguages in components/seo/HreflangTags.tsx).
   getAlternates: (path: string) => {
     const cleanPath = path.startsWith("/") ? path : `/${path}`;
     const basePath = cleanPath.split("?")[0];
 
     return {
       canonical: `${seoConfig.siteUrl}${basePath}`,
-      languages: {
-        "fr-FR": `${seoConfig.siteUrl}${basePath}?lang=fr`,
-        "en-US": `${seoConfig.siteUrl}${basePath}?lang=en`,
-        "x-default": `${seoConfig.siteUrl}${basePath}`,
-      },
     };
   },
 };
@@ -116,87 +114,87 @@ export const i18nSeoConfig = {
 export const localizedPageSeo = {
   home: {
     fr: {
-      title: "Posty AI – Attirez plus de prospects avec l'intelligence artificielle",
+      title: "Posty – Votre agent marketing IA pour LinkedIn",
       description:
-        "Automatisez votre présence LinkedIn et attirez des prospects qualifiés grâce à l'IA. Créez des posts professionnels percutants en quelques secondes. Plan gratuit disponible.",
+        "Posty apprend votre activité, construit votre stratégie de contenu LinkedIn et vous aide à créer, planifier et publier des contenus qui attirent la bonne audience. Démarrez gratuitement.",
       keywords: [
         "Posty",
         "Posty AI",
-        "prospects LinkedIn",
-        "automatisation LinkedIn",
-        "IA LinkedIn",
-        "générer prospects",
-        "contenu LinkedIn IA",
+        "agent marketing IA",
+        "assistant marketing IA",
+        "stratégie de contenu LinkedIn",
+        "automatisation des posts LinkedIn",
+        "automatisation du marketing de contenu",
         "personal branding LinkedIn",
       ],
     },
     en: {
-      title: "Posty AI – Generate More LinkedIn Leads with Artificial Intelligence",
+      title: "Posty – Your AI Marketing Agent for LinkedIn",
       description:
-        "Automate your LinkedIn presence and attract qualified prospects with AI. Create professional posts in seconds. Free plan available.",
+        "Posty learns your business, builds your LinkedIn content strategy, and helps you create, schedule and publish content that attracts the right audience. Start free.",
       keywords: [
         "Posty",
         "Posty AI",
-        "LinkedIn leads",
-        "LinkedIn automation",
-        "AI LinkedIn tool",
-        "generate prospects",
-        "LinkedIn content AI",
-        "personal branding LinkedIn",
+        "AI marketing agent",
+        "AI marketing assistant",
+        "LinkedIn content strategy",
+        "LinkedIn post automation",
+        "content marketing automation",
+        "personal branding on LinkedIn",
       ],
     },
   },
   pricing: {
     fr: {
-      title: "Tarifs Posty - Plans Pro et Max | Automatisation LinkedIn IA",
+      title: "Tarifs Posty - Plans Pro et Max | Agent marketing IA pour LinkedIn",
       description:
-        "Découvrez les offres Posty : Free, Pro et Max. Automatisez LinkedIn et générez des prospects qualifiés avec l'IA. Plan gratuit disponible.",
+        "Découvrez les offres Posty : Free, Pro et Max. Choisissez la part de votre marketing LinkedIn que Posty prend en charge : stratégie, création, planification et publication.",
       keywords: [
         "tarifs Posty",
-        "prix automatisation LinkedIn",
-        "abonnement LinkedIn IA",
+        "prix agent marketing IA",
+        "abonnement automatisation LinkedIn",
         "Posty Pro",
         "Posty Max",
       ],
     },
     en: {
-      title: "Posty Pricing - Pro & Max Plans | LinkedIn AI Automation",
+      title: "Posty Pricing - Pro & Max Plans | AI Marketing Agent for LinkedIn",
       description:
-        "Explore Posty plans: Free, Pro and Max. Automate LinkedIn and generate qualified leads with AI. Free plan available.",
+        "Explore Posty plans: Free, Pro and Max. Choose how much of your LinkedIn marketing Posty handles: strategy, content creation, scheduling and publishing.",
       keywords: [
         "Posty pricing",
-        "LinkedIn automation price",
-        "LinkedIn AI subscription",
-        "Posty free plan",
+        "AI marketing agent price",
+        "LinkedIn post automation subscription",
         "Posty Pro plan",
+        "Posty Max plan",
       ],
     },
   },
   login: {
     fr: {
-      title: "Connexion | Posty - Automatisation LinkedIn IA",
+      title: "Connexion | Posty - Agent marketing IA pour LinkedIn",
       description:
-        "Connectez-vous à Posty pour automatiser votre LinkedIn et générer des prospects qualifiés avec l'IA.",
+        "Connectez-vous à Posty, votre agent marketing IA pour LinkedIn : stratégie, création, planification et publication.",
       keywords: ["connexion Posty", "login Posty"],
     },
     en: {
-      title: "Login | Posty - LinkedIn AI Automation",
+      title: "Login | Posty - AI Marketing Agent for LinkedIn",
       description:
-        "Sign in to Posty to automate your LinkedIn and generate qualified leads with AI.",
+        "Sign in to Posty, your AI marketing agent for LinkedIn: strategy, content creation, scheduling and publishing.",
       keywords: ["Posty login", "sign in Posty"],
     },
   },
   signup: {
     fr: {
-      title: "Inscription Gratuite | Posty - Automatisation LinkedIn IA",
+      title: "Inscription Gratuite | Posty - Agent marketing IA pour LinkedIn",
       description:
-        "Créez votre compte Posty et automatisez votre LinkedIn. Générez des prospects qualifiés avec l'IA. Plan gratuit disponible.",
+        "Créez votre compte Posty : votre agent marketing IA apprend votre activité et vous aide à créer, planifier et publier sur LinkedIn. Démarrez gratuitement.",
       keywords: ["inscription Posty", "créer compte Posty", "LinkedIn IA gratuit"],
     },
     en: {
-      title: "Free Sign Up | Posty - LinkedIn AI Automation",
+      title: "Free Sign Up | Posty - AI Marketing Agent for LinkedIn",
       description:
-        "Create your free Posty account and start automating LinkedIn. Generate qualified leads with AI.",
+        "Create your Posty account: your AI marketing agent learns your business and helps you create, schedule and publish on LinkedIn. Start free.",
       keywords: ["Posty signup", "create Posty account", "free LinkedIn AI"],
     },
   },
@@ -247,6 +245,8 @@ export const seoSilos = {
       "IA pour créer du contenu LinkedIn",
       "Prompts efficaces pour LinkedIn",
       "Automatiser sa création de contenu",
+      "Agent marketing IA : ce qu'il peut faire pour votre entreprise",
+      "Construire une stratégie de contenu LinkedIn avec l'IA",
       "IA vs rédaction manuelle",
       "Outils IA pour LinkedIn",
     ],
@@ -260,10 +260,10 @@ export const seoSilos = {
     pillarPage: "/guides/contenu-b2b-linkedin",
     topics: [
       "Contenu LinkedIn pour le B2B",
-      "Générer des leads via LinkedIn",
+      "Attirer la bonne audience grâce au contenu LinkedIn",
       "Thought leadership B2B",
       "Contenu éducatif vs promotionnel",
-      "Mesurer le ROI du contenu LinkedIn",
+      "Mesurer l'impact de votre contenu LinkedIn",
     ],
   },
 };
@@ -273,26 +273,26 @@ export const seoSilos = {
  */
 export const pageSeo = {
   home: {
-    title: "Posty AI – Attirez plus de prospects avec l'intelligence artificielle",
+    title: "Posty – Votre agent marketing IA pour LinkedIn",
     description:
-      "Automatisez votre présence LinkedIn et attirez des prospects qualifiés grâce à l'IA. Créez des posts professionnels percutants en quelques secondes. Plan gratuit disponible.",
+      "Posty apprend votre activité, construit votre stratégie de contenu LinkedIn et vous aide à créer, planifier et publier des contenus qui attirent la bonne audience. Démarrez gratuitement.",
     keywords: [
       "Posty",
       "Posty AI",
-      "prospects LinkedIn",
-      "automatisation LinkedIn",
-      "IA LinkedIn",
-      "générer prospects",
+      "agent marketing IA",
+      "assistant marketing IA",
+      "stratégie de contenu LinkedIn",
+      "automatisation des posts LinkedIn",
     ],
   },
   pricing: {
-    title: "Tarifs Posty - Plans Free, Pro et Max | Automatisation LinkedIn IA",
+    title: "Tarifs Posty - Plans Free, Pro et Max | Agent marketing IA pour LinkedIn",
     description:
-      "Découvrez les offres Posty : Free, Pro et Max. Automatisez LinkedIn et générez des prospects qualifiés avec l'IA. Plan gratuit disponible.",
+      "Découvrez les offres Posty : Free, Pro et Max. Choisissez la part de votre marketing LinkedIn que Posty prend en charge : stratégie, création, planification et publication.",
     keywords: [
       "tarifs Posty",
-      "prix automatisation LinkedIn",
-      "abonnement LinkedIn IA",
+      "prix agent marketing IA",
+      "abonnement automatisation LinkedIn",
     ],
   },
   legal: {
@@ -304,7 +304,7 @@ export const pageSeo = {
     terms: {
       title: "Conditions Générales d'Utilisation | Posty",
       description:
-        "CGU de Posty : consultez les conditions d'utilisation de notre outil d'automatisation LinkedIn IA.",
+        "CGU de Posty : consultez les conditions d'utilisation de notre agent marketing IA pour LinkedIn.",
     },
     notices: {
       title: "Mentions Légales | Posty",
@@ -327,7 +327,7 @@ export const structuredData = {
     // Without this, Google indexes the entity as "Posty AI" only and
     // brand-search "Posty" loses to homonyms (Post Malone nickname,
     // Posty instant photo printer, posty.com.br, etc.).
-    alternateName: ["Posty", "PostyApp", "Posty App", "postyapp.ai"],
+    alternateName: ["Posty", "Posty IA", "PostyApp", "Posty App", "postyapp.ai"],
     url: seoConfig.siteUrl,
     logo: {
       "@type": "ImageObject",
@@ -343,15 +343,10 @@ export const structuredData = {
       jobTitle: f.role,
       ...(f.linkedIn ? { sameAs: [f.linkedIn] } : {}),
     })),
-    // Identity cluster — every additional verified profile here strengthens
-    // the "Posty" brand-entity in Google's Knowledge Graph.
-    // Add/remove URLs as social profiles are claimed.
-    sameAs: [
-      "https://www.linkedin.com/company/posty-app",
-      "https://twitter.com/posty_app",
-      "https://x.com/posty_app",
-      ...seoConfig.founders.map((f) => f.linkedIn).filter(Boolean),
-    ],
+    // Identity cluster — ONLY verified profiles. The company LinkedIn page and
+    // the X handle were removed (2026-10-22) because they are not confirmed to
+    // exist; add them back here once claimed.
+    sameAs: seoConfig.founders.map((f) => f.linkedIn).filter(Boolean),
     contactPoint: {
       "@type": "ContactPoint",
       email: seoConfig.supportEmail,
@@ -362,23 +357,40 @@ export const structuredData = {
       "@type": "PostalAddress",
       addressCountry: "FR",
     },
-    slogan: "Générez plus de prospects LinkedIn avec l'IA",
+    slogan: "Your marketing, moving forward",
+    knowsAbout: [
+      "AI marketing agent",
+      "LinkedIn content strategy",
+      "LinkedIn post automation",
+      "Content marketing automation",
+      "Personal branding on LinkedIn",
+    ],
   },
 
   softwareApplication: {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     name: "Posty AI",
-    alternateName: ["Posty", "PostyApp", "Posty App"],
+    alternateName: ["Posty", "Posty IA", "PostyApp", "Posty App"],
+    description:
+      "Posty AI is an AI marketing agent for professionals. It learns your business, writes your content and publishes it on your professional networks, starting with LinkedIn.",
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web",
     url: seoConfig.siteUrl,
-    offers: {
-      "@type": "Offer",
-      price: "0",
-      priceCurrency: "EUR",
-    },
-    // aggregateRating removed: no verified reviews yet
+    // Only features that exist in the product (see lib/config/plans.ts).
+    featureList: [
+      "AI LinkedIn post generation based on your business context",
+      "LinkedIn content strategy and weekly planning with the Marketing Strategist (Max plan)",
+      "Post scheduling (Pro and Max plans)",
+      "Direct publishing to LinkedIn",
+    ],
+    // Prices mirror lib/config/plans.ts (EUR / month). The Free plan is a trial.
+    offers: [
+      { "@type": "Offer", name: "Free", price: "0", priceCurrency: "EUR" },
+      { "@type": "Offer", name: "Pro", price: "12.90", priceCurrency: "EUR" },
+      { "@type": "Offer", name: "Max", price: "19.90", priceCurrency: "EUR" },
+    ],
+    // aggregateRating / review intentionally absent: no verified reviews yet.
   },
 
   faqPage: (questions: { question: string; answer: string }[]) => ({

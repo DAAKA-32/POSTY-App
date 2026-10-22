@@ -70,8 +70,12 @@ export default function HreflangTags({ currentPath = "/" }: HreflangTagsProps) {
 }
 
 /**
- * Static hreflang data for use in metadata
- * Can be used in generateMetadata() functions
+ * Metadata `alternates` for a page: the canonical URL only.
+ *
+ * No hreflang `languages` on purpose (2026-10-22): the language is switched
+ * client-side, so `?lang=xx` serves the same English HTML and is not a
+ * localized page. Declaring it as one sent contradictory signals. Re-add
+ * languages only once real server-rendered localized URLs exist (e.g. /fr/...).
  */
 export function getAlternateLanguages(path: string = "/") {
   const baseUrl = seoConfig.siteUrl;
@@ -80,13 +84,6 @@ export function getAlternateLanguages(path: string = "/") {
 
   return {
     canonical: `${baseUrl}${pathWithoutLang}`,
-    languages: {
-      "en-US": `${baseUrl}${pathWithoutLang}?lang=en`,
-      "fr-FR": `${baseUrl}${pathWithoutLang}?lang=fr`,
-      "es-ES": `${baseUrl}${pathWithoutLang}?lang=es`,
-      "pt-PT": `${baseUrl}${pathWithoutLang}?lang=pt`,
-      "x-default": `${baseUrl}${pathWithoutLang}`,
-    },
   };
 }
 

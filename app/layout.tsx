@@ -9,8 +9,6 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import AppProvider from "@/components/providers/AppProvider";
 import KeyboardNavigationProvider from "@/components/providers/KeyboardNavigationProvider";
 import SkipLinks from "@/components/accessibility/SkipLinks";
-import { HomepageJsonLd, HowToJsonLd, postyHowToData } from "@/components/seo/JsonLd";
-import HreflangTags from "@/components/seo/HreflangTags";
 import "./globals.css";
 
 // Secondary widgets — never on the critical path. Deferring them shaves the
@@ -46,11 +44,11 @@ export const metadata: Metadata = {
   // Base metadata
   metadataBase: new URL(siteConfig.url),
   title: {
-    default: "Posty IA — Turn LinkedIn posts into clients with AI",
-    template: "%s · Posty IA",
+    default: "Posty AI — Your AI Marketing Agent for Professionals",
+    template: "%s · Posty AI",
   },
   description:
-    "Posty (Posty AI, postyapp.ai) — Create high-performing LinkedIn posts in seconds with AI. Posty generates ready-to-publish content tailored to your audience. Start free today.",
+    "Posty (postyapp.ai) is your AI marketing agent. It learns your business, writes your content and publishes it automatically on your professional networks, to help the right audience find you.",
   keywords: [
     "Posty",
     "Posty AI",
@@ -59,14 +57,16 @@ export const metadata: Metadata = {
     "postyapp.ai",
     "Posty LinkedIn",
     "Posty AI LinkedIn",
+    "AI marketing agent",
+    "AI marketing assistant",
+    "LinkedIn content strategy",
+    "LinkedIn post automation",
+    "content marketing automation",
+    "personal branding on LinkedIn",
     "LinkedIn post generator",
     "AI LinkedIn tool",
-    "LinkedIn automation",
     "AI content creation",
-    "LinkedIn leads",
-    "personal branding",
     "LinkedIn marketing",
-    "LinkedIn engagement",
     "B2B content",
   ],
   authors: [
@@ -110,18 +110,16 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    alternateLocale: "fr_FR",
-    url: siteConfig.url,
-    siteName: "Posty",
-    title: "Posty — Posty AI · Turn LinkedIn posts into clients with AI",
+    siteName: "Posty AI",
+    title: "Posty AI — Your AI Marketing Agent for Professionals",
     description:
-      "Posty (Posty AI) — Create high-performing LinkedIn posts in seconds with AI. Posty generates ready-to-publish content tailored to your audience.",
+      "Posty learns your business, writes your content and publishes it automatically on your professional networks, to help the right audience find you.",
     images: [
       {
         url: `${siteConfig.url}/og-image.jpg`,
         width: 1200,
         height: 630,
-        alt: "Posty AI — Turn LinkedIn posts into clients with AI",
+        alt: "Posty AI — Your AI Marketing Agent for Professionals",
         type: "image/jpeg",
       },
     ],
@@ -131,9 +129,9 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     site: "@posty_app",
-    title: "Posty — Posty AI · Turn LinkedIn posts into clients with AI",
+    title: "Posty AI — Your AI Marketing Agent for Professionals",
     description:
-      "Posty (Posty AI) — Create high-performing LinkedIn posts in seconds with AI. Start free today.",
+      "Posty AI learns your business, writes your content and publishes it on your professional networks.",
     images: [`${siteConfig.url}/og-image.jpg`],
     creator: "@posty_app",
   },
@@ -151,15 +149,9 @@ export const metadata: Metadata = {
     },
   },
 
-  // Canonical & International SEO (hreflang)
-  alternates: {
-    canonical: siteConfig.url,
-    languages: {
-      "fr-FR": `${siteConfig.url}?lang=fr`,
-      "en-US": `${siteConfig.url}?lang=en`,
-      "x-default": siteConfig.url,
-    },
-  },
+  // No site-wide canonical: every route declares its own (`alternates.canonical`)
+  // so no page inherits the homepage's. No hreflang: the language is switched
+  // client-side, so `?lang=xx` serves the same HTML and is not a localized page.
 
   // Category
   category: "technology",
@@ -229,6 +221,11 @@ export default function RootLayout({
                   var root = document.documentElement;
                   var path = window.location.pathname;
                   // Public pages always render in light mode (no dark flash)
+                  // Landing: a probably-signed-in visitor gets the spinner overlay
+                  // instead of a flash of marketing content (lib/auth/auth-hint.ts).
+                  if (path === '/' && localStorage.getItem('posty-auth-hint') === '1') {
+                    root.classList.add('posty-auth-hint');
+                  }
                   var isPublicPage = path === '/' || path.startsWith('/about') || path.startsWith('/login') || path.startsWith('/signup') || path.startsWith('/legal') || path.startsWith('/pricing') || path.startsWith('/onboarding') || path.startsWith('/subscription') || path.startsWith('/ai-linkedin') || path.startsWith('/write-linkedin') || path.startsWith('/linkedin-post') || path.startsWith('/generate-linkedin');
                   if (isPublicPage) {
                     root.classList.add('light');
@@ -313,16 +310,9 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://api.openai.com" />
         <link rel="dns-prefetch" href="https://www.linkedin.com" />
 
-        {/* International SEO - hreflang tags */}
-        <HreflangTags currentPath="/" />
-
-        {/* Site-wide structured data (Organization + HowTo).
-            FAQPage is intentionally NOT injected here — it was causing
-            "Champ FAQPage en double" errors on pages that ship their own
-            page-specific FAQ (the (seo) group). FAQPage is now scoped to
-            the homepage only, via app/page.tsx. */}
-        <HomepageJsonLd />
-        <HowToJsonLd {...postyHowToData.en} />
+        {/* Structured data is page-scoped: Organization / WebSite /
+            SoftwareApplication / FAQPage live on the homepage (app/page.tsx),
+            HowTo on the AI generator page. */}
       </head>
       {/* `inter.variable` on <html> exposes --font-inter to globals.css.
           We deliberately do NOT slap `inter.className` here: that class would

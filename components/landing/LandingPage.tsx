@@ -28,7 +28,6 @@ import { useScrollLock } from "@/hooks/ui/useScrollLock";
 import AnimatedMacBook from "@/components/landing/AnimatedMacBook";
 import LandingSceneEngine from "@/components/landing/LandingSceneEngine";
 import LandingTopMask from "@/components/landing/LandingTopMask";
-import { FaqJsonLd, postyFaqData } from "@/components/seo/JsonLd";
 
 /* Below-the-fold sections — each is a multi-hundred-line component that
  * eagerly pulls Framer Motion sub-modules and decorative assets. Splitting
@@ -704,7 +703,7 @@ function HeroSection() {
               transition={{ duration: 0.4, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
               className="text-sm font-semibold uppercase tracking-[0.18em] mb-3 lg:mb-4 bg-gradient-to-r from-[#F8935D] to-[#F76B54] bg-clip-text text-transparent"
             >
-              Posty · The AI LinkedIn copilot
+              {t.landing.heroEyebrow}
             </motion.p>
 
             {/* Main headline */}
@@ -926,8 +925,9 @@ function DemoSection() {
   const [hasAnimated, setHasAnimated] = useState(alreadyPlayed);
 
   // Word-by-word reveal state
-  const HERO_WORDS_L1 = [t.landing.demoTitleWord1, t.landing.demoTitleWord2, t.landing.demoTitleWord3];
-  const HERO_WORDS_L2 = [t.landing.demoTitleWord4, t.landing.demoTitleWord5, t.landing.demoTitleWord6];
+  // Empty slots are allowed: a headline may use fewer than 3 words per line.
+  const HERO_WORDS_L1 = [t.landing.demoTitleWord1, t.landing.demoTitleWord2, t.landing.demoTitleWord3].filter(Boolean);
+  const HERO_WORDS_L2 = [t.landing.demoTitleWord4, t.landing.demoTitleWord5, t.landing.demoTitleWord6].filter(Boolean);
   const TOTAL_WORDS = HERO_WORDS_L1.length + HERO_WORDS_L2.length;
   const WORD_DELAY = 110;
 
@@ -1162,7 +1162,11 @@ function DemoSection() {
         {/* Hero title — sticky: stays on screen while content scrolls over it, fades out via titleOpacity */}
         <motion.div ref={titleRef} style={{ opacity: titleOpacity }} className="sticky top-0 left-0 right-0 z-[1] pt-24 pb-6 md:pb-2 px-4 sm:px-6 lg:px-8">
           <div className="relative text-center max-w-4xl mx-auto">
-            <h2 className="text-[2.5rem] md:text-5xl lg:text-[3.5rem] 2xl:text-[4rem] font-bold tracking-tight flex flex-col items-center gap-0 [&>span]:-my-[0.2em]">
+            <p className="mb-2 md:mb-3 text-xs md:text-sm font-semibold uppercase tracking-[0.18em] bg-gradient-to-r from-[#F8935D] to-[#F76B54] bg-clip-text text-transparent">
+              {t.landing.heroEyebrow}
+            </p>
+            {/* The page's only h1: the hero headline (the older HeroSection below is not mounted). */}
+            <h1 className="text-[2.5rem] md:text-5xl lg:text-[3.5rem] 2xl:text-[4rem] font-bold tracking-tight flex flex-col items-center gap-0 [&>span]:-my-[0.2em]">
               <span className="block">
                 {HERO_WORDS_L1.map((word, i) => (
                   <Fragment key={word}>
@@ -1181,7 +1185,7 @@ function DemoSection() {
                     {i < HERO_WORDS_L1.length - 1 ? " " : ""}
                   </Fragment>
                 ))}
-              </span>
+              </span>{" "}
               <span className="block">
                 {HERO_WORDS_L2.map((word, i) => {
                   const globalIndex = HERO_WORDS_L1.length + i;
@@ -1204,7 +1208,7 @@ function DemoSection() {
                   );
                 })}
               </span>
-            </h2>
+            </h1>
 
             <motion.p
               initial={{ opacity: 0, y: 10 }}
@@ -5521,7 +5525,11 @@ export default function LandingPage() {
     }
   }, [loading, user, userProfile, router]);
 
-  if (loading || user) {
+  // The landing is ALWAYS rendered (server HTML included) so search engines
+  // read it. Only a known signed-in user gets the spinner while redirecting.
+  // Before auth resolves, a returning user is covered by .posty-auth-overlay,
+  // shown by CSS when <html> carries the auth-hint class (lib/auth/auth-hint).
+  if (user) {
     return (
       <div className="min-h-screen bg-[#FEF3EE] flex items-center justify-center">
         <div className="w-10 h-10 border-4 border-[#F8935D] border-t-transparent rounded-full animate-spin" />
@@ -5536,9 +5544,10 @@ export default function LandingPage() {
     // sections tagged with `data-scene`, plus a global silver-star canvas that
     // travels across every scene (previously bounded to FAQ + Hero only).
     <div className="relative">
-      {/* Site-wide FAQPage JSON-LD — scoped to the homepage only to avoid
-          duplicating the schema on (seo) group pages that ship their own. */}
-      <FaqJsonLd questions={postyFaqData.en} />
+      {/* Returning signed-in visitor: covers the landing until auth resolves. */}
+      <div aria-hidden className="posty-auth-overlay fixed inset-0 z-[200] bg-[#FEF3EE] items-center justify-center">
+        <div className="w-10 h-10 border-4 border-[#F8935D] border-t-transparent rounded-full animate-spin" />
+      </div>
       {/* Unified background: gradients + stars + dot grid, scroll-driven. */}
       <LandingSceneEngine />
       <Navbar />
@@ -5566,11 +5575,15 @@ export default function LandingPage() {
             the social-proof and conversion blocks under one cooler-air
             wash that signals "method / how it works / what it returns". */}
         <div data-scene="schedule" className="relative z-[5]">
-          <CopilotSectionWrapper />
+          {/* Hidden from the landing (code kept): "Votre copilote LinkedIn, disponible 24h/24"
+              manual-vs-Posty comparison. Re-enable by restoring <CopilotSectionWrapper />. */}
+          {/* <CopilotSectionWrapper /> */}
           <TestimonialsSection />
           <FounderSection />
-          {/* ROI simulator — value-before-price anchor */}
-          <ROISimulator />
+          {/* Hidden from the landing (code kept): the ROI simulator projects revenue from
+              an assumed conversion rate, which Posty cannot substantiate. Re-enable by
+              restoring <ROISimulator />. */}
+          {/* <ROISimulator /> */}
           <PricingSection />
         </div>
 

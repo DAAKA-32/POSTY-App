@@ -13,7 +13,8 @@ export async function generateMetadata(
   const t = translations[resolved];
   const alternates = getAlternateLanguages(path);
   return {
-    title: t.meta.title,
+    // Absolute: the title already carries the brand ("| Posty").
+    title: { absolute: t.meta.title },
     description: t.meta.description,
     alternates,
     openGraph: {

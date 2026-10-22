@@ -1,31 +1,31 @@
 import { Metadata } from "next";
 import SwipeBackProvider from "@/components/providers/SwipeBackProvider";
-import { FaqJsonLd, ProductJsonLd, BreadcrumbJsonLd, postyFaqData } from "@/components/seo/JsonLd";
+import { ProductJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 
 const baseUrl =
   process.env.NEXT_PUBLIC_BASE_URL || "https://postyapp.ai";
 
 export const metadata: Metadata = {
-  title: "Pricing — Pro & Max Plans | Posty AI",
+  title: "Pricing — Pro and Max plans",
   description:
-    "Choose the right Posty plan for your LinkedIn strategy. Pro at $12.90/mo or Max at $19.90/mo. Generate unlimited AI-powered posts and turn content into clients. Free plan available.",
+    "Posty AI pricing: Pro at €12.90/month and Max at €19.90/month, after a 30-day free trial. Choose how much of your marketing your AI agent takes off your hands.",
   robots: {
     index: true,
     follow: true,
   },
   openGraph: {
-    title: "Posty AI Pricing — Pro & Max Plans",
+    title: "Pricing — Pro and Max plans · Posty AI",
     description:
-      "Unlock unlimited AI-powered LinkedIn posts. Choose Pro or Max and start turning your content into clients.",
+      "Pro at €12.90/month and Max at €19.90/month, after a 30-day free trial.",
     url: `${baseUrl}/subscription`,
     type: "website",
     siteName: "Posty AI",
   },
   twitter: {
     card: "summary",
-    title: "Posty AI Pricing — Pro & Max Plans",
+    title: "Pricing — Pro and Max plans · Posty AI",
     description:
-      "Unlock unlimited AI-powered LinkedIn posts. Choose your plan and start today.",
+      "Pro at €12.90/month and Max at €19.90/month, after a 30-day free trial.",
   },
   alternates: {
     canonical: `${baseUrl}/subscription`,
@@ -39,10 +39,10 @@ export default function SubscriptionLayout({
 }) {
   return (
     <SwipeBackProvider>
-      {/* Structured data for rich snippets */}
-      <FaqJsonLd questions={postyFaqData.en} />
-      <ProductJsonLd name="Posty Pro" description="AI-powered LinkedIn post generator — Pro plan with unlimited posts, personalized AI, and LinkedIn publishing." price={12.90} />
-      <ProductJsonLd name="Posty Max" description="AI-powered LinkedIn post generator — Max plan with dual AI responses, advanced coaching, and priority support." price={19.90} />
+      {/* Structured data. No FAQPage here: this page shows its own pricing FAQ,
+          and the schema must match visible content. */}
+      <ProductJsonLd name="Posty AI Pro" description="Posty AI, the AI marketing agent for professionals: Pro plan." price={12.90} />
+      <ProductJsonLd name="Posty AI Max" description="Posty AI, the AI marketing agent for professionals: Max plan." price={19.90} />
       <BreadcrumbJsonLd items={[
         { name: "Posty AI", url: `${baseUrl}` },
         { name: "Pricing" },

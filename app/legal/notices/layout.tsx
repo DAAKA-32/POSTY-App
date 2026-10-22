@@ -3,7 +3,7 @@ import { Metadata } from "next";
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://postyapp.ai";
 
 export const metadata: Metadata = {
-  title: "Legal Notices | Posty AI",
+  title: "Legal Notices",
   description:
     "Posty AI legal notices. Company information, hosting details, and regulatory information.",
   robots: { index: true, follow: true },
