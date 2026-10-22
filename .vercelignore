@@ -4,3 +4,9 @@
 .env*
 *.pem
 firestore-debug.log
+# Firebase Admin key and local QA artefacts — never upload (the CLI ignores .gitignore).
+service-account.json
+.preview-browser/
+.ui-shots/
+test-results/
+playwright-report/
