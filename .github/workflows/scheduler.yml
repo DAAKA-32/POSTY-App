@@ -1,0 +1,37 @@
+# Free trigger for Posty's scheduled publishing (all users).
+#
+# Calls https://postyapp.ai/api/cron/scheduler every ~10 minutes. Firebase
+# scheduled functions need the paid Blaze plan and Vercel Hobby crons are
+# daily-only; GitHub Actions minutes are free on this public repository.
+# GitHub may start scheduled runs a few minutes late — the scheduler tolerates
+# up to 24 h of lateness, and posts go out within ~10-20 min of their time.
+#
+# Setup: repository secret CRON_SECRET (same value as the CRON_SECRET env var
+# on Vercel). Optional repository variable POSTY_APP_URL (default
+# https://postyapp.ai). Schedules only run from the default branch (main).
+name: Posty scheduler
+
+on:
+  schedule:
+    - cron: "3-59/10 * * * *" # :03, :13, :23… (off the top of the hour, less congested)
+  workflow_dispatch:
+
+concurrency:
+  group: posty-scheduler
+  cancel-in-progress: false
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Publish due scheduled posts
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          APP_URL: ${{ vars.POSTY_APP_URL || 'https://postyapp.ai' }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then echo "::error::Repository secret CRON_SECRET is not set"; exit 1; fi
+          code=$(curl -sS -o response.json -w "%{http_code}" --max-time 90 \
+            -H "x-cron-secret: $CRON_SECRET" "$APP_URL/api/cron/scheduler")
+          cat response.json; echo
+          if [ "$code" != "200" ]; then echo "::error::Scheduler endpoint answered HTTP $code"; exit 1; fi

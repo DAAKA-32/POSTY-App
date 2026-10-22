@@ -3,5 +3,9 @@
   "buildCommand": "npm run build",
   "installCommand": "npm install --no-audit --no-fund",
   "devCommand": "npm run dev",
-  "regions": ["iad1"]
+  "regions": ["iad1"],
+  "crons": [
+    { "path": "/api/cron/autonomous-strategist", "schedule": "0 6 * * *" },
+    { "path": "/api/cron/analytics-retention", "schedule": "30 3 * * *" }
+  ]
 }
