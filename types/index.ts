@@ -1,5 +1,7 @@
 import { Timestamp } from "firebase/firestore";
 import { User as FirebaseUser } from "firebase/auth";
+import type { BusinessProfile } from "@/lib/business/profile";
+import type { ContentStrategy } from "@/lib/business/strategy";
 
 // ============== SUBSCRIPTION TYPES ==============
 
@@ -129,6 +131,12 @@ export interface UserProfile {
     publishingFrequency?: string;
     // Legacy field — kept for backward compatibility with existing users
     linkedinStyle?: string;
+    // Structured business context (see lib/business/profile.ts). Lives inside
+    // `profile` so it needs no firestore.rules change.
+    business?: BusinessProfile;
+    // Content pillars + cadence generated from `business` (server-written by
+    // /api/business/strategy; display-only, never injected into prompts).
+    strategy?: ContentStrategy;
   };
   stats?: {
     postsCount: number;

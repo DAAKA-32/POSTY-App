@@ -20,6 +20,7 @@ import {
 } from "firebase/firestore";
 import { auth, db } from "@/lib/db/firebase";
 import { UserProfile, Post, Session, ChatMessage, SubscriptionPlan, FacebookConnectionData, ThreadsConnectionData } from "@/types";
+import { normalizeBusinessProfile, type BusinessProfile } from "@/lib/business/profile";
 import { PlanType, DAILY_MESSAGE_LIMITS, PLAN_CONFIGS, getFounderOverridePlan, calculateFreeTrialEndDate } from "@/lib/config/plans";
 
 /**
@@ -169,6 +170,9 @@ export async function getUserProfile(
       // matching UI re-shows on every device: the field is written below in
       // updateUserProfile but never reaches `userProfile` unless mapped back.
       hasSeenAppTour: data.hasSeenAppTour,
+      // Strategist weekly-plan state, shown on the marketing overview.
+      autonomousMode: data.autonomousMode,
+      pendingAutoBatchId: data.pendingAutoBatchId,
       whatsNewSeenRelease: data.whatsNewSeenRelease,
       legalVersionsSeen: data.legalVersionsSeen,
       createdAt: data.createdAt,
@@ -226,6 +230,22 @@ export async function updateUserProfile(
   }
 
   await updateDoc(userRef, updateData);
+}
+
+/**
+ * Save the structured business context. Dotted path => only `profile.business`
+ * is replaced; the onboarding fields next to it are never touched.
+ */
+export async function saveBusinessProfile(
+  userId: string,
+  business: BusinessProfile
+): Promise<BusinessProfile> {
+  const clean: BusinessProfile = {
+    ...normalizeBusinessProfile(business),
+    updatedAt: new Date().toISOString(),
+  };
+  await updateDoc(doc(db, "users", userId), { "profile.business": clean });
+  return clean;
 }
 
 export async function completeOnboarding(

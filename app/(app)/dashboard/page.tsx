@@ -15,6 +15,7 @@ import ActivityChart from "@/components/dashboard/ActivityChart";
 import ResponseModeChart from "@/components/dashboard/ResponseModeChart";
 import FeatureUsageChart from "@/components/dashboard/FeatureUsageChart";
 import InsightsSection from "@/components/dashboard/InsightsSection";
+import MarketingOverview from "@/components/dashboard/MarketingOverview";
 import DashboardOnboarding from "@/components/dashboard/DashboardOnboarding";
 import { AnimatedLogo } from "@/components/ui/Logo";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
@@ -285,6 +286,9 @@ function DashboardContent() {
             </div>
           </div>
         </div>
+
+        {/* Marketing progress: pipeline, next action, business context, strategy */}
+        <MarketingOverview />
 
         {/* KPI Cards — infinite marquee (same effect as the landing's value
             carousel): two rows drifting in opposite directions, edge-faded and

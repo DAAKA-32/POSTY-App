@@ -710,6 +710,7 @@ export async function getUserProfileAdmin(userId: string): Promise<{
     targetAudience?: string;
     communicationTone?: string;
     publishingFrequency?: string;
+    business?: unknown;
   };
   isTestMode?: boolean;
 } | null> {

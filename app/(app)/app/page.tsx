@@ -66,6 +66,7 @@ import { trackPostGeneration, initAnalytics } from "@/lib/utils/analytics";
 import UniversalChatInput, { UniversalChatInputRef } from "@/components/chat/UniversalChatInput";
 import ActionConfirmCard from "@/components/ai-actions/ActionConfirmCard";
 import { getPersonalizedGreeting, getPersonalizedSubtitle } from "@/lib/services/personalization";
+import BusinessContextNudge from "@/components/business/BusinessContextNudge";
 import { getGiftPopupInfo, isGiftPopupPreviewEmail } from "@/lib/config/plans";
 
 // Premium animation easings - inspired by Linear, Notion
@@ -1288,6 +1289,7 @@ function AppContent() {
                 >
                   {getPersonalizedSubtitle(userProfile?.profile, language)}
                 </motion.p>
+                <BusinessContextNudge />
 
                 {/* Ready-to-publish post categories — gated behind a rollout
                     flag while the template catalog is finalized. The editor

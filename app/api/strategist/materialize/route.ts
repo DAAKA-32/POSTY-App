@@ -102,6 +102,7 @@ async function loadUserContextAndPosts(uid: string): Promise<{
       targetAudience: p.targetAudience,
       communicationTone: p.communicationTone,
       linkedinStyle: p.linkedinStyle,
+      business: p.business,
     };
     // Same business grounding Phase-1 (generate-batch) was given — restores
     // parity so the prose step is as grounded as the brief that shaped it.

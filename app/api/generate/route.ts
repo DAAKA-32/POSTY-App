@@ -423,6 +423,7 @@ export async function POST(request: NextRequest) {
               ...(profile.targetAudience && { targetAudience: profile.targetAudience }),
               ...(profile.communicationTone && { communicationTone: profile.communicationTone }),
               ...(profile.publishingFrequency && { publishingFrequency: profile.publishingFrequency }),
+              ...(profile.business ? { business: profile.business } : {}),
             };
           }
           // No personalization if plan doesn't support it

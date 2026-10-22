@@ -57,6 +57,9 @@ export interface UserContext {
   bio?: string;
   tagline?: string;
   website?: string;
+  /** Raw `profile.business` (structured business context); sanitized and
+   *  rendered inside the planner prompt. */
+  business?: unknown;
 }
 
 export type PlanPeriod = "day" | "week" | "month" | "none";
@@ -139,6 +142,7 @@ export async function loadUserContextAndPosts(uid: string): Promise<{
         (typeof branding.socialLinks?.website === "string" &&
           branding.socialLinks.website.trim()) ||
         undefined,
+      business: profile.business,
     };
     const snippets = postsSnap.docs
       .map((doc) => {

@@ -16,6 +16,7 @@
 
 import { z } from "zod";
 import type { StrategistAdvancedParams } from "@/types";
+import { renderBusinessLines } from "@/lib/business/render";
 import type { ExtractedUrlContent } from "@/lib/utils/url-extract";
 import {
   FORMATS,
@@ -86,6 +87,8 @@ export function buildBatchPlanPrompt(opts: {
     bio?: string;
     tagline?: string;
     website?: string;
+    /** Raw `profile.business` — rendered (sanitized) into the profile block. */
+    business?: unknown;
   };
   /** Last 3-5 post excerpts — used to AVOID repeating recent topics/openings. */
   recentPostSnippets?: string[];
@@ -111,6 +114,7 @@ export function buildBatchPlanPrompt(opts: {
     userContext.targetAudience && `- ${fr ? "Audience cible" : "Target audience"}: ${userContext.targetAudience}`,
     userContext.communicationTone && `- ${fr ? "Ton" : "Tone"}: ${userContext.communicationTone}`,
     userContext.publishingFrequency && `- ${fr ? "Fréquence souhaitée" : "Preferred frequency"}: ${userContext.publishingFrequency}`,
+    renderBusinessLines(userContext.business, fr ? "fr" : "en"),
   ].filter(Boolean).join("\n") || (fr ? "- (aucun champ de profil renseigné)" : "- (no profile fields captured yet)");
 
   const recentBlock = recentPostSnippets?.length

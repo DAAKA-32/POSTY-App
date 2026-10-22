@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { completeOnboarding } from "@/lib/db/firestore";
+import { trackEvent } from "@/lib/analytics/tracker";
 import {
   OnboardingData,
   normalizeMultiSelect,
@@ -385,6 +386,12 @@ export default function OnboardingPage() {
     }
   }, [currentStep, data, showRecap, isEditMode]);
 
+  // Funnel milestone: a first-time user landed on the first step (never on an
+  // edit or a resumed session — those are not "starts").
+  useEffect(() => {
+    if (!isEditMode && !savedProgress.current) void trackEvent("onboarding_started");
+  }, [isEditMode]);
+
   // Pre-fill onboarding data when returning to edit (handles legacy string → array migration)
   useEffect(() => {
     if (isEditMode && userProfile?.profile) {
@@ -529,6 +536,7 @@ export default function OnboardingPage() {
         // to prevent the redirect useEffect from navigating to /app during
         // intermediate renders where onboardingComplete=true but showRecap=false.
         setShowRecap(true);
+        void trackEvent("onboarding_completed");
         await refreshUserProfile();
         clearOnboardingFlag();
       }
