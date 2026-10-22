@@ -140,6 +140,9 @@ interface AuthFieldProps {
   rightElement?: React.ReactNode;
   /** Right-aligned accessory rendered on the label row (e.g. "Forgot password?"). */
   labelAccessory?: React.ReactNode;
+  /** On short screens the visible label drops out (kept for screen readers) and
+   *  the placeholder — when it simply repeats the label — takes over. */
+  compactLabel?: boolean;
   error?: string;
   prefersReducedMotion: boolean;
 }
@@ -160,14 +163,16 @@ const AuthField = ({
   inputRef,
   rightElement,
   labelAccessory,
+  compactLabel,
   error,
   prefersReducedMotion,
 }: AuthFieldProps) => {
   const errorId = `${id}-error`;
+  const echoPlaceholder = !!compactLabel && placeholder === label;
 
   return (
     <div>
-      <div className="mb-1.5 flex items-baseline justify-between gap-3">
+      <div className={`mb-1.5 flex items-baseline justify-between gap-3 ${compactLabel ? "[@media(max-height:700px)]:sr-only" : ""}`}>
         <label
           htmlFor={id}
           className="text-[12.5px] font-medium tracking-[0.01em] text-gray-600"
@@ -203,7 +208,7 @@ const AuthField = ({
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? errorId : undefined}
           className={`
-            relative h-[clamp(44px,6.3dvh,52px)] w-full rounded-xl pl-11
+            relative h-[clamp(40px,6.3dvh,52px)] w-full rounded-xl pl-11 ${echoPlaceholder ? "[@media(min-height:701px)]:placeholder:!text-transparent" : ""}
             border bg-white/80 text-[16px] text-gray-900 placeholder:text-gray-400
             transition-[border-color,box-shadow,background-color] duration-200 ease-out
             focus:outline-none
@@ -500,7 +505,7 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: prefersReducedMotion ? 0 : dur.slow, ease: ease.enter, delay: 0.05 }}
-        className="mb-[clamp(12px,2.6dvh,24px)] min-h-[58px] text-center sm:min-h-[64px] [@media(max-height:760px)]:min-h-0"
+        className={`mb-[clamp(6px,2.6dvh,24px)] min-h-[58px] text-center sm:min-h-[64px] [@media(max-height:760px)]:min-h-0 ${mode === "signup" ? "[@media(max-height:900px)]:min-h-0" : ""}`}
       >
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
@@ -510,10 +515,10 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
             exit={{ opacity: 0, y: -5 }}
             transition={{ duration: prefersReducedMotion ? 0 : dur.fast, ease: ease.enter }}
           >
-            <h1 className="text-silver-solid mb-1 text-[24px] font-bold leading-tight tracking-[-0.02em] sm:text-[28px]">
+            <h1 className="text-silver-solid mb-1 text-[24px] font-bold leading-tight tracking-[-0.02em] sm:text-[28px] [@media(max-height:700px)]:text-[22px]">
               {mode === "login" ? t.auth.welcomeBack : t.auth.createAccount}
             </h1>
-            <p className="mx-auto max-w-[300px] text-[13.5px] leading-snug text-gray-500 [@media(max-height:760px)]:hidden">
+            <p className={`mx-auto max-w-[300px] text-[13.5px] leading-snug text-gray-500 [@media(max-height:760px)]:hidden ${mode === "signup" ? "[@media(max-height:900px)]:hidden" : ""}`}>
               {mode === "login" ? t.auth.loginSubtitle : t.auth.signupSubtitle}
             </p>
           </motion.div>
@@ -572,16 +577,17 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
             )}
           </AnimatePresence>
 
-          <form onSubmit={handleSubmit} className="space-y-[clamp(10px,1.9dvh,16px)]" noValidate={false}>
+          <form onSubmit={handleSubmit} className="space-y-[clamp(8px,1.9dvh,16px)]" noValidate={false}>
             {/* Name field - Signup only */}
             {mode === "signup" && (
               <AuthField
                 id={nameId}
                 label={t.auth.yourName}
                 type="text"
-                /* Label already says "Your name" — repeating it as a placeholder
-                   is noise, so the field stays clean until focused. */
-                placeholder=""
+                /* The label already says "Your name": the placeholder echoes it
+                   only on short screens, where the label is visually dropped. */
+                placeholder={t.auth.yourName}
+                compactLabel
                 value={displayName}
                 onChange={(e) => { setDisplayName(e.target.value); setError(""); }}
                 icon={<UserIcon />}
@@ -599,6 +605,7 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
             <AuthField
               id={emailId}
               label={t.auth.emailAddress}
+              compactLabel={mode === "signup"}
               type="email"
               placeholder={t.auth.emailPlaceholder}
               value={email}
@@ -618,6 +625,7 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
               <AuthField
                 id={passwordId}
                 label={t.auth.password}
+                compactLabel={mode === "signup"}
                 type={showPassword ? "text" : "password"}
                 /* Language-neutral mask, not a translated "Your password" that
                    just echoes the label. */
@@ -677,10 +685,11 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
                     transition={{ duration: prefersReducedMotion ? 0 : 0.28, ease: ease.enter }}
                     className="overflow-hidden"
                   >
-                    <div className="space-y-2.5 pt-1">
-                      {/* Strength bar */}
-                      <div className="space-y-1.5">
-                        <div className="h-1.5 overflow-hidden rounded-full bg-gray-200/80">
+                    <div className="space-y-1 pt-1">
+                      {/* Strength: bar + verdict on ONE row, so typing a password
+                          doesn't push the form past the viewport. */}
+                      <div className="flex items-center gap-2.5">
+                        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-200/80">
                           <motion.div
                             className="h-full rounded-full"
                             style={{ backgroundColor: passwordStrength.color }}
@@ -689,45 +698,25 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
                             transition={{ duration: 0.4, ease: "easeOut" }}
                           />
                         </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-[10.5px] text-gray-500">{t.auth.strength}</span>
-                          <span
-                            className="text-[10.5px] font-medium"
-                            style={{ color: passwordStrength.color }}
-                          >
-                            {t.auth.passwordStrength[passwordStrength.labelKey]}
-                          </span>
-                        </div>
+                        <span
+                          className="shrink-0 text-[10.5px] font-medium"
+                          style={{ color: passwordStrength.color }}
+                        >
+                          {t.auth.passwordStrength[passwordStrength.labelKey]}
+                        </span>
                       </div>
 
-                      {/* Criteria checklist — single column on very narrow
-                          phones, where two columns force the labels to ellipsis
-                          ("8 characters mini…") and lose their meaning. */}
-                      <div className="grid grid-cols-1 gap-x-3 gap-y-1.5 min-[380px]:grid-cols-2">
-                        {passwordCriteria.map((criterion) => (
-                          <div
-                            key={criterion.labelKey}
-                            className={`flex items-center gap-1.5 text-[10.5px] transition-colors duration-200 ${
-                              criterion.met ? "text-emerald-600" : "text-gray-400"
-                            }`}
-                          >
-                            <motion.span
-                              className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full transition-colors duration-200 ${
-                                criterion.met ? "bg-emerald-100" : "bg-gray-200"
-                              }`}
-                              animate={{ scale: criterion.met && !prefersReducedMotion ? [1, 1.18, 1] : 1 }}
-                              transition={{ duration: 0.22 }}
-                            >
-                              {criterion.met ? (
-                                <CheckIcon className="h-2 w-2" />
-                              ) : (
-                                <span className="h-1 w-1 rounded-full bg-gray-400" />
-                              )}
-                            </motion.span>
-                            <span className="leading-tight">{t.auth.passwordCriteria[criterion.labelKey]}</span>
-                          </div>
-                        ))}
-                      </div>
+                      {/* What is still missing, on a single line — it disappears
+                          once every criterion is met (the checklist grid used to
+                          take two extra rows). */}
+                      {passwordCriteria.some((c) => !c.met) && (
+                        <p className="text-[10.5px] leading-snug text-gray-400">
+                          {passwordCriteria
+                            .filter((c) => !c.met)
+                            .map((c) => t.auth.passwordCriteria[c.labelKey])
+                            .join(" · ")}
+                        </p>
+                      )}
                     </div>
                   </motion.div>
                 )}
@@ -756,7 +745,7 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
                   </PremiumCheckbox>
                 </motion.div>
 
-                <p id={consentId} className="mt-2 pl-[30px] text-[11px] leading-relaxed text-gray-400">
+                <p id={consentId} className="mt-1.5 pl-[30px] text-[11px] leading-snug text-gray-400 [@media(max-height:700px)]:text-[10px]">
                   {t.consent.ageConfirm}
                 </p>
 
@@ -784,7 +773,7 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
               disabled={submitDisabled}
               aria-busy={isLoading}
               className="
-                group relative mt-1 h-[clamp(44px,6.3dvh,52px)] w-full overflow-hidden rounded-xl
+                group relative mt-1 h-[clamp(40px,6.3dvh,52px)] w-full overflow-hidden rounded-xl
                 bg-gradient-to-r from-warm-orange to-warm-coral
                 text-[15px] font-semibold tracking-[0.01em]
                 shadow-[0_1px_2px_rgba(15,17,21,0.06),0_10px_24px_-10px_rgba(248,147,93,0.75)]
@@ -832,7 +821,7 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
           </form>
 
           {/* Divider — hairlines fading into the card, not hard rules */}
-          <div className="my-[clamp(10px,2.2dvh,24px)] flex items-center gap-3">
+          <div className="my-[clamp(6px,2.2dvh,24px)] flex items-center gap-3">
             <span aria-hidden className="h-px flex-1 bg-gradient-to-r from-transparent to-gray-200" />
             <span className="shrink-0 text-[10.5px] font-medium uppercase tracking-[0.14em] text-gray-400">
               {t.auth.orContinueWith}
@@ -851,7 +840,7 @@ export default function AuthPanel({ initialMode = "login", onSuccess }: AuthPane
           />
 
           {/* Toggle mode */}
-          <div className="mt-[clamp(6px,1.6dvh,20px)] text-center">
+          <div className="mt-[clamp(2px,1.6dvh,20px)] text-center">
             <p className="text-[13px] text-gray-500">
               {mode === "login" ? t.auth.noAccount : t.auth.haveAccount}{" "}
               <button

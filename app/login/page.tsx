@@ -237,12 +237,12 @@ function LoginPageContent() {
           initial="hidden"
           animate="visible"
           variants={containerVariants}
-          className="min-h-full flex flex-col px-4"
+          className="relative min-h-full flex flex-col px-4"
         >
           {/* Mobile Header - Back */}
           <motion.div
             variants={itemVariants}
-            className="flex items-center py-2 shrink-0"
+            className="flex items-center py-2 shrink-0 [@media(max-height:600px)]:absolute [@media(max-height:600px)]:left-3 [@media(max-height:600px)]:top-2 [@media(max-height:600px)]:z-20 [@media(max-height:600px)]:py-0"
           >
             <Link
               href="/"
@@ -251,7 +251,7 @@ function LoginPageContent() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
-              {t.common.back}
+              <span className="[@media(max-height:600px)]:sr-only">{t.common.back}</span>
             </Link>
           </motion.div>
 
@@ -263,7 +263,7 @@ function LoginPageContent() {
             variants={itemVariants}
             className="flex-1 flex flex-col justify-center py-2"
           >
-            <div className="posty-landing-glass-card relative overflow-hidden rounded-3xl px-5 py-[clamp(16px,3.2dvh,32px)] sm:px-7">
+            <div className="posty-landing-glass-card relative overflow-hidden rounded-3xl px-5 py-[clamp(12px,3.2dvh,32px)] sm:px-7">
               <span aria-hidden className="posty-glass-sheen" />
               <span aria-hidden className="posty-glass-wash" />
               <AuthPanel initialMode={initialMode} onSuccess={() => {}} />
@@ -273,7 +273,7 @@ function LoginPageContent() {
           {/* Footer links */}
           <motion.div
             variants={itemVariants}
-            className="py-2 flex flex-wrap justify-center gap-4 text-xs text-text-muted shrink-0 [@media(max-height:640px)]:hidden"
+            className="py-2 flex flex-wrap justify-center gap-4 text-xs text-text-muted shrink-0 [@media(max-height:700px)]:hidden"
           >
             <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="hover:text-warm-orange transition-colors">{t.common.privacy}</a>
             <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="hover:text-warm-orange transition-colors">{t.common.terms}</a>
