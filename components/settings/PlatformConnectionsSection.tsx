@@ -535,10 +535,12 @@ export default function PlatformConnectionsSection() {
       : platform === "threadsz" ? threadszLoading
       : false;
 
-    // Threads and Facebook are positioned as enterprise-only offerings (not
-    // standard Max): their Meta Graph API integrations require a business
-    // verification + app review that we only support inside the Business plan.
-    const isBusinessOnlyPlatform = platform === "threads" || platform === "facebook";
+    // Threads, Facebook and Reddit are not self-serve for anyone: their APIs
+    // need a business verification / app review we run per account. Every user
+    // (whatever their plan) sees "activated on request" + a contact CTA instead
+    // of a Connect button or an upgrade pitch.
+    const isOnRequestPlatform =
+      platform === "threads" || platform === "facebook" || platform === "reddit" || platform === "threadsz";
 
     // Centralised connect/disconnect dispatch — keeps the action zone tidy.
     const triggerConnect = () => {
@@ -586,7 +588,9 @@ export default function PlatformConnectionsSection() {
     const isExpanded = expandedPlatform === platform;
 
     // Left rail color = connection state at a glance.
-    const railColor = !hasAccess
+    const railColor = isOnRequestPlatform
+      ? "bg-amber-500/50"
+      : !hasAccess
       ? "bg-gray-300/60 dark:bg-dark-border"
       : !isConnected
       ? "bg-red-500/60"
@@ -640,9 +644,9 @@ export default function PlatformConnectionsSection() {
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 min-w-0">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white truncate">{info.name}</h3>
-              {isBusinessOnlyPlatform ? (
+              {isOnRequestPlatform ? (
                 <span className="shrink-0 px-2 py-0.5 text-[10px] font-medium rounded-md border bg-gradient-to-r from-amber-500/10 to-yellow-500/10 text-amber-700 dark:text-amber-400 border-amber-500/25">
-                  {t.settings.businessBadge}
+                  {t.settings.onRequestBadge}
                 </span>
               ) : requiredPlan ? (
                 <PlanBadge plan={requiredPlan} />
@@ -665,6 +669,13 @@ export default function PlatformConnectionsSection() {
                 transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                 className={`w-4 h-4 border-2 border-t-transparent rounded-full ${colors.text}`}
               />
+            ) : isOnRequestPlatform ? (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/25 whitespace-nowrap">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                <span className="hidden sm:inline">{t.settings.onRequestStatus}</span>
+              </span>
             ) : !hasAccess ? (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border bg-gray-500/10 text-gray-500 dark:text-gray-400 border-gray-500/20 whitespace-nowrap">
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -695,17 +706,33 @@ export default function PlatformConnectionsSection() {
               className="overflow-hidden"
             >
               <div className="px-4 sm:px-5 pb-4 pt-3 ml-[3px] border-t border-gray-200 dark:border-dark-border">
-                {!hasAccess ? (
+                {isOnRequestPlatform ? (
+                  /* Activated by our team: explanation + contact CTA (all plans) */
+                  <div className="flex flex-col gap-3 pt-2">
+                    <p className="text-xs text-text-muted leading-relaxed">
+                      {t.settings.onRequestPlatformDesc.replace("{platform}", info.name)}
+                    </p>
+                    <a
+                      href={`mailto:postygroup@gmail.com?subject=${encodeURIComponent(`Posty — ${info.name} activation`)}`}
+                      className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary/90 rounded-lg transition-colors"
+                    >
+                      {t.settings.onRequestContactCta}
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </a>
+                  </div>
+                ) : !hasAccess ? (
                   /* Locked → explanation + upgrade CTA */
                   <div className="flex flex-col gap-3 pt-2">
                     <p className="text-xs text-text-muted leading-relaxed">
-                      {isBusinessOnlyPlatform ? t.settings.businessOnlyPlatform : t.settings.upgradeToUnlockPlatform}
+                      {t.settings.upgradeToUnlockPlatform}
                     </p>
                     <Link
-                      href={isBusinessOnlyPlatform ? "/business" : "/subscription"}
+                      href="/subscription"
                       className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary/90 rounded-lg transition-colors"
                     >
-                      {isBusinessOnlyPlatform ? t.settings.discoverBusinessOffer : t.ui.viewPlans}
+                      {t.ui.viewPlans}
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                       </svg>
@@ -715,10 +742,9 @@ export default function PlatformConnectionsSection() {
                   <div className="flex flex-col gap-3 pt-2">
                     {/* Description */}
                     <p className="text-xs text-text-muted leading-relaxed">
-                      {platform === "linkedin" ? t.settings.platformLinkedinDesc
-                        : platform === "threads" ? t.settings.platformThreadsDesc
-                        : platform === "facebook" ? t.settings.platformFacebookDesc
-                        : info.description}
+                      {/* Threads / Facebook / Reddit never reach this branch:
+                          they are handled by the on-request block above. */}
+                      {platform === "linkedin" ? t.settings.platformLinkedinDesc : info.description}
                     </p>
 
                     {/* Connected profile detail card */}

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { isAdminInitialized } from "@/lib/db/firebase-admin";
 import { saveDiscordConnectionAdmin } from "@/lib/db/firestore-admin";
 import { verifyAuth } from "@/lib/auth";
+import { requirePlatformPlan } from "@/lib/api/platform-gate";
 import {
   parseDiscordWebhookUrl,
   fetchDiscordWebhookInfo,
@@ -16,6 +17,8 @@ export async function POST(request: NextRequest) {
   try {
     const auth = await verifyAuth(request);
     if (auth.error) return auth.error;
+    const planGate = await requirePlatformPlan(auth, "discord");
+    if (planGate) return planGate;
 
     const { userId: bodyUserId, webhookUrl } = (await request.json()) as {
       userId?: string;

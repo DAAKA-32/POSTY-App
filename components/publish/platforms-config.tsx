@@ -37,7 +37,7 @@ export const PLATFORMS: PlatformOption[] = [
     color: "text-[#0A66C2]",
     bgColor: "bg-[#0A66C2]/20",
     borderColor: "border-[#0A66C2]",
-    minPlan: "pro",
+    minPlan: "free",
   },
   {
     id: "threads",
@@ -64,7 +64,7 @@ export const PLATFORMS: PlatformOption[] = [
     color: "text-[#0085FF]",
     bgColor: "bg-[#0085FF]/20",
     borderColor: "border-[#0085FF]",
-    minPlan: "free",
+    minPlan: "pro",
   },
   {
     id: "mastodon",
@@ -73,7 +73,7 @@ export const PLATFORMS: PlatformOption[] = [
     color: "text-[#6364FF]",
     bgColor: "bg-[#6364FF]/20",
     borderColor: "border-[#6364FF]",
-    minPlan: "free",
+    minPlan: "pro",
   },
   {
     id: "discord",
@@ -82,6 +82,6 @@ export const PLATFORMS: PlatformOption[] = [
     color: "text-[#5865F2]",
     bgColor: "bg-[#5865F2]/20",
     borderColor: "border-[#5865F2]",
-    minPlan: "free",
+    minPlan: "pro",
   },
 ];

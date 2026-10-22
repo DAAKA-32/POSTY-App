@@ -320,7 +320,7 @@ export const PLATFORM_INFO: Record<Platform, PlatformInfo> = {
     icon: "bluesky",
     color: "#0085FF",
     description: "Réseau décentralisé pro (AT Protocol)",
-    minPlan: "free",
+    minPlan: "pro",
   },
   mastodon: {
     id: "mastodon",
@@ -328,7 +328,7 @@ export const PLATFORM_INFO: Record<Platform, PlatformInfo> = {
     icon: "mastodon",
     color: "#6364FF",
     description: "Fédéré, public tech & journalistes",
-    minPlan: "free",
+    minPlan: "pro",
   },
   discord: {
     id: "discord",
@@ -336,7 +336,7 @@ export const PLATFORM_INFO: Record<Platform, PlatformInfo> = {
     icon: "discord",
     color: "#5865F2",
     description: "Communautés (webhook)",
-    minPlan: "free",
+    minPlan: "pro",
   },
   x: {
     id: "x",
@@ -344,7 +344,7 @@ export const PLATFORM_INFO: Record<Platform, PlatformInfo> = {
     icon: "x",
     color: "#000000",
     description: "Micro-blogging temps réel (ex-Twitter)",
-    minPlan: "free",
+    minPlan: "max",
   },
   instagram: {
     id: "instagram",
@@ -352,7 +352,7 @@ export const PLATFORM_INFO: Record<Platform, PlatformInfo> = {
     icon: "instagram",
     color: "#E1306C",
     description: "Visuels et stories (requiert un compte business)",
-    minPlan: "free",
+    minPlan: "max",
   },
   reddit: {
     id: "reddit",
@@ -373,6 +373,26 @@ export const PLATFORM_INFO: Record<Platform, PlatformInfo> = {
     minPlan: "max",
   },
 };
+
+/**
+ * Platforms a user can connect on their own from Settings.
+ *
+ * Threads, Facebook, Reddit (and the Zernio-backed X / Instagram / Threads)
+ * are NOT self-serve: their APIs need a per-account verification our team
+ * runs, so the connections screen shows "activated on request" + a contact
+ * CTA for everyone. Plan copy must only advertise the self-serve list,
+ * otherwise a plan promises a network the user cannot switch on.
+ */
+export const SELF_SERVE_PLATFORMS: Platform[] = ["linkedin", "bluesky", "mastodon", "discord"];
+
+export function isSelfServePlatform(platform: Platform): boolean {
+  return SELF_SERVE_PLATFORMS.includes(platform);
+}
+
+/** The plan's platforms the user can actually connect without contacting us. */
+export function getSelfServePlatforms(plan: PlanType): Platform[] {
+  return getPlanLimits(plan).allowedPlatforms.filter(isSelfServePlatform);
+}
 
 // Get all platforms as array
 export function getAllPlatforms(): Platform[] {
@@ -507,10 +527,9 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
       hasUrlAnalysis: false,
       hasRealtimeContext: false,
       hasMarketingStrategist: false,
-      // Free plan: LinkedIn + free-friendly providers + X/Instagram (via Zernio
-      // aggregator's free tier). Reddit is Max-only.
-      allowedPlatforms: ["linkedin", "bluesky", "mastodon", "discord", "x", "instagram"],
-      maxPlatformConnections: 7,
+      // Free plan: LinkedIn only. Bluesky, Mastodon and Discord start at Pro.
+      allowedPlatforms: ["linkedin"],
+      maxPlatformConnections: 1,
       canPublishSimultaneously: false, // Multi-publish is a Max-only feature
       quotaResetPeriod: "monthly",
       imagesPerDay: 0, // Locked on Free
@@ -552,10 +571,10 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
       hasRealtimeContext: true,
       // Marketing Strategist is reserved for Max — strong premium signal.
       hasMarketingStrategist: false,
-      // Multi-Platform: LinkedIn + free-friendly providers + X/Instagram via Zernio.
-      // Reddit is Max-only.
-      allowedPlatforms: ["linkedin", "bluesky", "mastodon", "discord", "x", "instagram"],
-      maxPlatformConnections: 7,
+      // Multi-Platform: LinkedIn + Bluesky, Mastodon and Discord. Threads,
+      // Facebook and Reddit are activated on request (see Max below).
+      allowedPlatforms: ["linkedin", "bluesky", "mastodon", "discord"],
+      maxPlatformConnections: 4,
       canPublishSimultaneously: false, // Multi-publish is a Max-only feature
       quotaResetPeriod: "daily",
       imagesPerDay: 3, // Pro: 3 visuals per day
@@ -598,7 +617,8 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
       hasRealtimeContext: true,
       // Marketing Strategist — Max-exclusive
       hasMarketingStrategist: true,
-      // Multi-Platform: 6 native + X + Instagram + Reddit + Threads-Zernio (via Zernio aggregator), simultaneous publishing
+      // Multi-Platform: Bluesky, Mastodon, Discord self-serve; Threads, Facebook,
+      // Reddit (+ X, Instagram, Threads-Zernio) activated on request. Simultaneous publishing.
       allowedPlatforms: ["linkedin", "threads", "facebook", "bluesky", "mastodon", "discord", "x", "instagram", "reddit", "threadsz"],
       maxPlatformConnections: 10,
       canPublishSimultaneously: true, // Publish to multiple platforms at once
@@ -1103,15 +1123,16 @@ function getDynamicFeatureLabel(key: string, plan: PlanConfig): string {
       return "";
 
     case "multiplatform": {
-      const platforms = limits.allowedPlatforms;
+      // Only self-serve platforms: the rest are activated on request, so
+      // listing them here would promise what the user cannot switch on.
+      const platforms = limits.allowedPlatforms.filter(isSelfServePlatform);
+      if (platforms.length === 0) return "";
       if (platforms.length === 1) {
         return `${PLATFORM_INFO[platforms[0]]?.name || platforms[0]} uniquement`;
       }
       const names = platforms.map((p) => PLATFORM_INFO[p]?.name || p);
-      // 2 platforms → "A + B"; 3-4 → comma list; 5+ → first 4 + "+N autres"
       if (platforms.length <= 2) return names.join(" + ");
-      if (platforms.length <= 4) return names.join(", ");
-      return `${names.slice(0, 4).join(", ")} +${platforms.length - 4} autres`;
+      return names.join(", ");
     }
 
     case "sharing":
@@ -1220,19 +1241,17 @@ function getLocalizedDynamicFeatureLabel(key: string, plan: PlanConfig, t: Trans
       return "";
 
     case "multiplatform": {
-      const platforms = limits.allowedPlatforms;
+      // Self-serve platforms only (see SELF_SERVE_PLATFORMS): Threads,
+      // Facebook and Reddit are activated on request, so advertising them in
+      // plan copy would promise a network the user cannot switch on alone.
+      const platforms = limits.allowedPlatforms.filter(isSelfServePlatform);
+      if (platforms.length === 0) return "";
       if (platforms.length === 1) {
         return t.plans.platformOnly.replace("{name}", PLATFORM_INFO[platforms[0]]?.name || platforms[0]);
       }
       const names = platforms.map((p) => PLATFORM_INFO[p]?.name || p);
-      // 2 platforms → "A + B"; 3-4 → comma list with all names so users see
-      // exactly which networks are unlocked (LinkedIn, Bluesky, Mastodon,
-      // Discord); 5+ → first 4 + "+N more" — keeps the line readable while
-      // still being explicit about scale.
       if (platforms.length <= 2) return names.join(" + ");
-      if (platforms.length <= 4) return names.join(", ");
-      const moreLabel = t.plans.networksMore ?? "autres";
-      return `${names.slice(0, 4).join(", ")} +${platforms.length - 4} ${moreLabel}`;
+      return names.join(", ");
     }
 
     case "sharing":
@@ -1488,9 +1507,10 @@ export function getPlanFeaturesDynamic(plan: PlanConfig): FeatureItem[] {
     features.push({ text: "Génération prioritaire", included: true, highlight: true });
   }
 
-  // Multi-platform - show specific platforms
-  if (limits.allowedPlatforms.length > 1) {
-    const platformNames = limits.allowedPlatforms
+  // Multi-platform — self-serve platforms only (the others are on request)
+  const selfServe = limits.allowedPlatforms.filter(isSelfServePlatform);
+  if (selfServe.length > 1) {
+    const platformNames = selfServe
       .map(p => PLATFORM_INFO[p]?.name || p)
       .join(", ");
     features.push({

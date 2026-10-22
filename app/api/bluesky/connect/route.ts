@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { isAdminInitialized } from "@/lib/db/firebase-admin";
 import { saveBlueskyConnectionAdmin } from "@/lib/db/firestore-admin";
 import { verifyAuth } from "@/lib/auth";
+import { requirePlatformPlan } from "@/lib/api/platform-gate";
 import {
   createBlueskySession,
   fetchBlueskyProfile,
@@ -24,6 +25,8 @@ export async function POST(request: NextRequest) {
     // uid could overwrite the victim's Bluesky session with their own.
     const auth = await verifyAuth(request);
     if (auth.error) return auth.error;
+    const planGate = await requirePlatformPlan(auth, "bluesky");
+    if (planGate) return planGate;
 
     const body = await request.json();
     const { handle, password, service, userId: bodyUserId } = body as {

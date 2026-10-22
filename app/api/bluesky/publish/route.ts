@@ -7,6 +7,7 @@ import {
   updateBlueskySessionAdmin,
 } from "@/lib/db/firestore-admin";
 import { verifyAuth } from "@/lib/auth";
+import { requirePlatformPlan } from "@/lib/api/platform-gate";
 import {
   BLUESKY_MAX_POST_LENGTH,
   createBlueskyPost,
@@ -21,6 +22,8 @@ export async function POST(request: NextRequest) {
   try {
     const auth = await verifyAuth(request);
     if (auth.error) return auth.error;
+    const planGate = await requirePlatformPlan(auth, "bluesky");
+    if (planGate) return planGate;
 
     const body = await request.json();
     const { userId: bodyUserId, content } = body as { userId?: string; content?: string };
