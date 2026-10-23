@@ -16,22 +16,41 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { trackPlanClick, trackPlanView } from "@/lib/analytics/tracker";
 
 // =============================================================================
-// LANDING PRICING CARD — conversion-first, marketing-only.
-// Built fresh for the landing (kept separate from the shared PricingCard that
-// powers the authenticated /subscription page so its many states stay intact).
-// Hierarchy does the selling: Pro is a filled-gradient "hero" card that pops
-// among the lighter Free / Max cards, pulling the eye to the target plan.
+// PRICING PLAN CARD — single source of truth for the plan cards.
+// Conversion-first design born on the landing (hierarchy does the selling: Pro
+// is a filled-gradient "hero" card that pops among the lighter Free / Max cards)
+// and reused verbatim on the authenticated /subscription page. The only thing
+// that differs between the two surfaces is the CTA:
+//   • landing  → a <Link> to /signup (no auth context);
+//   • /subscription → a <button> wired to the parent's checkout handler, with
+//     the current-plan / loading / downgrade / free-active / expired states.
+// The visual is identical in both contexts.
 // =============================================================================
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
-export interface LandingPricingCardProps {
+export interface PricingPlanCardProps {
   plan: PlanConfig;
   billingPeriod: "monthly" | "yearly";
   index: number;
   /** Name of the next-lower tier, for the "+ everything in X" line. */
   previousPlanName?: string;
+  /** Analytics surface — drives trackPlanView / trackPlanClick. */
+  surface?: "landing" | "subscription";
+  /** CTA link for unauthenticated pages (used when onSelect is not provided). */
   ctaHref?: string;
+  /** When provided, the CTA becomes an action <button> (authenticated page). */
+  onSelect?: () => void;
+  isCurrentPlan?: boolean;
+  isLoading?: boolean;
+  /** Pass true for the Free plan when the 30-day trial has expired. */
+  isFreeTrialExpired?: boolean;
+  /**
+   * Pass true on the Free card when the authenticated user is currently on a
+   * paid plan (Pro / Max). Repaints the Free CTA as a subdued "downgrade"
+   * affordance; the parent handler opens the DowngradeConfirmModal on click.
+   */
+  freeAsDowngrade?: boolean;
 }
 
 function Check({ className = "" }: { className?: string }) {
@@ -42,29 +61,57 @@ function Check({ className = "" }: { className?: string }) {
   );
 }
 
-export default function LandingPricingCard({
+function ArrowRight({ className = "" }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+    </svg>
+  );
+}
+
+export default function PricingPlanCard({
   plan,
   billingPeriod,
   index,
   previousPlanName,
+  surface = "landing",
   ctaHref = "/signup",
-}: LandingPricingCardProps) {
-  const { t } = useLanguage();
+  onSelect,
+  isCurrentPlan = false,
+  isLoading = false,
+  isFreeTrialExpired = false,
+  freeAsDowngrade = false,
+}: PricingPlanCardProps) {
+  const { t, language } = useLanguage();
 
   const isFree = plan.id === "free";
   const isPro = plan.highlight; // hero / recommended
   const isMax = plan.premium; // premium tier
   const tier: "free" | "pro" | "max" = isPro ? "pro" : isMax ? "max" : "free";
 
+  // Authenticated surface → the CTA is an action button with all plan states.
+  const isAction = typeof onSelect === "function";
+
+  // The Free card on a paid user becomes a downgrade affordance: parent opens a
+  // confirmation modal that schedules `cancel_at_period_end`.
+  const isDowngradeFreeCta = freeAsDowngrade && isFree && !isCurrentPlan;
+  const downgradeLabel = language === "fr" ? "Rétrograder vers Free" : "Downgrade to Free";
+
+  // Active free plan → green "open app". Expired free / current paid → disabled.
+  const isFreeActive = isAction && isCurrentPlan && isFree && !isFreeTrialExpired;
+  const isFreeExpired = isAction && isCurrentPlan && isFree && isFreeTrialExpired;
+  const isPaidCurrent = isAction && isCurrentPlan && !isFree;
+  const ctaDisabled = isLoading || isPaidCurrent || isFreeExpired;
+
   // Analytics: one plan_view per plan when its CTA scrolls into view.
-  const ctaRef = useRef<HTMLAnchorElement>(null);
+  const ctaRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = ctaRef.current;
     if (!el || typeof IntersectionObserver === "undefined") return;
     const io = new IntersectionObserver(
       (entries) => {
         if (entries.some((e) => e.isIntersecting)) {
-          trackPlanView(plan.id, "landing");
+          trackPlanView(plan.id, surface);
           io.disconnect();
         }
       },
@@ -72,7 +119,7 @@ export default function LandingPricingCard({
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [plan.id]);
+  }, [plan.id, surface]);
 
   const taglines = getLocalizedPlanTaglines(t);
   const tagline = (taglines[plan.id] || { tagline: plan.description }).tagline;
@@ -129,6 +176,68 @@ export default function LandingPricingCard({
   const featureText = tier === "pro" ? "text-white/100" : "text-gray-700";
   const trustColor = tier === "pro" ? "text-white/90" : "text-gray-400";
 
+  // ── CTA appearance ──────────────────────────────────────────────────────────
+  // Base per-tier look (landing identity), kept for the default / loading state.
+  const ctaBase =
+    tier === "pro"
+      ? "bg-white text-[#E8783C] shadow-lg shadow-black/5 hover:shadow-xl hover:brightness-[1.02]"
+      : tier === "max"
+        ? "bg-gradient-to-r from-amber-400 to-yellow-500 text-gray-900 shadow-lg shadow-amber-500/25 hover:shadow-xl hover:shadow-amber-500/40"
+        : "bg-white text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 hover:text-gray-900";
+
+  // State overrides for the authenticated action button.
+  const ctaStateClass = isDowngradeFreeCta
+    ? "bg-gray-50 text-gray-600 ring-1 ring-inset ring-gray-200 hover:bg-gray-100 hover:text-gray-800"
+    : isFreeActive
+      ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/20 hover:bg-emerald-600"
+      : isFreeExpired
+        ? "bg-gray-100 text-gray-400 ring-1 ring-inset ring-gray-200"
+        : isPaidCurrent && tier === "pro"
+          ? "bg-white/25 text-white/90"
+          : isPaidCurrent && tier === "max"
+            ? "bg-amber-100 text-amber-600"
+            : ctaBase;
+
+  const ctaClass = `group relative mt-5 flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl px-4 py-3.5 text-[15px] font-semibold transition-all duration-200 disabled:cursor-not-allowed ${ctaStateClass}`;
+
+  // CTA inner content (shared between <Link> and <button>).
+  const ctaContent = isLoading ? (
+    <span className="relative z-10 flex items-center gap-2">
+      <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+      </svg>
+      {t.pricingCard.redirecting}
+    </span>
+  ) : isDowngradeFreeCta ? (
+    <span className="relative z-10 flex items-center gap-2">
+      <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+      </svg>
+      {downgradeLabel}
+    </span>
+  ) : isFreeActive ? (
+    <span className="relative z-10 flex items-center gap-2">
+      {t.pricingCard.openApp}
+      <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+    </span>
+  ) : isPaidCurrent || isFreeExpired ? (
+    <span className="relative z-10 flex items-center gap-2">
+      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+      </svg>
+      {t.pricingCard.currentPlan}
+    </span>
+  ) : (
+    <span className="relative z-10 flex items-center gap-2">
+      {getLocalizedCTALabel(plan.id, t)}
+      <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+    </span>
+  );
+
+  // Luxury shine sweep on the premium (Max) CTA — only in the default state.
+  const showShine = isMax && !ctaDisabled && !isDowngradeFreeCta && !isFreeActive;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 24 }}
@@ -146,7 +255,7 @@ export default function LandingPricingCard({
         <div aria-hidden className="pointer-events-none absolute -inset-2.5 -z-10 rounded-[2rem] bg-amber-400/25 blur-2xl" />
       )}
 
-      <div className={`relative isolate flex h-full flex-col overflow-hidden rounded-[1.5rem] p-6 sm:p-7 ${cardBg} ${cardShadow}`}>
+      <div className={`relative isolate flex h-full flex-col overflow-hidden rounded-[1.5rem] p-6 sm:p-7 ${cardBg} ${cardShadow} ${isCurrentPlan ? "ring-2 ring-offset-2 ring-offset-transparent" : ""} ${isCurrentPlan ? (tier === "pro" ? "ring-white/70" : tier === "max" ? "ring-amber-400/70" : "ring-emerald-400/70") : ""}`}>
         {/* Premium gloss — a soft corner sheen (white on the hero, gold on the
             premium tier) gives the surface depth; sits behind the content. */}
         {(isPro || isMax) && (
@@ -160,6 +269,24 @@ export default function LandingPricingCard({
         {/* Gold hairline crowning the premium card. */}
         {isMax && (
           <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-px bg-gradient-to-r from-transparent via-amber-400/80 to-transparent" />
+        )}
+
+        {/* "Current plan" pill — authenticated surface only. */}
+        {isAction && isCurrentPlan && (
+          <span
+            className={`absolute right-5 top-5 z-10 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide shadow-sm ${
+              tier === "pro"
+                ? "bg-white/90 text-[#E8783C]"
+                : tier === "max"
+                  ? "bg-amber-100 text-amber-700 ring-1 ring-amber-300/60"
+                  : "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/70"
+            }`}
+          >
+            <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            </svg>
+            {t.pricingCard.current}
+          </span>
         )}
 
         {/* ── Badge ── */}
@@ -220,32 +347,41 @@ export default function LandingPricingCard({
         </div>
 
         {/* ── CTA ── */}
-        <Link
-          ref={ctaRef}
-          href={ctaHref}
-          onClick={() => trackPlanClick(plan.id, "landing", billingPeriod)}
-          className={`group relative mt-5 flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl px-4 py-3.5 text-[15px] font-semibold transition-all duration-200 ${
-            tier === "pro"
-              ? "bg-white text-[#E8783C] shadow-lg shadow-black/5 hover:shadow-xl hover:brightness-[1.02]"
-              : tier === "max"
-                ? "bg-gradient-to-r from-amber-400 to-yellow-500 text-gray-900 shadow-lg shadow-amber-500/25 hover:shadow-xl hover:shadow-amber-500/40"
-                : "bg-white text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 hover:text-gray-900"
-          }`}
-        >
-          {/* Luxury shine sweep on the premium CTA. */}
-          {isMax && (
-            <span
-              aria-hidden
-              className="pointer-events-none absolute inset-0 -translate-x-[120%] bg-gradient-to-r from-transparent via-white/45 to-transparent transition-transform duration-[900ms] ease-out group-hover:translate-x-[120%]"
-            />
+        <div ref={ctaRef}>
+          {isAction ? (
+            <button
+              type="button"
+              onClick={() => {
+                trackPlanClick(plan.id, surface, billingPeriod);
+                onSelect?.();
+              }}
+              disabled={ctaDisabled}
+              className={ctaClass}
+            >
+              {showShine && (
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 -translate-x-[120%] bg-gradient-to-r from-transparent via-white/45 to-transparent transition-transform duration-[900ms] ease-out group-hover:translate-x-[120%]"
+                />
+              )}
+              {ctaContent}
+            </button>
+          ) : (
+            <Link
+              href={ctaHref}
+              onClick={() => trackPlanClick(plan.id, surface, billingPeriod)}
+              className={ctaClass}
+            >
+              {showShine && (
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 -translate-x-[120%] bg-gradient-to-r from-transparent via-white/45 to-transparent transition-transform duration-[900ms] ease-out group-hover:translate-x-[120%]"
+                />
+              )}
+              {ctaContent}
+            </Link>
           )}
-          <span className="relative z-10 flex items-center gap-2">
-            {getLocalizedCTALabel(plan.id, t)}
-            <svg className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
-          </span>
-        </Link>
+        </div>
 
         {/* ── Features ── */}
         <div className={`mt-6 border-t pt-5 ${dividerColor}`}>

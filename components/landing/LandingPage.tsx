@@ -22,7 +22,7 @@ const LANG_SHORT: Record<Language, string> = {
   pt: "PT", nl: "NL", zh: "中文", ja: "日本", ko: "한국",
 };
 import BillingToggle from "@/components/ui/BillingToggle";
-import LandingPricingCard from "@/components/pricing/LandingPricingCard";
+import PricingPlanCard from "@/components/pricing/PricingPlanCard";
 import BusinessOffer from "@/components/pricing/BusinessOffer";
 import { useScrollLock } from "@/hooks/ui/useScrollLock";
 import AnimatedMacBook from "@/components/landing/AnimatedMacBook";
@@ -5125,12 +5125,13 @@ function PricingSection() {
             itself via its own negative margin. */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 md:gap-6 lg:gap-7 max-w-5xl mx-auto items-stretch overflow-visible px-1 py-4">
           {PLANS.map((plan, index) => (
-            <LandingPricingCard
+            <PricingPlanCard
               key={plan.id}
               plan={plan}
               billingPeriod={billingPeriod}
               index={index}
               previousPlanName={index > 0 ? PLANS[index - 1].name : undefined}
+              surface="landing"
               ctaHref="/signup"
             />
           ))}

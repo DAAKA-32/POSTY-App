@@ -223,28 +223,28 @@ function ProfileRecapScreen({
   };
 
   return (
-    <div className="w-full max-w-lg px-4 sm:px-6 py-6 sm:py-10 my-auto">
+    <div className="w-full max-w-lg px-4 sm:px-6 flex-1 min-h-0 overflow-y-auto flex flex-col justify-center py-[clamp(8px,2dvh,32px)]">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: smoothEase }}
-        className="text-center mb-6"
+        className="text-center mb-[clamp(10px,2.5dvh,24px)] shrink-0"
       >
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ delay: 0.15, type: "spring", stiffness: 200, damping: 15 }}
-          className="w-14 h-14 mx-auto mb-4 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center"
+          className="w-14 h-14 [@media(max-height:700px)]:w-11 [@media(max-height:700px)]:h-11 mx-auto mb-3 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center"
         >
           <svg className="w-7 h-7 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
           </svg>
         </motion.div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">
+        <h1 className="text-2xl sm:text-3xl [@media(max-height:700px)]:text-xl font-bold text-gray-900 mb-1">
           {t.onboarding.recapTitle}
         </h1>
-        <p className="text-gray-400 text-sm">
+        <p className="text-gray-400 text-sm [@media(max-height:640px)]:hidden">
           {t.onboarding.recapSubtitle}
         </p>
       </motion.div>
@@ -271,15 +271,15 @@ function ProfileRecapScreen({
           </span>
         </div>
 
-        {/* Profile fields */}
-        <div className="space-y-1.5">
+        {/* Profile fields — two columns so the recap fits without scrolling */}
+        <div className="grid grid-cols-2 gap-x-3 gap-y-1">
           {fields.map((field, i) => (
             <motion.div
               key={field.label}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 + i * 0.04, duration: 0.3, ease: smoothEase }}
-              className="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-gray-50/80 transition-colors"
+              className="flex items-center gap-2.5 rounded-lg px-2 py-2 hover:bg-gray-50/80 transition-colors"
             >
               <div className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 flex-shrink-0">
                 {iconMap[field.icon]}
@@ -314,7 +314,7 @@ function ProfileRecapScreen({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.2, duration: 0.3 }}
-        className="mt-6 flex items-center justify-center gap-2 text-sm text-gray-400"
+        className="mt-[clamp(10px,2.5dvh,24px)] shrink-0 flex items-center justify-center gap-2 text-sm text-gray-400"
       >
         <div className="w-4 h-4 border-2 border-gray-300 border-t-[#F8935D] rounded-full animate-spin" />
         {t.onboarding.recapRedirecting}
@@ -586,7 +586,7 @@ export default function OnboardingPage() {
 
   if (loading || subscriptionLoading || !user) {
     return (
-      <div className="min-h-screen bg-[#FFF8F5] flex items-center justify-center">
+      <div className="min-h-screen onboarding-shell posty-soft-welcome flex items-center justify-center">
         <div className="w-10 h-10 border-3 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -602,15 +602,15 @@ export default function OnboardingPage() {
     !showRecap
   ) {
     return (
-      <div className="min-h-screen bg-[#FFF8F5] flex items-center justify-center">
+      <div className="min-h-screen onboarding-shell posty-soft-welcome flex items-center justify-center">
         <div className="w-10 h-10 border-3 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="fixed inset-0 overflow-y-auto overflow-x-hidden bg-[#FFF8F5]">
-    <div className="min-h-full flex flex-col">
+    <div className="fixed inset-0 overflow-hidden">
+    <div className="onboarding-shell posty-soft-welcome h-full flex flex-col">
       {/* Header */}
       <header className="p-4 sm:p-6 flex items-center justify-between max-w-2xl mx-auto w-full flex-shrink-0">
         <Link href="/" className="inline-flex items-center gap-2.5">
@@ -639,7 +639,7 @@ export default function OnboardingPage() {
       )}
 
       {/* Main content */}
-      <main className="flex-1 flex flex-col items-center justify-start">
+      <main className="flex-1 min-h-0 flex flex-col items-center">
         {showRecap ? (
           <ProfileRecapScreen
             data={data}
@@ -647,7 +647,7 @@ export default function OnboardingPage() {
             onRedirect={handleRedirectAfterOnboarding}
           />
         ) : (
-          <div className="w-full max-w-lg px-4 sm:px-6 py-8 sm:py-12 my-auto">
+          <div className="w-full max-w-lg flex-1 min-h-0 flex flex-col px-4 sm:px-6 pt-[clamp(8px,2.5dvh,32px)]">
             <AnimatePresence mode="wait" custom={direction}>
               <motion.div
                 key={currentStep}
@@ -657,27 +657,32 @@ export default function OnboardingPage() {
                 animate="center"
                 exit="exit"
                 transition={{ duration: 0.35, ease: smoothEase }}
+                className="flex-1 min-h-0 flex flex-col"
               >
                 {/* Question */}
-                <div className="text-center mb-8 sm:mb-10">
-                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                <div className="text-center shrink-0 mb-[clamp(12px,3dvh,40px)]">
+                  <h1 className="text-2xl sm:text-3xl [@media(max-height:700px)]:text-xl font-bold text-gray-900 mb-2 [@media(max-height:700px)]:mb-1">
                     {(t.onboarding as unknown as Record<string, string>)[stepConfig.titleKey]}
                   </h1>
-                  <p className="text-gray-400 text-sm sm:text-base">
+                  <p className="text-gray-400 text-sm sm:text-base [@media(max-height:640px)]:hidden">
                     {(t.onboarding as unknown as Record<string, string>)[stepConfig.subtitleKey]}
                     {stepConfig.type === "multi-select" && (
-                      <span className="block text-xs text-primary/70 mt-1 font-medium">{(t.onboarding as unknown as Record<string, string>).multiSelectHint}</span>
+                      <span className="block text-xs text-primary/70 mt-1 font-medium [@media(max-height:760px)]:hidden">{(t.onboarding as unknown as Record<string, string>).multiSelectHint}</span>
                     )}
                   </p>
-                  <p className="mt-3 text-xs text-gray-400/80 flex items-center justify-center gap-1">
+                  <p className="mt-3 text-xs text-gray-400/80 flex items-center justify-center gap-1 [@media(max-height:760px)]:hidden">
                     <span>✦</span>
                     <span>{(t.onboarding as unknown as Record<string, string>).aiInfoNote}</span>
                   </p>
                 </div>
 
-                {/* Input / Single-Select / Multi-Select */}
+                {/* Input / Single-Select / Multi-Select — the options area is the
+                    only scrollable region (safety net for very short viewports or
+                    when the "Other" field is open); it never pushes the nav bar
+                    off-screen. */}
+                <div className="flex flex-1 min-h-0 flex-col overflow-y-auto -mx-1 px-1 pb-2">
                 {stepConfig.type === "input" ? (
-                  <div className="mb-8">
+                  <div>
                     <input
                       type="text"
                       value={currentValue as string}
@@ -688,67 +693,72 @@ export default function OnboardingPage() {
                     />
                   </div>
                 ) : stepConfig.type === "multi-select" ? (
-                  <div className="grid gap-2.5 mb-8">
-                    {stepOptions.map((option, i) => {
-                      const selectedArr = (currentValue as string[]) || [];
-                      const isSelected = selectedArr.includes(option);
-                      return (
-                        <div key={option}>
-                          <motion.button
-                            initial={{ opacity: 0, y: 8 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.25, delay: i * 0.04, ease: smoothEase }}
-                            onClick={() => handleMultiToggle(stepConfig.id, option)}
-                            className={`
-                              w-full p-4 text-left rounded-xl border transition-colors duration-200
-                              ${isSelected
-                                ? "bg-primary/5 border-primary text-gray-900 shadow-sm"
-                                : "bg-white border-gray-200 text-gray-600 hover:border-primary/40"
-                              }
-                            `}
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="text-[15px] font-medium">{option}</span>
-                              <div className={`w-5 h-5 rounded flex items-center justify-center border-2 transition-colors duration-200 ${
-                                isSelected ? "bg-primary border-primary" : "border-gray-300 bg-white"
-                              }`}>
-                                {isSelected && (
-                                  <motion.svg
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: 1 }}
-                                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                                    className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                  >
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                  </motion.svg>
-                                )}
-                              </div>
-                            </div>
-                          </motion.button>
-                          {/* "Other" text input — appears when "Other" is checked */}
-                          {option === otherLabel && isSelected && (
-                            <motion.div
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: "auto" }}
-                              exit={{ opacity: 0, height: 0 }}
-                              className="mt-2"
-                            >
-                              <input
-                                type="text"
-                                value={otherTexts[stepConfig.id] || ""}
-                                onChange={(e) => handleOtherText(stepConfig.id, e.target.value)}
-                                placeholder={(t.onboarding as unknown as Record<string, string>).otherPlaceholder || "..."}
-                                className="w-full px-4 py-3 bg-white border border-primary/30 rounded-xl text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#F8935D]/30 focus:border-[#F8935D]/50 transition-all duration-200 text-sm"
-                                autoFocus
-                              />
-                            </motion.div>
-                          )}
+                  (() => {
+                    const selectedArr = (currentValue as string[]) || [];
+                    return (
+                      <div className="flex min-h-full flex-col">
+                        <div className="grid flex-1 grid-cols-2 auto-rows-[minmax(48px,76px)] content-evenly gap-x-2.5 gap-y-2 sm:gap-x-3">
+                          {stepOptions.map((option, i) => {
+                            const isSelected = selectedArr.includes(option);
+                            return (
+                              <motion.button
+                                key={option}
+                                initial={{ opacity: 0, y: 8 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.25, delay: i * 0.04, ease: smoothEase }}
+                                onClick={() => handleMultiToggle(stepConfig.id, option)}
+                                className={`
+                                  flex w-full items-center px-3 py-2 text-left rounded-xl border transition-colors duration-200
+                                  ${isSelected
+                                    ? "bg-primary/5 border-primary text-gray-900 shadow-sm"
+                                    : "bg-white border-gray-200 text-gray-600 hover:border-primary/40"
+                                  }
+                                `}
+                              >
+                                <div className="flex w-full items-center justify-between gap-2">
+                                  <span className="text-[13.5px] sm:text-[14px] font-medium leading-tight">{option}</span>
+                                  <div className={`w-5 h-5 shrink-0 rounded flex items-center justify-center border-2 transition-colors duration-200 ${
+                                    isSelected ? "bg-primary border-primary" : "border-gray-300 bg-white"
+                                  }`}>
+                                    {isSelected && (
+                                      <motion.svg
+                                        initial={{ scale: 0 }}
+                                        animate={{ scale: 1 }}
+                                        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                                        className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                      >
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                      </motion.svg>
+                                    )}
+                                  </div>
+                                </div>
+                              </motion.button>
+                            );
+                          })}
                         </div>
-                      );
-                    })}
-                  </div>
+                        {/* "Other" text input — full width below the grid when checked */}
+                        {selectedArr.includes(otherLabel) && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="mt-2.5"
+                          >
+                            <input
+                              type="text"
+                              value={otherTexts[stepConfig.id] || ""}
+                              onChange={(e) => handleOtherText(stepConfig.id, e.target.value)}
+                              placeholder={(t.onboarding as unknown as Record<string, string>).otherPlaceholder || "..."}
+                              className="w-full px-4 py-3 bg-white border border-primary/30 rounded-xl text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#F8935D]/30 focus:border-[#F8935D]/50 transition-all duration-200 text-sm"
+                              autoFocus
+                            />
+                          </motion.div>
+                        )}
+                      </div>
+                    );
+                  })()
                 ) : (
-                  <div className="grid gap-2.5 mb-8">
+                  <div className="grid min-h-full grid-cols-2 auto-rows-[minmax(56px,92px)] content-center gap-x-2.5 gap-y-[clamp(10px,2.6dvh,24px)] sm:gap-x-3">
                     {stepOptions.map((option, i) => {
                       const isSelected = (currentValue as string) === option;
                       return (
@@ -759,20 +769,21 @@ export default function OnboardingPage() {
                           transition={{ duration: 0.25, delay: i * 0.04, ease: smoothEase }}
                           onClick={() => handleSelect(stepConfig.id, option)}
                           className={`
-                            p-4 text-left rounded-xl border transition-colors duration-200
+                            flex items-center px-3 py-2 text-left rounded-xl border transition-colors duration-200
                             ${isSelected
                               ? "bg-primary/5 border-primary text-gray-900 shadow-sm"
                               : "bg-white border-gray-200 text-gray-600 hover:border-primary/40"
                             }
                           `}
                         >
-                          <div className="flex items-center justify-between">
-                            <span className="text-[15px] font-medium">{option}</span>
+                          <div className="flex w-full items-center justify-between gap-2">
+                            <span className="text-[13.5px] sm:text-[14px] font-medium leading-tight">{option}</span>
                             {isSelected && (
                               <motion.div
                                 initial={{ scale: 0 }}
                                 animate={{ scale: 1 }}
                                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                                className="shrink-0"
                               >
                                 <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
                                   <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -787,9 +798,10 @@ export default function OnboardingPage() {
                     })}
                   </div>
                 )}
+                </div>
 
-                {/* Navigation */}
-                <div className="flex gap-3">
+                {/* Navigation — pinned below the options, always visible */}
+                <div className="flex gap-3 shrink-0 pt-4 pb-[max(env(safe-area-inset-bottom),0.5rem)]">
                   {currentStep > 0 && (
                     <button
                       onClick={handleBack}

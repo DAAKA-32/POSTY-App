@@ -2267,6 +2267,23 @@ html.light main {
 html.light .app-layout main {
   background-color: transparent !important;
 }
+/* Onboarding: same /app ambient (.posty-soft-welcome) — its <header>/<main>
+   must stay transparent too, otherwise `html.light main/header` paint white
+   over the gradient. */
+html.light .onboarding-shell main,
+html.light .onboarding-shell header {
+  background-color: transparent !important;
+}
+/* Mobile: the generic `onboarding-scroll-enabled main` rule (height:100% +
+   overflow-y:auto) would turn <main> into a scroller taller than its flex
+   slot. The onboarding is a fixed one-screen shell: <main> just fills the
+   remaining space, the options area scrolls internally if ever needed. */
+@media (max-width: 1023px) {
+  body.onboarding-scroll-enabled .onboarding-shell main {
+    height: auto !important;
+    overflow: hidden !important;
+  }
+}
 
 /* MOBILE GUARD — force `<main>` inside MainLayout to zero left/right padding
    on phones, regardless of any Tailwind utility that may attempt to apply

@@ -13,7 +13,7 @@ import BillingToggle from "@/components/ui/BillingToggle";
 import toast from "@/components/ui/Toast";
 import WelcomeModal from "@/components/ui/WelcomeModal";
 import DowngradeConfirmModal from "@/components/subscription/DowngradeConfirmModal";
-import PricingCard from "@/components/pricing/PricingCard";
+import PricingPlanCard from "@/components/pricing/PricingPlanCard";
 import PageHeader from "@/components/layout/PageHeader";
 import PageNavDropdown from "@/components/layout/PageNavDropdown";
 import { usePageTitle } from "@/hooks/ui/usePageTitle";
@@ -356,39 +356,38 @@ function SubscriptionContent() {
           <BillingToggle
             isYearly={billingPeriod === "yearly"}
             onChange={(isYearly) => setBillingPeriod(isYearly ? "yearly" : "monthly")}
-            monthlyLabel={t.pricing.monthly}
-            yearlyLabel={t.pricing.yearly}
-            savingsLabel={t.subscriptionPage.monthsFree}
+            monthlyLabel={t.settings.billingMonthly}
+            yearlyLabel={t.settings.billingYearly}
+            savingsLabel={t.landing.pricingSavingsLabel}
             showSavings={true}
             size="md"
             className="mb-12"
           />
         </motion.div>
 
-        {/* Pricing Cards - Grid: 1 col mobile, 3 cols desktop */}
-        <div className="max-w-5xl mx-auto px-2 sm:px-4 md:px-0">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5 md:gap-6 lg:gap-8 items-start">
-            {PLANS.map((plan, index) => (
-              <PricingCard
-                key={plan.id}
-                plan={plan}
-                billingPeriod={billingPeriod}
-                index={index}
-                isAuthenticated={true}
-                isCurrentPlan={plan.id === currentPlan}
-                isLoading={isLoading === plan.id}
-                onSelect={() => handleSelectPlan(plan)}
-                isFreeTrialExpired={plan.id === "free" ? freeTrialExpired : undefined}
-                // Free card only: when the authenticated user is on a paid
-                // plan, repaint the CTA as a downgrade affordance instead of
-                // the "Welcome to Free" path. Parent handler routes the
-                // click to the DowngradeConfirmModal.
-                freeAsDowngrade={
-                  plan.id === "free" && hasActiveSubscription && currentPlan !== "free"
-                }
-              />
-            ))}
-          </div>
+        {/* Pricing Cards — same shared component (and visual) as the landing. */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 md:gap-6 lg:gap-7 max-w-5xl mx-auto items-stretch overflow-visible px-1 py-4">
+          {PLANS.map((plan, index) => (
+            <PricingPlanCard
+              key={plan.id}
+              plan={plan}
+              billingPeriod={billingPeriod}
+              index={index}
+              previousPlanName={index > 0 ? PLANS[index - 1].name : undefined}
+              surface="subscription"
+              isCurrentPlan={plan.id === currentPlan}
+              isLoading={isLoading === plan.id}
+              onSelect={() => handleSelectPlan(plan)}
+              isFreeTrialExpired={plan.id === "free" ? freeTrialExpired : undefined}
+              // Free card only: when the authenticated user is on a paid
+              // plan, repaint the CTA as a downgrade affordance instead of
+              // the "Welcome to Free" path. Parent handler routes the
+              // click to the DowngradeConfirmModal.
+              freeAsDowngrade={
+                plan.id === "free" && hasActiveSubscription && currentPlan !== "free"
+              }
+            />
+          ))}
         </div>
 
         {/* Legal notice — EU withdrawal waiver (Directive 2011/83/EU, art. L.221-28) */}
