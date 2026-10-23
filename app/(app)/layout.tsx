@@ -14,6 +14,7 @@ import { ThreadszProvider } from "@/contexts/ThreadszContext";
 import { SchedulingProvider } from "@/contexts/SchedulingContext";
 import PersistentMobileHeader from "@/components/layout/PersistentMobileHeader";
 import { StrategistSessionProvider } from "@/components/strategist/StrategistSession";
+import { StrategistJourneyProvider } from "@/components/strategist/journey/JourneyState";
 import {
   AutonomousBatchBanner,
   GlobalCommandPalette,
@@ -62,8 +63,10 @@ export default function AuthenticatedLayout({
                           <ThreadszProvider>
                             <SchedulingProvider>
                               <StrategistSessionProvider>
-                                {children}
-                                <GlobalCommandPalette />
+                                <StrategistJourneyProvider>
+                                  {children}
+                                  <GlobalCommandPalette />
+                                </StrategistJourneyProvider>
                               </StrategistSessionProvider>
                             </SchedulingProvider>
                           </ThreadszProvider>

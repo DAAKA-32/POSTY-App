@@ -6,14 +6,14 @@
  * cards, banners, settings) must render this component instead of an ad-hoc
  * lucide `<Sparkles />` or an inline SVG — otherwise the brand drifts.
  *
- * Visual: amber diamond + secondary mini-sparkle, matching the fallback
+ * Visual: coral diamond + secondary mini-sparkle, matching the fallback
  * inside `StrategistAvatar` so the icon-only contexts read as the same
  * identity as the avatar-with-portrait contexts.
  *
  * Sizing: pass any Tailwind `w-X h-X` via `className` — the SVG fills its
  * container, no fixed dimensions. Color is `currentColor` for primary fill
  * and `currentColor/85` for the secondary sparkle, so callers can re-tint
- * via the parent's text color (`text-amber-600`, etc.).
+ * via the parent's text color (`text-[color:var(--st-accent)]`, etc.).
  */
 
 interface Props {

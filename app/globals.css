@@ -236,6 +236,278 @@ html.dark .posty-soft-welcome::before {
     radial-gradient(ellipse 110% 80% at 50% 50%, rgba(248, 147, 93, 0.08), transparent 78%);
 }
 
+/* STRATEGIST — the same kind of backdrop as every other page of the sidebar
+   (one fixed layer, so the glass sidebar and the page read as ONE continuous
+   gradient), in the Posty corals: a peach light top-left, a rose tail
+   bottom-right, a wash entering from the sidebar edge. The centre stays
+   quieter than /app's: this page is read and filled in, not browsed. */
+.posty-soft-strategist {
+  position: relative;
+  isolation: isolate;
+  background-color: transparent;
+}
+.posty-soft-strategist::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: #FAFAFA;
+  background-image:
+    radial-gradient(ellipse 160% 50% at 60% 0%, rgba(247, 107, 84, 0.24), transparent 72%),
+    radial-gradient(ellipse 80% 60% at 18% 4%, rgba(248, 158, 133, 0.52), transparent 62%),
+    radial-gradient(ellipse 70% 60% at 92% 96%, rgba(241, 52, 82, 0.34), transparent 60%),
+    radial-gradient(ellipse 45% 100% at -8% 50%, rgba(251, 185, 173, 0.50), transparent 65%),
+    radial-gradient(ellipse 110% 80% at 50% 50%, rgba(251, 185, 173, 0.14), transparent 78%);
+  background-repeat: no-repeat;
+}
+html.dark .posty-soft-strategist::before {
+  background-color: #0F1115;
+  background-image:
+    radial-gradient(ellipse 160% 50% at 60% 0%, rgba(247, 107, 84, 0.14), transparent 72%),
+    radial-gradient(ellipse 80% 60% at 18% 4%, rgba(248, 158, 133, 0.24), transparent 62%),
+    radial-gradient(ellipse 70% 60% at 92% 96%, rgba(241, 52, 82, 0.20), transparent 60%),
+    radial-gradient(ellipse 45% 100% at -8% 50%, rgba(251, 185, 173, 0.12), transparent 65%),
+    radial-gradient(ellipse 110% 80% at 50% 50%, rgba(251, 185, 173, 0.04), transparent 78%);
+}
+
+/* ── STRATEGIST design system ─────────────────────────────────────────────
+   Colour + density tokens for every Strategist surface (workspace, journey,
+   conversation, settings, plan cards, banner). Tailwind exposes the colours
+   as `st-*` (tailwind.config.ts). Coral is for rules, fills and selection;
+   TEXT in coral uses --st-accent-ink (#F76B54 on white is only 2.9:1). */
+:root {
+  --st-accent: #F76B54;
+  --st-accent-strong: #F13452;
+  --st-accent-soft: #FBB9AD;
+  --st-accent-ink: #C0392B;
+  --st-accent-wash: rgba(247, 107, 84, 0.10);
+  --st-accent-ring: rgba(247, 107, 84, 0.22);
+  --st-ink: #16181D;
+  --st-ink-2: #4A4F59;
+  --st-ink-3: #686E79;
+  --st-rule: rgba(22, 24, 29, 0.09);
+  --st-rule-strong: rgba(22, 24, 29, 0.16);
+  --st-field-bg: rgba(255, 255, 255, 0.86);
+  --st-field-border: rgba(22, 24, 29, 0.14);
+  --st-field-border-hover: rgba(22, 24, 29, 0.28);
+  --st-track: rgba(22, 24, 29, 0.06);
+  --st-surface: #FFFFFF;
+  --st-primary-bg: #16181D;
+  --st-primary-bg-hover: #2A2D35;
+  --st-primary-fg: #FFFFFF;
+
+  /* Density — the ONE place the "no scroll" budget is tuned. Spacing:
+     s1 label→field · s2 inside a group · s3 between groups · s4 header→body
+     and body→actions. */
+  --st-s1: 8px;
+  --st-s2: 12px;
+  --st-s3: 24px;
+  --st-s4: 36px;
+  --st-display: clamp(28px, calc(1.05rem + 1.2vw), 36px);
+  --st-lede: 16px;
+  --st-chip-h: 40px;
+  --st-option-py: 14px;
+  --st-textarea-h: clamp(128px, 22dvh, 200px);
+  --st-textarea-sm-h: clamp(84px, 12dvh, 112px);
+}
+html.dark {
+  --st-accent-ink: #FF9A86;
+  --st-accent-wash: rgba(247, 107, 84, 0.15);
+  --st-accent-ring: rgba(247, 107, 84, 0.30);
+  --st-ink: #F4F5F7;
+  --st-ink-2: #BAC0C9;
+  --st-ink-3: #8F96A1;
+  --st-rule: rgba(255, 255, 255, 0.08);
+  --st-rule-strong: rgba(255, 255, 255, 0.15);
+  --st-field-bg: rgba(255, 255, 255, 0.04);
+  --st-field-border: rgba(255, 255, 255, 0.14);
+  --st-field-border-hover: rgba(255, 255, 255, 0.26);
+  --st-track: rgba(255, 255, 255, 0.07);
+  --st-surface: #1B1E24;
+  --st-primary-bg: #F4F5F7;
+  --st-primary-bg-hover: #FFFFFF;
+  --st-primary-fg: #16181D;
+}
+/* Touch: 44px targets wherever there is room (the short-screen tiers win). */
+@media (pointer: coarse) {
+  :root { --st-chip-h: 44px; }
+}
+@media (max-width: 1023px) {
+  :root { --st-display: 25px; --st-lede: 15px; --st-s3: 20px; --st-s4: 24px; }
+}
+@media (max-height: 760px) {
+  :root {
+    --st-s3: 18px;
+    --st-s4: 22px;
+    --st-display: clamp(24px, calc(0.9rem + 1vw), 30px);
+    --st-option-py: 11px;
+    --st-textarea-h: clamp(96px, 19dvh, 150px);
+    --st-textarea-sm-h: clamp(72px, 11dvh, 96px);
+  }
+}
+@media (max-height: 760px) and (max-width: 1023px) {
+  :root { --st-display: 23px; }
+}
+@media (max-height: 660px) {
+  :root {
+    --st-s1: 6px;
+    --st-s2: 8px;
+    --st-s3: 14px;
+    --st-s4: 16px;
+    --st-display: 21px;
+    --st-lede: 14px;
+    --st-chip-h: 36px;
+    --st-option-py: 9px;
+    --st-textarea-h: clamp(76px, 17dvh, 112px);
+    --st-textarea-sm-h: clamp(60px, 10dvh, 80px);
+  }
+}
+@media (max-height: 600px) {
+  :root { --st-s3: 12px; --st-s4: 14px; --st-display: 20px; --st-chip-h: 32px; --st-option-py: 7px; }
+}
+/* Secondary text that steps aside when the screen gets short. */
+@media (max-height: 660px) { .st-hide-short { display: none !important; } }
+@media (max-height: 600px) { .st-hide-tight { display: none !important; } }
+@media (min-height: 661px) { .st-show-short { display: none !important; } }
+/* Phones / tablets that are also short (≤ 760px): the lede and other
+   secondary lines give their room to the answer. */
+@media (max-width: 1023px) and (max-height: 760px) { .st-hide-compact { display: none !important; } }
+/* Any short screen (≤ 760px), desktop included. */
+@media (max-height: 760px) { .st-hide-low { display: none !important; } }
+/* "Roomy" = desktop width AND ≥ 821px of height (same breakpoint as the
+   journey's fine-settings split): only there do option samples sit inline. */
+@media (max-width: 1023px), (max-height: 820px) { .st-roomy-only { display: none !important; } }
+@media (min-width: 1024px) and (min-height: 821px) { .st-roomy-hide { display: none !important; } }
+
+/* Type roles (see components/strategist/type.ts). */
+.st-type {
+  font-feature-settings: "cv11", "ss01";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.st-display {
+  font-size: var(--st-display);
+  line-height: 1.1;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+  color: var(--st-ink);
+}
+.st-lede {
+  font-size: var(--st-lede);
+  line-height: 1.5;
+  color: var(--st-ink-2);
+  text-wrap: pretty;
+}
+.st-kicker {
+  font-size: 11.5px;
+  line-height: 16px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--st-accent-ink);
+}
+
+/* Keyboard focus: one coral outline for every Strategist control, light and
+   dark (beats the generic `.light button:focus-visible` orange ring + glow). */
+html .st-type :is(button, a, [role="button"], [tabindex="0"]):focus-visible {
+  outline: 2px solid var(--st-accent);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+/* Fields. Beats the global `html.light input/textarea(:focus)` overrides. */
+.st-field {
+  width: 100%;
+  border-radius: 14px;
+  border: 1px solid var(--st-field-border);
+  background-color: var(--st-field-bg);
+  color: var(--st-ink);
+  padding: 12px 14px;
+  font-size: max(16px, 1rem);
+  line-height: 1.5;
+  transition: border-color 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+}
+html.light .st-field,
+html.dark .st-field {
+  background-color: var(--st-field-bg) !important;
+  color: var(--st-ink) !important;
+  border-color: var(--st-field-border) !important;
+}
+.st-field::placeholder { color: var(--st-ink-3); opacity: 0.9; }
+html .st-field:hover { border-color: var(--st-field-border-hover) !important; }
+html.light .st-field:focus,
+html.dark .st-field:focus,
+html .st-field:focus {
+  outline: none;
+  border-color: var(--st-accent) !important;
+  box-shadow: 0 0 0 4px var(--st-accent-ring) !important;
+}
+html.light .st-field[aria-invalid="true"],
+html.dark .st-field[aria-invalid="true"] {
+  border-color: #DC2626 !important;
+  box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.12) !important;
+}
+
+/* Buttons: ink primary, coral "brand" for the one decisive action. */
+.st-btn-primary {
+  background-color: var(--st-primary-bg);
+  color: var(--st-primary-fg) !important;
+}
+.st-btn-primary:hover:not(:disabled) { background-color: var(--st-primary-bg-hover); }
+.st-btn-primary * { color: inherit !important; }
+.st-btn-brand {
+  background-image: linear-gradient(135deg, #F76B54 0%, #F13452 100%);
+  color: #FFFFFF !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 8px 20px -10px rgba(241, 52, 82, 0.65);
+}
+.st-btn-brand:hover:not(:disabled) { filter: brightness(1.05) saturate(1.05); }
+.st-btn-brand * { color: inherit !important; }
+
+/* Selectable controls (chips, option tiles, segments, scale steps). */
+.st-select {
+  border: 1px solid var(--st-field-border);
+  background-color: var(--st-field-bg);
+  color: var(--st-ink);
+  transition: border-color 120ms ease, background-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
+}
+@media (hover: hover) {
+  .st-select:hover { border-color: var(--st-field-border-hover); }
+}
+.st-select[aria-pressed="true"],
+.st-select[aria-checked="true"] {
+  border-color: var(--st-accent);
+  background-color: var(--st-accent-wash);
+  box-shadow: inset 0 0 0 0.5px var(--st-accent);
+}
+/* Chips follow the density budget, including over the global 44px touch rule. */
+button.st-chip.st-chip { height: var(--st-chip-h); min-height: var(--st-chip-h); }
+
+/* Loading skeleton bars. */
+.st-shimmer {
+  background-image: linear-gradient(90deg, var(--st-track) 0%, var(--st-rule-strong) 50%, var(--st-track) 100%);
+  background-size: 200% 100%;
+  animation: st-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes st-shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+@media (prefers-reduced-motion: reduce) { .st-shimmer { animation: none; } }
+
+/* The composer's textarea sits in a bordered box that owns the focus ring:
+   cancel the global light-mode input paint + focus shadow on it. */
+html.light .st-composer-input,
+html.dark .st-composer-input,
+html .st-composer-input:focus {
+  background-color: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* A check mark settling in when a choice is made. */
+.st-pop { animation: st-pop 220ms cubic-bezier(0.16, 1, 0.3, 1); }
+@keyframes st-pop { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .st-pop { animation: none; } }
+
 /* POSTS — creative violet anchor top-left, coral tail bottom-right
    + sidebar wash (violet, full height, off-screen left)
    + central diffuse wash so the middle never reads as bare #FAFBFC.

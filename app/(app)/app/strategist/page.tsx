@@ -8,7 +8,9 @@
  * the user switches Posty Post ⇄ Posty Stratège, and back / reload / deep links
  * work like any page. Same layout recipe as /app: desktop renders inline in the
  * shell; mobile portals under <body> below the fixed 56px header so the
- * composer anchors to the viewport and can follow the keyboard.
+ * action bar / composer anchors to the viewport and can follow the keyboard.
+ * The portal is transparent on purpose: the shell's Strategist backdrop
+ * (posty-soft-strategist, a fixed layer) shows through it, like on desktop.
  */
 
 import { useEffect, useState } from "react";
@@ -44,7 +46,7 @@ function MobileStrategistPortal({ children }: { children: React.ReactNode }) {
   return createPortal(
     <div
       data-mobile-page-portal=""
-      className="lg:hidden fixed left-0 right-0 bottom-0 z-30 overflow-hidden bg-white dark:bg-dark-card"
+      className="lg:hidden fixed left-0 right-0 bottom-0 z-30 flex flex-col overflow-hidden"
       style={{
         top: "calc(env(safe-area-inset-top, 0px) + 56px)",
         // The virtual keyboard shrinks the visual viewport but not the layout
@@ -63,7 +65,11 @@ function StrategistRoute() {
   const enabled = isStrategistEnabled();
   usePageTitle("strategist");
 
-  const [isMobile, setIsMobile] = useState(false);
+  // Right from the first render (like /app), so phones never flash the
+  // desktop layout before the portal takes over.
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== "undefined" && window.matchMedia?.(MOBILE_QUERY).matches === true,
+  );
   useEffect(() => {
     if (typeof window === "undefined" || !window.matchMedia) return;
     const mq = window.matchMedia(MOBILE_QUERY);

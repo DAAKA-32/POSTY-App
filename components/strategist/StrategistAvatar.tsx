@@ -56,23 +56,23 @@ export default function StrategistAvatar({ size = "sm", className = "" }: Props)
         className="absolute inset-0 w-full h-full"
         xmlns="http://www.w3.org/2000/svg"
       >
-        <circle cx="32" cy="32" r="32" className="fill-amber-100 dark:fill-gray-800" />
+        <circle cx="32" cy="32" r="32" className="fill-[#FDECE8] dark:fill-gray-800" />
         <circle
           cx="32"
           cy="32"
           r="31.5"
           fill="none"
           strokeWidth="0.7"
-          className="stroke-amber-200/80 dark:stroke-gray-700"
+          className="stroke-[#FBB9AD] dark:stroke-gray-700"
         />
         <path
           d="M 32 13 L 33.5 30.5 L 51 32 L 33.5 33.5 L 32 51 L 30.5 33.5 L 13 32 L 30.5 30.5 Z"
-          className="fill-amber-600 dark:fill-amber-400"
+          className="fill-[#E2553F] dark:fill-[#F89E85]"
         />
         <path
           d="M 47 17 L 47.7 20 L 50.7 20.7 L 47.7 21.4 L 47 24.4 L 46.3 21.4 L 43.3 20.7 L 46.3 20 Z"
           opacity="0.85"
-          className="fill-amber-500"
+          className="fill-[#F13452]"
         />
       </svg>
 

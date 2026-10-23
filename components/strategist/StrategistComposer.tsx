@@ -6,7 +6,8 @@
  *   - Auto-grow textarea (16px font: no iOS zoom), Enter sends, Shift+Enter
  *     adds a line. Typing stays possible while an answer streams (the field
  *     is no longer disabled, so the mobile keyboard doesn't drop).
- *   - Solid amber send button with dark ink; Stop while a request runs.
+ *   - Coral send button once there is something to send; ink Stop while a
+ *     request runs.
  *   - Errors are announced (role="alert") with a real "Retry".
  *   - A chip shows when this session's settings differ from the saved ones.
  *   - Bottom safe-area padding (iPhone home indicator).
@@ -17,6 +18,7 @@ import { AlertCircle, ArrowUp, Square, SlidersHorizontal, X } from "lucide-react
 import { useStrategistCopy } from "@/lib/strategist/copy";
 import { useStrategistSession } from "./StrategistSession";
 import { focusRing } from "./ui";
+import { MEASURE } from "./type";
 
 export default function StrategistComposer() {
   const { c } = useStrategistCopy();
@@ -57,9 +59,9 @@ export default function StrategistComposer() {
   };
 
   return (
-    <div className="border-t border-gray-200 dark:border-dark-border bg-white dark:bg-dark-card pb-[max(env(safe-area-inset-bottom),0px)]">
+    <div className="shrink-0 border-t border-st-rule pb-[max(env(safe-area-inset-bottom),0px)]">
       {error && (
-        <div className="px-4 pt-3" role="alert">
+        <div className={`${MEASURE} px-4 pt-3 lg:px-0`} role="alert">
           <div className="flex items-start gap-2.5 px-3.5 py-3 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-[14px] text-red-800 dark:text-red-200">
             <AlertCircle aria-hidden className="w-[18px] h-[18px] mt-0.5 flex-shrink-0" />
             <span className="flex-1 leading-snug">{error.message}</span>
@@ -84,18 +86,18 @@ export default function StrategistComposer() {
         </div>
       )}
 
-      <div className="px-4 pt-3 pb-3">
+      <div className={`${MEASURE} px-4 pt-3 pb-3 sm:px-8 lg:px-0`}>
         {unsavedCount > 0 && (
           <button
             type="button"
             onClick={() => setView("settings")}
-            className={`mb-2 inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-amber-50 dark:bg-amber-400/10 text-[13px] font-medium text-amber-900 dark:text-amber-200 ${focusRing}`}
+            className={`no-min-size mb-2 inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-st-accent-wash text-[13px] font-medium text-st-accent-ink ${focusRing}`}
           >
             <SlidersHorizontal aria-hidden className="w-3.5 h-3.5" />
             {c.composer.customSettings(unsavedCount)}
           </button>
         )}
-        <div className="relative flex items-end gap-2 rounded-2xl border border-gray-300 dark:border-dark-border bg-white dark:bg-dark-elevated focus-within:border-amber-500 focus-within:ring-2 focus-within:ring-amber-500/25 transition-colors">
+        <div className="relative flex items-end gap-2 rounded-2xl border border-st-field-border bg-st-surface shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-[border-color,box-shadow] focus-within:border-[color:var(--st-accent)] focus-within:shadow-[0_0_0_4px_var(--st-accent-ring)]">
           <label htmlFor="strategist-input" className="sr-only">
             {c.composer.inputLabel}
           </label>
@@ -117,7 +119,7 @@ export default function StrategistComposer() {
             autoCorrect="on"
             autoCapitalize="sentences"
             spellCheck
-            className="flex-1 resize-none bg-transparent pl-4 py-3 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:outline-none"
+            className="st-composer-input flex-1 resize-none rounded-l-2xl bg-transparent pl-4 py-3 text-st-ink placeholder:text-st-ink-3 focus:outline-none"
             style={{ fontSize: "max(16px, 1rem)", lineHeight: 1.5, minHeight: 48, maxHeight: 180 }}
           />
           <div className="p-1.5">
@@ -127,7 +129,7 @@ export default function StrategistComposer() {
                 onClick={stop}
                 aria-label={c.composer.stop}
                 title={c.composer.stop}
-                className={`w-10 h-10 rounded-xl inline-flex items-center justify-center bg-gray-900 dark:bg-white text-white/100 dark:text-gray-900 ${focusRing}`}
+                className={`st-btn-primary w-10 h-10 rounded-xl inline-flex items-center justify-center active:scale-95 ${focusRing}`}
               >
                 <Square aria-hidden className="w-3.5 h-3.5 fill-current" />
               </button>
@@ -138,10 +140,8 @@ export default function StrategistComposer() {
                 disabled={!canSend}
                 aria-label={c.composer.send}
                 title={c.composer.send}
-                className={`w-10 h-10 rounded-xl inline-flex items-center justify-center transition-colors ${focusRing} ${
-                  canSend
-                    ? "bg-amber-400 hover:bg-amber-300 text-gray-900"
-                    : "bg-gray-100 dark:bg-dark-hover text-gray-400 dark:text-gray-500 cursor-not-allowed"
+                className={`w-10 h-10 rounded-xl inline-flex items-center justify-center transition-[filter,transform] ${focusRing} ${
+                  canSend ? "st-btn-brand active:scale-95" : "bg-st-track text-st-ink-3 cursor-not-allowed"
                 }`}
               >
                 <ArrowUp aria-hidden className="w-5 h-5" />

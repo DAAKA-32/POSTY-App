@@ -372,7 +372,7 @@ export default function BatchPlanCard({ batch, onChange }: Props) {
       {/* Header */}
       <header className="px-4 pt-4 pb-3 border-b border-gray-100 dark:border-dark-border/60">
         <div className="flex items-start gap-3">
-          <span className="mt-0.5 flex items-center justify-center w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-400/15 text-amber-700 dark:text-amber-400 flex-shrink-0">
+          <span className="mt-0.5 flex items-center justify-center w-8 h-8 rounded-lg bg-st-accent-wash text-st-accent-ink flex-shrink-0">
             <StrategistMark className="w-4 h-4" />
           </span>
           <div className="flex-1 min-w-0">
@@ -442,7 +442,7 @@ export default function BatchPlanCard({ batch, onChange }: Props) {
           {!isDraft && status !== "scheduled" && !allWritten && (
             writingAll ? (
               <p role="status" className="flex items-center gap-2 min-h-[44px] text-[14px] text-gray-700 dark:text-gray-200">
-                <Loader2 aria-hidden className="w-4 h-4 animate-spin motion-reduce:animate-none text-amber-600" />
+                <Loader2 aria-hidden className="w-4 h-4 animate-spin motion-reduce:animate-none text-st-accent-ink" />
                 {c.card.writing(posts.length - written)}
               </p>
             ) : (
@@ -507,7 +507,7 @@ export default function BatchPlanCard({ batch, onChange }: Props) {
                   </Button>
                   <Link
                     href="/schedule"
-                    className={`inline-flex items-center justify-center gap-2 h-11 px-4 rounded-xl border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-card hover:bg-gray-50 dark:hover:bg-dark-hover text-[14px] font-medium text-gray-800 dark:text-gray-100 ${focusRing}`}
+                    className={`inline-flex items-center justify-center gap-2 h-11 px-4 rounded-xl border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-card hover:bg-gray-50 dark:hover:bg-white/[0.08] text-[14px] font-medium text-gray-800 dark:text-gray-100 ${focusRing}`}
                   >
                     <CalendarClock aria-hidden className="w-4 h-4" />
                     {c.card.viewCalendar}
@@ -547,7 +547,7 @@ function Steps({ steps, current }: { steps: string[]; current: number }) {
                 done
                   ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-800 dark:text-emerald-300"
                   : active
-                    ? "bg-amber-100 dark:bg-amber-400/15 text-amber-900 dark:text-amber-200"
+                    ? "bg-st-accent-wash text-st-accent-ink"
                     : "bg-gray-100 dark:bg-dark-elevated text-gray-600 dark:text-gray-400"
               }`}
             >
@@ -691,7 +691,7 @@ function BriefRow({
               aria-expanded={whyOpen}
               aria-controls={whyId}
               onClick={() => setWhyOpen((v) => !v)}
-              className={`inline-flex items-center gap-1 h-10 px-2 rounded-lg text-[13px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-hover ${focusRing}`}
+              className={`inline-flex items-center gap-1 h-10 px-2 rounded-lg text-[13px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/[0.08] ${focusRing}`}
             >
               {c.card.why}
               <ChevronDown aria-hidden className={`w-4 h-4 transition-transform ${whyOpen ? "rotate-180" : ""}`} />
@@ -700,7 +700,7 @@ function BriefRow({
               <button
                 type="button"
                 onClick={() => setEditing(true)}
-                className={`inline-flex items-center gap-1.5 h-10 px-2 rounded-lg text-[13px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-hover ${focusRing}`}
+                className={`inline-flex items-center gap-1.5 h-10 px-2 rounded-lg text-[13px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/[0.08] ${focusRing}`}
               >
                 <Pencil aria-hidden className="w-3.5 h-3.5" />
                 {c.card.edit}
@@ -800,7 +800,7 @@ function BriefEditor({
   };
 
   const field =
-    "w-full rounded-xl border border-gray-300 dark:border-dark-border bg-white dark:bg-dark-elevated px-3 py-2.5 text-gray-900 dark:text-white focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/25";
+    "st-field !rounded-xl !px-3 !py-2.5";
   const label = "block text-[13px] font-medium text-gray-800 dark:text-gray-200 mb-1";
 
   return (
@@ -995,7 +995,7 @@ function PostPreview({
     return (
       <div className="mt-3 rounded-xl border border-gray-200 dark:border-dark-border p-4 space-y-2" role="status">
         <p className="flex items-center gap-2 text-[13px] text-gray-600 dark:text-gray-400">
-          <Loader2 aria-hidden className="w-4 h-4 animate-spin motion-reduce:animate-none text-amber-600" />
+          <Loader2 aria-hidden className="w-4 h-4 animate-spin motion-reduce:animate-none text-st-accent-ink" />
           {c.card.writing(1)}
         </p>
         {[90, 75, 60].map((w) => (
@@ -1022,7 +1022,7 @@ function PostPreview({
               }
             }}
             rows={Math.max(8, Math.min(22, draft.split("\n").length + 2))}
-            className="w-full rounded-lg border border-gray-300 dark:border-dark-border bg-white dark:bg-dark-elevated p-3 leading-relaxed text-gray-900 dark:text-white focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/25 resize-y"
+            className="st-field !rounded-xl !p-3 leading-relaxed resize-y"
             style={{ fontSize: "max(16px, 1rem)" }}
           />
           <div className="mt-2 flex justify-end gap-2">
@@ -1144,7 +1144,7 @@ function PostPreview({
                 key={chip}
                 type="button"
                 onClick={() => runRewrite(chip)}
-                className={`h-9 px-3 rounded-full border border-gray-200 dark:border-dark-border text-[13px] text-gray-800 dark:text-gray-200 hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-400/10 ${focusRing}`}
+                className={`h-9 px-3 rounded-full border border-gray-200 dark:border-dark-border text-[13px] text-gray-800 dark:text-gray-200 hover:border-[color:var(--st-accent)] hover:bg-st-accent-wash ${focusRing}`}
               >
                 {chip}
               </button>
@@ -1164,7 +1164,7 @@ function PostPreview({
               onChange={(e) => setInstruction(e.target.value)}
               maxLength={300}
               placeholder={c.card.rewritePlaceholder}
-              className="flex-1 min-w-0 h-10 rounded-xl border border-gray-300 dark:border-dark-border bg-white dark:bg-dark-elevated px-3 text-gray-900 dark:text-white placeholder:text-gray-500 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/25"
+              className="st-field flex-1 min-w-0 h-10 !rounded-xl !px-3 !py-0"
               style={{ fontSize: "max(16px, 1rem)" }}
             />
             <Button type="submit" variant="secondary" size="sm">

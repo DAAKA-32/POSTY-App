@@ -30,6 +30,9 @@ import FreeTrialPaywall from "@/components/subscription/FreeTrialPaywall";
 import UsageBanner from "@/components/ui/UsageBanner";
 import QuotaExceededModal from "@/components/ui/QuotaExceededModal";
 import HelpFloatingButton from "@/components/help/HelpFloatingButton";
+import { isStrategistEnabled } from "@/lib/config/feature-flags";
+import { isStrategistAllowedForEmail } from "@/lib/strategist/access";
+import { getStrategistCopy } from "@/lib/strategist/copy";
 import {
   navItemVariants,
   conversationItemVariants,
@@ -199,6 +202,32 @@ function getNavItems(t: ReturnType<typeof useLanguage>["t"]) {
   ];
 }
 
+const STRATEGIST_PATH = "/app/strategist";
+
+/** Sidebar row for the Strategist workspace — only for accounts that can open it. */
+function strategistNavItem(label: string) {
+  return {
+    name: label,
+    href: STRATEGIST_PATH,
+    iconColor: "text-[#F76B54] dark:text-[#F89E85]",
+    activeClasses: "",
+    hoverClasses: "",
+    indicatorColor: "",
+    glowColor: "",
+    icon: (isActive: boolean) => (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+        <circle cx="12" cy="12" r="9" strokeWidth={isActive ? 2.25 : 2} />
+        <path
+          strokeLinejoin="round"
+          strokeWidth={isActive ? 2.25 : 2}
+          fill={isActive ? "currentColor" : "none"}
+          d="M15.5 8.5l-2 5-5 2 2-5 5-2z"
+        />
+      </svg>
+    ),
+  };
+}
+
 export default function MainLayout({
   children,
   posts = [],
@@ -261,6 +290,7 @@ export default function MainLayout({
     // /app and /app/c/[id] share the SAME tone (welcome) — the conversation
     // flow is one continuous experience, the brutal flip orange→violet that
     // happened on router.replace('/app/c/<id>') after generation is gone.
+    if (p.startsWith(STRATEGIST_PATH)) return "posty-soft-strategist";      // strategist — its own calmer working room
     if (p === "/app" || p.startsWith("/app/")) return "posty-soft-welcome"; // chat — warm brand, persists across /app and /app/c/*
     if (p.startsWith("/history")) return "posty-soft-visuals";     // archive — fuchsia + rose
     if (p.startsWith("/schedule")) return "posty-soft-schedule";   // planning — sky + violet
@@ -281,7 +311,17 @@ export default function MainLayout({
 
   // Get nav items with translations — memoized so the array (and its icon
   // nodes) isn't rebuilt on every re-render of this always-mounted shell.
-  const navItems = useMemo(() => getNavItems(t), [t]);
+  const { language } = useLanguage();
+  const canSeeStrategist = isStrategistEnabled() && isStrategistAllowedForEmail(user?.email);
+  const navItems = useMemo(() => {
+    const items = getNavItems(t);
+    // Right after Chat: Posty Post and Posty Stratège sit side by side.
+    if (canSeeStrategist) items.splice(1, 0, strategistNavItem(getStrategistCopy(language).title));
+    return items;
+  }, [t, language, canSeeStrategist]);
+  // The Strategist is its own section: its own backdrop, and none of the post
+  // studio's chrome (trial / usage banners, floating help) over its workspace.
+  const isStrategistPage = pathname === STRATEGIST_PATH;
 
   // Pages where we should NOT load conversations (subscription page)
   const isSubscriptionPage = pathname === "/subscription" || pathname === "/pricing";
@@ -1159,10 +1199,10 @@ export default function MainLayout({
         )}
 
         {/* Trial / Guarantee Banner */}
-        <TrialBanner />
+        {!isStrategistPage && <TrialBanner />}
 
         {/* Quota Usage Banner (Free + Pro plans) */}
-        <UsageBanner className="px-3 sm:px-4 pt-2" />
+        {!isStrategistPage && <UsageBanner className="px-3 sm:px-4 pt-2" />}
 
         {/* Page Content - No scroll on mobile (children handle scroll), scroll on desktop.
             delay={0} so the shell's children appear in lockstep with the shell
@@ -1175,7 +1215,7 @@ export default function MainLayout({
         </AnimatedPageWrapper>
 
         {/* Help floating "?" button */}
-        <HelpFloatingButton />
+        {!isStrategistPage && <HelpFloatingButton />}
 
         {/* Quota Exceeded Modal (opens when user attempts action at limit) */}
         <QuotaExceededModal />

@@ -33,6 +33,7 @@ import { db } from "@/lib/db/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStrategistDrawer } from "@/contexts/StrategistDrawerContext";
 import { getAuthHeaders } from "@/lib/api/client";
+import { requestBatchPlan, type PlanResult } from "@/lib/strategist/request-plan";
 import { trackEvent } from "@/lib/analytics/tracker";
 import {
   detectStrategistIntent,
@@ -59,7 +60,8 @@ export type StrategistMsg = {
   streaming?: boolean;
 };
 
-export type StrategistView = "chat" | "settings";
+/** "plan" = the guided journey (default), "chat" = the advisor conversation. */
+export type StrategistView = "plan" | "chat" | "settings";
 
 interface SessionError {
   message: string;
@@ -108,7 +110,11 @@ interface StrategistSessionValue {
   patchAutonomous: (patch: Partial<AutonomousStrategistConfig>) => Promise<boolean>;
 
   lastPlan: StrategyBatch | null;
+  /** Make a plan produced outside the thread (the journey) the latest one. */
+  rememberPlan: (batch: StrategyBatch) => void;
   openLastPlan: () => void;
+  /** Saved settings + autonomous config have been read (or the read failed). */
+  hydrated: boolean;
   /** Append a plan generated elsewhere (autonomous "generate now"). */
   showBatch: (batch: StrategyBatch, intro?: string) => void;
 }
@@ -156,8 +162,6 @@ function summarizeBatch(batch: StrategyBatch, lang: StrategistLang): string {
 }
 
 const uid = (p: string) => `${p}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-const timezone = () =>
-  (typeof Intl !== "undefined" && Intl.DateTimeFormat().resolvedOptions().timeZone) || "UTC";
 
 export function StrategistSessionProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
@@ -177,7 +181,7 @@ export function StrategistSessionProvider({ children }: { children: ReactNode })
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<SessionError | null>(null);
   const [announcement, setAnnouncement] = useState("");
-  const [view, setView] = useState<StrategistView>("chat");
+  const [view, setView] = useState<StrategistView>("plan");
   const [prefill, setPrefill] = useState<{ text: string; nonce: number } | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const lastRequestRef = useRef<{ text: string; opts?: SendOptions } | null>(null);
@@ -187,6 +191,7 @@ export function StrategistSessionProvider({ children }: { children: ReactNode })
   const paramsRef = useRef<StrategistAdvancedParams>({});
   const [autonomous, setAutonomous] = useState<AutonomousStrategistConfig | null>(null);
   const [lastPlan, setLastPlan] = useState<StrategyBatch | null>(null);
+  const [hydrated, setHydrated] = useState(false);
   const hydratedRef = useRef(false);
 
   // Hydrate settings + autonomous config + latest plan the first time the
@@ -206,6 +211,7 @@ export function StrategistSessionProvider({ children }: { children: ReactNode })
       } catch (err) {
         console.warn("[StrategistSession] hydrate failed:", err);
       }
+      setHydrated(true);
       const batches = await listStrategyBatches(user.uid, 5);
       setLastPlan(batches.find((b) => b.status !== "discarded" && b.posts.length > 0) ?? null);
     })();
@@ -242,14 +248,21 @@ export function StrategistSessionProvider({ children }: { children: ReactNode })
     [commit],
   );
 
-  const errorFromResponse = useCallback(
-    async (res: Response): Promise<string> => {
-      const body = await res.json().catch(() => ({} as { message?: string }));
-      if (res.status === 429) return body.message || c.thread.errorRateLimit;
-      if ((res.status === 403 || res.status === 428 || res.status === 400) && body.message) return body.message;
+  const planErrorMessage = useCallback(
+    (r: Extract<PlanResult, { ok: false }>): string => {
+      if (r.status === 429) return r.message || c.thread.errorRateLimit;
+      if ((r.status === 403 || r.status === 428 || r.status === 400) && r.message) return r.message;
       return c.thread.errorGeneric;
     },
     [c.thread],
+  );
+
+  const errorFromResponse = useCallback(
+    async (res: Response): Promise<string> => {
+      const body = await res.json().catch(() => ({} as { message?: string }));
+      return planErrorMessage({ ok: false, status: res.status, message: body.message });
+    },
+    [planErrorMessage],
   );
 
   const send = useCallback(
@@ -284,27 +297,16 @@ export function StrategistSessionProvider({ children }: { children: ReactNode })
         const period = intent.kind === "plan" ? intent.period : "none";
         void (async () => {
           try {
-            const headers = await getAuthHeaders();
-            const advanced = cleanParams(paramsRef.current);
-            const res = await fetch("/api/strategist/batch-plan", {
-              method: "POST",
-              headers: { "Content-Type": "application/json", ...headers },
-              body: JSON.stringify({
-                sourcePrompt: text.slice(0, 2000),
-                count,
-                period,
-                timezone: timezone(),
-                language: lang,
-                ...(Object.keys(advanced).length ? { advanced } : {}),
-              }),
+            const result = await requestBatchPlan({
+              sourcePrompt: text,
+              count,
+              period,
+              language: lang,
+              advanced: cleanParams(paramsRef.current),
               signal: ctrl.signal,
             });
-            if (!res.ok) return failWith(placeholderId, await errorFromResponse(res));
-            const data = await res.json();
-            const batch = data?.batch as StrategyBatch | undefined;
-            if (!batch || !Array.isArray(batch.posts) || batch.posts.length === 0) {
-              return failWith(placeholderId, c.thread.errorGeneric);
-            }
+            if (!result.ok) return failWith(placeholderId, planErrorMessage(result));
+            const batch = result.batch;
             commit((prev) =>
               prev.map((m) =>
                 m.id === placeholderId
@@ -425,7 +427,7 @@ export function StrategistSessionProvider({ children }: { children: ReactNode })
         }
       })();
     },
-    [busy, user, commit, lang, c.thread, failWith, errorFromResponse],
+    [busy, user, commit, lang, c.thread, failWith, errorFromResponse, planErrorMessage],
   );
 
   const stop = useCallback(() => {
@@ -535,6 +537,8 @@ export function StrategistSessionProvider({ children }: { children: ReactNode })
     [user?.uid, autonomous],
   );
 
+  const rememberPlan = useCallback((batch: StrategyBatch) => setLastPlan(batch), []);
+
   const openLastPlan = useCallback(() => {
     if (lastPlan) appendBatchMessage(lastPlan, c.thread.planIntro(lastPlan.posts.length));
   }, [lastPlan, appendBatchMessage, c.thread]);
@@ -575,13 +579,15 @@ export function StrategistSessionProvider({ children }: { children: ReactNode })
       autonomous,
       patchAutonomous,
       lastPlan,
+      rememberPlan,
       openLastPlan,
+      hydrated,
       showBatch,
     }),
     [
       lang, messages, busy, error, announcement, send, stop, retry, newChat, regenerate,
       turnIntoPlan, updateBatch, view, prefill, requestPrefill, savedParams, params, setParams,
-      saveParams, autonomous, patchAutonomous, lastPlan, openLastPlan, showBatch,
+      saveParams, autonomous, patchAutonomous, lastPlan, rememberPlan, openLastPlan, hydrated, showBatch,
     ],
   );
 

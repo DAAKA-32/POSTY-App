@@ -40,6 +40,25 @@ export default {
         "app-surface": "var(--background-app)",
         foreground: "var(--foreground)",
 
+        // Posty Stratège — theme-aware tokens defined in globals.css
+        // (`--st-*`). No `/opacity` modifiers on these: var() colors can't
+        // take them, each tint has its own token instead.
+        st: {
+          accent: "var(--st-accent)",
+          "accent-strong": "var(--st-accent-strong)",
+          "accent-ink": "var(--st-accent-ink)",
+          "accent-wash": "var(--st-accent-wash)",
+          ink: "var(--st-ink)",
+          "ink-2": "var(--st-ink-2)",
+          "ink-3": "var(--st-ink-3)",
+          rule: "var(--st-rule)",
+          "rule-strong": "var(--st-rule-strong)",
+          field: "var(--st-field-bg)",
+          "field-border": "var(--st-field-border)",
+          track: "var(--st-track)",
+          surface: "var(--st-surface)",
+        },
+
         // Primary - Orange clair (couleur principale CTA)
         // Plus lumineux et engageant pour les boutons
         primary: {

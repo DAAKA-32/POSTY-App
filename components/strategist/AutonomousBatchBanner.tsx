@@ -89,7 +89,7 @@ export default function AutonomousBatchBanner() {
           className="fixed left-1/2 -translate-x-1/2 z-50 bottom-[max(1rem,env(safe-area-inset-bottom))] w-[min(560px,calc(100vw-2rem))] rounded-2xl bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border shadow-lg"
         >
           <div className="flex items-center gap-3 pl-4 pr-2 py-3">
-            <span className="flex items-center justify-center w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-400/15 text-amber-700 dark:text-amber-400 flex-shrink-0">
+            <span className="flex items-center justify-center w-9 h-9 rounded-xl bg-st-accent-wash text-st-accent-ink flex-shrink-0">
               <StrategistMark className="w-4 h-4" />
             </span>
             <div className="flex-1 min-w-0">
@@ -99,7 +99,7 @@ export default function AutonomousBatchBanner() {
             <button
               type="button"
               onClick={open}
-              className={`h-10 px-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-gray-900 text-[14px] font-semibold flex-shrink-0 ${focusRing}`}
+              className={`h-10 px-3 rounded-xl st-btn-primary text-[14px] font-semibold active:scale-[0.98] transition-[background-color,transform] flex-shrink-0 ${focusRing}`}
             >
               {c.banner.open}
             </button>
@@ -107,7 +107,7 @@ export default function AutonomousBatchBanner() {
               type="button"
               onClick={dismiss}
               aria-label={c.banner.dismiss}
-              className={`w-10 h-10 inline-flex items-center justify-center rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-hover flex-shrink-0 ${focusRing}`}
+              className={`w-10 h-10 inline-flex items-center justify-center rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/[0.08] flex-shrink-0 ${focusRing}`}
             >
               <X aria-hidden className="w-4 h-4" />
             </button>

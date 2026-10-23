@@ -51,7 +51,7 @@ export default function StrategistMessageBubble({
   if (role === "user") {
     return (
       <div className="flex justify-end px-5">
-        <div className="max-w-[85%] rounded-2xl rounded-tr-md bg-gray-100 dark:bg-dark-elevated text-gray-900 dark:text-gray-100 px-4 py-2.5 text-[14px] leading-[1.55] whitespace-pre-wrap break-words">
+        <div className="max-w-[85%] rounded-2xl rounded-tr-md border border-st-rule bg-st-surface text-st-ink px-4 py-2.5 text-[15px] leading-[1.55] whitespace-pre-wrap break-words shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
           {content}
         </div>
       </div>
@@ -67,7 +67,7 @@ export default function StrategistMessageBubble({
             <motion.span
               key={delay}
               aria-hidden
-              className="w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-500"
+              className="w-1.5 h-1.5 rounded-full bg-[color:var(--st-accent)]"
               animate={reduced ? undefined : { opacity: [0.3, 1, 0.3] }}
               transition={{ duration: 1.1, repeat: Infinity, ease: "easeInOut", delay }}
             />
@@ -80,7 +80,7 @@ export default function StrategistMessageBubble({
           {isStreaming && (
             <span
               aria-hidden
-              className={`inline-block align-middle ml-0.5 w-[2px] h-4 rounded-full bg-gray-400 dark:bg-gray-500 ${reduced ? "" : "animate-pulse"}`}
+              className={`inline-block align-middle ml-0.5 w-[2px] h-4 rounded-full bg-[color:var(--st-accent)] ${reduced ? "" : "animate-pulse"}`}
             />
           )}
         </>
@@ -106,7 +106,7 @@ export default function StrategistMessageBubble({
               variant="secondary"
               size="sm"
               onClick={onTurnIntoPlan}
-              icon={<CalendarPlus aria-hidden className="w-4 h-4 text-amber-700 dark:text-amber-400" />}
+              icon={<CalendarPlus aria-hidden className="w-4 h-4 text-st-accent-ink" />}
             >
               {c.thread.turnIntoPlan}
             </Button>
