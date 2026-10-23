@@ -65,7 +65,7 @@ function ConversationContent() {
   // sidebar reflects new messages without remounting.
   const sidebarPosts = useSidebarPostsOptional();
   const { connection: linkedInConnection, publishToLinkedIn } = useLinkedIn();
-  const { canSendMessage } = useQuota();
+  const { canSendMessage, isLoading: quotaLoading } = useQuota();
   const { currentPlan, planLimits, isMaxPlan, isProPlan } = useSubscription();
   const browserMode = useBrowserMode();
   const { keyboardHeight, isKeyboardVisible } = useKeyboardHeight();
@@ -1621,7 +1621,7 @@ function ConversationContent() {
               isMobile={browserMode.isMobileBrowser}
               browserMode={browserMode}
               context="conversation"
-              quotaLimitReached={!canSendMessage}
+              quotaLimitReached={!quotaLoading && !canSendMessage}
               currentPlan={currentPlan}
               maxCharacters={planLimits.maxCharactersPerPrompt}
               showCharacterCount={true}

@@ -21,7 +21,7 @@ import {
 import { auth, db } from "@/lib/db/firebase";
 import { UserProfile, Post, Session, ChatMessage, SubscriptionPlan, FacebookConnectionData, ThreadsConnectionData } from "@/types";
 import { normalizeBusinessProfile, type BusinessProfile } from "@/lib/business/profile";
-import { PlanType, DAILY_MESSAGE_LIMITS, PLAN_CONFIGS, getFounderOverridePlan, calculateFreeTrialEndDate } from "@/lib/config/plans";
+import { PlanType, DAILY_MESSAGE_LIMITS, PLAN_CONFIGS, getFounderOverridePlan, calculateFreeTrialEndDate, resolveFreeTrialEnd, isFreeTrialExpired } from "@/lib/config/plans";
 
 /**
  * Normalize plan name from Firestore to a valid SubscriptionPlan.
@@ -1467,56 +1467,48 @@ export async function getUserQuota(userId: string, authEmail?: string | null): P
   // exists but subscription fields haven't been written yet.
   if (!effectivePlan) {
     const createdAt = data.createdAt?.toDate?.();
-    const isRecentlyCreated = createdAt && (Date.now() - createdAt.getTime()) < 5 * 60 * 1000;
+    const isRecentlyCreated = !!createdAt && (Date.now() - createdAt.getTime()) < 5 * 60 * 1000;
 
-    if (isRecentlyCreated) {
-      // Likely a new user whose subscription field hasn't been set yet
-      const monthlyLimit = PLAN_CONFIGS.free.limits.conversationsPerMonth;
-      const wpLimit = PLAN_CONFIGS.free.limits.weeklyPublishLimit;
+    // A user inside an unexpired Free trial IS a Free user, even if
+    // subscription.plan hasn't been written yet (it is only written once the
+    // user picks Free on /subscription). Anchor on freeTrialStartedAt /
+    // freeTrialEndsAt — these are resolved Timestamps written at signup, unlike
+    // createdAt (a serverTimestamp that reads back null on the just-written
+    // doc). That createdAt race is what produced a false "Quota atteint" that
+    // only a hard refresh cleared.
+    const trialEnd = resolveFreeTrialEnd({ subscription: data.subscription, createdAt: data.createdAt });
+    const hasTrialWindow = !!(data.subscription?.freeTrialStartedAt || data.subscription?.freeTrialEndsAt);
+    const inUnexpiredFreeTrial = hasTrialWindow && !isFreeTrialExpired("free", trialEnd);
+
+    if (isRecentlyCreated || inUnexpiredFreeTrial) {
+      // Resolve to Free and fall through to the Free branch below so the
+      // monthly quota (3/month) is still enforced — a plan-less in-trial user
+      // who already used their 3 posts this month is still correctly blocked.
+      effectivePlan = "free";
+    } else {
+      // Trial truly expired (or no trial window at all) and no plan → block.
       return {
-        plan: "free",
-        dailyLimit: monthlyLimit,
+        plan: null,
+        dailyLimit: 0,
         usedToday: 0,
-        remaining: monthlyLimit,
-        canSendMessage: true,
-        resetsAt: getNextMonthStartUTC(),
-        monthlyLimit,
+        remaining: 0,
+        canSendMessage: false,
+        resetsAt: todayEnd,
+        monthlyLimit: 0,
         usedThisMonth: 0,
-        monthlyRemaining: monthlyLimit,
-        hasMonthlyLimit: true,
-        weeklyPublishLimit: wpLimit,
+        monthlyRemaining: 0,
+        hasMonthlyLimit: false,
+        weeklyPublishLimit: 0,
         weeklyPublishUsed: 0,
-        weeklyPublishRemaining: wpLimit,
-        hasWeeklyPublishLimit: true,
+        weeklyPublishRemaining: 0,
+        hasWeeklyPublishLimit: false,
         weeklyPublishResetsAt: getNextWeekStartUTC(),
-        canPublishThisWeek: true,
-        weeklyLimit: monthlyLimit,
+        canPublishThisWeek: false,
+        weeklyLimit: 0,
         usedThisWeek: 0,
-        canPublish: true,
+        canPublish: false,
       };
     }
-
-    return {
-      plan: null,
-      dailyLimit: 0,
-      usedToday: 0,
-      remaining: 0,
-      canSendMessage: false,
-      resetsAt: todayEnd,
-      monthlyLimit: 0,
-      usedThisMonth: 0,
-      monthlyRemaining: 0,
-      hasMonthlyLimit: false,
-      weeklyPublishLimit: 0,
-      weeklyPublishUsed: 0,
-      weeklyPublishRemaining: 0,
-      hasWeeklyPublishLimit: false,
-      weeklyPublishResetsAt: getNextWeekStartUTC(),
-      canPublishThisWeek: false,
-      weeklyLimit: 0,
-      usedThisWeek: 0,
-      canPublish: false,
-    };
   }
 
   // ========== FREE PLAN: MONTHLY QUOTA ENFORCEMENT ==========

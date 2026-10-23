@@ -111,7 +111,7 @@ const defaultQuota: QuotaInfo = {
 const QuotaContext = createContext<QuotaContextType | undefined>(undefined);
 
 export function QuotaProvider({ children }: { children: ReactNode }) {
-  const { user, loading: authLoading } = useAuth();
+  const { user, userProfile, loading: authLoading } = useAuth();
   const [quota, setQuota] = useState<QuotaInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showQuotaModal, setShowQuotaModal] = useState(false);
@@ -140,11 +140,14 @@ export function QuotaProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
-  // Load quota on mount and when user changes — skip while auth is resolving
+  // Load quota on mount and when user changes — skip while auth is resolving.
+  // Also reload when the resolved Firestore plan changes (e.g. activateFreePlan
+  // on /subscription, or a Stripe webhook upgrade): QuotaContext does a one-shot
+  // getDoc, so without this it would serve a stale quota until a hard refresh.
   useEffect(() => {
     if (authLoading) return;
     loadQuota();
-  }, [loadQuota, authLoading]);
+  }, [loadQuota, authLoading, userProfile?.subscription?.plan]);
 
   // Record a message and update quota
   const recordMessage = useCallback(async () => {

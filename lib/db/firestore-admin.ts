@@ -217,11 +217,20 @@ export async function checkUserQuotaAdmin(userId: string, authEmail?: string): P
     effectivePlan = founderPlan;
   }
 
-  // No subscription — check if recently created user (race condition)
+  // No subscription — treat an in-trial user as Free even before
+  // subscription.plan is written. Anchor on the resolved trial timestamps
+  // (freeTrialStartedAt / freeTrialEndsAt), NOT createdAt — createdAt is a
+  // serverTimestamp that reads back null right after signup, which is what let
+  // a brand-new user hit the "Aucun abonnement actif" block. The Free branch
+  // below still enforces trial expiry AND the plan quota, so this is not a
+  // bypass. Kept symmetric with getUserQuota (client).
   if (!effectivePlan) {
     const createdAt = data.createdAt?.toDate?.();
-    const isRecentlyCreated = createdAt && (Date.now() - createdAt.getTime()) < 5 * 60 * 1000;
-    if (isRecentlyCreated) {
+    const isRecentlyCreated = !!createdAt && (Date.now() - createdAt.getTime()) < 5 * 60 * 1000;
+    const trialEnd = resolveFreeTrialEnd({ subscription: data.subscription, createdAt: data.createdAt });
+    const hasTrialWindow = !!(data.subscription?.freeTrialStartedAt || data.subscription?.freeTrialEndsAt);
+    const inUnexpiredFreeTrial = hasTrialWindow && !isFreeTrialExpired("free", trialEnd);
+    if (isRecentlyCreated || inUnexpiredFreeTrial) {
       effectivePlan = "free";
     } else {
       return defaultResult;
@@ -489,11 +498,20 @@ export async function checkHourlyQuotaAdmin(userId: string, authEmail?: string):
     effectivePlan = founderPlan;
   }
 
-  // No subscription — check if recently created user (race condition)
+  // No subscription — treat an in-trial user as Free even before
+  // subscription.plan is written. Anchor on the resolved trial timestamps
+  // (freeTrialStartedAt / freeTrialEndsAt), NOT createdAt — createdAt is a
+  // serverTimestamp that reads back null right after signup, which is what let
+  // a brand-new user hit the "Aucun abonnement actif" block. The Free branch
+  // below still enforces trial expiry AND the plan quota, so this is not a
+  // bypass. Kept symmetric with getUserQuota (client).
   if (!effectivePlan) {
     const createdAt = data.createdAt?.toDate?.();
-    const isRecentlyCreated = createdAt && (Date.now() - createdAt.getTime()) < 5 * 60 * 1000;
-    if (isRecentlyCreated) {
+    const isRecentlyCreated = !!createdAt && (Date.now() - createdAt.getTime()) < 5 * 60 * 1000;
+    const trialEnd = resolveFreeTrialEnd({ subscription: data.subscription, createdAt: data.createdAt });
+    const hasTrialWindow = !!(data.subscription?.freeTrialStartedAt || data.subscription?.freeTrialEndsAt);
+    const inUnexpiredFreeTrial = hasTrialWindow && !isFreeTrialExpired("free", trialEnd);
+    if (isRecentlyCreated || inUnexpiredFreeTrial) {
       effectivePlan = "free";
     } else {
       return defaultResult;

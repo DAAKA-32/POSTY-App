@@ -133,7 +133,7 @@ function AppContent() {
   const sidebarPosts = useSidebarPostsOptional();
   const { connection: linkedInConnection, publishToLinkedIn } = useLinkedIn();
   const { t, language } = useLanguage();
-  const { canSendMessage } = useQuota();
+  const { canSendMessage, isLoading: quotaLoading } = useQuota();
   const { isMaxPlan, isProPlan, currentPlan, planLimits } = useSubscription();
   usePageTitle("app");
   // Premium first-time feature tour (5-slide carousel). Auto-opens after the
@@ -2006,7 +2006,7 @@ function AppContent() {
                 keyboardHeight={keyboardHeight}
                 browserMode={browserMode}
                 context="new-chat"
-                quotaLimitReached={!canSendMessage}
+                quotaLimitReached={!quotaLoading && !canSendMessage}
                 currentPlan={currentPlan}
                 maxCharacters={planLimits.maxCharactersPerPrompt}
                 showCharacterCount={true}
