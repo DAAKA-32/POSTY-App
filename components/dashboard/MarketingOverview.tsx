@@ -15,7 +15,7 @@ import Link from "next/link";
 import { AlertTriangle, ArrowRight, Building2, CalendarClock, CheckCircle2, Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { getScheduledPosts } from "@/lib/db/firestore";
-import { isStrategistAllowedForEmail } from "@/lib/strategist/access";
+import { useStrategistAccess } from "@/hooks/strategist/useStrategistAccess";
 import { useBusinessCopy } from "@/lib/business/copy";
 import { businessCompleteness, normalizeBusinessProfile } from "@/lib/business/profile";
 import { canBuildStrategy, readContentStrategy, type ContentStrategy } from "@/lib/business/strategy";
@@ -78,7 +78,7 @@ export default function MarketingOverview() {
   const business = useMemo(() => normalizeBusinessProfile(userProfile?.profile?.business), [userProfile]);
   const completeness = businessCompleteness(business);
   const strategy = freshStrategy ?? readContentStrategy(userProfile?.profile?.strategy);
-  const strategistOn = isStrategistAllowedForEmail(user?.email);
+  const strategistOn = useStrategistAccess();
   const auto = userProfile?.autonomousMode;
   const pendingBatch = !!userProfile?.pendingAutoBatchId;
 

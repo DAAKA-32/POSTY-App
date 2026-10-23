@@ -39,8 +39,8 @@ import {
 import { generateLinkedInPost } from "@/lib/services/post-generator";
 import { polishStrategistPost } from "@/lib/strategist/post-polish";
 import { getMaxTokensForPlan } from "@/lib/config/plans";
-import { isStrategistAllowedForEmail } from "@/lib/strategist/access";
-import { hasLinkedInConnected } from "@/lib/strategist/access-server";
+import { strategistDeniedMessage } from "@/lib/strategist/access";
+import { hasLinkedInConnected, hasStrategistAccess } from "@/lib/strategist/access-server";
 import { isOpenAIConfigured } from "@/lib/openai";
 import type {
   PostBrief,
@@ -277,15 +277,12 @@ export async function POST(request: NextRequest) {
   }
   const { batchId, briefIds, force, language, instruction } = parsed.data;
 
-  // ── Access gate — enterprise email allowlist ─────────────────────────
-  if (!isStrategistAllowedForEmail(auth.email)) {
+  // ── Access gate — Pro / Max plan (or allowlisted email) ──────────────
+  if (!(await hasStrategistAccess(userId, auth.email))) {
     return NextResponse.json(
       {
         error: "access_denied",
-        message:
-          language === "fr"
-            ? "Le Stratège est réservé aux entreprises. Contacte-nous pour activer ton compte."
-            : "The Strategist is reserved for enterprise accounts. Contact us to enable yours.",
+        message: strategistDeniedMessage(language),
       },
       { status: 403 }
     );

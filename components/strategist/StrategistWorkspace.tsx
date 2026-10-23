@@ -226,7 +226,7 @@ function StrategistTeaser() {
   return (
     <GateCard eyebrow={c.gate.lockedEyebrow} title={c.gate.lockedTitle} desc={c.gate.lockedDesc}>
       <Link
-        href="/business"
+        href="/subscription"
         className={`st-btn-brand inline-flex h-11 items-center justify-center rounded-xl px-4 text-[14px] font-semibold transition-[filter] ${focusRing}`}
       >
         {c.gate.lockedCta}

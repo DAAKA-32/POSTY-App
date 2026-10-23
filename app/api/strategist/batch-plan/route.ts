@@ -21,8 +21,8 @@ import { isAdminInitialized } from "@/lib/db/firebase-admin";
 import { checkHourlyQuotaAdmin, incrementUserQuotaAdmin } from "@/lib/db/firestore-admin";
 import { isOpenAIConfigured } from "@/lib/openai";
 import { generateBatchPlan, tomorrowInTz } from "@/lib/strategist/generate-batch";
-import { isStrategistAllowedForEmail } from "@/lib/strategist/access";
-import { hasLinkedInConnected } from "@/lib/strategist/access-server";
+import { strategistDeniedMessage } from "@/lib/strategist/access";
+import { hasLinkedInConnected, hasStrategistAccess } from "@/lib/strategist/access-server";
 import type { StrategistAdvancedParams } from "@/types";
 
 export const runtime = "nodejs";
@@ -95,15 +95,12 @@ export async function POST(request: NextRequest) {
   const { sourcePrompt, count, timezone, language, advanced, period } = parsed.data;
   const startDate = parsed.data.startDate ?? tomorrowInTz(timezone);
 
-  // ── Access gate — enterprise email allowlist ─────────────────────────
-  if (!isStrategistAllowedForEmail(auth.email)) {
+  // ── Access gate — Pro / Max plan (or allowlisted email) ──────────────
+  if (!(await hasStrategistAccess(userId, auth.email))) {
     return NextResponse.json(
       {
         error: "access_denied",
-        message:
-          language === "fr"
-            ? "Le Stratège est réservé aux entreprises. Contacte-nous pour activer ton compte."
-            : "The Strategist is reserved for enterprise accounts. Contact us to enable yours.",
+        message: strategistDeniedMessage(language),
       },
       { status: 403 }
     );

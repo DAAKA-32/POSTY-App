@@ -23,10 +23,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { PenLine, HelpCircle, ChevronDown, Check } from "lucide-react";
 import StrategistMark from "@/components/strategist/StrategistMark";
 import { useStrategistDrawer } from "@/contexts/StrategistDrawerContext";
-import { localized } from "@/lib/utils/error-messages";
 import { isStrategistEnabled } from "@/lib/config/feature-flags";
 import { useStrategistEligibility } from "@/hooks/strategist/useStrategistEligibility";
-import toast from "@/components/ui/Toast";
 import {
   menuContainerVariants,
   menuRowVariants,
@@ -80,13 +78,14 @@ export default function AIModeSwitch({
   //
   // Visibility vs clickability are decoupled now: the row is VISIBLE as soon
   // as the feature flag is on, but clicking it is GATED by eligibility:
-  //   - ok           → open the drawer
-  //   - no-access    → toast "invitation only" (don't open — user can't use it)
-  //   - no-linkedin  → open the drawer anyway (the drawer surfaces a Connect
-  //                    LinkedIn screen — recoverable in one click)
+  //   - ok           → open the workspace
+  //   - no-access    → open it anyway (Free): it shows the "included in Pro and
+  //                    Max" invitation with a link to the plans
+  //   - no-linkedin  → open it anyway (it surfaces a Connect LinkedIn screen —
+  //                    recoverable in one click)
   //   - loading      → silent no-op (transient state)
-  // Always-visible row gives the user a discoverable affordance they can ask
-  // us about instead of "where do I find the Strategist?".
+  // Always-visible row: a discoverable entry for everyone, and for Free users
+  // the way to learn that the Strategist is a Pro / Max feature.
   const strategist = useStrategistDrawer();
   const strategistEligibility = useStrategistEligibility();
   const strategistEnabled = isStrategistEnabled();
@@ -243,24 +242,15 @@ export default function AIModeSwitch({
                 active={strategist.isOpen}
                 onClick={() => {
                   setOpen(false);
-                  if (strategistEligibility.reason === "no-access") {
-                    toast.info(
-                      localized(
-                        "Le Stratège est réservé aux entreprises. Contacte-nous pour activer ton compte.",
-                        "The Strategist is reserved for businesses. Contact us to activate your account."
-                      ),
-                      { duration: 5000 }
-                    );
-                    return;
-                  }
                   if (strategistEligibility.reason === "loading") {
                     // Transient — silently bail rather than opening a workspace
                     // that would just show a spinner.
                     return;
                   }
-                  // ok OR no-linkedin → go to the Strategist workspace; in the
-                  // no-linkedin case it renders the Connect-LinkedIn screen
-                  // (recoverable in one click).
+                  // ok, no-linkedin OR no-access → go to the Strategist workspace:
+                  // no-linkedin renders the Connect-LinkedIn screen (recoverable
+                  // in one click), no-access (Free) the "included in Pro and Max"
+                  // invitation with a link to the plans.
                   strategist.open();
                 }}
               />

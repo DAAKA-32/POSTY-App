@@ -1,7 +1,7 @@
 /**
  * POST /api/strategist
  *
- * Marketing Strategist agent — Max-only conversational marketing advisor.
+ * Marketing Strategist agent — conversational marketing advisor (Pro and Max).
  *
  * Distinct from /api/chat (post generation):
  *   - /api/chat        → tactical, single-turn, generates LinkedIn posts
@@ -9,7 +9,7 @@
  *
  * Uses the existing OpenAIService streaming infra so the cost/latency profile
  * stays identical to the rest of the app. The differentiation is the system
- * prompt (advisor persona) + plan gating (Max only).
+ * prompt (advisor persona) + plan gating (Pro and Max, see lib/strategist/access.ts).
  */
 
 import { NextRequest } from "next/server";
@@ -26,8 +26,8 @@ import { getPlanLimits, PlanType } from "@/lib/config/plans";
 import { verifyAuth } from "@/lib/auth";
 import { STRATEGIST_SYSTEM_PROMPT } from "@/lib/ai/strategist-prompt";
 import { sanitizeProfileField } from "@/lib/services/prompt-builder";
-import { isStrategistAllowedForEmail } from "@/lib/strategist/access";
-import { hasLinkedInConnected } from "@/lib/strategist/access-server";
+import { strategistDeniedMessage } from "@/lib/strategist/access";
+import { hasLinkedInConnected, hasStrategistAccess } from "@/lib/strategist/access-server";
 import { renderBusinessLines } from "@/lib/business/render";
 import {
   trackAIUsage,
@@ -149,15 +149,9 @@ export async function POST(request: NextRequest) {
       return jsonError("invalid_payload", "messages array is required", 400);
     }
 
-    // ── Access gate — enterprise email allowlist ────────────────────────
-    if (!isStrategistAllowedForEmail(auth.email)) {
-      return jsonError(
-        "access_denied",
-        language === "fr"
-          ? "Le Stratège est réservé aux entreprises. Contacte-nous pour activer ton compte."
-          : "The Strategist is reserved for enterprise accounts. Contact us to enable yours.",
-        403
-      );
+    // ── Access gate — Pro / Max plan (or allowlisted email) ─────────────
+    if (!(await hasStrategistAccess(userId, auth.email))) {
+      return jsonError("access_denied", strategistDeniedMessage(language), 403);
     }
 
     // ── LinkedIn required ────────────────────────────────────────────────

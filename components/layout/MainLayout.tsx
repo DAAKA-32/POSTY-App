@@ -31,7 +31,7 @@ import UsageBanner from "@/components/ui/UsageBanner";
 import QuotaExceededModal from "@/components/ui/QuotaExceededModal";
 import HelpFloatingButton from "@/components/help/HelpFloatingButton";
 import { isStrategistEnabled } from "@/lib/config/feature-flags";
-import { isStrategistAllowedForEmail } from "@/lib/strategist/access";
+import { useStrategistAccess } from "@/hooks/strategist/useStrategistAccess";
 import { getStrategistCopy } from "@/lib/strategist/copy";
 import {
   navItemVariants,
@@ -312,7 +312,8 @@ export default function MainLayout({
   // Get nav items with translations — memoized so the array (and its icon
   // nodes) isn't rebuilt on every re-render of this always-mounted shell.
   const { language } = useLanguage();
-  const canSeeStrategist = isStrategistEnabled() && isStrategistAllowedForEmail(user?.email);
+  const strategistAccess = useStrategistAccess();
+  const canSeeStrategist = isStrategistEnabled() && strategistAccess;
   const navItems = useMemo(() => {
     const items = getNavItems(t);
     // Right after Chat: Posty Post and Posty Stratège sit side by side.

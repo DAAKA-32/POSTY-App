@@ -219,11 +219,11 @@ const fr = {
   },
 
   gate: {
-    lockedEyebrow: "Accès sur invitation",
-    lockedTitle: "Le Stratège est en accès anticipé",
+    lockedEyebrow: "Pro et Max",
+    lockedTitle: "Le Stratège est inclus dans Pro et Max",
     lockedDesc:
-      "Il planifie, rédige et programme tes posts LinkedIn à partir de ton activité. L'accès est ouvert progressivement.",
-    lockedCta: "Nous contacter",
+      "Il construit ta stratégie, planifie, rédige et programme tes posts LinkedIn à partir de ton activité. Passe à Pro pour l'activer.",
+    lockedCta: "Voir les plans",
     linkedinEyebrow: "LinkedIn requis",
     linkedinTitle: "Connecte ton compte LinkedIn",
     linkedinDesc: "Le Stratège programme tes posts directement sur LinkedIn : il a besoin de ton compte connecté.",
@@ -448,10 +448,10 @@ const en: StrategistCopy = {
   },
 
   gate: {
-    lockedEyebrow: "Invitation only",
-    lockedTitle: "The Strategist is in early access",
-    lockedDesc: "It plans, writes and schedules your LinkedIn posts from your business. Access is opening gradually.",
-    lockedCta: "Contact us",
+    lockedEyebrow: "Pro and Max",
+    lockedTitle: "The Strategist is included in Pro and Max",
+    lockedDesc: "It builds your strategy, then plans, writes and schedules your LinkedIn posts from your business. Upgrade to Pro to unlock it.",
+    lockedCta: "See the plans",
     linkedinEyebrow: "LinkedIn required",
     linkedinTitle: "Connect your LinkedIn account",
     linkedinDesc: "The Strategist schedules your posts directly on LinkedIn, so it needs your account connected.",

@@ -115,7 +115,7 @@ interface SubscriptionContextValue extends SubscriptionState {
   hasAudienceTargeting: boolean;
   hasPriorityProcessing: boolean;
   hasEarlyAccess: boolean;
-  hasMarketingStrategist: boolean; // Max-only conversational marketing advisor
+  hasMarketingStrategist: boolean; // Strategist: Pro and Max (see lib/strategist/access.ts for the full rule)
 
   // Usage tracking
   incrementConversationCount: () => Promise<void>;

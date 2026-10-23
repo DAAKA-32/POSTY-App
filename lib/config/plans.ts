@@ -450,8 +450,10 @@ export interface PlanLimits {
   // Facts are woven into the post (no links); sources stay internal.
   hasRealtimeContext: boolean;
 
-  // Marketing Strategist — premium conversational advisor (Max-only).
-  // Distinct from post generation: this is a multi-turn strategy/audit agent.
+  // Marketing Strategist — guided strategy journey, advisor conversation and
+  // autonomous weekly plan (Pro and Max). Distinct from post generation: this is
+  // a multi-turn strategy/audit agent. Free is excluded. Read through
+  // lib/strategist/access.ts (canUseStrategist), never directly.
   hasMarketingStrategist: boolean;
 
   // Visual image generation (creative-coding pipeline, not external image AI).
@@ -565,8 +567,8 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
       // URL Analysis
       hasUrlAnalysis: true,
       hasRealtimeContext: true,
-      // Marketing Strategist is reserved for Max — strong premium signal.
-      hasMarketingStrategist: false,
+      // Marketing Strategist — included from Pro (Free is excluded).
+      hasMarketingStrategist: true,
       // Multi-Platform: LinkedIn + Bluesky, Mastodon and Discord. Threads,
       // Facebook and Reddit are activated on request (see Max below).
       allowedPlatforms: ["linkedin", "bluesky", "mastodon", "discord"],
@@ -611,7 +613,7 @@ export const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
       // URL Analysis
       hasUrlAnalysis: true,
       hasRealtimeContext: true,
-      // Marketing Strategist — Max-exclusive
+      // Marketing Strategist — included (Pro and Max)
       hasMarketingStrategist: true,
       // Multi-Platform: Bluesky, Mastodon, Discord self-serve; Threads, Facebook,
       // Reddit (+ X, Instagram, Threads-Zernio) activated on request. Simultaneous publishing.

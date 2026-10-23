@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb, isAdminInitialized } from "@/lib/db/firebase-admin";
 import { rejectUnlessCron } from "@/lib/scheduler/cron-auth";
-import { getFounderOverridePlan } from "@/lib/config/plans";
+import { strategistAccessFromUserDoc } from "@/lib/strategist/access";
 
 /**
- * Daily autonomous Strategist: for every Max user whose autonomous mode runs
- * today (Europe/Paris), asks /api/strategist/auto-batch to prepare the week's
+ * Daily autonomous Strategist: for every Pro / Max user whose autonomous mode
+ * runs today (Europe/Paris), asks /api/strategist/auto-batch to prepare the week's
  * plan. Triggered once a day by Vercel Cron (vercel.json — daily crons are
  * free on Hobby). Replaces the `weeklyAutonomousStrategist` Cloud Function,
  * which needs the paid Blaze plan and never had POSTY_APP_URL / CRON_SECRET
@@ -35,12 +35,13 @@ async function handle(request: NextRequest) {
     .limit(500)
     .get();
 
-  // EFFECTIVE plan, like the rest of the app: founder / gift accounts are Max
-  // through the email override while their stored plan stays null/"free" (the
-  // Cloud Function compared the stored plan only and skipped them). The users
+  // The SAME rule as the interactive routes and auto-batch's re-check
+  // (strategistAccessFromUserDoc): the EFFECTIVE plan includes the Strategist
+  // (Pro, Max; founder / gift accounts are Max through the email override while
+  // their stored plan stays null/"free") or the email is allowlisted. The users
   // doc email is server-trusted since d568ced (clients cannot rewrite it).
   const targets = snap.docs
-    .filter((d) => (getFounderOverridePlan(d.get("email")) ?? d.get("subscription.plan")) === "max")
+    .filter((d) => strategistAccessFromUserDoc(d.data()))
     .map((d) => d.id);
   const skipped = snap.size - targets.length;
   const origin = request.nextUrl.origin;

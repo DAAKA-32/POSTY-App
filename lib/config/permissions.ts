@@ -310,11 +310,13 @@ export function hasEarlyAccess(subscription: UserSubscription): boolean {
 }
 
 /**
- * Marketing Strategist — Max-only conversational marketing advisor.
+ * Marketing Strategist — guided strategy journey + advisor conversation +
+ * autonomous weekly plan. Included in Pro and Max, never on Free.
  *
  * Distinct from post generation: this is a multi-turn strategy session
- * (audit, content plan, positioning, audience analysis). Premium signal,
- * never offered on Free or Pro.
+ * (audit, content plan, positioning, audience analysis). For the full access
+ * rule (this plan feature OR the email allowlist) use canUseStrategist in
+ * lib/strategist/access.ts.
  */
 export function hasMarketingStrategist(subscription: UserSubscription): boolean {
   if (!subscription.plan) return false;

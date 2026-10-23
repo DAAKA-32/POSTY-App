@@ -31,7 +31,7 @@ import { adminDb, isAdminInitialized } from "@/lib/db/firebase-admin";
 import { Timestamp, FieldValue } from "firebase-admin/firestore";
 import { isOpenAIConfigured } from "@/lib/openai";
 import { generateBatchPlan, tomorrowInTz } from "@/lib/strategist/generate-batch";
-import { isStrategistAllowedForEmail } from "@/lib/strategist/access";
+import { strategistAccessFromUserDoc } from "@/lib/strategist/access";
 import { hasLinkedInConnected } from "@/lib/strategist/access-server";
 import type { AutonomousStrategistConfig } from "@/types";
 
@@ -112,10 +112,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "autonomous_mode_disabled" }, { status: 400 });
   }
 
-  // Access re-check — the cron caller may have stale info; refuse if the
-  // user's email got removed from the allowlist since they opted in.
-  const userEmail: string | undefined = userData.email;
-  if (!isStrategistAllowedForEmail(userEmail) && !forcePrompt) {
+  // Access re-check — the cron caller may have stale info; refuse if the user
+  // is no longer on Pro/Max (downgrade, cancellation) and no longer
+  // allowlisted since they opted in. Same rule as the interactive routes.
+  if (!strategistAccessFromUserDoc(userData) && !forcePrompt) {
     return NextResponse.json({ error: "access_denied" }, { status: 403 });
   }
 

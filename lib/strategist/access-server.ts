@@ -9,7 +9,31 @@
  * Only API routes should import from this file.
  */
 
+import { adminDb } from "@/lib/db/firebase-admin";
 import { getLinkedInConnectionAdmin } from "@/lib/db/firestore-admin";
+import { strategistAccessFromUserDoc } from "./access";
+
+/**
+ * Server-side check: may this user use the Strategist? (Pro/Max plan, founder
+ * or gift account, or allowlisted email — see ./access.ts.) THE gate: the
+ * client only decides what to show.
+ *
+ * Reads `users/{uid}`; fails CLOSED (false) on any error or when the Admin SDK
+ * is not initialised, like `hasLinkedInConnected`.
+ */
+export async function hasStrategistAccess(
+  userId: string,
+  authEmail?: string | null
+): Promise<boolean> {
+  try {
+    if (!adminDb) return false;
+    const snap = await adminDb.collection("users").doc(userId).get();
+    return strategistAccessFromUserDoc(snap.exists ? snap.data() : null, authEmail);
+  } catch (err) {
+    console.warn("[strategist/access-server] hasStrategistAccess error:", err);
+    return false;
+  }
+}
 
 /**
  * Server-side check: does the user have an active LinkedIn connection?
